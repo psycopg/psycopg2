@@ -1,5 +1,9 @@
 2005-03-01  Federico Di Gregorio  <fog@debian.org>
 
+	* psycopg/cursor_type.c (psyco_curs_copy_from): we now use
+	PyOS_snprintf instead of asprintf. On some platforms this can be
+	bad (win32).. if that's your case, get a better platform. :/
+
 	* psycopg/microprotocols.c (microprotocols_adapt): fixed small
 	typo that made adaptation using __conform__ impossible.
 

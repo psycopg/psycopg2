@@ -930,7 +930,8 @@ _psyco_curs_has_write_check(PyObject* o, void* var)
 static PyObject *
 psyco_curs_copy_from(cursorObject *self, PyObject *args)
 {
-    char *table_name, *query = NULL;
+    char query[256];
+    char *table_name;
     char *sep = "\t", *null ="NULL";
     long int bufsize = DEFAULT_COPYSIZE;
     PyObject *file, *res = NULL;
@@ -943,8 +944,8 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args)
     
     EXC_IF_CURS_CLOSED(self);
     
-    asprintf(&query, "COPY %s FROM stdin USING DELIMITERS '%s'"
-                     " WITH NULL AS '%s'", table_name, sep, null);
+    PyOS_snprintf(query, 256, "COPY %s FROM stdin USING DELIMITERS '%s'"
+                  " WITH NULL AS '%s'", table_name, sep, null);
     Dprintf("psyco_curs_copy_from: query = %s", query);
 
     self->copysize = bufsize;
