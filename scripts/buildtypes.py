@@ -53,7 +53,17 @@ basic_types = (['NUMBER', ['INT8', 'INT4', 'INT2', 'FLOAT8', 'FLOAT4',
 # from postgresql headers; we'll have to do it hard-coding :/
 array_types = (['LONGINTEGER', [1016]],
                ['INTEGER', [1005, 1006, 1007]],
-               ['STRING', [1002, 1003, 1009, 1014, 1015]])
+               ['FLOAT', [1017, 1021, 1022]],
+               ['DECIMAL', [1231]],
+               ['UNICODE', [1002, 1003, 1009, 1014, 1015]],
+               ['STRING', [1002, 1003, 1009, 1014, 1015]],
+               ['BOOLEAN', [1000]],
+               ['DATETIME', [1115, 1185]],
+               ['TIME', [1183, 1270]],
+               ['DATE', [1182]],
+               ['INTERVAL', [1187]],
+               ['BINARY', [1001]],
+               ['ROWID', [1028, 1013]])
 
 # this is the header used to compile the data in the C module
 HEADER = """

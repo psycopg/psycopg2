@@ -116,7 +116,7 @@ typecast_init(PyObject *dict)
 
         Dprintf("typecast_init: initializing %s", typecast_builtins[i].name);
 
-        t = (typecastObject *)typecast_from_c(&(typecast_builtins[i]));
+        t = (typecastObject *)typecast_from_c(&(typecast_builtins[i]), dict);
         if (t == NULL) return -1;
         if (typecast_add((PyObject *)t, 0) != 0) return -1;
 
@@ -129,14 +129,14 @@ typecast_init(PyObject *dict)
     }
     
     /* create and save a default cast object (but does not register it) */
-    psyco_default_cast = typecast_from_c(&typecast_default);
+    psyco_default_cast = typecast_from_c(&typecast_default, dict);
 
     /* register the date/time typecasters with their original names */
 #ifdef HAVE_MXDATETIME
     for (i = 0; typecast_mxdatetime[i].name != NULL; i++) {
         typecastObject *t;
         Dprintf("typecast_init: initializing %s", typecast_mxdatetime[i].name);
-        t = (typecastObject *)typecast_from_c(&(typecast_mxdatetime[i]));
+        t = (typecastObject *)typecast_from_c(&(typecast_mxdatetime[i]), dict);
         if (t == NULL) return -1;
         PyDict_SetItem(dict, t->name, (PyObject *)t);
     }
@@ -145,33 +145,13 @@ typecast_init(PyObject *dict)
     for (i = 0; typecast_pydatetime[i].name != NULL; i++) {
         typecastObject *t;
         Dprintf("typecast_init: initializing %s", typecast_pydatetime[i].name);
-        t = (typecastObject *)typecast_from_c(&(typecast_pydatetime[i]));
+        t = (typecastObject *)typecast_from_c(&(typecast_pydatetime[i]), dict);
         if (t == NULL) return -1;
         PyDict_SetItem(dict, t->name, (PyObject *)t);
     }
 #endif
     
     return 0;
-}
-
-/* typecast_get_by_name - get a type object by name (slow!) */
-
-static PyObject*
-typecast_get_by_name(unsigned char *name)
-{
-    PyObject *value, *res = NULL;
-    int ppos = 0;
-
-    while (PyDict_Next(psyco_types, &ppos, NULL, &value)) {
-        if (strcmp(PyString_AsString(((typecastObject*)value)->name),
-                   name) == 0) {
-            res = value;
-            break;
-        }
-    }
-
-    /* borrowed reference */
-    return res;
 }
 
 /* typecast_add - add a type object to the dictionary */
@@ -422,7 +402,7 @@ typecast_from_python(PyObject *self, PyObject *args, PyObject *keywds)
 }
 
 PyObject *
-typecast_from_c(typecastObject_initlist *type)
+typecast_from_c(typecastObject_initlist *type, PyObject *dict)
 {
     PyObject *tuple, *base = NULL;
     typecastObject *obj;
@@ -430,7 +410,8 @@ typecast_from_c(typecastObject_initlist *type)
 
     /* before doing anything else we look for the base */
     if (type->base) {
-        base = typecast_get_by_name(type->base);
+        /* NOTE: base is a borrowed reference! */
+        base = PyDict_GetItemString(dict, type->base);
         if (!base) {
             PyErr_Format(Error, "typecast base not found: %s", type->base);
             return NULL;

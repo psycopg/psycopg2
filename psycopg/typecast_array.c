@@ -203,12 +203,18 @@ typecast_GENERIC_ARRAY_cast(unsigned char *str, int len, PyObject *curs)
     return obj;
 }
 
-/** LONGINTEGERARRAY and INTEGERARRAY - cast integers arrays **/
+/** almost all the basic array typecasters are derived from GENERIC **/
 
 #define typecast_LONGINTEGERARRAY_cast typecast_GENERIC_ARRAY_cast
 #define typecast_INTEGERARRAY_cast typecast_GENERIC_ARRAY_cast
-
-/** STRINGARRAY - cast integers arrays **/
-
+#define typecast_FLOATARRAY_cast typecast_GENERIC_ARRAY_cast
+#define typecast_DECIMALARRAY_cast typecast_GENERIC_ARRAY_cast
 #define typecast_STRINGARRAY_cast typecast_GENERIC_ARRAY_cast
-
+#define typecast_UNICODEARRAY_cast typecast_GENERIC_ARRAY_cast
+#define typecast_BOOLEANARRAY_cast typecast_GENERIC_ARRAY_cast
+#define typecast_DATETIMEARRAY_cast typecast_GENERIC_ARRAY_cast
+#define typecast_DATEARRAY_cast typecast_GENERIC_ARRAY_cast
+#define typecast_TIMEARRAY_cast typecast_GENERIC_ARRAY_cast
+#define typecast_INTERVALARRAY_cast typecast_GENERIC_ARRAY_cast
+#define typecast_BINARYARRAY_cast typecast_GENERIC_ARRAY_cast
+#define typecast_ROWIDARRAY_cast typecast_GENERIC_ARRAY_cast

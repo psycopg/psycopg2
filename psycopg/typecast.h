@@ -72,7 +72,7 @@ extern int typecast_init(PyObject *dict);
 extern int typecast_add(PyObject *obj, int binary);
 
 /* the C callable typecastObject creator function */
-extern PyObject *typecast_from_c(typecastObject_initlist *type);
+extern PyObject *typecast_from_c(typecastObject_initlist *type, PyObject *d);
 
 /* the python callable typecast creator function */
 extern PyObject *typecast_from_python(
