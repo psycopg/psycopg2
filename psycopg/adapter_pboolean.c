@@ -148,7 +148,7 @@ pboolean_repr(pbooleanObject *self)
 PyTypeObject pbooleanType = {
     PyObject_HEAD_INIT(NULL)
     0,
-    "psycopg.Boolean",
+    "psycopg._psycopg.Boolean",
     sizeof(pbooleanObject),
     0,
     pboolean_dealloc, /*tp_dealloc*/

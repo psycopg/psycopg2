@@ -335,7 +335,7 @@ connection_repr(connectionObject *self)
 PyTypeObject connectionType = {
     PyObject_HEAD_INIT(NULL)
     0,
-    "psycopg.connection",
+    "psycopg._psycopg.connection",
     sizeof(connectionObject),
     0,
     connection_dealloc, /*tp_dealloc*/

@@ -263,7 +263,7 @@ binary_repr(binaryObject *self)
 PyTypeObject binaryType = {
     PyObject_HEAD_INIT(NULL)
     0,
-    "psycopg.Binary",
+    "psycopg._psycopg.Binary",
     sizeof(binaryObject),
     0,
     binary_dealloc, /*tp_dealloc*/

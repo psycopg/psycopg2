@@ -1174,7 +1174,7 @@ cursor_repr(cursorObject *self)
 PyTypeObject cursorType = {
     PyObject_HEAD_INIT(NULL)
     0,
-    "psycopg.cursor",
+    "psycopg._psycopg.cursor",
     sizeof(cursorObject),
     0,
     cursor_dealloc, /*tp_dealloc*/

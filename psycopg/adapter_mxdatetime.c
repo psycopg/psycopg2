@@ -157,7 +157,7 @@ mxdatetime_repr(mxdatetimeObject *self)
 PyTypeObject mxdatetimeType = {
     PyObject_HEAD_INIT(NULL)
     0,
-    "psycopg.MxDateTime",
+    "psycopg._psycopg.MxDateTime",
     sizeof(mxdatetimeObject),
     0,
     mxdatetime_dealloc, /*tp_dealloc*/

@@ -280,7 +280,7 @@ qstring_repr(qstringObject *self)
 PyTypeObject qstringType = {
     PyObject_HEAD_INIT(NULL)
     0,
-    "psycopg.QuotedString",
+    "psycopg._psycopg.QuotedString",
     sizeof(qstringObject),
     0,
     qstring_dealloc, /*tp_dealloc*/
