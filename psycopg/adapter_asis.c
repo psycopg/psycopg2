@@ -52,7 +52,7 @@ asis_getquoted(asisObject *self, PyObject *args)
 }
 
 PyObject *
-asis_conform(binaryObject *self, PyObject *args)
+asis_conform(asisObject *self, PyObject *args)
 {
     PyObject *res, *proto;
     

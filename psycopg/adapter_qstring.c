@@ -185,7 +185,7 @@ qstring_prepare(qstringObject *self, PyObject *args)
 }
     
 PyObject *
-qstring_conform(binaryObject *self, PyObject *args)
+qstring_conform(qstringObject *self, PyObject *args)
 {
     PyObject *res, *proto;
     

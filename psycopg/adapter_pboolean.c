@@ -53,7 +53,7 @@ pboolean_getquoted(pbooleanObject *self, PyObject *args)
 }
 
 PyObject *
-pboolean_conform(binaryObject *self, PyObject *args)
+pboolean_conform(pbooleanObject *self, PyObject *args)
 {
     PyObject *res, *proto;
     

@@ -84,7 +84,7 @@ pydatetime_getquoted(pydatetimeObject *self, PyObject *args)
 }
 
 PyObject *
-datetime_conform(binaryObject *self, PyObject *args)
+pydatetime_conform(pydatetimeObject *self, PyObject *args)
 {
     PyObject *res, *proto;
     

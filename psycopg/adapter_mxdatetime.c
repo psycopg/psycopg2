@@ -60,7 +60,7 @@ mxdatetime_getquoted(mxdatetimeObject *self, PyObject *args)
 }
 
 PyObject *
-mxdatetime_conform(binaryObject *self, PyObject *args)
+mxdatetime_conform(mxdatetimeObject *self, PyObject *args)
 {
     PyObject *res, *proto;
     
