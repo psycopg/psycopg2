@@ -81,7 +81,7 @@ class AsIs(object):
     def __init__(self, obj):
         self.__obj = obj
     def getquoted(self):
-        return self.__obj
+        return str(self.__obj)
     def prepare(self, conn):
 	pass
     __str__ = getquoted
