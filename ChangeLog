@@ -1,6 +1,7 @@
 2005-03-02  Federico Di Gregorio  <fog@debian.org>
 
-	* Release 1.99.12.
+	* psycopg/adapter_binary.c (binary_conform): started to add
+	__conform__ to all adapters.
 
 	* psycopg/adapter_qstring.c (qstring_quote): we now use
 	PyString_AsStringAndSize() instead of strlen() that would stop at

@@ -31,6 +31,7 @@
 #include "psycopg/python.h"
 #include "psycopg/psycopg.h"
 #include "psycopg/adapter_binary.h"
+#include "psycopg/microprotocols_proto.h"
 
 /** the quoting code */
 
@@ -165,14 +166,19 @@ binary_getquoted(binaryObject *self, PyObject *args)
 }
 
 PyObject *
-binary_prepare(binaryObject *self, PyObject *args)
+binary_conform(binaryObject *self, PyObject *args)
 {
-    PyObject *fake;
+    PyObject *res, *proto;
     
-    if (!PyArg_ParseTuple(args, "O", &fake)) return NULL;
+    if (!PyArg_ParseTuple(args, "O", &proto)) return NULL;
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    if (proto == (PyObject*)&isqlquoteType)
+        res = (PyObject*)self;
+    else
+        res = Py_None;
+    
+    Py_INCREF(res);
+    return res;
 }
 
 /** the Binary object **/
@@ -190,8 +196,7 @@ static struct PyMemberDef binaryObject_members[] = {
 static PyMethodDef binaryObject_methods[] = {
     {"getquoted", (PyCFunction)binary_getquoted, METH_VARARGS,
      "getquoted() -> wrapped object value as SQL-quoted binary string"},
-    /*    {"prepare", (PyCFunction)binary_prepare, METH_VARARGS,
-          "prepare(conn) -> currently does nothing"},*/
+    {"__conform__", (PyCFunction)binary_conform, METH_VARARGS, NULL},
     {NULL}  /* Sentinel */
 };
 

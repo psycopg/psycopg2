@@ -15,7 +15,7 @@ intrusive for your classes (don't want inheritance from an 'Item' or
 from datetime import datetime
  
 import psycopg
-from psycopg.extensions import adapters, adapt
+from psycopg.extensions import adapt, register_adapter
 
 try: sorted()
 except NameError:
@@ -28,7 +28,7 @@ except NameError:
 # its job on that instance
 
 class ObjectMapper(object):
-    def __init__(self, orig):
+    def __init__(self, orig, curs=None):
         self.orig = orig
         self.tmp = {}
         self.items, self.fields = self._gatherState()
@@ -80,8 +80,9 @@ class Order(object):
         self.price = 34
         self.order_id = self.id
         Order.id = Order.id + 1
- 
-adapters.update({Album: ObjectMapper, Order: ObjectMapper})
+
+register_adapter(Album, ObjectMapper)
+register_adapter(Order, ObjectMapper)
     
 # Describe what is needed to save on each object
 # This is actually just configuration, you can use xml with a parser if you

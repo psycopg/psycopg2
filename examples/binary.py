@@ -46,9 +46,9 @@ data2 = {'id':2, 'name':'whereareyou.jpg',
          'img':buffer(open('whereareyou.jpg').read())}
 
 curs.execute("""INSERT INTO test_binary
-                  VALUES (%(id)d, %(name)s, %(img)s)""", data1)
+                  VALUES (%(id)s, %(name)s, %(img)s)""", data1)
 curs.execute("""INSERT INTO test_binary
-                  VALUES (%(id)d, %(name)s, %(img)s)""", data2)
+                  VALUES (%(id)s, %(name)s, %(img)s)""", data2)
 
 # now we try to extract the images as simple text strings
 
