@@ -1,5 +1,12 @@
 2005-03-02  Federico Di Gregorio  <fog@debian.org>
 
+	* Release 1.99.12.
+
+	* psycopg/adapter_qstring.c (qstring_quote): we now use
+	PyString_AsStringAndSize() instead of strlen() that would stop at
+	the first embedded \0 (but note that libpq quoting function will
+	truncate the string anyway!)
+	
 	* COPY TO implemented using both old and new (v3) protocol.
 
 	* psycopg/pqpath.c (_pq_copy_out_v3): implemented and working.

@@ -123,8 +123,7 @@ qstring_quote(qstringObject *self)
     }
 
     /* encode the string into buffer */
-    s = PyString_AsString(str);
-    len = strlen(s);
+    PyString_AsStringAndSize(str, &s, &len);
         
     buffer = (char *)PyMem_Malloc((len*2+3) * sizeof(char));
     if (buffer == NULL) {

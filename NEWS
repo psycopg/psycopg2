@@ -3,8 +3,6 @@ What's new in psycopg 1.99.12
 
 * .rowcount should be ok and in sync with psycopg 1.
 
-* Strings can contain NULLs and are quoted accordingly.
-
 * Implemented the new COPY FROM/COPY TO code when connection to the
   backend using libpq protocol 3 (this also removes all asprintf calls:
   build on win32 works again.) A protocol 3-enabled psycopg *can*
