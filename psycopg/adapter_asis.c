@@ -29,7 +29,7 @@
 #include "psycopg/python.h"
 #include "psycopg/psycopg.h"
 #include "psycopg/adapter_asis.h"
-
+#include "psycopg/microprotocols_proto.h"
 
 /** the AsIs object **/
 
@@ -52,14 +52,19 @@ asis_getquoted(asisObject *self, PyObject *args)
 }
 
 PyObject *
-asis_prepare(asisObject *self, PyObject *args)
+asis_conform(binaryObject *self, PyObject *args)
 {
-    PyObject *fake;
+    PyObject *res, *proto;
     
-    if (!PyArg_ParseTuple(args, "O", &fake)) return NULL;
+    if (!PyArg_ParseTuple(args, "O", &proto)) return NULL;
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    if (proto == (PyObject*)&isqlquoteType)
+        res = (PyObject*)self;
+    else
+        res = Py_None;
+    
+    Py_INCREF(res);
+    return res;
 }
 
 /** the AsIs object */
@@ -76,8 +81,7 @@ static struct PyMemberDef asisObject_members[] = {
 static PyMethodDef asisObject_methods[] = {
     {"getquoted", (PyCFunction)asis_getquoted, METH_VARARGS,
      "getquoted() -> wrapped object value as SQL-quoted string"},
-    /*    {"prepare", (PyCFunction)asis_prepare, METH_VARARGS,
-          "prepare(conn) -> currently does nothing"}, */
+    {"__conform__", (PyCFunction)asis_conform, METH_VARARGS, NULL},
     {NULL}  /* Sentinel */
 };
 

@@ -32,6 +32,7 @@
 #include "psycopg/psycopg.h"
 #include "psycopg/connection.h"
 #include "psycopg/adapter_qstring.h"
+#include "psycopg/microprotocols_proto.h"
 
 
 /** the quoting code */
@@ -183,6 +184,21 @@ qstring_prepare(qstringObject *self, PyObject *args)
     return Py_None;
 }
     
+PyObject *
+qstring_conform(binaryObject *self, PyObject *args)
+{
+    PyObject *res, *proto;
+    
+    if (!PyArg_ParseTuple(args, "O", &proto)) return NULL;
+
+    if (proto == (PyObject*)&isqlquoteType)
+        res = (PyObject*)self;
+    else
+        res = Py_None;
+    
+    Py_INCREF(res);
+    return res;
+}
 
 /** the QuotedString object **/
 
@@ -202,6 +218,7 @@ static PyMethodDef qstringObject_methods[] = {
      "getquoted() -> wrapped object value as SQL-quoted string"},
     {"prepare", (PyCFunction)qstring_prepare, METH_VARARGS,
      "prepare(conn) -> set encoding to conn->encoding"},
+    {"__conform__", (PyCFunction)qstring_conform, METH_VARARGS, NULL},
     {NULL}  /* Sentinel */
 };
 

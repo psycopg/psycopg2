@@ -29,6 +29,7 @@
 #include "psycopg/python.h"
 #include "psycopg/psycopg.h"
 #include "psycopg/adapter_pboolean.h"
+#include "psycopg/microprotocols_proto.h"
 
 
 /** the Boolean object **/
@@ -52,14 +53,19 @@ pboolean_getquoted(pbooleanObject *self, PyObject *args)
 }
 
 PyObject *
-pboolean_prepare(pbooleanObject *self, PyObject *args)
+pboolean_conform(binaryObject *self, PyObject *args)
 {
-    PyObject *fake;
+    PyObject *res, *proto;
     
-    if (!PyArg_ParseTuple(args, "O", &fake)) return NULL;
+    if (!PyArg_ParseTuple(args, "O", &proto)) return NULL;
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    if (proto == (PyObject*)&isqlquoteType)
+        res = (PyObject*)self;
+    else
+        res = Py_None;
+    
+    Py_INCREF(res);
+    return res;
 }
 
 /** the Boolean object */
@@ -76,8 +82,7 @@ static struct PyMemberDef pbooleanObject_members[] = {
 static PyMethodDef pbooleanObject_methods[] = {
     {"getquoted", (PyCFunction)pboolean_getquoted, METH_VARARGS,
      "getquoted() -> wrapped object value as SQL-quoted string"},
-    /*    {"prepare", (PyCFunction)pboolean_prepare, METH_VARARGS,
-          "prepare(conn) -> currently does nothing"}, */
+    {"__conform__", (PyCFunction)pboolean_conform, METH_VARARGS, NULL},
     {NULL}  /* Sentinel */
 };
 

@@ -32,6 +32,7 @@
 #include "psycopg/python.h"
 #include "psycopg/psycopg.h"
 #include "psycopg/adapter_datetime.h"
+#include "psycopg/microprotocols_proto.h"
 
 
 /* the pointer to the datetime module API is initialized by the module init
@@ -83,14 +84,19 @@ pydatetime_getquoted(pydatetimeObject *self, PyObject *args)
 }
 
 PyObject *
-pydatetime_prepare(pydatetimeObject *self, PyObject *args)
+datetime_conform(binaryObject *self, PyObject *args)
 {
-    PyObject *fake;
+    PyObject *res, *proto;
     
-    if (!PyArg_ParseTuple(args, "O", &fake)) return NULL;
+    if (!PyArg_ParseTuple(args, "O", &proto)) return NULL;
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    if (proto == (PyObject*)&isqlquoteType)
+        res = (PyObject*)self;
+    else
+        res = Py_None;
+    
+    Py_INCREF(res);
+    return res;
 }
 
 /** the DateTime wrapper object **/
@@ -108,8 +114,7 @@ static struct PyMemberDef pydatetimeObject_members[] = {
 static PyMethodDef pydatetimeObject_methods[] = {
     {"getquoted", (PyCFunction)pydatetime_getquoted, METH_VARARGS,
      "getquoted() -> wrapped object value as SQL date/time"},
-    /*    {"prepare", (PyCFunction)pydatetime_prepare, METH_VARARGS,
-          "prepare(conn) -> currently does nothing"}, */
+    {"__conform__", (PyCFunction)pydatetime_conform, METH_VARARGS, NULL},
     {NULL}  /* Sentinel */
 };
 

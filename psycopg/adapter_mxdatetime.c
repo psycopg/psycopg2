@@ -30,6 +30,7 @@
 #include "psycopg/python.h"
 #include "psycopg/psycopg.h"
 #include "psycopg/adapter_mxdatetime.h"
+#include "psycopg/microprotocols_proto.h"
 
 /* the pointer to the mxDateTime API is initialized by the module init code,
    we just need to grab it */
@@ -59,14 +60,19 @@ mxdatetime_getquoted(mxdatetimeObject *self, PyObject *args)
 }
 
 PyObject *
-mxdatetime_prepare(mxdatetimeObject *self, PyObject *args)
+mxdatetime_conform(binaryObject *self, PyObject *args)
 {
-    PyObject *fake;
+    PyObject *res, *proto;
     
-    if (!PyArg_ParseTuple(args, "O", &fake)) return NULL;
+    if (!PyArg_ParseTuple(args, "O", &proto)) return NULL;
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    if (proto == (PyObject*)&isqlquoteType)
+        res = (PyObject*)self;
+    else
+        res = Py_None;
+    
+    Py_INCREF(res);
+    return res;
 }
 
 /** the MxDateTime object **/
@@ -84,8 +90,7 @@ static struct PyMemberDef mxdatetimeObject_members[] = {
 static PyMethodDef mxdatetimeObject_methods[] = {
     {"getquoted", (PyCFunction)mxdatetime_getquoted, METH_VARARGS,
      "getquoted() -> wrapped object value as SQL date/time"},
-    /*    {"prepare", (PyCFunction)mxdatetime_prepare, METH_VARARGS,
-          "prepare(conn) -> currently does nothing"}, */
+    {"__conform__", (PyCFunction)mxdatetime_conform, METH_VARARGS, NULL},
     {NULL}  /* Sentinel */
 };
 
