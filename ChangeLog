@@ -1,5 +1,7 @@
 2004-12-14  Federico Di Gregorio  <fog@debian.org>
 
+	* Mm.. release 1.99.11.
+
 	* psycopg/cursor_type.c (_psyco_curs_prefetch): fixed bug in
 	interaction between the .isready() method and
 	_psyco_curs_prefetch: isready now store away the pgres but leave

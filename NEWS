@@ -9,6 +9,8 @@ What's new in psycopg 1.99.11
 * the .cursor attribute is gone and connections and cursors are propely
   gc-managed.
 
+* fixes to the async core.
+
 What's new in psycopg 1.99.10
 -----------------------------
 
