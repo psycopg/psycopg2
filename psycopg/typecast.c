@@ -468,11 +468,9 @@ typecast_cast(PyObject *obj, unsigned char *str, int len, PyObject *curs)
     ((cursorObject*)curs)->caster = obj;
     
     if (self->ccast) {
-        Dprintf("typecast_call: calling C cast function");
         res = self->ccast(str, len, curs);
     }
     else if (self->pcast) {
-        Dprintf("typecast_call: calling python callable");
         res = PyObject_CallFunction(self->pcast, "s#O", str, len, curs);
     }
     else {

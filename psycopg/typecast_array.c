@@ -19,9 +19,12 @@
  * Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#define MAX_DIMENSIONS 16
+
 
 /** typecast_array_scan - scan a string looking for array items **/
 
+#define ASCAN_ERROR -1
 #define ASCAN_EOF    0
 #define ASCAN_BEGIN  1
 #define ASCAN_END    2
@@ -32,15 +35,19 @@ static int
 typecast_array_tokenize(unsigned char *str, int strlength,
                         int *pos, unsigned char** token, int *length)
 {
-    int i;
-    int quoted = 0;
-
+    int i, l, res = ASCAN_TOKEN;
+    int qs = 0; /* 2 = in quotes, 1 = quotes closed */
+    
     /* first we check for quotes, used when the content of the item contains
        special or quoted characters */
+    
     if (str[*pos] == '"') {
-        quoted = 1;
+        qs = 2;
         *pos += 1;
     }
+
+    Dprintf("typecast_array_tokenize: '%s'; %d/%d",
+            &str[*pos], *pos, strlength);
 
     for (i = *pos ; i < strlength ; i++) {
         switch (str[i]) {
@@ -49,49 +56,116 @@ typecast_array_tokenize(unsigned char *str, int strlength,
             return ASCAN_BEGIN;
 
         case '}':
-            *pos = i+1;
-            return ASCAN_END;
+            /* we tokenize the last item in the array and then return it to
+               the user togheter with the closing bracket marker */
+            res = ASCAN_END;
+            goto tokenize;
 
+        case '"':
+            /* this will close the quoting only if the previous character was
+               NOT a backslash */
+            if (qs == 2 && str[i-1] != '\\') qs = 1;
+            continue;
+               
+        case '\\':
+            /* something has been quoted, sigh, we'll need a copy buffer */
+            res = ASCAN_QUOTED;
+            continue;
+            
         case ',':
-            *token = &str[*pos];
-            *length = i - *pos;
-            if (quoted == 1)
-                *length -= 1;
-            *pos = i+1;
-            return ASCAN_TOKEN;
-
-        default:
-            /* nothing to do right now */
-            break;
+            /* if we're inside quotes we use the comma as a normal char */
+            if (qs == 2)
+                continue;
+            else
+                goto tokenize;
         }
     }
 
-    *token = &str[*pos];
-    *length = i - *pos;
-    if (quoted == 1)
-        *length -= 1;
+    res = ASCAN_EOF;
     
-    return ASCAN_EOF;
+ tokenize:
+    l = i - *pos - qs;
+    
+    /* if res is ASCAN_QUOTED we need to copy the string to a newly allocated
+       buffer and return it */
+    if (res == ASCAN_QUOTED) {
+        unsigned char *buffer = PyMem_Malloc(l+1);
+        if (buffer == NULL) return ASCAN_ERROR;
+
+        *token = buffer;
+        
+        for (i = *pos; i < l+*pos; i++) {
+            if (str[i] != '\\')
+                *(buffer++) = str[i];
+        }
+        *buffer = '\0';
+        *length = (int)buffer - (int)*token;
+        *pos = i+2;
+    }
+    else {
+        *token = &str[*pos];
+        *length = l;
+        *pos = i+1;
+        if (res == ASCAN_END && str[*pos] == ',')
+            *pos += 1; /* skip both the bracket and the comma */
+    }
+    
+    return res;
 }
 
 static int
 typecast_array_scan(unsigned char *str, int strlength,
                     PyObject *curs, PyObject *base, PyObject *array)
 {
-    int state, length, pos = 0;
+    int state, length, bracket = 0, pos = 0;
     unsigned char *token;
+
+    PyObject *stack[MAX_DIMENSIONS];
+    int stack_index = 0;
     
     while (1) {
         state = typecast_array_tokenize(str, strlength, &pos, &token, &length);
-        
-        if (state == ASCAN_TOKEN || state ==  ASCAN_EOF) {
+        if (state == ASCAN_TOKEN
+            || state == ASCAN_QUOTED 
+            || (state ==  ASCAN_EOF && bracket == 0)
+            || (state == ASCAN_END && bracket == 0)) {
+            
             PyObject *obj = typecast_cast(base, token, length, curs);
+
+            /* before anything else we free the memory */
+            if (state == ASCAN_QUOTED) PyMem_Free(token);
             if (obj == NULL) return 0;
+
             PyList_Append(array, obj);
             Py_DECREF(obj);
         }
-        else {
-            Dprintf("** RECURSION (not supported right now)!!");
+        else if (state == ASCAN_BEGIN) {
+            PyObject *sub = PyList_New(0);            
+            if (sub == NULL) return 0;
+
+            PyList_Append(array, sub);
+            Py_DECREF(sub);
+
+            if (stack_index == MAX_DIMENSIONS)
+                return 0;
+
+            stack[stack_index++] = array;
+            array = sub;
+        }
+        else if (state == ASCAN_ERROR) {
+            return 0;
+        }
+
+        /* reset the closing bracket marker just before cheking for ASCAN_END:
+           this is to make sure we don't mistake two closing brackets for an
+           empty item */
+        bracket = 0;
+        
+        if (state == ASCAN_END) {
+            if (--stack_index < 0)
+                return 0;
+            array = stack[stack_index];
+            bracket = 1;
         }
 
         if (state ==  ASCAN_EOF) break;
@@ -115,6 +189,8 @@ typecast_GENERIC_ARRAY_cast(unsigned char *str, int len, PyObject *curs)
         PyErr_SetString(Error, "array does not start with '{'");
         return NULL;
     }
+
+    Dprintf("typecast_GENERIC_ARRAY_cast: scanning %s", str);
     
     obj = PyList_New(0);
 

@@ -1,3 +1,11 @@
+What's new in psycopg 1.99.13
+-----------------------------
+
+* Added missing .executemany() method.
+
+* Optimized type cast from PostgreSQL to Python (psycopg should be even
+  faster than before.)
+
 What's new in psycopg 1.99.12
 -----------------------------
 

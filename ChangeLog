@@ -17,7 +17,16 @@
 
 	* scripts/buildtypes.py: new version to include array data.
 
+2005-03-15  Federico Di Gregorio  <fog@debian.org>
+
+	* lib/extensions.py: Added AsIs import.
+
 2005-03-12  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/cursor.h: removed "qattr", not used anymore and added
+	"cast", holding the typecaster currently in use.
+
+	* Release 1.99.13.
 
 	* psycopg/cursor_type.c (psyco_curs_executemany): implemented as a
 	wrapper to extract python arguments and then call

@@ -25,7 +25,7 @@ This module holds all the extensions to the DBAPI-2.0 provided by psycopg:
 from _psycopg import UNICODE, INTEGER, LONGINTEGER, BOOLEAN, FLOAT
 from _psycopg import TIME, DATE, INTERVAL
 
-from _psycopg import Boolean, QuotedString
+from _psycopg import Boolean, QuotedString, AsIs
 try:
     from _psycopg import DateFromMx, TimeFromMx, TimestampFromMx
     from _psycopg import IntervalFromMx
