@@ -1,0 +1,114 @@
+From: 	Jack Moffitt <jack@xiph.org>
+To: 	Psycopg Mailing List <psycopg@lists.initd.org>
+Subject: 	Re: [Psycopg] preparing for 1.0
+Date: 	22 Oct 2001 11:16:21 -0600	
+
+www.vorbis.com is serving from 5-10k pages per day with psycopg serving 
+data for most of that.  
+
+I plan to use it for several of our other sites, so that number will
+increase.
+
+I've never had a single problem (that wasn't my fault) besides those
+segfaults, and those are now gone as well, and I've been using psycopg
+since June (around 0.99.2?).
+
+jack.
+
+
+From: 	Yury Don <gercon@vpcit.ru>
+To: 	Psycopg Mailing List <psycopg@lists.initd.org>
+Subject: 	Re: [Psycopg] preparing for 1.0
+Date: 	23 Oct 2001 09:53:11 +0600	
+
+We use psycopg and psycopg zope adapter since fisrt public
+release (it seems version 0.4). Now it works on 3 our sites and in intranet
+applications. We had few problems, but all problems were quckly
+solved. The strong side of psycopg is that it's code is well organized
+and easy to understand. When I found a problem with non-ISO datestyle in first
+version of psycopg, it took for me 15 or 20 minutes to learn code and
+to solve the problem, even thouth my knowledge of c were poor.
+
+BTW, segfault with dictfetchall on particular data set (see [Psycopg]
+dictfetchXXX() problems) disappeared in 0.99.8pre2.
+
+-- 
+Best regards,
+Yury Don
+
+
+From: 	Tom Jenkins <tjenkins@devis.com>
+To: 	Federico Di Gregorio <fog@debian.org>
+Cc: 	Psycopg Mailing List <psycopg@lists.initd.org>
+Subject: 	Re: [Psycopg] preparing for 1.0
+Date: 	23 Oct 2001 08:25:52 -0400
+	
+The US Govt Department of Labor's Office of Disability Employment
+Policy's DisabilityDirect website is run on zope and zpsycopg.
+
+
+From: 	Scott Leerssen <sleerssen@racemi.com>
+To: 	Federico Di Gregorio <fog@debian.org>
+Subject: 	Re: [Psycopg] preparing for 1.0
+Date: 	23 Oct 2001 09:56:10 -0400	
+
+Racemi's load management software infrastructure uses psycopg to handle
+complex server allocation decisions, plus storage and access of
+environmental conditions and accounting records for potentially
+thousands of servers.  Psycopg has, to this point, been the only
+Python/PostGreSQL interface that could handle the scaling required for
+our multithreaded applications.
+
+Scott
+
+
+From: 	Andre Schubert <andre.schubert@geyer.kabeljournal.de>
+To: 	Federico Di Gregorio <fog@debian.org>
+Cc: 	Psycopg Mailing List <psycopg@lists.initd.org>
+Subject: 	Re: [Psycopg] preparing for 1.0
+Date: 	23 Oct 2001 11:46:07 +0200	
+
+i have changed the psycopg version to 0.99.8pre2 on all devel-machines
+and all segfaults are gone. after my holiday i wil change to 0.99.8pre2 
+or 1.0 on our production-server.
+this server contains several web-sites which are all connected to
+postgres over ZPsycopgDA.
+
+thanks as
+
+
+From: 	Fred Wilson Horch <fhorch@ecoaccess.org>
+To: 	<psycopg@lists.initd.org>
+Subject: 	[Psycopg] Success story for psycopg
+Date: 	23 Oct 2001 10:59:17 -0400
+	
+Due to various quirks of PyGreSQL and PoPy, EcoAccess has been looking for
+a reliable, fast and relatively bug-free Python-PostgreSQL interface for
+our project.
+
+Binary support in psycopg, along with the umlimited tuple size in
+PostgreSQL 7.1, allowed us to quickly prototype a database-backed file
+storage web application, which we're using for file sharing among our
+staff and volunteers.  Using a database backend instead of a file system
+allows us to easily enrich the meta-information associated with each file
+and simplifies our data handling routines.
+
+We've been impressed by the responsiveness of the psycopg team to bug
+reports and feature requests, and we're looking forward to using psycopg
+as the Python interface for additional database-backed web applications.
+
+Keep up the good work!
+-- 
+Fred Wilson Horch                       mailto:fhorch@ecoaccess.org
+Executive Director, EcoAccess           http://ecoaccess.org/
+
+
+From: 	Damon Fasching <fasching@design.lbl.gov>
+To: 	Michele Comitini <mcm@glisco.it>
+Cc: 	fog@debian.org
+Subject: 	Re: How does one create a database within Python using psycopg?
+Date: 	25 Feb 2002 17:39:41 -0800
+
+[snip]
+btw I checked out 4 different Python-PostgreSQL packages.  psycopg is the
+only one which built and imported w/o any trouble!  (At least for me.)

@@ -1,0 +1,33 @@
+TODO list for psycopg 2 or later
+********************************
+
+Move items to the DONE section only after writing a test for the
+implementation. Also add a note on how the item was resolved.
+(Obviously I was joking about the test..)
+
+* Find a better way to compile the type-casting code instead of including it
+   in typecast.c directy. (Including is not that bad, but the need to touch
+   psycopg/typecast.c every time is bad bad bad.)
+
+* executemany() should _not_ take the async flag, remove it and force multiple
+   queries to be synchronous.
+
+* Fix all the docstrings.
+
+* Support the protocols API fully.
+
+* Unify the common code in typecast_datetime.c and typecast_mxdatetime.c.
+
+* Port typecasters to new-style classes.
+
+* Write a complete postgresql<->python encodings table.
+
+* Implement binary typecasters (should be easy, but it will take time.)
+
+DONE
+====
+
+* Convert type-casters to new-style types in Python 2.2+.
+
+* callproc() never worked, fix it or remove it and raise right exception.
+   [Removed callproc code, now an exception is raised.]

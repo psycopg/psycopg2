@@ -1,0 +1,32 @@
+# ZPsycopgDA/__init__.py - ZPsycopgDA Zope product
+#
+# Copyright (C) 2004 Federico Di Gregorio <fog@initd.org>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version.
+#
+# Or, at your option this program (ZPsycopgDA) can be distributed under the
+# Zope Public License (ZPL) Version 1.0, as published on the Zope web site,
+# http://www.zope.org/Resources/ZPL.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTIBILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.
+#
+# See the LICENSE file for details.
+
+__doc__ = "ZPsycopg Database Adalper Registration." 
+__version__ = '2.0'
+
+import sys
+import string
+import DA
+
+methods    = DA.folder_methods
+classes    = DA.classes
+meta_types = DA.meta_types
+misc_      = DA.misc_
+
+__ac_permissions__=DA.__ac_permissions__

@@ -1,0 +1,155 @@
+What's new in psycopg 1.99.10
+-----------------------------
+
+* The adapt() function now fully supports the adaptation protocol
+  described in PEP 246. Note that the adapters registry now is indexed
+  by (type, protocol) and not by type alone. Change your adapters
+  accordingly.
+
+* More configuration options moved from setup.py to setup.cfg.
+
+* Fixed two memory leaks: one in cursor deallocation and one in row
+  fetching (.fetchXXX() methods.)
+
+What's new in psycopg 1.99.9
+----------------------------
+
+* Added simple pooling code (psycopg.pool module); see the reworked
+  examples/threads.py for example code.
+
+* Added DECIMAL typecaster to convert postgresql DECIMAL and NUMERIC
+  types (i.e, all types with an OID of NUMERICOID.) Note that the
+  DECIMAL typecaster does not set scale and precision on the created
+  objects but uses Python defaults.
+
+* ZPsycopgDA back in and working using the new pooling code.
+
+* Isn't that enough? :)
+
+What's new in psycopg 1.99.8
+----------------------------
+
+* added support for UNICODE queries.
+
+* added UNICODE typecaster; to activate it just do:
+    
+    psycopg.extensions.register_type(psycopg.extensions.UNICODE)
+  
+  Note that the UNICODE typecaster override the STRING one, so it is
+  not activated by default.
+
+* cursors now really support the iterator protocol.
+
+* solved the rounding errors in time conversions.
+
+* now cursors support .fileno() and .isready() methods, to be used in
+  select() calls.
+
+* .copy_from() and .copy_in() methods are back in (still using the old
+  protocol, will be updated to use new one in next releasae.)
+
+* fixed memory corruption bug reported on win32 platform.
+
+What's new in psycopg 1.99.7
+----------------------------
+
+* added support for tuple factories in cursor objects (removed factory
+  argument in favor of a .tuple_factory attribute on the cursor object);
+  see the new module psycopg.extras for a cursor (DictCursor) that
+  return rows as objects that support indexing both by position and
+  column name.
+
+* added support for tzinfo objects in datetime.timestamp objects: the
+  PostgreSQL type "timestamp with time zone" is converted to 
+  datetime.timestamp with a FixedOffsetTimezone initialized as necessary.
+
+What's new in psycopg 1.99.6
+----------------------------
+
+* sslmode parameter from 1.1.x
+
+* various datetime conversion improvements.
+
+* now psycopg should compile without mx or without native datetime
+  (not both, obviously.)
+
+* included various win32/MSVC fixes (pthread.h changes, winsock2
+  library, include path in setup.py, etc.)
+
+* ported interval fixes from 1.1.14/1.1.15.
+
+* the last query executed by a cursor is now available in the
+  .query attribute.
+
+* conversion of unicode strings to backend encoding now uses a table
+  (that still need to be filled.)
+
+* cursors now have a .mogrify() method that return the query string
+  instead of executing it.
+
+* connection objects now have a .dsn read-only attribute that holds the
+  connection string.
+
+* moved psycopg C module to _psycopg and made psycopg a python module:
+  this allows for a neat separation of DBAPI-2.0 functionality and psycopg
+  extensions; the psycopg namespace will be also used to provide
+  python-only extensions (like the pooling code, some ZPsycopgDA support
+  functions and the like.)
+
+What's new in psycopg 1.99.3
+----------------------------
+
+* added support for python 2.3 datetime types (both ways) and made datetime
+  the default set of typecasters when available.
+
+* added example: dt.py.
+
+What's new in psycopg 1.99.3
+----------------------------
+
+* initial working support for unicode bound variables: UTF-8 and latin-1
+  backend encodings are natively supported (and the encoding.py example even
+  works!)
+
+* added .set_client_encoding() method on the connection object.
+
+* added examples: encoding.py, binary.py, lastrowid.py.
+
+What's new in psycopg 1.99.2
+----------------------------
+
+* better typecasting:
+  - DateTimeDelta used for postgresql TIME (merge from 1.1)
+  - BYTEA now is converted to a real buffer object, not to a string
+
+* buffer objects are now adapted into Binary objects automatically.
+
+* ported scroll method from 1.1 (DBAPI-2.0 extension for cursors)
+
+* initial support for some DBAPI-2.0 extensions:
+  - .rownumber attribute for cursors
+  - .connection attribute for cursors
+  - .next() and .__iter__() methods to have cursors support the iterator
+    protocol
+  - all exception objects are exported to the connection object
+
+What's new in psycopg 1.99.1
+----------------------------
+
+* implemented microprotocols to adapt arbitrary types to the interface used by
+  psycopg to bind variables in execute;
+
+* moved qstring, pboolean and mxdatetime to the new adapter layout (binary is
+  still missing; python 2.3 datetime needs to be written).
+
+
+What's new in psycopg 1.99.0
+----------------------------
+
+* reorganized the whole source tree;
+
+* async core is in place;
+
+* splitted QuotedString objects from mx stuff;
+
+* dropped autotools and moved to pythonic setup.py (needs work.)

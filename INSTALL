@@ -1,0 +1,18 @@
+Compiling and installing psycopg
+********************************
+
+While psycopg 1.x used autoconf for its build process psycopg 2 switched to
+the more pythoning setup.py. Currently both psycopg's author and distutils
+have some limitations so the file setup.cfg is almost unused and most build
+options are hidden in setup.py. Before building psycopg look at the very
+first lines of setup.py and change any settings to follow your system (or
+taste); then:
+
+    python setup.py build
+
+to build in the local directory; and:
+
+    python setup.py install
+    
+to install system-wide.
+

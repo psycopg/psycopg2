@@ -1,0 +1,43 @@
+General information
+*******************
+
+Some help to people wanting to hack on psycopg. First of all, note that
+*every* function in the psycopg module source code is prefixed by one of the
+following words:
+
+    psyco is used for function directly callable from python (i.e., functions
+        in the psycopg module itself.) the only notable exception is the
+        source code for the module itself, that uses "psyco" even for C-only
+        functions.
+
+    conn is used for functions related to connection objects.
+
+    curs is used for functions related to cursor objects.
+
+    typecast is used for typecasters and utility function related to
+        typecaster creation and registration.
+
+Pythonic definition of types and functions available from python are defined
+in *_type.c files. Internal functions, callable only from C are located in
+*_int.c files and extensions to the DBAPI can be found in the *_ext.c files.
+
+
+Patches
+*******
+
+If you submit a patch, please send a diff generated with the "-u" switch.
+Also note that I don't like that much cosmetic changes (like renaming
+already existing variables) and I will rewrap the patch to 78 columns
+anyway, so it is much better if you do that beforehand.
+
+
+The type system
+***************
+
+Simple types, like integers and strings, are converted to python base types
+(the conversion functions are in typecast_base.c). Complex types are
+converted to ad-hoc types, defined in the typeobj_*.{c,h} files. The
+conversion function are in the other typecast_*.c files. typecast.c defines
+the basic utility functions (available through the psycopg module) used when
+defining new typecasters from C and python.
+

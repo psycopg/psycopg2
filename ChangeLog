@@ -1,0 +1,362 @@
+2004-10-14  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/cursor_type.c (_psyco_curs_buildrow_fill): now we use
+	PySequence_SetItem to avoid problems with containers created from
+	cursor's .tuple_factory attribute.
+
+	* lib/extras.py (DictCursor.execute): fixed stupid bug with cursor
+	setting self.tuplefactory instead of self.tuple_factory.
+
+2004-10-02  Federico Di Gregorio  <fog@debian.org>
+
+	* Release 1.99.10.
+	
+	* psycopg/cursor_type.c (_psyco_curs_buildrow_*): unified normal
+	and factory code into the _psyco_curs_buildrow_fill function; no
+	more memory leaks here. 
+
+	* psycopg/config.h (round): added check for __FreeBSD__ (that
+	should be defined when compiling with gcc, I hope.)
+
+	* setup.py: removed a lot of code now in setup.cfg.
+
+2004-09-24  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/cursor_type.c (cursor_dealloc): fixed small memory leak
+	due to missing disposal of self->pgres.
+
+2004-9-14  Federico Di Gregorio  <fog@initd.org>
+
+	*  examples/dialtone.py: Added adapt() example by Valentino
+	Volonghi.
+
+2004-09-14  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/microprotocols.c (microprotocols_adapt): lots of changes
+	to the microprotocols layer (it is not micro anymore);
+	implementing almost all the PEP 246. The adapter registry is now
+	indexed by (type, protocol) and not by type alone.
+
+2004-09-13  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/cursor_type.c (_mogrify): and qattr is gone.
+
+2004-09-05  Federico Di Gregorio  <fog@debian.org>
+
+	* Release 1.99.9 (or, the "twisting by the pool" release).
+
+	* psycopg/pqpath.c (_pq_fetch_tuples): changed to "static void"
+	instead of "static int", no ways for this function to fail.
+
+2004-09-04  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/pqpath.c (_pq_fetch_tuples): ported rowcount fix from
+	1.1.15.
+
+	* ZPsycopgDA/*: ZPsycopgDA back in action, using the new pooling
+	code.
+
+2004-08-29  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/typecast_basic.c (typecast_DECIMAL_cast): added DECIMAL
+	typecaster; it even works :).
+
+	* scripts/buildtypes.py (basic_types): added DECIMAL typecaster
+	for the NUMERIC oid.
+
+	* examples/threads.py: updated threads example to use pooling code. 
+
+	* lib/pool.py: added very simple and thread-safe connection
+	pooling class.
+
+	* psycopg/cursor_type.c (psyco_curs_fetchmany): fixed problem with
+	.fetchall() and .fetchmany() returning None instead of [] on empty
+	result sets.
+
+	* Release 1.99.8.
+
+2004-08-28  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/cursor_type.c (psyco_curs_execute): added processing of
+	unicode queries.
+
+	* examples/encoding.py: much better encoding example, also using
+	the new UNICODE typecaster.
+
+	* psycopg/typecast_basic.c (typecast_UNICODE_cast): added UNICODE
+	typecaster.
+
+	* lib/extensions.py: the encodings dictionary is not available by
+	default but can be accessed from the psycopg.extensions module.
+
+	* psycopg/adapter_qstring.h: remove encoding information from
+	qstring adapter and moved it into psycopg module.
+
+2004-08-26  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/cursor_type.c (_psyco_curs_prefetch): added check for
+	asynchronous fetch by wrong cursor.
+
+	* psycopg/pqpath.c (pq_fetch): fixed backend status message (bug
+	reported by Daniele Varrazzo.)
+
+2004-07-29  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/typecast_basic.c (typecast_BINARY_cast): reverted to
+	using strings instead of buffers when converting postgresql binary
+	objects (should *temporarily* fix corruption bug reported on
+	win32.)
+
+2004-07-21  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/cursor_type.c: removed __iter__ and next methods from
+	object methods and moved them where they do belong (tp_iter and
+	tp_iternext.) Bug reported by Daniele Varrazzo (again!)
+
+2004-07-19  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/typecast_datetime.c (typecast_PYINTERVAL_cast): replaced
+	round() with micro() when rounding seconds (fixes bugs reported by
+	Daniele Varrazzo.)
+
+2004-07-16  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/pqpath.c (pq_set_critical): allow for a custom message
+	insted of the one from PQerrorMessage.
+	(pq_resolve_critical): added argument to specify if connection is
+	to be closed (used to not close it during COPY FROM/TO criticals.)
+
+	* psycopg/cursor_type.c (psyco_curs_fileno, psyco_curs_isready):
+	added extension methods related to async queries. 
+
+2004-07-15  Federico Di Gregorio  <fog@debian.org>
+
+	* Release 1.99.7.
+
+	* examples/tz.py: added example about time zones.
+
+	* psycopg/typecast_datetime.c (typecast_PYDATETIME_cast): create
+	FixedOffsetTimezone for postgresql "timestamp with time zone"
+	types.
+
+	* lib/tz.py: added (even more than) needed tzinfo classes.
+
+	* psycopg/typecast.c (typecast_call): changed typecast call code
+	to take the additional cursor parameter, needed for
+	cursor-dependent type casting (tzinfo & friends.)
+
+	* psycopg/cursor_type.c (_psyco_curs_buildrow_with_factory): added
+	use of tuple factories to fetcXXX methods.
+
+	* lib/extras.py: little extra goodies for psycopg.
+
+2004-07-14  Federico Di Gregorio  <fog@debian.org>
+
+	* Release 1.99.6. 
+	
+	* psycopg/connection_type.c: added .dsn attribute to connection
+	objects.
+
+	* psycopg/cursor_type.c (psyco_curs_mogrify): added .mogrify()
+	method.
+
+	* psycopg/adapter_qstring.c: copy the connection encoding only if
+	wrapped object is unicode and added table of encodings.
+
+2004-07-13  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/cursor_type.c (_mogrify): moved Dprintf statement to
+	avoid dereferencing empty pointer (from 1.1.x)
+	(psyco_curs_execute): now we save the query in self->query instead
+	of freeing the memory ASAP.
+	(cursorObject_members): and we finally export the saved query
+	through the cursor members interface. that's all folks.
+
+	* lib/extensions.py: added extensions module to clearly separate
+	psycopg own extensions from DBAPI-2.0
+
+2004-07-10  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/typecast_datetime.c: ported interval fix from 1.1.x.
+
+2004-05-16  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/typecast_datetime.c (typecast_*_cast): fixed Value error
+	when seconds > 59 by setting minutes += 1 and seconds -= 60
+	(reported by Marcel Gsteiger.) 
+
+2004-04-24  Federico Di Gregorio  <fog@debian.org>
+
+	* ported time interval patch by Ross Cohen from 1.1.12.
+
+2004-04-19  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/typecast_datetime.c (typecast_PYDATE_cast): applied
+	patch from Jason Erickson: min and max taken from datetime.Date
+	type.
+	
+2004-04-18  Federico Di Gregorio  <fog@debian.org>
+
+	* Applied changes from Jason Erickson to build on win32; see his
+	(slightly edited) entry below. (Still builds on Linux :)
+
+	* psycopg/*.c: removed inclusion of pthread.h from all files
+	except psycopg/config.h to build on win32 without faking the file.
+
+2004-04-15  Jason Erickson <jerickso@stickpeople.com>
+ 
+        * setup.py: Various changes. The critical ones: 
+	  - Make an empty pthread.h file so all the code doing an 
+	    #include <pthread.h> will find something.
+	  - Appended the winsock2 library and the PostgreSQL library to 
+	    the library path.
+	  - Setup the include path.
+	  - Have the PSYCOPG_VERSION macro be included with quotes.
+ 
+        * config.h: Added/Cleaned up Win32 includes, defines, stub functions.
+ 
+        * typecast.h: Removed ';' after PyObject_HEAD in the
+	typecastObject structure since Microsoft Visual Studio does not
+	like it.
+
+2004-04-15  Federico Di Gregorio  <fog@debian.org>
+
+	* Release 1.99.5 (bug-fixing and reorganization)
+
+	* setup.py et al.: moved psycopg to psycopg._psycopg to make
+	easier to provide high level python-only utilities (like the
+	promised pooling code). psycopg/__init__.py imports _psycopg and
+	make all the default DBAPI-2.0 stuff available. 
+
+2004-04-14  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/psycopgmodule.c (initpsycopg): wrapped initialization of
+	date/time adapters in #ifdefs to have psycopg compile without mx
+	or builtin datetime.
+
+2004-04-10  Federico Di Gregorio  <fog@debian.org>
+
+	* Release 1.99.4.
+
+2004-04-09  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/typecast_builtins.c: changed DATE to not include
+	DATETIME types anymore.
+
+	* psycopg/adapter_datetime.c (pydatetime_str): switched from
+	strftime to isoformat to preserve fractional seconds.
+
+2004-04-08  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/psycopgmodule.c (psyco_connect): ported sslmode
+	parameter from 1.1 branch.
+
+	* psycopg/adapter_datetime.*: added python built-in datetime
+	adapters. also added the datetime typecasters (still using mx as
+	default).
+
+	* psycopg/typecast.h: removed aliases, they now live in the right
+	typecast_xxx.c file.
+
+2004-03-08  Federico Di Gregorio  <fog@debian.org>
+
+	* Release 1.99.3 (alpha 4).
+
+	* examples/lastrowid.py: and the .lastrowid example is in. 
+
+	* psycopg/cursor_type.c (_mogrify): added call to .prepare()
+	method in both dict and sequence path.
+
+	* psycopg/connection_int.c (conn_set_client_encoding): added
+	encoding-change code.
+
+	* psycopg/adapter_qstring.c (qstring_quote): added hard-coded
+	support for utf8 and latin1 encodings.
+
+2004-03-01  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/connection_int.c (conn_close): does not use libpq
+	functions on NULL pgconn (this can happen when conn_close is
+	called after a failed PQconnect.)
+
+2004-02-29  Federico Di Gregorio  <fog@debian.org> 
+
+	* Release 1.99.2 (alpha 3).
+	
+	* psycopg/cursor_type.c: added .rownumber and .connection
+	attributes. Also added .scroll(), .next() and .__iter__() methods
+	(see DBAPI2-.0 extensions on PEP.)
+
+	* psycopg/connection_type.c (psyco_conn_set_isolation_level):
+	added connection method .set_isolation_level(). Also added all
+	error objects to the connection (see DBAPI2-.0 extensions on PEP.)
+
+	* psycopg/connection_int.c (conn_switch_isolation_level): added
+	isolation level switching code.
+
+	* setup.py: removed all references to PSYCOPG_NEWSTYLE: support
+	for python < 2.2 has been dropped.
+
+	* typecast_basic.c (typecast_BINARY_cast): now binary objects are
+	returned as true buffers.
+
+	* adapter_binary.*: added adapter for buffers and binary (bytea)
+	objects.
+
+	* Release 1.99.1 (alpha 2).
+
+	* adapter_mxdatetime.*: added adapters for all mx.DateTime types.
+
+2004-02-28  Federico Di Gregorio  <fog@debian.org>
+
+	* cursor_type.c (_mogrify): complete rework of the mogrification
+	code to use the microprotocols_adapt function.
+
+	* typecast_basic.c (typecast_BOOLEAN_cast): we now return real
+	Py_True and Py_False values.
+
+	* microprotocols.h: added very simple microprotocols
+	implementation to allow for python->postgresql types registry.
+
+2004-01-05  Federico Di Gregorio  <fog@debian.org>
+
+	* connection_int.c (conn_commit/conn_rollback): added code to
+	commit/rollback and connection methods. 
+
+2004-01-04  Federico Di Gregorio  <fog@debian.org>
+
+	* cursor_type.c (psyco_curs_fetchone): added fetchone method.
+
+2004-01-03  Federico Di Gregorio  <fog@debian.org>
+
+	* added (empty) INSTALL file.
+
+	* cursor_type.c (cursor_dealloc): added qattr for custom object
+	quoting using a callable attribute.
+	(_mogrify): ported new, fixed mogrification code from 1.1.12.
+
+2003-08-01  Federico Di Gregorio  <fog@debian.org>
+
+	* cursor_type.c (_mogrify_sequence): added sequence mogrification,
+	can be done better, on the dict model.
+
+2003-07-28  Federico Di Gregorio  <fog@debian.org>
+
+	* typeobj_qstring.c: added quoted strings (can use both own code,
+	like psycopg 1.x or PQescapeString from lipq.)
+
+2003-07-21  Federico Di Gregorio  <fog@debian.org>
+
+	* connection_type.c (psyco_conn_close): added .close()
+	method. wow.
+
+	* cursor_*.c: added basic cursor interface (new-style.)
+
+2003-07-20  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/*: beginning of new source layout. if you think this
+	changelog is somewhat empty, you're right. look at
+	doc/ChangeLog-1.x for psycopg 1.x changelog just before the
+	branch.
+
+
