@@ -48,7 +48,7 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *keywds)
     char *name = NULL;
     PyObject *obj, *factory = NULL;
 
-    static char *kwlist[] = {"name", "factory", NULL};
+    static char *kwlist[] = {"name", "cursor_factory", NULL};
     
     if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sO", kwlist,
                                      &name, &factory)) {

@@ -1,3 +1,8 @@
+2004-11-20  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/connection_type.c (psyco_conn_cursor): renamed 'cursor'
+	argument to 'cursor_factory'.
+
 2004-11-19  Federico Di Gregorio  <fog@debian.org>
 
 	* psycopg/cursor_type.c (_psyco_curs_buildrow_fill): now standard

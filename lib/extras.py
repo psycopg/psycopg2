@@ -20,30 +20,34 @@ class DictCursor(_cursor):
     __query_executed = 0
     
     def execute(self, query, vars=None, async=0):
-        self.tuple_factory = DictRow
+        self.row_factory = DictRow
         self.index = {}
         self.__query_executed = 1
         return _cursor.execute(self, query, vars, async)
 
     def _build_index(self):
-        if self.description:
+        if self.__query_executed == 1 and self.description:
             for i in range(len(self.description)):
                 self.index[self.description[i][0]] = i
-                
+            self.__query_executed = 0
+            
     def fetchone(self):
+        res = _cursor.fetchone(self)
         if self.__query_executed:
             self._build_index()
-        return _cursor.fetchone(self)
+        return res
 
     def fetchmany(self, size=None):
+        res = _cursor.fetchmany(self, size)
         if self.__query_executed:
             self._build_index()
-        return _cursor.fetchmany(self, size)
+        return res
 
     def fetchall(self):
+        res = _cursor.fetchall(self)
         if self.__query_executed:
             self._build_index()
-        return _cursor.fetchall(self)
+        return res
         
 class DictRow(list):
     """A row object that allow by-colun-name access to data."""
@@ -51,7 +55,6 @@ class DictRow(list):
     def __init__(self, cursor):
         self._cursor = cursor
         self[:] = [None] * len(cursor.description)
-        print cursor, self
 
     def __getitem__(self, x):
         if type(x) != int:
