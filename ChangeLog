@@ -1,8 +1,16 @@
 2005-03-12  Federico Di Gregorio  <fog@debian.org>
 
+	* psycopg/cursor_type.c (psyco_curs_executemany): implemented as a
+	wrapper to extract python arguments and then call
+	_psyco_curs_execute().
+
+	* psycopg/cursor_type.c (_psyco_curs_execute): splitted away
+	python argument parsing from the real execute code, to later allow
+	for .executemany().
+
 	* psycopg/cursor_type.c (_psyco_curs_buildrow_fill): modified to
 	call typecast_cast().
-
+	
 	* psycopg/typecast.c (typecast_call/typecast_cast): modified
 	typecast_call to use the new typecast_cast that avoids one string
 	conversion on every cast.

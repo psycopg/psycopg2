@@ -252,28 +252,20 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
 #define psyco_curs_execute_doc \
 "execute(query, vars=None, async=0) -> execute query with bound vars"
 
-static PyObject *
-psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
-{   
+static int
+_psyco_curs_execute(cursorObject *self,
+                    PyObject *operation, PyObject *vars, long int async)
+{
     int res;
-    long int async = 0;
-    PyObject *vars = NULL, *cvt = NULL, *operation = NULL;
-    PyObject *fquery, *uoperation = NULL;
+    PyObject *fquery, *cvt = NULL, *uoperation = NULL;
     
-    static char *kwlist[] = {"query", "vars", "async", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|Oi", kwlist,
-                                     &operation, &vars, &async)) {
-        return NULL;
-    }
-
     pthread_mutex_lock(&(self->conn->lock));
     if (self->conn->async_cursor != NULL
         && self->conn->async_cursor != (PyObject*)self) {
         pthread_mutex_unlock(&(self->conn->lock));
         PyErr_SetString(ProgrammingError,
                         "asynchronous query already in execution");
-        return NULL;
+        return 0;
     }
     pthread_mutex_unlock(&(self->conn->lock));
     
@@ -291,11 +283,10 @@ psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
         else {
             PyErr_Format(InterfaceError, "can't encode unicode query to %s",
                          self->conn->encoding);
-            return NULL;
+            return 0;
         }
     }
     
-    EXC_IF_CURS_CLOSED(self);
     IFCLEARPGRES(self->pgres);
 
     if (self->query) {
@@ -331,7 +322,7 @@ psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
     {
         if(_mogrify(vars, operation, self->conn, &cvt) == -1) {
             Py_XDECREF(uoperation);
-            return NULL;
+            return 0;
         }
     }
 
@@ -384,7 +375,7 @@ psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
                 PyErr_Restore(err, arg, trace);
             }
             Py_XDECREF(uoperation);
-            return NULL;
+            return 0;
         }
         self->query = strdup(PyString_AS_STRING(fquery));
 
@@ -403,14 +394,68 @@ psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
 
     Py_XDECREF(uoperation);
     
-    if (res == -1) {
+    return res == -1 ? 0 : 1;
+}
+
+static PyObject *
+psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
+{   
+    long int async = 0;
+    PyObject *vars = NULL, *operation = NULL;
+    
+    static char *kwlist[] = {"query", "vars", "async", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|Oi", kwlist,
+                                     &operation, &vars, &async)) {
         return NULL;
     }
-    else {
+
+    EXC_IF_CURS_CLOSED(self);
+    
+    if (_psyco_curs_execute(self, operation, vars, async)) {
         Py_INCREF(Py_None);
         return Py_None;
     }
+    else {
+        return NULL;
+    }
 }
+
+#define psyco_curs_executemany_doc \
+"execute(query, vars_list=(), async=0) -> execute many queries with bound vars"
+
+static PyObject *
+psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
+{
+    int i;
+    PyObject *operation = NULL, *vars = NULL;
+    
+    
+    static char *kwlist[] = {"query", "vars", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|Oi", kwlist,
+                                     &operation, &vars)) {
+        return NULL;
+    }
+
+    EXC_IF_CURS_CLOSED(self);
+    
+    for (i = 0; i < PySequence_Size(vars); i++) {
+        PyObject *v = PySequence_GetItem(vars, i);
+        if (!v  || _psyco_curs_execute(self, operation, vars, 0) == 0) {
+            Py_XDECREF(v);
+            return NULL;
+        }
+        else {
+            Py_DECREF(v);
+        }
+    }
+    
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+    
 
 #ifdef PSYCOPG_EXTENSIONS
 #define psyco_curs_mogrify_doc \
@@ -1119,6 +1164,8 @@ static struct PyMethodDef cursorObject_methods[] = {
      METH_VARARGS, psyco_curs_close_doc},
     {"execute", (PyCFunction)psyco_curs_execute,
      METH_VARARGS|METH_KEYWORDS, psyco_curs_execute_doc},
+    {"executemany", (PyCFunction)psyco_curs_executemany,
+     METH_VARARGS|METH_KEYWORDS, psyco_curs_executemany_doc},
     {"fetchone", (PyCFunction)psyco_curs_fetchone,
      METH_VARARGS, psyco_curs_fetchone_doc},
     {"fetchmany", (PyCFunction)psyco_curs_fetchmany,
