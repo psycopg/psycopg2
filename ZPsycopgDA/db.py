@@ -162,11 +162,26 @@ class DB(TM, dbi_db.DB):
                     if self.encoding:
                         qs = qs.encode(self.encoding)
                 try:
-                    if (query_data):
+                    if query_data:
                         c.execute(qs, query_data)
                     else:
                         c.execute(qs)
-                except (psycopg.ProgrammingError, psycopg.IntegrityError), e:
+                except OperationalError, e:
+                    try:
+                        self.close()
+                    except:
+                        pass
+                    self.open()
+                    try:
+                        if   query_data:
+                            c.execute(qs, query_data)
+                        else:
+                            c.execute(qs)
+                    except (psycopg.ProgrammingError,psycopg.IntegrityError),e:
+                        if e.args[0].find("concurrent update") > -1:
+                            raise ConflictError
+                        raise e
+                except (psycopg.ProgrammingError,psycopg.IntegrityError), e:
                     if e.args[0].find("concurrent update") > -1:
                         raise ConflictError
                     raise e

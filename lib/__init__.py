@@ -1,3 +1,11 @@
+"""A Python driver for PostgreSQL
+
+psycopg is a PostgreSQL database adapter for the Python programming
+language. This is version 2, a complete rewrite of the original code to
+provide new-style classes for connection and cursor objects and other sweet
+candies. Like the original, psycopg 2 was written with the aim of being very
+small and fast, and stable as a rock.
+"""
 # psycopg/__init__.py - initialization of the psycopg module
 #
 # Copyright (C) 2003-2004 Federico Di Gregorio  <fog@debian.org>

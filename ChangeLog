@@ -1,3 +1,28 @@
+2005-01-20  Federico Di Gregorio  <fog@debian.org>
+
+	* lib/extensions.py (register_adapter): added register_adapter
+	function, exported ISQLQuote in psycopg.extensions.
+
+2005-01-18  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/pqpath.c (_pq_fetch_tuples): ported scale/precision fix
+	from psycopg 1.1.
+
+	* LICENSE: detailed licensing information. Re-licensed some parts
+	under BSD-like to allow integration is pysqlite.
+
+2005-01-13  Federico Di Gregorio  <fog@debian.org>
+
+	* ZPsycopgDA/db.py (DB.query): ported ZPsycopgDA connection fix
+	from psycopg 1.1.
+
+	* lib/*.py: added pydoc-friendly messages.
+
+2005-01-12  Federico Di Gregorio  <fog@debian.org>
+
+	* Added debian directory (thanks to W. Borgert who sent initial
+	patch based on cdbs.)
+
 2004-12-20  Federico Di Gregorio  <fog@debian.org>
 
 	* psycopg/pqpath.c (pq_execute): removed multiple calls to

@@ -1,0 +1,10 @@
+psycopg can be downloaded from its homepage:
+
+    http://initd.org/pub/software/psycopg/ALPHA/
+
+Copyright (c) 2001-2005 Federico Di Gregorio <fog@debian.org>
+
+This program is distributed under the GNU GPL.
+ 
+On Debian GNU/Linux systems, the complete text of the GNU General
+Public License can be found in '/usr/share/common-licenses/GPL'.

@@ -1,3 +1,8 @@
+"""Miscellaneous goodies for psycopg
+
+This module is a generic place used to hold little helper function
+and classes untill a better place in the distribution is found.
+"""
 # psycopg/extras.py - miscellaneous extra goodies for psycopg
 #
 # Copyright (C) 2003-2004 Federico Di Gregorio  <fog@debian.org>

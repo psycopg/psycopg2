@@ -538,7 +538,7 @@ _pq_fetch_tuples(cursorObject *curs)
         /* 4,5/ scale and precision */
         if (ftype == NUMERICOID) {
             PyTuple_SET_ITEM(dtitem, 4, PyInt_FromLong((fmod >> 16) & 0xFFFF));
-            PyTuple_SET_ITEM(dtitem, 5, PyInt_FromLong(fmod & 0xFFFF));
+            PyTuple_SET_ITEM(dtitem, 5, PyInt_FromLong(fmod & 0xFFFF) - 4);
         }
         else {
             Py_INCREF(Py_None);
@@ -557,7 +557,7 @@ _pq_fetch_tuples(cursorObject *curs)
 
 #ifdef HAVE_PQPROTOCOL3
 static int
-_pq_copy_in(cursorObject *curs)
+_pq_copy_in_v3(cursorObject *curs)
 {
     /* COPY FROM implementation when protocol 3 is available: this function
        uses the new PQputCopyData() and can detect errors and set the correct
@@ -565,7 +565,7 @@ _pq_copy_in(cursorObject *curs)
     
     return -1;
 }
-#else
+#endif
 static int
 _pq_copy_in(cursorObject *curs)
 {
@@ -589,11 +589,10 @@ _pq_copy_in(cursorObject *curs)
 
     return 1;
 }
-#endif
 
 #ifdef HAVE_PQPROTOCOL3
 static int
-_pq_copy_out(cursorObject *curs)
+_pq_copy_out_v3(cursorObject *curs)
 {
     char *buffer;
     int len;
@@ -620,7 +619,8 @@ _pq_copy_out(cursorObject *curs)
 
     return 1;
 }
-#else
+#endif
+
 static int
 _pq_copy_out(cursorObject *curs)
 {
@@ -655,7 +655,7 @@ _pq_copy_out(cursorObject *curs)
     
     return 1;
 }
-#endif
+
 
 int
 pq_fetch(cursorObject *curs)
@@ -747,7 +747,12 @@ pq_fetch(cursorObject *curs)
     case PGRES_COPY_OUT:
         Dprintf("pq_fetch: data from a COPY TO (no tuples)");
         curs->rowcount = 0;
-        ex = _pq_copy_out(curs);
+#ifdef HAVE_PQPROTOCOL3
+        if (curs->conn->protocol == 3)
+            ex = _pq_copy_out_3(curs);
+        else
+#endif
+            ex = _pq_copy_out(curs);
         /* error caught by out glorious notice handler */
         if (PyErr_Occurred()) ex = -1;
         IFCLEARPGRES(curs->pgres);
@@ -756,7 +761,12 @@ pq_fetch(cursorObject *curs)
     case PGRES_COPY_IN:
         Dprintf("pq_fetch: data from a COPY FROM (no tuples)");
         curs->rowcount = 0;
-        ex = _pq_copy_in(curs);
+#ifdef HAVE_PQPROTOCOL3
+        if (curs->conn->protocol == 3)        
+            ex = _pq_copy_in_v3(curs);
+        else
+#endif
+            ex = _pq_copy_in(curs);
         /* error caught by out glorious notice handler */
         if (PyErr_Occurred()) ex = -1;
         IFCLEARPGRES(curs->pgres);

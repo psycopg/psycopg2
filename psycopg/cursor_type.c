@@ -895,6 +895,15 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
 #define psyco_curs_copy_from_doc \
 "copy_from(file, table, sep='\\t', null='NULL') -> copy file to table."
 
+static int
+_psyco_curs_copy_from_check(PyObject *o)
+{
+    if (PyObject_GetAttrString(o, "write")
+        return 1;
+        else
+        
+}
+
 static PyObject *
 psyco_curs_copy_from(cursorObject *self, PyObject *args)
 {

@@ -1,3 +1,13 @@
+"""
+psycopg extensions to the DBAPI-2.0
+
+This module holds all the extensions to the DBAPI-2.0 provided by psycopg:
+
+    connection -- the new-type inheritable connection class
+    cursor -- the new-type inheritable cursor class
+    adapt() -- exposes the PEP-246 compatile adapting machanism used
+     by psycopg to adapt Python types to PostgreSQL ones
+"""
 # psycopg/extensions.py - DBAPI-2.0 extensions specific to psycopg
 #
 # Copyright (C) 2003-2004 Federico Di Gregorio  <fog@debian.org>
@@ -29,3 +39,9 @@ except:
 
 from _psycopg import adapt, adapters, encodings, connection, cursor
 from _psycopg import string_types, binary_types, new_type, register_type
+from _psycopg import ISQLQuote
+
+
+def register_adapter(typ, callable):
+    """Register 'callable' as an ISQLQuote adapter for type 'typ'."""
+    adapters[(typ, ISQLQuote)] = callable

@@ -1,0 +1,51 @@
+Source: psycopg2
+Section: python
+Priority: optional
+Build-depends: postgresql-dev, debhelper (>> 3), python2.3-dev, cdbs
+Maintainer: Federico Di Gregorio <fog@debian.org>
+Standards-Version: 3.6.1.1
+
+Package: python-psycopg2
+Architecture: any
+Section: python
+Depends: python (>= 2.3), python (<< 2.4), python2.3-psycopg
+Description: Python module for PostgreSQL [dummy package]
+ psycopg is a PostgreSQL database adapter for the Python programming
+ language. It was written from scratch with the aim of being very small
+ and fast, and stable as a rock. The main advantages of psycopg are that
+ it supports the full Python DBAPI-2.0 and being thread safe at level 2.
+ .
+ psycopg 2 is the next generation psycopg, implementing a much better
+ type system and even more DBAPI extensions:
+ .
+ * support for Python datetime and Decimal types;
+ * complete implementation of adapt() from PEP 246 to convert Python
+   types to PostgreSQL ones;
+ * COPY FROM/COPY TO support
+ * inehritable connection and cursor objects and support for connection
+   and cursor factories;
+ * automatic encoding conversion and support for unicode queries.
+ .
+ This dummy package just depends on the right, default version of Python 
+ and psycopg 2.
+
+Package: python2.3-psycopg2
+Architecture: any
+Section: python
+Depends: ${shlibs:Depends}, python2.3
+Description: Python 2.3 module for PostgreSQL
+ psycopg is a PostgreSQL database adapter for the Python programming
+ language. It was written from scratch with the aim of being very small
+ and fast, and stable as a rock. The main advantages of psycopg are that
+ it supports the full Python DBAPI-2.0 and being thread safe at level 2.
+ .
+ psycopg 2 is the next generation psycopg, implementing a much better
+ type system and even more DBAPI extensions:
+ .
+ * support for Python datetime and Decimal types;
+ * complete implementation of adapt() from PEP 246 to convert Python
+   types to PostgreSQL ones;
+ * COPY FROM/COPY TO support
+ * inehritable connection and cursor objects and support for connection
+   and cursor factories;
+ * automatic encoding conversion and support for unicode queries.

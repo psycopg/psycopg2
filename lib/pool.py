@@ -1,3 +1,7 @@
+"""Connection pooling for psycopg
+
+This module implements thread-safe (and not) connection pools.
+"""
 # psycopg/pool.py - pooling code for psycopg
 #
 # Copyright (C) 2003-2004 Federico Di Gregorio  <fog@debian.org>
