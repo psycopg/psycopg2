@@ -21,7 +21,7 @@ Description: Python module for PostgreSQL [dummy package]
  * support for Python datetime and Decimal types;
  * complete implementation of adapt() from PEP 246 to convert Python
    types to PostgreSQL ones;
- * COPY FROM/COPY TO support
+ * COPY FROM/COPY TO support;
  * inehritable connection and cursor objects and support for connection
    and cursor factories;
  * automatic encoding conversion and support for unicode queries.
@@ -45,7 +45,7 @@ Description: Python 2.3 module for PostgreSQL
  * support for Python datetime and Decimal types;
  * complete implementation of adapt() from PEP 246 to convert Python
    types to PostgreSQL ones;
- * COPY FROM/COPY TO support
+ * COPY FROM/COPY TO support;
  * inehritable connection and cursor objects and support for connection
    and cursor factories;
  * automatic encoding conversion and support for unicode queries.

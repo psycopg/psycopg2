@@ -1,9 +1,9 @@
-psycopg2 (1.99.11-1) experimental; urgency=low
+psycopg2 (1.99.12.1-1) experimental; urgency=low
 
   * Adapted from patches sent by W. Borgert.
   * Renamed source package to psycopg2.
 
- --
+ -- Federico Di Gregorio <fog@debian.org>  Fri,  4 Mar 2005 13:11:43 +0100
 
 psycopg2 (1.99.11-0.1) unstable; urgency=low
   
