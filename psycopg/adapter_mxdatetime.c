@@ -84,8 +84,8 @@ static struct PyMemberDef mxdatetimeObject_members[] = {
 static PyMethodDef mxdatetimeObject_methods[] = {
     {"getquoted", (PyCFunction)mxdatetime_getquoted, METH_VARARGS,
      "getquoted() -> wrapped object value as SQL date/time"},
-    {"prepare", (PyCFunction)mxdatetime_prepare, METH_VARARGS,
-     "prepare(conn) -> currently does nothing"},
+    /*    {"prepare", (PyCFunction)mxdatetime_prepare, METH_VARARGS,
+          "prepare(conn) -> currently does nothing"}, */
     {NULL}  /* Sentinel */
 };
 

@@ -58,8 +58,7 @@ microprotocols_add(PyTypeObject *type, PyObject *proto, PyObject *cast)
 {
     if (proto == NULL) proto = (PyObject*)&isqlquoteType;
 
-    Dprintf("microprotocols_add: cast %p for (%s, ?)",
-            cast, type->tp_name);
+    Dprintf("microprotocols_add: cast %p for (%s, ?)", cast, type->tp_name);
 
     PyDict_SetItem(psyco_adapters,
                    Py_BuildValue("(OO)", (PyObject*)type, proto),
@@ -78,6 +77,8 @@ microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
        because the ISQLQuote type is abstract and there is no way to get a
        quotable object to be its instance */
 
+    Dprintf("microprotocols_adapt: trying to adapt %s", obj->ob_type->tp_name);
+    
     /* look for an adapter in the registry */
     key = Py_BuildValue("(OO)", (PyObject*)obj->ob_type, proto);
     adapter = PyDict_GetItem(psyco_adapters, key);
@@ -95,14 +96,14 @@ microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
             return NULL;
     }
 
-    /* and finally try to have the object adapt itself */
+    /* and finally try to have the object adapt itself */   
     if (PyObject_HasAttrString(obj, "__conform__")) {
-        PyObject *adapted = PyObject_CallMethod(proto, "__conform__","O", obj);
+        PyObject *adapted = PyObject_CallMethod(obj, "__conform__","O", proto);
         if (adapted && adapted != Py_None) return adapted;
         if (PyErr_Occurred() && !PyErr_ExceptionMatches(PyExc_TypeError))
             return NULL;
     }
-            
+    
     /* else set the right exception and return NULL */
     PyErr_SetString(ProgrammingError, "can't adapt");
     return NULL;

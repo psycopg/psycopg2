@@ -23,6 +23,12 @@ import sys, psycopg
 import psycopg.extensions
 import whrandom
 
+# importing psycopg.extras will give us a nice tuple adapter: this is wrong
+# because the adapter is meant to be used in SQL IN clauses while we use
+# tuples to represent points but it works and the example is about Rect, not
+# "Point"
+import psycopg.extras
+
 if len(sys.argv) > 1:
     DSN = sys.argv[1]
 
@@ -43,7 +49,7 @@ conn.commit()
 # usually a function, but we use a class, just to demonstrate the
 # flexibility of the psycopg casting system
 
-class Rect:
+class Rect(object):
     """Very simple rectangle.
 
     Note that we use this type as a data holder, as an adapter of itself for
@@ -59,7 +65,6 @@ class Rect:
 
     def __conform__(self, proto):
         """This is a terrible hack, just ignore proto and return self."""
-        print "CONFORMIG!"
         return self
     
     def from_points(self, x0, y0, x1, y1):
@@ -81,11 +86,6 @@ class Rect:
         s = "'((%d,%d),(%d,%d))'" % (
             self.x, self.y, self.x + self.width, self.y + self.height)
         return s
-
-    __str__ = getquoted
-    
-    def prepare(self, conn):
-        pass
 
     def show(self):
         """Format a description of the box."""

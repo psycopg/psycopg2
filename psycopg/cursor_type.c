@@ -61,6 +61,38 @@ psyco_curs_close(cursorObject *self, PyObject *args)
 
 /* mogrify a query string and build argument array or dict */
 
+static PyObject*
+_mogrify_getquoted(PyObject *obj, connectionObject *conn)
+{
+    PyObject *res = NULL;
+    PyObject *tmp = microprotocols_adapt(
+        obj, (PyObject*)&isqlquoteType, NULL);
+    
+    if (tmp != NULL) {
+        Dprintf("_mogrify: adapted to %s", tmp->ob_type->tp_name);
+
+        /* if requested prepare the object passing it the connection */
+        if (PyObject_HasAttrString(tmp, "prepare")) {
+            res = PyObject_CallMethod(tmp, "prepare", "O", (PyObject*)conn);
+            if (res == NULL) {
+                Py_DECREF(tmp);
+                return NULL;
+            }
+            else {
+                Py_DECREF(res);
+            }
+        }
+
+        /* call the getquoted method on tmp (that should exist because we
+           adapted to the right protocol) */
+        res = PyObject_CallMethod(tmp, "getquoted", NULL);
+        Py_DECREF(tmp);
+    }
+
+    /* we return res with one extra reference, the caller shall free it */
+    return res;
+}
+
 static int
 _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
 {
@@ -131,28 +163,17 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
                         if (*d) *d = 's';
                     }
                     else {
-                        t = microprotocols_adapt(value,
-                                                 (PyObject*)&isqlquoteType,
-                                                 NULL);
+                        t = _mogrify_getquoted(value, conn);
+
                         if (t != NULL) {
-                            /* t is a new object, refcnt = 1 */
-                            Dprintf("_mogrify: adapted to %s",
-                                t->ob_type->tp_name);
-
-                            /* prepare the object passing it the connection */
-                            PyObject_CallMethod(t, "prepare", "O",
-                                                (PyObject*)conn);
-
                             PyDict_SetItem(n, key, t);
                             /* both key and t refcnt +1, key is at 2 now */
                         }
                         else {
-                            /* we did not found an adapter but we don't raise
-                               an exception; just pass the original value */
-                            PyErr_Clear();
-                            PyDict_SetItem(n, key, value);
-                            Dprintf("_mogrify: set value refcnt: %d",
-                                    value->ob_refcnt);
+                            /* no adapter found, raise a BIG exception */
+                            Py_XDECREF(value); 
+                            Py_DECREF(n);
+                            return -1;
                         }
                     }
 
@@ -200,20 +221,16 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
                 Py_DECREF(value);
             }
             else {
-                PyObject *t = microprotocols_adapt(value,
-                                                   (PyObject*)&isqlquoteType,
-                                                   NULL);
-                if (t != NULL) {
-                    /* prepare the object passing it the connection */
-                    PyObject_CallMethod(t, "prepare", "O", (PyObject*)conn);
+                PyObject *t = _mogrify_getquoted(value, conn);
 
+                if (t != NULL) {
                     PyTuple_SET_ITEM(n, index, t);
                     Py_DECREF(value);
                 }
                 else {
-                    PyErr_Clear();
-                    PyTuple_SET_ITEM(n, index, value);
-                    /* here we steal value ref, no need to DECREF */
+                    Py_DECREF(n);
+                    Py_DECREF(value);
+                    return -1;
                 }
             }
             c = d;
@@ -228,7 +245,7 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
         n = PyTuple_New(0);
     *new = n;
     
-    return 0;;
+    return 0;
 }
     
 #define psyco_curs_execute_doc \

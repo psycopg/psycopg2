@@ -106,8 +106,8 @@ static struct PyMethodDef isqlquoteObject_methods[] = {
      METH_VARARGS, psyco_isqlquote_getbinary_doc},
     {"getbuffer", (PyCFunction)psyco_isqlquote_getbuffer,
      METH_VARARGS, psyco_isqlquote_getbuffer_doc},
-    {"prepare", (PyCFunction)psyco_isqlquote_prepare,
-     METH_VARARGS, psyco_isqlquote_prepare_doc},
+    /*    {"prepare", (PyCFunction)psyco_isqlquote_prepare,
+          METH_VARARGS, psyco_isqlquote_prepare_doc}, */
     {NULL}
 };
 

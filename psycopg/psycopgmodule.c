@@ -34,6 +34,7 @@
 #include "psycopg/adapter_qstring.h"
 #include "psycopg/adapter_binary.h"
 #include "psycopg/adapter_pboolean.h"
+#include "psycopg/adapter_asis.h"
 
 
 #ifdef HAVE_MXDATETIME
@@ -187,6 +188,10 @@ psyco_adapters_init(PyObject *mod)
 {
     PyObject *call;
     
+    microprotocols_add(&PyFloat_Type, NULL, (PyObject*)&asisType);
+    microprotocols_add(&PyInt_Type, NULL, (PyObject*)&asisType);
+    microprotocols_add(&PyLong_Type, NULL, (PyObject*)&asisType);
+
     microprotocols_add(&PyString_Type, NULL, (PyObject*)&qstringType);
     microprotocols_add(&PyUnicode_Type, NULL, (PyObject*)&qstringType);
     microprotocols_add(&PyBuffer_Type, NULL, (PyObject*)&binaryType);
@@ -225,6 +230,9 @@ static encodingPair encodings[] = {
     {"SQL_ASCII",    "ascii"},
     {"LATIN1",       "latin_1"},
     {"UNICODE",      "utf_8"},
+    /* some compatibility stuff */
+    {"latin-1",      "latin_1"},
+    
     {NULL, NULL}
 };
 static void psyco_encodings_fill(PyObject *dict)
@@ -328,7 +336,9 @@ static PyMethodDef psycopgMethods[] = {
      METH_VARARGS, psyco_register_type_doc},
     {"new_type", (PyCFunction)typecast_from_python,
      METH_VARARGS|METH_KEYWORDS},
-    
+
+    {"AsIs",  (PyCFunction)psyco_AsIs,
+     METH_VARARGS, psyco_AsIs_doc},
     {"QuotedString",  (PyCFunction)psyco_QuotedString,
      METH_VARARGS, psyco_QuotedString_doc},
     {"Boolean",  (PyCFunction)psyco_Boolean,
@@ -388,8 +398,9 @@ init_psycopg(void)
     cursorType.ob_type     = &PyType_Type;
     typecastType.ob_type   = &PyType_Type;
     qstringType.ob_type    = &PyType_Type;
-    binaryType.ob_type    = &PyType_Type;
-    isqlquoteType.ob_type    = &PyType_Type;
+    binaryType.ob_type     = &PyType_Type;
+    isqlquoteType.ob_type  = &PyType_Type;
+    asisType.ob_type       = &PyType_Type;
     
     if (PyType_Ready(&connectionType) == -1) return;
     if (PyType_Ready(&cursorType) == -1) return;
@@ -397,6 +408,7 @@ init_psycopg(void)
     if (PyType_Ready(&qstringType) == -1) return;
     if (PyType_Ready(&binaryType) == -1) return;
     if (PyType_Ready(&isqlquoteType) == -1) return;
+    if (PyType_Ready(&asisType) == -1) return;
     
 #ifdef HAVE_PYBOOL
     pbooleanType.ob_type   = &PyType_Type;

@@ -11,6 +11,8 @@ What's new in psycopg 1.99.12
   connect to an old protocol 2 database and will detect it and use the
   right code.
 
+* getquoted() called for real by the mogrification code.
+
 What's new in psycopg 1.99.11
 -----------------------------
 

@@ -190,8 +190,8 @@ static struct PyMemberDef binaryObject_members[] = {
 static PyMethodDef binaryObject_methods[] = {
     {"getquoted", (PyCFunction)binary_getquoted, METH_VARARGS,
      "getquoted() -> wrapped object value as SQL-quoted binary string"},
-    {"prepare", (PyCFunction)binary_prepare, METH_VARARGS,
-     "prepare(conn) -> currently does nothing"},
+    /*    {"prepare", (PyCFunction)binary_prepare, METH_VARARGS,
+          "prepare(conn) -> currently does nothing"},*/
     {NULL}  /* Sentinel */
 };
 

@@ -47,7 +47,7 @@ from distutils.core import setup, Extension
 from distutils.sysconfig import get_python_inc
 import distutils.ccompiler
 
-PSYCOPG_VERSION = '1.99.11'
+PSYCOPG_VERSION = '1.99.11/devel'
 
 have_pydatetime = False
 have_mxdatetime = False
@@ -114,7 +114,8 @@ sources = [
     'psycopgmodule.c', 'pqpath.c',  'typecast.c',
     'microprotocols.c', 'microprotocols_proto.c', 
     'connection_type.c', 'connection_int.c', 'cursor_type.c', 'cursor_int.c',
-    'adapter_qstring.c', 'adapter_pboolean.c', 'adapter_binary.c']
+    'adapter_qstring.c', 'adapter_pboolean.c', 'adapter_binary.c',
+    'adapter_asis.c']
 
 # check for mx package
 mxincludedir = os.path.join(get_python_inc(plat_specific=1), "mx")

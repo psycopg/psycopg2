@@ -71,40 +71,19 @@ class DictRow(list):
 
 
 
-class AsIs(object):
-    """An adapter that just return the object 'as is'.
-
-    psycopg 1.99.9 has some optimizations that make impossible to call adapt()
-    without adding some basic adapters externally. This limitation will be
-    lifted in a future release. In the meantime you can use the AsIs adapter.
-    """
-    def __init__(self, obj):
-        self.__obj = obj
-    def getquoted(self):
-        return str(self.__obj)
-    def prepare(self, conn):
-	pass
-    __str__ = getquoted
-
 class SQL_IN(object):
     """Adapt any iterable to an SQL quotable object."""
     
     def __init__(self, seq):
 	self._seq = seq
 	
-    def prepare(self, conn):
-	pass
-    
     def getquoted(self):
         # this is the important line: note how every object in the
         # list is adapted and then how getquoted() is called on it
 	qobjs = [str(_A(o).getquoted()) for o in self._seq]
 
 	return '(' + ', '.join(qobjs) + ')'
-	
+
     __str__ = getquoted
-
-
+    
 _RA(tuple, SQL_IN)
-_RA(int, AsIs)
-_RA(float, AsIs)

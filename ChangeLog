@@ -1,3 +1,22 @@
+2005-03-01  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/microprotocols.c (microprotocols_adapt): fixed small
+	typo that made adaptation using __conform__ impossible.
+
+2005-02-28  Federico Di Gregorio  <fog@debian.org>
+
+	* lib/extras.py: removed AsIs adapter (now a built-in); also
+	removed prepare() method from the adapters that don't use it to
+	avoid an extra method call at mogrification time.
+
+	* psycopg/psycopgmodule.c (psyco_adapters_init): added
+	initialization of the AsIs adapter (adapts int, long, float and
+	*wonder* None!)
+
+	* psycopg/cursor_type.c (_mogrify_getquoted): reorganized the code
+	to adapt and then call .getquoted() to obtain the quoted data into
+	this new function.
+
 2005-2-27  Federico Di Gregorio  <fog@initd.org>
 
 	* examples/myfirstrecipe.py: fixed adapter registration. 
