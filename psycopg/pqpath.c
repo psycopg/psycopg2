@@ -321,12 +321,15 @@ pq_is_busy(connectionObject *conn)
 
     if (PQconsumeInput(conn->pgconn) == 0) {
         Dprintf("pq_is_busy: PQconsumeInput() failed");
-        PyErr_SetString(OperationalError, PQerrorMessage(conn->pgconn));
         pthread_mutex_unlock(&(conn->lock));
         Py_BLOCK_THREADS;
+        PyErr_SetString(OperationalError, PQerrorMessage(conn->pgconn));
         return -1;
     }
 
+    pthread_mutex_unlock(&(conn->lock));
+    Py_END_ALLOW_THREADS;
+    
     /* now check for notifies */
     while ((pgn = PQnotifies(conn->pgconn)) != NULL) {
         PyObject *notify;
@@ -340,9 +343,6 @@ pq_is_busy(connectionObject *conn)
         PyList_Append(conn->notifies, notify);
         free(pgn);
     }
-
-    pthread_mutex_unlock(&(conn->lock));
-    Py_END_ALLOW_THREADS;
     
     return PQisBusy(conn->pgconn);
 }
