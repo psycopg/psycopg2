@@ -1,3 +1,9 @@
+2004-12-20  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/pqpath.c (pq_execute): removed multiple calls to
+	pq_fetch in syncronous DBAPI compatibility mode to solve rowcount
+	problem.
+
 2004-12-14  Federico Di Gregorio  <fog@debian.org>
 
 	* Mm.. release 1.99.11.

@@ -353,8 +353,6 @@ pq_is_busy(connectionObject *conn)
 int
 pq_execute(cursorObject *curs, const char *query, int async)
 {
-    int err;
-
     /* if the status of the connection is critical raise an exception and
        definitely close the connection */
     if (curs->conn->critical) {
@@ -410,10 +408,7 @@ pq_execute(cursorObject *curs, const char *query, int async)
        to respect the old DBAPI-2.0 compatible behaviour */
     if (async == 0) {
         Dprintf("pq_execute: entering syncronous DBAPI compatibility mode");
-        do {
-            err = pq_fetch(curs);
-            if (err == -1) return -1;
-        } while (err == 1);
+        if (pq_fetch(curs) == -1) return -1;
     }
     else {
         curs->conn->async_cursor = (PyObject*)curs;
