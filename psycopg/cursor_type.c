@@ -904,7 +904,8 @@ _psyco_curs_has_write_check(PyObject* o, void* var)
         return 1;
     }
     else {
-        PyErr_SetString(TypeError, "argument 1 must have a .write() method");
+        PyErr_SetString(PyExc_TypeError,
+                        "argument 1 must have a .write() method");
         return 0;
     }   
 }
