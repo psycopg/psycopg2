@@ -1,3 +1,8 @@
+2005-03-24  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/typecast_array.c (typecast_array_tokenize): much better
+	tokenization code.
+
 2005-03-23  Federico Di Gregorio  <fog@debian.org>
 
 	* psycopg/typecast_basic.c: all the basic casters now respect the

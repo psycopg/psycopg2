@@ -35,81 +35,98 @@ static int
 typecast_array_tokenize(unsigned char *str, int strlength,
                         int *pos, unsigned char** token, int *length)
 {
-    int i, l, res = ASCAN_TOKEN;
-    int qs = 0; /* 2 = in quotes, 1 = quotes closed */
-    
-    /* first we check for quotes, used when the content of the item contains
-       special or quoted characters */
-    
-    if (str[*pos] == '"') {
-        qs = 2;
-        *pos += 1;
-    }
+    /* FORTRAN glory */
+    int i, j, q, b, l, res;
 
-    Dprintf("typecast_array_tokenize: '%s'; %d/%d",
+    Dprintf("typecast_array_tokenize: '%s', %d/%d",
             &str[*pos], *pos, strlength);
 
+    /* we always get called with pos pointing at the start of a token, so a
+       fast check is enough for ASCAN_EOF, ASCAN_BEGIN and ASCAN_END */
+    if (*pos == strlength) {
+        return ASCAN_EOF;
+    }
+    else if (str[*pos] == '{') {
+        *pos += 1;
+        return ASCAN_BEGIN;
+    }
+    else if (str[*pos] == '}') {
+        *pos += 1;
+        if (str[*pos] == ',')
+            *pos += 1;
+        return ASCAN_END;
+    }
+
+    /* now we start looking for the first unquoted ',' or '}', the only two
+       tokens that can limit an array element */
+    q = 0; /* if q is odd we're inside quotes */
+    b = 0; /* if b is 1 we just encountered a backslash */
+    res = ASCAN_TOKEN;
+    
     for (i = *pos ; i < strlength ; i++) {
         switch (str[i]) {
-        case '{':
-            *pos = i+1;
-            return ASCAN_BEGIN;
+        case '"':
+            if (b == 0)
+                q += 1;
+            else
+                b = 0;
+            break;
+
+        case '\\':
+            res = ASCAN_QUOTED;
+            if (b == 0)
+                b = 1;
+            else
+                /* we're backslashing a backslash */
+                b = 0;
+            break;
 
         case '}':
-            /* we tokenize the last item in the array and then return it to
-               the user togheter with the closing bracket marker */
-            res = ASCAN_END;
-            goto tokenize;
-
-        case '"':
-            /* this will close the quoting only if the previous character was
-               NOT a backslash */
-            if (qs == 2 && str[i-1] != '\\') qs = 1;
-            continue;
-               
-        case '\\':
-            /* something has been quoted, sigh, we'll need a copy buffer */
-            res = ASCAN_QUOTED;
-            continue;
-            
         case ',':
-            /* if we're inside quotes we use the comma as a normal char */
-            if (qs == 2)
-                continue;
-            else
+            if (b == 0 && ((q&1) == 0))
                 goto tokenize;
+            break;
+
+        default:
+            /* reset the backslash counter */
+            b = 0;
+            break;
         }
     }
 
-    res = ASCAN_EOF;
-    
  tokenize:
-    l = i - *pos - qs;
-    
-    /* if res is ASCAN_QUOTED we need to copy the string to a newly allocated
-       buffer and return it */
-    if (res == ASCAN_QUOTED) {
+    /* remove initial quoting character and calculate raw length */
+    l = i - *pos;
+    if (str[*pos] == '"') {
+        *pos += 1;
+        l -= 2;
+    }
+
+    if (res == ASCAN_QUOTED) { 
         unsigned char *buffer = PyMem_Malloc(l+1);
         if (buffer == NULL) return ASCAN_ERROR;
 
         *token = buffer;
         
-        for (i = *pos; i < l+*pos; i++) {
-            if (str[i] != '\\')
-                *(buffer++) = str[i];
+        for (j = *pos; j < *pos+l; j++) {
+            if (str[j] != '\\'
+                || (j > *pos && str[j-1] == '\\'))
+                *(buffer++) = str[j];
         }
+        
         *buffer = '\0';
         *length = (int)buffer - (int)*token;
-        *pos = i+2;
     }
     else {
         *token = &str[*pos];
         *length = l;
-        *pos = i+1;
-        if (res == ASCAN_END && str[*pos] == ',')
-            *pos += 1; /* skip both the bracket and the comma */
     }
+
+    *pos = i;
     
+    /* skip the comma and set position to the start of next token */
+    if (str[i] == ',') *pos += 1;
+
     return res;
 }
 
@@ -117,19 +134,18 @@ static int
 typecast_array_scan(unsigned char *str, int strlength,
                     PyObject *curs, PyObject *base, PyObject *array)
 {
-    int state, length, bracket = 0, pos = 0;
+    int state, length, pos = 0;
     unsigned char *token;
 
     PyObject *stack[MAX_DIMENSIONS];
     int stack_index = 0;
     
     while (1) {
+        token = NULL;
         state = typecast_array_tokenize(str, strlength, &pos, &token, &length);
-        if (state == ASCAN_TOKEN
-            || state == ASCAN_QUOTED 
-            || (state ==  ASCAN_EOF && bracket == 0)
-            || (state == ASCAN_END && bracket == 0)) {
-            
+        Dprintf("typecast_array_scan: state = %d, length = %d, token = '%s'",
+                state, length, token);
+        if (state == ASCAN_TOKEN || state == ASCAN_QUOTED) {
             PyObject *obj = typecast_cast(base, token, length, curs);
 
             /* before anything else we free the memory */
@@ -139,6 +155,7 @@ typecast_array_scan(unsigned char *str, int strlength,
             PyList_Append(array, obj);
             Py_DECREF(obj);
         }
+
         else if (state == ASCAN_BEGIN) {
             PyObject *sub = PyList_New(0);            
             if (sub == NULL) return 0;
@@ -152,23 +169,19 @@ typecast_array_scan(unsigned char *str, int strlength,
             stack[stack_index++] = array;
             array = sub;
         }
+        
         else if (state == ASCAN_ERROR) {
             return 0;
         }
 
-        /* reset the closing bracket marker just before cheking for ASCAN_END:
-           this is to make sure we don't mistake two closing brackets for an
-           empty item */
-        bracket = 0;
-        
-        if (state == ASCAN_END) {
+        else if (state == ASCAN_END) {
             if (--stack_index < 0)
                 return 0;
             array = stack[stack_index];
-            bracket = 1;
         }
 
-        if (state ==  ASCAN_EOF) break;
+        else if (state ==  ASCAN_EOF)
+            break;
     }
 
     return 1;

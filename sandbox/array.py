@@ -16,6 +16,6 @@ print d, '->', d[0], d[1], d[2]
 curs.execute("SELECT ARRAY[ARRAY[1,2],ARRAY[3,4]] AS foo")
 print curs.fetchone()[0]
 
-curs.execute("SELECT ARRAY['20:00:01'::time] AS foo")
+curs.execute("SELECT ARRAY[ARRAY[now(), now()], ARRAY[now(), now()]] AS foo")
 print curs.description
 print curs.fetchone()[0]
