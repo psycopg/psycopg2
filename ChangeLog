@@ -1,3 +1,10 @@
+2005-04-03  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/psycopgmodule.c (psyco_connect): factory ->
+	connection_factory.
+
+	* lib/psycopg1.py: added psycopg 1.1.x compatibility module.
+
 2005-03-29  Federico Di Gregorio  <fog@debian.org>
 
 	* psycopg/pqpath.c (pq_is_busy): Staring from bug report from
@@ -5,6 +12,13 @@
 	without holding the GIL.
  
 2005-03-24  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/adapter_binary.c (binary_escape): propagated Andrea's
+	fix to binary adapter.
+
+	* psycopg/adapter_qstring.c (qstring_quote): applied patch from
+	Andrea Arcangeli to fix allocation failures (>4Gb) on 64 bit
+	arches.
 
 	* psycopg/typecast_array.c (typecast_array_tokenize): much better
 	tokenization code.

@@ -102,7 +102,8 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
     char *host=NULL, *port=NULL, *sslmode=NULL;
     
     static char *kwlist[] = {"dsn", "database", "host", "port",
-                             "user", "password", "sslmode", "factory", NULL};
+                             "user", "password", "sslmode",
+                             "connection_factory", NULL};
     
     if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sssssssO", kwlist,
                                      &dsn, &database, &host, &port,

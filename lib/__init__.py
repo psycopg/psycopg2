@@ -20,8 +20,6 @@ small and fast, and stable as a rock.
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-__all__ = ['extensions', 'extras', 'tz', 'pool']
-
 # import the DBAPI-2.0 stuff into top-level module
 from _psycopg import BINARY, NUMBER, STRING, DATETIME, ROWID
 
