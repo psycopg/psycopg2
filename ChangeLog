@@ -1,5 +1,8 @@
 2005-04-03  Federico Di Gregorio  <fog@debian.org>
 
+	* lib/psycopg1.py (connection.autocommit): added compatibility
+	.autocommit() method.
+
 	* psycopg/psycopgmodule.c (psyco_connect): factory ->
 	connection_factory.
 

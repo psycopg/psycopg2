@@ -41,6 +41,13 @@ class connection(_2connection):
         """cursor() -> new psycopg 1.1.x compatible cursor object"""
         return _2connection.cursor(self, cursor_factory=cursor)
 
+    def autocommit(self, on_off=1):
+        """autocommit(on_off=1) -> switch autocommit on (1) or off (0)"""
+        if on_off > 0:
+            self.set_isolation_level(0)
+        else:
+            self.set_isolation_level(2)
+            
 
 class cursor(_2cursor):
     """psycopg 1.1.x cursor.
@@ -73,4 +80,4 @@ class cursor(_2cursor):
         for row in rows:
             res.append(self.__build_dict(row))
         return res
- 
+
