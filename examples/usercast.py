@@ -65,7 +65,8 @@ class Rect(object):
 
     def __conform__(self, proto):
         """This is a terrible hack, just ignore proto and return self."""
-        return self
+        if proto == psycopg.extensions.ISQLQuote:
+            return self
     
     def from_points(self, x0, y0, x1, y1):
         """Init the rectangle from points."""
