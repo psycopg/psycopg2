@@ -76,7 +76,7 @@ class AsIs(object):
 
     psycopg 1.99.9 has some optimizations that make impossible to call adapt()
     without adding some basic adapters externally. This limitation will be
-    lifted in a future release.In the meantime you can use the AsIs adapter.
+    lifted in a future release. In the meantime you can use the AsIs adapter.
     """
     def __init__(self, obj):
         self.__obj = obj
@@ -84,7 +84,8 @@ class AsIs(object):
         return self.__obj
     def prepare(self, conn):
 	pass
-    
+    __str__ = getquoted
+
 class SQL_IN(object):
     """Adapt any iterable to an SQL quotable object."""
     

@@ -59,6 +59,7 @@ class Rect:
 
     def __conform__(self, proto):
         """This is a terrible hack, just ignore proto and return self."""
+        print "CONFORMIG!"
         return self
     
     def from_points(self, x0, y0, x1, y1):
