@@ -154,6 +154,25 @@ typecast_init(PyObject *dict)
     return 0;
 }
 
+/* typecast_get_by_name - get a type object by name (slow!) */
+
+static PyObject*
+typecast_get_by_name(unsigned char *name)
+{
+    PyObject *value, *res = NULL;
+    int ppos = 0;
+
+    while (PyDict_Next(psyco_types, &ppos, NULL, &value)) {
+        if (strcmp(PyString_AsString(((typecastObject*)value)->name),
+                   name) == 0) {
+            res = value;
+            break;
+        }
+    }
+
+    /* borrowed reference */
+    return res;
+}
 
 /* typecast_add - add a type object to the dictionary */
 int
@@ -179,6 +198,8 @@ typecast_add(PyObject *obj, int binary)
         }
     }
 
+    Dprintf("typecast_add:     base caster: %p", type->bcast);
+
     return 0;
 }
 
@@ -196,7 +217,7 @@ static struct memberlist typecastObject_memberlist[] = {
 /* numeric methods */
 
 static PyObject *
-typecast_new(PyObject *name, PyObject *values, PyObject *cast);
+typecast_new(PyObject *name, PyObject *values, PyObject *cast, PyObject *base);
      
 static int
 typecast_coerce(PyObject **pv, PyObject **pw)
@@ -207,7 +228,7 @@ typecast_coerce(PyObject **pv, PyObject **pw)
             args = PyTuple_New(1);
             Py_INCREF(*pw);
             PyTuple_SET_ITEM(args, 0, *pw);
-            coer = typecast_new(NULL, args, NULL);
+            coer = typecast_new(NULL, args, NULL, NULL);
             *pw = coer;
             Py_DECREF(args);
             Py_INCREF(*pv);
@@ -347,7 +368,7 @@ PyTypeObject typecastType = {
 };
 
 static PyObject *
-typecast_new(PyObject *name, PyObject *values, PyObject *cast)
+typecast_new(PyObject *name, PyObject *values, PyObject *cast, PyObject *base)
 {
     typecastObject *obj;
 
@@ -368,7 +389,11 @@ typecast_new(PyObject *name, PyObject *values, PyObject *cast)
 
     obj->pcast = NULL;
     obj->ccast = NULL;
-    
+    obj->bcast = base;
+
+    if (obj->bcast) Py_INCREF(obj->bcast);
+
+    /* FIXME: raise an exception when None is passed as Python caster */
     if (cast && cast != Py_None) {
         Py_INCREF(cast);
         obj->pcast = cast;
@@ -382,26 +407,35 @@ typecast_new(PyObject *name, PyObject *values, PyObject *cast)
 PyObject *
 typecast_from_python(PyObject *self, PyObject *args, PyObject *keywds)
 {
-    PyObject *v, *name, *cast = NULL;
+    PyObject *v, *name, *cast = NULL, *base = NULL;
 
-    static char *kwlist[] = {"values", "name", "castobj", NULL};
+    static char *kwlist[] = {"values", "name", "castobj", "baseobj", NULL};
     
-    if (!PyArg_ParseTupleAndKeywords(args, keywds, "O!|O!O", kwlist, 
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "O!|O!OO", kwlist, 
                                      &PyTuple_Type, &v,
                                      &PyString_Type, &name,
-                                     &cast)) {
+                                     &cast, &base)) {
         return NULL;
     }
     
-    return typecast_new(name, v, cast);
+    return typecast_new(name, v, cast, base);
 }
 
 PyObject *
 typecast_from_c(typecastObject_initlist *type)
 {
-    PyObject *tuple;
+    PyObject *tuple, *base = NULL;
     typecastObject *obj;
     int i, len = 0;
+
+    /* before doing anything else we look for the base */
+    if (type->base) {
+        base = typecast_get_by_name(type->base);
+        if (!base) {
+            PyErr_Format(Error, "typecast base not found: %s", type->base);
+            return NULL;
+        }
+    }
 
     while (type->values[len] != 0) len++;
     
@@ -411,9 +445,10 @@ typecast_from_c(typecastObject_initlist *type)
     for (i = 0; i < len ; i++) {
         PyTuple_SET_ITEM(tuple, i, PyInt_FromLong(type->values[i]));
     }
-    
+
+        
     obj = (typecastObject *)
-        typecast_new(PyString_FromString(type->name), tuple, NULL);
+        typecast_new(PyString_FromString(type->name), tuple, NULL, base);
     
     if (obj) {
         obj->ccast = type->cast;
@@ -425,18 +460,26 @@ typecast_from_c(typecastObject_initlist *type)
 PyObject *
 typecast_cast(PyObject *obj, unsigned char *str, int len, PyObject *curs)
 {
+    PyObject *old, *res = NULL;
     typecastObject *self = (typecastObject *)obj;
 
+    /* we don't incref, the caster *can't* die at this point */
+    old = ((cursorObject*)curs)->caster;
+    ((cursorObject*)curs)->caster = obj;
+    
     if (self->ccast) {
         Dprintf("typecast_call: calling C cast function");
-        return self->ccast(str, len, curs);
+        res = self->ccast(str, len, curs);
     }
     else if (self->pcast) {
         Dprintf("typecast_call: calling python callable");
-        return PyObject_CallFunction(self->pcast, "s#O", str, len, curs);
+        res = PyObject_CallFunction(self->pcast, "s#O", str, len, curs);
     }
     else {
         PyErr_SetString(Error, "internal error: no casting function found");
-        return NULL;
     }
+
+    ((cursorObject*)curs)->caster = old;
+
+    return res;
 }

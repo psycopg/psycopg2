@@ -43,6 +43,7 @@ typedef struct {
 
     typecast_function  ccast;  /* the C casting function */
     PyObject          *pcast;  /* the python casting function */
+    PyObject          *bcast;  /* base cast, used by array typecasters */
 } typecastObject;
 
 /* the initialization values are stored here */

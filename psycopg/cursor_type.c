@@ -1217,6 +1217,7 @@ static struct PyMemberDef cursorObject_members[] = {
     {"query", T_STRING, OFFSETOF(query), RO},
     {"row_factory", T_OBJECT, OFFSETOF(tuple_factory), 0},
     {"tzinfo_factory", T_OBJECT, OFFSETOF(tzinfo_factory), 0},
+    {"typecaster", T_OBJECT, OFFSETOF(caster), RO},
 #endif
     {NULL}
 };

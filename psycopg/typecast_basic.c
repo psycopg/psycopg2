@@ -27,8 +27,11 @@
 static PyObject *
 typecast_INTEGER_cast(unsigned char *s, int len, PyObject *curs)
 {
+    unsigned char buffer[12];
+    
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
-    return PyInt_FromString(s, NULL, 0);
+    strncpy(buffer, s, len); buffer[len] = '\0';
+    return PyInt_FromString(buffer, NULL, 0);
 }
 
 /** LONGINTEGER - cast long integers (8 bytes) to python long **/
@@ -36,7 +39,10 @@ typecast_INTEGER_cast(unsigned char *s, int len, PyObject *curs)
 static PyObject *
 typecast_LONGINTEGER_cast(unsigned char *s, int len, PyObject *curs)
 {
+    unsigned char buffer[24];
+    
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
+    strncpy(buffer, s, len); buffer[len] = '\0';
     return PyLong_FromString(s, NULL, 0);
 }
 
@@ -45,7 +51,10 @@ typecast_LONGINTEGER_cast(unsigned char *s, int len, PyObject *curs)
 static PyObject *
 typecast_FLOAT_cast(unsigned char *s, int len, PyObject *curs)
 {
+    unsigned char buffer[64];
+    
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
+    strncpy(buffer, s, len); buffer[len] = '\0';
     return PyFloat_FromDouble(atof(s));
 }
 
@@ -70,7 +79,7 @@ typecast_UNICODE_cast(unsigned char *s, int len, PyObject *curs)
     enc = PyDict_GetItemString(psycoEncodings,
                                ((cursorObject*)curs)->conn->encoding);
     if (enc) {
-        return PyUnicode_Decode(s, strlen(s), PyString_AsString(enc), NULL);
+        return PyUnicode_Decode(s, len, PyString_AsString(enc), NULL);
     }
     else {
        PyErr_Format(InterfaceError,
@@ -135,13 +144,17 @@ static PyObject *
 typecast_BINARY_cast(unsigned char *s, int l, PyObject *curs)
 {
     PyObject *res;
-    unsigned char *str;
+    unsigned char *str, saved;
     size_t len;
 
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
-   
+
+    /* PQunescapeBytea absolutely wants a 0-terminated string and we don't
+       want to copy the whole buffer, right? Wrong... :/ */
+    saved = s[l]; s[l] = '\0';
     str = PQunescapeBytea(s, &len);
     Dprintf("typecast_BINARY_cast: unescaped %d bytes", len);
+    s[l] = saved;
     
     /* TODO: using a PyBuffer would make this a zero-copy operation but we'll
        need to define our own buffer-derived object to keep a reference to the
@@ -178,8 +191,17 @@ typecast_BOOLEAN_cast(unsigned char *s, int len, PyObject *curs)
 static PyObject *
 typecast_DECIMAL_cast(unsigned char *s, int len, PyObject *curs)
 {
+    PyObject *res = NULL;
+    unsigned char *buffer;
+    
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
-    return PyObject_CallFunction(decimalType, "s", s);
+
+    buffer = PyMem_Malloc(len+1);
+    strncpy(buffer, s, len); buffer[len] = '\0';
+    res = PyObject_CallFunction(decimalType, "s", buffer);
+    PyMem_Free(buffer);
+
+    return res;
 }
 #else
 #define typecast_DECIMAL_cast  typecast_FLOAT_cast

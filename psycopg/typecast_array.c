@@ -20,23 +20,97 @@
  */
 
 
-/* the pointer to the datetime module API is initialized by the module init
-   code, we just need to grab it */
-extern PyObject* pyDateTimeModuleP;
-extern PyObject *pyDateTypeP;
-extern PyObject *pyTimeTypeP;
-extern PyObject *pyDateTimeTypeP;
-extern PyObject *pyDeltaTypeP;
+/** typecast_array_scan - scan a string looking for array items **/
+
+#define ASCAN_EOF   0
+#define ASCAN_BEGIN 1
+#define ASCAN_END   2
+#define ASCAN_TOKEN 3
+
+static int
+typecast_array_tokenize(unsigned char *str, int strlength,
+                        int *pos, unsigned char** token, int *length)
+{
+    int i = *pos;
+
+    Dprintf("TOKENIZE for %d, pos = %d", strlength, *pos);
+    
+    while (i < strlength) {
+        switch (str[i]) {
+        case '{':
+            *pos = i+1;
+            return ASCAN_BEGIN;
+
+        case '}':
+            *pos = i+1;
+            return ASCAN_END;
+
+        case ',':
+            *token = &str[*pos];
+            *length = i - *pos;
+            *pos = i+1;
+            Dprintf("TOKENIZE pos = %d, length = %d", *pos, *length);
+            return ASCAN_TOKEN;
+
+        default:
+            i++;
+        }
+    }
+
+    *token = &str[*pos];
+    *length = i - *pos;
+    
+    return ASCAN_EOF;
+}
+
+static int
+typecast_array_scan(unsigned char *str, int strlength,
+                    PyObject *curs, PyObject *base, PyObject *array)
+{
+    int state, length, pos = 0;
+    unsigned char *token;
+    
+    while (1) {
+        state = typecast_array_tokenize(str, strlength, &pos, &token, &length);
+        
+        if (state == ASCAN_TOKEN || state ==  ASCAN_EOF) {
+            PyObject *obj = typecast_cast(base, token, length, curs);
+            if (obj == NULL) return 0;
+            PyList_Append(array, obj);
+            Py_DECREF(obj);
+        }
+        else {
+            Dprintf("** RECURSION (not supported right now)!!");
+        }
+
+        if (state ==  ASCAN_EOF) break;
+    }
+
+    return 1;
+}
 
 /** LONGINTEGERARRAY and INTEGERARRAY - cast integers arrays **/
 
 static PyObject *
 typecast_INTEGERARRAY_cast(unsigned char *str, int len, PyObject *curs)
 {
-    PyObject* obj = NULL;
-     
+    PyObject *obj = NULL;
+    PyObject *base = ((typecastObject*)((cursorObject*)curs)->caster)->bcast;
+    
     if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
+    if (str[0] != '{') {
+        PyErr_SetString(Error, "array does not start with '{'");
+        return NULL;
+    }
+    
+    obj = PyList_New(0);
 
+    /* scan the array skipping the first level of {} */
+    if (typecast_array_scan(&str[1], len-2, curs, base, obj) == 0) {
+        Py_DECREF(obj);
+        obj = NULL;
+    }
+    
     return obj;
 }
 

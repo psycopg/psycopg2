@@ -1,3 +1,15 @@
+2005-03-23  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/typecast_basic.c: all the basic casters now respect the
+	passed string length.
+
+	* psycopg/typecast.c (typecast_cast): set curs->caster to self
+	during the type-casting.
+
+	* psycopg/cursor_type.c: added "typecaster" attribute to the
+	cursor (this is safe, cursors can't be shared among threads and
+	the attribute is RO.)
+
 2005-03-22  Federico Di Gregorio  <fog@debian.org>
 
 	* psycopg/typecast_array.c: added some more structure to implement

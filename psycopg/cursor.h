@@ -56,6 +56,7 @@ typedef struct {
     Oid         lastoid;   /* last oid from an insert or InvalidOid */
 
     PyObject *casts;      /* an array (tuple) of typecast functions */
+    PyObject *caster;     /* the current typecaster object */
     
     PyObject *copyfile;   /* file-like used during COPY TO/FROM ops */
     long int  copysize;   /* size of the copy buffer during COPY TO/FROM ops */
