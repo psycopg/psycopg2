@@ -49,13 +49,19 @@ basic_types = (['NUMBER', ['INT8', 'INT4', 'INT2', 'FLOAT8', 'FLOAT4',
                ['BINARY', ['BYTEA']],
                ['ROWID', ['OID']])
 
+# unfortunately we don't have a nice way to extract array information
+# from postgresql headers; we'll have to do it hard-coding :/
+array_types = (['LONGINTEGER', [1016]],
+               ['INTEGER', [1005, 1006, 1007]],
+               ['STRING', [1002, 1003, 1009, 1014, 1015]])
+
 # this is the header used to compile the data in the C module
 HEADER = """
 typecastObject_initlist typecast_builtins[] = {
 """
 
 # then comes the footer
-FOOTER = """    {NULL, NULL, NULL}\n};\n"""
+FOOTER = """    {NULL, NULL, NULL, NULL}\n};\n"""
 
 
 # usefull error reporting function
@@ -92,8 +98,16 @@ for t in basic_types:
     s = str(found_types[k])
     s = '{' + s[1:-1] + ', 0}'
     stypes = stypes + ('static long int typecast_%s_types[] = %s;\n' % (k, s))
-    sstruct = sstruct + ('    {"%s", typecast_%s_types, typecast_%s_cast},\n'
-                         % (k, k, k))
+    sstruct += ('  {"%s", typecast_%s_types, typecast_%s_cast, NULL},\n'
+                % (k, k, k))
+for t in array_types:
+    kt = t[0]
+    ka = t[0]+'ARRAY'
+    s = str(t[1])
+    s = '{' + s[1:-1] + ', 0}'
+    stypes = stypes + ('static long int typecast_%s_types[] = %s;\n' % (ka, s))
+    sstruct += ('  {"%s", typecast_%s_types, typecast_%s_cast, "%s"},\n'
+                % (ka, ka, ka, kt))
 sstruct = HEADER + sstruct + FOOTER
 
 print stypes

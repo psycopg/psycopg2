@@ -1,3 +1,10 @@
+2005-03-22  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/typecast_array.c: added some more structure to implement
+	array typecasting.
+
+	* scripts/buildtypes.py: new version to include array data.
+
 2005-03-12  Federico Di Gregorio  <fog@debian.org>
 
 	* psycopg/cursor_type.c (psyco_curs_executemany): implemented as a

@@ -50,6 +50,8 @@ skip_until_space(char *s)
 #include "psycopg/typecast_datetime.c"
 #endif
 
+#include "psycopg/typecast_array.c"
+
 #include "psycopg/typecast_builtins.c"
 
 /* a list of initializers, used to make the typecasters accessible anyway */

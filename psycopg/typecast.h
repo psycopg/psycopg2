@@ -51,6 +51,9 @@ typedef struct {
     char *name;
     long int *values;
     typecast_function cast;
+
+    /* base is the base typecaster for arrays */
+    char *base;
 } typecastObject_initlist;
 
 /* the type dictionary, much faster to access it globally */
