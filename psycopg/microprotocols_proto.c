@@ -34,6 +34,22 @@
 
 /** void protocol implementation **/
 
+/* prepare - prepare object for quotation */
+
+#define psyco_isqlquote_prepare_doc \
+"prepare(conn) -> prepare object with connection 'conn'"
+
+static PyObject *
+psyco_isqlquote_prepare(isqlquoteObject *self, PyObject *args)
+{
+    PyObject* conn = NULL;
+   
+    if (!PyArg_ParseTuple(args, "O", &conn)) return NULL;
+    
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 /* getquoted - return quoted representation for object */
 
 #define psyco_isqlquote_getquoted_doc \
@@ -90,6 +106,8 @@ static struct PyMethodDef isqlquoteObject_methods[] = {
      METH_VARARGS, psyco_isqlquote_getbinary_doc},
     {"getbuffer", (PyCFunction)psyco_isqlquote_getbuffer,
      METH_VARARGS, psyco_isqlquote_getbuffer_doc},
+    {"prepare", (PyCFunction)psyco_isqlquote_prepare,
+     METH_VARARGS, psyco_isqlquote_prepare_doc},
     {NULL}
 };
 

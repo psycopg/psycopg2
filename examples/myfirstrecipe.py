@@ -88,7 +88,10 @@ class SQL_IN(object):
     
     def __init__(self, seq):
 	self._seq = seq
-	
+
+    def prepare(self, conn):
+        pass
+
     def getquoted(self):
         # this is the important line: note how every object in the
         # list is adapted and then how getquoted() is called on it
@@ -98,6 +101,7 @@ class SQL_IN(object):
 	return '(' + ', '.join(qobjs) + ')'
 	
     __str__ = getquoted
+
     
 # add our new adapter class to psycopg list of adapters
 register_adapter(tuple, SQL_IN)
