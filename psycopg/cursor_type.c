@@ -896,12 +896,17 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
 "copy_from(file, table, sep='\\t', null='NULL') -> copy file to table."
 
 static int
-_psyco_curs_copy_from_check(PyObject *o)
+_psyco_curs_has_write_check(PyObject* o, void* var)
 {
-    if (PyObject_GetAttrString(o, "write")
+    if (PyObject_HasAttrString(o, "write")) {
+        Py_INCREF(o);
+        *((PyObject**)var) = o;
         return 1;
-        else
-        
+    }
+    else {
+        PyErr_SetString(TypeError, "argument 1 must have a .write() method");
+        return 0;
+    }   
 }
 
 static PyObject *
@@ -912,9 +917,9 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args)
     long int bufsize = DEFAULT_COPYSIZE;
     PyObject *file, *res = NULL;
 
-    if (!PyArg_ParseTuple(args, "O!s|ssi",
-                          &PyFile_Type, &file, &table_name,
-                          &sep, &null, &bufsize)) {
+    if (!PyArg_ParseTuple(args, "O&s|ssi",
+                          _psyco_curs_has_write_check, &file,
+                          &table_name, &sep, &null, &bufsize)) {
         return NULL;
     }
     

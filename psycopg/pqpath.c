@@ -749,7 +749,7 @@ pq_fetch(cursorObject *curs)
         curs->rowcount = 0;
 #ifdef HAVE_PQPROTOCOL3
         if (curs->conn->protocol == 3)
-            ex = _pq_copy_out_3(curs);
+            ex = _pq_copy_out_v3(curs);
         else
 #endif
             ex = _pq_copy_out(curs);

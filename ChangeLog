@@ -1,3 +1,16 @@
+2005-01-29  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/pqpath.c (_pq_fetch_tuples): fixed scale-related
+	segfault (*fourth* mail from Andrea. Another couple like this and
+	psycopg 2 will exit alpha at warp speed.)
+	
+	* psycopg/pqpath.c (pq_fetch): _pq_copy_out_3 -> _pq_copy_out_v3
+	(second and third mail from Andrea. :/)
+
+	* psycopg/cursor_type.c (_psyco_curs_has_write_check): added check
+	on .write() attribute, fixed compilation problems (first mail from
+	Andrea Arcangeli.)
+
 2005-01-20  Federico Di Gregorio  <fog@debian.org>
 
 	* lib/extensions.py (register_adapter): added register_adapter
