@@ -1,5 +1,12 @@
 2005-03-02  Federico Di Gregorio  <fog@debian.org>
 
+	* COPY TO implemented using both old and new (v3) protocol.
+
+	* psycopg/pqpath.c (_pq_copy_out_v3): implemented and working.
+
+	* psycopg/cursor_type.c (psyco_curs_copy_to): added cursor object
+	interface for copy_to.
+
 	* COPY FROM implemented using both old and new (v3) protocol.
 
 	* psycopg/config.h (Dprintf): declaration for asprintf is gone.

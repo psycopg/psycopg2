@@ -451,7 +451,7 @@ _pq_fetch_tuples(cursorObject *curs)
     /* calculate the display size for each column (cpu intensive, can be
        switched off at configuration time) */
 #ifdef PSYCOPG_DISPLAY_SIZE
-    dsize = (int *)calloc(pgnfields, sizeof(int));
+    dsize = (int *)PyMem_Malloc(pgnfields * sizeof(int));
     if (dsize != NULL) {
         if (curs->rowcount == 0) {
             for (i=0; i < pgnfields; i++)
@@ -554,7 +554,7 @@ _pq_fetch_tuples(cursorObject *curs)
         PyTuple_SET_ITEM(dtitem, 6, Py_None);
     }
     
-    if (dsize) free(dsize);
+    if (dsize) PyMem_Free(dsize);
 }
 
 #ifdef HAVE_PQPROTOCOL3
@@ -566,8 +566,6 @@ _pq_copy_in_v3(cursorObject *curs)
        exception */
     PyObject *o;
     int length = 0, error = 0;
-
-    Dprintf("_pq_copy_in_v3: called with object at %p", curs->copyfile);
     
     while (1) {
         o = PyObject_CallMethod(curs->copyfile, "read", "i", curs->copysize);
@@ -589,8 +587,6 @@ _pq_copy_in_v3(cursorObject *curs)
     }
     
     Py_XDECREF(o);
-
-    Dprintf("_pq_copy_in_v3: error = %d", error);
     
     if (error == 0 || error == 2)
         /* 0 means that the copy went well, 2 that there was an error on the
@@ -657,7 +653,7 @@ _pq_copy_out_v3(cursorObject *curs)
         Py_END_ALLOW_THREADS;
             
         if (len > 0 && buffer) {
-            PyObject_CallMethod(curs->copyfile, "write", "s", buffer);
+            PyObject_CallMethod(curs->copyfile, "write", "s#", buffer, len);
             PQfreemem(buffer);
         }
         /* we break on len == 0 but note that that should *not* happen,
@@ -671,6 +667,13 @@ _pq_copy_out_v3(cursorObject *curs)
         return -1;
     }
 
+    /* and finally we grab the operation result from the backend */
+    IFCLEARPGRES(curs->pgres);
+    while ((curs->pgres = PQgetResult(curs->conn->pgconn)) != NULL) {
+        if (PQresultStatus(curs->pgres) == PGRES_FATAL_ERROR)
+            pq_raise(curs->conn, curs, NULL, NULL);
+        IFCLEARPGRES(curs->pgres);
+    }
     return 1;
 }
 #endif
@@ -680,11 +683,11 @@ _pq_copy_out(cursorObject *curs)
 {
     char buffer[4096];
     int status, len;
-    PyObject *o;
 
     while (1) {
         Py_BEGIN_ALLOW_THREADS;
         status = PQgetline(curs->conn->pgconn, buffer, 4096);
+        Py_END_ALLOW_THREADS;
         if (status == 0) {
             if (buffer[0] == '\\' && buffer[1] == '.') break;
 
@@ -695,21 +698,27 @@ _pq_copy_out(cursorObject *curs)
             len = 4096-1;
         }
         else {
-            Py_BLOCK_THREADS;
             return -1;
         }
-        Py_END_ALLOW_THREADS;
         
-        o = PyString_FromStringAndSize(buffer, len);
-        PyObject_CallMethod(curs->copyfile, "write", "O", o);
-        Py_DECREF(o);
+        PyObject_CallMethod(curs->copyfile, "write", "s#", buffer, len);
     }
 
-    if (PQendcopy(curs->conn->pgconn) != 0) return -1;
+    status = 1;
+    if (PQendcopy(curs->conn->pgconn) != 0)
+        status = -1;
     
-    return 1;
-}
+    /* if for some reason we're using a protocol 3 libpq to connect to a
+       protocol 2 backend we still need to cycle on the result set */
+    IFCLEARPGRES(curs->pgres);
+    while ((curs->pgres = PQgetResult(curs->conn->pgconn)) != NULL) {
+        if (PQresultStatus(curs->pgres) == PGRES_FATAL_ERROR)
+            pq_raise(curs->conn, curs, NULL, NULL);
+        IFCLEARPGRES(curs->pgres);
+    }
 
+    return status;
+}
 
 int
 pq_fetch(cursorObject *curs)
@@ -840,6 +849,8 @@ pq_fetch(cursorObject *curs)
         break;
     }
 
+    Dprintf("pq_fetch: fetching done; check for critical errors");
+    
     /* error checking, close the connection if necessary (some critical errors
        are not really critical, like a COPY FROM error: if that's the case we
        raise the exception but we avoid to close the connection) */
