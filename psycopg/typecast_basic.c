@@ -30,8 +30,11 @@ typecast_INTEGER_cast(unsigned char *s, int len, PyObject *curs)
     unsigned char buffer[12];
     
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
-    strncpy(buffer, s, len); buffer[len] = '\0';
-    return PyInt_FromString(buffer, NULL, 0);
+    if (s[len] != '\0') {
+        strncpy(buffer, s, len); buffer[len] = '\0';
+        s = buffer;
+    }
+    return PyInt_FromString(s, NULL, 0);
 }
 
 /** LONGINTEGER - cast long integers (8 bytes) to python long **/
@@ -42,7 +45,10 @@ typecast_LONGINTEGER_cast(unsigned char *s, int len, PyObject *curs)
     unsigned char buffer[24];
     
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
-    strncpy(buffer, s, len); buffer[len] = '\0';
+    if (s[len] != '\0') {
+        strncpy(buffer, s, len); buffer[len] = '\0';
+        s = buffer;
+    }
     return PyLong_FromString(s, NULL, 0);
 }
 
@@ -51,10 +57,14 @@ typecast_LONGINTEGER_cast(unsigned char *s, int len, PyObject *curs)
 static PyObject *
 typecast_FLOAT_cast(unsigned char *s, int len, PyObject *curs)
 {
+    /* FIXME: is 64 large enough for any float? */
     unsigned char buffer[64];
     
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
-    strncpy(buffer, s, len); buffer[len] = '\0';
+    if (s[len] != '\0') {
+        strncpy(buffer, s, len); buffer[len] = '\0';
+        s = buffer;
+    }
     return PyFloat_FromDouble(atof(s));
 }
 
@@ -144,17 +154,23 @@ static PyObject *
 typecast_BINARY_cast(unsigned char *s, int l, PyObject *curs)
 {
     PyObject *res;
-    unsigned char *str, saved;
+    unsigned char *str, *buffer = NULL;
     size_t len;
 
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
 
     /* PQunescapeBytea absolutely wants a 0-terminated string and we don't
-       want to copy the whole buffer, right? Wrong... :/ */
-    saved = s[l]; s[l] = '\0';
+       want to copy the whole buffer, right? Wrong, but there isn't any other
+       way :/ */
+    if (s[l] != '\0') {
+        if ((buffer = PyMem_Malloc(l+1)) == NULL)
+            PyErr_NoMemory();
+        strncpy(buffer, s, l); buffer[l] = '\0';
+        s = buffer;
+    }
     str = PQunescapeBytea(s, &len);
     Dprintf("typecast_BINARY_cast: unescaped %d bytes", len);
-    s[l] = saved;
+    if (buffer) PyMem_Free(buffer);
     
     /* TODO: using a PyBuffer would make this a zero-copy operation but we'll
        need to define our own buffer-derived object to keep a reference to the
@@ -196,7 +212,8 @@ typecast_DECIMAL_cast(unsigned char *s, int len, PyObject *curs)
     
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
 
-    buffer = PyMem_Malloc(len+1);
+    if ((buffer = PyMem_Malloc(len+1)) == NULL)
+        PyErr_NoMemory();
     strncpy(buffer, s, len); buffer[len] = '\0';
     res = PyObject_CallFunction(decimalType, "s", buffer);
     PyMem_Free(buffer);

@@ -22,20 +22,27 @@
 
 /** typecast_array_scan - scan a string looking for array items **/
 
-#define ASCAN_EOF   0
-#define ASCAN_BEGIN 1
-#define ASCAN_END   2
-#define ASCAN_TOKEN 3
+#define ASCAN_EOF    0
+#define ASCAN_BEGIN  1
+#define ASCAN_END    2
+#define ASCAN_TOKEN  3
+#define ASCAN_QUOTED 4
 
 static int
 typecast_array_tokenize(unsigned char *str, int strlength,
                         int *pos, unsigned char** token, int *length)
 {
-    int i = *pos;
+    int i;
+    int quoted = 0;
 
-    Dprintf("TOKENIZE for %d, pos = %d", strlength, *pos);
-    
-    while (i < strlength) {
+    /* first we check for quotes, used when the content of the item contains
+       special or quoted characters */
+    if (str[*pos] == '"') {
+        quoted = 1;
+        *pos += 1;
+    }
+
+    for (i = *pos ; i < strlength ; i++) {
         switch (str[i]) {
         case '{':
             *pos = i+1;
@@ -48,17 +55,21 @@ typecast_array_tokenize(unsigned char *str, int strlength,
         case ',':
             *token = &str[*pos];
             *length = i - *pos;
+            if (quoted == 1)
+                *length -= 1;
             *pos = i+1;
-            Dprintf("TOKENIZE pos = %d, length = %d", *pos, *length);
             return ASCAN_TOKEN;
 
         default:
-            i++;
+            /* nothing to do right now */
+            break;
         }
     }
 
     *token = &str[*pos];
     *length = i - *pos;
+    if (quoted == 1)
+        *length -= 1;
     
     return ASCAN_EOF;
 }
@@ -89,10 +100,12 @@ typecast_array_scan(unsigned char *str, int strlength,
     return 1;
 }
 
-/** LONGINTEGERARRAY and INTEGERARRAY - cast integers arrays **/
 
+/** GENERIC - a generic typecaster that can be used when no special actions
+    have to be taken on the single items **/
+   
 static PyObject *
-typecast_INTEGERARRAY_cast(unsigned char *str, int len, PyObject *curs)
+typecast_GENERIC_ARRAY_cast(unsigned char *str, int len, PyObject *curs)
 {
     PyObject *obj = NULL;
     PyObject *base = ((typecastObject*)((cursorObject*)curs)->caster)->bcast;
@@ -114,16 +127,12 @@ typecast_INTEGERARRAY_cast(unsigned char *str, int len, PyObject *curs)
     return obj;
 }
 
-#define typecast_LONGINTEGERARRAY_cast typecast_INTEGERARRAY_cast
+/** LONGINTEGERARRAY and INTEGERARRAY - cast integers arrays **/
+
+#define typecast_LONGINTEGERARRAY_cast typecast_GENERIC_ARRAY_cast
+#define typecast_INTEGERARRAY_cast typecast_GENERIC_ARRAY_cast
 
 /** STRINGARRAY - cast integers arrays **/
 
-static PyObject *
-typecast_STRINGARRAY_cast(unsigned char *str, int len, PyObject *curs)
-{
-    PyObject* obj = NULL;
-     
-    if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
+#define typecast_STRINGARRAY_cast typecast_GENERIC_ARRAY_cast
 
-    return obj;
-}
