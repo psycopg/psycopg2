@@ -1,5 +1,10 @@
 2004-12-14  Federico Di Gregorio  <fog@debian.org>
 
+	* psycopg/cursor_type.c (_psyco_curs_prefetch): fixed bug in
+	interaction between the .isready() method and
+	_psyco_curs_prefetch: isready now store away the pgres but leave
+	prefetch do its work.
+
 	* psycopg/*.c: changed the names of most of the psycopg's built-in
 	types to replect their position in the psycopg._psycopg module.
 

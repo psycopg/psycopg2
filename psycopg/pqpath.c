@@ -669,8 +669,8 @@ pq_fetch(cursorObject *curs)
 
     /* even if we fail, we remove any information about the previous query */
     curs_reset(curs);
-
-     /* we check the result from the previous execute; if the result is not
+    
+    /* we check the result from the previous execute; if the result is not
        already there, we need to consume some input and go to sleep until we
        get something edible to eat */
     if (!curs->pgres) {

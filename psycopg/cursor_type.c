@@ -511,7 +511,8 @@ _psyco_curs_prefetch(cursorObject *self)
     }
     pthread_mutex_unlock(&(self->conn->lock));
     
-    if (self->pgres == NULL) {
+    if (self->pgres == NULL || self->needsfetch) {
+        self->needsfetch = 0;
         Dprintf("_psyco_curs_prefetch: trying to fetch data");
         do {
             i = pq_fetch(self);
@@ -978,6 +979,7 @@ psyco_curs_isready(cursorObject *self, PyObject *args)
         self->pgres = PQgetResult(self->conn->pgconn);
         self->conn->async_cursor = NULL;
         pthread_mutex_unlock(&(self->conn->lock));
+        self->needsfetch = 1;
         Py_INCREF(Py_True);
         return Py_True;
     }
