@@ -40,6 +40,8 @@ class TypesBasicTests(TestCase):
     def testNumber(self):
         s = self.execute("SELECT %s AS foo", (1971,))
         self.failUnless(s == 1971, "wrong integer quoting: " + str(s))
+        s = self.execute("SELECT %s AS foo", (1971L,))
+        self.failUnless(s == 1971L, "wrong integer quoting: " + str(s))
         s = self.execute("SELECT %s AS foo", (19.10,))
         self.failUnless(s == 19.10, "wrong float quoting: " + str(s))
 

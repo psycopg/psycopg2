@@ -1,13 +1,30 @@
+2005-03-12  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/cursor_type.c (_psyco_curs_buildrow_fill): modified to
+	call typecast_cast().
+
+	* psycopg/typecast.c (typecast_call/typecast_cast): modified
+	typecast_call to use the new typecast_cast that avoids one string
+	conversion on every cast.
+
 2005-03-04  Federico Di Gregorio  <fog@initd.org>
 
-	* Release 1.99.13.1.
+	* Release 1.99.12.1.
 
 	* psycopg/adapter_asis.c (asis_str): changed call to PyObject_Repr
 	to PyObject_Str to avoid problems with long integers.
 
+2005-03-03  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/typecast.h: added array casting functions.
+
+	* scripts/maketypes.sh: does not generate pgversion.h anymore. 
+
+	* Updated all examples for the release.
+
 2005-03-02  Federico Di Gregorio  <fog@debian.org>
 
-	* Release 1.99.13.
+	* Release 1.99.12.
 	
 	* psycopg/adapter_*.c: added __conform__ to all adapters.
 	

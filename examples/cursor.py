@@ -26,7 +26,6 @@ if len(sys.argv) > 1:
     DSN = sys.argv[1]
 
 print "Opening connection using dsn:", DSN
-
 conn = psycopg.connect(DSN)
 print "Encoding for this connection is", conn.encoding
 
@@ -51,7 +50,7 @@ class Cursor(psycopg.extensions.cursor):
 	    raise NoDataError("no more data")
         return d
     
-curs = conn.cursor(factory=Cursor)
+curs = conn.cursor(cursor_factory=Cursor)
 curs.execute("SELECT 1 AS foo")
 print "Result of fetchone():", curs.fetchone()
 

@@ -34,21 +34,6 @@
 
 /** void protocol implementation **/
 
-/* prepare - prepare object for quotation */
-
-#define psyco_isqlquote_prepare_doc \
-"prepare(conn) -> prepare object with connection 'conn'"
-
-static PyObject *
-psyco_isqlquote_prepare(isqlquoteObject *self, PyObject *args)
-{
-    PyObject* conn = NULL;
-   
-    if (!PyArg_ParseTuple(args, "O", &conn)) return NULL;
-    
-    Py_INCREF(Py_None);
-    return Py_None;
-}
 
 /* getquoted - return quoted representation for object */
 

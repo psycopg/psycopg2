@@ -47,7 +47,7 @@ from distutils.core import setup, Extension
 from distutils.sysconfig import get_python_inc
 import distutils.ccompiler
 
-PSYCOPG_VERSION = '1.99.12.1'
+PSYCOPG_VERSION = '1.99.13/devel'
 version_flags   = []
 
 have_pydatetime = False

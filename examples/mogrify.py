@@ -1,4 +1,4 @@
-# mogrify.py - test all possible type mogrifications
+# mogrify.py - test all possible simple type mogrifications
 # -*- encoding: latin1 -*-
 #
 # Copyright (C) 2004 Federico Di Gregorio  <fog@debian.org>
@@ -33,14 +33,14 @@ curs = conn.cursor()
 curs.execute("SELECT %(foo)s AS foo", {'foo':'bar'})
 curs.execute("SELECT %(foo)s AS foo", {'foo':None})
 curs.execute("SELECT %(foo)s AS foo", {'foo':True})
-curs.execute("SELECT %(foo)f AS foo", {'foo':42})
+curs.execute("SELECT %(foo)s AS foo", {'foo':42})
 curs.execute("SELECT %(foo)s AS foo", {'foo':u'yattà!'})
 curs.execute("SELECT %(foo)s AS foo", {'foo':u'bar'})
 
 print curs.mogrify("SELECT %(foo)s AS foo", {'foo':'bar'})
 print curs.mogrify("SELECT %(foo)s AS foo", {'foo':None})
 print curs.mogrify("SELECT %(foo)s AS foo", {'foo':True})
-print curs.mogrify("SELECT %(foo)f AS foo", {'foo':42})
+print curs.mogrify("SELECT %(foo)s AS foo", {'foo':42})
 print curs.mogrify("SELECT %(foo)s AS foo", {'foo':u'yattà!'})
 print curs.mogrify("SELECT %(foo)s AS foo", {'foo':u'bar'})
 

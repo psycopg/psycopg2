@@ -20,59 +20,57 @@
  */
 
 #include <libpq-fe.h>
+#include <stdlib.h>
 
 /** INTEGER - cast normal integers (4 bytes) to python int **/
 
 static PyObject *
-typecast_INTEGER_cast(PyObject *s, PyObject *curs)
+typecast_INTEGER_cast(unsigned char *s, int len, PyObject *curs)
 {
-    if (s == Py_None) {Py_INCREF(s); return s;}
-    return PyNumber_Int(s);
+    if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
+    return PyInt_FromString(s, NULL, 0);
 }
 
 /** LONGINTEGER - cast long integers (8 bytes) to python long **/
 
 static PyObject *
-typecast_LONGINTEGER_cast(PyObject *s, PyObject *curs)
+typecast_LONGINTEGER_cast(unsigned char *s, int len, PyObject *curs)
 {
-    if (s == Py_None) {Py_INCREF(s); return s;}
-    return PyNumber_Long(s);
+    if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
+    return PyLong_FromString(s, NULL, 0);
 }
 
 /** FLOAT - cast floating point numbers to python float **/
 
 static PyObject *
-typecast_FLOAT_cast(PyObject *s, PyObject *curs)
+typecast_FLOAT_cast(unsigned char *s, int len, PyObject *curs)
 {
-    if (s == Py_None) {Py_INCREF(s); return s;}
-    return PyNumber_Float(s);
+    if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
+    return PyFloat_FromDouble(atof(s));
 }
 
 /** STRING - cast strings of any type to python string **/
 
 static PyObject *
-typecast_STRING_cast(PyObject *s, PyObject *curs)
+typecast_STRING_cast(unsigned char *s, int len, PyObject *curs)
 {
-    Py_INCREF(s);
-    return s;
+    if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
+    return PyString_FromStringAndSize(s, len);
 }
 
 /** UNICODE - cast strings of any type to a python unicode object **/
 
 static PyObject *
-typecast_UNICODE_cast(PyObject *s, PyObject *curs)
+typecast_UNICODE_cast(unsigned char *s, int len, PyObject *curs)
 {
     PyObject *enc;
-    
-    if (s == Py_None) {Py_INCREF(s); return s;}
+
+    if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
 
     enc = PyDict_GetItemString(psycoEncodings,
                                ((cursorObject*)curs)->conn->encoding);
     if (enc) {
-        return PyUnicode_Decode(PyString_AsString(s),
-                                PyString_Size(s),
-                                PyString_AsString(enc),
-                                NULL);
+        return PyUnicode_Decode(s, strlen(s), PyString_AsString(enc), NULL);
     }
     else {
        PyErr_Format(InterfaceError,
@@ -134,15 +132,15 @@ typecast_BINARY_cast_unescape(unsigned char *str, size_t *to_length)
 #endif
     
 static PyObject *
-typecast_BINARY_cast(PyObject *s, PyObject *curs)
+typecast_BINARY_cast(unsigned char *s, int l, PyObject *curs)
 {
     PyObject *res;
     unsigned char *str;
     size_t len;
 
-    if (s == Py_None) {Py_INCREF(s); return s;}
+    if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
    
-    str = PQunescapeBytea(PyString_AS_STRING(s), &len);
+    str = PQunescapeBytea(s, &len);
     Dprintf("typecast_BINARY_cast: unescaped %d bytes", len);
     
     /* TODO: using a PyBuffer would make this a zero-copy operation but we'll
@@ -159,13 +157,13 @@ typecast_BINARY_cast(PyObject *s, PyObject *curs)
 /** BOOLEAN - cast boolean value into right python object **/
 
 static PyObject *
-typecast_BOOLEAN_cast(PyObject *s, PyObject *curs)
+typecast_BOOLEAN_cast(unsigned char *s, int len, PyObject *curs)
 {
     PyObject *res;
-    
-    if (s == Py_None) {Py_INCREF(s); return s;}
 
-    if (PyString_AS_STRING(s)[0] == 't')
+    if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
+
+    if (s[0] == 't')
         res = Py_True;
     else
         res = Py_False;
@@ -178,10 +176,10 @@ typecast_BOOLEAN_cast(PyObject *s, PyObject *curs)
 
 #ifdef HAVE_DECIMAL
 static PyObject *
-typecast_DECIMAL_cast(PyObject *s, PyObject *curs)
+typecast_DECIMAL_cast(unsigned char *s, int len, PyObject *curs)
 {
-    if (s == Py_None) {Py_INCREF(s); return s;}
-    return PyObject_CallFunction(decimalType, "O", s);
+    if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
+    return PyObject_CallFunction(decimalType, "s", s);
 }
 #else
 #define typecast_DECIMAL_cast  typecast_FLOAT_cast

@@ -49,10 +49,10 @@ curs.execute("""INSERT INTO test_oid
 moid = curs.lastrowid
 print "Oid for %(name)s %(surname)s" % data[1], "is", moid
 
-curs.execute("SELECT * FROM test_oid WHERE oid = %d", (foid,))
+curs.execute("SELECT * FROM test_oid WHERE oid = %s", (foid,))
 print "Oid", foid, "selected %s %s" % curs.fetchone()
 
-curs.execute("SELECT * FROM test_oid WHERE oid = %d", (moid,))
+curs.execute("SELECT * FROM test_oid WHERE oid = %s", (moid,))
 print "Oid", moid, "selected %s %s" % curs.fetchone()
 
 curs.execute("DROP TABLE test_oid")

@@ -81,7 +81,7 @@ def insert_func(conn_or_pool, rows):
                 conn = conn_or_pool.getconn()
         c = conn.cursor()
         try:
-            c.execute("INSERT INTO test_threads VALUES (%s, %d, %f)",
+            c.execute("INSERT INTO test_threads VALUES (%s, %s, %s)",
                       (str(i), i, float(i)))
         except psycopg.ProgrammingError, err:
             print name, ": an error occurred; skipping this insert"

@@ -30,6 +30,7 @@
 #include "psycopg/cursor.h"
 #include "psycopg/connection.h"
 #include "psycopg/pqpath.h"
+#include "psycopg/typecast.h"
 #include "psycopg/microprotocols.h"
 #include "psycopg/microprotocols_proto.h"
 #include "pgversion.h"
@@ -545,31 +546,26 @@ static PyObject *
 _psyco_curs_buildrow_fill(cursorObject *self, PyObject *res,
                           int row, int n, int istuple)
 {
-    int i;
-    PyObject *str, *val;
+    int i, len;
+    unsigned char *str;
+    PyObject *val;
     
     for (i=0; i < n; i++) {
         if (PQgetisnull(self->pgres, row, i)) {
-            Py_INCREF(Py_None);
-            str = Py_None;
+            str = NULL;
+            len = 0;
         }
         else {
-            char *s = PQgetvalue(self->pgres, row, i);
-            int l = PQgetlength(self->pgres, row, i);
-            str = PyString_FromStringAndSize(s, l);
-
-            Dprintf("_psyco_curs_buildrow: row %ld, element %d, len %i",
-                    self->row, i, l);
+            str = PQgetvalue(self->pgres, row, i);
+            len = PQgetlength(self->pgres, row, i);
         }
 
-        Dprintf("_psyco_curs_buildrow: str->refcnt = %d", str->ob_refcnt);
-        val = PyObject_CallFunction(PyTuple_GET_ITEM(self->casts, i), "OO",
-                                    str, self);
-        /* here we DECREF str because the typecaster should already have
-           INCREFfed it, if necessary and we don't need it anymore */
-        Py_DECREF(str);
-        Dprintf("_psyco_curs_buildrow: str->refcnt = %d", str->ob_refcnt);
-        
+        Dprintf("_psyco_curs_buildrow: row %ld, element %d, len %i",
+                self->row, i, len);
+
+        val = typecast_cast(PyTuple_GET_ITEM(self->casts, i), str, len,
+                            (PyObject*)self);
+
         if (val) {
             Dprintf("_psyco_curs_buildrow: val->refcnt = %d", val->ob_refcnt);
             if (istuple) {
@@ -590,7 +586,6 @@ _psyco_curs_buildrow_fill(cursorObject *self, PyObject *res,
         }
     }
     return res;
-
 }
 
 static PyObject *

@@ -305,31 +305,15 @@ typecast_destroy(typecastObject *self)
 static PyObject *
 typecast_call(PyObject *obj, PyObject *args, PyObject *kwargs)
 {   
-    PyObject *string, *cursor, *res;
-    
-    typecastObject *self = (typecastObject *)obj;
+    PyObject *string, *cursor;
     
     if (!PyArg_ParseTuple(args, "OO", &string, &cursor)) {
         return NULL;
     }
 
-    if (self->ccast) {
-        Dprintf("typecast_call: calling C cast function");
-        res = self->ccast(string, cursor);
-    }
-    else if (self->pcast) {
-        Dprintf("typecast_call: calling python callable");
-        Py_INCREF(string);
-        res = PyObject_CallFunction(self->pcast, "OO", string, cursor);
-    }
-    else {
-        Py_INCREF(Py_None);
-        res = Py_None;
-    }
-
-    Dprintf("typecast_call: string argument has refcnt = %d",
-            string->ob_refcnt);
-    return res;
+    return typecast_cast(obj,
+                         PyString_AsString(string), PyString_Size(string),
+                         cursor);
 }
 
 
@@ -436,4 +420,21 @@ typecast_from_c(typecastObject_initlist *type)
     return (PyObject *)obj;
 }
 
+PyObject *
+typecast_cast(PyObject *obj, unsigned char *str, int len, PyObject *curs)
+{
+    typecastObject *self = (typecastObject *)obj;
 
+    if (self->ccast) {
+        Dprintf("typecast_call: calling C cast function");
+        return self->ccast(str, len, curs);
+    }
+    else if (self->pcast) {
+        Dprintf("typecast_call: calling python callable");
+        return PyObject_CallFunction(self->pcast, "s#O", str, len, curs);
+    }
+    else {
+        PyErr_SetString(Error, "internal error: no casting function found");
+        return NULL;
+    }
+}

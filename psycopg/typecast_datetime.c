@@ -34,15 +34,12 @@ extern PyObject *pyDeltaTypeP;
 /** DATE - cast a date into a date python object **/
 
 static PyObject *
-typecast_PYDATE_cast(PyObject *s, PyObject *curs)
+typecast_PYDATE_cast(unsigned char *str, int len, PyObject *curs)
 {
     PyObject* obj = NULL;
     int n, y=0, m=0, d=0;
-    char *str;
      
-    if (s == Py_None) {Py_INCREF(s); return s;}
- 
-    str = PyString_AsString(s);
+    if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
     
     /* check for infinity */
     if (!strcmp(str, "infinity") || !strcmp(str, "-infinity")) {
@@ -70,18 +67,16 @@ typecast_PYDATE_cast(PyObject *s, PyObject *curs)
 /** DATETIME - cast a timestamp into a datetime python object **/
 
 static PyObject *
-typecast_PYDATETIME_cast(PyObject *s, PyObject *curs)
+typecast_PYDATETIME_cast(unsigned char *str, int len, PyObject *curs)
 {
     PyObject* obj = NULL;
     int n, y=0, m=0, d=0;
     int hh=0, mm=0;
     int tzh=0, tzm=0;
     double ss=0.0;
-    char tzs=0, *str;
+    char tzs=0;
     
-    if (s == Py_None) {Py_INCREF(s); return s;}
-    
-    str = PyString_AsString(s);
+    if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
     
     /* check for infinity */
     if (!strcmp(str, "infinity") || !strcmp(str, "-infinity")) {
@@ -136,16 +131,13 @@ typecast_PYDATETIME_cast(PyObject *s, PyObject *curs)
 /** TIME - parse time into a time object **/
 
 static PyObject *
-typecast_PYTIME_cast(PyObject *s, PyObject *curs)
+typecast_PYTIME_cast(unsigned char *str, int len, PyObject *curs)
 {
     PyObject* obj = NULL;
     int n, hh=0, mm=0;
-    double ss=0.0;    
-    char *str;
+    double ss=0.0;
     
-    if (s == Py_None) {Py_INCREF(s); return s;}
-
-    str = PyString_AsString(s);
+    if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
         
     n = sscanf(str, "%d:%d:%lf", &hh, &mm, &ss);
     
@@ -168,19 +160,15 @@ typecast_PYTIME_cast(PyObject *s, PyObject *curs)
 /** INTERVAL - parse an interval into a timedelta object **/
 
 static PyObject *
-typecast_PYINTERVAL_cast(PyObject *s, PyObject *curs)
+typecast_PYINTERVAL_cast(unsigned char *str, int len, PyObject *curs)
 {
     long years = 0, months = 0, days = 0, denominator = 1;
     double hours = 0.0, minutes = 0.0, seconds = 0.0, hundredths = 0.0;
     double v = 0.0, sign = 1.0;
     int part = 0, sec;
-    
     double micro;
-    char *str;
 
-    if (s == Py_None) {Py_INCREF(s); return s;}
-    
-    str = PyString_AsString(s);
+    if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
 
     Dprintf("typecast_PYINTERVAL_cast: s = %s", str);
     
