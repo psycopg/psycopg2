@@ -249,12 +249,15 @@ psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
         return NULL;
     }
 
+    pthread_mutex_lock(&(self->conn->lock));
     if (self->conn->async_cursor != NULL
         && self->conn->async_cursor != (PyObject*)self) {
+        pthread_mutex_unlock(&(self->conn->lock));
         PyErr_SetString(ProgrammingError,
                         "asynchronous query already in execution");
         return NULL;
     }
+    pthread_mutex_unlock(&(self->conn->lock));
     
     if (PyUnicode_Check(operation)) {
         PyObject *enc = PyDict_GetItemString(psycoEncodings,
@@ -498,12 +501,15 @@ _psyco_curs_prefetch(cursorObject *self)
     
     /* check if the fetching cursor is the one that did the asynchronous query
        and raise an exception if not */
+    pthread_mutex_lock(&(self->conn->lock));
     if (self->conn->async_cursor != NULL
         && self->conn->async_cursor != (PyObject*)self) {
+        pthread_mutex_unlock(&(self->conn->lock));
         PyErr_SetString(ProgrammingError,
                         "asynchronous fetch by wrong cursor");
         return -2;
     }
+    pthread_mutex_unlock(&(self->conn->lock));
     
     if (self->pgres == NULL) {
         Dprintf("_psyco_curs_prefetch: trying to fetch data");
@@ -622,10 +628,9 @@ psyco_curs_fetchone(cursorObject *self, PyObject *args)
     /* if the query was async aggresively free pgres, to allow
        successive requests to reallocate it */
     if (self->row >= self->rowcount
-        
         && self->conn->async_cursor == (PyObject*)self)
         IFCLEARPGRES(self->pgres);
-    
+
     return res;
 }
 
@@ -687,7 +692,8 @@ psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
 
     /* if the query was async aggresively free pgres, to allow
        successive requests to reallocate it */
-    if (self->row >= self->rowcount && self->conn->async_cursor)
+    if (self->row >= self->rowcount
+        && self->conn->async_cursor == (PyObject*)self)
         IFCLEARPGRES(self->pgres);
     
     return list;
@@ -743,7 +749,8 @@ psyco_curs_fetchall(cursorObject *self, PyObject *args)
 
     /* if the query was async aggresively free pgres, to allow
        successive requests to reallocate it */
-    if (self->row >= self->rowcount && self->conn->async_cursor)
+    if (self->row >= self->rowcount
+        && self->conn->async_cursor == (PyObject*)self)
         IFCLEARPGRES(self->pgres);
     
     return list;
@@ -929,13 +936,21 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args)
 static PyObject *
 psyco_curs_fileno(cursorObject *self, PyObject *args)
 {
+    long int socket;
+    
     if (!PyArg_ParseTuple(args, "")) return NULL;
     EXC_IF_CURS_CLOSED(self);
 
     /* note how we call PQflush() to make sure the user will use
        select() in the safe way! */
+    pthread_mutex_lock(&(self->conn->lock));
+    Py_BEGIN_ALLOW_THREADS;
     PQflush(self->conn->pgconn);
-    return PyInt_FromLong((long int)PQsocket(self->conn->pgconn));
+    socket = (long int)PQsocket(self->conn->pgconn);
+    Py_END_ALLOW_THREADS;
+    pthread_mutex_unlock(&(self->conn->lock));
+
+    return PyInt_FromLong(socket);
 }
 
 /* extension: isready - return true if data from async execute is ready */
@@ -949,11 +964,20 @@ psyco_curs_isready(cursorObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "")) return NULL;
     EXC_IF_CURS_CLOSED(self);
 
+    /* pq_is_busy does its own locking, we don't need anything special but if
+       the cursor is ready we need to fetch the result and free the connection
+       for the next query. */
+    
     if (pq_is_busy(self->conn)) {
         Py_INCREF(Py_False);
         return Py_False;
     }
     else {
+        IFCLEARPGRES(self->pgres);
+        pthread_mutex_lock(&(self->conn->lock));
+        self->pgres = PQgetResult(self->conn->pgconn);
+        self->conn->async_cursor = NULL;
+        pthread_mutex_unlock(&(self->conn->lock));
         Py_INCREF(Py_True);
         return Py_True;
     }
@@ -1061,6 +1085,8 @@ cursor_setup(cursorObject *self, connectionObject *conn)
             self, ((PyObject *)self)->ob_refcnt);
     
     self->conn = conn;
+    Py_INCREF((PyObject*)self->conn);
+    
     self->closed = 0;
     
     self->pgres = NULL; 
@@ -1092,25 +1118,10 @@ cursor_dealloc(PyObject* obj)
 {
     cursorObject *self = (cursorObject *)obj;
 
-    /* if necessary remove cursor from connection */
-    if (self->conn != NULL) {
-        PyObject *t;
-        int len, i;
-
-        if ((len = PyList_Size(self->conn->cursors)) > 0) {
-            for (i = 0; i < len; i++) {
-                t = PyList_GET_ITEM(self->conn->cursors, i);
-                if (self == (cursorObject *)t) {
-                    Dprintf("cursor_dealloc: found myself in cursor list");
-                    PySequence_DelItem(self->conn->cursors, i);
-                    break;
-                }
-            }
-        }
-    }
 
     if (self->query) free(self->query);
-    
+
+    Py_DECREF((PyObject*)self->conn);
     Py_XDECREF(self->casts);
     Py_XDECREF(self->description);
     Py_XDECREF(self->pgstatus);

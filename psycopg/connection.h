@@ -40,8 +40,6 @@ extern PyTypeObject connectionType;
 typedef struct {
     PyObject HEAD;
 
-    PyObject *cursors;      /* all cursors derived from this connection */
-
     pthread_mutex_t lock;   /* the global connection lock */
 
     char *dsn;              /* data source name */

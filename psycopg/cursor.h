@@ -72,11 +72,12 @@ typedef struct {
 extern void curs_reset(cursorObject *self);
     
 /* exception-raising macros */
-#define EXC_IF_CURS_CLOSED(self) if ((self)->closed) { \
-    PyErr_SetString(InterfaceError, "cursor already closed"); \
+#define EXC_IF_CURS_CLOSED(self) \
+if ((self)->closed || ((self)->conn && (self)->conn->closed)) { \
+    PyErr_SetString(InterfaceError, "cursor already closed");   \
     return NULL; }
 
-#define EXC_IF_NO_TUPLES(self) if ((self)->notuples) { \
+#define EXC_IF_NO_TUPLES(self) if ((self)->notuples) {        \
     PyErr_SetString(ProgrammingError, "no results to fetch"); \
     return NULL; }
     

@@ -131,9 +131,6 @@ conn_connect(connectionObject *self)
 void
 conn_close(connectionObject *self)
 {
-    int len, i;
-    PyObject *t = NULL;
-
     /* sets this connection as closed even for other threads; also note that
        we need to check the value of pgconn, because we get called even when
        the connection fails! */
@@ -143,34 +140,17 @@ conn_close(connectionObject *self)
     self->closed = 1;
 
     /* execute a forced rollback on the connection (but don't check the
-       result, we're going to close the pq connection anyway */
-    if (self->pgconn) pq_abort(self);
-    
-    /* orphans all the children cursors but do NOT destroy them (note that we
-       need to lock the connection before orphaning a cursor: we don't want to
-       remove a connection from a cursor executing a DB operation */
-    pthread_mutex_unlock(&self->lock);
-    Py_END_ALLOW_THREADS;
-
-    pthread_mutex_lock(&self->lock);
-    len = PyList_Size(self->cursors);
-    Dprintf("conn_close: ophaning %d cursors", len);
-    for (i = len-1; i >= 0; i--) {
-        t = PySequence_GetItem(self->cursors, i);
-        Dprintf("conn close:     cursor at %p: refcnt = %d", t, t->ob_refcnt);
-        PySequence_DelItem(self->cursors, i);
-        ((cursorObject *)t)->conn = NULL; /* orphaned */
-        Dprintf("conn_close:     -> new refcnt = %d", t->ob_refcnt);
-    }
-    pthread_mutex_unlock(&self->lock);
-    
-    /* now that all cursors have been orphaned (they can't operate on the
-       database anymore) we can shut down the connection */
+       result, we're going to close the pq connection anyway */    
     if (self->pgconn) {
+        pq_abort(self);
         PQfinish(self->pgconn);
         Dprintf("conn_close: PQfinish called");
         self->pgconn = NULL;
     }
+
+    pthread_mutex_unlock(&self->lock);
+    Py_END_ALLOW_THREADS;
+
 }
 
 /* conn_commit - commit on a connection */

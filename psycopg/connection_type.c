@@ -65,11 +65,6 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *keywds)
 
     /* TODO: added error checking on obj (cursor) here */
     
-    /* add the cursor to this connection's list (and decref it, so that it has
-       the right number of references to go away even if still in the list) */
-    PyList_Append(self->cursors, obj);
-    Py_DECREF(obj);
-        
     Dprintf("psyco_conn_cursor: new cursor at %p: refcnt = %d",
             obj, obj->ob_refcnt);
     return obj;
@@ -244,7 +239,6 @@ static struct PyMemberDef connectionObject_members[] = {
     {"isolation_level", T_LONG,
      offsetof(connectionObject, isolation_level), RO},
     {"encoding", T_STRING, offsetof(connectionObject, encoding), RO},
-    {"cursors", T_OBJECT, offsetof(connectionObject, cursors), RO},   
     {"notices", T_OBJECT, offsetof(connectionObject, notice_list), RO},
     {"notifies", T_OBJECT, offsetof(connectionObject, notifies), RO},
     {"dsn", T_STRING, offsetof(connectionObject, dsn), RO},
@@ -261,7 +255,6 @@ connection_setup(connectionObject *self, char *dsn)
             self, ((PyObject *)self)->ob_refcnt);
     
     self->dsn = strdup(dsn);
-    self->cursors = PyList_New(0);
     self->notice_list = PyList_New(0);
     self->closed = 0;
     self->isolation_level = 1;
@@ -273,7 +266,6 @@ connection_setup(connectionObject *self, char *dsn)
     pthread_mutex_init(&(self->lock), NULL);
     
     if (conn_connect(self) != 0) {
-        Py_XDECREF(self->cursors);
         pthread_mutex_destroy(&(self->lock));
         Dprintf("connection_init: FAILED");
         return -1;
@@ -291,7 +283,6 @@ connection_dealloc(PyObject* obj)
 
     if (self->closed == 0) conn_close(self);
     
-    Py_XDECREF(self->cursors);
     if (self->dsn) free(self->dsn);
     if (self->encoding) free(self->encoding);
     if (self->critical) free(self->critical);

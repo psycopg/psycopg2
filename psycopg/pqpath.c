@@ -19,6 +19,12 @@
  * Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/* IMPORTANT NOTE: no function in this file do its own connection locking
+   except for pg_execute and pq_fetch (that are somehow high-level. This means
+   that all the othe functions should be called while holding a lock to the
+   connection.
+*/
+
 #include <Python.h>
 #include <string.h>
 
@@ -33,7 +39,9 @@
 #include "psycopg/pgtypes.h"
 #include "psycopg/pgversion.h"
 
-/* pq_raise - raise a python exception of the right kind */
+/* pq_raise - raise a python exception of the right kind
+
+   This function should be called while holding the GIL. */
 
 void
 pq_raise(connectionObject *conn, cursorObject *curs, PyObject *exc, char *msg)
@@ -106,7 +114,8 @@ pq_raise(connectionObject *conn, cursorObject *curs, PyObject *exc, char *msg)
    critical condition like out of memory or lost connection. it save the error
    message and mark the connection as 'wanting cleanup'.
 
-   both functions do not call any Py_*_ALLOW_THREADS macros. */
+   both functions do not call any Py_*_ALLOW_THREADS macros.
+   pq_resolve_critical should be called while holding the GIL. */
 
 void
 pq_set_critical(connectionObject *conn, const char *msg)
@@ -140,6 +149,7 @@ pq_resolve_critical(connectionObject *conn, int close)
    note that this function does block because it needs to wait for the full
    result sets of the previous query to clear them.
 
+   
    this function does not call any Py_*_ALLOW_THREADS macros */
 
 void
@@ -149,6 +159,7 @@ pq_clear_async(connectionObject *conn)
 
     do {
         pgres = PQgetResult(conn->pgconn);
+        Dprintf("pq_clear_async: clearing PGresult at %p", pgres);
         IFCLEARPGRES(pgres);
     } while (pgres != NULL);
 }
@@ -291,7 +302,10 @@ pq_abort(connectionObject *conn)
  
    a status of 1 means that a call to pq_fetch will block, while a status of 0
    means that there is data available to be collected. -1 means an error, the
-   exception will be set accordingly. */
+   exception will be set accordingly.
+
+   this fucntion locks the connection object
+   this function call Py_*_ALLOW_THREADS macros */
 
 int
 pq_is_busy(connectionObject *conn)
@@ -299,9 +313,15 @@ pq_is_busy(connectionObject *conn)
     PGnotify *pgn;
     
     Dprintf("pq_is_busy: consuming input");
+
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&(conn->lock));
+
     if (PQconsumeInput(conn->pgconn) == 0) {
         Dprintf("pq_is_busy: PQconsumeInput() failed");
         PyErr_SetString(OperationalError, PQerrorMessage(conn->pgconn));
+        pthread_mutex_unlock(&(conn->lock));
+        Py_BLOCK_THREADS;
         return -1;
     }
 
@@ -315,11 +335,12 @@ pq_is_busy(connectionObject *conn)
         notify = PyTuple_New(2);
         PyTuple_SET_ITEM(notify, 0, PyInt_FromLong((long)pgn->be_pid));
         PyTuple_SET_ITEM(notify, 1, PyString_FromString(pgn->relname));
-        pthread_mutex_lock(&(conn->lock));
         PyList_Append(conn->notifies, notify);
-        pthread_mutex_unlock(&(conn->lock));
         free(pgn);
     }
+
+    pthread_mutex_unlock(&(conn->lock));
+    Py_END_ALLOW_THREADS;
     
     return PQisBusy(conn->pgconn);
 }
@@ -656,13 +677,13 @@ pq_fetch(cursorObject *curs)
         
         Dprintf("pq_fetch: no data: entering polling loop");
         
-        Py_BEGIN_ALLOW_THREADS;
-        pthread_mutex_lock(&(curs->conn->lock));
-        
         while (pq_is_busy(curs->conn) > 0) {
             fd_set rfds;
             struct timeval tv;
             int sval, sock;
+
+            Py_BEGIN_ALLOW_THREADS;
+            pthread_mutex_lock(&(curs->conn->lock));
 
             sock = PQsocket(curs->conn->pgconn);
             FD_ZERO(&rfds);
@@ -677,14 +698,14 @@ pq_fetch(cursorObject *curs)
             Dprintf("pq_fetch: entering PDflush() loop");
             while (PQflush(curs->conn->pgconn) != 0);
             sval = select(sock+1, &rfds, NULL, NULL, &tv);
+
+            pthread_mutex_unlock(&(curs->conn->lock));
+            Py_END_ALLOW_THREADS;
         }
 
         Dprintf("pq_fetch: data is probably ready");
         IFCLEARPGRES(curs->pgres);
         curs->pgres = PQgetResult(curs->conn->pgconn);
-
-        pthread_mutex_unlock(&(curs->conn->lock));
-        Py_END_ALLOW_THREADS;
     }
 
     /* check for PGRES_FATAL_ERROR result */

@@ -1,3 +1,14 @@
+What's new in psycopg 1.99.11
+-----------------------------
+
+* 'cursor' argument in .cursor() connection method renamed to 
+  'cursor_factory'.
+
+* changed 'tuple_factory' cursor attribute name to 'row_factory'.
+
+* the .cursor attribute is gone and connections and cursors are propely
+  gc-managed.
+
 What's new in psycopg 1.99.10
 -----------------------------
 
