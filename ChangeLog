@@ -1,3 +1,13 @@
+2004-11-20  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/cursor_type.c (_mogrify): ported %% fix from 1.1.15. 
+
+2004-11-20  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/cursor_type.c (psyco_curs_execute): added check to raise an
+	exception if a cursor tries to .execute() while an async query is
+	already in execution froma  different cursor. 
+
 2004-11-20  Federico Di Gregorio  <fog@debian.org>
 
 	* psycopg/connection_type.c (psyco_conn_cursor): renamed 'cursor'

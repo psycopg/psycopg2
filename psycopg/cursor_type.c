@@ -1,6 +1,6 @@
 /* cursor_type.c - python interface to cursor objects
  *
- * Copyright (C) 2003 Federico Di Gregorio <fog@debian.org>
+ * Copyright (C) 2003-2004 Federico Di Gregorio <fog@debian.org>
  *
  * This file is part of psycopg.
  *
@@ -66,7 +66,7 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
 {
     PyObject *key, *value, *n, *item;
     char *d, *c;
-    int index = 0;
+    int index = 0, force = 0;
 
     /* from now on we'll use n and replace its value in *new only at the end,
        just before returning. we also init *new to NULL to exit with an error
@@ -77,7 +77,7 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
     while(*c) {
         /* handle plain percent symbol in format string */
         if (c[0] == '%' && c[1] == '%') {
-            c+=2;
+            c+=2; force = 1;
         }
         
         /* if we find '%(' then this is a dictionary, we:
@@ -224,8 +224,11 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
         }
     }
 
+    if (force && n == NULL)
+        n = PyTuple_New(0);
     *new = n;
-    return 0;
+    
+    return 0;;
 }
     
 #define psyco_curs_execute_doc \
@@ -246,6 +249,13 @@ psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
         return NULL;
     }
 
+    if (self->conn->async_cursor != NULL
+        && self->conn->async_cursor != (PyObject*)self) {
+        PyErr_SetString(ProgrammingError,
+                        "asynchronous query already in execution");
+        return NULL;
+    }
+    
     if (PyUnicode_Check(operation)) {
         PyObject *enc = PyDict_GetItemString(psycoEncodings,
                                              self->conn->encoding);
@@ -970,7 +980,7 @@ cursor_next(PyObject *self)
 {
     PyObject *res;
 
-    /* we don't parse argumente: psyco_curs_fetchone will do that for us */
+    /* we don't parse arguments: psyco_curs_fetchone will do that for us */
     res = psyco_curs_fetchone((cursorObject*)self, NULL);
 
     /* convert a None to NULL to signal the end of iteration */
