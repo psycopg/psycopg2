@@ -433,7 +433,7 @@ psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
     
     static char *kwlist[] = {"query", "vars", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|Oi", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|O", kwlist,
                                      &operation, &vars)) {
         return NULL;
     }
@@ -442,7 +442,7 @@ psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
     
     for (i = 0; i < PySequence_Size(vars); i++) {
         PyObject *v = PySequence_GetItem(vars, i);
-        if (!v  || _psyco_curs_execute(self, operation, vars, 0) == 0) {
+        if (!v  || _psyco_curs_execute(self, operation, v, 0) == 0) {
             Py_XDECREF(v);
             return NULL;
         }

@@ -46,8 +46,7 @@ data = [('Tom', 'Jenkins', '37'),
         ('Madonna', None, '45'),
         ('Federico', 'Di Gregorio', None)]
 query = "INSERT INTO test_copy VALUES (%s, %s, %s)"
-for row in data:
-    curs.execute(query, row)
+curs.executemany(query, data)
 conn.commit()
 
 # copy_to using defaults
