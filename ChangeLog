@@ -1,3 +1,7 @@
+2005-2-27  Federico Di Gregorio  <fog@initd.org>
+
+	* examples/myfirstrecipe.py: fixed adapter registration. 
+
 2005-2-7  Federico Di Gregorio  <fog@initd.org>
 
 	* setup.py: added patch by Valentino Volonghi to build on MacOS X.

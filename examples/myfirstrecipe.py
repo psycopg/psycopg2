@@ -69,6 +69,7 @@ and on the psycopg 2 wiki:
 import psycopg
 import psycopg.extensions
 from psycopg.extensions import adapt as psycoadapt
+from psycopg.extensions import register_adapter
 
 class AsIs(object):
     """An adapter that just return the object 'as is'.
@@ -99,9 +100,9 @@ class SQL_IN(object):
     __str__ = getquoted
     
 # add our new adapter class to psycopg list of adapters
-psycopg.extensions.adapters[tuple] = SQL_IN
-psycopg.extensions.adapters[float] = AsIs
-psycopg.extensions.adapters[int] = AsIs
+register_adapter(tuple, SQL_IN)
+register_adapter(float, AsIs)
+register_adapter(int, AsIs)
 
 # usually we would call:
 #

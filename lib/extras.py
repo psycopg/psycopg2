@@ -18,6 +18,9 @@ and classes untill a better place in the distribution is found.
 # for more details.
 
 from psycopg.extensions import cursor as _cursor
+from psycopg.extensions import register_adapter as _RA
+from psycopg.extensions import adapt as _A
+
 
 class DictCursor(_cursor):
     """A cursor that keeps a list of column name -> index mappings."""
@@ -65,3 +68,42 @@ class DictRow(list):
         if type(x) != int:
             x = self._cursor.index[x]
         return list.__getitem__(self, x)
+
+
+
+class AsIs(object):
+    """An adapter that just return the object 'as is'.
+
+    psycopg 1.99.9 has some optimizations that make impossible to call adapt()
+    without adding some basic adapters externally. This limitation will be
+    lifted in a future release.In the meantime you can use the AsIs adapter.
+    """
+    def __init__(self, obj):
+        self.__obj = obj
+    def getquoted(self):
+        return self.__obj
+    def prepare(self, conn):
+	pass
+    
+class SQL_IN(object):
+    """Adapt any iterable to an SQL quotable object."""
+    
+    def __init__(self, seq):
+	self._seq = seq
+	
+    def prepare(self, conn):
+	pass
+    
+    def getquoted(self):
+        # this is the important line: note how every object in the
+        # list is adapted and then how getquoted() is called on it
+	qobjs = [str(_A(o).getquoted()) for o in self._seq]
+
+	return '(' + ', '.join(qobjs) + ')'
+	
+    __str__ = getquoted
+
+
+_RA(tuple, SQL_IN)
+_RA(int, AsIs)
+_RA(float, AsIs)
