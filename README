@@ -1,145 +1,26 @@
 psycopg - Python-PostgreSQL Database Adapter
 ********************************************
 
-psycopg is a PostgreSQL database adapter for the Python programming language
-(just like pygresql and popy.) It was written from scratch with the aim of
-being very small and fast, and stable as a rock. The main advantages of
-psycopg are that it supports (well... *will* support) the full Python
-DBAPI-2.0 and being thread safe at level 2.
+psycopg is a PostgreSQL database adapter for the Python programming
+language. This is version 2, a complete rewrite of the original code to
+provide new-style classes for connection and cursor objects and other sweet
+candies. Like the original, psycopg 2 was written with the aim of being
+very small and fast, and stable as a rock.
 
-psycopg is different from the other database adapter because it was designed
-for heavily multi-threaded applications that create and destroy lots of
-cursors and make a conspicuous number of concurrent INSERTs or UPDATEs. 
-Every open Python connection keeps a pool of real (UNIX or TCP/IP) connections
-to the database. Every time a new cursor is created, a new connection does not
-need to be opened; instead one of the unused connections from the pool is
-used. That makes psycopg very fast in typical client-server applications that
-create a servicing thread every time a client request arrives.
+psycopg is different from the other database adapter because it was
+designed for heavily multi-threaded applications that create and destroy
+lots of cursors and make a conspicuous number of concurrent INSERTs or
+UPDATEs. psycopg 2 also provide full asycronous operations for the really
+brave programmer.
 
-psycopg now support the Python DBAPI-2.0 completely. There are confirmed
-reports of psycopg compiling and running on Linux and FreeBSD on i386, Solaris
-and MacOS X.
+There are confirmed reports of psycopg 1.x compiling and running on Linux
+and FreeBSD on i386, Solaris, MacOS X and win32 architectures. psycopg 2
+does not introduce build-wise incompatible changes so it should be able to
+compile on all architectures just as its predecessor did.
 
+Now go read the INSTALL file. More information about psycopg extensions to
+the DBAPI-2.0 is available in the files located in the doc/ direcory.
 
-Extensions to the Python DBAPI-2.0
-----------------------------------
-
-psycopg offers some little extensions on the Python DBAPI-2.0. Note that the
-extension do not make psycopg incompatible and you can still use it without
-ever knowing the extensions are here. 
-
-The DBAPI-2.0 mandates that cursors derived from the same connection are not
-isolated, i.e., changes done to the database by one of them should be
-immediately visible by all the others. This is done by serializing the queries
-on the same physical connection to the database (PGconn struct in C.) 
-Serializing queries when the network latencies are hight (and network speed is
-low) dramatically lowers performance, so it is possible to put a connection
-into not-serialized mode, by calling the .serialize() method giving it a
-0-value argument or by creating a connection using the following code:
-
-	conn = psycopg.connect("dbname=...", serialize=0)
-
-After that every cursor will get its own physical connection to the database
-and multiple threads will go at full speed. Note that this feature makes the
-new cursors non-compliant respect to the DBAPI-2.0.
-
-The main extension is that we support (on not-serialized cursors) per-cursor
-commits. If you do a commit() on the connection all the changes on all the
-cursors derived from that connection are committed to the database (in random
-order, so take your care.)  But you can also call commit() on a single cursor
-to commit just the operations done on that cursor. Pretty nice.
-
-Note that you *do have* to call .commit() on the cursors or on the connection
-if you want to change your database. Note also that you *do have* to call
-commit() on a cursor even before a SELECT if you want to see the changes
-apported by other threads to the database.
-
-Also note that you *can't* (I repeat: *you* *can't*) call .commit() on cursor
-derived from a serialized connection: trying that will give you an exception
-with the message: "serialized connection: cannot commit on this cursor". If
-you want to use the per-cursor commit feature you need to create a
-non-serialized connection, as explained above.
-
-From version 0.4.1 psycopg supports autocommit mode. You can set the default
-mode for new cursor by setting the 'autocommit' variable to 0 or 1 on the
-connection before creating a new cursor with the cursor() method. On an
-already created cursor you can change the commit mode by calling the
-autocommit() method. Giving no arguments or 1 switches autocommit on, 0
-switches it off.
-
-Obviously everything said about commit is valid for rollbacks too.
-
-
-The type system
----------------
-
-The DBAPI-2.0 specify that should be possible to check for the column type
-reported in the second field of the description tuple of the cursor used for a
-SELECT using 'singletons' like NUMBER, STRING, etc. While this is fully
-supported by psycopg from release 0.3 on, we went forward and implemented
-support for custom typecasting from PostgreSQL to Python types using
-user-defined functions. See the examples test/check_types.py and
-doc/examples/usercast.py for more information. In particular usercast_test.py
-shows how to implement a callback that translates the PostgreSQL box type to
-an ad-hoc Python class with instances created automagically on SELECT.
-
-
-Compile-time configuration options
-----------------------------------
-
-To build psycopg you will need a C compiler (gcc), the Python development
-files (headers and libraries), the PostgreSQL header and libraries and the
-mxDateTime header files (and the mxDateTime Python package installed, version
->= 2.0.0, of curse.)
-
-The following options are specific to psycopg and can be set when running
-configure before issuing 'make' to compile the package.
-
-  --with-postgres-libraries=DIR
-      PostgreSQL 7.x libraries (libpq.so) are in directory DIR 
-
-  --with-postgres-includes=DIR
-      PostgreSQL 7.x header files are located in directory DIR
-  
-  --with-mxdatetime-includes=DIR
-      MXDateTime Python extension header files are located in directory DIR
-
-  --with-zope=DIR
-      install the ZPsycopgDA Zope Product into DIR (use 'make install-zope')
-
-  --enable-devel[=yes/no]
-      Enable developer features like debugging output and extra assertions.
-
-Some random notes about python versions and paths:
-
-  1/ If possible, don't use the configure arguments --with-python-prefix 
-     and --with-python-exec-prefix; the configure script is able to guess
-     the correct values from you python installation.
-
-  2/ If you have more than one Python version installed, use the arguments
-     --with-python (giving it the *full*, *absolute* path to the Python 
-     interpreter) and --with-python-version (giving it the corresponding
-     version, like 1.5 or 2.1.)
-  
-Common problems while building psycopg:
-
-  1/ if your compiler does not find some postgres headers try copying all the
-     headers from the postgres _source_ distribution to a single place. Also,
-     if building postgresql from source, make sure to install all headers by
-     the "make install-all-headers" target.
-
-  2/ if you have the same problem with mx.DateTime, try using the source
-     directory again; the install script does not copy all the headers, same
-     way as postgres install procedure does.
-
-  3/ under MacOS X you may need to run the runlib program on the posgres 
-     installed libraries before trying to compile psycopg. Also, if you
-     get compilation errors there is a change your python was not compiled
-     correctly and psycopg is grabbing the wrong compile-time options from
-     python's Makefile. try setting the OPT and LDFLAG environment variables 
-     to something usefull, as in the next example:
-
-       OPT="-no-cpp-precomp" LDFLAGS="-flat-namespace" ./configure ...
 
 Licence
 -------
@@ -149,16 +30,16 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version. See file COPYING for details.
 
-As a special exception, specific permission is granted for the GPLed
-code in this distribition to be linked to OpenSSL and PostgreSQL libpq
-without invoking GPL clause 2(b).
+As a special exception, specific permission is granted for the GPLed code in
+this distribition to be linked to OpenSSL and PostgreSQL libpq without
+invoking GPL clause 2(b).
 
-If you prefer you can use the Zope Database Adapter ZPsycopgDA (i.e.,
-every file inside the ZPsycopgDA directory) user the ZPL license as 
-published on the Zope web site, http://www.zope.org/Resources/ZPL.
+If you prefer you can use the Zope Database Adapter ZPsycopgDA (i.e., every
+file inside the ZPsycopgDA directory) under the ZPL license as published on
+the Zope web site, http://www.zope.org/Resources/ZPL. The ZPL is perfectly
+compatible with the GPL
 
-psycopg is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
+psycopg is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+details.
