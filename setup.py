@@ -102,7 +102,12 @@ if sys.platform == "darwin":
     # fink installs lots of goodies in /sw/... - make sure we check there
     include_dirs.append("/sw/include/postgresql")
     library_dirs.append("/sw/lib")
-    
+    include_dirs.append("/opt/local/include/postgresql")
+    library_dirs.append("/opt/local/lib")
+    library_dirs.append("/usr/lib")
+    libraries.append('ssl')
+    libraries.append('crypto')
+
 # sources
 
 sources = [
