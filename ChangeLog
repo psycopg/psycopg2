@@ -1,5 +1,14 @@
+2005-03-04  Federico Di Gregorio  <fog@initd.org>
+
+	* Release 1.99.13.1.
+
+	* psycopg/adapter_asis.c (asis_str): changed call to PyObject_Repr
+	to PyObject_Str to avoid problems with long integers.
+
 2005-03-02  Federico Di Gregorio  <fog@debian.org>
 
+	* Release 1.99.13.
+	
 	* psycopg/adapter_*.c: added __conform__ to all adapters.
 	
 	* psycopg/adapter_qstring.c (qstring_quote): we now use
