@@ -790,18 +790,11 @@ pq_fetch(cursorObject *curs)
     Py_XDECREF(curs->pgstatus);
     curs->pgstatus = PyString_FromString(PQcmdStatus(curs->pgres));
 
-    /* rowcount has a meaning even for INSERT and UPDATES but to get the right
-       number we need to check two times, one with PQntuples for SELECts and
-       one with PQcmdTuples for other queries */
-    curs->rowcount = PQntuples(curs->pgres);
-    if (curs->rowcount == 0)
-        curs->rowcount = atoi(PQcmdTuples(curs->pgres));
-    
     switch(pgstatus) {
 
     case PGRES_COMMAND_OK:
         Dprintf("pq_fetch: command returned OK (no tuples)");
-        curs->rowcount = 0;
+        curs->rowcount = atoi(PQcmdTuples(curs->pgres));
         curs->lastoid = PQoidValue(curs->pgres);
         CLEARPGRES(curs->pgres);
         ex = 1;
@@ -809,7 +802,6 @@ pq_fetch(cursorObject *curs)
 
     case PGRES_COPY_OUT:
         Dprintf("pq_fetch: data from a COPY TO (no tuples)");
-        curs->rowcount = 0;
 #ifdef HAVE_PQPROTOCOL3
         if (curs->conn->protocol == 3)
             ex = _pq_copy_out_v3(curs);
@@ -823,7 +815,6 @@ pq_fetch(cursorObject *curs)
         
     case PGRES_COPY_IN:
         Dprintf("pq_fetch: data from a COPY FROM (no tuples)");
-        curs->rowcount = 0;
 #ifdef HAVE_PQPROTOCOL3
         if (curs->conn->protocol == 3)        
             ex = _pq_copy_in_v3(curs);
@@ -837,6 +828,7 @@ pq_fetch(cursorObject *curs)
         
     case PGRES_TUPLES_OK:
         Dprintf("pq_fetch: data from a SELECT (got tuples)");
+        curs->rowcount = PQntuples(curs->pgres);
         _pq_fetch_tuples(curs); ex = 0;
         /* don't clear curs->pgres, because it contains the results! */
         break;

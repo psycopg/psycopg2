@@ -39,7 +39,7 @@
 #define binary_escape PQescapeBytea
 #else
 static unsigned char *
-binary_escape(char *from, size_t from_length, size_t *to_length)
+binary_escape(char *from, int from_length, int *to_length)
 {
     unsigneed char *quoted, *chptr, *newptr;
     int i, space, new_space;

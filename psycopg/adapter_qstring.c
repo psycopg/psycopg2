@@ -80,7 +80,7 @@ qstring_quote(qstringObject *self)
 {
     PyObject *str;
     char *s, *buffer;
-    size_t len;
+    int len;
 
     /* if the wrapped object is an unicode object we can encode it to match
        self->encoding but if the encoding is not specified we don't know what
