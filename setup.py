@@ -48,6 +48,7 @@ from distutils.sysconfig import get_python_inc
 import distutils.ccompiler
 
 PSYCOPG_VERSION = '1.99.11/devel'
+version_flags   = []
 
 have_pydatetime = False
 have_mxdatetime = False
@@ -80,13 +81,10 @@ if sys.version_info[0] >= 2 and sys.version_info[1] >= 4:
 ext = [] ; data_files = []
 library_dirs = [] ; libraries = [] ; include_dirs = []
 
-if sys.platform != 'win32':
-    define_macros.append(('PSYCOPG_VERSION', '"'+PSYCOPG_VERSION+'"'))
-else:
-    define_macros.append(('PSYCOPG_VERSION', '\\"'+PSYCOPG_VERSION+'\\"'))
+if sys.platform == 'win32':
     include_dirs = ['.',
-                 POSTGRESQLDIR + "\\src\\interfaces\\libpq",
-                 POSTGRESQLDIR + "\\src\\include" ]
+                    POSTGRESQLDIR + "\\src\\interfaces\\libpq",
+                    POSTGRESQLDIR + "\\src\\include" ]
     library_dirs = [ POSTGRESQLDIR + "\\src\\interfaces\\libpq\\Release" ]
     libraries = ["ws2_32"]
     if USE_PG_DLL:
@@ -124,12 +122,14 @@ if os.path.exists(mxincludedir):
     define_macros.append(('HAVE_MXDATETIME','1'))
     sources.append('adapter_mxdatetime.c')
     have_mxdatetime = True
+    version_flags.append('mx')
 
 # check for python datetime package
 if os.path.exists(os.path.join(get_python_inc(plat_specific=1),"datetime.h")):
     define_macros.append(('HAVE_PYDATETIME','1'))
     sources.append('adapter_datetime.c')
     have_pydatetime = True
+    version_flags.append('dt')
     
 # now decide which package will be the default for date/time typecasts
 if have_pydatetime and use_pydatetime \
@@ -142,6 +142,26 @@ else:
     sys.stderr.write("error:     mx.DateTime module not found\n")
     sys.stderr.write("error:     python datetime module not found\n")
     sys.exit(1)
+
+# generate a nice version string to avoid confusion when users report bugs
+from ConfigParser import ConfigParser
+parser = ConfigParser()
+parser.read('setup.cfg')
+for have in parser.get('build_ext', 'define').split(','):
+    if have == 'PSYCOPG_EXTENSIONS':
+        version_flags.append('ext')
+    elif have == 'HAVE_PQPROTOCOL3':
+        version_flags.append('pq3')
+if version_flags:
+    PSYCOPG_VERSION_EX = PSYCOPG_VERSION + " (%s)" % ' '.join(version_flags)
+else:
+    PSYCOPG_VERSION_EX = PSYCOPG_VERSION
+    
+if sys.platform != 'win32':
+    define_macros.append(('PSYCOPG_VERSION', '"'+PSYCOPG_VERSION_EX+'"'))
+else:
+    define_macros.append(('PSYCOPG_VERSION', '\\"'+PSYCOPG_VERSION_EX+'\\"'))
+
 
 # build the extension
 

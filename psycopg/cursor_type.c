@@ -901,6 +901,7 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
 
     Py_INCREF(Py_None);
     return Py_None;
+
 }
 
 
@@ -910,7 +911,64 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
 /* extension: copy_from - implements COPY FROM */
 
 #define psyco_curs_copy_from_doc \
-"copy_from(file, table, sep='\\t', null='NULL') -> copy file to table."
+"copy_from(file, table, sep='\\t', null='\\N') -> copy file to table."
+
+static int
+_psyco_curs_has_read_check(PyObject* o, void* var)
+{
+    if (PyObject_HasAttrString(o, "readline")
+        && PyObject_HasAttrString(o, "read")) {
+        Py_INCREF(o);
+        *((PyObject**)var) = o;
+        return 1;
+    }
+    else {
+        PyErr_SetString(PyExc_TypeError,
+            "argument 1 must have both .read() and .readline() methods");
+        return 0;
+    }   
+}
+
+static PyObject *
+psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
+{
+    char query[256];
+    char *table_name;
+    char *sep = "\t", *null = NULL;
+    long int bufsize = DEFAULT_COPYSIZE;
+    PyObject *file, *res = NULL;
+
+    static char *kwlist[] = {"file", "table", "sep", "null", "size", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&s|ssi", kwlist,
+                                     _psyco_curs_has_read_check, &file,
+                                     &table_name, &sep, &null, &bufsize)) {
+        return NULL;
+    }
+    
+    EXC_IF_CURS_CLOSED(self);
+
+    if (null) {
+        PyOS_snprintf(query, 256, "COPY %s FROM stdin USING DELIMITERS '%s'"
+                      " WITH NULL AS '%s'", table_name, sep, null);
+    }
+    else {
+        PyOS_snprintf(query, 256, "COPY %s FROM stdin USING DELIMITERS '%s'",
+                      table_name, sep);
+    }
+    Dprintf("psyco_curs_copy_from: query = %s", query);
+
+    self->copysize = bufsize;
+    self->copyfile = file;
+    Py_INCREF(file);
+
+    if (pq_execute(self, query, 0) == 1) {
+        res = Py_None;
+        Py_INCREF(Py_None);
+    }
+    
+    return res;
+}
 
 static int
 _psyco_curs_has_write_check(PyObject* o, void* var)
@@ -925,41 +983,6 @@ _psyco_curs_has_write_check(PyObject* o, void* var)
                         "argument 1 must have a .write() method");
         return 0;
     }   
-}
-
-static PyObject *
-psyco_curs_copy_from(cursorObject *self, PyObject *args)
-{
-    char query[256];
-    char *table_name;
-    char *sep = "\t", *null ="NULL";
-    long int bufsize = DEFAULT_COPYSIZE;
-    PyObject *file, *res = NULL;
-
-    if (!PyArg_ParseTuple(args, "O&s|ssi",
-                          _psyco_curs_has_write_check, &file,
-                          &table_name, &sep, &null, &bufsize)) {
-        return NULL;
-    }
-    
-    EXC_IF_CURS_CLOSED(self);
-    
-    PyOS_snprintf(query, 256, "COPY %s FROM stdin USING DELIMITERS '%s'"
-                  " WITH NULL AS '%s'", table_name, sep, null);
-    Dprintf("psyco_curs_copy_from: query = %s", query);
-
-    self->copysize = bufsize;
-    self->copyfile = file;
-    Py_INCREF(file);
-
-    if (pq_execute(self, query, 0) == 1) {
-        res = Py_None;
-        Py_INCREF(Py_None);
-    }
-    
-    free(query);
-
-    return res;
 }
 
 /* extension: fileno - return the file descripor of the connection */
@@ -1084,7 +1107,7 @@ static struct PyMethodDef cursorObject_methods[] = {
     {"isready", (PyCFunction)psyco_curs_isready,
      METH_VARARGS, psyco_curs_isready_doc},
     {"copy_from", (PyCFunction)psyco_curs_copy_from,
-     METH_VARARGS, psyco_curs_copy_from_doc},
+     METH_VARARGS|METH_KEYWORDS, psyco_curs_copy_from_doc},
 #endif
     {NULL}
 };

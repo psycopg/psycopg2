@@ -73,8 +73,8 @@ pq_raise(connectionObject *conn, cursorObject *curs, PyObject *exc, char *msg)
         if (curs && curs->pgres) {
             if (conn->protocol == 3) {
 #ifdef HAVE_PQPROTOCOL3
-                char *pgstate = PQresultErrorField(curs->pgres,
-                                                   PG_DIAG_SQLSTATE);
+                char *pgstate =
+                    PQresultErrorField(curs->pgres, PG_DIAG_SQLSTATE);
                 if (!strncmp(pgstate, "23", 2))
                     exc = IntegrityError;
                 else
@@ -98,7 +98,7 @@ pq_raise(connectionObject *conn, cursorObject *curs, PyObject *exc, char *msg)
 
     /* try to remove the initial "ERROR: " part from the postgresql error */
     if (err && strlen(err) > 8) err = &(err[8]);
-
+    
     /* if msg is not NULL, add it to the error message, after a '\n' */
     if (msg) {
         PyErr_Format(exc, "%s\n%s", err, msg);
@@ -130,6 +130,8 @@ pq_set_critical(connectionObject *conn, const char *msg)
 PyObject *
 pq_resolve_critical(connectionObject *conn, int close)
 {
+    Dprintf("pq_resolve_critical: resolving %s", conn->critical);
+    
     if (conn->critical) {
         char *msg = &(conn->critical[6]);
         Dprintf("pq_resolve_critical: error = %s", msg);
@@ -562,8 +564,51 @@ _pq_copy_in_v3(cursorObject *curs)
     /* COPY FROM implementation when protocol 3 is available: this function
        uses the new PQputCopyData() and can detect errors and set the correct
        exception */
+    PyObject *o;
+    int length = 0, error = 0;
+
+    Dprintf("_pq_copy_in_v3: called with object at %p", curs->copyfile);
     
-    return -1;
+    while (1) {
+        o = PyObject_CallMethod(curs->copyfile, "read", "i", curs->copysize);
+        if (!o || !PyString_Check(o) || (length = PyString_Size(o)) == -1) {
+            error = 1;
+        }
+        if (length == 0 || error == 1) break;
+        
+        Py_BEGIN_ALLOW_THREADS;
+        if (PQputCopyData(curs->conn->pgconn,
+                          PyString_AS_STRING(o), length) == -1) {
+            error = 2;
+        }
+        Py_END_ALLOW_THREADS;
+
+        if (error == 2) break;
+        
+        Py_DECREF(o);
+    }
+    
+    Py_XDECREF(o);
+
+    Dprintf("_pq_copy_in_v3: error = %d", error);
+    
+    if (error == 0 || error == 2)
+        /* 0 means that the copy went well, 2 that there was an error on the
+           backend: in both cases we'll get the error message from the
+           PQresult */
+        PQputCopyEnd(curs->conn->pgconn, NULL);
+    else
+        PQputCopyEnd(curs->conn->pgconn, "error during .read() call");
+
+    /* and finally we grab the operation result from the backend */
+    IFCLEARPGRES(curs->pgres);
+    while ((curs->pgres = PQgetResult(curs->conn->pgconn)) != NULL) {
+        if (PQresultStatus(curs->pgres) == PGRES_FATAL_ERROR)
+            pq_raise(curs->conn, curs, NULL, NULL);
+        IFCLEARPGRES(curs->pgres);
+    }
+
+    return 1;
 }
 #endif
 static int
@@ -586,6 +631,15 @@ _pq_copy_in(cursorObject *curs)
     Py_XDECREF(o);
     PQputline(curs->conn->pgconn, "\\.\n");
     PQendcopy(curs->conn->pgconn);
+
+    /* if for some reason we're using a protocol 3 libpq to connect to a
+       protocol 2 backend we still need to cycle on the result set */
+    IFCLEARPGRES(curs->pgres);
+    while ((curs->pgres = PQgetResult(curs->conn->pgconn)) != NULL) {
+        if (PQresultStatus(curs->pgres) == PGRES_FATAL_ERROR)
+            pq_raise(curs->conn, curs, NULL, NULL);
+        IFCLEARPGRES(curs->pgres);
+    }
 
     return 1;
 }

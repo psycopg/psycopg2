@@ -134,7 +134,7 @@ psyco_conn_rollback(connectionObject *self, PyObject *args)
 
 
 
-
+#ifdef PSYCOPG_EXTENSIONS
 /* set_isolation_level method - switch connection isolation level */
 
 #define psyco_conn_set_isolation_level_doc \
@@ -186,7 +186,7 @@ psyco_conn_set_client_encoding(connectionObject *self, PyObject *args)
         return NULL;
     }
 }
-
+#endif
 
 
 /** the connection object **/

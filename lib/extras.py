@@ -57,6 +57,7 @@ class DictCursor(_cursor):
             self._build_index()
         return res
         
+
 class DictRow(list):
     """A row object that allow by-colun-name access to data."""
 

@@ -18,7 +18,8 @@ DSN = 'dbname=test'
 
 ## don't modify anything below tis line (except for experimenting)
 
-import sys, psycopg
+import sys
+import psycopg
 
 if len(sys.argv) > 1:
     DSN = sys.argv[1]

@@ -22,11 +22,6 @@
 #ifndef PSYCOPG_CONFIG_H
 #define PSYCOPG_CONFIG_H 1
 
-/* replacement for asprintf() */
-#ifndef HAVE_ASPRINTF
-extern int asprintf(char **buffer, char *fmt, ...);
-#endif
-
 /* debug printf-like function */
 #if defined( __GNUC__) && !defined(__APPLE__)
 #ifdef PSYCOPG_DEBUG

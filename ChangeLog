@@ -1,4 +1,16 @@
+2005-03-02  Federico Di Gregorio  <fog@debian.org>
+
+	* COPY FROM implemented using both old and new (v3) protocol.
+
+	* psycopg/config.h (Dprintf): declaration for asprintf is gone.
+
+	* psycopg/pqpath.c (_pq_copy_in_v3): implemented.
+
 2005-03-01  Federico Di Gregorio  <fog@debian.org>
+
+	* setup.py: now we generate a slighly more verbose version string
+	that embeds some of the compile options, to facilitate users' bug
+	reports.
 
 	* psycopg/cursor_type.c (psyco_curs_copy_from): we now use
 	PyOS_snprintf instead of asprintf. On some platforms this can be
@@ -57,7 +69,8 @@
 
 2005-01-13  Federico Di Gregorio  <fog@debian.org>
 
-	* ZPsycopgDA/db.py (DB.query): ported ZPsycopgDA connection fix
+	* ZPsycopgDA/db.py (DB.query
+	): ported ZPsycopgDA connection fix
 	from psycopg 1.1.
 
 	* lib/*.py: added pydoc-friendly messages.
