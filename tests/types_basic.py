@@ -44,10 +44,10 @@ class TypesBasicTests(TestCase):
         self.failUnless(s == 19.10, "wrong float quoting: " + str(s))
 
     def testBinary(self):
-        s = ''.join([asc(x) for x in range(256)])
-        b = psycopg.Binary(s) 
-        self.failUnless(self.execute("SELECT %s AS foo", (b,)) == s,
-                        "wrong binary quoting: " + s)
+        s = ''.join([chr(x) for x in range(256)])
+        b = psycopg.Binary(s)
+        self.failUnless(self.execute("SELECT %s::bytea AS foo", (b,)) == s,
+                        "wrong binary quoting")
 
 class TypesBasicSuite(TestSuite):
     """Build a suite of all tests."""
