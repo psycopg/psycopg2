@@ -1,3 +1,12 @@
+2004-11-19  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/cursor_type.c (_psyco_curs_buildrow_fill): now standard
+	tuples are filled using PyTuple_SET_ITEM while extended types
+	(created via row_factory) are filled using PySequence_SetItem.
+	
+	* psycopg/cursor_type.c: change cursor attribute name from
+	tuple_factory to row_factory.
+
 2004-10-14  Federico Di Gregorio  <fog@debian.org>
 
 	* psycopg/cursor_type.c (_psyco_curs_buildrow_fill): now we use

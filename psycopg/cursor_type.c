@@ -508,7 +508,8 @@ _psyco_curs_prefetch(cursorObject *self)
 }
 
 static PyObject *
-_psyco_curs_buildrow_fill(cursorObject *self, PyObject *res, int row, int n)
+_psyco_curs_buildrow_fill(cursorObject *self, PyObject *res,
+                          int row, int n, int istuple)
 {
     int i;
     PyObject *str, *val;
@@ -537,8 +538,13 @@ _psyco_curs_buildrow_fill(cursorObject *self, PyObject *res, int row, int n)
         
         if (val) {
             Dprintf("_psyco_curs_buildrow: val->refcnt = %d", val->ob_refcnt);
-            PySequence_SetItem(res, i, val);
-            Py_DECREF(val);
+            if (istuple) {
+                PyTuple_SET_ITEM(res, i, val);
+            }
+            else {
+                PySequence_SetItem(res, i, val);
+                Py_DECREF(val);
+            }
         }
         else {
             /* an error occurred in the type system, we return NULL to raise
@@ -559,7 +565,7 @@ _psyco_curs_buildrow(cursorObject *self, int row)
     int n;
     
     n = PQnfields(self->pgres);
-    return _psyco_curs_buildrow_fill(self, PyTuple_New(n), row, n);
+    return _psyco_curs_buildrow_fill(self, PyTuple_New(n), row, n, 1);
 }
 
 static PyObject *
@@ -572,7 +578,7 @@ _psyco_curs_buildrow_with_factory(cursorObject *self, int row)
     if ((res = PyObject_CallFunction(self->tuple_factory, "O", self))== NULL)
         return NULL;
 
-    return _psyco_curs_buildrow_fill(self, res, row, n);
+    return _psyco_curs_buildrow_fill(self, res, row, n, 0);
 }
 
                      
@@ -1030,7 +1036,7 @@ static struct PyMemberDef cursorObject_members[] = {
 #ifdef PSYCOPG_EXTENSIONS    
     {"statusmessage", T_OBJECT, OFFSETOF(pgstatus), RO},
     {"query", T_STRING, OFFSETOF(query), RO},
-    {"tuple_factory", T_OBJECT, OFFSETOF(tuple_factory), 0},
+    {"row_factory", T_OBJECT, OFFSETOF(tuple_factory), 0},
     {"tzinfo_factory", T_OBJECT, OFFSETOF(tzinfo_factory), 0},
 #endif
     {NULL}

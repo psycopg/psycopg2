@@ -47,7 +47,7 @@ from distutils.core import setup, Extension
 from distutils.sysconfig import get_python_inc
 import distutils.ccompiler
 
-PSYCOPG_VERSION = '1.99.10'
+PSYCOPG_VERSION = '1.99.11'
 
 have_pydatetime = False
 have_mxdatetime = False
