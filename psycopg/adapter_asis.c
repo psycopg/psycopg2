@@ -40,7 +40,7 @@ asis_str(asisObject *self)
         return PyString_FromString("NULL");
     }
     else {
-        return PyObject_Repr(self->wrapped);
+        return PyObject_Str(self->wrapped);
     }
 }
 
