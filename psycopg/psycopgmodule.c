@@ -485,6 +485,16 @@ init_psycopg(void)
     /* create a standard set of exceptions and add them to the module's dict */
     psyco_errors_init();
     psyco_errors_fill(dict);
+    
+    /* Solve win32 build issue about non-constant initializer element */
+    cursorType.tp_alloc = PyType_GenericAlloc;
+    binaryType.tp_alloc = PyType_GenericAlloc;
+    isqlquoteType.tp_alloc = PyType_GenericAlloc;
+    pbooleanType.tp_alloc = PyType_GenericAlloc;
+    pydatetimeType.tp_alloc = PyType_GenericAlloc;
+    connectionType.tp_alloc = PyType_GenericAlloc;
+    asisType.tp_alloc = PyType_GenericAlloc;
+    qstringType.tp_alloc = PyType_GenericAlloc;
 
     Dprintf("initpsycopg: module initialization complete");
 }

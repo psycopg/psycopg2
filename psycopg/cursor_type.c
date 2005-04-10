@@ -1365,7 +1365,7 @@ PyTypeObject cursorType = {
     0,          /*tp_dictoffset*/
     
     cursor_init, /*tp_init*/
-    PyType_GenericAlloc, /*tp_alloc*/
+    0, /*tp_alloc  Will be set to PyType_GenericAlloc in module init*/
     cursor_new, /*tp_new*/
     (freefunc)cursor_del, /*tp_free  Low-level free-memory routine */
     0,          /*tp_is_gc For PyObject_IS_GC */

@@ -202,7 +202,7 @@ PyTypeObject pbooleanType = {
     0,          /*tp_dictoffset*/
     
     pboolean_init, /*tp_init*/
-    PyType_GenericAlloc, /*tp_alloc*/
+    0, /*tp_alloc  will be set to PyType_GenericAlloc in module init*/
     pboolean_new, /*tp_new*/
     (freefunc)pboolean_del, /*tp_free  Low-level free-memory routine */
     0,          /*tp_is_gc For PyObject_IS_GC */
