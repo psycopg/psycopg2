@@ -62,38 +62,6 @@ psyco_curs_close(cursorObject *self, PyObject *args)
 
 /* mogrify a query string and build argument array or dict */
 
-static PyObject*
-_mogrify_getquoted(PyObject *obj, connectionObject *conn)
-{
-    PyObject *res = NULL;
-    PyObject *tmp = microprotocols_adapt(
-        obj, (PyObject*)&isqlquoteType, NULL);
-    
-    if (tmp != NULL) {
-        Dprintf("_mogrify: adapted to %s", tmp->ob_type->tp_name);
-
-        /* if requested prepare the object passing it the connection */
-        if (PyObject_HasAttrString(tmp, "prepare")) {
-            res = PyObject_CallMethod(tmp, "prepare", "O", (PyObject*)conn);
-            if (res == NULL) {
-                Py_DECREF(tmp);
-                return NULL;
-            }
-            else {
-                Py_DECREF(res);
-            }
-        }
-
-        /* call the getquoted method on tmp (that should exist because we
-           adapted to the right protocol) */
-        res = PyObject_CallMethod(tmp, "getquoted", NULL);
-        Py_DECREF(tmp);
-    }
-
-    /* we return res with one extra reference, the caller shall free it */
-    return res;
-}
-
 static int
 _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
 {
@@ -164,7 +132,7 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
                         if (*d) *d = 's';
                     }
                     else {
-                        t = _mogrify_getquoted(value, conn);
+                        t = microprotocol_getquoted(value, conn);
 
                         if (t != NULL) {
                             PyDict_SetItem(n, key, t);
@@ -222,7 +190,7 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
                 Py_DECREF(value);
             }
             else {
-                PyObject *t = _mogrify_getquoted(value, conn);
+                PyObject *t = microprotocol_getquoted(value, conn);
 
                 if (t != NULL) {
                     PyTuple_SET_ITEM(n, index, t);

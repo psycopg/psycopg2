@@ -27,6 +27,7 @@
 #include "psycopg/python.h"
 #include "psycopg/psycopg.h"
 #include "psycopg/cursor.h"
+#include "psycopg/connection.h"
 #include "psycopg/microprotocols.h"
 #include "psycopg/microprotocols_proto.h"
 
@@ -108,6 +109,42 @@ microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
     PyErr_SetString(ProgrammingError, "can't adapt");
     return NULL;
 }
+
+/* microprotocol_getquoted - utility function that adapt and call getquoted */
+
+PyObject *
+microprotocol_getquoted(PyObject *obj, connectionObject *conn)
+{
+    PyObject *res = NULL;
+    PyObject *tmp = microprotocols_adapt(
+        obj, (PyObject*)&isqlquoteType, NULL);
+    
+    if (tmp != NULL) {
+        Dprintf("microprotocol_getquoted: adapted to %s",
+                tmp->ob_type->tp_name);
+
+        /* if requested prepare the object passing it the connection */
+        if (PyObject_HasAttrString(tmp, "prepare") && conn) {
+            res = PyObject_CallMethod(tmp, "prepare", "O", (PyObject*)conn);
+            if (res == NULL) {
+                Py_DECREF(tmp);
+                return NULL;
+            }
+            else {
+                Py_DECREF(res);
+            }
+        }
+
+        /* call the getquoted method on tmp (that should exist because we
+           adapted to the right protocol) */
+        res = PyObject_CallMethod(tmp, "getquoted", NULL);
+        Py_DECREF(tmp);
+    }
+
+    /* we return res with one extra reference, the caller shall free it */
+    return res;
+}
+
 
 /** module-level functions **/
 

@@ -35,7 +35,7 @@
 #include "psycopg/adapter_binary.h"
 #include "psycopg/adapter_pboolean.h"
 #include "psycopg/adapter_asis.h"
-
+#include "psycopg/adapter_list.h"
 
 #ifdef HAVE_MXDATETIME
 #include <mxDateTime.h>
@@ -192,11 +192,12 @@ psyco_adapters_init(PyObject *mod)
     microprotocols_add(&PyFloat_Type, NULL, (PyObject*)&asisType);
     microprotocols_add(&PyInt_Type, NULL, (PyObject*)&asisType);
     microprotocols_add(&PyLong_Type, NULL, (PyObject*)&asisType);
-
+    
     microprotocols_add(&PyString_Type, NULL, (PyObject*)&qstringType);
     microprotocols_add(&PyUnicode_Type, NULL, (PyObject*)&qstringType);
     microprotocols_add(&PyBuffer_Type, NULL, (PyObject*)&binaryType);
-    
+    microprotocols_add(&PyList_Type, NULL, (PyObject*)&listType);
+                       
 #ifdef HAVE_MXDATETIME
     /* the module has already been initialized, so we can obtain the callable
        objects directly from its dictionary :) */
@@ -358,6 +359,8 @@ static PyMethodDef psycopgMethods[] = {
      METH_VARARGS, psyco_TimeFromTicks_doc},
     {"TimestampFromTicks",  (PyCFunction)psyco_TimestampFromTicks,
      METH_VARARGS, psyco_TimestampFromTicks_doc},
+    {"List",  (PyCFunction)psyco_List,
+     METH_VARARGS, psyco_List_doc},
     
 #ifdef HAVE_MXDATETIME
     {"DateFromMx",  (PyCFunction)psyco_DateFromMx,
@@ -402,6 +405,7 @@ init_psycopg(void)
     binaryType.ob_type     = &PyType_Type;
     isqlquoteType.ob_type  = &PyType_Type;
     asisType.ob_type       = &PyType_Type;
+    listType.ob_type       = &PyType_Type;
     
     if (PyType_Ready(&connectionType) == -1) return;
     if (PyType_Ready(&cursorType) == -1) return;
@@ -410,6 +414,7 @@ init_psycopg(void)
     if (PyType_Ready(&binaryType) == -1) return;
     if (PyType_Ready(&isqlquoteType) == -1) return;
     if (PyType_Ready(&asisType) == -1) return;
+    if (PyType_Ready(&listType) == -1) return;
     
 #ifdef HAVE_PYBOOL
     pbooleanType.ob_type   = &PyType_Type;
@@ -495,6 +500,7 @@ init_psycopg(void)
     connectionType.tp_alloc = PyType_GenericAlloc;
     asisType.tp_alloc = PyType_GenericAlloc;
     qstringType.tp_alloc = PyType_GenericAlloc;
-
+    listType.tp_alloc = PyType_GenericAlloc;
+    
     Dprintf("initpsycopg: module initialization complete");
 }

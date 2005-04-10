@@ -230,7 +230,7 @@ sources = [
     'microprotocols.c', 'microprotocols_proto.c', 
     'connection_type.c', 'connection_int.c', 'cursor_type.c', 'cursor_int.c',
     'adapter_qstring.c', 'adapter_pboolean.c', 'adapter_binary.c',
-    'adapter_asis.c']
+    'adapter_asis.c', 'adapter_list.c']
 
 from ConfigParser import ConfigParser
 parser = ConfigParser()

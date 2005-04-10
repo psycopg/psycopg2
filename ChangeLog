@@ -1,5 +1,11 @@
 2005-04-10  Federico Di Gregorio  <fog@debian.org>
 
+	* psycopg/adapter_list.*: added list adapter. 
+
+	* psycopg/microprotocols.c (microprotocol_getquoted): moved
+	_mogrify_getquoted into utility function in the microprotocols
+	library.
+
 	* setup.py: Added extensive error message on missing datetime
 	headers.
 
