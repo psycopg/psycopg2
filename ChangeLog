@@ -1,5 +1,8 @@
 2005-04-10  Federico Di Gregorio  <fog@debian.org>
 
+	* setup.py: Added extensive error message on missing datetime
+	headers.
+
 	* Applied mingw patch from Daniele Varazzo. 
 
 2005-04-03  Federico Di Gregorio  <fog@debian.org>

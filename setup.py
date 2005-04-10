@@ -11,6 +11,7 @@
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTIBILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
+
 """Python-PostgreSQL Database Adapter
  
 psycopg is a PostgreSQL database adapter for the Python programming
@@ -58,19 +59,19 @@ version_flags   = []
 
 # to work around older distutil limitations
 if sys.version < '2.2.3':
-  from distutils.dist import DistributionMetadata
-  DistributionMetadata.classifiers = None
-  DistributionMetadata.download_url = None
+    from distutils.dist import DistributionMetadata
+    DistributionMetadata.classifiers = None
+    DistributionMetadata.download_url = None
 
 class psycopg_build_ext(build_ext):
     """Conditionally complement the setup.cfg options file.
     
-    This class configures the include_dirs, libray_dirs, libraries options as
-    required by the system. Most of the configuration happens in
-    finalize_options() method.
+    This class configures the include_dirs, libray_dirs, libraries
+    options as required by the system. Most of the configuration happens
+    in finalize_options() method.
     
-    If you want to set up the build step for a peculiar platform, add a method
-    finalize_PLAT(), where PLAT matches your sys.platform.
+    If you want to set up the build step for a peculiar platform, add a
+    method finalize_PLAT(), where PLAT matches your sys.platform.
     """
     user_options = build_ext.user_options[:]
     user_options.extend([
@@ -99,6 +100,7 @@ class psycopg_build_ext(build_ext):
         
         Address issues related to the different environmental configurations
         that can be met:
+        
           * msvc or gcc derived (mingw, cygwin) compiler;
           * source or bin PostgreSQL installation
           * static or dynamic linking vs. libpq.dll
@@ -179,6 +181,7 @@ class psycopg_build_ext(build_ext):
             return name
                 
     __libpqdll = None
+    
     def find_libpq_dll(self, *dirs):
         """Return the full libpq.dll path and name."""
         if self.__libpqdll:
@@ -205,6 +208,7 @@ class psycopg_build_ext(build_ext):
 
 # let's start with macro definitions (the ones not already in setup.cfg)
 define_macros = []
+include_dirs = []
 
 # python version
 define_macros.append(('PY_MAJOR_VERSION', str(sys.version_info[0])))
@@ -259,10 +263,15 @@ if have_pydatetime and use_pydatetime \
     define_macros.append(('PSYCOPG_DEFAULT_PYDATETIME','1'))
 elif have_mxdatetime:
     define_macros.append(('PSYCOPG_DEFAULT_MXDATETIME','1'))
-else:    
-    sys.stderr.write("error: psycopg requires a datetime module:\n")
-    sys.stderr.write("error:     mx.DateTime module not found\n")
-    sys.stderr.write("error:     python datetime module not found\n")
+else:
+    def e(msg):
+        sys.stderr.write("error: " + msg + "\n")
+    e("psycopg requires a datetime module:")
+    e("    mx.DateTime module not found")
+    e("    python datetime module not found")
+    e("Note that psycopg needs the module headers and not just the module")
+    e("itself. If you installed Python or mx.DateTime from a binary package")
+    e("you probably need to install its companion -dev or -devel package.")
     sys.exit(1)
 
 # generate a nice version string to avoid confusion when users report bugs
@@ -292,6 +301,7 @@ sources = map(lambda x: os.path.join('psycopg', x), sources)
 
 ext.append(Extension("psycopg._psycopg", sources,
                      define_macros=define_macros,
+                     include_dirs=include_dirs,
                      undef_macros=[]))
 
 setup(name="psycopg",
