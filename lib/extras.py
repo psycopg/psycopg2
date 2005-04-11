@@ -70,6 +70,12 @@ class DictRow(list):
             x = self._cursor.index[x]
         return list.__getitem__(self, x)
 
+    def items(self):
+	res = []
+	for n, v in self._cursor.index.items():
+	    res.append((n, list.__getitem__(self, v)))
+	return res
+    
 
 
 class SQL_IN(object):

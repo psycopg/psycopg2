@@ -23,6 +23,8 @@
 
 2005-03-29  Federico Di Gregorio  <fog@debian.org>
 
+	* Applied patch to fix tuple count.
+	
 	* psycopg/pqpath.c (pq_is_busy): Staring from bug report from
 	Jason Erickson fixed segfaults due to calling Python function
 	without holding the GIL.
