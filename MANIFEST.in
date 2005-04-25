@@ -3,6 +3,7 @@ recursive-include lib *.py
 recursive-include tests *.py
 recursive-include ZPsycopgDA *.py *.gif *.dtml
 recursive-include examples *.py somehackers.jpg whereareyou.jpg
+recursive-include debian *
 recursive-include doc TODO HACKING SUCCESS ChangeLog-1.x
 include scripts/maketypes.sh scripts/buildtypes.py
 include AUTHORS README INSTALL ChangeLog setup.py setup.cfg

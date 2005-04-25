@@ -76,6 +76,9 @@ class DictRow(list):
 	    res.append((n, list.__getitem__(self, v)))
 	return res
     
+    def keys(self):
+	return self._cursor.index.keys()
+
 
 
 class SQL_IN(object):
