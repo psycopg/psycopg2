@@ -395,9 +395,8 @@ psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
 static PyObject *
 psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
-    int i;
     PyObject *operation = NULL, *vars = NULL;
-    
+    PyObject *v, *iter = NULL;
     
     static char *kwlist[] = {"query", "vars", NULL};
 
@@ -407,23 +406,27 @@ psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
     }
 
     EXC_IF_CURS_CLOSED(self);
+
+    if (!PyIter_Check(vars)) {
+        vars = iter = PyObject_GetIter(vars);
+        if (iter == NULL) return NULL;
+    }
     
-    for (i = 0; i < PySequence_Size(vars); i++) {
-        PyObject *v = PySequence_GetItem(vars, i);
-        if (!v  || _psyco_curs_execute(self, operation, v, 0) == 0) {
-            Py_XDECREF(v);
+    while ((v = PyIter_Next(vars)) != NULL) {
+        if (_psyco_curs_execute(self, operation, v, 0) == 0) {
+            Py_DECREF(v);
             return NULL;
         }
         else {
             Py_DECREF(v);
         }
     }
+    Py_XDECREF(iter);
     
     Py_INCREF(Py_None);
     return Py_None;
 }
 
-    
 
 #ifdef PSYCOPG_EXTENSIONS
 #define psyco_curs_mogrify_doc \

@@ -1,3 +1,8 @@
+2005-05-09  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/cursor_type.c (psyco_curs_executemany): applied slightly
+	fixed patch from wrobell to allow iterators in .executemany().
+
 2005-04-18  Federico Di Gregorio  <fog@debian.org>
 
 	* MANIFEST.in: included debian directory.
