@@ -1,5 +1,12 @@
 2005-05-09  Federico Di Gregorio  <fog@debian.org>
 
+	* psycopg/typecast_datetime.c (typecast_PYDATETIME_cast): fixed a
+	typo (pyDateTimeModuleP->pyDateTimeTypeP) that was causing errors
+	with infinite datetime values.
+
+	* psycopg/adapter_binary.c (binary_str): Py_XINCREF on the buffer
+	that can be NULL on error.
+
 	* psycopg/typecast_binary.*: applied slightly modified
 	chunk/buffer object patch to allow round-trip of buffer objects
 	(BYTEA columns.) 

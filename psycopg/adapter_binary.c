@@ -154,7 +154,7 @@ binary_str(binaryObject *self)
     if (self->buffer == NULL) {
         binary_quote(self);
     }
-    Py_INCREF(self->buffer);
+    Py_XINCREF(self->buffer);
     return self->buffer;
 }
 

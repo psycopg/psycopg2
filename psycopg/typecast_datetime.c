@@ -81,10 +81,10 @@ typecast_PYDATETIME_cast(unsigned char *str, int len, PyObject *curs)
     /* check for infinity */
     if (!strcmp(str, "infinity") || !strcmp(str, "-infinity")) {
         if (str[0] == '-') {
-            obj = PyObject_GetAttrString(pyDateTimeModuleP, "min");
+            obj = PyObject_GetAttrString(pyDateTimeTypeP, "min");
         }
         else {
-            obj = PyObject_GetAttrString(pyDateTimeModuleP, "max");
+            obj = PyObject_GetAttrString(pyDateTimeTypeP, "max");
         }
     }
 

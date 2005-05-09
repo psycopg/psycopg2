@@ -1,3 +1,30 @@
+What's new in psycopg 2.0 beta 1
+--------------------------------
+
+* Officially in beta (i.e., no new features will be added.)
+
+* Array support: list objects can be passed as bound variables and are
+  correctly returned for array columns.
+
+* Added the psycopg.psycopg1 compatibility module (if you want instant
+  psycopg 1 compatibility just "from psycopg import psycopg1 as psycopg".)
+
+* Complete support for BYTEA columns and buffer objects.
+
+* The AsIs adapter is now exported by default (also Decimal objects are
+  adapter using the AsIs adapter (when str() is called on them they
+  already format themselves using the right precision and scale.)
+
+* The connect() function now takes "connection_factory" instead of
+  "factory" as keyword argument.
+
+* New setup.py code to build on win32 using mingw and better error
+  messages on missing datetime headers,
+
+* Internal changes that allow much better user-defined type casters.
+
+* A lot of bugfixes (binary, datetime, 64 bit arches, GIL, .executemany())
+ 
 What's new in psycopg 1.99.13
 -----------------------------
 
