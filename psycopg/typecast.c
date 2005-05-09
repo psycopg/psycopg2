@@ -41,6 +41,7 @@ skip_until_space(char *s)
 
 /** include casting objects **/
 #include "psycopg/typecast_basic.c"
+#include "psycopg/typecast_binary.c"
 
 #ifdef HAVE_MXDATETIME
 #include "psycopg/typecast_mxdatetime.c"

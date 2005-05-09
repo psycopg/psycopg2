@@ -1,5 +1,9 @@
 2005-05-09  Federico Di Gregorio  <fog@debian.org>
 
+	* psycopg/typecast_binary.*: applied slightly modified
+	chunk/buffer object patch to allow round-trip of buffer objects
+	(BYTEA columns.) 
+
 	* psycopg/cursor_type.c (psyco_curs_executemany): applied slightly
 	fixed patch from wrobell to allow iterators in .executemany().
 

@@ -19,9 +19,6 @@
  * Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#include <libpq-fe.h>
-#include <stdlib.h>
-
 /** INTEGER - cast normal integers (4 bytes) to python int **/
 
 static PyObject *
@@ -97,90 +94,6 @@ typecast_UNICODE_cast(unsigned char *s, int len, PyObject *curs)
                     ((cursorObject*)curs)->conn->encoding);
        return NULL; 
     }
-}
-
-/** BINARY - cast a binary string into a python string **/
-
-/* the function typecast_BINARY_cast_unescape is used when libpq does not
-   provide PQunescapeBytea: it convert all the \xxx octal sequences to the
-   proper byte value */
-
-#ifdef PSYCOPG_OWN_QUOTING
-static unsigned char *
-typecast_BINARY_cast_unescape(unsigned char *str, size_t *to_length)
-{
-    char *dstptr, *dststr;
-    int len, i;
-
-    len = strlen(str);
-    dststr = (char*)calloc(len, sizeof(char));
-    dstptr = dststr;
-
-    if (dststr == NULL) return NULL;
-
-    Py_BEGIN_ALLOW_THREADS;
-   
-    for (i = 0; i < len; i++) {
-        if (str[i] == '\\') {
-            if ( ++i < len) {
-                if (str[i] == '\\') {
-                    *dstptr = '\\';
-                }
-                else {
-                    *dstptr = 0;
-                    *dstptr |= (str[i++] & 7) << 6;
-                    *dstptr |= (str[i++] & 7) << 3;
-                    *dstptr |= (str[i] & 7);
-                }
-            }
-        }
-        else {
-            *dstptr = str[i];
-        }
-        dstptr++;
-    }
-    
-    Py_END_ALLOW_THREADS;
-
-    *to_length = (size_t)(dstptr-dststr);
-    
-    return dststr;
-}
-
-#define PQunescapeBytea typecast_BINARY_cast_unescape
-#endif
-    
-static PyObject *
-typecast_BINARY_cast(unsigned char *s, int l, PyObject *curs)
-{
-    PyObject *res;
-    unsigned char *str, *buffer = NULL;
-    size_t len;
-
-    if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
-
-    /* PQunescapeBytea absolutely wants a 0-terminated string and we don't
-       want to copy the whole buffer, right? Wrong, but there isn't any other
-       way :/ */
-    if (s[l] != '\0') {
-        if ((buffer = PyMem_Malloc(l+1)) == NULL)
-            PyErr_NoMemory();
-        strncpy(buffer, s, l); buffer[l] = '\0';
-        s = buffer;
-    }
-    str = PQunescapeBytea(s, &len);
-    Dprintf("typecast_BINARY_cast: unescaped %d bytes", len);
-    if (buffer) PyMem_Free(buffer);
-    
-    /* TODO: using a PyBuffer would make this a zero-copy operation but we'll
-       need to define our own buffer-derived object to keep a reference to the
-       memory area: does it buy it?
-
-       res = PyBuffer_FromMemory((void*)str, len); */
-    res = PyString_FromStringAndSize(str, len);
-    free(str);
-    
-    return res;
 }
 
 /** BOOLEAN - cast boolean value into right python object **/
