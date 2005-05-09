@@ -11,6 +11,8 @@ What's new in psycopg 2.0 beta 1
 
 * Complete support for BYTEA columns and buffer objects.
 
+* Added error codes to error messages.
+
 * The AsIs adapter is now exported by default (also Decimal objects are
   adapter using the AsIs adapter (when str() is called on them they
   already format themselves using the right precision and scale.)

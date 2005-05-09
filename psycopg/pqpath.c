@@ -47,6 +47,7 @@ void
 pq_raise(connectionObject *conn, cursorObject *curs, PyObject *exc, char *msg)
 {
     char *err = NULL;
+    char *code = NULL;
     
     if ((conn == NULL && curs == NULL) || (curs != NULL && conn == NULL)) {
         PyErr_SetString(Error,
@@ -54,8 +55,14 @@ pq_raise(connectionObject *conn, cursorObject *curs, PyObject *exc, char *msg)
         return;
     }
     
-    if (curs && curs->pgres)
+    if (curs && curs->pgres) {
         err = PQresultErrorMessage(curs->pgres);
+#ifdef HAVE_PQPROTOCOL3
+        if (err != NULL && conn->protocol == 3) {
+            code = PQresultErrorField(curs->pgres, PG_DIAG_SQLSTATE);
+        }
+#endif
+    }
     if (err == NULL)
         err = PQerrorMessage(conn->pgconn);
 
@@ -100,7 +107,10 @@ pq_raise(connectionObject *conn, cursorObject *curs, PyObject *exc, char *msg)
     if (err && strlen(err) > 8) err = &(err[8]);
     
     /* if msg is not NULL, add it to the error message, after a '\n' */
-    if (msg) {
+    if (msg && code) {
+        PyErr_Format(exc, "[%s] %s\n%s", code, err, msg);
+    }
+    else if (msg) {
         PyErr_Format(exc, "%s\n%s", err, msg);
     }
     else {
