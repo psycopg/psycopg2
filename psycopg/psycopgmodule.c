@@ -223,6 +223,10 @@ psyco_adapters_init(PyObject *mod)
 #ifdef HAVE_PYBOOL
     microprotocols_add(&PyBool_Type, NULL, (PyObject*)&pbooleanType);
 #endif
+
+#ifdef HAVE_DECIMAL
+    microprotocols_add((PyTypeObject*)decimalType, NULL, (PyObject*)&asisType);
+#endif
 }
 
 /* psyco_encodings_fill

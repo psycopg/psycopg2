@@ -1,5 +1,7 @@
 2005-05-09  Federico Di Gregorio  <fog@debian.org>
 
+	* Release 2.0 beta 1.
+
 	* psycopg/typecast_datetime.c (typecast_PYDATETIME_cast): fixed a
 	typo (pyDateTimeModuleP->pyDateTimeTypeP) that was causing errors
 	with infinite datetime values.
