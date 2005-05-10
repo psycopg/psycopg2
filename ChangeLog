@@ -1,3 +1,11 @@
+2005-05-10  Federico Di Gregorio  <fog@debian.org>
+
+	* lib/extras.py (DictRow): we now save a reference to the index
+	itself and not to the cursor to avoid problems while accessing
+	DictRow objects after reusing the cursor for a different query
+	(using  Kevin Jacobs db_row would be much better but DictRow is
+	just an example, right?)
+
 2005-05-09  Federico Di Gregorio  <fog@debian.org>
 
 	* Release 2.0 beta 1.

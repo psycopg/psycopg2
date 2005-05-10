@@ -62,22 +62,22 @@ class DictRow(list):
     """A row object that allow by-colun-name access to data."""
 
     def __init__(self, cursor):
-        self._cursor = cursor
+        self._index = cursor.index
         self[:] = [None] * len(cursor.description)
 
     def __getitem__(self, x):
         if type(x) != int:
-            x = self._cursor.index[x]
+            x = self._index[x]
         return list.__getitem__(self, x)
 
     def items(self):
 	res = []
-	for n, v in self._cursor.index.items():
+	for n, v in self._index.items():
 	    res.append((n, list.__getitem__(self, v)))
 	return res
     
     def keys(self):
-	return self._cursor.index.keys()
+	return self._index.keys()
 
 
 
