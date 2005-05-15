@@ -93,6 +93,7 @@ microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
     if (PyObject_HasAttrString(proto, "__adapt__")) {
         PyObject *adapted = PyObject_CallMethod(proto, "__adapt__", "O", obj);
         if (adapted && adapted != Py_None) return adapted;
+        Py_XDECREF(adapted);
         if (PyErr_Occurred() && !PyErr_ExceptionMatches(PyExc_TypeError))
             return NULL;
     }
@@ -101,6 +102,7 @@ microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
     if (PyObject_HasAttrString(obj, "__conform__")) {
         PyObject *adapted = PyObject_CallMethod(obj, "__conform__","O", proto);
         if (adapted && adapted != Py_None) return adapted;
+        Py_XDECREF(adapted);
         if (PyErr_Occurred() && !PyErr_ExceptionMatches(PyExc_TypeError))
             return NULL;
     }

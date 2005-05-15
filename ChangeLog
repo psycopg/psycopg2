@@ -1,3 +1,8 @@
+2005-05-15  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/microprotocols.c (microprotocols_adapt): fixed memory
+	leak on None as suggested by gh (bug #16.)
+
 2005-05-10  Federico Di Gregorio  <fog@debian.org>
 
 	* lib/extras.py (DictRow): we now save a reference to the index
