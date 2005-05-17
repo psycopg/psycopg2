@@ -1,3 +1,8 @@
+2005-05-18  Federico Di Gregorio  <fog@debian.org>
+
+	* setup.py: Applied combined patch from Daniele Varrazzo and Jason
+	Erickson to build on win32 using MSVC or mingw.
+
 2005-05-15  Federico Di Gregorio  <fog@debian.org>
 
 	* psycopg/microprotocols.c (microprotocols_adapt): fixed memory

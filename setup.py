@@ -53,8 +53,9 @@ from distutils.core import setup, Extension
 from distutils.errors import DistutilsFileError
 from distutils.command.build_ext import build_ext
 from distutils.sysconfig import get_python_inc
+from distutils.ccompiler import get_default_compiler
 
-PSYCOPG_VERSION = '2.0b1'
+PSYCOPG_VERSION = '2.0b2'
 version_flags   = []
 
 # to work around older distutil limitations
@@ -95,6 +96,14 @@ class psycopg_build_ext(build_ext):
         self.use_pg_dll = 1
         self.pgdir = None
         
+    def get_compiler(self):
+        """Return the c compiler to compile extensions.
+
+        If a compiler was not explicitely set (on the command line, for
+        example), fall back on the default compiler.
+        """
+        return self.compiler or get_default_compiler()
+
     def finalize_win32(self):
         """Finalize build system configuration on win32 platform.
         
@@ -114,7 +123,7 @@ class psycopg_build_ext(build_ext):
             self.include_dirs.append(os.path.join(
                 self.pgdir, "src", "include"))
                 
-            if self.compiler == "msvc":
+            if self.get_compiler() == "msvc":
                 self.libpqdir = os.path.join(
                     self.pgdir, "src", "interfaces", "libpq", "Release")
             else:
@@ -129,10 +138,20 @@ class psycopg_build_ext(build_ext):
             self.library_dirs.append(os.path.join(
                 self.pgdir, "lib"))
                 
+        # Remove the library that was added in the finalize_options, since:
+        #  1) We do not need it because we are using the DLL version, or
+        #  2) We do need it, but it might need to be msvc'ified, and
+        #  3) The other benefit is that msvc needs pqdll to be the last
+        self.libraries.remove("pq")
+
         if self.use_pg_dll:
             self.libraries.append(self.get_lib("pqdll"))
         else:
             self.libraries.append("advapi32")
+
+            if self.get_compiler() == "msvc":
+                self.libraries.append("shfolder")
+            self.libraries.append(self.get_lib("pq"))
 
     def finalize_darwin(self):
         """Finalize build system configuration on darwin platform.
@@ -151,7 +170,7 @@ class psycopg_build_ext(build_ext):
         """Complete the build system configuation."""
         build_ext.finalize_options(self)
         
-        self.libraries.append(self.get_lib("pq"))
+        self.libraries.append("pq")
         
         if hasattr(self, "finalize_" + sys.platform):
             getattr(self, "finalize_" + sys.platform)()
@@ -175,7 +194,7 @@ class psycopg_build_ext(build_ext):
         MS VC compiler doesn't assume a "lib" prefix as gcc derived ones do.
         Return the library name as required by the compiler.
         """
-        if sys.platform == 'win32' and self.compiler == "msvc":
+        if sys.platform == 'win32' and self.get_compiler() == "msvc":
             return "lib" + name
         else:
             return name
