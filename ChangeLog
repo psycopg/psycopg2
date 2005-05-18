@@ -1,5 +1,7 @@
 2005-05-18  Federico Di Gregorio  <fog@debian.org>
 
+	* Release 2.0b2.
+
 	* ZPsycopgDA/DA.py (ALLOWED_PSYCOPG_VERSIONS): updated to work
 	with 2.0b2 only (will support only the exact version untill final
 	2.0 release.)
@@ -10,7 +12,7 @@
 2005-05-15  Federico Di Gregorio  <fog@debian.org>
 
 	* psycopg/microprotocols.c (microprotocols_adapt): fixed memory
-	leak on None as suggested by gh (bug #16.)
+	leak on None as suggested by gh (closes: #16).
 
 2005-05-10  Federico Di Gregorio  <fog@debian.org>
 

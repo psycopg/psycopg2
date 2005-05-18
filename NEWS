@@ -1,3 +1,16 @@
+What's new in psycopg 2.0 beta 2
+--------------------------------
+
+* Fixed ZPsycopgDA version check (ZPsycopgDA can now be imported in
+  Zope.)
+
+* psycopg.extras.DictRow works even after a new query on the generating
+  cursor.
+
+* Better setup.py for win32 (should build with MSCV or mingw.)
+
+* Generic fixed and memory leaks plugs.
+
 What's new in psycopg 2.0 beta 1
 --------------------------------
 

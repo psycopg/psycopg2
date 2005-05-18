@@ -18,7 +18,7 @@
 # See the LICENSE file for details.
 
 
-ALLOWED_PSYCOPG_VERSIONS = ('2.0b1', '2.0b2')
+ALLOWED_PSYCOPG_VERSIONS = ('2.0b2')
 
 import sys
 import db
@@ -109,7 +109,7 @@ class Connection(DABase.Connection):
 
         # check psycopg version and raise exception if does not match
         if psycopg.__version__ not in ALLOWED_PSYCOPG_VERSIONS:
-            raise ImportError("psycopg version mismatch (imported %s)" +
+            raise ImportError("psycopg version mismatch (imported %s)" %s
                               psycopg.__version__)
 
         self.set_type_casts()
