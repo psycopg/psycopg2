@@ -1,5 +1,9 @@
 2005-05-18  Federico Di Gregorio  <fog@debian.org>
 
+	* ZPsycopgDA/DA.py (ALLOWED_PSYCOPG_VERSIONS): updated to work
+	with 2.0b2 only (will support only the exact version untill final
+	2.0 release.)
+
 	* setup.py: Applied combined patch from Daniele Varrazzo and Jason
 	Erickson to build on win32 using MSVC or mingw.
 

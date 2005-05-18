@@ -18,7 +18,7 @@
 # See the LICENSE file for details.
 
 
-ALLOWED_PSYCOPG_VERSIONS = ('1.99.9',)
+ALLOWED_PSYCOPG_VERSIONS = ('2.0b1', '2.0b2')
 
 import sys
 import db
