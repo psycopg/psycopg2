@@ -1,3 +1,9 @@
+2005-05-19  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/cursor_type.c (_psyco_curs_execute): added explict check
+	to avoid using None as bound variables (very importand for cursor
+	subclasses calling cursor.execute(self, query, None).
+
 2005-05-18  Federico Di Gregorio  <fog@debian.org>
 
 	* Release 2.0b2.

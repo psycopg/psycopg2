@@ -286,7 +286,7 @@ _psyco_curs_execute(cursorObject *self,
 
        let's go... */
     
-    if (vars)
+    if (vars && vars != Py_None)
     {
         if(_mogrify(vars, operation, self->conn, &cvt) == -1) {
             Py_XDECREF(uoperation);
