@@ -79,6 +79,18 @@ class DictRow(list):
     def keys(self):
 	return self._index.keys()
 
+    def values(self):
+        return tuple(self[:])
+
+    def has_key(self, x):
+        return self._index.has_key(x)
+    
+    def get(self, x, default=None):
+        try:
+            return self[x]
+        except:
+            return default
+
 
 
 class SQL_IN(object):
