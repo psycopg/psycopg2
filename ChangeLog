@@ -1,5 +1,7 @@
 2005-05-26  Federico Di Gregorio  <fog@debian.org>
 
+	* Release 2.0b3.
+
 	* ZPsycopgDA/db.py (DB.convert_description): isolated description
 	conversion (and fixed the conversion as per #18).
 
