@@ -22,12 +22,11 @@ from Shared.DC.ZRDB import dbi_db
 
 from ZODB.POSException import ConflictError
 
-import time
 import site
 import pool
 
 import psycopg
-from psycopg.extensions import INTEGER, LONGINTEGER, FLOAT, BOOLEAN
+from psycopg.extensions import INTEGER, LONGINTEGER, FLOAT, BOOLEAN, DATE
 from psycopg import NUMBER, STRING, ROWID, DATETIME 
 
 
@@ -91,6 +90,38 @@ class DB(TM, dbi_db.DB):
     def sortKey(self):
         return 1
 
+    def convert_description(self, desc, use_psycopg_types=False):
+        """Convert DBAPI-2.0 description field to Zope format."""
+        items = []
+        for name, typ, width, ds, p, scale, null_ok in desc:
+            if typ == NUMBER:
+                if typ == INTEGER or typ == LONGINTEGER:
+                    typs = 'i'
+                else:
+                    typs = 'n'
+                typp = NUMBER
+            elif typ == BOOLEAN:
+                typs = 'n'
+                typp = BOOLEAN
+            elif typ == ROWID:
+                typs = 'i'
+                typp = ROWID
+            elif typ == DATETIME or typ == DATE:
+                typs = 'd'
+                typp = DATETIME
+            else:
+                typs = 's'
+                typp = STRING
+            items.append({
+                'name': name,
+                'type': use_psycopg_types and typp or typs,
+                'width': width,
+                'precision': p,
+                'scale': scale,
+                'null': null_ok,
+                })
+        return items
+
     ## tables and rows ##
 
     def tables(self, rdb=0, _care=('TABLE', 'VIEW')):
@@ -119,30 +150,8 @@ class DB(TM, dbi_db.DB):
             r = c.execute('SELECT * FROM "%s" WHERE 1=0' % table_name)
         except:
             return ()
-        res = []
-        for name, type, width, ds, p, scale, null_ok in c.description:
-            if type == NUMBER:
-                if type == INTEGER:
-                    type = INTEGER
-                elif type == FLOAT:
-                    type = FLOAT
-                else: type = NUMBER
-            elif type == BOOLEAN:
-                type = BOOLEAN
-            elif type == ROWID:
-                type = ROWID
-            elif type == DATETIME:
-                type = DATETIME
-            else:
-                type = STRING
-
-            res.append({'Name': name,
-                        'Type': type.name,
-                        'Precision': 0,
-                        'Scale': 0,
-                        'Nullable': 0})
         self.putconn()
-        return res
+        return self.convert_description(c.description, True)
     
     ## query execution ##
 
@@ -201,24 +210,4 @@ class DB(TM, dbi_db.DB):
             self._abort()
             raise err
         
-        items = []
-        for name, typ, width, ds, p, scale, null_ok in desc:
-            if typ == NUMBER:
-                if typ == INTEGER or typ == LONGINTEGER: typs = 'i'
-                else: typs = 'n'
-            elif typ == BOOLEAN:
-                typs = 'n'
-            elif typ == ROWID:
-                typs = 'i'
-            elif typ == DATETIME:
-                typs = 'd'
-            else:
-                typs = 's'
-            items.append({
-                'name': name,
-                'type': typs,
-                'width': width,
-                'null': null_ok,
-                })
-
-        return items, res
+        return self.convert_description(desc), res

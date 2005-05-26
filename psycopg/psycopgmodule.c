@@ -503,12 +503,15 @@ init_psycopg(void)
     binaryType.tp_alloc = PyType_GenericAlloc;
     isqlquoteType.tp_alloc = PyType_GenericAlloc;
     pbooleanType.tp_alloc = PyType_GenericAlloc;
-    pydatetimeType.tp_alloc = PyType_GenericAlloc;
     connectionType.tp_alloc = PyType_GenericAlloc;
     asisType.tp_alloc = PyType_GenericAlloc;
     qstringType.tp_alloc = PyType_GenericAlloc;
     listType.tp_alloc = PyType_GenericAlloc;
     chunkType.tp_alloc = PyType_GenericAlloc;
+    
+#ifdef HAVE_PYDATETIME
+    pydatetimeType.tp_alloc = PyType_GenericAlloc;
+#endif
     
     Dprintf("initpsycopg: module initialization complete");
 }

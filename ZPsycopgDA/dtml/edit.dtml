@@ -45,10 +45,10 @@
     <td align="left" valign="top">
       <select name="tilevel:int">
         <option value="1"
-                <dtml-if expr="tilevel==1">selected="YES"</dtml-if">>
+                <dtml-if expr="tilevel==1">selected="YES"</dtml-if>>
         Read committed</option>
         <option value="2"
-                <dtml-if expr="tilevel==2">selected="YES"</dtml-if">>
+                <dtml-if expr="tilevel==2">selected="YES"</dtml-if>>
         Serializable</option>
       </select>
     </td>

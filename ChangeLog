@@ -1,3 +1,14 @@
+2005-05-26  Federico Di Gregorio  <fog@debian.org>
+
+	* ZPsycopgDA/db.py (DB.convert_description): isolated description
+	conversion (and fixed the conversion as per #18).
+
+	* ZPsycopgDA/DA.py: fixed again; this time Zope should work for
+	real. :/  Also fixed the type-casters (psycopg 2 added the extra
+	cursor parameter) as reported in #18.
+
+	* psycopg/psycopgmodule.c (init_psycopg): fixed Python 2.2 build. 
+
 2005-05-19  Federico Di Gregorio  <fog@debian.org>
 
 	* Release 2.0b2.

@@ -20,8 +20,6 @@
 __doc__ = "ZPsycopg Database Adalper Registration." 
 __version__ = '2.0'
 
-import sys
-import string
 import DA
 
 methods    = DA.folder_methods
@@ -30,3 +28,11 @@ meta_types = DA.meta_types
 misc_      = DA.misc_
 
 __ac_permissions__=DA.__ac_permissions__
+
+def initialize(context):
+    context.registerClass(
+        DA.Connection,
+        permission = 'Add Z Psycopg Database Connections',
+        constructors = (DA.manage_addZPsycopgConnectionForm,
+                        DA.manage_addZPsycopgConnection),
+        icon = SOFTWARE_HOME + '/Shared/DC/ZRDB/www/DBAdapterFolder_icon.gif')

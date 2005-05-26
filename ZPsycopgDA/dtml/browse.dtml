@@ -1,0 +1,11 @@
+<html>
+  <head><title><dtml-var title_or_id >tables</title></head>
+  <body bgcolor="#FFFFFF" link="#000099" vlink="#555555" alink="#77003B">
+    <dtml-var manage_tabs>
+    <dtml-tree header="info">
+      <IMG SRC="<dtml-var SCRIPT_NAME >/misc_/ZPsycopgDA/<dtml-var icon>"
+       ALT="<dtml-var Type>" BORDER="0">
+      <dtml-var Name><dtml-var Description>
+    </dtml-tree>
+  </body>
+</html>

@@ -22,10 +22,6 @@
 #include <Python.h>
 #include <structmember.h>
 #include <stringobject.h>
-#include <datetime.h>
-
-#include <time.h>
-#include <string.h>
 
 #define PSYCOPG_MODULE
 #include "psycopg/config.h"
