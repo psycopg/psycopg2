@@ -1,3 +1,7 @@
+2005-5-27  Federico Di Gregorio,  <fog@lana.initd.org>
+
+	* tests/types_basic.py: fixed float and binary tests.
+
 2005-05-26  Federico Di Gregorio  <fog@debian.org>
 
 	* Release 2.0b3.
