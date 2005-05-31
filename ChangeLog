@@ -1,3 +1,9 @@
+2005-05-31  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/cursor_type.c (_psyco_curs_execute): if a
+	UnicodeEncodeError is raised during the converion of a unicode
+	query we let it propagate insead of segfaulting.
+	
 2005-5-27  Federico Di Gregorio,  <fog@lana.initd.org>
 
 	* tests/types_basic.py: fixed float and binary tests.

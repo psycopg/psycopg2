@@ -1,3 +1,9 @@
+What's new in psycopg 2.0 beta 4
+--------------------------------
+
+* No more segfaults when a UNICODE query can't be converted to the
+  backend encoding.
+
 What's new in psycopg 2.0 beta 3
 --------------------------------
 

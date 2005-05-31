@@ -245,6 +245,11 @@ _psyco_curs_execute(cursorObject *self,
         if (enc) {
             operation = PyUnicode_AsEncodedString(
                 operation, PyString_AsString(enc), NULL);
+
+            /* if there was an error during the encoding from unicode to the
+               target encoding we just let the exception propagate */
+            if (operation == NULL) return 0;
+
             /* we clone operation in uoperation to be sure to free it later */ 
             uoperation = operation;
         }
