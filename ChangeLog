@@ -3,6 +3,15 @@
 	* psycopg/cursor_type.c (_psyco_curs_execute): fixed segfault when
 	not passing string or unicode to .execute().
 
+2005-06-01  Federico Di Gregorio  <fog@debian.org>
+
+	* examples/fetch.py: added example about using DECLARE CURSOR.
+
+	* psycopg/adapter_datetime.c (psyco_TimestampFromTicks): "Hmmm,
+	looks like someone forgot that C expects months to start counting
+	from 0, but the Python date routines start counting from 1." That
+	was me: fixed.
+
 2005-05-31  Federico Di Gregorio  <fog@debian.org>
 
 	* psycopg/cursor_type.c (_psyco_curs_execute): if a

@@ -338,7 +338,7 @@ psyco_DateFromTicks(PyObject *self, PyObject *args)
 
     t = (time_t)round(ticks);
     if (gmtime_r(&t, &tm)) {
-        args = Py_BuildValue("iii", tm.tm_year, tm.tm_mon, tm.tm_mday);
+        args = Py_BuildValue("iii", tm.tm_year, tm.tm_mon+1, tm.tm_mday);
         if (args) {
             res = psyco_Date(self, args);
             Py_DECREF(args);
@@ -383,7 +383,7 @@ psyco_TimestampFromTicks(PyObject *self, PyObject *args)
     t = (time_t)round(ticks);
     if (gmtime_r(&t, &tm)) {
         args = Py_BuildValue("iiiiid",
-                             tm.tm_year, tm.tm_mon, tm.tm_mday,
+                             tm.tm_year, tm.tm_mon+1, tm.tm_mday,
                              tm.tm_hour, tm.tm_min, (double)tm.tm_sec);
         if (args) {
             res = psyco_Timestamp(self, args);
