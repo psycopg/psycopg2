@@ -52,6 +52,14 @@ class TypesBasicTests(TestCase):
 	r = str(self.execute("SELECT %s::bytea AS foo", (b,)))
         self.failUnless(r == s, "wrong binary quoting")
 
+    def testArray(self):
+	s = self.execute("SELECT %s AS foo", ([[1,2],[3,4]],))
+	self.failUnless(s == [[1,2],[3,4]], "wrong array quoting " + str(s))
+	s = self.execute("SELECT %s AS foo", (['one', 'two', 'three'],))
+	self.failUnless(s == ['one', 'two', 'three'], 
+	                "wrong array quoting " + str(s))
+	
+	
 class TypesBasicSuite(TestSuite):
     """Build a suite of all tests."""
 

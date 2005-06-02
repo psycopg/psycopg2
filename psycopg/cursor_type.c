@@ -259,6 +259,12 @@ _psyco_curs_execute(cursorObject *self,
             return 0;
         }
     }
+    else if (!PyString_Check(operation)) {
+        /* the operation is not unicode or string, raise an error */
+        PyErr_SetString(PyExc_TypeError,
+                        "argument 1 must be a string or unicode object");
+        return 0;
+    }
     
     IFCLEARPGRES(self->pgres);
 

@@ -1,3 +1,8 @@
+2005-06-02  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/cursor_type.c (_psyco_curs_execute): fixed segfault when
+	not passing string or unicode to .execute().
+
 2005-05-31  Federico Di Gregorio  <fog@debian.org>
 
 	* psycopg/cursor_type.c (_psyco_curs_execute): if a
