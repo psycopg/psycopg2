@@ -23,13 +23,13 @@ DSN = 'dbname=test'
 import sys
 import os
 import StringIO
-import psycopg
+import psycopg2
 
 if len(sys.argv) > 1:
     DSN = sys.argv[1]
 
 print "Opening connection using dns:", DSN
-conn = psycopg.connect(DSN)
+conn = psycopg2.connect(DSN)
 print "Encoding for this connection is", conn.encoding
 
 curs = conn.cursor()

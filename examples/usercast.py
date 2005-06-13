@@ -19,7 +19,7 @@ DSN = 'dbname=test'
 
 ## don't modify anything below tis line (except for experimenting)
 
-import sys, psycopg
+import sys, psycopg2
 import psycopg.extensions
 import whrandom
 
@@ -27,13 +27,13 @@ import whrandom
 # because the adapter is meant to be used in SQL IN clauses while we use
 # tuples to represent points but it works and the example is about Rect, not
 # "Point"
-import psycopg.extras
+import psycopg2.extras
 
 if len(sys.argv) > 1:
     DSN = sys.argv[1]
 
 print "Opening connection using dns:", DSN
-conn = psycopg.connect(DSN)
+conn = psycopg2.connect(DSN)
 print "Initial encoding for this connection is", conn.encoding
 
 curs = conn.cursor()
@@ -65,7 +65,7 @@ class Rect(object):
 
     def __conform__(self, proto):
         """This is a terrible hack, just ignore proto and return self."""
-        if proto == psycopg.extensions.ISQLQuote:
+        if proto == psycopg2.extensions.ISQLQuote:
             return self
     
     def from_points(self, x0, y0, x1, y1):
@@ -100,8 +100,8 @@ boxoid = curs.description[0][1]
 print "Oid for the box datatype is", boxoid
 
 # and build the user cast object
-BOX = psycopg.extensions.new_type((boxoid,), "BOX", Rect)
-psycopg.extensions.register_type(BOX)
+BOX = psycopg2.extensions.new_type((boxoid,), "BOX", Rect)
+psycopg2.extensions.register_type(BOX)
 
 # now insert 100 random data (2 points and a box in each row)
 for i in range(100):

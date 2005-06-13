@@ -19,16 +19,17 @@ DSN = 'dbname=test'
 
 ## don't modify anything below this line (except for experimenting)
 
-import sys, psycopg
+import sys
+import psycopg2
 import datetime
 
-from psycopg.tz import ZERO, LOCAL, FixedOffsetTimezone
+from psycopg2.tz import ZERO, LOCAL, FixedOffsetTimezone
 
 if len(sys.argv) > 1:
     DSN = sys.argv[1]
 
 print "Opening connection using dns:", DSN
-conn = psycopg.connect(DSN)
+conn = psycopg2.connect(DSN)
 curs = conn.cursor()
 
 try:

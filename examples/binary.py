@@ -19,13 +19,13 @@ DSN = 'dbname=test'
 ## don't modify anything below tis line (except for experimenting)
 
 import sys
-import psycopg
+import psycopg2
 
 if len(sys.argv) > 1:
     DSN = sys.argv[1]
 
 print "Opening connection using dns:", DSN
-conn = psycopg.connect(DSN)
+conn = psycopg2.connect(DSN)
 print "Encoding for this connection is", conn.encoding
 
 curs = conn.cursor()
@@ -41,7 +41,7 @@ conn.commit()
 # using a buffer on a file object.
 
 data1 = {'id':1, 'name':'somehackers.jpg',
-         'img':psycopg.Binary(open('somehackers.jpg').read())}
+         'img':psycopg2.Binary(open('somehackers.jpg').read())}
 data2 = {'id':2, 'name':'whereareyou.jpg',
          'img':buffer(open('whereareyou.jpg').read())}
 

@@ -36,7 +36,7 @@ MODE = 1
 
 ## don't modify anything below tis line (except for experimenting)
 
-import sys, psycopg, threading
+import sys, psycopg2, threading
 from psycopg.pool import ThreadedConnectionPool
 
 if len(sys.argv) > 1:
@@ -45,7 +45,7 @@ if len(sys.argv) > 2:
     MODE = int(sys.argv[2])
     
 print "Opening connection using dns:", DSN
-conn = psycopg.connect(DSN)
+conn = psycopg2.connect(DSN)
 curs = conn.cursor()
 
 try:
@@ -83,7 +83,7 @@ def insert_func(conn_or_pool, rows):
         try:
             c.execute("INSERT INTO test_threads VALUES (%s, %s, %s)",
                       (str(i), i, float(i)))
-        except psycopg.ProgrammingError, err:
+        except psycopg2.ProgrammingError, err:
             print name, ": an error occurred; skipping this insert"
             print err
     conn.commit()
@@ -112,14 +112,14 @@ def select_func(conn_or_pool, z):
                     conn_or_pool.putconn(conn)
                 s = name + ": number of rows fetched: " + str(len(l))
                 print s
-            except psycopg.ProgrammingError, err:
+            except psycopg2.ProgrammingError, err:
                 print name, ": an error occurred; skipping this select"
                 print err
 
 ## create the connection pool or the connections
 if MODE == 0:
-    conn_insert = psycopg.connect(DSN)
-    conn_select = psycopg.connect(DSN)
+    conn_insert = psycopg2.connect(DSN)
+    conn_select = psycopg2.connect(DSN)
 else:
     m = len(INSERT_THREADS) + len(SELECT_THREADS)
     n = m/2

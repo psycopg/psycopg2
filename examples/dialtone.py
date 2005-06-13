@@ -14,8 +14,8 @@ intrusive for your classes (don't want inheritance from an 'Item' or
 
 from datetime import datetime
  
-import psycopg
-from psycopg.extensions import adapt, register_adapter
+import psycopg2
+from psycopg2.extensions import adapt, register_adapter
 
 try: sorted()
 except NameError:

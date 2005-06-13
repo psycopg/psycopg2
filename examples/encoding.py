@@ -19,63 +19,63 @@ DSN = 'dbname=test'
 
 ## don't modify anything below this line (except for experimenting)
 
-import sys, psycopg
+import sys, psycopg2
 import psycopg.extensions
 
 if len(sys.argv) > 1:
     DSN = sys.argv[1]
 
 print "Opening connection using dns:", DSN
-conn = psycopg.connect(DSN)
+conn = psycopg2.connect(DSN)
 print "Initial encoding for this connection is", conn.encoding
 
 print "\n** This example is supposed to be run in a UNICODE terminal! **\n"
 
 print "Available encodings:"
-for a, b in psycopg.extensions.encodings.items():
+for a, b in psycopg2.extensions.encodings.items():
     print " ", a, "<->", b
 
 print "Using STRING typecaster"    
 print "Setting backend encoding to LATIN1 and executing queries:"
 conn.set_client_encoding('LATIN1')
 curs = conn.cursor()
-curs.execute("SELECT %s::TEXT AS foo", ('àèìòù',))
+curs.execute("SELECT %s::TEXT AS foo", ('ï¿½ï¿½ï¿½ï¿½ï¿½',))
 x = curs.fetchone()[0]
 print "  ->", unicode(x, 'latin-1').encode('utf-8'), type(x)
-curs.execute("SELECT %s::TEXT AS foo", (u'àèìòù',))
+curs.execute("SELECT %s::TEXT AS foo", (u'ï¿½ï¿½ï¿½ï¿½ï¿½',))
 x = curs.fetchone()[0]
 print "  ->", unicode(x, 'latin-1').encode('utf-8'), type(x)
 
 print "Setting backend encoding to UTF8 and executing queries:"
 conn.set_client_encoding('UNICODE')
 curs = conn.cursor()
-curs.execute("SELECT %s::TEXT AS foo", (u'àèìòù'.encode('utf-8'),))
+curs.execute("SELECT %s::TEXT AS foo", (u'ï¿½ï¿½ï¿½ï¿½ï¿½'.encode('utf-8'),))
 x = curs.fetchone()[0]
 print "  ->", x, type(x)
-curs.execute("SELECT %s::TEXT AS foo", (u'àèìòù',))
+curs.execute("SELECT %s::TEXT AS foo", (u'ï¿½ï¿½ï¿½ï¿½ï¿½',))
 x = curs.fetchone()[0]
 print "  ->", x, type(x)
 
 print "Using UNICODE typecaster"
-psycopg.extensions.register_type(psycopg.extensions.UNICODE)
+psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 
 print "Setting backend encoding to LATIN1 and executing queries:"
 conn.set_client_encoding('LATIN1')
 curs = conn.cursor()
-curs.execute("SELECT %s::TEXT AS foo", ('àèìòù',))
+curs.execute("SELECT %s::TEXT AS foo", ('ï¿½ï¿½ï¿½ï¿½ï¿½',))
 x = curs.fetchone()[0]
 print "  ->", x.encode('utf-8'), ":", type(x)
-curs.execute("SELECT %s::TEXT AS foo", (u'àèìòù',))
+curs.execute("SELECT %s::TEXT AS foo", (u'ï¿½ï¿½ï¿½ï¿½ï¿½',))
 x = curs.fetchone()[0]
 print "  ->", x.encode('utf-8'), ":", type(x)
 
 print "Setting backend encoding to UTF8 and executing queries:"
 conn.set_client_encoding('UNICODE')
 curs = conn.cursor()
-curs.execute("SELECT %s::TEXT AS foo", (u'àèìòù'.encode('utf-8'),))
+curs.execute("SELECT %s::TEXT AS foo", (u'ï¿½ï¿½ï¿½ï¿½ï¿½'.encode('utf-8'),))
 x = curs.fetchone()[0]
 print "  ->", x.encode('utf-8'), ":", type(x)
-curs.execute("SELECT %s::TEXT AS foo", (u'àèìòù',))
+curs.execute("SELECT %s::TEXT AS foo", (u'ï¿½ï¿½ï¿½ï¿½ï¿½',))
 x = curs.fetchone()[0]
 print "  ->", x.encode('utf-8'), ":", type(x)
 
@@ -84,19 +84,19 @@ print "Executing full UNICODE queries"
 print "Setting backend encoding to LATIN1 and executing queries:"
 conn.set_client_encoding('LATIN1')
 curs = conn.cursor()
-curs.execute(u"SELECT %s::TEXT AS foo", ('àèìòù',))
+curs.execute(u"SELECT %s::TEXT AS foo", ('ï¿½ï¿½ï¿½ï¿½ï¿½',))
 x = curs.fetchone()[0]
 print "  ->", x.encode('utf-8'), ":", type(x)
-curs.execute(u"SELECT %s::TEXT AS foo", (u'àèìòù',))
+curs.execute(u"SELECT %s::TEXT AS foo", (u'ï¿½ï¿½ï¿½ï¿½ï¿½',))
 x = curs.fetchone()[0]
 print "  ->", x.encode('utf-8'), ":", type(x)
 
 print "Setting backend encoding to UTF8 and executing queries:"
 conn.set_client_encoding('UNICODE')
 curs = conn.cursor()
-curs.execute(u"SELECT %s::TEXT AS foo", (u'àèìòù'.encode('utf-8'),))
+curs.execute(u"SELECT %s::TEXT AS foo", (u'ï¿½ï¿½ï¿½ï¿½ï¿½'.encode('utf-8'),))
 x = curs.fetchone()[0]
 print "  ->", x.encode('utf-8'), ":", type(x)
-curs.execute(u"SELECT %s::TEXT AS foo", (u'àèìòù',))
+curs.execute(u"SELECT %s::TEXT AS foo", (u'ï¿½ï¿½ï¿½ï¿½ï¿½',))
 x = curs.fetchone()[0]
 print "  ->", x.encode('utf-8'), ":", type(x)

@@ -19,18 +19,18 @@ DSN = 'dbname=test'
 ## don't modify anything below this line (except for experimenting)
 
 import sys
-import psycopg
-import psycopg.extras
+import psycopg2
+import psycopg2.extras
 
 if len(sys.argv) > 1:
     DSN = sys.argv[1]
 
 print "Opening connection using dsn:", DSN
-conn = psycopg.connect(DSN)
+conn = psycopg2.connect(DSN)
 print "Encoding for this connection is", conn.encoding
 
     
-curs = conn.cursor(cursor_factory=psycopg.extras.DictCursor)
+curs = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 curs.execute("SELECT 1 AS foo, 'cip' AS bar, date(now()) as zot")
 
 data = curs.fetchone()

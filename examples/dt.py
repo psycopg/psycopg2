@@ -18,7 +18,7 @@ DSN = 'dbname=test'
 
 ## don't modify anything below tis line (except for experimenting)
 
-import sys, psycopg
+import sys, psycopg2
 import mx.DateTime
 import datetime
 
@@ -26,7 +26,7 @@ if len(sys.argv) > 1:
     DSN = sys.argv[1]
 
 print "Opening connection using dns:", DSN
-conn = psycopg.connect(DSN)
+conn = psycopg2.connect(DSN)
 curs = conn.cursor()
 
 try:

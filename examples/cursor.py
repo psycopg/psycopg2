@@ -19,22 +19,22 @@ DSN = 'dbname=test'
 ## don't modify anything below this line (except for experimenting)
 
 import sys
-import psycopg
-import psycopg.extensions
+import psycopg2
+import psycopg2.extensions
 
 if len(sys.argv) > 1:
     DSN = sys.argv[1]
 
 print "Opening connection using dsn:", DSN
-conn = psycopg.connect(DSN)
+conn = psycopg2.connect(DSN)
 print "Encoding for this connection is", conn.encoding
 
 
-class NoDataError(psycopg.ProgrammingError):
+class NoDataError(psycopg2.ProgrammingError):
     """Exception that will be raised by our cursor."""
     pass
 
-class Cursor(psycopg.extensions.cursor):
+class Cursor(psycopg2.extensions.cursor):
     """A custom cursor."""
 
     def fetchone(self):
@@ -45,7 +45,7 @@ class Cursor(psycopg.extensions.cursor):
         uses the same function to fetch rows, the code path from Python is
         different.
         """
-        d = psycopg.extensions.cursor.fetchone(self)
+        d = psycopg2.extensions.cursor.fetchone(self)
         if d is None:
 	    raise NoDataError("no more data")
         return d

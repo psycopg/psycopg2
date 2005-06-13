@@ -66,10 +66,10 @@ and on the psycopg 2 wiki:
 
 """
 
-import psycopg
-import psycopg.extensions
-from psycopg.extensions import adapt as psycoadapt
-from psycopg.extensions import register_adapter
+import psycopg2
+import psycopg2.extensions
+from psycopg2.extensions import adapt as psycoadapt
+from psycopg2.extensions import register_adapter
 
 class AsIs(object):
     """An adapter that just return the object 'as is'.

@@ -19,14 +19,14 @@ DSN = 'dbname=test'
 
 ## don't modify anything below this line (except for experimenting)
 
-import sys, psycopg
+import sys, psycopg2
 
 if len(sys.argv) > 1:
     DSN = sys.argv[1]
 
 print "Opening connection using dns:", DSN
 
-conn = psycopg.connect(DSN)
+conn = psycopg2.connect(DSN)
 print "Encoding for this connection is", conn.encoding
 
 curs = conn.cursor()
@@ -34,14 +34,14 @@ curs.execute("SELECT %(foo)s AS foo", {'foo':'bar'})
 curs.execute("SELECT %(foo)s AS foo", {'foo':None})
 curs.execute("SELECT %(foo)s AS foo", {'foo':True})
 curs.execute("SELECT %(foo)s AS foo", {'foo':42})
-curs.execute("SELECT %(foo)s AS foo", {'foo':u'yattà!'})
+curs.execute("SELECT %(foo)s AS foo", {'foo':u'yattï¿½!'})
 curs.execute("SELECT %(foo)s AS foo", {'foo':u'bar'})
 
 print curs.mogrify("SELECT %(foo)s AS foo", {'foo':'bar'})
 print curs.mogrify("SELECT %(foo)s AS foo", {'foo':None})
 print curs.mogrify("SELECT %(foo)s AS foo", {'foo':True})
 print curs.mogrify("SELECT %(foo)s AS foo", {'foo':42})
-print curs.mogrify("SELECT %(foo)s AS foo", {'foo':u'yattà!'})
+print curs.mogrify("SELECT %(foo)s AS foo", {'foo':u'yattï¿½!'})
 print curs.mogrify("SELECT %(foo)s AS foo", {'foo':u'bar'})
 
 conn.rollback()
