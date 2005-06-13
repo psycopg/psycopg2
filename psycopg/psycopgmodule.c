@@ -98,26 +98,30 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
 {
     PyObject *conn, *factory = NULL;
     
-    int idsn=-1;
+    int idsn=-1, iport=-1;
     char *dsn=NULL, *database=NULL, *user=NULL, *password=NULL;
-    char *host=NULL, *port=NULL, *sslmode=NULL;
+    char *host=NULL, *sslmode=NULL;
+    char port[16];
     
     static char *kwlist[] = {"dsn", "database", "host", "port",
                              "user", "password", "sslmode",
                              "connection_factory", NULL};
     
-    if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sssssssO", kwlist,
-                                     &dsn, &database, &host, &port,
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sssisssO", kwlist,
+                                     &dsn, &database, &host, &iport,
                                      &user, &password, &sslmode, &factory)) {
         return NULL;
     }
 
+	if (iport > 0)
+		snprintf(port, 16, "%d", iport);
+		
     if (dsn == NULL) {
         int l = 36;  /* len("dbname= user= password= host= port=\0") */
 
         if (database) l += strlen(database);
         if (host) l += strlen(host);
-        if (port) l += strlen(port);
+        if (iport > 0) l += strlen(port);
         if (user) l += strlen(user);
         if (password) l += strlen(password);
         if (sslmode) l += strlen(sslmode);
@@ -133,7 +137,7 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
             idsn = _psyco_connect_fill_dsn(dsn, " dbname=", database, idsn);
         if (host)
             idsn = _psyco_connect_fill_dsn(dsn, " host=", host, idsn);
-        if (port)
+        if (iport > 0)
             idsn = _psyco_connect_fill_dsn(dsn, " port=", port, idsn);
         if (user)
             idsn = _psyco_connect_fill_dsn(dsn, " user=", user, idsn);

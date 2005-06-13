@@ -1,5 +1,8 @@
 2005-06-13  Federico Di Gregorio  <fog@initd.org>
 
+	* psycopg/psycopgmodule.c (psyco_connect): changed the port keyword
+	parameter type to int (instead of string); this should fix #23.
+	
 	* psycopg/cursor_type.c (_psyco_curs_execute): now checks for empty queries
 	and raise a ProgrammingError if appropriate (closes: #24).
 	

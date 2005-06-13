@@ -3,6 +3,10 @@ What's new in psycopg 2.0 beta 4
 
 * No more segfaults when a UNICODE query can't be converted to the
   backend encoding.
+  
+* No more segfaults on empty queries.
+
+* psycopg2.connect() now takes an integer for the port keyword parameter.
 
 What's new in psycopg 2.0 beta 3
 --------------------------------
