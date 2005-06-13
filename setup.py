@@ -318,26 +318,26 @@ if sys.platform == 'win32' and int(parser.get('build_ext', 'use_pg_dll')):
 
 sources = map(lambda x: os.path.join('psycopg', x), sources)
 
-ext.append(Extension("psycopg._psycopg", sources,
+ext.append(Extension("psycopg2._psycopg", sources,
                      define_macros=define_macros,
                      include_dirs=include_dirs,
                      undef_macros=[]))
 
-setup(name="psycopg",
+setup(name="psycopg2",
       version=PSYCOPG_VERSION,
       maintainer="Federico Di Gregorio",
       maintainer_email="fog@initd.org",
       author="Federico Di Gregorio",
       author_email="fog@initd.org",
-      url="http://initd.org/software/initd/psycopg",
-      download_url = "http://initd.org/software/initd/psycopg",
+      url="http://initd.org/software/initd/psycopg2",
+      download_url = "http://initd.org/software/initd/psycopg2",
       license="GPL or ZPL",
       platforms = ["any"],
       description=__doc__.split("\n")[0],
       long_description="\n".join(__doc__.split("\n")[2:]),
       classifiers=filter(None, classifiers.split("\n")),
       data_files=data_files,
-      package_dir={'psycopg':'lib'},
-      packages=['psycopg'],
+      package_dir={'psycopg2':'lib'},
+      packages=['psycopg2'],
       cmdclass={ 'build_ext': psycopg_build_ext },
       ext_modules=ext)

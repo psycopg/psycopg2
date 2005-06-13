@@ -1,3 +1,10 @@
+2005-06-13  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/cursor_type.c (_psyco_curs_execute): now checks for empty queries
+	and raise a ProgrammingError if appropriate (closes: #24).
+	
+	* setup.py: psycopg module renamed to psycopg2.
+
 2005-06-02  Federico Di Gregorio  <fog@debian.org>
 
 	* psycopg/cursor_type.c (_psyco_curs_execute): fixed segfault when

@@ -237,6 +237,11 @@ _psyco_curs_execute(cursorObject *self,
     }
     pthread_mutex_unlock(&(self->conn->lock));
     
+    if (!PyObject_IsTrue(operation)) {
+    	PyErr_SetString(ProgrammingError, "can't execute an empty query");
+    	return 0;
+    }
+    
     if (PyUnicode_Check(operation)) {
         PyObject *enc = PyDict_GetItemString(psycoEncodings,
                                              self->conn->encoding);
