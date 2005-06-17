@@ -1,5 +1,7 @@
 2005-06-18  Federico Di Gregorio  <fog@initd.org>
 
+	* setup.cfg: some clarifications and include_dirs example for Mandrake.
+	
 	* ZPsycopgDA/DA.py: DTMLFile -> HTMLFile everywhere to fix zope cut&paste
 	problems.
 	
