@@ -1,3 +1,10 @@
+2005-06-18  Federico Di Gregorio  <fog@initd.org>
+
+	* lib/psycopg1.py: fixed .dictfetchrow() to return None if fetchone()
+	returns None instead of raising an exception.
+	
+	* ZPsycopgDA/icons: replaced corrupted icons with good ones. 
+
 2005-06-13  Federico Di Gregorio  <fog@initd.org>
 
 	* psycopg/psycopgmodule.c (psyco_connect): changed the port keyword

@@ -65,8 +65,11 @@ class cursor(_2cursor):
     
     def dictfetchone(self):
         row = _2cursor.fetchone(self)
-        return self.__build_dict(row)
-    
+        if row:
+            return self.__build_dict(row)
+        else:
+            return row
+            
     def dictfetchmany(self, size):
         res = []
         rows = _2cursor.fetchmany(self, size)
