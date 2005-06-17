@@ -1,5 +1,10 @@
 2005-06-18  Federico Di Gregorio  <fog@initd.org>
 
+	* ZPsycopgDA/DA.py: DTMLFile -> HTMLFile everywhere to fix zope cut&paste
+	problems.
+	
+	* MANIFEST.in: added missing files to do bdist_rpm.
+	
 	* lib/psycopg1.py: fixed .dictfetchrow() to return None if fetchone()
 	returns None instead of raising an exception.
 	

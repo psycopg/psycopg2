@@ -5,5 +5,7 @@ recursive-include ZPsycopgDA *.py *.gif *.dtml
 recursive-include examples *.py somehackers.jpg whereareyou.jpg
 recursive-include debian *
 recursive-include doc TODO HACKING SUCCESS ChangeLog-1.x
+recursive-include scripts *.py *.sh
 include scripts/maketypes.sh scripts/buildtypes.py
-include AUTHORS README INSTALL ChangeLog setup.py setup.cfg
+include AUTHORS README INSTALL ChangeLog 
+include PKG-INFO MANIFEST.in MANIFEST setup.py setup.cfg

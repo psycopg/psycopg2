@@ -28,7 +28,7 @@ import Acquisition
 import Shared.DC.ZRDB.Connection
 
 from db import DB
-from Globals import DTMLFile
+from Globals import HTMLFile
 from ImageFile import ImageFile
 from ExtensionClass import Base
 from App.Dialogs import MessageDialog
@@ -46,7 +46,7 @@ from psycopg.extensions import new_type, register_type
 
 # add a new connection to a folder
 
-manage_addZPsycopgConnectionForm = DTMLFile('dtml/add',globals())
+manage_addZPsycopgConnectionForm = HTMLFile('dtml/add',globals())
 
 def manage_addZPsycopgConnection(self, id, title, connection_string,
                                  zdatetime=None, tilevel=2,
@@ -93,7 +93,7 @@ class Connection(Shared.DC.ZRDB.Connection.Connection):
         
         if check: self.connect(self.connection_string)
 
-    manage_properties = DTMLFile('dtml/edit', globals())
+    manage_properties = HTMLFile('dtml/edit', globals())
 
     def manage_edit(self, title, connection_string,
                     zdatetime=None, check=None, tilevel=2, encoding='UTF-8',
@@ -148,8 +148,8 @@ class Connection(Shared.DC.ZRDB.Connection.Connection):
     manage_options = Shared.DC.ZRDB.Connection.Connection.manage_options + (
         {'label': 'Browse', 'action':'manage_browse'},)
 
-    manage_tables = DTMLFile('dtml/tables', globals())
-    manage_browse = DTMLFile('dtml/browse', globals())
+    manage_tables = HTMLFile('dtml/tables', globals())
+    manage_browse = HTMLFile('dtml/browse', globals())
 
     info = None
     
@@ -273,8 +273,8 @@ class values:
 class TableBrowser(Browser, Acquisition.Implicit):
     icon = 'what'
     Description = check = ''
-    info = DTMLFile('table_info', globals())
-    menu = DTMLFile('table_menu', globals())
+    info = HTMLFile('table_info', globals())
+    menu = HTMLFile('table_menu', globals())
 
     def tpValues(self):
         v = values()
@@ -298,7 +298,7 @@ class TableBrowser(Browser, Acquisition.Implicit):
     def Name(self): return self._d['TABLE_NAME']
     def Type(self): return self._d['TABLE_TYPE']
 
-    manage_designInput=DTMLFile('designInput',globals())
+    manage_designInput=HTMLFile('designInput',globals())
     def manage_buildInput(self, id, source, default, REQUEST=None):
         "Create a database method for an input form"
         args=[]
