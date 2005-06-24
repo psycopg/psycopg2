@@ -162,9 +162,9 @@ typecast_PYTIME_cast(unsigned char *str, int len, PyObject *curs)
 static PyObject *
 typecast_PYINTERVAL_cast(unsigned char *str, int len, PyObject *curs)
 {
-    long years = 0, months = 0, days = 0, denominator = 1;
+    long years = 0, months = 0, days = 0;
     double hours = 0.0, minutes = 0.0, seconds = 0.0, hundredths = 0.0;
-    double v = 0.0, sign = 1.0;
+    double v = 0.0, sign = 1.0, denominator = 1.0;
     int part = 0, sec;
     double micro;
 

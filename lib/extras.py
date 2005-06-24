@@ -17,9 +17,9 @@ and classes untill a better place in the distribution is found.
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-from psycopg.extensions import cursor as _cursor
-from psycopg.extensions import register_adapter as _RA
-from psycopg.extensions import adapt as _A
+from psycopg2.extensions import cursor as _cursor
+from psycopg2.extensions import register_adapter as _RA
+from psycopg2.extensions import adapt as _A
 
 
 class DictCursor(_cursor):

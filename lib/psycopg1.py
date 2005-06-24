@@ -21,10 +21,10 @@ old code hile porting to psycopg 2. Import as follows:
 # for more details.
 
 import _psycopg as _2psycopg
-from psycopg.extensions import cursor as _2cursor
-from psycopg.extensions import connection as _2connection
+from psycopg2.extensions import cursor as _2cursor
+from psycopg2.extensions import connection as _2connection
 
-from psycopg import *
+from psycopg2 import *
 del connect
 
 
