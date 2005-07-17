@@ -18,9 +18,14 @@ and classes untill a better place in the distribution is found.
 # for more details.
 
 from psycopg2.extensions import cursor as _cursor
+from psycopg2.extensions import connection as _connection
 from psycopg2.extensions import register_adapter as _RA
 from psycopg2.extensions import adapt as _A
 
+class DictConnection(_connection):
+    """A connection that uses DictCursor automatically."""
+    def cursor(self):
+        return _connection.cursor(self, cursor_factory=DictCursor)
 
 class DictCursor(_cursor):
     """A cursor that keeps a list of column name -> index mappings."""

@@ -1,3 +1,8 @@
+2005-07-17  Federico Di Gregorio  <fog@debian.org>
+
+	* lib/extras.py (DictConnection.cursor): added DictConnection to
+	make easier to retrieve data in DictRows.
+
 2005-06-24  Federico Di Gregorio  <fog@initd.org>
 
 	* psycopg/typecast_datetime.c (typecast_PYINTERVAL_cast): applied patch
@@ -7,8 +12,8 @@
 
 	* setup.cfg: some clarifications and include_dirs example for Mandrake.
 	
-	* ZPsycopgDA/DA.py: DTMLFile -> HTMLFile everywhere to fix zope cut&paste
-	problems.
+	* ZPsycopgDA/DA.py: DTMLFile -> HTMLFile everywhere to fix zope
+	cut&paste problems.
 	
 	* MANIFEST.in: added missing files to do bdist_rpm.
 	
@@ -22,8 +27,9 @@
 	* psycopg/psycopgmodule.c (psyco_connect): changed the port keyword
 	parameter type to int (instead of string); this should fix #23.
 	
-	* psycopg/cursor_type.c (_psyco_curs_execute): now checks for empty queries
-	and raise a ProgrammingError if appropriate (closes: #24).
+	* psycopg/cursor_type.c (_psyco_curs_execute): now checks for
+	empty queries and raise a ProgrammingError if appropriate (closes:
+	#24).
 	
 	* setup.py: psycopg module renamed to psycopg2.
 
