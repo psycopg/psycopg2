@@ -1,5 +1,7 @@
 2005-07-17  Federico Di Gregorio  <fog@debian.org>
 
+	* Release 2.0 beta 4.
+
 	* lib/extras.py (DictConnection.cursor): added DictConnection to
 	make easier to retrieve data in DictRows.
 
