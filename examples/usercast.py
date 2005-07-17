@@ -19,8 +19,9 @@ DSN = 'dbname=test'
 
 ## don't modify anything below tis line (except for experimenting)
 
-import sys, psycopg2
-import psycopg.extensions
+import sys
+import psycopg2
+import psycopg2.extensions
 import whrandom
 
 # importing psycopg.extras will give us a nice tuple adapter: this is wrong

@@ -17,8 +17,9 @@ from datetime import datetime
 import psycopg2
 from psycopg2.extensions import adapt, register_adapter
 
-try: sorted()
-except NameError:
+try:
+    sorted()
+except:
     def sorted(seq):
         seq.sort()
         return seq

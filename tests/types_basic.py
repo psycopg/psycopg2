@@ -12,7 +12,12 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-import psycopg
+import sys
+try:
+    import decimal
+except:
+    pass
+import psycopg2
 from unittest import TestCase, TestSuite, main
 
 
@@ -20,7 +25,7 @@ class TypesBasicTests(TestCase):
     """Test presence of mandatory attributes and methods."""
 
     def setUp(self):
-        self.conn = psycopg.connect("dbname=test")
+        self.conn = psycopg2.connect("dbname=test")
 
     def execute(self, *args):
         curs = self.conn.cursor()
@@ -42,13 +47,19 @@ class TypesBasicTests(TestCase):
         self.failUnless(s == 1971, "wrong integer quoting: " + str(s))
         s = self.execute("SELECT %s AS foo", (1971L,))
         self.failUnless(s == 1971L, "wrong integer quoting: " + str(s))
-        s = self.execute("SELECT %s AS foo", (19.10,))
-        self.failUnless(abs(s - 19.10) < 0.001,
-	                "wrong float quoting: " + str(s))
+        # Python 2.4 defaults to Decimal?
+        if sys.version_info[0] >= 2 and sys.version_info[1] >= 4:
+            s = self.execute("SELECT %s AS foo", (19.10,))
+            self.failUnless(s - decimal.Decimal("19.10") == 0,
+                            "wrong decimal quoting: " + str(s))
+        else:
+            s = self.execute("SELECT %s AS foo", (19.10,))
+            self.failUnless(abs(s - 19.10) < 0.001,
+                            "wrong float quoting: " + str(s))
 
     def testBinary(self):
         s = ''.join([chr(x) for x in range(256)])
-        b = psycopg.Binary(s)
+        b = psycopg2.Binary(s)
 	r = str(self.execute("SELECT %s::bytea AS foo", (b,)))
         self.failUnless(r == s, "wrong binary quoting")
 

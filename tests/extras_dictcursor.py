@@ -12,8 +12,8 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-import psycopg
-import psycopg.extras
+import psycopg2
+import psycopg2.extras
 from unittest import TestCase, TestSuite, main
 
 
@@ -21,12 +21,12 @@ class ExtrasDictCursorTests(TestCase):
     """Test if DictCursor extension class works."""
 
     def setUp(self):
-        self.conn = psycopg.connect("dbname=test")
+        self.conn = psycopg2.connect("dbname=test")
         curs = self.conn.cursor()
         curs.execute("CREATE TABLE ExtrasDictCursorTests (foo text)")
     
     def testDictCursor(self):
-        curs = self.conn.cursor(cursor_factory=psycopg.extras.DictCursor)
+        curs = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         curs.execute("INSERT INTO ExtrasDictCursorTests VALUES ('bar')")
         curs.execute("SELECT * FROM ExtrasDictCursorTests")
         row = curs.fetchone()

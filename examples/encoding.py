@@ -19,8 +19,9 @@ DSN = 'dbname=test'
 
 ## don't modify anything below this line (except for experimenting)
 
-import sys, psycopg2
-import psycopg.extensions
+import sys
+import psycopg2
+import psycopg2.extensions
 
 if len(sys.argv) > 1:
     DSN = sys.argv[1]
