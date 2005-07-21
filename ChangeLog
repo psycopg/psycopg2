@@ -1,3 +1,8 @@
+2005-07-21  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/adapter_datetime.c (psyco_XXXFromTicks): fixed the 1900
+	years offset reported by Jeroen van Dongen (see ticket #33). 
+
 2005-07-17  Federico Di Gregorio  <fog@debian.org>
 
 	* Release 2.0 beta 4.
