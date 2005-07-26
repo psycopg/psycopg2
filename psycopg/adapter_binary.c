@@ -127,7 +127,7 @@ binary_quote(binaryObject *self)
     if (PyString_Check(self->wrapped) || PyBuffer_Check(self->wrapped)) {
         /* escape and build quoted buffer */
         PyObject_AsCharBuffer(self->wrapped, &buffer, &buffer_len);
-        to = (char *)binary_escape(buffer, buffer_len, &len);
+        to = (char *)binary_escape((unsigned char*)buffer, buffer_len, &len);
         if (to == NULL) {
             PyErr_NoMemory();
             return NULL;
