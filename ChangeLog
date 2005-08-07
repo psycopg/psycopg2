@@ -1,3 +1,7 @@
+2005-08-07  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/config.h: added __sun__ to the symbols checked for round()
+
 2005-07-21  Federico Di Gregorio  <fog@debian.org>
 
 	* psycopg/adapter_datetime.c (psyco_XXXFromTicks): fixed the 1900
