@@ -41,12 +41,6 @@ typedef struct {
 #define       PSYCO_MXDATETIME_INTERVAL   3   
     
 } mxdatetimeObject;
-
-/* the conversion strings */
-#define PSYCO_MXDATETIME_TIME_CONV       "'%H:%M:%S'"
-#define PSYCO_MXDATETIME_DATE_CONV       "'%Y-%m-%d'"
-#define PSYCO_MXDATETIME_TIMESTAMP_CONV  "'%Y-%m-%d %H:%M:%S'"
-#define PSYCO_MXDATETIME_INTERVAL_CONV   "'%d:%H:%M:%S'"
     
 /* functions exported to psycopgmodule.c */
 #ifdef PSYCOPG_DEFAULT_MXDATETIME

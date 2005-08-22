@@ -39,17 +39,43 @@ extern mxDateTimeModule_APIObject *mxDateTimeP;
 
 /* mxdatetime_str, mxdatetime_getquoted - return result of quoting */
 
-static char *mxdatetimeObject_str_conv[] = {
-    PSYCO_MXDATETIME_TIME_CONV,
-    PSYCO_MXDATETIME_DATE_CONV,
-    PSYCO_MXDATETIME_TIMESTAMP_CONV
-};
-
 static PyObject *
 mxdatetime_str(mxdatetimeObject *self)
 {
-    return PyObject_CallMethod(self->wrapped, "strftime", "s",
-                               mxdatetimeObject_str_conv[self->type]);
+    PyObject *res = NULL;
+    char *buffer = NULL;
+    
+    mxDateTimeObject *obj = (mxDateTimeObject*)self->wrapped;
+
+    switch (self->type) {
+        
+    case 0:
+        asprintf(&buffer, "'%02d:%02d:%.6f'",
+                 (int)obj->hour, (int)obj->minute, (float)obj->second);
+        if (buffer) res = PyString_FromString(buffer);
+        break;
+
+    case 1:
+        asprintf(&buffer, "'%ld-%02d-%02d'",
+                 obj->year, (int)obj->month, (int)obj->day);
+        if (buffer) res = PyString_FromString(buffer);
+        break;
+
+    case 2:
+        asprintf(&buffer, "'%ld-%02d-%02d %02d:%02d:%.6f'",
+                 obj->year, (int)obj->month, (int)obj->day,
+                 (int)obj->hour, (int)obj->minute, (float)obj->second);
+        if (buffer) res = PyString_FromString(buffer);
+        break;
+
+    case 3:
+        res = PyObject_CallMethod(self->wrapped, "strftime", "s",
+                                  "'%d:%H:%M:%S'");
+        break;
+    }
+
+    if (buffer) free(buffer);
+    return res;
 }
 
 PyObject *

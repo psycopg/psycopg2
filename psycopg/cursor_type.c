@@ -588,7 +588,7 @@ _psyco_curs_buildrow_fill(cursorObject *self, PyObject *res,
             len = 0;
         }
         else {
-            str = PQgetvalue(self->pgres, row, i);
+            str = (unsigned char*)PQgetvalue(self->pgres, row, i);
             len = PQgetlength(self->pgres, row, i);
         }
 

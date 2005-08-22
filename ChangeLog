@@ -1,3 +1,9 @@
+2005-08-23  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/adapter_mxdatetime.c (mxdatetime_str): ported code from 1.1.x
+	to convert mxDateTime object preserving the precision of fractional
+	seconds.
+
 2005-08-22  Federico Di Gregorio  <fog@debian.org>
 
 	* ZPsycopgDA/*.py: psycopg -> psycopg2. 
