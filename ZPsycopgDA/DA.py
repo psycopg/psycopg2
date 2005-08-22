@@ -36,11 +36,11 @@ from DateTime import DateTime
 
 # import psycopg and functions/singletons needed for date/time conversions
 
-import psycopg
-from psycopg import NUMBER, STRING, ROWID, DATETIME
-from psycopg.extensions import INTEGER, LONGINTEGER, FLOAT, BOOLEAN, DATE
-from psycopg.extensions import TIME, INTERVAL
-from psycopg.extensions import new_type, register_type
+import psycopg2
+from psycopg2 import NUMBER, STRING, ROWID, DATETIME
+from psycopg2.extensions import INTEGER, LONGINTEGER, FLOAT, BOOLEAN, DATE
+from psycopg2.extensions import TIME, INTERVAL
+from psycopg2.extensions import new_type, register_type
 
 
 
@@ -112,9 +112,9 @@ class Connection(Shared.DC.ZRDB.Connection.Connection):
             pass
 
         # check psycopg version and raise exception if does not match
-        if psycopg.__version__[:5] not in ALLOWED_PSYCOPG_VERSIONS:
+        if psycopg2.__version__[:5] not in ALLOWED_PSYCOPG_VERSIONS:
             raise ImportError("psycopg version mismatch (imported %s)" %
-                              psycopg.__version__)
+                              psycopg2.__version__)
 
         self.set_type_casts()
         self._v_connected = ''

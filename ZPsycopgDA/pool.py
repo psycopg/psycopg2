@@ -21,7 +21,7 @@
 # ZPsycopgDA code in db.py
 
 import threading
-import psycopg.pool
+import psycopg2.pool
 
 _connections_pool = {}
 _connections_lock = threading.Lock()
@@ -31,7 +31,7 @@ def getpool(dsn, create=True):
     try:
         if not _connections_pool.has_key(dsn) and create:
             _connections_pool[dsn] = \
-                psycopg.pool.ThreadedConnectionPool(4, 200, dsn)
+                psycopg2.pool.ThreadedConnectionPool(4, 200, dsn)
     finally:
         _connections_lock.release()
     return _connections_pool[dsn]

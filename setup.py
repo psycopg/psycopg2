@@ -311,7 +311,7 @@ else:
 
 
 if sys.platform == 'win32' and int(parser.get('build_ext', 'use_pg_dll')):
-    data_files.append((".\\lib\\site-packages\\psycopg\\",
+    data_files.append((".\\lib\\site-packages\\psycopg2\\",
         [ "lib\\libpq.dll" ]))
     
 # build the extension

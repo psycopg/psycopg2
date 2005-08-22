@@ -25,9 +25,9 @@ from ZODB.POSException import ConflictError
 import site
 import pool
 
-import psycopg
-from psycopg.extensions import INTEGER, LONGINTEGER, FLOAT, BOOLEAN, DATE
-from psycopg import NUMBER, STRING, ROWID, DATETIME 
+import psycopg2
+from psycopg2.extensions import INTEGER, LONGINTEGER, FLOAT, BOOLEAN, DATE
+from psycopg2 import NUMBER, STRING, ROWID, DATETIME 
 
 
 
@@ -186,18 +186,19 @@ class DB(TM, dbi_db.DB):
                             c.execute(qs, query_data)
                         else:
                             c.execute(qs)
-                    except (psycopg.ProgrammingError,psycopg.IntegrityError),e:
+                    except (psycopg2.ProgrammingError,
+                            psycopg2.IntegrityError), e:
                         if e.args[0].find("concurrent update") > -1:
                             raise ConflictError
                         raise e
-                except (psycopg.ProgrammingError,psycopg.IntegrityError), e:
+                except (psycopg2.ProgrammingError, psycopg2.IntegrityError), e:
                     if e.args[0].find("concurrent update") > -1:
                         raise ConflictError
                     raise e
                 if c.description is not None:
                     nselects += 1
                     if c.description != desc and nselects > 1:
-                        raise psycopg.ProgrammingError(
+                        raise psycopg2.ProgrammingError(
                             'multiple selects in single query not allowed')
                     if max_rows:
                         res = c.fetchmany(max_rows)

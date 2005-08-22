@@ -1,3 +1,10 @@
+2005-08-22  Federico Di Gregorio  <fog@debian.org>
+
+	* ZPsycopgDA/*.py: psycopg -> psycopg2. 
+
+	* setup.py: modified to install the module components under
+	psycopg2 on windows too (thanks to Daniele Varrazzo.)
+
 2005-08-07  Federico Di Gregorio  <fog@debian.org>
 
 	* psycopg/config.h: added __sun__ to the symbols checked for round()
