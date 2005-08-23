@@ -1,5 +1,8 @@
 2005-08-23  Federico Di Gregorio  <fog@debian.org>
 
+	* setup.py: applied patch from Daniele Varrazzo to avoid segfaults
+	when compiling with migw for Python 2.4.x.
+
 	* psycopg/adapter_mxdatetime.c (mxdatetime_str): ported code from 1.1.x
 	to convert mxDateTime object preserving the precision of fractional
 	seconds.

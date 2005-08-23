@@ -23,7 +23,8 @@ class SimpleQuoter(object):
     def sqlquote(x=None):
         return "'bar'"
 
-import sys, psycopg2
+import sys
+import psycopg2
 
 if len(sys.argv) > 1:
     DSN = sys.argv[1]

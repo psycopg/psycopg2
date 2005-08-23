@@ -104,6 +104,16 @@ class psycopg_build_ext(build_ext):
         """
         return self.compiler or get_default_compiler()
 
+    def build_extensions(self):
+        # Linking against this library causes psycopg2 to crash 
+        # on Python >= 2.4. Maybe related to strdup calls, cfr.
+        # http://mail.python.org/pipermail/distutils-sig/2005-April/004433.html
+        if self.get_compiler().compiler_type == "mingw32" \
+        and 'msvcr71' in self.compiler.dll_libraries:
+            self.compiler.dll_libraries.remove('msvcr71')
+        
+        build_ext.build_extensions(self)
+        
     def finalize_win32(self):
         """Finalize build system configuration on win32 platform.
         
