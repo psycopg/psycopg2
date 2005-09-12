@@ -1,4 +1,4 @@
-"""Connection pooling for psycopg
+"""Connection pooling for psycopg2
 
 This module implements thread-safe (and not) connection pools.
 """
@@ -16,7 +16,7 @@ This module implements thread-safe (and not) connection pools.
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-import psycopg
+import psycopg2
 
 try:
     from zLOG import LOG, DEBUG, INFO
@@ -29,12 +29,10 @@ except:
     def dbg(*args):
         sys.stderr.write(' '.join(args)+'\n')
 
-
 
-class PoolError(psycopg.Error):
+class PoolError(psycopg2.Error):
     pass
 
-
 
 class AbstractConnectionPool(object):
     """Generic key-based pooling code."""
@@ -62,7 +60,7 @@ class AbstractConnectionPool(object):
 
     def _connect(self, key=None):
         """Create a new connection and assign it to 'key' if not None."""
-        conn = psycopg.connect(*self._args, **self._kwargs)
+        conn = psycopg2.connect(*self._args, **self._kwargs)
         if key is not None:
             self._used[key] = conn
         else:
@@ -128,7 +126,6 @@ class AbstractConnectionPool(object):
                 pass
         self.closed = True
         
-
 
 class SimpleConnectionPool(AbstractConnectionPool):
     """A connection pool that can't be shared across different threads."""
@@ -137,7 +134,6 @@ class SimpleConnectionPool(AbstractConnectionPool):
     putconn = AbstractConnectionPool._putconn
     closeall   = AbstractConnectionPool._closeall
 
-
 
 class ThreadedConnectionPool(AbstractConnectionPool):
     """A connection pool that works with the threading module.

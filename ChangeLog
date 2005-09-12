@@ -1,5 +1,7 @@
 2005-09-12  Federico Di Gregorio  <fog@initd.org>
 
+	* lib/pool.py: Applied psycopg->psycopg2 patch to from bug #35.
+
 	* ZpsycopgDA/db.py: fixed problem with OperationalError that resulted in
 	cryptic message to Zope users ("'OperationalError' is not defined".)
 	
