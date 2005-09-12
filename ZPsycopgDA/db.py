@@ -29,7 +29,6 @@ import psycopg2
 from psycopg2.extensions import INTEGER, LONGINTEGER, FLOAT, BOOLEAN, DATE
 from psycopg2 import NUMBER, STRING, ROWID, DATETIME 
 
-
 
 # the DB object, managing all the real query work
 
@@ -175,7 +174,7 @@ class DB(TM, dbi_db.DB):
                         c.execute(qs, query_data)
                     else:
                         c.execute(qs)
-                except OperationalError, e:
+                except psycopg2.OperationalError, e:
                     try:
                         self.close()
                     except:

@@ -1,3 +1,8 @@
+2005-09-12  Federico Di Gregorio  <fog@initd.org>
+
+	* ZpsycopgDA/db.py: fixed problem with OperationalError that resulted in
+	cryptic message to Zope users ("'OperationalError' is not defined".)
+	
 2005-08-23  Federico Di Gregorio  <fog@debian.org>
 
 	* setup.py: applied patch from Daniele Varrazzo to avoid segfaults

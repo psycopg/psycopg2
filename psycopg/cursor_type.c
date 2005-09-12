@@ -963,7 +963,7 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
     char *table_name;
     char *sep = "\t", *null = NULL;
     long int bufsize = DEFAULT_COPYSIZE;
-    PyObject *file, *res = NULL;
+    PyObject *file, *columns, *res = NULL;
 
     static char *kwlist[] = {"file", "table", "sep", "null", "size", NULL};
 
