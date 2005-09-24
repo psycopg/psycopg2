@@ -1,9 +1,15 @@
+2005-09-23  Federico Di Gregorio  <fog@debian.org>
+
+	* lib/pool.py: applied patch from piro to avoid the scan of the
+	whole connection array on getconn().
+
 2005-09-12  Federico Di Gregorio  <fog@initd.org>
 
 	* lib/pool.py: Applied psycopg->psycopg2 patch to from bug #35.
 
-	* ZpsycopgDA/db.py: fixed problem with OperationalError that resulted in
-	cryptic message to Zope users ("'OperationalError' is not defined".)
+	* ZpsycopgDA/db.py: fixed problem with OperationalError that
+	resulted in cryptic message to Zope users ("'OperationalError' is
+	not defined".)
 	
 2005-08-23  Federico Di Gregorio  <fog@debian.org>
 

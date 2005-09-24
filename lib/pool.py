@@ -53,6 +53,7 @@ class AbstractConnectionPool(object):
 
         self._pool = []
         self._used = {}
+        self._rused = {} # id(conn) -> key map
         self._keys = 0
 
         for i in range(self.minconn):
@@ -63,6 +64,7 @@ class AbstractConnectionPool(object):
         conn = psycopg2.connect(*self._args, **self._kwargs)
         if key is not None:
             self._used[key] = conn
+            self._rused[id(conn)] = key
         else:
             self._pool.append(conn)
         return conn
@@ -71,31 +73,28 @@ class AbstractConnectionPool(object):
         """Return a new unique key."""
         self._keys += 1
         return self._keys
-
-    def _findkey(self, conn):
-        """Return the key associated with a connection or None."""
-        for o, k in self._used.items():
-            if o == conn:
-                return k
             
     def _getconn(self, key=None):
         """Get a free connection and assign it to 'key' if not None."""
         if self.closed: raise PoolError("connection pool is closed")
         if key is None: key = self._getkey()
+	
+        if self._used.has_key(key):
+            return self._used[key]
 
-        if not self._used.has_key(key):
-            if not self._pool:
-                if len(self._used) == self.maxconn:
-                    raise PoolError("connection pool exausted")
-                return self._connect(key)
-            else:
-                self._used[key] = self._pool.pop()
-        return self._used[key]
-
+         if self._pool:
+             self._used[key] = conn = self._pool.pop()
+             self._rused[id(conn)] = key
+             return conn
+         else:
+             if len(self._used) == self.maxconn:
+                 raise PoolError("connection pool exausted")
+             return self._connect(key)
+		 
     def _putconn(self, conn, key=None, close=False):
         """Put away a connection."""
         if self.closed: raise PoolError("connection pool is closed")
-        if key is None: key = self._findkey(conn)
+        if key is None: key = self._rused[id(conn)]
 
         if not key:
             raise PoolError("trying to put unkeyed connection")
@@ -109,6 +108,7 @@ class AbstractConnectionPool(object):
         # thread tries to put back a connection after a call to close
         if not self.closed or key in self._used:
             del self._used[key]
+            del self._rused[id(conn)]
 
     def _closeall(self):
         """Close all connections.
