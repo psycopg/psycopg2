@@ -82,14 +82,14 @@ class AbstractConnectionPool(object):
         if self._used.has_key(key):
             return self._used[key]
 
-         if self._pool:
-             self._used[key] = conn = self._pool.pop()
-             self._rused[id(conn)] = key
-             return conn
-         else:
-             if len(self._used) == self.maxconn:
-                 raise PoolError("connection pool exausted")
-             return self._connect(key)
+        if self._pool:
+            self._used[key] = conn = self._pool.pop()
+            self._rused[id(conn)] = key
+            return conn
+        else:
+            if len(self._used) == self.maxconn:
+                raise PoolError("connection pool exausted")
+            return self._connect(key)
 		 
     def _putconn(self, conn, key=None, close=False):
         """Put away a connection."""
