@@ -167,7 +167,7 @@ psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
 /* set_isolation_level method - switch connection isolation level */
 
 #define psyco_conn_set_client_encoding_doc \
-"set_client_encoding(encoding) -> set client encoding 'encoding'"
+"set_client_encoding(encoding) -> set client encoding to 'encoding'"
 
 static PyObject *
 psyco_conn_set_client_encoding(connectionObject *self, PyObject *args)

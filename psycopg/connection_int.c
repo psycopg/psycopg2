@@ -239,13 +239,15 @@ conn_set_client_encoding(connectionObject *self, char *enc)
         pgres = PQexec(self->pgconn, query);
 
         if (pgres == NULL || PQresultStatus(pgres) != PGRES_COMMAND_OK ) {
-            PyErr_Format(OperationalError, "can't set encoding to '%s'", enc);
             res = -1;
         }
-        IFCLEARPGRES(pgres);
+        else {
+            /* no error, we can proceeed and store the new encoding */
+            if (self->encoding) free(self->encoding);
+            self->encoding = strdup(enc);
+        }
 
-        if (self->encoding) free(self->encoding);
-        self->encoding = strdup(enc);
+        IFCLEARPGRES(pgres);
     }
     
     Dprintf("conn_set_client_encoding: set encoding to %s", self->encoding);
@@ -253,5 +255,8 @@ conn_set_client_encoding(connectionObject *self, char *enc)
     pthread_mutex_unlock(&self->lock);
     Py_END_ALLOW_THREADS;
 
+    if (res == -1)
+        PyErr_Format(OperationalError, "can't set encoding to %s", enc);
+        
     return res;   
 }

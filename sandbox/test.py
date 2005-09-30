@@ -1,12 +1,13 @@
 import datetime
 import time
-import psycopg
+import psycopg2
 
 #d = datetime.timedelta(12, 100, 9876)
 #print d.days, d.seconds, d.microseconds
 #print psycopg.adapt(d).getquoted()
 
-conn = psycopg.connect("dbname=test")
+conn = psycopg2.connect("dbname=test_unicode")
+conn.set_client_encoding("xxx")
 curs = conn.cursor()
 #curs.execute("SELECT 1.0 AS foo")
 #print curs.fetchmany(2)

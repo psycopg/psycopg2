@@ -1,5 +1,8 @@
 2005-10-01  Federico Di Gregorio  <fog@debian.org>
 
+	* psycopg/connection_int.c: fixed segfault by moving PyErr_Format
+	after GIL acquisition (closes: #50).
+
 	* psycopg/connection_type.c: applied patch from Matt Goodall to
 	fix some doc strings.
 
