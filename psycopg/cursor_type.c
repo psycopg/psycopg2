@@ -803,27 +803,55 @@ psyco_curs_fetchall(cursorObject *self, PyObject *args)
 
 
 
-/* callproc method - execute a stored procedure (not YET supported) */
+/* callproc method - execute a stored procedure */
 
 #define psyco_curs_callproc_doc \
-"callproc(procname, [parameters]) -> execute stored procedure\n\n" \
-"This method is not (yet) impelemented and calling it raise an exception."
+"callproc(procname, [parameters]) -> execute stored procedure"
 
 static PyObject *
-psyco_curs_callproc(cursorObject *self, PyObject *args)
+psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
-    PyObject *procname, *procargs;
-    
-    if (!PyArg_ParseTuple(args, "O|O", &procname, &procargs))
+    char *procname = NULL, *sql = NULL;
+    long int async = 0;
+    int i, nparameters = 0, sl = 0;
+    PyObject *parameters = NULL;
+    PyObject *operation = NULL;
+    PyObject *res = NULL;
+
+    if (!PyArg_ParseTuple(args, "s|Oi", &procname, &parameters, &async)) {
         return NULL;
-    
+    }
+
     EXC_IF_CURS_CLOSED(self);
 
-    PyErr_SetString(NotSupportedError, "not yet implemented");
-    return NULL;
+    if(parameters && parameters != Py_None) {
+        nparameters = PyObject_Length(parameters);
+    }
+
+    /* allocate some memory, build the SQL and create a PyString from it */
+    sl = strlen(procname) + 10 + nparameters*3;
+    sql = (char*)PyMem_Malloc(sl);
+    if (sql == NULL) return NULL;
+    
+    sprintf(sql, "SELECT %s(", procname);
+    for(i=0; i<nparameters; i++) {
+        strcat(sql, "%s,");
+    }
+    sql[sl-2] = ')';
+    sql[sl-1] = '\0';
+    
+    operation = PyString_FromString(sql);
+    PyMem_Free((void*)sql);
+    
+    if (_psyco_curs_execute(self, operation, parameters, async)) {
+        Py_INCREF(Py_None);
+        res = Py_None;
+    }
+
+    Py_DECREF(operation);
+    return res;
 }
 
-
 
 /* nextset method - return the next set of data (not supported) */
 

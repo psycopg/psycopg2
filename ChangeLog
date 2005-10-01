@@ -1,3 +1,9 @@
+2005-10-02  Federico Di Gregorio  <fog@debian.org>
+
+	* psycopg/cursor_type.c (psyco_curs_callproc): applied callproc
+	patch from Matt Goodall (added a check on _psyco_curs_execute
+	return value and substituted malloc/free with PyMem versions.) 
+
 2005-10-01  Federico Di Gregorio  <fog@debian.org>
 
 	* psycopg/connection_int.c: fixed segfault by moving PyErr_Format
