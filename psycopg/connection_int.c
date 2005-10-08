@@ -131,6 +131,8 @@ conn_connect(connectionObject *self)
     else if ((strncmp(lvl2a, data, strlen(lvl2a)) == 0)
         || (strncmp(lvl2b, data, strlen(lvl2b)) == 0))
         self->isolation_level = 2;
+    else
+        self->isolation_level = 2;
     CLEARPGRES(pgres);
 
     if (PQsetnonblocking(pgconn, 1) != 0) {
