@@ -31,8 +31,9 @@ del connect
 def connect(*args, **kwargs):
     """connect(dsn, ...) -> new psycopg 1.1.x compatible connection object"""
     kwargs['connection_factory'] = connection
-    return _2psycopg.connect(*args, **kwargs)
-
+    conn = _2psycopg.connect(*args, **kwargs)
+    conn.set_isolation_level(2)
+    return conn
     
 class connection(_2connection):
     """psycopg 1.1.x connection."""

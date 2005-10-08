@@ -257,7 +257,6 @@ connection_setup(connectionObject *self, char *dsn)
     self->dsn = strdup(dsn);
     self->notice_list = PyList_New(0);
     self->closed = 0;
-    self->isolation_level = 1;
     self->status = CONN_STATUS_READY;
     self->critical = NULL;
     self->async_cursor = NULL;

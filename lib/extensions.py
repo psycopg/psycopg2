@@ -41,6 +41,15 @@ from _psycopg import adapt, adapters, encodings, connection, cursor
 from _psycopg import string_types, binary_types, new_type, register_type
 from _psycopg import ISQLQuote
 
+"""Isolation level values."""
+ISOLATION_LEVEL_AUTOCOMMIT    = 0
+ISOLATION_LEVEL_READ_COMMITED = 1 
+ISOLATION_LEVEL_SERIALIZABLE  = 2
+
+# Postgresql maps the the other standard values to already defined levels
+ISOLATION_LEVEL_REPEATABLE_READ  = ISOLATION_LEVEL_SERIALIZABLE
+ISOLATION_LEVEL_READ UNCOMMITTED = ISOLATION_LEVEL_READ_COMMITED
+
 
 def register_adapter(typ, callable):
     """Register 'callable' as an ISQLQuote adapter for type 'typ'."""

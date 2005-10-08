@@ -1,3 +1,16 @@
+2005-10-08 Federico Di Gregorio <fog@initd.org>
+
+	* lib/psycopg1.py: explicitly set isolation level to 2 on .connect()
+	to mimic psycopg 1 behaviour.
+
+	* psycopg/connection_int.c: now set isolation level from
+	default_transaction_isolation backend environment value.
+
+	* psycopg/pqpath.c: removed serialization level 3: now everybody
+	(except me) has to use the mnemonics defined in psycopg2.extensions.
+
+	* lib/extensions.py: Added mnemonics for serialization levels.
+
 2005-10-02  Federico Di Gregorio  <fog@debian.org>
 
 	* psycopg/cursor_type.c (psyco_curs_callproc): applied callproc

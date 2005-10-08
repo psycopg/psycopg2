@@ -186,7 +186,6 @@ pq_begin(connectionObject *conn)
     const char *query[] = {
         NULL,
         "BEGIN; SET TRANSACTION ISOLATION LEVEL READ COMMITTED",
-        "BEGIN; SET TRANSACTION ISOLATION LEVEL SERIALIZABLE",
         "BEGIN; SET TRANSACTION ISOLATION LEVEL SERIALIZABLE"};
     
     int pgstatus, retvalue = -1;

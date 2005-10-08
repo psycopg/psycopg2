@@ -53,11 +53,18 @@ conn_connect(connectionObject *self)
 {
     PGconn *pgconn;
     PGresult *pgres;
-
+    char *data;
+    
     /* we need the initial date style to be ISO, for typecasters; if the user
        later change it, she must know what she's doing... */
     const char *datestyle = "SET DATESTYLE TO 'ISO'";
     const char *encoding  = "SHOW client_encoding";
+    const char *isolevel  = "SHOW default_transaction_isolation";
+    
+    const char *lvl1a = "read uncommitted";
+    const char *lvl1b = "read committed";
+    const char *lvl2a = "repeatable read";
+    const char *lvl2b = "serializable";
     
     Py_BEGIN_ALLOW_THREADS;
     pgconn = PQconnectdb(self->dsn);
@@ -86,7 +93,6 @@ conn_connect(connectionObject *self)
     Py_END_ALLOW_THREADS;
 
     if (pgres == NULL || PQresultStatus(pgres) != PGRES_COMMAND_OK ) {
-        Dprintf("conn_connect: setting datestyle to iso FAILED");
         PyErr_SetString(OperationalError, "can't set datestyle to ISO");
         PQfinish(pgconn);
         IFCLEARPGRES(pgres);
@@ -99,13 +105,32 @@ conn_connect(connectionObject *self)
     Py_END_ALLOW_THREADS;
 
     if (pgres == NULL || PQresultStatus(pgres) != PGRES_TUPLES_OK) {
-        Dprintf("conn_connect: fetching current client_encoding FAILED");
         PyErr_SetString(OperationalError, "can't fetch client_encoding");
         PQfinish(pgconn);
         IFCLEARPGRES(pgres);
         return -1;
     }
     self->encoding = strdup(PQgetvalue(pgres, 0, 0));
+    CLEARPGRES(pgres);
+    
+    Py_BEGIN_ALLOW_THREADS;
+    pgres = PQexec(pgconn, isolevel);
+    Py_END_ALLOW_THREADS;
+
+    if (pgres == NULL || PQresultStatus(pgres) != PGRES_TUPLES_OK) {
+        PyErr_SetString(OperationalError,
+                         "can't fetch default_isolation_level");
+        PQfinish(pgconn);
+        IFCLEARPGRES(pgres);
+        return -1;
+    }
+    data = PQgetvalue(pgres, 0, 0);
+    if ((strncmp(lvl1a, data, strlen(lvl1a)) == 0)
+        || (strncmp(lvl1b, data, strlen(lvl1b)) == 0))
+        self->isolation_level = 1;
+    else if ((strncmp(lvl2a, data, strlen(lvl2a)) == 0)
+        || (strncmp(lvl2b, data, strlen(lvl2b)) == 0))
+        self->isolation_level = 2;
     CLEARPGRES(pgres);
 
     if (PQsetnonblocking(pgconn, 1) != 0) {
