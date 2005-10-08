@@ -1,4 +1,6 @@
-2005-10-08 Federico Di Gregorio <fog@initd.org>
+2005-10-08  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/connection_type.c: isolation level upper bound set to 2.
 
 	* lib/psycopg1.py: explicitly set isolation level to 2 on .connect()
 	to mimic psycopg 1 behaviour.

@@ -149,7 +149,7 @@ psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
 
     if (!PyArg_ParseTuple(args, "i", &level)) return NULL;
 
-    if (level < 0 || level > 3) {
+    if (level < 0 || level > 2) {
         PyErr_SetString(PyExc_ValueError,
                         "isolation level out of bounds (0,3)");
         return NULL;
