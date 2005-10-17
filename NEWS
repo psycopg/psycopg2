@@ -12,6 +12,8 @@ What's new in psycopg 2.0 rc 1
 
 * Better docstrings for a few functions/methods.
 
+* Some time-related functions like psycopg2.TimeFromTicks() now take the
+  local timezone into account.
 
 What's new in psycopg 2.0 beta 4
 --------------------------------

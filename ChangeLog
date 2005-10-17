@@ -1,4 +1,13 @@
-2005-10-17 Federico Di Gregorio <fog@initd.org>
+2005-10-18  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/adapter_datetime.c: added tzinfo argument to psycopg2.Time and
+	psycopg2.Timestamp. Also now TimestampFromTicks sets the tzinfo object
+	to psycopg2.tz.LOCAL.
+
+2005-10-17  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/adapter_datetime.c: we now use localtime() instead of gmtime()
+	to accound for the local time-zone in timestamps.
 
 	* psycopg/connection_type.c: fixed docstring for .cursor().
 

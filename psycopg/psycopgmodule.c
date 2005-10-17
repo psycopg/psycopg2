@@ -55,6 +55,10 @@ PyObject *pyDateTimeTypeP = NULL;
 PyObject *pyDeltaTypeP = NULL;
 #endif
 
+/* pointers to the psycopg.tz classes */
+PyObject *pyPsycopgTzModule = NULL;
+PyObject *pyPsycopgTzLocalTimezone = NULL;
+
 PyObject *psycoEncodings = NULL;
 PyObject *decimalType = NULL;
 
@@ -354,7 +358,6 @@ psyco_decimal_init(void)
 #endif
 }
 
-
 
 /** method table and module initialization **/
 
@@ -480,6 +483,11 @@ init_psycopg(void)
     pyDeltaTypeP = PyObject_GetAttrString(pyDateTimeModuleP, "timedelta");
 #endif    
 
+    /* import psycopg2.tz anyway (TODO: replace with C-level module?) */
+    pyPsycopgTzModule = PyImport_ImportModule("psycopg2.tz");
+    pyPsycopgTzLocalTimezone = 
+        PyObject_GetAttrString(pyPsycopgTzModule, "LOCAL"); 
+    
     /* initialize the module and grab module's dictionary */
     module = Py_InitModule("_psycopg", psycopgMethods);
     dict = PyModule_GetDict(module);

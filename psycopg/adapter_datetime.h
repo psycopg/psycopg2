@@ -52,11 +52,11 @@ extern PyObject *psyco_Date(PyObject *module, PyObject *args);
 
 extern PyObject *psyco_Time(PyObject *module, PyObject *args);
 #define psyco_Time_doc \
-    "psycopg.Time(hour, minutes, seconds) -> new time"
+    "psycopg.Time(hour, minutes, seconds, tzinfo=None) -> new time"
 
 extern PyObject *psyco_Timestamp(PyObject *module, PyObject *args);
 #define psyco_Timestamp_doc \
-    "psycopg.Time(year, month, day, hour, minutes, seconds) -> new timestamp"
+    "psycopg.Time(year, month, day, hour, minutes, seconds, tzinfo=None) -> new timestamp"
 
 extern PyObject *psyco_DateFromTicks(PyObject *module, PyObject *args);
 #define psyco_DateFromTicks_doc \
