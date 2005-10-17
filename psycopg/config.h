@@ -71,6 +71,11 @@ static struct tm *gmtime_r(time_t *t, struct tm *tm)
   tm = gmtime(t);
   return tm;
 }
+static struct tm *localtime_r(time_t *t, struct tm *tm)
+{
+  tm = localtime(t);
+  return tm;
+}
 /* remove the inline keyword, since it doesn't work unless C++ file */
 #define inline
 #endif

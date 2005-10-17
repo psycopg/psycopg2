@@ -59,7 +59,6 @@ psyco_curs_close(cursorObject *self, PyObject *args)
     return Py_None;
 }
 
-
 
 /* execute method - executes a query */
 
@@ -537,7 +536,6 @@ psyco_curs_mogrify(cursorObject *self, PyObject *args, PyObject *kwargs)
 }
 #endif
 
-
 
 /* fetchone method - fetch one row of results */
 
@@ -682,7 +680,6 @@ psyco_curs_fetchone(cursorObject *self, PyObject *args)
     return res;
 }
 
-
 
 /* fetch many - fetch some results */
 
@@ -804,7 +801,6 @@ psyco_curs_fetchall(cursorObject *self, PyObject *args)
     return list;
 }
 
-
 
 /* callproc method - execute a stored procedure */
 
@@ -874,7 +870,6 @@ psyco_curs_nextset(cursorObject *self, PyObject *args)
     return NULL;
 }
 
-
 
 /* setinputsizes - predefine memory areas for execute (does nothing) */
 
@@ -896,7 +891,6 @@ psyco_curs_setinputsizes(cursorObject *self, PyObject *args)
     return Py_None;
 }
 
-
 
 /* setoutputsize - predefine memory areas for execute (does nothing) */
 
@@ -918,7 +912,6 @@ psyco_curs_setoutputsize(cursorObject *self, PyObject *args)
     return Py_None;
 }
 
-
 
 /* scroll - scroll position in result list */
 
@@ -962,7 +955,6 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
 
 }
 
-
 
 #ifdef PSYCOPG_EXTENSIONS
 
@@ -1144,7 +1136,6 @@ psyco_curs_isready(cursorObject *self, PyObject *args)
 
 #endif
 
-
 
 /** the cursor object **/
 

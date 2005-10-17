@@ -1,5 +1,7 @@
 2005-10-18  Federico Di Gregorio  <fog@initd.org>
 
+	* psycopg/config.h: added fake localtime_r for platforms missing it
+
 	* psycopg/cursor_type.c: cursors now have a FixedOffsetTimezone
 	tzinfo_factory by default.
 
