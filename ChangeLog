@@ -1,5 +1,8 @@
 2005-10-18  Federico Di Gregorio  <fog@initd.org>
 
+	* psycopg/cursor_type.c: cursors now have a FixedOffsetTimezone
+	tzinfo_factory by default.
+
 	* psycopg/adapter_datetime.c: added tzinfo argument to psycopg2.Time and
 	psycopg2.Timestamp. Also now TimestampFromTicks sets the tzinfo object
 	to psycopg2.tz.LOCAL.

@@ -44,7 +44,7 @@ extern PyObject *pyDateTimeTypeP;
 extern PyObject *pyDeltaTypeP;
 
 extern PyObject *pyPsycopgTzModule;
-extern PyObject *pyPsycopgTzLocalTimezone;
+extern PyObject *pyPsycopgTzLOCAL;
 
 /* datetime_str, datetime_getquoted - return result of quoting */
 
@@ -401,7 +401,7 @@ psyco_TimestampFromTicks(PyObject *self, PyObject *args)
         args = Py_BuildValue("iiiiidO",
                              tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday,
                              tm.tm_hour, tm.tm_min, (double)tm.tm_sec,
-                             pyPsycopgTzLocalTimezone);
+                             pyPsycopgTzLOCAL);
         if (args) {
             res = psyco_Timestamp(self, args);
             Py_DECREF(args);

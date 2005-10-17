@@ -35,6 +35,9 @@
 #include "psycopg/microprotocols_proto.h"
 #include "pgversion.h"
 
+extern PyObject *pyPsycopgTzFixedOffsetTimezone;
+
+
 /** DBAPI methods **/
 
 /* close method - close the cursor */
@@ -1266,8 +1269,10 @@ cursor_setup(cursorObject *self, connectionObject *conn)
     Py_INCREF(Py_None);
     self->tuple_factory = Py_None;
     Py_INCREF(Py_None);
-    self->tzinfo_factory = Py_None;
-    Py_INCREF(Py_None);
+    
+    /* default tzinfo factory */
+    self->tzinfo_factory = pyPsycopgTzFixedOffsetTimezone;
+    Py_INCREF(self->tzinfo_factory);
     
     Dprintf("cursor_setup: good cursor object at %p, refcnt = %d",
             self, ((PyObject *)self)->ob_refcnt);

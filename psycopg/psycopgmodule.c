@@ -57,7 +57,8 @@ PyObject *pyDeltaTypeP = NULL;
 
 /* pointers to the psycopg.tz classes */
 PyObject *pyPsycopgTzModule = NULL;
-PyObject *pyPsycopgTzLocalTimezone = NULL;
+PyObject *pyPsycopgTzLOCAL = NULL;
+PyObject *pyPsycopgTzFixedOffsetTimezone = NULL;
 
 PyObject *psycoEncodings = NULL;
 PyObject *decimalType = NULL;
@@ -485,9 +486,11 @@ init_psycopg(void)
 
     /* import psycopg2.tz anyway (TODO: replace with C-level module?) */
     pyPsycopgTzModule = PyImport_ImportModule("psycopg2.tz");
-    pyPsycopgTzLocalTimezone = 
+    pyPsycopgTzLOCAL = 
         PyObject_GetAttrString(pyPsycopgTzModule, "LOCAL"); 
-    
+    pyPsycopgTzFixedOffsetTimezone = 
+        PyObject_GetAttrString(pyPsycopgTzModule, "FixedOffsetTimezone");
+        
     /* initialize the module and grab module's dictionary */
     module = Py_InitModule("_psycopg", psycopgMethods);
     dict = PyModule_GetDict(module);
