@@ -37,10 +37,11 @@
 /* cursor method - allocate a new cursor */
 
 #define psyco_conn_cursor_doc \
-"cursor(factory=psycopg.cursor) -> new cursor\n\n" \
-"Return a new cursor. The 'factory' argument can be used to create\n" \
-"non-standard cursors by passing a class different from the default.\n" \
-"Note that the new class *should* be a sub-class of psycopg.cursor."
+"cursor(cursor_factory=psycopg.cursor) -> new cursor\n\n" \
+"Return a new cursor. The 'cursor_factory' argument can be used to\n"    \
+"create non-standard cursors by passing a class different from the\n"    \
+"default. Note that the new class *should* be a sub-class of\n"          \
+"'psycopg2.cursor'.\n"
 
 static PyObject *
 psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *keywds)

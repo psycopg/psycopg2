@@ -1,3 +1,9 @@
+2005-10-17 Federico Di Gregorio <fog@initd.org>
+
+	* psycopg/connection_type.c: fixed docstring for .cursor().
+
+	* psycopg/psycopgmodule.c: added useful docstring for .connect().
+
 2005-10-08  Federico Di Gregorio  <fog@initd.org>
 
 	* psycopg/connection_type.c: isolation level upper bound set to 2.
