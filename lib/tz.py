@@ -1,3 +1,9 @@
+"""tzinfo implementations for psycopg2
+
+This module holds twi different tzinfo implementations that can be used as
+the 'tzinfo' argument to datetime constructors, directly passed to psycopg
+functions or used to set the .tzinfo_factory attribute in cursors. 
+"""
 # psycopg/tz.py - tzinfo implementation
 #
 # Copyright (C) 2003-2004 Federico Di Gregorio  <fog@debian.org>

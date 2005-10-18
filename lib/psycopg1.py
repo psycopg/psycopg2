@@ -2,9 +2,9 @@
 
 This module uses the new style connection and cursor types to build a psycopg
 1.1.1.x compatibility layer. It should be considered a temporary hack to run
-old code hile porting to psycopg 2. Import as follows:
+old code hile porting to psycopg 2. Import it as follows:
 
-    from psycopg import psycopg1 as psycopg
+    from psycopg2 import psycopg1 as psycopg
 """
 # psycopg/psycopg1.py - psycopg 1.1.x compatibility module
 #

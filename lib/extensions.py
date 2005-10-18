@@ -1,12 +1,11 @@
-"""
-psycopg extensions to the DBAPI-2.0
+"""psycopg extensions to the DBAPI-2.0
 
-This module holds all the extensions to the DBAPI-2.0 provided by psycopg:
+This module holds all the extensions to the DBAPI-2.0 provided by psycopg.
 
     connection -- the new-type inheritable connection class
     cursor -- the new-type inheritable cursor class
     adapt() -- exposes the PEP-246 compatile adapting machanism used
-     by psycopg to adapt Python types to PostgreSQL ones
+    by psycopg to adapt Python types to PostgreSQL ones
 """
 # psycopg/extensions.py - DBAPI-2.0 extensions specific to psycopg
 #
