@@ -68,19 +68,19 @@ PyObject *decimalType = NULL;
 "connect(dsn, ...) -> new connection object\n\n" \
 "This function supports two different but equivalent sets of arguments.\n" \
 "A single data source name or 'dsn' string can be used to specify the\n"   \
-"connection parameters, as follows:\n\n"                                   \
+"connection parameters, as follows::\n\n"                                  \
 "    psycopg2.connect(\"dbname=xxx user=xxx ...\")\n\n"   \
 "If 'dsn' is not provided it is possible to pass the parameters as\n"      \
-"keyword arguments; e.g.,\n\n"                                             \
+"keyword arguments; e.g.::\n\n"                                            \
 "    psycopg2.connect(database='xxx', user='xxx', ...)\n\n"                \
 "The full list of available parameters is:\n\n"                            \
-"    dbname -- database name (only in 'dsn')\n"                            \
-"    database -- database name (only as keyword argument)\n"               \
-"    host -- host address (defaults to UNIX socket if not provided)\n"     \
-"    port -- port number (defaults to 5432 if not provided)\n"             \
-"    user -- user name used to authenticate\n"                             \
-"    password -- password used to authenticate\n"                          \
-"    sslmode -- SSL mode (see PostgreSQL documentation)\n\n"               \
+"    - dbname -- database name (only in 'dsn')\n"                          \
+"    - database -- database name (only as keyword argument)\n"             \
+"    - host -- host address (defaults to UNIX socket if not provided)\n"   \
+"    - port -- port number (defaults to 5432 if not provided)\n"           \
+"    - user -- user name used to authenticate\n"                           \
+"    - password -- password used to authenticate\n"                        \
+"    - sslmode -- SSL mode (see PostgreSQL documentation)\n\n"             \
 "If the 'connection_factory' keyword argument is not provided this\n"      \
 "function always return an instance of the 'psycopg2.connection' class.\n" \
 "Else the given sub-class of 'psycopg2.connection' will be used to\n"      \
