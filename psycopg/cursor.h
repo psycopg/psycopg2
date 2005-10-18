@@ -68,6 +68,10 @@ typedef struct {
     char *qattr;          /* quoting attr, used when quoting strings */
     char *notice;         /* a notice from the backend */
     char *query;          /* last query executed */
+    
+    PyObject *string_types;   /* a set of typecasters for string types */
+    PyObject *binary_types;   /* a set of typecasters for binary types */
+
 } cursorObject;
     
 /* C-callable functions in cursor_int.c and cursor_ext.c */

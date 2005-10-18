@@ -1,3 +1,14 @@
+2005-10-18 Federico Di Gregorio <fog@initd.org>
+
+	* NOTIFY is back end working.
+
+	* psycopg/connection_type.c: fixed problem with initialization of
+	notifies list (also fixed small memory leak in connection dealloc.)
+
+	* examples/notify.py: added NOTIFY example.
+
+	* psycopg/cursor_type.c: added per-cursor type-casters dictionaries.
+
 2005-10-18  Federico Di Gregorio  <fog@initd.org>
 
 	* psycopg/typecast.c: temporary fix to typecasting objects to return

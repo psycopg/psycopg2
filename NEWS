@@ -19,6 +19,8 @@ What's new in psycopg 2.0 rc 1
   
 * All classes have been renamed to exist in the psycopg2._psycopg module,
   to fix problems with automatic documentation generators like epydoc.
+  
+* NOTIFY is correctly trapped (see examples/notify.py for example code.)
 
 What's new in psycopg 2.0 beta 4
 --------------------------------

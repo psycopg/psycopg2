@@ -1227,6 +1227,8 @@ static struct PyMemberDef cursorObject_members[] = {
     {"row_factory", T_OBJECT, OFFSETOF(tuple_factory), 0},
     {"tzinfo_factory", T_OBJECT, OFFSETOF(tzinfo_factory), 0},
     {"typecaster", T_OBJECT, OFFSETOF(caster), RO},
+    {"string_types", T_OBJECT, OFFSETOF(string_types), 0},
+    {"binary_types", T_OBJECT, OFFSETOF(binary_types), 0},  
 #endif
     {NULL}
 };
@@ -1253,6 +1255,9 @@ cursor_setup(cursorObject *self, connectionObject *conn)
     self->casts = NULL;
     self->notice = NULL;
     self->query = NULL;
+    
+    self->string_types = NULL;
+    self->binary_types = NULL;
     
     self->description = Py_None;
     Py_INCREF(Py_None);

@@ -110,7 +110,6 @@ psyco_conn_commit(connectionObject *self, PyObject *args)
     return Py_None;
 }
 
-
 
 /* rollback method - roll back all changes done to the database */
 
@@ -131,7 +130,6 @@ psyco_conn_rollback(connectionObject *self, PyObject *args)
     return Py_None;
 }
 
-
 
 #ifdef PSYCOPG_EXTENSIONS
 /* set_isolation_level method - switch connection isolation level */
@@ -186,7 +184,7 @@ psyco_conn_set_client_encoding(connectionObject *self, PyObject *args)
     }
 }
 #endif
-
+
 
 /** the connection object **/
 
@@ -215,28 +213,28 @@ static struct PyMethodDef connectionObject_methods[] = {
 
 static struct PyMemberDef connectionObject_members[] = {
     /* DBAPI-2.0 extensions (exception objects) */
-    {"Error", T_OBJECT, offsetof(connectionObject,exc_Error), RO},
+    {"Error", T_OBJECT, offsetof(connectionObject, exc_Error), RO},
     {"Warning", T_OBJECT, offsetof(connectionObject, exc_Warning), RO},
     {"InterfaceError", T_OBJECT,
-     offsetof(connectionObject, exc_InterfaceError), RO},
+        offsetof(connectionObject, exc_InterfaceError), RO},
     {"DatabaseError", T_OBJECT,
-     offsetof(connectionObject, exc_DatabaseError), RO},
+        offsetof(connectionObject, exc_DatabaseError), RO},
     {"InternalError", T_OBJECT,
-     offsetof(connectionObject, exc_InternalError), RO},
+        offsetof(connectionObject, exc_InternalError), RO},
     {"OperationalError", T_OBJECT,
-     offsetof(connectionObject, exc_OperationalError), RO},
+        offsetof(connectionObject, exc_OperationalError), RO},
     {"ProgrammingError", T_OBJECT,
-     offsetof(connectionObject, exc_ProgrammingError), RO},
+        offsetof(connectionObject, exc_ProgrammingError), RO},
     {"IntegrityError", T_OBJECT,
-     offsetof(connectionObject, exc_IntegrityError), RO},
+        offsetof(connectionObject, exc_IntegrityError), RO},
     {"DataError", T_OBJECT,
-     offsetof(connectionObject, exc_DataError), RO},
+        offsetof(connectionObject, exc_DataError), RO},
     {"NotSupportedError", T_OBJECT,
      offsetof(connectionObject, exc_NotSupportedError), RO},
 #ifdef PSYCOPG_EXTENSIONS    
     {"closed", T_LONG, offsetof(connectionObject, closed), RO},
     {"isolation_level", T_LONG,
-     offsetof(connectionObject, isolation_level), RO},
+        offsetof(connectionObject, isolation_level), RO},
     {"encoding", T_STRING, offsetof(connectionObject, encoding), RO},
     {"notices", T_OBJECT, offsetof(connectionObject, notice_list), RO},
     {"notifies", T_OBJECT, offsetof(connectionObject, notifies), RO},
@@ -255,6 +253,7 @@ connection_setup(connectionObject *self, char *dsn)
     
     self->dsn = strdup(dsn);
     self->notice_list = PyList_New(0);
+    self->notifies = PyList_New(0);
     self->closed = 0;
     self->status = CONN_STATUS_READY;
     self->critical = NULL;
@@ -284,6 +283,9 @@ connection_dealloc(PyObject* obj)
     if (self->dsn) free(self->dsn);
     if (self->encoding) free(self->encoding);
     if (self->critical) free(self->critical);
+    
+    Py_XDECREF(self->notice_list);
+    Py_XDECREF(self->notifies);
     
     pthread_mutex_destroy(&(self->lock));
 
