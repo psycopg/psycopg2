@@ -221,8 +221,12 @@ typecast_coerce(PyObject **pv, PyObject **pw)
             return 0;
         }
     }
-    PyErr_SetString(PyExc_TypeError, "type coercion failed");
-    return -1;
+    
+    /* PyErr_SetString(PyExc_TypeError, "type coercion failed"); */
+    /* let's try to return None instead of raising an exception */
+    Py_INCREF(*pv);
+    Py_INCREF(*pw);
+    return 0;
 }
 
 static PyNumberMethods typecastObject_as_number = {
@@ -255,13 +259,21 @@ static PyNumberMethods typecastObject_as_number = {
 /* object methods */
 
 static int
-typecast_cmp(typecastObject *self, typecastObject *v)
+typecast_cmp(typecastObject *self, PyObject* obj)
 {
+    typecastObject *v = NULL;
     int res;
-
+    
+    if (PyObject_TypeCheck(obj, &typecastType)) {
+        v = (typecastObject*)obj;
+    }
+    else {
+        return 1;
+    }
+    
     if (PyObject_Length(v->values) > 1 && PyObject_Length(self->values) == 1) {
         /* calls itself exchanging the args */
-        return typecast_cmp(v, self);
+        return typecast_cmp(v, (PyObject*)self);
     }
     res = PySequence_Contains(self->values, PyTuple_GET_ITEM(v->values, 0));
     

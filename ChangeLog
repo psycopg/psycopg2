@@ -1,5 +1,10 @@
 2005-10-18  Federico Di Gregorio  <fog@initd.org>
 
+	* psycopg/typecast.c: temporary fix to typecasting objects to return
+	False for any comparaison except an integer in self.values (i.e., we
+	don't raise an exception anymore on a coerce error.) Epydoc is now
+	happy.
+
 	* psycopg/config.h: ZETA config.h patch from Charlie Clark.
 
 	* examples/threads.py: fixed small typo: psycopg -> psycopg2.
