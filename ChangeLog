@@ -1,4 +1,8 @@
-2005-10-18 Federico Di Gregorio <fog@initd.org>
+2005-10-19  Federico Di Gregorio  <fog@initd.org>
+
+	* Releasing 2.0 beta 5.
+
+2005-10-18  Federico Di Gregorio  <fog@initd.org>
 
 	* NOTIFY is back end working.
 
