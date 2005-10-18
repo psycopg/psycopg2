@@ -18,7 +18,8 @@ DSN = 'dbname=test'
 
 ## don't modify anything below tis line (except for experimenting)
 
-import sys, psycopg2
+import sys
+import psycopg2
 import mx.DateTime
 import datetime
 
@@ -30,14 +31,13 @@ conn = psycopg2.connect(DSN)
 curs = conn.cursor()
 
 try:
-    curs.execute("""CREATE TABLE test_dt (k int4, d date, t time, dt timestamp,
-                                          z interval)""")
+    curs.execute("""CREATE TABLE test_dt (
+                     k int4, d date, t time, dt timestamp, z interval)""")
 except:
     conn.rollback()
     curs.execute("DROP TABLE test_dt")
-    curs.execute("""CREATE TABLE test_dt (k int4,
-                                          d date, t time, dt timestamp,
-                                          z interval)""")
+    curs.execute("""CREATE TABLE test_dt (
+                     k int4, d date, t time, dt timestamp, z interval)""")
 conn.commit()
 
 # build and insert some data using mx.DateTime
@@ -47,6 +47,10 @@ mx1 = (
     mx.DateTime.Time(0, 11, 17.015),
     mx.DateTime.Timestamp(2004, 10, 19, 0, 11, 17.5),
     mx.DateTime.DateTimeDelta(13, 15, 17, 59.9))
+
+from psycopg2.extensions import adapt
+import psycopg2.extras
+print adapt(mx1)
 
 print "Inserting mx.DateTime values..."
 curs.execute("INSERT INTO test_dt VALUES (%s, %s, %s, %s, %s)", mx1)

@@ -1,8 +1,6 @@
 What's new in psycopg 2.0 beta 5
 --------------------------------
 
-* First (and probably last) release candidate.
-
 * Fixed all known bugs.
 
 * The initial isolation level is now read from the server and

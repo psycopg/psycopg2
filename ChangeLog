@@ -1,6 +1,11 @@
 2005-10-19  Federico Di Gregorio  <fog@initd.org>
 
 	* Releasing 2.0 beta 5.
+	
+	* psycopg/adapter_mxdatetime.c: reverted to old strftime method to format
+	mx.DateTime objects; the new method didn't worked in some corner-cases.
+	This makes impossible to have more than 2 decimal places for seconds but
+	at least we get the time right every time.
 
 2005-10-18  Federico Di Gregorio  <fog@initd.org>
 

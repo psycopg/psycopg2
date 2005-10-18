@@ -45,30 +45,26 @@ mxdatetime_str(mxdatetimeObject *self)
     PyObject *res = NULL;
     char *buffer = NULL;
     
-    mxDateTimeObject *obj = (mxDateTimeObject*)self->wrapped;
+    /* mxDateTimeObject *obj = (mxDateTimeObject*)self->wrapped; */
 
     switch (self->type) {
         
-    case 0:
-        asprintf(&buffer, "'%02d:%02d:%.6f'",
-                 (int)obj->hour, (int)obj->minute, (float)obj->second);
-        if (buffer) res = PyString_FromString(buffer);
+    case PSYCO_MXDATETIME_TIME:
+        res = PyObject_CallMethod(self->wrapped, "strftime", "s",
+                                   "'%H:%M:%S'");
         break;
 
-    case 1:
-        asprintf(&buffer, "'%ld-%02d-%02d'",
-                 obj->year, (int)obj->month, (int)obj->day);
-        if (buffer) res = PyString_FromString(buffer);
+    case PSYCO_MXDATETIME_DATE:
+        res = PyObject_CallMethod(self->wrapped, "strftime", "s",
+                                   "'%Y-%m-%d'");
         break;
 
-    case 2:
-        asprintf(&buffer, "'%ld-%02d-%02d %02d:%02d:%.6f'",
-                 obj->year, (int)obj->month, (int)obj->day,
-                 (int)obj->hour, (int)obj->minute, (float)obj->second);
-        if (buffer) res = PyString_FromString(buffer);
+    case PSYCO_MXDATETIME_TIMESTAMP:
+        res = PyObject_CallMethod(self->wrapped, "strftime", "s",
+                                   "'%Y-%m-%dT%H:%M:%S'");
         break;
 
-    case 3:
+    case PSYCO_MXDATETIME_INTERVAL:
         res = PyObject_CallMethod(self->wrapped, "strftime", "s",
                                   "'%d:%H:%M:%S'");
         break;
