@@ -48,10 +48,10 @@ static void Dprintf(const char *fmt, ...) {}
 #endif
 #endif
 
-/* win32 specific stuff */
-#ifndef _WIN32
-#include <pthread.h>
-#else
+/* pthreads work-arounds for mutilated operating systems */
+#if defined(_WIN32) || defined(__BEOS__)
+
+#ifdef _WIN32
 #include <winsock2.h>
 #define pthread_mutex_t HANDLE
 #define pthread_condvar_t HANDLE
@@ -64,8 +64,30 @@ static int pthread_mutex_init(pthread_mutex_t *mutex, void* fake)
   *mutex = CreateMutex(NULL, FALSE, NULL);
   return 0;
 }
+#endif /* _WIN32 */
+
+#ifdef __BEOS__
+#include <OS.h>
+#define pthread_mutex_t sem_id
+#define pthread_mutex_lock(object) acquire_sem(object)
+#define pthread_mutex_unlock(object) release_sem(object)
+#define pthread_mutex_destroy(ref) delete_sem(*ref)
+static int pthread_mutex_init(pthread_mutex_t *mutex, void* fake)
+{
+        *mutex = create_sem(1, "psycopg_mutex");
+        if (*mutex < B_OK)
+                return *mutex;
+        return 0;
+}
+#endif /* __BEOS__ */
+
+#else /* pthread is available */
+#include <pthread.h>
+#endif
+
 /* to work around the fact that Windows does not have a gmtime_r function, or
    a proper gmtime function */
+#ifdef _WIN32
 static struct tm *gmtime_r(time_t *t, struct tm *tm)
 {
   tm = gmtime(t);

@@ -221,7 +221,7 @@ typecast_coerce(PyObject **pv, PyObject **pw)
             return 0;
         }
     }
-    PyErr_SetString(PyExc_TypeError, "psycopg type coercion failed");
+    PyErr_SetString(PyExc_TypeError, "type coercion failed");
     return -1;
 }
 

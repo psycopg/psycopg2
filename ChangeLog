@@ -1,5 +1,7 @@
 2005-10-18  Federico Di Gregorio  <fog@initd.org>
 
+	* psycopg/config.h: ZETA config.h patch from Charlie Clark.
+
 	* examples/threads.py: fixed small typo: psycopg -> psycopg2.
 
 	* Big cleanup of unsigned chars to tame gcc 4.
