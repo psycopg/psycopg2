@@ -140,19 +140,19 @@ asis_del(PyObject* self)
 static PyObject *
 asis_repr(asisObject *self)
 {
-    return PyString_FromFormat("<psycopg.AsIs object at %p>", self);
+    return PyString_FromFormat("<psycopg2._psycopg.AsIs object at %p>", self);
 }
 
 
 /* object type */
 
 #define asisType_doc \
-"psycopg.AsIs(str) -> new AsIs adapter object"
+"AsIs(str) -> new AsIs adapter object"
 
 PyTypeObject asisType = {
     PyObject_HEAD_INIT(NULL)
     0,
-    "psycopg._psycopg.AsIs",
+    "psycopg2._psycopg.AsIs",
     sizeof(asisObject),
     0,
     asis_dealloc, /*tp_dealloc*/

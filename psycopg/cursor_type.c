@@ -596,7 +596,7 @@ _psyco_curs_buildrow_fill(cursorObject *self, PyObject *res,
         Dprintf("_psyco_curs_buildrow: row %ld, element %d, len %i",
                 self->row, i, len);
 
-        val = typecast_cast(PyTuple_GET_ITEM(self->casts, i), str, len,
+        val = typecast_cast(PyTuple_GET_ITEM(self->casts, i), (char*)str, len,
                             (PyObject*)self);
 
         if (val) {
@@ -1331,7 +1331,7 @@ cursor_repr(cursorObject *self)
 PyTypeObject cursorType = {
     PyObject_HEAD_INIT(NULL)
     0,
-    "psycopg._psycopg.cursor",
+    "psycopg2._psycopg.cursor",
     sizeof(cursorObject),
     0,
     cursor_dealloc, /*tp_dealloc*/

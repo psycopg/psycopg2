@@ -13,7 +13,12 @@ What's new in psycopg 2.0 rc 1
 * Better docstrings for a few functions/methods.
 
 * Some time-related functions like psycopg2.TimeFromTicks() now take the
-  local timezone into account.
+  local timezone into account. Also a tzinfo object (as per datetime module
+  specifications) can be passed to the psycopg2.Time and psycopg2.Datetime
+  constructors.
+  
+* All classes have been renamed to exist in the psycopg2._psycopg module,
+  to fix problems with automatic documentation generators like epydoc.
 
 What's new in psycopg 2.0 beta 4
 --------------------------------

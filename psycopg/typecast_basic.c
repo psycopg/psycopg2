@@ -22,9 +22,9 @@
 /** INTEGER - cast normal integers (4 bytes) to python int **/
 
 static PyObject *
-typecast_INTEGER_cast(unsigned char *s, int len, PyObject *curs)
+typecast_INTEGER_cast(char *s, int len, PyObject *curs)
 {
-    unsigned char buffer[12];
+    char buffer[12];
     
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
     if (s[len] != '\0') {
@@ -37,9 +37,9 @@ typecast_INTEGER_cast(unsigned char *s, int len, PyObject *curs)
 /** LONGINTEGER - cast long integers (8 bytes) to python long **/
 
 static PyObject *
-typecast_LONGINTEGER_cast(unsigned char *s, int len, PyObject *curs)
+typecast_LONGINTEGER_cast(char *s, int len, PyObject *curs)
 {
-    unsigned char buffer[24];
+    char buffer[24];
     
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
     if (s[len] != '\0') {
@@ -52,10 +52,10 @@ typecast_LONGINTEGER_cast(unsigned char *s, int len, PyObject *curs)
 /** FLOAT - cast floating point numbers to python float **/
 
 static PyObject *
-typecast_FLOAT_cast(unsigned char *s, int len, PyObject *curs)
+typecast_FLOAT_cast(char *s, int len, PyObject *curs)
 {
     /* FIXME: is 64 large enough for any float? */
-    unsigned char buffer[64];
+    char buffer[64];
     
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
     if (s[len] != '\0') {
@@ -68,7 +68,7 @@ typecast_FLOAT_cast(unsigned char *s, int len, PyObject *curs)
 /** STRING - cast strings of any type to python string **/
 
 static PyObject *
-typecast_STRING_cast(unsigned char *s, int len, PyObject *curs)
+typecast_STRING_cast(char *s, int len, PyObject *curs)
 {
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
     return PyString_FromStringAndSize(s, len);
@@ -77,7 +77,7 @@ typecast_STRING_cast(unsigned char *s, int len, PyObject *curs)
 /** UNICODE - cast strings of any type to a python unicode object **/
 
 static PyObject *
-typecast_UNICODE_cast(unsigned char *s, int len, PyObject *curs)
+typecast_UNICODE_cast(char *s, int len, PyObject *curs)
 {
     PyObject *enc;
 
@@ -99,7 +99,7 @@ typecast_UNICODE_cast(unsigned char *s, int len, PyObject *curs)
 /** BOOLEAN - cast boolean value into right python object **/
 
 static PyObject *
-typecast_BOOLEAN_cast(unsigned char *s, int len, PyObject *curs)
+typecast_BOOLEAN_cast(char *s, int len, PyObject *curs)
 {
     PyObject *res;
 
@@ -118,10 +118,10 @@ typecast_BOOLEAN_cast(unsigned char *s, int len, PyObject *curs)
 
 #ifdef HAVE_DECIMAL
 static PyObject *
-typecast_DECIMAL_cast(unsigned char *s, int len, PyObject *curs)
+typecast_DECIMAL_cast(char *s, int len, PyObject *curs)
 {
     PyObject *res = NULL;
-    unsigned char *buffer;
+    char *buffer;
     
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
 

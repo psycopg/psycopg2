@@ -212,18 +212,18 @@ list_del(PyObject* self)
 static PyObject *
 list_repr(listObject *self)
 {
-    return PyString_FromFormat("<psycopg.list object at %p>", self);
+    return PyString_FromFormat("<psycopg2._psycopg.List object at %p>", self);
 }
 
 /* object type */
 
 #define listType_doc \
-"psycopg.List(list) -> new list wrapper object"
+"List(list) -> new list wrapper object"
 
 PyTypeObject listType = {
     PyObject_HEAD_INIT(NULL)
     0,
-    "psycopg._psycopg.datetime",
+    "psycopg2._psycopg.List",
     sizeof(listObject),
     0,
     list_dealloc, /*tp_dealloc*/

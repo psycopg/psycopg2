@@ -285,18 +285,19 @@ qstring_del(PyObject* self)
 static PyObject *
 qstring_repr(qstringObject *self)
 {
-    return PyString_FromFormat("<psycopg.QuotedString object at %p>", self);
+    return PyString_FromFormat("<psycopg2._psycopg.QuotedString object at %p>", 
+                                self);
 }
 
 /* object type */
 
 #define qstringType_doc \
-"psycopg.QuotedString(str, enc) -> new quoted object with 'enc' encoding"
+"QuotedString(str, enc) -> new quoted object with 'enc' encoding"
 
 PyTypeObject qstringType = {
     PyObject_HEAD_INIT(NULL)
     0,
-    "psycopg._psycopg.QuotedString",
+    "psycopg2._psycopg.QuotedString",
     sizeof(qstringObject),
     0,
     qstring_dealloc, /*tp_dealloc*/

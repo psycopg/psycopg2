@@ -80,7 +80,7 @@ static PyBufferProcs chunk_as_buffer =
 PyTypeObject chunkType = {
     PyObject_HEAD_INIT(NULL)
     0,                          /* ob_size */
-    "psycopg._psycopg.chunk",   /* tp_name */
+    "psycopg2._psycopg.chunk",   /* tp_name */
     sizeof(chunkObject),        /* tp_basicsize */
     0,                          /* tp_itemsize */
     (destructor) chunk_dealloc, /* tp_dealloc*/
@@ -152,11 +152,11 @@ typecast_BINARY_cast_unescape(unsigned char *str, size_t *to_length)
 #endif
     
 static PyObject *
-typecast_BINARY_cast(unsigned char *s, int l, PyObject *curs)
+typecast_BINARY_cast(char *s, int l, PyObject *curs)
 {
     chunkObject *chunk;
     PyObject *res;
-    unsigned char *str, *buffer = NULL;
+    char *str, *buffer = NULL;
     size_t len;
 
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
@@ -171,7 +171,7 @@ typecast_BINARY_cast(unsigned char *s, int l, PyObject *curs)
         buffer[l] = '\0';
         s = buffer;
     }
-    str = PQunescapeBytea(s, &len);
+    str = (char*)PQunescapeBytea((unsigned char*)s, &len);
     Dprintf("typecast_BINARY_cast: unescaped %d bytes", len);
     if (buffer) PyMem_Free(buffer);
 

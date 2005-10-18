@@ -52,8 +52,8 @@ skip_until_space(char *s)
 #endif
 
 #include "psycopg/typecast_array.c"
-
 #include "psycopg/typecast_builtins.c"
+
 
 /* a list of initializers, used to make the typecasters accessible anyway */
 #ifdef HAVE_PYDATETIME
@@ -325,7 +325,7 @@ PyTypeObject typecastType = {
     PyObject_HEAD_INIT(NULL)
 
     0, /*ob_size*/
-    "psycopg.type", /*tp_name*/
+    "psycopg2._psycopg.type", /*tp_name*/
     sizeof(typecastObject), /*tp_basicsize*/
     0,    /*tp_itemsize*/
 
@@ -440,7 +440,7 @@ typecast_from_c(typecastObject_initlist *type, PyObject *dict)
 }
 
 PyObject *
-typecast_cast(PyObject *obj, unsigned char *str, int len, PyObject *curs)
+typecast_cast(PyObject *obj, char *str, int len, PyObject *curs)
 {
     PyObject *old, *res = NULL;
     typecastObject *self = (typecastObject *)obj;

@@ -29,7 +29,7 @@ extern "C" {
 #endif
 
 /* type of type-casting functions (both C and Python) */
-typedef PyObject *(*typecast_function)(unsigned char *, int len, PyObject *);
+typedef PyObject *(*typecast_function)(char *, int len, PyObject *);
 
 /** typecast type **/
 
@@ -80,6 +80,6 @@ extern PyObject *typecast_from_python(
 
 /* the function used to dispatch typecasting calls */
 extern PyObject *typecast_cast(
-    PyObject *self, unsigned char *str, int len, PyObject *curs);
+    PyObject *self, char *str, int len, PyObject *curs);
     
 #endif /* !defined(PSYCOPG_TYPECAST_H) */

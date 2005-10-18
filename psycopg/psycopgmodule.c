@@ -295,23 +295,27 @@ PyObject *Error, *Warning, *InterfaceError, *DatabaseError,
 static void
 psyco_errors_init(void)
 {
-    Error = PyErr_NewException("psycopg.Error", PyExc_StandardError, NULL);
-    Warning = PyErr_NewException("psycopg.Warning", PyExc_StandardError,NULL);
-    InterfaceError = PyErr_NewException("psycopg.InterfaceError", Error, NULL);
-    DatabaseError = PyErr_NewException("psycopg.DatabaseError", Error, NULL);
-    
-    InternalError =
-        PyErr_NewException("psycopg.InternalError", DatabaseError, NULL);
-    OperationalError =
-        PyErr_NewException("psycopg.OperationalError", DatabaseError, NULL);
-    ProgrammingError =
-        PyErr_NewException("psycopg.ProgrammingError", DatabaseError, NULL);
-    IntegrityError =
-        PyErr_NewException("psycopg.IntegrityError", DatabaseError,NULL);
-    DataError =
-        PyErr_NewException("psycopg.DataError", DatabaseError, NULL);
+    Error = PyErr_NewException("psycopg2._psycopg.Error",
+        PyExc_StandardError, NULL);
+    Warning = PyErr_NewException("psycopg2._psycopg.Warning",
+        PyExc_StandardError,NULL);
+    InterfaceError = PyErr_NewException("psycopg2._psycopg.InterfaceError",
+        Error, NULL);
+    DatabaseError = PyErr_NewException("psycopg2._psycopg.DatabaseError",
+        Error, NULL);
+    InternalError = PyErr_NewException("psycopg2._psycopg.InternalError",
+        DatabaseError, NULL);
+    OperationalError = PyErr_NewException("psycopg2._psycopg.OperationalError",
+        DatabaseError, NULL);
+    ProgrammingError = PyErr_NewException("psycopg2._psycopg.ProgrammingError",
+        DatabaseError, NULL);
+    IntegrityError = PyErr_NewException("psycopg2._psycopg.IntegrityError",
+        DatabaseError,NULL);
+    DataError = PyErr_NewException("psycopg2._psycopg.DataError",
+        DatabaseError, NULL);
     NotSupportedError =
-        PyErr_NewException("psycopg.NotSupportedError", DatabaseError, NULL);
+        PyErr_NewException("psycopg2._psycopg.NotSupportedError",
+        DatabaseError, NULL);
 }
 
 void

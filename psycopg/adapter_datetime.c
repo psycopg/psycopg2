@@ -178,18 +178,19 @@ pydatetime_del(PyObject* self)
 static PyObject *
 pydatetime_repr(pydatetimeObject *self)
 {
-    return PyString_FromFormat("<psycopg.datetime object at %p>", self);
+    return PyString_FromFormat("<psycopg2._psycopg.datetime object at %p>",
+                                self);
 }
 
 /* object type */
 
 #define pydatetimeType_doc \
-"psycopg.Pydatetime(datetime, type) -> new datetime wrapper object"
+"datetime(datetime, type) -> new datetime wrapper object"
 
 PyTypeObject pydatetimeType = {
     PyObject_HEAD_INIT(NULL)
     0,
-    "psycopg._psycopg.datetime",
+    "psycopg2._psycopg.datetime",
     sizeof(pydatetimeObject),
     0,
     pydatetime_dealloc, /*tp_dealloc*/

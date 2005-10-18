@@ -37,11 +37,11 @@
 /* cursor method - allocate a new cursor */
 
 #define psyco_conn_cursor_doc \
-"cursor(cursor_factory=psycopg.cursor) -> new cursor\n\n" \
+"cursor(cursor_factory=psycopg2.extensions.cursor) -> new cursor\n\n" \
 "Return a new cursor. The 'cursor_factory' argument can be used to\n"    \
 "create non-standard cursors by passing a class different from the\n"    \
 "default. Note that the new class *should* be a sub-class of\n"          \
-"'psycopg2.cursor'.\n"
+"'psycopg2.extensions.cursor'.\n"
 
 static PyObject *
 psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *keywds)
@@ -71,7 +71,6 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *keywds)
     return obj;
 }
 
-
 
 /* close method - close the connection and all related cursors */
 
@@ -92,7 +91,6 @@ psyco_conn_close(connectionObject *self, PyObject *args)
     return Py_None;
 }
 
-
 
 /* commit method - commit all changes to the database */
 
@@ -335,7 +333,7 @@ connection_repr(connectionObject *self)
 PyTypeObject connectionType = {
     PyObject_HEAD_INIT(NULL)
     0,
-    "psycopg._psycopg.connection",
+    "psycopg2._psycopg.connection",
     sizeof(connectionObject),
     0,
     connection_dealloc, /*tp_dealloc*/

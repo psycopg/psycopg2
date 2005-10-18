@@ -32,8 +32,8 @@
 #define ASCAN_QUOTED 4
 
 static int
-typecast_array_tokenize(unsigned char *str, int strlength,
-                        int *pos, unsigned char** token, int *length)
+typecast_array_tokenize(char *str, int strlength,
+                        int *pos, char** token, int *length)
 {
     /* FORTRAN glory */
     int i, j, q, b, l, res;
@@ -103,7 +103,7 @@ typecast_array_tokenize(unsigned char *str, int strlength,
     }
 
     if (res == ASCAN_QUOTED) { 
-        unsigned char *buffer = PyMem_Malloc(l+1);
+        char *buffer = PyMem_Malloc(l+1);
         if (buffer == NULL) return ASCAN_ERROR;
 
         *token = buffer;
@@ -131,11 +131,11 @@ typecast_array_tokenize(unsigned char *str, int strlength,
 }
 
 static int
-typecast_array_scan(unsigned char *str, int strlength,
+typecast_array_scan(char *str, int strlength,
                     PyObject *curs, PyObject *base, PyObject *array)
 {
-    int state, length, pos = 0;
-    unsigned char *token;
+    int state, length = 0, pos = 0;
+    char *token;
 
     PyObject *stack[MAX_DIMENSIONS];
     int stack_index = 0;
@@ -192,7 +192,7 @@ typecast_array_scan(unsigned char *str, int strlength,
     have to be taken on the single items **/
    
 static PyObject *
-typecast_GENERIC_ARRAY_cast(unsigned char *str, int len, PyObject *curs)
+typecast_GENERIC_ARRAY_cast(char *str, int len, PyObject *curs)
 {
     PyObject *obj = NULL;
     PyObject *base = ((typecastObject*)((cursorObject*)curs)->caster)->bcast;
