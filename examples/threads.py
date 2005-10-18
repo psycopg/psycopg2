@@ -37,7 +37,7 @@ MODE = 1
 ## don't modify anything below tis line (except for experimenting)
 
 import sys, psycopg2, threading
-from psycopg.pool import ThreadedConnectionPool
+from psycopg2.pool import ThreadedConnectionPool
 
 if len(sys.argv) > 1:
     DSN = sys.argv[1]

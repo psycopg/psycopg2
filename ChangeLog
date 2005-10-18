@@ -1,5 +1,7 @@
 2005-10-18  Federico Di Gregorio  <fog@initd.org>
 
+	* examples/threads.py: fixed small typo: psycopg -> psycopg2.
+
 	* Big cleanup of unsigned chars to tame gcc 4.
 
 	* Big cleanup of module names (i.e., psycopg2._psycopg everywhere.)
