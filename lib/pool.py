@@ -136,12 +136,48 @@ class SimpleConnectionPool(AbstractConnectionPool):
 
 
 class ThreadedConnectionPool(AbstractConnectionPool):
-    """A connection pool that works with the threading module.
+    """A connection pool that works with the threading module."""
+
+    def __init__(self, minconn, maxconn, *args, **kwargs):
+        """Initialize the threading lock."""
+        import threading
+        AbstractConnectionPool.__init__(
+            self, minconn, maxconn, *args, **kwargs)
+        self._lock = threading.Lock()
+
+    def getconn(self, key=None):
+        """Get a free connection and assign it to 'key' if not None."""
+        self._lock.acquire()
+        try:
+            return self._getconn(key)
+        finally:
+            self._lock.release()
+
+    def putconn(self, conn=None, key=None, close=False):
+        """Put away an unused connection."""
+        self._lock.acquire()
+        try:
+            self._putconn(conn, key, close)
+        finally:
+            self._lock.release()
+
+    def closeall(self):
+        """Close all connections (even the one currently in use.)"""
+        self._lock.acquire()
+        try:
+            self._closeall()
+        finally:
+            self._lock.release()
+
+
+class PersistentConnectionPool(AbstractConnectionPool):
+    """A pool that assigns persistent connections to different threads. 
 
     Note that this connection pool generates by itself the required keys
     using the current thread id.  This means that untill a thread put away
     a connection it will always get the same connection object by successive
-    .getconn() calls.
+    .getconn() calls. This also means that a thread can't use more than one
+    single connection from the pool.
     """
 
     def __init__(self, minconn, maxconn, *args, **kwargs):
@@ -176,7 +212,7 @@ class ThreadedConnectionPool(AbstractConnectionPool):
             self._lock.release()
 
     def closeall(self):
-        """Close all connections (even the one currently in use."""
+        """Close all connections (even the one currently in use.)"""
         self._lock.acquire()
         try:
             self._closeall()
