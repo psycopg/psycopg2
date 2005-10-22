@@ -191,7 +191,8 @@ conn_commit(connectionObject *self)
     pthread_mutex_lock(&self->lock);
 
     res = pq_commit(self);
-
+    self->mark++;
+    
     pthread_mutex_unlock(&self->lock);
     Py_END_ALLOW_THREADS;
 
@@ -209,7 +210,8 @@ conn_rollback(connectionObject *self)
     pthread_mutex_lock(&self->lock);
 
     res = pq_abort(self);
-
+    self->mark++;
+    
     pthread_mutex_unlock(&self->lock);
     Py_END_ALLOW_THREADS;
 
@@ -232,7 +234,8 @@ conn_switch_isolation_level(connectionObject *self, int level)
         res = pq_abort(self);
     }
     self->isolation_level = level;
-
+    self->mark++;
+    
     Dprintf("conn_switch_isolation_level: switched to level %d", level);
     
     pthread_mutex_unlock(&self->lock);
@@ -256,7 +259,7 @@ conn_set_client_encoding(connectionObject *self, char *enc)
     pthread_mutex_lock(&self->lock);
     
     /* set encoding, no encoding string is longer than 24 bytes */
-    snprintf(query, 47, "SET client_encoding = '%s'", enc);
+    PyOS_snprintf(query, 47, "SET client_encoding = '%s'", enc);
 
     /* abort the current transaction, to set the encoding ouside of
        transactions */

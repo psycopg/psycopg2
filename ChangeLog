@@ -1,3 +1,27 @@
+2005-10-22 Federico Di Gregorio <fog@initd.org>
+
+	* psycopg/cursor_type.c: added support for named cursors:
+	  - .fetchXXX() methods now execute a FETCH if the cursor is named
+	  - .execute() executes a DECLARE if the cursor is named
+	  - .execute() fails if a named cursor is used in autocommit
+	  - .executemany() can't be called on named cursors
+	  - .scroll() executes a MOVE if the cursor is named
+	  - .close() executes a CLOSE if the cursor is named
+	  Also, a "transaction mark" was added to both the connection and the
+	  cursor and an exception is raised when using a named cursor unless the
+	  two marks correspond.
+
+	* psycopg/connection_int.c: snprintf->PyOS_snprintf.
+
+	* psycopg/psycopgmodule.c: snprintf->PyOS_snprintf.
+
+	* psycopg/cursor_type.c: changed self->query type from C string to
+	PyObject* to better manage queries in named cursors.
+
+	* psycopg/psycopgmodule.c: cleaned up exception names (now the errors
+	is printed as psycopg2.Error and not as the confusing
+	psycopg2._psycopg.Error.)
+
 2005-10-20  Federico Di Gregorio  <fog@initd.org>
 
 	* lib/pool.py: renamed ThreadedConnectionPool to PersistentConnectionPool

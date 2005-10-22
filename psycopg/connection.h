@@ -48,6 +48,7 @@ typedef struct {
     
     long int closed;          /* 2 means connection has been closed */
     long int isolation_level; /* isolation level for this connection */
+    long int mark;            /* number of commits/rollbacks done so far */ 
     int status;               /* status of the connection */
     int protocol;             /* protocol version */
     

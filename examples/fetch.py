@@ -52,19 +52,28 @@ conn.commit()
 
 # does some nice tricks with the transaction and postgres cursors
 # (remember to always commit or rollback before a DECLARE)
+#
+# we don't need to DECLARE ourselves, psycopg now support named
+# cursor (but we leave the code here, comments, as an example of
+# what psycopg is doing under the hood)
+#curs.execute("DECLARE crs CURSOR FOR SELECT * FROM test_fetch")
+#curs.execute("FETCH 10 FROM crs")
+#print "First 10 rows:", flatten(curs.fetchall())
+#curs.execute("MOVE -5 FROM crs")
+#print "Moved back cursor by 5 rows (to row 5.)"
+#curs.execute("FETCH 10 FROM crs")
+#print "Another 10 rows:", flatten(curs.fetchall())
+#curs.execute("FETCH 10 FROM crs")
+#print "The remaining rows:", flatten(curs.fetchall())
 
-curs.execute("DECLARE crs CURSOR FOR SELECT * FROM test_fetch")
-curs.execute("FETCH 10 FROM crs")
-print "First 10 rows:", flatten(curs.fetchall())
-curs.execute("MOVE -5 FROM crs")
+ncurs = conn.cursor("crs")
+ncurs.execute("SELECT * FROM test_fetch")
+print "First 10 rows:", flatten(ncurs.fetchmany(10))
+ncurs.scroll(-5)
 print "Moved back cursor by 5 rows (to row 5.)"
-curs.execute("FETCH 10 FROM crs")
-print "Another 10 rows:", flatten(curs.fetchall())
-curs.execute("FETCH 10 FROM crs")
-print "The remaining rows:", flatten(curs.fetchall())
-
-# rollback to close the transaction
-
+print "Another 10 rows:", flatten(ncurs.fetchmany(10))
+print "Another one:", list(ncurs.fetchone())
+print "The remaining rows:", flatten(ncurs.fetchall())
 conn.rollback()
 
 curs.execute("DROP TABLE test_fetch")

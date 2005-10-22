@@ -62,9 +62,18 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *keywds)
     Dprintf("psyco_conn_cursor:     parameters: name = %s", name);
     
     if (factory == NULL) factory = (PyObject *)&cursorType;
-    obj = PyObject_CallFunction(factory, "O", self);    
+    if (name)
+        obj = PyObject_CallFunction(factory, "Os", self, name);    
+    else
+        obj = PyObject_CallFunction(factory, "O", self);
 
-    /* TODO: added error checking on obj (cursor) here */
+    if (obj == NULL) return NULL;
+    if (PyObject_IsInstance(obj, (PyObject *)&cursorType) == 0) {
+        PyErr_SetString(PyExc_TypeError,
+            "cursor factory must be subclass of psycopg2._psycopg.cursor");
+        Py_DECREF(obj);
+        return NULL;
+    }
     
     Dprintf("psyco_conn_cursor: new cursor at %p: refcnt = %d",
             obj, obj->ob_refcnt);
@@ -259,6 +268,7 @@ connection_setup(connectionObject *self, char *dsn)
     self->critical = NULL;
     self->async_cursor = NULL;
     self->pgconn = NULL;
+    self->mark = 0;
     
     pthread_mutex_init(&(self->lock), NULL);
     

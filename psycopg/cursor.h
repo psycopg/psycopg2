@@ -46,6 +46,7 @@ typedef struct {
     long int columns;        /* number of columns fetched from the db */
     long int arraysize;      /* how many rows should fetchmany() return */
     long int row;            /* the row counter for fetch*() operations */
+    long int mark;           /* transaction marker, copied from conn */
 
     PyObject *description;   /* read-only attribute: sequence of 7-item
                                 sequences.*/
@@ -65,9 +66,11 @@ typedef struct {
     PyObject *tuple_factory;    /* factory for result tuples */
     PyObject *tzinfo_factory;   /* factory for tzinfo objects */
     
+    PyObject *query;      /* last query executed */
+    
     char *qattr;          /* quoting attr, used when quoting strings */
     char *notice;         /* a notice from the backend */
-    char *query;          /* last query executed */
+    char *name;           /* this cursor name */
     
     PyObject *string_types;   /* a set of typecasters for string types */
     PyObject *binary_types;   /* a set of typecasters for binary types */
@@ -83,10 +86,16 @@ if ((self)->closed || ((self)->conn && (self)->conn->closed)) { \
     PyErr_SetString(InterfaceError, "cursor already closed");   \
     return NULL; }
 
-#define EXC_IF_NO_TUPLES(self) if ((self)->notuples) {        \
+#define EXC_IF_NO_TUPLES(self) \
+if ((self)->notuples && (self)->name == NULL) {               \
     PyErr_SetString(ProgrammingError, "no results to fetch"); \
     return NULL; }
     
+#define EXC_IF_NO_MARK(self) \
+if ((self)->mark != (self)->conn->mark) {                                  \
+    PyErr_SetString(ProgrammingError, "named cursor isn't valid anymore"); \
+    return NULL; }
+
 #ifdef __cplusplus
 }
 #endif

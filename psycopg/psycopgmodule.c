@@ -139,7 +139,7 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
     }
 
 	if (iport > 0)
-		snprintf(port, 16, "%d", iport);
+		PyOS_snprintf(port, 16, "%d", iport);
 		
     if (dsn == NULL) {
         int l = 36;  /* len("dbname= user= password= host= port=\0") */
@@ -295,26 +295,29 @@ PyObject *Error, *Warning, *InterfaceError, *DatabaseError,
 static void
 psyco_errors_init(void)
 {
-    Error = PyErr_NewException("psycopg2._psycopg.Error",
-        PyExc_StandardError, NULL);
-    Warning = PyErr_NewException("psycopg2._psycopg.Warning",
+    /* the names of the exceptions here reflect the oranization of the
+       psycopg2 module and not the fact the the original error objects
+       live in _psycopg */
+       
+    Error = PyErr_NewException("psycopg2.Error", PyExc_StandardError, NULL);
+    
+    Warning = PyErr_NewException("psycopg2.Warning",
         PyExc_StandardError,NULL);
-    InterfaceError = PyErr_NewException("psycopg2._psycopg.InterfaceError",
+    InterfaceError = PyErr_NewException("psycopg2.InterfaceError",
         Error, NULL);
-    DatabaseError = PyErr_NewException("psycopg2._psycopg.DatabaseError",
+    DatabaseError = PyErr_NewException("psycopg2.DatabaseError",
         Error, NULL);
-    InternalError = PyErr_NewException("psycopg2._psycopg.InternalError",
+    InternalError = PyErr_NewException("psycopg2.InternalError",
         DatabaseError, NULL);
-    OperationalError = PyErr_NewException("psycopg2._psycopg.OperationalError",
+    OperationalError = PyErr_NewException("psycopg2.OperationalError",
         DatabaseError, NULL);
-    ProgrammingError = PyErr_NewException("psycopg2._psycopg.ProgrammingError",
+    ProgrammingError = PyErr_NewException("psycopg2.ProgrammingError",
         DatabaseError, NULL);
-    IntegrityError = PyErr_NewException("psycopg2._psycopg.IntegrityError",
+    IntegrityError = PyErr_NewException("psycopg2.IntegrityError",
         DatabaseError,NULL);
-    DataError = PyErr_NewException("psycopg2._psycopg.DataError",
+    DataError = PyErr_NewException("psycopg2.DataError",
         DatabaseError, NULL);
-    NotSupportedError =
-        PyErr_NewException("psycopg2._psycopg.NotSupportedError",
+    NotSupportedError = PyErr_NewException("psycopg2.NotSupportedError",
         DatabaseError, NULL);
 }
 
