@@ -1,3 +1,7 @@
+2005-10-26 Federico Di Gregorio <fog@initd.org>
+
+	* setup.cfg: added include_dirs line for SUSE 9.3.
+
 2005-10-22  Federico Di Gregorio  <fog@initd.org>
 
 	* psycopg/cursor_type.c: added support for named cursors:

@@ -3,7 +3,6 @@ What's new in psycopg 2.0 beta 6
 
 * Support for named cursors (see examples/fetch.py).
 
-
 What's new in psycopg 2.0 beta 5
 --------------------------------
 
