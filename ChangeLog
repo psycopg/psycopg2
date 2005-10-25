@@ -1,4 +1,4 @@
-2005-10-22 Federico Di Gregorio <fog@initd.org>
+2005-10-22  Federico Di Gregorio  <fog@initd.org>
 
 	* psycopg/cursor_type.c: added support for named cursors:
 	  - .fetchXXX() methods now execute a FETCH if the cursor is named

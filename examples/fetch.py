@@ -54,8 +54,9 @@ conn.commit()
 # (remember to always commit or rollback before a DECLARE)
 #
 # we don't need to DECLARE ourselves, psycopg now support named
-# cursor (but we leave the code here, comments, as an example of
+# cursors (but we leave the code here, comments, as an example of
 # what psycopg is doing under the hood)
+#
 #curs.execute("DECLARE crs CURSOR FOR SELECT * FROM test_fetch")
 #curs.execute("FETCH 10 FROM crs")
 #print "First 10 rows:", flatten(curs.fetchall())
