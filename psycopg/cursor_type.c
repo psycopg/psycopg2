@@ -890,7 +890,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
     }
 
     /* allocate some memory, build the SQL and create a PyString from it */
-    sl = strlen(procname) + 10 + nparameters*3;
+    sl = strlen(procname) + 10 + nparameters*3 - (nparameters ? 1 : 0);
     sql = (char*)PyMem_Malloc(sl);
     if (sql == NULL) return NULL;
     
