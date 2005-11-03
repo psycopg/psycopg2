@@ -363,6 +363,11 @@ psyco_decimal_init(void)
     if (decimal) {
         decimalType = PyObject_GetAttrString(decimal, "Decimal");
     }
+    else {
+        PyErr_Clear();
+        decimalType = (PyObject *)&PyFloat_Type;
+        Py_INCREF(decimalType);
+    }
 #endif
 }
 

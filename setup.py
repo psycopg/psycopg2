@@ -81,11 +81,13 @@ class psycopg_build_ext(build_ext):
         ('use-pg-dll', None, 
          "Build against libpq.dll"),
         ('use-pydatetime', None,
-         "Use Python datatime objects for date and time representation.")
+         "Use Python datatime objects for date and time representation."),
+        ('use-decimal', None,
+         "Use Decimal type even on Python 2.3 if the module is provided."),
     ])
     
     boolean_options = build_ext.boolean_options[:]
-    boolean_options.extend(('use-pg-dll', 'use-pydatetime'))
+    boolean_options.extend(('use-pg-dll', 'use-pydatetime', 'use-decimal'))
     
     # libpq directory in win32 source distribution: compiler dependant.
     libpqdir = None
@@ -246,9 +248,7 @@ define_macros.append(('PY_MINOR_VERSION', str(sys.version_info[1])))
 # some macros related to python versions and features
 if sys.version_info[0] >= 2 and sys.version_info[1] >= 3:
     define_macros.append(('HAVE_PYBOOL','1'))
-if sys.version_info[0] >= 2 and sys.version_info[1] >= 4:
-    define_macros.append(('HAVE_DECIMAL','1'))
-
+    
 # gather information to build the extension module
 ext = [] ; data_files = []
 
@@ -264,6 +264,13 @@ sources = [
 from ConfigParser import ConfigParser
 parser = ConfigParser()
 parser.read('setup.cfg')
+
+# Choose if to use Decimal type
+use_decimal = int(parser.get('build_ext', 'use_decimal'))
+if sys.version_info[0] >= 2 and (
+    sys.version_info[1] >= 4 or (sys.version_info[1] == 3 and use_decimal)):
+    define_macros.append(('HAVE_DECIMAL','1'))
+    version_flags.append('dec')
 
 # Choose a datetime module
 have_pydatetime = False
