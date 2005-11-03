@@ -1,9 +1,14 @@
-2005-11-03 Federico Di Gregorio <fog@initd.org>
+2005-11-04 Federico Di Gregorio <fog@initd.org>
 
-	* Applied patch from Daniele Varazzo to enabl√eDecimal on Python
+	* psycopg/typecast_datetime.c: now typecast_PYINTERVAL_cast limit the
+	scan to 'len' characters in the string (should fix #65.)
+
+2005-11-03  Federico Di Gregorio  <fog@initd.org>
+
+	* Applied patch from Daniele Varazzo to enable Decimal on Python
 	2.3 when the module is available (run-time check, nice.)
 	
-2005-10-26 Federico Di Gregorio <fog@initd.org>
+2005-10-26  Federico Di Gregorio  <fog@initd.org>
 
 	* setup.cfg: added include_dirs line for SUSE 9.3.
 

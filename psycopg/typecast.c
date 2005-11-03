@@ -38,6 +38,15 @@ skip_until_space(char *s)
     return s;
 }
 
+static char *
+skip_until_space2(char *s, int *len)
+{
+    while (*len > 0 && *s && *s != ' ') {
+        s++; (*len)--;
+    }
+    return s;
+}
+
 
 /** include casting objects **/
 #include "psycopg/typecast_basic.c"

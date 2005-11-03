@@ -89,7 +89,7 @@ typecast_PYDATETIME_cast(char *str, int len, PyObject *curs)
     }
 
     else {
-         Dprintf("typecast_PYDATETIME_cast: s = %s", str);
+        Dprintf("typecast_PYDATETIME_cast: s = %s", str);
         n = sscanf(str, "%d-%d-%d %d:%d:%lf%c%d:%d",
                    &y, &m, &d, &hh, &mm, &ss, &tzs, &tzh, &tzm);
         Dprintf("typecast_PYDATETIME_cast: date parsed, %d components", n);
@@ -172,7 +172,7 @@ typecast_PYINTERVAL_cast(char *str, int len, PyObject *curs)
 
     Dprintf("typecast_PYINTERVAL_cast: s = %s", str);
     
-    while (*str) {
+    while (len-- > 0 && *str) {
         switch (*str) {
 
         case '-':
@@ -190,7 +190,7 @@ typecast_PYINTERVAL_cast(char *str, int len, PyObject *curs)
         case 'y':
             if (part == 0) {
                 years = (long)(v*sign);
-                str = skip_until_space(str);
+                str = skip_until_space2(str, &len);
                 v = 0.0; sign = 1.0; part = 1;
             }
             break;
@@ -198,7 +198,7 @@ typecast_PYINTERVAL_cast(char *str, int len, PyObject *curs)
         case 'm':
             if (part <= 1) {
                 months = (long)(v*sign);
-                str = skip_until_space(str);
+                str = skip_until_space2(str, &len);
                 v = 0.0; sign = 1.0; part = 2;
             }
             break;
@@ -206,7 +206,7 @@ typecast_PYINTERVAL_cast(char *str, int len, PyObject *curs)
         case 'd':
             if (part <= 2) {
                 days = (long)(v*sign);
-                str = skip_until_space(str);
+                str = skip_until_space2(str, &len);
                 v = 0.0; sign = 1.0; part = 3;
             }
             break;
