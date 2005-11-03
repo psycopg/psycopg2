@@ -198,133 +198,78 @@ typecast_add(PyObject *obj, int binary)
 
 #define OFFSETOF(x) offsetof(typecastObject, x)
 
-static struct memberlist typecastObject_memberlist[] = {
+static int
+typecast_cmp(PyObject *obj1, PyObject* obj2)
+{
+    typecastObject *self = (typecastObject*)obj1;
+    typecastObject *other = NULL;
+    PyObject *number = NULL;
+    int i, j, res = -1;
+    
+    if (PyObject_TypeCheck(obj2, &typecastType)) {
+        other = (typecastObject*)obj2;
+    }
+    else {
+        number = PyNumber_Int(obj2);
+    }
+
+    Dprintf("typecast_cmp: other = %p, number = %p", other, number);
+    
+    for (i=0; i < PyObject_Length(self->values) && res == -1; i++) {
+        long int val = PyInt_AsLong(PyTuple_GET_ITEM(self->values, i));
+        
+        if (other != NULL) {
+            for (j=0; j < PyObject_Length(other->values); j++) {
+                if (PyInt_AsLong(PyTuple_GET_ITEM(other->values, j)) == val) {
+                    res = 0; break;   
+                }
+            }
+        }
+        
+        else if (number != NULL) {
+            if (PyInt_AsLong(number) == val) {
+                res = 0; break;
+            }
+        }
+    }
+    
+    Py_XDECREF(number);
+    return res;
+}
+
+static PyObject*
+typecast_richcompare(PyObject *obj1, PyObject* obj2, int opid)
+{
+    PyObject *result = NULL;
+    int res = typecast_cmp(obj1, obj2);
+    
+    if (PyErr_Occurred()) return NULL;
+    
+    if ((opid == Py_EQ && res == 0) || (opid != Py_EQ && res != 0))
+        result = Py_True;
+    else
+        result = Py_False;
+    
+    Py_INCREF(result);
+    return result;
+}
+     
+static struct PyMemberDef typecastObject_members[] = {
     {"name", T_OBJECT, OFFSETOF(name), RO},
     {"values", T_OBJECT, OFFSETOF(values), RO},
     {NULL}
 };
-
-/* numeric methods */
-
-static PyObject *
-typecast_new(PyObject *name, PyObject *values, PyObject *cast, PyObject *base);
-     
-static int
-typecast_coerce(PyObject **pv, PyObject **pw)
-{    
-    if (PyObject_TypeCheck(*pv, &typecastType)) {
-        if (PyInt_Check(*pw)) {
-            PyObject *coer, *args;
-            args = PyTuple_New(1);
-            Py_INCREF(*pw);
-            PyTuple_SET_ITEM(args, 0, *pw);
-            coer = typecast_new(NULL, args, NULL, NULL);
-            *pw = coer;
-            Py_DECREF(args);
-            Py_INCREF(*pv);
-            return 0;
-        }
-        else if (PyObject_TypeCheck(*pw, &typecastType)){
-            Py_INCREF(*pv);
-            Py_INCREF(*pw);
-            return 0;
-        }
-    }
     
-    /* PyErr_SetString(PyExc_TypeError, "type coercion failed"); */
-    /* let's try to return None instead of raising an exception */
-    Py_INCREF(*pv);
-    Py_INCREF(*pw);
-    return 0;
-}
-
-static PyNumberMethods typecastObject_as_number = {
-    0, 	/*nb_add*/
-    0,	/*nb_subtract*/
-    0,	/*nb_multiply*/
-    0,	/*nb_divide*/
-    0,	/*nb_remainder*/
-    0,	/*nb_divmod*/
-    0,	/*nb_power*/
-    0,	/*nb_negative*/
-    0,	/*nb_positive*/
-    0,	/*nb_absolute*/
-    0,  /*nb_nonzero*/
-    0,	/*nb_invert*/
-    0,	/*nb_lshift*/
-    0,	/*nb_rshift*/
-    0,	/*nb_and*/
-    0,	/*nb_xor*/
-    0,	/*nb_or*/
-    typecast_coerce, /*nb_coerce*/
-    0,	/*nb_int*/
-    0,	/*nb_long*/
-    0,	/*nb_float*/
-    0,	/*nb_oct*/
-    0,	/*nb_hex*/
-};
-
-
-/* object methods */
-
-static int
-typecast_cmp(typecastObject *self, PyObject* obj)
-{
-    typecastObject *v = NULL;
-    int res;
-    
-    if (PyObject_TypeCheck(obj, &typecastType)) {
-        v = (typecastObject*)obj;
-    }
-    else {
-        return 1;
-    }
-    
-    if (PyObject_Length(v->values) > 1 && PyObject_Length(self->values) == 1) {
-        /* calls itself exchanging the args */
-        return typecast_cmp(v, (PyObject*)self);
-    }
-    res = PySequence_Contains(self->values, PyTuple_GET_ITEM(v->values, 0));
-    
-    if (res < 0) return res;
-    else return res == 1 ? 0 : 1;
-}
-
-static struct PyMethodDef typecastObject_methods[] = {
-    {"__cmp__", (PyCFunction)typecast_cmp, METH_VARARGS, NULL},
-    {NULL, NULL}
-};
-
-/** FIXME: typecast should become a new-style type sometime in the future, but
-    right now this is not important and we keep going with old class */
-
-static PyObject *
-typecast_getattr(typecastObject *self, char *name)
-{
-    PyObject *rv;
-	
-    rv = PyMember_Get((char *)self, typecastObject_memberlist, name);
-    if (rv) return rv;
-    PyErr_Clear();
-    return Py_FindMethod(typecastObject_methods, (PyObject *)self, name);
-}
-
 static void
-typecast_destroy(typecastObject *self)
+typecast_dealloc(PyObject *obj)
 {
-    PyObject *name, *cast, *values;
+    typecastObject *self = (typecastObject*)obj;
+    
+    Py_XDECREF(self->values);
+    Py_XDECREF(self->name);
+    Py_XDECREF(self->pcast);
 
-    values = self->values;
-    name = self->name;
-    cast = self->pcast;
-
-    PyObject_Del(self);
-
-    Py_XDECREF(name);
-    Py_XDECREF(values);
-    Py_XDECREF(cast);
-
-    Dprintf("typecast_destroy: object at %p destroyed", self);
+    obj->ob_type->tp_free(obj);
 }
 
 static PyObject *
@@ -341,32 +286,64 @@ typecast_call(PyObject *obj, PyObject *args, PyObject *kwargs)
                          cursor);
 }
 
-
 PyTypeObject typecastType = {
     PyObject_HEAD_INIT(NULL)
-
-    0, /*ob_size*/
-    "psycopg2._psycopg.type", /*tp_name*/
-    sizeof(typecastObject), /*tp_basicsize*/
-    0,    /*tp_itemsize*/
-
-    /* methods */
-    (destructor)typecast_destroy, /*tp_dealloc*/
-    0,    /*tp_print*/
-    (getattrfunc)typecast_getattr, /*tp_getattr*/
-    0,    /*tp_setattr*/
-    (cmpfunc)typecast_cmp, /*tp_compare*/
-    0,    /*tp_repr*/
-    &typecastObject_as_number, /*tp_as_number*/
-    0,    /*tp_as_sequence*/
-    0,    /*tp_as_mapping*/
-    0,    /*tp_hash*/
-    typecast_call, /*tp_call*/
-    0,    /*tp_str*/
+    0,
+    "psycopg2._psycopg.type",
+    sizeof(typecastObject),
+    0,
     
-    /* Space for future expansion */
-    0L,0L,0L,0L,
-    "psycopg type-casting object"  /* Documentation string */
+    typecast_dealloc, /*tp_dealloc*/
+    0,          /*tp_print*/ 
+    0,          /*tp_getattr*/
+    0,          /*tp_setattr*/
+    typecast_cmp, /*tp_compare*/
+    0,          /*tp_repr*/
+    0,          /*tp_as_number*/
+    0,          /*tp_as_sequence*/
+    0,          /*tp_as_mapping*/
+    0,          /*tp_hash */
+
+    typecast_call, /*tp_call*/
+    0,          /*tp_str*/
+    0,          /*tp_getattro*/
+    0,          /*tp_setattro*/
+    0,          /*tp_as_buffer*/
+
+    Py_TPFLAGS_HAVE_RICHCOMPARE, /*tp_flags*/
+    "psycopg type-casting object", /*tp_doc*/
+    
+    0,          /*tp_traverse*/
+    0,          /*tp_clear*/
+
+    typecast_richcompare, /*tp_richcompare*/
+    0,          /*tp_weaklistoffset*/
+
+    0,          /*tp_iter*/
+    0,          /*tp_iternext*/
+
+    /* Attribute descriptor and subclassing stuff */
+
+    0, /*tp_methods*/
+    typecastObject_members, /*tp_members*/
+    0,          /*tp_getset*/
+    0,          /*tp_base*/
+    0,          /*tp_dict*/
+    
+    0,          /*tp_descr_get*/
+    0,          /*tp_descr_set*/
+    0,          /*tp_dictoffset*/
+    
+    0, /*tp_init*/
+    0, /*tp_alloc  will be set to PyType_GenericAlloc in module init*/
+    0, /*tp_new*/
+    0, /*tp_free  Low-level free-memory routine */
+    0,          /*tp_is_gc For PyObject_IS_GC */
+    0,          /*tp_bases*/
+    0,          /*tp_mro method resolution order */
+    0,          /*tp_cache*/
+    0,          /*tp_subclasses*/
+    0           /*tp_weaklist*/
 };
 
 static PyObject *

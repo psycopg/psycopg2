@@ -1,4 +1,13 @@
-2005-11-04 Federico Di Gregorio <fog@initd.org>
+2005-11-04  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/typecast.c: a lot of changes:
+	  - made typecast a new-style type
+	  - removed coerce code and implemented the richcompare protocol that
+	    allows to compare objects of different types
+	  - much better __cmp__ method that allows to compare two typecast
+	    objects and returns True if any two of the mapped oids match
+	  - any object that can be used as an int works as right-hand operand
+	    in __cmp__ operations 
 
 	* psycopg/typecast_datetime.c: now typecast_PYINTERVAL_cast limit the
 	scan to 'len' characters in the string (should fix #65.)
