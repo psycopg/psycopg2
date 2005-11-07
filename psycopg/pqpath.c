@@ -462,17 +462,14 @@ _pq_fetch_tuples(cursorObject *curs)
 #ifdef PSYCOPG_DISPLAY_SIZE
     dsize = (int *)PyMem_Malloc(pgnfields * sizeof(int));
     if (dsize != NULL) {
-        if (curs->rowcount == 0) {
-            for (i=0; i < pgnfields; i++)
-                dsize[i] = -1;
+        int j, len;
+        for (i=0; i < pgnfields; i++) {
+            dsize[i] = -1;
         }
-        else {
-            int j, len;
-            for (j = 0; j < curs->rowcount; j++) {
-                for (i = 0; i < pgnfields; i++) {
-                    len = PQgetlength(curs->pgres, j, i);
-                    if (len > dsize[i]) dsize[i] = len;
-                }
+        for (j = 0; j < curs->rowcount; j++) {
+            for (i = 0; i < pgnfields; i++) {
+                len = PQgetlength(curs->pgres, j, i);
+                if (len > dsize[i]) dsize[i] = len;
             }
         }
     }
@@ -486,7 +483,7 @@ _pq_fetch_tuples(cursorObject *curs)
         
         PyObject *dtitem = PyTuple_New(7);
         PyObject *type = PyInt_FromLong(ftype);
-        PyObject *cast;
+        PyObject *cast = NULL;
         
         PyTuple_SET_ITEM(curs->description, i, dtitem);
         
@@ -502,7 +499,8 @@ _pq_fetch_tuples(cursorObject *curs)
             }
         }
         /* else if we got binary tuples and if we got a field that
-           is binary use the default cast.
+           is binary use the default cast
+           FIXME: what the hell am I trying to do here? This just can't work..
         */
         else if (pgbintuples && cast == psyco_default_binary_cast) {
             Dprintf("_pq_fetch_tuples: Binary cursor and "

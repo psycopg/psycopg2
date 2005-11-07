@@ -1,3 +1,8 @@
+2005-11-07  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/pqpath.c: fixed problem with uninitialized value (all this was
+	started by replacing calloc() calls with PyMem_Malloc().)
+
 2005-11-04  Federico Di Gregorio  <fog@initd.org>
 
 	* psycopg/typecast.c: a lot of changes:
