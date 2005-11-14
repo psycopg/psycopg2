@@ -41,7 +41,6 @@ typecast_PYDATE_cast(char *str, int len, PyObject *curs)
      
     if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
     
-    /* check for infinity */
     if (!strcmp(str, "infinity") || !strcmp(str, "-infinity")) {
         if (str[0] == '-') {
             obj = PyObject_GetAttrString(pyDateTypeP, "min");
@@ -52,8 +51,10 @@ typecast_PYDATE_cast(char *str, int len, PyObject *curs)
     }
 
     else {
-        n = sscanf(str, "%d-%d-%d", &y, &m, &d);
-    
+        n = typecast_parse_date(str, NULL, &len, &y, &m, &d);
+        Dprintf("typecast_PYDATE_cast: "
+                "n = %d, len = %d, y = %d, m = %d, d = %d",
+                 n, len, y, m, d);
         if (n != 3) {
             PyErr_SetString(DataError, "unable to parse date");
         }
@@ -71,10 +72,8 @@ typecast_PYDATETIME_cast(char *str, int len, PyObject *curs)
 {
     PyObject* obj = NULL;
     int n, y=0, m=0, d=0;
-    int hh=0, mm=0;
-    int tzh=0, tzm=0;
-    double ss=0.0;
-    char tzs=0;
+    int hh=0, mm=0, ss=0, us=0, tz=0;
+    char *tp = NULL;
     
     if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
     
@@ -90,39 +89,45 @@ typecast_PYDATETIME_cast(char *str, int len, PyObject *curs)
 
     else {
         Dprintf("typecast_PYDATETIME_cast: s = %s", str);
-        n = sscanf(str, "%d-%d-%d %d:%d:%lf%c%d:%d",
-                   &y, &m, &d, &hh, &mm, &ss, &tzs, &tzh, &tzm);
-        Dprintf("typecast_PYDATETIME_cast: date parsed, %d components", n);
-        
-        if (n != 3 && n != 6 && n <= 7) {
+        n = typecast_parse_date(str, &tp, &len, &y, &m, &d);
+        Dprintf("typecast_PYDATE_cast: tp = %p "
+                "n = %d, len = %d, y = %d, m = %d, d = %d",
+                 tp, n, len, y, m, d);        
+        if (n != 3) {
             PyErr_SetString(DataError, "unable to parse date");
         }
+        
+        if (len > 0) {
+            n = typecast_parse_time(tp, NULL, &len, &hh, &mm, &ss, &us, &tz);
+            Dprintf("typecast_PYDATETIME_cast: n = %d, len = %d, "
+                "hh = %d, mm = %d, ss = %d, us = %d, tz = %d",
+                n, len, hh, mm, ss, us, tz);
+            if (n < 3 || n > 5) {
+                PyErr_SetString(DataError, "unable to parse time");
+            }
+        }
+        
+        if (ss > 59) {
+            mm += 1;
+            ss -= 60;
+        }
+        
+        if (n == 5 && ((cursorObject*)curs)->tzinfo_factory != Py_None) {
+            /* we have a time zone, calculate minutes and create
+               appropriate tzinfo object calling the factory */
+            PyObject *tzinfo;
+            Dprintf("typecast_PYDATETIME_cast: UTC offset = %dm", tz);
+            tzinfo = PyObject_CallFunction(
+                ((cursorObject*)curs)->tzinfo_factory, "i", tz);
+            obj = PyObject_CallFunction(pyDateTimeTypeP, "iiiiiiiO",
+                 y, m, d, hh, mm, ss, us, tzinfo);
+            Dprintf("typecast_PYDATETIME_cast: tzinfo: %p, refcnt = %d",
+                    tzinfo, tzinfo->ob_refcnt);
+            Py_XDECREF(tzinfo);
+        }
         else {
-            double micro = (ss - floor(ss)) * 1000000.0;
-            int sec = (int)floor(ss);
-            if (sec > 59) {
-                mm += 1;
-                sec -= 60;
-            }
-            if (tzs && ((cursorObject*)curs)->tzinfo_factory != Py_None) {
-                /* we have a time zone, calculate minutes and create
-                   appropriate tzinfo object calling the factory */
-                PyObject *tzinfo;
-                tzm += tzh*60;
-                if (tzs == '-') tzm = -tzm;
-                Dprintf("typecast_PYDATETIME_cast: UTC offset = %dm", tzm);
-                tzinfo = PyObject_CallFunction(
-                    ((cursorObject*)curs)->tzinfo_factory, "i", tzm);
-                obj = PyObject_CallFunction(pyDateTimeTypeP, "iiiiiiiO",
-                     y, m, d, hh, mm, sec, (int)round(micro), tzinfo);
-                Dprintf("typecast_PYDATETIME_cast: tzinfo: %p, refcnt = %d",
-                        tzinfo, tzinfo->ob_refcnt);
-                Py_XDECREF(tzinfo);
-            }
-            else {
-                obj = PyObject_CallFunction(pyDateTimeTypeP, "iiiiiii",
-                     y, m, d, hh, mm, sec, (int)round(micro));
-            }
+            obj = PyObject_CallFunction(pyDateTimeTypeP, "iiiiiii",
+                 y, m, d, hh, mm, ss, us);
         }
     }
     return obj;
@@ -134,25 +139,24 @@ static PyObject *
 typecast_PYTIME_cast(char *str, int len, PyObject *curs)
 {
     PyObject* obj = NULL;
-    int n, hh=0, mm=0;
-    double ss=0.0;
+    int n, hh=0, mm=0, ss=0, us=0, tz=0;
     
     if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
         
-    n = sscanf(str, "%d:%d:%lf", &hh, &mm, &ss);
-    
-    if (n != 3) {
+    n = typecast_parse_time(str, NULL, &len, &hh, &mm, &ss, &us, &tz);
+    Dprintf("typecast_PYTIME_cast: n = %d, len = %d, "
+            "hh = %d, mm = %d, ss = %d, us = %d, tz = %d",
+            n, len, hh, mm, ss, us, tz);
+                
+    if (n < 3 || n > 5) {
         PyErr_SetString(DataError, "unable to parse time");
     }
     else {
-        double micro = (ss - floor(ss)) * 1000000.0;
-        int sec = (int)floor(ss);
-        if (sec > 59) {
+        if (ss > 59) {
             mm += 1;
-            sec -= 60;
+            ss -= 60;
         }
-        obj = PyObject_CallFunction(pyTimeTypeP, "iiii",
-            hh, mm, sec, (int)round(micro));
+        obj = PyObject_CallFunction(pyTimeTypeP, "iiii", hh, mm, ss, us);
     }
     return obj;          
 }
@@ -256,7 +260,7 @@ typecast_PYINTERVAL_cast(char *str, int len, PyObject *curs)
         seconds += hundredths + minutes*60 + hours*3600;
     }
 
-    /* calculates days */
+    /* calculates days */ 
     days += years*365 + months*30;
 
     micro = (seconds - floor(seconds)) * 1000000.0;

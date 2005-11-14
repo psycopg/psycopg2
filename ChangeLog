@@ -1,3 +1,9 @@
+2005-11-14  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/typecast.c: added typecast_parse_date and typecast_parse_time
+	functions to do locale-safe date/time parsing. This would probably also
+	speed-up psycopg a little bit.
+
 2005-11-07  Federico Di Gregorio  <fog@initd.org>
 
 	* psycopg/pqpath.c: fixed problem with uninitialized value (all this was

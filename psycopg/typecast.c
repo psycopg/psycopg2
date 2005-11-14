@@ -47,6 +47,99 @@ skip_until_space2(char *s, int *len)
     return s;
 }
 
+static int
+typecast_parse_date(char* s, char** t, int* len,
+                     int* year, int* month, int* day)
+{
+    int acc = -1, cz = 0;
+    
+    Dprintf("typecast_parse_date: len = %d, s = %s", *len, s);
+     
+    while (cz < 3 && *len > 0 && *s) {
+        switch (*s) {
+        case '-':
+        case ' ':
+        case 'T':
+            if (cz == 0) *year = acc;
+            else if (cz == 1) *month = acc;
+            else if (cz == 2) *day = acc;
+            acc = -1; cz++;
+            break;
+        default:
+            acc = (acc == -1 ? 0 : acc*10) + ((int)*s - (int)'0');
+            break;            
+        }
+
+        s++; (*len)--;
+    }
+
+    if (acc != -1) {
+        *day = acc;
+        cz += 1;
+    }
+    if (t != NULL) *t = s;    
+
+    return cz;
+}
+
+static int
+typecast_parse_time(char* s, char** t, int* len,
+                     int* hh, int* mm, int* ss, int* us, int* tz)
+{
+    int acc = -1, cz = 0;
+    int tzs = 1, tzhh = 0, tzmm = 0;
+    
+    /* sets microseconds and timezone to 0 because they may be missing */
+    *us = *tz = 0;
+    
+    Dprintf("typecast_parse_time: len = %d, s = %s", *len, s);
+     
+    while (cz < 5 && *len > 0 && *s) {
+        switch (*s) {
+        case ':':
+            if (cz == 0) *hh = acc;
+            else if (cz == 1) *mm = acc;
+            else if (cz == 2) *ss = acc;
+            else if (cz == 3) *us = acc;
+            else if (cz == 4) tzhh = acc;
+            acc = -1; cz++;
+            break;
+        case '.':
+            /* we expect seconds and if we don't get them we return an error */
+            if (cz != 2) return -1;
+            *ss = acc;
+            acc = -1; cz++;
+            break;
+        case '+':
+        case '-':
+            /* seconds or microseconds here, anything else is an error */
+            if (cz < 2 || cz > 3) return -1;
+            if (*s == '-') tzs = -1;
+            if      (cz == 2) *ss = acc;
+            else if (cz == 3) *us = acc;
+            else if (cz == 4) *tz = acc;
+            acc = -1; cz++;
+            break;
+        default:
+            acc = (acc == -1 ? 0 : acc*10) + ((int)*s - (int)'0');
+            break;            
+        }
+
+        s++; (*len)--;
+    }
+
+    if (acc != -1) {
+        if (cz == 2)      { *ss = acc; cz += 1; }
+        else if (cz == 3) { *us = acc; cz += 1; }
+        else if (cz == 4) { tzhh = acc; cz += 1; }
+        else if (cz == 5)   tzmm = acc;
+    }
+    if (t != NULL) *t = s;
+    
+    *tz = tzs * tzhh*60 + tzmm;
+
+    return cz;
+}
 
 /** include casting objects **/
 #include "psycopg/typecast_basic.c"

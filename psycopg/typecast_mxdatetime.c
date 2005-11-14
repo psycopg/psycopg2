@@ -31,10 +31,12 @@ static PyObject *
 typecast_MXDATE_cast(char *str, int len, PyObject *curs)
 {
     int n, y=0, m=0, d=0;
-    int hh=0, mm=0;
-    double ss=0.0;
-
+    int hh=0, mm=0, ss=0, us=0, tz=0;
+    char *tp = NULL;
+    
     if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
+ 
+    Dprintf("typecast_MXDATE_cast: s = %s", str);
     
     /* check for infinity */
     if (!strcmp(str, "infinity") || !strcmp(str, "-infinity")) {
@@ -46,15 +48,27 @@ typecast_MXDATE_cast(char *str, int len, PyObject *curs)
         }
     }
     
-    Dprintf("typecast_MXDATE_cast: s = %s", str);
-    n = sscanf(str, "%d-%d-%d %d:%d:%lf", &y, &m, &d, &hh, &mm, &ss);
-    Dprintf("typecast_MXDATE_cast: date parsed, %d components", n);
-    
-    if (n != 3 && n != 6) {
+    n = typecast_parse_date(str, &tp, &len, &y, &m, &d);
+    Dprintf("typecast_MXDATE_cast: tp = %p n = %d, len = %d, "
+             "y = %d, m = %d, d = %d", tp, n, len, y, m, d);        
+    if (n != 3) {
         PyErr_SetString(DataError, "unable to parse date");
-        return NULL;
     }
-    return mxDateTimeP->DateTime_FromDateAndTime(y, m, d, hh, mm, ss);
+    
+    if (len > 0) {
+        n = typecast_parse_time(tp, NULL, &len, &hh, &mm, &ss, &us, &tz);
+        Dprintf("typecast_MXDATE_cast: n = %d, len = %d, "
+            "hh = %d, mm = %d, ss = %d, us = %d, tz = %d",
+            n, len, hh, mm, ss, us, tz);
+        if (n < 3 || n > 5) {
+            PyErr_SetString(DataError, "unable to parse time");
+        }
+    }    
+    
+    Dprintf("typecast_MXDATE_cast: fractionary seconds: %lf",
+        (double)ss + (double)us/(double)1000000.0);
+    return mxDateTimeP->DateTime_FromDateAndTime(y, m, d, hh, mm,
+        (double)ss + (double)us/(double)1000000.0);
 }
 
 /** TIME - parse time into an mx.DateTime object **/
@@ -62,23 +76,26 @@ typecast_MXDATE_cast(char *str, int len, PyObject *curs)
 static PyObject *
 typecast_MXTIME_cast(char *str, int len, PyObject *curs)
 {
-    int n, hh=0, mm=0;
-    double ss=0.0;
+    int n, hh=0, mm=0, ss=0, us=0, tz=0;
 
     if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
     
     Dprintf("typecast_MXTIME_cast: s = %s", str);
     
-    n = sscanf(str, "%d:%d:%lf", &hh, &mm, &ss);
+    n = typecast_parse_time(str, NULL, &len, &hh, &mm, &ss, &us, &tz);
     Dprintf("typecast_MXTIME_cast: time parsed, %d components", n);
-    Dprintf("typecast_MXTIME_cast: hh = %d, mm = %d, ss = %f", hh, mm, ss);
+    Dprintf("typecast_MXTIME_cast: hh = %d, mm = %d, ss = %d, us = %d",
+             hh, mm, ss, us);
     
-    if (n != 3) {
+    if (n < 3 || n > 5) {
         PyErr_SetString(DataError, "unable to parse time");
         return NULL;
     }
 
-    return mxDateTimeP->DateTimeDelta_FromTime(hh, mm ,ss);
+    Dprintf("typecast_MXTIME_cast: fractionary seconds: %lf",
+        (double)ss + (double)us/(double)1000000.0);
+    return mxDateTimeP->DateTimeDelta_FromTime(hh, mm,
+        (double)ss + (double)us/(double)1000000.0);
 }
 
 /** INTERVAL - parse an interval into an mx.DateTimeDelta **/
