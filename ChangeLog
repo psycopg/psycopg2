@@ -1,3 +1,8 @@
+2005-11-16  Federico Di Gregorio  <fog@initd.org>
+
+	* lib/__init__.py: very nice hack from Harald Armin Massa to allow
+	py2exe and similar tools to do their work without problems.
+
 2005-11-15  Federico Di Gregorio  <fog@initd.org>
 
 	* psycopg/psycopgmodule.c: now bails out with correct exception when one
