@@ -1,3 +1,8 @@
+2005-11-15  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/psycopgmodule.c: now bails out with correct exception when one
+	of the needed modules can't be imported (should fix #32.)
+
 2005-11-14  Federico Di Gregorio  <fog@initd.org>
 
 	* psycopg/typecast.c: added typecast_parse_date and typecast_parse_time

@@ -17,7 +17,7 @@
 #
 # See the LICENSE file for details.
 
-__doc__ = "ZPsycopg Database Adalper Registration." 
+__doc__ = "ZPsycopg 2 Database Adapter Registration." 
 __version__ = '2.0'
 
 import DA
@@ -27,12 +27,15 @@ classes    = DA.classes
 meta_types = DA.meta_types
 misc_      = DA.misc_
 
-__ac_permissions__=DA.__ac_permissions__
+__ac_permissions__ = DA.__ac_permissions__
 
-def initialize(context):
-    context.registerClass(
-        DA.Connection,
-        permission = 'Add Z Psycopg Database Connections',
-        constructors = (DA.manage_addZPsycopgConnectionForm,
-                        DA.manage_addZPsycopgConnection),
-        icon = SOFTWARE_HOME + '/Shared/DC/ZRDB/www/DBAdapterFolder_icon.gif')
+# FIXME: isn't this crazy? Apparently the variables above are enough
+#        to have the ZPsycopgDA product installed and working. :/
+#
+#def initialize(context):
+#    context.registerClass(
+#        DA.Connection,
+#        permission = 'Add Z Psycopg 2 Database Connections',
+#        constructors = (DA.manage_addZPsycopgConnectionForm,
+#                        DA.manage_addZPsycopgConnection),
+#        icon = SOFTWARE_HOME + '/Shared/DC/ZRDB/www/DBAdapterFolder_icon.gif')

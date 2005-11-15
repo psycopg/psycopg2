@@ -42,7 +42,6 @@ from psycopg2.extensions import INTEGER, LONGINTEGER, FLOAT, BOOLEAN, DATE
 from psycopg2.extensions import TIME, INTERVAL
 from psycopg2.extensions import new_type, register_type
 
-
 
 # add a new connection to a folder
 
@@ -56,17 +55,16 @@ def manage_addZPsycopgConnection(self, id, title, connection_string,
                                    zdatetime, check, tilevel))
     if REQUEST is not None: return self.manage_main(self, REQUEST)
 
-
 
 # the connection object
 
 class Connection(Shared.DC.ZRDB.Connection.Connection):
-    """ZPsycopg Connection."""
+    """ZPsycopg 2 Connection."""
     _isAnSQLConnection = 1
     
-    id                = 'Psycopg_database_connection' 
-    database_type     = 'Psycopg'
-    meta_type = title = 'Z Psycopg Database Connection'
+    id                = 'Psycopg2_database_connection' 
+    database_type     = 'Psycopg2'
+    meta_type = title = 'Z Psycopg 2 Database Connection'
     icon              = 'misc_/ZPsycopgDA/conn'
 
     def __init__(self, id, title, connection_string,
@@ -187,7 +185,7 @@ class Connection(Shared.DC.ZRDB.Connection.Connection):
 
 classes = (Connection,)
 
-meta_types = ({'name':'Z Psycopg Database Connection',
+meta_types = ({'name':'Z Psycopg 2 Database Connection',
                'action':'manage_addZPsycopgConnectionForm'},)
 
 folder_methods = {
@@ -195,7 +193,7 @@ folder_methods = {
     'manage_addZPsycopgConnectionForm': manage_addZPsycopgConnectionForm}
 
 __ac_permissions__ = (
-    ('Add Z Psycopg Database Connections',
+    ('Add Z Psycopg 2 Database Connections',
      ('manage_addZPsycopgConnectionForm', 'manage_addZPsycopgConnection')),)
 
 # add icons

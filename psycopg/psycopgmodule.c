@@ -484,7 +484,11 @@ init_psycopg(void)
     /* import python builtin datetime module, if available */
 #ifdef HAVE_PYDATETIME
     pyDateTimeModuleP = PyImport_ImportModule("datetime");
-
+    if (pyDateTimeModuleP == NULL) {
+        Dprintf("initpsycopg: can't import datetime module"); 
+        PyErr_SetString(PyExc_ImportError, "can't import datetime module");
+        return;
+    }
     pydatetimeType.ob_type = &PyType_Type;
     if (PyType_Ready(&pydatetimeType) == -1) return;
 
@@ -498,6 +502,11 @@ init_psycopg(void)
 
     /* import psycopg2.tz anyway (TODO: replace with C-level module?) */
     pyPsycopgTzModule = PyImport_ImportModule("psycopg2.tz");
+    if (pyPsycopgTzModule == NULL) {
+        Dprintf("initpsycopg: can't import psycopg2.tz module"); 
+        PyErr_SetString(PyExc_ImportError, "can't import psycopg2.tz module");
+        return;        
+    }
     pyPsycopgTzLOCAL = 
         PyObject_GetAttrString(pyPsycopgTzModule, "LOCAL"); 
     pyPsycopgTzFixedOffsetTimezone = 
