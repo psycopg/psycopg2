@@ -27,13 +27,23 @@ small and fast, and stable as a rock.
 # module instead of raising an exception (in case we're running a thin
 # embedded Python or something even more devious.)
 
-import sys
+import sys, warnings
 if sys.version_info[0] >= 2 and sys.version_info[1] >= 3:
-    import datetime as _psycopg_needs_datetime
+    try:
+        import datetime as _psycopg_needs_datetime
+    except:
+        warnings.warn(
+            "can't import datetime module probably needed by _psycopg",
+            RuntimeWarning)
 if sys.version_info[0] >= 2 and sys.version_info[1] >= 4:
-    import decimal as _psycopg_needs_decimal
+    try:
+        import decimal as _psycopg_needs_decimal
+    except:
+        warnings.warn(
+            "can't import decimal module probably needed by _psycopg",
+            RuntimeWarning)
 from psycopg2 import tz
-del sys
+del sys, warnings
 
 # Import the DBAPI-2.0 stuff into top-level module.
 
