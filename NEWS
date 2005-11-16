@@ -5,6 +5,12 @@ What's new in psycopg 2.0 beta 6
 
 * Safer parsing of time intervals.
 
+* Better parsing of times and dates, no more locale problems.
+
+* Should now play well with py2exe and similar tools.
+
+* The "decimal" module is now used if available under Python 2.3.
+
 What's new in psycopg 2.0 beta 5
 --------------------------------
 

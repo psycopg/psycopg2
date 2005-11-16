@@ -1,5 +1,7 @@
 2005-11-16  Federico Di Gregorio  <fog@initd.org>
 
+	* Preparing release 2.0 beta 6.
+
 	* lib/__init__.py: very nice hack from Harald Armin Massa to allow
 	py2exe and similar tools to do their work without problems.
 

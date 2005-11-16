@@ -18,7 +18,7 @@
 # See the LICENSE file for details.
 
 
-ALLOWED_PSYCOPG_VERSIONS = ('2.0b4', '2.0b5')
+ALLOWED_PSYCOPG_VERSIONS = ('2.0b4', '2.0b5', '2.0b6')
 
 import sys
 import time
@@ -59,12 +59,12 @@ def manage_addZPsycopgConnection(self, id, title, connection_string,
 # the connection object
 
 class Connection(Shared.DC.ZRDB.Connection.Connection):
-    """ZPsycopg 2 Connection."""
+    """ZPsycopg Connection."""
     _isAnSQLConnection = 1
     
-    id                = 'Psycopg2_database_connection' 
-    database_type     = 'Psycopg2'
-    meta_type = title = 'Z Psycopg 2 Database Connection'
+    id                = 'Psycopg_database_connection' 
+    database_type     = 'Psycopg'
+    meta_type = title = 'Z Psycopg Database Connection'
     icon              = 'misc_/ZPsycopgDA/conn'
 
     def __init__(self, id, title, connection_string,
@@ -185,7 +185,7 @@ class Connection(Shared.DC.ZRDB.Connection.Connection):
 
 classes = (Connection,)
 
-meta_types = ({'name':'Z Psycopg 2 Database Connection',
+meta_types = ({'name':'Z Psycopg Database Connection',
                'action':'manage_addZPsycopgConnectionForm'},)
 
 folder_methods = {
@@ -193,7 +193,7 @@ folder_methods = {
     'manage_addZPsycopgConnectionForm': manage_addZPsycopgConnectionForm}
 
 __ac_permissions__ = (
-    ('Add Z Psycopg 2 Database Connections',
+    ('Add Z Psycopg Database Connections',
      ('manage_addZPsycopgConnectionForm', 'manage_addZPsycopgConnection')),)
 
 # add icons

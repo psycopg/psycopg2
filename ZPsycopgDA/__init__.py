@@ -17,7 +17,7 @@
 #
 # See the LICENSE file for details.
 
-__doc__ = "ZPsycopg 2 Database Adapter Registration." 
+__doc__ = "ZPsycopg Database Adapter Registration." 
 __version__ = '2.0'
 
 import DA
