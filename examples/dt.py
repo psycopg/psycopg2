@@ -23,6 +23,8 @@ import psycopg2
 import mx.DateTime
 import datetime
 
+from psycopg2.extensions import adapt
+
 if len(sys.argv) > 1:
     DSN = sys.argv[1]
 
@@ -73,9 +75,11 @@ for n, x in zip(mx1[1:], curs.fetchone()):
     try:
         # this will work only is psycopg has been compiled with datetime
         # as the default typecaster for date/time values
-        s = repr(n) + "\n -> " +  repr(x) + "\n -> " + x.isoformat()
+        s = repr(n) + "\n -> " + str(adapt(n)) + \
+            "\n -> " + repr(x) + "\n -> " + x.isoformat()
     except:
-        s = repr(n) + "\n -> " +  repr(x) + "\n -> " + str(x)
+        s = repr(n) + "\n -> " + str(adapt(n))  + \
+            "\n -> " + repr(x) + "\n -> " + str(x)
     print s
 print
 

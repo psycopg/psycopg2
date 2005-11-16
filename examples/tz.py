@@ -1,5 +1,5 @@
 # tz.py - example of datetime objects with time zones
-# -*- encoding: latin1 -*-
+# -*- encoding: utf8 -*-
 #
 # Copyright (C) 2004 Federico Di Gregorio  <fog@debian.org>
 #

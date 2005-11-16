@@ -42,35 +42,61 @@ extern mxDateTimeModule_APIObject *mxDateTimeP;
 static PyObject *
 mxdatetime_str(mxdatetimeObject *self)
 {
-    PyObject *res = NULL;
-    char *buffer = NULL;
+    PyObject *str = NULL, *res = NULL;
     
-    /* mxDateTimeObject *obj = (mxDateTimeObject*)self->wrapped; */
-
     switch (self->type) {
-        
-    case PSYCO_MXDATETIME_TIME:
-        res = PyObject_CallMethod(self->wrapped, "strftime", "s",
-                                   "'%H:%M:%S'");
-        break;
 
     case PSYCO_MXDATETIME_DATE:
-        res = PyObject_CallMethod(self->wrapped, "strftime", "s",
-                                   "'%Y-%m-%d'");
-        break;
-
     case PSYCO_MXDATETIME_TIMESTAMP:
-        res = PyObject_CallMethod(self->wrapped, "strftime", "s",
-                                   "'%Y-%m-%dT%H:%M:%S'");
+        str = PyObject_Str(self->wrapped);
+        
+        /* given the limitation of the mx.DateTime module that uses the same
+           type for both date and timestamp values we need to do some black
+           magic and make sure we're not using an adapt()ed timestamp as a
+           simple date */
+        if (strncmp(&(PyString_AsString(str)[11]), "00:00:00.000", 12) == 0) {
+            PyObject *tmp = 
+                PyString_FromStringAndSize(PyString_AsString(str), 10);
+            Py_DECREF(str);
+            str = tmp; 
+        }
         break;
 
+    case PSYCO_MXDATETIME_TIME:
     case PSYCO_MXDATETIME_INTERVAL:
-        res = PyObject_CallMethod(self->wrapped, "strftime", "s",
-                                  "'%d:%H:%M:%S'");
+        str = PyObject_Str(self->wrapped);
+
+        /* given the limitation of the mx.DateTime module that uses the same
+           type for both time and delta values we need to do some black magic
+           and make sure we're not using an adapt()ed interval as a simple
+           time */                    
+        if (PyString_Size(str) > 8 && PyString_AsString(str)[8] == ':') {
+            mxDateTimeDeltaObject *obj = (mxDateTimeDeltaObject*)self->wrapped;
+        
+            char buffer[8];
+            int i, j, x;
+            
+            double ss = obj->hour*3600.0 + obj->minute*60.0 + obj->second;
+            int us = (int)((ss - floor(ss))*1000000);
+                
+            for (i=1000000, j=0; i > 0 ; i /= 10) {
+                x = us/i;
+                us -= x*i;
+                buffer[j++] = '0'+x;
+            }
+            buffer[j] = '\0';
+            
+            res = PyString_FromFormat("'%ld days %d.%s seconds'",
+                obj->day, (int)round(ss), buffer);
+        }
         break;
     }
 
-    if (buffer) free(buffer);
+    if (str != NULL && res == NULL) {
+        res = PyString_FromFormat("'%s'", PyString_AsString(str));
+    }
+    Py_XDECREF(str);   
+
     return res;
 }
 

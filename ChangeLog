@@ -1,6 +1,14 @@
 2005-11-16  Federico Di Gregorio  <fog@initd.org>
 
 	* Preparing release 2.0 beta 6.
+	
+	* psycopg/adapter_mxdatetime.c: fixed all problems with mx conversions.
+	
+	* psycopg/typecast.c: now the timezone is set correctly even if there
+	are no microseconds and/or the offset is 0;
+
+	* examples/encoding.py: fixed example by using python utf8 encoding for
+	the whole file.
 
 	* lib/__init__.py: very nice hack from Harald Armin Massa to allow
 	py2exe and similar tools to do their work without problems.

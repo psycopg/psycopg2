@@ -117,8 +117,7 @@ typecast_parse_time(char* s, char** t, int* len,
             if (*s == '-') tzs = -1;
             if      (cz == 2) *ss = acc;
             else if (cz == 3) *us = acc;
-            else if (cz == 4) *tz = acc;
-            acc = -1; cz++;
+            acc = -1; cz = 4;
             break;
         default:
             acc = (acc == -1 ? 0 : acc*10) + ((int)*s - (int)'0');
