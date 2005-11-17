@@ -31,7 +31,7 @@ def getpool(dsn, create=True):
     try:
         if not _connections_pool.has_key(dsn) and create:
             _connections_pool[dsn] = \
-                psycopg2.pool.ThreadedConnectionPool(4, 200, dsn)
+                psycopg2.pool.PersistentConnectionPool(4, 200, dsn)
     finally:
         _connections_lock.release()
     return _connections_pool[dsn]
