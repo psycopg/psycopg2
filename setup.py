@@ -170,9 +170,13 @@ class psycopg_build_ext(build_ext):
         
         fink installs lots of goodies in /sw/... - make sure we check there
         """
+	self.include_dirs.append("/sw/include")
         self.include_dirs.append("/sw/include/postgresql")
+	self.include_dirs.append("/sw/include/postgresql/server")
         self.library_dirs.append("/sw/lib")
+	self.include_dirs.append("/opt/local/include")
         self.include_dirs.append("/opt/local/include/postgresql")
+	self.include_dirs.append("/opt/local/include/postgresql/server")
         self.library_dirs.append("/opt/local/lib")
         self.library_dirs.append("/usr/lib")
         self.libraries.append('ssl')
