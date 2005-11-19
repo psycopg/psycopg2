@@ -1,3 +1,9 @@
+2005-11-19  Federico Di Gregorio  <fog@initd.org>
+
+	* doc/extensions.rst: included Daniele's work after minor cosmetic changes
+	like using the new constants instead of numbers for transaction isolation
+	levels.
+
 2005-11-17  Federico Di Gregorio  <fog@initd.org>
 
 	* ZPsycopgDA/pool.py: fixed connections leak by using the new name
