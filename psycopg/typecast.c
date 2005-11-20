@@ -140,8 +140,7 @@ typecast_parse_time(char* s, char** t, int* len,
     *tz = tzs * tzhh*60 + tzmm;
     
     if (*us != 0.0) {
-        while (usd < 6)
-            *us *= (*us)*10.0;
+        while (usd++ < 6) *us *= 10.0;
     }
     
     return cz;

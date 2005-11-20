@@ -1,3 +1,8 @@
+What's new in psycopg 2.0 beta 7
+--------------------------------
+
+* Ironed out last problems with times and date (should be quite solid now.)
+
 What's new in psycopg 2.0 beta 6
 --------------------------------
 
