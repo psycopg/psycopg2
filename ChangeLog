@@ -1,6 +1,12 @@
+2005-11-20  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/typecast.c: fixed problem with microseconds conversion by
+	applying slightly modified patch from Ronnie Mackay.
+
 2005-11-19  Federico Di Gregorio  <fog@initd.org>
 
 	* lib/extensions.py: COMMITED -> COMMITTED. (Closes: #73)
+
 	* doc/extensions.rst: included Daniele's work after minor cosmetic changes
 	like using the new constants instead of numbers for transaction isolation
 	levels.

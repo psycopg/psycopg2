@@ -88,6 +88,7 @@ typecast_parse_time(char* s, char** t, int* len,
 {
     int acc = -1, cz = 0;
     int tzs = 1, tzhh = 0, tzmm = 0;
+    int usd = 0;
     
     /* sets microseconds and timezone to 0 because they may be missing */
     *us = *tz = 0;
@@ -121,6 +122,7 @@ typecast_parse_time(char* s, char** t, int* len,
             break;
         default:
             acc = (acc == -1 ? 0 : acc*10) + ((int)*s - (int)'0');
+            if (cz == 3) usd += 1;
             break;            
         }
 
@@ -136,7 +138,12 @@ typecast_parse_time(char* s, char** t, int* len,
     if (t != NULL) *t = s;
     
     *tz = tzs * tzhh*60 + tzmm;
-
+    
+    if (*us != 0.0) {
+        while (usd < 6)
+            *us *= (*us)*10.0;
+    }
+    
     return cz;
 }
 

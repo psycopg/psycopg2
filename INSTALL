@@ -16,8 +16,19 @@ to build in the local directory; and:
 to install system-wide.
 
 
+Using setuptools and EasyInstall
+================================
+
+If setuptools are installed on your system you can easily create an egg for
+psycopg and install it. Download the source distribution (if you're reading
+this file you probably already have) and then edit setup.cfg to your taste
+and build from the source distribution top-level directory using:
+
+    easy_install .
+
+
 Compiling under Windows with mingw32
-************************************
+====================================
 
 You can compile psycopg under Windows platform with mingw32 compiler. The
 software required is:
