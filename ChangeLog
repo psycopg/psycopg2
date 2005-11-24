@@ -1,3 +1,10 @@
+2005-11-24  Federico Di Gregorio  <fog@initd.org>
+
+	* sandbox: added all the test and creash-me files to the repository.
+
+	* psycopg/typecast.c (typecast_dealloc): now directly calls
+	PyObject_Del to avoid to segfault.
+
 2005-11-20  Federico Di Gregorio  <fog@initd.org>
 
 	* psycopg/typecast.c: fixed problem with microseconds conversion by
