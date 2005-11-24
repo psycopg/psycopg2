@@ -367,7 +367,7 @@ typecast_dealloc(PyObject *obj)
     Py_XDECREF(self->name);
     Py_XDECREF(self->pcast);
 
-    obj->ob_type->tp_free(obj);
+    PyObject_Del(self);
 }
 
 static PyObject *
@@ -452,6 +452,8 @@ typecast_new(PyObject *name, PyObject *values, PyObject *cast, PyObject *base)
     obj = PyObject_NEW(typecastObject, &typecastType);
     if (obj == NULL) return NULL;
 
+    Dprintf("typecast_new: new type at = %p, refcnt = %d", obj, obj->ob_refcnt);
+             
     Py_INCREF(values);
     obj->values = values;
     
