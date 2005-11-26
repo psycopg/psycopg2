@@ -1,3 +1,9 @@
+2005-11-26   Daniele Varrazzo
+
+    * psycopg/psycopgmodule.c: fixed exceptions refcount.
+
+    * fixed lots of doctrings and added Epydoc-generated docs support.
+
 2005-11-24  Federico Di Gregorio  <fog@initd.org>
 
 	* sandbox: added all the test and creash-me files to the repository.

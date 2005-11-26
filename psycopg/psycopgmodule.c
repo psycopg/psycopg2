@@ -65,25 +65,25 @@ PyObject *decimalType = NULL;
 
 /** connect module-level function **/
 #define psyco_connect_doc \
-"connect(dsn, ...) -> new connection object\n\n" \
+"connect(dsn, ...) -> new connection object -- Create a new database connection.\n\n" \
 "This function supports two different but equivalent sets of arguments.\n" \
-"A single data source name or 'dsn' string can be used to specify the\n"   \
+"A single data source name or ``dsn`` string can be used to specify the\n" \
 "connection parameters, as follows::\n\n"                                  \
 "    psycopg2.connect(\"dbname=xxx user=xxx ...\")\n\n"   \
-"If 'dsn' is not provided it is possible to pass the parameters as\n"      \
+"If ``dsn`` is not provided it is possible to pass the parameters as\n"    \
 "keyword arguments; e.g.::\n\n"                                            \
 "    psycopg2.connect(database='xxx', user='xxx', ...)\n\n"                \
 "The full list of available parameters is:\n\n"                            \
-"    - dbname -- database name (only in 'dsn')\n"                          \
-"    - database -- database name (only as keyword argument)\n"             \
-"    - host -- host address (defaults to UNIX socket if not provided)\n"   \
-"    - port -- port number (defaults to 5432 if not provided)\n"           \
-"    - user -- user name used to authenticate\n"                           \
-"    - password -- password used to authenticate\n"                        \
-"    - sslmode -- SSL mode (see PostgreSQL documentation)\n\n"             \
-"If the 'connection_factory' keyword argument is not provided this\n"      \
-"function always return an instance of the 'psycopg2.connection' class.\n" \
-"Else the given sub-class of 'psycopg2.connection' will be used to\n"      \
+"- ``dbname`` -- database name (only in 'dsn')\n"                          \
+"- ``database`` -- database name (only as keyword argument)\n"             \
+"- ``host`` -- host address (defaults to UNIX socket if not provided)\n"   \
+"- ``port`` -- port number (defaults to 5432 if not provided)\n"           \
+"- ``user`` -- user name used to authenticate\n"                           \
+"- ``password`` -- password used to authenticate\n"                        \
+"- ``sslmode`` -- SSL mode (see PostgreSQL documentation)\n\n"             \
+"If the ``connection_factory`` keyword argument is not provided this\n"    \
+"function always return an instance of the ``connection`` class.\n"        \
+"Else the given sub-class of ``connection`` will be used to\n"             \
 "instantiate the connection object.\n" 
 
 static int
@@ -102,17 +102,17 @@ _psyco_connect_fill_exc(connectionObject *conn)
     Py_INCREF(Error);
     conn->exc_Warning = Warning;
     Py_INCREF(Warning);
-    conn->exc_InterfaceError = Error;
+    conn->exc_InterfaceError = InterfaceError;
     Py_INCREF(InterfaceError);
-    conn->exc_DatabaseError = Error;
+    conn->exc_DatabaseError = DatabaseError;
     Py_INCREF(DatabaseError);
-    conn->exc_InternalError = Error;
+    conn->exc_InternalError = InternalError;
     Py_INCREF(InternalError);
-    conn->exc_ProgrammingError = Error;
+    conn->exc_ProgrammingError = ProgrammingError;
     Py_INCREF(ProgrammingError);
-    conn->exc_IntegrityError = Error;
+    conn->exc_IntegrityError = IntegrityError;
     Py_INCREF(IntegrityError);
-    conn->exc_DataError = Error;
+    conn->exc_DataError = DataError;
     Py_INCREF(DataError);
     conn->exc_NotSupportedError = NotSupportedError;
     Py_INCREF(NotSupportedError);
@@ -194,7 +194,21 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
 
 /** type registration **/
 #define psyco_register_type_doc \
-"register_type(obj) -> register obj with psycopg type system"
+"register_type(obj) -> None -- register obj with psycopg type system\n\n" \
+":Parameters:\n" \
+"  * `obj`: A type adapter created by `new_type()`"
+
+#define typecast_from_python_doc \
+"new_type(oids, name, adapter) -> new type object\n\n" \
+"Create a new binding object. The object can be used with the\n" \
+"`register_type()` function to bind PostgreSQL objects to python objects.\n\n" \
+":Parameters:\n" \
+"  * `oids`: Tuple of ``oid`` of the PostgreSQL types to convert.\n" \
+"  * `name`: Name for the new type\n" \
+"  * `adapter`: Callable to perform type conversion.\n" \
+"    It must have the signature ``fun(value, cur)`` where ``value`` is\n" \
+"    the string representation returned by PostgreSQL (`None` if ``NULL``)\n" \
+"    and ``cur`` is the cursor from which data are read."
 
 static PyObject *
 psyco_register_type(PyObject *self, PyObject *args)
@@ -383,7 +397,7 @@ static PyMethodDef psycopgMethods[] = {
     {"register_type", (PyCFunction)psyco_register_type,
      METH_VARARGS, psyco_register_type_doc},
     {"new_type", (PyCFunction)typecast_from_python,
-     METH_VARARGS|METH_KEYWORDS},
+     METH_VARARGS|METH_KEYWORDS, typecast_from_python_doc},
 
     {"AsIs",  (PyCFunction)psyco_AsIs,
      METH_VARARGS, psyco_AsIs_doc},

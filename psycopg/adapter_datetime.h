@@ -48,45 +48,45 @@ typedef struct {
     
 extern PyObject *psyco_Date(PyObject *module, PyObject *args);
 #define psyco_Date_doc \
-    "psycopg.Date(year, month, day) -> new date"
+    "Date(year, month, day) -> new date"
 
 extern PyObject *psyco_Time(PyObject *module, PyObject *args);
 #define psyco_Time_doc \
-    "psycopg.Time(hour, minutes, seconds, tzinfo=None) -> new time"
+    "Time(hour, minutes, seconds, tzinfo=None) -> new time"
 
 extern PyObject *psyco_Timestamp(PyObject *module, PyObject *args);
 #define psyco_Timestamp_doc \
-    "psycopg.Time(year, month, day, hour, minutes, seconds, tzinfo=None) -> new timestamp"
+    "Timestamp(year, month, day, hour, minutes, seconds, tzinfo=None) -> new timestamp"
 
 extern PyObject *psyco_DateFromTicks(PyObject *module, PyObject *args);
 #define psyco_DateFromTicks_doc \
-    "psycopg.DateFromTicks(ticks) -> new date"
+    "DateFromTicks(ticks) -> new date"
 
 extern PyObject *psyco_TimeFromTicks(PyObject *module, PyObject *args);
 #define psyco_TimeFromTicks_doc \
-    "psycopg.TimeFromTicks(ticks) -> new date"
+    "TimeFromTicks(ticks) -> new time"
 
 extern PyObject *psyco_TimestampFromTicks(PyObject *module, PyObject *args);
 #define psyco_TimestampFromTicks_doc \
-    "psycopg.TimestampFromTicks(ticks) -> new date"
+    "TimestampFromTicks(ticks) -> new timestamp"
 
 #endif /* PSYCOPG_DEFAULT_PYDATETIME */
 
 extern PyObject *psyco_DateFromPy(PyObject *module, PyObject *args);
 #define psyco_DateFromPy_doc \
-    "psycopg.DateFromPy(datetime.date) -> new wrapper"
+    "DateFromPy(datetime.date) -> new wrapper"
 
 extern PyObject *psyco_TimeFromPy(PyObject *module, PyObject *args);
 #define psyco_TimeFromPy_doc \
-    "psycopg.TimeFromPy(datetime.time) -> new wrapper"
+    "TimeFromPy(datetime.time) -> new wrapper"
 
 extern PyObject *psyco_TimestampFromPy(PyObject *module, PyObject *args);
 #define psyco_TimestampFromPy_doc \
-    "psycopg.TimestampFromPy(datetime.datetime) -> new wrapper"
+    "TimestampFromPy(datetime.datetime) -> new wrapper"
 
 extern PyObject *psyco_IntervalFromPy(PyObject *module, PyObject *args);
 #define psyco_IntervalFromPy_doc \
-    "psycopg.IntervalFromPy(datetime.timedelta) -> new wrapper"
+    "IntervalFromPy(datetime.timedelta) -> new wrapper"
     
 #ifdef __cplusplus
 }

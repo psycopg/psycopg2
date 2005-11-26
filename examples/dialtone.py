@@ -112,16 +112,13 @@ insert  completely new objects inside a database. As you can see objects do
 not know anything about the code that is handling them. We specify all the 
 fields that we need for each object through the persistent_fields dict.
 
-The most important line of this recipe is this one:
-    adapters.update({Album: ObjectMapper, Order: ObjectMapper})
+The most important lines of this recipe are:
+    register_adapter(Album, ObjectMapper)
+    register_adapter(Order, ObjectMapper)
 
-In this line we notify the system that when we call adapt with an Album instance 
+In these line we notify the system that when we call adapt with an Album instance 
 as an argument we want it to istantiate ObjectMapper passing the Album instance  
 as argument (self.orig in the ObjectMapper class).
-
-adapters is just a python dict with a Key that represents the type 
-we need to adapt from and a value that is the adapter 
-which will adapt to the wanted interface.
 
 The output is something like this (for each call to generateInsert):
     

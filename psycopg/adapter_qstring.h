@@ -42,7 +42,7 @@ typedef struct {
     
 extern PyObject *psyco_QuotedString(PyObject *module, PyObject *args);
 #define psyco_QuotedString_doc \
-    "psycopg.QuotedString(str, enc) -> new quoted string"
+    "QuotedString(str, enc) -> new quoted string"
 
 #ifdef __cplusplus
 }

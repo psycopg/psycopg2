@@ -9,7 +9,7 @@ you already know how to program in Python using a DBAPI-2.0 compliant driver:
 basic concepts like opening a connection, executing queries and commiting or
 rolling back a transaction will not be explained but just used.
 
-__ http://www.python.org/peps/pep-0249.html
+.. __: http://www.python.org/peps/pep-0249.html
 
 Many objects and extension functions are defined in the `psycopg2.extensions`
 module.
@@ -36,29 +36,26 @@ Setting transaction isolation levels
 
 psycopg2 connection objects hold informations about the PostgreSQL `transaction
 isolation level`_.  The current transaction level can be read from the
-`connection.isolation_level` attribute.  The default isolation level is read
-committed.  A different isolation level con be set through the
-`connection.set_isolation_level()` method.  The method takes the new level as
-parameter.  Isolation levels are defined in the `psycopg2.extensions` module:
+`.isolation_level` attribute.  The default isolation level is ``READ
+COMMITTED``.  A different isolation level con be set through the
+`.set_isolation_level()` method.  The level can be set to one of the following
+constants, defined in `psycopg2.extensions`:
 
-ISOLATION_LEVEL_AUTOCOMMIT
+`ISOLATION_LEVEL_AUTOCOMMIT`
     No transaction is started when command are issued and no
     `.commit()`/`.rollback()` is required.  Some PostgreSQL command such as
     ``CREATE DATABASE`` can't run into a transaction: to run such command use
     `.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)`.
     
-ISOLATION_LEVEL_READ_COMMITED
+`ISOLATION_LEVEL_READ_COMMITTED`
     This is the default value.  A new transaction is started at the first
     `.execute()` command on a cursor and at each new `.execute()` after a
     `.commit()` or a `.rollback()`.  The transaction runs in the PostgreSQL
     ``READ COMMITTED`` isolation level.
     
-ISOLATION_LEVEL_REPEATABLE_READ
-    Same as ISOLATION_LEVEL_SERIALIZABLE: PostgreSQL treats the SQL
-    ``REPEATABLE READ`` isolation level as ``SERIALIZABLE``.
-    
-ISOLATION_LEVEL_SERIALIZABLE
-    Serializable. Transactions are run at a ``SERIALIZABLE`` isolation level.
+`ISOLATION_LEVEL_SERIALIZABLE`
+    Transactions are run at a ``SERIALIZABLE`` isolation level.
+
 
 .. _transaction isolation level: 
    http://www.postgresql.org/docs/8.1/static/transaction-iso.html
@@ -81,20 +78,21 @@ is converted into the SQL command::
     INSERT INTO atable (anint, adate, astring)
      VALUES (10, '2005-11-18', 'O''Reilly');
 
-Notice that:
+Named arguments are supported too with ``%(name)s`` placeholders. Notice that:
 
-  - The Python string operator ``%`` is not used: the `curs.execute()` function
-    accepts two parameters.
+  - The Python string operator ``%`` is not used: the `.execute()` function
+    accepts the values tuple or dictionary as second parameter.
 
-  - The variables placeholder must always be ``%s``, even if a different
-    placeholder (such as a %d for an integer) may look more appropriate.
+  - The variables placeholder must always be a ``%s``, even if a different
+    placeholder (such as a ``%d`` for an integer) may look more appropriate.
 
-  - The second argument must always be a tuple, even if it contains a single
-    parameter.
+  - For positional variables binding, the second argument must always be a
+    tuple, even if it contains a single variable.
 
   - Only variable values should be bound via this method: it shouldn't be used
     to set table or field names. For these elements, ordinary string formatting
     should be used before running `.execute()`.
+
 
 Adapting new types
 ------------------
@@ -104,14 +102,14 @@ is similar to the Object Adaptation proposed in the `PEP-246`_ and is exposed
 by the `adapt()` function.
 
 psycopg2 `.execute()` method adapts its ``vars`` arguments to the `ISQLQuote`
-protocol.  Objects that conform to this protocol expose a `getquoted()` method
+protocol.  Objects that conform to this protocol expose a ``getquoted()`` method
 returning the SQL representation of the object as a string.
 
 The easiest way to adapt an object to an SQL string is to register an adapter
 function via the `register_adapter()` function.  The adapter function must take
 the value to be adapted as argument and return a conform object.  A convenient
-object is the `AsIs` wrapper, whose `getquoted()` result is simply the `str()`\
-ingification of the wrapped object.
+object is the `AsIs` wrapper, whose ``getquoted()`` result is simply the
+``str()``\ ingification of the wrapped object.
 
 Example: mapping of a ``Point`` class into the ``point`` PostgreSQL geometric
 type::
@@ -141,13 +139,26 @@ The above function call results in the SQL command::
 Type casting of SQL types into Python values
 ============================================
 
-PostgreSQL objects read from the database can be adapted to Python objects.  To
-create a new mapping from a PostgreSQL type (either standard or user-defined),
-first its ``oid`` must be known.  It can be retrieved either by the second
-column of the cursor description::
+PostgreSQL objects read from the database can be adapted to Python objects
+through an user-defined adapting function.  An adapter function takes two
+argments: the object string representation as returned by PostgreSQL and the
+cursor currently being read, and should return a new Python object.  For
+example, the following function parses a PostgreSQL ``point`` into the
+previously defined ``Point`` class::
+
+    def cast_point(value, curs):
+        if value is not None:
+        	# Convert from (f1, f2) syntax using a regular expression.
+            m = re.match("\((.*),(.*)\)", value) 
+            if m:
+                return Point(float(m.group(1)), float(m.group(2)))
+                
+To create a mapping from the PostgreSQL type (either standard or user-defined),
+its ``oid`` must be known. It can be retrieved either by the second column of
+the cursor description::
 
     curs.execute("SELECT NULL::point")
-    point_oid = cur.description[0][1]   # usually returns 600
+    point_oid = curs.description[0][1]   # usually returns 600
 
 or by querying the system catalogs for the type name and namespace (the
 namespace for system objects is ``pg_catalog``)::
@@ -162,24 +173,15 @@ namespace for system objects is ``pg_catalog``)::
         
     point_oid = curs.fetchone()[0]
 
-After you know the object ``oid``, you must create and register the new type
-caster object::
+After you know the object ``oid``, you must can and register the new type::
 
-    def cast_point(value, curs):
-        if value is not None:
-        	# Convert from (f1, f2) syntax using a regular expression.
-            m = re.match("\((.*),(.*)\)", value) 
-            if m:
-                return Point(float(m.group(1)), float(m.group(2)))
-                
     POINT = psycopg2.extensions.new_type((point_oid,), "POINT", cast_point)
     psycopg2.extensions.register_type(POINT)
 
 The `new_type()` function binds the object oids (more than one can be
-specified) to a conversion function.  The function is called by psycopg passing
-it the string representation of the data as returned by PostgreSQL and the
-cursor: it should perform the conversion and return a Python type.
-`register_type()` completes the spell::
+specified) to the adapter function.  `register_type()` completes the spell.
+Conversion is automatically performed when a column whose type is a registered
+``oid`` is read::
 
     curs.execute("SELECT '(10.2,20.3)'::point")
     point = curs.fetchone()[0]
@@ -198,6 +200,23 @@ Receiving NOTIFYs
 Using COPY TO and COPY FROM
 ===========================
 
+psycopg2 `cursor` object provides an interface to the efficient `PostgreSQL
+COPY command`__ to move data from files to tables and back.
+
+The `.copy_to(file, table)` method writes the content of the table
+named ``table`` *to* the file-like object ``file``. ``file`` must have a
+``write()`` method.
+
+The `.copy_from(file, table)` reads data *from* the file-like object
+``file`` appending them to the table named ``table``. ``file`` must have both
+``read()`` and ``readline()`` method.
+
+Both methods accept two optional arguments: ``sep`` (defaulting to a tab) is
+the columns separator and ``null`` (defaulting to ``\N``) represents ``NULL``
+values in the file.
+
+.. __: http://www.postgresql.org/docs/8.1/static/sql-copy.html
+
 
 PostgreSQL status message and executed query
 ============================================
@@ -214,4 +233,3 @@ PostgreSQL status message and executed query
     INSERT, UPDATE, ...) and some additional information like the number of
     rows updated and so on. Refer to the PostgreSQL manual for more
     information.
-

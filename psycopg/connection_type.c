@@ -37,11 +37,11 @@
 /* cursor method - allocate a new cursor */
 
 #define psyco_conn_cursor_doc \
-"cursor(cursor_factory=psycopg2.extensions.cursor) -> new cursor\n\n" \
-"Return a new cursor. The 'cursor_factory' argument can be used to\n"    \
-"create non-standard cursors by passing a class different from the\n"    \
-"default. Note that the new class *should* be a sub-class of\n"          \
-"'psycopg2.extensions.cursor'.\n"
+"cursor(cursor_factory=psycopg2.extensions.cursor) -> new cursor\n\n"       \
+"Return a new cursor.\n\nThe ``cursor_factory`` argument can be used to\n"  \
+"create non-standard cursors by passing a class different from the\n"       \
+"default. Note that the new class *should* be a sub-class of\n"             \
+"``psycopg2.extensions.cursor``."
 
 static PyObject *
 psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *keywds)
@@ -83,7 +83,7 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *keywds)
 
 /* close method - close the connection and all related cursors */
 
-#define psyco_conn_close_doc "close() -> close the connection"
+#define psyco_conn_close_doc "close() -- Close the connection."
 
 static PyObject *
 psyco_conn_close(connectionObject *self, PyObject *args)
@@ -103,7 +103,7 @@ psyco_conn_close(connectionObject *self, PyObject *args)
 
 /* commit method - commit all changes to the database */
 
-#define psyco_conn_commit_doc "commit() -> commit all changes to database"
+#define psyco_conn_commit_doc "commit() -- Commit all changes to database."
 
 static PyObject *
 psyco_conn_commit(connectionObject *self, PyObject *args)
@@ -123,7 +123,7 @@ psyco_conn_commit(connectionObject *self, PyObject *args)
 /* rollback method - roll back all changes done to the database */
 
 #define psyco_conn_rollback_doc \
-"rollback() -> roll back all changes done to database"
+"rollback() -- Roll back all changes done to database."
 
 static PyObject *
 psyco_conn_rollback(connectionObject *self, PyObject *args)
@@ -144,7 +144,7 @@ psyco_conn_rollback(connectionObject *self, PyObject *args)
 /* set_isolation_level method - switch connection isolation level */
 
 #define psyco_conn_set_isolation_level_doc \
-"set_isolation_level(level) -> switch isolation level to 'level'"
+"set_isolation_level(level) -- Switch isolation level to ``level``."
 
 static PyObject *
 psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
@@ -173,7 +173,7 @@ psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
 /* set_isolation_level method - switch connection isolation level */
 
 #define psyco_conn_set_client_encoding_doc \
-"set_client_encoding(encoding) -> set client encoding to 'encoding'"
+"set_client_encoding(encoding) -- Set client encoding to ``encoding``."
 
 static PyObject *
 psyco_conn_set_client_encoding(connectionObject *self, PyObject *args)
@@ -241,13 +241,17 @@ static struct PyMemberDef connectionObject_members[] = {
     {"NotSupportedError", T_OBJECT,
      offsetof(connectionObject, exc_NotSupportedError), RO},
 #ifdef PSYCOPG_EXTENSIONS    
-    {"closed", T_LONG, offsetof(connectionObject, closed), RO},
+    {"closed", T_LONG, offsetof(connectionObject, closed), RO,
+        "True if the connection is closed."},
     {"isolation_level", T_LONG,
-        offsetof(connectionObject, isolation_level), RO},
-    {"encoding", T_STRING, offsetof(connectionObject, encoding), RO},
+        offsetof(connectionObject, isolation_level), RO,
+        "The current isolation level."},
+    {"encoding", T_STRING, offsetof(connectionObject, encoding), RO,
+        "The current client encoding."},
     {"notices", T_OBJECT, offsetof(connectionObject, notice_list), RO},
     {"notifies", T_OBJECT, offsetof(connectionObject, notifies), RO},
-    {"dsn", T_STRING, offsetof(connectionObject, dsn), RO},
+    {"dsn", T_STRING, offsetof(connectionObject, dsn), RO,
+        "The current connection string."},
 #endif    
     {NULL}
 };
@@ -340,7 +344,11 @@ connection_repr(connectionObject *self)
 /* object type */
 
 #define connectionType_doc \
-"connection(dsn, ...) -> new connection object"
+"connection(dsn, ...) -> new connection object\n\n" \
+":Groups:\n" \
+"  * `DBAPI-2.0 errors`: `Error`, `Warning`, `InterfaceError`,\n" \
+"    `DatabaseError`, `InternalError`, `OperationalError`,\n" \
+"    `ProgrammingError`, `IntegrityError`, `DataError`, `NotSupportedError`"
 
 PyTypeObject connectionType = {
     PyObject_HEAD_INIT(NULL)

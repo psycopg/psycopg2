@@ -43,7 +43,7 @@ extern PyObject *pyPsycopgTzFixedOffsetTimezone;
 /* close method - close the cursor */
 
 #define psyco_curs_close_doc \
-"close() -> close the cursor"
+"close() -- Close the cursor."
 
 static PyObject *
 psyco_curs_close(cursorObject *self, PyObject *args)
@@ -228,7 +228,7 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
 }
     
 #define psyco_curs_execute_doc \
-"execute(query, vars=None, async=0) -> execute query with bound vars"
+"execute(query, vars=None, async=0) -- Execute query with bound vars."
 
 static int
 _psyco_curs_execute(cursorObject *self,
@@ -431,7 +431,7 @@ psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
 }
 
 #define psyco_curs_executemany_doc \
-"execute(query, vars_list=(), async=0) -> execute many queries with bound vars"
+"executemany(query, vars_list=(), async=0) -- Execute many queries with bound vars."
 
 static PyObject *
 psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
@@ -477,7 +477,7 @@ psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
 
 #ifdef PSYCOPG_EXTENSIONS
 #define psyco_curs_mogrify_doc \
-"mogrify(query, vars=None) -> return query after binding vars"
+"mogrify(query, vars=None) -> str -- Return query after vars binding."
 
 static PyObject *
 psyco_curs_mogrify(cursorObject *self, PyObject *args, PyObject *kwargs)
@@ -569,10 +569,10 @@ psyco_curs_mogrify(cursorObject *self, PyObject *args, PyObject *kwargs)
 /* fetchone method - fetch one row of results */
 
 #define psyco_curs_fetchone_doc \
-"fetchone() -> next tuple of data or None\n\n" \
+"fetchone() -> tuple or None\n\n" \
 "Return the next row of a query result set in the form of a tuple (by\n" \
-"default) or using the sequence factory previously set in the tuplefactory\n" \
-"attribute. Return None when no more data is available.\n"
+"default) or using the sequence factory previously set in the\n" \
+"`row_factory` attribute. Return `None` when no more data is available.\n"
 
 static int
 _psyco_curs_prefetch(cursorObject *self)
@@ -721,10 +721,10 @@ psyco_curs_fetchone(cursorObject *self, PyObject *args)
 /* fetch many - fetch some results */
 
 #define psyco_curs_fetchmany_doc \
-"fetchone(size=10000) -> next size tuples of data or None\n\n" \
-"Return the next 'size' rows of a query result set in the form of a tuple\n" \
+"fetchmany(size=self.arraysize) -> list of tuple\n\n" \
+"Return the next `size` rows of a query result set in the form of a list\n" \
 "of tuples (by default) or using the sequence factory previously set in\n" \
-"the tuplefactory attribute. Return None when no more data is available.\n"
+"the `row_factory` attribute. Return `None` when no more data is available.\n"
 
 PyObject *
 psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
@@ -795,11 +795,11 @@ psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
 /* fetch all - fetch all results */
 
 #define psyco_curs_fetchall_doc \
-"fetchall() -> all remaining tuples of data or None\n\n" \
-"Return all the remaining rows of a query result set in the form of a\n" \
-"tuple of tuples (by default) or using the sequence factory previously\n" \
-"set in the tuplefactory attribute. Return None when no more data is\n" \
-"available.\n"
+"fetchall() -> list of tuple\n\n" \
+"Return all the remaining rows of a query result set.\n\n" \
+"Rows are returned in the form of a list of tuples (by default) or using\n" \
+"the sequence factory previously set in the `row_factory` attribute.\n" \
+"Return `None` when no more data is available.\n"
 
 PyObject *
 psyco_curs_fetchall(cursorObject *self, PyObject *args)
@@ -861,7 +861,7 @@ psyco_curs_fetchall(cursorObject *self, PyObject *args)
 /* callproc method - execute a stored procedure */
 
 #define psyco_curs_callproc_doc \
-"callproc(procname, [parameters]) -> execute stored procedure"
+"callproc(procname, parameters=None, async=0) -- Execute stored procedure."
 
 static PyObject *
 psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
@@ -917,7 +917,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
 /* nextset method - return the next set of data (not supported) */
 
 #define psyco_curs_nextset_doc \
-"nextset() -> skip to next set of data\n\n" \
+"nextset() -- Skip to next set of data.\n\n" \
 "This method is not supported (PostgreSQL does not have multiple data \n" \
 "sets) and will raise a NotSupportedError exception."
 
@@ -936,7 +936,7 @@ psyco_curs_nextset(cursorObject *self, PyObject *args)
 /* setinputsizes - predefine memory areas for execute (does nothing) */
 
 #define psyco_curs_setinputsizes_doc \
-"setinputsizes(sizes) -> set memory areas before execute\n\n" \
+"setinputsizes(sizes) -- Set memory areas before execute.\n\n" \
 "This method currently does nothing but it is safe to call it."
 
 static PyObject *
@@ -957,7 +957,7 @@ psyco_curs_setinputsizes(cursorObject *self, PyObject *args)
 /* setoutputsize - predefine memory areas for execute (does nothing) */
 
 #define psyco_curs_setoutputsize_doc \
-"setoutputsize(size, [column]) -> set column buffer size\n\n" \
+"setoutputsize(size, column=None) -- Set column buffer size.\n\n" \
 "This method currently does nothing but it is safe to call it."
 
 static PyObject *
@@ -978,7 +978,7 @@ psyco_curs_setoutputsize(cursorObject *self, PyObject *args)
 /* scroll - scroll position in result list */
 
 #define psyco_curs_scroll_doc \
-"scroll(value, mode='relative') -> scroll to new position according to mode" 
+"scroll(value, mode='relative') -- Scroll to new position according to mode." 
 
 static PyObject *
 psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
@@ -1043,7 +1043,7 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
 /* extension: copy_from - implements COPY FROM */
 
 #define psyco_curs_copy_from_doc \
-"copy_from(file, table, sep='\\t', null='\\N') -> copy file to table."
+"copy_from(file, table, sep='\\t', null='\\N') -- Copy table from file."
 
 static int
 _psyco_curs_has_read_check(PyObject* o, void* var)
@@ -1104,7 +1104,7 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
 }
 
 #define psyco_curs_copy_to_doc \
-"copy_to(file, table, sep='\\t', null='\\N') -> copy file to table."
+"copy_to(file, table, sep='\\t', null='\\N') -- Copy table to file."
 
 static int
 _psyco_curs_has_write_check(PyObject* o, void* var)
@@ -1163,7 +1163,7 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
 /* extension: fileno - return the file descripor of the connection */
 
 #define psyco_curs_fileno_doc \
-"fileno() -> return file descriptor associated to database connection"
+"fileno() -> int -- Return file descriptor associated to database connection."
 
 static PyObject *
 psyco_curs_fileno(cursorObject *self, PyObject *args)
@@ -1188,7 +1188,7 @@ psyco_curs_fileno(cursorObject *self, PyObject *args)
 /* extension: isready - return true if data from async execute is ready */
 
 #define psyco_curs_isready_doc \
-"isready() -> return True if data is ready after an async query"
+"isready() -> bool -- Return True if data is ready after an async query."
 
 static PyObject *
 psyco_curs_isready(cursorObject *self, PyObject *args)
@@ -1296,17 +1296,26 @@ static struct PyMethodDef cursorObject_methods[] = {
 
 static struct PyMemberDef cursorObject_members[] = {
     /* DBAPI-2.0 basics */
-    {"rowcount", T_LONG, OFFSETOF(rowcount), RO},
-    {"arraysize", T_LONG, OFFSETOF(arraysize), 0},
-    {"description", T_OBJECT, OFFSETOF(description), RO},
-    {"lastrowid", T_LONG, OFFSETOF(lastoid), RO},
+    {"rowcount", T_LONG, OFFSETOF(rowcount), RO,
+        "Number of rows read from the backend in the last command."},
+    {"arraysize", T_LONG, OFFSETOF(arraysize), 0, 
+        "Number of records `fetchmany()` must fetch if not explicitely " \
+        "specified."},
+    {"description", T_OBJECT, OFFSETOF(description), RO,
+        "Cursor description as defined in DBAPI-2.0."},
+    {"lastrowid", T_LONG, OFFSETOF(lastoid), RO,
+        "The ``oid`` of the last row inserted by the cursor."},
     /* DBAPI-2.0 extensions */
-    {"rownumber", T_LONG, OFFSETOF(row), RO},
-    {"connection", T_OBJECT, OFFSETOF(conn), RO},
+    {"rownumber", T_LONG, OFFSETOF(row), RO,
+        "The current row position."},
+    {"connection", T_OBJECT, OFFSETOF(conn), RO, 
+        "The connection where the cursor comes from."},
 #ifdef PSYCOPG_EXTENSIONS
     {"name", T_STRING, OFFSETOF(name), RO},
-    {"statusmessage", T_OBJECT, OFFSETOF(pgstatus), RO},
-    {"query", T_OBJECT, OFFSETOF(query), RO},
+    {"statusmessage", T_OBJECT, OFFSETOF(pgstatus), RO,
+        "The return message of the last command."},
+    {"query", T_OBJECT, OFFSETOF(query), RO,
+        "The last query text sent to the backend."},
     {"row_factory", T_OBJECT, OFFSETOF(tuple_factory), 0},
     {"tzinfo_factory", T_OBJECT, OFFSETOF(tzinfo_factory), 0},
     {"typecaster", T_OBJECT, OFFSETOF(caster), RO},

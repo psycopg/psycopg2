@@ -42,7 +42,7 @@ typedef struct {
     
 extern PyObject *psyco_AsIs(PyObject *module, PyObject *args);
 #define psyco_AsIs_doc \
-    "psycopg.AsIs(obj) -> new AsIs wrapper object"
+    "AsIs(obj) -> new AsIs wrapper object"
 
 #ifdef __cplusplus
 }

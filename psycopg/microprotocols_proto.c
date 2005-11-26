@@ -38,7 +38,7 @@
 /* getquoted - return quoted representation for object */
 
 #define psyco_isqlquote_getquoted_doc \
-"getquoted() -> return SQL-quoted representation of this object"
+"getquoted() -- return SQL-quoted representation of this object"
 
 static PyObject *
 psyco_isqlquote_getquoted(isqlquoteObject *self, PyObject *args)
@@ -52,7 +52,7 @@ psyco_isqlquote_getquoted(isqlquoteObject *self, PyObject *args)
 /* getbinary - return quoted representation for object */
 
 #define psyco_isqlquote_getbinary_doc \
-"getbinary() -> return SQL-quoted binary representation of this object"
+"getbinary() -- return SQL-quoted binary representation of this object"
 
 static PyObject *
 psyco_isqlquote_getbinary(isqlquoteObject *self, PyObject *args)
@@ -66,7 +66,7 @@ psyco_isqlquote_getbinary(isqlquoteObject *self, PyObject *args)
 /* getbuffer - return quoted representation for object */
 
 #define psyco_isqlquote_getbuffer_doc \
-"getbuffer() -> return this object"
+"getbuffer() -- return this object"
 
 static PyObject *
 psyco_isqlquote_getbuffer(isqlquoteObject *self, PyObject *args)
@@ -152,7 +152,9 @@ isqlquote_del(PyObject* self)
 /* object type */
 
 #define isqlquoteType_doc \
-"Abstract ISQLQuote protocol"
+"Abstract ISQLQuote protocol\n\n" \
+"An object conform to this protocol should expose a ``getquoted()`` method\n" \
+"returning the SQL representation of the object.\n\n"
 
 PyTypeObject isqlquoteType = {
     PyObject_HEAD_INIT(NULL)

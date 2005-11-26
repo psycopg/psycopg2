@@ -40,7 +40,7 @@ typedef struct {
 
 extern PyObject *psyco_List(PyObject *module, PyObject *args);
 #define psyco_List_doc \
-    "psycopg.List(list, enc) -> new quoted list"
+    "List(list, enc) -> new quoted list"
 
 #ifdef __cplusplus
 }

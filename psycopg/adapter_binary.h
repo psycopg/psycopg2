@@ -43,7 +43,7 @@ typedef struct {
     
 extern PyObject *psyco_Binary(PyObject *module, PyObject *args);
 #define psyco_Binary_doc \
-    "psycopg.Binary(buffer) -> new binary object"
+    "Binary(buffer) -> new binary object"
 
 #ifdef __cplusplus
 }

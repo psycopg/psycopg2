@@ -47,45 +47,45 @@ typedef struct {
     
 extern PyObject *psyco_Date(PyObject *module, PyObject *args);
 #define psyco_Date_doc \
-    "psycopg.Date(year, month, day) -> new date"
+    "Date(year, month, day) -> new date"
 
 extern PyObject *psyco_Time(PyObject *module, PyObject *args);
 #define psyco_Time_doc \
-    "psycopg.Time(hour, minutes, seconds) -> new time"
+    "Time(hour, minutes, seconds) -> new time"
 
 extern PyObject *psyco_Timestamp(PyObject *module, PyObject *args);
 #define psyco_Timestamp_doc \
-    "psycopg.Time(year, month, day, hour, minutes, seconds) -> new timestamp"
+    "Time(year, month, day, hour, minutes, seconds) -> new timestamp"
     
 extern PyObject *psyco_DateFromTicks(PyObject *module, PyObject *args);
 #define psyco_DateFromTicks_doc \
-    "psycopg.DateFromTicks(ticks) -> new date"
+    "DateFromTicks(ticks) -> new date"
 
 extern PyObject *psyco_TimeFromTicks(PyObject *module, PyObject *args);
 #define psyco_TimeFromTicks_doc \
-    "psycopg.TimeFromTicks(ticks) -> new time"
+    "TimeFromTicks(ticks) -> new time"
 
 extern PyObject *psyco_TimestampFromTicks(PyObject *module, PyObject *args);
 #define psyco_TimestampFromTicks_doc \
-    "psycopg.TimestampFromTicks(ticks) -> new timestamp"
+    "TimestampFromTicks(ticks) -> new timestamp"
 
 #endif /* PSYCOPG_DEFAULT_MXDATETIME */
 
 extern PyObject *psyco_DateFromMx(PyObject *module, PyObject *args);
 #define psyco_DateFromMx_doc \
-    "psycopg.DateFromMx(mx) -> new date"
+    "DateFromMx(mx) -> new date"
 
 extern PyObject *psyco_TimeFromMx(PyObject *module, PyObject *args);
 #define psyco_TimeFromMx_doc \
-    "psycopg.TimeFromMx(mx) -> new time"
+    "TimeFromMx(mx) -> new time"
 
 extern PyObject *psyco_TimestampFromMx(PyObject *module, PyObject *args);
 #define psyco_TimestampFromMx_doc \
-    "psycopg.TimestampFromMx(mx) -> new timestamp"
+    "TimestampFromMx(mx) -> new timestamp"
 
 extern PyObject *psyco_IntervalFromMx(PyObject *module, PyObject *args);
 #define psyco_IntervalFromMx_doc \
-    "psycopg.IntervalFromMx(mx) -> new interval"
+    "IntervalFromMx(mx) -> new interval"
     
 #ifdef __cplusplus
 }

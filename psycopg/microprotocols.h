@@ -55,6 +55,6 @@ extern PyObject *microprotocol_getquoted(
 extern PyObject *
     psyco_microprotocols_adapt(cursorObject *self, PyObject *args);   
 #define psyco_microprotocols_adapt_doc \
-    "psycopg.adapt(obj, protocol, alternate) -> adapt obj to given protocol"
+    "adapt(obj, protocol, alternate) -> object -- adapt obj to given protocol"
     
 #endif /* !defined(PSYCOPG_MICROPROTOCOLS_H) */

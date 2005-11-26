@@ -42,7 +42,7 @@ typedef struct {
     
 extern PyObject *psyco_Boolean(PyObject *module, PyObject *args);
 #define psyco_Boolean_doc \
-    "psycopg.Boolean(obj) -> new boolean value"
+    "Boolean(obj) -> new boolean value"
 
 #ifdef __cplusplus
 }
