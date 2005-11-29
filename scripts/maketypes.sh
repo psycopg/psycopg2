@@ -37,8 +37,5 @@ echo -n generating typecast_builtins.c ...
 awk '/#define .+OID/ {print $2 " " $3}' "$PGTYPE" | \
     python $SCRIPTSDIR/buildtypes.py >$SRCDIR/typecast_builtins.c
 echo " done"
-#echo -n generating pgversion.h ...
-#echo "#define PG_VERSION_MAJOR $PGMAJOR" >$SRCDIR/pgversion.h
-#echo "#define PG_VERSION_MINOR $PGMINOR" >>$SRCDIR/pgversion.h
-#echo " done"
+
 

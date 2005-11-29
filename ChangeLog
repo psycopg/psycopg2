@@ -1,3 +1,7 @@
+2005-11-29  Federico Di Gregorio  <fog@initd.org>
+
+	* MANIFEST.in: added docs/async.txt. (Closes: #75)
+
 2005-11-26  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* psycopg/psycopgmodule.c: fixed exceptions refcount.

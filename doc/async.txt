@@ -1,6 +1,8 @@
 psycopg asynchronous API
 ************************
 
+** Important: async quaeries are not enabled for 2.0 **
+
 Program code can initiate an asynchronous query by passing an 'async=1' flag
 to the .execute() method. A very simple example, from the connection to the
 query:
