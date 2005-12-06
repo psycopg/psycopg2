@@ -37,6 +37,12 @@ class DictCursor(_cursor):
         self.index = {}
         self.__query_executed = 1
         return _cursor.execute(self, query, vars, async)
+    
+    def callproc(self, procname, vars=None):
+        self.row_factory = DictRow
+        self.index = {}
+        self.__query_executed = 1
+        return _cursor.callproc(self, procname, vars)   
 
     def _build_index(self):
         if self.__query_executed == 1 and self.description:

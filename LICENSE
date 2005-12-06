@@ -50,3 +50,11 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
+Proprietary licenses
+====================
+
+A non-discriminatory license is available for companies that want to include
+psycopg in their proprietary products without respecting the spirit of the
+GPL. The price of the license is one day of development done by the author,
+at the consulting fee he applies to his usual customers at the day of the
+request.

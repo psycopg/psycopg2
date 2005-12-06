@@ -1,3 +1,8 @@
+2005-12-06  Federico Di Gregorio  <fog@initd.org>
+
+	* lib/extras.py: added .callproc() to DictCursor as suggested
+	by Philip Semanchuk.
+
 2005-11-29  Federico Di Gregorio  <fog@initd.org>
 
 	* MANIFEST.in: added docs/async.txt. (Closes: #75)

@@ -815,6 +815,7 @@ pq_fetch(cursorObject *curs)
         else
 #endif
             ex = _pq_copy_out(curs);
+        curs->rowcount = -1;
         /* error caught by out glorious notice handler */
         if (PyErr_Occurred()) ex = -1;
         IFCLEARPGRES(curs->pgres);
@@ -828,6 +829,7 @@ pq_fetch(cursorObject *curs)
         else
 #endif
             ex = _pq_copy_in(curs);
+        curs->rowcount = -1;
         /* error caught by out glorious notice handler */
         if (PyErr_Occurred()) ex = -1;
         IFCLEARPGRES(curs->pgres);

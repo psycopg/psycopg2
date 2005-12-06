@@ -881,7 +881,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
 
     if (self->name != NULL) {
         PyErr_SetString(ProgrammingError,
-            "can't call .executemany() on named cursors");
+            "can't call .callproc() on named cursors");
         return NULL;
     } 
 
