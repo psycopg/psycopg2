@@ -95,7 +95,7 @@ typecast_parse_time(char* s, char** t, int* len,
     
     Dprintf("typecast_parse_time: len = %d, s = %s", *len, s);
      
-    while (cz < 5 && *len > 0 && *s) {
+    while (cz < 6 && *len > 0 && *s) {
         switch (*s) {
         case ':':
             if (cz == 0) *hh = acc;

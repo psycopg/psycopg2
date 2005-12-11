@@ -21,25 +21,5 @@ compile on all architectures just as its predecessor did.
 Now go read the INSTALL file. More information about psycopg extensions to
 the DBAPI-2.0 is available in the files located in the doc/ direcory.
 
-
-Licence
--------
-
-psycopg is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version. See file COPYING for details.
-
-As a special exception, specific permission is granted for the GPLed code in
-this distribition to be linked to OpenSSL and PostgreSQL libpq without
-invoking GPL clause 2(b).
-
-If you prefer you can use the Zope Database Adapter ZPsycopgDA (i.e., every
-file inside the ZPsycopgDA directory) under the ZPL license as published on
-the Zope web site, http://www.zope.org/Resources/ZPL. The ZPL is perfectly
-compatible with the GPL
-
-psycopg is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
-details.
+psycopg is free software ("free as in freedom" but I like beer too.)
+Licensing information is available in the LICENSE file.
