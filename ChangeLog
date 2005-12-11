@@ -1,5 +1,8 @@
 2005-12-11  Federico Di Gregorio  <fog@initd.org>
 
+	* setup.py: half-applied patch from Tavis to specify mx_include_dir
+	in setup.cfg.
+
 	* psycopg/typecast.c (typecast_parse_time): cz limit in the while
 	loop is 6, not 5. This solve the problem with "fractionary" time zones
 	and fixes #78. 

@@ -77,13 +77,11 @@ class psycopg_build_ext(build_ext):
     user_options = build_ext.user_options[:]
     user_options.extend([
         ('pgdir=', None, 
-         "The postgresql directory, either source or bin"),
+         "The postgresql directory, either source or bin (win32 only)"),
         ('use-pg-dll', None, 
-         "Build against libpq.dll"),
+         "Build against libpq.dll (win32 only)"),
         ('use-pydatetime', None,
          "Use Python datatime objects for date and time representation."),
-        ('use-decimal', None,
-         "Use Decimal type even on Python 2.3 if the module is provided."),
     ])
     
     boolean_options = build_ext.boolean_options[:]
@@ -282,7 +280,10 @@ have_mxdatetime = False
 use_pydatetime  = int(parser.get('build_ext', 'use_pydatetime'))
 
 # check for mx package
-mxincludedir = os.path.join(get_python_inc(plat_specific=1), "mx")
+if parser.has_option('build_ext', 'mx_include_dir'):
+    mxincludedir = parser.get('build_ext', 'mx_include_dir')
+else:
+    mxincludedir = os.path.join(get_python_inc(plat_specific=1), "mx")
 if os.path.exists(mxincludedir):
     include_dirs.append(mxincludedir)
     define_macros.append(('HAVE_MXDATETIME','1'))
