@@ -21,6 +21,27 @@
 
 #define MAX_DIMENSIONS 16
 
+/** typecast_array_cleanup - remove the horrible [...]= stuff **/
+
+static int
+typecast_array_cleanup(char **str, int *len)
+{
+    int i, depth = 1;
+    
+    if ((*str)[0] != '[') return -1;
+    
+    for (i=1 ; depth > 0 && i < *len ; i++) {
+        if ((*str)[i] == '[')
+            depth += 1;
+        else if ((*str)[i] == ']')
+            depth -= 1;
+    }
+    if ((*str)[i] != '=') return -1;
+    
+    *str = &((*str)[i+1]);
+    *len = *len - i - 2;
+    return 0;
+}
 
 /** typecast_array_scan - scan a string looking for array items **/
 
@@ -198,6 +219,8 @@ typecast_GENERIC_ARRAY_cast(char *str, int len, PyObject *curs)
     PyObject *base = ((typecastObject*)((cursorObject*)curs)->caster)->bcast;
     
     if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
+    if (str[0] == '[')
+        typecast_array_cleanup(&str, &len);
     if (str[0] != '{') {
         PyErr_SetString(Error, "array does not start with '{'");
         return NULL;

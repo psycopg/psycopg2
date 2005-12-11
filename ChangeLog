@@ -1,3 +1,10 @@
+2005-12-11 Federico Di Gregorio <fog@initd.org>
+
+	* psycopg/typecast_array.c (typecast_array_cleanup): added functio
+	to cleanup the "[...]=" part of an array result. This probably will
+	need some more work for nested arrays but it fixed every test I was
+	able to write. (Closes: #80)
+
 2005-12-11  Federico Di Gregorio  <fog@initd.org>
 
 	* setup.py: half-applied patch from Tavis to specify mx_include_dir
