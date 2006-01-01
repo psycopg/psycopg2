@@ -1,4 +1,8 @@
-2006-01-01 Federico Di Gregorio <fog@initd.org>
+2006-01-01  Federico Di Gregorio  <fog@initd.org>
+
+	* MANIFEST.in: we now distrbute pre-built documentation (still need
+	to add to setup.py the code necessary to build docs as part of the
+	build process.)
 
 	* psycopg/connection_int.c: PostgreSQL encoding names are now force
 	uppercase (after all PostgreSQL documentation reports them this way.)

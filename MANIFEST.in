@@ -9,3 +9,4 @@ recursive-include scripts *.py *.sh
 include scripts/maketypes.sh scripts/buildtypes.py
 include AUTHORS README INSTALL ChangeLog 
 include PKG-INFO MANIFEST.in MANIFEST setup.py setup.cfg
+recursive-include doc *.rst *.css *.html
