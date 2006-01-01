@@ -8,7 +8,7 @@ What's new in psycopg 2.0 beta 7
 * Slightly better ZPsycopgDA (no more double connection objects in the menu
   and other minor fixes.)
    
-* Documentation! (With many kudos to piro.)
+* Documentation in the doc/ directory! (With many kudos to piro.)
 
 What's new in psycopg 2.0 beta 6
 --------------------------------

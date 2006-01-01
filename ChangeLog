@@ -1,5 +1,7 @@
 2006-01-01  Federico Di Gregorio  <fog@initd.org>
 
+	* Preparing release 2 beta 7.
+
 	* MANIFEST.in: we now distrbute pre-built documentation (still need
 	to add to setup.py the code necessary to build docs as part of the
 	build process.)
