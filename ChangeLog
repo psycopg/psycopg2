@@ -1,3 +1,8 @@
+2006-01-01 Federico Di Gregorio <fog@initd.org>
+
+	* psycopg/connection_int.c: PostgreSQL encoding names are now force
+	uppercase (after all PostgreSQL documentation reports them this way.)
+
 2005-12-11 Federico Di Gregorio <fog@initd.org>
 
 	* psycopg/typecast_array.c (typecast_array_cleanup): added functio

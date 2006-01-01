@@ -281,8 +281,9 @@ static encodingPair encodings[] = {
     {"LATIN1",       "latin_1"},
     {"UNICODE",      "utf_8"},
     {"UTF8",         "utf_8"},
+    
     /* some compatibility stuff */
-    {"latin-1",      "latin_1"},
+    {"LATIN-1",      "latin_1"},
     
     {NULL, NULL}
 };

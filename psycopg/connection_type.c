@@ -295,7 +295,7 @@ connection_dealloc(PyObject* obj)
     if (self->closed == 0) conn_close(self);
     
     if (self->dsn) free(self->dsn);
-    if (self->encoding) free(self->encoding);
+    if (self->encoding) PyMem_Free(self->encoding);
     if (self->critical) free(self->critical);
     
     Py_XDECREF(self->notice_list);

@@ -53,7 +53,8 @@ conn_connect(connectionObject *self)
 {
     PGconn *pgconn;
     PGresult *pgres;
-    char *data;
+    char *data, *tmp;
+    int i;
     
     /* we need the initial date style to be ISO, for typecasters; if the user
        later change it, she must know what she's doing... */
@@ -110,7 +111,17 @@ conn_connect(connectionObject *self)
         IFCLEARPGRES(pgres);
         return -1;
     }
-    self->encoding = strdup(PQgetvalue(pgres, 0, 0));
+    tmp = PQgetvalue(pgres, 0, 0);
+    self->encoding = PyMem_Malloc(strlen(tmp));
+    if (self->encoding == NULL) {
+        /* exception already set by PyMem_Malloc() */
+        PQfinish(pgconn);
+        IFCLEARPGRES(pgres);
+        return -1;
+    }  
+    for (i=0 ; i < strlen(tmp) ; i++)
+        self->encoding[i] = toupper(tmp[i]);
+    self->encoding[i] = '\0';
     CLEARPGRES(pgres);
     
     Py_BEGIN_ALLOW_THREADS;
