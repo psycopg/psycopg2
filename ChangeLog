@@ -1,3 +1,7 @@
+2006-01-06  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* setup.py: libpq.dll not used anymore. win32 setup uses pg_config too.
+
 2006-01-05  Federico Di Gregorio  <fog@initd.org>
 
 	* psycopg/psycopgmodule.c (psyco_set_error): added function to set extra

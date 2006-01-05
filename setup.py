@@ -27,9 +27,6 @@ UPDATEs. psycopg 2 also provide full asycronous operations for the really
 brave programmer.
 """
 
-# Enable generators on Python 2.2
-from __future__ import generators
-
 classifiers = """\
 Development Status :: 4 - Beta
 Intended Audience :: Developers
@@ -48,7 +45,6 @@ Operating System :: Unix
 
 import os
 import sys
-import shutil
 import popen2
 from distutils.core import setup, Extension
 from distutils.errors import DistutilsFileError
@@ -77,21 +73,16 @@ class psycopg_build_ext(build_ext):
     """
     user_options = build_ext.user_options[:]
     user_options.extend([
-        ('pgdir=', None, 
-         "The postgresql directory, either source or bin (win32 only)"),
-        ('use-pg-dll', None, 
-         "Build against libpq.dll (win32 only)"),
         ('use-pydatetime', None,
          "Use Python datatime objects for date and time representation."),    
-        ('pg_config=', None,
-          "The name of the pg_config binary and/or full path to find it"),                          
+        ('pg-config=', None,
+          "The name of the pg_config binary and/or full path to find it"),
+        ('use-decimal', None,
+         "Use Decimal type even on Python 2.3 if the module is provided."),
     ])
     
     boolean_options = build_ext.boolean_options[:]
-    boolean_options.extend(('use-pg-dll', 'use-pydatetime', 'use-decimal'))
-    
-    # libpq directory in win32 source distribution: compiler dependant.
-    libpqdir = None
+    boolean_options.extend(('use-pydatetime', 'use-decimal'))
     
     def initialize_options(self):
         build_ext.initialize_options(self)
@@ -101,7 +92,7 @@ class psycopg_build_ext(build_ext):
         self.pg_config = "pg_config"
     
     def get_pg_config(self, kind):
-        p = popen2.popen3(self.pg_config + " --" + kind, mode="r")
+        p = popen2.popen3(self.pg_config + " --" + kind, mode="t")
         r = p[0].readline().strip()
         if not r:
             raise Warning(p[2].readline().strip())
@@ -126,53 +117,11 @@ class psycopg_build_ext(build_ext):
         build_ext.build_extensions(self)
         
     def finalize_win32(self):
-        """Finalize build system configuration on win32 platform.
-        
-        Address issues related to the different environmental configurations
-        that can be met:
-        
-          * msvc or gcc derived (mingw, cygwin) compiler;
-          * source or bin PostgreSQL installation
-          * static or dynamic linking vs. libpq.dll
-        """
-        self.include_dirs.append(".")
+        """Finalize build system configuration on win32 platform."""
         self.libraries.append("ws2_32")
-        
-        if self.build_from_src():
-            self.include_dirs.append(os.path.join(
-                self.pgdir, "src", "interfaces", "libpq"))
-            self.include_dirs.append(os.path.join(
-                self.pgdir, "src", "include"))
-                
-            if self.get_compiler() == "msvc":
-                self.libpqdir = os.path.join(
-                    self.pgdir, "src", "interfaces", "libpq", "Release")
-            else:
-                self.libpqdir = os.path.join(
-                    self.pgdir, "src", "interfaces", "libpq")
-            
-            self.library_dirs.append(self.libpqdir)
-            
-        else:
-            self.include_dirs.append(os.path.join(
-                self.pgdir, "include"))
-            self.library_dirs.append(os.path.join(
-                self.pgdir, "lib"))
-                
-        # Remove the library that was added in the finalize_options, since:
-        #  1) We do not need it because we are using the DLL version, or
-        #  2) We do need it, but it might need to be msvc'ified, and
-        #  3) The other benefit is that msvc needs pqdll to be the last
-        self.libraries.remove("pq")
-
-        if self.use_pg_dll:
-            self.libraries.append(self.get_lib("pqdll"))
-        else:
-            self.libraries.append("advapi32")
-
-            if self.get_compiler() == "msvc":
-                self.libraries.append("shfolder")
-            self.libraries.append(self.get_lib("pq"))
+        self.libraries.append("advapi32")
+        if self.get_compiler() == "msvc":
+            self.libraries.append("shfolder")
 
     def finalize_darwin(self):
         """Finalize build system configuration on darwin platform."""
@@ -193,58 +142,6 @@ class psycopg_build_ext(build_ext):
         if hasattr(self, "finalize_" + sys.platform):
             getattr(self, "finalize_" + sys.platform)()
             
-    def run(self):
-        build_ext.run(self)
-        
-        # Add libpq.dll to the lib directory. libpq.dll can be in a wide
-        # variety of places. The easiest way to add it to the distribution is
-        # to have a copy in a fixed place (lib).
-        if sys.platform == 'win32' and self.use_pg_dll:
-            shutil.copy(self.find_libpq_dll(), "lib")
-        
-    ## win32-specific stuff ##
-    
-    def build_from_src(self):
-        """Detect if building from postgres source or bin on w32 platform"""
-        return os.path.exists(os.path.join(self.pgdir, "src"))
-
-    def get_lib(self, name):
-        """Return the full library name given its suffix.
-        
-        MS VC compiler doesn't assume a "lib" prefix as gcc derived ones do.
-        Return the library name as required by the compiler.
-        """
-        if sys.platform == 'win32' and self.get_compiler() == "msvc":
-            return "lib" + name
-        else:
-            return name
-                
-    __libpqdll = None
-    
-    def find_libpq_dll(self, *dirs):
-        """Return the full libpq.dll path and name."""
-        if self.__libpqdll:
-            return self.__libpqdll
-            
-        for path in self.__iter_libpq_dll():
-            if os.path.exists(path):
-                sys.stdout.write("libpq.dll found in %s\n" 
-                                 % os.path.dirname(path))
-                self.__libpqdll = path
-                return path
-            
-        raise DistutilsFileError("Can't find libpq.dll on the system")
-        
-    def __iter_libpq_dll(self):
-        """Iterate on the possible filenames for libpq.dll."""
-        # in the build dir for src installation
-        if self.libpqdir:
-            yield os.path.join(self.libpqdir, "libpq.dll")
-            
-        # somewhere in the path - probably in system32 - for bin dist
-        for path in os.environ['PATH'].split(os.pathsep):
-            yield os.path.join(path, "libpq.dll")
-
 # let's start with macro definitions (the ones not already in setup.cfg)
 define_macros = []
 include_dirs = []
@@ -337,11 +234,6 @@ if sys.platform != 'win32':
 else:
     define_macros.append(('PSYCOPG_VERSION', '\\"'+PSYCOPG_VERSION_EX+'\\"'))
 
-
-if sys.platform == 'win32' and int(parser.get('build_ext', 'use_pg_dll')):
-    data_files.append((".\\lib\\site-packages\\psycopg2\\",
-        [ "lib\\libpq.dll" ]))
-    
 # build the extension
 
 sources = map(lambda x: os.path.join('psycopg', x), sources)

@@ -30,59 +30,14 @@ and build from the source distribution top-level directory using:
 Compiling under Windows with mingw32
 ====================================
 
-You can compile psycopg under Windows platform with mingw32 compiler. The
-software required is:
+You can compile psycopg under Windows platform with mingw32
+(http://www.mingw.org/) compiler. MinGW is also shipped with IDEs such as
+Dev-C++ (http://www.bloodshed.net/devcpp.html) and Code::Blocks
+(http://www.codeblocks.org). gcc binaries should be in your PATH.
 
- * MinGW (http://www.mingw.org/). You also get MinGW installed by installing
-   Dev-C++ IDE (http://www.bloodshed.net/devcpp.html);
+You need a PostgreSQL with include and libary files installed. At least v8.0 is required.
 
- * either:
-    * a binary PostgreSQL installation with include and libary files, at least
-      release 8.0 (http://www.postgresql.org/download/);
-    * PostgreSQL sources. You will need to compile PostgreSQL, which also
-      requires MSYS (http://www.mingw.org/msys.shtml) and Flex and Bison
-      packages (http://gnuwin32.sourceforge.net/packages.html).
+First you need to create a libpython2X.a as described in 
+http://starship.python.net/crew/kernr/mingw32/Notes.html. Then run:
 
-I assume all the software installed in the standard way. gcc compiler directory
-should be in your path.
-
-Steps required to package your own version of psycopg:
-
- 1. if building from PostgreSQL binaries:
-
-     1.1. create the file libpqdll.a (you should already know how to build
-          Python extensions with mingw: see
-          http://starship.python.net/crew/kernr/mingw32/Notes.html for
-          details):
-
-           1.1.1. cd C:\Program Files\PostgreSQL\8.0\lib
-
-           1.1.2. pexports C:\WINNT\system32\libpq.dll > libpqdll.def
-
-           1.1.3. dlltool --dllname libpq.dll --def libpqdll.def \
-                          --output-lib libpqdll.a
-
- 2. else, if building from PostgreSQL source:
-
-     2.1. compile it:
-
-           2.1.1. unpack postgresql source (ex. in c:\)
-
-           2.1.2. run MSYS
-
-           2.1.3. cd /c/postgresql-8.0
-
-           2.1.4. ./configure --without-zlib
-
-           2.1.5. make
-
-     2.2. create the file libpqdll.a (dlltool is part of MinGW):
-
-           2.2.1. cd postgresql-8.0\src\interfaces\libpq
-
-           2.2.2. dlltool --dllname libpq.dll --def libpqdll.def \
-                          --output-lib libpqdll.a
-
- 3. build psycopg:
-
-     3.1. python setup.py build_ext --compiler=mingw32 install
+    python setup.py build_ext --compiler=mingw32 install
