@@ -108,7 +108,7 @@ microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
     }
     
     /* else set the right exception and return NULL */
-    PyErr_SetString(ProgrammingError, "can't adapt");
+    psyco_set_error(ProgrammingError, NULL, "can't adapt", NULL, NULL);
     return NULL;
 }
 

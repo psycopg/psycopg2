@@ -366,6 +366,46 @@ psyco_errors_set(PyObject *type)
     PyObject_SetAttrString(type, "NotSupportedError", NotSupportedError);
 }
 
+/* psyco_error_new
+  
+   Create a new error of the given type with extra attributes. */
+   
+void
+psyco_set_error(PyObject *exc, PyObject *curs, char *msg, 
+                 char *pgerror, char *pgcode)
+{
+    PyObject *t;
+    
+    PyObject *err = PyObject_CallFunction(exc, "s", msg);
+  
+    if (err) {
+        if (pgerror) {
+            t = PyString_FromString(pgerror);
+        }
+        else {
+            t = Py_None ; Py_INCREF(t);
+        }
+        PyObject_SetAttrString(err, "pgerror", t);
+        Py_DECREF(t);
+
+        if (pgcode) {
+            t = PyString_FromString(pgcode);
+        }
+        else {
+            t = Py_None ; Py_INCREF(t);
+        }
+        PyObject_SetAttrString(err, "pgcode", t);
+        Py_DECREF(t);
+        
+        if (curs)
+            PyObject_SetAttrString(err, "cursor", curs);
+        else
+            PyObject_SetAttrString(err, "cursor", Py_None);
+
+        PyErr_SetObject(exc, err);
+    }
+} 
+
 /* psyco_decimal_init
 
    Initialize the module's pointer to the decimal type. */

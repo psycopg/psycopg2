@@ -99,7 +99,11 @@ typedef struct {
 
 /* the Decimal type, used by the DECIMAL typecaster */    
 extern PyObject *decimalType;
-    
+
+/* some utility functions */
+extern void psyco_set_error(PyObject *exc, PyObject *curs,  char *msg, 
+                             char *pgerror, char *pgcode);
+                                  
 #ifdef __cplusplus
 }
 #endif

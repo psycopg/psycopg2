@@ -46,12 +46,15 @@
 void
 pq_raise(connectionObject *conn, cursorObject *curs, PyObject *exc, char *msg)
 {
+    PyObject *pgc = (PyObject*)curs;
+    
     char *err = NULL;
+    char *err2 = NULL;
     char *code = NULL;
+    char *buf = NULL;
     
     if ((conn == NULL && curs == NULL) || (curs != NULL && conn == NULL)) {
-        PyErr_SetString(Error,
-                        "psycopg went psycotic and raised a null error");
+        PyErr_SetString(Error, "psycopg went psycotic and raised a null error");
         return;
     }
     
@@ -102,20 +105,31 @@ pq_raise(connectionObject *conn, cursorObject *curs, PyObject *exc, char *msg)
         else
             exc = ProgrammingError;
     }
-
-    /* try to remove the initial "ERROR: " part from the postgresql error */
-    if (err && strlen(err) > 8) err = &(err[8]);
     
+    /* try to remove the initial "ERROR: " part from the postgresql error */
+    if (err && strlen(err) > 8) err2 = &(err[8]);
+    else err2 = err;
+
     /* if msg is not NULL, add it to the error message, after a '\n' */
     if (msg && code) {
-        PyErr_Format(exc, "[%s] %s\n%s", code, err, msg);
+        int len = strlen(code) + strlen(err) + strlen(msg) + 5;
+        if ((buf = PyMem_Malloc(len))) {
+            snprintf(buf, len, "[%s] %s\n%s", code, err2, msg);
+            psyco_set_error(exc, pgc, buf, err, code);
+        }
     }
     else if (msg) {
-        PyErr_Format(exc, "%s\n%s", err, msg);
+        int len = strlen(err) + strlen(msg) + 2;
+        if ((buf = PyMem_Malloc(len))) {
+            snprintf(buf, len, "%s\n%s", err2, msg);
+            psyco_set_error(exc, pgc, buf, err, code);
+        }
     }
     else {
-        PyErr_SetString(exc, err);
+        psyco_set_error(exc, pgc, err2, err, code);        
     }
+    
+    if (buf != NULL) PyMem_Free(buf);
 }
 
 /* pq_set_critical, pq_resolve_critical - manage critical errors

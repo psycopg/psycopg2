@@ -1,5 +1,9 @@
 2006-01-05  Federico Di Gregorio  <fog@initd.org>
 
+	* psycopg/psycopgmodule.c (psyco_set_error): added function to set extra
+	parameters on ProgrammingError instances. Also modified all occurances of
+	PyErr_SetString(ProgrammingError,...) to psycopg_set_error(). 
+
 	* setup.{cfg,py}: we now use pg_config to locate PostgreSQL libraries
 	and headers (modified patch from lbruno, see #70.)
 

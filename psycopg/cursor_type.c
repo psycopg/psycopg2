@@ -241,14 +241,15 @@ _psyco_curs_execute(cursorObject *self,
     if (self->conn->async_cursor != NULL
         && self->conn->async_cursor != (PyObject*)self) {
         pthread_mutex_unlock(&(self->conn->lock));
-        PyErr_SetString(ProgrammingError,
-                        "asynchronous query already in execution");
+        psyco_set_error(ProgrammingError, (PyObject*)self,
+                         "asynchronous query already in execution", NULL, NULL);
         return 0;
     }
     pthread_mutex_unlock(&(self->conn->lock));
     
     if (!PyObject_IsTrue(operation)) {
-    	PyErr_SetString(ProgrammingError, "can't execute an empty query");
+        psyco_set_error(ProgrammingError, (PyObject*)self,
+                         "can't execute an empty query", NULL, NULL);
     	return 0;
     }
     
@@ -334,7 +335,8 @@ _psyco_curs_execute(cursorObject *self,
                     if (!strcmp(s, "not enough arguments for format string")
                       || !strcmp(s, "not all arguments converted")) {
                         Dprintf("psyco_curs_execute:     -> got a match");
-                        PyErr_SetString(ProgrammingError, s);
+                        psyco_set_error(ProgrammingError, (PyObject*)self,
+                                         s, NULL, NULL);
                         pe = 1;
                     }
 
@@ -403,18 +405,19 @@ psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
 
     if (self->name != NULL) {
         if (self->query != Py_None) {
-            PyErr_SetString(ProgrammingError,
-                "can't call .execute() on named cursors more than once");
+            psyco_set_error(ProgrammingError, (PyObject*)self,
+                "can't call .execute() on named cursors more than once",
+                NULL, NULL);
             return NULL;
         }
         if (self->conn->isolation_level == 0) {
-            PyErr_SetString(ProgrammingError,
-                "can't use a named cursor outside of transactions");
+            psyco_set_error(ProgrammingError, (PyObject*)self,
+                "can't use a named cursor outside of transactions", NULL, NULL);
             return NULL;          
         }
         if (self->conn->mark != self->mark) {
-            PyErr_SetString(ProgrammingError,
-                "named cursor isn't valid anymore");
+            psyco_set_error(ProgrammingError, (PyObject*)self,
+                "named cursor isn't valid anymore", NULL, NULL);
             return NULL;
         }
     }
@@ -449,8 +452,8 @@ psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
     EXC_IF_CURS_CLOSED(self);
     
     if (self->name != NULL) {
-        PyErr_SetString(ProgrammingError,
-            "can't call .executemany() on named cursors");
+        psyco_set_error(ProgrammingError, (PyObject*)self,
+                "can't call .executemany() on named cursors", NULL, NULL);
         return NULL;
     } 
 
@@ -533,7 +536,8 @@ psyco_curs_mogrify(cursorObject *self, PyObject *args, PyObject *kwargs)
                     if (!strcmp(s, "not enough arguments for format string")
                       || !strcmp(s, "not all arguments converted")) {
                         Dprintf("psyco_curs_execute:     -> got a match");
-                        PyErr_SetString(ProgrammingError, s);
+                        psyco_set_error(ProgrammingError, (PyObject*)self,
+                                         s, NULL, NULL);
                         pe = 1;
                     }
 
@@ -585,8 +589,8 @@ _psyco_curs_prefetch(cursorObject *self)
     if (self->conn->async_cursor != NULL
         && self->conn->async_cursor != (PyObject*)self) {
         pthread_mutex_unlock(&(self->conn->lock));
-        PyErr_SetString(ProgrammingError,
-                        "asynchronous fetch by wrong cursor");
+        psyco_set_error(ProgrammingError, (PyObject*)self,
+                         "asynchronous fetch by wrong cursor", NULL, NULL);
         return -2;
     }
     pthread_mutex_unlock(&(self->conn->lock));
@@ -880,8 +884,8 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
     EXC_IF_CURS_CLOSED(self);
 
     if (self->name != NULL) {
-        PyErr_SetString(ProgrammingError,
-            "can't call .callproc() on named cursors");
+        psyco_set_error(ProgrammingError, (PyObject*)self,
+                         "can't call .callproc() on named cursors", NULL, NULL);
         return NULL;
     } 
 
@@ -1003,14 +1007,14 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
         } else if (strcmp( mode, "absolute") == 0) {
             newpos = value;
         } else {
-            PyErr_SetString(ProgrammingError,
-                            "scroll mode must be 'relative' or 'absolute'");
+            psyco_set_error(ProgrammingError, (PyObject*)self,
+                "scroll mode must be 'relative' or 'absolute'", NULL, NULL);
             return NULL;
         }
     
         if (newpos < 0 || newpos >= self->rowcount ) {
-            PyErr_SetString(PyExc_IndexError,
-                            "scroll destination out of bounds");
+            psyco_set_error(ProgrammingError, (PyObject*)self,
+                             "scroll destination out of bounds", NULL, NULL);
             return NULL;
         }
         
