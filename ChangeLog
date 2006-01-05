@@ -1,3 +1,8 @@
+2006-01-05  Federico Di Gregorio  <fog@initd.org>
+
+	* setup.{cfg,py}: we now use pg_config to locate PostgreSQL libraries
+	and headers (modified patch from lbruno, see #70.)
+
 2006-01-01  Federico Di Gregorio  <fog@initd.org>
 
 	* Preparing release 2 beta 7.

@@ -49,6 +49,7 @@ Operating System :: Unix
 import os
 import sys
 import shutil
+import popen2
 from distutils.core import setup, Extension
 from distutils.errors import DistutilsFileError
 from distutils.command.build_ext import build_ext
@@ -81,7 +82,9 @@ class psycopg_build_ext(build_ext):
         ('use-pg-dll', None, 
          "Build against libpq.dll (win32 only)"),
         ('use-pydatetime', None,
-         "Use Python datatime objects for date and time representation."),
+         "Use Python datatime objects for date and time representation."),    
+        ('pg_config=', None,
+          "The name of the pg_config binary and/or full path to find it"),                          
     ])
     
     boolean_options = build_ext.boolean_options[:]
@@ -95,7 +98,15 @@ class psycopg_build_ext(build_ext):
         self.use_pydatetime = 1
         self.use_pg_dll = 1
         self.pgdir = None
-        
+        self.pg_config = "pg_config"
+    
+    def get_pg_config(self, kind):
+        p = popen2.popen3(self.pg_config + " --" + kind, mode="r")
+        r = p[0].readline().strip()
+        if not r:
+            raise Warning(p[2].readline().strip())
+        return r
+    
     def get_compiler(self):
         """Return the c compiler to compile extensions.
 
@@ -111,7 +122,7 @@ class psycopg_build_ext(build_ext):
         if self.get_compiler().compiler_type == "mingw32" \
         and 'msvcr71' in self.compiler.dll_libraries:
             self.compiler.dll_libraries.remove('msvcr71')
-        
+
         build_ext.build_extensions(self)
         
     def finalize_win32(self):
@@ -164,28 +175,21 @@ class psycopg_build_ext(build_ext):
             self.libraries.append(self.get_lib("pq"))
 
     def finalize_darwin(self):
-        """Finalize build system configuration on darwin platform.
-        
-        fink installs lots of goodies in /sw/... - make sure we check there
-        """
-        self.include_dirs.append("/sw/include")
-        self.include_dirs.append("/sw/include/postgresql")
-        self.include_dirs.append("/sw/include/postgresql/server")
-        self.library_dirs.append("/sw/lib")
-        self.include_dirs.append("/opt/local/include")
-        self.include_dirs.append("/opt/local/include/postgresql")
-        self.include_dirs.append("/opt/local/include/postgresql/server")
-        self.library_dirs.append("/opt/local/lib")
-        self.library_dirs.append("/usr/lib")
+        """Finalize build system configuration on darwin platform."""
         self.libraries.append('ssl')
         self.libraries.append('crypto')
         
     def finalize_options(self):
         """Complete the build system configuation."""
         build_ext.finalize_options(self)
-        
+
+        self.include_dirs.append(".")        
         self.libraries.append("pq")
         
+        self.library_dirs.append(self.get_pg_config("libdir"))
+        self.include_dirs.append(self.get_pg_config("includedir"))
+        self.include_dirs.append(self.get_pg_config("includedir-server"))
+
         if hasattr(self, "finalize_" + sys.platform):
             getattr(self, "finalize_" + sys.platform)()
             
@@ -198,6 +202,8 @@ class psycopg_build_ext(build_ext):
         if sys.platform == 'win32' and self.use_pg_dll:
             shutil.copy(self.find_libpq_dll(), "lib")
         
+    ## win32-specific stuff ##
+    
     def build_from_src(self):
         """Detect if building from postgres source or bin on w32 platform"""
         return os.path.exists(os.path.join(self.pgdir, "src"))
