@@ -82,40 +82,38 @@ class DictRow(list):
         return list.__getitem__(self, x)
 
     def items(self):
-	res = []
-	for n, v in self._index.items():
-	    res.append((n, list.__getitem__(self, v)))
-	return res
+        res = []
+        for n, v in self._index.items():
+            res.append((n, list.__getitem__(self, v)))
+        return res
     
     def keys(self):
-	return self._index.keys()
+        return self._index.keys()
 
     def values(self):
         return tuple(self[:])
 
     def has_key(self, x):
         return self._index.has_key(x)
-    
+
     def get(self, x, default=None):
         try:
             return self[x]
         except:
             return default
 
-
 
 class SQL_IN(object):
     """Adapt any iterable to an SQL quotable object."""
     
     def __init__(self, seq):
-	self._seq = seq
+        self._seq = seq
 	
     def getquoted(self):
         # this is the important line: note how every object in the
         # list is adapted and then how getquoted() is called on it
-	qobjs = [str(_A(o).getquoted()) for o in self._seq]
-
-	return '(' + ', '.join(qobjs) + ')'
+        qobjs = [str(_A(o).getquoted()) for o in self._seq]
+        return '(' + ', '.join(qobjs) + ')'
 
     __str__ = getquoted
     
