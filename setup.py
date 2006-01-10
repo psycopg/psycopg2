@@ -84,18 +84,20 @@ class psycopg_build_ext(build_ext):
     boolean_options = build_ext.boolean_options[:]
     boolean_options.extend(('use-pydatetime', 'use-decimal'))
     
+    DEFAULT_PG_CONFIG = "pg_config"
+    
     def initialize_options(self):
         build_ext.initialize_options(self)
         self.use_pydatetime = 1
         self.use_pg_dll = 1
         self.pgdir = None
-        self.pg_config = "pg_config"
+        self.pg_config = self.DEFAULT_PG_CONFIG
     
     def get_pg_config(self, kind):
-        p = popen2.popen3(self.pg_config + " --" + kind, mode="t")
+        p = popen2.popen3(self.pg_config + " --" + kind)
         r = p[0].readline().strip()
         if not r:
-            raise Warning(p[2].readline().strip())
+            raise Warning(p[2].readline())
         return r
     
     def get_compiler(self):
@@ -135,10 +137,17 @@ class psycopg_build_ext(build_ext):
         self.include_dirs.append(".")        
         self.libraries.append("pq")
         
-        self.library_dirs.append(self.get_pg_config("libdir"))
-        self.include_dirs.append(self.get_pg_config("includedir"))
-        self.include_dirs.append(self.get_pg_config("includedir-server"))
-
+        try:
+            self.library_dirs.append(self.get_pg_config("libdir"))
+            self.include_dirs.append(self.get_pg_config("includedir"))
+            self.include_dirs.append(self.get_pg_config("includedir-server"))
+        except Warning, w:
+            if self.pg_config == self.DEFAULT_PG_CONFIG:
+                sys.stderr.write("Warning: %s" % str(w))
+            else:
+                sys.stderr.write("Error: %s" % str(w))
+                sys.exit(1)
+            
         if hasattr(self, "finalize_" + sys.platform):
             getattr(self, "finalize_" + sys.platform)()
             
@@ -249,9 +258,9 @@ setup(name="psycopg2",
       maintainer_email="fog@initd.org",
       author="Federico Di Gregorio",
       author_email="fog@initd.org",
-      url="http://initd.org/software/initd/psycopg2",
-      download_url = "http://initd.org/software/initd/psycopg2",
-      license="GPL or ZPL",
+      url="http://initd.org/tracker/psycopg",
+      download_url = "http://initd.org/pub/software/psycopg2",
+      license="GPL with exceptions or ZPL",
       platforms = ["any"],
       description=__doc__.split("\n")[0],
       long_description="\n".join(__doc__.split("\n")[2:]),

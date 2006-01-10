@@ -1,3 +1,8 @@
+2006-01-11  Federico Di Gregorio  <fog@initd.org>
+
+	* setup.py: does not report an error in pg_config unless the pg_config
+	was explicitly set (allows for building with old options.) 
+
 2006-01-06  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* setup.py: libpq.dll not used anymore. win32 setup uses pg_config too.
