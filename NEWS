@@ -7,6 +7,13 @@ What's new in psycopg 2.0 beta 7
 
 * Slightly better ZPsycopgDA (no more double connection objects in the menu
   and other minor fixes.)
+  
+* ProgrammingError exceptions now have three extra attributes: .cursor
+  (it is possible to access the query that caused the exception using
+  error.cursor.query), .pgerror and .pgcode (PostgreSQL original error
+  text and code.)
+  
+* The build system uses pg_config when available.
    
 * Documentation in the doc/ directory! (With many kudos to piro.)
 

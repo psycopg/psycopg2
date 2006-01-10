@@ -1,19 +1,11 @@
-import psycopg
-import psycopg.extras
+import psycopg2
+import threading, os, time, gc
 
-conn = psycopg.connect('dbname=test')
-#curs = conn.cursor()
-#curs.execute("CREATE TABLE itest (n int4)")
-
-#for i in xrange(10000000):
-#    curs = conn.cursor()
-#    curs.execute("INSERT INTO itest VALUES (1)")
-#    curs.execute("SELECT '2003-12-12 10:00:00'::timestamp AS foo")
-#    curs.execute("SELECT 'xxx' AS foo")
-#    curs.fetchall()
-#    curs.close()
-
-curs = conn.cursor(factory=psycopg.extras.DictCursor)
-curs.execute("select 1 as foo")
-x = curs.fetchone()
-print x['foo']
+for i in range(20000):
+    conn = psycopg2.connect('dbname=test')
+    del conn
+    if i%200 == 0:
+        datafile = os.popen('ps -p %s -o rss' % os.getpid())
+        line = datafile.readlines(2)[1].strip()
+        datafile.close()
+        print str(i) + '\t' + line

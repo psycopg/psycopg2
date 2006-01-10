@@ -111,7 +111,7 @@ class psycopg_build_ext(build_ext):
         # on Python >= 2.4. Maybe related to strdup calls, cfr.
         # http://mail.python.org/pipermail/distutils-sig/2005-April/004433.html
         if self.get_compiler().compiler_type == "mingw32" \
-        and 'msvcr71' in self.compiler.dll_libraries:
+            and 'msvcr71' in self.compiler.dll_libraries:
             self.compiler.dll_libraries.remove('msvcr71')
 
         build_ext.build_extensions(self)

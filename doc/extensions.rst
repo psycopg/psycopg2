@@ -20,9 +20,12 @@ Connection and cursor factories
 
 psycopg 2 exposes two new-style classes that can be sub-classed and expanded to
 adapt them to the needs of the programmer: `cursor` and `connection`.  The
-`connection` class is usually sub-classed only to provide a . `cursor` is much
-more interesting, because it is the class where query building, execution and
-result type-casting into Python variables happens.
+`connection` class is usually sub-classed only to provide an easy way to create
+customized cursors but other uses are possible. `cursor` is much more
+interesting, because it is the class where query building, execution and result
+type-casting into Python variables happens.
+
+`connection` instances
 
 Row factories
 -------------
@@ -132,6 +135,7 @@ type::
 The above function call results in the SQL command::
 
     INSERT INTO atable (apoint) VALUES ((1.23, 4.56));
+
 
 .. _PEP-246: http://www.python.org/peps/pep-0246.html
 
