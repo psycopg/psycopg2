@@ -25,7 +25,28 @@ customized cursors but other uses are possible. `cursor` is much more
 interesting, because it is the class where query building, execution and result
 type-casting into Python variables happens.
 
-`connection` instances
+An example of cursor subclass performing logging is::
+
+    import psycopg2
+    import psycopg2.extensions
+    import logging
+
+    class LoggingCursor(psycopg2.extensions.cursor):
+        def execute(self, sql, args=None):
+            logger = logging.getLogger('sql_debug')
+            logger.info(self.mogrify(sql, args))
+
+            try:
+                psycopg2.extensions.cursor.execute(self, sql, args)
+            except Exception, exc:
+                logger.error("%s: %s" % (exc.__class__.__name__, exc))
+                raise
+
+    conn = psycopg2.connect(DSN)
+    curs = conn.cursor(cursor_factory=LoggingCursor)
+    curs.execute("INSERT INTO mytable VALUES (%s, %s, %s);",
+                 (10, 20, 30))
+
 
 Row factories
 -------------
