@@ -48,27 +48,39 @@ typedef struct {
     
 extern PyObject *psyco_Date(PyObject *module, PyObject *args);
 #define psyco_Date_doc \
-    "Date(year, month, day) -> new date"
+    "Date(year, month, day) -> new date\n\n" \
+    "Build an object holding a date value."
 
 extern PyObject *psyco_Time(PyObject *module, PyObject *args);
 #define psyco_Time_doc \
-    "Time(hour, minutes, seconds, tzinfo=None) -> new time"
+    "Time(hour, minutes, seconds, tzinfo=None) -> new time\n\n" \
+    "Build an object holding a time value."
 
 extern PyObject *psyco_Timestamp(PyObject *module, PyObject *args);
 #define psyco_Timestamp_doc \
-    "Timestamp(year, month, day, hour, minutes, seconds, tzinfo=None) -> new timestamp"
+    "Timestamp(year, month, day, hour, minutes, seconds, tzinfo=None) -> new timestamp\n\n" \
+    "Build an object holding a timestamp value."
 
 extern PyObject *psyco_DateFromTicks(PyObject *module, PyObject *args);
 #define psyco_DateFromTicks_doc \
-    "DateFromTicks(ticks) -> new date"
+    "DateFromTicks(ticks) -> new date\n\n" \
+    "Build an object holding a date value from the given ticks value.\n\n" \
+    "Ticks are the number of seconds since the epoch; see the documentation " \
+    "of the standard Python time module for details)."
 
 extern PyObject *psyco_TimeFromTicks(PyObject *module, PyObject *args);
 #define psyco_TimeFromTicks_doc \
-    "TimeFromTicks(ticks) -> new time"
+    "TimeFromTicks(ticks) -> new time\n\n" \
+    "Build an object holding a time value from the given ticks value.\n\n" \
+    "Ticks are the number of seconds since the epoch; see the documentation " \
+    "of the standard Python time module for details)."
 
 extern PyObject *psyco_TimestampFromTicks(PyObject *module, PyObject *args);
 #define psyco_TimestampFromTicks_doc \
-    "TimestampFromTicks(ticks) -> new timestamp"
+    "TimestampFromTicks(ticks) -> new timestamp\n\n" \
+    "Build an object holding a timestamp value from the given ticks value.\n\n" \
+    "Ticks are the number of seconds since the epoch; see the documentation " \
+    "of the standard Python time module for details)."
 
 #endif /* PSYCOPG_DEFAULT_PYDATETIME */
 

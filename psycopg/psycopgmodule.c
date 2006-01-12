@@ -65,7 +65,7 @@ PyObject *decimalType = NULL;
 
 /** connect module-level function **/
 #define psyco_connect_doc \
-"connect(dsn, ...) -> new connection object -- Create a new database connection.\n\n" \
+"connect(dsn, ...) -- Create a new database connection.\n\n"               \
 "This function supports two different but equivalent sets of arguments.\n" \
 "A single data source name or ``dsn`` string can be used to specify the\n" \
 "connection parameters, as follows::\n\n"                                  \
@@ -82,9 +82,11 @@ PyObject *decimalType = NULL;
 "- ``password`` -- password used to authenticate\n"                        \
 "- ``sslmode`` -- SSL mode (see PostgreSQL documentation)\n\n"             \
 "If the ``connection_factory`` keyword argument is not provided this\n"    \
-"function always return an instance of the ``connection`` class.\n"        \
-"Else the given sub-class of ``connection`` will be used to\n"             \
-"instantiate the connection object.\n" 
+"function always return an instance of the `connection` class.\n"          \
+"Else the given sub-class of `extensions.connection` will be used to\n"    \
+"instantiate the connection object.\n\n"                                   \
+":return: New database connection\n"                                         \
+":rtype: `extensions.connection`"
 
 static int
 _psyco_connect_fill_dsn(char *dsn, char *kw, char *v, int i)
@@ -307,6 +309,30 @@ PyObject *Error, *Warning, *InterfaceError, *DatabaseError,
     *InternalError, *OperationalError, *ProgrammingError,
     *IntegrityError, *DataError, *NotSupportedError;
 
+/* mapping between exception names and their PyObject */
+static struct {
+    char *name;
+    PyObject **exc;
+    PyObject **base;
+    char *docstr;
+} exctable[] = {
+    { "psycopg2.Error", &Error, 0, Error_doc },
+    { "psycopg2.Warning", &Warning, 0, Warning_doc },
+    { "psycopg2.InterfaceError", &InterfaceError, &Error, InterfaceError_doc },
+    { "psycopg2.DatabaseError", &DatabaseError, &Error, DatabaseError_doc },
+    { "psycopg2.InternalError", &InternalError, &DatabaseError, InternalError_doc },
+    { "psycopg2.OperationalError", &OperationalError, &DatabaseError, 
+        OperationalError_doc },
+    { "psycopg2.ProgrammingError", &ProgrammingError, &DatabaseError, 
+        ProgrammingError_doc },
+    { "psycopg2.IntegrityError", &IntegrityError, &DatabaseError, 
+        IntegrityError_doc },
+    { "psycopg2.DataError", &DataError, &DatabaseError, DataError_doc },
+    { "psycopg2.NotSupportedError", &NotSupportedError, &DatabaseError, 
+        NotSupportedError_doc },
+    {NULL}  /* Sentinel */
+};
+
 static void
 psyco_errors_init(void)
 {
@@ -314,26 +340,26 @@ psyco_errors_init(void)
        psycopg2 module and not the fact the the original error objects
        live in _psycopg */
        
-    Error = PyErr_NewException("psycopg2.Error", PyExc_StandardError, NULL);
-    
-    Warning = PyErr_NewException("psycopg2.Warning",
-        PyExc_StandardError,NULL);
-    InterfaceError = PyErr_NewException("psycopg2.InterfaceError",
-        Error, NULL);
-    DatabaseError = PyErr_NewException("psycopg2.DatabaseError",
-        Error, NULL);
-    InternalError = PyErr_NewException("psycopg2.InternalError",
-        DatabaseError, NULL);
-    OperationalError = PyErr_NewException("psycopg2.OperationalError",
-        DatabaseError, NULL);
-    ProgrammingError = PyErr_NewException("psycopg2.ProgrammingError",
-        DatabaseError, NULL);
-    IntegrityError = PyErr_NewException("psycopg2.IntegrityError",
-        DatabaseError,NULL);
-    DataError = PyErr_NewException("psycopg2.DataError",
-        DatabaseError, NULL);
-    NotSupportedError = PyErr_NewException("psycopg2.NotSupportedError",
-        DatabaseError, NULL);
+    int i;
+    PyObject *dict;
+    PyObject *base;
+    PyObject *str;
+
+    for (i=0; exctable[i].name; i++) {
+        dict = PyDict_New();
+
+        if (exctable[i].docstr) {
+            str = PyString_FromString(exctable[i].docstr);
+            PyDict_SetItemString(dict, "__doc__", str);
+        }
+
+        if (exctable[i].base == 0)
+            base = PyExc_StandardError;
+        else
+            base = *exctable[i].base;
+
+        *exctable[i].exc = PyErr_NewException(exctable[i].name, base, dict);
+    }
 }
 
 void

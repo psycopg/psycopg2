@@ -37,11 +37,12 @@
 /* cursor method - allocate a new cursor */
 
 #define psyco_conn_cursor_doc \
-"cursor(cursor_factory=psycopg2.extensions.cursor) -> new cursor\n\n"       \
+"cursor(cursor_factory=extensions.cursor) -- new cursor\n\n"                \
 "Return a new cursor.\n\nThe ``cursor_factory`` argument can be used to\n"  \
 "create non-standard cursors by passing a class different from the\n"       \
 "default. Note that the new class *should* be a sub-class of\n"             \
-"``psycopg2.extensions.cursor``."
+"`extensions.cursor`.\n\n"                                                  \
+":rtype: `extensions.cursor`"
 
 static PyObject *
 psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *keywds)
@@ -222,24 +223,31 @@ static struct PyMethodDef connectionObject_methods[] = {
 
 static struct PyMemberDef connectionObject_members[] = {
     /* DBAPI-2.0 extensions (exception objects) */
-    {"Error", T_OBJECT, offsetof(connectionObject, exc_Error), RO},
-    {"Warning", T_OBJECT, offsetof(connectionObject, exc_Warning), RO},
+    {"Error", T_OBJECT, 
+        offsetof(connectionObject, exc_Error), RO, Error_doc},
+    {"Warning", 
+        T_OBJECT, offsetof(connectionObject, exc_Warning), RO, Warning_doc},
     {"InterfaceError", T_OBJECT,
-        offsetof(connectionObject, exc_InterfaceError), RO},
+        offsetof(connectionObject, exc_InterfaceError), RO,
+        InterfaceError_doc},
     {"DatabaseError", T_OBJECT,
-        offsetof(connectionObject, exc_DatabaseError), RO},
+        offsetof(connectionObject, exc_DatabaseError), RO, DatabaseError_doc},
     {"InternalError", T_OBJECT,
-        offsetof(connectionObject, exc_InternalError), RO},
+        offsetof(connectionObject, exc_InternalError), RO, InternalError_doc},
     {"OperationalError", T_OBJECT,
-        offsetof(connectionObject, exc_OperationalError), RO},
+        offsetof(connectionObject, exc_OperationalError), RO,
+        OperationalError_doc},
     {"ProgrammingError", T_OBJECT,
-        offsetof(connectionObject, exc_ProgrammingError), RO},
+        offsetof(connectionObject, exc_ProgrammingError), RO,
+        ProgrammingError_doc},
     {"IntegrityError", T_OBJECT,
-        offsetof(connectionObject, exc_IntegrityError), RO},
+        offsetof(connectionObject, exc_IntegrityError), RO,
+        IntegrityError_doc},
     {"DataError", T_OBJECT,
-        offsetof(connectionObject, exc_DataError), RO},
+        offsetof(connectionObject, exc_DataError), RO, DataError_doc},
     {"NotSupportedError", T_OBJECT,
-     offsetof(connectionObject, exc_NotSupportedError), RO},
+        offsetof(connectionObject, exc_NotSupportedError), RO,
+        NotSupportedError_doc},
 #ifdef PSYCOPG_EXTENSIONS    
     {"closed", T_LONG, offsetof(connectionObject, closed), RO,
         "True if the connection is closed."},
@@ -347,9 +355,9 @@ connection_repr(connectionObject *self)
 #define connectionType_doc \
 "connection(dsn, ...) -> new connection object\n\n" \
 ":Groups:\n" \
-"  * `DBAPI-2.0 errors`: `Error`, `Warning`, `InterfaceError`,\n" \
-"    `DatabaseError`, `InternalError`, `OperationalError`,\n" \
-"    `ProgrammingError`, `IntegrityError`, `DataError`, `NotSupportedError`"
+"  * `DBAPI-2.0 errors`: Error, Warning, InterfaceError,\n" \
+"    DatabaseError, InternalError, OperationalError,\n" \
+"    ProgrammingError, IntegrityError, DataError, NotSupportedError"
 
 PyTypeObject connectionType = {
     PyObject_HEAD_INIT(NULL)

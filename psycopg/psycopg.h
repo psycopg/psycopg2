@@ -104,6 +104,37 @@ extern PyObject *decimalType;
 extern void psyco_set_error(PyObject *exc, PyObject *curs,  char *msg, 
                              char *pgerror, char *pgcode);
                                   
+/* Exceptions docstrings */
+#define Error_doc \
+"Base class for error exceptions."
+
+#define Warning_doc \
+"A database warning."
+
+#define InterfaceError_doc \
+"Error related to the database interface."
+
+#define DatabaseError_doc \
+"Error related to the database engine."
+
+#define InternalError_doc \
+"The database encountered an internal error."
+
+#define OperationalError_doc \
+"Error related to database operation (disconnect, memory allocation etc)."
+
+#define ProgrammingError_doc \
+"Error related to database programming (SQL error, table not found etc)."
+
+#define IntegrityError_doc \
+"Error related to database integrity."
+
+#define DataError_doc \
+"Error related to problems with the processed data."
+
+#define NotSupportedError_doc \
+"A not supported datbase API was called."
+
 #ifdef __cplusplus
 }
 #endif

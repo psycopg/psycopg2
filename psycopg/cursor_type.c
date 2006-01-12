@@ -1443,7 +1443,7 @@ cursor_repr(cursorObject *self)
 /* object type */
 
 #define cursorType_doc \
-"cursor(conn) -> new cursor object"
+"A database cursor."
 
 PyTypeObject cursorType = {
     PyObject_HEAD_INIT(NULL)

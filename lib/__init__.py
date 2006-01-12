@@ -1,10 +1,20 @@
 """A Python driver for PostgreSQL
 
-psycopg is a PostgreSQL database adapter for the Python programming
+psycopg is a PostgreSQL_ database adapter for the Python_ programming
 language. This is version 2, a complete rewrite of the original code to
 provide new-style classes for connection and cursor objects and other sweet
 candies. Like the original, psycopg 2 was written with the aim of being very
 small and fast, and stable as a rock.
+
+Homepage: http://initd.org/projects/psycopg2
+
+.. _PostgreSQL: http://www.postgresql.org/
+.. _Python: http://www.python.org/
+
+:Groups:
+  * `Connections creation`: connect
+  * `Value objects constructors`: Binary, Date, DateFromTicks, Time,
+    TimeFromTicks, Timestamp, TimestampFromTicks
 """
 # psycopg/__init__.py - initialization of the psycopg module
 #
@@ -58,3 +68,5 @@ from _psycopg import NotSupportedError, OperationalError
 
 from _psycopg import connect, apilevel, threadsafety, paramstyle
 from _psycopg import __version__
+
+__all__ = [ k for k in locals().keys() if not k.startswith('_') ]

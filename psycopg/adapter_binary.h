@@ -43,7 +43,8 @@ typedef struct {
     
 extern PyObject *psyco_Binary(PyObject *module, PyObject *args);
 #define psyco_Binary_doc \
-    "Binary(buffer) -> new binary object"
+    "Binary(buffer) -> new binary object\n\n" \
+    "Build an object capable to hold a bynary string value."
 
 #ifdef __cplusplus
 }
