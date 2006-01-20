@@ -23,3 +23,17 @@ the DBAPI-2.0 is available in the files located in the doc/ direcory.
 
 psycopg is free software ("free as in freedom" but I like beer too.)
 Licensing information is available in the LICENSE file.
+
+
+Contributors
+------------
+
+A short list of contributors to psycopg2 follows (if you feel you belong
+to this list and you can't find yourself here just drop me a mail):
+
+ * Kudos to piro for all the documentation work.
+
+ * Peter Fein contributed a logging connection/cursor class that even if it
+   was not used directly heavily influenced the implementation currently in
+   psycopg2.extras.
+   

@@ -17,10 +17,19 @@ and classes untill a better place in the distribution is found.
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
+import os
+import time
+
+try:
+    import logging
+except:
+    logging = None
+    
 from psycopg2.extensions import cursor as _cursor
 from psycopg2.extensions import connection as _connection
 from psycopg2.extensions import register_adapter as _RA
 from psycopg2.extensions import adapt as _A
+
 
 class DictConnection(_connection):
     """A connection that uses DictCursor automatically."""
@@ -118,3 +127,95 @@ class SQL_IN(object):
     __str__ = getquoted
     
 _RA(tuple, SQL_IN)
+
+    
+class LoggingConnection(_connection):
+    """A connection that logs all queries to a file or logger object."""
+
+    def initialize(self, logobj):
+        """Initialize the connection to log to `logobj`.
+        
+        The `logobj` parameter can be an open file object or a Logger instance
+        from the standard logging module.
+        """
+        self._logobj = logobj
+        if logging and isinstance(logobj, logging.Logger):
+            self.log = self._logtologger
+        else:
+            self.log = self._logtofile
+    
+    def filter(self, msg, curs):
+        """Filter the query before logging it.
+        
+        This is the method to overwrite to filter unwanted queries out of the
+        log or to add some extra data to the output. The default implementation
+        just does nothing.
+        """
+        return msg
+    
+    def _logtofile(self, msg, curs):
+        msg = self.filter(msg, curs)
+        if msg: self._logobj.write(msg + os.linesep)
+        
+    def _logtologger(self, msg, curs):
+        msg = self.filter(msg, curs)
+        if msg: self._logobj.debug(msg)
+    
+    def _check(self):
+        if not hasattr(self, '_logobj'):
+            raise self.ProgrammingError(
+                "LoggingConnection object has not been initialize()d")
+            
+    def cursor(self):
+        self._check()
+        return _connection.cursor(self, cursor_factory=LoggingCursor)
+    
+class LoggingCursor(_cursor):
+    """A cursor that logs queries using its connection logging facilities."""
+
+    def execute(self, query, vars=None, async=0):
+        try:
+            return _cursor.execute(self, query, vars, async)
+        finally:
+            self.connection.log(self.query, self)
+
+    def callproc(self, procname, vars=None):
+        try:
+            return _cursor.callproc(self, procname, vars)  
+        finally:
+            self.connection.log(self.query, self)
+
+            
+class MinTimeLoggingConnection(LoggingConnection):
+    """A connection that logs queries based on execution time.
+    
+    This is just an example of how to sub-class LoggingConnection to provide
+    some extra filtering for the logged queries. Both the `.inizialize()` and
+    `.filter()` methods are overwritten to make sure that only queries
+    executing for more than `mintime` ms are logged.
+    
+    Note that this connection uses the specialized cursor MinTimeLoggingCursor.
+    """
+    def initialize(self, logobj, mintime=0):
+        LoggingConnection.initialize(self, logobj)
+        self._mintime = mintime
+        
+    def filter(self, msg, curs):
+        t = (time.time() - curs.timestamp) * 1000
+        if t > self._mintime:
+            return msg + os.linesep + "  (execution time: %d ms)" % t
+
+    def cursor(self):
+        self._check()
+        return _connection.cursor(self, cursor_factory=MinTimeLoggingCursor)
+    
+class MinTimeLoggingCursor(LoggingCursor):
+    """The cursor sub-class companion to MinTimeLoggingConnection."""
+
+    def execute(self, query, vars=None, async=0):
+        self.timestamp = time.time()
+        return LoggingCursor.execute(self, query, vars, async)
+    
+    def callproc(self, procname, vars=None):
+        self.timestamp = time.time()
+        return LoggingCursor.execute(self, procname, var)
