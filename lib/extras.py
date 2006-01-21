@@ -117,7 +117,7 @@ class SQL_IN(object):
     
     def __init__(self, seq):
         self._seq = seq
-	
+
     def getquoted(self):
         # this is the important line: note how every object in the
         # list is adapted and then how getquoted() is called on it
