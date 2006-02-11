@@ -1,5 +1,7 @@
 2006-02-11  Federico Di Gregorio  <fog@initd.org>
 
+	* Release 2.0 beta 7.
+
 	* psycopg/psycopgmodule.c: applied fix for memory overflow in
 	connect() (reported by solt, #91.)
 
