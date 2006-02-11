@@ -1,5 +1,12 @@
 2006-02-11  Federico Di Gregorio  <fog@initd.org>
 
+	* Release 2.0 beta 8.
+
+	* psycopg/config.h: applied patch from Jason to fix handle leak on
+	win32, as documented in #92.
+
+2006-02-11  Federico Di Gregorio  <fog@initd.org>
+
 	* Release 2.0 beta 7.
 
 	* psycopg/psycopgmodule.c: applied fix for memory overflow in

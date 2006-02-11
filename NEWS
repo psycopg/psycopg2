@@ -1,3 +1,8 @@
+What's new in psycopg 2.0 beta 8
+--------------------------------
+
+* Fixed handle leak on win32.
+
 What's new in psycopg 2.0 beta 7
 --------------------------------
 

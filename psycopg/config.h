@@ -57,7 +57,7 @@ static void Dprintf(const char *fmt, ...) {}
 #define pthread_condvar_t HANDLE
 #define pthread_mutex_lock(object) WaitForSingleObject(object, INFINITE)
 #define pthread_mutex_unlock(object) ReleaseMutex(object)
-#define pthread_mutex_destroy(ref) (CloseHandle(ref))
+#define pthread_mutex_destroy(ref) (CloseHandle(*(ref)))
 /* convert pthread mutex to native mutex */
 static int pthread_mutex_init(pthread_mutex_t *mutex, void* fake)
 {
