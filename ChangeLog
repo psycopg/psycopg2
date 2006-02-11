@@ -1,6 +1,9 @@
 2006-02-11  Federico Di Gregorio  <fog@initd.org>
 
-	* setup.py: Applied patch from lbruno.
+	* psycopg/psycopgmodule.c: applied fix for memory overflow in
+	connect() (reported by solt, #91.)
+
+	* setup.py: applied patch from lbruno.
 
 2006-01-11  Federico Di Gregorio  <fog@initd.org>
 

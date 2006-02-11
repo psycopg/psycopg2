@@ -144,7 +144,7 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
 		PyOS_snprintf(port, 16, "%d", iport);
 		
     if (dsn == NULL) {
-        int l = 36;  /* len("dbname= user= password= host= port=\0") */
+        int l = 45;  /* len("dbname= user= password= host= port= sslmode=\0") */
 
         if (database) l += strlen(database);
         if (host) l += strlen(host);
