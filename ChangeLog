@@ -1,3 +1,7 @@
+2006-02-11  Federico Di Gregorio  <fog@initd.org>
+
+	* setup.py: Applied patch from lbruno.
+
 2006-01-11  Federico Di Gregorio  <fog@initd.org>
 
 	* setup.py: does not report an error in pg_config unless the pg_config

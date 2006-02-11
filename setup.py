@@ -123,8 +123,15 @@ class psycopg_build_ext(build_ext):
         self.libraries.append("ws2_32")
         self.libraries.append("advapi32")
         if self.get_compiler() == "msvc":
+            # MSVC requires an explicit "libpq"
+            self.libraries.remove("pq")
+            self.libraries.append("libpq")
             self.libraries.append("shfolder")
-
+            for path in self.library_dirs: 
+                if os.path.isfile(os.path.join(path, "ms", "libpq.lib")): 
+                    self.library_dirs.append(os.path.join(path, "ms")) 
+                    break
+ 
     def finalize_darwin(self):
         """Finalize build system configuration on darwin platform."""
         self.libraries.append('ssl')
