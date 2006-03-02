@@ -136,7 +136,7 @@ typecast_array_tokenize(char *str, int strlength,
         }
         
         *buffer = '\0';
-        *length = (int)buffer - (int)*token;
+        *length = buffer - *token;
     }
     else {
         *token = &str[*pos];
