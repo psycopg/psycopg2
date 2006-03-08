@@ -1,3 +1,7 @@
+2006-03-08  Federico Di Gregorio  <fog@initd.org>
+
+	* lib/extras.py: added .next() to DictCursot to support iteration.
+
 2006-03-02  Federico Di Gregorio  <fog@initd.org>
 
 	* psycopg/typecast_array.c (typecast_array_tokenize): removed cast

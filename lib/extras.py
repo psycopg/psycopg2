@@ -76,7 +76,14 @@ class DictCursor(_cursor):
         if self.__query_executed:
             self._build_index()
         return res
-        
+    
+    def next(self):
+        res = _cursor.fetchone(self)
+        if res is None:
+            raise StopIteration()
+        if self.__query_executed:
+            self._build_index()
+        return res
 
 class DictRow(list):
     """A row object that allow by-colun-name access to data."""
