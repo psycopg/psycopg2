@@ -37,12 +37,21 @@
 static PyObject *
 pboolean_str(pbooleanObject *self)
 {
+#ifdef PSYCOPG_NEW_BOOLEAN
+    if (PyObject_IsTrue(self->wrapped)) {
+        return PyString_FromString("true");
+    }
+    else {
+        return PyString_FromString("false");
+    }
+#else
     if (PyObject_IsTrue(self->wrapped)) {
         return PyString_FromString("'t'");
     }
     else {
         return PyString_FromString("'f'");
     }
+#endif
 }
 
 PyObject *

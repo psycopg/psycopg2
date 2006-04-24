@@ -1,3 +1,8 @@
+2006-04-24  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/adapter_pboolean.c: added the possibility to format boolean
+	values as "true" and "false" instead of "'t'" and "'f'".
+
 2006-03-08  Federico Di Gregorio  <fog@initd.org>
 
 	* lib/extras.py: added .next() to DictCursot to support iteration.
