@@ -92,7 +92,8 @@ class psycopg_build_ext(build_ext):
         self.use_pg_dll = 1
         self.pgdir = None
         self.pg_config = self.DEFAULT_PG_CONFIG
-    
+        self.mx_include_dir = None
+
     def get_pg_config(self, kind):
         p = popen2.popen3(self.pg_config + " --" + kind)
         r = p[0].readline().strip()
