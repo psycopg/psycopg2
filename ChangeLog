@@ -1,3 +1,11 @@
+2006-05-24  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/adapter_qstring.c: now quote using PQescapeStringConn if
+	available. 
+
+	* psycopg/adapter_binary.c: now quote using PQescapeByteaConn if
+	available. 
+
 2006-04-38  Federico Di Gregorio  <fog@initd.org>
 
 	* setup.py: fixed little problem with mx_include_dir as suggested

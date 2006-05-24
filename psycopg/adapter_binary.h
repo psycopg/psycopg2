@@ -36,7 +36,7 @@ typedef struct {
 
     PyObject *wrapped;
     PyObject *buffer;
-    char     *encoding;
+    PyObject *conn;
 } binaryObject;
 
 /* functions exported to psycopgmodule.c */

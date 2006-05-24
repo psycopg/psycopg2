@@ -30,16 +30,26 @@
 #include "psycopg/config.h"
 #include "psycopg/python.h"
 #include "psycopg/psycopg.h"
+#include "psycopg/connection.h"
 #include "psycopg/adapter_binary.h"
 #include "psycopg/microprotocols_proto.h"
 
 /** the quoting code */
 
 #ifndef PSYCOPG_OWN_QUOTING
-#define binary_escape PQescapeBytea
+static unsigned char *
+binary_escape(unsigned char *from, unsigned int from_length,
+               unsigned int *to_length, PGconn *conn)
+{
+    if (conn)
+        return PQescapeByteaConn(conn, from, from_length, to_length);
+    else
+        return PQescapeBytea(from, from_length, to_length);
+}
 #else
 static unsigned char *
-binary_escape(char *from, int from_length, int *to_length)
+binary_escape(unsigned char *from, unsigned int from_length,
+               unsigned int *to_length, PGconn *conn)
 {
     unsigneed char *quoted, *chptr, *newptr;
     int i, space, new_space;
@@ -71,7 +81,7 @@ binary_escape(char *from, int from_length, int *to_length)
         if (from[i]) {
             if (from[i] >= ' ' && from[i] <= '~') {
                 if (from[i] == '\'') {
-                    *chptr = '\\';
+                    *chptr = '\'';
                     chptr++;
                     *chptr = '\'';
                     chptr++;
@@ -127,7 +137,8 @@ binary_quote(binaryObject *self)
     if (PyString_Check(self->wrapped) || PyBuffer_Check(self->wrapped)) {
         /* escape and build quoted buffer */
         PyObject_AsCharBuffer(self->wrapped, &buffer, &buffer_len);
-        to = (char *)binary_escape((unsigned char*)buffer, buffer_len, &len);
+        to = (char *)binary_escape((unsigned char*)buffer, buffer_len, &len,
+                                   ((connectionObject*)self->conn)->pgconn);
         if (to == NULL) {
             PyErr_NoMemory();
             return NULL;
@@ -166,6 +177,24 @@ binary_getquoted(binaryObject *self, PyObject *args)
 }
 
 PyObject *
+binary_prepare(binaryObject *self, PyObject *args)
+{
+    connectionObject *conn;
+
+    if (!PyArg_ParseTuple(args, "O", &conn))
+        return NULL;
+
+    Py_XDECREF(self->conn);
+    if (conn) {
+        self->conn = (PyObject*)conn;
+        Py_INCREF(self->conn);
+    }
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+PyObject *
 binary_conform(binaryObject *self, PyObject *args)
 {
     PyObject *res, *proto;
@@ -196,6 +225,8 @@ static struct PyMemberDef binaryObject_members[] = {
 static PyMethodDef binaryObject_methods[] = {
     {"getquoted", (PyCFunction)binary_getquoted, METH_VARARGS,
      "getquoted() -> wrapped object value as SQL-quoted binary string"},
+    {"prepare", (PyCFunction)binary_prepare, METH_VARARGS,
+     "prepare(conn) -> prepare for binary encoding using conn"},
     {"__conform__", (PyCFunction)binary_conform, METH_VARARGS, NULL},
     {NULL}  /* Sentinel */
 };
@@ -209,6 +240,7 @@ binary_setup(binaryObject *self, PyObject *str)
             self, ((PyObject *)self)->ob_refcnt);
 
     self->buffer = NULL;
+    self->conn = NULL;
     self->wrapped = str;
     Py_INCREF(self->wrapped);
     
@@ -224,6 +256,7 @@ binary_dealloc(PyObject* obj)
 
     Py_XDECREF(self->wrapped);
     Py_XDECREF(self->buffer);
+    Py_XDECREF(self->conn);
     
     Dprintf("binary_dealloc: deleted binary object at %p, refcnt = %d",
             obj, obj->ob_refcnt);
