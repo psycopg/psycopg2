@@ -38,10 +38,19 @@
 /** the quoting code */
 
 #ifndef PSYCOPG_OWN_QUOTING
-#define qstring_escape PQescapeString
+static size_t
+qstring_escape(char *to, char *from, size_t len, PGconn *conn)
+{
+    int err = 0;
+
+    if (conn)
+        return PQescapeStringConn(conn, to, from, len, &err);
+    else
+        return PQescapeString(to, from, len);
+}
 #else
 static size_t
-qstring_escape(char *to, char *from, size_t len)
+qstring_escape(char *to, char *from, size_t len, PGconn *conn)
 {
     int i, j;
 
@@ -134,7 +143,8 @@ qstring_quote(qstringObject *self)
     }
 
     Py_BEGIN_ALLOW_THREADS;
-    len = qstring_escape(buffer+1, s, len);
+    len = qstring_escape(buffer+1, s, len,
+                         ((connectionObject*)self->conn)->pgconn);
     buffer[0] = '\'' ; buffer[len+1] = '\'';
     Py_END_ALLOW_THREADS;
     
@@ -179,7 +189,13 @@ qstring_prepare(qstringObject *self, PyObject *args)
         self->encoding = strdup(conn->encoding);
         Dprintf("qstring_prepare: set encoding to %s", conn->encoding);
     }
-    
+
+    Py_XDECREF(self->conn);
+    if (conn) {
+        self->conn = (PyObject*)conn;
+        Py_INCREF(self->conn);
+    }
+
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -217,7 +233,7 @@ static PyMethodDef qstringObject_methods[] = {
     {"getquoted", (PyCFunction)qstring_getquoted, METH_VARARGS,
      "getquoted() -> wrapped object value as SQL-quoted string"},
     {"prepare", (PyCFunction)qstring_prepare, METH_VARARGS,
-     "prepare(conn) -> set encoding to conn->encoding"},
+     "prepare(conn) -> set encoding to conn->encoding and store conn"},
     {"__conform__", (PyCFunction)qstring_conform, METH_VARARGS, NULL},
     {NULL}  /* Sentinel */
 };
@@ -231,6 +247,7 @@ qstring_setup(qstringObject *self, PyObject *str, char *enc)
             self, ((PyObject *)self)->ob_refcnt);
 
     self->buffer = NULL;
+    self->conn = NULL;
 
     /* FIXME: remove this orrible strdup */
     if (enc) self->encoding = strdup(enc);
@@ -250,6 +267,8 @@ qstring_dealloc(PyObject* obj)
 
     Py_XDECREF(self->wrapped);
     Py_XDECREF(self->buffer);
+    Py_XDECREF(self->conn);
+
     if (self->encoding) free(self->encoding);
     
     Dprintf("qstring_dealloc: deleted qstring object at %p, refcnt = %d",

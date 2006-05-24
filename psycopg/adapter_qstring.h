@@ -36,6 +36,8 @@ typedef struct {
     PyObject *wrapped;
     PyObject *buffer;
     char     *encoding;
+
+    PyObject *conn;
 } qstringObject;
     
 /* functions exported to psycopgmodule.c */
