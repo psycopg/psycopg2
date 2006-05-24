@@ -1,5 +1,8 @@
 2006-05-24  Federico Di Gregorio  <fog@initd.org>
 
+	* Enabled 8.1.4 security fix only when the version is >= 8.1.4, fall
+	back to old code otherwise.
+	
 	* psycopg/adapter_qstring.c: now quote using PQescapeStringConn if
 	available. 
 

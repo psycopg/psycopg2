@@ -61,6 +61,13 @@ if sys.version < '2.2.3':
     DistributionMetadata.classifiers = None
     DistributionMetadata.download_url = None
 
+def get_pg_config(kind, pg_config="pg_config"):
+    p = popen2.popen3(pg_config + " --" + kind)
+    r = p[0].readline().strip()
+    if not r:
+        raise Warning(p[2].readline())
+    return r
+    
 class psycopg_build_ext(build_ext):
     """Conditionally complement the setup.cfg options file.
     
@@ -93,13 +100,6 @@ class psycopg_build_ext(build_ext):
         self.pgdir = None
         self.pg_config = self.DEFAULT_PG_CONFIG
         self.mx_include_dir = None
-
-    def get_pg_config(self, kind):
-        p = popen2.popen3(self.pg_config + " --" + kind)
-        r = p[0].readline().strip()
-        if not r:
-            raise Warning(p[2].readline())
-        return r
     
     def get_compiler(self):
         """Return the c compiler to compile extensions.
@@ -108,6 +108,9 @@ class psycopg_build_ext(build_ext):
         example), fall back on the default compiler.
         """
         return self.compiler or get_default_compiler()
+
+    def get_pg_config(self, kind):
+        return get_pg_config(kind, self.pg_config)
 
     def build_extensions(self):
         # Linking against this library causes psycopg2 to crash 
@@ -149,6 +152,17 @@ class psycopg_build_ext(build_ext):
             self.library_dirs.append(self.get_pg_config("libdir"))
             self.include_dirs.append(self.get_pg_config("includedir"))
             self.include_dirs.append(self.get_pg_config("includedir-server"))
+            try:
+                # Here we take a conservative approach: we suppose that
+                # *at least* PostgreSQL 7.4 is available (this is the only
+                # 7.x series supported by psycopg 2)
+                pgversion = self.get_pg_config("version").split()[1]
+                pgmajor, pgminor, pgpatch = pgversion.split('.')
+            except:
+                pgmajor, pgminor, pgpatch = 7, 4, 0
+            define_macros.append(("PG_MAJOR_VERSION", pgmajor))
+            define_macros.append(("PG_MINOR_VERSION", pgminor))
+            define_macros.append(("PG_PATCH_VERSION", pgpatch))
         except Warning, w:
             if self.pg_config == self.DEFAULT_PG_CONFIG:
                 sys.stderr.write("Warning: %s" % str(w))

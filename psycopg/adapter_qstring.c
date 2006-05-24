@@ -42,10 +42,11 @@ static size_t
 qstring_escape(char *to, char *from, size_t len, PGconn *conn)
 {
     int err = 0;
-
+#if PG_MAJOR_VERSION >= 8 && PG_MINOR_VERSION >= 1 && PG_PATCH_VERSION >= 4
     if (conn)
         return PQescapeStringConn(conn, to, from, len, &err);
     else
+#endif
         return PQescapeString(to, from, len);
 }
 #else
