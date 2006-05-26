@@ -41,12 +41,14 @@ static unsigned char *
 binary_escape(unsigned char *from, unsigned int from_length,
                unsigned int *to_length, PGconn *conn)
 {
-#if PG_MAJOR_VERSION >= 8 && PG_MINOR_VERSION >= 1 && PG_PATCH_VERSION >= 4    
-    if (conn)
-        return PQescapeByteaConn(conn, from, from_length, to_length);
-    else
+#if PG_MAJOR_VERSION > 8 || \
+ (PG_MAJOR_VERSION == 8 && PG_MINOR_VERSION > 1) || \
+ (PG_MAJOR_VERSION == 8 && PG_MINOR_VERSION == 1 && PG_PATCH_VERSION >= 4)
+    return PQescapeByteaConn(conn, from, from_length, to_length);
+#else
+#warning "YOUR POSTGRESQL VERSION IS TOO OLD AND IT CAN BE INSECURE"
+    return PQescapeBytea(from, from_length, to_length);
 #endif
-        return PQescapeBytea(from, from_length, to_length);
 }
 #else
 static unsigned char *

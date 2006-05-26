@@ -1,3 +1,7 @@
+2006-05-26  Federico Di Gregorio  <fog@initd.org>
+
+	* Applied better PostgreSQL patch from AA.
+
 2006-05-24  Federico Di Gregorio  <fog@initd.org>
 
 	* Enabled 8.1.4 security fix only when the version is >= 8.1.4, fall
