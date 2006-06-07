@@ -144,11 +144,12 @@ class Connection(Shared.DC.ZRDB.Connection.Connection):
 
     ## browsing and table/column management ##
 
-    manage_options = Shared.DC.ZRDB.Connection.Connection.manage_options + (
-        {'label': 'Browse', 'action':'manage_browse'},)
+    manage_options = Shared.DC.ZRDB.Connection.Connection.manage_options
+    # + (
+    #    {'label': 'Browse', 'action':'manage_browse'},)
 
-    manage_tables = HTMLFile('dtml/tables', globals())
-    manage_browse = HTMLFile('dtml/browse', globals())
+    #manage_tables = HTMLFile('dtml/tables', globals())
+    #manage_browse = HTMLFile('dtml/browse', globals())
 
     info = None
     

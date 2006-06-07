@@ -1,3 +1,8 @@
+2006-06-08  Federico Di Gregorio  <fog@initd.org>
+
+	* ZPsycopgDA/DA.py: removed Browse table for 2.0 release; we'll
+	add it back later.
+
 2006-05-26  Federico Di Gregorio  <fog@initd.org>
 
 	* Applied better PostgreSQL patch from AA.
