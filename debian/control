@@ -8,7 +8,7 @@ Standards-Version: 3.6.1.1
 Package: python-psycopg2
 Architecture: any
 Section: python
-Depends: python (>= 2.3), python (<< 2.4), python2.3-psycopg
+Depends: python (>= 2.3), python (<< 2.4), python2.3-psycopg2
 Description: Python module for PostgreSQL [dummy package]
  psycopg is a PostgreSQL database adapter for the Python programming
  language. It was written from scratch with the aim of being very small
