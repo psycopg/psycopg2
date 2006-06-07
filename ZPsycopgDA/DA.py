@@ -18,11 +18,12 @@
 # See the LICENSE file for details.
 
 
-ALLOWED_PSYCOPG_VERSIONS = ('2.0b4', '2.0b5', '2.0b6', '2.0b7', '2.0b8')
+ALLOWED_PSYCOPG_VERSIONS = ('2.0',)
 
 import sys
 import time
 import db
+import re
 
 import Acquisition
 import Shared.DC.ZRDB.Connection
@@ -62,10 +63,10 @@ class Connection(Shared.DC.ZRDB.Connection.Connection):
     """ZPsycopg Connection."""
     _isAnSQLConnection = 1
     
-    id                = 'Psycopg_database_connection' 
-    database_type     = 'Psycopg'
-    meta_type = title = 'Z Psycopg Database Connection'
-    icon              = 'misc_/ZPsycopgDA/conn'
+    id                = 'Psycopg2_database_connection' 
+    database_type     = 'Psycopg2'
+    meta_type = title = 'Z Psycopg 2 Database Connection'
+    icon              = 'misc_/conn'
 
     def __init__(self, id, title, connection_string,
                  zdatetime, check=None, tilevel=2, encoding=''):
@@ -185,7 +186,7 @@ class Connection(Shared.DC.ZRDB.Connection.Connection):
 
 classes = (Connection,)
 
-meta_types = ({'name':'Z Psycopg Database Connection',
+meta_types = ({'name':'Z Psycopg 2 Database Connection',
                'action':'manage_addZPsycopgConnectionForm'},)
 
 folder_methods = {
@@ -208,35 +209,37 @@ for icon in ('table', 'view', 'stable', 'what', 'field', 'text', 'bin',
 ## zope-specific psycopg typecasters ##
 
 # convert an ISO timestamp string from postgres to a Zope DateTime object
-def _cast_DateTime(str, curs):
-    if str:
-        # this will split us into [date, time, GMT/AM/PM(if there)]
-        dt = str.split(' ')
-        if len(dt) > 1:
-            # we now should split out any timezone info
-            dt[1] = dt[1].split('-')[0]
-            dt[1] = dt[1].split('+')[0]
-            return DateTime(' '.join(dt[:2]))
-        else:
-            return DateTime(dt[0])
+def _cast_DateTime(iso, curs):
+    if iso:
+        return DateTime(re.split("GMT\+?|GMT-?", iso)[0])
+	
+    # this will split us into [date, time, GMT/AM/PM(if there)]
+    #    dt = str.split(' ')
+    #    if len(dt) > 1:
+    #        # we now should split out any timezone info
+    #        dt[1] = dt[1].split('-')[0]
+    #        dt[1] = dt[1].split('+')[0]
+    #        return DateTime(' '.join(dt[:2]))
+    #    else:
+    #        return DateTime(dt[0])
 
 # convert an ISO date string from postgres to a Zope DateTime object
-def _cast_Date(str, curs):
-    if str:
-        return DateTime(str)
+def _cast_Date(iso, curs):
+    if iso:
+        return DateTime(iso)
 
 # Convert a time string from postgres to a Zope DateTime object.
 # NOTE: we set the day as today before feeding to DateTime so
 # that it has the same DST settings.
-def _cast_Time(str, curs):
-    if str:
+def _cast_Time(iso, curs):
+    if iso:
         return DateTime(time.strftime('%Y-%m-%d %H:%M:%S',
                                       time.localtime(time.time())[:3]+
-                                      time.strptime(str[:8], "%H:%M:%S")[3:]))
+                                      time.strptime(iso[:8], "%H:%M:%S")[3:]))
 
 # TODO: DateTime does not support intervals: what's the best we can do?
-def _cast_Interval(str, curs):
-    return str
+def _cast_Interval(iso, curs):
+    return iso
 
 ZDATETIME = new_type((1184, 1114), "ZDATETIME", _cast_DateTime)
 ZINTERVAL = new_type((1186,), "ZINTERVAL", _cast_Interval)

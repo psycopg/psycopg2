@@ -1,13 +1,13 @@
 <dtml-var manage_page_header>
 
 <dtml-var "manage_form_title(this(), _,
-           form_title='Add Z Psycopg Database Connection',
+           form_title='Add Z Psycopg 2 Database Connection',
            help_product='ZPsycopgDA',
            help_topic='ZPsycopgDA-Method-Add.stx'
            )">
 
 <p class="form-help">
-A Zope Psycopg Database Connection is used to connect and execute
+A Zope Psycopg 2 Database Connection is used to connect and execute
 queries on a PostgreSQL database.
 </p>
 
@@ -26,7 +26,7 @@ or DSN for short) is a string... (TODO: finish docs)
     </td>
     <td align="left" valign="top">
     <input type="text" name="id" size="40"
-           value="Psycopg_database_connection" />
+           value="Psycopg2_database_connection" />
     </td>
   </tr>
   <tr>
@@ -37,7 +37,7 @@ or DSN for short) is a string... (TODO: finish docs)
     </td>
     <td align="left" valign="top">
     <input type="text" name="title" size="40"
-        value="Z Psycopg Database Connection"/>
+        value="Z Psycopg 2 Database Connection"/>
     </td>
   </tr>
   <tr>

@@ -22,20 +22,10 @@ __version__ = '2.0'
 
 import DA
 
-methods    = DA.folder_methods
-classes    = DA.classes
-meta_types = DA.meta_types
-misc_      = DA.misc_
-
-__ac_permissions__ = DA.__ac_permissions__
-
-# FIXME: isn't this crazy? Apparently the variables above are enough
-#        to have the ZPsycopgDA product installed and working. :/
-#
-#def initialize(context):
-#    context.registerClass(
-#        DA.Connection,
-#        permission = 'Add Z Psycopg 2 Database Connections',
-#        constructors = (DA.manage_addZPsycopgConnectionForm,
-#                        DA.manage_addZPsycopgConnection),
-#        icon = SOFTWARE_HOME + '/Shared/DC/ZRDB/www/DBAdapterFolder_icon.gif')
+def initialize(context):
+    context.registerClass(
+        DA.Connection,
+        permission = 'Add Z Psycopg 2 Database Connections',
+        constructors = (DA.manage_addZPsycopgConnectionForm,
+                        DA.manage_addZPsycopgConnection),
+        icon = SOFTWARE_HOME + '/Shared/DC/ZRDB/www/DBAdapterFolder_icon.gif')
