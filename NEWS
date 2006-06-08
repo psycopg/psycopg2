@@ -1,7 +1,13 @@
-What's new in psycopg 2.0 beta 8
---------------------------------
+What's new in psycopg 2.0
+-------------------------
 
 * Fixed handle leak on win32.
+
+* If available the new "safe" encoding functions of libpq are used.
+
+* django and tinyerp people, please switch to psycopg 2 _without_
+  using a psycopg 1 compatibility layer (this release was anticipated
+  so that you all stop grumbling about psycopg 2 is still in beta.. :)
 
 What's new in psycopg 2.0 beta 7
 --------------------------------

@@ -134,13 +134,11 @@ class Connection(Shared.DC.ZRDB.Connection.Connection):
             register_type(ZDATETIME)
             register_type(ZDATE)
             register_type(ZTIME)
-            register_type(ZINTERVAL)
         else:
             # use the standard
             register_type(DATETIME)
             register_type(DATE)
             register_type(TIME)
-            register_type(INTERVAL)
 
     ## browsing and table/column management ##
 
@@ -238,7 +236,8 @@ def _cast_Time(iso, curs):
                                       time.localtime(time.time())[:3]+
                                       time.strptime(iso[:8], "%H:%M:%S")[3:]))
 
-# TODO: DateTime does not support intervals: what's the best we can do?
+# NOTE: we don't cast intervals anymore because they are passed
+# untouched to Zope.
 def _cast_Interval(iso, curs):
     return iso
 

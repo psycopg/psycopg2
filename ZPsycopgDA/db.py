@@ -105,7 +105,8 @@ class DB(TM, dbi_db.DB):
             elif typ == ROWID:
                 typs = 'i'
                 typp = ROWID
-            elif typ == DATETIME or typ == DATE:
+	    # FIXME: shouldn't DATETIME include other types?
+            elif typ == DATETIME or typ == DATE or typ == TIME:
                 typs = 'd'
                 typp = DATETIME
             else:
