@@ -26,7 +26,7 @@ import site
 import pool
 
 import psycopg2
-from psycopg2.extensions import INTEGER, LONGINTEGER, FLOAT, BOOLEAN, DATE
+from psycopg2.extensions import INTEGER, LONGINTEGER, FLOAT, BOOLEAN, DATE, TIME
 from psycopg2 import NUMBER, STRING, ROWID, DATETIME 
 
 

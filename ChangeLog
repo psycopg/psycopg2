@@ -1,4 +1,6 @@
 2006-06-08  Federico Di Gregorio  <fog@initd.org>
+	
+	* Release 2.0.
 
 	* ZPsycopgDA/DA.py: removed Browse table for 2.0 release; we'll
 	add it back later.
