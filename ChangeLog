@@ -1,3 +1,10 @@
+2006-06-09  Federico Di Gregorio  <fog@initd.org>
+
+        * Release 2.0.1.
+
+	* Fixed some buglets in ZPsycopgDA (was unable to load due
+	to shorter version number in psycopg module.)
+
 2006-06-08  Federico Di Gregorio  <fog@initd.org>
 	
 	* Release 2.0.
