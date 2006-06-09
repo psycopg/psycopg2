@@ -1,3 +1,8 @@
+What's new in psycopg 2.0.1
+---------------------------
+
+* ZPsycopgDA now actually loads.
+
 What's new in psycopg 2.0
 -------------------------
 
