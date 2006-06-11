@@ -891,6 +891,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
 
     if(parameters && parameters != Py_None) {
         nparameters = PyObject_Length(parameters);
+	if (nparameters < 0) nparameters = 0;
     }
 
     /* allocate some memory, build the SQL and create a PyString from it */
