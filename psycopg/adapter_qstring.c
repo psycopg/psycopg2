@@ -47,7 +47,9 @@ qstring_escape(char *to, char *from, size_t len, PGconn *conn)
     int err;
     return PQescapeStringConn(conn, to, from, len, &err);
 #else
+#ifdef __GNUC__
 #warning "YOUR POSTGRESQL VERSION IS TOO OLD AND IT CAN BE INSECURE"
+#endif
     return PQescapeString(to, from, len);
 #endif
 }

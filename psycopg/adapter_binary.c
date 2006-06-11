@@ -46,7 +46,9 @@ binary_escape(unsigned char *from, unsigned int from_length,
  (PG_MAJOR_VERSION == 8 && PG_MINOR_VERSION == 1 && PG_PATCH_VERSION >= 4)
     return PQescapeByteaConn(conn, from, from_length, to_length);
 #else
+#ifdef __GNUC__
 #warning "YOUR POSTGRESQL VERSION IS TOO OLD AND IT CAN BE INSECURE"
+#endif
     return PQescapeBytea(from, from_length, to_length);
 #endif
 }

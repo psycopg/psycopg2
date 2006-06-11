@@ -1,14 +1,20 @@
 2006-06-11  Federico Di Gregorio  <fog@initd.org>
 
-	* Applied patch to adapt an empty list into an empty array
-	and not to NULL (from iGGy, closes: #108).
+	* psycopg/adapter_binary.c: as below.
 
-	* Applied patch from wkv to avoid under-allocating query
-	space when the parameters are not of the right type
-	(Closes: #110).
+	* psycopg/adapter_qstring.c: wrapped #warning in #ifdef __GCC__
+	because other compilers don't have it and it will just break
+	compilation (patch from jason, our great win32 builder).
 
-	* Applied patch from wkv to avoid off by one allocation of
-	connection encoding string (Closes: #109).
+	* psycopg/adapter_list.c: applied patch to adapt an empty list
+	into an empty array and not to NULL (from iGGy, closes: #108).
+
+	* psycopg/cursor_type.c: applied patch from wkv to avoid
+	under-allocating query space when the parameters are not of the
+	right type (Closes: #110).
+
+	* psycopg/connection_int.c: applied patch from wkv to avoid off 
+	by one allocation of connection encoding string (Closes: #109).
 
 2006-06-09  Federico Di Gregorio  <fog@initd.org>
 
