@@ -1,5 +1,8 @@
 2006-06-11  Federico Di Gregorio  <fog@initd.org>
 
+	* Applied patch to adapt an empty list into an empty array
+	and not to NULL (from iGGy, closes: #108).
+
 	* Applied patch from wkv to avoid under-allocating query
 	space when the parameters are not of the right type
 	(Closes: #110).
