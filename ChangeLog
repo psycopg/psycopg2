@@ -1,3 +1,8 @@
+2006-06-11  Federico Di Gregorio  <fog@initd.org>
+
+	* Applied patch from wkv to avoid off by one allocation of
+	connection encoding string (Closes: #109).
+
 2006-06-09  Federico Di Gregorio  <fog@initd.org>
 
         * Release 2.0.1.
