@@ -1,5 +1,9 @@
 2006-06-11  Federico Di Gregorio  <fog@initd.org>
 
+	* psycopg/typecast_array.c (typecast_array_cleanup): fixed a
+	problem with typecast_array_cleanup always returning the new
+	string length shorter by 1 (Closes: #93).
+
 	* psycopg/adapter_binary.c: as below.
 
 	* psycopg/adapter_qstring.c: wrapped #warning in #ifdef __GCC__

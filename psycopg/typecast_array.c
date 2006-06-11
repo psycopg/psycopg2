@@ -39,7 +39,7 @@ typecast_array_cleanup(char **str, int *len)
     if ((*str)[i] != '=') return -1;
     
     *str = &((*str)[i+1]);
-    *len = *len - i - 2;
+    *len = *len - i - 1;
     return 0;
 }
 
@@ -217,7 +217,9 @@ typecast_GENERIC_ARRAY_cast(char *str, int len, PyObject *curs)
 {
     PyObject *obj = NULL;
     PyObject *base = ((typecastObject*)((cursorObject*)curs)->caster)->bcast;
-    
+   
+    Dprintf("typecast_GENERIC_ARRAY_cast: str = '%s', len = %d", str, len);
+
     if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
     if (str[0] == '[')
         typecast_array_cleanup(&str, &len);
@@ -226,7 +228,7 @@ typecast_GENERIC_ARRAY_cast(char *str, int len, PyObject *curs)
         return NULL;
     }
 
-    Dprintf("typecast_GENERIC_ARRAY_cast: scanning %s", str);
+    Dprintf("typecast_GENERIC_ARRAY_cast: str = '%s', len = %d", str, len);
     
     obj = PyList_New(0);
 
