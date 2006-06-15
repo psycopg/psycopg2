@@ -1,3 +1,13 @@
+2006-06-15  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/typecast_basic.c: fixed problem with bogus
+	conversion when importing gtk (that was crazy, I didn't
+	understand why it happened but the new code just fixes it.)
+
+	* ZPsycopgDA/db.py: better type analisys, using an hash
+	instead of a series of if (variation on patch from Charlie
+	Clark.)
+
 2006-06-11  Federico Di Gregorio  <fog@initd.org>
 
 	* Release 2.0.2.
