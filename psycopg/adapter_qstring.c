@@ -45,13 +45,11 @@ qstring_escape(char *to, char *from, size_t len, PGconn *conn)
  (PG_MAJOR_VERSION == 8 && PG_MINOR_VERSION > 1) || \
  (PG_MAJOR_VERSION == 8 && PG_MINOR_VERSION == 1 && PG_PATCH_VERSION >= 4)
     int err;
-    return PQescapeStringConn(conn, to, from, len, &err);
-#else
-#ifdef __GNUC__
-#warning "YOUR POSTGRESQL VERSION IS TOO OLD AND IT CAN BE INSECURE"
+    if (conn)
+        return PQescapeStringConn(conn, to, from, len, &err);
+    else
 #endif
-    return PQescapeString(to, from, len);
-#endif
+        return PQescapeString(to, from, len);
 }
 #else
 static size_t
@@ -149,7 +147,7 @@ qstring_quote(qstringObject *self)
 
     Py_BEGIN_ALLOW_THREADS;
     len = qstring_escape(buffer+1, s, len,
-                         ((connectionObject*)self->conn)->pgconn);
+        self->conn ? ((connectionObject*)self->conn)->pgconn : NULL);
     buffer[0] = '\'' ; buffer[len+1] = '\'';
     Py_END_ALLOW_THREADS;
     
