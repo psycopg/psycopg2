@@ -1,3 +1,9 @@
+2006-07-26  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/adapter_datetime.c (pydatetime_str): fixed error
+	in conversion of microseconds for intervals and better algo
+	(thanks to Mario Frasca.)
+
 2006-06-18  Federico Di Gregorio  <fog@initd.org>
 
 	* psycopg/adapter_binary.c: same as below.
