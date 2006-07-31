@@ -1,5 +1,7 @@
 2006-07-31  Federico Di Gregorio  <fog@initd.org>
 
+	* Release 2.0.3.
+
 	* psycopg/cursor_type.c: applied patch from jbellis (#113) to
 	allow column selection in .copy_from().
 

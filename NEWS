@@ -1,3 +1,8 @@
+What's new in psycopg 2.0.3
+---------------------------
+
+* Fixed various buglets and a memory leak (see ChangeLog for details)
+
 What's new in psycopg 2.0.2
 ---------------------------
 
