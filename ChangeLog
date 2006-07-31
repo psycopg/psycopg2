@@ -1,3 +1,8 @@
+2006-07-31  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/psycopgmodule.c: fixed memory leak in custom exceptions
+	(applied patch from #114).
+
 2006-07-26  Federico Di Gregorio  <fog@initd.org>
 
 	* psycopg/adapter_datetime.c (pydatetime_str): fixed error

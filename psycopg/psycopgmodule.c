@@ -429,6 +429,7 @@ psyco_set_error(PyObject *exc, PyObject *curs, char *msg,
             PyObject_SetAttrString(err, "cursor", Py_None);
 
         PyErr_SetObject(exc, err);
+	Py_DECREF(err);
     }
 } 
 
