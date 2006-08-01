@@ -1,3 +1,10 @@
+2006-08-02  Federico Di Gregorio  <fog@initd.org>
+
+	* Release 2.0.4.
+
+	* Fixed bug in float conversion (check for NULL string was
+	erroneously removed in 2.0.3!)
+
 2006-07-31  Federico Di Gregorio  <fog@initd.org>
 
 	* Release 2.0.3.

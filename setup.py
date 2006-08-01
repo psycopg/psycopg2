@@ -52,7 +52,7 @@ from distutils.command.build_ext import build_ext
 from distutils.sysconfig import get_python_inc
 from distutils.ccompiler import get_default_compiler
 
-PSYCOPG_VERSION = '2.0.3'
+PSYCOPG_VERSION = '2.0.4'
 version_flags   = []
 
 # to work around older distutil limitations

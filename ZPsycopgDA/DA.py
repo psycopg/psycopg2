@@ -18,7 +18,7 @@
 # See the LICENSE file for details.
 
 
-ALLOWED_PSYCOPG_VERSIONS = ('2.0.1', '2.0.2', '2.0.3')
+ALLOWED_PSYCOPG_VERSIONS = ('2.0.1', '2.0.2', '2.0.3', '2.0.4')
 
 import sys
 import time
