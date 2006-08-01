@@ -1,3 +1,8 @@
+What's new in psycopg 2.0.4
+---------------------------
+
+* Fixed float conversion bug introduced in 2.0.3.
+
 What's new in psycopg 2.0.3
 ---------------------------
 
