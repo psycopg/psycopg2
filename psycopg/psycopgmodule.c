@@ -118,6 +118,8 @@ _psyco_connect_fill_exc(connectionObject *conn)
     Py_INCREF(DataError);
     conn->exc_NotSupportedError = NotSupportedError;
     Py_INCREF(NotSupportedError);
+    conn->exc_OperationalError = OperationalError;
+    Py_INCREF(OperationalError);
 }
 
 static PyObject *

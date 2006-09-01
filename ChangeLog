@@ -2,6 +2,9 @@
 
 	* Preparing release 2.0.5.
 
+	* psycopg/psycopgmodule.c: fixed filling of connection errors
+	to include OperationalError.
+
 	* setup.py: removed pydatetime option from initialize_options
 	to make sure that the value in setup.cfg is used.
 
