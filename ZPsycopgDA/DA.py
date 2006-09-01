@@ -30,10 +30,20 @@ import Shared.DC.ZRDB.Connection
 
 from db import DB
 from Globals import HTMLFile
-from ImageFile import ImageFile
 from ExtensionClass import Base
 from App.Dialogs import MessageDialog
 from DateTime import DateTime
+
+# Build Zope version in a float for later cheks
+import App
+zope_version = App.version_txt.getZopeVersion()
+zope_version = float("%s.%s" %(zope_version[:2]))
+
+# ImageFile is deprecated in Zope >= 2.9
+if zope_version < 2.9:
+     from ImageFile import ImageFile
+else:
+     from App.ImageFile import ImageFile 
 
 # import psycopg and functions/singletons needed for date/time conversions
 
