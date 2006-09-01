@@ -95,7 +95,6 @@ class psycopg_build_ext(build_ext):
     
     def initialize_options(self):
         build_ext.initialize_options(self)
-        self.use_pydatetime = 1
         self.use_pg_dll = 1
         self.pgdir = None
         self.pg_config = self.DEFAULT_PG_CONFIG

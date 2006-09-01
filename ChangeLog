@@ -1,5 +1,8 @@
 2006-09-01  Federico Di Gregorio  <fog@initd.org>
 
+	* setup.py: removed pydatetime option from initialize_options
+	to make sure that the value in setup.cfg is used.
+
 	* psycopg/psycopgmodule.c: applied patch from jdahlin (#120)
 	to have .connect() accept either a string or int as the port
 	parameter.
