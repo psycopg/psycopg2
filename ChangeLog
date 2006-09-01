@@ -1,5 +1,8 @@
 2006-09-01  Federico Di Gregorio  <fog@initd.org>
 
+	* psycopg/cursor_type.c: applied patch from intgr (#116) to
+	fix bad keyword naming and segfault in .executemany().
+
 	* ZPsycopgDA/DA.py: applied ImageFile patch from Charlie
 	Clark.
 

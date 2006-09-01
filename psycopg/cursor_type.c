@@ -434,7 +434,7 @@ psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
 }
 
 #define psyco_curs_executemany_doc \
-"executemany(query, vars_list=(), async=0) -- Execute many queries with bound vars."
+"executemany(query, vars_list) -- Execute many queries with bound vars."
 
 static PyObject *
 psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
@@ -442,9 +442,9 @@ psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
     PyObject *operation = NULL, *vars = NULL;
     PyObject *v, *iter = NULL;
     
-    static char *kwlist[] = {"query", "vars", NULL};
+    static char *kwlist[] = {"query", "vars_list", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|O", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO", kwlist,
                                      &operation, &vars)) {
         return NULL;
     }
