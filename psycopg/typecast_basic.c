@@ -54,11 +54,12 @@ typecast_LONGINTEGER_cast(char *s, int len, PyObject *curs)
 static PyObject *
 typecast_FLOAT_cast(char *s, int len, PyObject *curs)
 {
+    PyObject *str = NULL, *flo = NULL;
     char *pend;
     
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
-    PyObject *str = PyString_FromStringAndSize(s, len);
-    PyObject *flo = PyFloat_FromString(str, &pend);
+    str = PyString_FromStringAndSize(s, len);
+    flo = PyFloat_FromString(str, &pend);
     Py_DECREF(str);
     return flo;
 }
