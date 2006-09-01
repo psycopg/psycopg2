@@ -1,5 +1,7 @@
 2006-09-01  Federico Di Gregorio  <fog@initd.org>
 
+	* Preparing release 2.0.5.
+
 	* setup.py: removed pydatetime option from initialize_options
 	to make sure that the value in setup.cfg is used.
 
