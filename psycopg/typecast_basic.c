@@ -54,15 +54,14 @@ typecast_LONGINTEGER_cast(char *s, int len, PyObject *curs)
 static PyObject *
 typecast_FLOAT_cast(char *s, int len, PyObject *curs)
 {
-    /* FIXME: is 64 large enough for any float? */
-    char buffer[64];
+    PyObject *str = NULL, *flo = NULL;
+    char *pend;
     
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
-    if (s[len] != '\0') {
-        strncpy(buffer, s, len); buffer[len] = '\0';
-        s = buffer;
-    }
-    return PyFloat_FromDouble(atof(s));
+    str = PyString_FromStringAndSize(s, len);
+    flo = PyFloat_FromString(str, &pend);
+    Py_DECREF(str);
+    return flo;
 }
 
 /** STRING - cast strings of any type to python string **/

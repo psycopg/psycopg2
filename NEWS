@@ -1,3 +1,29 @@
+What's new in psycopg 2.0.4
+---------------------------
+
+* Fixed float conversion bug introduced in 2.0.3.
+
+What's new in psycopg 2.0.3
+---------------------------
+
+* Fixed various buglets and a memory leak (see ChangeLog for details)
+
+What's new in psycopg 2.0.2
+---------------------------
+
+* Fixed a bug in array typecasting that sometimes made psycopg forget about
+  the last element in the array.
+
+* Fixed some minor buglets in string memory allocations.
+
+* Builds again with compilers different from gcc (#warning about PostgreSQL
+  version is issued only if __GCC__ is defined.)
+
+What's new in psycopg 2.0.1
+---------------------------
+
+* ZPsycopgDA now actually loads.
+
 What's new in psycopg 2.0
 -------------------------
 

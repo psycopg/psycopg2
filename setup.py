@@ -52,7 +52,7 @@ from distutils.command.build_ext import build_ext
 from distutils.sysconfig import get_python_inc
 from distutils.ccompiler import get_default_compiler
 
-PSYCOPG_VERSION = '2.0'
+PSYCOPG_VERSION = '2.0.5'
 version_flags   = []
 
 # to work around older distutil limitations
@@ -95,7 +95,6 @@ class psycopg_build_ext(build_ext):
     
     def initialize_options(self):
         build_ext.initialize_options(self)
-        self.use_pydatetime = 1
         self.use_pg_dll = 1
         self.pgdir = None
         self.pg_config = self.DEFAULT_PG_CONFIG

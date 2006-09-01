@@ -85,7 +85,7 @@ pq_raise(connectionObject *conn, cursorObject *curs, PyObject *exc, char *msg)
 #ifdef HAVE_PQPROTOCOL3
                 char *pgstate =
                     PQresultErrorField(curs->pgres, PG_DIAG_SQLSTATE);
-                if (!strncmp(pgstate, "23", 2))
+                if (pgstate != NULL && !strncmp(pgstate, "23", 2))
                     exc = IntegrityError;
                 else
                     exc = ProgrammingError;

@@ -64,15 +64,14 @@ pydatetime_str(pydatetimeObject *self)
         PyDateTime_Delta *obj = (PyDateTime_Delta*)self->wrapped;
         
         char buffer[8];
-        int i, j, x;
+        int i;
         int a = obj->microseconds;
         
-        for (i=1000000, j=0; i > 0 ; i /= 10) {
-            x = a/i;
-            a -= x*i;
-            buffer[j++] = '0'+x;
+        for (i=0; i < 6 ; i++) {
+            buffer[5-i] = '0' + (a % 10);
+            a /= 10;
         }
-        buffer[j] = '\0';
+        buffer[6] = '\0';
 
         return PyString_FromFormat("'%d days %d.%s seconds'",
                                    obj->days, obj->seconds, buffer);

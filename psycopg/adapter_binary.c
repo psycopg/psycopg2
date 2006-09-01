@@ -44,11 +44,11 @@ binary_escape(unsigned char *from, unsigned int from_length,
 #if PG_MAJOR_VERSION > 8 || \
  (PG_MAJOR_VERSION == 8 && PG_MINOR_VERSION > 1) || \
  (PG_MAJOR_VERSION == 8 && PG_MINOR_VERSION == 1 && PG_PATCH_VERSION >= 4)
-    return PQescapeByteaConn(conn, from, from_length, to_length);
-#else
-#warning "YOUR POSTGRESQL VERSION IS TOO OLD AND IT CAN BE INSECURE"
-    return PQescapeBytea(from, from_length, to_length);
+    if (conn)
+        return PQescapeByteaConn(conn, from, from_length, to_length);
+    else
 #endif
+        return PQescapeBytea(from, from_length, to_length);
 }
 #else
 static unsigned char *
@@ -136,19 +136,23 @@ binary_quote(binaryObject *self)
     const char *buffer;
     int buffer_len;
     size_t len = 0;
-    
+
     /* if we got a plain string or a buffer we escape it and save the buffer */
     if (PyString_Check(self->wrapped) || PyBuffer_Check(self->wrapped)) {
         /* escape and build quoted buffer */
         PyObject_AsCharBuffer(self->wrapped, &buffer, &buffer_len);
+
         to = (char *)binary_escape((unsigned char*)buffer, buffer_len, &len,
-                                   ((connectionObject*)self->conn)->pgconn);
+            self->conn ? ((connectionObject*)self->conn)->pgconn : NULL);
         if (to == NULL) {
             PyErr_NoMemory();
             return NULL;
         }
 
-        self->buffer = PyString_FromFormat("'%s'", to);
+	if (len > 0)
+            self->buffer = PyString_FromFormat("'%s'", to);
+	else
+            self->buffer = PyString_FromString("''");
         PQfreemem(to);
     }
     

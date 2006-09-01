@@ -1,4 +1,115 @@
+2006-09-01  Federico Di Gregorio  <fog@initd.org>
+
+	* Release 2.0.5.
+
+	* Fixed patch from #119, see tracker for details.
+
+	* Preparing release 2.0.5.
+
+	* psycopg/psycopgmodule.c: fixed filling of connection errors
+	to include OperationalError.
+
+	* setup.py: removed pydatetime option from initialize_options
+	to make sure that the value in setup.cfg is used.
+
+	* psycopg/psycopgmodule.c: applied patch from jdahlin (#120)
+	to have .connect() accept either a string or int as the port
+	parameter.
+
+	* psycopg/adapter_binary.c: applied patch from jdahlin (#119)
+	to fix the segfault on empty binary buffers.
+
+	* psycopg/connection_type.c: added .status attribute to expose
+	the internal status.
+
+	* psycopg/pqpath.c: applied patch from intgr (#117) to fix
+	segfault on null queries.
+
+	* psycopg/cursor_type.c: applied patch from intgr (#116) to
+	fix bad keyword naming and segfault in .executemany().
+
+	* ZPsycopgDA/DA.py: applied ImageFile patch from Charlie
+	Clark.
+
+	* lib/pool.py: applied logging patch from Charlie Clark.
+	It will probably get a makeup and be moved to the top-level
+	module later.
+
+2006-08-02  Federico Di Gregorio  <fog@initd.org>
+
+	* Release 2.0.4.
+
+	* Fixed bug in float conversion (check for NULL string was
+	erroneously removed in 2.0.3!)
+
+2006-07-31  Federico Di Gregorio  <fog@initd.org>
+
+	* Release 2.0.3.
+
+	* psycopg/cursor_type.c: applied patch from jbellis (#113) to
+	allow column selection in .copy_from().
+
+	* psycopg/psycopgmodule.c: fixed memory leak in custom exceptions
+	(applied patch from #114).
+
+2006-07-26  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/adapter_datetime.c (pydatetime_str): fixed error
+	in conversion of microseconds for intervals and better algo
+	(thanks to Mario Frasca.)
+
+2006-06-18  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/adapter_binary.c: same as below.
+
+        * psycopg/adapter_qstring.c: does not segfault anymore if 
+	.getquoted() is called without preparing the qstring with 
+	the connection.
+
+2006-06-15  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/typecast_basic.c: fixed problem with bogus
+	conversion when importing gtk (that was crazy, I didn't
+	understand why it happened but the new code just fixes it.)
+
+	* ZPsycopgDA/db.py: better type analisys, using an hash
+	instead of a series of if (variation on patch from Charlie
+	Clark.)
+
+2006-06-11  Federico Di Gregorio  <fog@initd.org>
+
+	* Release 2.0.2.
+
+	* psycopg/typecast_array.c (typecast_array_cleanup): fixed a
+	problem with typecast_array_cleanup always returning the new
+	string length shorter by 1 (Closes: #93).
+
+	* psycopg/adapter_binary.c: as below.
+
+	* psycopg/adapter_qstring.c: wrapped #warning in #ifdef __GCC__
+	because other compilers don't have it and it will just break
+	compilation (patch from jason, our great win32 builder).
+
+	* psycopg/adapter_list.c: applied patch to adapt an empty list
+	into an empty array and not to NULL (from iGGy, closes: #108).
+
+	* psycopg/cursor_type.c: applied patch from wkv to avoid
+	under-allocating query space when the parameters are not of the
+	right type (Closes: #110).
+
+	* psycopg/connection_int.c: applied patch from wkv to avoid off 
+	by one allocation of connection encoding string (Closes: #109).
+
+2006-06-09  Federico Di Gregorio  <fog@initd.org>
+
+        * Release 2.0.1.
+
+	* Fixed some buglets in ZPsycopgDA (was unable to load due
+	to shorter version number in psycopg module.)
+
 2006-06-08  Federico Di Gregorio  <fog@initd.org>
+	
+	* Release 2.0.
 
 	* ZPsycopgDA/DA.py: removed Browse table for 2.0 release; we'll
 	add it back later.

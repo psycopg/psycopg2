@@ -26,7 +26,7 @@ import site
 import pool
 
 import psycopg2
-from psycopg2.extensions import INTEGER, LONGINTEGER, FLOAT, BOOLEAN, DATE
+from psycopg2.extensions import INTEGER, LONGINTEGER, FLOAT, BOOLEAN, DATE, TIME
 from psycopg2 import NUMBER, STRING, ROWID, DATETIME 
 
 
@@ -42,6 +42,7 @@ class DB(TM, dbi_db.DB):
         self.encoding = enc
         self.failures = 0
         self.calls = 0
+        self.make_mappings()
 
     def getconn(self, create=True):
         conn = pool.getconn(self.dsn)
@@ -89,32 +90,23 @@ class DB(TM, dbi_db.DB):
     def sortKey(self):
         return 1
 
+    def make_mappings(self):
+        """Generate the mappings used later by self.convert_description()."""
+        self.type_mappings = {}
+	for t, s in [(INTEGER,'i'), (LONGINTEGER, 'i'), (NUMBER, 'n'),  
+	             (BOOLEAN,'n'), (ROWID, 'i'),
+	             (DATETIME, 'd'), (DATE, 'd'), (TIME, 'd')]:
+            for v in t.values:
+	        self.type_mappings[v] = (t, s)
+
     def convert_description(self, desc, use_psycopg_types=False):
         """Convert DBAPI-2.0 description field to Zope format."""
         items = []
         for name, typ, width, ds, p, scale, null_ok in desc:
-            if typ == NUMBER:
-                if typ == INTEGER or typ == LONGINTEGER:
-                    typs = 'i'
-                else:
-                    typs = 'n'
-                typp = NUMBER
-            elif typ == BOOLEAN:
-                typs = 'n'
-                typp = BOOLEAN
-            elif typ == ROWID:
-                typs = 'i'
-                typp = ROWID
-	    # FIXME: shouldn't DATETIME include other types?
-            elif typ == DATETIME or typ == DATE or typ == TIME:
-                typs = 'd'
-                typp = DATETIME
-            else:
-                typs = 's'
-                typp = STRING
+	    m = self.type_mappings.get(typ, (STRING, 's'))
             items.append({
                 'name': name,
-                'type': use_psycopg_types and typp or typs,
+                'type': use_psycopg_types and m[0] or m[1],
                 'width': width,
                 'precision': p,
                 'scale': scale,
