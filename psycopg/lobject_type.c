@@ -107,45 +107,8 @@ lobject_setup(lobjectObject *self, connectionObject *conn,
     self->oid = InvalidOid;
     self->fd = -1;
 
-    Py_BEGIN_ALLOW_THREADS;
-    pthread_mutex_lock(&(self->conn->lock));
-
-    pq_begin(self->conn);
-    
-    /* if the oid is InvalidOid we create a new lob before opening it 
-       or we import a file from the FS, depending on the value of
-       new_name */
-    if (oid == InvalidOid) {
-        if (new_file)
-            self->oid = lo_import(self->conn->pgconn, new_file);
-	else
-            self->oid = lo_create(self->conn->pgconn, new_oid);
-	
-	Dprintf("lobject_setup: large object created with oid = %d",
-	        self->oid);
-
-	if (self->oid == InvalidOid) goto end;
-	mode = INV_WRITE;
-    }
-    else {
-        self->oid = oid;
-	if (mode == 0) mode = INV_READ;
-    }	
-
-    /* if the oid is a real one we try to open with the given mode */
-    Dprintf("oid = %d, mode = %d", self->oid, mode);
-    self->fd = lo_open(self->conn->pgconn, self->oid, mode);
-    
- end:
-    
-    pthread_mutex_unlock(&(self->conn->lock));
-    Py_END_ALLOW_THREADS;
-
-    /* here we check for errors before returning 0 */
-    if (self->fd == -1 || self->oid == InvalidOid) {
-        pq_raise(conn, NULL, NULL, NULL);
-	return -1;
-    }
+    if (lobject_open(self, conn, oid, mode, new_oid, new_file) == -1)
+        return -1;
     else {
         Dprintf("lobject_setup: good lobject object at %p, refcnt = %d",
                 self, ((PyObject *)self)->ob_refcnt);

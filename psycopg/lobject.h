@@ -47,7 +47,11 @@ typedef struct {
     int fd;                  /* the file descriptor for file-like ops */
 } lobjectObject;
     
-    
+/* functions exported from lobject_int.c */
+
+extern int lobject_open(lobjectObject *self, connectionObject *conn,
+                         Oid oid, int mode, Oid new_oid, char *new_file);
+
 /* exception-raising macros */
 #define EXC_IF_LOBJ_CLOSED(self) \
 if ((self)->closed || ((self)->conn && (self)->conn->closed)) { \
