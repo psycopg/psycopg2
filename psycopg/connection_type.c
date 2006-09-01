@@ -260,6 +260,9 @@ static struct PyMemberDef connectionObject_members[] = {
     {"notifies", T_OBJECT, offsetof(connectionObject, notifies), RO},
     {"dsn", T_STRING, offsetof(connectionObject, dsn), RO,
         "The current connection string."},
+    {"status", T_LONG,
+        offsetof(connectionObject, status), RO,
+	"The current transaction status."},
 #endif    
     {NULL}
 };

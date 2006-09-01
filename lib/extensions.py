@@ -43,13 +43,23 @@ from _psycopg import string_types, binary_types, new_type, register_type
 from _psycopg import ISQLQuote
 
 """Isolation level values."""
-ISOLATION_LEVEL_AUTOCOMMIT    = 0
+ISOLATION_LEVEL_AUTOCOMMIT     = 0
 ISOLATION_LEVEL_READ_COMMITTED = 1 
-ISOLATION_LEVEL_SERIALIZABLE  = 2
+ISOLATION_LEVEL_SERIALIZABLE   = 2
 
 # PostgreSQL maps the the other standard values to already defined levels
 ISOLATION_LEVEL_REPEATABLE_READ  = ISOLATION_LEVEL_SERIALIZABLE
 ISOLATION_LEVEL_READ_UNCOMMITTED = ISOLATION_LEVEL_READ_COMMITTED
+
+"""Transaction status values."""
+STATUS_SETUP = 0
+STATUS_READY    = 1
+STATUS_BEGIN    = 2
+STATUS_SYNC     = 3
+STATUS_ASYNC    = 4
+
+# This is a usefull mnemonic to check if the connection is in a transaction
+STATUS_IN_TRANSACTION = STATUS_BEGIN
 
 
 def register_adapter(typ, callable):
