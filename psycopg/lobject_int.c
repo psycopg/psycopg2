@@ -31,6 +31,8 @@
 
 #ifdef PSYCOPG_EXTENSIONS
 
+/* lobject_open - create a new/open an existing lo */
+
 int
 lobject_open(lobjectObject *self, connectionObject *conn,
               Oid oid, int mode, Oid new_oid, char *new_file)
@@ -79,6 +81,144 @@ lobject_open(lobjectObject *self, connectionObject *conn,
         return 0;
     }
 }
+
+/* lobject_unlink - remove an lo from database */
+
+int
+lobject_unlink(lobjectObject *self)
+{
+    int res;
+
+    /* first we make sure the lobject is closed and then we unlink */
+    lobject_close(self);
+    
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&(self->conn->lock));
+
+    pq_begin(self->conn);
+
+    res = lo_unlink(self->conn->pgconn, self->oid);
+
+    pthread_mutex_unlock(&(self->conn->lock));
+    Py_END_ALLOW_THREADS;
+
+    if (res == -1)
+        pq_raise(self->conn, NULL, NULL, NULL);
+    return res;
+}
+
+/* lobject_close - close an existing lo */
+
+void
+lobject_close(lobjectObject *self)
+{
+    if (self->conn->isolation_level > 0
+        && self->conn->mark == self->mark) {
+        if (self->fd != -1)
+            lo_close(self->conn->pgconn, self->fd);
+    }
+}
+
+/* lobject_write - write bytes to a lo */
+
+size_t
+lobject_write(lobjectObject *self, char *buf, size_t len)
+{
+    size_t written;
+
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&(self->conn->lock));
+
+    written = lo_write(self->conn->pgconn, self->fd, buf, len);
+
+    pthread_mutex_unlock(&(self->conn->lock));
+    Py_END_ALLOW_THREADS;
+
+    if (written < 0)
+        pq_raise(self->conn, NULL, NULL, NULL);
+    return written;
+}
+
+/* lobject_read - read bytes from a lo */
+
+size_t
+lobject_read(lobjectObject *self, char *buf, size_t len)
+{
+    size_t readed;
+
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&(self->conn->lock));
+
+    readed = lo_read(self->conn->pgconn, self->fd, buf, len);
+
+    pthread_mutex_unlock(&(self->conn->lock));
+    Py_END_ALLOW_THREADS;
+
+    if (readed < 0)
+        pq_raise(self->conn, NULL, NULL, NULL);
+    return readed;
+}
+
+/* lobject_seek - move the current position in the lo */
+
+int
+lobject_seek(lobjectObject *self, int pos, int whence)
+{
+    int where;
+
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&(self->conn->lock));
+
+    where = lo_lseek(self->conn->pgconn, self->fd, pos, whence);
+
+    pthread_mutex_unlock(&(self->conn->lock));
+    Py_END_ALLOW_THREADS;
+
+    if (where < 0)
+        pq_raise(self->conn, NULL, NULL, NULL);
+    return where;
+}
+
+/* lobject_tell - tell the current position in the lo */
+
+int
+lobject_tell(lobjectObject *self)
+{
+    int where;
+
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&(self->conn->lock));
+
+    where = lo_tell(self->conn->pgconn, self->fd);
+
+    pthread_mutex_unlock(&(self->conn->lock));
+    Py_END_ALLOW_THREADS;
+
+    if (where < 0)
+        pq_raise(self->conn, NULL, NULL, NULL);
+    return where;
+}
+
+/* lobject_export - export to a local file */
+
+int
+lobject_export(lobjectObject *self, char *filename)
+{
+    int res;
+
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&(self->conn->lock));
+
+    res = lo_export(self->conn->pgconn, self->oid, filename);
+
+    pthread_mutex_unlock(&(self->conn->lock));
+    Py_END_ALLOW_THREADS;
+
+    if (res < 0)
+        pq_raise(self->conn, NULL, NULL, NULL);
+    return res;
+}
+
 
 #endif
 

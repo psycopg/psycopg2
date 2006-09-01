@@ -61,6 +61,14 @@ STATUS_ASYNC    = 4
 # This is a usefull mnemonic to check if the connection is in a transaction
 STATUS_IN_TRANSACTION = STATUS_BEGIN
 
+"""Large object flags"""
+LOBJECT_INV_READ  = 0
+LOBJECT_INV_WRITE = 1
+
+LOBJECT_SEEK_SET = 0
+LOBJECT_SEEK_CUR = 1
+LOBJECT_SEEK_END = 2
+
 
 def register_adapter(typ, callable):
     """Register 'callable' as an ISQLQuote adapter for type 'typ'."""
