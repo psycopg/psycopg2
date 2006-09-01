@@ -62,9 +62,9 @@ class TypesBasicTests(TestCase):
         b = psycopg2.Binary(s)
 	r = str(self.execute("SELECT %s::bytea AS foo", (b,)))
         self.failUnless(r == s, "wrong binary quoting")
-
+        # test to make sure an empty Binary is converted to an empty string
         b = psycopg2.Binary('')
-        self.assertEqual(str(b), '')
+        self.assertEqual(str(b), "''")
 
     def testArray(self):
 	s = self.execute("SELECT %s AS foo", ([[1,2],[3,4]],))

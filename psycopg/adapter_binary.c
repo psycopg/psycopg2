@@ -137,10 +137,8 @@ binary_quote(binaryObject *self)
     int buffer_len;
     size_t len = 0;
 
-    if (self->buffer == NULL)
-      self->buffer = PyString_FromString("");
     /* if we got a plain string or a buffer we escape it and save the buffer */
-    else if (PyString_Check(self->wrapped) || PyBuffer_Check(self->wrapped)) {
+    if (PyString_Check(self->wrapped) || PyBuffer_Check(self->wrapped)) {
         /* escape and build quoted buffer */
         PyObject_AsCharBuffer(self->wrapped, &buffer, &buffer_len);
 
@@ -151,8 +149,14 @@ binary_quote(binaryObject *self)
             return NULL;
         }
 
-        self->buffer = PyString_FromFormat("'%s'", to);
-        PQfreemem(to);
+	if (len > 0) {
+            self->buffer = PyString_FromFormat("'%s'", to);
+            PQfreemem(to);
+	}
+	else {
+            self->buffer = PyString_FromString("''");
+	    PQfreemem(to);
+	}
     }
     
     /* if the wrapped object is not a string or a buffer, this is an error */ 
