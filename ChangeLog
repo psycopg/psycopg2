@@ -1,3 +1,9 @@
+2006-09-01  Federico Di Gregorio  <fog@initd.org>
+
+	* lib/pool.py: applied logging patch from Charlie Clark.
+	It will probably get a makeup and be moved to the top-level
+	module later.
+
 2006-08-02  Federico Di Gregorio  <fog@initd.org>
 
 	* Release 2.0.4.

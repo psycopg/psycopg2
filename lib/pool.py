@@ -19,11 +19,27 @@ This module implements thread-safe (and not) connection pools.
 import psycopg2
 
 try:
+    import logging
+    # do basic initialization if the module is not already initialized
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s %(levelname)s %(message)s')
+    # create logger object for psycopg2 module and sub-modules
+    _logger = logging.getLogger("psycopg2")
+    def dbg(*args):
+        _logger.debug("psycopg2", ' '.join([str(x) for x in args]))
+    try:
+        import App # does this make sure that we're running in Zope?
+        _logger.info("installed. Logging using Python logging module")
+    except:
+        _logger.debug("installed. Logging using Python logging module")
+    
+except ImportError:
     from zLOG import LOG, DEBUG, INFO
     def dbg(*args):
         LOG('ZPsycopgDA',  DEBUG, "",
             ' '.join([str(x) for x in args])+'\n')
     LOG('ZPsycopgDA', INFO, "Installed", "Logging using Zope's zLOG\n") 
+
 except:
     import sys
     def dbg(*args):
