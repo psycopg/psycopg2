@@ -136,11 +136,14 @@ binary_quote(binaryObject *self)
     const char *buffer;
     int buffer_len;
     size_t len = 0;
-    
+
+    if (self->buffer == NULL)
+      self->buffer = PyString_FromString("");
     /* if we got a plain string or a buffer we escape it and save the buffer */
-    if (PyString_Check(self->wrapped) || PyBuffer_Check(self->wrapped)) {
+    else if (PyString_Check(self->wrapped) || PyBuffer_Check(self->wrapped)) {
         /* escape and build quoted buffer */
         PyObject_AsCharBuffer(self->wrapped, &buffer, &buffer_len);
+
         to = (char *)binary_escape((unsigned char*)buffer, buffer_len, &len,
             self->conn ? ((connectionObject*)self->conn)->pgconn : NULL);
         if (to == NULL) {

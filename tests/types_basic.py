@@ -63,6 +63,9 @@ class TypesBasicTests(TestCase):
 	r = str(self.execute("SELECT %s::bytea AS foo", (b,)))
         self.failUnless(r == s, "wrong binary quoting")
 
+        b = psycopg2.Binary('')
+        self.assertEqual(str(b), '')
+
     def testArray(self):
 	s = self.execute("SELECT %s AS foo", ([[1,2],[3,4]],))
 	self.failUnless(s == [[1,2],[3,4]], "wrong array quoting " + str(s))
