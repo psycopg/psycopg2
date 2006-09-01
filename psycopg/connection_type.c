@@ -31,6 +31,7 @@
 #include "psycopg/psycopg.h"
 #include "psycopg/connection.h"
 #include "psycopg/cursor.h"
+#include "psycopg/lobject.h"
 
 /** DBAPI methods **/
 
@@ -169,9 +170,8 @@ psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
     return Py_None;
 }
 
-
 
-/* set_isolation_level method - switch connection isolation level */
+/* set_client_encoding method - set client encoding */
 
 #define psyco_conn_set_client_encoding_doc \
 "set_client_encoding(encoding) -- Set client encoding to ``encoding``."
@@ -193,6 +193,66 @@ psyco_conn_set_client_encoding(connectionObject *self, PyObject *args)
         return NULL;
     }
 }
+
+
+/* lobject method - allocate a new lobject */
+
+#define psyco_conn_lobject_doc \
+"cursor(oid=0, mode=0, new_oid=0, new_file=None,\n"                         \
+"       lobject_factory=extensions.lobject) -- new lobject\n\n"             \
+"Return a new lobject.\n\nThe ``lobject_factory`` argument can be used\n"   \
+"to create non-standard lobjects by passing a class different from the\n"   \
+"default. Note that the new class *should* be a sub-class of\n"             \
+"`extensions.lobject`.\n\n"                                                 \
+":rtype: `extensions.lobject`"
+
+static PyObject *
+psyco_conn_lobject(connectionObject *self, PyObject *args, PyObject *keywds)
+{
+    int oid=0, new_oid=0, mode=0;
+    char *new_file = NULL;
+    PyObject *obj, *factory = NULL;
+
+    static char *kwlist[] = {"oid", "mode", "new_oid", "new_file",
+                             "cursor_factory", NULL};
+    
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "|iiisO", kwlist,
+                                     &oid, &mode, &new_oid, &new_file, 
+				     &factory)) {
+        return NULL;
+    }
+
+    EXC_IF_CONN_CLOSED(self);
+
+    Dprintf("psyco_conn_lobject: new lobject for connection at %p", self);
+    Dprintf("psyco_conn_lobject:     parameters: oid = %d, mode = %d",
+            oid, mode);
+    Dprintf("psyco_conn_lobject:     parameters: new_oid = %d, new_file = %s",
+            new_oid, new_file);
+    
+    if (factory == NULL) factory = (PyObject *)&lobjectType;
+    if (new_file)
+        obj = PyObject_CallFunction(factory, "Oiiis", 
+	    self, oid, mode, new_oid, new_file);    
+    else
+        obj = PyObject_CallFunction(factory, "Oiii",
+	    self, oid, mode, new_oid);
+
+    if (obj == NULL) return NULL;
+    if (PyObject_IsInstance(obj, (PyObject *)&lobjectType) == 0) {
+        PyErr_SetString(PyExc_TypeError,
+            "lobject factory must be subclass of psycopg2._psycopg.lobject");
+        Py_DECREF(obj);
+        return NULL;
+    }
+    
+    Dprintf("psyco_conn_lobject: new lobject at %p: refcnt = %d",
+            obj, obj->ob_refcnt);
+    return obj;
+}
+
+
+
 #endif
 
 
@@ -214,7 +274,9 @@ static struct PyMethodDef connectionObject_methods[] = {
     {"set_isolation_level", (PyCFunction)psyco_conn_set_isolation_level,
      METH_VARARGS, psyco_conn_set_isolation_level_doc},
     {"set_client_encoding", (PyCFunction)psyco_conn_set_client_encoding,
-     METH_VARARGS, psyco_conn_set_client_encoding_doc},    
+     METH_VARARGS, psyco_conn_set_client_encoding_doc},
+    {"lobject", (PyCFunction)psyco_conn_lobject,
+     METH_VARARGS|METH_KEYWORDS, psyco_conn_lobject_doc},
 #endif    
     {NULL}
 };

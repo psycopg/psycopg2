@@ -1,5 +1,13 @@
 2006-09-01  Federico Di Gregorio  <fog@initd.org>
 
+	* psycopg/connection_int.c: removed increment of self->mark,
+	now it is done directly in pqpath.c to make sure even the
+	large object support gets it.
+
+	* Starting 2.1 development.
+
+2006-09-01  Federico Di Gregorio  <fog@initd.org>
+
 	* Release 2.0.5.
 
 	* Fixed patch from #119, see tracker for details.
