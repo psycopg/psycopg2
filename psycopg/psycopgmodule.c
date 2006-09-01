@@ -124,6 +124,7 @@ static PyObject *
 psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
 {
     PyObject *conn, *factory = NULL;
+    PyObject *pyport = NULL;
     
     int idsn=-1, iport=-1;
     char *dsn=NULL, *database=NULL, *user=NULL, *password=NULL;
@@ -134,15 +135,28 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
                              "user", "password", "sslmode",
                              "connection_factory", NULL};
     
-    if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sssisssO", kwlist,
-                                     &dsn, &database, &host, &iport,
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sssOsssO", kwlist,
+                                     &dsn, &database, &host, &pyport,
                                      &user, &password, &sslmode, &factory)) {
         return NULL;
     }
 
-	if (iport > 0)
-		PyOS_snprintf(port, 16, "%d", iport);
-		
+    if (pyport && PyString_Check(pyport)) {
+	PyObject *pyint = PyInt_FromString(PyString_AsString(pyport), NULL, 10);
+	if (!pyint) return NULL;
+	iport = PyInt_AsLong(pyint);
+    }
+    else if (pyport && PyInt_Check(pyport)) {
+	iport = PyInt_AsLong(pyport);
+    }
+    else if (pyport != NULL) {
+	PyErr_SetString(PyExc_TypeError, "port must be a string or int");
+	return NULL;
+    }
+
+    if (iport > 0)
+      PyOS_snprintf(port, 16, "%d", iport);
+
     if (dsn == NULL) {
         int l = 45;  /* len("dbname= user= password= host= port= sslmode=\0") */
 

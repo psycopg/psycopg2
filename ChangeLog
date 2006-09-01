@@ -1,5 +1,9 @@
 2006-09-01  Federico Di Gregorio  <fog@initd.org>
 
+	* psycopg/psycopgmodule.c: applied patch from jdahlin (#120)
+	to have .connect() accept either a string or int as the port
+	parameter.
+
 	* psycopg/adapter_binary.c: applied patch from jdahlin (#119)
 	to fix the segfault on empty binary buffers.
 
