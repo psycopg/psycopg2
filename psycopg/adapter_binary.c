@@ -149,14 +149,11 @@ binary_quote(binaryObject *self)
             return NULL;
         }
 
-	if (len > 0) {
+	if (len > 0)
             self->buffer = PyString_FromFormat("'%s'", to);
-            PQfreemem(to);
-	}
-	else {
+	else
             self->buffer = PyString_FromString("''");
-	    PQfreemem(to);
-	}
+        PQfreemem(to);
     }
     
     /* if the wrapped object is not a string or a buffer, this is an error */ 
