@@ -217,7 +217,7 @@ psyco_conn_lobject(connectionObject *self, PyObject *args, PyObject *keywds)
     static char *kwlist[] = {"oid", "mode", "new_oid", "new_file",
                              "cursor_factory", NULL};
     
-    if (!PyArg_ParseTupleAndKeywords(args, keywds, "|izisO", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "|izizO", kwlist,
                                      &oid, &smode, &new_oid, &new_file, 
 				     &factory)) {
         return NULL;

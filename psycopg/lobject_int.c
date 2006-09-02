@@ -86,6 +86,18 @@ lobject_open(lobjectObject *self, connectionObject *conn,
         return -1;
     }
     else {
+        /* set the mode for future reference and return */
+	self->mode = mode;
+	switch (mode) {
+            case -1:
+                self->smode = "n"; break;
+            case INV_READ:
+                self->smode = "r"; break;
+            case INV_WRITE:
+                self->smode = "w"; break;
+            case INV_READ+INV_WRITE:
+                self->smode = "rw"; break;
+	}
         return 0;
     }
 }

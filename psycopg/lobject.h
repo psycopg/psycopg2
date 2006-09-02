@@ -39,8 +39,10 @@ typedef struct {
 
     connectionObject *conn; /* connection owning the lobject */
 
-    int closed:1;            /* 1 if the lobject is closed */
-    
+    int closed;              /* 1 if the lobject is closed */
+    int mode;                /* numeric mode, tells if lobject was opened */
+    char *smode;             /* string mode if lobject was opened */
+
     long int mark;           /* copied from conn->mark */
 
     Oid oid;                 /* the oid for this lobject */

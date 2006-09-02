@@ -230,9 +230,12 @@ static struct PyMethodDef lobjectObject_methods[] = {
 /* object member list */
 
 static struct PyMemberDef lobjectObject_members[] = {
-    {"oid", T_LONG,
-        offsetof(lobjectObject, oid), RO,
+    {"oid", T_LONG, offsetof(lobjectObject, oid), RO,
         "The backend OID associated to this lobject."},
+    {"closed", T_LONG, offsetof(lobjectObject, closed), RO,
+        "The if the large object is closed (no file-like methods)."},
+    {"mode", T_STRING, offsetof(lobjectObject, smode), RO,
+        "Open mode ('r', 'w', 'rw' or 'n')."},
     {NULL}
 };
 
@@ -261,12 +264,11 @@ lobject_setup(lobjectObject *self, connectionObject *conn,
 
     if (lobject_open(self, conn, oid, mode, new_oid, new_file) == -1)
         return -1;
-    else {
-        Dprintf("lobject_setup: good lobject object at %p, refcnt = %d",
-                self, ((PyObject *)self)->ob_refcnt);
-        Dprintf("lobject_setup:    oid = %d, fd = %d", self->oid, self->fd);
-        return 0;
-    }
+    
+   Dprintf("lobject_setup: good lobject object at %p, refcnt = %d",
+       self, ((PyObject *)self)->ob_refcnt);
+   Dprintf("lobject_setup:    oid = %d, fd = %d", self->oid, self->fd);
+   return 0;
 }
 
 static void
