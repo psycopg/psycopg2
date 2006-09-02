@@ -1,5 +1,8 @@
 2006-09-01  Federico Di Gregorio  <fog@initd.org>
 
+	* psycopg/adapter_mxdatetime.c, psycopg/psycopgmodule.c: fixed last
+        problem with non-constant initializers (merge from 2.0).
+
 	* psycopg/connection_type.c: merged in double mutex destroy patch
 	from Joerg Sonnenberger.
 
