@@ -288,7 +288,6 @@ connection_setup(connectionObject *self, char *dsn)
     pthread_mutex_init(&(self->lock), NULL);
  
     if (conn_connect(self) != 0) {
-        pthread_mutex_destroy(&(self->lock));
         Dprintf("connection_init: FAILED");
         return -1;
     }

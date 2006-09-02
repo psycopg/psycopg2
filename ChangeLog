@@ -1,5 +1,8 @@
 2006-09-02  Federico Di Gregorio  <fog@initd.org>
 
+	* psycopg/connection_type.c: applied patch from Joerg Sonnenberger
+	to fix a double mutex destroy.
+
 	* Release 2.0.5.1.
 
 	* psycopg/cursor_type.c: applied patch from Jason Erickson to
