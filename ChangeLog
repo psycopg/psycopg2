@@ -1,5 +1,8 @@
 2006-09-01  Federico Di Gregorio  <fog@initd.org>
 
+	* psycopg/connection_type.c: merged in double mutex destroy patch
+	from Joerg Sonnenberger.
+
 	* Implemented large objects support.
 
 	* psycopg/connection_int.c: removed increment of self->mark,
