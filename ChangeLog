@@ -1,3 +1,10 @@
+2006-09-02  Federico Di Gregorio  <fog@initd.org>
+
+	* Release 2.0.5.1.
+
+	* psycopg/cursor_type.c: applied patch from Jason Erickson to
+	build on MSVC and older gcc.
+
 2006-09-01  Federico Di Gregorio  <fog@initd.org>
 
 	* Release 2.0.5.

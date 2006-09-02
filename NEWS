@@ -1,3 +1,21 @@
+What's new in psycopg 2.0.5.1
+­----------------------------
+
+* Now it really, really builds on MSVC and older gcc versions.
+
+What's new in psycopg 2.0.5
+­--------------------------
+
+* Fixed various buglets such as:
+  - segfault when passing an empty string to Binary()
+  - segfault on null queries
+  - segfault and bad keyword naming in .executemany()
+  - OperationalError in connection objects was always None
+
+* Various changes to ZPsycopgDA to make it more zope2.9-ish.
+
+* connect() now accept both integers and strings as port parameter
+
 What's new in psycopg 2.0.4
 ---------------------------
 
