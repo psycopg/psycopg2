@@ -209,15 +209,16 @@ psyco_conn_set_client_encoding(connectionObject *self, PyObject *args)
 static PyObject *
 psyco_conn_lobject(connectionObject *self, PyObject *args, PyObject *keywds)
 {
-    int oid=0, new_oid=0, mode=0;
-    char *new_file = NULL;
+    Oid oid=InvalidOid, new_oid=InvalidOid;
+    char *smode = NULL, *new_file = NULL;
+    int mode=0;
     PyObject *obj, *factory = NULL;
 
     static char *kwlist[] = {"oid", "mode", "new_oid", "new_file",
                              "cursor_factory", NULL};
     
-    if (!PyArg_ParseTupleAndKeywords(args, keywds, "|iiisO", kwlist,
-                                     &oid, &mode, &new_oid, &new_file, 
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "|izisO", kwlist,
+                                     &oid, &smode, &new_oid, &new_file, 
 				     &factory)) {
         return NULL;
     }
@@ -225,11 +226,30 @@ psyco_conn_lobject(connectionObject *self, PyObject *args, PyObject *keywds)
     EXC_IF_CONN_CLOSED(self);
 
     Dprintf("psyco_conn_lobject: new lobject for connection at %p", self);
-    Dprintf("psyco_conn_lobject:     parameters: oid = %d, mode = %d",
-            oid, mode);
+    Dprintf("psyco_conn_lobject:     parameters: oid = %d, mode = %s",
+            oid, smode);
     Dprintf("psyco_conn_lobject:     parameters: new_oid = %d, new_file = %s",
             new_oid, new_file);
     
+    /* build a mode number out of the mode string: right now we only accept
+       'r', 'w' and 'rw' (but note that 'w' implies 'rw' because PostgreSQL
+       backend does that. */
+    if (smode) {
+        if (strncmp("rw", smode, 2) == 0)
+            mode = INV_READ+INV_WRITE;
+        else if (smode[0] == 'r')
+           mode = INV_READ;
+        else if (smode[0] == 'w')
+           mode = INV_WRITE;
+	else if (smode[0] == 'n')
+	   mode = -1;
+        else {
+            PyErr_SetString(PyExc_TypeError,
+                "mode should be one of 'r', 'w' or 'rw'");
+	    return NULL;
+	}
+    }
+
     if (factory == NULL) factory = (PyObject *)&lobjectType;
     if (new_file)
         obj = PyObject_CallFunction(factory, "Oiiis", 

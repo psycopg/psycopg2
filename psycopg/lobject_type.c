@@ -48,18 +48,160 @@ static PyObject *
 psyco_lobj_close(lobjectObject *self, PyObject *args)
 {
     if (!PyArg_ParseTuple(args, "")) return NULL;
-    
+   
+    /* file-like objects can be closed multiple times and remember that
+       closing the current transaction is equivalent to close all the 
+       opened large objects */
+    if (!self->closed
+        && self->conn->isolation_level > 0
+	&& self->conn->mark == self->mark)
+    {
+        self->closed = 1;
+        lobject_close(self);
+
+        Dprintf("psyco_lobj_close: lobject at %p closed", self);
+    }
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+/* write method - write data to the lobject */
+
+#define psyco_lobj_write_doc \
+"write(str) -- Write a string to the large object."
+
+static PyObject *
+psyco_lobj_write(lobjectObject *self, PyObject *args)
+{
+    int len, res=0;
+    char *buffer;
+
+    if (!PyArg_ParseTuple(args, "s#", &buffer, &len)) return NULL;
+
     EXC_IF_LOBJ_CLOSED(self);
     EXC_IF_LOBJ_LEVEL0(self);
     EXC_IF_LOBJ_UNMARKED(self);
 
-    self->closed = 1;
-    lobject_close(self);
+    if ((res = lobject_write(self, buffer, len)) < 0) return NULL;
 
-    Dprintf("psyco_lobj_close: lobject at %p closed", self);
+    return PyInt_FromLong((long)res);
+}
 
+/* read method - read data from the lobject */
+
+#define psyco_lobj_read_doc \
+"read(size=-1) -- Read at most size bytes or to the end of the large object."
+
+static PyObject *
+psyco_lobj_read(lobjectObject *self, PyObject *args)
+{
+    int where, end, size = -1;
+    char *buffer;
+
+    if (!PyArg_ParseTuple(args, "|i", &size)) return NULL;
+
+    EXC_IF_LOBJ_CLOSED(self);
+    EXC_IF_LOBJ_LEVEL0(self);
+    EXC_IF_LOBJ_UNMARKED(self);
+
+    if (size < 0) {
+        if ((where = lobject_tell(self)) < 0) return NULL;
+        if ((end = lobject_seek(self, 0, SEEK_END)) < 0) return NULL;
+        if (lobject_seek(self, where, SEEK_SET) < 0) return NULL;
+        size = end - where;
+    }
+
+    if ((buffer = PyMem_Malloc(size)) == NULL) return NULL;
+    if ((size = lobject_read(self, buffer, size)) < 0) {
+        PyMem_Free(buffer);
+        return NULL;
+    }
+
+    return PyString_FromStringAndSize(buffer, size);
+}
+
+/* seek method - seek in the lobject */
+
+#define psyco_lobj_seek_doc \
+"seek(offset, whence=0) -- Set the lobject's current position."
+
+static PyObject *
+psyco_lobj_seek(lobjectObject *self, PyObject *args)
+{
+    int offset, whence=0;
+    int pos=0;
+
+    if (!PyArg_ParseTuple(args, "i|i", &offset, &whence))
+    	return NULL;
+    
+    EXC_IF_LOBJ_CLOSED(self);
+    EXC_IF_LOBJ_LEVEL0(self);
+    EXC_IF_LOBJ_UNMARKED(self);
+ 
+    if ((pos = lobject_seek(self, pos, whence)) < 0)
+    	return NULL;
+    
+    return PyInt_FromLong((long)pos);
+}
+
+/* tell method - tell current position in the lobject */
+
+#define psyco_lobj_tell_doc \
+"tell() -- Return the lobject's current position."
+
+static PyObject *
+psyco_lobj_tell(lobjectObject *self, PyObject *args)
+{
+    int pos;
+
+    if (!PyArg_ParseTuple(args, "")) return NULL;
+    
+    EXC_IF_LOBJ_CLOSED(self);
+    EXC_IF_LOBJ_LEVEL0(self);
+    EXC_IF_LOBJ_UNMARKED(self);
+    
+    if ((pos = lobject_tell(self)) < 0)
+    	return NULL;
+    
+    return PyInt_FromLong((long)pos);
+}
+
+/* unlink method - unlink (destroy) the lobject */
+
+#define psyco_lobj_unlink_doc \
+"unlink() -- Close and then remove the lobject."
+
+static PyObject *
+psyco_lobj_unlink(lobjectObject *self, PyObject *args)
+{
+    if (!PyArg_ParseTuple(args, "")) return NULL;
+    
+    if (lobject_unlink(self) < 0)
+    	return NULL;
+    
     Py_INCREF(Py_None);
     return Py_None;
+}
+
+/* export method - export lobject's content to given file */
+
+#define psyco_lobj_export_doc \
+"export(filename) -- Export large object to given file."
+
+static PyObject *
+psyco_lobj_export(lobjectObject *self, PyObject *args)
+{
+    char *filename;
+
+    if (!PyArg_ParseTuple(args, "s", &filename))
+    	return NULL;
+    
+    if (lobject_export(self, filename) < 0)
+    	return NULL;
+    
+    Py_INCREF(Py_None);
+    return Py_None;  
 }
 
 
@@ -68,8 +210,20 @@ psyco_lobj_close(lobjectObject *self, PyObject *args)
 /* object method list */
 
 static struct PyMethodDef lobjectObject_methods[] = {
+    {"read", (PyCFunction)psyco_lobj_read,
+     METH_VARARGS, psyco_lobj_read_doc},
+    {"write", (PyCFunction)psyco_lobj_write,
+     METH_VARARGS, psyco_lobj_write_doc},
+    {"seek", (PyCFunction)psyco_lobj_seek,
+     METH_VARARGS, psyco_lobj_seek_doc},
+    {"tell", (PyCFunction)psyco_lobj_tell,
+     METH_VARARGS, psyco_lobj_tell_doc},
     {"close", (PyCFunction)psyco_lobj_close,
      METH_VARARGS, psyco_lobj_close_doc},
+    {"unlink",(PyCFunction)psyco_lobj_unlink,
+     METH_VARARGS, psyco_lobj_unlink_doc},
+    {"export",(PyCFunction)psyco_lobj_export,
+     METH_VARARGS, psyco_lobj_export_doc},
     {NULL}
 };
 

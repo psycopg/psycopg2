@@ -28,13 +28,52 @@ print "Opening connection using dns:", DSN
 conn = psycopg2.connect(DSN)
 print "Encoding for this connection is", conn.encoding
 
-# this will create a large object with a new random oid
+# this will create a large object with a new random oid, we'll
+# use it to make some basic tests about read/write and seek.
 lobj = conn.lobject()
-print "lobject oid =", lobj.oid
+loid = lobj.oid
+print "Created a new large object with oid", loid
 
-# this will create a large object with the given oid
-lobj = conn.lobject(0, 0, 666)
-print "lobject oid =", lobj.oid
+print "Manually importing some binary data into the object:"
+data = open("somehackers.jpg").read()
+len = lobj.write(data)
+print "  imported", len, "bytes of data"
 
-lobj = conn.lobject(0, 0, 666)
+conn.commit()
 
+print "Trying to (re)open large object with oid", loid
+lobj = conn.lobject(loid)
+print "Manually exporting the data from the lobject:"
+data1 = lobj.read()
+len = lobj.tell()
+lobj.seek(0, 0)
+data2 = lobj.read()
+if data1 != data2:
+    print "ERROR: read after seek returned different data"
+open("somehackers_lobject1.jpg", 'wb').write(data1)
+print "  written", len, "bytes of data to somehackers_lobject1.jpg"
+
+lobj.unlink()
+print "Large object with oid", loid, "removed"
+
+conn.commit()
+
+# now we try to use the import and export functions to do the same
+lobj = conn.lobject(0, 'n', 0, "somehackers.jpg")
+loid = lobj.oid
+print "Imported a new large object with oid", loid
+
+conn.commit()
+
+print "Trying to (re)open large object with oid", loid
+lobj = conn.lobject(loid, 'n')
+print "Using export() to export the data from the large object:"
+lobj.export("somehackers_lobject2.jpg")
+print "  exported large object to somehackers_lobject2.jpg"
+
+lobj.unlink()
+print "Large object with oid", loid, "removed"
+
+conn.commit()
+
+print "\nNow try to load the new images, to check it worked!"

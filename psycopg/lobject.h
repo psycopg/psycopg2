@@ -51,8 +51,17 @@ typedef struct {
 
 extern int lobject_open(lobjectObject *self, connectionObject *conn,
                          Oid oid, int mode, Oid new_oid, char *new_file);
+extern int lobject_unlink(lobjectObject *self);
+extern int lobject_export(lobjectObject *self, char *filename);
+
+extern size_t lobject_read(lobjectObject *self, char *buf, size_t len);
+extern size_t lobject_write(lobjectObject *self, char *buf, size_t len);
+extern int lobject_seek(lobjectObject *self, int pos, int whence);
+extern int lobject_tell(lobjectObject *self);
+extern void lobject_close(lobjectObject *self);
 
 /* exception-raising macros */
+
 #define EXC_IF_LOBJ_CLOSED(self) \
 if ((self)->closed || ((self)->conn && (self)->conn->closed)) { \
     PyErr_SetString(InterfaceError, "lobject already closed");  \

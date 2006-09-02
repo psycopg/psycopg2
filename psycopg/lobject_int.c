@@ -63,17 +63,25 @@ lobject_open(lobjectObject *self, connectionObject *conn,
         if (mode == 0) mode = INV_READ;
     }
 
-    /* if the oid is a real one we try to open with the given mode */
-    self->fd = lo_open(self->conn->pgconn, self->oid, mode);
-    Dprintf("lobject_open: large object opened with fd = %d",
+    /* if the oid is a real one we try to open with the given mode,
+       unless the mode is -1, meaning "don't open!" */
+    if (mode != -1) {
+        self->fd = lo_open(self->conn->pgconn, self->oid, mode);
+        Dprintf("lobject_open: large object opened with fd = %d",
             self->fd);
- 
+    }
+    else {
+        /* this is necessary to make sure no function that needs and
+	   fd is called on unopened lobjects */
+        self->closed = 1;
+    }
+
  end:
     pthread_mutex_unlock(&(self->conn->lock));
     Py_END_ALLOW_THREADS;
 
     /* here we check for errors before returning 0 */
-    if (self->fd == -1 || self->oid == InvalidOid) {
+    if ((self->fd == -1 && mode != -1) || self->oid == InvalidOid) {
         pq_raise(conn, NULL, NULL, NULL);
         return -1;
     }

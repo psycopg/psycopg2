@@ -1088,13 +1088,13 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
     
     if (columns != NULL && columns != Py_None) {
         PyObject* collistiter = PyObject_GetIter(columns);
-        if (collistiter == NULL) {
-            return NULL;
-        }
         PyObject* col;
         int collistlen = 2;
         int colitemlen;
         char* colname;
+        if (collistiter == NULL) {
+            return NULL;
+        }
         strcpy(columnlist, " (");
         while ((col = PyIter_Next(collistiter)) != NULL) {
             if (!PyString_Check(col)) {
