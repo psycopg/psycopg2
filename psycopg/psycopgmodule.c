@@ -667,6 +667,10 @@ init_psycopg(void)
 #ifdef HAVE_PYDATETIME
     pydatetimeType.tp_alloc = PyType_GenericAlloc;
 #endif
-    
+
+#ifdef HAVE_MXDATETIME
+    mxdatetimeType.tp_alloc = PyType_GenericAlloc;
+#endif
+
     Dprintf("initpsycopg: module initialization complete");
 }

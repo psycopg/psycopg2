@@ -258,7 +258,7 @@ PyTypeObject mxdatetimeType = {
     0,          /*tp_dictoffset*/
     
     mxdatetime_init, /*tp_init*/
-    PyType_GenericAlloc, /*tp_alloc*/
+    0,          /*tp_alloc*/
     mxdatetime_new, /*tp_new*/
     (freefunc)mxdatetime_del, /*tp_free  Low-level free-memory routine */
     0,          /*tp_is_gc For PyObject_IS_GC */
