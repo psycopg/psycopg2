@@ -232,4 +232,5 @@ class MinTimeLoggingCursor(LoggingCursor):
     
     def callproc(self, procname, vars=None):
         self.timestamp = time.time()
-        return LoggingCursor.execute(self, procname, var)
+        return LoggingCursor.execute(self, procname, vars)
+

@@ -1,3 +1,7 @@
+2006-09-11  Federico Di Gregorio  <fog@initd.org>
+
+	* Fixed syntax error in lib/extras.py (see #123)
+
 2006-09-02  Federico Di Gregorio  <fog@initd.org>
 
 	* psycopg/adapter_mxdatetime.c, psycopg/psycopgmodule.c: fixed last
