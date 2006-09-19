@@ -1,51 +1,35 @@
 Source: psycopg2
 Section: python
 Priority: optional
-Build-depends: postgresql-dev, debhelper (>> 3), python2.3-dev, cdbs
-Maintainer: Federico Di Gregorio <fog@debian.org>
-Standards-Version: 3.6.1.1
+Build-Depends: debhelper (>= 5.0.37.2), python-all-dev, python-central (>= 0.5.0), python (>= 2.3.5-7), python-egenix-mx-base-dev, autoconf, libpq-dev
+Build-Depends-Indep: zope-debhelper (>= 0.3.2.7)
+Maintainer: Fabio Tranchitella <kobold@debian.org>
+Standards-Version: 3.7.2
+XS-Python-Version: all
 
 Package: python-psycopg2
 Architecture: any
 Section: python
-Depends: python (>= 2.3), python (<< 2.4), python2.3-psycopg2
-Description: Python module for PostgreSQL [dummy package]
- psycopg is a PostgreSQL database adapter for the Python programming
- language. It was written from scratch with the aim of being very small
- and fast, and stable as a rock. The main advantages of psycopg are that
- it supports the full Python DBAPI-2.0 and being thread safe at level 2.
+Depends: ${python:Depends}, ${shlibs:Depends}
+Provides: ${python:Provides}
+XB-Python-Version: ${python:Versions}
+Description: Python module for PostgreSQL
+ psycopg is a PostgreSQL database adapter for the Python programming language
+ (just like pygresql and popy.) This is version 2, a complete rewrite of the
+ original code to provide new-style classes for connection and cursor objects
+ and other sweet candies. Like the original, psycopg 2 was written with the
+ aim of being very small and fast, and stable as a rock.
  .
- psycopg 2 is the next generation psycopg, implementing a much better
- type system and even more DBAPI extensions:
- .
- * support for Python datetime and Decimal types;
- * complete implementation of adapt() from PEP 246 to convert Python
-   types to PostgreSQL ones;
- * COPY FROM/COPY TO support;
- * inehritable connection and cursor objects and support for connection
-   and cursor factories;
- * automatic encoding conversion and support for unicode queries.
- .
- This dummy package just depends on the right, default version of Python 
- and psycopg 2.
+ psycopg is different from the other database adapter because it was designed
+ for heavily multi-threaded applications that create and destroy lots of
+ cursors and make a conspicuous number of concurrent INSERTs or UPDATEs.
+ psycopg 2 also provides full asycronous operations for the really brave
+ programmer.
 
-Package: python2.3-psycopg2
-Architecture: any
+Package: zope-psycopgda2
+Architecture: all
 Section: python
-Depends: ${shlibs:Depends}, python2.3
-Description: Python 2.3 module for PostgreSQL
- psycopg is a PostgreSQL database adapter for the Python programming
- language. It was written from scratch with the aim of being very small
- and fast, and stable as a rock. The main advantages of psycopg are that
- it supports the full Python DBAPI-2.0 and being thread safe at level 2.
- .
- psycopg 2 is the next generation psycopg, implementing a much better
- type system and even more DBAPI extensions:
- .
- * support for Python datetime and Decimal types;
- * complete implementation of adapt() from PEP 246 to convert Python
-   types to PostgreSQL ones;
- * COPY FROM/COPY TO support;
- * inehritable connection and cursor objects and support for connection
-   and cursor factories;
- * automatic encoding conversion and support for unicode queries.
+Depends: ${zope:Depends}, python-psycopg2 (>= ${Source-Version})
+Description: Zope database adapter based on python-psycopg
+ The package contains the PostgreSQL database adapter for Zope 2.7, 2.8 and
+ 2.9 based on the psycopg2 Python module.
