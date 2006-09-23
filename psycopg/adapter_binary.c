@@ -134,7 +134,7 @@ binary_quote(binaryObject *self)
 {
     char *to;
     const char *buffer;
-    int buffer_len;
+    Py_ssize_t buffer_len;
     size_t len = 0;
 
     /* if we got a plain string or a buffer we escape it and save the buffer */

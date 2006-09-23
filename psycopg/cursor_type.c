@@ -1090,7 +1090,7 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
         PyObject* collistiter = PyObject_GetIter(columns);
         PyObject* col;
         int collistlen = 2;
-        int colitemlen;
+        Py_ssize_t colitemlen;
         char* colname;
         if (collistiter == NULL) {
             return NULL;
