@@ -28,6 +28,13 @@
 extern "C" {
 #endif
 
+/* Python 2.5 ssize_t compatibility */
+#if PY_VERSION_HEX < 0x02050000 && !defined(PY_SSIZE_T_MIN)
+typedef int Py_ssize_t;
+#define PY_SSIZE_T_MAX INT_MAX
+#define PY_SSIZE_T_MIN INT_MIN
+#endif
+
 /* DBAPI compliance parameters */
 #define APILEVEL "2.0"
 #define THREADSAFETY 2
