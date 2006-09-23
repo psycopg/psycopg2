@@ -80,6 +80,6 @@ extern PyObject *typecast_from_python(
 
 /* the function used to dispatch typecasting calls */
 extern PyObject *typecast_cast(
-    PyObject *self, char *str, int len, PyObject *curs);
+    PyObject *self, char *str, Py_ssize_t len, PyObject *curs);
     
 #endif /* !defined(PSYCOPG_TYPECAST_H) */
