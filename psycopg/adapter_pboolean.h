@@ -31,7 +31,7 @@ extern "C" {
 extern PyTypeObject pbooleanType;
 
 typedef struct {
-    PyObject HEAD;
+    PyObject_HEAD;
 
     /* this is the real object we wrap */
     PyObject *wrapped;

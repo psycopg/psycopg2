@@ -31,7 +31,7 @@ extern "C" {
 extern PyTypeObject qstringType;
 
 typedef struct {
-    PyObject HEAD;
+    PyObject_HEAD;
 
     PyObject *wrapped;
     PyObject *buffer;
