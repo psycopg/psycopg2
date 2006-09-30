@@ -32,7 +32,7 @@ extern "C" {
 extern PyTypeObject isqlquoteType;
 
 typedef struct {
-    PyObject HEAD;
+    PyObject_HEAD;
 
     PyObject *wrapped;
     

@@ -40,7 +40,7 @@ list_quote(listObject *self)
     /*  adapt the list by calling adapt() recursively and then wrapping
         everything into "ARRAY[]" */
     PyObject *tmp = NULL, *str = NULL, *joined = NULL, *res = NULL;
-    int i, len;
+    Py_ssize_t i, len;
 
     len = PyList_GET_SIZE(self->wrapped);
     

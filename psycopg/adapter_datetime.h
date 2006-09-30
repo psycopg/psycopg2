@@ -31,7 +31,7 @@ extern "C" {
 extern PyTypeObject pydatetimeType;
 
 typedef struct {
-    PyObject HEAD;
+    PyObject_HEAD;
 
     PyObject *wrapped;
     int       type;

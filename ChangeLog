@@ -1,3 +1,47 @@
+2006-09-30  Federico Di Gregorio  <fog@initd.org>
+
+	* ZpsycopgDA/DA.py: applied the infinity patch from 1.1 (fixes #122).
+
+	* psycopg/adapter_datetime.py: fixed conversion problem with seconds
+	in the (59,60) range (fixes #131).
+
+	* ZpsycopgDA/DA.py: we now split on GMT+, GMT-, + or -. This should
+	fix bug #129.
+
+	* psycopg/adapter_datetime.py: now TimeFromTicks and
+	TimestampFromTicks both accept fractionary seconds (fixes #130).
+
+2006-09-23  Federico Di Gregorio  <fog@initd.org>
+
+	* lib/errorcodes.py: added list of all PostgreSQL error codes
+	compiled by Johan Dahlin.
+
+	* psycopg/psycopg.h: applied compatibility macros from PEP 353.
+
+	* Applied patch 1/3 from Piet Delport; from his email:
+	   
+	   psycopg2-Py_ssize_t-input.diff adjusts variables used for parameters
+	   and return values.  These changes only prevent overflowing on values
+	   greater than 32-bits, so they're not as critical as the other two
+	   patches.  I tried to leave places unchanged where the input size is
+	   already constrained to sizeof(int), but i might have missed a few
+	   either way, not being too familiar with the codebase.
+
+	* Applied patch 2/3 from Piet Delport; from his email:
+	   
+	   psycopg2-Py_ssize_t-output.diff adjusts variables used as outputs
+	   from CPython API calls:  without it the calls try to write 64 bits
+	   to 32 bit locations, trampling over adjacent values/pointers,
+	   and segfaulting later.
+
+	* Applied patch 1/3 from Piet Delport; from his email:
+        
+	   psycopg2-PyObject_HEAD.diff adds missing underscores to several
+           "PyObject_HEAD" declarations.  As far as i can tell from gdb, the 
+	   "PyObject HEAD" versions end up accidentally meaning almost exactly
+	   the same, but get aligned differently on AMD64, resulting in wrong
+	   size calculation and memory corruption later.
+
 2006-09-11  Federico Di Gregorio  <fog@initd.org>
 
 	* lib/extras.py: ported syntax error fix from 2.0 (#123).

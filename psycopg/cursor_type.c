@@ -77,7 +77,8 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
 {
     PyObject *key, *value, *n, *item;
     char *d, *c;
-    int index = 0, force = 0;
+    Py_ssize_t index = 0;
+    int force = 0;
 
     /* from now on we'll use n and replace its value in *new only at the end,
        just before returning. we also init *new to NULL to exit with an error
@@ -872,7 +873,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
     char *procname = NULL, *sql = NULL;
     long int async = 0;
-    int i, nparameters = 0, sl = 0;
+    Py_ssize_t i, nparameters = 0, sl = 0;
     PyObject *parameters = NULL;
     PyObject *operation = NULL;
     PyObject *res = NULL;
@@ -1090,7 +1091,7 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
         PyObject* collistiter = PyObject_GetIter(columns);
         PyObject* col;
         int collistlen = 2;
-        int colitemlen;
+        Py_ssize_t colitemlen;
         char* colname;
         if (collistiter == NULL) {
             return NULL;

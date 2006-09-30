@@ -590,7 +590,8 @@ _pq_copy_in_v3(cursorObject *curs)
        uses the new PQputCopyData() and can detect errors and set the correct
        exception */
     PyObject *o;
-    int length = 0, error = 0;
+    Py_ssize_t length = 0;
+    int error = 0;
     
     while (1) {
         o = PyObject_CallMethod(curs->copyfile, "read", "i", curs->copysize);

@@ -267,7 +267,7 @@ int
 typecast_add(PyObject *obj, int binary)
 {
     PyObject *val;
-    int len, i;
+    Py_ssize_t len, i;
 
     typecastObject *type = (typecastObject *)obj;
     
@@ -302,7 +302,8 @@ typecast_cmp(PyObject *obj1, PyObject* obj2)
     typecastObject *self = (typecastObject*)obj1;
     typecastObject *other = NULL;
     PyObject *number = NULL;
-    int i, j, res = -1;
+    Py_ssize_t i, j;
+    int res = -1;
     
     if (PyObject_TypeCheck(obj2, &typecastType)) {
         other = (typecastObject*)obj2;
@@ -505,7 +506,7 @@ typecast_from_c(typecastObject_initlist *type, PyObject *dict)
 {
     PyObject *tuple, *base = NULL;
     typecastObject *obj;
-    int i, len = 0;
+    Py_ssize_t i, len = 0;
 
     /* before doing anything else we look for the base */
     if (type->base) {
@@ -538,7 +539,7 @@ typecast_from_c(typecastObject_initlist *type, PyObject *dict)
 }
 
 PyObject *
-typecast_cast(PyObject *obj, char *str, int len, PyObject *curs)
+typecast_cast(PyObject *obj, char *str, Py_ssize_t len, PyObject *curs)
 {
     PyObject *old, *res = NULL;
     typecastObject *self = (typecastObject *)obj;

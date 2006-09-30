@@ -277,25 +277,26 @@ psyco_Date(PyObject *self, PyObject *args)
 PyObject *
 psyco_Time(PyObject *self, PyObject *args) 
 {
-	PyObject *res = NULL;
+    PyObject *res = NULL;
     PyObject *tzinfo = NULL;
     int hours, minutes=0;
-	double micro, seconds=0.0;
+    double micro, second=0.0;
     
     PyObject* obj = NULL;
 
-    if (!PyArg_ParseTuple(args, "iid|O", &hours, &minutes, &seconds,
+    if (!PyArg_ParseTuple(args, "iid|O", &hours, &minutes, &second,
                           &tzinfo))
 	    return NULL;
 
-    micro = (seconds - floor(seconds)) * 1000000.0;
-    
+    micro = (second - floor(second)) * 1000000.0;
+    second = floor(second);
+
     if (tzinfo == NULL)
        obj = PyObject_CallFunction(pyTimeTypeP, "iiii",
-            hours, minutes, (int)round(seconds), (int)round(micro));
+            hours, minutes, (int)second, (int)round(micro));
     else
        obj = PyObject_CallFunction(pyTimeTypeP, "iiiiO",
-            hours, minutes, (int)round(seconds), (int)round(micro), tzinfo);
+            hours, minutes, (int)second, (int)round(micro), tzinfo);
     
     if (obj) {
         res = PyObject_CallFunction((PyObject *)&pydatetimeType,
@@ -309,11 +310,11 @@ psyco_Time(PyObject *self, PyObject *args)
 PyObject *
 psyco_Timestamp(PyObject *self, PyObject *args) 
 {
-	PyObject *res = NULL;
+    PyObject *res = NULL;
     PyObject *tzinfo = NULL;
     int year, month, day;
-	int hour=0, minute=0; /* default to midnight */
-	double micro, second=0.0;
+    int hour=0, minute=0; /* default to midnight */
+    double micro, second=0.0;
 
     PyObject* obj = NULL;
     
@@ -322,14 +323,15 @@ psyco_Timestamp(PyObject *self, PyObject *args)
 	    return NULL;
 
     micro = (second - floor(second)) * 1000000.0;
-    
+    second = floor(second);
+
     if (tzinfo == NULL)
         obj = PyObject_CallFunction(pyDateTimeTypeP, "iiiiiii",
-            year, month, day, hour, minute, (int)round(second),
+            year, month, day, hour, minute, (int)second,
             (int)round(micro));
     else
         obj = PyObject_CallFunction(pyDateTimeTypeP, "iiiiiiiO",
-            year, month, day, hour, minute, (int)round(second),
+            year, month, day, hour, minute, (int)second,
             (int)round(micro), tzinfo);
     
     if (obj) {
@@ -375,8 +377,10 @@ psyco_TimeFromTicks(PyObject *self, PyObject *args)
         return NULL;
 
     t = (time_t)round(ticks);
+    ticks -= (double)t;
     if (localtime_r(&t, &tm)) {
-        args = Py_BuildValue("iid", tm.tm_hour, tm.tm_min, (double)tm.tm_sec);
+        args = Py_BuildValue("iid", tm.tm_hour, tm.tm_min,
+	                      (double)tm.tm_sec + ticks);
         if (args) {
             res = psyco_Time(self, args);
             Py_DECREF(args);
@@ -397,10 +401,12 @@ psyco_TimestampFromTicks(PyObject *self, PyObject *args)
         return NULL;
     
     t = (time_t)round(ticks);
+    ticks -= (double)t;
     if (localtime_r(&t, &tm)) {
         args = Py_BuildValue("iiiiidO",
                              tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday,
-                             tm.tm_hour, tm.tm_min, (double)tm.tm_sec,
+                             tm.tm_hour, tm.tm_min,
+			     (double)tm.tm_sec + ticks,
                              pyPsycopgTzLOCAL);
         if (args) {
             res = psyco_Timestamp(self, args);
