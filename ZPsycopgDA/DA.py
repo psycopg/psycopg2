@@ -221,7 +221,10 @@ for icon in ('table', 'view', 'stable', 'what', 'field', 'text', 'bin',
 # convert an ISO timestamp string from postgres to a Zope DateTime object
 def _cast_DateTime(iso, curs):
     if iso:
-        return DateTime(re.split("GMT\+?|GMT-?|\+|-", iso)[0])
+        if iso in ['-infinity', 'infinity']:
+            return iso
+        else:
+            return DateTime(re.split("GMT\+?|GMT-?|\+|-", iso)[0])
 	
     # this will split us into [date, time, GMT/AM/PM(if there)]
     #    dt = str.split(' ')
@@ -236,14 +239,20 @@ def _cast_DateTime(iso, curs):
 # convert an ISO date string from postgres to a Zope DateTime object
 def _cast_Date(iso, curs):
     if iso:
-        return DateTime(iso)
+        if iso in ['-infinity', 'infinity']:
+            return iso
+        else:
+            return DateTime(iso)
 
 # Convert a time string from postgres to a Zope DateTime object.
 # NOTE: we set the day as today before feeding to DateTime so
 # that it has the same DST settings.
 def _cast_Time(iso, curs):
     if iso:
-        return DateTime(time.strftime('%Y-%m-%d %H:%M:%S',
+        if iso in ['-infinity', 'infinity']:
+            return iso
+        else:
+            return DateTime(time.strftime('%Y-%m-%d %H:%M:%S',
                                       time.localtime(time.time())[:3]+
                                       time.strptime(iso[:8], "%H:%M:%S")[3:]))
 

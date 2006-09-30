@@ -1,5 +1,7 @@
 2006-09-30  Federico Di Gregorio  <fog@initd.org>
 
+	* ZpsycopgDA/DA.py: applied the infinity patch from 1.1 (fixes #122).
+
 	* psycopg/adapter_datetime.py: fixed conversion problem with seconds
 	in the (59,60) range (fixes #131).
 
