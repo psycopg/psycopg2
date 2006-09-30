@@ -1,5 +1,8 @@
 2006-09-30  Federico Di Gregorio  <fog@initd.org>
 
+	* ZpsycopgDA/DA.py: we now split on GMT+, GMT-, + or -. This should
+	fix bug #129.
+
 	* psycopg/adapter_datetime.py: now TimeFromTicks and
 	TimestampFromTicks both accept fractionary seconds (fixes #130).
 

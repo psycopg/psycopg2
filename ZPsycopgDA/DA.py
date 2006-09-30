@@ -18,7 +18,8 @@
 # See the LICENSE file for details.
 
 
-ALLOWED_PSYCOPG_VERSIONS = ('2.0.1', '2.0.2', '2.0.3', '2.0.4', '2.0.5')
+ALLOWED_PSYCOPG_VERSIONS = ('2.0.1', '2.0.2', '2.0.3', '2.0.4', '2.0.5',
+                            '2.0.6')
 
 import sys
 import time
@@ -220,7 +221,7 @@ for icon in ('table', 'view', 'stable', 'what', 'field', 'text', 'bin',
 # convert an ISO timestamp string from postgres to a Zope DateTime object
 def _cast_DateTime(iso, curs):
     if iso:
-        return DateTime(re.split("GMT\+?|GMT-?", iso)[0])
+        return DateTime(re.split("GMT\+?|GMT-?|\+|-", iso)[0])
 	
     # this will split us into [date, time, GMT/AM/PM(if there)]
     #    dt = str.split(' ')
