@@ -375,8 +375,10 @@ psyco_TimeFromTicks(PyObject *self, PyObject *args)
         return NULL;
 
     t = (time_t)round(ticks);
+    ticks -= (double)t;
     if (localtime_r(&t, &tm)) {
-        args = Py_BuildValue("iid", tm.tm_hour, tm.tm_min, (double)tm.tm_sec);
+        args = Py_BuildValue("iid", tm.tm_hour, tm.tm_min,
+	                      (double)tm.tm_sec + ticks);
         if (args) {
             res = psyco_Time(self, args);
             Py_DECREF(args);
@@ -397,10 +399,12 @@ psyco_TimestampFromTicks(PyObject *self, PyObject *args)
         return NULL;
     
     t = (time_t)round(ticks);
+    ticks -= (double)t;
     if (localtime_r(&t, &tm)) {
         args = Py_BuildValue("iiiiidO",
                              tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday,
-                             tm.tm_hour, tm.tm_min, (double)tm.tm_sec,
+                             tm.tm_hour, tm.tm_min,
+			     (double)tm.tm_sec + ticks,
                              pyPsycopgTzLOCAL);
         if (args) {
             res = psyco_Timestamp(self, args);
