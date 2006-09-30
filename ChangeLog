@@ -1,5 +1,8 @@
 2006-09-30  Federico Di Gregorio  <fog@initd.org>
 
+	* psycopg/adapter_datetime.py: fixed conversion problem with seconds
+	in the (59,60) range (fixes #131).
+
 	* ZpsycopgDA/DA.py: we now split on GMT+, GMT-, + or -. This should
 	fix bug #129.
 
