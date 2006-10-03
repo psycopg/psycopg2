@@ -10,7 +10,7 @@ XS-Python-Version: all
 Package: python-psycopg2
 Architecture: any
 Section: python
-Depends: ${python:Depends}, ${shlibs:Depends}
+Depends: ${python:Depends}, ${shlibs:Depends}, python-egenix-mxdatetime
 Provides: ${python:Provides}
 XB-Python-Version: ${python:Versions}
 Description: Python module for PostgreSQL
