@@ -896,11 +896,11 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
     }
 
     /* allocate some memory, build the SQL and create a PyString from it */
-    sl = strlen(procname) + 10 + nparameters*3 - (nparameters ? 1 : 0);
+    sl = strlen(procname) + 17 + nparameters*3 - (nparameters ? 1 : 0);
     sql = (char*)PyMem_Malloc(sl);
     if (sql == NULL) return NULL;
     
-    sprintf(sql, "SELECT %s(", procname);
+    sprintf(sql, "SELECT * FROM %s(", procname);
     for(i=0; i<nparameters; i++) {
         strcat(sql, "%s,");
     }

@@ -2,6 +2,7 @@ recursive-include psycopg *.c *.h
 recursive-include lib *.py
 recursive-include tests *.py
 recursive-include ZPsycopgDA *.py *.gif *.dtml
+recursive-include psycopg2da * 
 recursive-include examples *.py somehackers.jpg whereareyou.jpg
 recursive-include debian *
 recursive-include doc TODO HACKING SUCCESS ChangeLog-1.x async.txt
