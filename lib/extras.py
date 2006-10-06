@@ -118,6 +118,9 @@ class DictRow(list):
         except:
             return default
 
+    def iteritems(self):
+        for n, v in self._index.items():
+            yield n, list.__getitem__(self, v)
 
 class SQL_IN(object):
     """Adapt any iterable to an SQL quotable object."""
