@@ -561,7 +561,7 @@ _pq_fetch_tuples(cursorObject *curs)
         /* 4,5/ scale and precision */
         if (ftype == NUMERICOID) {
             PyTuple_SET_ITEM(dtitem, 4, PyInt_FromLong((fmod >> 16) & 0xFFFF));
-            PyTuple_SET_ITEM(dtitem, 5, PyInt_FromLong((fmod & 0xFFFF) - 4));
+            PyTuple_SET_ITEM(dtitem, 5, PyInt_FromLong(fmod & 0xFFFF));
         }
         else {
             Py_INCREF(Py_None);
