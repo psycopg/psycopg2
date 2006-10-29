@@ -38,7 +38,7 @@ extern "C" {
 extern PyTypeObject connectionType;
 
 typedef struct {
-    PyObject_HEAD;
+    PyObject_HEAD
 
     pthread_mutex_t lock;   /* the global connection lock */
 

@@ -32,7 +32,7 @@ extern "C" {
 extern PyTypeObject binaryType;
 
 typedef struct {
-    PyObject_HEAD;
+    PyObject_HEAD
 
     PyObject *wrapped;
     PyObject *buffer;

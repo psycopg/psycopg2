@@ -31,7 +31,7 @@ extern "C" {
 extern PyTypeObject listType;
 
 typedef struct {
-    PyObject_HEAD;
+    PyObject_HEAD
 
     PyObject *wrapped;
     PyObject *connection;

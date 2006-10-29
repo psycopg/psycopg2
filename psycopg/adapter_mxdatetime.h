@@ -31,7 +31,7 @@ extern "C" {
 extern PyTypeObject mxdatetimeType;
 
 typedef struct {
-    PyObject_HEAD;
+    PyObject_HEAD
 
     PyObject *wrapped;
     int       type;

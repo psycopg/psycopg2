@@ -34,7 +34,7 @@ extern "C" {
 extern PyTypeObject cursorType;
 
 typedef struct {
-    PyObject_HEAD;
+    PyObject_HEAD
 
     connectionObject *conn; /* connection owning the cursor */
 
