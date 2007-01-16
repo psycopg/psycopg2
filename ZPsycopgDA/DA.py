@@ -224,17 +224,7 @@ def _cast_DateTime(iso, curs):
         if iso in ['-infinity', 'infinity']:
             return iso
         else:
-            return DateTime(re.split("GMT\+?|GMT-?|\+|-", iso)[0])
-	
-    # this will split us into [date, time, GMT/AM/PM(if there)]
-    #    dt = str.split(' ')
-    #    if len(dt) > 1:
-    #        # we now should split out any timezone info
-    #        dt[1] = dt[1].split('-')[0]
-    #        dt[1] = dt[1].split('+')[0]
-    #        return DateTime(' '.join(dt[:2]))
-    #    else:
-    #        return DateTime(dt[0])
+            return DateTime(iso)
 
 # convert an ISO date string from postgres to a Zope DateTime object
 def _cast_Date(iso, curs):
