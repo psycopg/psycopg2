@@ -272,7 +272,6 @@ ext.append(Extension("psycopg2._psycopg", sources,
                      define_macros=define_macros,
                      include_dirs=include_dirs,
                      undef_macros=[]))
-
 setup(name="psycopg2",
       version=PSYCOPG_VERSION,
       maintainer="Federico Di Gregorio",
@@ -291,3 +290,4 @@ setup(name="psycopg2",
       packages=['psycopg2'],
       cmdclass={ 'build_ext': psycopg_build_ext },
       ext_modules=ext)
+

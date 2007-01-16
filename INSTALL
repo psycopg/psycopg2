@@ -7,9 +7,7 @@ Compiling and installing psycopg
    libpq will leak memory.
 
 While psycopg 1.x used autoconf for its build process psycopg 2 switched to
-the more pythoning setup.py. Currently both psycopg's author and distutils
-have some limitations so the file setup.cfg is almost unused and most build
-options are hidden in setup.py. Before building psycopg look at setup.cfg file
+the more pythoning setup.py. Before building psycopg look at setup.cfg file
 and change any settings to follow your system (or taste); then:
 
     python setup.py build
@@ -19,6 +17,21 @@ to build in the local directory; and:
     python setup.py install
     
 to install system-wide.
+
+
+Common errors and build problems
+================================
+
+One of the most common errors is trying to build psycopg without the right
+development headers for PostgreSQL, Python or both. If you get errors, look
+for the following messages and then take the appropriate action:
+
+libpq-fe.h: No such file or directory
+  PostgreSQL headers are not properly installed on your system or are
+  installed in a non default path. First make sure they are installed, then
+  check setup.cfg and make sure pg_config points to a valid pg_config
+  executable. If you don't have a working pg_config try to play with the
+  include_dirs variable (and note that a working pg_config is better.)
 
 
 Using setuptools and EasyInstall
@@ -46,3 +59,4 @@ First you need to create a libpython2X.a as described in
 http://starship.python.net/crew/kernr/mingw32/Notes.html. Then run:
 
     python setup.py build_ext --compiler=mingw32 install
+
