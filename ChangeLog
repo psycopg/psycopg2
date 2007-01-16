@@ -1,5 +1,9 @@
 2007-01-16  Federico Di Gregorio  <fog@initd.org>
 
+	* psycopg/adapt_mxdatetime.c: fixed #137 by accessing the 'date' and
+	'time' attributes of the mx.DateTime instance: they are always in ISO
+	format.
+
 	* psycopg/typecast_datetime.c: fixed problem with year > 9999.
 
 2006-10-29  Federico Di Gregorio  <fog@initd.org>

@@ -43,23 +43,22 @@ static PyObject *
 mxdatetime_str(mxdatetimeObject *self)
 {
     PyObject *str = NULL, *res = NULL;
-    
+    PyObject *supa, *supb;
+
     switch (self->type) {
 
     case PSYCO_MXDATETIME_DATE:
+        str = PyObject_GetAttrString(self->wrapped, "date");
+        break;
+
     case PSYCO_MXDATETIME_TIMESTAMP:
-        str = PyObject_Str(self->wrapped);
-        
-        /* given the limitation of the mx.DateTime module that uses the same
-           type for both date and timestamp values we need to do some black
-           magic and make sure we're not using an adapt()ed timestamp as a
-           simple date */
-        if (strncmp(&(PyString_AsString(str)[11]), "00:00:00.000", 12) == 0) {
-            PyObject *tmp = 
-                PyString_FromStringAndSize(PyString_AsString(str), 10);
-            Py_DECREF(str);
-            str = tmp; 
-        }
+        /* here we build the right ISO string from date and time */
+        supa = PyObject_GetAttrString(self->wrapped, "date");
+        supb = PyObject_GetAttrString(self->wrapped, "time");
+        str = PyString_FromFormat("%sT%s",
+            PyString_AsString(supa), PyString_AsString(supb));
+        Py_XDECREF(supa);
+        Py_XDECREF(supb);
         break;
 
     case PSYCO_MXDATETIME_TIME:
