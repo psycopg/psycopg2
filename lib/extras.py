@@ -27,7 +27,6 @@ except:
     
 from psycopg2.extensions import cursor as _cursor
 from psycopg2.extensions import connection as _connection
-from psycopg2.extensions import register_adapter as _RA
 from psycopg2.extensions import adapt as _A
 
 
@@ -121,29 +120,6 @@ class DictRow(list):
     def iteritems(self):
         for n, v in self._index.items():
             yield n, list.__getitem__(self, v)
-
-class SQL_IN(object):
-    """Adapt any iterable to an SQL quotable object."""
-    
-    def __init__(self, seq):
-        self._seq = seq
-
-    def prepare(self, conn):
-        self._conn = conn
-    
-    def getquoted(self):
-        # this is the important line: note how every object in the
-        # list is adapted and then how getquoted() is called on it
-        pobjs = [_A(o) for o in self._seq]
-        for obj in pobjs:
-            if hasattr(obj, 'prepare'):
-                obj.prepare(self._conn)
-        qobjs = [str(o.getquoted()) for o in pobjs]
-        return '(' + ', '.join(qobjs) + ')'
-
-    __str__ = getquoted
-    
-_RA(tuple, SQL_IN)
 
     
 class LoggingConnection(_connection):

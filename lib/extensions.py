@@ -66,4 +66,30 @@ def register_adapter(typ, callable):
     """Register 'callable' as an ISQLQuote adapter for type 'typ'."""
     adapters[(typ, ISQLQuote)] = callable
 
+
+# The SQL_IN class is the official adapter for tuples starting from 2.0.6.
+class SQL_IN(object):
+    """Adapt any iterable to an SQL quotable object."""
+    
+    def __init__(self, seq):
+        self._seq = seq
+
+    def prepare(self, conn):
+        self._conn = conn
+    
+    def getquoted(self):
+        # this is the important line: note how every object in the
+        # list is adapted and then how getquoted() is called on it
+        pobjs = [adapt(o) for o in self._seq]
+        for obj in pobjs:
+            if hasattr(obj, 'prepare'):
+                obj.prepare(self._conn)
+        qobjs = [str(o.getquoted()) for o in pobjs]
+        return '(' + ', '.join(qobjs) + ')'
+
+    __str__ = getquoted
+
+register_adapter(tuple, SQL_IN)
+
+
 __all__ = [ k for k in locals().keys() if not k.startswith('_') ]
