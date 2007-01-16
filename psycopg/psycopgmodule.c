@@ -296,13 +296,20 @@ psyco_adapters_init(PyObject *mod)
 
 static encodingPair encodings[] = {
     {"SQL_ASCII",    "ascii"},
-    {"LATIN1",       "latin_1"},
+    {"LATIN1",       "iso8859_1"},
+    {"LATIN2",       "iso8859_2"}, 
+    {"LATIN3",       "iso8859_3"}, 
+    {"LATIN4",       "iso8859_4"}, 
+    {"LATIN5",       "iso8859_9"}, 
+    {"LATIN6",       "iso8859_10"}, 
+    {"LATIN7",       "iso8859_13"}, 
+    {"LATIN8",       "iso8859_14"}, 
+    {"LATIN9",       "iso8859_15"},    
     {"UNICODE",      "utf_8"},
     {"UTF8",         "utf_8"},
     
     /* some compatibility stuff */
     {"LATIN-1",      "latin_1"},
-    
     {NULL, NULL}
 };
 static void psyco_encodings_fill(PyObject *dict)

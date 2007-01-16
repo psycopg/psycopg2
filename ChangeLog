@@ -1,5 +1,7 @@
 2007-01-16  Federico Di Gregorio  <fog@initd.org>
 
+	* psycopg/psycopgmodule.c: applied LATIN patch from #148.
+
 	* psycopg/connection_type.c: obfuscate password after using it.
 
 	* lib/extras.py: moved SQL_IN to extensions.py; we're now officially
