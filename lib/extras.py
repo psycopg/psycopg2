@@ -30,59 +30,70 @@ from psycopg2.extensions import connection as _connection
 from psycopg2.extensions import adapt as _A
 
 
+class DictCursorBase(_cursor):
+    """Base class for all dict-like cursors."""
+
+    def __init__(self, *args, **kwargs):
+        if kwargs.has_key('row_factory'):
+            row_factory = kwargs['row_factory']
+            del kwargs['row_factory']
+        else:
+            raise NotImplementedError(
+                "DictCursorBase can't be instantiated without a row factory.")
+        _cursor.__init__(self, *args, **kwargs)
+        self._query_executed = 0
+        self.row_factory = row_factory
+
+    def fetchone(self):
+        if self._query_executed:
+            self._build_index()
+        return _cursor.fetchone(self)
+
+    def fetchmany(self, size=None):
+        if self._query_executed:
+            self._build_index()
+        return _cursor.fetchmany(self, size)
+
+    def fetchall(self):
+        if self._query_executed:
+            self._build_index()
+        return _cursor.fetchall(self)
+    
+    def next(self):
+        if self._query_executed:
+            self._build_index()
+        res = _cursor.fetchone(self)
+        if res is None:
+            raise StopIteration()
+        return res
+
 class DictConnection(_connection):
     """A connection that uses DictCursor automatically."""
     def cursor(self):
         return _connection.cursor(self, cursor_factory=DictCursor)
 
-class DictCursor(_cursor):
+class DictCursor(DictCursorBase):
     """A cursor that keeps a list of column name -> index mappings."""
 
-    __query_executed = 0
-    
+    def __init__(self, *args, **kwargs):
+        kwargs['row_factory'] = DictRow
+        DictCursorBase.__init__(self, *args, **kwargs)
+
     def execute(self, query, vars=None, async=0):
-        self.row_factory = DictRow
         self.index = {}
-        self.__query_executed = 1
+        self._query_executed = 1
         return _cursor.execute(self, query, vars, async)
     
     def callproc(self, procname, vars=None):
-        self.row_factory = DictRow
         self.index = {}
-        self.__query_executed = 1
+        self._query_executed = 1
         return _cursor.callproc(self, procname, vars)   
 
     def _build_index(self):
-        if self.__query_executed == 1 and self.description:
+        if self._query_executed == 1 and self.description:
             for i in range(len(self.description)):
                 self.index[self.description[i][0]] = i
-            self.__query_executed = 0
-            
-    def fetchone(self):
-        res = _cursor.fetchone(self)
-        if self.__query_executed:
-            self._build_index()
-        return res
-
-    def fetchmany(self, size=None):
-        res = _cursor.fetchmany(self, size)
-        if self.__query_executed:
-            self._build_index()
-        return res
-
-    def fetchall(self):
-        res = _cursor.fetchall(self)
-        if self.__query_executed:
-            self._build_index()
-        return res
-    
-    def next(self):
-        res = _cursor.fetchone(self)
-        if res is None:
-            raise StopIteration()
-        if self.__query_executed:
-            self._build_index()
-        return res
+            self._query_executed = 0           
 
 class DictRow(list):
     """A row object that allow by-colun-name access to data."""
@@ -121,7 +132,52 @@ class DictRow(list):
         for n, v in self._index.items():
             yield n, list.__getitem__(self, v)
 
+
+class RealDictConnection(_connection):
+    """A connection that uses RealDictCursor automatically."""
+    def cursor(self):
+        return _connection.cursor(self, cursor_factory=RealDictCursor)
+
+class RealDictCursor(DictCursorBase):
+    """A cursor that uses a real dict as the base type for rows.
+
+    Note that this cursor is extremely specialized and does not allow
+    the normal access (using integer indices) to fetched data. If you need
+    to access database rows both as a dictionary and a list, then use
+    the generic DictCursor instead of RealDictCursor.
+    """
+
+    def __init__(self, *args, **kwargs):
+        kwargs['row_factory'] = RealDictRow
+        DictCursorBase.__init__(self, *args, **kwargs)
+
+    def execute(self, query, vars=None, async=0):
+        self.column_mapping = []
+        self._query_executed = 1
+        return _cursor.execute(self, query, vars, async)
     
+    def callproc(self, procname, vars=None):
+        self.column_mapping = []
+        self._query_executed = 1
+        return _cursor.callproc(self, procname, vars)   
+
+    def _build_index(self):
+        if self._query_executed == 1 and self.description:
+            for item in self.description:
+                self.column_mapping.append(item[0])
+            self._query_executed = 0           
+
+class RealDictRow(dict):
+    def __init__(self, cursor):
+        dict.__init__(self)
+        self._column_mapping = cursor.column_mapping
+
+    def __setitem__(self, name, value):
+        if type(name) == type(0):
+            name = self._column_mapping[name]
+        return dict.__setitem__(self, name, value)
+
+
 class LoggingConnection(_connection):
     """A connection that logs all queries to a file or logger object."""
 

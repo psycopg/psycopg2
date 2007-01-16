@@ -1,5 +1,10 @@
 2007-01-16  Federico Di Gregorio  <fog@initd.org>
 
+	* lib/extras.py: merged DictCursor from #143 and renamed it RealDictCursor
+	because allows access by cursor keys _only_. Also cleaned up a little bit
+	the implementation of both DictCursor and RealDictCursor by introducing
+	DictCursorBase.
+
 	* psycopg/pqpath.cs: new checks for NULL values (meaning an
 	  exception was raised) in all method calls (fixes #134).
 
