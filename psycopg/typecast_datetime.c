@@ -59,6 +59,7 @@ typecast_PYDATE_cast(char *str, int len, PyObject *curs)
             PyErr_SetString(DataError, "unable to parse date");
         }
         else {
+	    if (y > 9999) y = 9999;
             obj = PyObject_CallFunction(pyDateTypeP, "iii", y, m, d);
         }
     }
@@ -111,7 +112,9 @@ typecast_PYDATETIME_cast(char *str, int len, PyObject *curs)
             mm += 1;
             ss -= 60;
         }
-        
+        if (y > 9999)
+	    y = 9999;
+
         if (n == 5 && ((cursorObject*)curs)->tzinfo_factory != Py_None) {
             /* we have a time zone, calculate minutes and create
                appropriate tzinfo object calling the factory */

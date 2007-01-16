@@ -1,3 +1,7 @@
+2007-01-16  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/typecast_datetime.c: fixed problem with year > 9999.
+
 2006-10-29  Federico Di Gregorio  <fog@initd.org>
 
 	* Applied patch from Jason Erickson to make psycopg build
