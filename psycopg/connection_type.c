@@ -272,6 +272,9 @@ static struct PyMemberDef connectionObject_members[] = {
 static int
 connection_setup(connectionObject *self, char *dsn)
 {
+    int i;
+    char *pos;
+
     Dprintf("connection_setup: init connection object at %p, refcnt = %d",
             self, ((PyObject *)self)->ob_refcnt);
     
@@ -284,7 +287,13 @@ connection_setup(connectionObject *self, char *dsn)
     self->async_cursor = NULL;
     self->pgconn = NULL;
     self->mark = 0;
-    
+   
+    pos = strstr(self->dsn, "password");
+    if (pos != NULL) {
+        for (pos = pos+9 ; *pos != '\0' && *pos != ' '; pos++)
+            *pos = 'x';
+    }
+
     pthread_mutex_init(&(self->lock), NULL);
  
     if (conn_connect(self) != 0) {
