@@ -609,7 +609,9 @@ _pq_copy_in_v3(cursorObject *curs)
     }
     
     Py_XDECREF(o);
-    
+   
+    Dprintf("_pq_copy_in_v3: error = %d", error);
+
     if (error == 0 || error == 2)
         /* 0 means that the copy went well, 2 that there was an error on the
            backend: in both cases we'll get the error message from the
@@ -626,7 +628,7 @@ _pq_copy_in_v3(cursorObject *curs)
         IFCLEARPGRES(curs->pgres);
     }
 
-    return 1;
+    return error == 0 ? 1 : -1;
 }
 #endif
 static int
@@ -639,7 +641,8 @@ _pq_copy_in(cursorObject *curs)
 
     while (1) {
         o = PyObject_CallMethod(curs->copyfile, "readline", NULL);
-        if (!o || o == Py_None || PyString_GET_SIZE(o) == 0) break;
+        if (o == NULL) return -1;
+        if (o == Py_None || PyString_GET_SIZE(o) == 0) break;
         if (PQputline(curs->conn->pgconn, PyString_AS_STRING(o)) != 0) {
             Py_DECREF(o);
             return -1;
@@ -666,6 +669,8 @@ _pq_copy_in(cursorObject *curs)
 static int
 _pq_copy_out_v3(cursorObject *curs)
 {
+    PyObject *tmp = NULL;
+
     char *buffer;
     int len;
     
@@ -675,8 +680,13 @@ _pq_copy_out_v3(cursorObject *curs)
         Py_END_ALLOW_THREADS;
             
         if (len > 0 && buffer) {
-            PyObject_CallMethod(curs->copyfile, "write", "s#", buffer, len);
+            tmp = PyObject_CallMethod(curs->copyfile,
+                            "write", "s#", buffer, len);
             PQfreemem(buffer);
+            if (tmp == NULL)
+                return -1;
+            else
+                Py_DECREF(tmp);
         }
         /* we break on len == 0 but note that that should *not* happen,
            because we are not doing an async call (if it happens blame
@@ -703,9 +713,11 @@ _pq_copy_out_v3(cursorObject *curs)
 static int
 _pq_copy_out(cursorObject *curs)
 {
+    PyObject *tmp = NULL;
+
     char buffer[4096];
     int status, len;
-
+    
     while (1) {
         Py_BEGIN_ALLOW_THREADS;
         status = PQgetline(curs->conn->pgconn, buffer, 4096);
@@ -723,7 +735,11 @@ _pq_copy_out(cursorObject *curs)
             return -1;
         }
         
-        PyObject_CallMethod(curs->copyfile, "write", "s#", buffer, len);
+        tmp = PyObject_CallMethod(curs->copyfile, "write", "s#", buffer, len);
+        if (tmp == NULL)
+            return -1;
+        else
+            Py_DECREF(tmp);
     }
 
     status = 1;
