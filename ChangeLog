@@ -1,5 +1,9 @@
 2007-01-16  Federico Di Gregorio  <fog@initd.org>
 
+	* psycopg/connection_type.c: .set_client_encoding() now converts the
+	argument to upper case to make sure it has the same case of the entries
+	in the PostgreSQL -> Python encoding conversion table.
+
 	* lib/extras.py: merged DictCursor from #143 and renamed it RealDictCursor
 	because allows access by cursor keys _only_. Also cleaned up a little bit
 	the implementation of both DictCursor and RealDictCursor by introducing

@@ -100,10 +100,12 @@ qstring_quote(qstringObject *self)
 
     /* TODO: we need a real translation table from postgres encoding names to
            python ones here */
-    
+   
+    Dprintf("qstring_quote: encoding to %s", self->encoding);
+
     if (PyUnicode_Check(self->wrapped) && self->encoding) {
         PyObject *enc = PyDict_GetItemString(psycoEncodings, self->encoding);
-        /* note that pgenc is a borrowed reference */
+        /* note that enc is a borrowed reference */
 
         if (enc) {
             char *s = PyString_AsString(enc);

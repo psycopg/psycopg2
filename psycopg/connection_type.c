@@ -24,6 +24,7 @@
 #include <stringobject.h>
 
 #include <string.h>
+#include <ctype.h>
 
 #define PSYCOPG_MODULE
 #include "psycopg/config.h"
@@ -179,12 +180,16 @@ psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
 static PyObject *
 psyco_conn_set_client_encoding(connectionObject *self, PyObject *args)
 {
-    char *enc = NULL;
+    char *pos, *enc = NULL;
     
     EXC_IF_CONN_CLOSED(self);
 
     if (!PyArg_ParseTuple(args, "s", &enc)) return NULL;
-    
+   
+    /* convert to upper case */
+    for (pos = enc ; *pos != '\0' ; pos++)
+         *pos = toupper(*pos);
+
     if (conn_set_client_encoding(self, enc) == 0) {
         Py_INCREF(Py_None);
         return Py_None;
@@ -272,7 +277,6 @@ static struct PyMemberDef connectionObject_members[] = {
 static int
 connection_setup(connectionObject *self, char *dsn)
 {
-    int i;
     char *pos;
 
     Dprintf("connection_setup: init connection object at %p, refcnt = %d",
