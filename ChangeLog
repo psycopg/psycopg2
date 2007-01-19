@@ -1,3 +1,9 @@
+2007-01-20  Federico Di Gregorio  <fog@initd.org>
+
+	* Release 2.0.6b1.
+
+	* Added encodings patch from Karsten Hilbert.
+
 2007-01-19  Federico Di Gregorio  <fog@initd.org>
 
 	* psycopg/adapt_list.c: added support for None. And this closes

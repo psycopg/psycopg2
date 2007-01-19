@@ -304,14 +304,68 @@ static encodingPair encodings[] = {
     {"LATIN6",       "iso8859_10"}, 
     {"LATIN7",       "iso8859_13"}, 
     {"LATIN8",       "iso8859_14"}, 
-    {"LATIN9",       "iso8859_15"},    
-    {"UNICODE",      "utf_8"},
+    {"LATIN9",       "iso8859_15"},
+    {"ISO88591",     "iso8859_1"},
+    {"ISO88592",     "iso8859_2"},
+    {"ISO88593",     "iso8859_3"},
+    {"ISO88595",     "iso8859_5"},
+    {"ISO88596",     "iso8859_6"},
+    {"ISO88597",     "iso8859_7"},
+    {"ISO885913",    "iso8859_13"},
+    {"ISO88598",     "iso8859_8"},
+    {"ISO88599",     "iso8859_9"},
+    {"ISO885914",    "iso8859_14"},
+    {"ISO885915",    "iso8859_15"},
+    {"UNICODE",      "utf_8"}, /* Not valid in 8.2, backward compatibility */
     {"UTF8",         "utf_8"},
-    
-    /* some compatibility stuff */
-    {"LATIN-1",      "latin_1"},
+    {"WIN950",       "cp950"},
+    {"Windows950",   "cp950"},
+    {"BIG5",         "big5"},
+    {"EUC_JP",       "euc_jp"},
+    {"EUC_KR",       "euc_kr"},
+    {"GB18030",      "gb18030"},
+    {"GBK",          "gbk"},
+    {"WIN936",       "gbk"},
+    {"Windows936",   "gbk"},
+    {"JOHAB",        "johab"},
+    {"KOI8",         "koi8_r"}, /* in PG: KOI8 == KOI8R == KOI8-R == KOI8-U
+                                   but in Python there is koi8_r AND koi8_u */
+    {"KOI8R",        "koi8_r"},
+    {"SJIS",         "cp932"},
+    {"Mskanji",      "cp932"},
+    {"ShiftJIS",     "cp932"},
+    {"WIN932",       "cp932"},
+    {"Windows932",   "cp932"},
+    {"UHC",          "cp949"},          
+    {"WIN949",       "cp949"},
+    {"Windows949",   "cp949"},
+    {"WIN866",       "cp866"},
+    {"ALT",          "cp866"},
+    {"WIN874",       "cp874"},
+    {"WIN1250",      "cp1250"},
+    {"WIN1251",      "cp1251"},
+    {"WIN",          "cp1251"},
+    {"WIN1252",      "cp1252"},
+    {"WIN1253",      "cp1253"},
+    {"WIN1254",      "cp1254"},
+    {"WIN1255",      "cp1255"},
+    {"WIN1256",      "cp1256"},
+    {"WIN1257",      "cp1257"},
+    {"WIN1258",      "cp1258"},
+    {"ABC",          "cp1258"},
+    {"TCVN",         "cp1258"},
+    {"TCVN5712",     "cp1258"},
+    {"VSCII",        "cp1258"},
+
+/* those are missing from Python:                */
+/*    {"EUC_CN", "?"},                           */
+/*    {"EUC_TW", "?"},                           */
+/*    {"LATIN10", "?"},                          */
+/*    {"ISO885916", "?"},                        */
+/*    {"MULE_INTERNAL", "?"},                    */    
     {NULL, NULL}
 };
+
 static void psyco_encodings_fill(PyObject *dict)
 {
     encodingPair *enc;
