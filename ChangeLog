@@ -1,13 +1,17 @@
+2007-01-19  Federico Di Gregorio  <fog@initd.org>
+
+	* Release 2.0.6 beta 1.
+
 2007-01-16  Federico Di Gregorio  <fog@initd.org>
 
 	* psycopg/connection_type.c: .set_client_encoding() now converts the
 	argument to upper case to make sure it has the same case of the entries
 	in the PostgreSQL -> Python encoding conversion table.
 
-	* lib/extras.py: merged DictCursor from #143 and renamed it RealDictCursor
-	because allows access by cursor keys _only_. Also cleaned up a little bit
-	the implementation of both DictCursor and RealDictCursor by introducing
-	DictCursorBase.
+	* lib/extras.py: merged DictCursor from #143 and renamed it 
+	RealDictCursor because allows access by cursor keys _only_.
+	Also cleaned up a little bit the implementation of both DictCursor
+	and RealDictCursor by introducing DictCursorBase.
 
 	* psycopg/pqpath.cs: new checks for NULL values (meaning an
 	  exception was raised) in all method calls (fixes #134).
