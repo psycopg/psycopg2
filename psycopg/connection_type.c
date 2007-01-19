@@ -180,21 +180,30 @@ psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
 static PyObject *
 psyco_conn_set_client_encoding(connectionObject *self, PyObject *args)
 {
-    char *pos, *enc = NULL;
-    
+    char *buffer, *enc = NULL;
+    int i, j;
+
     EXC_IF_CONN_CLOSED(self);
 
     if (!PyArg_ParseTuple(args, "s", &enc)) return NULL;
    
-    /* convert to upper case */
-    for (pos = enc ; *pos != '\0' ; pos++)
-         *pos = toupper(*pos);
+    /* convert to upper case and remove '-' and '_' from string */
+    buffer = PyMem_Malloc(strlen(enc));
+    for (i=j=0 ; i < strlen(enc) ; i++) {
+        if (enc[i] == '_' || enc[i] == '-')
+	    continue;
+	else
+	    buffer[j++] = toupper(enc[i]);
+    }
+    buffer[j] = '\0';
 
-    if (conn_set_client_encoding(self, enc) == 0) {
+    if (conn_set_client_encoding(self, buffer) == 0) {
+    	PyMem_Free(buffer);
         Py_INCREF(Py_None);
         return Py_None;
     }
     else {
+        PyMem_Free(buffer);
         return NULL;
     }
 }
