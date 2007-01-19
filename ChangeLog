@@ -1,6 +1,11 @@
 2007-01-19  Federico Di Gregorio  <fog@initd.org>
 
-	* Release 2.0.6 beta 1.
+	* psycopg/adapt_list.c: added support for None. And this closes
+	the other half.
+
+	* psycopg/typecast_array.c: added support for detecting the NULL
+	special string and converting it as a real NULL if not enclosed in
+	quotes. This closes half of #154.
 
 2007-01-16  Federico Di Gregorio  <fog@initd.org>
 

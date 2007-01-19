@@ -1,6 +1,6 @@
 import psycopg2
 
-conn = psycopg2.connect("dbname=test")
+conn = psycopg2.connect("port=5433 dbname=test")
 curs = conn.cursor()
 
 #curs.execute("SELECT ARRAY[1,2,3] AS foo")
@@ -20,9 +20,12 @@ curs = conn.cursor()
 #print curs.description
 #print curs.fetchone()[0]
 
-curs.execute("SELECT 1 AS foo, ARRAY[1,2] AS bar")
-print curs.fetchone()
+#curs.execute("SELECT 1 AS foo, ARRAY[1,2] AS bar")
+#print curs.fetchone()
 
-curs.execute("SELECT * FROM test()")
+#curs.execute("SELECT * FROM test()")
+#print curs.fetchone()
+
+curs.execute("SELECT %s", ([1,2,None],))
 print curs.fetchone()
 

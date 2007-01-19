@@ -51,9 +51,13 @@ list_quote(listObject *self)
     tmp = PyTuple_New(len);
     
     for (i=0; i<len; i++) {
-        PyObject *quoted =
-            microprotocol_getquoted(PyList_GET_ITEM(self->wrapped, i),
-                                    (connectionObject*)self->connection);
+        PyObject *quoted;
+	PyObject *wrapped = PyList_GET_ITEM(self->wrapped, i);
+	if (wrapped == Py_None)
+	    quoted = PyString_FromString("NULL");
+	else 
+	    quoted = microprotocol_getquoted(wrapped,
+                                   (connectionObject*)self->connection);
         if (quoted == NULL) goto error;
 
         /* here we don't loose a refcnt: SET_ITEM does not change the

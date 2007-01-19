@@ -54,7 +54,7 @@ typecast_array_cleanup(char **str, int *len)
 
 static int
 typecast_array_tokenize(char *str, int strlength,
-                        int *pos, char** token, int *length)
+                        int *pos, char** token, int *length, int *quotes)
 {
     /* FORTRAN glory */
     int i, j, q, b, l, res;
@@ -117,10 +117,12 @@ typecast_array_tokenize(char *str, int strlength,
 
  tokenize:
     /* remove initial quoting character and calculate raw length */
+    *quotes = 0;
     l = i - *pos;
     if (str[*pos] == '"') {
         *pos += 1;
         l -= 2;
+	*quotes = 1;
     }
 
     if (res == ASCAN_QUOTED) { 
@@ -155,7 +157,7 @@ static int
 typecast_array_scan(char *str, int strlength,
                     PyObject *curs, PyObject *base, PyObject *array)
 {
-    int state, length = 0, pos = 0;
+    int state, quotes, length = 0, pos = 0;
     char *token;
 
     PyObject *stack[MAX_DIMENSIONS];
@@ -163,11 +165,20 @@ typecast_array_scan(char *str, int strlength,
     
     while (1) {
         token = NULL;
-        state = typecast_array_tokenize(str, strlength, &pos, &token, &length);
+        state = typecast_array_tokenize(str, strlength, 
+	                                &pos, &token, &length, &quotes);
         Dprintf("typecast_array_scan: state = %d, length = %d, token = '%s'",
                 state, length, token);
         if (state == ASCAN_TOKEN || state == ASCAN_QUOTED) {
-            PyObject *obj = typecast_cast(base, token, length, curs);
+            PyObject *obj;
+	    if (!quotes && length == 4 
+	        && (token[0] == 'n' || token[0] == 'N')
+	        && (token[1] == 'u' || token[1] == 'U')
+	        && (token[2] == 'l' || token[2] == 'L')
+	        && (token[3] == 'l' || token[3] == 'L'))
+		obj = typecast_cast(base, NULL, 0, curs);
+	    else
+                obj = typecast_cast(base, token, length, curs);
 
             /* before anything else we free the memory */
             if (state == ASCAN_QUOTED) PyMem_Free(token);
