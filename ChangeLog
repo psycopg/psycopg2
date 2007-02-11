@@ -1,5 +1,7 @@
 2007-02-11  Federico Di Gregorio  <fog@initd.org>
 
+	* psycopg/pqpath.c: ported psycopg1 patch from #135.
+
 	* psycopg/connection_type.c: now the password is obfuscated after we try
 	to connect to the backend. This really fixes #147.
 

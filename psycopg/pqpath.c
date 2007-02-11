@@ -716,20 +716,22 @@ _pq_copy_out(cursorObject *curs)
     PyObject *tmp = NULL;
 
     char buffer[4096];
-    int status, len;
+    int status, len, ll=0;
     
     while (1) {
         Py_BEGIN_ALLOW_THREADS;
         status = PQgetline(curs->conn->pgconn, buffer, 4096);
         Py_END_ALLOW_THREADS;
         if (status == 0) {
-            if (buffer[0] == '\\' && buffer[1] == '.') break;
+            if (!ll && buffer[0] == '\\' && buffer[1] == '.') break;
 
             len = strlen(buffer);
             buffer[len++] = '\n';
+            ll = 0;
         }
         else if (status == 1) {
             len = 4096-1;
+            ll = 1;
         }
         else {
             return -1;
