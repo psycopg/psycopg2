@@ -287,6 +287,7 @@ static int
 connection_setup(connectionObject *self, char *dsn)
 {
     char *pos;
+    int res;
 
     Dprintf("connection_setup: init connection object at %p, refcnt = %d",
             self, ((PyObject *)self)->ob_refcnt);
@@ -301,22 +302,27 @@ connection_setup(connectionObject *self, char *dsn)
     self->pgconn = NULL;
     self->mark = 0;
    
+
+    pthread_mutex_init(&(self->lock), NULL);
+ 
+    if (conn_connect(self) != 0) {
+        Dprintf("connection_init: FAILED");
+        res = -1;
+    }
+    else {
+        Dprintf("connection_setup: good connection object at %p, refcnt = %d",
+            self, ((PyObject *)self)->ob_refcnt);
+        res = 0;
+    }
+ 
+    /* here we obfuscate the password even if there was a connection error */
     pos = strstr(self->dsn, "password");
     if (pos != NULL) {
         for (pos = pos+9 ; *pos != '\0' && *pos != ' '; pos++)
             *pos = 'x';
     }
 
-    pthread_mutex_init(&(self->lock), NULL);
- 
-    if (conn_connect(self) != 0) {
-        Dprintf("connection_init: FAILED");
-        return -1;
-    }
- 
-    Dprintf("connection_setup: good connection object at %p, refcnt = %d",
-            self, ((PyObject *)self)->ob_refcnt);
-    return 0;
+    return res;
 }
 
 static void
