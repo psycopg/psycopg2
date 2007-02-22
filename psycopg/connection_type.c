@@ -276,7 +276,11 @@ static struct PyMemberDef connectionObject_members[] = {
         "The current connection string."},
     {"status", T_LONG,
         offsetof(connectionObject, status), RO,
-	"The current transaction status."},
+	    "The current transaction status."},
+    {"string_types", T_OBJECT, offsetof(connectionObject, string_types), RO,
+        "A set of typecasters to convert textual values."},
+    {"binary_types", T_OBJECT, offsetof(connectionObject, binary_types), RO,
+        "A set of typecasters to convert binary values."},
 #endif    
     {NULL}
 };
@@ -301,7 +305,8 @@ connection_setup(connectionObject *self, char *dsn)
     self->async_cursor = NULL;
     self->pgconn = NULL;
     self->mark = 0;
-   
+    self->string_types = PyDict_New();   
+    self->binary_types = PyDict_New();
 
     pthread_mutex_init(&(self->lock), NULL);
  
@@ -339,6 +344,8 @@ connection_dealloc(PyObject* obj)
     Py_XDECREF(self->notice_list);
     Py_XDECREF(self->notifies);
     Py_XDECREF(self->async_cursor);
+    Py_XDECREF(self->string_types);
+    Py_XDECREF(self->binary_types);
     
     pthread_mutex_destroy(&(self->lock));
 

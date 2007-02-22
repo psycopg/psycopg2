@@ -228,17 +228,40 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
 "    the string representation returned by PostgreSQL (`None` if ``NULL``)\n" \
 "    and ``cur`` is the cursor from which data are read."
 
+static void
+_psyco_register_type_set(PyObject **dict, PyObject *type)
+{
+    if (*dict == NULL)
+        *dict = PyDict_New();
+    typecast_add(type, *dict, 0);
+}
+
 static PyObject *
 psyco_register_type(PyObject *self, PyObject *args)
 {
-    PyObject *type;
+    PyObject *type, *obj;
 
-    if (!PyArg_ParseTuple(args, "O!", &typecastType, &type)) {
+    if (!PyArg_ParseTuple(args, "O!|O", &typecastType, &type, &obj)) {
         return NULL;
     }
 
-    typecast_add(type, 0);
-    
+    if (obj != NULL) {
+        if (obj->ob_type == &cursorType) {
+            _psyco_register_type_set(&(((cursorObject*)obj)->string_types), type);
+        }
+        else if (obj->ob_type == &connectionType) {
+            typecast_add(type, ((connectionObject*)obj)->string_types, 0);
+        }
+        else {
+            PyErr_SetString(PyExc_TypeError,
+                "argument 2 must be a connection, cursor or None");
+            return NULL;
+        }
+    }
+    else {
+        typecast_add(type, NULL, 0);
+    }
+
     Py_INCREF(Py_None);
     return Py_None;
 }

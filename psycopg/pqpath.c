@@ -501,34 +501,44 @@ _pq_fetch_tuples(cursorObject *curs)
         
         PyTuple_SET_ITEM(curs->description, i, dtitem);
         
-        /* fill the right cast function by accessing the global dictionary of
-           casting objects.  if we got no defined cast use the default
-           one */
-        if (!(cast = PyDict_GetItem(curs->casts, type))) {
-            Dprintf("_pq_fetch_tuples: cast %d not in per-cursor dict", ftype);
-            if (!(cast = PyDict_GetItem(psyco_types, type))) {
-                Dprintf("_pq_fetch_tuples: cast %d not found, using default",
-                        PQftype(curs->pgres,i));
-                cast = psyco_default_cast;
-            }
+        /* fill the right cast function by accessing three different dictionaries:
+           - the per-cursor dictionary, if available (can be NULL or None)
+           - the per-connection dictionary (always exists but can be null)
+           - the global dictionary (at module level)
+           if we get no defined cast use the default one */
+
+        Dprintf("_pq_fetch_tuples: looking for cast %d:", ftype);
+        if (curs->string_types != NULL && curs->string_types != Py_None) {
+            cast = PyDict_GetItem(curs->string_types, type);
+            Dprintf("_pq_fetch_tuples:     per-cursor dict: %p", cast);
         }
+        if (cast == NULL) {
+            cast = PyDict_GetItem(curs->conn->string_types, type);
+            Dprintf("_pq_fetch_tuples:     per-connection dict: %p", cast);
+        }
+        if (cast == NULL) {
+            cast = PyDict_GetItem(psyco_types, type);
+            Dprintf("_pq_fetch_tuples:     global dict: %p", cast);
+        }
+        if (cast == NULL) cast = psyco_default_cast;
+        
         /* else if we got binary tuples and if we got a field that
            is binary use the default cast
            FIXME: what the hell am I trying to do here? This just can't work..
         */
-        else if (pgbintuples && cast == psyco_default_binary_cast) {
+        if (pgbintuples && cast == psyco_default_binary_cast) {
             Dprintf("_pq_fetch_tuples: Binary cursor and "
                     "binary field: %i using default cast",
                     PQftype(curs->pgres,i));
             cast = psyco_default_cast;
         }
+
         Dprintf("_pq_fetch_tuples: using cast at %p (%s) for type %d",
                 cast, PyString_AS_STRING(((typecastObject*)cast)->name),
                 PQftype(curs->pgres,i));
         Py_INCREF(cast);
         PyTuple_SET_ITEM(curs->casts, i, cast);
     
-
         /* 1/ fill the other fields */
         PyTuple_SET_ITEM(dtitem, 0,
                          PyString_FromString(PQfname(curs->pgres, i)));

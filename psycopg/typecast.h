@@ -69,7 +69,7 @@ extern PyObject *psyco_default_binary_cast;
 
 /* used by module.c to init the type system and register types */
 extern int typecast_init(PyObject *dict);
-extern int typecast_add(PyObject *obj, int binary);
+extern int typecast_add(PyObject *obj, PyObject *dict, int binary);
 
 /* the C callable typecastObject creator function */
 extern PyObject *typecast_from_c(typecastObject_initlist *type, PyObject *d);

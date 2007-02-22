@@ -1448,7 +1448,9 @@ cursor_dealloc(PyObject* obj)
     Py_XDECREF(self->tuple_factory);
     Py_XDECREF(self->tzinfo_factory);
     Py_XDECREF(self->query);
-
+    Py_XDECREF(self->string_types);
+    Py_XDECREF(self->binary_types);
+    
     IFCLEARPGRES(self->pgres);
     
     Dprintf("cursor_dealloc: deleted cursor object at %p, refcnt = %d",

@@ -226,7 +226,7 @@ typecast_init(PyObject *dict)
 
         t = (typecastObject *)typecast_from_c(&(typecast_builtins[i]), dict);
         if (t == NULL) return -1;
-        if (typecast_add((PyObject *)t, 0) != 0) return -1;
+        if (typecast_add((PyObject *)t, NULL, 0) != 0) return -1;
 
         PyDict_SetItem(dict, t->name, (PyObject *)t);
 
@@ -264,7 +264,7 @@ typecast_init(PyObject *dict)
 
 /* typecast_add - add a type object to the dictionary */
 int
-typecast_add(PyObject *obj, int binary)
+typecast_add(PyObject *obj, PyObject *dict, int binary)
 {
     PyObject *val;
     Py_ssize_t len, i;
@@ -274,16 +274,14 @@ typecast_add(PyObject *obj, int binary)
     Dprintf("typecast_add: object at %p, values refcnt = %d",
             obj, type->values->ob_refcnt);
 
+    if (dict == NULL)
+        dict = (binary ? psyco_binary_types : psyco_types);
+
     len = PyTuple_Size(type->values);
     for (i = 0; i < len; i++) {
         val = PyTuple_GetItem(type->values, i);
         Dprintf("typecast_add:     adding val: %ld", PyInt_AsLong(val));
-        if (binary) {
-            PyDict_SetItem(psyco_binary_types, val, obj);
-        }
-        else {
-            PyDict_SetItem(psyco_types, val, obj);
-        }
+        PyDict_SetItem(dict, val, obj);
     }
 
     Dprintf("typecast_add:     base caster: %p", type->bcast);

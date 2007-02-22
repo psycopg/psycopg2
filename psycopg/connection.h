@@ -74,7 +74,11 @@ typedef struct {
     PyObject *exc_IntegrityError;
     PyObject *exc_DataError;
     PyObject *exc_NotSupportedError;
-    
+
+    /* per-connection typecasters */
+    PyObject *string_types;   /* a set of typecasters for string types */
+    PyObject *binary_types;   /* a set of typecasters for binary types */
+
 } connectionObject;
     
 /* C-callable functions in connection_int.c and connection_ext.c */
