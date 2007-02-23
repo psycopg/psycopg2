@@ -236,6 +236,9 @@ conn_switch_isolation_level(connectionObject *self, int level)
 {
     int res = 0;
 
+    /* if the current isolation level is equal to the requested one don't switch */
+    if (self->isolation_level == level) return 0;
+
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
     
@@ -263,7 +266,11 @@ conn_set_client_encoding(connectionObject *self, char *enc)
     PGresult *pgres;
     char query[48];
     int res = 0;
-    
+   
+    /* If the current encoding is equal to the requested one we don't
+       issue any query to the backend */
+    if (strcmp(self->encoding, enc) == 0) return 0;
+
     /* TODO: check for async query here and raise error if necessary */
     
     Py_BEGIN_ALLOW_THREADS;

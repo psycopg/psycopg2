@@ -125,30 +125,23 @@ class Connection(Shared.DC.ZRDB.Connection.Connection):
             raise ImportError("psycopg version mismatch (imported %s)" %
                               psycopg2.__version__)
 
-        self.set_type_casts()
         self._v_connected = ''
         dbf = self.factory()
         
         # TODO: let the psycopg exception propagate, or not?
         self._v_database_connection = dbf(
-            self.connection_string, self.tilevel, self.encoding)
+            self.connection_string, self.tilevel, self.get_type_casts(), self.encoding)
         self._v_database_connection.open()
         self._v_connected = DateTime()
 
         return self
 
-    def set_type_casts(self):
+    def get_type_casts(self):
         # note that in both cases order *is* important
         if self.zdatetime:
-            # use zope internal datetime routines
-            register_type(ZDATETIME)
-            register_type(ZDATE)
-            register_type(ZTIME)
+            return ZDATETIME, ZDATE, ZTIME
         else:
-            # use the standard
-            register_type(DATETIME)
-            register_type(DATE)
-            register_type(TIME)
+            return DATETIME, DATE, TIME
 
     ## browsing and table/column management ##
 

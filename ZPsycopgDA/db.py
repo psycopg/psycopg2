@@ -27,6 +27,7 @@ import pool
 
 import psycopg2
 from psycopg2.extensions import INTEGER, LONGINTEGER, FLOAT, BOOLEAN, DATE, TIME
+from psycopg2.extensions import register_type
 from psycopg2 import NUMBER, STRING, ROWID, DATETIME 
 
 
@@ -36,17 +37,21 @@ class DB(TM, dbi_db.DB):
     
     _p_oid = _p_changed = _registered = None
 
-    def __init__(self, dsn, tilevel, enc='utf-8'):
+    def __init__(self, dsn, tilevel, typecasts, enc='utf-8'):
         self.dsn = dsn
         self.tilevel = tilevel
+        self.typecasts = typecasts
         self.encoding = enc
         self.failures = 0
         self.calls = 0
         self.make_mappings()
-
+                        
     def getconn(self, create=True):
         conn = pool.getconn(self.dsn)
         conn.set_isolation_level(int(self.tilevel))
+        conn.set_client_encoding(self.encoding)
+        for tc in self.typecasts:
+            register_type(tc, conn)
         return conn
 
     def putconn(self, close=False):
@@ -159,9 +164,6 @@ class DB(TM, dbi_db.DB):
 
         try:
             for qs in [x for x in query_string.split('\0') if x]:
-                if type(qs) == unicode:
-                    if self.encoding:
-                        qs = qs.encode(self.encoding)
                 try:
                     if query_data:
                         c.execute(qs, query_data)
