@@ -379,11 +379,7 @@ def _handle_psycopg_exception(error):
     # PostgreSQL releases - if so, the different messages should be added
     # rather than the existing ones changed so this logic works with
     # different versions.
-    if msg.startswith(
-            'ERROR:  could not serialize access due to concurrent update'
-            ):
-        raise Retry(sys.exc_info())
-    if msg.startswith('ERROR:  deadlock detected'):
+    if 'could not serialize' in msg or 'deadlock detected' in msg:
         raise Retry(sys.exc_info())
     raise
 
