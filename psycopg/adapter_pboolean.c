@@ -19,6 +19,7 @@
  * Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
 #include <stringobject.h>
@@ -65,14 +66,14 @@ PyObject *
 pboolean_conform(pbooleanObject *self, PyObject *args)
 {
     PyObject *res, *proto;
-    
+
     if (!PyArg_ParseTuple(args, "O", &proto)) return NULL;
 
     if (proto == (PyObject*)&isqlquoteType)
         res = (PyObject*)self;
     else
         res = Py_None;
-    
+
     Py_INCREF(res);
     return res;
 }
@@ -100,14 +101,18 @@ static PyMethodDef pbooleanObject_methods[] = {
 static int
 pboolean_setup(pbooleanObject *self, PyObject *obj)
 {
-    Dprintf("pboolean_setup: init pboolean object at %p, refcnt = %d",
-            self, ((PyObject *)self)->ob_refcnt);
+    Dprintf("pboolean_setup: init pboolean object at %p, refcnt = "
+        FORMAT_CODE_PY_SSIZE_T,
+        self, ((PyObject *)self)->ob_refcnt
+      );
 
     self->wrapped = obj;
     Py_INCREF(self->wrapped);
-    
-    Dprintf("pboolean_setup: good pboolean object at %p, refcnt = %d",
-            self, ((PyObject *)self)->ob_refcnt);
+
+    Dprintf("pboolean_setup: good pboolean object at %p, refcnt = "
+        FORMAT_CODE_PY_SSIZE_T,
+        self, ((PyObject *)self)->ob_refcnt
+      );
     return 0;
 }
 
@@ -117,10 +122,12 @@ pboolean_dealloc(PyObject* obj)
     pbooleanObject *self = (pbooleanObject *)obj;
 
     Py_XDECREF(self->wrapped);
-    
-    Dprintf("pboolean_dealloc: deleted pboolean object at %p, refcnt = %d",
-            obj, obj->ob_refcnt);
-    
+
+    Dprintf("pboolean_dealloc: deleted pboolean object at %p, refcnt = "
+        FORMAT_CODE_PY_SSIZE_T,
+        obj, obj->ob_refcnt
+      );
+
     obj->ob_type->tp_free(obj);
 }
 
@@ -128,7 +135,7 @@ static int
 pboolean_init(PyObject *obj, PyObject *args, PyObject *kwds)
 {
     PyObject *o;
-    
+
     if (!PyArg_ParseTuple(args, "O", &o))
         return -1;
 
@@ -137,7 +144,7 @@ pboolean_init(PyObject *obj, PyObject *args, PyObject *kwds)
 
 static PyObject *
 pboolean_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
-{    
+{
     return type->tp_alloc(type, 0);
 }
 
@@ -170,7 +177,7 @@ PyTypeObject pbooleanType = {
     0,          /*tp_print*/
 
     0,          /*tp_getattr*/
-    0,          /*tp_setattr*/ 
+    0,          /*tp_setattr*/
 
     0,          /*tp_compare*/
 
@@ -182,14 +189,14 @@ PyTypeObject pbooleanType = {
 
     0,          /*tp_call*/
     (reprfunc)pboolean_str, /*tp_str*/
-    
+
     0,          /*tp_getattro*/
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
 
     Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /*tp_flags*/
     pbooleanType_doc, /*tp_doc*/
-    
+
     0,          /*tp_traverse*/
     0,          /*tp_clear*/
 
@@ -206,11 +213,11 @@ PyTypeObject pbooleanType = {
     0,          /*tp_getset*/
     0,          /*tp_base*/
     0,          /*tp_dict*/
-    
+
     0,          /*tp_descr_get*/
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
-    
+
     pboolean_init, /*tp_init*/
     0, /*tp_alloc  will be set to PyType_GenericAlloc in module init*/
     pboolean_new, /*tp_new*/
@@ -230,9 +237,9 @@ PyObject *
 psyco_Boolean(PyObject *module, PyObject *args)
 {
     PyObject *obj;
-     
+
     if (!PyArg_ParseTuple(args, "O", &obj))
         return NULL;
-  
+
     return PyObject_CallFunction((PyObject *)&pbooleanType, "O", obj);
 }

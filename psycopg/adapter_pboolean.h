@@ -22,6 +22,7 @@
 #ifndef PSYCOPG_PBOOLEAN_H
 #define PSYCOPG_PBOOLEAN_H 1
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 #ifdef __cplusplus
@@ -39,7 +40,7 @@ typedef struct {
 } pbooleanObject;
 
 /* functions exported to psycopgmodule.c */
-    
+
 extern PyObject *psyco_Boolean(PyObject *module, PyObject *args);
 #define psyco_Boolean_doc \
     "Boolean(obj) -> new boolean value"

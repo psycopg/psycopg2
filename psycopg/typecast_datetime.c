@@ -38,9 +38,9 @@ typecast_PYDATE_cast(char *str, int len, PyObject *curs)
 {
     PyObject* obj = NULL;
     int n, y=0, m=0, d=0;
-     
+
     if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
-    
+
     if (!strcmp(str, "infinity") || !strcmp(str, "-infinity")) {
         if (str[0] == '-') {
             obj = PyObject_GetAttrString(pyDateTypeP, "min");
@@ -59,7 +59,7 @@ typecast_PYDATE_cast(char *str, int len, PyObject *curs)
             PyErr_SetString(DataError, "unable to parse date");
         }
         else {
-	    if (y > 9999) y = 9999;
+        if (y > 9999) y = 9999;
             obj = PyObject_CallFunction(pyDateTypeP, "iii", y, m, d);
         }
     }
@@ -75,9 +75,9 @@ typecast_PYDATETIME_cast(char *str, int len, PyObject *curs)
     int n, y=0, m=0, d=0;
     int hh=0, mm=0, ss=0, us=0, tz=0;
     char *tp = NULL;
-    
+
     if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
-    
+
     /* check for infinity */
     if (!strcmp(str, "infinity") || !strcmp(str, "-infinity")) {
         if (str[0] == '-') {
@@ -93,11 +93,11 @@ typecast_PYDATETIME_cast(char *str, int len, PyObject *curs)
         n = typecast_parse_date(str, &tp, &len, &y, &m, &d);
         Dprintf("typecast_PYDATE_cast: tp = %p "
                 "n = %d, len = %d, y = %d, m = %d, d = %d",
-                 tp, n, len, y, m, d);        
+                 tp, n, len, y, m, d);
         if (n != 3) {
             PyErr_SetString(DataError, "unable to parse date");
         }
-        
+
         if (len > 0) {
             n = typecast_parse_time(tp, NULL, &len, &hh, &mm, &ss, &us, &tz);
             Dprintf("typecast_PYDATETIME_cast: n = %d, len = %d, "
@@ -107,13 +107,13 @@ typecast_PYDATETIME_cast(char *str, int len, PyObject *curs)
                 PyErr_SetString(DataError, "unable to parse time");
             }
         }
-        
+
         if (ss > 59) {
             mm += 1;
             ss -= 60;
         }
         if (y > 9999)
-	    y = 9999;
+        y = 9999;
 
         if (n == 5 && ((cursorObject*)curs)->tzinfo_factory != Py_None) {
             /* we have a time zone, calculate minutes and create
@@ -124,8 +124,10 @@ typecast_PYDATETIME_cast(char *str, int len, PyObject *curs)
                 ((cursorObject*)curs)->tzinfo_factory, "i", tz);
             obj = PyObject_CallFunction(pyDateTimeTypeP, "iiiiiiiO",
                  y, m, d, hh, mm, ss, us, tzinfo);
-            Dprintf("typecast_PYDATETIME_cast: tzinfo: %p, refcnt = %d",
-                    tzinfo, tzinfo->ob_refcnt);
+            Dprintf("typecast_PYDATETIME_cast: tzinfo: %p, refcnt = "
+                FORMAT_CODE_PY_SSIZE_T,
+                tzinfo, tzinfo->ob_refcnt
+              );
             Py_XDECREF(tzinfo);
         }
         else {
@@ -143,14 +145,14 @@ typecast_PYTIME_cast(char *str, int len, PyObject *curs)
 {
     PyObject* obj = NULL;
     int n, hh=0, mm=0, ss=0, us=0, tz=0;
-    
+
     if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
-        
+
     n = typecast_parse_time(str, NULL, &len, &hh, &mm, &ss, &us, &tz);
     Dprintf("typecast_PYTIME_cast: n = %d, len = %d, "
             "hh = %d, mm = %d, ss = %d, us = %d, tz = %d",
             n, len, hh, mm, ss, us, tz);
-                
+
     if (n < 3 || n > 5) {
         PyErr_SetString(DataError, "unable to parse time");
     }
@@ -161,7 +163,7 @@ typecast_PYTIME_cast(char *str, int len, PyObject *curs)
         }
         obj = PyObject_CallFunction(pyTimeTypeP, "iiii", hh, mm, ss, us);
     }
-    return obj;          
+    return obj;
 }
 
 /** INTERVAL - parse an interval into a timedelta object **/
@@ -178,7 +180,7 @@ typecast_PYINTERVAL_cast(char *str, int len, PyObject *curs)
     if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
 
     Dprintf("typecast_PYINTERVAL_cast: s = %s", str);
-    
+
     while (len-- > 0 && *str) {
         switch (*str) {
 
@@ -234,12 +236,12 @@ typecast_PYINTERVAL_cast(char *str, int len, PyObject *curs)
                 seconds = v;
                 v = 0.0; part = 6;
             }
-            break;   
+            break;
 
         default:
             break;
         }
-        
+
         str++;
     }
 
@@ -254,7 +256,7 @@ typecast_PYINTERVAL_cast(char *str, int len, PyObject *curs)
         hundredths = v;
         hundredths = hundredths/denominator;
     }
-    
+
     /* calculates seconds */
     if (sign < 0.0) {
         seconds = - (hundredths + seconds + minutes*60 + hours*3600);
@@ -263,7 +265,7 @@ typecast_PYINTERVAL_cast(char *str, int len, PyObject *curs)
         seconds += hundredths + minutes*60 + hours*3600;
     }
 
-    /* calculates days */ 
+    /* calculates days */
     days += years*365 + months*30;
 
     micro = (seconds - floor(seconds)) * 1000000.0;
@@ -274,7 +276,7 @@ typecast_PYINTERVAL_cast(char *str, int len, PyObject *curs)
 
 /* psycopg defaults to using python datetime types */
 
-#ifdef PSYCOPG_DEFAULT_PYDATETIME 
+#ifdef PSYCOPG_DEFAULT_PYDATETIME
 #define typecast_DATE_cast typecast_PYDATE_cast
 #define typecast_TIME_cast typecast_PYTIME_cast
 #define typecast_INTERVAL_cast typecast_PYINTERVAL_cast

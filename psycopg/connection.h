@@ -22,6 +22,7 @@
 #ifndef PSYCOPG_CONNECTION_H
 #define PSYCOPG_CONNECTION_H 1
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <libpq-fe.h>
 
@@ -34,7 +35,7 @@ extern "C" {
 #define CONN_STATUS_BEGIN 2
 #define CONN_STATUS_SYNC  3
 #define CONN_STATUS_ASYNC 4
-    
+
 extern PyTypeObject connectionType;
 
 typedef struct {
@@ -45,17 +46,17 @@ typedef struct {
     char *dsn;              /* data source name */
     char *critical;         /* critical error on this connection */
     char *encoding;         /* current backend encoding */
-    
+
     long int closed;          /* 2 means connection has been closed */
     long int isolation_level; /* isolation level for this connection */
-    long int mark;            /* number of commits/rollbacks done so far */ 
+    long int mark;            /* number of commits/rollbacks done so far */
     int status;               /* status of the connection */
     int protocol;             /* protocol version */
-    
+
     PGconn *pgconn;         /* the postgresql connection */
 
     PyObject *async_cursor;
-    
+
     /* notice processing */
     PyObject *notice_list;
     PyObject *notice_filter;
@@ -80,20 +81,20 @@ typedef struct {
     PyObject *binary_types;   /* a set of typecasters for binary types */
 
 } connectionObject;
-    
+
 /* C-callable functions in connection_int.c and connection_ext.c */
 extern int  conn_connect(connectionObject *self);
 extern void conn_close(connectionObject *self);
 extern int  conn_commit(connectionObject *self);
 extern int  conn_rollback(connectionObject *self);
 extern int  conn_switch_isolation_level(connectionObject *self, int level);
-extern int  conn_set_client_encoding(connectionObject *self, char *enc); 
+extern int  conn_set_client_encoding(connectionObject *self, char *enc);
 
 /* exception-raising macros */
 #define EXC_IF_CONN_CLOSED(self) if ((self)->closed > 0) { \
     PyErr_SetString(InterfaceError, "connection already closed"); \
     return NULL; }
-    
+
 #ifdef __cplusplus
 }
 #endif

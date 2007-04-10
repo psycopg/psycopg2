@@ -22,22 +22,23 @@
 #ifndef PSYCOPG_ISQLQUOTE_H
 #define PSYCOPG_ISQLQUOTE_H 1
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <libpq-fe.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-    
+
 extern PyTypeObject isqlquoteType;
 
 typedef struct {
     PyObject_HEAD
 
     PyObject *wrapped;
-    
+
 } isqlquoteObject;
-    
+
 #ifdef __cplusplus
 }
 #endif

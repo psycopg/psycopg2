@@ -33,8 +33,10 @@
 static void
 chunk_dealloc(chunkObject *self)
 {
-    Dprintf("chunk_dealloc: deallocating memory at %p, size %d",
-            self->base, self->len);
+    Dprintf("chunk_dealloc: deallocating memory at %p, size "
+        FORMAT_CODE_PY_SSIZE_T,
+        self->base, self->len
+      );
     free(self->base);
     self->ob_type->tp_free((PyObject *) self);
 }
@@ -42,12 +44,14 @@ chunk_dealloc(chunkObject *self)
 static PyObject *
 chunk_repr(chunkObject *self)
 {
-    return PyString_FromFormat("<memory chunk at %p size %d>",
-                               self->base, self->len);
+    return PyString_FromFormat(
+        "<memory chunk at %p size " FORMAT_CODE_PY_SSIZE_T ">",
+        self->base, self->len
+      );
 }
 
-static int
-chunk_getreadbuffer(chunkObject *self, int segment, void **ptr)
+static Py_ssize_t
+chunk_getreadbuffer(chunkObject *self, Py_ssize_t segment, void **ptr)
 {
     if (segment != 0)
     {
@@ -59,8 +63,8 @@ chunk_getreadbuffer(chunkObject *self, int segment, void **ptr)
     return self->len;
 }
 
-static int
-chunk_getsegcount(chunkObject *self, int *lenp)
+static Py_ssize_t
+chunk_getsegcount(chunkObject *self, Py_ssize_t *lenp)
 {
     if (lenp != NULL)
         *lenp = self->len;
@@ -69,10 +73,10 @@ chunk_getsegcount(chunkObject *self, int *lenp)
 
 static PyBufferProcs chunk_as_buffer =
 {
-    (getreadbufferproc) chunk_getreadbuffer,
-    (getwritebufferproc) NULL,
-    (getsegcountproc) chunk_getsegcount,
-    (getcharbufferproc) NULL
+    (readbufferproc) chunk_getreadbuffer,
+    (writebufferproc) NULL,
+    (segcountproc) chunk_getsegcount,
+    (charbufferproc) NULL
 };
 
 #define chunk_doc "memory chunk"
@@ -120,7 +124,7 @@ typecast_BINARY_cast_unescape(unsigned char *str, size_t *to_length)
     if (dststr == NULL) return NULL;
 
     Py_BEGIN_ALLOW_THREADS;
-   
+
     for (i = 0; i < len; i++) {
         if (str[i] == '\\') {
             if ( ++i < len) {
@@ -140,17 +144,17 @@ typecast_BINARY_cast_unescape(unsigned char *str, size_t *to_length)
         }
         dstptr++;
     }
-    
+
     Py_END_ALLOW_THREADS;
 
     *to_length = (size_t)(dstptr-dststr);
-    
+
     return dststr;
 }
 
 #define PQunescapeBytea typecast_BINARY_cast_unescape
 #endif
-    
+
 static PyObject *
 typecast_BINARY_cast(char *s, int l, PyObject *curs)
 {
@@ -172,12 +176,13 @@ typecast_BINARY_cast(char *s, int l, PyObject *curs)
         s = buffer;
     }
     str = (char*)PQunescapeBytea((unsigned char*)s, &len);
-    Dprintf("typecast_BINARY_cast: unescaped %d bytes", len);
+    Dprintf("typecast_BINARY_cast: unescaped " FORMAT_CODE_SIZE_T " bytes",
+      len);
     if (buffer) PyMem_Free(buffer);
 
     chunk = (chunkObject *) PyObject_New(chunkObject, &chunkType);
     if (chunk == NULL) return NULL;
-    
+
     chunk->base = str;
     chunk->len = len;
     if ((res = PyBuffer_FromObject((PyObject *)chunk, 0, len)) == NULL)

@@ -22,6 +22,7 @@
 #ifndef PSYCOPG_LIST_H
 #define PSYCOPG_LIST_H 1
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 #ifdef __cplusplus

@@ -22,6 +22,7 @@
 #ifndef PSYCOPG_CURSOR_H
 #define PSYCOPG_CURSOR_H 1
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <libpq-fe.h>
 
@@ -41,7 +42,7 @@ typedef struct {
     int closed:1;            /* 1 if the cursor is closed */
     int notuples:1;          /* 1 if the command was not a SELECT query */
     int needsfetch:1;        /* 1 if a call to pq_fetch is pending */
-    
+
     long int rowcount;       /* number of rows affected by last execute */
     long int columns;        /* number of columns fetched from the db */
     long int arraysize;      /* how many rows should fetchmany() return */
@@ -58,28 +59,28 @@ typedef struct {
 
     PyObject *casts;      /* an array (tuple) of typecast functions */
     PyObject *caster;     /* the current typecaster object */
-    
+
     PyObject *copyfile;   /* file-like used during COPY TO/FROM ops */
-    long int  copysize;   /* size of the copy buffer during COPY TO/FROM ops */
+    Py_ssize_t copysize;   /* size of the copy buffer during COPY TO/FROM ops */
 #define DEFAULT_COPYSIZE 16384
-    
+
     PyObject *tuple_factory;    /* factory for result tuples */
     PyObject *tzinfo_factory;   /* factory for tzinfo objects */
-    
+
     PyObject *query;      /* last query executed */
-    
+
     char *qattr;          /* quoting attr, used when quoting strings */
     char *notice;         /* a notice from the backend */
     char *name;           /* this cursor name */
-    
+
     PyObject *string_types;   /* a set of typecasters for string types */
     PyObject *binary_types;   /* a set of typecasters for binary types */
 
 } cursorObject;
-    
+
 /* C-callable functions in cursor_int.c and cursor_ext.c */
 extern void curs_reset(cursorObject *self);
-    
+
 /* exception-raising macros */
 #define EXC_IF_CURS_CLOSED(self) \
 if ((self)->closed || ((self)->conn && (self)->conn->closed)) { \
@@ -90,7 +91,7 @@ if ((self)->closed || ((self)->conn && (self)->conn->closed)) { \
 if ((self)->notuples && (self)->name == NULL) {               \
     PyErr_SetString(ProgrammingError, "no results to fetch"); \
     return NULL; }
-    
+
 #define EXC_IF_NO_MARK(self) \
 if ((self)->mark != (self)->conn->mark) {                                  \
     PyErr_SetString(ProgrammingError, "named cursor isn't valid anymore"); \

@@ -19,6 +19,7 @@
  * Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
 #include <stringobject.h>
@@ -68,23 +69,23 @@ mxdatetime_str(mxdatetimeObject *self)
         /* given the limitation of the mx.DateTime module that uses the same
            type for both time and delta values we need to do some black magic
            and make sure we're not using an adapt()ed interval as a simple
-           time */                    
+           time */
         if (PyString_Size(str) > 8 && PyString_AsString(str)[8] == ':') {
             mxDateTimeDeltaObject *obj = (mxDateTimeDeltaObject*)self->wrapped;
-        
+
             char buffer[8];
             int i, j, x;
-            
+
             double ss = obj->hour*3600.0 + obj->minute*60.0 + obj->second;
             int us = (int)((ss - floor(ss))*1000000);
-                
+
             for (i=1000000, j=0; i > 0 ; i /= 10) {
                 x = us/i;
                 us -= x*i;
                 buffer[j++] = '0'+x;
             }
             buffer[j] = '\0';
-            
+
             res = PyString_FromFormat("'%ld days %d.%s seconds'",
                 obj->day, (int)round(ss), buffer);
         }
@@ -94,7 +95,7 @@ mxdatetime_str(mxdatetimeObject *self)
     if (str != NULL && res == NULL) {
         res = PyString_FromFormat("'%s'", PyString_AsString(str));
     }
-    Py_XDECREF(str);   
+    Py_XDECREF(str);
 
     return res;
 }
@@ -110,14 +111,14 @@ PyObject *
 mxdatetime_conform(mxdatetimeObject *self, PyObject *args)
 {
     PyObject *res, *proto;
-    
+
     if (!PyArg_ParseTuple(args, "O", &proto)) return NULL;
 
     if (proto == (PyObject*)&isqlquoteType)
         res = (PyObject*)self;
     else
         res = Py_None;
-    
+
     Py_INCREF(res);
     return res;
 }
@@ -146,15 +147,19 @@ static PyMethodDef mxdatetimeObject_methods[] = {
 static int
 mxdatetime_setup(mxdatetimeObject *self, PyObject *obj, int type)
 {
-    Dprintf("mxdatetime_setup: init mxdatetime object at %p, refcnt = %d",
-            self, ((PyObject *)self)->ob_refcnt);
+    Dprintf("mxdatetime_setup: init mxdatetime object at %p, refcnt = "
+        FORMAT_CODE_PY_SSIZE_T,
+        self, ((PyObject *)self)->ob_refcnt
+      );
 
     self->type = type;
     self->wrapped = obj;
     Py_INCREF(self->wrapped);
-    
-    Dprintf("mxdatetime_setup: good mxdatetime object at %p, refcnt = %d",
-            self, ((PyObject *)self)->ob_refcnt);
+
+    Dprintf("mxdatetime_setup: good mxdatetime object at %p, refcnt = "
+        FORMAT_CODE_PY_SSIZE_T,
+        self, ((PyObject *)self)->ob_refcnt
+      );
     return 0;
 }
 
@@ -164,10 +169,12 @@ mxdatetime_dealloc(PyObject* obj)
     mxdatetimeObject *self = (mxdatetimeObject *)obj;
 
     Py_XDECREF(self->wrapped);
-    
-    Dprintf("mxdatetime_dealloc: deleted mxdatetime object at %p, refcnt = %d",
-            obj, obj->ob_refcnt);
-    
+
+    Dprintf("mxdatetime_dealloc: deleted mxdatetime object at %p, refcnt = "
+        FORMAT_CODE_PY_SSIZE_T,
+        obj, obj->ob_refcnt
+      );
+
     obj->ob_type->tp_free(obj);
 }
 
@@ -176,7 +183,7 @@ mxdatetime_init(PyObject *obj, PyObject *args, PyObject *kwds)
 {
     PyObject *mx;
     int type = -1; /* raise an error if type was not passed! */
-    
+
     if (!PyArg_ParseTuple(args, "O|i", &mx, &type))
         return -1;
 
@@ -185,7 +192,7 @@ mxdatetime_init(PyObject *obj, PyObject *args, PyObject *kwds)
 
 static PyObject *
 mxdatetime_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
-{    
+{
     return type->tp_alloc(type, 0);
 }
 
@@ -216,7 +223,7 @@ PyTypeObject mxdatetimeType = {
     mxdatetime_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/
     0,          /*tp_getattr*/
-    0,          /*tp_setattr*/   
+    0,          /*tp_setattr*/
 
     0,          /*tp_compare*/
     (reprfunc)mxdatetime_repr, /*tp_repr*/
@@ -234,7 +241,7 @@ PyTypeObject mxdatetimeType = {
     Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /*tp_flags*/
 
     mxdatetimeType_doc, /*tp_doc*/
-    
+
     0,          /*tp_traverse*/
     0,          /*tp_clear*/
 
@@ -251,11 +258,11 @@ PyTypeObject mxdatetimeType = {
     0,          /*tp_getset*/
     0,          /*tp_base*/
     0,          /*tp_dict*/
-    
+
     0,          /*tp_descr_get*/
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
-    
+
     mxdatetime_init, /*tp_init*/
     0,          /*tp_alloc*/
     mxdatetime_new, /*tp_new*/
@@ -274,15 +281,15 @@ PyTypeObject mxdatetimeType = {
 #ifdef PSYCOPG_DEFAULT_MXDATETIME
 
 PyObject *
-psyco_Date(PyObject *self, PyObject *args) 
+psyco_Date(PyObject *self, PyObject *args)
 {
-	PyObject *res, *mx;
-	int year, month, day;
-	
-	if (!PyArg_ParseTuple(args, "iii", &year, &month, &day))
-	    return NULL;
-					 
-	mx = mxDateTimeP->DateTime_FromDateAndTime(year, month, day, 0, 0, 0.0);
+    PyObject *res, *mx;
+    int year, month, day;
+
+    if (!PyArg_ParseTuple(args, "iii", &year, &month, &day))
+        return NULL;
+
+    mx = mxDateTimeP->DateTime_FromDateAndTime(year, month, day, 0, 0, 0.0);
     if (mx == NULL) return NULL;
 
     res = PyObject_CallFunction((PyObject *)&mxdatetimeType, "Oi", mx,
@@ -292,35 +299,35 @@ psyco_Date(PyObject *self, PyObject *args)
 }
 
 PyObject *
-psyco_Time(PyObject *self, PyObject *args) 
+psyco_Time(PyObject *self, PyObject *args)
 {
-	PyObject *res, *mx;
+    PyObject *res, *mx;
     int hours, minutes=0;
-	double seconds=0.0;
+    double seconds=0.0;
 
     if (!PyArg_ParseTuple(args, "iid", &hours, &minutes, &seconds))
-	    return NULL;
-					 
-	mx = mxDateTimeP->DateTimeDelta_FromTime(hours, minutes, seconds);
+        return NULL;
+
+    mx = mxDateTimeP->DateTimeDelta_FromTime(hours, minutes, seconds);
     if (mx == NULL) return NULL;
 
     res = PyObject_CallFunction((PyObject *)&mxdatetimeType, "Oi", mx,
                                 PSYCO_MXDATETIME_TIME);
     Py_DECREF(mx);
-    return res;    
+    return res;
 }
 
 PyObject *
-psyco_Timestamp(PyObject *self, PyObject *args) 
+psyco_Timestamp(PyObject *self, PyObject *args)
 {
-	PyObject *res, *mx;
+    PyObject *res, *mx;
     int year, month, day;
-	int hour=0, minute=0; /* default to midnight */
-	double second=0.0;
-    
+    int hour=0, minute=0; /* default to midnight */
+    double second=0.0;
+
     if (!PyArg_ParseTuple(args, "lii|iid", &year, &month, &day,
                           &hour, &minute, &second))
-	    return NULL;
+        return NULL;
 
     mx = mxDateTimeP->DateTime_FromDateAndTime(year, month, day,
                                                hour, minute, second);
@@ -329,7 +336,7 @@ psyco_Timestamp(PyObject *self, PyObject *args)
     res = PyObject_CallFunction((PyObject *)&mxdatetimeType, "Oi", mx,
                                 PSYCO_MXDATETIME_TIMESTAMP);
     Py_DECREF(mx);
-    return res;     
+    return res;
 }
 
 PyObject *
@@ -340,14 +347,14 @@ psyco_DateFromTicks(PyObject *self, PyObject *args)
 
     if (!PyArg_ParseTuple(args,"d", &ticks))
         return NULL;
-					 
+
     if (!(mx = mxDateTimeP->DateTime_FromTicks(ticks)))
         return NULL;
-    
+
     res = PyObject_CallFunction((PyObject *)&mxdatetimeType, "Oi", mx,
                                 PSYCO_MXDATETIME_DATE);
     Py_DECREF(mx);
-    return res; 
+    return res;
 }
 
 PyObject *
@@ -358,7 +365,7 @@ psyco_TimeFromTicks(PyObject *self, PyObject *args)
 
     if (!PyArg_ParseTuple(args,"d", &ticks))
         return NULL;
-					 
+
     if (!(dt = mxDateTimeP->DateTime_FromTicks(ticks)))
         return NULL;
 
@@ -373,7 +380,7 @@ psyco_TimeFromTicks(PyObject *self, PyObject *args)
     res = PyObject_CallFunction((PyObject *)&mxdatetimeType, "Oi", mx,
                                 PSYCO_MXDATETIME_TIME);
     Py_DECREF(mx);
-    return res; 
+    return res;
 }
 
 PyObject *
@@ -384,14 +391,14 @@ psyco_TimestampFromTicks(PyObject *self, PyObject *args)
 
     if (!PyArg_ParseTuple(args, "d", &ticks))
         return NULL;
-					 
+
     if (!(mx = mxDateTimeP->DateTime_FromTicks(ticks)))
         return NULL;
 
     res = PyObject_CallFunction((PyObject *)&mxdatetimeType, "Oi", mx,
                                  PSYCO_MXDATETIME_TIMESTAMP);
     Py_DECREF(mx);
-    return res; 
+    return res;
 }
 
 #endif
@@ -403,7 +410,7 @@ psyco_DateFromMx(PyObject *self, PyObject *args)
 
     if (!PyArg_ParseTuple(args, "O!", mxDateTimeP->DateTime_Type, &mx))
         return NULL;
-    
+
     return PyObject_CallFunction((PyObject *)&mxdatetimeType, "Oi", mx,
                                  PSYCO_MXDATETIME_DATE);
 }
@@ -415,7 +422,7 @@ psyco_TimeFromMx(PyObject *self, PyObject *args)
 
     if (!PyArg_ParseTuple(args, "O!", mxDateTimeP->DateTimeDelta_Type, &mx))
         return NULL;
-    
+
     return PyObject_CallFunction((PyObject *)&mxdatetimeType, "Oi", mx,
                                  PSYCO_MXDATETIME_TIME);
 }
@@ -427,7 +434,7 @@ psyco_TimestampFromMx(PyObject *self, PyObject *args)
 
     if (!PyArg_ParseTuple(args, "O!", mxDateTimeP->DateTime_Type, &mx))
         return NULL;
-    
+
     return PyObject_CallFunction((PyObject *)&mxdatetimeType, "Oi", mx,
                                  PSYCO_MXDATETIME_TIMESTAMP);
 }
@@ -439,7 +446,7 @@ psyco_IntervalFromMx(PyObject *self, PyObject *args)
 
     if (!PyArg_ParseTuple(args, "O!", mxDateTimeP->DateTime_Type, &mx))
         return NULL;
-    
+
     return PyObject_CallFunction((PyObject *)&mxdatetimeType, "Oi", mx,
                                  PSYCO_MXDATETIME_INTERVAL);
 }

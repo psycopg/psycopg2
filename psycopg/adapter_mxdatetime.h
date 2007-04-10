@@ -22,6 +22,7 @@
 #ifndef PSYCOPG_MXDATETIME_H
 #define PSYCOPG_MXDATETIME_H 1
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 #ifdef __cplusplus
@@ -38,13 +39,13 @@ typedef struct {
 #define       PSYCO_MXDATETIME_TIME       0
 #define       PSYCO_MXDATETIME_DATE       1
 #define       PSYCO_MXDATETIME_TIMESTAMP  2
-#define       PSYCO_MXDATETIME_INTERVAL   3   
-    
+#define       PSYCO_MXDATETIME_INTERVAL   3
+
 } mxdatetimeObject;
-    
+
 /* functions exported to psycopgmodule.c */
 #ifdef PSYCOPG_DEFAULT_MXDATETIME
-    
+
 extern PyObject *psyco_Date(PyObject *module, PyObject *args);
 #define psyco_Date_doc \
     "Date(year, month, day) -> new date"
@@ -56,7 +57,7 @@ extern PyObject *psyco_Time(PyObject *module, PyObject *args);
 extern PyObject *psyco_Timestamp(PyObject *module, PyObject *args);
 #define psyco_Timestamp_doc \
     "Time(year, month, day, hour, minutes, seconds) -> new timestamp"
-    
+
 extern PyObject *psyco_DateFromTicks(PyObject *module, PyObject *args);
 #define psyco_DateFromTicks_doc \
     "DateFromTicks(ticks) -> new date"
@@ -86,7 +87,7 @@ extern PyObject *psyco_TimestampFromMx(PyObject *module, PyObject *args);
 extern PyObject *psyco_IntervalFromMx(PyObject *module, PyObject *args);
 #define psyco_IntervalFromMx_doc \
     "IntervalFromMx(mx) -> new interval"
-    
+
 #ifdef __cplusplus
 }
 #endif

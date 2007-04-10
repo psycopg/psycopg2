@@ -19,6 +19,7 @@
  * Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <string.h>
 
@@ -55,22 +56,22 @@ conn_connect(connectionObject *self)
     PGresult *pgres;
     char *data, *tmp;
     int i;
-    
+
     /* we need the initial date style to be ISO, for typecasters; if the user
        later change it, she must know what she's doing... */
     const char *datestyle = "SET DATESTYLE TO 'ISO'";
     const char *encoding  = "SHOW client_encoding";
     const char *isolevel  = "SHOW default_transaction_isolation";
-    
+
     const char *lvl1a = "read uncommitted";
     const char *lvl1b = "read committed";
     const char *lvl2a = "repeatable read";
     const char *lvl2b = "serializable";
-    
+
     Py_BEGIN_ALLOW_THREADS;
     pgconn = PQconnectdb(self->dsn);
     Py_END_ALLOW_THREADS;
-    
+
     Dprintf("conn_connect: new postgresql connection at %p", pgconn);
 
     if (pgconn == NULL)
@@ -118,12 +119,12 @@ conn_connect(connectionObject *self)
         PQfinish(pgconn);
         IFCLEARPGRES(pgres);
         return -1;
-    }  
+    }
     for (i=0 ; i < strlen(tmp) ; i++)
         self->encoding[i] = toupper(tmp[i]);
     self->encoding[i] = '\0';
     CLEARPGRES(pgres);
-    
+
     Py_BEGIN_ALLOW_THREADS;
     pgres = PQexec(pgconn, isolevel);
     Py_END_ALLOW_THREADS;
@@ -159,7 +160,7 @@ conn_connect(connectionObject *self)
     self->protocol = 2;
 #endif
     Dprintf("conn_connect: using protocol %d", self->protocol);
-    
+
     self->pgconn = pgconn;
     return 0;
 }
@@ -178,7 +179,7 @@ conn_close(connectionObject *self)
     self->closed = 1;
 
     /* execute a forced rollback on the connection (but don't check the
-       result, we're going to close the pq connection anyway */    
+       result, we're going to close the pq connection anyway */
     if (self->pgconn) {
         pq_abort(self);
         PQfinish(self->pgconn);
@@ -203,7 +204,7 @@ conn_commit(connectionObject *self)
 
     res = pq_commit(self);
     self->mark++;
-    
+
     pthread_mutex_unlock(&self->lock);
     Py_END_ALLOW_THREADS;
 
@@ -222,7 +223,7 @@ conn_rollback(connectionObject *self)
 
     res = pq_abort(self);
     self->mark++;
-    
+
     pthread_mutex_unlock(&self->lock);
     Py_END_ALLOW_THREADS;
 
@@ -241,7 +242,7 @@ conn_switch_isolation_level(connectionObject *self, int level)
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
-    
+
     /* if the current isolation level is > 0 we need to abort the current
        transaction before changing; that all folks! */
     if (self->isolation_level != level && self->isolation_level > 0) {
@@ -249,13 +250,13 @@ conn_switch_isolation_level(connectionObject *self, int level)
     }
     self->isolation_level = level;
     self->mark++;
-    
+
     Dprintf("conn_switch_isolation_level: switched to level %d", level);
-    
+
     pthread_mutex_unlock(&self->lock);
     Py_END_ALLOW_THREADS;
 
-    return res;   
+    return res;
 }
 
 /* conn_set_client_encoding - switch client encoding on connection */
@@ -266,16 +267,16 @@ conn_set_client_encoding(connectionObject *self, char *enc)
     PGresult *pgres;
     char query[48];
     int res = 0;
-   
+
     /* If the current encoding is equal to the requested one we don't
        issue any query to the backend */
     if (strcmp(self->encoding, enc) == 0) return 0;
 
     /* TODO: check for async query here and raise error if necessary */
-    
+
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
-    
+
     /* set encoding, no encoding string is longer than 24 bytes */
     PyOS_snprintf(query, 47, "SET client_encoding = '%s'", enc);
 
@@ -297,14 +298,14 @@ conn_set_client_encoding(connectionObject *self, char *enc)
 
         IFCLEARPGRES(pgres);
     }
-    
+
     Dprintf("conn_set_client_encoding: set encoding to %s", self->encoding);
-    
+
     pthread_mutex_unlock(&self->lock);
     Py_END_ALLOW_THREADS;
 
     if (res == -1)
         PyErr_Format(OperationalError, "can't set encoding to %s", enc);
-        
-    return res;   
+
+    return res;
 }

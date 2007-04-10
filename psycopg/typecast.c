@@ -19,6 +19,7 @@
  * Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
 
@@ -52,9 +53,9 @@ typecast_parse_date(char* s, char** t, int* len,
                      int* year, int* month, int* day)
 {
     int acc = -1, cz = 0;
-    
+
     Dprintf("typecast_parse_date: len = %d, s = %s", *len, s);
-     
+
     while (cz < 3 && *len > 0 && *s) {
         switch (*s) {
         case '-':
@@ -67,7 +68,7 @@ typecast_parse_date(char* s, char** t, int* len,
             break;
         default:
             acc = (acc == -1 ? 0 : acc*10) + ((int)*s - (int)'0');
-            break;            
+            break;
         }
 
         s++; (*len)--;
@@ -77,7 +78,7 @@ typecast_parse_date(char* s, char** t, int* len,
         *day = acc;
         cz += 1;
     }
-    if (t != NULL) *t = s;    
+    if (t != NULL) *t = s;
 
     return cz;
 }
@@ -89,12 +90,12 @@ typecast_parse_time(char* s, char** t, int* len,
     int acc = -1, cz = 0;
     int tzs = 1, tzhh = 0, tzmm = 0;
     int usd = 0;
-    
+
     /* sets microseconds and timezone to 0 because they may be missing */
     *us = *tz = 0;
-    
+
     Dprintf("typecast_parse_time: len = %d, s = %s", *len, s);
-     
+
     while (cz < 6 && *len > 0 && *s) {
         switch (*s) {
         case ':':
@@ -123,7 +124,7 @@ typecast_parse_time(char* s, char** t, int* len,
         default:
             acc = (acc == -1 ? 0 : acc*10) + ((int)*s - (int)'0');
             if (cz == 3) usd += 1;
-            break;            
+            break;
         }
 
         s++; (*len)--;
@@ -136,13 +137,13 @@ typecast_parse_time(char* s, char** t, int* len,
         else if (cz == 5)   tzmm = acc;
     }
     if (t != NULL) *t = s;
-    
+
     *tz = tzs * tzhh*60 + tzmm;
-    
+
     if (*us != 0.0) {
         while (usd++ < 6) *us *= 10.0;
     }
-    
+
     return cz;
 }
 
@@ -168,7 +169,7 @@ typecastObject_initlist typecast_pydatetime[] = {
     {"PYDATETIME", typecast_DATETIME_types, typecast_PYDATETIME_cast},
     {"PYTIME", typecast_TIME_types, typecast_PYTIME_cast},
     {"PYDATE", typecast_DATE_types, typecast_PYDATE_cast},
-    {"PYINTERVAL", typecast_INTERVAL_types, typecast_PYINTERVAL_cast},    
+    {"PYINTERVAL", typecast_INTERVAL_types, typecast_PYINTERVAL_cast},
     {NULL, NULL, NULL}
 };
 #endif
@@ -179,7 +180,7 @@ typecastObject_initlist typecast_mxdatetime[] = {
     {"MXDATETIME", typecast_DATETIME_types, typecast_MXDATE_cast},
     {"MXTIME", typecast_TIME_types, typecast_MXTIME_cast},
     {"MXDATE", typecast_DATE_types, typecast_MXDATE_cast},
-    {"MXINTERVAL", typecast_INTERVAL_types, typecast_MXINTERVAL_cast},    
+    {"MXINTERVAL", typecast_INTERVAL_types, typecast_MXINTERVAL_cast},
     {NULL, NULL, NULL}
 };
 #endif
@@ -203,20 +204,20 @@ int
 typecast_init(PyObject *dict)
 {
     int i;
-    
+
     /* create type dictionary and put it in module namespace */
     psyco_types = PyDict_New();
     psyco_binary_types = PyDict_New();
-    
+
     if (!psyco_types || !psyco_binary_types) {
         Py_XDECREF(psyco_types);
         Py_XDECREF(psyco_binary_types);
         return -1;
-    }                         
+    }
 
     PyDict_SetItemString(dict, "string_types", psyco_types);
     PyDict_SetItemString(dict, "binary_types", psyco_binary_types);
-    
+
     /* insert the cast types into the 'types' dictionary and register them in
        the module dictionary */
     for (i = 0; typecast_builtins[i].name != NULL; i++) {
@@ -235,7 +236,7 @@ typecast_init(PyObject *dict)
             psyco_default_binary_cast = (PyObject *)t;
         }
     }
-    
+
     /* create and save a default cast object (but does not register it) */
     psyco_default_cast = typecast_from_c(&typecast_default, dict);
 
@@ -258,7 +259,7 @@ typecast_init(PyObject *dict)
         PyDict_SetItem(dict, t->name, (PyObject *)t);
     }
 #endif
-    
+
     return 0;
 }
 
@@ -270,9 +271,11 @@ typecast_add(PyObject *obj, PyObject *dict, int binary)
     Py_ssize_t len, i;
 
     typecastObject *type = (typecastObject *)obj;
-    
-    Dprintf("typecast_add: object at %p, values refcnt = %d",
-            obj, type->values->ob_refcnt);
+
+    Dprintf("typecast_add: object at %p, values refcnt = "
+        FORMAT_CODE_PY_SSIZE_T,
+        obj, type->values->ob_refcnt
+      );
 
     if (dict == NULL)
         dict = (binary ? psyco_binary_types : psyco_types);
@@ -302,7 +305,7 @@ typecast_cmp(PyObject *obj1, PyObject* obj2)
     PyObject *number = NULL;
     Py_ssize_t i, j;
     int res = -1;
-    
+
     if (PyObject_TypeCheck(obj2, &typecastType)) {
         other = (typecastObject*)obj2;
     }
@@ -311,25 +314,25 @@ typecast_cmp(PyObject *obj1, PyObject* obj2)
     }
 
     Dprintf("typecast_cmp: other = %p, number = %p", other, number);
-    
+
     for (i=0; i < PyObject_Length(self->values) && res == -1; i++) {
         long int val = PyInt_AsLong(PyTuple_GET_ITEM(self->values, i));
-        
+
         if (other != NULL) {
             for (j=0; j < PyObject_Length(other->values); j++) {
                 if (PyInt_AsLong(PyTuple_GET_ITEM(other->values, j)) == val) {
-                    res = 0; break;   
+                    res = 0; break;
                 }
             }
         }
-        
+
         else if (number != NULL) {
             if (PyInt_AsLong(number) == val) {
                 res = 0; break;
             }
         }
     }
-    
+
     Py_XDECREF(number);
     return res;
 }
@@ -339,29 +342,29 @@ typecast_richcompare(PyObject *obj1, PyObject* obj2, int opid)
 {
     PyObject *result = NULL;
     int res = typecast_cmp(obj1, obj2);
-    
+
     if (PyErr_Occurred()) return NULL;
-    
+
     if ((opid == Py_EQ && res == 0) || (opid != Py_EQ && res != 0))
         result = Py_True;
     else
         result = Py_False;
-    
+
     Py_INCREF(result);
     return result;
 }
-     
+
 static struct PyMemberDef typecastObject_members[] = {
     {"name", T_OBJECT, OFFSETOF(name), RO},
     {"values", T_OBJECT, OFFSETOF(values), RO},
     {NULL}
 };
-    
+
 static void
 typecast_dealloc(PyObject *obj)
 {
     typecastObject *self = (typecastObject*)obj;
-    
+
     Py_XDECREF(self->values);
     Py_XDECREF(self->name);
     Py_XDECREF(self->pcast);
@@ -371,9 +374,9 @@ typecast_dealloc(PyObject *obj)
 
 static PyObject *
 typecast_call(PyObject *obj, PyObject *args, PyObject *kwargs)
-{   
+{
     PyObject *string, *cursor;
-    
+
     if (!PyArg_ParseTuple(args, "OO", &string, &cursor)) {
         return NULL;
     }
@@ -389,9 +392,9 @@ PyTypeObject typecastType = {
     "psycopg2._psycopg.type",
     sizeof(typecastObject),
     0,
-    
+
     typecast_dealloc, /*tp_dealloc*/
-    0,          /*tp_print*/ 
+    0,          /*tp_print*/
     0,          /*tp_getattr*/
     0,          /*tp_setattr*/
     typecast_cmp, /*tp_compare*/
@@ -409,7 +412,7 @@ PyTypeObject typecastType = {
 
     Py_TPFLAGS_HAVE_RICHCOMPARE, /*tp_flags*/
     "psycopg type-casting object", /*tp_doc*/
-    
+
     0,          /*tp_traverse*/
     0,          /*tp_clear*/
 
@@ -426,11 +429,11 @@ PyTypeObject typecastType = {
     0,          /*tp_getset*/
     0,          /*tp_base*/
     0,          /*tp_dict*/
-    
+
     0,          /*tp_descr_get*/
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
-    
+
     0, /*tp_init*/
     0, /*tp_alloc  will be set to PyType_GenericAlloc in module init*/
     0, /*tp_new*/
@@ -451,11 +454,12 @@ typecast_new(PyObject *name, PyObject *values, PyObject *cast, PyObject *base)
     obj = PyObject_NEW(typecastObject, &typecastType);
     if (obj == NULL) return NULL;
 
-    Dprintf("typecast_new: new type at = %p, refcnt = %d", obj, obj->ob_refcnt);
-             
+    Dprintf("typecast_new: new type at = %p, refcnt = " FORMAT_CODE_PY_SSIZE_T,
+      obj, obj->ob_refcnt);
+
     Py_INCREF(values);
     obj->values = values;
-    
+
     if (name) {
         Py_INCREF(name);
         obj->name = name;
@@ -476,26 +480,26 @@ typecast_new(PyObject *name, PyObject *values, PyObject *cast, PyObject *base)
         Py_INCREF(cast);
         obj->pcast = cast;
     }
-    
+
     Dprintf("typecast_new: typecast object created at %p", obj);
-    
+
     return (PyObject *)obj;
 }
 
 PyObject *
 typecast_from_python(PyObject *self, PyObject *args, PyObject *keywds)
 {
-    PyObject *v, *name, *cast = NULL, *base = NULL;
+    PyObject *v, *name = NULL, *cast = NULL, *base = NULL;
 
     static char *kwlist[] = {"values", "name", "castobj", "baseobj", NULL};
-    
-    if (!PyArg_ParseTupleAndKeywords(args, keywds, "O!|O!OO", kwlist, 
+
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "O!|O!OO", kwlist,
                                      &PyTuple_Type, &v,
                                      &PyString_Type, &name,
                                      &cast, &base)) {
         return NULL;
     }
-    
+
     return typecast_new(name, v, cast, base);
 }
 
@@ -517,18 +521,18 @@ typecast_from_c(typecastObject_initlist *type, PyObject *dict)
     }
 
     while (type->values[len] != 0) len++;
-    
+
     tuple = PyTuple_New(len);
     if (!tuple) return NULL;
-    
+
     for (i = 0; i < len ; i++) {
         PyTuple_SET_ITEM(tuple, i, PyInt_FromLong(type->values[i]));
     }
 
-        
+
     obj = (typecastObject *)
         typecast_new(PyString_FromString(type->name), tuple, NULL, base);
-    
+
     if (obj) {
         obj->ccast = type->cast;
         obj->pcast = NULL;
@@ -545,7 +549,7 @@ typecast_cast(PyObject *obj, char *str, Py_ssize_t len, PyObject *curs)
     /* we don't incref, the caster *can't* die at this point */
     old = ((cursorObject*)curs)->caster;
     ((cursorObject*)curs)->caster = obj;
-    
+
     if (self->ccast) {
         res = self->ccast(str, len, curs);
     }

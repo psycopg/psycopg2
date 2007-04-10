@@ -25,6 +25,7 @@
    connection.
 */
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <string.h>
 
@@ -47,17 +48,17 @@ void
 pq_raise(connectionObject *conn, cursorObject *curs, PyObject *exc, char *msg)
 {
     PyObject *pgc = (PyObject*)curs;
-    
+
     char *err = NULL;
     char *err2 = NULL;
     char *code = NULL;
     char *buf = NULL;
-    
+
     if ((conn == NULL && curs == NULL) || (curs != NULL && conn == NULL)) {
         PyErr_SetString(Error, "psycopg went psycotic and raised a null error");
         return;
     }
-    
+
     if (curs && curs->pgres) {
         err = PQresultErrorMessage(curs->pgres);
 #ifdef HAVE_PQPROTOCOL3
@@ -76,7 +77,7 @@ pq_raise(connectionObject *conn, cursorObject *curs, PyObject *exc, char *msg)
         PyErr_SetString(Error, "psycopg went psycotic without error set");
         return;
     }
-    
+
     /* if exc is NULL, analyze the message and try to deduce the right
        exception kind (only if we have a pgres, obviously) */
     if (exc == NULL) {
@@ -93,7 +94,7 @@ pq_raise(connectionObject *conn, cursorObject *curs, PyObject *exc, char *msg)
             }
         }
     }
-    
+
     /* if exc is still NULL psycopg was not built with HAVE_PQPROTOCOL3 or the
        connection is using protocol 2: in both cases we default to comparing
        error messages */
@@ -105,7 +106,7 @@ pq_raise(connectionObject *conn, cursorObject *curs, PyObject *exc, char *msg)
         else
             exc = ProgrammingError;
     }
-    
+
     /* try to remove the initial "ERROR: " part from the postgresql error */
     if (err && strlen(err) > 8) err2 = &(err[8]);
     else err2 = err;
@@ -126,9 +127,9 @@ pq_raise(connectionObject *conn, cursorObject *curs, PyObject *exc, char *msg)
         }
     }
     else {
-        psyco_set_error(exc, pgc, err2, err, code);        
+        psyco_set_error(exc, pgc, err2, err, code);
     }
-    
+
     if (buf != NULL) PyMem_Free(buf);
 }
 
@@ -144,7 +145,7 @@ pq_raise(connectionObject *conn, cursorObject *curs, PyObject *exc, char *msg)
 void
 pq_set_critical(connectionObject *conn, const char *msg)
 {
-    if (msg == NULL) 
+    if (msg == NULL)
         msg = PQerrorMessage(conn->pgconn);
     if (conn->critical) free(conn->critical);
     if (msg && msg[0] != '\0') conn->critical = strdup(msg);
@@ -155,7 +156,7 @@ PyObject *
 pq_resolve_critical(connectionObject *conn, int close)
 {
     Dprintf("pq_resolve_critical: resolving %s", conn->critical);
-    
+
     if (conn->critical) {
         char *msg = &(conn->critical[6]);
         Dprintf("pq_resolve_critical: error = %s", msg);
@@ -163,7 +164,7 @@ pq_resolve_critical(connectionObject *conn, int close)
            from the connection, so we just raise an OperationalError with the
            critical message */
         PyErr_SetString(OperationalError, msg);
-        
+
         /* we don't want to destroy this connection but just close it */
         if (close == 1) conn_close(conn);
     }
@@ -175,7 +176,7 @@ pq_resolve_critical(connectionObject *conn, int close)
    note that this function does block because it needs to wait for the full
    result sets of the previous query to clear them.
 
-   
+
    this function does not call any Py_*_ALLOW_THREADS macros */
 
 void
@@ -201,7 +202,7 @@ pq_begin(connectionObject *conn)
         NULL,
         "BEGIN; SET TRANSACTION ISOLATION LEVEL READ COMMITTED",
         "BEGIN; SET TRANSACTION ISOLATION LEVEL SERIALIZABLE"};
-    
+
     int pgstatus, retvalue = -1;
     PGresult *pgres = NULL;
 
@@ -324,7 +325,7 @@ pq_abort(connectionObject *conn)
 }
 
 /* pq_is_busy - consume input and return connection status
- 
+
    a status of 1 means that a call to pq_fetch will block, while a status of 0
    means that there is data available to be collected. -1 means an error, the
    exception will be set accordingly.
@@ -336,7 +337,7 @@ int
 pq_is_busy(connectionObject *conn)
 {
     PGnotify *pgn;
-    
+
     Dprintf("pq_is_busy: consuming input");
 
     Py_BEGIN_ALLOW_THREADS;
@@ -352,13 +353,13 @@ pq_is_busy(connectionObject *conn)
 
     pthread_mutex_unlock(&(conn->lock));
     Py_END_ALLOW_THREADS;
-    
+
     /* now check for notifies */
     while ((pgn = PQnotifies(conn->pgconn)) != NULL) {
         PyObject *notify;
-        
+
         Dprintf("curs_is_busy: got NOTIFY from pid %d, msg = %s",
-                pgn->be_pid, pgn->relname);
+                (int) pgn->be_pid, pgn->relname);
 
         notify = PyTuple_New(2);
         PyTuple_SET_ITEM(notify, 0, PyInt_FromLong((long)pgn->be_pid));
@@ -366,7 +367,7 @@ pq_is_busy(connectionObject *conn)
         PyList_Append(conn->notifies, notify);
         free(pgn);
     }
-    
+
     return PQisBusy(conn->pgconn);
 }
 
@@ -410,10 +411,10 @@ pq_execute(cursorObject *curs, const char *query, int async)
            not what should we do? just block and discard data or execute
            another query? */
         pq_clear_async(curs->conn);
-        
+
         Dprintf("pq_execute: executing ASYNC query:");
         Dprintf("    %-.200s", query);
-        
+
         /* then we can go on and send a new query without fear */
         IFCLEARPGRES(curs->pgres);
         if (PQsendQuery(curs->conn->pgconn, query) == 0) {
@@ -425,10 +426,10 @@ pq_execute(cursorObject *curs, const char *query, int async)
         }
         Dprintf("pq_execute: async query sent to backend");
     }
-    
+
     pthread_mutex_unlock(&(curs->conn->lock));
     Py_END_ALLOW_THREADS;
-    
+
     /* if the execute was sync, we call pq_fetch() immediately,
        to respect the old DBAPI-2.0 compatible behaviour */
     if (async == 0) {
@@ -438,7 +439,7 @@ pq_execute(cursorObject *curs, const char *query, int async)
     else {
         curs->conn->async_cursor = (PyObject*)curs;
     }
-    
+
     return 1-async;
 }
 
@@ -470,7 +471,7 @@ _pq_fetch_tuples(cursorObject *curs)
     curs->description = PyTuple_New(pgnfields);
     curs->casts = PyTuple_New(pgnfields);
     curs->columns = pgnfields;
-    
+
     /* calculate the display size for each column (cpu intensive, can be
        switched off at configuration time) */
 #ifdef PSYCOPG_DISPLAY_SIZE
@@ -494,13 +495,13 @@ _pq_fetch_tuples(cursorObject *curs)
         Oid ftype = PQftype(curs->pgres, i);
         int fsize = PQfsize(curs->pgres, i);
         int fmod =  PQfmod(curs->pgres, i);
-        
+
         PyObject *dtitem = PyTuple_New(7);
         PyObject *type = PyInt_FromLong(ftype);
         PyObject *cast = NULL;
-        
+
         PyTuple_SET_ITEM(curs->description, i, dtitem);
-        
+
         /* fill the right cast function by accessing three different dictionaries:
            - the per-cursor dictionary, if available (can be NULL or None)
            - the per-connection dictionary (always exists but can be null)
@@ -521,7 +522,7 @@ _pq_fetch_tuples(cursorObject *curs)
             Dprintf("_pq_fetch_tuples:     global dict: %p", cast);
         }
         if (cast == NULL) cast = psyco_default_cast;
-        
+
         /* else if we got binary tuples and if we got a field that
            is binary use the default cast
            FIXME: what the hell am I trying to do here? This just can't work..
@@ -538,7 +539,7 @@ _pq_fetch_tuples(cursorObject *curs)
                 PQftype(curs->pgres,i));
         Py_INCREF(cast);
         PyTuple_SET_ITEM(curs->casts, i, cast);
-    
+
         /* 1/ fill the other fields */
         PyTuple_SET_ITEM(dtitem, 0,
                          PyString_FromString(PQfname(curs->pgres, i)));
@@ -584,7 +585,7 @@ _pq_fetch_tuples(cursorObject *curs)
         Py_INCREF(Py_None);
         PyTuple_SET_ITEM(dtitem, 6, Py_None);
     }
-    
+
     if (dsize) PyMem_Free(dsize);
 }
 
@@ -598,14 +599,16 @@ _pq_copy_in_v3(cursorObject *curs)
     PyObject *o;
     Py_ssize_t length = 0;
     int error = 0;
-    
+
     while (1) {
-        o = PyObject_CallMethod(curs->copyfile, "read", "i", curs->copysize);
+        o = PyObject_CallMethod(curs->copyfile, "read",
+            CONV_CODE_PY_SSIZE_T, curs->copysize
+          );
         if (!o || !PyString_Check(o) || (length = PyString_Size(o)) == -1) {
             error = 1;
         }
         if (length == 0 || error == 1) break;
-        
+
         Py_BEGIN_ALLOW_THREADS;
         if (PQputCopyData(curs->conn->pgconn,
                           PyString_AS_STRING(o), length) == -1) {
@@ -614,12 +617,12 @@ _pq_copy_in_v3(cursorObject *curs)
         Py_END_ALLOW_THREADS;
 
         if (error == 2) break;
-        
+
         Py_DECREF(o);
     }
-    
+
     Py_XDECREF(o);
-   
+
     Dprintf("_pq_copy_in_v3: error = %d", error);
 
     if (error == 0 || error == 2)
@@ -682,13 +685,13 @@ _pq_copy_out_v3(cursorObject *curs)
     PyObject *tmp = NULL;
 
     char *buffer;
-    int len;
-    
+    Py_ssize_t len;
+
     while (1) {
         Py_BEGIN_ALLOW_THREADS;
         len = PQgetCopyData(curs->conn->pgconn, &buffer, 0);
         Py_END_ALLOW_THREADS;
-            
+
         if (len > 0 && buffer) {
             tmp = PyObject_CallMethod(curs->copyfile,
                             "write", "s#", buffer, len);
@@ -703,7 +706,7 @@ _pq_copy_out_v3(cursorObject *curs)
            postgresql authors :/) */
         else if (len <= 0) break;
     }
-    
+
     if (len == -2) {
         pq_raise(curs->conn, NULL, NULL, NULL);
         return -1;
@@ -726,8 +729,9 @@ _pq_copy_out(cursorObject *curs)
     PyObject *tmp = NULL;
 
     char buffer[4096];
-    int status, len, ll=0;
-    
+    int status, ll=0;
+    Py_ssize_t len;
+
     while (1) {
         Py_BEGIN_ALLOW_THREADS;
         status = PQgetline(curs->conn->pgconn, buffer, 4096);
@@ -735,7 +739,7 @@ _pq_copy_out(cursorObject *curs)
         if (status == 0) {
             if (!ll && buffer[0] == '\\' && buffer[1] == '.') break;
 
-            len = strlen(buffer);
+            len = (Py_ssize_t) strlen(buffer);
             buffer[len++] = '\n';
             ll = 0;
         }
@@ -746,7 +750,7 @@ _pq_copy_out(cursorObject *curs)
         else {
             return -1;
         }
-        
+
         tmp = PyObject_CallMethod(curs->copyfile, "write", "s#", buffer, len);
         if (tmp == NULL)
             return -1;
@@ -757,7 +761,7 @@ _pq_copy_out(cursorObject *curs)
     status = 1;
     if (PQendcopy(curs->conn->pgconn) != 0)
         status = -1;
-    
+
     /* if for some reason we're using a protocol 3 libpq to connect to a
        protocol 2 backend we still need to cycle on the result set */
     IFCLEARPGRES(curs->pgres);
@@ -777,14 +781,14 @@ pq_fetch(cursorObject *curs)
 
     /* even if we fail, we remove any information about the previous query */
     curs_reset(curs);
-    
+
     /* we check the result from the previous execute; if the result is not
        already there, we need to consume some input and go to sleep until we
        get something edible to eat */
     if (!curs->pgres) {
-        
+
         Dprintf("pq_fetch: no data: entering polling loop");
-        
+
         while (pq_is_busy(curs->conn) > 0) {
             fd_set rfds;
             struct timeval tv;
@@ -830,9 +834,9 @@ pq_fetch(cursorObject *curs)
         }
     }
     */
-    
+
     if (curs->pgres == NULL) return 0;
-    
+
     pgstatus = PQresultStatus(curs->pgres);
     Dprintf("pq_fetch: pgstatus = %s", PQresStatus(pgstatus));
 
@@ -863,11 +867,11 @@ pq_fetch(cursorObject *curs)
         if (PyErr_Occurred()) ex = -1;
         IFCLEARPGRES(curs->pgres);
         break;
-        
+
     case PGRES_COPY_IN:
         Dprintf("pq_fetch: data from a COPY FROM (no tuples)");
 #ifdef HAVE_PQPROTOCOL3
-        if (curs->conn->protocol == 3)        
+        if (curs->conn->protocol == 3)
             ex = _pq_copy_in_v3(curs);
         else
 #endif
@@ -877,14 +881,14 @@ pq_fetch(cursorObject *curs)
         if (PyErr_Occurred()) ex = -1;
         IFCLEARPGRES(curs->pgres);
         break;
-        
+
     case PGRES_TUPLES_OK:
         Dprintf("pq_fetch: data from a SELECT (got tuples)");
         curs->rowcount = PQntuples(curs->pgres);
         _pq_fetch_tuples(curs); ex = 0;
         /* don't clear curs->pgres, because it contains the results! */
         break;
-        
+
     default:
         Dprintf("pq_fetch: uh-oh, something FAILED");
         pq_raise(curs->conn, curs, NULL, NULL);
@@ -894,7 +898,7 @@ pq_fetch(cursorObject *curs)
     }
 
     Dprintf("pq_fetch: fetching done; check for critical errors");
-    
+
     /* error checking, close the connection if necessary (some critical errors
        are not really critical, like a COPY FROM error: if that's the case we
        raise the exception but we avoid to close the connection) */
@@ -907,6 +911,6 @@ pq_fetch(cursorObject *curs)
         }
         return -1;
     }
-    
+
     return ex;
 }

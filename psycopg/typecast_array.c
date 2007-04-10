@@ -27,9 +27,9 @@ static int
 typecast_array_cleanup(char **str, int *len)
 {
     int i, depth = 1;
-    
+
     if ((*str)[0] != '[') return -1;
-    
+
     for (i=1 ; depth > 0 && i < *len ; i++) {
         if ((*str)[i] == '[')
             depth += 1;
@@ -37,7 +37,7 @@ typecast_array_cleanup(char **str, int *len)
             depth -= 1;
     }
     if ((*str)[i] != '=') return -1;
-    
+
     *str = &((*str)[i+1]);
     *len = *len - i - 1;
     return 0;
@@ -83,7 +83,7 @@ typecast_array_tokenize(char *str, int strlength,
     q = 0; /* if q is odd we're inside quotes */
     b = 0; /* if b is 1 we just encountered a backslash */
     res = ASCAN_TOKEN;
-    
+
     for (i = *pos ; i < strlength ; i++) {
         switch (str[i]) {
         case '"':
@@ -122,21 +122,21 @@ typecast_array_tokenize(char *str, int strlength,
     if (str[*pos] == '"') {
         *pos += 1;
         l -= 2;
-	*quotes = 1;
+    *quotes = 1;
     }
 
-    if (res == ASCAN_QUOTED) { 
+    if (res == ASCAN_QUOTED) {
         char *buffer = PyMem_Malloc(l+1);
         if (buffer == NULL) return ASCAN_ERROR;
 
         *token = buffer;
-        
+
         for (j = *pos; j < *pos+l; j++) {
             if (str[j] != '\\'
                 || (j > *pos && str[j-1] == '\\'))
                 *(buffer++) = str[j];
         }
-        
+
         *buffer = '\0';
         *length = buffer - *token;
     }
@@ -146,7 +146,7 @@ typecast_array_tokenize(char *str, int strlength,
     }
 
     *pos = i;
-    
+
     /* skip the comma and set position to the start of next token */
     if (str[i] == ',') *pos += 1;
 
@@ -162,22 +162,22 @@ typecast_array_scan(char *str, int strlength,
 
     PyObject *stack[MAX_DIMENSIONS];
     int stack_index = 0;
-    
+
     while (1) {
         token = NULL;
-        state = typecast_array_tokenize(str, strlength, 
-	                                &pos, &token, &length, &quotes);
+        state = typecast_array_tokenize(str, strlength,
+                                    &pos, &token, &length, &quotes);
         Dprintf("typecast_array_scan: state = %d, length = %d, token = '%s'",
                 state, length, token);
         if (state == ASCAN_TOKEN || state == ASCAN_QUOTED) {
             PyObject *obj;
-	    if (!quotes && length == 4 
-	        && (token[0] == 'n' || token[0] == 'N')
-	        && (token[1] == 'u' || token[1] == 'U')
-	        && (token[2] == 'l' || token[2] == 'L')
-	        && (token[3] == 'l' || token[3] == 'L'))
-		obj = typecast_cast(base, NULL, 0, curs);
-	    else
+        if (!quotes && length == 4
+            && (token[0] == 'n' || token[0] == 'N')
+            && (token[1] == 'u' || token[1] == 'U')
+            && (token[2] == 'l' || token[2] == 'L')
+            && (token[3] == 'l' || token[3] == 'L'))
+        obj = typecast_cast(base, NULL, 0, curs);
+        else
                 obj = typecast_cast(base, token, length, curs);
 
             /* before anything else we free the memory */
@@ -189,7 +189,7 @@ typecast_array_scan(char *str, int strlength,
         }
 
         else if (state == ASCAN_BEGIN) {
-            PyObject *sub = PyList_New(0);            
+            PyObject *sub = PyList_New(0);
             if (sub == NULL) return 0;
 
             PyList_Append(array, sub);
@@ -201,7 +201,7 @@ typecast_array_scan(char *str, int strlength,
             stack[stack_index++] = array;
             array = sub;
         }
-        
+
         else if (state == ASCAN_ERROR) {
             return 0;
         }
@@ -222,13 +222,13 @@ typecast_array_scan(char *str, int strlength,
 
 /** GENERIC - a generic typecaster that can be used when no special actions
     have to be taken on the single items **/
-   
+
 static PyObject *
 typecast_GENERIC_ARRAY_cast(char *str, int len, PyObject *curs)
 {
     PyObject *obj = NULL;
     PyObject *base = ((typecastObject*)((cursorObject*)curs)->caster)->bcast;
-   
+
     Dprintf("typecast_GENERIC_ARRAY_cast: str = '%s', len = %d", str, len);
 
     if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
@@ -240,7 +240,7 @@ typecast_GENERIC_ARRAY_cast(char *str, int len, PyObject *curs)
     }
 
     Dprintf("typecast_GENERIC_ARRAY_cast: str = '%s', len = %d", str, len);
-    
+
     obj = PyList_New(0);
 
     /* scan the array skipping the first level of {} */
@@ -248,7 +248,7 @@ typecast_GENERIC_ARRAY_cast(char *str, int len, PyObject *curs)
         Py_DECREF(obj);
         obj = NULL;
     }
-    
+
     return obj;
 }
 

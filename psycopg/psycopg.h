@@ -1,4 +1,4 @@
-/* psycopg.h - definitions for the psycopg python module 
+/* psycopg.h - definitions for the psycopg python module
  *
  * Copyright (C) 2003 Federico Di Gregorio <fog@debian.org>
  *
@@ -22,35 +22,60 @@
 #ifndef PSYCOPG_H
 #define PSYCOPG_H 1
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Python 2.5 ssize_t compatibility */
-#if PY_VERSION_HEX < 0x02050000 && !defined(PY_SSIZE_T_MIN)
-typedef int Py_ssize_t;
-#define PY_SSIZE_T_MAX INT_MAX
-#define PY_SSIZE_T_MIN INT_MIN
+/* Python 2.5+ Py_ssize_t compatibility: */
+#ifndef PY_FORMAT_SIZE_T
+  #define PY_FORMAT_SIZE_T ""
+#endif
+
+/* FORMAT_CODE_SIZE_T is for plain size_t, not for Py_ssize_t: */
+#ifdef _MSC_VER
+  /* For MSVC: */
+  #define FORMAT_CODE_SIZE_T "%Iu"
+#else
+  /* C99 standard format code: */
+  #define FORMAT_CODE_SIZE_T "%zu"
+#endif
+/* FORMAT_CODE_PY_SSIZE_T is for Py_ssize_t: */
+#define FORMAT_CODE_PY_SSIZE_T "%" PY_FORMAT_SIZE_T "d"
+
+#if PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION >= 5
+  #define CONV_CODE_PY_SSIZE_T "n"
+#else
+  #define CONV_CODE_PY_SSIZE_T "d"
+
+  typedef int Py_ssize_t;
+  #define PY_SSIZE_T_MIN INT_MIN
+  #define PY_SSIZE_T_MAX INT_MAX
+
+  #define readbufferproc getreadbufferproc
+  #define writebufferproc getwritebufferproc
+  #define segcountproc getsegcountproc
+  #define charbufferproc getcharbufferproc
 #endif
 
 /* DBAPI compliance parameters */
 #define APILEVEL "2.0"
 #define THREADSAFETY 2
 #define PARAMSTYLE "pyformat"
-    
+
 /* C API functions */
 #define psyco_errors_fill_NUM 0
 #define psyco_errors_fill_RETURN void
-#define psyco_errors_fill_PROTO (PyObject *dict)   
+#define psyco_errors_fill_PROTO (PyObject *dict)
 #define psyco_errors_set_NUM 1
 #define psyco_errors_set_RETURN void
 #define psyco_errors_set_PROTO (PyObject *type)
-    
+
 /* Total number of C API pointers */
 #define PSYCOPG_API_pointers 2
-    
+
 #ifdef PSYCOPG_MODULE
     /** This section is used when compiling psycopgmodule.c & co. **/
 extern psyco_errors_fill_RETURN psyco_errors_fill psyco_errors_fill_PROTO;
@@ -65,7 +90,7 @@ extern PyObject *Error, *Warning, *InterfaceError, *DatabaseError,
 #ifndef PyMODINIT_FUNC
 #define PyMODINIT_FUNC void
 #endif
-    
+
 #else
     /** This section is used in modules that use psycopg's C API **/
 
@@ -77,7 +102,7 @@ static void **PSYCOPG_API;
 #define psyco_errors_set \
  (*(psyco_errors_set_RETURN (*)psyco_errors_set_PROTO) \
   PSYCOPG_API[psyco_errors_set_NUM])
-    
+
 /* Return -1 and set exception on error, 0 on success. */
 static int
 import_psycopg(void)
@@ -98,19 +123,19 @@ import_psycopg(void)
 
 /* postgresql<->python encoding map */
 extern PyObject *psycoEncodings;
-    
+
 typedef struct {
     char *pgenc;
     char *pyenc;
 } encodingPair;
 
-/* the Decimal type, used by the DECIMAL typecaster */    
+/* the Decimal type, used by the DECIMAL typecaster */
 extern PyObject *decimalType;
 
 /* some utility functions */
-extern void psyco_set_error(PyObject *exc, PyObject *curs,  char *msg, 
+extern void psyco_set_error(PyObject *exc, PyObject *curs,  char *msg,
                              char *pgerror, char *pgcode);
-                                  
+
 /* Exceptions docstrings */
 #define Error_doc \
 "Base class for error exceptions."

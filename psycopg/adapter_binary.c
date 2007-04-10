@@ -19,6 +19,7 @@
  * Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
 #include <stringobject.h>
@@ -38,8 +39,8 @@
 
 #ifndef PSYCOPG_OWN_QUOTING
 static unsigned char *
-binary_escape(unsigned char *from, unsigned int from_length,
-               unsigned int *to_length, PGconn *conn)
+binary_escape(unsigned char *from, size_t from_length,
+               size_t *to_length, PGconn *conn)
 {
 #if PG_MAJOR_VERSION > 8 || \
  (PG_MAJOR_VERSION == 8 && PG_MINOR_VERSION > 1) || \
@@ -52,11 +53,11 @@ binary_escape(unsigned char *from, unsigned int from_length,
 }
 #else
 static unsigned char *
-binary_escape(unsigned char *from, unsigned int from_length,
-               unsigned int *to_length, PGconn *conn)
+binary_escape(unsigned char *from, size_t from_length,
+               size_t *to_length, PGconn *conn)
 {
-    unsigneed char *quoted, *chptr, *newptr;
-    int i, space, new_space;
+    unsigned char *quoted, *chptr, *newptr;
+    size_t i, space, new_space;
 
     space = from_length + 2;
 
@@ -67,7 +68,7 @@ binary_escape(unsigned char *from, unsigned int from_length,
 
     chptr = quoted;
 
-    for (i=0; i < len; i++) {
+    for (i = 0; i < from_length; i++) {
         if (chptr - quoted > space - 6) {
             new_space  =  space * ((space) / (i + 1)) + 2 + 6;
             if (new_space - space < 1024) space += 1024;
@@ -102,7 +103,7 @@ binary_escape(unsigned char *from, unsigned int from_length,
             }
             else {
                 unsigned char c;
-                
+
                 /* escape to octal notation \nnn */
                 *chptr++ = '\\';
                 *chptr++ = '\\';
@@ -122,7 +123,7 @@ binary_escape(unsigned char *from, unsigned int from_length,
 
     Py_END_ALLOW_THREADS;
 
-    *to_size = chptr - quoted + 1;
+    *to_length = chptr - quoted + 1;
     return quoted;
 }
 #endif
@@ -142,26 +143,26 @@ binary_quote(binaryObject *self)
         /* escape and build quoted buffer */
         PyObject_AsCharBuffer(self->wrapped, &buffer, &buffer_len);
 
-        to = (char *)binary_escape((unsigned char*)buffer, buffer_len, &len,
-            self->conn ? ((connectionObject*)self->conn)->pgconn : NULL);
+        to = (char *)binary_escape((unsigned char*)buffer, (size_t) buffer_len,
+            &len, self->conn ? ((connectionObject*)self->conn)->pgconn : NULL);
         if (to == NULL) {
             PyErr_NoMemory();
             return NULL;
         }
 
-	if (len > 0)
-            self->buffer = PyString_FromFormat("'%s'", to);
-	else
-            self->buffer = PyString_FromString("''");
+    if (len > 0)
+        self->buffer = PyString_FromFormat("'%s'", to);
+    else
+        self->buffer = PyString_FromString("''");
         PQfreemem(to);
     }
-    
-    /* if the wrapped object is not a string or a buffer, this is an error */ 
+
+    /* if the wrapped object is not a string or a buffer, this is an error */
     else {
         PyErr_SetString(PyExc_TypeError, "can't escape non-string object");
         return NULL;
     }
-    
+
     return self->buffer;
 }
 
@@ -206,14 +207,14 @@ PyObject *
 binary_conform(binaryObject *self, PyObject *args)
 {
     PyObject *res, *proto;
-    
+
     if (!PyArg_ParseTuple(args, "O", &proto)) return NULL;
 
     if (proto == (PyObject*)&isqlquoteType)
         res = (PyObject*)self;
     else
         res = Py_None;
-    
+
     Py_INCREF(res);
     return res;
 }
@@ -244,16 +245,19 @@ static PyMethodDef binaryObject_methods[] = {
 static int
 binary_setup(binaryObject *self, PyObject *str)
 {
-    Dprintf("binary_setup: init binary object at %p, refcnt = %d",
-            self, ((PyObject *)self)->ob_refcnt);
+    Dprintf("binary_setup: init binary object at %p, refcnt = "
+        FORMAT_CODE_PY_SSIZE_T,
+        self, ((PyObject *)self)->ob_refcnt
+      );
 
     self->buffer = NULL;
     self->conn = NULL;
     self->wrapped = str;
     Py_INCREF(self->wrapped);
-    
-    Dprintf("binary_setup: good binary object at %p, refcnt = %d",
-            self, ((PyObject *)self)->ob_refcnt);
+
+    Dprintf("binary_setup: good binary object at %p, refcnt = "
+        FORMAT_CODE_PY_SSIZE_T,
+        self, ((PyObject *)self)->ob_refcnt);
     return 0;
 }
 
@@ -265,10 +269,12 @@ binary_dealloc(PyObject* obj)
     Py_XDECREF(self->wrapped);
     Py_XDECREF(self->buffer);
     Py_XDECREF(self->conn);
-    
-    Dprintf("binary_dealloc: deleted binary object at %p, refcnt = %d",
-            obj, obj->ob_refcnt);
-    
+
+    Dprintf("binary_dealloc: deleted binary object at %p, refcnt = "
+        FORMAT_CODE_PY_SSIZE_T,
+        obj, obj->ob_refcnt
+      );
+
     obj->ob_type->tp_free(obj);
 }
 
@@ -276,7 +282,7 @@ static int
 binary_init(PyObject *obj, PyObject *args, PyObject *kwds)
 {
     PyObject *str;
-    
+
     if (!PyArg_ParseTuple(args, "O", &str))
         return -1;
 
@@ -285,7 +291,7 @@ binary_init(PyObject *obj, PyObject *args, PyObject *kwds)
 
 static PyObject *
 binary_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
-{    
+{
     return type->tp_alloc(type, 0);
 }
 
@@ -315,7 +321,7 @@ PyTypeObject binaryType = {
     binary_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/
     0,          /*tp_getattr*/
-    0,          /*tp_setattr*/   
+    0,          /*tp_setattr*/
 
     0,          /*tp_compare*/
     (reprfunc)binary_repr, /*tp_repr*/
@@ -333,7 +339,7 @@ PyTypeObject binaryType = {
     Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /*tp_flags*/
 
     binaryType_doc, /*tp_doc*/
-    
+
     0,          /*tp_traverse*/
     0,          /*tp_clear*/
 
@@ -350,11 +356,11 @@ PyTypeObject binaryType = {
     0,          /*tp_getset*/
     0,          /*tp_base*/
     0,          /*tp_dict*/
-    
+
     0,          /*tp_descr_get*/
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
-    
+
     binary_init, /*tp_init*/
     0, /*tp_alloc  will be set to PyType_GenericAlloc in module init*/
     binary_new, /*tp_new*/
@@ -374,9 +380,9 @@ PyObject *
 psyco_Binary(PyObject *module, PyObject *args)
 {
     PyObject *str;
-    
+
     if (!PyArg_ParseTuple(args, "O", &str))
         return NULL;
-  
+
     return PyObject_CallFunction((PyObject *)&binaryType, "O", str);
 }

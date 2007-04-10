@@ -22,6 +22,7 @@
 #ifndef PSYCOPG_QSTRING_H
 #define PSYCOPG_QSTRING_H 1
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 #ifdef __cplusplus
@@ -39,9 +40,9 @@ typedef struct {
 
     PyObject *conn;
 } qstringObject;
-    
+
 /* functions exported to psycopgmodule.c */
-    
+
 extern PyObject *psyco_QuotedString(PyObject *module, PyObject *args);
 #define psyco_QuotedString_doc \
     "QuotedString(str, enc) -> new quoted string"

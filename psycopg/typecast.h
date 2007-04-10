@@ -22,6 +22,7 @@
 #ifndef PSYCOPG_TYPECAST_H
 #define PSYCOPG_TYPECAST_H 1
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 #ifdef __cplusplus
@@ -60,7 +61,7 @@ typedef struct {
 /* the type dictionary, much faster to access it globally */
 extern PyObject *psyco_types;
 extern PyObject *psyco_binary_types;
-    
+
 /* the default casting objects, used when no other objects are available */
 extern PyObject *psyco_default_cast;
 extern PyObject *psyco_default_binary_cast;
@@ -81,5 +82,5 @@ extern PyObject *typecast_from_python(
 /* the function used to dispatch typecasting calls */
 extern PyObject *typecast_cast(
     PyObject *self, char *str, Py_ssize_t len, PyObject *curs);
-    
+
 #endif /* !defined(PSYCOPG_TYPECAST_H) */

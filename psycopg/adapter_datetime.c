@@ -19,6 +19,7 @@
  * Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
 #include <stringobject.h>
@@ -62,11 +63,11 @@ pydatetime_str(pydatetimeObject *self)
     }
     else {
         PyDateTime_Delta *obj = (PyDateTime_Delta*)self->wrapped;
-        
+
         char buffer[8];
         int i;
         int a = obj->microseconds;
-        
+
         for (i=0; i < 6 ; i++) {
             buffer[5-i] = '0' + (a % 10);
             a /= 10;
@@ -89,14 +90,14 @@ PyObject *
 pydatetime_conform(pydatetimeObject *self, PyObject *args)
 {
     PyObject *res, *proto;
-    
+
     if (!PyArg_ParseTuple(args, "O", &proto)) return NULL;
 
     if (proto == (PyObject*)&isqlquoteType)
         res = (PyObject*)self;
     else
         res = Py_None;
-    
+
     Py_INCREF(res);
     return res;
 }
@@ -125,15 +126,19 @@ static PyMethodDef pydatetimeObject_methods[] = {
 static int
 pydatetime_setup(pydatetimeObject *self, PyObject *obj, int type)
 {
-    Dprintf("pydatetime_setup: init datetime object at %p, refcnt = %d",
-            self, ((PyObject *)self)->ob_refcnt);
+    Dprintf("pydatetime_setup: init datetime object at %p, refcnt = "
+        FORMAT_CODE_PY_SSIZE_T,
+        self, ((PyObject *)self)->ob_refcnt
+      );
 
     self->type = type;
     self->wrapped = obj;
     Py_INCREF(self->wrapped);
-    
-    Dprintf("pydatetime_setup: good pydatetime object at %p, refcnt = %d",
-            self, ((PyObject *)self)->ob_refcnt);
+
+    Dprintf("pydatetime_setup: good pydatetime object at %p, refcnt = "
+        FORMAT_CODE_PY_SSIZE_T,
+        self, ((PyObject *)self)->ob_refcnt
+      );
     return 0;
 }
 
@@ -143,10 +148,10 @@ pydatetime_dealloc(PyObject* obj)
     pydatetimeObject *self = (pydatetimeObject *)obj;
 
     Py_XDECREF(self->wrapped);
-    
+
     Dprintf("mpydatetime_dealloc: deleted pydatetime object at %p, "
-            "refcnt = %d", obj, obj->ob_refcnt);
-    
+            "refcnt = " FORMAT_CODE_PY_SSIZE_T, obj, obj->ob_refcnt);
+
     obj->ob_type->tp_free(obj);
 }
 
@@ -155,7 +160,7 @@ pydatetime_init(PyObject *obj, PyObject *args, PyObject *kwds)
 {
     PyObject *dt;
     int type = -1; /* raise an error if type was not passed! */
-    
+
     if (!PyArg_ParseTuple(args, "O|i", &dt, &type))
         return -1;
 
@@ -164,7 +169,7 @@ pydatetime_init(PyObject *obj, PyObject *args, PyObject *kwds)
 
 static PyObject *
 pydatetime_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
-{    
+{
     return type->tp_alloc(type, 0);
 }
 
@@ -195,7 +200,7 @@ PyTypeObject pydatetimeType = {
     pydatetime_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/
     0,          /*tp_getattr*/
-    0,          /*tp_setattr*/   
+    0,          /*tp_setattr*/
 
     0,          /*tp_compare*/
     (reprfunc)pydatetime_repr, /*tp_repr*/
@@ -213,7 +218,7 @@ PyTypeObject pydatetimeType = {
     Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /*tp_flags*/
 
     pydatetimeType_doc, /*tp_doc*/
-    
+
     0,          /*tp_traverse*/
     0,          /*tp_clear*/
 
@@ -230,11 +235,11 @@ PyTypeObject pydatetimeType = {
     0,          /*tp_getset*/
     0,          /*tp_base*/
     0,          /*tp_dict*/
-    
+
     0,          /*tp_descr_get*/
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
-    
+
     pydatetime_init, /*tp_init*/
     0, /*tp_alloc  will be set to PyType_GenericAlloc in module init*/
     pydatetime_new, /*tp_new*/
@@ -253,15 +258,15 @@ PyTypeObject pydatetimeType = {
 #ifdef PSYCOPG_DEFAULT_PYDATETIME
 
 PyObject *
-psyco_Date(PyObject *self, PyObject *args) 
+psyco_Date(PyObject *self, PyObject *args)
 {
-	PyObject *res = NULL;
-	int year, month, day;
+    PyObject *res = NULL;
+    int year, month, day;
 
     PyObject* obj = NULL;
-    
-	if (!PyArg_ParseTuple(args, "iii", &year, &month, &day))
-	    return NULL;
+
+    if (!PyArg_ParseTuple(args, "iii", &year, &month, &day))
+        return NULL;
 
     obj = PyObject_CallFunction(pyDateTypeP, "iii", year, month, day);
 
@@ -275,18 +280,18 @@ psyco_Date(PyObject *self, PyObject *args)
 }
 
 PyObject *
-psyco_Time(PyObject *self, PyObject *args) 
+psyco_Time(PyObject *self, PyObject *args)
 {
     PyObject *res = NULL;
     PyObject *tzinfo = NULL;
     int hours, minutes=0;
     double micro, second=0.0;
-    
+
     PyObject* obj = NULL;
 
     if (!PyArg_ParseTuple(args, "iid|O", &hours, &minutes, &second,
                           &tzinfo))
-	    return NULL;
+        return NULL;
 
     micro = (second - floor(second)) * 1000000.0;
     second = floor(second);
@@ -297,7 +302,7 @@ psyco_Time(PyObject *self, PyObject *args)
     else
        obj = PyObject_CallFunction(pyTimeTypeP, "iiiiO",
             hours, minutes, (int)second, (int)round(micro), tzinfo);
-    
+
     if (obj) {
         res = PyObject_CallFunction((PyObject *)&pydatetimeType,
                                     "Oi", obj, PSYCO_DATETIME_TIME);
@@ -308,7 +313,7 @@ psyco_Time(PyObject *self, PyObject *args)
 }
 
 PyObject *
-psyco_Timestamp(PyObject *self, PyObject *args) 
+psyco_Timestamp(PyObject *self, PyObject *args)
 {
     PyObject *res = NULL;
     PyObject *tzinfo = NULL;
@@ -317,10 +322,10 @@ psyco_Timestamp(PyObject *self, PyObject *args)
     double micro, second=0.0;
 
     PyObject* obj = NULL;
-    
+
     if (!PyArg_ParseTuple(args, "lii|iidO", &year, &month, &day,
                           &hour, &minute, &second, &tzinfo))
-	    return NULL;
+        return NULL;
 
     micro = (second - floor(second)) * 1000000.0;
     second = floor(second);
@@ -333,13 +338,13 @@ psyco_Timestamp(PyObject *self, PyObject *args)
         obj = PyObject_CallFunction(pyDateTimeTypeP, "iiiiiiiO",
             year, month, day, hour, minute, (int)second,
             (int)round(micro), tzinfo);
-    
+
     if (obj) {
         res = PyObject_CallFunction((PyObject *)&pydatetimeType,
                                     "Oi", obj, PSYCO_DATETIME_TIMESTAMP);
         Py_DECREF(obj);
     }
-    
+
     return res;
 }
 
@@ -361,8 +366,8 @@ psyco_DateFromTicks(PyObject *self, PyObject *args)
             res = psyco_Date(self, args);
             Py_DECREF(args);
         }
-    }    
-    return res; 
+    }
+    return res;
 }
 
 PyObject *
@@ -380,13 +385,13 @@ psyco_TimeFromTicks(PyObject *self, PyObject *args)
     ticks -= (double)t;
     if (localtime_r(&t, &tm)) {
         args = Py_BuildValue("iid", tm.tm_hour, tm.tm_min,
-	                      (double)tm.tm_sec + ticks);
+                          (double)tm.tm_sec + ticks);
         if (args) {
             res = psyco_Time(self, args);
             Py_DECREF(args);
         }
-    } 
-    return res; 
+    }
+    return res;
 }
 
 PyObject *
@@ -399,21 +404,21 @@ psyco_TimestampFromTicks(PyObject *self, PyObject *args)
 
     if (!PyArg_ParseTuple(args,"d", &ticks))
         return NULL;
-    
+
     t = (time_t)round(ticks);
     ticks -= (double)t;
     if (localtime_r(&t, &tm)) {
         args = Py_BuildValue("iiiiidO",
                              tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday,
                              tm.tm_hour, tm.tm_min,
-			     (double)tm.tm_sec + ticks,
+                 (double)tm.tm_sec + ticks,
                              pyPsycopgTzLOCAL);
         if (args) {
             res = psyco_Timestamp(self, args);
             Py_DECREF(args);
         }
-    } 
-    return res; 
+    }
+    return res;
 }
 
 #endif
@@ -425,7 +430,7 @@ psyco_DateFromPy(PyObject *self, PyObject *args)
 
     if (!PyArg_ParseTuple(args, "O!", pyDateTypeP, &obj))
         return NULL;
-    
+
     return PyObject_CallFunction((PyObject *)&pydatetimeType, "Oi", obj,
                                  PSYCO_DATETIME_DATE);
 }
@@ -437,7 +442,7 @@ psyco_TimeFromPy(PyObject *self, PyObject *args)
 
     if (!PyArg_ParseTuple(args, "O!", pyTimeTypeP, &obj))
         return NULL;
-    
+
     return PyObject_CallFunction((PyObject *)&pydatetimeType, "Oi", obj,
                                  PSYCO_DATETIME_TIME);
 }
@@ -449,7 +454,7 @@ psyco_TimestampFromPy(PyObject *self, PyObject *args)
 
     if (!PyArg_ParseTuple(args, "O!", pyDateTimeTypeP, &obj))
         return NULL;
-    
+
     return PyObject_CallFunction((PyObject *)&pydatetimeType, "Oi", obj,
                                  PSYCO_DATETIME_TIMESTAMP);
 }
@@ -461,7 +466,7 @@ psyco_IntervalFromPy(PyObject *self, PyObject *args)
 
     if (!PyArg_ParseTuple(args, "O!", pyDeltaTypeP, &obj))
         return NULL;
-    
+
     return PyObject_CallFunction((PyObject *)&pydatetimeType, "Oi", obj,
                                  PSYCO_DATETIME_INTERVAL);
 }

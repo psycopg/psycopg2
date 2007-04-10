@@ -22,6 +22,7 @@
 #ifndef PSYCOPG_TYPECAST_BINARY_H
 #define PSYCOPG_TYPECAST_BINARY_H 1
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 #ifdef __cplusplus
@@ -36,7 +37,7 @@ typedef struct {
     PyObject_HEAD
 
     void *base;     /* Pointer to the memory chunk. */
-    int len;        /* Size in bytes of the memory chunk. */
+    Py_ssize_t len;        /* Size in bytes of the memory chunk. */
 
 } chunkObject;
 

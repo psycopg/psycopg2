@@ -22,6 +22,7 @@
 #ifndef PSYCOPG_DATETIME_H
 #define PSYCOPG_DATETIME_H 1
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 #ifdef __cplusplus
@@ -38,14 +39,14 @@ typedef struct {
 #define       PSYCO_DATETIME_TIME       0
 #define       PSYCO_DATETIME_DATE       1
 #define       PSYCO_DATETIME_TIMESTAMP  2
-#define       PSYCO_DATETIME_INTERVAL   3    
-    
+#define       PSYCO_DATETIME_INTERVAL   3
+
 } pydatetimeObject;
-    
-    
+
+
 /* functions exported to psycopgmodule.c */
 #ifdef PSYCOPG_DEFAULT_PYDATETIME
-    
+
 extern PyObject *psyco_Date(PyObject *module, PyObject *args);
 #define psyco_Date_doc \
     "Date(year, month, day) -> new date\n\n" \
@@ -99,7 +100,7 @@ extern PyObject *psyco_TimestampFromPy(PyObject *module, PyObject *args);
 extern PyObject *psyco_IntervalFromPy(PyObject *module, PyObject *args);
 #define psyco_IntervalFromPy_doc \
     "IntervalFromPy(datetime.timedelta) -> new wrapper"
-    
+
 #ifdef __cplusplus
 }
 #endif

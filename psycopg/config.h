@@ -28,7 +28,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #define Dprintf(fmt, args...) \
-    fprintf(stderr, "[%d] " fmt "\n", getpid() , ## args)
+    fprintf(stderr, "[%d] " fmt "\n", (int) getpid() , ## args)
 #else
 #define Dprintf(fmt, args...)
 #endif

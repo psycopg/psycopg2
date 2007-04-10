@@ -19,6 +19,7 @@
  * Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
 #include <stringobject.h>
@@ -55,14 +56,14 @@ PyObject *
 asis_conform(asisObject *self, PyObject *args)
 {
     PyObject *res, *proto;
-    
+
     if (!PyArg_ParseTuple(args, "O", &proto)) return NULL;
 
     if (proto == (PyObject*)&isqlquoteType)
         res = (PyObject*)self;
     else
         res = Py_None;
-    
+
     Py_INCREF(res);
     return res;
 }
@@ -90,14 +91,18 @@ static PyMethodDef asisObject_methods[] = {
 static int
 asis_setup(asisObject *self, PyObject *obj)
 {
-    Dprintf("asis_setup: init asis object at %p, refcnt = %d",
-            self, ((PyObject *)self)->ob_refcnt);
+    Dprintf("asis_setup: init asis object at %p, refcnt = "
+        FORMAT_CODE_PY_SSIZE_T,
+        self, ((PyObject *)self)->ob_refcnt
+      );
 
     self->wrapped = obj;
     Py_INCREF(self->wrapped);
-    
-    Dprintf("asis_setup: good asis object at %p, refcnt = %d",
-            self, ((PyObject *)self)->ob_refcnt);
+
+    Dprintf("asis_setup: good asis object at %p, refcnt = "
+        FORMAT_CODE_PY_SSIZE_T,
+        self, ((PyObject *)self)->ob_refcnt
+      );
     return 0;
 }
 
@@ -107,10 +112,12 @@ asis_dealloc(PyObject* obj)
     asisObject *self = (asisObject *)obj;
 
     Py_XDECREF(self->wrapped);
-    
-    Dprintf("asis_dealloc: deleted asis object at %p, refcnt = %d",
-            obj, obj->ob_refcnt);
-    
+
+    Dprintf("asis_dealloc: deleted asis object at %p, refcnt = "
+        FORMAT_CODE_PY_SSIZE_T,
+        obj, obj->ob_refcnt
+      );
+
     obj->ob_type->tp_free(obj);
 }
 
@@ -118,7 +125,7 @@ static int
 asis_init(PyObject *obj, PyObject *args, PyObject *kwds)
 {
     PyObject *o;
-    
+
     if (!PyArg_ParseTuple(args, "O", &o))
         return -1;
 
@@ -127,7 +134,7 @@ asis_init(PyObject *obj, PyObject *args, PyObject *kwds)
 
 static PyObject *
 asis_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
-{    
+{
     return type->tp_alloc(type, 0);
 }
 
@@ -159,7 +166,7 @@ PyTypeObject asisType = {
     0,          /*tp_print*/
 
     0,          /*tp_getattr*/
-    0,          /*tp_setattr*/ 
+    0,          /*tp_setattr*/
 
     0,          /*tp_compare*/
 
@@ -171,14 +178,14 @@ PyTypeObject asisType = {
 
     0,          /*tp_call*/
     (reprfunc)asis_str, /*tp_str*/
-    
+
     0,          /*tp_getattro*/
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
 
     Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /*tp_flags*/
     asisType_doc, /*tp_doc*/
-    
+
     0,          /*tp_traverse*/
     0,          /*tp_clear*/
 
@@ -195,11 +202,11 @@ PyTypeObject asisType = {
     0,          /*tp_getset*/
     0,          /*tp_base*/
     0,          /*tp_dict*/
-    
+
     0,          /*tp_descr_get*/
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
-    
+
     asis_init, /*tp_init*/
     0, /*tp_alloc  will be set to PyType_GenericAlloc in module init*/
     asis_new, /*tp_new*/
@@ -219,9 +226,9 @@ PyObject *
 psyco_AsIs(PyObject *module, PyObject *args)
 {
     PyObject *obj;
-     
+
     if (!PyArg_ParseTuple(args, "O", &obj))
         return NULL;
-  
+
     return PyObject_CallFunction((PyObject *)&asisType, "O", obj);
 }

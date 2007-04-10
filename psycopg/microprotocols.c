@@ -19,6 +19,7 @@
  * Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
 
@@ -44,10 +45,10 @@ microprotocols_init(PyObject *dict)
     /* create adapters dictionary and put it in module namespace */
     if ((psyco_adapters = PyDict_New()) == NULL) {
         return -1;
-    }                         
+    }
 
     PyDict_SetItemString(dict, "adapters", psyco_adapters);
-    
+
     return 0;
 }
 
@@ -79,7 +80,7 @@ microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
        quotable object to be its instance */
 
     Dprintf("microprotocols_adapt: trying to adapt %s", obj->ob_type->tp_name);
-    
+
     /* look for an adapter in the registry */
     key = Py_BuildValue("(OO)", (PyObject*)obj->ob_type, proto);
     adapter = PyDict_GetItem(psyco_adapters, key);
@@ -98,7 +99,7 @@ microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
             return NULL;
     }
 
-    /* and finally try to have the object adapt itself */   
+    /* and finally try to have the object adapt itself */
     if (PyObject_HasAttrString(obj, "__conform__")) {
         PyObject *adapted = PyObject_CallMethod(obj, "__conform__","O", proto);
         if (adapted && adapted != Py_None) return adapted;
@@ -106,7 +107,7 @@ microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
         if (PyErr_Occurred() && !PyErr_ExceptionMatches(PyExc_TypeError))
             return NULL;
     }
-    
+
     /* else set the right exception and return NULL */
     psyco_set_error(ProgrammingError, NULL, "can't adapt", NULL, NULL);
     return NULL;
@@ -120,7 +121,7 @@ microprotocol_getquoted(PyObject *obj, connectionObject *conn)
     PyObject *res = NULL;
     PyObject *tmp = microprotocols_adapt(
         obj, (PyObject*)&isqlquoteType, NULL);
-    
+
     if (tmp != NULL) {
         Dprintf("microprotocol_getquoted: adapted to %s",
                 tmp->ob_type->tp_name);

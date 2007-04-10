@@ -22,6 +22,7 @@
 #ifndef PSYCOPG_MICROPROTOCOLS_H
 #define PSYCOPG_MICROPROTOCOLS_H 1
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include "psycopg/connection.h"
 #include "psycopg/cursor.h"
@@ -46,15 +47,15 @@ extern PyObject *psyco_adapters;
 extern int microprotocols_init(PyObject *dict);
 extern int microprotocols_add(
     PyTypeObject *type, PyObject *proto, PyObject *cast);
-    
+
 extern PyObject *microprotocols_adapt(
     PyObject *obj, PyObject *proto, PyObject *alt);
 extern PyObject *microprotocol_getquoted(
     PyObject *obj, connectionObject *conn);
-    
+
 extern PyObject *
-    psyco_microprotocols_adapt(cursorObject *self, PyObject *args);   
+    psyco_microprotocols_adapt(cursorObject *self, PyObject *args);
 #define psyco_microprotocols_adapt_doc \
     "adapt(obj, protocol, alternate) -> object -- adapt obj to given protocol"
-    
+
 #endif /* !defined(PSYCOPG_MICROPROTOCOLS_H) */

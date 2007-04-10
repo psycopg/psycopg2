@@ -22,6 +22,7 @@
 #ifndef PSYCOPG_BINARY_H
 #define PSYCOPG_BINARY_H 1
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <libpq-fe.h>
 
@@ -40,7 +41,7 @@ typedef struct {
 } binaryObject;
 
 /* functions exported to psycopgmodule.c */
-    
+
 extern PyObject *psyco_Binary(PyObject *module, PyObject *args);
 #define psyco_Binary_doc \
     "Binary(buffer) -> new binary object\n\n" \

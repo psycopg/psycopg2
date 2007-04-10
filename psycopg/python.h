@@ -22,12 +22,13 @@
 #ifndef PSYCOPG_PYTHON_H
 #define PSYCOPG_PYTHON_H 1
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
 
 /* python < 2.2 does not have PyMemeberDef */
 #if PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION < 2
-#define PyMemberDef memberlist 
+#define PyMemberDef memberlist
 #endif
 
 /* PyObject_TypeCheck introduced in 2.2 */

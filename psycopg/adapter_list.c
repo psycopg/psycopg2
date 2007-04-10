@@ -19,6 +19,7 @@
  * Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
 #include <stringobject.h>
@@ -43,20 +44,20 @@ list_quote(listObject *self)
     Py_ssize_t i, len;
 
     len = PyList_GET_SIZE(self->wrapped);
-    
+
     /* empty arrays are converted to NULLs (still searching for a way to
        insert an empty array in postgresql */
     if (len == 0) return PyString_FromString("'{}'");
-    
+
     tmp = PyTuple_New(len);
-    
+
     for (i=0; i<len; i++) {
         PyObject *quoted;
-	PyObject *wrapped = PyList_GET_ITEM(self->wrapped, i);
-	if (wrapped == Py_None)
-	    quoted = PyString_FromString("NULL");
-	else 
-	    quoted = microprotocol_getquoted(wrapped,
+    PyObject *wrapped = PyList_GET_ITEM(self->wrapped, i);
+    if (wrapped == Py_None)
+        quoted = PyString_FromString("NULL");
+    else
+        quoted = microprotocol_getquoted(wrapped,
                                    (connectionObject*)self->connection);
         if (quoted == NULL) goto error;
 
@@ -73,7 +74,7 @@ list_quote(listObject *self)
     if (joined == NULL) goto error;
 
     res = PyString_FromFormat("ARRAY[%s]", PyString_AsString(joined));
-    
+
  error:
     Py_XDECREF(tmp);
     Py_XDECREF(str);
@@ -110,7 +111,7 @@ list_prepare(listObject *self, PyObject *args)
     Py_XDECREF(self->connection);
     self->connection = (PyObject*)conn;
     Py_INCREF(self->connection);
-    
+
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -119,14 +120,14 @@ PyObject *
 list_conform(listObject *self, PyObject *args)
 {
     PyObject *res, *proto;
-    
+
     if (!PyArg_ParseTuple(args, "O", &proto)) return NULL;
 
     if (proto == (PyObject*)&isqlquoteType)
         res = (PyObject*)self;
     else
         res = Py_None;
-    
+
     Py_INCREF(res);
     return res;
 }
@@ -146,7 +147,7 @@ static PyMethodDef listObject_methods[] = {
     {"getquoted", (PyCFunction)list_getquoted, METH_VARARGS,
      "getquoted() -> wrapped object value as SQL date/time"},
     {"prepare", (PyCFunction)list_prepare, METH_VARARGS,
-     "prepare(conn) -> set encoding to conn->encoding"},    
+     "prepare(conn) -> set encoding to conn->encoding"},
     {"__conform__", (PyCFunction)list_conform, METH_VARARGS, NULL},
     {NULL}  /* Sentinel */
 };
@@ -156,8 +157,10 @@ static PyMethodDef listObject_methods[] = {
 static int
 list_setup(listObject *self, PyObject *obj, char *enc)
 {
-    Dprintf("list_setup: init list object at %p, refcnt = %d",
-            self, ((PyObject *)self)->ob_refcnt);
+    Dprintf("list_setup: init list object at %p, refcnt = "
+        FORMAT_CODE_PY_SSIZE_T,
+        self, ((PyObject *)self)->ob_refcnt
+      );
 
     if (!PyList_Check(obj))
         return -1;
@@ -168,9 +171,11 @@ list_setup(listObject *self, PyObject *obj, char *enc)
     self->connection = NULL;
     self->wrapped = obj;
     Py_INCREF(self->wrapped);
-    
-    Dprintf("list_setup: good list object at %p, refcnt = %d",
-            self, ((PyObject *)self)->ob_refcnt);
+
+    Dprintf("list_setup: good list object at %p, refcnt = "
+        FORMAT_CODE_PY_SSIZE_T,
+        self, ((PyObject *)self)->ob_refcnt
+      );
     return 0;
 }
 
@@ -182,10 +187,10 @@ list_dealloc(PyObject* obj)
     Py_XDECREF(self->wrapped);
     Py_XDECREF(self->connection);
     if (self->encoding) free(self->encoding);
-    
+
     Dprintf("list_dealloc: deleted list object at %p, "
-            "refcnt = %d", obj, obj->ob_refcnt);
-    
+            "refcnt = " FORMAT_CODE_PY_SSIZE_T, obj, obj->ob_refcnt);
+
     obj->ob_type->tp_free(obj);
 }
 
@@ -194,7 +199,7 @@ list_init(PyObject *obj, PyObject *args, PyObject *kwds)
 {
     PyObject *l;
     char *enc = "latin-1"; /* default encoding as in Python */
-    
+
     if (!PyArg_ParseTuple(args, "O|s", &l, &enc))
         return -1;
 
@@ -203,7 +208,7 @@ list_init(PyObject *obj, PyObject *args, PyObject *kwds)
 
 static PyObject *
 list_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
-{    
+{
     return type->tp_alloc(type, 0);
 }
 
@@ -233,7 +238,7 @@ PyTypeObject listType = {
     list_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/
     0,          /*tp_getattr*/
-    0,          /*tp_setattr*/   
+    0,          /*tp_setattr*/
 
     0,          /*tp_compare*/
     (reprfunc)list_repr, /*tp_repr*/
@@ -251,7 +256,7 @@ PyTypeObject listType = {
     Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /*tp_flags*/
 
     listType_doc, /*tp_doc*/
-    
+
     0,          /*tp_traverse*/
     0,          /*tp_clear*/
 
@@ -268,11 +273,11 @@ PyTypeObject listType = {
     0,          /*tp_getset*/
     0,          /*tp_base*/
     0,          /*tp_dict*/
-    
+
     0,          /*tp_descr_get*/
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
-    
+
     list_init, /*tp_init*/
     0, /*tp_alloc  will be set to PyType_GenericAlloc in module init*/
     list_new, /*tp_new*/
@@ -293,9 +298,9 @@ psyco_List(PyObject *module, PyObject *args)
 {
     PyObject *str;
     char *enc = "latin-1"; /* default encoding as in Python */
-    
+
     if (!PyArg_ParseTuple(args, "O|s", &str, &enc))
         return NULL;
-  
+
     return PyObject_CallFunction((PyObject *)&listType, "Os", str, enc);
 }

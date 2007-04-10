@@ -19,6 +19,7 @@
  * Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
 #include <stringobject.h>
@@ -52,7 +53,7 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *keywds)
     PyObject *obj, *factory = NULL;
 
     static char *kwlist[] = {"name", "cursor_factory", NULL};
-    
+
     if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sO", kwlist,
                                      &name, &factory)) {
         return NULL;
@@ -62,10 +63,10 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *keywds)
 
     Dprintf("psyco_conn_cursor: new cursor for connection at %p", self);
     Dprintf("psyco_conn_cursor:     parameters: name = %s", name);
-    
+
     if (factory == NULL) factory = (PyObject *)&cursorType;
     if (name)
-        obj = PyObject_CallFunction(factory, "Os", self, name);    
+        obj = PyObject_CallFunction(factory, "Os", self, name);
     else
         obj = PyObject_CallFunction(factory, "O", self);
 
@@ -76,9 +77,11 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *keywds)
         Py_DECREF(obj);
         return NULL;
     }
-    
-    Dprintf("psyco_conn_cursor: new cursor at %p: refcnt = %d",
-            obj, obj->ob_refcnt);
+
+    Dprintf("psyco_conn_cursor: new cursor at %p: refcnt = "
+        FORMAT_CODE_PY_SSIZE_T,
+        obj, obj->ob_refcnt
+      );
     return obj;
 }
 
@@ -93,7 +96,7 @@ psyco_conn_close(connectionObject *self, PyObject *args)
     EXC_IF_CONN_CLOSED(self);
 
     if (!PyArg_ParseTuple(args, "")) return NULL;
-                                     
+
     Dprintf("psyco_conn_close: closing connection at %p", self);
     conn_close(self);
     Dprintf("psyco_conn_close: connection at %p closed", self);
@@ -152,7 +155,7 @@ static PyObject *
 psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
 {
     int level = 1;
-    
+
     EXC_IF_CONN_CLOSED(self);
 
     if (!PyArg_ParseTuple(args, "i", &level)) return NULL;
@@ -162,7 +165,7 @@ psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
                         "isolation level out of bounds (0,3)");
         return NULL;
     }
-    
+
     /* FIXME: check return status? */
     conn_switch_isolation_level(self, level);
 
@@ -186,19 +189,19 @@ psyco_conn_set_client_encoding(connectionObject *self, PyObject *args)
     EXC_IF_CONN_CLOSED(self);
 
     if (!PyArg_ParseTuple(args, "s", &enc)) return NULL;
-   
+
     /* convert to upper case and remove '-' and '_' from string */
     buffer = PyMem_Malloc(strlen(enc));
     for (i=j=0 ; i < strlen(enc) ; i++) {
         if (enc[i] == '_' || enc[i] == '-')
-	    continue;
-	else
-	    buffer[j++] = toupper(enc[i]);
+        continue;
+    else
+        buffer[j++] = toupper(enc[i]);
     }
     buffer[j] = '\0';
 
     if (conn_set_client_encoding(self, buffer) == 0) {
-    	PyMem_Free(buffer);
+        PyMem_Free(buffer);
         Py_INCREF(Py_None);
         return Py_None;
     }
@@ -228,8 +231,8 @@ static struct PyMethodDef connectionObject_methods[] = {
     {"set_isolation_level", (PyCFunction)psyco_conn_set_isolation_level,
      METH_VARARGS, psyco_conn_set_isolation_level_doc},
     {"set_client_encoding", (PyCFunction)psyco_conn_set_client_encoding,
-     METH_VARARGS, psyco_conn_set_client_encoding_doc},    
-#endif    
+     METH_VARARGS, psyco_conn_set_client_encoding_doc},
+#endif
     {NULL}
 };
 
@@ -237,9 +240,9 @@ static struct PyMethodDef connectionObject_methods[] = {
 
 static struct PyMemberDef connectionObject_members[] = {
     /* DBAPI-2.0 extensions (exception objects) */
-    {"Error", T_OBJECT, 
+    {"Error", T_OBJECT,
         offsetof(connectionObject, exc_Error), RO, Error_doc},
-    {"Warning", 
+    {"Warning",
         T_OBJECT, offsetof(connectionObject, exc_Warning), RO, Warning_doc},
     {"InterfaceError", T_OBJECT,
         offsetof(connectionObject, exc_InterfaceError), RO,
@@ -262,7 +265,7 @@ static struct PyMemberDef connectionObject_members[] = {
     {"NotSupportedError", T_OBJECT,
         offsetof(connectionObject, exc_NotSupportedError), RO,
         NotSupportedError_doc},
-#ifdef PSYCOPG_EXTENSIONS    
+#ifdef PSYCOPG_EXTENSIONS
     {"closed", T_LONG, offsetof(connectionObject, closed), RO,
         "True if the connection is closed."},
     {"isolation_level", T_LONG,
@@ -274,14 +277,14 @@ static struct PyMemberDef connectionObject_members[] = {
     {"notifies", T_OBJECT, offsetof(connectionObject, notifies), RO},
     {"dsn", T_STRING, offsetof(connectionObject, dsn), RO,
         "The current connection string."},
-    {"status", T_LONG,
+    {"status", T_INT,
         offsetof(connectionObject, status), RO,
-	    "The current transaction status."},
+        "The current transaction status."},
     {"string_types", T_OBJECT, offsetof(connectionObject, string_types), RO,
         "A set of typecasters to convert textual values."},
     {"binary_types", T_OBJECT, offsetof(connectionObject, binary_types), RO,
         "A set of typecasters to convert binary values."},
-#endif    
+#endif
     {NULL}
 };
 
@@ -293,9 +296,11 @@ connection_setup(connectionObject *self, char *dsn)
     char *pos;
     int res;
 
-    Dprintf("connection_setup: init connection object at %p, refcnt = %d",
-            self, ((PyObject *)self)->ob_refcnt);
-    
+    Dprintf("connection_setup: init connection object at %p, refcnt = "
+        FORMAT_CODE_PY_SSIZE_T,
+        self, ((PyObject *)self)->ob_refcnt
+      );
+
     self->dsn = strdup(dsn);
     self->notice_list = PyList_New(0);
     self->notifies = PyList_New(0);
@@ -305,21 +310,23 @@ connection_setup(connectionObject *self, char *dsn)
     self->async_cursor = NULL;
     self->pgconn = NULL;
     self->mark = 0;
-    self->string_types = PyDict_New();   
+    self->string_types = PyDict_New();
     self->binary_types = PyDict_New();
 
     pthread_mutex_init(&(self->lock), NULL);
- 
+
     if (conn_connect(self) != 0) {
         Dprintf("connection_init: FAILED");
         res = -1;
     }
     else {
-        Dprintf("connection_setup: good connection object at %p, refcnt = %d",
-            self, ((PyObject *)self)->ob_refcnt);
+        Dprintf("connection_setup: good connection object at %p, refcnt = "
+            FORMAT_CODE_PY_SSIZE_T,
+            self, ((PyObject *)self)->ob_refcnt
+          );
         res = 0;
     }
- 
+
     /* here we obfuscate the password even if there was a connection error */
     pos = strstr(self->dsn, "password");
     if (pos != NULL) {
@@ -336,21 +343,23 @@ connection_dealloc(PyObject* obj)
     connectionObject *self = (connectionObject *)obj;
 
     if (self->closed == 0) conn_close(self);
-    
+
     if (self->dsn) free(self->dsn);
     if (self->encoding) PyMem_Free(self->encoding);
     if (self->critical) free(self->critical);
-    
+
     Py_XDECREF(self->notice_list);
     Py_XDECREF(self->notifies);
     Py_XDECREF(self->async_cursor);
     Py_XDECREF(self->string_types);
     Py_XDECREF(self->binary_types);
-    
+
     pthread_mutex_destroy(&(self->lock));
 
-    Dprintf("connection_dealloc: deleted connection object at %p, refcnt = %d",
-            obj, obj->ob_refcnt);
+    Dprintf("connection_dealloc: deleted connection object at %p, refcnt = "
+        FORMAT_CODE_PY_SSIZE_T,
+        obj, obj->ob_refcnt
+      );
 
     obj->ob_type->tp_free(obj);
 }
@@ -403,7 +412,7 @@ PyTypeObject connectionType = {
     sizeof(connectionObject),
     0,
     connection_dealloc, /*tp_dealloc*/
-    0,          /*tp_print*/ 
+    0,          /*tp_print*/
     0,          /*tp_getattr*/
     0,          /*tp_setattr*/
     0,          /*tp_compare*/
@@ -421,7 +430,7 @@ PyTypeObject connectionType = {
 
     Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /*tp_flags*/
     connectionType_doc, /*tp_doc*/
-    
+
     0,          /*tp_traverse*/
     0,          /*tp_clear*/
 
@@ -438,11 +447,11 @@ PyTypeObject connectionType = {
     0,          /*tp_getset*/
     0,          /*tp_base*/
     0,          /*tp_dict*/
-    
+
     0,          /*tp_descr_get*/
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
-    
+
     connection_init, /*tp_init*/
     0, /*tp_alloc  will be set to PyType_GenericAlloc in module init*/
     connection_new, /*tp_new*/
