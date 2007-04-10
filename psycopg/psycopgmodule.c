@@ -126,11 +126,12 @@ _psyco_connect_fill_exc(connectionObject *conn)
 static PyObject *
 psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
 {
-    PyObject *conn, *factory = NULL;
+    PyObject *conn = NULL, *factory = NULL;
     PyObject *pyport = NULL;
 
     int idsn=-1, iport=-1;
-    char *dsn=NULL, *database=NULL, *user=NULL, *password=NULL;
+    char *dsn_static=NULL, *dsn_dynamic=NULL;
+    char *database=NULL, *user=NULL, *password=NULL;
     char *host=NULL, *sslmode=NULL;
     char port[16];
 
@@ -139,28 +140,31 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
                              "connection_factory", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sssOsssO", kwlist,
-                                     &dsn, &database, &host, &pyport,
+                                     &dsn_static, &database, &host, &pyport,
                                      &user, &password, &sslmode, &factory)) {
         return NULL;
     }
 
     if (pyport && PyString_Check(pyport)) {
-    PyObject *pyint = PyInt_FromString(PyString_AsString(pyport), NULL, 10);
-    if (!pyint) return NULL;
-    iport = PyInt_AsLong(pyint);
+      PyObject *pyint = PyInt_FromString(PyString_AsString(pyport), NULL, 10);
+      if (!pyint) goto fail;
+      /* Must use PyInt_AsLong rather than PyInt_AS_LONG, because
+       * PyInt_FromString can return a PyLongObject: */
+      iport = PyInt_AsLong(pyint);
+      Py_DECREF(pyint);
     }
     else if (pyport && PyInt_Check(pyport)) {
-    iport = PyInt_AsLong(pyport);
+      iport = PyInt_AsLong(pyport);
     }
     else if (pyport != NULL) {
-    PyErr_SetString(PyExc_TypeError, "port must be a string or int");
-    return NULL;
+      PyErr_SetString(PyExc_TypeError, "port must be a string or int");
+      goto fail;
     }
 
     if (iport > 0)
       PyOS_snprintf(port, 16, "%d", iport);
 
-    if (dsn == NULL) {
+    if (dsn_static == NULL) {
         int l = 45;  /* len("dbname= user= password= host= port= sslmode=\0") */
 
         if (database) l += strlen(database);
@@ -170,43 +174,58 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
         if (password) l += strlen(password);
         if (sslmode) l += strlen(sslmode);
 
-        dsn = malloc(l*sizeof(char));
-        if (dsn == NULL) {
+        dsn_dynamic = malloc(l*sizeof(char));
+        if (dsn_dynamic == NULL) {
             PyErr_SetString(InterfaceError, "dynamic dsn allocation failed");
-            return NULL;
+            goto fail;
         }
 
         idsn = 0;
         if (database)
-            idsn = _psyco_connect_fill_dsn(dsn, " dbname=", database, idsn);
+            idsn = _psyco_connect_fill_dsn(dsn_dynamic, " dbname=", database, idsn);
         if (host)
-            idsn = _psyco_connect_fill_dsn(dsn, " host=", host, idsn);
+            idsn = _psyco_connect_fill_dsn(dsn_dynamic, " host=", host, idsn);
         if (iport > 0)
-            idsn = _psyco_connect_fill_dsn(dsn, " port=", port, idsn);
+            idsn = _psyco_connect_fill_dsn(dsn_dynamic, " port=", port, idsn);
         if (user)
-            idsn = _psyco_connect_fill_dsn(dsn, " user=", user, idsn);
+            idsn = _psyco_connect_fill_dsn(dsn_dynamic, " user=", user, idsn);
         if (password)
-            idsn = _psyco_connect_fill_dsn(dsn, " password=", password, idsn);
+            idsn = _psyco_connect_fill_dsn(dsn_dynamic, " password=", password, idsn);
         if (sslmode)
-            idsn = _psyco_connect_fill_dsn(dsn, " sslmode=", sslmode, idsn);
+            idsn = _psyco_connect_fill_dsn(dsn_dynamic, " sslmode=", sslmode, idsn);
 
         if (idsn > 0) {
-            dsn[idsn] = '\0';
-            memmove(dsn, &dsn[1], idsn);
+            dsn_dynamic[idsn] = '\0';
+            memmove(dsn_dynamic, &dsn_dynamic[1], idsn);
         }
         else {
-            free(dsn);
             PyErr_SetString(InterfaceError, "missing dsn and no parameters");
-            return NULL;
+            goto fail;
         }
     }
 
-    Dprintf("psyco_connect: dsn = '%s'", dsn);
+    {
+      const char *dsn = (dsn_static != NULL ? dsn_static : dsn_dynamic);
+      Dprintf("psyco_connect: dsn = '%s'", dsn);
 
-    /* allocate connection, fill with errors and return it */
-    if (factory == NULL) factory = (PyObject *)&connectionType;
-    conn = PyObject_CallFunction(factory, "s", dsn);
-    if (conn) _psyco_connect_fill_exc((connectionObject*)conn);
+      /* allocate connection, fill with errors and return it */
+      if (factory == NULL) factory = (PyObject *)&connectionType;
+      conn = PyObject_CallFunction(factory, "s", dsn);
+      if (conn) _psyco_connect_fill_exc((connectionObject*)conn);
+    }
+
+    goto cleanup;
+    fail:
+      assert (PyErr_Occurred());
+      if (conn != NULL) {
+        Py_DECREF(conn);
+        conn = NULL;
+      }
+      /* Fall through to cleanup: */
+    cleanup:
+      if (dsn_dynamic != NULL) {
+        free(dsn_dynamic);
+      }
 
     return conn;
 }

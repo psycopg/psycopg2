@@ -1,5 +1,8 @@
 2007-04-10  Federico Di Gregorio  <fog@initd.org>
 
+	* Applied patch from David Rushby to fix mem and ref leaks in
+	  psycopg2.connect().
+
 	* Applied super-patch from David Rushby to fix Python 2.5 and 64
 	bit problems (all of them, kudos!)
 
