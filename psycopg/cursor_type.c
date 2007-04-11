@@ -79,7 +79,7 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
     PyObject *key, *value, *n, *item;
     char *d, *c;
     Py_ssize_t index = 0;
-    int force = 0;
+    int force = 0, kind = 0;
 
     /* from now on we'll use n and replace its value in *new only at the end,
        just before returning. we also init *new to NULL to exit with an error
@@ -88,6 +88,15 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
     c = PyString_AsString(fmt);
 
     while(*c) {
+        /* check if some crazy guy mixed formats */
+        if (kind == 2) {
+	    Py_XDECREF(n);
+            psyco_set_error(ProgrammingError, (PyObject*)conn,
+	    	"argument formats can't be mixed", NULL, NULL);
+            return -1;
+	}
+	kind = 1;
+
         /* handle plain percent symbol in format string */
         if (c[0] == '%' && c[1] == '%') {
             c+=2; force = 1;
@@ -181,6 +190,15 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
             /* this is a format that expects a tuple; it is much easier,
                because we don't need to check the old/new dictionary for
                keys */
+
+            /* check if some crazy guy mixed formats */
+            if (kind == 1) {
+                Py_XDECREF(n);
+                psyco_set_error(ProgrammingError, (PyObject*)conn,
+	    	    "argument formats can't be mixed", NULL, NULL);
+		return -1;
+            }
+            kind = 2;
 
             value = PySequence_GetItem(var, index);
             /* value has refcnt inc'ed by 1 here */

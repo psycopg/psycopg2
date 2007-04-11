@@ -1,3 +1,11 @@
+2007-04-11  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/cursor_type.c: added check to raise an error when
+	some crazy programmer tries to use different argument formats
+	in the same query string. Fixes #162.
+
+	* Applied patch from David Rushby to fix win32 builds.
+
 2007-04-10  Federico Di Gregorio  <fog@initd.org>
 
 	* Applied patch from David Rushby to fix mem and ref leaks in

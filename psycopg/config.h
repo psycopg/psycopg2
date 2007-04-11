@@ -52,6 +52,17 @@ static void Dprintf(const char *fmt, ...) {}
 #if defined(_WIN32) || defined(__BEOS__)
 
 #ifdef _WIN32
+
+/* A Python extension should be linked to only one C runtime:  the same one as
+ * the Python interpreter itself.  Straightforwardly using the strdup function
+ * causes MinGW to implicitly link to the msvcrt.dll, which is not appropriate
+ * for any Python version later than 2.3.
+ * Microsoft C runtimes for Windows 98 and later make a _strdup function
+ * available, which replaces the "normal" strdup.  If we replace all psycopg
+ * calls to strdup with calls to _strdup, MinGW no longer implicitly links to
+ * the obsolete C runtime. */
+#define strdup _strdup
+
 #include <winsock2.h>
 #define pthread_mutex_t HANDLE
 #define pthread_condvar_t HANDLE
@@ -102,7 +113,7 @@ static struct tm *localtime_r(time_t *t, struct tm *tm)
 #define inline
 #endif
 
-#if defined(__FreeBSD__) || defined(_WIN32) || defined(__sun__)
+#if defined(__FreeBSD__) || (defined(_WIN32) && !defined(__GNUC__)) || defined(__sun__)
 /* what's this, we have no round function either? */
 static double round(double num)
 {
