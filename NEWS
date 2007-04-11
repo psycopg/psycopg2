@@ -3,12 +3,20 @@ What's new in psycopg 2.0.6
 
 * Full support for PostgreSQL 8.2, including NULLs in arrays.
 
+* Full support for Python 2.5 and 64 bit architectures.
+
 * Support for almost all PostgreSQL encodings.
 
 * Better management of times and dates both from Python and in Zope.
 
+* Support for per-connection type-casters (used by ZPsycopgDA too, this
+  fixes a long standing bug that made different connections use a random
+  set of date/time type-casters instead of the configured one.)
+
 * We now have a full list of PostgreSQL error codes available by
   importing the psycopg2.errorcodes module.
+
+* Better build support on win32 platform.
 
 * Fixed some small buglets and build glitches:
   - removed double mutex destroy
@@ -17,6 +25,8 @@ What's new in psycopg 2.0.6
     on 64 bit architectures
   - fixed several Python API calls to work on 64 bit architectures
   - applied compatibility macros from PEP 353
+  - now using more than one argument format raise an error instead of
+    a segfault
 
 What's new in psycopg 2.0.5.1
 ­----------------------------

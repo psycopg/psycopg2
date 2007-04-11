@@ -1,5 +1,7 @@
 2007-04-11  Federico Di Gregorio  <fog@initd.org>
 
+	* Release 2.0.6b2.
+
 	* psycopg/cursor_type.c: added check to raise an error when
 	some crazy programmer tries to use different argument formats
 	in the same query string. Fixes #162.
