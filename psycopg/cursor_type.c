@@ -88,15 +88,6 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
     c = PyString_AsString(fmt);
 
     while(*c) {
-        /* check if some crazy guy mixed formats */
-        if (kind == 2) {
-            Py_XDECREF(n);
-            psyco_set_error(ProgrammingError, (PyObject*)conn,
-              "argument formats can't be mixed", NULL, NULL);
-            return -1;
-        }
-        kind = 1;
-
         /* handle plain percent symbol in format string */
         if (c[0] == '%' && c[1] == '%') {
             c+=2; force = 1;
@@ -109,6 +100,15 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
            4/ ...and add it to the new dictionary to be used as argument
         */
         else if (c[0] == '%' && c[1] == '(') {
+            
+	    /* check if some crazy guy mixed formats */
+            if (kind == 2) {
+                Py_XDECREF(n);
+                psyco_set_error(ProgrammingError, (PyObject*)conn,
+                   "argument formats can't be mixed", NULL, NULL);
+                return -1;
+            }
+            kind = 1;
 
             /* let's have d point the end of the argument */
             for (d = c + 2; *d && *d != ')'; d++);
@@ -1076,6 +1076,55 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
 
 #ifdef PSYCOPG_EXTENSIONS
 
+#define COPY_BUFFER_SIZE 1024
+
+static int _psyco_curs_copy_columns(PyObject *columns, char *columnlist)
+{
+    PyObject *col, *coliter;
+    Py_ssize_t collen;
+    char* colname;
+    int offset = 1;
+
+    columnlist[0] = '\0';
+    if (columns == NULL || columns == Py_None) return 0;
+
+    coliter = PyObject_GetIter(columns);
+    if (coliter == NULL) return 0;
+        
+    columnlist[0] = '(';
+
+    while ((col = PyIter_Next(coliter)) != NULL) {
+        if (!PyString_Check(col)) {
+            Py_DECREF(col);
+            Py_DECREF(coliter);
+            PyErr_SetString(PyExc_ValueError,
+                "elements in column list must be strings");
+            return -1;
+        }
+        PyString_AsStringAndSize(col, &colname, &collen);
+        if (offset + collen > DEFAULT_COPYBUFF - 2) {
+            Py_DECREF(col);
+            Py_DECREF(coliter);
+            PyErr_SetString(PyExc_ValueError, "column list too long");
+            return -1;
+        }
+        strncpy(&columnlist[offset], colname, collen);
+        offset += collen;
+        columnlist[offset++] = ',';
+        Py_DECREF(col);
+    }
+    Py_DECREF(coliter);
+
+    if (offset == 2) {
+        return 0;
+    }
+    else {
+        columnlist[offset - 1] = ')';
+        columnlist[offset] = '\0';
+        return 1;
+    }
+}
+
 /* extension: copy_from - implements COPY FROM */
 
 #define psyco_curs_copy_from_doc \
@@ -1100,12 +1149,12 @@ _psyco_curs_has_read_check(PyObject* o, void* var)
 static PyObject *
 psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
-    char query[1024];
+    char query[DEFAULT_COPYBUFF];
     char *table_name;
     char *sep = "\t", *null = NULL;
-    Py_ssize_t bufsize = DEFAULT_COPYSIZE;
+    Py_ssize_t bufsize = DEFAULT_COPYBUFF;
     PyObject *file, *columns = NULL, *res = NULL;
-    char columnlist[1024] = "";
+    char columnlist[DEFAULT_COPYBUFF];
 
     static char *kwlist[] = {"file", "table", "sep", "null", "size",
                              "columns", NULL};
@@ -1119,58 +1168,19 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
         return NULL;
     }
 
-    if (columns != NULL && columns != Py_None) {
-        PyObject* collistiter = PyObject_GetIter(columns);
-        PyObject* col;
-        Py_ssize_t collistlen = 2;
-        Py_ssize_t colitemlen;
-        char* colname;
-        if (collistiter == NULL) {
-            return NULL;
-        }
-        strcpy(columnlist, " (");
-        while ((col = PyIter_Next(collistiter)) != NULL) {
-            if (!PyString_Check(col)) {
-                Py_DECREF(col);
-                Py_DECREF(collistiter);
-                PyErr_SetString(PyExc_ValueError,
-            "Elements in column list must be strings");
-                return NULL;
-            }
-            PyString_AsStringAndSize(col, &colname, &colitemlen);
-            if (collistlen + colitemlen > 1022) {
-                Py_DECREF(col);
-                Py_DECREF(collistiter);
-                PyErr_SetString(PyExc_ValueError, "Column list too long");
-                return NULL;
-            }
-            strncpy(&columnlist[collistlen], colname, colitemlen);
-            collistlen += colitemlen;
-            columnlist[collistlen++] = ',';
-            Py_DECREF(col);
-        }
-        Py_DECREF(collistiter);
-
-        if (collistlen == 2) {  /* empty list; we printed no comma */
-            collistlen++;
-        }
-
-        columnlist[collistlen - 1] = ')';
-        columnlist[collistlen] = '\0';
-    }
-
-    if (PyErr_Occurred()) {
+    if (_psyco_curs_copy_columns(columns, columnlist) == -1)
         return NULL;
-    }
 
     EXC_IF_CURS_CLOSED(self);
 
     if (null) {
-        PyOS_snprintf(query, 1023, "COPY %s%s FROM stdin USING DELIMITERS '%s'"
+        PyOS_snprintf(query, DEFAULT_COPYBUFF-1, 
+                      "COPY %s%s FROM stdin USING DELIMITERS '%s'"
                       " WITH NULL AS '%s'", table_name, columnlist, sep, null);
     }
     else {
-        PyOS_snprintf(query, 1023, "COPY %s%s FROM stdin USING DELIMITERS '%s'",
+        PyOS_snprintf(query, DEFAULT_COPYBUFF-1,
+                      "COPY %s%s FROM stdin USING DELIMITERS '%s'",
                       table_name, columnlist, sep);
     }
     Dprintf("psyco_curs_copy_from: query = %s", query);
@@ -1188,8 +1198,10 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
     return res;
 }
 
+/* extension: copy_to - implements COPY TO */
+
 #define psyco_curs_copy_to_doc \
-"copy_to(file, table, sep='\\t', null='\\N') -- Copy table to file."
+"copy_to(file, table, sep='\\t', null='\\N', columns=None) -- Copy table to file."
 
 static int
 _psyco_curs_has_write_check(PyObject* o, void* var)
@@ -1209,28 +1221,34 @@ _psyco_curs_has_write_check(PyObject* o, void* var)
 static PyObject *
 psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
-    char query[256];
+    char query[DEFAULT_COPYBUFF];
+    char columnlist[DEFAULT_COPYBUFF];
     char *table_name;
     char *sep = "\t", *null = NULL;
-    PyObject *file, *res = NULL;
+    PyObject *file, *columns = NULL, *res = NULL;
 
-    static char *kwlist[] = {"file", "table", "sep", "null", NULL};
+    static char *kwlist[] = {"file", "table", "sep", "null", "columns", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&s|ss", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&s|ssO", kwlist,
                                      _psyco_curs_has_write_check, &file,
-                                     &table_name, &sep, &null)) {
+                                     &table_name, &sep, &null, &columns)) {
         return NULL;
     }
+    
+    if (_psyco_curs_copy_columns(columns, columnlist) == -1)
+        return NULL;
 
     EXC_IF_CURS_CLOSED(self);
 
     if (null) {
-        PyOS_snprintf(query, 255, "COPY %s TO stdout USING DELIMITERS '%s'"
-                      " WITH NULL AS '%s'", table_name, sep, null);
+        PyOS_snprintf(query, DEFAULT_COPYBUFF-1,
+                      "COPY %s%s TO stdout USING DELIMITERS '%s'"
+                      " WITH NULL AS '%s'", table_name, columnlist, sep, null);
     }
     else {
-        PyOS_snprintf(query, 255, "COPY %s TO stdout USING DELIMITERS '%s'",
-                      table_name, sep);
+        PyOS_snprintf(query, DEFAULT_COPYBUFF-1,
+                      "COPY %s%s TO stdout USING DELIMITERS '%s'",
+                      table_name, columnlist, sep);
     }
 
     self->copysize = 0;

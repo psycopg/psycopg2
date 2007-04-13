@@ -1,4 +1,14 @@
+2007-04-14  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/psycopg.h: fixed probable typo in definition of
+	CONV_CODE_PY_SSIZE_T: d -> i for Python < 2.5.
+
+	* Fixed some of the examples.
+
 2007-04-13  Federico Di Gregorio  <fog@initd.org>
+
+	* Applied slighly modified patch from daniel (#176). Made
+	buffer size a compile-time parameter.
 
 	* Applied patch from David Rushby: typecast_binary.c cleanup.
 

@@ -45,8 +45,8 @@ conn.commit()
 
 io = open('copy_from.txt', 'wr')
 data = ['Tom\tJenkins\t37\n',
-        'Madonna\t\N\t45\n',
-        'Federico\tDi Gregorio\t\N\n']
+        'Madonna\t\\N\t45\n',
+        'Federico\tDi Gregorio\t\\N\n']
 io.writelines(data)
 io.close()
 

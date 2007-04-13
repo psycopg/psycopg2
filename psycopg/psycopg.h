@@ -48,7 +48,7 @@ extern "C" {
 #if PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION >= 5
   #define CONV_CODE_PY_SSIZE_T "n"
 #else
-  #define CONV_CODE_PY_SSIZE_T "d"
+  #define CONV_CODE_PY_SSIZE_T "i"
 
   typedef int Py_ssize_t;
   #define PY_SSIZE_T_MIN INT_MIN
