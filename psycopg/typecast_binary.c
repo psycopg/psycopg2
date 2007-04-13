@@ -156,11 +156,11 @@ typecast_BINARY_cast_unescape(unsigned char *str, size_t *to_length)
 #endif
 
 static PyObject *
-typecast_BINARY_cast(char *s, int l, PyObject *curs)
+typecast_BINARY_cast(char *s, Py_ssize_t l, PyObject *curs)
 {
-    chunkObject *chunk;
-    PyObject *res;
-    char *str, *buffer = NULL;
+    chunkObject *chunk = NULL;
+    PyObject *res = NULL;
+    char *str = NULL, *buffer = NULL;
     size_t len;
 
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
@@ -169,28 +169,65 @@ typecast_BINARY_cast(char *s, int l, PyObject *curs)
        want to copy the whole buffer, right? Wrong, but there isn't any other
        way <g> */
     if (s[l] != '\0') {
-        if ((buffer = PyMem_Malloc(l+1)) == NULL)
+        if ((buffer = PyMem_Malloc(l+1)) == NULL) {
             PyErr_NoMemory();
-        strncpy(buffer, s, l);
+            goto fail;
+        }
+        /* Py_ssize_t->size_t cast is safe, as long as the Py_ssize_t is
+         * >= 0: */
+        assert (l >= 0);
+        strncpy(buffer, s, (size_t) l);
+
         buffer[l] = '\0';
         s = buffer;
     }
     str = (char*)PQunescapeBytea((unsigned char*)s, &len);
     Dprintf("typecast_BINARY_cast: unescaped " FORMAT_CODE_SIZE_T " bytes",
       len);
-    if (buffer) PyMem_Free(buffer);
+
+    /* The type of the second parameter to PQunescapeBytea is size_t *, so it's
+     * possible (especially with Python < 2.5) to get a return value too large
+     * to fit into a Python container. */
+    if (len > (size_t) PY_SSIZE_T_MAX) {
+      PyErr_SetString(PyExc_IndexError, "PG buffer too large to fit in Python"
+                                        " buffer.");
+      goto fail;
+    }
 
     chunk = (chunkObject *) PyObject_New(chunkObject, &chunkType);
-    if (chunk == NULL) return NULL;
+    if (chunk == NULL) goto fail;
 
+    /* **Transfer** ownership of str's memory to the chunkObject: */
     chunk->base = str;
-    chunk->len = len;
-    if ((res = PyBuffer_FromObject((PyObject *)chunk, 0, len)) == NULL)
-        return NULL;
+    str = NULL;
 
-    /* PyBuffer_FromObject() created a new reference. Release our reference so
-       that the memory can be freed once the buffer is garbage collected. */
-    Py_DECREF(chunk);
+    /* size_t->Py_ssize_t cast was validated above: */
+    chunk->len = (Py_ssize_t) len;
+    if ((res = PyBuffer_FromObject((PyObject *)chunk, 0, chunk->len)) == NULL)
+        goto fail;
+    /* PyBuffer_FromObject() created a new reference.  We'll release our
+     * reference held in 'chunk' in the 'cleanup' clause. */
 
-    return res;
+    goto cleanup;
+    fail:
+      assert (PyErr_Occurred());
+      if (res != NULL) {
+          Py_DECREF(res);
+          res = NULL;
+      }
+      /* Fall through to cleanup: */
+    cleanup:
+      if (chunk != NULL) {
+          Py_DECREF((PyObject *) chunk);
+      }
+      if (str != NULL) {
+          /* str's mem was allocated by PQunescapeBytea; must use free: */
+          free(str);
+      }
+      if (buffer != NULL) {
+          /* We allocated buffer with PyMem_Malloc; must use PyMem_Free: */
+          PyMem_Free(buffer);
+      }
+
+      return res;
 }

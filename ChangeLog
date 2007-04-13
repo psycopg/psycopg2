@@ -1,5 +1,7 @@
 2007-04-13  Federico Di Gregorio  <fog@initd.org>
 
+	* Applied patch from David Rushby: typecast_binary.c cleanup.
+
 	* Applied patch from David Rushby for int->size_t transition.
 
 2007-04-12  Federico Di Gregorio  <fog@initd.org>
