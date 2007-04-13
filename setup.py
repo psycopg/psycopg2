@@ -90,10 +90,12 @@ class psycopg_build_ext(build_ext):
           "The name of the pg_config binary and/or full path to find it"),
         ('use-decimal', None,
          "Use Decimal type even on Python 2.3 if the module is provided."),
+        ('have-ssl', None,
+         "Compile with OpenSSL built PostgreSQL libraries (Windows only)."),
     ])
 
     boolean_options = build_ext.boolean_options[:]
-    boolean_options.extend(('use-pydatetime', 'use-decimal'))
+    boolean_options.extend(('use-pydatetime', 'use-decimal', 'have-ssl'))
 
     DEFAULT_PG_CONFIG = "pg_config"
 
@@ -179,6 +181,11 @@ class psycopg_build_ext(build_ext):
                 if os.path.isfile(os.path.join(path, "ms", "libpq.lib")):
                     self.library_dirs.append(os.path.join(path, "ms"))
                     break
+            if have_ssl:
+                self.libraries.append("libeay32")
+                self.libraries.append("ssleay32")
+                self.libraries.append("user32")
+                self.libraries.append("gdi32")
 
     def finalize_darwin(self):
         """Finalize build system configuration on darwin platform."""
@@ -256,29 +263,34 @@ class psycopg_build_ext(build_ext):
         pg_config_path = None
 
         reg = _winreg.ConnectRegistry(None, _winreg.HKEY_LOCAL_MACHINE)
-        pg_inst_list_key = _winreg.OpenKey(reg,
-            'SOFTWARE\\PostgreSQL\\Installations'
-          )
         try:
-            # Determine the name of the first subkey, if any:
-            try:
-                first_sub_key_name = _winreg.EnumKey(pg_inst_list_key, 0)
-            except EnvironmentError:
-                first_sub_key_name = None
+            pg_inst_list_key = _winreg.OpenKey(reg,
+                'SOFTWARE\\PostgreSQL\\Installations'
+              )
+        except EnvironmentError:
+            pg_inst_list_key = None
 
-            if first_sub_key_name is not None:
-                pg_first_inst_key = _winreg.OpenKey(reg,
-                    'SOFTWARE\\PostgreSQL\\Installations\\'
-                    + first_sub_key_name
-                  )
+        if pg_inst_list_key is not None:
+            try:
+                # Determine the name of the first subkey, if any:
                 try:
-                    pg_inst_base_dir = _winreg.QueryValueEx(
-                        pg_first_inst_key, 'Base Directory'
-                      )[0]
-                finally:
-                    _winreg.CloseKey(pg_first_inst_key)
-        finally:
-            _winreg.CloseKey(pg_inst_list_key)
+                    first_sub_key_name = _winreg.EnumKey(pg_inst_list_key, 0)
+                except EnvironmentError:
+                    first_sub_key_name = None
+
+                if first_sub_key_name is not None:
+                    pg_first_inst_key = _winreg.OpenKey(reg,
+                        'SOFTWARE\\PostgreSQL\\Installations\\'
+                        + first_sub_key_name
+                      )
+                    try:
+                        pg_inst_base_dir = _winreg.QueryValueEx(
+                            pg_first_inst_key, 'Base Directory'
+                          )[0]
+                    finally:
+                        _winreg.CloseKey(pg_first_inst_key)
+            finally:
+                _winreg.CloseKey(pg_inst_list_key)
 
         if pg_inst_base_dir and os.path.exists(pg_inst_base_dir):
             pg_config_path = os.path.join(pg_inst_base_dir, 'bin',
@@ -383,6 +395,11 @@ if not PLATFORM_IS_WINDOWS:
     define_macros.append(('PSYCOPG_VERSION', '"'+PSYCOPG_VERSION_EX+'"'))
 else:
     define_macros.append(('PSYCOPG_VERSION', '\\"'+PSYCOPG_VERSION_EX+'\\"'))
+
+if parser.has_option('build_ext', 'have_ssl'):
+    have_ssl = int(parser.get('build_ext', 'have_ssl'))
+else:
+    have_ssl = 0
 
 # build the extension
 
