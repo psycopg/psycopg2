@@ -89,8 +89,8 @@ PyObject *decimalType = NULL;
 ":return: New database connection\n"                                         \
 ":rtype: `extensions.connection`"
 
-static int
-_psyco_connect_fill_dsn(char *dsn, char *kw, char *v, int i)
+static size_t
+_psyco_connect_fill_dsn(char *dsn, char *kw, char *v, size_t i)
 {
     strcpy(&dsn[i], kw); i += strlen(kw);
     strcpy(&dsn[i], v); i += strlen(v);
@@ -129,7 +129,8 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
     PyObject *conn = NULL, *factory = NULL;
     PyObject *pyport = NULL;
 
-    int idsn=-1, iport=-1;
+    size_t idsn=-1;
+    int iport=-1;
     char *dsn_static=NULL, *dsn_dynamic=NULL;
     char *database=NULL, *user=NULL, *password=NULL;
     char *host=NULL, *sslmode=NULL;
@@ -165,7 +166,7 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
       PyOS_snprintf(port, 16, "%d", iport);
 
     if (dsn_static == NULL) {
-        int l = 45;  /* len("dbname= user= password= host= port= sslmode=\0") */
+        size_t l = 45; /* len("dbname= user= password= host= port= sslmode=\0") */
 
         if (database) l += strlen(database);
         if (host) l += strlen(host);

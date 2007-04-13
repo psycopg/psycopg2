@@ -34,7 +34,7 @@ extern PyObject *pyDeltaTypeP;
 /** DATE - cast a date into a date python object **/
 
 static PyObject *
-typecast_PYDATE_cast(char *str, int len, PyObject *curs)
+typecast_PYDATE_cast(char *str, Py_ssize_t len, PyObject *curs)
 {
     PyObject* obj = NULL;
     int n, y=0, m=0, d=0;
@@ -53,7 +53,8 @@ typecast_PYDATE_cast(char *str, int len, PyObject *curs)
     else {
         n = typecast_parse_date(str, NULL, &len, &y, &m, &d);
         Dprintf("typecast_PYDATE_cast: "
-                "n = %d, len = %d, y = %d, m = %d, d = %d",
+                "n = %d, len = " FORMAT_CODE_PY_SSIZE_T ", "
+                "y = %d, m = %d, d = %d",
                  n, len, y, m, d);
         if (n != 3) {
             PyErr_SetString(DataError, "unable to parse date");
@@ -69,7 +70,7 @@ typecast_PYDATE_cast(char *str, int len, PyObject *curs)
 /** DATETIME - cast a timestamp into a datetime python object **/
 
 static PyObject *
-typecast_PYDATETIME_cast(char *str, int len, PyObject *curs)
+typecast_PYDATETIME_cast(char *str, Py_ssize_t len, PyObject *curs)
 {
     PyObject* obj = NULL;
     int n, y=0, m=0, d=0;
@@ -92,7 +93,8 @@ typecast_PYDATETIME_cast(char *str, int len, PyObject *curs)
         Dprintf("typecast_PYDATETIME_cast: s = %s", str);
         n = typecast_parse_date(str, &tp, &len, &y, &m, &d);
         Dprintf("typecast_PYDATE_cast: tp = %p "
-                "n = %d, len = %d, y = %d, m = %d, d = %d",
+                "n = %d, len = " FORMAT_CODE_PY_SSIZE_T ","
+                " y = %d, m = %d, d = %d",
                  tp, n, len, y, m, d);
         if (n != 3) {
             PyErr_SetString(DataError, "unable to parse date");
@@ -100,8 +102,9 @@ typecast_PYDATETIME_cast(char *str, int len, PyObject *curs)
 
         if (len > 0) {
             n = typecast_parse_time(tp, NULL, &len, &hh, &mm, &ss, &us, &tz);
-            Dprintf("typecast_PYDATETIME_cast: n = %d, len = %d, "
-                "hh = %d, mm = %d, ss = %d, us = %d, tz = %d",
+            Dprintf("typecast_PYDATETIME_cast: n = %d,"
+                " len = " FORMAT_CODE_PY_SSIZE_T ","
+                " hh = %d, mm = %d, ss = %d, us = %d, tz = %d",
                 n, len, hh, mm, ss, us, tz);
             if (n < 3 || n > 5) {
                 PyErr_SetString(DataError, "unable to parse time");
@@ -141,7 +144,7 @@ typecast_PYDATETIME_cast(char *str, int len, PyObject *curs)
 /** TIME - parse time into a time object **/
 
 static PyObject *
-typecast_PYTIME_cast(char *str, int len, PyObject *curs)
+typecast_PYTIME_cast(char *str, Py_ssize_t len, PyObject *curs)
 {
     PyObject* obj = NULL;
     int n, hh=0, mm=0, ss=0, us=0, tz=0;
@@ -149,7 +152,7 @@ typecast_PYTIME_cast(char *str, int len, PyObject *curs)
     if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
 
     n = typecast_parse_time(str, NULL, &len, &hh, &mm, &ss, &us, &tz);
-    Dprintf("typecast_PYTIME_cast: n = %d, len = %d, "
+    Dprintf("typecast_PYTIME_cast: n = %d, len = " FORMAT_CODE_PY_SSIZE_T ", "
             "hh = %d, mm = %d, ss = %d, us = %d, tz = %d",
             n, len, hh, mm, ss, us, tz);
 
@@ -169,7 +172,7 @@ typecast_PYTIME_cast(char *str, int len, PyObject *curs)
 /** INTERVAL - parse an interval into a timedelta object **/
 
 static PyObject *
-typecast_PYINTERVAL_cast(char *str, int len, PyObject *curs)
+typecast_PYINTERVAL_cast(char *str, Py_ssize_t len, PyObject *curs)
 {
     long years = 0, months = 0, days = 0;
     double hours = 0.0, minutes = 0.0, seconds = 0.0, hundredths = 0.0;

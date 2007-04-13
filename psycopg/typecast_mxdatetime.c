@@ -28,16 +28,16 @@ extern mxDateTimeModule_APIObject *mxDateTimeP;
 /** DATE - cast a date into mx.DateTime python object **/
 
 static PyObject *
-typecast_MXDATE_cast(char *str, int len, PyObject *curs)
+typecast_MXDATE_cast(char *str, Py_ssize_t len, PyObject *curs)
 {
     int n, y=0, m=0, d=0;
     int hh=0, mm=0, ss=0, us=0, tz=0;
     char *tp = NULL;
-    
+
     if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
- 
+
     Dprintf("typecast_MXDATE_cast: s = %s", str);
-    
+
     /* check for infinity */
     if (!strcmp(str, "infinity") || !strcmp(str, "-infinity")) {
         if (str[0] == '-') {
@@ -47,24 +47,26 @@ typecast_MXDATE_cast(char *str, int len, PyObject *curs)
             return mxDateTimeP->DateTime_FromDateAndTime(999999,12,31, 0,0,0);
         }
     }
-    
+
     n = typecast_parse_date(str, &tp, &len, &y, &m, &d);
-    Dprintf("typecast_MXDATE_cast: tp = %p n = %d, len = %d, "
-             "y = %d, m = %d, d = %d", tp, n, len, y, m, d);        
+    Dprintf("typecast_MXDATE_cast: tp = %p n = %d,"
+            " len = " FORMAT_CODE_PY_SSIZE_T ","
+            " y = %d, m = %d, d = %d", tp, n, len, y, m, d);
     if (n != 3) {
         PyErr_SetString(DataError, "unable to parse date");
     }
-    
+
     if (len > 0) {
         n = typecast_parse_time(tp, NULL, &len, &hh, &mm, &ss, &us, &tz);
-        Dprintf("typecast_MXDATE_cast: n = %d, len = %d, "
-            "hh = %d, mm = %d, ss = %d, us = %d, tz = %d",
+        Dprintf("typecast_MXDATE_cast: n = %d,"
+            " len = " FORMAT_CODE_PY_SSIZE_T ","
+            " hh = %d, mm = %d, ss = %d, us = %d, tz = %d",
             n, len, hh, mm, ss, us, tz);
         if (n < 3 || n > 5) {
             PyErr_SetString(DataError, "unable to parse time");
         }
-    }    
-    
+    }
+
     Dprintf("typecast_MXDATE_cast: fractionary seconds: %lf",
         (double)ss + (double)us/(double)1000000.0);
     return mxDateTimeP->DateTime_FromDateAndTime(y, m, d, hh, mm,
@@ -74,19 +76,19 @@ typecast_MXDATE_cast(char *str, int len, PyObject *curs)
 /** TIME - parse time into an mx.DateTime object **/
 
 static PyObject *
-typecast_MXTIME_cast(char *str, int len, PyObject *curs)
+typecast_MXTIME_cast(char *str, Py_ssize_t len, PyObject *curs)
 {
     int n, hh=0, mm=0, ss=0, us=0, tz=0;
 
     if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
-    
+
     Dprintf("typecast_MXTIME_cast: s = %s", str);
-    
+
     n = typecast_parse_time(str, NULL, &len, &hh, &mm, &ss, &us, &tz);
     Dprintf("typecast_MXTIME_cast: time parsed, %d components", n);
     Dprintf("typecast_MXTIME_cast: hh = %d, mm = %d, ss = %d, us = %d",
              hh, mm, ss, us);
-    
+
     if (n < 3 || n > 5) {
         PyErr_SetString(DataError, "unable to parse time");
         return NULL;
@@ -101,7 +103,7 @@ typecast_MXTIME_cast(char *str, int len, PyObject *curs)
 /** INTERVAL - parse an interval into an mx.DateTimeDelta **/
 
 static PyObject *
-typecast_MXINTERVAL_cast(char *str, int len, PyObject *curs)
+typecast_MXINTERVAL_cast(char *str, Py_ssize_t len, PyObject *curs)
 {
     long years = 0, months = 0, days = 0, denominator = 1;
     double hours = 0.0, minutes = 0.0, seconds = 0.0, hundredths = 0.0;
@@ -109,9 +111,9 @@ typecast_MXINTERVAL_cast(char *str, int len, PyObject *curs)
     int part = 0;
 
     if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
-    
+
     Dprintf("typecast_MXINTERVAL_cast: s = %s", str);
-    
+
     while (*str) {
         switch (*str) {
 
@@ -179,12 +181,12 @@ typecast_MXINTERVAL_cast(char *str, int len, PyObject *curs)
                 Dprintf("typecast_MXINTERVAL_cast: seconds = %f", seconds);
                 v = 0.0; part = 6;
             }
-            break;   
+            break;
 
         default:
             break;
         }
-        
+
         str++;
     }
 
@@ -203,7 +205,7 @@ typecast_MXINTERVAL_cast(char *str, int len, PyObject *curs)
         hundredths = hundredths/denominator;
         Dprintf("typecast_MXINTERVAL_cast: fractions = %.20f", hundredths);
     }
-    
+
     /* calculates seconds */
     if (sign < 0.0) {
         seconds = - (hundredths + seconds + minutes*60 + hours*3600);
@@ -214,7 +216,7 @@ typecast_MXINTERVAL_cast(char *str, int len, PyObject *curs)
 
     /* calculates days */
     days += years*365 + months*30;
-    
+
     Dprintf("typecast_MXINTERVAL_cast: days = %ld, seconds = %f",
             days, seconds);
     return mxDateTimeP->DateTimeDelta_FromDaysAndSeconds(days, seconds);
@@ -222,7 +224,7 @@ typecast_MXINTERVAL_cast(char *str, int len, PyObject *curs)
 
 /* psycopg defaults to using mx types */
 
-#ifdef PSYCOPG_DEFAULT_MXDATETIME 
+#ifdef PSYCOPG_DEFAULT_MXDATETIME
 #define typecast_DATE_cast typecast_MXDATE_cast
 #define typecast_TIME_cast typecast_MXTIME_cast
 #define typecast_INTERVAL_cast typecast_MXINTERVAL_cast

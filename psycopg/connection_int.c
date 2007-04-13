@@ -55,7 +55,7 @@ conn_connect(connectionObject *self)
     PGconn *pgconn;
     PGresult *pgres;
     char *data, *tmp;
-    int i;
+    size_t i;
 
     /* we need the initial date style to be ISO, for typecasters; if the user
        later change it, she must know what she's doing... */

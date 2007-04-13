@@ -30,7 +30,7 @@ extern "C" {
 #endif
 
 /* type of type-casting functions (both C and Python) */
-typedef PyObject *(*typecast_function)(char *, int len, PyObject *);
+typedef PyObject *(*typecast_function)(char *, Py_ssize_t len, PyObject *);
 
 /** typecast type **/
 

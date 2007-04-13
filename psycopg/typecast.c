@@ -40,7 +40,7 @@ skip_until_space(char *s)
 }
 
 static char *
-skip_until_space2(char *s, int *len)
+skip_until_space2(char *s, Py_ssize_t *len)
 {
     while (*len > 0 && *s && *s != ' ') {
         s++; (*len)--;
@@ -49,12 +49,13 @@ skip_until_space2(char *s, int *len)
 }
 
 static int
-typecast_parse_date(char* s, char** t, int* len,
+typecast_parse_date(char* s, char** t, Py_ssize_t* len,
                      int* year, int* month, int* day)
 {
     int acc = -1, cz = 0;
 
-    Dprintf("typecast_parse_date: len = %d, s = %s", *len, s);
+    Dprintf("typecast_parse_date: len = " FORMAT_CODE_PY_SSIZE_T ", s = %s",
+      *len, s);
 
     while (cz < 3 && *len > 0 && *s) {
         switch (*s) {
@@ -84,7 +85,7 @@ typecast_parse_date(char* s, char** t, int* len,
 }
 
 static int
-typecast_parse_time(char* s, char** t, int* len,
+typecast_parse_time(char* s, char** t, Py_ssize_t* len,
                      int* hh, int* mm, int* ss, int* us, int* tz)
 {
     int acc = -1, cz = 0;
@@ -94,7 +95,8 @@ typecast_parse_time(char* s, char** t, int* len,
     /* sets microseconds and timezone to 0 because they may be missing */
     *us = *tz = 0;
 
-    Dprintf("typecast_parse_time: len = %d, s = %s", *len, s);
+    Dprintf("typecast_parse_time: len = " FORMAT_CODE_PY_SSIZE_T ", s = %s",
+      *len, s);
 
     while (cz < 6 && *len > 0 && *s) {
         switch (*s) {
@@ -140,8 +142,8 @@ typecast_parse_time(char* s, char** t, int* len,
 
     *tz = tzs * tzhh*60 + tzmm;
 
-    if (*us != 0.0) {
-        while (usd++ < 6) *us *= 10.0;
+    if (*us != 0) {
+        while (usd++ < 6) *us *= 10;
     }
 
     return cz;

@@ -184,7 +184,7 @@ static PyObject *
 psyco_conn_set_client_encoding(connectionObject *self, PyObject *args)
 {
     char *buffer, *enc = NULL;
-    int i, j;
+    size_t i, j;
 
     EXC_IF_CONN_CLOSED(self);
 

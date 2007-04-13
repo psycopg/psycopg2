@@ -113,14 +113,14 @@ pq_raise(connectionObject *conn, cursorObject *curs, PyObject *exc, char *msg)
 
     /* if msg is not NULL, add it to the error message, after a '\n' */
     if (msg && code) {
-        int len = strlen(code) + strlen(err) + strlen(msg) + 5;
+        size_t len = strlen(code) + strlen(err) + strlen(msg) + 5;
         if ((buf = PyMem_Malloc(len))) {
             snprintf(buf, len, "[%s] %s\n%s", code, err2, msg);
             psyco_set_error(exc, pgc, buf, err, code);
         }
     }
     else if (msg) {
-        int len = strlen(err) + strlen(msg) + 2;
+        size_t len = strlen(err) + strlen(msg) + 2;
         if ((buf = PyMem_Malloc(len))) {
             snprintf(buf, len, "%s\n%s", err2, msg);
             psyco_set_error(exc, pgc, buf, err, code);
@@ -607,11 +607,14 @@ _pq_copy_in_v3(cursorObject *curs)
         if (!o || !PyString_Check(o) || (length = PyString_Size(o)) == -1) {
             error = 1;
         }
-        if (length == 0 || error == 1) break;
+        if (length == 0 || length > INT_MAX || error == 1) break;
 
         Py_BEGIN_ALLOW_THREADS;
         if (PQputCopyData(curs->conn->pgconn,
-                          PyString_AS_STRING(o), length) == -1) {
+                          PyString_AS_STRING(o),
+                          /* Py_ssize_t->int cast was validated above: */
+                          (int) length
+                         ) == -1) {
             error = 2;
         }
         Py_END_ALLOW_THREADS;

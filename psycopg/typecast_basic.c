@@ -22,13 +22,13 @@
 /** INTEGER - cast normal integers (4 bytes) to python int **/
 
 static PyObject *
-typecast_INTEGER_cast(char *s, int len, PyObject *curs)
+typecast_INTEGER_cast(char *s, Py_ssize_t len, PyObject *curs)
 {
     char buffer[12];
-    
+
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
     if (s[len] != '\0') {
-        strncpy(buffer, s, len); buffer[len] = '\0';
+        strncpy(buffer, s, (size_t) len); buffer[len] = '\0';
         s = buffer;
     }
     return PyInt_FromString(s, NULL, 0);
@@ -37,13 +37,13 @@ typecast_INTEGER_cast(char *s, int len, PyObject *curs)
 /** LONGINTEGER - cast long integers (8 bytes) to python long **/
 
 static PyObject *
-typecast_LONGINTEGER_cast(char *s, int len, PyObject *curs)
+typecast_LONGINTEGER_cast(char *s, Py_ssize_t len, PyObject *curs)
 {
     char buffer[24];
-    
+
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
     if (s[len] != '\0') {
-        strncpy(buffer, s, len); buffer[len] = '\0';
+        strncpy(buffer, s, (size_t) len); buffer[len] = '\0';
         s = buffer;
     }
     return PyLong_FromString(s, NULL, 0);
@@ -52,11 +52,11 @@ typecast_LONGINTEGER_cast(char *s, int len, PyObject *curs)
 /** FLOAT - cast floating point numbers to python float **/
 
 static PyObject *
-typecast_FLOAT_cast(char *s, int len, PyObject *curs)
+typecast_FLOAT_cast(char *s, Py_ssize_t len, PyObject *curs)
 {
     PyObject *str = NULL, *flo = NULL;
     char *pend;
-    
+
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
     str = PyString_FromStringAndSize(s, len);
     flo = PyFloat_FromString(str, &pend);
@@ -67,7 +67,7 @@ typecast_FLOAT_cast(char *s, int len, PyObject *curs)
 /** STRING - cast strings of any type to python string **/
 
 static PyObject *
-typecast_STRING_cast(char *s, int len, PyObject *curs)
+typecast_STRING_cast(char *s, Py_ssize_t len, PyObject *curs)
 {
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
     return PyString_FromStringAndSize(s, len);
@@ -76,7 +76,7 @@ typecast_STRING_cast(char *s, int len, PyObject *curs)
 /** UNICODE - cast strings of any type to a python unicode object **/
 
 static PyObject *
-typecast_UNICODE_cast(char *s, int len, PyObject *curs)
+typecast_UNICODE_cast(char *s, Py_ssize_t len, PyObject *curs)
 {
     PyObject *enc;
 
@@ -91,14 +91,14 @@ typecast_UNICODE_cast(char *s, int len, PyObject *curs)
        PyErr_Format(InterfaceError,
                     "can't decode into unicode string from %s",
                     ((cursorObject*)curs)->conn->encoding);
-       return NULL; 
+       return NULL;
     }
 }
 
 /** BOOLEAN - cast boolean value into right python object **/
 
 static PyObject *
-typecast_BOOLEAN_cast(char *s, int len, PyObject *curs)
+typecast_BOOLEAN_cast(char *s, Py_ssize_t len, PyObject *curs)
 {
     PyObject *res;
 
@@ -117,16 +117,16 @@ typecast_BOOLEAN_cast(char *s, int len, PyObject *curs)
 
 #ifdef HAVE_DECIMAL
 static PyObject *
-typecast_DECIMAL_cast(char *s, int len, PyObject *curs)
+typecast_DECIMAL_cast(char *s, Py_ssize_t len, PyObject *curs)
 {
     PyObject *res = NULL;
     char *buffer;
-    
+
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
 
     if ((buffer = PyMem_Malloc(len+1)) == NULL)
         PyErr_NoMemory();
-    strncpy(buffer, s, len); buffer[len] = '\0';
+    strncpy(buffer, s, (size_t) len); buffer[len] = '\0';
     res = PyObject_CallFunction(decimalType, "s", buffer);
     PyMem_Free(buffer);
 
@@ -135,7 +135,7 @@ typecast_DECIMAL_cast(char *s, int len, PyObject *curs)
 #else
 #define typecast_DECIMAL_cast  typecast_FLOAT_cast
 #endif
-     
+
 /* some needed aliases */
 #define typecast_NUMBER_cast   typecast_FLOAT_cast
 #define typecast_ROWID_cast    typecast_INTEGER_cast

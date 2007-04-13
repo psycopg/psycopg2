@@ -90,12 +90,12 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
     while(*c) {
         /* check if some crazy guy mixed formats */
         if (kind == 2) {
-	    Py_XDECREF(n);
+            Py_XDECREF(n);
             psyco_set_error(ProgrammingError, (PyObject*)conn,
-	    	"argument formats can't be mixed", NULL, NULL);
+              "argument formats can't be mixed", NULL, NULL);
             return -1;
-	}
-	kind = 1;
+        }
+        kind = 1;
 
         /* handle plain percent symbol in format string */
         if (c[0] == '%' && c[1] == '%') {
@@ -114,7 +114,7 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
             for (d = c + 2; *d && *d != ')'; d++);
 
             if (*d == ')') {
-                key = PyString_FromStringAndSize(c+2, d-c-2);
+                key = PyString_FromStringAndSize(c+2, (Py_ssize_t) (d-c-2));
                 value = PyObject_GetItem(var, key);
                 /* key has refcnt 1, value the original value + 1 */
 
@@ -195,8 +195,8 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
             if (kind == 1) {
                 Py_XDECREF(n);
                 psyco_set_error(ProgrammingError, (PyObject*)conn,
-	    	    "argument formats can't be mixed", NULL, NULL);
-		return -1;
+                  "argument formats can't be mixed", NULL, NULL);
+                return -1;
             }
             kind = 2;
 
@@ -653,7 +653,7 @@ _psyco_curs_buildrow_fill(cursorObject *self, PyObject *res,
             len = PQgetlength(self->pgres, row, i);
         }
 
-        Dprintf("_psyco_curs_buildrow: row %ld, element %d, len %i",
+        Dprintf("_psyco_curs_buildrow: row %ld, element %d, len %d",
                 self->row, i, len);
 
         val = typecast_cast(PyTuple_GET_ITEM(self->casts, i), (char*)str, len,
@@ -902,14 +902,15 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
     char *procname = NULL, *sql = NULL;
     long int async = 0;
-    Py_ssize_t i, nparameters = 0, sl = 0;
+    Py_ssize_t procname_len, i, nparameters = 0, sl = 0;
     PyObject *parameters = NULL;
     PyObject *operation = NULL;
     PyObject *res = NULL;
 
-    if (!PyArg_ParseTuple(args, "s|Ol", &procname, &parameters, &async)) {
-        return NULL;
-    }
+    if (!PyArg_ParseTuple(args, "s#|Ol",
+          &procname, &procname_len, &parameters, &async
+       ))
+    { return NULL; }
 
     EXC_IF_CURS_CLOSED(self);
 
@@ -925,7 +926,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
     }
 
     /* allocate some memory, build the SQL and create a PyString from it */
-    sl = strlen(procname) + 17 + nparameters*3 - (nparameters ? 1 : 0);
+    sl = procname_len + 17 + nparameters*3 - (nparameters ? 1 : 0);
     sql = (char*)PyMem_Malloc(sl);
     if (sql == NULL) return NULL;
 
@@ -1121,7 +1122,7 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
     if (columns != NULL && columns != Py_None) {
         PyObject* collistiter = PyObject_GetIter(columns);
         PyObject* col;
-        int collistlen = 2;
+        Py_ssize_t collistlen = 2;
         Py_ssize_t colitemlen;
         char* colname;
         if (collistiter == NULL) {

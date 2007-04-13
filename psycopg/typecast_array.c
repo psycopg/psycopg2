@@ -24,9 +24,9 @@
 /** typecast_array_cleanup - remove the horrible [...]= stuff **/
 
 static int
-typecast_array_cleanup(char **str, int *len)
+typecast_array_cleanup(char **str, Py_ssize_t *len)
 {
-    int i, depth = 1;
+    Py_ssize_t i, depth = 1;
 
     if ((*str)[0] != '[') return -1;
 
@@ -53,13 +53,16 @@ typecast_array_cleanup(char **str, int *len)
 #define ASCAN_QUOTED 4
 
 static int
-typecast_array_tokenize(char *str, int strlength,
-                        int *pos, char** token, int *length, int *quotes)
+typecast_array_tokenize(char *str, Py_ssize_t strlength,
+                        Py_ssize_t *pos, char** token,
+                        Py_ssize_t *length, int *quotes)
 {
     /* FORTRAN glory */
-    int i, j, q, b, l, res;
+    Py_ssize_t i, l;
+    int q, b, res;
 
-    Dprintf("typecast_array_tokenize: '%s', %d/%d",
+    Dprintf("typecast_array_tokenize: '%s', "
+            FORMAT_CODE_PY_SSIZE_T "/" FORMAT_CODE_PY_SSIZE_T,
             &str[*pos], *pos, strlength);
 
     /* we always get called with pos pointing at the start of a token, so a
@@ -122,10 +125,11 @@ typecast_array_tokenize(char *str, int strlength,
     if (str[*pos] == '"') {
         *pos += 1;
         l -= 2;
-    *quotes = 1;
+        *quotes = 1;
     }
 
     if (res == ASCAN_QUOTED) {
+        Py_ssize_t j;
         char *buffer = PyMem_Malloc(l+1);
         if (buffer == NULL) return ASCAN_ERROR;
 
@@ -138,7 +142,10 @@ typecast_array_tokenize(char *str, int strlength,
         }
 
         *buffer = '\0';
-        *length = buffer - *token;
+        /* The variable that was used to indicate the size of buffer is of type
+         * Py_ssize_t, so a subsegment of buffer couldn't possibly exceed
+         * PY_SSIZE_T_MAX: */
+        *length = (Py_ssize_t) (buffer - *token);
     }
     else {
         *token = &str[*pos];
@@ -154,31 +161,35 @@ typecast_array_tokenize(char *str, int strlength,
 }
 
 static int
-typecast_array_scan(char *str, int strlength,
+typecast_array_scan(char *str, Py_ssize_t strlength,
                     PyObject *curs, PyObject *base, PyObject *array)
 {
-    int state, quotes, length = 0, pos = 0;
+    int state, quotes;
+    Py_ssize_t length = 0, pos = 0;
     char *token;
 
     PyObject *stack[MAX_DIMENSIONS];
-    int stack_index = 0;
+    size_t stack_index = 0;
 
     while (1) {
         token = NULL;
         state = typecast_array_tokenize(str, strlength,
                                     &pos, &token, &length, &quotes);
-        Dprintf("typecast_array_scan: state = %d, length = %d, token = '%s'",
+        Dprintf("typecast_array_scan: state = %d,"
+                " length = " FORMAT_CODE_PY_SSIZE_T ", token = '%s'",
                 state, length, token);
         if (state == ASCAN_TOKEN || state == ASCAN_QUOTED) {
             PyObject *obj;
-        if (!quotes && length == 4
-            && (token[0] == 'n' || token[0] == 'N')
-            && (token[1] == 'u' || token[1] == 'U')
-            && (token[2] == 'l' || token[2] == 'L')
-            && (token[3] == 'l' || token[3] == 'L'))
-        obj = typecast_cast(base, NULL, 0, curs);
-        else
+            if (!quotes && length == 4
+                && (token[0] == 'n' || token[0] == 'N')
+                && (token[1] == 'u' || token[1] == 'U')
+                && (token[2] == 'l' || token[2] == 'L')
+                && (token[3] == 'l' || token[3] == 'L'))
+            {
+                obj = typecast_cast(base, NULL, 0, curs);
+            } else {
                 obj = typecast_cast(base, token, length, curs);
+            }
 
             /* before anything else we free the memory */
             if (state == ASCAN_QUOTED) PyMem_Free(token);
@@ -224,12 +235,13 @@ typecast_array_scan(char *str, int strlength,
     have to be taken on the single items **/
 
 static PyObject *
-typecast_GENERIC_ARRAY_cast(char *str, int len, PyObject *curs)
+typecast_GENERIC_ARRAY_cast(char *str, Py_ssize_t len, PyObject *curs)
 {
     PyObject *obj = NULL;
     PyObject *base = ((typecastObject*)((cursorObject*)curs)->caster)->bcast;
 
-    Dprintf("typecast_GENERIC_ARRAY_cast: str = '%s', len = %d", str, len);
+    Dprintf("typecast_GENERIC_ARRAY_cast: str = '%s',"
+            " len = " FORMAT_CODE_PY_SSIZE_T, str, len);
 
     if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
     if (str[0] == '[')
@@ -239,7 +251,8 @@ typecast_GENERIC_ARRAY_cast(char *str, int len, PyObject *curs)
         return NULL;
     }
 
-    Dprintf("typecast_GENERIC_ARRAY_cast: str = '%s', len = %d", str, len);
+    Dprintf("typecast_GENERIC_ARRAY_cast: str = '%s',"
+            " len = " FORMAT_CODE_PY_SSIZE_T, str, len);
 
     obj = PyList_New(0);
 

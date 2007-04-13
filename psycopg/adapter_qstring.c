@@ -148,11 +148,26 @@ qstring_quote(qstringObject *self)
         return NULL;
     }
 
-    Py_BEGIN_ALLOW_THREADS;
-    len = qstring_escape(buffer+1, s, len,
-        self->conn ? ((connectionObject*)self->conn)->pgconn : NULL);
-    buffer[0] = '\'' ; buffer[len+1] = '\'';
-    Py_END_ALLOW_THREADS;
+    { /* Call qstring_escape with the GIL released, then reacquire the GIL
+       * before verifying that the results can fit into a Python string; raise
+       * an exception if not. */
+        size_t qstring_res;
+
+        Py_BEGIN_ALLOW_THREADS
+        qstring_res = qstring_escape(buffer+1, s, len,
+          self->conn ? ((connectionObject*)self->conn)->pgconn : NULL);
+        Py_END_ALLOW_THREADS
+
+        if (qstring_res > (size_t) PY_SSIZE_T_MAX) {
+            PyErr_SetString(PyExc_IndexError, "PG buffer too large to fit in"
+              " Python buffer.");
+            PyMem_Free(buffer);
+            Py_DECREF(str);
+            return NULL;
+        }
+        len = (Py_ssize_t) qstring_res;
+        buffer[0] = '\'' ; buffer[len+1] = '\'';
+    }
 
     self->buffer = PyString_FromStringAndSize(buffer, len+2);
     PyMem_Free(buffer);
