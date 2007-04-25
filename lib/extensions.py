@@ -51,8 +51,8 @@ ISOLATION_LEVEL_SERIALIZABLE   = 2
 ISOLATION_LEVEL_REPEATABLE_READ  = ISOLATION_LEVEL_SERIALIZABLE
 ISOLATION_LEVEL_READ_UNCOMMITTED = ISOLATION_LEVEL_READ_COMMITTED
 
-"""Transaction status values."""
-STATUS_SETUP = 0
+"""psycopg connection status values."""
+STATUS_SETUP    = 0
 STATUS_READY    = 1
 STATUS_BEGIN    = 2
 STATUS_SYNC     = 3
@@ -61,6 +61,12 @@ STATUS_ASYNC    = 4
 # This is a usefull mnemonic to check if the connection is in a transaction
 STATUS_IN_TRANSACTION = STATUS_BEGIN
 
+"""Backend transaction status values."""
+TRANSACTION_STATUS_IDLE    = 0
+TRANSACTION_STATUS_ACTIVE  = 1
+TRANSACTION_STATUS_INTRANS = 2
+TRANSACTION_STATUS_INERROR = 3
+TRANSACTION_STATUS_UNKNOWN = 4
 
 def register_adapter(typ, callable):
     """Register 'callable' as an ISQLQuote adapter for type 'typ'."""

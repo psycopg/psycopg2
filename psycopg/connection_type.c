@@ -146,6 +146,7 @@ psyco_conn_rollback(connectionObject *self, PyObject *args)
 
 
 #ifdef PSYCOPG_EXTENSIONS
+
 /* set_isolation_level method - switch connection isolation level */
 
 #define psyco_conn_set_isolation_level_doc \
@@ -172,8 +173,6 @@ psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
     Py_INCREF(Py_None);
     return Py_None;
 }
-
-
 
 /* set_isolation_level method - switch connection isolation level */
 
@@ -210,6 +209,22 @@ psyco_conn_set_client_encoding(connectionObject *self, PyObject *args)
         return NULL;
     }
 }
+
+/* set_isolation_level method - switch connection isolation level */
+
+#define psyco_conn_get_transaction_status_doc \
+"get_transaction_status() -- Get backend transaction status."
+
+static PyObject *
+psyco_conn_get_transaction_status(connectionObject *self, PyObject *args)
+{
+    EXC_IF_CONN_CLOSED(self);
+
+    if (!PyArg_ParseTuple(args, "")) return NULL;
+
+    return PyInt_FromLong((long)PQtransactionStatus(self->pgconn));
+}
+
 #endif
 
 
@@ -232,6 +247,8 @@ static struct PyMethodDef connectionObject_methods[] = {
      METH_VARARGS, psyco_conn_set_isolation_level_doc},
     {"set_client_encoding", (PyCFunction)psyco_conn_set_client_encoding,
      METH_VARARGS, psyco_conn_set_client_encoding_doc},
+    {"get_transaction_status", (PyCFunction)psyco_conn_get_transaction_status,
+     METH_VARARGS, psyco_conn_get_transaction_status_doc},
 #endif
     {NULL}
 };

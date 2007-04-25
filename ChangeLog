@@ -1,3 +1,10 @@
+2007-04-25  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/connection_type.c: added support for a new method
+	.get_transaction_status() that returns the backend transaction
+	status as libpq knows. Also added some symbolic constants to
+	psycopg.extensions module (TRANSACTION_STATUS_XXX).
+
 2007-04-14  Federico Di Gregorio  <fog@initd.org>
 
 	* psycopg/psycopg.h: fixed probable typo in definition of
