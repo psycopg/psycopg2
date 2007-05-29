@@ -17,6 +17,10 @@ What's new in psycopg 2.0.6
 
 * copy_to and copy_from now take an extra "columns" parameter.
 
+* Python tuples are now adapted to SQL sequences that can be used with
+  the "IN" operator by default if the psycopg2.extensions module is
+  imported (i.e., the SQL_IN adapter was moved from extras to extensions.)
+
 * Fixed some small buglets and build glitches:
   - removed double mutex destroy
   - removed all non-constant initializers

@@ -100,8 +100,8 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
            4/ ...and add it to the new dictionary to be used as argument
         */
         else if (c[0] == '%' && c[1] == '(') {
-            
-	    /* check if some crazy guy mixed formats */
+
+            /* check if some crazy guy mixed formats */
             if (kind == 2) {
                 Py_XDECREF(n);
                 psyco_set_error(ProgrammingError, (PyObject*)conn,
@@ -1090,7 +1090,7 @@ static int _psyco_curs_copy_columns(PyObject *columns, char *columnlist)
 
     coliter = PyObject_GetIter(columns);
     if (coliter == NULL) return 0;
-        
+
     columnlist[0] = '(';
 
     while ((col = PyIter_Next(coliter)) != NULL) {
@@ -1174,7 +1174,7 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
     EXC_IF_CURS_CLOSED(self);
 
     if (null) {
-        PyOS_snprintf(query, DEFAULT_COPYBUFF-1, 
+        PyOS_snprintf(query, DEFAULT_COPYBUFF-1,
                       "COPY %s%s FROM stdin USING DELIMITERS '%s'"
                       " WITH NULL AS '%s'", table_name, columnlist, sep, null);
     }
@@ -1234,7 +1234,7 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
                                      &table_name, &sep, &null, &columns)) {
         return NULL;
     }
-    
+
     if (_psyco_curs_copy_columns(columns, columnlist) == -1)
         return NULL;
 
