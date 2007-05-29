@@ -1135,7 +1135,8 @@ _psyco_curs_has_read_check(PyObject* o, void* var)
 {
     if (PyObject_HasAttrString(o, "readline")
         && PyObject_HasAttrString(o, "read")) {
-        Py_INCREF(o);
+        /* It's OK to store a borrowed reference, because it is only held for
+         * the duration of psyco_curs_copy_from. */
         *((PyObject**)var) = o;
         return 1;
     }
@@ -1207,7 +1208,8 @@ static int
 _psyco_curs_has_write_check(PyObject* o, void* var)
 {
     if (PyObject_HasAttrString(o, "write")) {
-        Py_INCREF(o);
+        /* It's OK to store a borrowed reference, because it is only held for
+         * the duration of psyco_curs_copy_to. */
         *((PyObject**)var) = o;
         return 1;
     }
