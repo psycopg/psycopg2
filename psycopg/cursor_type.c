@@ -1293,6 +1293,79 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
 
     return res;
 }
+
+/* extension: copy_expert - implements extended COPY FROM/TO
+
+   This method supports both COPY FROM and COPY TO with user-specifiable
+   SQL statement, rather than composing the statement from parameters.
+*/
+
+#define psyco_curs_copy_expert_doc \
+"copy_expert(sql, file, size=None) -- Submit a user-composed COPY statement.\n" \
+"`file` must be an open, readable file for COPY FROM or an open, writeable\n"   \
+"file for COPY TO. The optional `size` argument, when specified for a COPY\n"   \
+"FROM statement, will be passed to file's read method to control the read\n"    \
+"buffer size."
+
+static PyObject *
+psyco_curs_copy_expert(cursorObject *self, PyObject *args, PyObject *kwargs)
+{
+    Py_ssize_t bufsize = DEFAULT_COPYBUFF;
+    PyObject *sql, *file, *res = NULL;
+
+    static char *kwlist[] = {"sql", "file", "size", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,
+        "OO|" CONV_CODE_PY_SSIZE_T, kwlist, &sql, &file, &bufsize))
+    { return NULL; }
+
+    EXC_IF_CURS_CLOSED(self);
+
+    sql = _psyco_curs_validate_sql_basic(self, sql);
+    
+    /* Any failure from here forward should 'goto fail' rather than
+       'return NULL' directly. */
+    
+    if (sql == NULL) { goto fail; }
+
+    /* This validation of file is rather weak, in that it doesn't enforce the
+       assocation between "COPY FROM" -> "read" and "COPY TO" -> "write".
+       However, the error handling in _pq_copy_[in|out] must be able to handle
+       the case where the attempt to call file.read|write fails, so no harm
+       done. */
+    
+    if (   !PyObject_HasAttrString(file, "read")
+        && !PyObject_HasAttrString(file, "write")
+      )
+    {
+        PyErr_SetString(PyExc_TypeError, "file must be a readable file-like"
+            " object for COPY FROM; a writeable file-like object for COPY TO."
+          );
+        goto fail;
+    }
+
+    self->copysize = bufsize;
+    self->copyfile = file;
+
+    /* At this point, the SQL statement must be str, not unicode */
+    if (pq_execute(self, PyString_AS_STRING(sql), 0) != 1) { goto fail; }
+
+    res = Py_None;
+    Py_INCREF(res);
+    goto cleanup;
+ fail:
+    if (res != NULL) {
+        Py_DECREF(res);
+        res = NULL;
+    }
+    /* Fall through to cleanup */
+ cleanup:
+    self->copyfile = NULL;
+    Py_XDECREF(sql);
+
+    return res;
+}
+
 /* extension: fileno - return the file descripor of the connection */
 
 #define psyco_curs_fileno_doc \
@@ -1419,6 +1492,8 @@ static struct PyMethodDef cursorObject_methods[] = {
      METH_VARARGS|METH_KEYWORDS, psyco_curs_copy_from_doc},
     {"copy_to", (PyCFunction)psyco_curs_copy_to,
      METH_VARARGS|METH_KEYWORDS, psyco_curs_copy_to_doc},
+    {"copy_expert", (PyCFunction)psyco_curs_copy_expert,
+     METH_VARARGS|METH_KEYWORDS, psyco_curs_copy_expert_doc},
 #endif
     {NULL}
 };

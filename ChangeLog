@@ -1,5 +1,7 @@
 2007-05-29  Federico Di Gregorio  <fog@initd.org>
 
+	* cursor.copy_expert() implementation by David Rushby (copy_expert set 5/5.)
+
 	* SQL validation refactor patch from David Rushby (copy_expert set 4/5.)
 
 	* Reference count leak fix from David Rushby (copy_expert set 3/5.)
