@@ -1,5 +1,8 @@
 2007-05-29  Federico Di Gregorio  <fog@initd.org>
 
+	* Applied patch from mkz (ticket #187) to add error handling when calling
+	conn_commit() and conn_rollback(). Fixes #187.
+
 	* cursor.copy_expert() implementation by David Rushby (copy_expert set 5/5.)
 
 	* SQL validation refactor patch from David Rushby (copy_expert set 4/5.)

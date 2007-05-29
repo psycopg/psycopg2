@@ -117,8 +117,11 @@ psyco_conn_commit(connectionObject *self, PyObject *args)
 
     if (!PyArg_ParseTuple(args, "")) return NULL;
 
-    /* FIXME: check return status? */
-    conn_commit(self);
+    if (conn_commit(self) < 0) {
+        PyErr_SetString(OperationalError,
+                        PQerrorMessage(self->pgconn));
+        return NULL;
+    }
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -137,8 +140,11 @@ psyco_conn_rollback(connectionObject *self, PyObject *args)
 
     if (!PyArg_ParseTuple(args, "")) return NULL;
 
-    /* FIXME: check return status? */
-    conn_rollback(self);
+    if (conn_rollback(self) < 0) {
+        PyErr_SetString(OperationalError,
+                        PQerrorMessage(self->pgconn));
+        return NULL;
+    }
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -167,8 +173,12 @@ psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
         return NULL;
     }
 
-    /* FIXME: check return status? */
-    conn_switch_isolation_level(self, level);
+    if (conn_switch_isolation_level(self, level) < 0) {
+        PyErr_SetString(OperationalError,
+                        PQerrorMessage(self->pgconn));
+        return NULL;
+    }
+
 
     Py_INCREF(Py_None);
     return Py_None;

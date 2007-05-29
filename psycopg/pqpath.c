@@ -397,13 +397,29 @@ pq_execute(cursorObject *curs, const char *query, int async)
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(curs->conn->lock));
 
-    pq_begin(curs->conn);
+    if (pq_begin(curs->conn) < 0) {
+        pthread_mutex_unlock(&(curs->conn->lock));
+        Py_BLOCK_THREADS;
+        PyErr_SetString(OperationalError,
+                        PQerrorMessage(curs->conn->pgconn));
+        return -1;
+    }
 
     if (async == 0) {
         IFCLEARPGRES(curs->pgres);
         Dprintf("pq_execute: executing SYNC query:");
         Dprintf("    %-.200s", query);
         curs->pgres = PQexec(curs->conn->pgconn, query);
+
+        /* dont let pgres = NULL go to pq_fetch() */
+        /* if (curs->pgres == NULL) {
+            pthread_mutex_unlock(&(curs->conn->lock));
+            Py_BLOCK_THREADS;
+            PyErr_SetString(OperationalError,
+                            PQerrorMessage(curs->conn->pgconn));
+            return -1;
+        }
+        */
     }
 
     else if (async == 1) {
