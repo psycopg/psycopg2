@@ -1,5 +1,7 @@
 2007-05-29  Federico Di Gregorio  <fog@initd.org>
 
+	* SQL validation refactor patch from David Rushby (copy_expert set 4/5.)
+
 	* Reference count leak fix from David Rushby (copy_expert set 3/5.)
 
 	* 64 bit fix patch from David Rushby (copy_expert set 2/5.)

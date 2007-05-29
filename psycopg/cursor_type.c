@@ -251,6 +251,53 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
     return 0;
 }
 
+static PyObject *_psyco_curs_validate_sql_basic(
+    cursorObject *self, PyObject *sql
+  )
+{
+    /* Performs very basic validation on an incoming SQL string.
+       Returns a new reference to a str instance on success; NULL on failure,
+       after having set an exception. */
+
+    if (!sql || !PyObject_IsTrue(sql)) {
+        psyco_set_error(ProgrammingError, (PyObject*)self,
+                         "can't execute an empty query", NULL, NULL);
+        goto fail;
+    }
+
+    if (PyString_Check(sql)) {
+        /* Necessary for ref-count symmetry with the unicode case: */
+        Py_INCREF(sql);
+    }
+    else if (PyUnicode_Check(sql)) {
+        PyObject *enc = PyDict_GetItemString(psycoEncodings,
+                                             self->conn->encoding);
+        /* enc is a borrowed reference; we won't decref it */
+
+        if (enc) {
+            sql = PyUnicode_AsEncodedString(sql, PyString_AsString(enc), NULL);
+            /* if there was an error during the encoding from unicode to the
+               target encoding, we just let the exception propagate */
+            if (sql == NULL) { goto fail; }
+        } else {
+            PyErr_Format(InterfaceError,
+                         "can't encode unicode SQL statement to %s",
+                         self->conn->encoding);
+            goto fail;
+        }
+    }
+    else {
+        /* the  is not unicode or string, raise an error */
+        PyErr_SetString(PyExc_TypeError,
+                        "argument 1 must be a string or unicode object");
+        goto fail;
+    }
+
+    return sql; /* new reference */
+    fail:
+        return NULL;
+}
+
 #define psyco_curs_execute_doc \
 "execute(query, vars=None, async=0) -- Execute query with bound vars."
 
@@ -258,8 +305,8 @@ static int
 _psyco_curs_execute(cursorObject *self,
                     PyObject *operation, PyObject *vars, long int async)
 {
-    int res;
-    PyObject *fquery, *cvt = NULL, *uoperation = NULL;
+    int res = 0;
+    PyObject *fquery, *cvt = NULL;
 
     pthread_mutex_lock(&(self->conn->lock));
     if (self->conn->async_cursor != NULL
@@ -271,40 +318,12 @@ _psyco_curs_execute(cursorObject *self,
     }
     pthread_mutex_unlock(&(self->conn->lock));
 
-    if (!PyObject_IsTrue(operation)) {
-        psyco_set_error(ProgrammingError, (PyObject*)self,
-                         "can't execute an empty query", NULL, NULL);
-        return 0;
-    }
+    operation = _psyco_curs_validate_sql_basic(self, operation);
 
-    if (PyUnicode_Check(operation)) {
-        PyObject *enc = PyDict_GetItemString(psycoEncodings,
-                                             self->conn->encoding);
-        /* enc is a borrowed reference, we won't decref it */
-
-        if (enc) {
-            operation = PyUnicode_AsEncodedString(
-                operation, PyString_AsString(enc), NULL);
-
-            /* if there was an error during the encoding from unicode to the
-               target encoding we just let the exception propagate */
-            if (operation == NULL) return 0;
-
-            /* we clone operation in uoperation to be sure to free it later */
-            uoperation = operation;
-        }
-        else {
-            PyErr_Format(InterfaceError, "can't encode unicode query to %s",
-                         self->conn->encoding);
-            return 0;
-        }
-    }
-    else if (!PyString_Check(operation)) {
-        /* the operation is not unicode or string, raise an error */
-        PyErr_SetString(PyExc_TypeError,
-                        "argument 1 must be a string or unicode object");
-        return 0;
-    }
+    /* Any failure from here forward should 'goto fail' rather than 'return 0'
+       directly. */
+    
+    if (operation == NULL) { goto fail; }
 
     IFCLEARPGRES(self->pgres);
 
@@ -321,10 +340,7 @@ _psyco_curs_execute(cursorObject *self,
 
     if (vars && vars != Py_None)
     {
-        if(_mogrify(vars, operation, self->conn, &cvt) == -1) {
-            Py_XDECREF(uoperation);
-            return 0;
-        }
+        if(_mogrify(vars, operation, self->conn, &cvt) == -1) { goto fail; }
     }
 
     if (vars && cvt) {
@@ -376,8 +392,7 @@ _psyco_curs_execute(cursorObject *self,
             else {
                 PyErr_Restore(err, arg, trace);
             }
-            Py_XDECREF(uoperation);
-            return 0;
+            goto fail;
         }
 
         if (self->name != NULL) {
@@ -389,10 +404,6 @@ _psyco_curs_execute(cursorObject *self,
         else {
             self->query = fquery;
         }
-
-        Dprintf("psyco_curs_execute: cvt->refcnt = " FORMAT_CODE_PY_SSIZE_T,
-          cvt->ob_refcnt);
-        Py_DECREF(cvt);
     }
     else {
         if (self->name != NULL) {
@@ -401,18 +412,35 @@ _psyco_curs_execute(cursorObject *self,
                 self->name, PyString_AS_STRING(operation));
         }
         else {
-            Py_INCREF(operation);
+            /* Transfer reference ownership of the str in operation to
+               self->query, clearing the local variable to prevent cleanup from
+               DECREFing it */
             self->query = operation;
+            operation = NULL;
         }
     }
 
+    /* At this point, the SQL statement must be str, not unicode */
+    
     res = pq_execute(self, PyString_AS_STRING(self->query), async);
-
     Dprintf("psyco_curs_execute: res = %d, pgres = %p", res, self->pgres);
+    if (res == -1) { goto fail; }
 
-    Py_XDECREF(uoperation);
+    res = 1; /* Success */
+    goto cleanup;
 
-    return res == -1 ? 0 : 1;
+    fail:
+        res = 0;
+        /* Fall through to cleanup */
+    cleanup:
+        /* Py_XDECREF(operation) is safe because the original reference passed
+           by the caller was overwritten with either NULL or a new
+           reference */
+        Py_XDECREF(operation);
+
+        Py_XDECREF(cvt);
+
+        return res;
 }
 
 static PyObject *
