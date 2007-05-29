@@ -1,5 +1,7 @@
 2007-05-29  Federico Di Gregorio  <fog@initd.org>
 
+	* ZPsycopgDA/DA.py: removed call to now obsolete .set_type_casts().
+
 	* Applied patch from mkz (ticket #187) to add error handling when calling
 	conn_commit() and conn_rollback(). Fixes #187.
 
