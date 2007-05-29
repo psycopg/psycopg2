@@ -1083,7 +1083,7 @@ static int _psyco_curs_copy_columns(PyObject *columns, char *columnlist)
     PyObject *col, *coliter;
     Py_ssize_t collen;
     char* colname;
-    int offset = 1;
+    Py_ssize_t offset = 1;
 
     columnlist[0] = '\0';
     if (columns == NULL || columns == Py_None) return 0;

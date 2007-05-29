@@ -1,6 +1,9 @@
 2007-05-29  Federico Di Gregorio  <fog@initd.org>
 
-	* Applied whitespace normalization patch from David Rushby (copy_expert set.)
+	* 64 bit fix patch from David Rushby (copy_expert set 2/5.)
+
+	* Applied whitespace normalization patch from David Rushby (copy_expert
+	set 1/5.)
 
 2007-04-25  Federico Di Gregorio  <fog@initd.org>
 
