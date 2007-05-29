@@ -97,8 +97,6 @@ class Connection(Shared.DC.ZRDB.Connection.Connection):
         self.zdatetime = zdatetime
         self.tilevel = tilevel
         self.encoding = encoding
-
-        self.set_type_casts()
         
         if check: self.connect(self.connection_string)
 
