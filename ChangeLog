@@ -1,13 +1,17 @@
 2007-05-29  Federico Di Gregorio  <fog@initd.org>
 
+	* Release 2.0.6.
+
 	* ZPsycopgDA/DA.py: removed call to now obsolete .set_type_casts().
 
-	* Applied patch from mkz (ticket #187) to add error handling when calling
-	conn_commit() and conn_rollback(). Fixes #187.
+	* Applied patch from mkz (ticket #187) to add error handling when
+	calling conn_commit() and conn_rollback(). Fixes #187.
 
-	* cursor.copy_expert() implementation by David Rushby (copy_expert set 5/5.)
+	* cursor.copy_expert() implementation by David Rushby (copy_expert
+	set 5/5.)
 
-	* SQL validation refactor patch from David Rushby (copy_expert set 4/5.)
+	* SQL validation refactor patch from David Rushby (copy_expert
+	set 4/5.)
 
 	* Reference count leak fix from David Rushby (copy_expert set 3/5.)
 
