@@ -1,3 +1,7 @@
+2007-09-01  Federico Di Gregorio  <fog@initd.org>
+
+	* Added "name" parameter to all .cursor() calls in extras.py.
+
 2007-05-29  Federico Di Gregorio  <fog@initd.org>
 
 	* Release 2.0.6.

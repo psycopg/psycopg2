@@ -69,8 +69,11 @@ class DictCursorBase(_cursor):
 
 class DictConnection(_connection):
     """A connection that uses DictCursor automatically."""
-    def cursor(self):
-        return _connection.cursor(self, cursor_factory=DictCursor)
+    def cursor(self, name=None):
+        if name is None:
+            return _connection.cursor(self, cursor_factory=DictCursor)
+        else:
+	    return _connection.cursor(self, name, cursor_factory=DictCursor)
 
 class DictCursor(DictCursorBase):
     """A cursor that keeps a list of column name -> index mappings."""
@@ -135,8 +138,11 @@ class DictRow(list):
 
 class RealDictConnection(_connection):
     """A connection that uses RealDictCursor automatically."""
-    def cursor(self):
-        return _connection.cursor(self, cursor_factory=RealDictCursor)
+    def cursor(self, name=None):
+        if name is None:
+            return _connection.cursor(self, cursor_factory=RealDictCursor)
+        else:
+	    return _connection.cursor(self, name, cursor_factory=RealDictCursor)
 
 class RealDictCursor(DictCursorBase):
     """A cursor that uses a real dict as the base type for rows.
@@ -215,10 +221,13 @@ class LoggingConnection(_connection):
             raise self.ProgrammingError(
                 "LoggingConnection object has not been initialize()d")
             
-    def cursor(self):
+    def cursor(self, name=None):
         self._check()
-        return _connection.cursor(self, cursor_factory=LoggingCursor)
-    
+	if name is None:
+            return _connection.cursor(self, cursor_factory=LoggingCursor)
+        else:
+	    return _connection.cursor(self, name, cursor_factory=LoggingCursor)
+
 class LoggingCursor(_cursor):
     """A cursor that logs queries using its connection logging facilities."""
 
@@ -254,9 +263,12 @@ class MinTimeLoggingConnection(LoggingConnection):
         if t > self._mintime:
             return msg + os.linesep + "  (execution time: %d ms)" % t
 
-    def cursor(self):
+    def cursor(self, name=None):
         self._check()
-        return _connection.cursor(self, cursor_factory=MinTimeLoggingCursor)
+	if name is None:
+            return _connection.cursor(self, cursor_factory=MinTimeLoggingCursor)
+        else:
+	    return _connection.cursor(self, name, cursor_factory=MinTimeLoggingCursor)
     
 class MinTimeLoggingCursor(LoggingCursor):
     """The cursor sub-class companion to MinTimeLoggingConnection."""
