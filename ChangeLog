@@ -1,3 +1,11 @@
+2007-09-08  Federico Di Gregorio <fog@initd.org>
+
+	* Added MonoDevelop project, yahi!
+
+2007-09-06  Federico Di Gregorio  <fog@initd.org>
+
+	* Fixed bug #194.
+
 2007-09-01  Federico Di Gregorio  <fog@initd.org>
 
 	* Added "name" parameter to all .cursor() calls in extras.py.

@@ -40,8 +40,10 @@ conn_notice_callback(void *args, const char *message)
     Dprintf("conn_notice_callback: %s", message);
 
     /* unfortunately the old protocl return COPY FROM errors only as notices,
-       so we need to filter them looking for such errors */
-    if (strncmp(message, "ERROR", 5) == 0)
+       so we need to filter them looking for such errors (but we do it
+       only if the protocol if <3, else we don't need that */
+
+    if (self->protocol < 3 && strncmp(message, "ERROR", 5) == 0)
         pq_set_critical(self, message);
     else
         PyList_Append(self->notice_list, PyString_FromString(message));
@@ -208,6 +210,8 @@ conn_commit(connectionObject *self)
     pthread_mutex_unlock(&self->lock);
     Py_END_ALLOW_THREADS;
 
+    if (res == -1)
+        pq_resolve_critical(self, 0);
     return res;
 }
 
@@ -227,6 +231,8 @@ conn_rollback(connectionObject *self)
     pthread_mutex_unlock(&self->lock);
     Py_END_ALLOW_THREADS;
 
+    if (res == -1)
+        pq_resolve_critical(self, 0);
     return res;
 }
 

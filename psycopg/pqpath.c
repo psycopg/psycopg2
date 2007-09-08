@@ -148,8 +148,25 @@ pq_set_critical(connectionObject *conn, const char *msg)
     if (msg == NULL)
         msg = PQerrorMessage(conn->pgconn);
     if (conn->critical) free(conn->critical);
+    Dprintf("pq_set_critical: setting %s", msg);
     if (msg && msg[0] != '\0') conn->critical = strdup(msg);
     else conn->critical = NULL;
+}
+
+void
+pq_clear_critical(connectionObject *conn)
+{
+    /* sometimes we know that the notice analizer set a critical that
+       was not really as such (like when raising an error for a delayed
+       contraint violation. it would be better to analyze the notice
+       or avoid the set-error-on-notice stuff at all but given that we
+       can't, some functions at least clear the critical status after
+       operations they know would result in a wrong critical to be set */
+    Dprintf("pq_clear_critical: clearing %s", conn->critical);
+    if (conn->critical) {
+        free(conn->critical);
+        conn->critical = NULL;
+    }
 }
 
 PyObject *
@@ -167,6 +184,9 @@ pq_resolve_critical(connectionObject *conn, int close)
 
         /* we don't want to destroy this connection but just close it */
         if (close == 1) conn_close(conn);
+    
+        /* remember to clear the critical! */
+        pq_clear_critical(conn);    
     }
     return NULL;
 }
@@ -268,6 +288,9 @@ pq_commit(connectionObject *conn)
     pgstatus = PQresultStatus(pgres);
     if (pgstatus != PGRES_COMMAND_OK ) {
         Dprintf("pq_commit: result is NOT OK");
+        /* if the result is not OK the transaction has been rolled back
+           so we set the status to CONN_STATUS_READY anyway */
+        conn->status = CONN_STATUS_READY;
         pq_set_critical(conn, NULL);
         goto cleanup;
     }
@@ -400,8 +423,7 @@ pq_execute(cursorObject *curs, const char *query, int async)
     if (pq_begin(curs->conn) < 0) {
         pthread_mutex_unlock(&(curs->conn->lock));
         Py_BLOCK_THREADS;
-        PyErr_SetString(OperationalError,
-                        PQerrorMessage(curs->conn->pgconn));
+        pq_resolve_critical(curs->conn, 0);
         return -1;
     }
 
