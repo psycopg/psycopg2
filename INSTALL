@@ -7,7 +7,7 @@ Compiling and installing psycopg
    libpq will leak memory.
 
 While psycopg 1.x used autoconf for its build process psycopg 2 switched to
-the more pythoning setup.py. Before building psycopg look at setup.cfg file
+the more pythonic setup.py. Before building psycopg look at setup.cfg file
 and change any settings to follow your system (or taste); then:
 
     python setup.py build
@@ -53,7 +53,8 @@ You can compile psycopg under Windows platform with mingw32
 Dev-C++ (http://www.bloodshed.net/devcpp.html) and Code::Blocks
 (http://www.codeblocks.org). gcc binaries should be in your PATH.
 
-You need a PostgreSQL with include and libary files installed. At least v8.0 is required.
+You need a PostgreSQL with include and libary files installed. At least v8.0
+is required.
 
 First you need to create a libpython2X.a as described in 
 http://starship.python.net/crew/kernr/mingw32/Notes.html. Then run:

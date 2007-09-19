@@ -359,6 +359,7 @@ pq_abort(connectionObject *conn)
 int
 pq_is_busy(connectionObject *conn)
 {
+    int res;
     PGnotify *pgn;
 
     Dprintf("pq_is_busy: consuming input");
@@ -374,8 +375,6 @@ pq_is_busy(connectionObject *conn)
         return -1;
     }
 
-    pthread_mutex_unlock(&(conn->lock));
-    Py_END_ALLOW_THREADS;
 
     /* now check for notifies */
     while ((pgn = PQnotifies(conn->pgconn)) != NULL) {
@@ -384,14 +383,21 @@ pq_is_busy(connectionObject *conn)
         Dprintf("curs_is_busy: got NOTIFY from pid %d, msg = %s",
                 (int) pgn->be_pid, pgn->relname);
 
+        Py_BLOCK_THREADS;
         notify = PyTuple_New(2);
         PyTuple_SET_ITEM(notify, 0, PyInt_FromLong((long)pgn->be_pid));
         PyTuple_SET_ITEM(notify, 1, PyString_FromString(pgn->relname));
         PyList_Append(conn->notifies, notify);
+        Py_UNBLOCK_THREADS;
         free(pgn);
     }
 
-    return PQisBusy(conn->pgconn);
+    res = PQisBusy(conn->pgconn);
+    
+    pthread_mutex_unlock(&(conn->lock));
+    Py_END_ALLOW_THREADS;
+
+    return res;
 }
 
 /* pq_execute - execute a query, possibly asyncronously
@@ -497,23 +503,32 @@ static void
 _pq_fetch_tuples(cursorObject *curs)
 {
     int i, *dsize = NULL;
+    int pgnfields;
+    int pgbintuples;
 
-    int pgnfields = PQnfields(curs->pgres);
-    int pgbintuples = PQbinaryTuples(curs->pgres);
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&(curs->conn->lock));
+    
+    pgnfields = PQnfields(curs->pgres);
+    pgbintuples = PQbinaryTuples(curs->pgres);
 
     curs->notuples = 0;
 
     /* create the tuple for description and typecasting */
+    Py_BLOCK_THREADS;
     Py_XDECREF(curs->description);
-    Py_XDECREF(curs->casts);
+    Py_XDECREF(curs->casts);    
     curs->description = PyTuple_New(pgnfields);
     curs->casts = PyTuple_New(pgnfields);
     curs->columns = pgnfields;
+    Py_UNBLOCK_THREADS;
 
     /* calculate the display size for each column (cpu intensive, can be
        switched off at configuration time) */
 #ifdef PSYCOPG_DISPLAY_SIZE
+    Py_BLOCK_THREADS;
     dsize = (int *)PyMem_Malloc(pgnfields * sizeof(int));
+    Py_UNBLOCK_THREADS;
     if (dsize != NULL) {
         int j, len;
         for (i=0; i < pgnfields; i++) {
@@ -534,6 +549,7 @@ _pq_fetch_tuples(cursorObject *curs)
         int fsize = PQfsize(curs->pgres, i);
         int fmod =  PQfmod(curs->pgres, i);
 
+        Py_BLOCK_THREADS;
         PyObject *dtitem = PyTuple_New(7);
         PyObject *type = PyInt_FromLong(ftype);
         PyObject *cast = NULL;
@@ -622,9 +638,18 @@ _pq_fetch_tuples(cursorObject *curs)
         /* 6/ FIXME: null_ok??? */
         Py_INCREF(Py_None);
         PyTuple_SET_ITEM(dtitem, 6, Py_None);
+    
+        Py_UNBLOCK_THREADS;    
     }
 
-    if (dsize) PyMem_Free(dsize);
+    if (dsize) {
+        Py_BLOCK_THREADS;
+        PyMem_Free(dsize);
+        Py_UNBLOCK_THREADS;
+   }
+   
+    pthread_mutex_unlock(&(curs->conn->lock));
+    Py_END_ALLOW_THREADS;
 }
 
 #ifdef HAVE_PQPROTOCOL3
@@ -856,9 +881,15 @@ pq_fetch(cursorObject *curs)
             Py_END_ALLOW_THREADS;
         }
 
+        Py_BEGIN_ALLOW_THREADS;
+        pthread_mutex_lock(&(curs->conn->lock));
+
         Dprintf("pq_fetch: data is probably ready");
         IFCLEARPGRES(curs->pgres);
         curs->pgres = PQgetResult(curs->conn->pgconn);
+
+        pthread_mutex_unlock(&(curs->conn->lock));
+        Py_END_ALLOW_THREADS;
     }
 
     /* check for PGRES_FATAL_ERROR result */

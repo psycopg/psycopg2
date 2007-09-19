@@ -64,7 +64,7 @@ pydatetime_str(pydatetimeObject *self)
     else {
         PyDateTime_Delta *obj = (PyDateTime_Delta*)self->wrapped;
 
-        char buffer[8];
+        char buffer[8]; 
         int i;
         int a = obj->microseconds;
 
@@ -128,8 +128,7 @@ pydatetime_setup(pydatetimeObject *self, PyObject *obj, int type)
 {
     Dprintf("pydatetime_setup: init datetime object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt
-      );
+        self, ((PyObject *)self)->ob_refcnt);
 
     self->type = type;
     self->wrapped = obj;
@@ -137,8 +136,7 @@ pydatetime_setup(pydatetimeObject *self, PyObject *obj, int type)
 
     Dprintf("pydatetime_setup: good pydatetime object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt
-      );
+        self, ((PyObject *)self)->ob_refcnt);
     return 0;
 }
 
@@ -411,9 +409,10 @@ psyco_TimestampFromTicks(PyObject *self, PyObject *args)
         args = Py_BuildValue("iiiiidO",
                              tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday,
                              tm.tm_hour, tm.tm_min,
-                 (double)tm.tm_sec + ticks,
+                             (double)tm.tm_sec + ticks,
                              pyPsycopgTzLOCAL);
         if (args) {
+/*            Dprintf("psyco_TimestampFromTicks: args->refcnt = %d", args->ob_refcnt);*/
             res = psyco_Timestamp(self, args);
             Py_DECREF(args);
         }

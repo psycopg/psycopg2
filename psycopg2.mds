@@ -1,0 +1,16 @@
+<Combine name="psycopg2" fileversion="2.0">
+  <Configurations active="Debug">
+    <Configuration name="Debug" ctype="CombineConfiguration">
+      <Entry build="True" name="psycopg2" configuration="Debug" />
+    </Configuration>
+    <Configuration name="Release" ctype="CombineConfiguration">
+      <Entry build="True" name="psycopg2" configuration="Release" />
+    </Configuration>
+  </Configurations>
+  <StartMode startupentry="psycopg2" single="True">
+    <Execute type="None" entry="psycopg2" />
+  </StartMode>
+  <Entries>
+    <Entry filename="./psycopg2.mdp" />
+  </Entries>
+</Combine>
