@@ -125,7 +125,7 @@ typecast_DECIMAL_cast(char *s, Py_ssize_t len, PyObject *curs)
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
 
     if ((buffer = PyMem_Malloc(len+1)) == NULL)
-        PyErr_NoMemory();
+        return PyErr_NoMemory();
     strncpy(buffer, s, (size_t) len); buffer[len] = '\0';
     res = PyObject_CallFunction(decimalType, "s", buffer);
     PyMem_Free(buffer);
