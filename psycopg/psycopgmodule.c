@@ -565,6 +565,7 @@ psyco_decimal_init(void)
     PyObject *decimal = PyImport_ImportModule("decimal");
     if (decimal) {
         decimalType = PyObject_GetAttrString(decimal, "Decimal");
+        Py_DECREF(decimal);
     }
     else {
         PyErr_Clear();
