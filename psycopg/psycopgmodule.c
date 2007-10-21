@@ -62,7 +62,6 @@ PyObject *pyPsycopgTzLOCAL = NULL;
 PyObject *pyPsycopgTzFixedOffsetTimezone = NULL;
 
 PyObject *psycoEncodings = NULL;
-PyObject *decimalType = NULL;
 
 /** connect module-level function **/
 #define psyco_connect_doc \
@@ -330,7 +329,8 @@ psyco_adapters_init(PyObject *mod)
 #endif
 
 #ifdef HAVE_DECIMAL
-    microprotocols_add((PyTypeObject*)decimalType, NULL, (PyObject*)&asisType);
+    microprotocols_add((PyTypeObject*)psyco_GetDecimalType(),
+                       NULL, (PyObject*)&asisType);
 #endif
 }
 
@@ -554,14 +554,55 @@ psyco_set_error(PyObject *exc, PyObject *curs, char *msg,
     }
 }
 
-/* psyco_decimal_init
 
-   Initialize the module's pointer to the decimal type. */
-
-void
-psyco_decimal_init(void)
+/* Return nonzero if the current one is the main interpreter */
+static int
+psyco_is_main_interp()
 {
+    static PyInterpreterState *main_interp = NULL;  /* Cached reference */
+    PyInterpreterState *interp;
+
+    if (main_interp) {
+        return (main_interp == PyThreadState_Get()->interp);
+    }
+
+    /* No cached value: cache the proper value and try again. */
+    interp = PyInterpreterState_Head();
+    while (interp->next)
+        interp = interp->next;
+
+    main_interp = interp;
+    assert (main_interp);
+    return psyco_is_main_interp();
+}
+
+
+/* psyco_GetDecimalType
+
+   Return a new reference to the adapter for decimal type.
+
+   If decimals should be used but the module import fails, fall back on
+   the float type.
+
+    If decimals are not to be used, return NULL.
+   */
+
+PyObject *
+psyco_GetDecimalType(void)
+{
+    PyObject *decimalType = NULL;
+    static PyObject *cachedType = NULL;
+
 #ifdef HAVE_DECIMAL
+
+    /* Use the cached object if running from the main interpreter. */
+    int can_cache = psyco_is_main_interp();
+    if (can_cache && cachedType) {
+        Py_INCREF(cachedType);
+        return cachedType;
+    }
+
+    /* Get a new reference to the Decimal type. */
     PyObject *decimal = PyImport_ImportModule("decimal");
     if (decimal) {
         decimalType = PyObject_GetAttrString(decimal, "Decimal");
@@ -572,7 +613,15 @@ psyco_decimal_init(void)
         decimalType = (PyObject *)&PyFloat_Type;
         Py_INCREF(decimalType);
     }
-#endif
+
+    /* Store the object from future uses. */
+    if (can_cache && !cachedType) {
+        cachedType = decimalType;
+    }
+
+#endif /* HAVE_DECIMAL */
+
+    return decimalType;
 }
 
 
@@ -731,7 +780,6 @@ init_psycopg(void)
     /* other mixed initializations of module-level variables */
     psycoEncodings = PyDict_New();
     psyco_encodings_fill(psycoEncodings);
-    psyco_decimal_init();
 
     /* set some module's parameters */
     PyModule_AddStringConstant(module, "__version__", PSYCOPG_VERSION);

@@ -120,6 +120,7 @@ static PyObject *
 typecast_DECIMAL_cast(char *s, Py_ssize_t len, PyObject *curs)
 {
     PyObject *res = NULL;
+    PyObject *decimalType;
     char *buffer;
 
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
@@ -127,7 +128,9 @@ typecast_DECIMAL_cast(char *s, Py_ssize_t len, PyObject *curs)
     if ((buffer = PyMem_Malloc(len+1)) == NULL)
         return PyErr_NoMemory();
     strncpy(buffer, s, (size_t) len); buffer[len] = '\0';
+    decimalType = psyco_GetDecimalType();
     res = PyObject_CallFunction(decimalType, "s", buffer);
+    Py_DECREF(decimalType);
     PyMem_Free(buffer);
 
     return res;

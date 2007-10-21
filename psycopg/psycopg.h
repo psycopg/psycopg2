@@ -130,7 +130,7 @@ typedef struct {
 } encodingPair;
 
 /* the Decimal type, used by the DECIMAL typecaster */
-extern PyObject *decimalType;
+extern PyObject *psyco_GetDecimalType(void);
 
 /* some utility functions */
 extern void psyco_set_error(PyObject *exc, PyObject *curs,  char *msg,

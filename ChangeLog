@@ -1,4 +1,9 @@
-2007-09-08  Federico Di Gregorio <fog@initd.org>
+2007-10-21  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* Fixed bug #192 (Decimal support not safe for use with multiple sub
+	  interpreters) as proposed by Graham Dumpleton.
+
+2007-09-08  Federico Di Gregorio  <fog@initd.org>
 
 	* Added MonoDevelop project, yahi!
 
