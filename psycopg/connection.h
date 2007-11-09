@@ -36,6 +36,9 @@ extern "C" {
 #define CONN_STATUS_SYNC  3
 #define CONN_STATUS_ASYNC 4
 
+/* Hard limit on the notices stored by the Python connection */
+#define CONN_NOTICES_LIMIT 50
+
 extern PyTypeObject connectionType;
 
 typedef struct {
