@@ -1,3 +1,7 @@
+2007-11-09  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* Put a limit on the number of notices stored in the connection.
+
 2007-10-21  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* Fixed bug #192 (Decimal support not safe for use with multiple sub
