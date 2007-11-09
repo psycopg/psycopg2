@@ -1,10 +1,7 @@
 2007-11-09  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
-	* Use escape string syntax for binary escape if connected with a
-	  server with ver >= 8.2.
-
-	  The feature is only enabled when compiling psycopg with libpq
-	  ver >= 8.0.
+	* Use escape string syntax for binary escape if connected to a
+	  server requiring it.
 
 	* Put a limit on the number of notices stored in the connection.
 
