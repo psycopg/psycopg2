@@ -137,23 +137,45 @@ binary_quote(binaryObject *self)
     const char *buffer;
     Py_ssize_t buffer_len;
     size_t len = 0;
+    PGconn *pgconn = NULL;
+    const char *quotes = "'%s'";
 
     /* if we got a plain string or a buffer we escape it and save the buffer */
     if (PyString_Check(self->wrapped) || PyBuffer_Check(self->wrapped)) {
         /* escape and build quoted buffer */
         PyObject_AsCharBuffer(self->wrapped, &buffer, &buffer_len);
 
+        if (self->conn)
+            pgconn = ((connectionObject*)self->conn)->pgconn;
+
         to = (char *)binary_escape((unsigned char*)buffer, (size_t) buffer_len,
-            &len, self->conn ? ((connectionObject*)self->conn)->pgconn : NULL);
+            &len, pgconn);
         if (to == NULL) {
             PyErr_NoMemory();
             return NULL;
         }
 
-    if (len > 0)
-        self->buffer = PyString_FromFormat("'%s'", to);
-    else
-        self->buffer = PyString_FromString("''");
+        if (len > 0) {
+            /*
+             * Backslashes in non-escape (non-E'') strings raise warnings
+             * by default in PostgreSQL >= 8.2
+             *
+             * http://www.postgresql.org/docs/8.2/static/sql-syntax-lexical.html
+             *      #SQL-SYNTAX-STRINGS
+             *
+             * Before PG 8.0 there was no PQserverVersion:
+             * PQparameterStatus(pgconn, "server_version") can be used,
+             * but it's harder to compare with.
+             */
+#if PG_MAJOR_VERSION >= 8
+            if (pgconn && (PQserverVersion(pgconn) >= 80200))
+                quotes = "E'%s'";
+#endif
+            self->buffer = PyString_FromFormat(quotes, to);
+        }
+        else
+            self->buffer = PyString_FromString("''");
+
         PQfreemem(to);
     }
 
