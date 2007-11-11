@@ -94,6 +94,7 @@ qstring_quote(qstringObject *self)
     PyObject *str;
     char *s, *buffer;
     Py_ssize_t len;
+    int equote;         /* buffer offset if E'' quotes are needed */
 
     /* if the wrapped object is an unicode object we can encode it to match
        self->encoding but if the encoding is not specified we don't know what
@@ -141,12 +142,14 @@ qstring_quote(qstringObject *self)
     /* encode the string into buffer */
     PyString_AsStringAndSize(str, &s, &len);
 
-    buffer = (char *)PyMem_Malloc((len*2+3) * sizeof(char));
+    buffer = (char *)PyMem_Malloc((len*2+4) * sizeof(char));
     if (buffer == NULL) {
         Py_DECREF(str);
         PyErr_NoMemory();
         return NULL;
     }
+
+    equote = (self->conn && ((connectionObject*)self->conn)->equote) ? 1 : 0;
 
     { /* Call qstring_escape with the GIL released, then reacquire the GIL
        * before verifying that the results can fit into a Python string; raise
@@ -154,7 +157,7 @@ qstring_quote(qstringObject *self)
         size_t qstring_res;
 
         Py_BEGIN_ALLOW_THREADS
-        qstring_res = qstring_escape(buffer+1, s, len,
+        qstring_res = qstring_escape(buffer+equote+1, s, len,
           self->conn ? ((connectionObject*)self->conn)->pgconn : NULL);
         Py_END_ALLOW_THREADS
 
@@ -166,10 +169,12 @@ qstring_quote(qstringObject *self)
             return NULL;
         }
         len = (Py_ssize_t) qstring_res;
-        buffer[0] = '\'' ; buffer[len+1] = '\'';
+        if (equote)
+            buffer[0] = 'E';
+        buffer[equote] = '\'' ; buffer[len+equote+1] = '\'';
     }
 
-    self->buffer = PyString_FromStringAndSize(buffer, len+2);
+    self->buffer = PyString_FromStringAndSize(buffer, len+equote+2);
     PyMem_Free(buffer);
     Py_DECREF(str);
 

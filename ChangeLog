@@ -1,3 +1,8 @@
+2007-11-11  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* Use escape string syntax for string escape if connected to a
+	  server requiring it.
+
 2007-11-09  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* Use escape string syntax for binary escape if connected to a

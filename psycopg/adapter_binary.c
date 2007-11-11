@@ -137,46 +137,23 @@ binary_quote(binaryObject *self)
     const char *buffer;
     Py_ssize_t buffer_len;
     size_t len = 0;
-    PGconn *pgconn = NULL;
-    const char *quotes = "'%s'";
-    const char *scs;
 
     /* if we got a plain string or a buffer we escape it and save the buffer */
     if (PyString_Check(self->wrapped) || PyBuffer_Check(self->wrapped)) {
         /* escape and build quoted buffer */
         PyObject_AsCharBuffer(self->wrapped, &buffer, &buffer_len);
 
-        if (self->conn) {
-            pgconn = ((connectionObject*)self->conn)->pgconn;
-
-            /*
-             * The presence of the 'standard_conforming_strings' parameters
-             * means that the server _accepts_ the E'' quote.
-             *
-             * If the paramer is off, the PQescapeByteaConn returns
-             * backslash escaped strings (e.g. '\001' -> "\\001"),
-             * so the E'' quotes are required to avoid warnings
-             * if 'escape_string_warning' is set.
-             *
-             * If the parameter is on, the PQescapeByteaConn returns
-             * not escaped strings (e.g. '\001' -> "\001"), relying on the
-             * fact that the '\' will pass untouched the string parser.
-             * In this case the E'' quotes are NOT to be used.
-             */
-            scs = PQparameterStatus(pgconn, "standard_conforming_strings");
-            if (scs && (0 == strcmp("off", scs)))
-                quotes = "E'%s'";
-        }
-
         to = (char *)binary_escape((unsigned char*)buffer, (size_t) buffer_len,
-            &len, pgconn);
+            &len, self->conn ? ((connectionObject*)self->conn)->pgconn : NULL);
         if (to == NULL) {
             PyErr_NoMemory();
             return NULL;
         }
 
         if (len > 0)
-            self->buffer = PyString_FromFormat(quotes, to);
+            self->buffer = PyString_FromFormat(
+                (self->conn && ((connectionObject*)self->conn)->equote)
+                    ? "E'%s'" : "'%s'" , to);
         else
             self->buffer = PyString_FromString("''");
 

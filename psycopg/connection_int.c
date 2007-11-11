@@ -54,7 +54,7 @@ conn_notice_callback(void *args, const char *message)
     }
 }
 
-/* conn_connect - execute a connection to the dataabase */
+/* conn_connect - execute a connection to the database */
 
 int
 conn_connect(connectionObject *self)
@@ -62,6 +62,7 @@ conn_connect(connectionObject *self)
     PGconn *pgconn;
     PGresult *pgres;
     char *data, *tmp;
+    const char *scs;    /* standard-conforming strings */
     size_t i;
 
     /* we need the initial date style to be ISO, for typecasters; if the user
@@ -96,6 +97,34 @@ conn_connect(connectionObject *self)
     }
 
     PQsetNoticeProcessor(pgconn, conn_notice_callback, (void*)self);
+
+    /*
+     * The presence of the 'standard_conforming_strings' parameter
+     * means that the server _accepts_ the E'' quote.
+     *
+     * If the paramer is off, the PQescapeByteaConn returns
+     * backslash escaped strings (e.g. '\001' -> "\\001"),
+     * so the E'' quotes are required to avoid warnings
+     * if 'escape_string_warning' is set.
+     *
+     * If the parameter is on, the PQescapeByteaConn returns
+     * not escaped strings (e.g. '\001' -> "\001"), relying on the
+     * fact that the '\' will pass untouched the string parser.
+     * In this case the E'' quotes are NOT to be used.
+     *
+     * The PSYCOPG_OWN_QUOTING implementation always returns escaped strings.
+     */
+    scs = PQparameterStatus(pgconn, "standard_conforming_strings");
+    Dprintf("conn_connect: server standard_conforming_strings parameter: %s",
+        scs ? scs : "unavailable");
+
+#ifndef PSYCOPG_OWN_QUOTING
+    self->equote = (scs && (0 == strcmp("off", scs)));
+#else
+    self->equote = (scs != NULL);
+#endif
+    Dprintf("conn_connect: server requires E'' quotes: %s",
+        self->equote ? "YES" : "NO");
 
     Py_BEGIN_ALLOW_THREADS;
     pgres = PQexec(pgconn, datestyle);

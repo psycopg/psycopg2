@@ -83,6 +83,8 @@ typedef struct {
     PyObject *string_types;   /* a set of typecasters for string types */
     PyObject *binary_types;   /* a set of typecasters for binary types */
 
+    int equote;               /* use E''-style quotes for escaped strings */
+
 } connectionObject;
 
 /* C-callable functions in connection_int.c and connection_ext.c */
