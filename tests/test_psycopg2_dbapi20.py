@@ -4,32 +4,26 @@ import unittest
 import psycopg2
 import popen2
 
-class test_Psycopg(dbapi20.DatabaseAPI20Test):
+import tests
+
+class Psycopg2TestCase(dbapi20.DatabaseAPI20Test):
     driver = psycopg2
     connect_args = ()
-    connect_kw_args = {'dsn': 'dbname=dbapi20_test'}
+    connect_kw_args = {'dsn': 'dbname=%s' % tests.dbname}
 
     lower_func = 'lower' # For stored procedure test
 
-    def setUp(self):
-        # Call superclass setUp In case this does something in the
-        # future
-        dbapi20.DatabaseAPI20Test.setUp(self) 
+    def test_setoutputsize(self):
+        # psycopg2's setoutputsize() is a no-op
+        pass
 
-        try:
-            con = self._connect()
-            con.close()
-        except:
-            cmd = "psql -c 'create database dbapi20_test' template1"
-            cout,cin = popen2.popen2(cmd)
-            cin.close()
-            cout.read()
+    def test_nextset(self):
+        # psycopg2 does not implement nextset()
+        pass
 
-    def tearDown(self):
-        dbapi20.DatabaseAPI20Test.tearDown(self)
 
-    def test_nextset(self): pass
-    def test_setoutputsize(self): pass
+def test_suite():
+    return unittest.TestLoader().loadTestsFromName(__name__)
 
 if __name__ == '__main__':
     unittest.main()

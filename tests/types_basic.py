@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # types_basic.py - tests for basic types conversions
 #
 # Copyright (C) 2004 Federico Di Gregorio  <fog@debian.org>
@@ -18,14 +19,16 @@ try:
 except:
     pass
 import psycopg2
-from unittest import TestCase, TestSuite, main
+import unittest
+
+import tests
 
 
-class TypesBasicTests(TestCase):
+class TypesBasicTests(unittest.TestCase):
     """Test presence of mandatory attributes and methods."""
 
     def setUp(self):
-        self.conn = psycopg2.connect("dbname=test")
+        self.conn = psycopg2.connect("dbname=%s" % tests.dbname)
 
     def execute(self, *args):
         curs = self.conn.cursor()
@@ -74,14 +77,9 @@ class TypesBasicTests(TestCase):
                         "wrong array quoting " + str(s))
 
 
-class TypesBasicSuite(TestSuite):
-    """Build a suite of all tests."""
-
-    def __init__(self):
-        """Build a list of tests."""
-        self.tests = [x for x in dir(TypesBasicTests) if x.startswith('test')]
-        TestSuite.__init__(self, map(TestModule, self.tests))
-
+def test_suite():
+    return unittest.TestLoader().loadTestsFromName(__name__)
 
 if __name__ == "__main__":
-    main()
+    unittest.main()
+

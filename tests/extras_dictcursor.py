@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # extras_dictcursor - test if DictCursor extension class works
 #
 # Copyright (C) 2004 Federico Di Gregorio  <fog@debian.org>
@@ -14,17 +15,22 @@
 
 import psycopg2
 import psycopg2.extras
-from unittest import TestCase, TestSuite, main
+import unittest
+
+import tests
 
 
-class ExtrasDictCursorTests(TestCase):
+class ExtrasDictCursorTests(unittest.TestCase):
     """Test if DictCursor extension class works."""
 
     def setUp(self):
-        self.conn = psycopg2.connect("dbname=test")
+        self.conn = psycopg2.connect("dbname=%s" % tests.dbname)
         curs = self.conn.cursor()
-        curs.execute("CREATE TABLE ExtrasDictCursorTests (foo text)")
-    
+        curs.execute("CREATE TEMPORARY TABLE ExtrasDictCursorTests (foo text)")
+
+    def tearDown(self):
+        self.conn.close()
+
     def testDictCursor(self):
         curs = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         curs.execute("INSERT INTO ExtrasDictCursorTests VALUES ('bar')")
@@ -33,15 +39,9 @@ class ExtrasDictCursorTests(TestCase):
         self.failUnless(row['foo'] == 'bar')
         self.failUnless(row[0] == 'bar')
 
-class ExtrasDictCursorSuite(TestSuite):
-    """Build a suite of all tests."""
 
-    def __init__(self):
-        """Build a list of tests."""
-        self.tests = [x for x in dir(ExtrasDictCursorTests)
-					  if x.startswith('test')]
-        TestSuite.__init__(self, map(TestModule, self.tests))
-
+def test_suite():
+    return unittest.TestLoader().loadTestsFromName(__name__)
 
 if __name__ == "__main__":
-    main()
+    unittest.main()
