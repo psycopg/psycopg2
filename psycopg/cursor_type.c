@@ -525,6 +525,7 @@ psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
         }
     }
     Py_XDECREF(iter);
+    self->rowcount = -1;
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -931,7 +932,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
     char *procname = NULL, *sql = NULL;
     long int async = 0;
     Py_ssize_t procname_len, i, nparameters = 0, sl = 0;
-    PyObject *parameters = NULL;
+    PyObject *parameters = Py_None;
     PyObject *operation = NULL;
     PyObject *res = NULL;
 
@@ -948,9 +949,9 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
         return NULL;
     }
 
-    if(parameters && parameters != Py_None) {
+    if(parameters != Py_None) {
         nparameters = PyObject_Length(parameters);
-    if (nparameters < 0) nparameters = 0;
+        if (nparameters < 0) nparameters = 0;
     }
 
     /* allocate some memory, build the SQL and create a PyString from it */
@@ -969,8 +970,8 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
     PyMem_Free((void*)sql);
 
     if (_psyco_curs_execute(self, operation, parameters, async)) {
-        Py_INCREF(Py_None);
-        res = Py_None;
+        Py_INCREF(parameters);
+        res = parameters;
     }
 
     Py_DECREF(operation);

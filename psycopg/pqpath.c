@@ -844,6 +844,7 @@ int
 pq_fetch(cursorObject *curs)
 {
     int pgstatus, ex = -1;
+    const char *rowcount;
 
     /* even if we fail, we remove any information about the previous query */
     curs_reset(curs);
@@ -920,7 +921,11 @@ pq_fetch(cursorObject *curs)
 
     case PGRES_COMMAND_OK:
         Dprintf("pq_fetch: command returned OK (no tuples)");
-        curs->rowcount = atoi(PQcmdTuples(curs->pgres));
+        rowcount = PQcmdTuples(curs->pgres);
+        if (!rowcount || !rowcount[0])
+          curs->rowcount = -1;
+        else
+          curs->rowcount = atoi(rowcount);
         curs->lastoid = PQoidValue(curs->pgres);
         CLEARPGRES(curs->pgres);
         ex = 1;
