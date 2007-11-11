@@ -31,7 +31,7 @@ class TypesBasicTests(TestCase):
         curs = self.conn.cursor()
         curs.execute(*args)
         return curs.fetchone()[0]
-    
+
     def testQuoting(self):
         s = "Quote'this\\! ''ok?''"
         self.failUnless(self.execute("SELECT %s AS foo", (s,)) == s,
@@ -60,20 +60,20 @@ class TypesBasicTests(TestCase):
     def testBinary(self):
         s = ''.join([chr(x) for x in range(256)])
         b = psycopg2.Binary(s)
-	r = str(self.execute("SELECT %s::bytea AS foo", (b,)))
+        r = str(self.execute("SELECT %s::bytea AS foo", (b,)))
         self.failUnless(r == s, "wrong binary quoting")
         # test to make sure an empty Binary is converted to an empty string
         b = psycopg2.Binary('')
         self.assertEqual(str(b), "''")
 
     def testArray(self):
-	s = self.execute("SELECT %s AS foo", ([[1,2],[3,4]],))
-	self.failUnless(s == [[1,2],[3,4]], "wrong array quoting " + str(s))
-	s = self.execute("SELECT %s AS foo", (['one', 'two', 'three'],))
-	self.failUnless(s == ['one', 'two', 'three'], 
-	                "wrong array quoting " + str(s))
-	
-	
+        s = self.execute("SELECT %s AS foo", ([[1,2],[3,4]],))
+        self.failUnless(s == [[1,2],[3,4]], "wrong array quoting " + str(s))
+        s = self.execute("SELECT %s AS foo", (['one', 'two', 'three'],))
+        self.failUnless(s == ['one', 'two', 'three'],
+                        "wrong array quoting " + str(s))
+
+
 class TypesBasicSuite(TestSuite):
     """Build a suite of all tests."""
 
