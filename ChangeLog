@@ -1,3 +1,21 @@
+2007-12-20  James Henstridge  <james@jamesh.id.au>
+
+	* psycopg/pqpath.c (pq_raise): only remove the first 8 characters
+	of the exception message if it actually gives the severity.
+
+	* psycopg/pqpath.h (pq_resolve_critical): add prototype, since
+	this function is being used from connection_int.c.
+
+	* psycopg/psycopg.h: update psyco_set_error() prototype.
+
+	* psycopg/psycopgmodule.c (psyco_errors_init): set pgerror, pgcode
+	and cursor class attributes to None on psycopg2.Error so that the
+	attributes will always be available (simplifies error handling).
+	(psyco_set_error): add const qualifiers to msg, pgerror and pgcode
+	arguments.
+	Don't bother setting pgerror, pgcode or cursor to None if they are
+	not provided -- the class defaults take care of this.
+
 2007-11-11  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* Use escape string syntax for string escape if connected to a

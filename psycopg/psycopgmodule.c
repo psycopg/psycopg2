@@ -481,6 +481,13 @@ psyco_errors_init(void)
 
         *exctable[i].exc = PyErr_NewException(exctable[i].name, base, dict);
     }
+
+    /* Make pgerror, pgcode and cursor default to None on psycopg
+       error objects.  This simplifies error handling code that checks
+       these attributes. */
+    PyObject_SetAttrString(Error, "pgerror", Py_None);
+    PyObject_SetAttrString(Error, "pgcode", Py_None);
+    PyObject_SetAttrString(Error, "cursor", Py_None);
 }
 
 void
@@ -518,8 +525,8 @@ psyco_errors_set(PyObject *type)
    Create a new error of the given type with extra attributes. */
 
 void
-psyco_set_error(PyObject *exc, PyObject *curs, char *msg,
-                 char *pgerror, char *pgcode)
+psyco_set_error(PyObject *exc, PyObject *curs, const char *msg,
+                const char *pgerror, const char *pgcode)
 {
     PyObject *t;
 
@@ -528,26 +535,18 @@ psyco_set_error(PyObject *exc, PyObject *curs, char *msg,
     if (err) {
         if (pgerror) {
             t = PyString_FromString(pgerror);
+            PyObject_SetAttrString(err, "pgerror", t);
+            Py_DECREF(t);
         }
-        else {
-            t = Py_None ; Py_INCREF(t);
-        }
-        PyObject_SetAttrString(err, "pgerror", t);
-        Py_DECREF(t);
 
         if (pgcode) {
             t = PyString_FromString(pgcode);
+            PyObject_SetAttrString(err, "pgcode", t);
+            Py_DECREF(t);
         }
-        else {
-            t = Py_None ; Py_INCREF(t);
-        }
-        PyObject_SetAttrString(err, "pgcode", t);
-        Py_DECREF(t);
 
         if (curs)
             PyObject_SetAttrString(err, "cursor", curs);
-        else
-            PyObject_SetAttrString(err, "cursor", Py_None);
 
         PyErr_SetObject(exc, err);
     Py_DECREF(err);
@@ -557,7 +556,7 @@ psyco_set_error(PyObject *exc, PyObject *curs, char *msg,
 
 /* Return nonzero if the current one is the main interpreter */
 static int
-psyco_is_main_interp()
+psyco_is_main_interp(void)
 {
     static PyInterpreterState *main_interp = NULL;  /* Cached reference */
     PyInterpreterState *interp;

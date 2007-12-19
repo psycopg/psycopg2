@@ -133,8 +133,8 @@ typedef struct {
 extern PyObject *psyco_GetDecimalType(void);
 
 /* some utility functions */
-extern void psyco_set_error(PyObject *exc, PyObject *curs,  char *msg,
-                             char *pgerror, char *pgcode);
+extern void psyco_set_error(PyObject *exc, PyObject *curs,  const char *msg,
+                            const char *pgerror, const char *pgcode);
 
 /* Exceptions docstrings */
 #define Error_doc \

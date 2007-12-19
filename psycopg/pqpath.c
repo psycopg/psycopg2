@@ -40,18 +40,35 @@
 #include "psycopg/pgtypes.h"
 #include "psycopg/pgversion.h"
 
+
+/* Strip off the severity from a Postgres error message. */
+static const char *
+strip_severity(const char *msg)
+{
+    if (!msg)
+        return NULL;
+
+    if (strlen(msg) > 8 && (!strncmp(msg, "ERROR:  ", 8) ||
+                            !strncmp(msg, "FATAL:  ", 8) ||
+                            !strncmp(msg, "PANIC:  ", 8)))
+        return &msg[8];
+    else
+        return msg;
+}
+
 /* pq_raise - raise a python exception of the right kind
 
    This function should be called while holding the GIL. */
 
-void
-pq_raise(connectionObject *conn, cursorObject *curs, PyObject *exc, char *msg)
+static void
+pq_raise(connectionObject *conn, cursorObject *curs, PyObject *exc,
+         const char *msg)
 {
     PyObject *pgc = (PyObject*)curs;
 
-    char *err = NULL;
-    char *err2 = NULL;
-    char *code = NULL;
+    const char *err = NULL;
+    const char *err2 = NULL;
+    const char *code = NULL;
     char *buf = NULL;
 
     if ((conn == NULL && curs == NULL) || (curs != NULL && conn == NULL)) {
@@ -108,8 +125,7 @@ pq_raise(connectionObject *conn, cursorObject *curs, PyObject *exc, char *msg)
     }
 
     /* try to remove the initial "ERROR: " part from the postgresql error */
-    if (err && strlen(err) > 8) err2 = &(err[8]);
-    else err2 = err;
+    err2 = strip_severity(err);
 
     /* if msg is not NULL, add it to the error message, after a '\n' */
     if (msg && code) {

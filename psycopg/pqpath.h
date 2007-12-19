@@ -37,5 +37,6 @@ extern int pq_commit(connectionObject *conn);
 extern int pq_abort(connectionObject *conn);
 extern int pq_is_busy(connectionObject *conn);
 extern void pq_set_critical(connectionObject *conn, const char *msg);
+extern PyObject *pq_resolve_critical(connectionObject *conn, int close);
 
 #endif /* !defined(PSYCOPG_PQPATH_H) */
