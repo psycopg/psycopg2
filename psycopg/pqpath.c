@@ -456,14 +456,13 @@ pq_execute(cursorObject *curs, const char *query, int async)
         curs->pgres = PQexec(curs->conn->pgconn, query);
 
         /* dont let pgres = NULL go to pq_fetch() */
-        /* if (curs->pgres == NULL) {
+        if (curs->pgres == NULL) {
             pthread_mutex_unlock(&(curs->conn->lock));
             Py_BLOCK_THREADS;
             PyErr_SetString(OperationalError,
                             PQerrorMessage(curs->conn->pgconn));
             return -1;
         }
-        */
     }
 
     else if (async == 1) {

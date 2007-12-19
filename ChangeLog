@@ -1,5 +1,13 @@
 2007-12-20  James Henstridge  <james@jamesh.id.au>
 
+	* psycopg/pqpath.c (pq_execute): uncomment the "curs->pgres ==
+	NULL" error handler after the PQexec() call.  This is needed to
+	catch database disconnects (and probably other errors).  According
+	to Federico, it was commented out to avoid a spurious error, so we
+	should watch for problems.
+
+2007-12-20  James Henstridge  <james@jamesh.id.au>
+
 	* psycopg/pqpath.c (pq_raise): only remove the first 8 characters
 	of the exception message if it actually gives the severity.
 
