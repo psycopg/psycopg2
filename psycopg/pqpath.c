@@ -564,10 +564,11 @@ _pq_fetch_tuples(cursorObject *curs)
         int fsize = PQfsize(curs->pgres, i);
         int fmod =  PQfmod(curs->pgres, i);
 
-        Py_BLOCK_THREADS;
         PyObject *dtitem = PyTuple_New(7);
         PyObject *type = PyInt_FromLong(ftype);
         PyObject *cast = NULL;
+
+        Py_BLOCK_THREADS;
 
         PyTuple_SET_ITEM(curs->description, i, dtitem);
 

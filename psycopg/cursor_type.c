@@ -308,15 +308,18 @@ _psyco_curs_execute(cursorObject *self,
     int res = 0;
     PyObject *fquery, *cvt = NULL;
 
+    Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
     if (self->conn->async_cursor != NULL
         && self->conn->async_cursor != (PyObject*)self) {
         pthread_mutex_unlock(&(self->conn->lock));
+        Py_BLOCK_THREADS;
         psyco_set_error(ProgrammingError, (PyObject*)self,
                          "asynchronous query already in execution", NULL, NULL);
         return 0;
     }
     pthread_mutex_unlock(&(self->conn->lock));
+    Py_END_ALLOW_THREADS;
 
     operation = _psyco_curs_validate_sql_basic(self, operation);
 
@@ -641,15 +644,18 @@ _psyco_curs_prefetch(cursorObject *self)
 
     /* check if the fetching cursor is the one that did the asynchronous query
        and raise an exception if not */
+    Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
     if (self->conn->async_cursor != NULL
         && self->conn->async_cursor != (PyObject*)self) {
         pthread_mutex_unlock(&(self->conn->lock));
+        Py_BLOCK_THREADS;
         psyco_set_error(ProgrammingError, (PyObject*)self,
                          "asynchronous fetch by wrong cursor", NULL, NULL);
         return -2;
     }
     pthread_mutex_unlock(&(self->conn->lock));
+    Py_END_ALLOW_THREADS;
 
     if (self->pgres == NULL || self->needsfetch) {
         self->needsfetch = 0;
@@ -1382,12 +1388,12 @@ psyco_curs_fileno(cursorObject *self, PyObject *args)
 
     /* note how we call PQflush() to make sure the user will use
        select() in the safe way! */
-    pthread_mutex_lock(&(self->conn->lock));
     Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&(self->conn->lock));
     PQflush(self->conn->pgconn);
     socket = (long int)PQsocket(self->conn->pgconn);
-    Py_END_ALLOW_THREADS;
     pthread_mutex_unlock(&(self->conn->lock));
+    Py_END_ALLOW_THREADS;
 
     return PyInt_FromLong(socket);
 }
@@ -1413,10 +1419,12 @@ psyco_curs_isready(cursorObject *self, PyObject *args)
     }
     else {
         IFCLEARPGRES(self->pgres);
+        Py_BEGIN_ALLOW_THREADS;
         pthread_mutex_lock(&(self->conn->lock));
         self->pgres = PQgetResult(self->conn->pgconn);
         self->conn->async_cursor = NULL;
         pthread_mutex_unlock(&(self->conn->lock));
+        Py_END_ALLOW_THREADS;
         self->needsfetch = 1;
         Py_INCREF(Py_True);
         return Py_True;

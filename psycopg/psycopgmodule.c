@@ -593,6 +593,7 @@ psyco_GetDecimalType(void)
     static PyObject *cachedType = NULL;
 
 #ifdef HAVE_DECIMAL
+    PyObject *decimal = PyImport_ImportModule("decimal");
 
     /* Use the cached object if running from the main interpreter. */
     int can_cache = psyco_is_main_interp();
@@ -602,7 +603,6 @@ psyco_GetDecimalType(void)
     }
 
     /* Get a new reference to the Decimal type. */
-    PyObject *decimal = PyImport_ImportModule("decimal");
     if (decimal) {
         decimalType = PyObject_GetAttrString(decimal, "Decimal");
         Py_DECREF(decimal);
