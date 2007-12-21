@@ -130,6 +130,9 @@
     <File name="./tests/test_psycopg2_dbapi20.py" subtype="Code" buildaction="Nothing" />
     <File name="./tests/test_transaction.py" subtype="Code" buildaction="Nothing" />
     <File name="./tests/types_basic.py" subtype="Code" buildaction="Nothing" />
+    <File name="./tests/bugX000.py" subtype="Code" buildaction="Nothing" />
+    <File name="./tests/Makefile" subtype="Code" buildaction="Nothing" />
+    <File name="./tests/runtests.py" subtype="Code" buildaction="Nothing" />
   </Contents>
   <compiler ctype="GccCompiler" />
   <MonoDevelop.ChangeLogAddIn.ChangeLogInfo policy="UpdateNearestChangeLog" />

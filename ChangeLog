@@ -1,3 +1,10 @@
+2007-12-21  Federico Di Gregorio <fog@initd.org>
+
+	* Applied win32 patch from Jason Erickson.
+
+	* Applied patch from Thomas Lotze to use correct version
+	for new Zopes.
+
 2007-12-20  James Henstridge  <james@jamesh.id.au>
 
 	* psycopg/pqpath.c (pq_execute): uncomment the "curs->pgres ==

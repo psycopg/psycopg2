@@ -37,10 +37,13 @@ from DateTime import DateTime
 # Build Zope version in a float for later cheks
 import App
 zope_version = App.version_txt.getZopeVersion()
-zope_version = float("%s.%s" %(zope_version[:2]))
+if zope_version[1] == -1:
+    zope_version = None
+else:
+    zope_version = float("%s.%s" %(zope_version[:2]))
 
 # ImageFile is deprecated in Zope >= 2.9
-if zope_version < 2.9:
+if zope_version is not None and zope_version < 2.9:
      from ImageFile import ImageFile
 else:
      from App.ImageFile import ImageFile 
