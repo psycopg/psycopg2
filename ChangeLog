@@ -1,3 +1,12 @@
+2007-12-22  James Henstridge  <james@jamesh.id.au>
+
+	* psycopg/config.h: only print debug messages if
+	psycopg_debug_enabled is true.
+
+	* psycopg/psycopgmodule.c (init_psycopg): set
+	psycopg_debug_enabled to true if the $PSYCOPG_DEBUG environment
+	variable is set.
+
 2007-12-21  Federico Di Gregorio <fog@initd.org>
 
 	* Applied win32 patch from Jason Erickson.

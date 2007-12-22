@@ -63,6 +63,10 @@ PyObject *pyPsycopgTzFixedOffsetTimezone = NULL;
 
 PyObject *psycoEncodings = NULL;
 
+#ifdef PSYCOPG_DEBUG
+int psycopg_debug_enabled = 0;
+#endif
+
 /** connect module-level function **/
 #define psyco_connect_doc \
 "connect(dsn, ...) -- Create a new database connection.\n\n"               \
@@ -692,6 +696,11 @@ init_psycopg(void)
 
     PyObject *module, *dict;
     PyObject *c_api_object;
+
+#ifdef PSYCOPG_DEBUG
+    if (getenv("PSYCOPG_DEBUG"))
+      psycopg_debug_enabled = 1;
+#endif
 
     Dprintf("initpsycopg: initializing psycopg %s", PSYCOPG_VERSION);
 

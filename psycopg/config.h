@@ -23,12 +23,17 @@
 #define PSYCOPG_CONFIG_H 1
 
 /* debug printf-like function */
+#ifdef PSYCOPG_DEBUG
+extern int psycopg_debug_enabled;
+#endif
+
 #if defined( __GNUC__) && !defined(__APPLE__)
 #ifdef PSYCOPG_DEBUG
 #include <sys/types.h>
 #include <unistd.h>
 #define Dprintf(fmt, args...) \
-    fprintf(stderr, "[%d] " fmt "\n", (int) getpid() , ## args)
+    if (!psycopg_debug_enabled) ; else \
+        fprintf(stderr, "[%d] " fmt "\n", (int) getpid() , ## args)
 #else
 #define Dprintf(fmt, args...)
 #endif
@@ -38,6 +43,10 @@
 static void Dprintf(const char *fmt, ...)
 {
     va_list ap;
+
+    if (!psycopg_debug_enabled)
+      return;
+    printf("[%d] ", (int) getpid());
     va_start(ap, fmt);
     vprintf(fmt, ap);
     va_end(ap);
