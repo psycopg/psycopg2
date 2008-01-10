@@ -1,3 +1,17 @@
+2008-01-11  James Henstridge  <james@jamesh.id.au>
+
+	* psycopg/connection_int.c (conn_close): fix for new
+	pq_abort_locked() prototype.
+	(conn_switch_isolation_level): fix for new pq_abort_locked()
+	prototype, and use pq_complete_error() to show error message.
+	(conn_set_client_encoding): same here.
+
+	* psycopg/pqpath.c (pq_execute_command_locked): remove static
+	modifier.
+	(pq_complete_error): same here.
+	(pq_abort_locked): add pgres and error arguments.
+	(pq_abort): call pq_abort_locked() to reduce code duplication.
+
 2007-12-23  James Henstridge  <james@jamesh.id.au>
 
 	* psycopg/pqpath.c (pq_execute_command_locked): add an error

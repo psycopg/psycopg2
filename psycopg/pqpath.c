@@ -238,7 +238,7 @@ pq_clear_async(connectionObject *conn)
    On error, -1 is returned, and the pgres argument will hold the
    relevant result structure.
  */
-static int
+int
 pq_execute_command_locked(connectionObject *conn, const char *query,
                           PGresult **pgres, char **error)
 {
@@ -280,7 +280,7 @@ pq_execute_command_locked(connectionObject *conn, const char *query,
    This function should be called while holding the global interpreter
    lock.
  */
-static void
+void
 pq_complete_error(connectionObject *conn, PGresult **pgres, char **error)
 {
     Dprintf("pq_complete_error: pgconn = %p, pgres = %p, error = %s",
@@ -375,11 +375,9 @@ pq_commit(connectionObject *conn)
 }
 
 int
-pq_abort_locked(connectionObject *conn)
+pq_abort_locked(connectionObject *conn, PGresult **pgres, char **error)
 {
     int retvalue = -1;
-    PGresult *pgres = NULL;
-    char *error = NULL;
 
     Dprintf("pq_abort_locked: pgconn = %p, isolevel = %ld, status = %d",
             conn->pgconn, conn->isolation_level, conn->status);
@@ -390,14 +388,10 @@ pq_abort_locked(connectionObject *conn)
     }
 
     pq_clear_async(conn);
-    retvalue = pq_execute_command_locked(conn, "ROLLBACK", &pgres, &error);
+    retvalue = pq_execute_command_locked(conn, "ROLLBACK", pgres, error);
+    if (retvalue == 0)
+        conn->status = CONN_STATUS_READY;
 
-    if (retvalue < 0)
-        pq_set_critical(conn, NULL);
-
-    IFCLEARPGRES(pgres);
-    if (error)
-        free(error);
     return retvalue;
 }
 
@@ -424,16 +418,13 @@ pq_abort(connectionObject *conn)
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&conn->lock);
 
-    pq_clear_async(conn);
-    retvalue = pq_execute_command_locked(conn, "ROLLBACK", &pgres, &error);
+    retvalue = pq_abort_locked(conn, &pgres, &error);
 
     pthread_mutex_unlock(&conn->lock);
     Py_END_ALLOW_THREADS;
 
     if (retvalue < 0)
         pq_complete_error(conn, &pgres, &error);
-    else
-        conn->status = CONN_STATUS_READY;
 
     return retvalue;
 }
