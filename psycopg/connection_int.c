@@ -217,7 +217,7 @@ conn_close(connectionObject *self)
     /* execute a forced rollback on the connection (but don't check the
        result, we're going to close the pq connection anyway */
     if (self->pgconn) {
-        pq_abort(self);
+        pq_abort_locked(self);
         PQfinish(self->pgconn);
         Dprintf("conn_close: PQfinish called");
         self->pgconn = NULL;
@@ -235,17 +235,8 @@ conn_commit(connectionObject *self)
 {
     int res;
 
-    Py_BEGIN_ALLOW_THREADS;
-    pthread_mutex_lock(&self->lock);
-
     res = pq_commit(self);
     self->mark++;
-
-    pthread_mutex_unlock(&self->lock);
-    Py_END_ALLOW_THREADS;
-
-    if (res == -1)
-        pq_resolve_critical(self, 0);
     return res;
 }
 
@@ -256,17 +247,8 @@ conn_rollback(connectionObject *self)
 {
     int res;
 
-    Py_BEGIN_ALLOW_THREADS;
-    pthread_mutex_lock(&self->lock);
-
     res = pq_abort(self);
     self->mark++;
-
-    pthread_mutex_unlock(&self->lock);
-    Py_END_ALLOW_THREADS;
-
-    if (res == -1)
-        pq_resolve_critical(self, 0);
     return res;
 }
 
@@ -286,7 +268,7 @@ conn_switch_isolation_level(connectionObject *self, int level)
     /* if the current isolation level is > 0 we need to abort the current
        transaction before changing; that all folks! */
     if (self->isolation_level != level && self->isolation_level > 0) {
-        res = pq_abort(self);
+        res = pq_abort_locked(self);
     }
     self->isolation_level = level;
     self->mark++;
@@ -322,7 +304,7 @@ conn_set_client_encoding(connectionObject *self, char *enc)
 
     /* abort the current transaction, to set the encoding ouside of
        transactions */
-    res = pq_abort(self);
+    res = pq_abort_locked(self);
 
     if (res == 0) {
         pgres = PQexec(self->pgconn, query);

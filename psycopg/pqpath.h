@@ -32,8 +32,8 @@
 /* exported functions */
 extern int pq_fetch(cursorObject *curs);
 extern int pq_execute(cursorObject *curs, const char *query, int async);
-extern int pq_begin(connectionObject *conn);
 extern int pq_commit(connectionObject *conn);
+extern int pq_abort_locked(connectionObject *conn);
 extern int pq_abort(connectionObject *conn);
 extern int pq_is_busy(connectionObject *conn);
 extern void pq_set_critical(connectionObject *conn, const char *msg);

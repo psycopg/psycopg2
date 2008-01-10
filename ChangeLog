@@ -1,3 +1,52 @@
+2007-12-23  James Henstridge  <james@jamesh.id.au>
+
+	* psycopg/pqpath.c (pq_execute_command_locked): add an error
+	argument to hold an error when no PGresult is returned by PQexec,
+	rather than using pq_set_critical().
+	(pq_complete_error): new function that converts the error returned
+	by pq_execute_command_locked() to a Python exception.
+	(pq_begin_locked): add error argument.
+	(pq_commit): use pq_complete_error().
+	(pq_abort): use pq_complete_error().
+	(pq_abort_locked): always call pq_set_critical() on error, and
+	clear the error message from pq_execute_command_locked().
+	(pq_execute): use pq_complete_error() to handle the error from
+	pq_begin_locked().
+
+	* psycopg/pqpath.c (pq_begin): remove unused function.
+
+	* psycopg/connection_type.c (psyco_conn_commit): if conn_commit()
+	raises an error, just return NULL, since it is now setting an
+	exception itself.
+	(psyco_conn_rollback): same here.
+
+	* psycopg/connection_int.c (conn_commit): don't drop GIL and lock
+	connection before calling pq_commit().
+	(conn_rollback): same here.
+	(conn_close): use pq_abort_locked().
+	(conn_switch_isolation_level): same here.
+	(conn_set_client_encoding): same here.
+
+	* psycopg/pqpath.h: add prototype for pq_abort_locked().
+
+	* psycopg/pqpath.c (pq_commit): convert function to run with GIL
+	held, and handle errors appropriately.
+	(pq_abort): same here.
+	(pq_abort_locked): new function to abort a locked connection.
+
+2007-12-22  James Henstridge  <james@jamesh.id.au>
+
+	* psycopg/pqpath.c (pq_raise): add a "pgres" argument so we can
+	generate nice errors not related to a particular cursor.
+	(pq_execute): use pq_begin_locked() rather than pq_begin().  Use
+	pq_raise() to handle any errors from it.
+
+	* psycopg/pqpath.c (pq_execute_command_locked): helper function
+	used to execute a command-style query on a locked connection.
+	(pq_begin_locked): a variant of pq_begin() that uses
+	pq_execute_command_locked().
+	(pq_begin): rewrite to use pq_begin_locked().
+
 2007-12-22  James Henstridge  <james@jamesh.id.au>
 
 	* psycopg/config.h: only print debug messages if

@@ -117,11 +117,8 @@ psyco_conn_commit(connectionObject *self, PyObject *args)
 
     if (!PyArg_ParseTuple(args, "")) return NULL;
 
-    if (conn_commit(self) < 0) {
-        PyErr_SetString(OperationalError,
-                        PQerrorMessage(self->pgconn));
+    if (conn_commit(self) < 0)
         return NULL;
-    }
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -140,11 +137,8 @@ psyco_conn_rollback(connectionObject *self, PyObject *args)
 
     if (!PyArg_ParseTuple(args, "")) return NULL;
 
-    if (conn_rollback(self) < 0) {
-        PyErr_SetString(OperationalError,
-                        PQerrorMessage(self->pgconn));
+    if (conn_rollback(self) < 0)
         return NULL;
-    }
 
     Py_INCREF(Py_None);
     return Py_None;
