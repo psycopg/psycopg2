@@ -1,5 +1,15 @@
 2008-01-11  James Henstridge  <james@jamesh.id.au>
 
+	* psycopg/adapter_binary.c (binary_quote): apply Brandon Rhodes'
+	patch from ticket #209 to check return value from
+	PyObject_AsCharBuffer().  This fixes the segfault.
+	(binary_quote): switch from PyObject_AsCharBuffer() to
+	PyObject_AsReadBuffer() to support buffer objects that don't
+	implement the bf_getcharbuf protocol.
+
+	* tests/types_basic.py (TypesBasicTests.testBinary): Test round
+	tripping of bytea buffers.  Currently segfaults.
+
 	* psycopg/connection_int.c (conn_close): fix for new
 	pq_abort_locked() prototype.
 	(conn_switch_isolation_level): fix for new pq_abort_locked()

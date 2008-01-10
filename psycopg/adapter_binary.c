@@ -141,7 +141,9 @@ binary_quote(binaryObject *self)
     /* if we got a plain string or a buffer we escape it and save the buffer */
     if (PyString_Check(self->wrapped) || PyBuffer_Check(self->wrapped)) {
         /* escape and build quoted buffer */
-        PyObject_AsCharBuffer(self->wrapped, &buffer, &buffer_len);
+        if (PyObject_AsReadBuffer(self->wrapped, (const void **)&buffer,
+                                  &buffer_len) < 0)
+            return NULL;
 
         to = (char *)binary_escape((unsigned char*)buffer, (size_t) buffer_len,
             &len, self->conn ? ((connectionObject*)self->conn)->pgconn : NULL);

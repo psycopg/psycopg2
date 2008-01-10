@@ -63,11 +63,15 @@ class TypesBasicTests(unittest.TestCase):
     def testBinary(self):
         s = ''.join([chr(x) for x in range(256)])
         b = psycopg2.Binary(s)
-        r = str(self.execute("SELECT %s::bytea AS foo", (b,)))
-        self.failUnless(r == s, "wrong binary quoting")
+        buf = self.execute("SELECT %s::bytea AS foo", (b,))
+        self.failUnless(str(buf) == s, "wrong binary quoting")
         # test to make sure an empty Binary is converted to an empty string
         b = psycopg2.Binary('')
         self.assertEqual(str(b), "''")
+        # test to make sure buffers returned by psycopg2 are
+        # understood by execute:
+        buf2 = self.execute("SELECT %s::bytea AS foo", (buf,))
+        self.failUnless(str(buf2) == s, "wrong binary quoting")
 
     def testArray(self):
         s = self.execute("SELECT %s AS foo", ([[1,2],[3,4]],))
