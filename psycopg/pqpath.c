@@ -56,6 +56,81 @@ strip_severity(const char *msg)
         return msg;
 }
 
+/* Returns the Python exception corresponding to an SQLSTATE error
+   code.  A list of error codes can be found at:
+
+   http://www.postgresql.org/docs/current/static/errcodes-appendix.html */
+static PyObject *
+exception_from_sqlstate(const char *sqlstate)
+{
+    switch (sqlstate[0]) {
+    case '0':
+        switch (sqlstate[1]) {
+        case 'A': /* Class 0A - Feature Not Supported */
+            return NotSupportedError;
+        }
+        break;
+    case '2':
+        switch (sqlstate[1]) {
+        case '1': /* Class 21 - Cardinality Violation */
+            return ProgrammingError;
+        case '2': /* Class 22 - Data Exception */
+            return DataError;
+        case '3': /* Class 23 - Integrity Constraint Violation */
+            return IntegrityError;
+        case '4': /* Class 24 - Invalid Cursor State */
+        case '5': /* Class 25 - Invalid Transaction State */
+            return InternalError;
+        case '6': /* Class 26 - Invalid SQL Statement Name */
+        case '7': /* Class 27 - Triggered Data Change Violation */
+        case '8': /* Class 28 - Invalid Authorization Specification */
+            return OperationalError;
+        case 'B': /* Class 2B - Dependent Privilege Descriptors Still Exist */
+        case 'D': /* Class 2D - Invalid Transaction Termination */
+        case 'F': /* Class 2F - SQL Routine Exception */
+            return InternalError;
+        }
+        break;
+    case '3':
+        switch (sqlstate[1]) {
+        case '4': /* Class 34 - Invalid Cursor Name */
+            return OperationalError;
+        case '8': /* Class 38 - External Routine Exception */
+        case '9': /* Class 39 - External Routine Invocation Exception */
+        case 'B': /* Class 3B - Savepoint Exception */
+            return InternalError;
+        case 'D': /* Class 3D - Invalid Catalog Name */
+        case 'F': /* Class 3F - Invalid Schema Name */
+            return ProgrammingError;
+        }
+        break;
+    case '4':
+        switch (sqlstate[1]) {
+        case '0': /* Class 40 - Transaction Rollback */
+            return OperationalError;
+        case '2': /* Class 42 - Syntax Error or Access Rule Violation */
+        case '4': /* Class 44 — WITH CHECK OPTION Violation */
+            return ProgrammingError;
+        }
+        break;
+    case '5':
+        /* Class 53 - Insufficient Resources
+           Class 54 - Program Limit Exceeded
+           Class 55 - Object Not In Prerequisite State
+           Class 57 - Operator Intervention
+           Class 58 - System Error (errors external to PostgreSQL itself) */
+        return OperationalError;
+    case 'F': /* Class F0 - Configuration File Error */
+        return InternalError;
+    case 'P': /* Class P0 - PL/pgSQL Error */
+        return InternalError;
+    case 'X': /* Class XX - Internal Error */
+        return InternalError;
+    }
+    /* return DatabaseError as a fallback */
+    return DatabaseError;
+}
+
 /* pq_raise - raise a python exception of the right kind
 
    This function should be called while holding the GIL. */
@@ -99,20 +174,10 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres,
     }
 
     /* if exc is NULL, analyze the message and try to deduce the right
-       exception kind (only if we have a pgres, obviously) */
-    if (exc == NULL) {
-        if (pgres) {
-            if (conn->protocol == 3) {
-#ifdef HAVE_PQPROTOCOL3
-                char *pgstate =
-                    PQresultErrorField(pgres, PG_DIAG_SQLSTATE);
-                if (pgstate != NULL && !strncmp(pgstate, "23", 2))
-                    exc = IntegrityError;
-                else
-                    exc = ProgrammingError;
-#endif
-            }
-        }
+       exception kind (only if we got the SQLSTATE from the pgres,
+       obviously) */
+    if (exc == NULL && code != NULL) {
+        exc = exception_from_sqlstate(code);
     }
 
     /* if exc is still NULL psycopg was not built with HAVE_PQPROTOCOL3 or the
@@ -286,7 +351,7 @@ pq_complete_error(connectionObject *conn, PGresult **pgres, char **error)
     Dprintf("pq_complete_error: pgconn = %p, pgres = %p, error = %s",
             conn->pgconn, *pgres, *error ? *error : "(null)");
     if (*pgres != NULL)
-        pq_raise(conn, NULL, *pgres, OperationalError, NULL);
+        pq_raise(conn, NULL, *pgres, NULL, NULL);
     else if (*error != NULL) {
         PyErr_SetString(OperationalError, *error);
         free(*error);

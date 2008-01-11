@@ -62,7 +62,7 @@ class TransactionTestCase(unittest.TestCase):
         curs.execute('INSERT INTO table2 VALUES (2, 42)')
         # The commit should fail, and move the cursor back to READY state
         self.assertEqual(self.conn.status, STATUS_BEGIN)
-        self.assertRaises(psycopg2.OperationalError, self.conn.commit)
+        self.assertRaises(psycopg2.IntegrityError, self.conn.commit)
         self.assertEqual(self.conn.status, STATUS_READY)
         # The connection should be ready to use for the next transaction:
         curs.execute('SELECT 1')
