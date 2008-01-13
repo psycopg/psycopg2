@@ -45,14 +45,14 @@ asis_str(asisObject *self)
     }
 }
 
-PyObject *
+static PyObject *
 asis_getquoted(asisObject *self, PyObject *args)
 {
     if (!PyArg_ParseTuple(args, "")) return NULL;
     return asis_str(self);
 }
 
-PyObject *
+static PyObject *
 asis_conform(asisObject *self, PyObject *args)
 {
     PyObject *res, *proto;

@@ -55,14 +55,14 @@ pboolean_str(pbooleanObject *self)
 #endif
 }
 
-PyObject *
+static PyObject *
 pboolean_getquoted(pbooleanObject *self, PyObject *args)
 {
     if (!PyArg_ParseTuple(args, "")) return NULL;
     return pboolean_str(self);
 }
 
-PyObject *
+static PyObject *
 pboolean_conform(pbooleanObject *self, PyObject *args)
 {
     PyObject *res, *proto;

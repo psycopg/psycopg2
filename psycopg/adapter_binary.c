@@ -183,14 +183,14 @@ binary_str(binaryObject *self)
     return self->buffer;
 }
 
-PyObject *
+static PyObject *
 binary_getquoted(binaryObject *self, PyObject *args)
 {
     if (!PyArg_ParseTuple(args, "")) return NULL;
     return binary_str(self);
 }
 
-PyObject *
+static PyObject *
 binary_prepare(binaryObject *self, PyObject *args)
 {
     connectionObject *conn;
@@ -208,7 +208,7 @@ binary_prepare(binaryObject *self, PyObject *args)
     return Py_None;
 }
 
-PyObject *
+static PyObject *
 binary_conform(binaryObject *self, PyObject *args)
 {
     PyObject *res, *proto;

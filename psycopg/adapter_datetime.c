@@ -79,14 +79,14 @@ pydatetime_str(pydatetimeObject *self)
     }
 }
 
-PyObject *
+static PyObject *
 pydatetime_getquoted(pydatetimeObject *self, PyObject *args)
 {
     if (!PyArg_ParseTuple(args, "")) return NULL;
     return pydatetime_str(self);
 }
 
-PyObject *
+static PyObject *
 pydatetime_conform(pydatetimeObject *self, PyObject *args)
 {
     PyObject *res, *proto;

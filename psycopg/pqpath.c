@@ -237,7 +237,7 @@ pq_set_critical(connectionObject *conn, const char *msg)
     else conn->critical = NULL;
 }
 
-void
+static void
 pq_clear_critical(connectionObject *conn)
 {
     /* sometimes we know that the notice analizer set a critical that
@@ -283,7 +283,7 @@ pq_resolve_critical(connectionObject *conn, int close)
 
    this function does not call any Py_*_ALLOW_THREADS macros */
 
-void
+static void
 pq_clear_async(connectionObject *conn)
 {
     PGresult *pgres;

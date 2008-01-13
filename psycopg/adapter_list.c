@@ -82,21 +82,21 @@ list_quote(listObject *self)
     return res;
 }
 
-PyObject *
+static PyObject *
 list_str(listObject *self, PyObject *args)
 {
     if (!PyArg_ParseTuple(args, "")) return NULL;
     return list_quote(self);
 }
 
-PyObject *
+static PyObject *
 list_getquoted(listObject *self, PyObject *args)
 {
     if (!PyArg_ParseTuple(args, "")) return NULL;
     return list_quote(self);
 }
 
-PyObject *
+static PyObject *
 list_prepare(listObject *self, PyObject *args)
 {
     connectionObject *conn;
@@ -116,7 +116,7 @@ list_prepare(listObject *self, PyObject *args)
     return Py_None;
 }
 
-PyObject *
+static PyObject *
 list_conform(listObject *self, PyObject *args)
 {
     PyObject *res, *proto;

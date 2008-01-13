@@ -32,7 +32,7 @@
 
 /* conn_notice_callback - process notices */
 
-void
+static void
 conn_notice_callback(void *args, const char *message)
 {
     connectionObject *self = (connectionObject *)args;

@@ -741,7 +741,7 @@ _psyco_curs_buildrow_with_factory(cursorObject *self, int row)
     return _psyco_curs_buildrow_fill(self, res, row, n, 0);
 }
 
-PyObject *
+static PyObject *
 psyco_curs_fetchone(cursorObject *self, PyObject *args)
 {
     PyObject *res;
@@ -795,7 +795,7 @@ psyco_curs_fetchone(cursorObject *self, PyObject *args)
 "of tuples (by default) or using the sequence factory previously set in\n" \
 "the `row_factory` attribute. Return `None` when no more data is available.\n"
 
-PyObject *
+static PyObject *
 psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
 {
     int i;
@@ -870,7 +870,7 @@ psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
 "the sequence factory previously set in the `row_factory` attribute.\n" \
 "Return `None` when no more data is available.\n"
 
-PyObject *
+static PyObject *
 psyco_curs_fetchall(cursorObject *self, PyObject *args)
 {
     int i, size;

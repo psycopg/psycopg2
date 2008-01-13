@@ -1,3 +1,10 @@
+2008-01-14  James Henstridge  <james@jamesh.id.au>
+
+	* psycopg/typecast_array.c (typecast_array_scan): set an initial
+	value for quotes to keep gcc happy.
+
+	* psycopg/*.c: add missing static modifier on many functions.
+
 2008-01-12  James Henstridge  <james@jamesh.id.au>
 
 	* tests/test_transaction.py

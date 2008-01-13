@@ -193,14 +193,14 @@ qstring_str(qstringObject *self)
     return self->buffer;
 }
 
-PyObject *
+static PyObject *
 qstring_getquoted(qstringObject *self, PyObject *args)
 {
     if (!PyArg_ParseTuple(args, "")) return NULL;
     return qstring_str(self);
 }
 
-PyObject *
+static PyObject *
 qstring_prepare(qstringObject *self, PyObject *args)
 {
     connectionObject *conn;
@@ -226,7 +226,7 @@ qstring_prepare(qstringObject *self, PyObject *args)
     return Py_None;
 }
 
-PyObject *
+static PyObject *
 qstring_conform(qstringObject *self, PyObject *args)
 {
     PyObject *res, *proto;

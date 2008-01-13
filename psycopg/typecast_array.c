@@ -164,7 +164,7 @@ static int
 typecast_array_scan(char *str, Py_ssize_t strlength,
                     PyObject *curs, PyObject *base, PyObject *array)
 {
-    int state, quotes;
+    int state, quotes = 0;
     Py_ssize_t length = 0, pos = 0;
     char *token;
 
