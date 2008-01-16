@@ -100,32 +100,6 @@ _psyco_connect_fill_dsn(char *dsn, char *kw, char *v, size_t i)
     return i;
 }
 
-static void
-_psyco_connect_fill_exc(connectionObject *conn)
-{
-    /* fill the connection object with the exceptions */
-    conn->exc_Error = Error;
-    Py_INCREF(Error);
-    conn->exc_Warning = Warning;
-    Py_INCREF(Warning);
-    conn->exc_InterfaceError = InterfaceError;
-    Py_INCREF(InterfaceError);
-    conn->exc_DatabaseError = DatabaseError;
-    Py_INCREF(DatabaseError);
-    conn->exc_InternalError = InternalError;
-    Py_INCREF(InternalError);
-    conn->exc_ProgrammingError = ProgrammingError;
-    Py_INCREF(ProgrammingError);
-    conn->exc_IntegrityError = IntegrityError;
-    Py_INCREF(IntegrityError);
-    conn->exc_DataError = DataError;
-    Py_INCREF(DataError);
-    conn->exc_NotSupportedError = NotSupportedError;
-    Py_INCREF(NotSupportedError);
-    conn->exc_OperationalError = OperationalError;
-    Py_INCREF(OperationalError);
-}
-
 static PyObject *
 psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
 {
@@ -215,7 +189,6 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
       /* allocate connection, fill with errors and return it */
       if (factory == NULL) factory = (PyObject *)&connectionType;
       conn = PyObject_CallFunction(factory, "s", dsn);
-      if (conn) _psyco_connect_fill_exc((connectionObject*)conn);
     }
 
     goto cleanup;
@@ -433,6 +406,9 @@ static void psyco_encodings_fill(PyObject *dict)
 PyObject *Error, *Warning, *InterfaceError, *DatabaseError,
     *InternalError, *OperationalError, *ProgrammingError,
     *IntegrityError, *DataError, *NotSupportedError;
+#ifdef PSYCOPG_EXTENSIONS
+PyObject *QueryCanceledError, *TransactionRollbackError;
+#endif
 
 /* mapping between exception names and their PyObject */
 static struct {
@@ -455,6 +431,13 @@ static struct {
     { "psycopg2.DataError", &DataError, &DatabaseError, DataError_doc },
     { "psycopg2.NotSupportedError", &NotSupportedError, &DatabaseError,
         NotSupportedError_doc },
+#ifdef PSYCOPG_EXTENSIONS
+    { "psycopg2.extensions.QueryCanceledError", &QueryCanceledError,
+      &OperationalError, OperationalError_doc },
+    { "psycopg2.extensions.TransactionRollbackError",
+      &TransactionRollbackError, &OperationalError,
+      TransactionRollbackError_doc },
+#endif
     {NULL}  /* Sentinel */
 };
 
@@ -507,6 +490,11 @@ psyco_errors_fill(PyObject *dict)
     PyDict_SetItemString(dict, "IntegrityError", IntegrityError);
     PyDict_SetItemString(dict, "DataError", DataError);
     PyDict_SetItemString(dict, "NotSupportedError", NotSupportedError);
+#ifdef PSYCOPG_EXTENSIONS
+    PyDict_SetItemString(dict, "QueryCanceledError", QueryCanceledError);
+    PyDict_SetItemString(dict, "TransactionRollbackError",
+                         TransactionRollbackError);
+#endif
 }
 
 void
@@ -522,6 +510,11 @@ psyco_errors_set(PyObject *type)
     PyObject_SetAttrString(type, "IntegrityError", IntegrityError);
     PyObject_SetAttrString(type, "DataError", DataError);
     PyObject_SetAttrString(type, "NotSupportedError", NotSupportedError);
+#ifdef PSYCOPG_EXTENSIONS
+    PyObject_SetAttrString(type, "QueryCanceledError", QueryCanceledError);
+    PyObject_SetAttrString(type, "TransactionRollbackError",
+                           TransactionRollbackError);
+#endif
 }
 
 /* psyco_error_new

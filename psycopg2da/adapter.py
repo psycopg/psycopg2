@@ -372,14 +372,7 @@ def _handle_psycopg_exception(error):
     If we have a serialization exception or a deadlock, we should retry the
     transaction by raising a Retry exception. Otherwise, we reraise.
     """
-    if not error.args:
-        raise
-    msg = error.args[0]
-    # These messages are from PostgreSQL 8.0. They may change between
-    # PostgreSQL releases - if so, the different messages should be added
-    # rather than the existing ones changed so this logic works with
-    # different versions.
-    if 'could not serialize' in msg or 'deadlock detected' in msg:
+    if isinstance(error, psycopg2.extensions.TransactionRollbackError):
         raise Retry(sys.exc_info())
     raise
 

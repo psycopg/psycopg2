@@ -85,6 +85,9 @@ extern psyco_errors_set_RETURN psyco_errors_set psyco_errors_set_PROTO;
 extern PyObject *Error, *Warning, *InterfaceError, *DatabaseError,
     *InternalError, *OperationalError, *ProgrammingError,
     *IntegrityError, *DataError, *NotSupportedError;
+#ifdef PSYCOPG_EXTENSIONS
+extern PyObject *QueryCanceledError, *TransactionRollbackError;
+#endif
 
 /* python versions and compatibility stuff */
 #ifndef PyMODINIT_FUNC
@@ -166,6 +169,14 @@ extern void psyco_set_error(PyObject *exc, PyObject *curs,  const char *msg,
 
 #define NotSupportedError_doc \
 "A not supported datbase API was called."
+
+#ifdef PSYCOPG_EXTENSIONS
+#define QueryCanceledError_doc \
+"Error related to SQL query cancelation."
+
+#define TransactionRollbackError_doc \
+"Error causing transaction rollback (deadlocks, serialisation failures, etc)."
+#endif
 
 #ifdef __cplusplus
 }

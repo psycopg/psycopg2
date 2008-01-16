@@ -107,9 +107,13 @@ exception_from_sqlstate(const char *sqlstate)
     case '4':
         switch (sqlstate[1]) {
         case '0': /* Class 40 - Transaction Rollback */
+#ifdef PSYCOPG_EXTENSIONS
+            return TransactionRollbackError;
+#else
             return OperationalError;
+#endif
         case '2': /* Class 42 - Syntax Error or Access Rule Violation */
-        case '4': /* Class 44 — WITH CHECK OPTION Violation */
+        case '4': /* Class 44 - WITH CHECK OPTION Violation */
             return ProgrammingError;
         }
         break;
@@ -119,7 +123,12 @@ exception_from_sqlstate(const char *sqlstate)
            Class 55 - Object Not In Prerequisite State
            Class 57 - Operator Intervention
            Class 58 - System Error (errors external to PostgreSQL itself) */
-        return OperationalError;
+#ifdef PSYCOPG_EXTENSIONS
+        if (!strcmp(sqlstate, "57014"))
+            return QueryCanceledError;
+        else
+#endif
+            return OperationalError;
     case 'F': /* Class F0 - Configuration File Error */
         return InternalError;
     case 'P': /* Class P0 - PL/pgSQL Error */
@@ -188,6 +197,9 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres,
             || !strncmp(err, "ERROR:  ExecAppend: Fail to add null", 36)
             || strstr(err, "referential integrity violation"))
             exc = IntegrityError;
+        else if (strstr(err, "could not serialize") ||
+                 strstr(err, "deadlock detected"))
+            exc = TransactionRollbackError;
         else
             exc = ProgrammingError;
     }

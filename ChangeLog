@@ -1,5 +1,40 @@
 2008-01-16  James Henstridge  <james@jamesh.id.au>
 
+	* tests/test_transaction.py (DeadlockSerializationTestCase): port
+	over some tests for serialisation and deadlock errors,
+	demonstrating that TransactionRollbackError is generated.
+	(QueryCancelationTests): add a test to show that
+	QueryCanceledError is raised on statement timeouts.
+
+	* psycopg2da/adapter.py (_handle_psycopg_exception): rather than
+	checking exception messages, check for TransactionRollbackError.
+
+	* psycopg/pqpath.c (exception_from_sqlstate): return
+	TransactionRollbackError for 40xxx errors, and QueryCanceledError
+	for 57014 errors.
+	(pq_raise): If we are using an old server, use
+	TransactionRollbackError if the error message contains "could not
+	serialize" or "deadlock detected".
+
+	* psycopg/psycopgmodule.c (_psyco_connect_fill_exc): remove
+	function, since we no longer need to store pointers to the
+	exceptions in the connection.  This also fixes a reference leak.
+	(psyco_connect): remove _psyco_connect_fill_exc() function call.
+
+	* psycopg/connection.h (connectionObject): remove exception
+	members from struct.
+
+	* psycopg/connection_type.c (connectionObject_getsets): modify the
+	exception attributes on the connection object from members to
+	getsets.  This reduces the size of the struct.
+
+	* lib/extensions.py: import the two new extensions.
+
+	* psycopg/psycopgmodule.c (exctable): add new QueryCanceledError
+	and TransactionRollbackError exceptions.
+
+2008-01-16  James Henstridge  <james@jamesh.id.au>
+
 	* tests/__init__.py (test_suite): add date tests to test suite.
 
 	* tests/test_dates.py: add tests for date/time typecasting and

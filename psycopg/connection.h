@@ -67,18 +67,6 @@ typedef struct {
     /* notifies */
     PyObject *notifies;
 
-    /* errors (DBAPI-2.0 extension) */
-    PyObject *exc_Error;
-    PyObject *exc_Warning;
-    PyObject *exc_InterfaceError;
-    PyObject *exc_DatabaseError;
-    PyObject *exc_InternalError;
-    PyObject *exc_OperationalError;
-    PyObject *exc_ProgrammingError;
-    PyObject *exc_IntegrityError;
-    PyObject *exc_DataError;
-    PyObject *exc_NotSupportedError;
-
     /* per-connection typecasters */
     PyObject *string_types;   /* a set of typecasters for string types */
     PyObject *binary_types;   /* a set of typecasters for binary types */

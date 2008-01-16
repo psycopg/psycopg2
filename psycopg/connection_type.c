@@ -231,6 +231,14 @@ psyco_conn_get_transaction_status(connectionObject *self, PyObject *args)
 
 #endif
 
+static PyObject *
+psyco_conn_get_exception(PyObject *self, void *closure)
+{
+    PyObject *exception = *(PyObject **)closure;
+
+    Py_INCREF(exception);
+    return exception;
+}
 
 /** the connection object **/
 
@@ -260,32 +268,6 @@ static struct PyMethodDef connectionObject_methods[] = {
 /* object member list */
 
 static struct PyMemberDef connectionObject_members[] = {
-    /* DBAPI-2.0 extensions (exception objects) */
-    {"Error", T_OBJECT,
-        offsetof(connectionObject, exc_Error), RO, Error_doc},
-    {"Warning",
-        T_OBJECT, offsetof(connectionObject, exc_Warning), RO, Warning_doc},
-    {"InterfaceError", T_OBJECT,
-        offsetof(connectionObject, exc_InterfaceError), RO,
-        InterfaceError_doc},
-    {"DatabaseError", T_OBJECT,
-        offsetof(connectionObject, exc_DatabaseError), RO, DatabaseError_doc},
-    {"InternalError", T_OBJECT,
-        offsetof(connectionObject, exc_InternalError), RO, InternalError_doc},
-    {"OperationalError", T_OBJECT,
-        offsetof(connectionObject, exc_OperationalError), RO,
-        OperationalError_doc},
-    {"ProgrammingError", T_OBJECT,
-        offsetof(connectionObject, exc_ProgrammingError), RO,
-        ProgrammingError_doc},
-    {"IntegrityError", T_OBJECT,
-        offsetof(connectionObject, exc_IntegrityError), RO,
-        IntegrityError_doc},
-    {"DataError", T_OBJECT,
-        offsetof(connectionObject, exc_DataError), RO, DataError_doc},
-    {"NotSupportedError", T_OBJECT,
-        offsetof(connectionObject, exc_NotSupportedError), RO,
-        NotSupportedError_doc},
 #ifdef PSYCOPG_EXTENSIONS
     {"closed", T_LONG, offsetof(connectionObject, closed), RO,
         "True if the connection is closed."},
@@ -308,6 +290,25 @@ static struct PyMemberDef connectionObject_members[] = {
 #endif
     {NULL}
 };
+
+#define EXCEPTION_GETTER(exc) \
+    { #exc, psyco_conn_get_exception, NULL, exc ## _doc, &exc }
+
+static struct PyGetSetDef connectionObject_getsets[] = {
+    /* DBAPI-2.0 extensions (exception objects) */
+    EXCEPTION_GETTER(Error),
+    EXCEPTION_GETTER(Warning),
+    EXCEPTION_GETTER(InterfaceError),
+    EXCEPTION_GETTER(DatabaseError),
+    EXCEPTION_GETTER(InternalError),
+    EXCEPTION_GETTER(OperationalError),
+    EXCEPTION_GETTER(ProgrammingError),
+    EXCEPTION_GETTER(IntegrityError),
+    EXCEPTION_GETTER(DataError),
+    EXCEPTION_GETTER(NotSupportedError),
+    {NULL}
+};
+#undef EXCEPTION_GETTER
 
 /* initialization and finalization methods */
 
@@ -465,7 +466,7 @@ PyTypeObject connectionType = {
 
     connectionObject_methods, /*tp_methods*/
     connectionObject_members, /*tp_members*/
-    0,          /*tp_getset*/
+    connectionObject_getsets, /*tp_getset*/
     0,          /*tp_base*/
     0,          /*tp_dict*/
 
