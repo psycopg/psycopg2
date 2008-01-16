@@ -1,3 +1,8 @@
+2008-01-17  James Henstridge  <james@jamesh.id.au>
+
+	* ZPsycopgDA/DA.py (Connection.__init__): Default the encoding to
+	UTF-8, fixing bug #190.
+
 2008-01-16  James Henstridge  <james@jamesh.id.au>
 
 	* tests/test_transaction.py (DeadlockSerializationTestCase): port

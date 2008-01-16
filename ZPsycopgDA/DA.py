@@ -82,7 +82,7 @@ class Connection(Shared.DC.ZRDB.Connection.Connection):
     icon              = 'misc_/conn'
 
     def __init__(self, id, title, connection_string,
-                 zdatetime, check=None, tilevel=2, encoding=''):
+                 zdatetime, check=None, tilevel=2, encoding='UTF-8'):
         self.zdatetime = zdatetime
         self.id = str(id)
         self.edit(title, connection_string, zdatetime,
@@ -94,7 +94,7 @@ class Connection(Shared.DC.ZRDB.Connection.Connection):
     ## connection parameters editing ##
     
     def edit(self, title, connection_string,
-             zdatetime, check=None, tilevel=2, encoding=''):
+             zdatetime, check=None, tilevel=2, encoding='UTF-8'):
         self.title = title
         self.connection_string = connection_string
         self.zdatetime = zdatetime
