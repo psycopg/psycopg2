@@ -79,6 +79,13 @@ typecast_parse_date(char* s, char** t, Py_ssize_t* len,
         *day = acc;
         cz += 1;
     }
+
+    /* Is this a BC date?  If so, adjust the year value.  Note that
+     * mx.DateTime numbers BC dates from zero rather than one.  The
+     * Python datetime module does not support BC dates at all. */
+    if (*len >= 2 && s[*len-2] == 'B' && s[*len-1] == 'C')
+        *year = 1 - (*year);
+
     if (t != NULL) *t = s;
 
     return cz;
@@ -122,6 +129,12 @@ typecast_parse_time(char* s, char** t, Py_ssize_t* len,
             if      (cz == 2) *ss = acc;
             else if (cz == 3) *us = acc;
             acc = -1; cz = 4;
+            break;
+        case ' ':
+        case 'B':
+        case 'C':
+            /* Ignore the " BC" suffix, if passed -- it is handled
+             * when parsing the date portion. */
             break;
         default:
             acc = (acc == -1 ? 0 : acc*10) + ((int)*s - (int)'0');

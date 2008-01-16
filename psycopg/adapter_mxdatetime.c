@@ -43,71 +43,70 @@ extern mxDateTimeModule_APIObject *mxDateTimeP;
 static PyObject *
 mxdatetime_str(mxdatetimeObject *self)
 {
-    PyObject *str = NULL, *res = NULL;
-    PyObject *supa, *supb;
+    mxDateTimeObject *dt;
+    mxDateTimeDeltaObject *dtd;
+    char buf[128] = { 0, };
 
     switch (self->type) {
 
     case PSYCO_MXDATETIME_DATE:
-        str = PyObject_GetAttrString(self->wrapped, "date");
+        dt = (mxDateTimeObject *)self->wrapped;
+        if (dt->year >= 1)
+            PyOS_snprintf(buf, sizeof(buf) - 1, "'%04ld-%02d-%02d'",
+                          dt->year, (int)dt->month, (int)dt->day);
+        else
+            PyOS_snprintf(buf, sizeof(buf) - 1, "'%04ld-%02d-%02d BC'",
+                          1 - dt->year, (int)dt->month, (int)dt->day);
         break;
 
     case PSYCO_MXDATETIME_TIMESTAMP:
-        /* here we build the right ISO string from date and time */
-        supa = PyObject_GetAttrString(self->wrapped, "date");
-        supb = PyObject_GetAttrString(self->wrapped, "time");
-        str = PyString_FromFormat("%sT%s",
-            PyString_AsString(supa), PyString_AsString(supb));
-        Py_XDECREF(supa);
-        Py_XDECREF(supb);
+        dt = (mxDateTimeObject *)self->wrapped;
+        if (dt->year >= 1)
+            PyOS_snprintf(buf, sizeof(buf) - 1,
+                          "'%04ld-%02d-%02dT%02d:%02d:%09.6f'",
+                          dt->year, (int)dt->month, (int)dt->day,
+                          (int)dt->hour, (int)dt->minute, dt->second);
+        else
+            PyOS_snprintf(buf, sizeof(buf) - 1,
+                          "'%04ld-%02d-%02dT%02d:%02d:%09.6f BC'",
+                          1 - dt->year, (int)dt->month, (int)dt->day,
+                          (int)dt->hour, (int)dt->minute, dt->second);
         break;
 
     case PSYCO_MXDATETIME_TIME:
     case PSYCO_MXDATETIME_INTERVAL:
-        str = PyObject_Str(self->wrapped);
-
         /* given the limitation of the mx.DateTime module that uses the same
            type for both time and delta values we need to do some black magic
            and make sure we're not using an adapt()ed interval as a simple
            time */
-        if (PyString_Size(str) > 8 && PyString_AsString(str)[8] == ':') {
-            mxDateTimeDeltaObject *obj = (mxDateTimeDeltaObject*)self->wrapped;
+        dtd = (mxDateTimeDeltaObject *)self->wrapped;
+        if (0 <= dtd->seconds && dtd->seconds < 24*3600) {
+            PyOS_snprintf(buf, sizeof(buf) - 1, "'%02d:%02d:%09.6f'",
+                          (int)dtd->hour, (int)dtd->minute, dtd->second);
+        } else {
+            double ss = dtd->hour*3600.0 + dtd->minute*60.0 + dtd->second;
 
-            char buffer[8];
-            int i, j, x;
-
-            double ss = obj->hour*3600.0 + obj->minute*60.0 + obj->second;
-            int us = (int)((ss - floor(ss))*1000000);
-
-            for (i=1000000, j=0; i > 0 ; i /= 10) {
-                x = us/i;
-                us -= x*i;
-                buffer[j++] = '0'+x;
-            }
-            buffer[j] = '\0';
-
-            res = PyString_FromFormat("'%ld days %d.%s seconds'",
-                obj->day, (int)round(ss), buffer);
+            if (dtd->seconds >= 0)
+                PyOS_snprintf(buf, sizeof(buf) - 1, "'%ld days %.6f seconds'",
+                              dtd->day, ss);
+            else
+                PyOS_snprintf(buf, sizeof(buf) - 1, "'-%ld days -%.6f seconds'",
+                              dtd->day, ss);
         }
         break;
     }
 
-    if (str != NULL && res == NULL) {
-        res = PyString_FromFormat("'%s'", PyString_AsString(str));
-    }
-    Py_XDECREF(str);
-
-    return res;
+    return PyString_FromString(buf);
 }
 
-PyObject *
+static PyObject *
 mxdatetime_getquoted(mxdatetimeObject *self, PyObject *args)
 {
     if (!PyArg_ParseTuple(args, "")) return NULL;
     return mxdatetime_str(self);
 }
 
-PyObject *
+static PyObject *
 mxdatetime_conform(mxdatetimeObject *self, PyObject *args)
 {
     PyObject *res, *proto;

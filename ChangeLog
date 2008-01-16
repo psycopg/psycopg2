@@ -1,3 +1,20 @@
+2008-01-16  James Henstridge  <james@jamesh.id.au>
+
+	* tests/__init__.py (test_suite): add date tests to test suite.
+
+	* tests/test_dates.py: add tests for date/time typecasting and
+	adaption.
+
+	* psycopg/adapter_mxdatetime.c (mxdatetime_str): add support for
+	outputting BC dates (which involves switching them to one-based
+	dates).  Also remove broken handling of microseconds.
+
+	* psycopg/typecast.c (typecast_parse_date): if the string ends
+	with "BC" adjust the year value to be a zero-based BC value as
+	used by mx.DateTime (datetime doesn't support BC dates).
+	(typecast_parse_time): ignore ' ', 'B' and 'C' in time strings
+	rather than treating them as part of the seconds part of the time.
+
 2008-01-14  James Henstridge  <james@jamesh.id.au>
 
 	* psycopg/typecast_array.c (typecast_array_scan): set an initial
