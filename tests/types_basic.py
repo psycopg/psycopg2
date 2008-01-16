@@ -13,14 +13,14 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-import sys
 try:
     import decimal
 except:
     pass
-import psycopg2
+import sys
 import unittest
 
+import psycopg2
 import tests
 
 
@@ -65,11 +65,17 @@ class TypesBasicTests(unittest.TestCase):
         b = psycopg2.Binary(s)
         buf = self.execute("SELECT %s::bytea AS foo", (b,))
         self.failUnless(str(buf) == s, "wrong binary quoting")
+
+    def testBinaryEmptyString(self):
         # test to make sure an empty Binary is converted to an empty string
         b = psycopg2.Binary('')
         self.assertEqual(str(b), "''")
+
+    def testBinaryRoundTrip(self):
         # test to make sure buffers returned by psycopg2 are
         # understood by execute:
+        s = ''.join([chr(x) for x in range(256)])
+        buf = self.execute("SELECT %s::bytea AS foo", (psycopg2.Binary(s),))
         buf2 = self.execute("SELECT %s::bytea AS foo", (buf,))
         self.failUnless(str(buf2) == s, "wrong binary quoting")
 
