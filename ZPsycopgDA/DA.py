@@ -34,19 +34,13 @@ from ExtensionClass import Base
 from App.Dialogs import MessageDialog
 from DateTime import DateTime
 
-# Build Zope version in a float for later cheks
-import App
-zope_version = App.version_txt.getZopeVersion()
-if zope_version[1] == -1:
-    zope_version = None
-else:
-    zope_version = float("%s.%s" %(zope_version[:2]))
-
 # ImageFile is deprecated in Zope >= 2.9
-if zope_version is not None and zope_version < 2.9:
-     from ImageFile import ImageFile
-else:
-     from App.ImageFile import ImageFile 
+try:
+    from App.ImageFile import ImageFile
+except ImportError:
+    # Zope < 2.9.  If PIL's installed with a .pth file, we're probably
+    # hosed.
+    from ImageFile import ImageFile
 
 # import psycopg and functions/singletons needed for date/time conversions
 

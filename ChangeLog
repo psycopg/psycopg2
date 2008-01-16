@@ -2,6 +2,8 @@
 
 	* ZPsycopgDA/DA.py (Connection.__init__): Default the encoding to
 	UTF-8, fixing bug #190.
+	(App.ImageFile): simplify ImageFile import using patch from
+	chrism, fixing bug #198.
 
 2008-01-16  James Henstridge  <james@jamesh.id.au>
 
