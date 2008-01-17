@@ -16,6 +16,9 @@ build-stamp:
 	for python in $(PYVERS); do \
 		$$python setup.py build ; \
 	done
+	for python in $(PYVERS); do \
+		$$python-dbg setup.py build ; \
+	done
 	touch build-stamp
 
 clean: configure
@@ -33,23 +36,33 @@ install-arch: build
 	dh_clean -k
 	dh_installdirs
 	# psycopg2
-	for python in $(PYVERS); \
-        do $$python setup.py install --root=$(CURDIR)/debian/python-psycopg2 --no-compile; \
-    done
+	for python in $(PYVERS); do \
+            $$python setup.py install \
+		--root=$(CURDIR)/debian/python-psycopg2 --no-compile; \
+	done
+	for python in $(PYVERS); do \
+	    $$python-dbg setup.py install \
+		--root=$(CURDIR)/debian/python-psycopg2-dbg --no-compile; \
+	done
+	find debian/python-*-dbg ! -type d ! -name '*.so' | xargs rm -f
+	find debian/python-*-dbg -depth -empty -exec rmdir {} \;
 
 install-indep: build
 	# Zope package
 	dh_installzope -p zope-psycopgda2 ZPsycopgDA
+	# Zope3 package
+	dh_installzope -p python-psycopg2da psycopg2da
 
 # Build architecture-independent files here.
 binary-indep: build install-indep
 	dh_testdir
 	dh_testroot
-	dh_installdocs -i AUTHORS debian/README.zpsycopgda2
+	dh_installdocs -i AUTHORS
 	dh_installchangelogs -i
 	dh_link -i
 	dh_compress -i
 	dh_fixperms -i
+	dh_pycentral -p python-psycopg2da
 	dh_installdeb -i
 	dh_gencontrol -i
 	dh_md5sums -i
@@ -62,7 +75,9 @@ binary-arch: build install-arch
 	dh_installdocs -a README AUTHORS doc tests
 	dh_installchangelogs -a ChangeLog
 	dh_link -a
-	dh_strip -a
+	dh_strip -ppython-psycopg2 --dbg-package=python-psycopg2-dbg
+	rm -rf debian/python-psycopg2-dbg/usr/share/doc/python-psycopg2-dbg
+	ln -s python-psycopg2 debian/python-psycopg2-dbg/usr/share/doc/python-psycopg2-dbg
 	dh_compress -a
 	dh_fixperms -a
 	dh_makeshlibs -a

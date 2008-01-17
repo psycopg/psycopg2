@@ -1,0 +1,3 @@
+Name: psycopg2da
+ZopeVersions: 3
+Global: yes

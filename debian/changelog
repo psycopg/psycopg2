@@ -1,3 +1,62 @@
+psycopg2 (2.0.6-3) unstable; urgency=low
+
+  [ Piotr Ożarowski ]
+  * XS-Vcs-Svn field renamed to Vcs-Svn
+  * Vcs-Browser field added
+
+  [ Fabio Tranchitella ]
+  * Mention DB-API 2.0 compatibility in the long description.
+    (Closes: #430763)
+
+ -- Fabio Tranchitella <kobold@debian.org>  Thu, 08 Nov 2007 15:07:05 +0100
+
+psycopg2 (2.0.6-2) unstable; urgency=low
+
+  * Build a python-psycopg-dbg package
+
+ -- Scott Kitterman <scott@kitterman.com>  Tue, 03 Ju1 2007 16:55:48 -0400
+
+psycopg2 (2.0.6-1) unstable; urgency=low
+
+  * New upstream release.
+  * psycopg2da: removed, merged upstream.
+
+ -- Fabio Tranchitella <kobold@debian.org>  Sat, 09 Jun 2007 22:38:23 +0200
+
+psycopg2 (2.0.5.1-7) UNRELEASED; urgency=low
+
+  * debian/watch: added.
+
+ -- Fabio Tranchitella <kobold@debian.org>  Fri,  9 Feb 2007 12:35:55 +0100
+
+psycopg2 (2.0.5.1-6) unstable; urgency=high
+
+  * debian/zope-psycopgda2.dzproduct: requires Zope 2.9 or higher: previous
+    versions use python2.3 which is not supported anymore in psycopg.
+
+ -- Fabio Tranchitella <kobold@debian.org>  Mon, 15 Jan 2007 11:39:15 +0100
+
+psycopg2 (2.0.5.1-5) unstable; urgency=medium
+
+  * Do not run dh_pycentral on zope-psycopgda2. (Closes: #400846)
+
+ -- Fabio Tranchitella <kobold@debian.org>  Wed, 29 Nov 2006 09:04:09 +0100
+
+psycopg2 (2.0.5.1-4) unstable; urgency=medium
+
+  * Fixed a bug in psycopg2da.
+  * debian/control: bumped build-dependency on zope-debhelper.
+  * Added XS-Vcs-Svn field
+
+ -- Fabio Tranchitella <kobold@debian.org>  Fri, 24 Nov 2006 13:50:11 +0100
+
+psycopg2 (2.0.5.1-3) unstable; urgency=low
+
+  * psycopgda: imported upstream psycopg2da database adapter from SVN, which
+    builds a new binary package, python-psycopg2da.
+
+ -- Fabio Tranchitella <kobold@debian.org>  Fri, 10 Nov 2006 08:56:05 +0100
+
 psycopg2 (2.0.5.1-2) unstable; urgency=low
 
   * debian/control: added again a dependency on python-egenix-mxdatetime.

@@ -1,4 +1,4 @@
 Name: ZPsycopgDA
 Directory: ZPsycopgDA:2
 Package: zope-psycopgda2
-ZopeVersions: 2.9 2.8 2.7
+ZopeVersions: >= 2.9
