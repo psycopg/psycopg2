@@ -145,15 +145,13 @@ exception_from_sqlstate(const char *sqlstate)
    This function should be called while holding the GIL. */
 
 static void
-pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres,
-         PyObject *exc, const char *msg)
+pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres)
 {
     PyObject *pgc = (PyObject*)curs;
-
+    PyObject *exc = NULL;
     const char *err = NULL;
     const char *err2 = NULL;
     const char *code = NULL;
-    char *buf = NULL;
 
     if ((conn == NULL && curs == NULL) || (curs != NULL && conn == NULL)) {
         PyErr_SetString(Error, "psycopg went psycotic and raised a null error");
@@ -182,10 +180,9 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres,
         return;
     }
 
-    /* if exc is NULL, analyze the message and try to deduce the right
-       exception kind (only if we got the SQLSTATE from the pgres,
-       obviously) */
-    if (exc == NULL && code != NULL) {
+    /* Analyze the message and try to deduce the right exception kind
+       (only if we got the SQLSTATE from the pgres, obviously) */
+    if (code != NULL) {
         exc = exception_from_sqlstate(code);
     }
 
@@ -207,26 +204,7 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres,
     /* try to remove the initial "ERROR: " part from the postgresql error */
     err2 = strip_severity(err);
 
-    /* if msg is not NULL, add it to the error message, after a '\n' */
-    if (msg && code) {
-        size_t len = strlen(code) + strlen(err) + strlen(msg) + 5;
-        if ((buf = PyMem_Malloc(len))) {
-            snprintf(buf, len, "[%s] %s\n%s", code, err2, msg);
-            psyco_set_error(exc, pgc, buf, err, code);
-        }
-    }
-    else if (msg) {
-        size_t len = strlen(err) + strlen(msg) + 2;
-        if ((buf = PyMem_Malloc(len))) {
-            snprintf(buf, len, "%s\n%s", err2, msg);
-            psyco_set_error(exc, pgc, buf, err, code);
-        }
-    }
-    else {
-        psyco_set_error(exc, pgc, err2, err, code);
-    }
-
-    if (buf != NULL) PyMem_Free(buf);
+    psyco_set_error(exc, pgc, err2, err, code);
 }
 
 /* pq_set_critical, pq_resolve_critical - manage critical errors
@@ -265,7 +243,7 @@ pq_clear_critical(connectionObject *conn)
     }
 }
 
-PyObject *
+static PyObject *
 pq_resolve_critical(connectionObject *conn, int close)
 {
     Dprintf("pq_resolve_critical: resolving %s", conn->critical);
@@ -363,7 +341,7 @@ pq_complete_error(connectionObject *conn, PGresult **pgres, char **error)
     Dprintf("pq_complete_error: pgconn = %p, pgres = %p, error = %s",
             conn->pgconn, *pgres, *error ? *error : "(null)");
     if (*pgres != NULL)
-        pq_raise(conn, NULL, *pgres, NULL, NULL);
+        pq_raise(conn, NULL, *pgres);
     else if (*error != NULL) {
         PyErr_SetString(OperationalError, *error);
         free(*error);
@@ -865,7 +843,7 @@ _pq_copy_in_v3(cursorObject *curs)
     IFCLEARPGRES(curs->pgres);
     while ((curs->pgres = PQgetResult(curs->conn->pgconn)) != NULL) {
         if (PQresultStatus(curs->pgres) == PGRES_FATAL_ERROR)
-            pq_raise(curs->conn, curs, NULL, NULL, NULL);
+            pq_raise(curs->conn, curs, NULL);
         IFCLEARPGRES(curs->pgres);
     }
 
@@ -899,7 +877,7 @@ _pq_copy_in(cursorObject *curs)
     IFCLEARPGRES(curs->pgres);
     while ((curs->pgres = PQgetResult(curs->conn->pgconn)) != NULL) {
         if (PQresultStatus(curs->pgres) == PGRES_FATAL_ERROR)
-            pq_raise(curs->conn, curs, NULL, NULL, NULL);
+            pq_raise(curs->conn, curs, NULL);
         IFCLEARPGRES(curs->pgres);
     }
 
@@ -936,7 +914,7 @@ _pq_copy_out_v3(cursorObject *curs)
     }
 
     if (len == -2) {
-        pq_raise(curs->conn, NULL, NULL, NULL, NULL);
+        pq_raise(curs->conn, curs, NULL);
         return -1;
     }
 
@@ -944,7 +922,7 @@ _pq_copy_out_v3(cursorObject *curs)
     IFCLEARPGRES(curs->pgres);
     while ((curs->pgres = PQgetResult(curs->conn->pgconn)) != NULL) {
         if (PQresultStatus(curs->pgres) == PGRES_FATAL_ERROR)
-            pq_raise(curs->conn, curs, NULL, NULL, NULL);
+            pq_raise(curs->conn, curs, NULL);
         IFCLEARPGRES(curs->pgres);
     }
     return 1;
@@ -995,7 +973,7 @@ _pq_copy_out(cursorObject *curs)
     IFCLEARPGRES(curs->pgres);
     while ((curs->pgres = PQgetResult(curs->conn->pgconn)) != NULL) {
         if (PQresultStatus(curs->pgres) == PGRES_FATAL_ERROR)
-            pq_raise(curs->conn, curs, NULL, NULL, NULL);
+            pq_raise(curs->conn, curs, NULL);
         IFCLEARPGRES(curs->pgres);
     }
 
@@ -1130,7 +1108,7 @@ pq_fetch(cursorObject *curs)
 
     default:
         Dprintf("pq_fetch: uh-oh, something FAILED");
-        pq_raise(curs->conn, curs, NULL, NULL, NULL);
+        pq_raise(curs->conn, curs, NULL);
         IFCLEARPGRES(curs->pgres);
         ex = -1;
         break;
