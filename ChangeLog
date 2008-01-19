@@ -1,5 +1,12 @@
 2008-01-19  James Henstridge  <james@jamesh.id.au>
 
+	* tests/test_connection.py (ConnectionTests): add simple tests for
+	the Connection and Cursor "closed" attributes.
+
+	* psycopg/cursor_type.c (psyco_curs_get_closed): add a "closed"
+	attribute to cursors.  It will be True if either the cursor or its
+	associated connection are closed.  This fixes bug #164.
+
 	* psycopg/pqpath.c (pq_raise): remove unused arguments to
 	function, and simplify.
 	(pq_resolve_critical): make function static, since it isn't being

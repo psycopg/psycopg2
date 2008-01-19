@@ -1431,6 +1431,22 @@ psyco_curs_isready(cursorObject *self, PyObject *args)
     }
 }
 
+/* extension: closed - return true if cursor is closed*/
+
+#define psyco_curs_closed_doc \
+"True if cursor is closed, False if cursor is open"
+
+static PyObject *
+psyco_curs_get_closed(cursorObject *self, void *closure)
+{
+    PyObject *closed;
+
+    closed = (self->closed || (self->conn && self->conn->closed)) ?
+        Py_True : Py_False;
+    Py_INCREF(closed);
+    return closed;
+}
+
 #endif
 
 
@@ -1538,6 +1554,15 @@ static struct PyMemberDef cursorObject_members[] = {
     {"typecaster", T_OBJECT, OFFSETOF(caster), RO},
     {"string_types", T_OBJECT, OFFSETOF(string_types), 0},
     {"binary_types", T_OBJECT, OFFSETOF(binary_types), 0},
+#endif
+    {NULL}
+};
+
+/* object calculated member list */
+static struct PyGetSetDef cursorObject_getsets[] = {
+#ifdef PSYCOPG_EXTENSIONS
+    { "closed", (getter)psyco_curs_get_closed, NULL,
+      psyco_curs_closed_doc, NULL },
 #endif
     {NULL}
 };
@@ -1703,7 +1728,7 @@ PyTypeObject cursorType = {
 
     cursorObject_methods, /*tp_methods*/
     cursorObject_members, /*tp_members*/
-    0,          /*tp_getset*/
+    cursorObject_getsets, /*tp_getset*/
     0,          /*tp_base*/
     0,          /*tp_dict*/
 

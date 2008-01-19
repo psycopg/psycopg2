@@ -3,13 +3,12 @@ import threading
 import unittest
 
 import psycopg2
-import psycopg2
-import tests
-
 from psycopg2.extensions import (
     ISOLATION_LEVEL_SERIALIZABLE, STATUS_BEGIN, STATUS_READY)
+import tests
 
-class TransactionTestCase(unittest.TestCase):
+
+class TransactionTests(unittest.TestCase):
 
     def setUp(self):
         self.conn = psycopg2.connect("dbname=%s" % tests.dbname)
@@ -72,7 +71,7 @@ class TransactionTestCase(unittest.TestCase):
         self.assertEqual(curs.fetchone()[0], 1)
 
 
-class DeadlockSerializationTestCase(unittest.TestCase):
+class DeadlockSerializationTests(unittest.TestCase):
     """Test deadlock and serialization failure errors."""
 
     def connect(self):
@@ -222,7 +221,4 @@ class QueryCancelationTests(unittest.TestCase):
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
-
-if __name__ == "__main__":
-    unittest.main()
 
