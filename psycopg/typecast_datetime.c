@@ -34,7 +34,7 @@ extern PyObject *pyDeltaTypeP;
 /** DATE - cast a date into a date python object **/
 
 static PyObject *
-typecast_PYDATE_cast(char *str, Py_ssize_t len, PyObject *curs)
+typecast_PYDATE_cast(const char *str, Py_ssize_t len, PyObject *curs)
 {
     PyObject* obj = NULL;
     int n, y=0, m=0, d=0;
@@ -70,12 +70,12 @@ typecast_PYDATE_cast(char *str, Py_ssize_t len, PyObject *curs)
 /** DATETIME - cast a timestamp into a datetime python object **/
 
 static PyObject *
-typecast_PYDATETIME_cast(char *str, Py_ssize_t len, PyObject *curs)
+typecast_PYDATETIME_cast(const char *str, Py_ssize_t len, PyObject *curs)
 {
     PyObject* obj = NULL;
     int n, y=0, m=0, d=0;
     int hh=0, mm=0, ss=0, us=0, tz=0;
-    char *tp = NULL;
+    const char *tp = NULL;
 
     if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
 
@@ -144,7 +144,7 @@ typecast_PYDATETIME_cast(char *str, Py_ssize_t len, PyObject *curs)
 /** TIME - parse time into a time object **/
 
 static PyObject *
-typecast_PYTIME_cast(char *str, Py_ssize_t len, PyObject *curs)
+typecast_PYTIME_cast(const char *str, Py_ssize_t len, PyObject *curs)
 {
     PyObject* obj = NULL;
     int n, hh=0, mm=0, ss=0, us=0, tz=0;
@@ -172,7 +172,7 @@ typecast_PYTIME_cast(char *str, Py_ssize_t len, PyObject *curs)
 /** INTERVAL - parse an interval into a timedelta object **/
 
 static PyObject *
-typecast_PYINTERVAL_cast(char *str, Py_ssize_t len, PyObject *curs)
+typecast_PYINTERVAL_cast(const char *str, Py_ssize_t len, PyObject *curs)
 {
     long years = 0, months = 0, days = 0;
     double hours = 0.0, minutes = 0.0, seconds = 0.0, hundredths = 0.0;

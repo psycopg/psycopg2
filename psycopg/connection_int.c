@@ -296,7 +296,7 @@ conn_switch_isolation_level(connectionObject *self, int level)
 /* conn_set_client_encoding - switch client encoding on connection */
 
 int
-conn_set_client_encoding(connectionObject *self, char *enc)
+conn_set_client_encoding(connectionObject *self, const char *enc)
 {
     PGresult *pgres = NULL;
     char *error = NULL;

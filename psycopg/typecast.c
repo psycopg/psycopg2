@@ -32,15 +32,15 @@
 
 /* usefull function used by some typecasters */
 
-static char *
-skip_until_space(char *s)
+static const char *
+skip_until_space(const char *s)
 {
     while (*s && *s != ' ') s++;
     return s;
 }
 
-static char *
-skip_until_space2(char *s, Py_ssize_t *len)
+static const char *
+skip_until_space2(const char *s, Py_ssize_t *len)
 {
     while (*len > 0 && *s && *s != ' ') {
         s++; (*len)--;
@@ -49,7 +49,7 @@ skip_until_space2(char *s, Py_ssize_t *len)
 }
 
 static int
-typecast_parse_date(char* s, char** t, Py_ssize_t* len,
+typecast_parse_date(const char* s, const char** t, Py_ssize_t* len,
                      int* year, int* month, int* day)
 {
     int acc = -1, cz = 0;
@@ -92,7 +92,7 @@ typecast_parse_date(char* s, char** t, Py_ssize_t* len,
 }
 
 static int
-typecast_parse_time(char* s, char** t, Py_ssize_t* len,
+typecast_parse_time(const char* s, const char** t, Py_ssize_t* len,
                      int* hh, int* mm, int* ss, int* us, int* tz)
 {
     int acc = -1, cz = 0;
@@ -556,7 +556,7 @@ typecast_from_c(typecastObject_initlist *type, PyObject *dict)
 }
 
 PyObject *
-typecast_cast(PyObject *obj, char *str, Py_ssize_t len, PyObject *curs)
+typecast_cast(PyObject *obj, const char *str, Py_ssize_t len, PyObject *curs)
 {
     PyObject *old, *res = NULL;
     typecastObject *self = (typecastObject *)obj;

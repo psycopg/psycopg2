@@ -24,7 +24,7 @@
 /** typecast_array_cleanup - remove the horrible [...]= stuff **/
 
 static int
-typecast_array_cleanup(char **str, Py_ssize_t *len)
+typecast_array_cleanup(const char **str, Py_ssize_t *len)
 {
     Py_ssize_t i, depth = 1;
 
@@ -53,7 +53,7 @@ typecast_array_cleanup(char **str, Py_ssize_t *len)
 #define ASCAN_QUOTED 4
 
 static int
-typecast_array_tokenize(char *str, Py_ssize_t strlength,
+typecast_array_tokenize(const char *str, Py_ssize_t strlength,
                         Py_ssize_t *pos, char** token,
                         Py_ssize_t *length, int *quotes)
 {
@@ -148,7 +148,7 @@ typecast_array_tokenize(char *str, Py_ssize_t strlength,
         *length = (Py_ssize_t) (buffer - *token);
     }
     else {
-        *token = &str[*pos];
+        *token = (char *)&str[*pos];
         *length = l;
     }
 
@@ -161,7 +161,7 @@ typecast_array_tokenize(char *str, Py_ssize_t strlength,
 }
 
 static int
-typecast_array_scan(char *str, Py_ssize_t strlength,
+typecast_array_scan(const char *str, Py_ssize_t strlength,
                     PyObject *curs, PyObject *base, PyObject *array)
 {
     int state, quotes = 0;
@@ -235,7 +235,7 @@ typecast_array_scan(char *str, Py_ssize_t strlength,
     have to be taken on the single items **/
 
 static PyObject *
-typecast_GENERIC_ARRAY_cast(char *str, Py_ssize_t len, PyObject *curs)
+typecast_GENERIC_ARRAY_cast(const char *str, Py_ssize_t len, PyObject *curs)
 {
     PyObject *obj = NULL;
     PyObject *base = ((typecastObject*)((cursorObject*)curs)->caster)->bcast;

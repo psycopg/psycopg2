@@ -1,3 +1,8 @@
+2008-01-22  James Henstridge  <james@jamesh.id.au>
+
+	* psycopg/*.[ch]: add const qualifier to various string arguments
+	to functions (typecast functions and conn_switch_isolation_level).
+
 2008-01-21  James Henstridge  <james@jamesh.id.au>
 
 	* setup.cfg (define): remove PSYCOPG_DISPLAY_SIZE from default

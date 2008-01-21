@@ -156,7 +156,7 @@ typecast_BINARY_cast_unescape(unsigned char *str, size_t *to_length)
 #endif
 
 static PyObject *
-typecast_BINARY_cast(char *s, Py_ssize_t l, PyObject *curs)
+typecast_BINARY_cast(const char *s, Py_ssize_t l, PyObject *curs)
 {
     chunkObject *chunk = NULL;
     PyObject *res = NULL;

@@ -22,7 +22,7 @@
 /** INTEGER - cast normal integers (4 bytes) to python int **/
 
 static PyObject *
-typecast_INTEGER_cast(char *s, Py_ssize_t len, PyObject *curs)
+typecast_INTEGER_cast(const char *s, Py_ssize_t len, PyObject *curs)
 {
     char buffer[12];
 
@@ -31,13 +31,13 @@ typecast_INTEGER_cast(char *s, Py_ssize_t len, PyObject *curs)
         strncpy(buffer, s, (size_t) len); buffer[len] = '\0';
         s = buffer;
     }
-    return PyInt_FromString(s, NULL, 0);
+    return PyInt_FromString((char *)s, NULL, 0);
 }
 
 /** LONGINTEGER - cast long integers (8 bytes) to python long **/
 
 static PyObject *
-typecast_LONGINTEGER_cast(char *s, Py_ssize_t len, PyObject *curs)
+typecast_LONGINTEGER_cast(const char *s, Py_ssize_t len, PyObject *curs)
 {
     char buffer[24];
 
@@ -46,13 +46,13 @@ typecast_LONGINTEGER_cast(char *s, Py_ssize_t len, PyObject *curs)
         strncpy(buffer, s, (size_t) len); buffer[len] = '\0';
         s = buffer;
     }
-    return PyLong_FromString(s, NULL, 0);
+    return PyLong_FromString((char *)s, NULL, 0);
 }
 
 /** FLOAT - cast floating point numbers to python float **/
 
 static PyObject *
-typecast_FLOAT_cast(char *s, Py_ssize_t len, PyObject *curs)
+typecast_FLOAT_cast(const char *s, Py_ssize_t len, PyObject *curs)
 {
     PyObject *str = NULL, *flo = NULL;
     char *pend;
@@ -67,7 +67,7 @@ typecast_FLOAT_cast(char *s, Py_ssize_t len, PyObject *curs)
 /** STRING - cast strings of any type to python string **/
 
 static PyObject *
-typecast_STRING_cast(char *s, Py_ssize_t len, PyObject *curs)
+typecast_STRING_cast(const char *s, Py_ssize_t len, PyObject *curs)
 {
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
     return PyString_FromStringAndSize(s, len);
@@ -76,7 +76,7 @@ typecast_STRING_cast(char *s, Py_ssize_t len, PyObject *curs)
 /** UNICODE - cast strings of any type to a python unicode object **/
 
 static PyObject *
-typecast_UNICODE_cast(char *s, Py_ssize_t len, PyObject *curs)
+typecast_UNICODE_cast(const char *s, Py_ssize_t len, PyObject *curs)
 {
     PyObject *enc;
 
@@ -98,7 +98,7 @@ typecast_UNICODE_cast(char *s, Py_ssize_t len, PyObject *curs)
 /** BOOLEAN - cast boolean value into right python object **/
 
 static PyObject *
-typecast_BOOLEAN_cast(char *s, Py_ssize_t len, PyObject *curs)
+typecast_BOOLEAN_cast(const char *s, Py_ssize_t len, PyObject *curs)
 {
     PyObject *res;
 
@@ -117,7 +117,7 @@ typecast_BOOLEAN_cast(char *s, Py_ssize_t len, PyObject *curs)
 
 #ifdef HAVE_DECIMAL
 static PyObject *
-typecast_DECIMAL_cast(char *s, Py_ssize_t len, PyObject *curs)
+typecast_DECIMAL_cast(const char *s, Py_ssize_t len, PyObject *curs)
 {
     PyObject *res = NULL;
     PyObject *decimalType;

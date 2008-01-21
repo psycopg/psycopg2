@@ -83,7 +83,7 @@ HIDDEN void conn_close(connectionObject *self);
 HIDDEN int  conn_commit(connectionObject *self);
 HIDDEN int  conn_rollback(connectionObject *self);
 HIDDEN int  conn_switch_isolation_level(connectionObject *self, int level);
-HIDDEN int  conn_set_client_encoding(connectionObject *self, char *enc);
+HIDDEN int  conn_set_client_encoding(connectionObject *self, const char *enc);
 
 /* exception-raising macros */
 #define EXC_IF_CONN_CLOSED(self) if ((self)->closed > 0) { \
