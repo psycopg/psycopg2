@@ -61,20 +61,20 @@ conn_connect(connectionObject *self)
 {
     PGconn *pgconn;
     PGresult *pgres;
-    char *data, *tmp;
+    const char *data, *tmp;
     const char *scs;    /* standard-conforming strings */
     size_t i;
 
     /* we need the initial date style to be ISO, for typecasters; if the user
        later change it, she must know what she's doing... */
-    const char *datestyle = "SET DATESTYLE TO 'ISO'";
-    const char *encoding  = "SHOW client_encoding";
-    const char *isolevel  = "SHOW default_transaction_isolation";
+    const char datestyle[] = "SET DATESTYLE TO 'ISO'";
+    const char encoding[]  = "SHOW client_encoding";
+    const char isolevel[]  = "SHOW default_transaction_isolation";
 
-    const char *lvl1a = "read uncommitted";
-    const char *lvl1b = "read committed";
-    const char *lvl2a = "repeatable read";
-    const char *lvl2b = "serializable";
+    const char lvl1a[] = "read uncommitted";
+    const char lvl1b[] = "read committed";
+    const char lvl2a[] = "repeatable read";
+    const char lvl2b[] = "serializable";
 
     Py_BEGIN_ALLOW_THREADS;
     pgconn = PQconnectdb(self->dsn);

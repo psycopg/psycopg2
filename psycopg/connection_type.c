@@ -49,7 +49,7 @@
 static PyObject *
 psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *keywds)
 {
-    char *name = NULL;
+    const char *name = NULL;
     PyObject *obj, *factory = NULL;
 
     static char *kwlist[] = {"name", "cursor_factory", NULL};
@@ -186,7 +186,8 @@ psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
 static PyObject *
 psyco_conn_set_client_encoding(connectionObject *self, PyObject *args)
 {
-    char *buffer, *enc = NULL;
+    const char *enc = NULL;
+    char *buffer;
     size_t i, j;
 
     EXC_IF_CONN_CLOSED(self);
@@ -313,7 +314,7 @@ static struct PyGetSetDef connectionObject_getsets[] = {
 /* initialization and finalization methods */
 
 static int
-connection_setup(connectionObject *self, char *dsn)
+connection_setup(connectionObject *self, const char *dsn)
 {
     char *pos;
     int res;
@@ -389,7 +390,7 @@ connection_dealloc(PyObject* obj)
 static int
 connection_init(PyObject *obj, PyObject *args, PyObject *kwds)
 {
-    char *dsn;
+    const char *dsn;
 
     if (!PyArg_ParseTuple(args, "s", &dsn))
         return -1;

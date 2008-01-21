@@ -110,7 +110,7 @@ qstring_quote(qstringObject *self)
         /* note that enc is a borrowed reference */
 
         if (enc) {
-            char *s = PyString_AsString(enc);
+            const char *s = PyString_AsString(enc);
             Dprintf("qstring_quote: encoding unicode object to %s", s);
             str = PyUnicode_AsEncodedString(self->wrapped, s, NULL);
             Dprintf("qstring_quote: got encoded object at %p", str);
@@ -267,7 +267,7 @@ static PyMethodDef qstringObject_methods[] = {
 /* initialization and finalization methods */
 
 static int
-qstring_setup(qstringObject *self, PyObject *str, char *enc)
+qstring_setup(qstringObject *self, PyObject *str, const char *enc)
 {
     Dprintf("qstring_setup: init qstring object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
@@ -313,7 +313,7 @@ static int
 qstring_init(PyObject *obj, PyObject *args, PyObject *kwds)
 {
     PyObject *str;
-    char *enc = "latin-1"; /* default encoding as in Python */
+    const char *enc = "latin-1"; /* default encoding as in Python */
 
     if (!PyArg_ParseTuple(args, "O|s", &str, &enc))
         return -1;
@@ -413,7 +413,7 @@ PyObject *
 psyco_QuotedString(PyObject *module, PyObject *args)
 {
     PyObject *str;
-    char *enc = "latin-1"; /* default encoding as in Python */
+    const char *enc = "latin-1"; /* default encoding as in Python */
 
     if (!PyArg_ParseTuple(args, "O|s", &str, &enc))
         return NULL;

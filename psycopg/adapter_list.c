@@ -155,7 +155,7 @@ static PyMethodDef listObject_methods[] = {
 /* initialization and finalization methods */
 
 static int
-list_setup(listObject *self, PyObject *obj, char *enc)
+list_setup(listObject *self, PyObject *obj, const char *enc)
 {
     Dprintf("list_setup: init list object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
@@ -198,7 +198,7 @@ static int
 list_init(PyObject *obj, PyObject *args, PyObject *kwds)
 {
     PyObject *l;
-    char *enc = "latin-1"; /* default encoding as in Python */
+    const char *enc = "latin-1"; /* default encoding as in Python */
 
     if (!PyArg_ParseTuple(args, "O|s", &l, &enc))
         return -1;
@@ -297,7 +297,7 @@ PyObject *
 psyco_List(PyObject *module, PyObject *args)
 {
     PyObject *str;
-    char *enc = "latin-1"; /* default encoding as in Python */
+    const char *enc = "latin-1"; /* default encoding as in Python */
 
     if (!PyArg_ParseTuple(args, "O|s", &str, &enc))
         return NULL;

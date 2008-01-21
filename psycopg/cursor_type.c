@@ -371,7 +371,7 @@ _psyco_curs_execute(cursorObject *self,
                 if (PyObject_HasAttrString(arg, "args")) {
                     PyObject *args = PyObject_GetAttrString(arg, "args");
                     PyObject *str = PySequence_GetItem(args, 0);
-                    char *s = PyString_AS_STRING(str);
+                    const char *s = PyString_AS_STRING(str);
 
                     Dprintf("psyco_curs_execute:     -> %s", s);
 
@@ -586,7 +586,7 @@ psyco_curs_mogrify(cursorObject *self, PyObject *args, PyObject *kwargs)
                 if (PyObject_HasAttrString(arg, "args")) {
                     PyObject *args = PyObject_GetAttrString(arg, "args");
                     PyObject *str = PySequence_GetItem(args, 0);
-                    char *s = PyString_AS_STRING(str);
+                    const char *s = PyString_AS_STRING(str);
 
                     Dprintf("psyco_curs_execute:     -> %s", s);
 
@@ -675,7 +675,7 @@ _psyco_curs_buildrow_fill(cursorObject *self, PyObject *res,
                           int row, int n, int istuple)
 {
     int i, len;
-    unsigned char *str;
+    const char *str;
     PyObject *val;
 
     for (i=0; i < n; i++) {
@@ -684,14 +684,14 @@ _psyco_curs_buildrow_fill(cursorObject *self, PyObject *res,
             len = 0;
         }
         else {
-            str = (unsigned char*)PQgetvalue(self->pgres, row, i);
+            str = PQgetvalue(self->pgres, row, i);
             len = PQgetlength(self->pgres, row, i);
         }
 
         Dprintf("_psyco_curs_buildrow: row %ld, element %d, len %d",
                 self->row, i, len);
 
-        val = typecast_cast(PyTuple_GET_ITEM(self->casts, i), (char*)str, len,
+        val = typecast_cast(PyTuple_GET_ITEM(self->casts, i), str, len,
                             (PyObject*)self);
 
         if (val) {
@@ -935,7 +935,8 @@ psyco_curs_fetchall(cursorObject *self, PyObject *args)
 static PyObject *
 psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
-    char *procname = NULL, *sql = NULL;
+    const char *procname = NULL;
+    char *sql = NULL;
     long int async = 0;
     Py_ssize_t procname_len, i, nparameters = 0, sl = 0;
     PyObject *parameters = Py_None;
@@ -1055,7 +1056,7 @@ static PyObject *
 psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
     int value, newpos;
-    char *mode = "relative";
+    const char *mode = "relative";
 
     static char *kwlist[] = {"value", "mode", NULL};
 
@@ -1186,8 +1187,8 @@ static PyObject *
 psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
     char query[DEFAULT_COPYBUFF];
-    char *table_name;
-    char *sep = "\t", *null = NULL;
+    const char *table_name;
+    const char *sep = "\t", *null = NULL;
     Py_ssize_t bufsize = DEFAULT_COPYBUFF;
     PyObject *file, *columns = NULL, *res = NULL;
     char columnlist[DEFAULT_COPYBUFF];
@@ -1260,8 +1261,8 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
     char query[DEFAULT_COPYBUFF];
     char columnlist[DEFAULT_COPYBUFF];
-    char *table_name;
-    char *sep = "\t", *null = NULL;
+    const char *table_name;
+    const char *sep = "\t", *null = NULL;
     PyObject *file, *columns = NULL, *res = NULL;
 
     static char *kwlist[] = {"file", "table", "sep", "null", "columns", NULL};
@@ -1570,7 +1571,7 @@ static struct PyGetSetDef cursorObject_getsets[] = {
 /* initialization and finalization methods */
 
 static int
-cursor_setup(cursorObject *self, connectionObject *conn, char *name)
+cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
 {
     Dprintf("cursor_setup: init cursor object at %p", self);
     Dprintf("cursor_setup:     parameters: name = %s, conn = %p", name, conn);
@@ -1655,7 +1656,7 @@ cursor_dealloc(PyObject* obj)
 static int
 cursor_init(PyObject *obj, PyObject *args, PyObject *kwds)
 {
-    char *name = NULL;
+    const char *name = NULL;
     PyObject *conn;
 
     if (!PyArg_ParseTuple(args, "O|s", &conn, &name))

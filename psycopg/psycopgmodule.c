@@ -93,7 +93,7 @@ int psycopg_debug_enabled = 0;
 ":rtype: `extensions.connection`"
 
 static size_t
-_psyco_connect_fill_dsn(char *dsn, char *kw, char *v, size_t i)
+_psyco_connect_fill_dsn(char *dsn, const char *kw, const char *v, size_t i)
 {
     strcpy(&dsn[i], kw); i += strlen(kw);
     strcpy(&dsn[i], v); i += strlen(v);
@@ -108,9 +108,10 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
 
     size_t idsn=-1;
     int iport=-1;
-    char *dsn_static=NULL, *dsn_dynamic=NULL;
-    char *database=NULL, *user=NULL, *password=NULL;
-    char *host=NULL, *sslmode=NULL;
+    const char *dsn_static = NULL;
+    char *dsn_dynamic=NULL;
+    const char *database=NULL, *user=NULL, *password=NULL;
+    const char *host=NULL, *sslmode=NULL;
     char port[16];
 
     static char *kwlist[] = {"dsn", "database", "host", "port",
@@ -415,7 +416,7 @@ static struct {
     char *name;
     PyObject **exc;
     PyObject **base;
-    char *docstr;
+    const char *docstr;
 } exctable[] = {
     { "psycopg2.Error", &Error, 0, Error_doc },
     { "psycopg2.Warning", &Warning, 0, Warning_doc },
