@@ -1,5 +1,9 @@
 2008-01-21  James Henstridge  <james@jamesh.id.au>
 
+	* setup.cfg (define): remove PSYCOPG_DISPLAY_SIZE from default
+	list of defines, as discussed on mailing list.  It slows down
+	queries with very little benefit.
+
 	* psycypg/*.h: apply HIDDEN to all global variables and functions
 	that should not be exported from the module.  This results in a 5%
 	reduction in code size and shortens the dynamic symbol table.
