@@ -89,7 +89,7 @@ extern HIDDEN PyObject *Error, *Warning, *InterfaceError, *DatabaseError,
     *InternalError, *OperationalError, *ProgrammingError,
     *IntegrityError, *DataError, *NotSupportedError;
 #ifdef PSYCOPG_EXTENSIONS
-extern PyObject *QueryCanceledError, *TransactionRollbackError;
+extern HIDDEN PyObject *QueryCanceledError, *TransactionRollbackError;
 #endif
 
 /* python versions and compatibility stuff */

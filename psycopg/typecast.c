@@ -180,7 +180,7 @@ typecast_parse_time(const char* s, const char** t, Py_ssize_t* len,
 
 /* a list of initializers, used to make the typecasters accessible anyway */
 #ifdef HAVE_PYDATETIME
-typecastObject_initlist typecast_pydatetime[] = {
+static typecastObject_initlist typecast_pydatetime[] = {
     {"PYDATETIME", typecast_DATETIME_types, typecast_PYDATETIME_cast},
     {"PYTIME", typecast_TIME_types, typecast_PYTIME_cast},
     {"PYDATE", typecast_DATE_types, typecast_PYDATE_cast},
@@ -191,7 +191,7 @@ typecastObject_initlist typecast_pydatetime[] = {
 
 /* a list of initializers, used to make the typecasters accessible anyway */
 #ifdef HAVE_MXDATETIME
-typecastObject_initlist typecast_mxdatetime[] = {
+static typecastObject_initlist typecast_mxdatetime[] = {
     {"MXDATETIME", typecast_DATETIME_types, typecast_MXDATE_cast},
     {"MXTIME", typecast_TIME_types, typecast_MXTIME_cast},
     {"MXDATE", typecast_DATE_types, typecast_MXDATE_cast},

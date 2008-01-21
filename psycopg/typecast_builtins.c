@@ -27,7 +27,7 @@ static long int typecast_BINARYARRAY_types[] = {1001, 0};
 static long int typecast_ROWIDARRAY_types[] = {1028, 1013, 0};
 
 
-typecastObject_initlist typecast_builtins[] = {
+static typecastObject_initlist typecast_builtins[] = {
   {"NUMBER", typecast_NUMBER_types, typecast_NUMBER_cast, NULL},
   {"LONGINTEGER", typecast_LONGINTEGER_types, typecast_LONGINTEGER_cast, NULL},
   {"INTEGER", typecast_INTEGER_types, typecast_INTEGER_cast, NULL},

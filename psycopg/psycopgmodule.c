@@ -42,29 +42,29 @@
 #ifdef HAVE_MXDATETIME
 #include <mxDateTime.h>
 #include "psycopg/adapter_mxdatetime.h"
-mxDateTimeModule_APIObject *mxDateTimeP = NULL;
+HIDDEN mxDateTimeModule_APIObject *mxDateTimeP = NULL;
 #endif
 
 /* some module-level variables, like the datetime module */
 #ifdef HAVE_PYDATETIME
 #include <datetime.h>
 #include "psycopg/adapter_datetime.h"
-PyObject *pyDateTimeModuleP = NULL;
-PyObject *pyDateTypeP = NULL;
-PyObject *pyTimeTypeP = NULL;
-PyObject *pyDateTimeTypeP = NULL;
-PyObject *pyDeltaTypeP = NULL;
+HIDDEN PyObject *pyDateTimeModuleP = NULL;
+HIDDEN PyObject *pyDateTypeP = NULL;
+HIDDEN PyObject *pyTimeTypeP = NULL;
+HIDDEN PyObject *pyDateTimeTypeP = NULL;
+HIDDEN PyObject *pyDeltaTypeP = NULL;
 #endif
 
 /* pointers to the psycopg.tz classes */
-PyObject *pyPsycopgTzModule = NULL;
-PyObject *pyPsycopgTzLOCAL = NULL;
-PyObject *pyPsycopgTzFixedOffsetTimezone = NULL;
+HIDDEN PyObject *pyPsycopgTzModule = NULL;
+HIDDEN PyObject *pyPsycopgTzLOCAL = NULL;
+HIDDEN PyObject *pyPsycopgTzFixedOffsetTimezone = NULL;
 
-PyObject *psycoEncodings = NULL;
+HIDDEN PyObject *psycoEncodings = NULL;
 
 #ifdef PSYCOPG_DEBUG
-int psycopg_debug_enabled = 0;
+HIDDEN int psycopg_debug_enabled = 0;
 #endif
 
 /** connect module-level function **/

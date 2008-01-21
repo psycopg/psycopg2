@@ -1,5 +1,17 @@
 2008-01-22  James Henstridge  <james@jamesh.id.au>
 
+	* psycopg/typecast.c (typecast_pydatetime): make array static.
+	(typecast_mxdatetime): same here.
+
+	* psycopg/typecast_builtins.c (typecast_builtins): make array
+	static.
+
+	* psycopg/psycopgmodule.c: add hidden visibility to a bunch of
+	global variables here.
+
+	* psycopg/psycopg.h: add set QueryCanceledError and
+	TransactionRollbackError to hidden visibility.
+
 	* psycopg/*.[ch]: add const qualifier to various string arguments
 	to functions (typecast functions and conn_switch_isolation_level).
 
