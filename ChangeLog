@@ -1,3 +1,12 @@
+2008-01-21  James Henstridge  <james@jamesh.id.au>
+
+	* psycypg/*.h: apply HIDDEN to all global variables and functions
+	that should not be exported from the module.  This results in a 5%
+	reduction in code size and shortens the dynamic symbol table.
+
+	* psycopg/config.h: If GCC >= 4.0 is installed, define the HIDDEN
+	symbol to apply the "hidden" visibility attribute.
+
 2008-01-19  James Henstridge  <james@jamesh.id.au>
 
 	* tests/test_connection.py (ConnectionTests): add simple tests for

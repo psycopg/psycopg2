@@ -25,13 +25,15 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+#include "psycopg/config.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /** chunk type **/
 
-extern PyTypeObject chunkType;
+extern HIDDEN PyTypeObject chunkType;
 
 typedef struct {
     PyObject_HEAD

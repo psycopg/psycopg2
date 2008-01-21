@@ -26,11 +26,13 @@
 #include <Python.h>
 #include <libpq-fe.h>
 
+#include "psycopg/config.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern PyTypeObject binaryType;
+extern HIDDEN PyTypeObject binaryType;
 
 typedef struct {
     PyObject_HEAD
@@ -42,7 +44,7 @@ typedef struct {
 
 /* functions exported to psycopgmodule.c */
 
-extern PyObject *psyco_Binary(PyObject *module, PyObject *args);
+HIDDEN PyObject *psyco_Binary(PyObject *module, PyObject *args);
 #define psyco_Binary_doc \
     "Binary(buffer) -> new binary object\n\n" \
     "Build an object capable to hold a bynary string value."

@@ -26,11 +26,13 @@
 #include <Python.h>
 #include <libpq-fe.h>
 
+#include "psycopg/config.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern PyTypeObject isqlquoteType;
+extern HIDDEN PyTypeObject isqlquoteType;
 
 typedef struct {
     PyObject_HEAD

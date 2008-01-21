@@ -25,6 +25,8 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+#include "psycopg/config.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -34,7 +36,7 @@ typedef PyObject *(*typecast_function)(char *, Py_ssize_t len, PyObject *);
 
 /** typecast type **/
 
-extern PyTypeObject typecastType;
+extern HIDDEN PyTypeObject typecastType;
 
 typedef struct {
     PyObject_HEAD
@@ -59,28 +61,28 @@ typedef struct {
 } typecastObject_initlist;
 
 /* the type dictionary, much faster to access it globally */
-extern PyObject *psyco_types;
-extern PyObject *psyco_binary_types;
+extern HIDDEN PyObject *psyco_types;
+extern HIDDEN PyObject *psyco_binary_types;
 
 /* the default casting objects, used when no other objects are available */
-extern PyObject *psyco_default_cast;
-extern PyObject *psyco_default_binary_cast;
+extern HIDDEN PyObject *psyco_default_cast;
+extern HIDDEN PyObject *psyco_default_binary_cast;
 
 /** exported functions **/
 
 /* used by module.c to init the type system and register types */
-extern int typecast_init(PyObject *dict);
-extern int typecast_add(PyObject *obj, PyObject *dict, int binary);
+HIDDEN int typecast_init(PyObject *dict);
+HIDDEN int typecast_add(PyObject *obj, PyObject *dict, int binary);
 
 /* the C callable typecastObject creator function */
-extern PyObject *typecast_from_c(typecastObject_initlist *type, PyObject *d);
+HIDDEN PyObject *typecast_from_c(typecastObject_initlist *type, PyObject *d);
 
 /* the python callable typecast creator function */
-extern PyObject *typecast_from_python(
+HIDDEN PyObject *typecast_from_python(
     PyObject *self, PyObject *args, PyObject *keywds);
 
 /* the function used to dispatch typecasting calls */
-extern PyObject *typecast_cast(
+HIDDEN PyObject *typecast_cast(
     PyObject *self, char *str, Py_ssize_t len, PyObject *curs);
 
 #endif /* !defined(PSYCOPG_TYPECAST_H) */

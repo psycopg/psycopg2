@@ -26,6 +26,8 @@
 #include <Python.h>
 #include <libpq-fe.h>
 
+#include "psycopg/config.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -39,7 +41,7 @@ extern "C" {
 /* Hard limit on the notices stored by the Python connection */
 #define CONN_NOTICES_LIMIT 50
 
-extern PyTypeObject connectionType;
+extern HIDDEN PyTypeObject connectionType;
 
 typedef struct {
     PyObject_HEAD
@@ -76,12 +78,12 @@ typedef struct {
 } connectionObject;
 
 /* C-callable functions in connection_int.c and connection_ext.c */
-extern int  conn_connect(connectionObject *self);
-extern void conn_close(connectionObject *self);
-extern int  conn_commit(connectionObject *self);
-extern int  conn_rollback(connectionObject *self);
-extern int  conn_switch_isolation_level(connectionObject *self, int level);
-extern int  conn_set_client_encoding(connectionObject *self, char *enc);
+HIDDEN int  conn_connect(connectionObject *self);
+HIDDEN void conn_close(connectionObject *self);
+HIDDEN int  conn_commit(connectionObject *self);
+HIDDEN int  conn_rollback(connectionObject *self);
+HIDDEN int  conn_switch_isolation_level(connectionObject *self, int level);
+HIDDEN int  conn_set_client_encoding(connectionObject *self, char *enc);
 
 /* exception-raising macros */
 #define EXC_IF_CONN_CLOSED(self) if ((self)->closed > 0) { \

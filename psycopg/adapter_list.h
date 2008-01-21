@@ -25,11 +25,13 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+#include "psycopg/config.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern PyTypeObject listType;
+extern HIDDEN PyTypeObject listType;
 
 typedef struct {
     PyObject_HEAD
@@ -39,7 +41,7 @@ typedef struct {
     char     *encoding;
 } listObject;
 
-extern PyObject *psyco_List(PyObject *module, PyObject *args);
+HIDDEN PyObject *psyco_List(PyObject *module, PyObject *args);
 #define psyco_List_doc \
     "List(list, enc) -> new quoted list"
 

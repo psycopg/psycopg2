@@ -22,9 +22,16 @@
 #ifndef PSYCOPG_CONFIG_H
 #define PSYCOPG_CONFIG_H 1
 
+/* GCC 4.0 and later have support for specifying symbol visibility */
+#if __GNUC__ >= 4
+#  define HIDDEN __attribute__((visibility("hidden")))
+#else
+#  define HIDDEN
+#endif
+
 /* debug printf-like function */
 #ifdef PSYCOPG_DEBUG
-extern int psycopg_debug_enabled;
+extern HIDDEN int psycopg_debug_enabled;
 #endif
 
 #if defined( __GNUC__) && !defined(__APPLE__)

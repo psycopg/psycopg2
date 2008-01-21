@@ -24,6 +24,7 @@
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include "psycopg/config.h"
 #include "psycopg/connection.h"
 #include "psycopg/cursor.h"
 
@@ -33,7 +34,7 @@ extern "C" {
 
 /** adapters registry **/
 
-extern PyObject *psyco_adapters;
+extern HIDDEN PyObject *psyco_adapters;
 
 /** the names of the three mandatory methods **/
 
@@ -44,16 +45,16 @@ extern PyObject *psyco_adapters;
 /** exported functions **/
 
 /* used by module.c to init the microprotocols system */
-extern int microprotocols_init(PyObject *dict);
-extern int microprotocols_add(
+HIDDEN int microprotocols_init(PyObject *dict);
+HIDDEN int microprotocols_add(
     PyTypeObject *type, PyObject *proto, PyObject *cast);
 
-extern PyObject *microprotocols_adapt(
+HIDDEN PyObject *microprotocols_adapt(
     PyObject *obj, PyObject *proto, PyObject *alt);
-extern PyObject *microprotocol_getquoted(
+HIDDEN PyObject *microprotocol_getquoted(
     PyObject *obj, connectionObject *conn);
 
-extern PyObject *
+HIDDEN PyObject *
     psyco_microprotocols_adapt(cursorObject *self, PyObject *args);
 #define psyco_microprotocols_adapt_doc \
     "adapt(obj, protocol, alternate) -> object -- adapt obj to given protocol"

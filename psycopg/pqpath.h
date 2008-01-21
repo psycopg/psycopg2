@@ -22,6 +22,7 @@
 #ifndef PSYCOPG_PQPATH_H
 #define PSYCOPG_PQPATH_H 1
 
+#include "psycopg/config.h"
 #include "psycopg/cursor.h"
 #include "psycopg/connection.h"
 
@@ -30,20 +31,20 @@
 #define CLEARPGRES(pgres)    PQclear(pgres); pgres = NULL
 
 /* exported functions */
-extern int pq_fetch(cursorObject *curs);
-extern int pq_execute(cursorObject *curs, const char *query, int async);
-extern int pq_commit(connectionObject *conn);
-extern int pq_abort_locked(connectionObject *conn, PGresult **pgres,
+HIDDEN int pq_fetch(cursorObject *curs);
+HIDDEN int pq_execute(cursorObject *curs, const char *query, int async);
+HIDDEN int pq_commit(connectionObject *conn);
+HIDDEN int pq_abort_locked(connectionObject *conn, PGresult **pgres,
                            char **error);
-extern int pq_abort(connectionObject *conn);
-extern int pq_is_busy(connectionObject *conn);
+HIDDEN int pq_abort(connectionObject *conn);
+HIDDEN int pq_is_busy(connectionObject *conn);
 
-extern void pq_set_critical(connectionObject *conn, const char *msg);
+HIDDEN void pq_set_critical(connectionObject *conn, const char *msg);
 
-extern int pq_execute_command_locked(connectionObject *conn,
+HIDDEN int pq_execute_command_locked(connectionObject *conn,
                                      const char *query,
                                      PGresult **pgres, char **error);
-extern void pq_complete_error(connectionObject *conn, PGresult **pgres,
+HIDDEN void pq_complete_error(connectionObject *conn, PGresult **pgres,
                               char **error);
 
 #endif /* !defined(PSYCOPG_PQPATH_H) */

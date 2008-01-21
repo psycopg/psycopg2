@@ -25,6 +25,8 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+#include "psycopg/config.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -77,12 +79,13 @@ extern "C" {
 #define PSYCOPG_API_pointers 2
 
 #ifdef PSYCOPG_MODULE
+
     /** This section is used when compiling psycopgmodule.c & co. **/
-extern psyco_errors_fill_RETURN psyco_errors_fill psyco_errors_fill_PROTO;
-extern psyco_errors_set_RETURN psyco_errors_set psyco_errors_set_PROTO;
+HIDDEN psyco_errors_fill_RETURN psyco_errors_fill psyco_errors_fill_PROTO;
+HIDDEN psyco_errors_set_RETURN psyco_errors_set psyco_errors_set_PROTO;
 
 /* global excpetions */
-extern PyObject *Error, *Warning, *InterfaceError, *DatabaseError,
+extern HIDDEN PyObject *Error, *Warning, *InterfaceError, *DatabaseError,
     *InternalError, *OperationalError, *ProgrammingError,
     *IntegrityError, *DataError, *NotSupportedError;
 #ifdef PSYCOPG_EXTENSIONS
@@ -125,7 +128,7 @@ import_psycopg(void)
 #endif
 
 /* postgresql<->python encoding map */
-extern PyObject *psycoEncodings;
+extern HIDDEN PyObject *psycoEncodings;
 
 typedef struct {
     char *pgenc;
@@ -133,10 +136,10 @@ typedef struct {
 } encodingPair;
 
 /* the Decimal type, used by the DECIMAL typecaster */
-extern PyObject *psyco_GetDecimalType(void);
+HIDDEN PyObject *psyco_GetDecimalType(void);
 
 /* some utility functions */
-extern void psyco_set_error(PyObject *exc, PyObject *curs,  const char *msg,
+HIDDEN void psyco_set_error(PyObject *exc, PyObject *curs,  const char *msg,
                             const char *pgerror, const char *pgcode);
 
 /* Exceptions docstrings */

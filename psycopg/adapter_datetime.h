@@ -25,11 +25,13 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+#include "psycopg/config.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern PyTypeObject pydatetimeType;
+extern HIDDEN PyTypeObject pydatetimeType;
 
 typedef struct {
     PyObject_HEAD
@@ -47,36 +49,36 @@ typedef struct {
 /* functions exported to psycopgmodule.c */
 #ifdef PSYCOPG_DEFAULT_PYDATETIME
 
-extern PyObject *psyco_Date(PyObject *module, PyObject *args);
+HIDDEN PyObject *psyco_Date(PyObject *module, PyObject *args);
 #define psyco_Date_doc \
     "Date(year, month, day) -> new date\n\n" \
     "Build an object holding a date value."
 
-extern PyObject *psyco_Time(PyObject *module, PyObject *args);
+HIDDEN PyObject *psyco_Time(PyObject *module, PyObject *args);
 #define psyco_Time_doc \
     "Time(hour, minutes, seconds, tzinfo=None) -> new time\n\n" \
     "Build an object holding a time value."
 
-extern PyObject *psyco_Timestamp(PyObject *module, PyObject *args);
+HIDDEN PyObject *psyco_Timestamp(PyObject *module, PyObject *args);
 #define psyco_Timestamp_doc \
     "Timestamp(year, month, day, hour, minutes, seconds, tzinfo=None) -> new timestamp\n\n" \
     "Build an object holding a timestamp value."
 
-extern PyObject *psyco_DateFromTicks(PyObject *module, PyObject *args);
+HIDDEN PyObject *psyco_DateFromTicks(PyObject *module, PyObject *args);
 #define psyco_DateFromTicks_doc \
     "DateFromTicks(ticks) -> new date\n\n" \
     "Build an object holding a date value from the given ticks value.\n\n" \
     "Ticks are the number of seconds since the epoch; see the documentation " \
     "of the standard Python time module for details)."
 
-extern PyObject *psyco_TimeFromTicks(PyObject *module, PyObject *args);
+HIDDEN PyObject *psyco_TimeFromTicks(PyObject *module, PyObject *args);
 #define psyco_TimeFromTicks_doc \
     "TimeFromTicks(ticks) -> new time\n\n" \
     "Build an object holding a time value from the given ticks value.\n\n" \
     "Ticks are the number of seconds since the epoch; see the documentation " \
     "of the standard Python time module for details)."
 
-extern PyObject *psyco_TimestampFromTicks(PyObject *module, PyObject *args);
+HIDDEN PyObject *psyco_TimestampFromTicks(PyObject *module, PyObject *args);
 #define psyco_TimestampFromTicks_doc \
     "TimestampFromTicks(ticks) -> new timestamp\n\n" \
     "Build an object holding a timestamp value from the given ticks value.\n\n" \
@@ -85,19 +87,19 @@ extern PyObject *psyco_TimestampFromTicks(PyObject *module, PyObject *args);
 
 #endif /* PSYCOPG_DEFAULT_PYDATETIME */
 
-extern PyObject *psyco_DateFromPy(PyObject *module, PyObject *args);
+HIDDEN PyObject *psyco_DateFromPy(PyObject *module, PyObject *args);
 #define psyco_DateFromPy_doc \
     "DateFromPy(datetime.date) -> new wrapper"
 
-extern PyObject *psyco_TimeFromPy(PyObject *module, PyObject *args);
+HIDDEN PyObject *psyco_TimeFromPy(PyObject *module, PyObject *args);
 #define psyco_TimeFromPy_doc \
     "TimeFromPy(datetime.time) -> new wrapper"
 
-extern PyObject *psyco_TimestampFromPy(PyObject *module, PyObject *args);
+HIDDEN PyObject *psyco_TimestampFromPy(PyObject *module, PyObject *args);
 #define psyco_TimestampFromPy_doc \
     "TimestampFromPy(datetime.datetime) -> new wrapper"
 
-extern PyObject *psyco_IntervalFromPy(PyObject *module, PyObject *args);
+HIDDEN PyObject *psyco_IntervalFromPy(PyObject *module, PyObject *args);
 #define psyco_IntervalFromPy_doc \
     "IntervalFromPy(datetime.timedelta) -> new wrapper"
 

@@ -25,11 +25,13 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+#include "psycopg/config.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern PyTypeObject asisType;
+extern HIDDEN PyTypeObject asisType;
 
 typedef struct {
     PyObject_HEAD
@@ -41,7 +43,7 @@ typedef struct {
 
 /* functions exported to psycopgmodule.c */
 
-extern PyObject *psyco_AsIs(PyObject *module, PyObject *args);
+HIDDEN PyObject *psyco_AsIs(PyObject *module, PyObject *args);
 #define psyco_AsIs_doc \
     "AsIs(obj) -> new AsIs wrapper object"
 

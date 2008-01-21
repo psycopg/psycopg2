@@ -25,11 +25,13 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+#include "psycopg/config.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern PyTypeObject pbooleanType;
+extern HIDDEN PyTypeObject pbooleanType;
 
 typedef struct {
     PyObject_HEAD
@@ -41,7 +43,7 @@ typedef struct {
 
 /* functions exported to psycopgmodule.c */
 
-extern PyObject *psyco_Boolean(PyObject *module, PyObject *args);
+HIDDEN PyObject *psyco_Boolean(PyObject *module, PyObject *args);
 #define psyco_Boolean_doc \
     "Boolean(obj) -> new boolean value"
 

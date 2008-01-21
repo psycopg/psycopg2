@@ -26,13 +26,14 @@
 #include <Python.h>
 #include <libpq-fe.h>
 
+#include "psycopg/config.h"
 #include "psycopg/connection.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern PyTypeObject cursorType;
+extern HIDDEN PyTypeObject cursorType;
 
 typedef struct {
     PyObject_HEAD
@@ -80,7 +81,7 @@ typedef struct {
 } cursorObject;
 
 /* C-callable functions in cursor_int.c and cursor_ext.c */
-extern void curs_reset(cursorObject *self);
+HIDDEN void curs_reset(cursorObject *self);
 
 /* exception-raising macros */
 #define EXC_IF_CURS_CLOSED(self) \
