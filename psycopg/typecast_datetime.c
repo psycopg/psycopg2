@@ -25,11 +25,11 @@
 
 /* the pointer to the datetime module API is initialized by the module init
    code, we just need to grab it */
-extern PyObject* pyDateTimeModuleP;
-extern PyObject *pyDateTypeP;
-extern PyObject *pyTimeTypeP;
-extern PyObject *pyDateTimeTypeP;
-extern PyObject *pyDeltaTypeP;
+extern HIDDEN PyObject* pyDateTimeModuleP;
+extern HIDDEN PyObject *pyDateTypeP;
+extern HIDDEN PyObject *pyTimeTypeP;
+extern HIDDEN PyObject *pyDateTimeTypeP;
+extern HIDDEN PyObject *pyDeltaTypeP;
 
 /** DATE - cast a date into a date python object **/
 

@@ -23,7 +23,7 @@
 
 /* the pointer to the mxDateTime API is initialized by the module init code,
    we just need to grab it */
-extern mxDateTimeModule_APIObject *mxDateTimeP;
+extern HIDDEN mxDateTimeModule_APIObject *mxDateTimeP;
 
 /** DATE - cast a date into mx.DateTime python object **/
 

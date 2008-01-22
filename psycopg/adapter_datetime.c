@@ -38,14 +38,14 @@
 
 /* the pointer to the datetime module API is initialized by the module init
    code, we just need to grab it */
-extern PyObject* pyDateTimeModuleP;
-extern PyObject *pyDateTypeP;
-extern PyObject *pyTimeTypeP;
-extern PyObject *pyDateTimeTypeP;
-extern PyObject *pyDeltaTypeP;
+extern HIDDEN PyObject* pyDateTimeModuleP;
+extern HIDDEN PyObject *pyDateTypeP;
+extern HIDDEN PyObject *pyTimeTypeP;
+extern HIDDEN PyObject *pyDateTimeTypeP;
+extern HIDDEN PyObject *pyDeltaTypeP;
 
-extern PyObject *pyPsycopgTzModule;
-extern PyObject *pyPsycopgTzLOCAL;
+extern HIDDEN PyObject *pyPsycopgTzModule;
+extern HIDDEN PyObject *pyPsycopgTzLOCAL;
 
 /* datetime_str, datetime_getquoted - return result of quoting */
 

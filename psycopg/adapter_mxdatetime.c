@@ -35,7 +35,7 @@
 
 /* the pointer to the mxDateTime API is initialized by the module init code,
    we just need to grab it */
-extern mxDateTimeModule_APIObject *mxDateTimeP;
+extern HIDDEN mxDateTimeModule_APIObject *mxDateTimeP;
 
 
 /* mxdatetime_str, mxdatetime_getquoted - return result of quoting */
