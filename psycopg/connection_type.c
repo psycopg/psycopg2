@@ -195,12 +195,12 @@ psyco_conn_set_client_encoding(connectionObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "s", &enc)) return NULL;
 
     /* convert to upper case and remove '-' and '_' from string */
-    buffer = PyMem_Malloc(strlen(enc));
+    buffer = PyMem_Malloc(strlen(enc)+1);
     for (i=j=0 ; i < strlen(enc) ; i++) {
         if (enc[i] == '_' || enc[i] == '-')
-        continue;
-    else
-        buffer[j++] = toupper(enc[i]);
+            continue;
+        else
+            buffer[j++] = toupper(enc[i]);
     }
     buffer[j] = '\0';
 
