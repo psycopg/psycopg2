@@ -1,3 +1,8 @@
+2008-02-27  James Henstridge  <james@jamesh.id.au>
+
+	* runtests.py: add a harness to run all the psycopg tests against
+	the version built by distutils.
+
 2008-01-22  James Henstridge  <james@jamesh.id.au>
 
 	* psycopg/typecast.c (typecast_pydatetime): make array static.

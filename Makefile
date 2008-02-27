@@ -12,4 +12,4 @@ check:
 	    dropdb $(TESTDB) >/dev/null; \
 	fi
 	createdb $(TESTDB)
-	PSYCOPG2_TESTDB=$(TESTDB) $(PYTHON) tests/__init__.py --verbose
+	PSYCOPG2_TESTDB=$(TESTDB) $(PYTHON) runtests.py --verbose
