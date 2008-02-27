@@ -1,3 +1,49 @@
+What's new in psycopg 2.0.7 (unreleased)
+---------------------------
+
+* Improved error handling:
+  - All instances of psycopg2.Error subclasses now have pgerror,
+    pgcode and cursor attributes.  They will be set to None if no
+    value is available.
+  - Exception classes are now chosen based on the SQLSTATE value from
+    the result.  (#184)
+  - The commit() and rollback() methods now set the pgerror and pgcode
+    attributes on exceptions. (#152)
+  - errors from commit() and rollback() are no longer considered
+    fatal. (#194)
+  - If a disconnect is detected during execute(), an exception will be
+    raised at that point rather than resulting in "ProgrammingError:
+    no results to fetch" later on. (#186)
+
+* Better PostgreSQL compatibility:
+  - If the server uses standard_conforming_strings, perform
+    appropriate quoting.
+  - BC dates are now handled if psycopg is compiled with mxDateTime
+    support.  If using datetime, an appropriate ValueError is
+    raised. (#203)
+
+* Other bug fixes:
+  - If multiple sub-interpreters are in use, do not share the Decimal
+    type between them. (#192)
+  - Buffer objects obtained from psycopg are now accepted by psycopg
+    too, without segfaulting. (#209)
+  - A few small changes were made to improve DB-API compatibility.
+    All the dbapi20 tests now pass.
+
+* Miscellaneous:
+  - The PSYCOPG_DISPLAY_SIZE option is now off by default.  This means
+    that display size will always be set to "None" in
+    cursor.description.  Calculating the display size was expensive,
+    and infrequently used so this should improve performance.
+  - New QueryCanceledError and TransactionRollbackError exceptions
+    have been added to the psycopg2.extensions module.  They can be
+    used to detect deadlocks and statement timeouts respectively.
+  - Cursor objects now have a "closed" attribute. (#164)
+  - If psycopg has been built with debug support, it is now necessary
+    to set the PSYCOPG_DEBUG environment variable to turn on debug
+    spew.
+
+
 What's new in psycopg 2.0.6
 ---------------------------
 

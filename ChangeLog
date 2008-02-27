@@ -1,5 +1,7 @@
 2008-02-27  James Henstridge  <james@jamesh.id.au>
 
+	* NEWS: add some draft NEWS items for a 2.0.7 release.
+
 	* runtests.py: add a harness to run all the psycopg tests against
 	the version built by distutils.
 
