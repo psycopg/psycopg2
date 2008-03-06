@@ -1,3 +1,8 @@
+2008-03-07  Jason Erickson  <jerickso@stickpeople.com>
+
+	* psycopg/psycopgmodule.c (psyco_connect): fix off by one error in
+	calculating the length of the DSN.
+
 2008-03-07  James Henstridge  <james@jamesh.id.au>
 
 	* psycopg/pqpath.c (_pq_fetch_tuples): Don't call Python APIs
