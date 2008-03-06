@@ -196,7 +196,11 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres)
             exc = IntegrityError;
         else if (strstr(err, "could not serialize") ||
                  strstr(err, "deadlock detected"))
+#ifdef PSYCOPG_EXTENSIONS
             exc = TransactionRollbackError;
+#else
+            exc = OperationalError;
+#endif
         else
             exc = ProgrammingError;
     }

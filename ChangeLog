@@ -1,5 +1,9 @@
 2008-03-07  Jason Erickson  <jerickso@stickpeople.com>
 
+	* psycopg/pqpath.c (pq_raise): if PSYCOPG_EXTENSIONS is not
+	defined, raise OperationalError rather than
+	TransactionRollbackError for deadlock or serialisation errors.
+
 	* psycopg/psycopgmodule.c (psyco_connect): fix off by one error in
 	calculating the length of the DSN.
 
