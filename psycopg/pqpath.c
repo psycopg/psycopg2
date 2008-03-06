@@ -688,12 +688,13 @@ _pq_fetch_tuples(cursorObject *curs)
         int fsize = PQfsize(curs->pgres, i);
         int fmod =  PQfmod(curs->pgres, i);
 
-        PyObject *dtitem = PyTuple_New(7);
-        PyObject *type = PyInt_FromLong(ftype);
+        PyObject *dtitem;
+        PyObject *type;
         PyObject *cast = NULL;
 
         Py_BLOCK_THREADS;
 
+        dtitem = PyTuple_New(7);
         PyTuple_SET_ITEM(curs->description, i, dtitem);
 
         /* fill the right cast function by accessing three different dictionaries:
@@ -702,6 +703,7 @@ _pq_fetch_tuples(cursorObject *curs)
            - the global dictionary (at module level)
            if we get no defined cast use the default one */
 
+        type = PyInt_FromLong(ftype);
         Dprintf("_pq_fetch_tuples: looking for cast %d:", ftype);
         if (curs->string_types != NULL && curs->string_types != Py_None) {
             cast = PyDict_GetItem(curs->string_types, type);
