@@ -1,3 +1,8 @@
+2008-03-17  Federico Di Gregorio <fog@initd.org>
+
+	* psycopg/adapter_datetime.c: fixed double decref when using 
+	a PyObject as a parameter in a nested call (line 415).
+
 2008-03-17  James Henstridge  <james@jamesh.id.au>
 
 	* psycopg/typecast.c (typecast_parse_time): give the correct

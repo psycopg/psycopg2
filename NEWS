@@ -1,4 +1,4 @@
-What's new in psycopg 2.0.7 (unreleased)
+What's new in psycopg 2.0.7
 ---------------------------
 
 * Improved error handling:
@@ -42,7 +42,6 @@ What's new in psycopg 2.0.7 (unreleased)
   - If psycopg has been built with debug support, it is now necessary
     to set the PSYCOPG_DEBUG environment variable to turn on debug
     spew.
-
 
 What's new in psycopg 2.0.6
 ---------------------------

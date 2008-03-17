@@ -406,17 +406,18 @@ psyco_TimestampFromTicks(PyObject *self, PyObject *args)
     t = (time_t)round(ticks);
     ticks -= (double)t;
     if (localtime_r(&t, &tm)) {
-        args = Py_BuildValue("iiiiidO",
-                             tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday,
-                             tm.tm_hour, tm.tm_min,
-                             (double)tm.tm_sec + ticks,
-                             pyPsycopgTzLOCAL);
-        if (args) {
-/*            Dprintf("psyco_TimestampFromTicks: args->refcnt = %d", args->ob_refcnt);*/
-            res = psyco_Timestamp(self, args);
-            Py_DECREF(args);
+        PyObject *value = Py_BuildValue("iiiiidO",
+            tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday,
+            tm.tm_hour, tm.tm_min,
+            (double)tm.tm_sec + ticks,
+            pyPsycopgTzLOCAL);
+        if (value) {
+            /* we don't decref the value here because the call to
+               psyco_Timestamp will do that by calling PyArg_ParseTuple */
+            res = psyco_Timestamp(self, value);
         }
     }
+    
     return res;
 }
 
