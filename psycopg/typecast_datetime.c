@@ -58,9 +58,10 @@ typecast_PYDATE_cast(const char *str, Py_ssize_t len, PyObject *curs)
                  n, len, y, m, d);
         if (n != 3) {
             PyErr_SetString(DataError, "unable to parse date");
+            return NULL;
         }
         else {
-        if (y > 9999) y = 9999;
+            if (y > 9999) y = 9999;
             obj = PyObject_CallFunction(pyDateTypeP, "iii", y, m, d);
         }
     }
@@ -98,6 +99,7 @@ typecast_PYDATETIME_cast(const char *str, Py_ssize_t len, PyObject *curs)
                  tp, n, len, y, m, d);
         if (n != 3) {
             PyErr_SetString(DataError, "unable to parse date");
+            return NULL;
         }
 
         if (len > 0) {
@@ -108,6 +110,7 @@ typecast_PYDATETIME_cast(const char *str, Py_ssize_t len, PyObject *curs)
                 n, len, hh, mm, ss, us, tz);
             if (n < 3 || n > 5) {
                 PyErr_SetString(DataError, "unable to parse time");
+                return NULL;
             }
         }
 
@@ -116,7 +119,7 @@ typecast_PYDATETIME_cast(const char *str, Py_ssize_t len, PyObject *curs)
             ss -= 60;
         }
         if (y > 9999)
-        y = 9999;
+            y = 9999;
 
         if (n == 5 && ((cursorObject*)curs)->tzinfo_factory != Py_None) {
             /* we have a time zone, calculate minutes and create
@@ -158,6 +161,7 @@ typecast_PYTIME_cast(const char *str, Py_ssize_t len, PyObject *curs)
 
     if (n < 3 || n > 5) {
         PyErr_SetString(DataError, "unable to parse time");
+        return NULL;
     }
     else {
         if (ss > 59) {

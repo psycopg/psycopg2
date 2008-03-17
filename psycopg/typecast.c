@@ -146,7 +146,9 @@ typecast_parse_time(const char* s, const char** t, Py_ssize_t* len,
     }
 
     if (acc != -1) {
-        if (cz == 2)      { *ss = acc; cz += 1; }
+        if (cz == 0)      { *hh = acc; cz += 1; }
+        else if (cz == 1) { *mm = acc; cz += 1; }
+        else if (cz == 2) { *ss = acc; cz += 1; }
         else if (cz == 3) { *us = acc; cz += 1; }
         else if (cz == 4) { tzhh = acc; cz += 1; }
         else if (cz == 5)   tzmm = acc;

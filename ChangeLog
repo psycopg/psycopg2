@@ -1,3 +1,26 @@
+2008-03-17  James Henstridge  <james@jamesh.id.au>
+
+	* psycopg/typecast.c (typecast_parse_time): give the correct
+	return value for partially parsed time values.
+
+	* psycopg/typecast_mxdatetime.c (typecast_MXDATE_cast): return
+	NULL after setting DataError.  Also, don't treat it as an error if
+	typecast_parse_time() returns 0 (as might happen if the remainder
+	of the string is " BC").
+
+	* psycopg/typecast_datetime.c (typecast_PYDATE_cast): return NULL
+	after setting DataError.
+	(typecast_PYDATETIME_cast): same here.
+	(typecast_PYTIME_cast): same here.
+
+	* tests/test_dates.py
+	(CommonDatetimeTestsMixin.test_parse_incomplete_date): test that
+	parsing incomplete date values results in DataError.
+	(CommonDatetimeTestsMixin.test_parse_incomplete_time): same for
+	times.
+	(CommonDatetimeTestsMixin.test_parse_incomplete_time): same for
+	datetimes.
+
 2008-03-07  Jason Erickson  <jerickso@stickpeople.com>
 
 	* psycopg/pqpath.c (pq_raise): if PSYCOPG_EXTENSIONS is not

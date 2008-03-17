@@ -54,6 +54,7 @@ typecast_MXDATE_cast(const char *str, Py_ssize_t len, PyObject *curs)
             " y = %d, m = %d, d = %d", tp, n, len, y, m, d);
     if (n != 3) {
         PyErr_SetString(DataError, "unable to parse date");
+        return NULL;
     }
 
     if (len > 0) {
@@ -62,8 +63,9 @@ typecast_MXDATE_cast(const char *str, Py_ssize_t len, PyObject *curs)
             " len = " FORMAT_CODE_PY_SSIZE_T ","
             " hh = %d, mm = %d, ss = %d, us = %d, tz = %d",
             n, len, hh, mm, ss, us, tz);
-        if (n < 3 || n > 5) {
+        if (n != 0 && (n < 3 || n > 5)) {
             PyErr_SetString(DataError, "unable to parse time");
+            return NULL;
         }
     }
 
