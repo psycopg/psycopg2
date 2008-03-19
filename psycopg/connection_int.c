@@ -46,7 +46,10 @@ conn_notice_callback(void *args, const char *message)
     if (self->protocol < 3 && strncmp(message, "ERROR", 5) == 0)
         pq_set_critical(self, message);
     else {
-        PyList_Append(self->notice_list, PyString_FromString(message));
+        PyObject *msg = PyString_FromString(message);
+
+        PyList_Append(self->notice_list, msg);
+        Py_DECREF(msg);
 
         /* Remove the oldest item if the queue is getting too long. */
         if (PyList_GET_SIZE(self->notice_list) > CONN_NOTICES_LIMIT)

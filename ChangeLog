@@ -1,3 +1,8 @@
+2008-03-19  James Henstridge  <james@jamesh.id.au>
+
+	* psycopg/connection_int.c (conn_notice_callback): don't leak
+	notice messages.
+
 2008-03-17  Federico Di Gregorio <fog@initd.org>
 
 	* psycopg/adapter_datetime.c: fixed double decref when using 
