@@ -523,8 +523,8 @@ typecast_from_python(PyObject *self, PyObject *args, PyObject *keywds)
 PyObject *
 typecast_from_c(typecastObject_initlist *type, PyObject *dict)
 {
-    PyObject *tuple, *base = NULL;
-    typecastObject *obj;
+    PyObject *name = NULL, *values = NULL, *base = NULL;
+    typecastObject *obj = NULL;
     Py_ssize_t i, len = 0;
 
     /* before doing anything else we look for the base */
@@ -533,27 +533,32 @@ typecast_from_c(typecastObject_initlist *type, PyObject *dict)
         base = PyDict_GetItemString(dict, type->base);
         if (!base) {
             PyErr_Format(Error, "typecast base not found: %s", type->base);
-            return NULL;
+            goto end;
         }
     }
 
+    name = PyString_FromString(type->name);
+    if (!name) goto end;
+
     while (type->values[len] != 0) len++;
 
-    tuple = PyTuple_New(len);
-    if (!tuple) return NULL;
+    values = PyTuple_New(len);
+    if (!values) goto end;
 
     for (i = 0; i < len ; i++) {
-        PyTuple_SET_ITEM(tuple, i, PyInt_FromLong(type->values[i]));
+        PyTuple_SET_ITEM(values, i, PyInt_FromLong(type->values[i]));
     }
 
-
-    obj = (typecastObject *)
-        typecast_new(PyString_FromString(type->name), tuple, NULL, base);
+    obj = (typecastObject *)typecast_new(name, values, NULL, base);
 
     if (obj) {
         obj->ccast = type->cast;
         obj->pcast = NULL;
     }
+
+ end:
+    Py_XDECREF(values);
+    Py_XDECREF(name);
     return (PyObject *)obj;
 }
 
