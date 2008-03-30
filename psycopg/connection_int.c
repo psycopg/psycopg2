@@ -152,9 +152,9 @@ conn_connect(connectionObject *self)
         return -1;
     }
     tmp = PQgetvalue(pgres, 0, 0);
-    self->encoding = PyMem_Malloc(strlen(tmp)+1);
+    self->encoding = malloc(strlen(tmp)+1);
     if (self->encoding == NULL) {
-        /* exception already set by PyMem_Malloc() */
+        PyErr_NoMemory();
         PQfinish(pgconn);
         IFCLEARPGRES(pgres);
         return -1;
