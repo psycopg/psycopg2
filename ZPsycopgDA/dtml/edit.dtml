@@ -54,6 +54,17 @@
     </td>
   </tr>
   <tr>
+    <td align="left" valign="top">
+    <div class="form-label">
+    Encoding
+    </div>
+    </td>
+    <td align="left" valign="top">
+    <input type="text" name="encoding" size="40"
+           value="&dtml-encoding;" />
+    </td>
+  </tr>
+  <tr>
     <td align="left" valign="top" colspan="2">
     <div class="form-element">
     <input class="form-element" type="submit" name="submit"
