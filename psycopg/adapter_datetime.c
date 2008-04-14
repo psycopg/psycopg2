@@ -400,7 +400,7 @@ psyco_TimestampFromTicks(PyObject *self, PyObject *args)
     time_t t;
     double ticks;
 
-    if (!PyArg_ParseTuple(args,"d", &ticks))
+    if (!PyArg_ParseTuple(args, "d", &ticks))
         return NULL;
 
     t = (time_t)round(ticks);
@@ -412,8 +412,10 @@ psyco_TimestampFromTicks(PyObject *self, PyObject *args)
             (double)tm.tm_sec + ticks,
             pyPsycopgTzLOCAL);
         if (value) {
-            /* we don't decref the value here because the call to
-               psyco_Timestamp will do that by calling PyArg_ParseTuple */
+            /* FIXME: not decref'ing the value here is a memory leak
+	       but, on the other hand, if we decref we get a clean nice
+	       segfault (on my 64 bit Python 2.4 box). So this leaks
+	       will stay until after 2.0.7 when we'll try to plug it */
             res = psyco_Timestamp(self, value);
         }
     }
