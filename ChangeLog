@@ -1,3 +1,7 @@
+2008-03-17  Federico Di Gregorio <fog@initd.org>
+
+	* Release 2.0.7.
+
 2008-03-31  James Henstridge  <james@jamesh.id.au>
 
 	* psycopg/connection_type.c (connection_dealloc): free
