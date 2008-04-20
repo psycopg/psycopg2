@@ -1,7 +1,9 @@
 #!/usr/bin/env python
+import unittest
+import warnings
+
 import psycopg2
 import psycopg2.extensions
-import unittest
 import tests
 
 class QuotingTestCase(unittest.TestCase):
@@ -55,6 +57,14 @@ class QuotingTestCase(unittest.TestCase):
         self.assert_(not self.conn.notices)
 
     def test_unicode(self):
+        curs = self.conn.cursor()
+        curs.execute("SHOW server_encoding")
+        server_encoding = curs.fetchone()[0]
+        if server_encoding != "UTF8":
+            warnings.warn("Unicode test skipped since server encoding is %s"
+                          % server_encoding)
+            return
+
         data = u"""some data with \t chars
         to escape into, 'quotes', \u20ac euro sign and \\ a backslash too.
         """
@@ -63,7 +73,6 @@ class QuotingTestCase(unittest.TestCase):
         self.conn.set_client_encoding('UNICODE')
 
         psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
-        curs = self.conn.cursor()
         curs.execute("SELECT %s::text;", (data,))
         res = curs.fetchone()[0]
 

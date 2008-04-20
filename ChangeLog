@@ -1,5 +1,11 @@
 2008-04-21  James Henstridge  <james@jamesh.id.au>
 
+	* tests/test_quote.py (QuotingTestCase.test_unicode): If the
+	server encoding is not UTF8, skip the unicode test and emit a
+	warning.
+
+2008-04-21  Jorgen Austvik <Jorgen.Austvik@sun.com>
+
 	* tests/*.py: use the DSN constructed in tests/__init__.py.
 
 	* tests/__init__.py: allow setting the host, port and user for the
