@@ -9,7 +9,7 @@ import tests
 class Psycopg2TestCase(dbapi20.DatabaseAPI20Test):
     driver = psycopg2
     connect_args = ()
-    connect_kw_args = {'dsn': 'dbname=%s' % tests.dbname}
+    connect_kw_args = {'dsn': tests.dsn}
 
     lower_func = 'lower' # For stored procedure test
 

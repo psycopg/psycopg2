@@ -11,7 +11,7 @@ import tests
 class TransactionTests(unittest.TestCase):
 
     def setUp(self):
-        self.conn = psycopg2.connect("dbname=%s" % tests.dbname)
+        self.conn = psycopg2.connect(tests.dsn)
         self.conn.set_isolation_level(ISOLATION_LEVEL_SERIALIZABLE)
         curs = self.conn.cursor()
         curs.execute('''
@@ -75,7 +75,7 @@ class DeadlockSerializationTests(unittest.TestCase):
     """Test deadlock and serialization failure errors."""
 
     def connect(self):
-        conn = psycopg2.connect("dbname=%s" % tests.dbname)
+        conn = psycopg2.connect(tests.dsn)
         conn.set_isolation_level(ISOLATION_LEVEL_SERIALIZABLE)
         return conn
 
@@ -208,7 +208,7 @@ class QueryCancelationTests(unittest.TestCase):
     """Tests for query cancelation."""
 
     def setUp(self):
-        self.conn = psycopg2.connect("dbname=%s" % tests.dbname)
+        self.conn = psycopg2.connect(tests.dsn)
         self.conn.set_isolation_level(ISOLATION_LEVEL_SERIALIZABLE)
 
     def test_statement_timeout(self):

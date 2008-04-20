@@ -23,7 +23,7 @@ class QuotingTestCase(unittest.TestCase):
     http://www.postgresql.org/docs/8.1/static/runtime-config-compatible.html
     """
     def setUp(self):
-        self.conn = psycopg2.connect("dbname=%s" % tests.dbname)
+        self.conn = psycopg2.connect(tests.dsn)
 
     def tearDown(self):
         self.conn.close()

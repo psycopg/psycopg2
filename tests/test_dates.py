@@ -9,7 +9,7 @@ import tests
 class CommonDatetimeTestsMixin:
 
     def execute(self, *args):
-        conn = psycopg2.connect("dbname=%s" % tests.dbname)
+        conn = psycopg2.connect(tests.dsn)
         curs = conn.cursor()
         curs.execute(*args)
         return curs.fetchone()[0]

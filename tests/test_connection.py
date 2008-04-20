@@ -8,7 +8,7 @@ import tests
 class ConnectionTests(unittest.TestCase):
 
     def connect(self):
-        return psycopg2.connect("dbname=%s" % tests.dbname)
+        return psycopg2.connect(tests.dsn)
 
     def test_closed_attribute(self):
         conn = self.connect()

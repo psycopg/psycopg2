@@ -3,6 +3,18 @@ import os
 import unittest
 
 dbname = os.environ.get('PSYCOPG2_TESTDB', 'psycopg2_test')
+dbhost = os.environ.get('PSYCOPG2_TESTDB_HOST', None)
+dbport = os.environ.get('PSYCOPG2_TESTDB_PORT', None)
+dbuser = os.environ.get('PSYCOPG2_TESTDB_USER', None)
+
+# Construct a DSN to connect to the test database:
+dsn = 'dbname=%s' % dbname
+if dbhost is not None:
+    dsn += ' host=%s' % dbhost
+if dbport is not None:
+    dsn += ' port=%s' % dbport
+if dbuser is not None:
+    dsn += ' user=%s' % dbuser
 
 import bugX000
 import extras_dictcursor

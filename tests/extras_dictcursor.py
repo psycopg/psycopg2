@@ -24,7 +24,7 @@ class ExtrasDictCursorTests(unittest.TestCase):
     """Test if DictCursor extension class works."""
 
     def setUp(self):
-        self.conn = psycopg2.connect("dbname=%s" % tests.dbname)
+        self.conn = psycopg2.connect(tests.dsn)
         curs = self.conn.cursor()
         curs.execute("CREATE TEMPORARY TABLE ExtrasDictCursorTests (foo text)")
 

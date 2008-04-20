@@ -28,7 +28,7 @@ class TypesBasicTests(unittest.TestCase):
     """Test presence of mandatory attributes and methods."""
 
     def setUp(self):
-        self.conn = psycopg2.connect("dbname=%s" % tests.dbname)
+        self.conn = psycopg2.connect(tests.dsn)
 
     def execute(self, *args):
         curs = self.conn.cursor()
