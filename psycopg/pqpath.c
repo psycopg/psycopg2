@@ -348,7 +348,6 @@ pq_complete_error(connectionObject *conn, PGresult **pgres, char **error)
         pq_raise(conn, NULL, *pgres);
     else if (*error != NULL) {
         PyErr_SetString(OperationalError, *error);
-        free(*error);
     } else {
         PyErr_SetString(OperationalError, "unknown error");
     }
