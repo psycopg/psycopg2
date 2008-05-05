@@ -368,7 +368,7 @@ pq_complete_error(connectionObject *conn, PGresult **pgres, char **error)
    On error, -1 is returned, and the pgres argument will hold the
    relevant result structure.
  */
-static int
+int
 pq_begin_locked(connectionObject *conn, PGresult **pgres, char **error)
 {
     const char *query[] = {

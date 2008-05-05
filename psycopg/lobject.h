@@ -26,6 +26,7 @@
 #include <libpq-fe.h>
 #include <libpq/libpq-fs.h>
 
+#include "psycopg/config.h"
 #include "psycopg/connection.h"
 
 #ifdef __cplusplus
@@ -48,19 +49,19 @@ typedef struct {
     Oid oid;                 /* the oid for this lobject */
     int fd;                  /* the file descriptor for file-like ops */
 } lobjectObject;
-    
+
 /* functions exported from lobject_int.c */
 
-extern int lobject_open(lobjectObject *self, connectionObject *conn,
+HIDDEN int lobject_open(lobjectObject *self, connectionObject *conn,
                          Oid oid, int mode, Oid new_oid, char *new_file);
-extern int lobject_unlink(lobjectObject *self);
-extern int lobject_export(lobjectObject *self, char *filename);
+HIDDEN int lobject_unlink(lobjectObject *self);
+HIDDEN int lobject_export(lobjectObject *self, char *filename);
 
-extern size_t lobject_read(lobjectObject *self, char *buf, size_t len);
-extern size_t lobject_write(lobjectObject *self, char *buf, size_t len);
-extern int lobject_seek(lobjectObject *self, int pos, int whence);
-extern int lobject_tell(lobjectObject *self);
-extern void lobject_close(lobjectObject *self);
+HIDDEN Py_ssize_t lobject_read(lobjectObject *self, char *buf, size_t len);
+HIDDEN Py_ssize_t lobject_write(lobjectObject *self, char *buf, size_t len);
+HIDDEN int lobject_seek(lobjectObject *self, int pos, int whence);
+HIDDEN int lobject_tell(lobjectObject *self);
+HIDDEN int lobject_close(lobjectObject *self);
 
 /* exception-raising macros */
 

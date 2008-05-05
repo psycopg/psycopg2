@@ -31,16 +31,31 @@
 
 #ifdef PSYCOPG_EXTENSIONS
 
+static void
+collect_error(connectionObject *conn, char **error)
+{
+    const char *msg = PQerrorMessage(conn->pgconn);
+
+    if (msg)
+        *error = strdup(msg);
+}
+
 /* lobject_open - create a new/open an existing lo */
 
 int
 lobject_open(lobjectObject *self, connectionObject *conn,
               Oid oid, int mode, Oid new_oid, char *new_file)
 {
+    int retvalue = -1;
+    PGresult *pgres = NULL;
+    char *error = NULL;
+
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
 
-    pq_begin(self->conn);
+    retvalue = pq_begin_locked(self->conn, &pgres, &error);
+    if (retvalue < 0)
+        goto end;
 
     /* if the oid is InvalidOid we create a new lob before opening it
        or we import a file from the FS, depending on the value of
@@ -54,8 +69,12 @@ lobject_open(lobjectObject *self, connectionObject *conn,
         Dprintf("lobject_open: large object created with oid = %d",
                 self->oid);
 
-        if (self->oid == InvalidOid) goto end;
-        
+        if (self->oid == InvalidOid) {
+            collect_error(self->conn, &error);
+            retvalue = -1;
+            goto end;
+        }
+
         mode = INV_WRITE;
     }
     else {
@@ -69,37 +88,78 @@ lobject_open(lobjectObject *self, connectionObject *conn,
         self->fd = lo_open(self->conn->pgconn, self->oid, mode);
         Dprintf("lobject_open: large object opened with fd = %d",
             self->fd);
+
+        if (self->fd == -1) {
+            collect_error(self->conn, &error);
+            retvalue = -1;
+            goto end;
+        }
     }
     else {
         /* this is necessary to make sure no function that needs and
 	   fd is called on unopened lobjects */
         self->closed = 1;
     }
+    /* set the mode for future reference */
+    self->mode = mode;
+    switch (mode) {
+    case -1:
+        self->smode = "n"; break;
+    case INV_READ:
+        self->smode = "r"; break;
+    case INV_WRITE:
+        self->smode = "w"; break;
+    case INV_READ+INV_WRITE:
+        self->smode = "rw"; break;
+    }
+    retvalue = 0;
 
  end:
     pthread_mutex_unlock(&(self->conn->lock));
     Py_END_ALLOW_THREADS;
 
-    /* here we check for errors before returning 0 */
-    if ((self->fd == -1 && mode != -1) || self->oid == InvalidOid) {
-        pq_raise(conn, NULL, NULL, NULL);
-        return -1;
-    }
-    else {
-        /* set the mode for future reference and return */
-	self->mode = mode;
-	switch (mode) {
-            case -1:
-                self->smode = "n"; break;
-            case INV_READ:
-                self->smode = "r"; break;
-            case INV_WRITE:
-                self->smode = "w"; break;
-            case INV_READ+INV_WRITE:
-                self->smode = "rw"; break;
-	}
+    if (retvalue < 0)
+        pq_complete_error(self->conn, &pgres, &error);
+    return retvalue;
+}
+
+/* lobject_close - close an existing lo */
+
+static int
+lobject_close_locked(lobjectObject *self, char **error)
+{
+    int retvalue;
+
+    if (self->conn->isolation_level == 0 ||
+        self->conn->mark != self->mark ||
+        self->fd == -1)
         return 0;
-    }
+
+    retvalue = lo_close(self->conn->pgconn, self->fd);
+    self->fd = -1;
+    if (retvalue < 0)
+        collect_error(self->conn, error);
+
+    return retvalue;
+}
+
+int
+lobject_close(lobjectObject *self)
+{
+    char *error = NULL;
+    int retvalue;
+
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&(self->conn->lock));
+
+    retvalue = lobject_close_locked(self, &error);
+
+    pthread_mutex_unlock(&(self->conn->lock));
+    Py_END_ALLOW_THREADS;
+
+    if (retvalue < 0)
+        pq_complete_error(self->conn, NULL, &error);
+    return retvalue;
 }
 
 /* lobject_unlink - remove an lo from database */
@@ -107,76 +167,79 @@ lobject_open(lobjectObject *self, connectionObject *conn,
 int
 lobject_unlink(lobjectObject *self)
 {
-    int res;
+    PGresult *pgres = NULL;
+    char *error = NULL;
+    int retvalue = -1;
 
-    /* first we make sure the lobject is closed and then we unlink */
-    lobject_close(self);
-    
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
 
-    pq_begin(self->conn);
+    retvalue = pq_begin_locked(self->conn, &pgres, &error);
+    if (retvalue < 0)
+        goto end;
 
-    res = lo_unlink(self->conn->pgconn, self->oid);
+    /* first we make sure the lobject is closed and then we unlink */
+    retvalue = lobject_close_locked(self, &error);
+    if (retvalue < 0)
+        goto end;
 
+    retvalue = lo_unlink(self->conn->pgconn, self->oid);
+    if (retvalue < 0)
+        collect_error(self->conn, &error);
+
+ end:
     pthread_mutex_unlock(&(self->conn->lock));
     Py_END_ALLOW_THREADS;
 
-    if (res == -1)
-        pq_raise(self->conn, NULL, NULL, NULL);
-    return res;
-}
-
-/* lobject_close - close an existing lo */
-
-void
-lobject_close(lobjectObject *self)
-{
-    if (self->conn->isolation_level > 0
-        && self->conn->mark == self->mark) {
-        if (self->fd != -1)
-            lo_close(self->conn->pgconn, self->fd);
-    }
+    if (retvalue < 0)
+        pq_complete_error(self->conn, &pgres, &error);
+    return retvalue;
 }
 
 /* lobject_write - write bytes to a lo */
 
-size_t
+Py_ssize_t
 lobject_write(lobjectObject *self, char *buf, size_t len)
 {
-    size_t written;
+    Py_ssize_t written;
+    char *error = NULL;
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
 
     written = lo_write(self->conn->pgconn, self->fd, buf, len);
+    if (written < 0)
+        collect_error(self->conn, &error);
 
     pthread_mutex_unlock(&(self->conn->lock));
     Py_END_ALLOW_THREADS;
 
     if (written < 0)
-        pq_raise(self->conn, NULL, NULL, NULL);
+        pq_complete_error(self->conn, NULL, &error);
     return written;
 }
 
 /* lobject_read - read bytes from a lo */
 
-size_t
+Py_ssize_t
 lobject_read(lobjectObject *self, char *buf, size_t len)
 {
-    size_t readed;
+    Py_ssize_t n_read;
+    char *error = NULL;
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
 
-    readed = lo_read(self->conn->pgconn, self->fd, buf, len);
+    n_read = lo_read(self->conn->pgconn, self->fd, buf, len);
+    if (n_read < 0)
+        collect_error(self->conn, &error);
 
     pthread_mutex_unlock(&(self->conn->lock));
     Py_END_ALLOW_THREADS;
 
-    if (readed < 0)
-        pq_raise(self->conn, NULL, NULL, NULL);
-    return readed;
+    if (n_read < 0)
+        pq_complete_error(self->conn, NULL, &error);
+    return n_read;
 }
 
 /* lobject_seek - move the current position in the lo */
@@ -185,17 +248,20 @@ int
 lobject_seek(lobjectObject *self, int pos, int whence)
 {
     int where;
+    char *error = NULL;
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
 
     where = lo_lseek(self->conn->pgconn, self->fd, pos, whence);
+    if (where < 0)
+        collect_error(self->conn, &error);
 
     pthread_mutex_unlock(&(self->conn->lock));
     Py_END_ALLOW_THREADS;
 
     if (where < 0)
-        pq_raise(self->conn, NULL, NULL, NULL);
+        pq_complete_error(self->conn, NULL, &error);
     return where;
 }
 
@@ -205,17 +271,20 @@ int
 lobject_tell(lobjectObject *self)
 {
     int where;
+    char *error = NULL;
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
 
     where = lo_tell(self->conn->pgconn, self->fd);
+    if (where < 0)
+        collect_error(self->conn, &error);
 
     pthread_mutex_unlock(&(self->conn->lock));
     Py_END_ALLOW_THREADS;
 
     if (where < 0)
-        pq_raise(self->conn, NULL, NULL, NULL);
+        pq_complete_error(self->conn, NULL, &error);
     return where;
 }
 
@@ -225,17 +294,20 @@ int
 lobject_export(lobjectObject *self, char *filename)
 {
     int res;
+    char *error = NULL;
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
 
     res = lo_export(self->conn->pgconn, self->oid, filename);
+    if (res < 0)
+        collect_error(self->conn, &error);
 
     pthread_mutex_unlock(&(self->conn->lock));
     Py_END_ALLOW_THREADS;
 
     if (res < 0)
-        pq_raise(self->conn, NULL, NULL, NULL);
+        pq_complete_error(self->conn, NULL, &error);
     return res;
 }
 

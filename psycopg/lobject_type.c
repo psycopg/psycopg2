@@ -57,7 +57,8 @@ psyco_lobj_close(lobjectObject *self, PyObject *args)
 	&& self->conn->mark == self->mark)
     {
         self->closed = 1;
-        lobject_close(self);
+        if (lobject_close(self) < 0)
+            return NULL;
 
         Dprintf("psyco_lobj_close: lobject at %p closed", self);
     }
@@ -276,7 +277,8 @@ lobject_dealloc(PyObject* obj)
 {
     lobjectObject *self = (lobjectObject *)obj;
 
-    lobject_close(self);
+    if (lobject_close(self) < 0)
+        PyErr_Print();
     Py_XDECREF((PyObject*)self->conn);
 
     Dprintf("lobject_dealloc: deleted lobject object at %p, refcnt = %d",
