@@ -341,6 +341,7 @@ static struct PyMethodDef connectionObject_methods[] = {
      METH_VARARGS, psyco_conn_get_transaction_status_doc},
     {"lobject", (PyCFunction)psyco_conn_lobject,
      METH_VARARGS|METH_KEYWORDS, psyco_conn_lobject_doc},
+#endif
     {NULL}
 };
 
