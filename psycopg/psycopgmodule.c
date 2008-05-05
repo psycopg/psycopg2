@@ -27,6 +27,7 @@
 #include "psycopg/psycopg.h"
 #include "psycopg/connection.h"
 #include "psycopg/cursor.h"
+#include "psycopg/lobject.h"
 #include "psycopg/typecast.h"
 #include "psycopg/microprotocols.h"
 #include "psycopg/microprotocols_proto.h"
@@ -551,7 +552,7 @@ init_psycopg(void)
     asisType.ob_type       = &PyType_Type;
     listType.ob_type       = &PyType_Type;
     chunkType.ob_type      = &PyType_Type;
-    
+
     if (PyType_Ready(&connectionType) == -1) return;
     if (PyType_Ready(&cursorType) == -1) return;
     if (PyType_Ready(&typecastType) == -1) return;
@@ -562,6 +563,11 @@ init_psycopg(void)
     if (PyType_Ready(&listType) == -1) return;
     if (PyType_Ready(&chunkType) == -1) return;
     
+#ifdef PSYCOPG_EXTENSIONS
+    lobjectType.ob_type    = &PyType_Type;
+    if (PyType_Ready(&lobjectType) == -1) return;
+#endif
+
 #ifdef HAVE_PYBOOL
     pbooleanType.ob_type   = &PyType_Type;
     if (PyType_Ready(&pbooleanType) == -1) return;
@@ -638,7 +644,10 @@ init_psycopg(void)
     PyModule_AddObject(module, "connection", (PyObject*)&connectionType);
     PyModule_AddObject(module, "cursor", (PyObject*)&cursorType);
     PyModule_AddObject(module, "ISQLQuote", (PyObject*)&isqlquoteType);
-    
+#ifdef PSYCOPG_EXTENSIONS
+    PyModule_AddObject(module, "lobject", (PyObject*)&lobjectType);
+#endif
+
     /* encodings dictionary in module dictionary */
     PyModule_AddObject(module, "encodings", psycoEncodings);
     
@@ -664,6 +673,10 @@ init_psycopg(void)
     listType.tp_alloc = PyType_GenericAlloc;
     chunkType.tp_alloc = PyType_GenericAlloc;
     
+#ifdef PSYCOPG_EXTENSIONS    
+    lobjectType.tp_alloc = PyType_GenericAlloc;
+#endif
+
 #ifdef HAVE_PYDATETIME
     pydatetimeType.tp_alloc = PyType_GenericAlloc;
 #endif

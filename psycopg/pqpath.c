@@ -256,6 +256,8 @@ pq_commit(connectionObject *conn)
         return 0;
     }
 
+    conn->mark += 1;
+
     pq_clear_async(conn);
     pgres = PQexec(conn->pgconn, query);
     if (pgres == NULL) {
@@ -298,6 +300,8 @@ pq_abort(connectionObject *conn)
         Dprintf("pq_abort: no transaction to abort");
         return 0;
     }
+
+    conn->mark += 1;
 
     pq_clear_async(conn);
     pgres = PQexec(conn->pgconn, query);

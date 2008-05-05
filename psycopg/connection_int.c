@@ -202,7 +202,6 @@ conn_commit(connectionObject *self)
     pthread_mutex_lock(&self->lock);
 
     res = pq_commit(self);
-    self->mark++;
     
     pthread_mutex_unlock(&self->lock);
     Py_END_ALLOW_THREADS;
@@ -221,7 +220,6 @@ conn_rollback(connectionObject *self)
     pthread_mutex_lock(&self->lock);
 
     res = pq_abort(self);
-    self->mark++;
     
     pthread_mutex_unlock(&self->lock);
     Py_END_ALLOW_THREADS;
@@ -245,7 +243,6 @@ conn_switch_isolation_level(connectionObject *self, int level)
         res = pq_abort(self);
     }
     self->isolation_level = level;
-    self->mark++;
     
     Dprintf("conn_switch_isolation_level: switched to level %d", level);
     
