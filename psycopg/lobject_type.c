@@ -231,9 +231,9 @@ static struct PyMethodDef lobjectObject_methods[] = {
 /* object member list */
 
 static struct PyMemberDef lobjectObject_members[] = {
-    {"oid", T_LONG, offsetof(lobjectObject, oid), RO,
+    {"oid", T_UINT, offsetof(lobjectObject, oid), RO,
         "The backend OID associated to this lobject."},
-    {"closed", T_LONG, offsetof(lobjectObject, closed), RO,
+    {"closed", T_INT, offsetof(lobjectObject, closed), RO,
         "The if the large object is closed (no file-like methods)."},
     {"mode", T_STRING, offsetof(lobjectObject, smode), RO,
         "Open mode ('r', 'w', 'rw' or 'n')."},
