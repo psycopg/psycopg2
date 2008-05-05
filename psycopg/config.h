@@ -129,7 +129,7 @@ static struct tm *localtime_r(time_t *t, struct tm *tm)
 #define inline
 #endif
 
-#if defined(__FreeBSD__) || (defined(_WIN32) && !defined(__GNUC__)) || defined(__sun__)
+#if defined(__FreeBSD__) || (defined(_WIN32) && !defined(__GNUC__)) || defined(__sun__) || defined(sun)
 /* what's this, we have no round function either? */
 static double round(double num)
 {

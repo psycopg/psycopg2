@@ -1,3 +1,7 @@
+2008-05-05  Federico Di Gregorio  <fog@initd.org>
+
+	* Fixed sun build problem by adding "sun" to config.h checks. 
+
 2006-09-01  Federico Di Gregorio  <fog@initd.org>
 
 	* psycopg/connection_type.c: merged in double mutex destroy patch
