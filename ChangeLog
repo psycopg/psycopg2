@@ -1,3 +1,16 @@
+2006-09-01  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/connection_type.c: merged in double mutex destroy patch
+	from Joerg Sonnenberger.
+
+	* Implemented large objects support.
+
+	* psycopg/connection_int.c: removed increment of self->mark,
+	now it is done directly in pqpath.c to make sure even the
+	large object support gets it.
+
+	* Starting 2.1 development.
+
 2008-04-21  James Henstridge  <james@jamesh.id.au>
 
 	* tests/test_quote.py (QuotingTestCase.test_unicode): If the

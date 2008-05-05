@@ -33,6 +33,7 @@
 #include "psycopg/psycopg.h"
 #include "psycopg/connection.h"
 #include "psycopg/cursor.h"
+#include "psycopg/lobject.h"
 
 /** DBAPI methods **/
 
@@ -178,7 +179,7 @@ psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
     return Py_None;
 }
 
-/* set_isolation_level method - switch connection isolation level */
+/* set_client_encoding method - set client encoding */
 
 #define psyco_conn_set_client_encoding_doc \
 "set_client_encoding(encoding) -- Set client encoding to ``encoding``."
@@ -215,7 +216,7 @@ psyco_conn_set_client_encoding(connectionObject *self, PyObject *args)
     }
 }
 
-/* set_isolation_level method - switch connection isolation level */
+/* get_transaction_status method - Get backend transaction status */
 
 #define psyco_conn_get_transaction_status_doc \
 "get_transaction_status() -- Get backend transaction status."
@@ -228,6 +229,82 @@ psyco_conn_get_transaction_status(connectionObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "")) return NULL;
 
     return PyInt_FromLong((long)PQtransactionStatus(self->pgconn));
+}
+
+/* lobject method - allocate a new lobject */
+
+#define psyco_conn_lobject_doc \
+"cursor(oid=0, mode=0, new_oid=0, new_file=None,\n"                         \
+"       lobject_factory=extensions.lobject) -- new lobject\n\n"             \
+"Return a new lobject.\n\nThe ``lobject_factory`` argument can be used\n"   \
+"to create non-standard lobjects by passing a class different from the\n"   \
+"default. Note that the new class *should* be a sub-class of\n"             \
+"`extensions.lobject`.\n\n"                                                 \
+":rtype: `extensions.lobject`"
+
+static PyObject *
+psyco_conn_lobject(connectionObject *self, PyObject *args, PyObject *keywds)
+{
+    Oid oid=InvalidOid, new_oid=InvalidOid;
+    char *smode = NULL, *new_file = NULL;
+    int mode=0;
+    PyObject *obj, *factory = NULL;
+
+    static char *kwlist[] = {"oid", "mode", "new_oid", "new_file",
+                             "cursor_factory", NULL};
+    
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "|izizO", kwlist,
+                                     &oid, &smode, &new_oid, &new_file, 
+				     &factory)) {
+        return NULL;
+    }
+
+    EXC_IF_CONN_CLOSED(self);
+
+    Dprintf("psyco_conn_lobject: new lobject for connection at %p", self);
+    Dprintf("psyco_conn_lobject:     parameters: oid = %d, mode = %s",
+            oid, smode);
+    Dprintf("psyco_conn_lobject:     parameters: new_oid = %d, new_file = %s",
+            new_oid, new_file);
+    
+    /* build a mode number out of the mode string: right now we only accept
+       'r', 'w' and 'rw' (but note that 'w' implies 'rw' because PostgreSQL
+       backend does that. */
+    if (smode) {
+        if (strncmp("rw", smode, 2) == 0)
+            mode = INV_READ+INV_WRITE;
+        else if (smode[0] == 'r')
+           mode = INV_READ;
+        else if (smode[0] == 'w')
+           mode = INV_WRITE;
+	else if (smode[0] == 'n')
+	   mode = -1;
+        else {
+            PyErr_SetString(PyExc_TypeError,
+                "mode should be one of 'r', 'w' or 'rw'");
+	    return NULL;
+	}
+    }
+
+    if (factory == NULL) factory = (PyObject *)&lobjectType;
+    if (new_file)
+        obj = PyObject_CallFunction(factory, "Oiiis", 
+	    self, oid, mode, new_oid, new_file);    
+    else
+        obj = PyObject_CallFunction(factory, "Oiii",
+	    self, oid, mode, new_oid);
+
+    if (obj == NULL) return NULL;
+    if (PyObject_IsInstance(obj, (PyObject *)&lobjectType) == 0) {
+        PyErr_SetString(PyExc_TypeError,
+            "lobject factory must be subclass of psycopg2._psycopg.lobject");
+        Py_DECREF(obj);
+        return NULL;
+    }
+    
+    Dprintf("psyco_conn_lobject: new lobject at %p: refcnt = %d",
+            obj, obj->ob_refcnt);
+    return obj;
 }
 
 #endif
@@ -262,7 +339,8 @@ static struct PyMethodDef connectionObject_methods[] = {
      METH_VARARGS, psyco_conn_set_client_encoding_doc},
     {"get_transaction_status", (PyCFunction)psyco_conn_get_transaction_status,
      METH_VARARGS, psyco_conn_get_transaction_status_doc},
-#endif
+    {"lobject", (PyCFunction)psyco_conn_lobject,
+     METH_VARARGS|METH_KEYWORDS, psyco_conn_lobject_doc},
     {NULL}
 };
 

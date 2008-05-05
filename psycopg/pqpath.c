@@ -416,6 +416,7 @@ pq_commit(connectionObject *conn)
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&conn->lock);
+    conn->mark += 1;
 
     pq_clear_async(conn);
     retvalue = pq_execute_command_locked(conn, "COMMIT", &pgres, &error);
@@ -446,6 +447,7 @@ pq_abort_locked(connectionObject *conn, PGresult **pgres, char **error)
         return 0;
     }
 
+    conn->mark += 1;
     pq_clear_async(conn);
     retvalue = pq_execute_command_locked(conn, "ROLLBACK", pgres, error);
     if (retvalue == 0)
