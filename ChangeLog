@@ -1,6 +1,21 @@
+2008-05-05  James Henstridge  <james@jamesh.id.au>
+
+	* psycopg/lobject.h: don't export the lobjectType symbol.
+
 2008-05-05  Federico Di Gregorio  <fog@initd.org>
 
-	* Fixed sun build problem by adding "sun" to config.h checks. 
+	* Fixed sun build problem by adding "sun" to config.h checks.
+
+2008-05-05  James Henstridge  <james@jamesh.id.au>
+
+	* psycopg/pqpath.c (pq_complete_error): get rid of double free
+	error in case when pgres is NULL.
+
+	* tests/test_lobject.py: add some basic tests for large object
+	code.
+
+	* psycopg/lobject*.[ch]: port the large object code to work with
+	current psycopg code.
 
 2006-09-01  Federico Di Gregorio  <fog@initd.org>
 

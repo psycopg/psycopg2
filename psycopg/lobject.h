@@ -33,7 +33,7 @@
 extern "C" {
 #endif
 
-extern PyTypeObject lobjectType;
+extern HIDDEN PyTypeObject lobjectType;
 
 typedef struct {
     PyObject HEAD;
