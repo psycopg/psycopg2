@@ -246,7 +246,6 @@ conn_commit(connectionObject *self)
     int res;
 
     res = pq_commit(self);
-    self->mark++;
     return res;
 }
 
@@ -258,7 +257,6 @@ conn_rollback(connectionObject *self)
     int res;
 
     res = pq_abort(self);
-    self->mark++;
     return res;
 }
 
@@ -283,7 +281,6 @@ conn_switch_isolation_level(connectionObject *self, int level)
         res = pq_abort_locked(self, &pgres, &error);
     }
     self->isolation_level = level;
-    self->mark++;
 
     Dprintf("conn_switch_isolation_level: switched to level %d", level);
 

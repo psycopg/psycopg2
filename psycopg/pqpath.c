@@ -348,7 +348,6 @@ pq_complete_error(connectionObject *conn, PGresult **pgres, char **error)
         pq_raise(conn, NULL, *pgres);
     else if (*error != NULL) {
         PyErr_SetString(OperationalError, *error);
-        free(*error);
     } else {
         PyErr_SetString(OperationalError, "unknown error");
     }
@@ -368,7 +367,7 @@ pq_complete_error(connectionObject *conn, PGresult **pgres, char **error)
    On error, -1 is returned, and the pgres argument will hold the
    relevant result structure.
  */
-static int
+int
 pq_begin_locked(connectionObject *conn, PGresult **pgres, char **error)
 {
     const char *query[] = {
@@ -416,6 +415,7 @@ pq_commit(connectionObject *conn)
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&conn->lock);
+    conn->mark += 1;
 
     pq_clear_async(conn);
     retvalue = pq_execute_command_locked(conn, "COMMIT", &pgres, &error);
@@ -446,6 +446,7 @@ pq_abort_locked(connectionObject *conn, PGresult **pgres, char **error)
         return 0;
     }
 
+    conn->mark += 1;
     pq_clear_async(conn);
     retvalue = pq_execute_command_locked(conn, "ROLLBACK", pgres, error);
     if (retvalue == 0)
