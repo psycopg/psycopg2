@@ -19,6 +19,7 @@
  * Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <string.h>
 
@@ -146,6 +147,7 @@ lobject_close_locked(lobjectObject *self, char **error)
 int
 lobject_close(lobjectObject *self)
 {
+    PGresult *pgres = NULL;
     char *error = NULL;
     int retvalue;
 
@@ -158,7 +160,7 @@ lobject_close(lobjectObject *self)
     Py_END_ALLOW_THREADS;
 
     if (retvalue < 0)
-        pq_complete_error(self->conn, NULL, &error);
+        pq_complete_error(self->conn, &pgres, &error);
     return retvalue;
 }
 
@@ -202,6 +204,7 @@ Py_ssize_t
 lobject_write(lobjectObject *self, char *buf, size_t len)
 {
     Py_ssize_t written;
+    PGresult *pgres = NULL;
     char *error = NULL;
 
     Py_BEGIN_ALLOW_THREADS;
@@ -215,7 +218,7 @@ lobject_write(lobjectObject *self, char *buf, size_t len)
     Py_END_ALLOW_THREADS;
 
     if (written < 0)
-        pq_complete_error(self->conn, NULL, &error);
+        pq_complete_error(self->conn, &pgres, &error);
     return written;
 }
 
@@ -225,6 +228,7 @@ Py_ssize_t
 lobject_read(lobjectObject *self, char *buf, size_t len)
 {
     Py_ssize_t n_read;
+    PGresult *pgres = NULL;
     char *error = NULL;
 
     Py_BEGIN_ALLOW_THREADS;
@@ -238,7 +242,7 @@ lobject_read(lobjectObject *self, char *buf, size_t len)
     Py_END_ALLOW_THREADS;
 
     if (n_read < 0)
-        pq_complete_error(self->conn, NULL, &error);
+        pq_complete_error(self->conn, &pgres, &error);
     return n_read;
 }
 
@@ -247,8 +251,9 @@ lobject_read(lobjectObject *self, char *buf, size_t len)
 int
 lobject_seek(lobjectObject *self, int pos, int whence)
 {
-    int where;
+    PGresult *pgres = NULL;
     char *error = NULL;
+    int where;
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
@@ -261,7 +266,7 @@ lobject_seek(lobjectObject *self, int pos, int whence)
     Py_END_ALLOW_THREADS;
 
     if (where < 0)
-        pq_complete_error(self->conn, NULL, &error);
+        pq_complete_error(self->conn, &pgres, &error);
     return where;
 }
 
@@ -270,8 +275,9 @@ lobject_seek(lobjectObject *self, int pos, int whence)
 int
 lobject_tell(lobjectObject *self)
 {
-    int where;
+    PGresult *pgres = NULL;
     char *error = NULL;
+    int where;
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
@@ -284,7 +290,7 @@ lobject_tell(lobjectObject *self)
     Py_END_ALLOW_THREADS;
 
     if (where < 0)
-        pq_complete_error(self->conn, NULL, &error);
+        pq_complete_error(self->conn, &pgres, &error);
     return where;
 }
 
@@ -293,8 +299,9 @@ lobject_tell(lobjectObject *self)
 int
 lobject_export(lobjectObject *self, char *filename)
 {
-    int res;
+    PGresult *pgres = NULL;
     char *error = NULL;
+    int res;
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
@@ -307,7 +314,7 @@ lobject_export(lobjectObject *self, char *filename)
     Py_END_ALLOW_THREADS;
 
     if (res < 0)
-        pq_complete_error(self->conn, NULL, &error);
+        pq_complete_error(self->conn, &pgres, &error);
     return res;
 }
 
