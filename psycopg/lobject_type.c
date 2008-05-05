@@ -140,7 +140,7 @@ psyco_lobj_seek(lobjectObject *self, PyObject *args)
     EXC_IF_LOBJ_LEVEL0(self);
     EXC_IF_LOBJ_UNMARKED(self);
  
-    if ((pos = lobject_seek(self, pos, whence)) < 0)
+    if ((pos = lobject_seek(self, offset, whence)) < 0)
     	return NULL;
     
     return PyInt_FromLong((long)pos);

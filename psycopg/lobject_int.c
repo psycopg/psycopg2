@@ -255,10 +255,14 @@ lobject_seek(lobjectObject *self, int pos, int whence)
     char *error = NULL;
     int where;
 
+    Dprintf("lobject_seek: fd = %d, pos = %d, whence = %d",
+            self->fd, pos, whence);
+
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
 
     where = lo_lseek(self->conn->pgconn, self->fd, pos, whence);
+    Dprintf("lobject_seek: where = %d", where);
     if (where < 0)
         collect_error(self->conn, &error);
 
@@ -279,10 +283,13 @@ lobject_tell(lobjectObject *self)
     char *error = NULL;
     int where;
 
+    Dprintf("lobject_tell: fd = %d", self->fd);
+
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
 
     where = lo_tell(self->conn->pgconn, self->fd);
+    Dprintf("lobject_tell: where = %d", where);
     if (where < 0)
         collect_error(self->conn, &error);
 
