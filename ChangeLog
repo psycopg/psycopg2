@@ -1,5 +1,12 @@
 2008-05-06  James Henstridge  <james@jamesh.id.au>
 
+	* psycopg/lobject_*.c: replace uses of the closed struct member,
+	and change the Python level attribute to a getset.
+
+	* psycopg/lobject.h (lobjectObject): remove the closed member,
+	since "fd < 0" gives us the same information.  Reorder the struct
+	members for better packing.
+
 	* psycopg/lobject*: const'ify the code.
 
 	* tests/test_lobject.py (LargeObjectTests): add more tests,

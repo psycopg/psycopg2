@@ -95,7 +95,6 @@ lobject_open(lobjectObject *self, connectionObject *conn,
             retvalue = -1;
             goto end;
         }
-        self->closed = 0;
     }
     /* set the mode for future reference */
     self->mode = mode;
@@ -132,7 +131,6 @@ lobject_close_locked(lobjectObject *self, char **error)
         self->fd == -1)
         return 0;
 
-    self->closed = 1;
     retvalue = lo_close(self->conn->pgconn, self->fd);
     self->fd = -1;
     if (retvalue < 0)

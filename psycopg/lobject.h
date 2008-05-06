@@ -38,16 +38,15 @@ extern HIDDEN PyTypeObject lobjectType;
 typedef struct {
     PyObject HEAD;
 
-    connectionObject *conn; /* connection owning the lobject */
-
-    int closed;              /* 1 if the lobject is closed */
-    int mode;                /* numeric mode, tells if lobject was opened */
-    const char *smode;       /* string mode if lobject was opened */
-
+    connectionObject *conn;  /* connection owning the lobject */
     long int mark;           /* copied from conn->mark */
 
-    Oid oid;                 /* the oid for this lobject */
+    const char *smode;       /* string mode if lobject was opened */
+    int mode;                /* numeric mode, tells if lobject was opened */
+
+
     int fd;                  /* the file descriptor for file-like ops */
+    Oid oid;                 /* the oid for this lobject */
 } lobjectObject;
 
 /* functions exported from lobject_int.c */
@@ -65,10 +64,13 @@ HIDDEN int lobject_seek(lobjectObject *self, int pos, int whence);
 HIDDEN int lobject_tell(lobjectObject *self);
 HIDDEN int lobject_close(lobjectObject *self);
 
+#define lobject_is_closed(self) \
+    ((self)->fd < 0 || !(self)->conn || (self)->conn->closed)
+
 /* exception-raising macros */
 
 #define EXC_IF_LOBJ_CLOSED(self) \
-if ((self)->closed || ((self)->conn && (self)->conn->closed)) { \
+  if (lobject_is_closed(self)) { \
     PyErr_SetString(InterfaceError, "lobject already closed");  \
     return NULL; }
 

@@ -52,7 +52,7 @@ psyco_lobj_close(lobjectObject *self, PyObject *args)
     /* file-like objects can be closed multiple times and remember that
        closing the current transaction is equivalent to close all the
        opened large objects */
-    if (!self->closed
+    if (!lobject_is_closed(self)
         && self->conn->isolation_level > 0
 	&& self->conn->mark == self->mark)
     {
@@ -206,6 +206,17 @@ psyco_lobj_export(lobjectObject *self, PyObject *args)
 }
 
 
+static PyObject *
+psyco_lobj_get_closed(lobjectObject *self, void *closure)
+{
+    PyObject *closed;
+
+    closed = lobject_is_closed(self) ? Py_True : Py_False;
+    Py_INCREF(closed);
+    return closed;
+}
+
+
 /** the lobject object **/
 
 /* object method list */
@@ -233,10 +244,16 @@ static struct PyMethodDef lobjectObject_methods[] = {
 static struct PyMemberDef lobjectObject_members[] = {
     {"oid", T_UINT, offsetof(lobjectObject, oid), RO,
         "The backend OID associated to this lobject."},
-    {"closed", T_INT, offsetof(lobjectObject, closed), RO,
-        "The if the large object is closed (no file-like methods)."},
     {"mode", T_STRING, offsetof(lobjectObject, smode), RO,
         "Open mode ('r', 'w', 'rw' or 'n')."},
+    {NULL}
+};
+
+/* object getset list */
+
+static struct PyGetSetDef lobjectObject_getsets[] = {
+    {"closed", (getter)psyco_lobj_get_closed, NULL,
+     "The if the large object is closed (no file-like methods)."},
     {NULL}
 };
 
@@ -259,9 +276,8 @@ lobject_setup(lobjectObject *self, connectionObject *conn,
 
     Py_INCREF((PyObject*)self->conn);
 
-    self->closed = 1;
-    self->oid = InvalidOid;
     self->fd = -1;
+    self->oid = InvalidOid;
 
     if (lobject_open(self, conn, oid, mode, new_oid, new_file) == -1)
         return -1;
@@ -319,7 +335,7 @@ static PyObject *
 lobject_repr(lobjectObject *self)
 {
     return PyString_FromFormat(
-        "<lobject object at %p; closed: %d>", self, self->closed);
+        "<lobject object at %p; closed: %d>", self, lobject_is_closed(self));
 }
 
 
@@ -367,7 +383,7 @@ PyTypeObject lobjectType = {
 
     lobjectObject_methods, /*tp_methods*/
     lobjectObject_members, /*tp_members*/
-    0,          /*tp_getset*/
+    lobjectObject_getsets, /*tp_getset*/
     0,          /*tp_base*/
     0,          /*tp_dict*/
 
