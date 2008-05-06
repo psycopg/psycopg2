@@ -48,19 +48,17 @@ static PyObject *
 psyco_lobj_close(lobjectObject *self, PyObject *args)
 {
     if (!PyArg_ParseTuple(args, "")) return NULL;
-   
+
     /* file-like objects can be closed multiple times and remember that
-       closing the current transaction is equivalent to close all the 
+       closing the current transaction is equivalent to close all the
        opened large objects */
     if (!self->closed
         && self->conn->isolation_level > 0
 	&& self->conn->mark == self->mark)
     {
-        self->closed = 1;
+        Dprintf("psyco_lobj_close: closing lobject at %p", self);
         if (lobject_close(self) < 0)
             return NULL;
-
-        Dprintf("psyco_lobj_close: lobject at %p closed", self);
     }
 
     Py_INCREF(Py_None);
@@ -135,14 +133,14 @@ psyco_lobj_seek(lobjectObject *self, PyObject *args)
 
     if (!PyArg_ParseTuple(args, "i|i", &offset, &whence))
     	return NULL;
-    
+
     EXC_IF_LOBJ_CLOSED(self);
     EXC_IF_LOBJ_LEVEL0(self);
     EXC_IF_LOBJ_UNMARKED(self);
- 
+
     if ((pos = lobject_seek(self, offset, whence)) < 0)
     	return NULL;
-    
+
     return PyInt_FromLong((long)pos);
 }
 
@@ -157,14 +155,14 @@ psyco_lobj_tell(lobjectObject *self, PyObject *args)
     int pos;
 
     if (!PyArg_ParseTuple(args, "")) return NULL;
-    
+
     EXC_IF_LOBJ_CLOSED(self);
     EXC_IF_LOBJ_LEVEL0(self);
     EXC_IF_LOBJ_UNMARKED(self);
-    
+
     if ((pos = lobject_tell(self)) < 0)
     	return NULL;
-    
+
     return PyInt_FromLong((long)pos);
 }
 
@@ -177,10 +175,10 @@ static PyObject *
 psyco_lobj_unlink(lobjectObject *self, PyObject *args)
 {
     if (!PyArg_ParseTuple(args, "")) return NULL;
-    
+
     if (lobject_unlink(self) < 0)
     	return NULL;
-    
+
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -197,12 +195,14 @@ psyco_lobj_export(lobjectObject *self, PyObject *args)
 
     if (!PyArg_ParseTuple(args, "s", &filename))
     	return NULL;
-    
+
+    EXC_IF_LOBJ_LEVEL0(self);
+
     if (lobject_export(self, filename) < 0)
     	return NULL;
-    
+
     Py_INCREF(Py_None);
-    return Py_None;  
+    return Py_None;
 }
 
 
@@ -247,9 +247,9 @@ lobject_setup(lobjectObject *self, connectionObject *conn,
               Oid oid, int mode, Oid new_oid, char *new_file)
 {
     Dprintf("lobject_setup: init lobject object at %p", self);
-    
+
     if (conn->isolation_level == 0) {
-        psyco_set_error(ProgrammingError, (PyObject*)self, 
+        psyco_set_error(ProgrammingError, (PyObject*)self,
             "can't use a lobject outside of transactions", NULL, NULL);
         return -1;
     }
@@ -258,14 +258,14 @@ lobject_setup(lobjectObject *self, connectionObject *conn,
     self->mark = conn->mark;
 
     Py_INCREF((PyObject*)self->conn);
-    
-    self->closed = 0;
+
+    self->closed = 1;
     self->oid = InvalidOid;
     self->fd = -1;
 
     if (lobject_open(self, conn, oid, mode, new_oid, new_file) == -1)
         return -1;
-    
+
    Dprintf("lobject_setup: good lobject object at %p, refcnt = %d",
        self, ((PyObject *)self)->ob_refcnt);
    Dprintf("lobject_setup:    oid = %d, fd = %d", self->oid, self->fd);
@@ -294,7 +294,7 @@ lobject_init(PyObject *obj, PyObject *args, PyObject *kwds)
     int mode=0;
     char *new_file = NULL;
     PyObject *conn;
-    
+
     if (!PyArg_ParseTuple(args, "O|iiis",
          &conn, &oid, &mode, &new_oid, &new_file))
         return -1;
@@ -335,7 +335,7 @@ PyTypeObject lobjectType = {
     sizeof(lobjectObject),
     0,
     lobject_dealloc, /*tp_dealloc*/
-    0,          /*tp_print*/  
+    0,          /*tp_print*/
     0,          /*tp_getattr*/
     0,          /*tp_setattr*/
     0,          /*tp_compare*/
@@ -353,7 +353,7 @@ PyTypeObject lobjectType = {
 
     Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_ITER, /*tp_flags*/
     lobjectType_doc, /*tp_doc*/
-    
+
     0,          /*tp_traverse*/
     0,          /*tp_clear*/
 
@@ -370,11 +370,11 @@ PyTypeObject lobjectType = {
     0,          /*tp_getset*/
     0,          /*tp_base*/
     0,          /*tp_dict*/
-    
+
     0,          /*tp_descr_get*/
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
-    
+
     lobject_init, /*tp_init*/
     0, /*tp_alloc  Will be set to PyType_GenericAlloc in module init*/
     lobject_new, /*tp_new*/

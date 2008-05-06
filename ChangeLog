@@ -1,3 +1,20 @@
+2008-05-06  James Henstridge  <james@jamesh.id.au>
+
+	* tests/test_lobject.py (LargeObjectTests): add more tests,
+	including behaviour on closed lobjects and stale lobjects.
+
+	* psycopg/lobject_type.c (psyco_lobj_close): don't mark the
+	connection closed here because it is done by
+	lobject_close_locked().
+
+	* psycopg/lobject_int.c (lobject_open): mark objects as not closed
+	if we successfully open them.
+	(lobject_close_locked): mark the lobject closed here.
+	(lobject_export): ensure we are in a transaction, since
+	lo_export() issues multiple queries.
+
+	* psycopg/lobject_type.c (lobject_setup): make lobjects start closed.
+
 2008-05-05  James Henstridge  <james@jamesh.id.au>
 
 	* psycopg/lobject.h: don't export the lobjectType symbol.

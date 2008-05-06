@@ -95,11 +95,7 @@ lobject_open(lobjectObject *self, connectionObject *conn,
             retvalue = -1;
             goto end;
         }
-    }
-    else {
-        /* this is necessary to make sure no function that needs and
-	   fd is called on unopened lobjects */
-        self->closed = 1;
+        self->closed = 0;
     }
     /* set the mode for future reference */
     self->mode = mode;
@@ -136,6 +132,7 @@ lobject_close_locked(lobjectObject *self, char **error)
         self->fd == -1)
         return 0;
 
+    self->closed = 1;
     retvalue = lo_close(self->conn->pgconn, self->fd);
     self->fd = -1;
     if (retvalue < 0)
@@ -308,21 +305,26 @@ lobject_export(lobjectObject *self, char *filename)
 {
     PGresult *pgres = NULL;
     char *error = NULL;
-    int res;
+    int retvalue;
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
 
-    res = lo_export(self->conn->pgconn, self->oid, filename);
-    if (res < 0)
+    retvalue = pq_begin_locked(self->conn, &pgres, &error);
+    if (retvalue < 0)
+        goto end;
+
+    retvalue = lo_export(self->conn->pgconn, self->oid, filename);
+    if (retvalue < 0)
         collect_error(self->conn, &error);
 
+ end:
     pthread_mutex_unlock(&(self->conn->lock));
     Py_END_ALLOW_THREADS;
 
-    if (res < 0)
+    if (retvalue < 0)
         pq_complete_error(self->conn, &pgres, &error);
-    return res;
+    return retvalue;
 }
 
 
