@@ -45,7 +45,7 @@ collect_error(connectionObject *conn, char **error)
 
 int
 lobject_open(lobjectObject *self, connectionObject *conn,
-              Oid oid, int mode, Oid new_oid, char *new_file)
+              Oid oid, int mode, Oid new_oid, const char *new_file)
 {
     int retvalue = -1;
     PGresult *pgres = NULL;
@@ -198,7 +198,7 @@ lobject_unlink(lobjectObject *self)
 /* lobject_write - write bytes to a lo */
 
 Py_ssize_t
-lobject_write(lobjectObject *self, char *buf, size_t len)
+lobject_write(lobjectObject *self, const char *buf, size_t len)
 {
     Py_ssize_t written;
     PGresult *pgres = NULL;
@@ -301,7 +301,7 @@ lobject_tell(lobjectObject *self)
 /* lobject_export - export to a local file */
 
 int
-lobject_export(lobjectObject *self, char *filename)
+lobject_export(lobjectObject *self, const char *filename)
 {
     PGresult *pgres = NULL;
     char *error = NULL;

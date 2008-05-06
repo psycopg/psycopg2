@@ -1,5 +1,7 @@
 2008-05-06  James Henstridge  <james@jamesh.id.au>
 
+	* psycopg/lobject*: const'ify the code.
+
 	* tests/test_lobject.py (LargeObjectTests): add more tests,
 	including behaviour on closed lobjects and stale lobjects.
 

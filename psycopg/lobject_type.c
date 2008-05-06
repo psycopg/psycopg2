@@ -74,7 +74,7 @@ static PyObject *
 psyco_lobj_write(lobjectObject *self, PyObject *args)
 {
     int len, res=0;
-    char *buffer;
+    const char *buffer;
 
     if (!PyArg_ParseTuple(args, "s#", &buffer, &len)) return NULL;
 
@@ -191,7 +191,7 @@ psyco_lobj_unlink(lobjectObject *self, PyObject *args)
 static PyObject *
 psyco_lobj_export(lobjectObject *self, PyObject *args)
 {
-    char *filename;
+    const char *filename;
 
     if (!PyArg_ParseTuple(args, "s", &filename))
     	return NULL;
@@ -244,7 +244,7 @@ static struct PyMemberDef lobjectObject_members[] = {
 
 static int
 lobject_setup(lobjectObject *self, connectionObject *conn,
-              Oid oid, int mode, Oid new_oid, char *new_file)
+              Oid oid, int mode, Oid new_oid, const char *new_file)
 {
     Dprintf("lobject_setup: init lobject object at %p", self);
 
@@ -292,7 +292,7 @@ lobject_init(PyObject *obj, PyObject *args, PyObject *kwds)
 {
     Oid oid=InvalidOid, new_oid=InvalidOid;
     int mode=0;
-    char *new_file = NULL;
+    const char *new_file = NULL;
     PyObject *conn;
 
     if (!PyArg_ParseTuple(args, "O|iiis",

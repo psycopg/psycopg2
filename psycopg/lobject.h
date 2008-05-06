@@ -42,7 +42,7 @@ typedef struct {
 
     int closed;              /* 1 if the lobject is closed */
     int mode;                /* numeric mode, tells if lobject was opened */
-    char *smode;             /* string mode if lobject was opened */
+    const char *smode;       /* string mode if lobject was opened */
 
     long int mark;           /* copied from conn->mark */
 
@@ -53,12 +53,14 @@ typedef struct {
 /* functions exported from lobject_int.c */
 
 HIDDEN int lobject_open(lobjectObject *self, connectionObject *conn,
-                         Oid oid, int mode, Oid new_oid, char *new_file);
+                        Oid oid, int mode, Oid new_oid,
+                        const char *new_file);
 HIDDEN int lobject_unlink(lobjectObject *self);
-HIDDEN int lobject_export(lobjectObject *self, char *filename);
+HIDDEN int lobject_export(lobjectObject *self, const char *filename);
 
 HIDDEN Py_ssize_t lobject_read(lobjectObject *self, char *buf, size_t len);
-HIDDEN Py_ssize_t lobject_write(lobjectObject *self, char *buf, size_t len);
+HIDDEN Py_ssize_t lobject_write(lobjectObject *self, const char *buf,
+                                size_t len);
 HIDDEN int lobject_seek(lobjectObject *self, int pos, int whence);
 HIDDEN int lobject_tell(lobjectObject *self);
 HIDDEN int lobject_close(lobjectObject *self);
