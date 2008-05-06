@@ -97,7 +97,6 @@ lobject_open(lobjectObject *self, connectionObject *conn,
         }
     }
     /* set the mode for future reference */
-    self->mode = mode;
     switch (mode) {
     case -1:
         self->smode = "n"; break;

@@ -42,8 +42,6 @@ typedef struct {
     long int mark;           /* copied from conn->mark */
 
     const char *smode;       /* string mode if lobject was opened */
-    int mode;                /* numeric mode, tells if lobject was opened */
-
 
     int fd;                  /* the file descriptor for file-like ops */
     Oid oid;                 /* the oid for this lobject */

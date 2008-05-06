@@ -1,5 +1,8 @@
 2008-05-06  James Henstridge  <james@jamesh.id.au>
 
+	* psycopg/lobject.h (lobjectObject): remove "mode" struct member,
+	since it was unused.
+
 	* psycopg/lobject_*.c: replace uses of the closed struct member,
 	and change the Python level attribute to a getset.
 
