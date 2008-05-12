@@ -4,10 +4,10 @@ Priority: optional
 Build-Depends: debhelper (>= 5.0.37.2), python-all-dev, python-all-dbg, python-central (>= 0.5.0), python (>= 2.3.5-7), python-egenix-mx-base-dev, autoconf, libpq-dev
 Build-Depends-Indep: zope-debhelper (>= 0.3.4)
 Maintainer: Fabio Tranchitella <kobold@debian.org>
-Standards-Version: 3.7.2.1
+Standards-Version: 3.7.3
 XS-Python-Version: all
 Vcs-Svn: svn://svn.debian.org/python-modules/packages/psycopg2/trunk/
-Vcs-Browser: http://svn.debian.org/wsvn/python-modules/packages/psycopg2/?op=log
+Vcs-Browser: http://svn.debian.org/wsvn/python-modules/packages/psycopg2/trunk/?op=log
 
 Package: python-psycopg2
 Architecture: any
@@ -36,7 +36,7 @@ Package: python-psycopg2-dbg
 Priority: extra
 Architecture: any
 Section: python
-Depends: python-psycopg2 (= ${Source-Version}), python-dbg, python-egenix-mxdatetime-dbg, ${shlibs:Depends}
+Depends: python-psycopg2 (= ${binary:Version}), python-dbg, python-egenix-mxdatetime-dbg, ${shlibs:Depends}
 Description: Python module for PostgreSQL (debug extension)
  psycopg is a PostgreSQL database adapter for the Python programming language
  (just like pygresql and popy.) This is version 2, a complete rewrite of the
@@ -44,7 +44,7 @@ Description: Python module for PostgreSQL (debug extension)
  and other sweet candies. Like the original, psycopg 2 was written with the
  aim of being very small and fast, and stable as a rock.
  .
- This package contains the extensions built for the python debug interpreter.
+ This package contains the extensions built for the Python debug interpreter.
 
 Package: zope-psycopgda2
 Architecture: all

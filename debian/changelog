@@ -1,3 +1,28 @@
+psycopg2 (2.0.7-2) unstable; urgency=medium
+
+  * ZPsycopgDA/DA.py: updated the patch. (Closes: #478860)
+
+ -- Fabio Tranchitella <kobold@debian.org>  Thu, 01 May 2008 17:43:54 +0200
+
+psycopg2 (2.0.7-1) unstable; urgency=low
+
+  * New upstream release. (Closes: #476101)
+  * debian/control: bumped Standard-Versions to 3.7.3.
+
+ -- Fabio Tranchitella <kobold@debian.org>  Tue, 15 Apr 2008 10:05:51 +0200
+
+psycopg2 (2.0.6-4) unstable; urgency=low
+
+  [ Sandro Tosi ]
+  * debian/control
+    - uniforming Vcs-Browser field
+
+  [ Fabio Tranchitella ]
+  * Provides a encoding parameter when adding a ZPsycopgDA instance using the
+    ZMI. (Closes: #475123)
+
+ -- Fabio Tranchitella <kobold@debian.org>  Wed, 09 Apr 2008 19:51:10 +0200
+
 psycopg2 (2.0.6-3) unstable; urgency=low
 
   [ Piotr Ożarowski ]
@@ -14,7 +39,7 @@ psycopg2 (2.0.6-2) unstable; urgency=low
 
   * Build a python-psycopg-dbg package
 
- -- Scott Kitterman <scott@kitterman.com>  Tue, 03 Ju1 2007 16:55:48 -0400
+ -- Scott Kitterman <scott@kitterman.com>  Tue, 03 Jul 2007 16:55:48 -0400
 
 psycopg2 (2.0.6-1) unstable; urgency=low
 
