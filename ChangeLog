@@ -1,3 +1,8 @@
+2008-05-19  Federico Di Gregorio <fog@initd.org>
+
+	* psycopg/cursor_type.c: fixed memory leak in .executemany(); on
+	error "iter" was not dec'reffed.
+
 2008-05-06  James Henstridge  <james@jamesh.id.au>
 
 	* psycopg/lobject.h (lobjectObject): remove "mode" struct member,

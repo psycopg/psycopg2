@@ -521,6 +521,7 @@ psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
     while ((v = PyIter_Next(vars)) != NULL) {
         if (_psyco_curs_execute(self, operation, v, 0) == 0) {
             Py_DECREF(v);
+            Py_XDECREF(iter);
             return NULL;
         }
         else {
