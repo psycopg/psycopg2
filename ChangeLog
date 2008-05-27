@@ -1,3 +1,9 @@
+2008-05-27  Federico Di Gregorio <fog@initd.org>
+
+	* psycopg/pqpath.c: better error checks in _pq_copy_in_v3 to
+	avoid calling blocking libpq functions when the connection to
+	the server has been broken
+
 2008-05-19  Federico Di Gregorio <fog@initd.org>
 
 	* psycopg/cursor_type.c: fixed memory leak in .executemany(); on

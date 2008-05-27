@@ -215,11 +215,12 @@ conn_close(connectionObject *self)
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
 
-    self->closed = 1;
+    if (self->closed == 0)
+        self->closed = 1;
 
     /* execute a forced rollback on the connection (but don't check the
        result, we're going to close the pq connection anyway */
-    if (self->pgconn) {
+    if (self->pgconn && self->closed == 1) {
         PGresult *pgres = NULL;
         char *error = NULL;
 
@@ -228,14 +229,15 @@ conn_close(connectionObject *self)
             if (error)
                 free (error);
         }
+    }
+    if (self->pgconn) {
         PQfinish(self->pgconn);
         Dprintf("conn_close: PQfinish called");
         self->pgconn = NULL;
-    }
-
+   }
+   
     pthread_mutex_unlock(&self->lock);
     Py_END_ALLOW_THREADS;
-
 }
 
 /* conn_commit - commit on a connection */

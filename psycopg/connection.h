@@ -52,7 +52,8 @@ typedef struct {
     char *critical;         /* critical error on this connection */
     char *encoding;         /* current backend encoding */
 
-    long int closed;          /* 2 means connection has been closed */
+    long int closed;          /* 1 means connection has been closed;
+                                 2 that something horrible happened */
     long int isolation_level; /* isolation level for this connection */
     long int mark;            /* number of commits/rollbacks done so far */
     int status;               /* status of the connection */

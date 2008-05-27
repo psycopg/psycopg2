@@ -153,10 +153,16 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres)
     const char *err2 = NULL;
     const char *code = NULL;
 
-    if ((conn == NULL && curs == NULL) || (curs != NULL && conn == NULL)) {
+    if (conn == NULL) {
         PyErr_SetString(Error, "psycopg went psycotic and raised a null error");
         return;
     }
+    
+    /* if the connection has somehow beed broken, we mark the connection
+       object as closed but requiring cleanup */
+    Dprintf("%d %d", PQtransactionStatus(conn->pgconn), PQstatus(conn->pgconn));
+    if (conn->pgconn != NULL && PQstatus(conn->pgconn) == CONNECTION_BAD)
+        conn->closed = 2;
 
     if (pgres == NULL && curs != NULL)
         pgres = curs->pgres;
@@ -808,23 +814,30 @@ _pq_copy_in_v3(cursorObject *curs)
        exception */
     PyObject *o;
     Py_ssize_t length = 0;
-    int error = 0;
+    int res, error = 0;
 
     while (1) {
         o = PyObject_CallMethod(curs->copyfile, "read",
-            CONV_CODE_PY_SSIZE_T, curs->copysize
-          );
+            CONV_CODE_PY_SSIZE_T, curs->copysize);
         if (!o || !PyString_Check(o) || (length = PyString_Size(o)) == -1) {
             error = 1;
         }
         if (length == 0 || length > INT_MAX || error == 1) break;
 
         Py_BEGIN_ALLOW_THREADS;
-        if (PQputCopyData(curs->conn->pgconn,
-                          PyString_AS_STRING(o),
-                          /* Py_ssize_t->int cast was validated above: */
-                          (int) length
-                         ) == -1) {
+        res = PQputCopyData(curs->conn->pgconn, PyString_AS_STRING(o),
+            /* Py_ssize_t->int cast was validated above */
+            (int) length);
+        Dprintf("_pq_copy_in_v3: sent %d bytes of data; res = %d",
+            (int) length, res);
+            
+        if (res == 0) {
+            /* FIXME: in theory this should not happen but adding a check
+               here would be a nice idea */
+        }
+        else if (res == -1) {
+            Dprintf("_pq_copy_in_v3: PQerrorMessage = %s",
+                PQerrorMessage(curs->conn->pgconn));
             error = 2;
         }
         Py_END_ALLOW_THREADS;
@@ -838,22 +851,37 @@ _pq_copy_in_v3(cursorObject *curs)
 
     Dprintf("_pq_copy_in_v3: error = %d", error);
 
-    if (error == 0 || error == 2)
-        /* 0 means that the copy went well, 2 that there was an error on the
-           backend: in both cases we'll get the error message from the
-           PQresult */
-        PQputCopyEnd(curs->conn->pgconn, NULL);
+    /* 0 means that the copy went well, 2 that there was an error on the
+       backend: in both cases we'll get the error message from the PQresult */
+    if (error == 0)
+        res = PQputCopyEnd(curs->conn->pgconn, NULL);
+    else if (error == 2)
+        res = PQputCopyEnd(curs->conn->pgconn, "error in PQputCopyData() call");
     else
-        PQputCopyEnd(curs->conn->pgconn, "error during .read() call");
+        res = PQputCopyEnd(curs->conn->pgconn, "error in .read() call");
 
-    /* and finally we grab the operation result from the backend */
     IFCLEARPGRES(curs->pgres);
-    while ((curs->pgres = PQgetResult(curs->conn->pgconn)) != NULL) {
-        if (PQresultStatus(curs->pgres) == PGRES_FATAL_ERROR)
-            pq_raise(curs->conn, curs, NULL);
-        IFCLEARPGRES(curs->pgres);
+    
+    Dprintf("_pq_copy_in_v3: copy ended; res = %d", res);
+    
+    /* if the result is -1 we should not even try to get a result from the
+       bacause that will lock the current thread forever */
+    if (res == -1) {
+        pq_raise(curs->conn, curs, NULL);
+        /* FIXME: pq_raise check the connection but for some reason even
+           if the error message says "server closed the connection unexpectedly"
+           the status returned by PQstatus is CONNECTION_OK! */
+        curs->conn->closed = 2;
     }
-
+    else {
+        /* and finally we grab the operation result from the backend */
+        while ((curs->pgres = PQgetResult(curs->conn->pgconn)) != NULL) {
+            if (PQresultStatus(curs->pgres) == PGRES_FATAL_ERROR)
+                pq_raise(curs->conn, curs, NULL);
+            IFCLEARPGRES(curs->pgres);
+        }
+    }
+   
     return error == 0 ? 1 : -1;
 }
 #endif
