@@ -1634,15 +1634,15 @@ cursor_dealloc(PyObject* obj)
 
     if (self->name) PyMem_Free(self->name);
 
-    Py_XDECREF((PyObject*)self->conn);
-    Py_XDECREF(self->casts);
-    Py_XDECREF(self->description);
-    Py_XDECREF(self->pgstatus);
-    Py_XDECREF(self->tuple_factory);
-    Py_XDECREF(self->tzinfo_factory);
-    Py_XDECREF(self->query);
-    Py_XDECREF(self->string_types);
-    Py_XDECREF(self->binary_types);
+    Py_CLEAR(self->conn);
+    Py_CLEAR(self->casts);
+    Py_CLEAR(self->description);
+    Py_CLEAR(self->pgstatus);
+    Py_CLEAR(self->tuple_factory);
+    Py_CLEAR(self->tzinfo_factory);
+    Py_CLEAR(self->query);
+    Py_CLEAR(self->string_types);
+    Py_CLEAR(self->binary_types);
 
     IFCLEARPGRES(self->pgres);
 
@@ -1675,7 +1675,7 @@ cursor_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static void
 cursor_del(PyObject* self)
 {
-    PyObject_Del(self);
+    PyObject_GC_Del(self);
 }
 
 static PyObject *
@@ -1683,6 +1683,23 @@ cursor_repr(cursorObject *self)
 {
     return PyString_FromFormat(
         "<cursor object at %p; closed: %d>", self, self->closed);
+}
+
+static int
+cursor_traverse(cursorObject *self, visitproc visit, void *arg)
+{
+    Py_VISIT(self->conn);
+    Py_VISIT(self->description);
+    Py_VISIT(self->pgstatus);
+    Py_VISIT(self->casts);
+    Py_VISIT(self->caster);
+    Py_VISIT(self->copyfile);
+    Py_VISIT(self->tuple_factory);
+    Py_VISIT(self->tzinfo_factory);
+    Py_VISIT(self->query);
+    Py_VISIT(self->string_types);
+    Py_VISIT(self->binary_types);
+    return 0;
 }
 
 
@@ -1714,10 +1731,11 @@ PyTypeObject cursorType = {
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
 
-    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_ITER, /*tp_flags*/
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_ITER |
+      Py_TPFLAGS_HAVE_GC, /*tp_flags*/
     cursorType_doc, /*tp_doc*/
 
-    0,          /*tp_traverse*/
+    (traverseproc)cursor_traverse, /*tp_traverse*/
     0,          /*tp_clear*/
 
     0,          /*tp_richcompare*/
