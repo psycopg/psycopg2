@@ -1590,8 +1590,8 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
             "argument 1 must be subclass of psycopg2._psycopg.connection");
         return 1;
     } */
+    Py_INCREF(conn);
     self->conn = conn;
-    Py_INCREF((PyObject*)self->conn);
 
     self->closed = 0;
     self->mark = conn->mark;
@@ -1607,6 +1607,7 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
     self->string_types = NULL;
     self->binary_types = NULL;
 
+    Py_INCREF(Py_None);
     self->description = Py_None;
     Py_INCREF(Py_None);
     self->pgstatus = Py_None;
@@ -1614,11 +1615,10 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
     self->tuple_factory = Py_None;
     Py_INCREF(Py_None);
     self->query = Py_None;
-    Py_INCREF(Py_None);
 
     /* default tzinfo factory */
+    Py_INCREF(pyPsycopgTzFixedOffsetTimezone);
     self->tzinfo_factory = pyPsycopgTzFixedOffsetTimezone;
-    Py_INCREF(self->tzinfo_factory);
 
     Dprintf("cursor_setup: good cursor object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,

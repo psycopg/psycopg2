@@ -34,15 +34,19 @@
 void
 curs_reset(cursorObject *self)
 {
+    PyObject *tmp;
+
     /* initialize some variables to default values */
     self->notuples = 1;
     self->rowcount = -1;
     self->row = 0;
 
-    Py_XDECREF(self->description);
+    tmp = self->description;
     Py_INCREF(Py_None);
     self->description = Py_None;
+    Py_XDECREF(tmp);
 
-    Py_XDECREF(self->casts);
+    tmp = self->casts;
     self->casts = NULL;
+    Py_XDECREF(tmp);
 }
