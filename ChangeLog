@@ -1,3 +1,15 @@
+2008-05-28  James Henstridge  <james@jamesh.id.au>
+
+	* psycopg/typecast.c (typecast_traverse): implement cyclic GC
+	traversal for typecasters.
+
+	* psycopg/connection_type.c:
+	* psycopg/cursor_type.c: add support for cyclic GC traversal (no
+	support for clearing).
+
+	* psycopg/python.h: add definitions for Py_CLEAR() and Py_VISIT()
+	for compatibility with old versions of Python.
+
 2008-05-19  Federico Di Gregorio <fog@initd.org>
 
 	* psycopg/cursor_type.c: fixed memory leak in .executemany(); on

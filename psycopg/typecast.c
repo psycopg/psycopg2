@@ -382,11 +382,28 @@ typecast_dealloc(PyObject *obj)
 {
     typecastObject *self = (typecastObject*)obj;
 
-    Py_XDECREF(self->values);
-    Py_XDECREF(self->name);
-    Py_XDECREF(self->pcast);
+    Py_CLEAR(self->values);
+    Py_CLEAR(self->name);
+    Py_CLEAR(self->pcast);
 
-    PyObject_Del(self);
+    obj->ob_type->tp_free(obj);
+}
+
+static int
+typecast_traverse(PyObject *obj, visitproc visit, void *arg)
+{
+    typecastObject *self = (typecastObject*)obj;
+
+    Py_VISIT(self->values);
+    Py_VISIT(self->name);
+    Py_VISIT(self->pcast);
+    return 0;
+}
+
+static void
+typecast_del(void *self)
+{
+    PyObject_GC_Del(self);
 }
 
 static PyObject *
@@ -427,10 +444,11 @@ PyTypeObject typecastType = {
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
 
-    Py_TPFLAGS_HAVE_RICHCOMPARE, /*tp_flags*/
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_RICHCOMPARE |
+      Py_TPFLAGS_HAVE_GC, /*tp_flags*/
     "psycopg type-casting object", /*tp_doc*/
 
-    0,          /*tp_traverse*/
+    typecast_traverse, /*tp_traverse*/
     0,          /*tp_clear*/
 
     typecast_richcompare, /*tp_richcompare*/
@@ -454,7 +472,7 @@ PyTypeObject typecastType = {
     0, /*tp_init*/
     0, /*tp_alloc  will be set to PyType_GenericAlloc in module init*/
     0, /*tp_new*/
-    0, /*tp_free  Low-level free-memory routine */
+    typecast_del, /*tp_free  Low-level free-memory routine */
     0,          /*tp_is_gc For PyObject_IS_GC */
     0,          /*tp_bases*/
     0,          /*tp_mro method resolution order */
@@ -468,7 +486,7 @@ typecast_new(PyObject *name, PyObject *values, PyObject *cast, PyObject *base)
 {
     typecastObject *obj;
 
-    obj = PyObject_NEW(typecastObject, &typecastType);
+    obj = PyObject_GC_New(typecastObject, &typecastType);
     if (obj == NULL) return NULL;
 
     Dprintf("typecast_new: new type at = %p, refcnt = " FORMAT_CODE_PY_SSIZE_T,
@@ -497,6 +515,8 @@ typecast_new(PyObject *name, PyObject *values, PyObject *cast, PyObject *base)
         Py_INCREF(cast);
         obj->pcast = cast;
     }
+
+    PyObject_GC_Track(obj);
 
     Dprintf("typecast_new: typecast object created at %p", obj);
 
