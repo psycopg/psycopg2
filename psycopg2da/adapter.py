@@ -309,6 +309,7 @@ def registerTypes(encoding):
     psycopg2.extensions.register_type(INTERVAL)
     STRING = psycopg2.extensions.new_type((CHAR_OID, TEXT_OID, BPCHAR_OID, VARCHAR_OID), "ZSTRING", _get_string_conv(encoding))
     psycopg2.extensions.register_type(STRING)
+    psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 
 
 dsn2option_mapping = {'host': 'host',

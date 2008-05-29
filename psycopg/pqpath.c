@@ -160,7 +160,6 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres)
     
     /* if the connection has somehow beed broken, we mark the connection
        object as closed but requiring cleanup */
-    Dprintf("%d %d", PQtransactionStatus(conn->pgconn), PQstatus(conn->pgconn));
     if (conn->pgconn != NULL && PQstatus(conn->pgconn) == CONNECTION_BAD)
         conn->closed = 2;
 
