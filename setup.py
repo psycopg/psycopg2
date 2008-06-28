@@ -66,6 +66,8 @@ if sys.version < '2.2.3':
     DistributionMetadata.download_url = None
 
 def get_pg_config(kind, pg_config="pg_config"):
+    if ' ' in pg_config:
+        pg_config = '"'+pg_config+'"'
     p = popen2.popen3(pg_config + " --" + kind)
     r = p[0].readline().strip()
     if not r:

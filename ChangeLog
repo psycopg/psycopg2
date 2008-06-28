@@ -1,3 +1,7 @@
+2008-06-28  Federico Di Gregorio <fog@initd.org>
+
+	* setup.py: fixed problem with spaces in pg_config path.
+
 2008-05-27  Federico Di Gregorio <fog@initd.org>
 
 	* psycopg/pqpath.c: better error checks in _pq_copy_in_v3 to
