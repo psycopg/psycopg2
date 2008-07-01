@@ -266,6 +266,17 @@ binary_setup(binaryObject *self, PyObject *str)
     return 0;
 }
 
+static int
+binary_traverse(PyObject *obj, visitproc visit, void *arg)
+{
+    binaryObject *self = (binaryObject *)obj;
+
+    Py_VISIT(self->wrapped);
+    Py_VISIT(self->buffer);
+    Py_VISIT(self->conn);
+    return 0;
+}
+
 static void
 binary_dealloc(PyObject* obj)
 {
@@ -303,7 +314,7 @@ binary_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static void
 binary_del(PyObject* self)
 {
-    PyObject_Del(self);
+    PyObject_GC_Del(self);
 }
 
 static PyObject *
@@ -341,11 +352,11 @@ PyTypeObject binaryType = {
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
 
-    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /*tp_flags*/
+    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
 
     binaryType_doc, /*tp_doc*/
 
-    0,          /*tp_traverse*/
+    binary_traverse, /*tp_traverse*/
     0,          /*tp_clear*/
 
     0,          /*tp_richcompare*/

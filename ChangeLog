@@ -1,5 +1,8 @@
 2008-07-01  James Henstridge  <james@jamesh.id.au>
 
+	* psycopg/adapter_binary.c (binary_traverse): add cyclic GC
+	traversal for binary adapters.
+
 	* psycopg/adapter_asis.c (asis_traverse): add cyclic GC traversal
 	for AsIs adapters.
 
