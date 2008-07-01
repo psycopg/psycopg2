@@ -179,6 +179,16 @@ list_setup(listObject *self, PyObject *obj, const char *enc)
     return 0;
 }
 
+static int
+list_traverse(PyObject *obj, visitproc visit, void *arg)
+{
+    listObject *self = (listObject *)obj;
+
+    Py_VISIT(self->wrapped);
+    Py_VISIT(self->connection);
+    return 0;
+}
+
 static void
 list_dealloc(PyObject* obj)
 {
@@ -215,7 +225,7 @@ list_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static void
 list_del(PyObject* self)
 {
-    PyObject_Del(self);
+    PyObject_GC_Del(self);
 }
 
 static PyObject *
@@ -253,11 +263,11 @@ PyTypeObject listType = {
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
 
-    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /*tp_flags*/
+    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
 
     listType_doc, /*tp_doc*/
 
-    0,          /*tp_traverse*/
+    list_traverse, /*tp_traverse*/
     0,          /*tp_clear*/
 
     0,          /*tp_richcompare*/

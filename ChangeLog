@@ -1,3 +1,8 @@
+2008-07-01  James Henstridge  <james@jamesh.id.au>
+
+	* psycopg/adapter_list.c (list_traverse): add cyclic GC traversal
+	for list adapters.
+
 2008-05-28  James Henstridge  <james@jamesh.id.au>
 
 	* psycopg/cursor_type.c (cursor_setup): incref before setting
