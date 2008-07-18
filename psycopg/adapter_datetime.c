@@ -140,6 +140,15 @@ pydatetime_setup(pydatetimeObject *self, PyObject *obj, int type)
     return 0;
 }
 
+static int
+pydatetime_traverse(PyObject *obj, visitproc visit, void *arg)
+{
+    pydatetimeObject *self = (pydatetimeObject *)obj;
+
+    Py_VISIT(self->wrapped);
+    return 0;
+}
+
 static void
 pydatetime_dealloc(PyObject* obj)
 {
@@ -174,7 +183,7 @@ pydatetime_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static void
 pydatetime_del(PyObject* self)
 {
-    PyObject_Del(self);
+    PyObject_GC_Del(self);
 }
 
 static PyObject *
@@ -213,11 +222,11 @@ PyTypeObject pydatetimeType = {
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
 
-    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /*tp_flags*/
+    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
 
     pydatetimeType_doc, /*tp_doc*/
 
-    0,          /*tp_traverse*/
+    pydatetime_traverse, /*tp_traverse*/
     0,          /*tp_clear*/
 
     0,          /*tp_richcompare*/

@@ -116,6 +116,15 @@ pboolean_setup(pbooleanObject *self, PyObject *obj)
     return 0;
 }
 
+static int
+pboolean_traverse(PyObject *obj, visitproc visit, void *arg)
+{
+    pbooleanObject *self = (pbooleanObject *)obj;
+
+    Py_VISIT(self->wrapped);
+    return 0;
+}
+
 static void
 pboolean_dealloc(PyObject* obj)
 {
@@ -151,7 +160,7 @@ pboolean_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static void
 pboolean_del(PyObject* self)
 {
-    PyObject_Del(self);
+    PyObject_GC_Del(self);
 }
 
 static PyObject *
@@ -194,10 +203,10 @@ PyTypeObject pbooleanType = {
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
 
-    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /*tp_flags*/
+    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
     pbooleanType_doc, /*tp_doc*/
 
-    0,          /*tp_traverse*/
+    pboolean_traverse, /*tp_traverse*/
     0,          /*tp_clear*/
 
     0,          /*tp_richcompare*/

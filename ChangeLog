@@ -1,3 +1,17 @@
+2008-07-18  James Henstridge  <james@jamesh.id.au>
+
+	* psycopg/adapter_qstring.c (qstring_traverse): add cyclic GC
+	traversal for quoted string adapters.
+
+	* psycopg/adapter_pboolean.c (pboolean_traverse): add cyclic GC
+	traversal for boolean adapters.
+
+	* psycopg/adapter_mxdatetime.c (mxdatetime_traverse): add cyclic
+	GC traversal for mxdatetime adapters.
+
+	* psycopg/adapter_datetime.c (pydatetime_traverse): add cyclic GC
+	traversal for datetime adapters.
+
 2008-07-01  James Henstridge  <james@jamesh.id.au>
 
 	* psycopg/adapter_binary.c (binary_traverse): add cyclic GC
