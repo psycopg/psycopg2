@@ -1688,7 +1688,7 @@ cursor_repr(cursorObject *self)
 static int
 cursor_traverse(cursorObject *self, visitproc visit, void *arg)
 {
-    Py_VISIT(self->conn);
+    Py_VISIT((PyObject *)self->conn);
     Py_VISIT(self->description);
     Py_VISIT(self->pgstatus);
     Py_VISIT(self->casts);

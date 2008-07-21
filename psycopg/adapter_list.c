@@ -108,9 +108,9 @@ list_prepare(listObject *self, PyObject *args)
        reference to it; we'll need it during the recursive adapt() call (the
        encoding is here for a future expansion that will make .getquoted()
        work even without a connection to the backend. */
-    Py_XDECREF(self->connection);
+    Py_CLEAR(self->connection);
+    Py_INCREF(conn);
     self->connection = (PyObject*)conn;
-    Py_INCREF(self->connection);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -169,8 +169,8 @@ list_setup(listObject *self, PyObject *obj, const char *enc)
     if (enc) self->encoding = strdup(enc);
 
     self->connection = NULL;
+    Py_INCREF(obj);
     self->wrapped = obj;
-    Py_INCREF(self->wrapped);
 
     Dprintf("list_setup: good list object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
@@ -194,8 +194,8 @@ list_dealloc(PyObject* obj)
 {
     listObject *self = (listObject *)obj;
 
-    Py_XDECREF(self->wrapped);
-    Py_XDECREF(self->connection);
+    Py_CLEAR(self->wrapped);
+    Py_CLEAR(self->connection);
     if (self->encoding) free(self->encoding);
 
     Dprintf("list_dealloc: deleted list object at %p, "

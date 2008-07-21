@@ -106,8 +106,8 @@ pboolean_setup(pbooleanObject *self, PyObject *obj)
         self, ((PyObject *)self)->ob_refcnt
       );
 
+    Py_INCREF(obj);
     self->wrapped = obj;
-    Py_INCREF(self->wrapped);
 
     Dprintf("pboolean_setup: good pboolean object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
@@ -130,7 +130,7 @@ pboolean_dealloc(PyObject* obj)
 {
     pbooleanObject *self = (pbooleanObject *)obj;
 
-    Py_XDECREF(self->wrapped);
+    Py_CLEAR(self->wrapped);
 
     Dprintf("pboolean_dealloc: deleted pboolean object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,

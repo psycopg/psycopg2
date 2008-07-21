@@ -216,10 +216,10 @@ qstring_prepare(qstringObject *self, PyObject *args)
         Dprintf("qstring_prepare: set encoding to %s", conn->encoding);
     }
 
-    Py_XDECREF(self->conn);
+    Py_CLEAR(self->conn);
     if (conn) {
+        Py_INCREF(conn);
         self->conn = (PyObject*)conn;
-        Py_INCREF(self->conn);
     }
 
     Py_INCREF(Py_None);
@@ -280,8 +280,8 @@ qstring_setup(qstringObject *self, PyObject *str, const char *enc)
     /* FIXME: remove this orrible strdup */
     if (enc) self->encoding = strdup(enc);
 
+    Py_INCREF(str);
     self->wrapped = str;
-    Py_INCREF(self->wrapped);
 
     Dprintf("qstring_setup: good qstring object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
@@ -306,9 +306,9 @@ qstring_dealloc(PyObject* obj)
 {
     qstringObject *self = (qstringObject *)obj;
 
-    Py_XDECREF(self->wrapped);
-    Py_XDECREF(self->buffer);
-    Py_XDECREF(self->conn);
+    Py_CLEAR(self->wrapped);
+    Py_CLEAR(self->buffer);
+    Py_CLEAR(self->conn);
 
     if (self->encoding) free(self->encoding);
 

@@ -257,8 +257,8 @@ binary_setup(binaryObject *self, PyObject *str)
 
     self->buffer = NULL;
     self->conn = NULL;
+    Py_INCREF(str);
     self->wrapped = str;
-    Py_INCREF(self->wrapped);
 
     Dprintf("binary_setup: good binary object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
@@ -282,9 +282,9 @@ binary_dealloc(PyObject* obj)
 {
     binaryObject *self = (binaryObject *)obj;
 
-    Py_XDECREF(self->wrapped);
-    Py_XDECREF(self->buffer);
-    Py_XDECREF(self->conn);
+    Py_CLEAR(self->wrapped);
+    Py_CLEAR(self->buffer);
+    Py_CLEAR(self->conn);
 
     Dprintf("binary_dealloc: deleted binary object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,

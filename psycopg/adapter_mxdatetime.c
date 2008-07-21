@@ -152,8 +152,8 @@ mxdatetime_setup(mxdatetimeObject *self, PyObject *obj, int type)
       );
 
     self->type = type;
+    Py_INCREF(obj);
     self->wrapped = obj;
-    Py_INCREF(self->wrapped);
 
     Dprintf("mxdatetime_setup: good mxdatetime object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
@@ -176,7 +176,7 @@ mxdatetime_dealloc(PyObject* obj)
 {
     mxdatetimeObject *self = (mxdatetimeObject *)obj;
 
-    Py_XDECREF(self->wrapped);
+    Py_CLEAR(self->wrapped);
 
     Dprintf("mxdatetime_dealloc: deleted mxdatetime object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,

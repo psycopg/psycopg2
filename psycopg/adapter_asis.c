@@ -96,8 +96,8 @@ asis_setup(asisObject *self, PyObject *obj)
         self, ((PyObject *)self)->ob_refcnt
       );
 
+    Py_INCREF(obj);
     self->wrapped = obj;
-    Py_INCREF(self->wrapped);
 
     Dprintf("asis_setup: good asis object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
@@ -118,7 +118,7 @@ asis_dealloc(PyObject* obj)
 {
     asisObject *self = (asisObject *)obj;
 
-    Py_XDECREF(self->wrapped);
+    Py_CLEAR(self->wrapped);
 
     Dprintf("asis_dealloc: deleted asis object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,

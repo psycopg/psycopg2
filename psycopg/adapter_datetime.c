@@ -131,8 +131,8 @@ pydatetime_setup(pydatetimeObject *self, PyObject *obj, int type)
         self, ((PyObject *)self)->ob_refcnt);
 
     self->type = type;
+    Py_INCREF(obj);
     self->wrapped = obj;
-    Py_INCREF(self->wrapped);
 
     Dprintf("pydatetime_setup: good pydatetime object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
@@ -154,7 +154,7 @@ pydatetime_dealloc(PyObject* obj)
 {
     pydatetimeObject *self = (pydatetimeObject *)obj;
 
-    Py_XDECREF(self->wrapped);
+    Py_CLEAR(self->wrapped);
 
     Dprintf("mpydatetime_dealloc: deleted pydatetime object at %p, "
             "refcnt = " FORMAT_CODE_PY_SSIZE_T, obj, obj->ob_refcnt);
