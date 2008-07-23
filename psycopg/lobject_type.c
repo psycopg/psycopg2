@@ -282,8 +282,8 @@ lobject_setup(lobjectObject *self, connectionObject *conn,
     if (lobject_open(self, conn, oid, mode, new_oid, new_file) == -1)
         return -1;
 
-   Dprintf("lobject_setup: good lobject object at %p, refcnt = %d",
-       self, ((PyObject *)self)->ob_refcnt);
+   Dprintf("lobject_setup: good lobject object at %p, refcnt = "
+           FORMAT_CODE_PY_SSIZE_T, self, ((PyObject *)self)->ob_refcnt);
    Dprintf("lobject_setup:    oid = %d, fd = %d", self->oid, self->fd);
    return 0;
 }
@@ -297,8 +297,8 @@ lobject_dealloc(PyObject* obj)
         PyErr_Print();
     Py_XDECREF((PyObject*)self->conn);
 
-    Dprintf("lobject_dealloc: deleted lobject object at %p, refcnt = %d",
-            obj, obj->ob_refcnt);
+    Dprintf("lobject_dealloc: deleted lobject object at %p, refcnt = "
+            FORMAT_CODE_PY_SSIZE_T, obj, obj->ob_refcnt);
 
     obj->ob_type->tp_free(obj);
 }

@@ -1,3 +1,10 @@
+2008-07-23  James Henstridge  <james@jamesh.id.au>
+
+	* psycopg/lobject_type.c (lobject_setup): use
+	FORMAT_CODE_PY_SSIZE_T in Dprintf() call for 64-bit compatibility
+	when using Python 2.5 or later.
+	(lobject_dealloc): same here.
+
 2008-07-18  James Henstridge  <james@jamesh.id.au>
 
 	* psycopg/adapter_qstring.c (qstring_traverse): add cyclic GC
