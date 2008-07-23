@@ -108,9 +108,9 @@ list_prepare(listObject *self, PyObject *args)
        reference to it; we'll need it during the recursive adapt() call (the
        encoding is here for a future expansion that will make .getquoted()
        work even without a connection to the backend. */
-    Py_XDECREF(self->connection);
+    Py_CLEAR(self->connection);
+    Py_INCREF(conn);
     self->connection = (PyObject*)conn;
-    Py_INCREF(self->connection);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -169,8 +169,8 @@ list_setup(listObject *self, PyObject *obj, const char *enc)
     if (enc) self->encoding = strdup(enc);
 
     self->connection = NULL;
+    Py_INCREF(obj);
     self->wrapped = obj;
-    Py_INCREF(self->wrapped);
 
     Dprintf("list_setup: good list object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
@@ -179,13 +179,23 @@ list_setup(listObject *self, PyObject *obj, const char *enc)
     return 0;
 }
 
+static int
+list_traverse(PyObject *obj, visitproc visit, void *arg)
+{
+    listObject *self = (listObject *)obj;
+
+    Py_VISIT(self->wrapped);
+    Py_VISIT(self->connection);
+    return 0;
+}
+
 static void
 list_dealloc(PyObject* obj)
 {
     listObject *self = (listObject *)obj;
 
-    Py_XDECREF(self->wrapped);
-    Py_XDECREF(self->connection);
+    Py_CLEAR(self->wrapped);
+    Py_CLEAR(self->connection);
     if (self->encoding) free(self->encoding);
 
     Dprintf("list_dealloc: deleted list object at %p, "
@@ -215,7 +225,7 @@ list_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static void
 list_del(PyObject* self)
 {
-    PyObject_Del(self);
+    PyObject_GC_Del(self);
 }
 
 static PyObject *
@@ -253,11 +263,11 @@ PyTypeObject listType = {
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
 
-    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /*tp_flags*/
+    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
 
     listType_doc, /*tp_doc*/
 
-    0,          /*tp_traverse*/
+    list_traverse, /*tp_traverse*/
     0,          /*tp_clear*/
 
     0,          /*tp_richcompare*/

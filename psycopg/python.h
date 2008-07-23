@@ -41,4 +41,27 @@
 #define freefunc destructor
 #endif
 
+/* Py_VISIT and Py_CLEAR introduced in Python 2.4 */
+#ifndef Py_VISIT
+#define Py_VISIT(op)                                    \
+        do {                                            \
+                if (op) {                               \
+                        int vret = visit((op), arg);    \
+                        if (vret)                       \
+                                return vret;            \
+                }                                       \
+        } while (0)
+#endif
+
+#ifndef Py_CLEAR
+#define Py_CLEAR(op)                            \
+        do {                                    \
+                if (op) {                       \
+                        PyObject *tmp = (PyObject *)(op);       \
+                        (op) = NULL;            \
+                        Py_DECREF(tmp);         \
+                }                               \
+        } while (0)
+#endif
+
 #endif /* !defined(PSYCOPG_PYTHON_H) */

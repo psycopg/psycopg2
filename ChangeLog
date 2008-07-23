@@ -1,3 +1,46 @@
+2008-07-18  James Henstridge  <james@jamesh.id.au>
+
+	* psycopg/adapter_qstring.c (qstring_traverse): add cyclic GC
+	traversal for quoted string adapters.
+
+	* psycopg/adapter_pboolean.c (pboolean_traverse): add cyclic GC
+	traversal for boolean adapters.
+
+	* psycopg/adapter_mxdatetime.c (mxdatetime_traverse): add cyclic
+	GC traversal for mxdatetime adapters.
+
+	* psycopg/adapter_datetime.c (pydatetime_traverse): add cyclic GC
+	traversal for datetime adapters.
+
+2008-07-01  James Henstridge  <james@jamesh.id.au>
+
+	* psycopg/adapter_binary.c (binary_traverse): add cyclic GC
+	traversal for binary adapters.
+
+	* psycopg/adapter_asis.c (asis_traverse): add cyclic GC traversal
+	for AsIs adapters.
+
+	* psycopg/adapter_list.c (list_traverse): add cyclic GC traversal
+	for list adapters.
+
+2008-05-28  James Henstridge  <james@jamesh.id.au>
+
+	* psycopg/cursor_type.c (cursor_setup): incref before setting
+	attributes, to make things GC-safe.
+
+	* psycopg/cursor_int.c (curs_reset): make clearing of description
+	and casts attributes GC-safe.
+
+	* psycopg/typecast.c (typecast_traverse): implement cyclic GC
+	traversal for typecasters.
+
+	* psycopg/connection_type.c:
+	* psycopg/cursor_type.c: add support for cyclic GC traversal (no
+	support for clearing).
+
+	* psycopg/python.h: add definitions for Py_CLEAR() and Py_VISIT()
+	for compatibility with old versions of Python.
+
 2008-06-28  Federico Di Gregorio <fog@initd.org>
 
 	* setup.py: fixed problem with spaces in pg_config path.

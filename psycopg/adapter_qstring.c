@@ -216,10 +216,10 @@ qstring_prepare(qstringObject *self, PyObject *args)
         Dprintf("qstring_prepare: set encoding to %s", conn->encoding);
     }
 
-    Py_XDECREF(self->conn);
+    Py_CLEAR(self->conn);
     if (conn) {
+        Py_INCREF(conn);
         self->conn = (PyObject*)conn;
-        Py_INCREF(self->conn);
     }
 
     Py_INCREF(Py_None);
@@ -280,8 +280,8 @@ qstring_setup(qstringObject *self, PyObject *str, const char *enc)
     /* FIXME: remove this orrible strdup */
     if (enc) self->encoding = strdup(enc);
 
+    Py_INCREF(str);
     self->wrapped = str;
-    Py_INCREF(self->wrapped);
 
     Dprintf("qstring_setup: good qstring object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
@@ -290,14 +290,25 @@ qstring_setup(qstringObject *self, PyObject *str, const char *enc)
     return 0;
 }
 
+static int
+qstring_traverse(PyObject *obj, visitproc visit, void *arg)
+{
+    qstringObject *self = (qstringObject *)obj;
+
+    Py_VISIT(self->wrapped);
+    Py_VISIT(self->buffer);
+    Py_VISIT(self->conn);
+    return 0;
+}
+
 static void
 qstring_dealloc(PyObject* obj)
 {
     qstringObject *self = (qstringObject *)obj;
 
-    Py_XDECREF(self->wrapped);
-    Py_XDECREF(self->buffer);
-    Py_XDECREF(self->conn);
+    Py_CLEAR(self->wrapped);
+    Py_CLEAR(self->buffer);
+    Py_CLEAR(self->conn);
 
     if (self->encoding) free(self->encoding);
 
@@ -330,7 +341,7 @@ qstring_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static void
 qstring_del(PyObject* self)
 {
-    PyObject_Del(self);
+    PyObject_GC_Del(self);
 }
 
 static PyObject *
@@ -369,11 +380,11 @@ PyTypeObject qstringType = {
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
 
-    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /*tp_flags*/
+    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
 
     qstringType_doc, /*tp_doc*/
 
-    0,          /*tp_traverse*/
+    qstring_traverse, /*tp_traverse*/
     0,          /*tp_clear*/
 
     0,          /*tp_richcompare*/

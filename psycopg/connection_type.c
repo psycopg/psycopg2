@@ -450,11 +450,11 @@ connection_dealloc(PyObject* obj)
     if (self->encoding) free(self->encoding);
     if (self->critical) free(self->critical);
 
-    Py_XDECREF(self->notice_list);
-    Py_XDECREF(self->notifies);
-    Py_XDECREF(self->async_cursor);
-    Py_XDECREF(self->string_types);
-    Py_XDECREF(self->binary_types);
+    Py_CLEAR(self->notice_list);
+    Py_CLEAR(self->notifies);
+    Py_CLEAR(self->async_cursor);
+    Py_CLEAR(self->string_types);
+    Py_CLEAR(self->binary_types);
 
     pthread_mutex_destroy(&(self->lock));
 
@@ -486,7 +486,7 @@ connection_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static void
 connection_del(PyObject* self)
 {
-    PyObject_Del(self);
+    PyObject_GC_Del(self);
 }
 
 static PyObject *
@@ -495,6 +495,18 @@ connection_repr(connectionObject *self)
     return PyString_FromFormat(
         "<connection object at %p; dsn: '%s', closed: %ld>",
         self, self->dsn, self->closed);
+}
+
+static int
+connection_traverse(connectionObject *self, visitproc visit, void *arg)
+{
+    Py_VISIT(self->async_cursor);
+    Py_VISIT(self->notice_list);
+    Py_VISIT(self->notice_filter);
+    Py_VISIT(self->notifies);
+    Py_VISIT(self->string_types);
+    Py_VISIT(self->binary_types);
+    return 0;
 }
 
 
@@ -530,10 +542,10 @@ PyTypeObject connectionType = {
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
 
-    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /*tp_flags*/
+    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
     connectionType_doc, /*tp_doc*/
 
-    0,          /*tp_traverse*/
+    (traverseproc)connection_traverse, /*tp_traverse*/
     0,          /*tp_clear*/
 
     0,          /*tp_richcompare*/

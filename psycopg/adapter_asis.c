@@ -96,8 +96,8 @@ asis_setup(asisObject *self, PyObject *obj)
         self, ((PyObject *)self)->ob_refcnt
       );
 
+    Py_INCREF(obj);
     self->wrapped = obj;
-    Py_INCREF(self->wrapped);
 
     Dprintf("asis_setup: good asis object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
@@ -106,12 +106,19 @@ asis_setup(asisObject *self, PyObject *obj)
     return 0;
 }
 
+static int
+asis_traverse(asisObject *self, visitproc visit, void *arg)
+{
+    Py_VISIT(self->wrapped);
+    return 0;
+}
+
 static void
 asis_dealloc(PyObject* obj)
 {
     asisObject *self = (asisObject *)obj;
 
-    Py_XDECREF(self->wrapped);
+    Py_CLEAR(self->wrapped);
 
     Dprintf("asis_dealloc: deleted asis object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
@@ -141,7 +148,7 @@ asis_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static void
 asis_del(PyObject* self)
 {
-    PyObject_Del(self);
+    PyObject_GC_Del(self);
 }
 
 static PyObject *
@@ -183,10 +190,10 @@ PyTypeObject asisType = {
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
 
-    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /*tp_flags*/
+    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
     asisType_doc, /*tp_doc*/
 
-    0,          /*tp_traverse*/
+    (traverseproc)asis_traverse, /*tp_traverse*/
     0,          /*tp_clear*/
 
     0,          /*tp_richcompare*/
