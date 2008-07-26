@@ -152,8 +152,8 @@ mxdatetime_setup(mxdatetimeObject *self, PyObject *obj, int type)
       );
 
     self->type = type;
+    Py_INCREF(obj);
     self->wrapped = obj;
-    Py_INCREF(self->wrapped);
 
     Dprintf("mxdatetime_setup: good mxdatetime object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
@@ -162,12 +162,21 @@ mxdatetime_setup(mxdatetimeObject *self, PyObject *obj, int type)
     return 0;
 }
 
+static int
+mxdatetime_traverse(PyObject *obj, visitproc visit, void *arg)
+{
+    mxdatetimeObject *self = (mxdatetimeObject *)obj;
+
+    Py_VISIT(self->wrapped);
+    return 0;
+}
+
 static void
 mxdatetime_dealloc(PyObject* obj)
 {
     mxdatetimeObject *self = (mxdatetimeObject *)obj;
 
-    Py_XDECREF(self->wrapped);
+    Py_CLEAR(self->wrapped);
 
     Dprintf("mxdatetime_dealloc: deleted mxdatetime object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
@@ -198,7 +207,7 @@ mxdatetime_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static void
 mxdatetime_del(PyObject* self)
 {
-    PyObject_Del(self);
+    PyObject_GC_Del(self);
 }
 
 static PyObject *
@@ -237,11 +246,11 @@ PyTypeObject mxdatetimeType = {
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
 
-    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /*tp_flags*/
+    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
 
     mxdatetimeType_doc, /*tp_doc*/
 
-    0,          /*tp_traverse*/
+    mxdatetime_traverse, /*tp_traverse*/
     0,          /*tp_clear*/
 
     0,          /*tp_richcompare*/
