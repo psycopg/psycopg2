@@ -39,7 +39,7 @@
 /** the quoting code */
 
 #ifndef PSYCOPG_OWN_QUOTING
-static size_t
+size_t
 qstring_escape(char *to, char *from, size_t len, PGconn *conn)
 {
 #if PG_MAJOR_VERSION > 8 || \
@@ -53,7 +53,7 @@ qstring_escape(char *to, char *from, size_t len, PGconn *conn)
         return PQescapeString(to, from, len);
 }
 #else
-static size_t
+size_t
 qstring_escape(char *to, char *from, size_t len, PGconn *conn)
 {
     int i, j;
@@ -99,9 +99,6 @@ qstring_quote(qstringObject *self)
     /* if the wrapped object is an unicode object we can encode it to match
        self->encoding but if the encoding is not specified we don't know what
        to do and we raise an exception */
-
-    /* TODO: we need a real translation table from postgres encoding names to
-           python ones here */
 
     Dprintf("qstring_quote: encoding to %s", self->encoding);
 

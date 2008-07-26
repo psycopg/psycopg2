@@ -142,6 +142,8 @@ HIDDEN PyObject *psyco_GetDecimalType(void);
 HIDDEN void psyco_set_error(PyObject *exc, PyObject *curs,  const char *msg,
                             const char *pgerror, const char *pgcode);
 
+HIDDEN size_t qstring_escape(char *to, char *from, size_t len, PGconn *conn);
+
 /* Exceptions docstrings */
 #define Error_doc \
 "Base class for error exceptions."

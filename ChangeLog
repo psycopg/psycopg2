@@ -1,3 +1,8 @@
+2008-07-26  Federico Di Gregorio <fog@initd.org>
+
+	* psycopg/connection_type.c: merged get_backend_pid() method
+	by Casey Duncan.
+
 2008-06-28  Federico Di Gregorio <fog@initd.org>
 
 	* setup.py: fixed problem with spaces in pg_config path.

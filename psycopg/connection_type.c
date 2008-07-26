@@ -307,6 +307,19 @@ psyco_conn_lobject(connectionObject *self, PyObject *args, PyObject *keywds)
     return obj;
 }
 
+/* get the current backend pid */
+
+#define psyco_conn_get_backend_pid_doc \
+"get_backend_pid() -- Get backend process id."
+
+static PyObject *
+psyco_conn_get_backend_pid(connectionObject *self)
+{
+    EXC_IF_CONN_CLOSED(self);
+
+    return PyInt_FromLong((long)PQbackendPID(self->pgconn));
+}
+
 #endif
 
 static PyObject *
@@ -339,6 +352,8 @@ static struct PyMethodDef connectionObject_methods[] = {
      METH_VARARGS, psyco_conn_set_client_encoding_doc},
     {"get_transaction_status", (PyCFunction)psyco_conn_get_transaction_status,
      METH_VARARGS, psyco_conn_get_transaction_status_doc},
+    {"get_backend_pid", (PyCFunction)psyco_conn_get_backend_pid,
+     METH_NOARGS, psyco_conn_get_backend_pid_doc},
     {"lobject", (PyCFunction)psyco_conn_lobject,
      METH_VARARGS|METH_KEYWORDS, psyco_conn_lobject_doc},
 #endif
