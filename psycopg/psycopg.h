@@ -24,6 +24,7 @@
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include <libpq-fe.h>
 
 #include "psycopg/config.h"
 
