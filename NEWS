@@ -1,18 +1,17 @@
 What's new in psycopg 2.0.8
 ---------------------------
 
-* The connection object now has a get_backend_pid() method that
-  returns the current PostgreSQL connection backend process PID.
+* New features:
+  - The connection object now has a get_backend_pid() method that
+    returns the current PostgreSQL connection backend process PID.
+  - The PostgreSQL large object API has been exposed through the
+    Cursor.lobject() method.
 
-* The PostgreSQL large object API has been exposed through the
-  Cursor.lobject() method.
-
-* Some fixes to ZPsycopgDA have been merged from the Debian package.
-
-* A memory leak was fixed in Cursor.executemany().
-
-* A double free was fixed in pq_complete_error(), that caused crashes
-  under some error conditions.
+* Bug fixes:
+  - Some fixes to ZPsycopgDA have been merged from the Debian package.
+  - A memory leak was fixed in Cursor.executemany().
+  - A double free was fixed in pq_complete_error(), that caused crashes
+    under some error conditions.
 
 What's new in psycopg 2.0.7
 ---------------------------
