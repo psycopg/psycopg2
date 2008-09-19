@@ -24,7 +24,8 @@ try:
     import logging
 except:
     logging = None
-    
+
+from psycopg2 import extensions as _ext
 from psycopg2.extensions import cursor as _cursor
 from psycopg2.extensions import connection as _connection
 from psycopg2.extensions import adapt as _A
@@ -281,3 +282,43 @@ class MinTimeLoggingCursor(LoggingCursor):
         self.timestamp = time.time()
         return LoggingCursor.execute(self, procname, vars)
 
+
+# a dbtype and adapter for Python UUID type
+
+try:
+    import uuid
+
+    class UUID_adapter(object):
+        """Adapt Python's uuid.UUID type to PostgreSQL's uuid."""
+        
+        def __init__(self, uuid):
+            self._uuid = uuid
+    
+        def prepare(self, conn):
+            pass
+        
+        def getquoted(self):
+            return "'"+str(self._uuid)+"'::uuid"
+            
+        __str__ = getquoted
+
+    def register_uuid(oid=None):
+        """Create the UUID type and an uuid.UUID adapter."""
+        if not oid: oid = 2950
+        _ext.UUID = _ext.new_type((oid, ), "UUID",
+                                   lambda data, cursor: uuid.UUID(data))
+        _ext.register_type(_ext.UUID)
+        _ext.register_adapter(uuid.UUID, UUID_adapter)
+        return _ext.UUID
+        
+except ImportError, e:
+    def register_uuid(oid=None):
+        """Create the UUID type and an uuid.UUID adapter.
+
+        This is a fake function that will always raise an error because the
+        import of the uuid module failed.
+        """
+        raise e
+
+
+__all__ = [ k for k in locals().keys() if not k.startswith('_') ]

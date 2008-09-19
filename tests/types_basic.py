@@ -25,7 +25,7 @@ import tests
 
 
 class TypesBasicTests(unittest.TestCase):
-    """Test presence of mandatory attributes and methods."""
+    """Test that all type conversions are working."""
 
     def setUp(self):
         self.conn = psycopg2.connect(tests.dsn)

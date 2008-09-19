@@ -1,3 +1,8 @@
+2008-09-19  Federico Di Gregorio <fog@initd.org>
+
+	* lib/extras.py: added UUID support, modeled after the code
+	sent by Brian Sutherland.
+
 2008-09-16  Federico Di Gregorio <fog@initd.org>
 
 	* Release 2.0.8.
