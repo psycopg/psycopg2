@@ -174,7 +174,7 @@ HIDDEN size_t qstring_escape(char *to, char *from, size_t len, PGconn *conn);
 "Error related to problems with the processed data."
 
 #define NotSupportedError_doc \
-"A not supported datbase API was called."
+"A method or database API was used which is not supported by the database."
 
 #ifdef PSYCOPG_EXTENSIONS
 #define QueryCanceledError_doc \

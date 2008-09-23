@@ -2,6 +2,11 @@
 
 	* lib/extras.py: added inet support and related tests.
 
+2008-09-23  James Henstridge  <james@jamesh.id.au>
+
+	* psycopg/psycopg.h (NotSupportedError_doc): clean up
+	spelling/grammar a bit, using exception description from the PEP.
+
 2008-09-23  Federico Di Gregorio <fog@initd.org>
 
 	* Applied patch from Brian Sutherland that fixes NULL
