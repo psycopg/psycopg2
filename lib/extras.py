@@ -306,11 +306,12 @@ try:
         """Create the UUID type and an uuid.UUID adapter."""
         if not oid: oid = 2950
         _ext.UUID = _ext.new_type((oid, ), "UUID",
-                                   lambda data, cursor: data and uuid.UUID(data) or None)
+                lambda data, cursor: data and uuid.UUID(data) or None)
         _ext.register_type(_ext.UUID)
         _ext.register_adapter(uuid.UUID, UUID_adapter)
         return _ext.UUID
-        
+
+
 except ImportError, e:
     def register_uuid(oid=None):
         """Create the UUID type and an uuid.UUID adapter.
@@ -319,6 +320,40 @@ except ImportError, e:
         import of the uuid module failed.
         """
         raise e
+
+
+# a type, dbtype and adapter for PostgreSQL inet type
+
+class Inet(object):
+    """Wrap a string to allow for correct SQL-quoting of inet values.
+
+    Note that this adapter does NOT check the passed value to make
+    sure it really is an inet-compatible address but DOES call adapt()
+    on it to make sure it is impossible to execute an SQL-injection
+    by passing an evil value to the initializer.
+    """
+    def __init__(self, addr):
+        self.addr
+    
+    def prepare(self, conn):
+        self._conn = conn
+    
+    def getquoted(self):
+        obj = adapt(self.addr)
+        if hasattr(obj, 'prepare'):
+            obj.prepare(self._conn)
+        return obj.getquoted()+"::inet"
+
+    def __str__(self):
+        return str(self.addr)
+        
+def register_inet(oid=None):
+    """Create the INET type and an Inet adapter."""
+    if not oid: oid = 869
+    _ext.INET = _ext.new_type((oid, ), "INET",
+            lambda data, cursor: data and Inet(data) or None)
+    _ext.register_type(_ext.INET)
+    return _ext.INET
 
 
 __all__ = [ k for k in locals().keys() if not k.startswith('_') ]

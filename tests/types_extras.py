@@ -49,6 +49,15 @@ class TypesBasicTests(unittest.TestCase):
         s = self.execute("SELECT NULL::uuid AS foo")
         self.failUnless(s is None)
 
+    def testINET(self):
+        psycopg2.extras.register_inet()
+        i = "192.168.1.0/24";
+        s = self.execute("SELECT %s AS foo", (i,))
+        self.failUnless(i == s)
+        # must survive NULL cast to inet
+        s = self.execute("SELECT NULL::inet AS foo")
+        self.failUnless(s is None)
+
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

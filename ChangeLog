@@ -1,3 +1,7 @@
+2008-09-24  Federico Di Gregorio <fog@initd.org>
+
+	* lib/extras.py: added inet support and related tests.
+
 2008-09-23  Federico Di Gregorio <fog@initd.org>
 
 	* Applied patch from Brian Sutherland that fixes NULL
