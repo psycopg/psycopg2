@@ -1,3 +1,8 @@
+2008-09-23  Federico Di Gregorio <fog@initd.org>
+
+	* Applied patch from Brian Sutherland that fixes NULL
+	valus in UUID support.
+
 2008-09-19  Federico Di Gregorio <fog@initd.org>
 
 	* lib/extras.py: added UUID support, modeled after the code

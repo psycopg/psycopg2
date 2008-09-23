@@ -45,6 +45,9 @@ class TypesBasicTests(unittest.TestCase):
         u = uuid.UUID('9c6d5a77-7256-457e-9461-347b4358e350');
         s = self.execute("SELECT %s AS foo", (u,))
         self.failUnless(u == s)
+        # must survive NULL cast to a uuid
+        s = self.execute("SELECT NULL::uuid AS foo")
+        self.failUnless(s is None)
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

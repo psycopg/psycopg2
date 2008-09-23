@@ -306,7 +306,7 @@ try:
         """Create the UUID type and an uuid.UUID adapter."""
         if not oid: oid = 2950
         _ext.UUID = _ext.new_type((oid, ), "UUID",
-                                   lambda data, cursor: uuid.UUID(data))
+                                   lambda data, cursor: data and uuid.UUID(data) or None)
         _ext.register_type(_ext.UUID)
         _ext.register_adapter(uuid.UUID, UUID_adapter)
         return _ext.UUID
