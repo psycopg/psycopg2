@@ -131,11 +131,13 @@
     <File name="tests/test_transaction.py" subtype="Code" buildaction="Nothing" />
     <File name="tests/types_basic.py" subtype="Code" buildaction="Nothing" />
     <File name="tests/bugX000.py" subtype="Code" buildaction="Nothing" />
-    <File name="tests/Makefile" subtype="Code" buildaction="Nothing" />
-    <File name="tests/runtests.py" subtype="Code" buildaction="Nothing" />
     <File name="tests/types_extras.py" subtype="Code" buildaction="Nothing" />
     <File name="psycopg/utils.c" subtype="Code" buildaction="Compile" />
     <File name="psycopg/utils.h" subtype="Code" buildaction="Nothing" />
+    <File name="tests/test_connection.py" subtype="Code" buildaction="Nothing" />
+    <File name="tests/test_dates.py" subtype="Code" buildaction="Nothing" />
+    <File name="tests/test_lobject.py" subtype="Code" buildaction="Nothing" />
+    <File name="tests/test_quote.py" subtype="Code" buildaction="Nothing" />
   </Contents>
   <compiler ctype="GccCompiler" />
   <MonoDevelop.ChangeLogAddIn.ChangeLogInfo policy="UpdateNearestChangeLog" />
