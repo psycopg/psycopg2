@@ -134,6 +134,8 @@
     <File name="tests/Makefile" subtype="Code" buildaction="Nothing" />
     <File name="tests/runtests.py" subtype="Code" buildaction="Nothing" />
     <File name="tests/types_extras.py" subtype="Code" buildaction="Nothing" />
+    <File name="psycopg/utils.c" subtype="Code" buildaction="Compile" />
+    <File name="psycopg/utils.h" subtype="Code" buildaction="Nothing" />
   </Contents>
   <compiler ctype="GccCompiler" />
   <MonoDevelop.ChangeLogAddIn.ChangeLogInfo policy="UpdateNearestChangeLog" />
