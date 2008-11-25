@@ -40,7 +40,7 @@
 
 #ifndef PSYCOPG_OWN_QUOTING
 size_t
-qstring_escape(char *to, char *from, size_t len, PGconn *conn)
+qstring_escape(char *to, const char *from, size_t len, PGconn *conn)
 {
 #if PG_MAJOR_VERSION > 8 || \
  (PG_MAJOR_VERSION == 8 && PG_MINOR_VERSION > 1) || \
@@ -54,7 +54,7 @@ qstring_escape(char *to, char *from, size_t len, PGconn *conn)
 }
 #else
 size_t
-qstring_escape(char *to, char *from, size_t len, PGconn *conn)
+qstring_escape(char *to, const char *from, size_t len, PGconn *conn)
 {
     int i, j;
 

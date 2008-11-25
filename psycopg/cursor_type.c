@@ -34,7 +34,9 @@
 #include "psycopg/typecast.h"
 #include "psycopg/microprotocols.h"
 #include "psycopg/microprotocols_proto.h"
+#include "psycopg/utils.h"
 #include "pgversion.h"
+#include <stdlib.h>
 
 extern PyObject *pyPsycopgTzFixedOffsetTimezone;
 
@@ -1113,7 +1115,7 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
 
 #ifdef PSYCOPG_EXTENSIONS
 
-#define COPY_BUFFER_SIZE 1024
+#define COPY_BUFFER_SIZE 8192
 
 static int _psyco_curs_copy_columns(PyObject *columns, char *columnlist)
 {
@@ -1187,12 +1189,15 @@ _psyco_curs_has_read_check(PyObject* o, void* var)
 static PyObject *
 psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
-    char query[DEFAULT_COPYBUFF];
+    char query_buffer[COPY_BUFFER_SIZE];
+    size_t query_size;
+    char *query;
     const char *table_name;
     const char *sep = "\t", *null = NULL;
     Py_ssize_t bufsize = DEFAULT_COPYBUFF;
     PyObject *file, *columns = NULL, *res = NULL;
     char columnlist[DEFAULT_COPYBUFF];
+    char *quoted_delimiter;
 
     static char *kwlist[] = {"file", "table", "sep", "null", "size",
                              "columns", NULL};
@@ -1211,16 +1216,44 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
 
     EXC_IF_CURS_CLOSED(self);
 
+    quoted_delimiter = psycopg_internal_escape_string(self->conn, sep);
+    if (NULL == quoted_delimiter) {
+        PyErr_SetString(PyExc_ValueError, "Failed to quote delimiter");
+        return NULL;
+    }
+    query = query_buffer;
     if (null) {
-        PyOS_snprintf(query, DEFAULT_COPYBUFF-1,
-                      "COPY %s%s FROM stdin USING DELIMITERS '%s'"
-                      " WITH NULL AS '%s'", table_name, columnlist, sep, null);
+        char *quoted_null = psycopg_internal_escape_string(self->conn, null);
+        if (NULL == quoted_null) {
+            PyErr_SetString(PyExc_ValueError, "Failed to quote null-marker");
+            return NULL;
+        }
+        query_size = PyOS_snprintf(query, COPY_BUFFER_SIZE,
+                                   "COPY %s%s FROM stdin WITH DELIMITER AS %s"
+                                   " NULL AS %s", table_name, columnlist, quoted_delimiter, quoted_null);
+        if (query_size >= COPY_BUFFER_SIZE) {
+            /* Got truncated, allocate dynamically */
+            query = (char *) malloc((query_size + 1) * sizeof(char));
+            PyOS_snprintf(query, query_size + 1,
+                          "COPY %s%s FROM stdin WITH DELIMITER AS %s"
+                          " NULL AS %s", table_name, columnlist, quoted_delimiter, quoted_null);
+        }
+        free(quoted_null);
     }
     else {
-        PyOS_snprintf(query, DEFAULT_COPYBUFF-1,
-                      "COPY %s%s FROM stdin USING DELIMITERS '%s'",
-                      table_name, columnlist, sep);
+        query_size = PyOS_snprintf(query, COPY_BUFFER_SIZE,
+                                   "COPY %s%s FROM stdin WITH DELIMITER AS %s",
+                                   table_name, columnlist, quoted_delimiter);
+        if (query_size >= COPY_BUFFER_SIZE) {
+            /* Got truncated, allocate dynamically */
+            query = (char *) malloc((query_size + 1) * sizeof(char));
+            PyOS_snprintf(query, query_size + 1,
+                          "COPY %s%s FROM stdin WITH DELIMITER AS %s",
+                          table_name, columnlist, quoted_delimiter);
+        }
+        
     }
+    free(quoted_delimiter);
     Dprintf("psyco_curs_copy_from: query = %s", query);
 
     self->copysize = bufsize;
@@ -1231,6 +1264,9 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
         Py_INCREF(Py_None);
     }
 
+    if (query && (query != query_buffer)) {
+        free(query);
+    }
     self->copyfile =NULL;
 
     return res;
@@ -1260,11 +1296,14 @@ _psyco_curs_has_write_check(PyObject* o, void* var)
 static PyObject *
 psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
-    char query[DEFAULT_COPYBUFF];
+    char *query = NULL;
+    char query_buffer[COPY_BUFFER_SIZE];
+    size_t query_size;
     char columnlist[DEFAULT_COPYBUFF];
     const char *table_name;
     const char *sep = "\t", *null = NULL;
     PyObject *file, *columns = NULL, *res = NULL;
+    char *quoted_delimiter;
 
     static char *kwlist[] = {"file", "table", "sep", "null", "columns", NULL};
 
@@ -1278,17 +1317,46 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
         return NULL;
 
     EXC_IF_CURS_CLOSED(self);
+    quoted_delimiter = psycopg_internal_escape_string(self->conn, sep);
+    if (NULL == quoted_delimiter) {
+        PyErr_SetString(PyExc_ValueError, "Failed to quote delimiter");
+        return NULL;
+    }
 
+    query = query_buffer;
     if (null) {
-        PyOS_snprintf(query, DEFAULT_COPYBUFF-1,
-                      "COPY %s%s TO stdout USING DELIMITERS '%s'"
-                      " WITH NULL AS '%s'", table_name, columnlist, sep, null);
+        char *quoted_null = psycopg_internal_escape_string(self->conn, null);
+        if (NULL == quoted_null) {
+            PyErr_SetString(PyExc_ValueError, "Failed to quote null-marker");
+            return NULL;
+        }
+        
+        query_size = PyOS_snprintf(query, COPY_BUFFER_SIZE,
+                                   "COPY %s%s TO stdout WITH DELIMITER AS %s"
+                                   " NULL AS %s", table_name, columnlist, quoted_delimiter, quoted_null);
+
+        if (query_size >= COPY_BUFFER_SIZE) {
+            /* Got truncated, allocate dynamically */
+            query = (char *) malloc((query_size + 1) * sizeof(char));
+            PyOS_snprintf(query, query_size + 1,
+                          "COPY %s%s TO stdout WITH DELIMITER AS %s"
+                          " NULL AS %s", table_name, columnlist, quoted_delimiter, quoted_null);
+        }
+        
     }
     else {
-        PyOS_snprintf(query, DEFAULT_COPYBUFF-1,
-                      "COPY %s%s TO stdout USING DELIMITERS '%s'",
-                      table_name, columnlist, sep);
+        query_size = PyOS_snprintf(query, COPY_BUFFER_SIZE,
+                      "COPY %s%s TO stdout WITH DELIMITER AS %s",
+                      table_name, columnlist, quoted_delimiter);
+        if (query_size >= COPY_BUFFER_SIZE) {
+            /* Got truncated, allocate dynamically */
+            query = (char *) malloc((query_size + 1) * sizeof(char));
+            PyOS_snprintf(query, query_size + 1,
+                      "COPY %s%s TO stdout WITH DELIMITER AS %s",
+                      table_name, columnlist, quoted_delimiter);
+        }
     }
+    free(quoted_delimiter);
 
     self->copysize = 0;
     self->copyfile = file;
@@ -1297,7 +1365,9 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
         res = Py_None;
         Py_INCREF(Py_None);
     }
-
+    if (query && (query != query_buffer)) {
+        free(query);
+    }
     self->copyfile = NULL;
 
     return res;
