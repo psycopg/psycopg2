@@ -1,3 +1,10 @@
+What's new in psycopg 2.0.9
+---------------------------
+
+* New features:
+  - COPY TO/COPY FROM queries now can be of any size and psycopg will
+    correctly quote separators.
+
 What's new in psycopg 2.0.8
 ---------------------------
 

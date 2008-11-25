@@ -3,7 +3,6 @@
  */
 
 #include "psycopg/config.h"
-#include "psycopg/utils.h"
 #include "psycopg/psycopg.h"
 #include "psycopg/connection.h"
 #include "psycopg/pgtypes.h"
@@ -11,33 +10,75 @@
 #include <string.h>
 #include <stdlib.h>
 
-char *psycopg_internal_escape_string(connectionObject *conn, const char *string)
+char *
+psycopg_escape_string(PyObject *obj, const char *from, Py_ssize_t len,
+                       char *to, Py_ssize_t *tolen)
 {
-    char *buffer;
-    size_t string_length;
-    int equote;         /* buffer offset if E'' quotes are needed */  
+    Py_ssize_t ql;
+    connectionObject *conn = (connectionObject*)obj;
+    int eq = (conn && (conn->equote)) ? 1 : 0;   
 
-    string_length = strlen(string);
+    if (len == 0)
+        len = strlen(from);
     
-    buffer = (char *) malloc((string_length * 2 + 4) * sizeof(char));
-    if (buffer == NULL) {
-        return NULL;
+    if (to == NULL) {
+        to = (char *)PyMem_Malloc((len * 2 + 4) * sizeof(char));
+        if (to == NULL)
+            return NULL;
     }
 
-    equote = (conn && (conn->equote)) ? 1 : 0;
-
-    { 
-        size_t qstring_length;
-
-        qstring_length = qstring_escape(buffer + equote + 1, string, string_length,
-                                        (conn ? conn->pgconn : NULL));
-
-        if (equote)
-            buffer[0] = 'E';
-        buffer[equote] = '\''; 
-        buffer[qstring_length + equote + 1] = '\'';
-        buffer[qstring_length + equote + 2] = 0;
+    #ifndef PSYCOPG_OWN_QUOTING
+    {
+        #if PG_MAJOR_VERSION > 8 || \
+         (PG_MAJOR_VERSION == 8 && PG_MINOR_VERSION > 1) || \
+         (PG_MAJOR_VERSION == 8 && PG_MINOR_VERSION == 1 && PG_PATCH_VERSION >= 4)
+            int err;
+            if (conn && conn->pgconn)
+                ql = PQescapeStringConn(conn->pgconn, to+eq+1, from, len, &err);
+            else
+        #endif
+                ql = PQescapeString(to+eq+1, from, len);
     }
+    #else
+    {
+        int i, j;
+    
+        for (i=0, j=eq+1; i<len; i++) {
+            switch(from[i]) {
+    
+            case '\'':
+                to[j++] = '\'';
+                to[j++] = '\'';
+                break;
+    
+            case '\\':
+                to[j++] = '\\';
+                to[j++] = '\\';
+                break;
+    
+            case '\0':
+                /* do nothing, embedded \0 are discarded */
+                break;
+    
+            default:
+                to[j++] = from[i];
+            }
+        }
+        to[j] = '\0';
+    
+        Dprintf("qstring_quote: to = %s", to);
+        ql = strlen(to);
+    }
+    #endif
 
-    return buffer;
+    if (eq)
+        to[0] = 'E';
+    to[eq] = '\''; 
+    to[ql+eq+1] = '\'';
+    to[ql+eq+2] = '\0';
+
+    if (tolen)
+        *tolen = ql+eq+2;
+        
+    return to;
 }

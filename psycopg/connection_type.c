@@ -302,7 +302,8 @@ psyco_conn_lobject(connectionObject *self, PyObject *args, PyObject *keywds)
         return NULL;
     }
     
-    Dprintf("psyco_conn_lobject: new lobject at %p: refcnt = %d",
+    Dprintf("psyco_conn_lobject: new lobject at %p: refcnt = "
+            FORMAT_CODE_PY_SSIZE_T,
             obj, obj->ob_refcnt);
     return obj;
 }

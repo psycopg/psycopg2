@@ -36,56 +36,6 @@
 #include "psycopg/microprotocols_proto.h"
 
 
-/** the quoting code */
-
-#ifndef PSYCOPG_OWN_QUOTING
-size_t
-qstring_escape(char *to, const char *from, size_t len, PGconn *conn)
-{
-#if PG_MAJOR_VERSION > 8 || \
- (PG_MAJOR_VERSION == 8 && PG_MINOR_VERSION > 1) || \
- (PG_MAJOR_VERSION == 8 && PG_MINOR_VERSION == 1 && PG_PATCH_VERSION >= 4)
-    int err;
-    if (conn)
-        return PQescapeStringConn(conn, to, from, len, &err);
-    else
-#endif
-        return PQescapeString(to, from, len);
-}
-#else
-size_t
-qstring_escape(char *to, const char *from, size_t len, PGconn *conn)
-{
-    int i, j;
-
-    for (i=0, j=0; i<len; i++) {
-        switch(from[i]) {
-
-        case '\'':
-            to[j++] = '\'';
-            to[j++] = '\'';
-            break;
-
-        case '\\':
-            to[j++] = '\\';
-            to[j++] = '\\';
-            break;
-
-        case '\0':
-            /* do nothing, embedded \0 are discarded */
-            break;
-
-        default:
-            to[j++] = from[i];
-        }
-    }
-    to[j] = '\0';
-
-    Dprintf("qstring_quote: to = %s", to);
-    return strlen(to);
-}
-#endif
-
 /* qstring_quote - do the quote process on plain and unicode strings */
 
 static PyObject *
@@ -93,8 +43,7 @@ qstring_quote(qstringObject *self)
 {
     PyObject *str;
     char *s, *buffer;
-    Py_ssize_t len;
-    int equote;         /* buffer offset if E'' quotes are needed */
+    Py_ssize_t len, qlen;
 
     /* if the wrapped object is an unicode object we can encode it to match
        self->encoding but if the encoding is not specified we don't know what
@@ -139,39 +88,29 @@ qstring_quote(qstringObject *self)
     /* encode the string into buffer */
     PyString_AsStringAndSize(str, &s, &len);
 
-    buffer = (char *)PyMem_Malloc((len*2+4) * sizeof(char));
+    /* Call qstring_escape with the GIL released, then reacquire the GIL
+       before verifying that the results can fit into a Python string; raise
+       an exception if not. */        
+
+    Py_BEGIN_ALLOW_THREADS
+    buffer = psycopg_escape_string(self->conn, s, len, NULL, &qlen);
+    Py_END_ALLOW_THREADS
+    
     if (buffer == NULL) {
         Py_DECREF(str);
         PyErr_NoMemory();
         return NULL;
     }
 
-    equote = (self->conn && ((connectionObject*)self->conn)->equote) ? 1 : 0;
-
-    { /* Call qstring_escape with the GIL released, then reacquire the GIL
-       * before verifying that the results can fit into a Python string; raise
-       * an exception if not. */
-        size_t qstring_res;
-
-        Py_BEGIN_ALLOW_THREADS
-        qstring_res = qstring_escape(buffer+equote+1, s, len,
-          self->conn ? ((connectionObject*)self->conn)->pgconn : NULL);
-        Py_END_ALLOW_THREADS
-
-        if (qstring_res > (size_t) PY_SSIZE_T_MAX) {
-            PyErr_SetString(PyExc_IndexError, "PG buffer too large to fit in"
-              " Python buffer.");
-            PyMem_Free(buffer);
-            Py_DECREF(str);
-            return NULL;
-        }
-        len = (Py_ssize_t) qstring_res;
-        if (equote)
-            buffer[0] = 'E';
-        buffer[equote] = '\'' ; buffer[len+equote+1] = '\'';
+    if (qlen > (size_t) PY_SSIZE_T_MAX) {
+        PyErr_SetString(PyExc_IndexError,
+            "PG buffer too large to fit in Python buffer.");
+        PyMem_Free(buffer);
+        Py_DECREF(str);
+        return NULL;
     }
-
-    self->buffer = PyString_FromStringAndSize(buffer, len+equote+2);
+    
+    self->buffer = PyString_FromStringAndSize(buffer, qlen);
     PyMem_Free(buffer);
     Py_DECREF(str);
 

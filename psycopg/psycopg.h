@@ -143,7 +143,8 @@ HIDDEN PyObject *psyco_GetDecimalType(void);
 HIDDEN void psyco_set_error(PyObject *exc, PyObject *curs,  const char *msg,
                             const char *pgerror, const char *pgcode);
 
-HIDDEN size_t qstring_escape(char *to, const char *from, size_t len, PGconn *conn);
+HIDDEN char *psycopg_escape_string(PyObject *conn,
+              const char *from, Py_ssize_t len, char *to, Py_ssize_t *tolen);
 
 /* Exceptions docstrings */
 #define Error_doc \
