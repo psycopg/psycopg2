@@ -2,12 +2,14 @@
  *
  */
 
+#include <Python.h>
+#include <string.h>
+
 #include "psycopg/config.h"
 #include "psycopg/psycopg.h"
 #include "psycopg/connection.h"
 #include "psycopg/pgtypes.h"
 #include "psycopg/pgversion.h"
-#include <string.h>
 #include <stdlib.h>
 
 char *
