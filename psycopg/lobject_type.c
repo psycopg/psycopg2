@@ -95,6 +95,7 @@ psyco_lobj_write(lobjectObject *self, PyObject *args)
 static PyObject *
 psyco_lobj_read(lobjectObject *self, PyObject *args)
 {
+    PyObject *res;
     int where, end, size = -1;
     char *buffer;
 
@@ -111,13 +112,19 @@ psyco_lobj_read(lobjectObject *self, PyObject *args)
         size = end - where;
     }
 
-    if ((buffer = PyMem_Malloc(size)) == NULL) return NULL;
+    if ((buffer = PyMem_Malloc(size)) == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
     if ((size = lobject_read(self, buffer, size)) < 0) {
         PyMem_Free(buffer);
         return NULL;
     }
 
-    return PyString_FromStringAndSize(buffer, size);
+    res = PyString_FromStringAndSize(buffer, size);
+    PyMem_Free(buffer);
+    
+    return res;
 }
 
 /* seek method - seek in the lobject */

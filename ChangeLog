@@ -1,3 +1,9 @@
+2008-12-04  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/lobject_type.c: fixed memory leak. The patch was kindly
+	sent from a psycopg user but I wrongly deleted the email so no
+	kudos (and I had to fix the problem by myself!)
+
 2008-11-25  Federico Di Gregorio  <fog@initd.org>
 
 	* psycopg/cursor_type.c: integrated patch from Alejandro Dubrovsky.
