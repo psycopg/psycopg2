@@ -26,42 +26,36 @@
 #include <Python.h>
 #include <structmember.h>
 
-/* python < 2.2 does not have PyMemeberDef */
-#if PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION < 2
-#define PyMemberDef memberlist
+#if PY_VERSION_HEX < 0x02040000
+#  error "psycopg requires Python >= 2.4"
 #endif
 
-/* PyObject_TypeCheck introduced in 2.2 */
-#ifndef PyObject_TypeCheck
-#define PyObject_TypeCheck(o, t) ((o)->ob_type == (t))
+#if PY_VERSION_HEX < 0x02050000 && !defined(PY_SSIZE_T_MIN)
+  typedef int Py_ssize_t;
+  #define PY_SSIZE_T_MIN INT_MIN
+  #define PY_SSIZE_T_MAX INT_MAX
+  #define PY_FORMAT_SIZE_T ""
+
+  #define readbufferproc getreadbufferproc
+  #define writebufferproc getwritebufferproc
+  #define segcountproc getsegcountproc
+  #define charbufferproc getcharbufferproc
+
+  #define CONV_CODE_PY_SSIZE_T "i"
+#else
+  #define CONV_CODE_PY_SSIZE_T "n"
 #endif
 
-/* python 2.2 does not have freefunc (it has destructor instead) */
-#if PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION < 3
-#define freefunc destructor
-#endif
+/* FORMAT_CODE_PY_SSIZE_T is for Py_ssize_t: */
+#define FORMAT_CODE_PY_SSIZE_T "%" PY_FORMAT_SIZE_T "d"
 
-/* Py_VISIT and Py_CLEAR introduced in Python 2.4 */
-#ifndef Py_VISIT
-#define Py_VISIT(op)                                    \
-        do {                                            \
-                if (op) {                               \
-                        int vret = visit((op), arg);    \
-                        if (vret)                       \
-                                return vret;            \
-                }                                       \
-        } while (0)
-#endif
-
-#ifndef Py_CLEAR
-#define Py_CLEAR(op)                            \
-        do {                                    \
-                if (op) {                       \
-                        PyObject *tmp = (PyObject *)(op);       \
-                        (op) = NULL;            \
-                        Py_DECREF(tmp);         \
-                }                               \
-        } while (0)
+/* FORMAT_CODE_SIZE_T is for plain size_t, not for Py_ssize_t: */
+#ifdef _MSC_VER
+  /* For MSVC: */
+  #define FORMAT_CODE_SIZE_T "%Iu"
+#else
+  /* C99 standard format code: */
+  #define FORMAT_CODE_SIZE_T "%zu"
 #endif
 
 #endif /* !defined(PSYCOPG_PYTHON_H) */

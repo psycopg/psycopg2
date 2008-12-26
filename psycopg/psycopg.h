@@ -27,40 +27,10 @@
 #include <libpq-fe.h>
 
 #include "psycopg/config.h"
+#include "psycopg/python.h"
 
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-/* Python 2.5+ Py_ssize_t compatibility: */
-#ifndef PY_FORMAT_SIZE_T
-  #define PY_FORMAT_SIZE_T ""
-#endif
-
-/* FORMAT_CODE_SIZE_T is for plain size_t, not for Py_ssize_t: */
-#ifdef _MSC_VER
-  /* For MSVC: */
-  #define FORMAT_CODE_SIZE_T "%Iu"
-#else
-  /* C99 standard format code: */
-  #define FORMAT_CODE_SIZE_T "%zu"
-#endif
-/* FORMAT_CODE_PY_SSIZE_T is for Py_ssize_t: */
-#define FORMAT_CODE_PY_SSIZE_T "%" PY_FORMAT_SIZE_T "d"
-
-#if PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION >= 5
-  #define CONV_CODE_PY_SSIZE_T "n"
-#else
-  #define CONV_CODE_PY_SSIZE_T "i"
-
-  typedef int Py_ssize_t;
-  #define PY_SSIZE_T_MIN INT_MIN
-  #define PY_SSIZE_T_MAX INT_MAX
-
-  #define readbufferproc getreadbufferproc
-  #define writebufferproc getwritebufferproc
-  #define segcountproc getsegcountproc
-  #define charbufferproc getcharbufferproc
 #endif
 
 /* DBAPI compliance parameters */
