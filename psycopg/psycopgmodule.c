@@ -280,8 +280,11 @@ psyco_adapters_init(PyObject *mod)
     microprotocols_add(&PyUnicode_Type, NULL, (PyObject*)&qstringType);
     microprotocols_add(&PyBuffer_Type, NULL, (PyObject*)&binaryType);
     microprotocols_add(&PyList_Type, NULL, (PyObject*)&listType);
+    microprotocols_add((PyTypeObject*)psyco_GetDecimalType(),
+                       NULL, (PyObject*)&asisType);
 
-    /* as above, we use the callable objects from the psycopg module */
+    /* the module has already been initialized, so we can obtain the callable
+       objects directly from its dictionary :) */
     call = PyMapping_GetItemString(mod, "DateFromPy");
     microprotocols_add((PyTypeObject*)pyDateTypeP, NULL, call);
     call = PyMapping_GetItemString(mod, "TimeFromPy");
@@ -292,17 +295,11 @@ psyco_adapters_init(PyObject *mod)
     microprotocols_add((PyTypeObject*)pyDeltaTypeP, NULL, call);
 
 #ifdef HAVE_MXDATETIME
-    /* the module has already been initialized, so we can obtain the callable
-       objects directly from its dictionary :) */
+    /* as above, we use the callable objects from the psycopg module */
     call = PyMapping_GetItemString(mod, "TimestampFromMx");
     microprotocols_add(mxDateTimeP->DateTime_Type, NULL, call);
     call = PyMapping_GetItemString(mod, "TimeFromMx");
     microprotocols_add(mxDateTimeP->DateTimeDelta_Type, NULL, call);
-#endif
-
-#ifdef HAVE_DECIMAL
-    microprotocols_add((PyTypeObject*)psyco_GetDecimalType(),
-                       NULL, (PyObject*)&asisType);
 #endif
 }
 
@@ -583,9 +580,7 @@ psyco_GetDecimalType(void)
 {
     PyObject *decimalType = NULL;
     static PyObject *cachedType = NULL;
-
-#ifdef HAVE_DECIMAL
-    PyObject *decimal = PyImport_ImportModule("decimal");
+    PyObject *decimal;
 
     /* Use the cached object if running from the main interpreter. */
     int can_cache = psyco_is_main_interp();
@@ -595,6 +590,7 @@ psyco_GetDecimalType(void)
     }
 
     /* Get a new reference to the Decimal type. */
+    decimal = PyImport_ImportModule("decimal");
     if (decimal) {
         decimalType = PyObject_GetAttrString(decimal, "Decimal");
         Py_DECREF(decimal);
@@ -607,10 +603,9 @@ psyco_GetDecimalType(void)
 
     /* Store the object from future uses. */
     if (can_cache && !cachedType) {
+        Py_INCREF(decimalType);
         cachedType = decimalType;
     }
-
-#endif /* HAVE_DECIMAL */
 
     return decimalType;
 }

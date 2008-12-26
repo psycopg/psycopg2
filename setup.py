@@ -55,7 +55,7 @@ from distutils.sysconfig import get_python_inc
 from distutils.ccompiler import get_default_compiler
 
 PSYCOPG_VERSION = '2.0.8'
-version_flags   = ['dt']
+version_flags   = ['dt', 'dec']
 
 PLATFORM_IS_WINDOWS = sys.platform.lower().startswith('win')
 
@@ -86,14 +86,12 @@ class psycopg_build_ext(build_ext):
          "Use Python datatime objects for date and time representation."),
         ('pg-config=', None,
           "The name of the pg_config binary and/or full path to find it"),
-        ('use-decimal', None,
-         "Use Decimal type even on Python 2.3 if the module is provided."),
         ('have-ssl', None,
          "Compile with OpenSSL built PostgreSQL libraries (Windows only)."),
     ])
 
     boolean_options = build_ext.boolean_options[:]
-    boolean_options.extend(('use-pydatetime', 'use-decimal', 'have-ssl'))
+    boolean_options.extend(('use-pydatetime', 'have-ssl'))
 
     DEFAULT_PG_CONFIG = "pg_config"
 
@@ -322,13 +320,6 @@ sources = [
 
 parser = ConfigParser.ConfigParser()
 parser.read('setup.cfg')
-
-# Choose if to use Decimal type
-use_decimal = int(parser.get('build_ext', 'use_decimal'))
-if sys.version_info[0] >= 2 and (
-    sys.version_info[1] >= 4 or (sys.version_info[1] == 3 and use_decimal)):
-    define_macros.append(('HAVE_DECIMAL','1'))
-    version_flags.append('dec')
 
 # Choose a datetime module
 have_pydatetime = True
