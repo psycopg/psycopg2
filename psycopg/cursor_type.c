@@ -1479,16 +1479,23 @@ psyco_curs_fileno(cursorObject *self, PyObject *args)
 static PyObject *
 psyco_curs_isready(cursorObject *self, PyObject *args)
 {
+    int res;
+    
     if (!PyArg_ParseTuple(args, "")) return NULL;
     EXC_IF_CURS_CLOSED(self);
 
     /* pq_is_busy does its own locking, we don't need anything special but if
        the cursor is ready we need to fetch the result and free the connection
-       for the next query. */
+       for the next query. if -1 is returned we raise an exception. */
 
-    if (pq_is_busy(self->conn)) {
+    res = pq_is_busy(self->conn);
+    
+    if (res == 1) {
         Py_INCREF(Py_False);
         return Py_False;
+    }
+    else if (res == -1) {
+        return NULL;
     }
     else {
         IFCLEARPGRES(self->pgres);
