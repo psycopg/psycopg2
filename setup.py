@@ -46,7 +46,7 @@ Operating System :: Unix
 import os
 import os.path
 import sys
-import popen2
+import subprocess
 import ConfigParser
 from distutils.core import setup, Extension
 from distutils.errors import DistutilsFileError
@@ -55,23 +55,19 @@ from distutils.sysconfig import get_python_inc
 from distutils.ccompiler import get_default_compiler
 
 PSYCOPG_VERSION = '2.0.8'
-version_flags   = []
+version_flags   = ['dt', 'dec']
 
 PLATFORM_IS_WINDOWS = sys.platform.lower().startswith('win')
 
-# to work around older distutil limitations
-if sys.version < '2.2.3':
-    from distutils.dist import DistributionMetadata
-    DistributionMetadata.classifiers = None
-    DistributionMetadata.download_url = None
-
 def get_pg_config(kind, pg_config="pg_config"):
-    if ' ' in pg_config:
-        pg_config = '"'+pg_config+'"'
-    p = popen2.popen3(pg_config + " --" + kind)
-    r = p[0].readline().strip()
+    p = subprocess.Popen([pg_config, "--" + kind],
+                         stdin=subprocess.PIPE,
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
+    p.stdin.close()
+    r = p.stdout.readline().strip()
     if not r:
-        raise Warning(p[2].readline())
+        raise Warning(p.stderr.readline())
     return r
 
 class psycopg_build_ext(build_ext):
@@ -90,14 +86,12 @@ class psycopg_build_ext(build_ext):
          "Use Python datatime objects for date and time representation."),
         ('pg-config=', None,
           "The name of the pg_config binary and/or full path to find it"),
-        ('use-decimal', None,
-         "Use Decimal type even on Python 2.3 if the module is provided."),
         ('have-ssl', None,
          "Compile with OpenSSL built PostgreSQL libraries (Windows only)."),
     ])
 
     boolean_options = build_ext.boolean_options[:]
-    boolean_options.extend(('use-pydatetime', 'use-decimal', 'have-ssl'))
+    boolean_options.extend(('use-pydatetime', 'have-ssl'))
 
     DEFAULT_PG_CONFIG = "pg_config"
 
@@ -311,14 +305,6 @@ class psycopg_build_ext(build_ext):
 define_macros = []
 include_dirs = []
 
-# python version
-define_macros.append(('PY_MAJOR_VERSION', str(sys.version_info[0])))
-define_macros.append(('PY_MINOR_VERSION', str(sys.version_info[1])))
-
-# some macros related to python versions and features
-if sys.version_info[0] >= 2 and sys.version_info[1] >= 3:
-    define_macros.append(('HAVE_PYBOOL','1'))
-
 # gather information to build the extension module
 ext = [] ; data_files = []
 
@@ -330,20 +316,13 @@ sources = [
     'connection_type.c', 'connection_int.c', 'cursor_type.c', 'cursor_int.c',
     'lobject_type.c', 'lobject_int.c',
     'adapter_qstring.c', 'adapter_pboolean.c', 'adapter_binary.c',
-    'adapter_asis.c', 'adapter_list.c', 'utils.c']
+    'adapter_asis.c', 'adapter_list.c', 'adapter_datetime.c', 'utils.c']
 
 parser = ConfigParser.ConfigParser()
 parser.read('setup.cfg')
 
-# Choose if to use Decimal type
-use_decimal = int(parser.get('build_ext', 'use_decimal'))
-if sys.version_info[0] >= 2 and (
-    sys.version_info[1] >= 4 or (sys.version_info[1] == 3 and use_decimal)):
-    define_macros.append(('HAVE_DECIMAL','1'))
-    version_flags.append('dec')
-
 # Choose a datetime module
-have_pydatetime = False
+have_pydatetime = True
 have_mxdatetime = False
 use_pydatetime  = int(parser.get('build_ext', 'use_pydatetime'))
 
@@ -359,16 +338,8 @@ if os.path.exists(mxincludedir):
     have_mxdatetime = True
     version_flags.append('mx')
 
-# check for python datetime package
-if os.path.exists(os.path.join(get_python_inc(plat_specific=1),"datetime.h")):
-    define_macros.append(('HAVE_PYDATETIME','1'))
-    sources.append('adapter_datetime.c')
-    have_pydatetime = True
-    version_flags.append('dt')
-
 # now decide which package will be the default for date/time typecasts
-if have_pydatetime and use_pydatetime \
-       or have_pydatetime and not have_mxdatetime:
+if have_pydatetime and (use_pydatetime or not have_mxdatetime):
     define_macros.append(('PSYCOPG_DEFAULT_PYDATETIME','1'))
 elif have_mxdatetime:
     define_macros.append(('PSYCOPG_DEFAULT_MXDATETIME','1'))

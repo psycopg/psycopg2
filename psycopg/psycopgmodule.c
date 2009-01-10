@@ -47,7 +47,6 @@ HIDDEN mxDateTimeModule_APIObject *mxDateTimeP = NULL;
 #endif
 
 /* some module-level variables, like the datetime module */
-#ifdef HAVE_PYDATETIME
 #include <datetime.h>
 #include "psycopg/adapter_datetime.h"
 HIDDEN PyObject *pyDateTimeModuleP = NULL;
@@ -55,7 +54,6 @@ HIDDEN PyObject *pyDateTypeP = NULL;
 HIDDEN PyObject *pyTimeTypeP = NULL;
 HIDDEN PyObject *pyDateTimeTypeP = NULL;
 HIDDEN PyObject *pyDeltaTypeP = NULL;
-#endif
 
 /* pointers to the psycopg.tz classes */
 HIDDEN PyObject *pyPsycopgTzModule = NULL;
@@ -276,23 +274,17 @@ psyco_adapters_init(PyObject *mod)
     microprotocols_add(&PyFloat_Type, NULL, (PyObject*)&asisType);
     microprotocols_add(&PyInt_Type, NULL, (PyObject*)&asisType);
     microprotocols_add(&PyLong_Type, NULL, (PyObject*)&asisType);
+    microprotocols_add(&PyBool_Type, NULL, (PyObject*)&pbooleanType);
 
     microprotocols_add(&PyString_Type, NULL, (PyObject*)&qstringType);
     microprotocols_add(&PyUnicode_Type, NULL, (PyObject*)&qstringType);
     microprotocols_add(&PyBuffer_Type, NULL, (PyObject*)&binaryType);
     microprotocols_add(&PyList_Type, NULL, (PyObject*)&listType);
+    microprotocols_add((PyTypeObject*)psyco_GetDecimalType(),
+                       NULL, (PyObject*)&asisType);
 
-#ifdef HAVE_MXDATETIME
     /* the module has already been initialized, so we can obtain the callable
        objects directly from its dictionary :) */
-    call = PyMapping_GetItemString(mod, "TimestampFromMx");
-    microprotocols_add(mxDateTimeP->DateTime_Type, NULL, call);
-    call = PyMapping_GetItemString(mod, "TimeFromMx");
-    microprotocols_add(mxDateTimeP->DateTimeDelta_Type, NULL, call);
-#endif
-
-#ifdef HAVE_PYDATETIME
-    /* as above, we use the callable objects from the psycopg module */
     call = PyMapping_GetItemString(mod, "DateFromPy");
     microprotocols_add((PyTypeObject*)pyDateTypeP, NULL, call);
     call = PyMapping_GetItemString(mod, "TimeFromPy");
@@ -301,15 +293,13 @@ psyco_adapters_init(PyObject *mod)
     microprotocols_add((PyTypeObject*)pyDateTimeTypeP, NULL, call);
     call = PyMapping_GetItemString(mod, "IntervalFromPy");
     microprotocols_add((PyTypeObject*)pyDeltaTypeP, NULL, call);
-#endif
 
-#ifdef HAVE_PYBOOL
-    microprotocols_add(&PyBool_Type, NULL, (PyObject*)&pbooleanType);
-#endif
-
-#ifdef HAVE_DECIMAL
-    microprotocols_add((PyTypeObject*)psyco_GetDecimalType(),
-                       NULL, (PyObject*)&asisType);
+#ifdef HAVE_MXDATETIME
+    /* as above, we use the callable objects from the psycopg module */
+    call = PyMapping_GetItemString(mod, "TimestampFromMx");
+    microprotocols_add(mxDateTimeP->DateTime_Type, NULL, call);
+    call = PyMapping_GetItemString(mod, "TimeFromMx");
+    microprotocols_add(mxDateTimeP->DateTimeDelta_Type, NULL, call);
 #endif
 }
 
@@ -590,9 +580,7 @@ psyco_GetDecimalType(void)
 {
     PyObject *decimalType = NULL;
     static PyObject *cachedType = NULL;
-
-#ifdef HAVE_DECIMAL
-    PyObject *decimal = PyImport_ImportModule("decimal");
+    PyObject *decimal;
 
     /* Use the cached object if running from the main interpreter. */
     int can_cache = psyco_is_main_interp();
@@ -602,6 +590,7 @@ psyco_GetDecimalType(void)
     }
 
     /* Get a new reference to the Decimal type. */
+    decimal = PyImport_ImportModule("decimal");
     if (decimal) {
         decimalType = PyObject_GetAttrString(decimal, "Decimal");
         Py_DECREF(decimal);
@@ -614,10 +603,9 @@ psyco_GetDecimalType(void)
 
     /* Store the object from future uses. */
     if (can_cache && !cachedType) {
+        Py_INCREF(decimalType);
         cachedType = decimalType;
     }
-
-#endif /* HAVE_DECIMAL */
 
     return decimalType;
 }
@@ -659,6 +647,15 @@ static PyMethodDef psycopgMethods[] = {
     {"List",  (PyCFunction)psyco_List,
      METH_VARARGS, psyco_List_doc},
 
+    {"DateFromPy",  (PyCFunction)psyco_DateFromPy,
+     METH_VARARGS, psyco_DateFromPy_doc},
+    {"TimeFromPy",  (PyCFunction)psyco_TimeFromPy,
+     METH_VARARGS, psyco_TimeFromPy_doc},
+    {"TimestampFromPy",  (PyCFunction)psyco_TimestampFromPy,
+     METH_VARARGS, psyco_TimestampFromPy_doc},
+    {"IntervalFromPy",  (PyCFunction)psyco_IntervalFromPy,
+     METH_VARARGS, psyco_IntervalFromPy_doc},
+
 #ifdef HAVE_MXDATETIME
     {"DateFromMx",  (PyCFunction)psyco_DateFromMx,
      METH_VARARGS, psyco_DateFromMx_doc},
@@ -668,17 +665,6 @@ static PyMethodDef psycopgMethods[] = {
      METH_VARARGS, psyco_TimestampFromMx_doc},
     {"IntervalFromMx",  (PyCFunction)psyco_IntervalFromMx,
      METH_VARARGS, psyco_IntervalFromMx_doc},
-#endif
-
-#ifdef HAVE_PYDATETIME
-    {"DateFromPy",  (PyCFunction)psyco_DateFromPy,
-     METH_VARARGS, psyco_DateFromPy_doc},
-    {"TimeFromPy",  (PyCFunction)psyco_TimeFromPy,
-     METH_VARARGS, psyco_TimeFromPy_doc},
-    {"TimestampFromPy",  (PyCFunction)psyco_TimestampFromPy,
-     METH_VARARGS, psyco_TimestampFromPy_doc},
-    {"IntervalFromPy",  (PyCFunction)psyco_IntervalFromPy,
-     METH_VARARGS, psyco_IntervalFromPy_doc},
 #endif
 
     {NULL, NULL, 0, NULL}        /* Sentinel */
@@ -694,7 +680,7 @@ init_psycopg(void)
 
 #ifdef PSYCOPG_DEBUG
     if (getenv("PSYCOPG_DEBUG"))
-      psycopg_debug_enabled = 1;
+        psycopg_debug_enabled = 1;
 #endif
 
     Dprintf("initpsycopg: initializing psycopg %s", PSYCOPG_VERSION);
@@ -706,6 +692,7 @@ init_psycopg(void)
     qstringType.ob_type    = &PyType_Type;
     binaryType.ob_type     = &PyType_Type;
     isqlquoteType.ob_type  = &PyType_Type;
+    pbooleanType.ob_type   = &PyType_Type;
     asisType.ob_type       = &PyType_Type;
     listType.ob_type       = &PyType_Type;
     chunkType.ob_type      = &PyType_Type;
@@ -716,6 +703,7 @@ init_psycopg(void)
     if (PyType_Ready(&qstringType) == -1) return;
     if (PyType_Ready(&binaryType) == -1) return;
     if (PyType_Ready(&isqlquoteType) == -1) return;
+    if (PyType_Ready(&pbooleanType) == -1) return;
     if (PyType_Ready(&asisType) == -1) return;
     if (PyType_Ready(&listType) == -1) return;
     if (PyType_Ready(&chunkType) == -1) return;
@@ -723,11 +711,6 @@ init_psycopg(void)
 #ifdef PSYCOPG_EXTENSIONS
     lobjectType.ob_type    = &PyType_Type;
     if (PyType_Ready(&lobjectType) == -1) return;
-#endif
-
-#ifdef HAVE_PYBOOL
-    pbooleanType.ob_type   = &PyType_Type;
-    if (PyType_Ready(&pbooleanType) == -1) return;
 #endif
 
     /* import mx.DateTime module, if necessary */
@@ -743,7 +726,6 @@ init_psycopg(void)
 #endif
 
     /* import python builtin datetime module, if available */
-#ifdef HAVE_PYDATETIME
     pyDateTimeModuleP = PyImport_ImportModule("datetime");
     if (pyDateTimeModuleP == NULL) {
         Dprintf("initpsycopg: can't import datetime module");
@@ -759,7 +741,6 @@ init_psycopg(void)
     pyTimeTypeP = PyObject_GetAttrString(pyDateTimeModuleP, "time");
     pyDateTimeTypeP = PyObject_GetAttrString(pyDateTimeModuleP, "datetime");
     pyDeltaTypeP = PyObject_GetAttrString(pyDateTimeModuleP, "timedelta");
-#endif
 
     /* import psycopg2.tz anyway (TODO: replace with C-level module?) */
     pyPsycopgTzModule = PyImport_ImportModule("psycopg2.tz");
@@ -828,14 +809,12 @@ init_psycopg(void)
     qstringType.tp_alloc = PyType_GenericAlloc;
     listType.tp_alloc = PyType_GenericAlloc;
     chunkType.tp_alloc = PyType_GenericAlloc;
+    pydatetimeType.tp_alloc = PyType_GenericAlloc;
 
 #ifdef PSYCOPG_EXTENSIONS
     lobjectType.tp_alloc = PyType_GenericAlloc;
 #endif
 
-#ifdef HAVE_PYDATETIME
-    pydatetimeType.tp_alloc = PyType_GenericAlloc;
-#endif
 
 #ifdef HAVE_MXDATETIME
     mxdatetimeType.tp_alloc = PyType_GenericAlloc;

@@ -115,7 +115,6 @@ typecast_BOOLEAN_cast(const char *s, Py_ssize_t len, PyObject *curs)
 
 /** DECIMAL - cast any kind of number into a Python Decimal object **/
 
-#ifdef HAVE_DECIMAL
 static PyObject *
 typecast_DECIMAL_cast(const char *s, Py_ssize_t len, PyObject *curs)
 {
@@ -135,9 +134,6 @@ typecast_DECIMAL_cast(const char *s, Py_ssize_t len, PyObject *curs)
 
     return res;
 }
-#else
-#define typecast_DECIMAL_cast  typecast_FLOAT_cast
-#endif
 
 /* some needed aliases */
 #define typecast_NUMBER_cast   typecast_FLOAT_cast

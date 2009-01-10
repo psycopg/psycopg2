@@ -167,13 +167,10 @@ typecast_parse_time(const char* s, const char** t, Py_ssize_t* len,
 /** include casting objects **/
 #include "psycopg/typecast_basic.c"
 #include "psycopg/typecast_binary.c"
+#include "psycopg/typecast_datetime.c"
 
 #ifdef HAVE_MXDATETIME
 #include "psycopg/typecast_mxdatetime.c"
-#endif
-
-#ifdef HAVE_PYDATETIME
-#include "psycopg/typecast_datetime.c"
 #endif
 
 #include "psycopg/typecast_array.c"
@@ -181,7 +178,6 @@ typecast_parse_time(const char* s, const char** t, Py_ssize_t* len,
 
 
 /* a list of initializers, used to make the typecasters accessible anyway */
-#ifdef HAVE_PYDATETIME
 static typecastObject_initlist typecast_pydatetime[] = {
     {"PYDATETIME", typecast_DATETIME_types, typecast_PYDATETIME_cast},
     {"PYTIME", typecast_TIME_types, typecast_PYTIME_cast},
@@ -189,7 +185,6 @@ static typecastObject_initlist typecast_pydatetime[] = {
     {"PYINTERVAL", typecast_INTERVAL_types, typecast_PYINTERVAL_cast},
     {NULL, NULL, NULL}
 };
-#endif
 
 /* a list of initializers, used to make the typecasters accessible anyway */
 #ifdef HAVE_MXDATETIME
@@ -267,7 +262,6 @@ typecast_init(PyObject *dict)
         PyDict_SetItem(dict, t->name, (PyObject *)t);
     }
 #endif
-#ifdef HAVE_PYDATETIME
     for (i = 0; typecast_pydatetime[i].name != NULL; i++) {
         typecastObject *t;
         Dprintf("typecast_init: initializing %s", typecast_pydatetime[i].name);
@@ -275,7 +269,6 @@ typecast_init(PyObject *dict)
         if (t == NULL) return -1;
         PyDict_SetItem(dict, t->name, (PyObject *)t);
     }
-#endif
 
     return 0;
 }
