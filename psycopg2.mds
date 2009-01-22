@@ -11,6 +11,6 @@
     <Execute type="None" entry="psycopg2" />
   </StartMode>
   <Entries>
-    <Entry filename="./psycopg2.mdp" />
+    <Entry filename="psycopg2.mdp" />
   </Entries>
 </Combine>

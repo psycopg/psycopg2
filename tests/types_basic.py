@@ -60,6 +60,14 @@ class TypesBasicTests(unittest.TestCase):
             self.failUnless(abs(s - 19.10) < 0.001,
                             "wrong float quoting: " + str(s))
 
+    def testFloat(self):
+        s = self.execute("SELECT %s AS foo", (float("nan"),))
+        self.failUnless(str(s) == "nan", "wrong float quoting: " + str(s))
+        self.failUnless(type(s) == float, "wrong float conversion: " + repr(s))
+        s = self.execute("SELECT %s AS foo", (float("inf"),))
+        self.failUnless(str(s) == "inf", "wrong float quoting: " + str(s))      
+        self.failUnless(type(s) == float, "wrong float conversion: " + repr(s))
+
     def testBinary(self):
         s = ''.join([chr(x) for x in range(256)])
         b = psycopg2.Binary(s)

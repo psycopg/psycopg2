@@ -316,7 +316,8 @@ sources = [
     'connection_type.c', 'connection_int.c', 'cursor_type.c', 'cursor_int.c',
     'lobject_type.c', 'lobject_int.c',
     'adapter_qstring.c', 'adapter_pboolean.c', 'adapter_binary.c',
-    'adapter_asis.c', 'adapter_list.c', 'adapter_datetime.c', 'utils.c']
+    'adapter_asis.c', 'adapter_list.c', 'adapter_datetime.c', 'adapter_pfloat.c',
+    'utils.c']
 
 parser = ConfigParser.ConfigParser()
 parser.read('setup.cfg')

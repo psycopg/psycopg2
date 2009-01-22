@@ -1,4 +1,12 @@
-2009-01-20  Federico Di Gregorio  <fog@initd.org
+2009-01-23  Federico Di Gregorio  <fog@initd.org>
+
+    * Fixed problem mailed by Markus Demleitner about Python to
+    PostgreSQL conversions of "nan" and "inf" floats resulting in
+    backend errors. Added the new psycopg2.extensions.Float adapter
+    that correctly handle both values and unit tests. (The opposite
+    conversion was already working.)
+
+2009-01-20  Federico Di Gregorio  <fog@initd.org>
 
 	* Fixed problem reported by Lawrence Oluyede where
 	register_type() didn't work on connection and cursors

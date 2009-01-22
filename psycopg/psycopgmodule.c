@@ -36,6 +36,7 @@
 #include "psycopg/adapter_qstring.h"
 #include "psycopg/adapter_binary.h"
 #include "psycopg/adapter_pboolean.h"
+#include "psycopg/adapter_pfloat.h"
 #include "psycopg/adapter_asis.h"
 #include "psycopg/adapter_list.h"
 #include "psycopg/typecast_binary.h"
@@ -271,7 +272,7 @@ psyco_adapters_init(PyObject *mod)
 {
     PyObject *call;
 
-    microprotocols_add(&PyFloat_Type, NULL, (PyObject*)&asisType);
+    microprotocols_add(&PyFloat_Type, NULL, (PyObject*)&pfloatType);
     microprotocols_add(&PyInt_Type, NULL, (PyObject*)&asisType);
     microprotocols_add(&PyLong_Type, NULL, (PyObject*)&asisType);
     microprotocols_add(&PyBool_Type, NULL, (PyObject*)&pbooleanType);
@@ -629,6 +630,8 @@ static PyMethodDef psycopgMethods[] = {
     {"QuotedString",  (PyCFunction)psyco_QuotedString,
      METH_VARARGS, psyco_QuotedString_doc},
     {"Boolean",  (PyCFunction)psyco_Boolean,
+     METH_VARARGS, psyco_Float_doc},
+    {"Float",  (PyCFunction)psyco_Float,
      METH_VARARGS, psyco_Boolean_doc},
     {"Binary",  (PyCFunction)psyco_Binary,
      METH_VARARGS, psyco_Binary_doc},
@@ -693,6 +696,7 @@ init_psycopg(void)
     binaryType.ob_type     = &PyType_Type;
     isqlquoteType.ob_type  = &PyType_Type;
     pbooleanType.ob_type   = &PyType_Type;
+    pfloatType.ob_type     = &PyType_Type;
     asisType.ob_type       = &PyType_Type;
     listType.ob_type       = &PyType_Type;
     chunkType.ob_type      = &PyType_Type;
@@ -704,6 +708,7 @@ init_psycopg(void)
     if (PyType_Ready(&binaryType) == -1) return;
     if (PyType_Ready(&isqlquoteType) == -1) return;
     if (PyType_Ready(&pbooleanType) == -1) return;
+    if (PyType_Ready(&pfloatType) == -1) return;
     if (PyType_Ready(&asisType) == -1) return;
     if (PyType_Ready(&listType) == -1) return;
     if (PyType_Ready(&chunkType) == -1) return;
@@ -804,6 +809,7 @@ init_psycopg(void)
     binaryType.tp_alloc = PyType_GenericAlloc;
     isqlquoteType.tp_alloc = PyType_GenericAlloc;
     pbooleanType.tp_alloc = PyType_GenericAlloc;
+    pfloatType.tp_alloc = PyType_GenericAlloc;
     connectionType.tp_alloc = PyType_GenericAlloc;
     asisType.tp_alloc = PyType_GenericAlloc;
     qstringType.tp_alloc = PyType_GenericAlloc;

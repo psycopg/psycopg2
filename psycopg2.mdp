@@ -142,6 +142,8 @@
     <File name="psycopg/lobject_type.c" subtype="Code" buildaction="Compile" />
     <File name="psycopg/typecast_basic.c.old" subtype="Code" buildaction="Nothing" />
     <File name="sandbox/test_isready_connection_closed.py" subtype="Code" buildaction="Nothing" />
+    <File name="psycopg/adapter_pfloat.c" subtype="Code" buildaction="Compile" />
+    <File name="psycopg/adapter_pfloat.h" subtype="Code" buildaction="Nothing" />
   </Contents>
   <compiler ctype="GccCompiler" />
   <MonoDevelop.ChangeLogAddIn.ChangeLogInfo policy="UpdateNearestChangeLog" />

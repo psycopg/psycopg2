@@ -31,7 +31,7 @@ from _psycopg import DECIMALARRAY, FLOATARRAY, INTEGERARRAY, INTERVALARRAY
 from _psycopg import LONGINTEGERARRAY, ROWIDARRAY, STRINGARRAY, TIMEARRAY
 from _psycopg import UNICODEARRAY
 
-from _psycopg import Boolean, QuotedString, AsIs
+from _psycopg import Boolean, Float, QuotedString, AsIs
 try:
     from _psycopg import DateFromMx, TimeFromMx, TimestampFromMx
     from _psycopg import IntervalFromMx
