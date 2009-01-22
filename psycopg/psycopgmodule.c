@@ -243,10 +243,10 @@ psyco_register_type(PyObject *self, PyObject *args)
     }
 
     if (obj != NULL) {
-        if (obj->ob_type == &cursorType) {
+        if (PyObject_TypeCheck(obj, &cursorType)) {
             _psyco_register_type_set(&(((cursorObject*)obj)->string_types), type);
         }
-        else if (obj->ob_type == &connectionType) {
+        else if (PyObject_TypeCheck(obj, &connectionType)) {
             typecast_add(type, ((connectionObject*)obj)->string_types, 0);
         }
         else {
