@@ -1,10 +1,16 @@
+2009-02-06  Federico Di Gregorio  <fog@initd.org>
+
+	* Applied patch by Markus Demleitner to make executemany() return
+	the sum of modified rows by executed statements or -1 if any one
+	statement returns it. This is still DBAPI-2.0 compliant.
+
 2009-01-23  Federico Di Gregorio  <fog@initd.org>
 
-    * Fixed problem mailed by Markus Demleitner about Python to
-    PostgreSQL conversions of "nan" and "inf" floats resulting in
-    backend errors. Added the new psycopg2.extensions.Float adapter
-    that correctly handle both values and unit tests. (The opposite
-    conversion was already working.)
+	* Fixed problem mailed by Markus Demleitner about Python to
+	PostgreSQL conversions of "nan" and "inf" floats resulting in
+	backend errors. Added the new psycopg2.extensions.Float adapter
+	that correctly handle both values and unit tests. (The opposite
+	conversion was already working.)
 
 2009-01-20  Federico Di Gregorio  <fog@initd.org>
 

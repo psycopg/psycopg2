@@ -498,9 +498,13 @@ psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
     PyObject *operation = NULL, *vars = NULL;
     PyObject *v, *iter = NULL;
-
+    int rowcount = 0;
+    
     static char *kwlist[] = {"query", "vars_list", NULL};
 
+    /* reset rowcount to -1 to avoid setting it when an exception is raised */
+    self->rowcount = -1;
+    
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO", kwlist,
                                      &operation, &vars)) {
         return NULL;
@@ -526,11 +530,15 @@ psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
             return NULL;
         }
         else {
+            if (self->rowcount == -1)
+		rowcount = -1;
+            else if (rowcount >= 0)
+                rowcount += self->rowcount;
             Py_DECREF(v);
         }
     }
     Py_XDECREF(iter);
-    self->rowcount = -1;
+    self->rowcount = rowcount;
 
     Py_INCREF(Py_None);
     return Py_None;

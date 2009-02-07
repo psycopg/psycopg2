@@ -1,4 +1,7 @@
 <Combine name="psycopg2" fileversion="2.0">
+  <Policies>
+    <TextStylePolicy FileWidth="120" TabWidth="4" TabsToSpaces="True" NoTabsAfterNonTabs="False" RemoveTrailingWhitespace="True" />
+  </Policies>
   <Configurations active="Debug">
     <Configuration name="Debug" ctype="CombineConfiguration">
       <Entry build="True" name="psycopg2" configuration="Debug" />
