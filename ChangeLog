@@ -1,3 +1,8 @@
+2009-02-16  Federico Di Gregorio  <fog@initd.org>
+
+	* FreeBSD now has round(). Modified config.h as suggested by
+	Jeroen Ruigrok van der Werven.
+
 2009-02-06  Federico Di Gregorio  <fog@initd.org>
 
 	* Applied patch by Markus Demleitner to make executemany() return
