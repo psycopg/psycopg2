@@ -1,5 +1,14 @@
 2009-02-17  James Henstridge  <james@jamesh.id.au>
 
+	* psycopg/utils.c (psycopg_escape_string): same here.
+
+	* psycopg/adapter_binary.c (binary_escape): simplify PostgreSQL
+	version check.
+
+	* setup.py (psycopg_build_ext.finalize_options): use a single
+	define of the PostgreSQL version in a form that can easily be used
+	by #ifdefs.
+
 	* tests/test_dates.py (DatetimeTests, mxDateTimeTests): full test
 	coverage for datetime and time strings with and without time zone
 	information.

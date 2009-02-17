@@ -204,12 +204,11 @@ class psycopg_build_ext(build_ext):
                 # *at least* PostgreSQL 7.4 is available (this is the only
                 # 7.x series supported by psycopg 2)
                 pgversion = self.get_pg_config("version").split()[1]
-                pgmajor, pgminor, pgpatch = pgversion.split('.')
             except:
-                pgmajor, pgminor, pgpatch = 7, 4, 0
-            define_macros.append(("PG_MAJOR_VERSION", pgmajor))
-            define_macros.append(("PG_MINOR_VERSION", pgminor))
-            define_macros.append(("PG_PATCH_VERSION", pgpatch))
+                pgversion = "7.4.0"
+            pgmajor, pgminor, pgpatch = pgversion.split('.')
+            define_macros.append(("PG_VERSION_HEX", "0x%02X%02X%02X" %
+                                  (int(pgmajor), int(pgminor), int(pgpatch))))
         except Warning, w:
             if self.pg_config == self.DEFAULT_PG_CONFIG:
                 sys.stderr.write("Warning: %s" % str(w))
