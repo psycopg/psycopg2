@@ -63,7 +63,7 @@ typecast_MXDATE_cast(const char *str, Py_ssize_t len, PyObject *curs)
             " len = " FORMAT_CODE_PY_SSIZE_T ","
             " hh = %d, mm = %d, ss = %d, us = %d, tz = %d",
             n, len, hh, mm, ss, us, tz);
-        if (n != 0 && (n < 3 || n > 5)) {
+        if (n != 0 && (n < 3 || n > 6)) {
             PyErr_SetString(DataError, "unable to parse time");
             return NULL;
         }
@@ -91,7 +91,7 @@ typecast_MXTIME_cast(const char *str, Py_ssize_t len, PyObject *curs)
     Dprintf("typecast_MXTIME_cast: hh = %d, mm = %d, ss = %d, us = %d",
              hh, mm, ss, us);
 
-    if (n < 3 || n > 5) {
+    if (n < 3 || n > 6) {
         PyErr_SetString(DataError, "unable to parse time");
         return NULL;
     }
