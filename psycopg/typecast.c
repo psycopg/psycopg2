@@ -155,7 +155,7 @@ typecast_parse_time(const char* s, const char** t, Py_ssize_t* len,
     }
     if (t != NULL) *t = s;
 
-    *tz = tzs * tzhh*60 + tzmm;
+    *tz = tzs * (tzhh * 60 + tzmm);
 
     if (*us != 0) {
         while (usd++ < 6) *us *= 10;

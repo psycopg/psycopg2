@@ -136,7 +136,10 @@ class DatetimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
         self.check_timezone(curs, "+01:15", 4500)
         self.check_timezone(curs, "-01:15", -4500)
 
-    def test_parse_datetime_timezone_hours_minutes_seconds(self):
+    # This test is disabled because we don't support parsing second
+    # resolution timezone offsets and Python wouldn't handle them even
+    # if we did.
+    def disabled_test_parse_datetime_timezone_hours_minutes_seconds(self):
         conn = psycopg2.connect(tests.dsn)
         curs = conn.cursor()
         self.check_timezone(curs, "+01:15:42", 4542)

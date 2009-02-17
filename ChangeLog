@@ -1,3 +1,12 @@
+2009-02-17  James Henstridge  <james@jamesh.id.au>
+
+	* psycopg/typecast.c (typecast_parse_time): Fix up handling of
+	negative timezone offsets with a non-zero minutes field.
+
+	* tests/test_dates.py (DatetimeTests): Add tests for time zone
+	parsing.  The test for HH:MM:SS time zones is disabled because we
+	don't currently support it.
+
 2009-02-16  Federico Di Gregorio  <fog@initd.org>
 
 	* FreeBSD now has round(). Modified config.h as suggested by
