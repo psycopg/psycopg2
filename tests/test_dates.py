@@ -3,6 +3,7 @@ import math
 import unittest
 
 import psycopg2
+from psycopg2.tz import FixedOffsetTimezone
 import tests
 
 
@@ -102,6 +103,44 @@ class DatetimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
         value = self.DATETIME('2007-01-01 13:30:29.123456', None)
         self.assertEqual(value.second, 29)
         self.assertEqual(value.microsecond, 123456)
+
+    def check_timezone(self, curs, str_offset, offset):
+        from datetime import datetime, timedelta
+        base = datetime(2007, 1, 1, 13, 30, 29)
+        base_str = '2007-01-01 13:30:29'
+
+        value = self.DATETIME(base_str + str_offset, curs)
+
+        # tzinfo instance is correct.
+        self.assertTrue(isinstance(value.tzinfo, FixedOffsetTimezone),
+                        "value's timezone is not a FixedOffsetTimezone")
+        self.assertEqual(value.tzinfo._offset, timedelta(seconds=offset))
+
+        # Datetime is correct.
+        self.assertEqual(value.replace(tzinfo=None), base)
+
+        # Offset from UTC is correct.
+        UTC = FixedOffsetTimezone(0, "UTC")
+        value_utc = value.astimezone(UTC).replace(tzinfo=None)
+        self.assertEqual(base - value_utc, timedelta(seconds=offset))
+
+    def test_parse_datetime_timezone_hours(self):
+        conn = psycopg2.connect(tests.dsn)
+        curs = conn.cursor()
+        self.check_timezone(curs, "+01", 3600)
+        self.check_timezone(curs, "-01", -3600)
+
+    def test_parse_datetime_timezone_hours_minutes(self):
+        conn = psycopg2.connect(tests.dsn)
+        curs = conn.cursor()
+        self.check_timezone(curs, "+01:15", 4500)
+        self.check_timezone(curs, "-01:15", -4500)
+
+    def test_parse_datetime_timezone_hours_minutes_seconds(self):
+        conn = psycopg2.connect(tests.dsn)
+        curs = conn.cursor()
+        self.check_timezone(curs, "+01:15:42", 4542)
+        self.check_timezone(curs, "-01:15:42", -4542)
 
     def test_parse_interval(self):
         value = self.INTERVAL('42 days 12:34:56.123456', None)
