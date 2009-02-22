@@ -4,6 +4,20 @@ What's new in psycopg 2.0.9
 * New features:
   - COPY TO/COPY FROM queries now can be of any size and psycopg will
     correctly quote separators.
+  - float values Inf and NaN are now correctly handled and can
+    round-trip to the database.
+  - executemany() now return the numer of total INSERTed or UPDATEd
+    rows. Note that, as it has always been, executemany() should not
+    be used to execute multiple SELECT statements and while it will
+    execute the statements without any problem, it will return the
+    wrong value.
+  - copy_from() and copy_to() can now use quoted separators.
+  - "import psycopg2.extras" to get UUID support.
+  
+* Bug fixes:
+  - register_type() now works on connection and cursor subclasses.
+  - fixed a memory leak when using lobjects.
+  
 
 What's new in psycopg 2.0.8
 ---------------------------
