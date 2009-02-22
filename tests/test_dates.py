@@ -3,49 +3,48 @@ import math
 import unittest
 
 import psycopg2
+from psycopg2.tz import FixedOffsetTimezone
 import tests
 
 
 class CommonDatetimeTestsMixin:
 
     def execute(self, *args):
-        conn = psycopg2.connect(tests.dsn)
-        curs = conn.cursor()
-        curs.execute(*args)
-        return curs.fetchone()[0]
+        self.curs.execute(*args)
+        return self.curs.fetchone()[0]
 
     def test_parse_date(self):
-        value = self.DATE('2007-01-01', None)
+        value = self.DATE('2007-01-01', self.curs)
         self.assertNotEqual(value, None)
         self.assertEqual(value.year, 2007)
         self.assertEqual(value.month, 1)
         self.assertEqual(value.day, 1)
 
     def test_parse_null_date(self):
-        value = self.DATE(None, None)
+        value = self.DATE(None, self.curs)
         self.assertEqual(value, None)
 
     def test_parse_incomplete_date(self):
-        self.assertRaises(psycopg2.DataError, self.DATE, '2007', None)
-        self.assertRaises(psycopg2.DataError, self.DATE, '2007-01', None)
+        self.assertRaises(psycopg2.DataError, self.DATE, '2007', self.curs)
+        self.assertRaises(psycopg2.DataError, self.DATE, '2007-01', self.curs)
 
     def test_parse_time(self):
-        value = self.TIME('13:30:29', None)
+        value = self.TIME('13:30:29', self.curs)
         self.assertNotEqual(value, None)
         self.assertEqual(value.hour, 13)
         self.assertEqual(value.minute, 30)
         self.assertEqual(value.second, 29)
 
     def test_parse_null_time(self):
-        value = self.TIME(None, None)
+        value = self.TIME(None, self.curs)
         self.assertEqual(value, None)
 
     def test_parse_incomplete_time(self):
-        self.assertRaises(psycopg2.DataError, self.TIME, '13', None)
-        self.assertRaises(psycopg2.DataError, self.TIME, '13:30', None)
+        self.assertRaises(psycopg2.DataError, self.TIME, '13', self.curs)
+        self.assertRaises(psycopg2.DataError, self.TIME, '13:30', self.curs)
 
     def test_parse_datetime(self):
-        value = self.DATETIME('2007-01-01 13:30:29', None)
+        value = self.DATETIME('2007-01-01 13:30:29', self.curs)
         self.assertNotEqual(value, None)
         self.assertEqual(value.year, 2007)
         self.assertEqual(value.month, 1)
@@ -55,23 +54,21 @@ class CommonDatetimeTestsMixin:
         self.assertEqual(value.second, 29)
 
     def test_parse_null_datetime(self):
-        value = self.DATETIME(None, None)
+        value = self.DATETIME(None, self.curs)
         self.assertEqual(value, None)
 
     def test_parse_incomplete_time(self):
         self.assertRaises(psycopg2.DataError,
-                          self.DATETIME, '2007', None)
+                          self.DATETIME, '2007', self.curs)
         self.assertRaises(psycopg2.DataError,
-                          self.DATETIME, '2007-01', None)
+                          self.DATETIME, '2007-01', self.curs)
         self.assertRaises(psycopg2.DataError,
-                          self.DATETIME, '2007-01-01 13', None)
+                          self.DATETIME, '2007-01-01 13', self.curs)
         self.assertRaises(psycopg2.DataError,
-                          self.DATETIME, '2007-01-01 13:30', None)
-        self.assertRaises(psycopg2.DataError,
-                          self.DATETIME, '2007-01-01 13:30:29+00:10:50', None)
+                          self.DATETIME, '2007-01-01 13:30', self.curs)
 
     def test_parse_null_interval(self):
-        value = self.INTERVAL(None, None)
+        value = self.INTERVAL(None, self.curs)
         self.assertEqual(value, None)
 
 
@@ -79,39 +76,137 @@ class DatetimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
     """Tests for the datetime based date handling in psycopg2."""
 
     def setUp(self):
+        self.conn = psycopg2.connect(tests.dsn)
+        self.curs = self.conn.cursor()
         self.DATE = psycopg2._psycopg.PYDATE
         self.TIME = psycopg2._psycopg.PYTIME
         self.DATETIME = psycopg2._psycopg.PYDATETIME
         self.INTERVAL = psycopg2._psycopg.PYINTERVAL
 
+    def tearDown(self):
+        self.conn.close()
+
     def test_parse_bc_date(self):
         # datetime does not support BC dates
-        self.assertRaises(ValueError, self.DATE, '00042-01-01 BC', None)
+        self.assertRaises(ValueError, self.DATE, '00042-01-01 BC', self.curs)
 
     def test_parse_bc_datetime(self):
         # datetime does not support BC dates
         self.assertRaises(ValueError, self.DATETIME,
-                          '00042-01-01 13:30:29 BC', None)
+                          '00042-01-01 13:30:29 BC', self.curs)
 
     def test_parse_time_microseconds(self):
-        value = self.TIME('13:30:29.123456', None)
+        value = self.TIME('13:30:29.123456', self.curs)
         self.assertEqual(value.second, 29)
         self.assertEqual(value.microsecond, 123456)
 
     def test_parse_datetime_microseconds(self):
-        value = self.DATETIME('2007-01-01 13:30:29.123456', None)
+        value = self.DATETIME('2007-01-01 13:30:29.123456', self.curs)
         self.assertEqual(value.second, 29)
         self.assertEqual(value.microsecond, 123456)
 
+    def check_time_tz(self, str_offset, offset):
+        from datetime import time, timedelta
+        base = time(13, 30, 29)
+        base_str = '13:30:29'
+
+        value = self.TIME(base_str + str_offset, self.curs)
+
+        # Value has time zone info and correct UTC offset.
+        self.assertNotEqual(value.tzinfo, None),
+        self.assertEqual(value.utcoffset(), timedelta(seconds=offset))
+
+        # Time portion is correct.
+        self.assertEqual(value.replace(tzinfo=None), base)
+
+    def test_parse_time_timezone(self):
+        self.check_time_tz("+01", 3600)
+        self.check_time_tz("-01", -3600)
+        self.check_time_tz("+01:15", 4500)
+        self.check_time_tz("-01:15", -4500)
+        # The Python datetime module does not support time zone
+        # offsets that are not a whole number of minutes, so we get an
+        # error here.  Check that we are generating an understandable
+        # error message.
+        try:
+            self.check_time_tz("+01:15:42", 4542)
+        except ValueError, exc:
+            self.assertEqual(exc.message, "time zone offset 4542 is not a "
+                             "whole number of minutes")
+        else:
+            self.fail("Expected ValueError")
+
+        try:
+            self.check_time_tz("-01:15:42", -4542)
+        except ValueError, exc:
+            self.assertEqual(exc.message, "time zone offset -4542 is not a "
+                             "whole number of minutes")
+        else:
+            self.fail("Expected ValueError")
+
+    def check_datetime_tz(self, str_offset, offset):
+        from datetime import datetime, timedelta
+        base = datetime(2007, 1, 1, 13, 30, 29)
+        base_str = '2007-01-01 13:30:29'
+
+        value = self.DATETIME(base_str + str_offset, self.curs)
+
+        # Value has time zone info and correct UTC offset.
+        self.assertNotEqual(value.tzinfo, None),
+        self.assertEqual(value.utcoffset(), timedelta(seconds=offset))
+
+        # Datetime is correct.
+        self.assertEqual(value.replace(tzinfo=None), base)
+
+        # Conversion to UTC produces the expected offset.
+        UTC = FixedOffsetTimezone(0, "UTC")
+        value_utc = value.astimezone(UTC).replace(tzinfo=None)
+        self.assertEqual(base - value_utc, timedelta(seconds=offset))
+
+    def test_parse_datetime_timezone(self):
+        self.check_datetime_tz("+01", 3600)
+        self.check_datetime_tz("-01", -3600)
+        self.check_datetime_tz("+01:15", 4500)
+        self.check_datetime_tz("-01:15", -4500)
+        # The Python datetime module does not support time zone
+        # offsets that are not a whole number of minutes, so we get an
+        # error here.  Check that we are generating an understandable
+        # error message.
+        try:
+            self.check_datetime_tz("+01:15:42", 4542)
+        except ValueError, exc:
+            self.assertEqual(exc.message, "time zone offset 4542 is not a "
+                             "whole number of minutes")
+        else:
+            self.fail("Expected ValueError")
+
+        try:
+            self.check_datetime_tz("-01:15:42", -4542)
+        except ValueError, exc:
+            self.assertEqual(exc.message, "time zone offset -4542 is not a "
+                             "whole number of minutes")
+        else:
+            self.fail("Expected ValueError")
+
+    def test_parse_time_no_timezone(self):
+        self.assertEqual(self.TIME("13:30:29", self.curs).tzinfo, None)
+        self.assertEqual(self.TIME("13:30:29.123456", self.curs).tzinfo, None)
+
+    def test_parse_datetime_no_timezone(self):
+        self.assertEqual(
+            self.DATETIME("2007-01-01 13:30:29", self.curs).tzinfo, None)
+        self.assertEqual(
+            self.DATETIME("2007-01-01 13:30:29.123456", self.curs).tzinfo, None)
+
     def test_parse_interval(self):
-        value = self.INTERVAL('42 days 12:34:56.123456', None)
+        value = self.INTERVAL('42 days 12:34:56.123456', self.curs)
         self.assertNotEqual(value, None)
         self.assertEqual(value.days, 42)
         self.assertEqual(value.seconds, 45296)
         self.assertEqual(value.microseconds, 123456)
 
     def test_parse_negative_interval(self):
-        value = self.INTERVAL('-42 days -12:34:56.123456', None)
+        value = self.INTERVAL('-42 days -12:34:56.123456', self.curs)
         self.assertNotEqual(value, None)
         self.assertEqual(value.days, -43)
         self.assertEqual(value.seconds, 41103)
@@ -163,13 +258,18 @@ class mxDateTimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
     """Tests for the mx.DateTime based date handling in psycopg2."""
 
     def setUp(self):
+        self.conn = psycopg2.connect(tests.dsn)
+        self.curs = self.conn.cursor()
         self.DATE = psycopg2._psycopg.MXDATE
         self.TIME = psycopg2._psycopg.MXTIME
         self.DATETIME = psycopg2._psycopg.MXDATETIME
         self.INTERVAL = psycopg2._psycopg.MXINTERVAL
 
+    def tearDown(self):
+        self.conn.close()
+
     def test_parse_bc_date(self):
-        value = self.DATE('00042-01-01 BC', None)
+        value = self.DATE('00042-01-01 BC', self.curs)
         self.assertNotEqual(value, None)
         # mx.DateTime numbers BC dates from 0 rather than 1.
         self.assertEqual(value.year, -41)
@@ -177,7 +277,7 @@ class mxDateTimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
         self.assertEqual(value.day, 1)
 
     def test_parse_bc_datetime(self):
-        value = self.DATETIME('00042-01-01 13:30:29 BC', None)
+        value = self.DATETIME('00042-01-01 13:30:29 BC', self.curs)
         self.assertNotEqual(value, None)
         # mx.DateTime numbers BC dates from 0 rather than 1.
         self.assertEqual(value.year, -41)
@@ -188,19 +288,47 @@ class mxDateTimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
         self.assertEqual(value.second, 29)
 
     def test_parse_time_microseconds(self):
-        value = self.TIME('13:30:29.123456', None)
+        value = self.TIME('13:30:29.123456', self.curs)
         self.assertEqual(math.floor(value.second), 29)
         self.assertEqual(
             int((value.second - math.floor(value.second)) * 1000000), 123456)
 
     def test_parse_datetime_microseconds(self):
-        value = self.DATETIME('2007-01-01 13:30:29.123456', None)
+        value = self.DATETIME('2007-01-01 13:30:29.123456', self.curs)
         self.assertEqual(math.floor(value.second), 29)
         self.assertEqual(
             int((value.second - math.floor(value.second)) * 1000000), 123456)
 
+    def test_parse_time_timezone(self):
+        # Time zone information is ignored.
+        from mx.DateTime import Time
+        expected = Time(13, 30, 29)
+        self.assertEqual(expected, self.TIME("13:30:29+01", self.curs))
+        self.assertEqual(expected, self.TIME("13:30:29-01", self.curs))
+        self.assertEqual(expected, self.TIME("13:30:29+01:15", self.curs))
+        self.assertEqual(expected, self.TIME("13:30:29-01:15", self.curs))
+        self.assertEqual(expected, self.TIME("13:30:29+01:15:42", self.curs))
+        self.assertEqual(expected, self.TIME("13:30:29-01:15:42", self.curs))
+
+    def test_parse_datetime_timezone(self):
+        # Time zone information is ignored.
+        from mx.DateTime import DateTime
+        expected = DateTime(2007, 1, 1, 13, 30, 29)
+        self.assertEqual(
+            expected, self.DATETIME("2007-01-01 13:30:29+01", self.curs))
+        self.assertEqual(
+            expected, self.DATETIME("2007-01-01 13:30:29-01", self.curs))
+        self.assertEqual(
+            expected, self.DATETIME("2007-01-01 13:30:29+01:15", self.curs))
+        self.assertEqual(
+            expected, self.DATETIME("2007-01-01 13:30:29-01:15", self.curs))
+        self.assertEqual(
+            expected, self.DATETIME("2007-01-01 13:30:29+01:15:42", self.curs))
+        self.assertEqual(
+            expected, self.DATETIME("2007-01-01 13:30:29-01:15:42", self.curs))
+
     def test_parse_interval(self):
-        value = self.INTERVAL('42 days 05:50:05', None)
+        value = self.INTERVAL('42 days 05:50:05', self.curs)
         self.assertNotEqual(value, None)
         self.assertEqual(value.day, 42)
         self.assertEqual(value.hour, 5)

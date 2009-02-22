@@ -31,9 +31,7 @@ psycopg_escape_string(PyObject *obj, const char *from, Py_ssize_t len,
 
     #ifndef PSYCOPG_OWN_QUOTING
     {
-        #if PG_MAJOR_VERSION > 8 || \
-         (PG_MAJOR_VERSION == 8 && PG_MINOR_VERSION > 1) || \
-         (PG_MAJOR_VERSION == 8 && PG_MINOR_VERSION == 1 && PG_PATCH_VERSION >= 4)
+        #if PG_VERSION_HEX >= 0x080104
             int err;
             if (conn && conn->pgconn)
                 ql = PQescapeStringConn(conn->pgconn, to+eq+1, from, len, &err);

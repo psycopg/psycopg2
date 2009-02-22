@@ -96,7 +96,7 @@ typecast_parse_time(const char* s, const char** t, Py_ssize_t* len,
                      int* hh, int* mm, int* ss, int* us, int* tz)
 {
     int acc = -1, cz = 0;
-    int tzs = 1, tzhh = 0, tzmm = 0;
+    int tzsign = 1, tzhh = 0, tzmm = 0, tzss = 0;
     int usd = 0;
 
     /* sets microseconds and timezone to 0 because they may be missing */
@@ -105,7 +105,7 @@ typecast_parse_time(const char* s, const char** t, Py_ssize_t* len,
     Dprintf("typecast_parse_time: len = " FORMAT_CODE_PY_SSIZE_T ", s = %s",
       *len, s);
 
-    while (cz < 6 && *len > 0 && *s) {
+    while (cz < 7 && *len > 0 && *s) {
         switch (*s) {
         case ':':
             if (cz == 0) *hh = acc;
@@ -113,6 +113,7 @@ typecast_parse_time(const char* s, const char** t, Py_ssize_t* len,
             else if (cz == 2) *ss = acc;
             else if (cz == 3) *us = acc;
             else if (cz == 4) tzhh = acc;
+            else if (cz == 5) tzmm = acc;
             acc = -1; cz++;
             break;
         case '.':
@@ -125,7 +126,7 @@ typecast_parse_time(const char* s, const char** t, Py_ssize_t* len,
         case '-':
             /* seconds or microseconds here, anything else is an error */
             if (cz < 2 || cz > 3) return -1;
-            if (*s == '-') tzs = -1;
+            if (*s == '-') tzsign = -1;
             if      (cz == 2) *ss = acc;
             else if (cz == 3) *us = acc;
             acc = -1; cz = 4;
@@ -151,11 +152,12 @@ typecast_parse_time(const char* s, const char** t, Py_ssize_t* len,
         else if (cz == 2) { *ss = acc; cz += 1; }
         else if (cz == 3) { *us = acc; cz += 1; }
         else if (cz == 4) { tzhh = acc; cz += 1; }
-        else if (cz == 5)   tzmm = acc;
+        else if (cz == 5) { tzmm = acc; cz += 1; }
+        else if (cz == 6) tzss = acc;
     }
     if (t != NULL) *t = s;
 
-    *tz = tzs * tzhh*60 + tzmm;
+    *tz = tzsign * (3600 * tzhh + 60 * tzmm + tzss);
 
     if (*us != 0) {
         while (usd++ < 6) *us *= 10;

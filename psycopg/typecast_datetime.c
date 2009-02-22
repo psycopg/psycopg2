@@ -74,6 +74,8 @@ static PyObject *
 typecast_PYDATETIME_cast(const char *str, Py_ssize_t len, PyObject *curs)
 {
     PyObject* obj = NULL;
+    PyObject *tzinfo = NULL;
+    PyObject *tzinfo_factory;
     int n, y=0, m=0, d=0;
     int hh=0, mm=0, ss=0, us=0, tz=0;
     const char *tp = NULL;
@@ -108,7 +110,7 @@ typecast_PYDATETIME_cast(const char *str, Py_ssize_t len, PyObject *curs)
                 " len = " FORMAT_CODE_PY_SSIZE_T ","
                 " hh = %d, mm = %d, ss = %d, us = %d, tz = %d",
                 n, len, hh, mm, ss, us, tz);
-            if (n < 3 || n > 5) {
+            if (n < 3 || n > 6) {
                 PyErr_SetString(DataError, "unable to parse time");
                 return NULL;
             }
@@ -121,24 +123,34 @@ typecast_PYDATETIME_cast(const char *str, Py_ssize_t len, PyObject *curs)
         if (y > 9999)
             y = 9999;
 
-        if (n == 5 && ((cursorObject*)curs)->tzinfo_factory != Py_None) {
+        tzinfo_factory = ((cursorObject *)curs)->tzinfo_factory;
+        if (n >= 5 && tzinfo_factory != Py_None) {
             /* we have a time zone, calculate minutes and create
                appropriate tzinfo object calling the factory */
-            PyObject *tzinfo;
-            Dprintf("typecast_PYDATETIME_cast: UTC offset = %dm", tz);
-            tzinfo = PyObject_CallFunction(
-                ((cursorObject*)curs)->tzinfo_factory, "i", tz);
+            Dprintf("typecast_PYDATETIME_cast: UTC offset = %ds", tz);
+
+            /* The datetime module requires that time zone offsets be
+               a whole number of minutes, so fail if we have a time
+               zone with a seconds offset.
+             */
+            if (tz % 60 != 0) {
+                PyErr_Format(PyExc_ValueError, "time zone offset %d is not "
+                             "a whole number of minutes", tz);
+                return NULL;
+            }
+            tzinfo = PyObject_CallFunction(tzinfo_factory, "i", tz / 60);
+        } else {
+            Py_INCREF(Py_None);
+            tzinfo = Py_None;
+        }
+        if (tzinfo != NULL) {
             obj = PyObject_CallFunction(pyDateTimeTypeP, "iiiiiiiO",
                  y, m, d, hh, mm, ss, us, tzinfo);
             Dprintf("typecast_PYDATETIME_cast: tzinfo: %p, refcnt = "
                 FORMAT_CODE_PY_SSIZE_T,
                 tzinfo, tzinfo->ob_refcnt
               );
-            Py_XDECREF(tzinfo);
-        }
-        else {
-            obj = PyObject_CallFunction(pyDateTimeTypeP, "iiiiiii",
-                 y, m, d, hh, mm, ss, us);
+            Py_DECREF(tzinfo);
         }
     }
     return obj;
@@ -150,6 +162,8 @@ static PyObject *
 typecast_PYTIME_cast(const char *str, Py_ssize_t len, PyObject *curs)
 {
     PyObject* obj = NULL;
+    PyObject *tzinfo = NULL;
+    PyObject *tzinfo_factory;
     int n, hh=0, mm=0, ss=0, us=0, tz=0;
 
     if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
@@ -159,16 +173,38 @@ typecast_PYTIME_cast(const char *str, Py_ssize_t len, PyObject *curs)
             "hh = %d, mm = %d, ss = %d, us = %d, tz = %d",
             n, len, hh, mm, ss, us, tz);
 
-    if (n < 3 || n > 5) {
+    if (n < 3 || n > 6) {
         PyErr_SetString(DataError, "unable to parse time");
         return NULL;
     }
-    else {
-        if (ss > 59) {
-            mm += 1;
-            ss -= 60;
+    if (ss > 59) {
+        mm += 1;
+        ss -= 60;
+    }
+    tzinfo_factory = ((cursorObject *)curs)->tzinfo_factory;
+    if (n >= 5 && tzinfo_factory != Py_None) {
+        /* we have a time zone, calculate minutes and create
+           appropriate tzinfo object calling the factory */
+        Dprintf("typecast_PYTIME_cast: UTC offset = %ds", tz);
+
+        /* The datetime module requires that time zone offsets be
+           a whole number of minutes, so fail if we have a time
+           zone with a seconds offset.
+        */
+        if (tz % 60 != 0) {
+            PyErr_Format(PyExc_ValueError, "time zone offset %d is not "
+                         "a whole number of minutes", tz);
+            return NULL;
         }
-        obj = PyObject_CallFunction(pyTimeTypeP, "iiii", hh, mm, ss, us);
+        tzinfo = PyObject_CallFunction(tzinfo_factory, "i", tz / 60);
+    } else {
+        Py_INCREF(Py_None);
+        tzinfo = Py_None;
+    }
+    if (tzinfo != NULL) {
+        obj = PyObject_CallFunction(pyTimeTypeP, "iiiiO",
+                                    hh, mm, ss, us, tzinfo);
+        Py_DECREF(tzinfo);
     }
     return obj;
 }

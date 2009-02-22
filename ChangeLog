@@ -1,3 +1,38 @@
+2009-02-17  James Henstridge  <james@jamesh.id.au>
+
+	* psycopg/utils.c (psycopg_escape_string): same here.
+
+	* psycopg/adapter_binary.c (binary_escape): simplify PostgreSQL
+	version check.
+
+	* setup.py (psycopg_build_ext.finalize_options): use a single
+	define of the PostgreSQL version in a form that can easily be used
+	by #ifdefs.
+
+	* tests/test_dates.py (DatetimeTests, mxDateTimeTests): full test
+	coverage for datetime and time strings with and without time zone
+	information.
+
+	* psycopg/typecast_datetime.c (typecast_PYDATETIME_cast): adjust
+	to handle the changes in typecast_parse_time.
+	(typecast_PYTIME_cast): add support for time zone aware time
+	values.
+
+	* psycopg/typecast_mxdatetime.c (typecast_MXDATE_cast): make sure
+	that values with time zones are correctly processed (even though
+	that means ignoring the time zone value).
+	(typecast_MXTIME_cast): same here.
+
+	* psycopg/typecast.c (typecast_parse_time): Update method to parse
+	second resolution timezone offsets.
+
+	* psycopg/typecast.c (typecast_parse_time): Fix up handling of
+	negative timezone offsets with a non-zero minutes field.
+
+	* tests/test_dates.py (DatetimeTests): Add tests for time zone
+	parsing.  The test for HH:MM:SS time zones is disabled because we
+	don't currently support it.
+
 2009-02-16  Federico Di Gregorio  <fog@initd.org>
 
 	* FreeBSD now has round(). Modified config.h as suggested by
