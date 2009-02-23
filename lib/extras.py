@@ -143,7 +143,7 @@ class RealDictConnection(_connection):
         if name is None:
             return _connection.cursor(self, cursor_factory=RealDictCursor)
         else:
-	    return _connection.cursor(self, name, cursor_factory=RealDictCursor)
+            return _connection.cursor(self, name, cursor_factory=RealDictCursor)
 
 class RealDictCursor(DictCursorBase):
     """A cursor that uses a real dict as the base type for rows.
@@ -224,10 +224,10 @@ class LoggingConnection(_connection):
             
     def cursor(self, name=None):
         self._check()
-	if name is None:
+        if name is None:
             return _connection.cursor(self, cursor_factory=LoggingCursor)
         else:
-	    return _connection.cursor(self, name, cursor_factory=LoggingCursor)
+            return _connection.cursor(self, name, cursor_factory=LoggingCursor)
 
 class LoggingCursor(_cursor):
     """A cursor that logs queries using its connection logging facilities."""
@@ -266,10 +266,10 @@ class MinTimeLoggingConnection(LoggingConnection):
 
     def cursor(self, name=None):
         self._check()
-	if name is None:
+        if name is None:
             return _connection.cursor(self, cursor_factory=MinTimeLoggingCursor)
         else:
-	    return _connection.cursor(self, name, cursor_factory=MinTimeLoggingCursor)
+            return _connection.cursor(self, name, cursor_factory=MinTimeLoggingCursor)
     
 class MinTimeLoggingCursor(LoggingCursor):
     """The cursor sub-class companion to MinTimeLoggingConnection."""
@@ -310,7 +310,6 @@ try:
         _ext.register_type(_ext.UUID)
         _ext.register_adapter(uuid.UUID, UUID_adapter)
         return _ext.UUID
-
 
 except ImportError, e:
     def register_uuid(oid=None):
