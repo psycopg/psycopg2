@@ -142,4 +142,10 @@ static double round(double num)
 #define PQfreemem free
 #endif
 
+/* resolve missing isinf() function for Solaris **/
+#if defined (__SVR4) && defined (__sun)
+#include <ieeefp.h>
+int isinf(double x) { return !finite(x) && x==x; }
+#endif
+
 #endif /* !defined(PSYCOPG_CONFIG_H) */

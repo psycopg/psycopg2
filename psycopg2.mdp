@@ -1,4 +1,10 @@
 <Project name="psycopg2" fileversion="2.0" language="C" Target="Bin" ctype="CProject">
+  <Policies>
+    <ChangeLogPolicy UpdateMode="Nearest" VcsIntegration="None" inheritsSet="Mono">
+      <MessageStyle FileSeparator=", " LineAlign="0" />
+    </ChangeLogPolicy>
+    <TextStylePolicy FileWidth="120" TabWidth="4" TabsToSpaces="False" NoTabsAfterNonTabs="False" RemoveTrailingWhitespace="True" EolMarker="Native" />
+  </Policies>
   <Configurations active="Debug">
     <Configuration name="Debug" ctype="CProjectConfiguration">
       <CustomCommands>
@@ -8,6 +14,7 @@
       <Output directory="." output="psycopg2" />
       <Build debugmode="True" target="Bin" />
       <Execution runwithwarnings="True" consolepause="True" />
+      <EnvironmentVariables />
       <CodeGeneration WarningLevel="Normal" WarningsAsErrors="False" OptimizationLevel="0" ExtraCompilerArguments="" ExtraLinkerArguments="" DefineSymbols="DEBUG MONODEVELOP" ctype="CCompilationParameters" />
     </Configuration>
     <Configuration name="Release" ctype="CProjectConfiguration">
@@ -18,132 +25,132 @@
     </Configuration>
   </Configurations>
   <Contents>
-    <File name="AUTHORS" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="ChangeLog" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="INSTALL" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="LICENSE" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="MANIFEST.in" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="NEWS" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="README" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="setup.cfg" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="setup.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="doc/async.txt" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="doc/extensions.rst" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="doc/HACKING" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="doc/SUCCESS" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="doc/TODO" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="examples/binary.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="examples/copy_from.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="examples/copy_to.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="examples/cursor.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="examples/dialtone.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="examples/dict.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="examples/dt.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="examples/encoding.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="examples/fetch.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="examples/lastrowid.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="examples/mogrify.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="examples/myfirstrecipe.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="examples/notify.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="examples/simple.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="examples/somehackers.jpg" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="examples/threads.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="examples/typecast.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="examples/tz.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="examples/usercast.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="examples/whereareyou.jpg" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="lib/errorcodes.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="lib/extensions.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="lib/extras.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="lib/__init__.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="lib/pool.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="lib/psycopg1.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="lib/tz.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="psycopg/adapter_asis.c" subtype="Code" buildaction="Compile" resource_id="" />
-    <File name="psycopg/adapter_asis.h" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="psycopg/adapter_binary.c" subtype="Code" buildaction="Compile" resource_id="" />
-    <File name="psycopg/adapter_binary.h" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="psycopg/adapter_datetime.c" subtype="Code" buildaction="Compile" resource_id="" />
-    <File name="psycopg/adapter_datetime.h" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="psycopg/adapter_list.c" subtype="Code" buildaction="Compile" resource_id="" />
-    <File name="psycopg/adapter_list.h" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="psycopg/adapter_mxdatetime.c" subtype="Code" buildaction="Compile" resource_id="" />
-    <File name="psycopg/adapter_mxdatetime.h" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="psycopg/adapter_pboolean.c" subtype="Code" buildaction="Compile" resource_id="" />
-    <File name="psycopg/adapter_pboolean.h" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="psycopg/adapter_qstring.c" subtype="Code" buildaction="Compile" resource_id="" />
-    <File name="psycopg/adapter_qstring.h" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="psycopg/config.h" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="psycopg/connection.h" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="psycopg/connection_int.c" subtype="Code" buildaction="Compile" resource_id="" />
-    <File name="psycopg/connection_type.c" subtype="Code" buildaction="Compile" resource_id="" />
-    <File name="psycopg/cursor.h" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="psycopg/cursor_int.c" subtype="Code" buildaction="Compile" resource_id="" />
-    <File name="psycopg/cursor_type.c" subtype="Code" buildaction="Compile" resource_id="" />
-    <File name="psycopg/microprotocols.c" subtype="Code" buildaction="Compile" resource_id="" />
-    <File name="psycopg/microprotocols.h" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="psycopg/microprotocols_proto.c" subtype="Code" buildaction="Compile" resource_id="" />
-    <File name="psycopg/microprotocols_proto.h" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="psycopg/pgtypes.h" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="psycopg/pgversion.h" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="psycopg/pqpath.c" subtype="Code" buildaction="Compile" resource_id="" />
-    <File name="psycopg/pqpath.h" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="psycopg/psycopg.h" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="psycopg/psycopgmodule.c" subtype="Code" buildaction="Compile" resource_id="" />
-    <File name="psycopg/python.h" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="psycopg/typecast.c" subtype="Code" buildaction="Compile" resource_id="" />
-    <File name="psycopg/typecast.h" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="psycopg/typecast_array.c" subtype="Code" buildaction="Compile" resource_id="" />
-    <File name="psycopg/typecast_basic.c" subtype="Code" buildaction="Compile" resource_id="" />
-    <File name="psycopg/typecast_binary.c" subtype="Code" buildaction="Compile" resource_id="" />
-    <File name="psycopg/typecast_binary.h" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="psycopg/typecast_builtins.c" subtype="Code" buildaction="Compile" resource_id="" />
-    <File name="psycopg/typecast_datetime.c" subtype="Code" buildaction="Compile" resource_id="" />
-    <File name="psycopg/typecast_mxdatetime.c" subtype="Code" buildaction="Compile" resource_id="" />
-    <File name="scripts/buildtypes.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="scripts/ext2html.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="scripts/makedocs.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="scripts/maketypes.sh" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="ZPsycopgDA/dtml/add.dtml" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="ZPsycopgDA/dtml/browse.dtml" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="ZPsycopgDA/dtml/edit.dtml" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="ZPsycopgDA/dtml/table_info.dtml" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="ZPsycopgDA/icons/bin.gif" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="ZPsycopgDA/icons/date.gif" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="ZPsycopgDA/icons/datetime.gif" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="ZPsycopgDA/icons/field.gif" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="ZPsycopgDA/icons/float.gif" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="ZPsycopgDA/icons/int.gif" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="ZPsycopgDA/icons/stable.gif" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="ZPsycopgDA/icons/table.gif" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="ZPsycopgDA/icons/text.gif" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="ZPsycopgDA/icons/time.gif" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="ZPsycopgDA/icons/view.gif" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="ZPsycopgDA/icons/what.gif" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="ZPsycopgDA/DA.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="ZPsycopgDA/db.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="ZPsycopgDA/__init__.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="ZPsycopgDA/pool.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="tests/dbapi20.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="tests/extras_dictcursor.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="tests/__init__.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="tests/test_psycopg2_dbapi20.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="tests/test_transaction.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="tests/types_basic.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="tests/bugX000.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="tests/types_extras.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="psycopg/utils.c" subtype="Code" buildaction="Compile" resource_id="" />
-    <File name="tests/test_connection.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="tests/test_dates.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="tests/test_lobject.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="tests/test_quote.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="psycopg/lobject.h" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="psycopg/lobject_int.c" subtype="Code" buildaction="Compile" resource_id="" />
-    <File name="psycopg/lobject_type.c" subtype="Code" buildaction="Compile" resource_id="" />
-    <File name="psycopg/typecast_basic.c.old" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="sandbox/test_isready_connection_closed.py" subtype="Code" buildaction="Nothing" resource_id="" />
-    <File name="psycopg/adapter_pfloat.c" subtype="Code" buildaction="Compile" resource_id="" />
-    <File name="psycopg/adapter_pfloat.h" subtype="Code" buildaction="Nothing" resource_id="" />
+    <File name="AUTHORS" subtype="Code" buildaction="Nothing" />
+    <File name="ChangeLog" subtype="Code" buildaction="Nothing" />
+    <File name="INSTALL" subtype="Code" buildaction="Nothing" />
+    <File name="LICENSE" subtype="Code" buildaction="Nothing" />
+    <File name="MANIFEST.in" subtype="Code" buildaction="Nothing" />
+    <File name="NEWS" subtype="Code" buildaction="Nothing" />
+    <File name="README" subtype="Code" buildaction="Nothing" />
+    <File name="setup.cfg" subtype="Code" buildaction="Nothing" />
+    <File name="setup.py" subtype="Code" buildaction="Nothing" />
+    <File name="doc/async.txt" subtype="Code" buildaction="Nothing" />
+    <File name="doc/extensions.rst" subtype="Code" buildaction="Nothing" />
+    <File name="doc/HACKING" subtype="Code" buildaction="Nothing" />
+    <File name="doc/SUCCESS" subtype="Code" buildaction="Nothing" />
+    <File name="doc/TODO" subtype="Code" buildaction="Nothing" />
+    <File name="examples/binary.py" subtype="Code" buildaction="Nothing" />
+    <File name="examples/copy_from.py" subtype="Code" buildaction="Nothing" />
+    <File name="examples/copy_to.py" subtype="Code" buildaction="Nothing" />
+    <File name="examples/cursor.py" subtype="Code" buildaction="Nothing" />
+    <File name="examples/dialtone.py" subtype="Code" buildaction="Nothing" />
+    <File name="examples/dict.py" subtype="Code" buildaction="Nothing" />
+    <File name="examples/dt.py" subtype="Code" buildaction="Nothing" />
+    <File name="examples/encoding.py" subtype="Code" buildaction="Nothing" />
+    <File name="examples/fetch.py" subtype="Code" buildaction="Nothing" />
+    <File name="examples/lastrowid.py" subtype="Code" buildaction="Nothing" />
+    <File name="examples/mogrify.py" subtype="Code" buildaction="Nothing" />
+    <File name="examples/myfirstrecipe.py" subtype="Code" buildaction="Nothing" />
+    <File name="examples/notify.py" subtype="Code" buildaction="Nothing" />
+    <File name="examples/simple.py" subtype="Code" buildaction="Nothing" />
+    <File name="examples/somehackers.jpg" subtype="Code" buildaction="Nothing" />
+    <File name="examples/threads.py" subtype="Code" buildaction="Nothing" />
+    <File name="examples/typecast.py" subtype="Code" buildaction="Nothing" />
+    <File name="examples/tz.py" subtype="Code" buildaction="Nothing" />
+    <File name="examples/usercast.py" subtype="Code" buildaction="Nothing" />
+    <File name="examples/whereareyou.jpg" subtype="Code" buildaction="Nothing" />
+    <File name="lib/errorcodes.py" subtype="Code" buildaction="Nothing" />
+    <File name="lib/extensions.py" subtype="Code" buildaction="Nothing" />
+    <File name="lib/extras.py" subtype="Code" buildaction="Nothing" />
+    <File name="lib/__init__.py" subtype="Code" buildaction="Nothing" />
+    <File name="lib/pool.py" subtype="Code" buildaction="Nothing" />
+    <File name="lib/psycopg1.py" subtype="Code" buildaction="Nothing" />
+    <File name="lib/tz.py" subtype="Code" buildaction="Nothing" />
+    <File name="psycopg/adapter_asis.c" subtype="Code" buildaction="Compile" />
+    <File name="psycopg/adapter_asis.h" subtype="Code" buildaction="Nothing" />
+    <File name="psycopg/adapter_binary.c" subtype="Code" buildaction="Compile" />
+    <File name="psycopg/adapter_binary.h" subtype="Code" buildaction="Nothing" />
+    <File name="psycopg/adapter_datetime.c" subtype="Code" buildaction="Compile" />
+    <File name="psycopg/adapter_datetime.h" subtype="Code" buildaction="Nothing" />
+    <File name="psycopg/adapter_list.c" subtype="Code" buildaction="Compile" />
+    <File name="psycopg/adapter_list.h" subtype="Code" buildaction="Nothing" />
+    <File name="psycopg/adapter_mxdatetime.c" subtype="Code" buildaction="Compile" />
+    <File name="psycopg/adapter_mxdatetime.h" subtype="Code" buildaction="Nothing" />
+    <File name="psycopg/adapter_pboolean.c" subtype="Code" buildaction="Compile" />
+    <File name="psycopg/adapter_pboolean.h" subtype="Code" buildaction="Nothing" />
+    <File name="psycopg/adapter_qstring.c" subtype="Code" buildaction="Compile" />
+    <File name="psycopg/adapter_qstring.h" subtype="Code" buildaction="Nothing" />
+    <File name="psycopg/config.h" subtype="Code" buildaction="Nothing" />
+    <File name="psycopg/connection.h" subtype="Code" buildaction="Nothing" />
+    <File name="psycopg/connection_int.c" subtype="Code" buildaction="Compile" />
+    <File name="psycopg/connection_type.c" subtype="Code" buildaction="Compile" />
+    <File name="psycopg/cursor.h" subtype="Code" buildaction="Nothing" />
+    <File name="psycopg/cursor_int.c" subtype="Code" buildaction="Compile" />
+    <File name="psycopg/cursor_type.c" subtype="Code" buildaction="Compile" />
+    <File name="psycopg/microprotocols.c" subtype="Code" buildaction="Compile" />
+    <File name="psycopg/microprotocols.h" subtype="Code" buildaction="Nothing" />
+    <File name="psycopg/microprotocols_proto.c" subtype="Code" buildaction="Compile" />
+    <File name="psycopg/microprotocols_proto.h" subtype="Code" buildaction="Nothing" />
+    <File name="psycopg/pgtypes.h" subtype="Code" buildaction="Nothing" />
+    <File name="psycopg/pgversion.h" subtype="Code" buildaction="Nothing" />
+    <File name="psycopg/pqpath.c" subtype="Code" buildaction="Compile" />
+    <File name="psycopg/pqpath.h" subtype="Code" buildaction="Nothing" />
+    <File name="psycopg/psycopg.h" subtype="Code" buildaction="Nothing" />
+    <File name="psycopg/psycopgmodule.c" subtype="Code" buildaction="Compile" />
+    <File name="psycopg/python.h" subtype="Code" buildaction="Nothing" />
+    <File name="psycopg/typecast.c" subtype="Code" buildaction="Compile" />
+    <File name="psycopg/typecast.h" subtype="Code" buildaction="Nothing" />
+    <File name="psycopg/typecast_array.c" subtype="Code" buildaction="Compile" />
+    <File name="psycopg/typecast_basic.c" subtype="Code" buildaction="Compile" />
+    <File name="psycopg/typecast_binary.c" subtype="Code" buildaction="Compile" />
+    <File name="psycopg/typecast_binary.h" subtype="Code" buildaction="Nothing" />
+    <File name="psycopg/typecast_builtins.c" subtype="Code" buildaction="Compile" />
+    <File name="psycopg/typecast_datetime.c" subtype="Code" buildaction="Compile" />
+    <File name="psycopg/typecast_mxdatetime.c" subtype="Code" buildaction="Compile" />
+    <File name="scripts/buildtypes.py" subtype="Code" buildaction="Nothing" />
+    <File name="scripts/ext2html.py" subtype="Code" buildaction="Nothing" />
+    <File name="scripts/makedocs.py" subtype="Code" buildaction="Nothing" />
+    <File name="scripts/maketypes.sh" subtype="Code" buildaction="Nothing" />
+    <File name="ZPsycopgDA/dtml/add.dtml" subtype="Code" buildaction="Nothing" />
+    <File name="ZPsycopgDA/dtml/browse.dtml" subtype="Code" buildaction="Nothing" />
+    <File name="ZPsycopgDA/dtml/edit.dtml" subtype="Code" buildaction="Nothing" />
+    <File name="ZPsycopgDA/dtml/table_info.dtml" subtype="Code" buildaction="Nothing" />
+    <File name="ZPsycopgDA/icons/bin.gif" subtype="Code" buildaction="Nothing" />
+    <File name="ZPsycopgDA/icons/date.gif" subtype="Code" buildaction="Nothing" />
+    <File name="ZPsycopgDA/icons/datetime.gif" subtype="Code" buildaction="Nothing" />
+    <File name="ZPsycopgDA/icons/field.gif" subtype="Code" buildaction="Nothing" />
+    <File name="ZPsycopgDA/icons/float.gif" subtype="Code" buildaction="Nothing" />
+    <File name="ZPsycopgDA/icons/int.gif" subtype="Code" buildaction="Nothing" />
+    <File name="ZPsycopgDA/icons/stable.gif" subtype="Code" buildaction="Nothing" />
+    <File name="ZPsycopgDA/icons/table.gif" subtype="Code" buildaction="Nothing" />
+    <File name="ZPsycopgDA/icons/text.gif" subtype="Code" buildaction="Nothing" />
+    <File name="ZPsycopgDA/icons/time.gif" subtype="Code" buildaction="Nothing" />
+    <File name="ZPsycopgDA/icons/view.gif" subtype="Code" buildaction="Nothing" />
+    <File name="ZPsycopgDA/icons/what.gif" subtype="Code" buildaction="Nothing" />
+    <File name="ZPsycopgDA/DA.py" subtype="Code" buildaction="Nothing" />
+    <File name="ZPsycopgDA/db.py" subtype="Code" buildaction="Nothing" />
+    <File name="ZPsycopgDA/__init__.py" subtype="Code" buildaction="Nothing" />
+    <File name="ZPsycopgDA/pool.py" subtype="Code" buildaction="Nothing" />
+    <File name="tests/dbapi20.py" subtype="Code" buildaction="Nothing" />
+    <File name="tests/extras_dictcursor.py" subtype="Code" buildaction="Nothing" />
+    <File name="tests/__init__.py" subtype="Code" buildaction="Nothing" />
+    <File name="tests/test_psycopg2_dbapi20.py" subtype="Code" buildaction="Nothing" />
+    <File name="tests/test_transaction.py" subtype="Code" buildaction="Nothing" />
+    <File name="tests/types_basic.py" subtype="Code" buildaction="Nothing" />
+    <File name="tests/bugX000.py" subtype="Code" buildaction="Nothing" />
+    <File name="tests/types_extras.py" subtype="Code" buildaction="Nothing" />
+    <File name="psycopg/utils.c" subtype="Code" buildaction="Compile" />
+    <File name="tests/test_connection.py" subtype="Code" buildaction="Nothing" />
+    <File name="tests/test_dates.py" subtype="Code" buildaction="Nothing" />
+    <File name="tests/test_lobject.py" subtype="Code" buildaction="Nothing" />
+    <File name="tests/test_quote.py" subtype="Code" buildaction="Nothing" />
+    <File name="psycopg/lobject.h" subtype="Code" buildaction="Nothing" />
+    <File name="psycopg/lobject_int.c" subtype="Code" buildaction="Compile" />
+    <File name="psycopg/lobject_type.c" subtype="Code" buildaction="Compile" />
+    <File name="psycopg/typecast_basic.c.old" subtype="Code" buildaction="Nothing" />
+    <File name="sandbox/test_isready_connection_closed.py" subtype="Code" buildaction="Nothing" />
+    <File name="psycopg/adapter_pfloat.c" subtype="Code" buildaction="Compile" />
+    <File name="psycopg/adapter_pfloat.h" subtype="Code" buildaction="Nothing" />
   </Contents>
   <compiler ctype="GccCompiler" />
   <MonoDevelop.ChangeLogAddIn.ChangeLogInfo policy="UpdateNearestChangeLog" />

@@ -1,3 +1,8 @@
+2009-02-27  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/config.h: added check to provide compatible isinf()
+	for Solaris (thanks to Jeremy Mason.)
+
 2009-02-23  Federico Di Gregorio  <fog@initd.org>
 
 	* Release 2.0.9.
