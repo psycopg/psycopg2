@@ -1,3 +1,8 @@
+2009-03-02  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/config.h: applied patch from Jason Erickson to build
+	with MSVC. Solaris version of isinf() is now a macro.
+
 2009-02-27  Federico Di Gregorio  <fog@initd.org>
 
 	* psycopg/config.h: added check to provide compatible isinf()

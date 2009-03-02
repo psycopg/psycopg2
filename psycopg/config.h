@@ -127,6 +127,15 @@ static struct tm *localtime_r(time_t *t, struct tm *tm)
 }
 /* remove the inline keyword, since it doesn't work unless C++ file */
 #define inline
+
+/* Hmmm, MSVC doesn't have a isnan/isinf function, but has _isnan function */
+#if defined (_MSC_VER)
+#define isnan(x) (_isnan(x))
+/* The following line was hacked together from simliar code by Bjorn Reese
+ * in libxml2 code */
+#define isinf(x) ((_fpclass(x) == _FPCLASS_PINF) ? 1 \
+	: ((_fpclass(x) == _FPCLASS_NINF) ? -1 : 0))
+#endif
 #endif
 
 #if (defined(__FreeBSD__) && __FreeBSD_version < 503000) || (defined(_WIN32) && !defined(__GNUC__)) || defined(__sun__) || defined(sun)
@@ -142,10 +151,10 @@ static double round(double num)
 #define PQfreemem free
 #endif
 
-/* resolve missing isinf() function for Solaris **/
+/* resolve missing isinf() function for Solaris */
 #if defined (__SVR4) && defined (__sun)
 #include <ieeefp.h>
-int isinf(double x) { return !finite(x) && x==x; }
+#define isinf(x) (!finite((x)) && (x)==(x))
 #endif
 
 #endif /* !defined(PSYCOPG_CONFIG_H) */
