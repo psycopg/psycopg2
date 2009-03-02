@@ -24,6 +24,7 @@ import test_quote
 import test_connection
 import test_transaction
 import types_basic
+import types_extras
 import test_lobject
 
 def test_suite():
@@ -36,6 +37,7 @@ def test_suite():
     suite.addTest(test_connection.test_suite())
     suite.addTest(test_transaction.test_suite())
     suite.addTest(types_basic.test_suite())
+    suite.addTest(types_extras.test_suite())
     suite.addTest(test_lobject.test_suite())
     return suite
 

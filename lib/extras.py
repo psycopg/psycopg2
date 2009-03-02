@@ -19,12 +19,14 @@ and classes untill a better place in the distribution is found.
 
 import os
 import time
+import re as regex
 
 try:
     import logging
 except:
     logging = None
 
+from psycopg2 import DATETIME, DataError
 from psycopg2 import extensions as _ext
 from psycopg2.extensions import cursor as _cursor
 from psycopg2.extensions import connection as _connection
@@ -46,26 +48,29 @@ class DictCursorBase(_cursor):
         self.row_factory = row_factory
 
     def fetchone(self):
+        res = _cursor.fetchone(self)
         if self._query_executed:
             self._build_index()
-        return _cursor.fetchone(self)
+        return res
 
     def fetchmany(self, size=None):
+        res = _cursor.fetchmany(self, size)
         if self._query_executed:
             self._build_index()
-        return _cursor.fetchmany(self, size)
+        return res
 
     def fetchall(self):
+        res = _cursor.fetchall(self)
         if self._query_executed:
             self._build_index()
-        return _cursor.fetchall(self)
+        return res
     
     def next(self):
-        if self._query_executed:
-            self._build_index()
         res = _cursor.fetchone(self)
         if res is None:
             raise StopIteration()
+        if self._query_executed:
+            self._build_index()
         return res
 
 class DictConnection(_connection):
@@ -74,7 +79,7 @@ class DictConnection(_connection):
         if name is None:
             return _connection.cursor(self, cursor_factory=DictCursor)
         else:
-	    return _connection.cursor(self, name, cursor_factory=DictCursor)
+            return _connection.cursor(self, name, cursor_factory=DictCursor)
 
 class DictCursor(DictCursorBase):
     """A cursor that keeps a list of column name -> index mappings."""
@@ -302,12 +307,12 @@ try:
             
         __str__ = getquoted
 
-    def register_uuid(oid=None):
+    def register_uuid(oid=None, conn_or_curs=None):
         """Create the UUID type and an uuid.UUID adapter."""
         if not oid: oid = 2950
         _ext.UUID = _ext.new_type((oid, ), "UUID",
                 lambda data, cursor: data and uuid.UUID(data) or None)
-        _ext.register_type(_ext.UUID)
+        _ext.register_type(_ext.UUID, conn_or_curs)
         _ext.register_adapter(uuid.UUID, UUID_adapter)
         return _ext.UUID
 
@@ -346,12 +351,12 @@ class Inet(object):
     def __str__(self):
         return str(self.addr)
         
-def register_inet(oid=None):
+def register_inet(oid=None, conn_or_curs=None):
     """Create the INET type and an Inet adapter."""
     if not oid: oid = 869
     _ext.INET = _ext.new_type((oid, ), "INET",
             lambda data, cursor: data and Inet(data) or None)
-    _ext.register_type(_ext.INET)
+    _ext.register_type(_ext.INET, conn_or_curs)
     return _ext.INET
 
 

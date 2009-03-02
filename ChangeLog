@@ -1,5 +1,9 @@
 2009-03-02  Federico Di Gregorio  <fog@initd.org>
 
+	* Applied patch from Menno Smits to avoid problems with DictCursor
+	when the query is executed by a named cursor. Also added Menno's
+	tests and uniformed other DictCursor tests.
+
 	* psycopg/psycopgmodule.c: fixed unwanted exception when passing an
 	explicit None to register_type().
 

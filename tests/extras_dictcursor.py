@@ -27,18 +27,55 @@ class ExtrasDictCursorTests(unittest.TestCase):
         self.conn = psycopg2.connect(tests.dsn)
         curs = self.conn.cursor()
         curs.execute("CREATE TEMPORARY TABLE ExtrasDictCursorTests (foo text)")
+        curs.execute("INSERT INTO ExtrasDictCursorTests VALUES ('bar')")
+        self.conn.commit()
 
     def tearDown(self):
         self.conn.close()
 
-    def testDictCursor(self):
+    def testDictCursorWithPlainCursorFetchOne(self):
+        self._testWithPlainCursor(lambda curs: curs.fetchone())
+
+    def testDictCursorWithPlainCursorFetchMany(self):
+        self._testWithPlainCursor(lambda curs: curs.fetchmany(100)[0])
+
+    def testDictCursorWithPlainCursorFetchAll(self):
+        self._testWithPlainCursor(lambda curs: curs.fetchall()[0])
+
+    def testDictCursorWithPlainCursorIter(self):
+        def getter(curs):
+            for row in curs:
+                return row
+        self._testWithPlainCursor(getter)
+        
+    def testDictCursorWithNamedCursorFetchOne(self):
+        self._testWithNamedCursor(lambda curs: curs.fetchone())
+
+    def testDictCursorWithNamedCursorFetchMany(self):
+        self._testWithNamedCursor(lambda curs: curs.fetchmany(100)[0])
+
+    def testDictCursorWithNamedCursorFetchAll(self):
+        self._testWithNamedCursor(lambda curs: curs.fetchall()[0])
+
+    def testDictCursorWithNamedCursorIter(self):
+        def getter(curs):
+            for row in curs:
+                return row
+        self._testWithNamedCursor(getter)
+
+    def _testWithPlainCursor(self, getter):
         curs = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        curs.execute("INSERT INTO ExtrasDictCursorTests VALUES ('bar')")
         curs.execute("SELECT * FROM ExtrasDictCursorTests")
-        row = curs.fetchone()
+        row = getter(curs)
         self.failUnless(row['foo'] == 'bar')
         self.failUnless(row[0] == 'bar')
 
+    def _testWithNamedCursor(self, getter):
+        curs = self.conn.cursor('aname', cursor_factory=psycopg2.extras.DictCursor)
+        curs.execute("SELECT * FROM ExtrasDictCursorTests")
+        row = getter(curs)
+        self.failUnless(row['foo'] == 'bar')
+        self.failUnless(row[0] == 'bar')
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

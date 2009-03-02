@@ -25,7 +25,7 @@ import psycopg2.extras
 import tests
 
 
-class TypesBasicTests(unittest.TestCase):
+class TypesExtrasTests(unittest.TestCase):
     """Test that all type conversions are working."""
 
     def setUp(self):
