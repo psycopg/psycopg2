@@ -1,5 +1,8 @@
 2009-03-02  Federico Di Gregorio  <fog@initd.org>
 
+	* Applied modified patch from Karsten Hilbert to provide a
+	type-caster able to parse times with seconds in the time zone.
+
 	* Applied patch from Menno Smits to avoid problems with DictCursor
 	when the query is executed by a named cursor. Also added Menno's
 	tests and uniformed other DictCursor tests.

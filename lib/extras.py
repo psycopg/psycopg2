@@ -360,4 +360,53 @@ def register_inet(oid=None, conn_or_curs=None):
     return _ext.INET
 
 
+# safe management of times with a non-standard time zone
+
+def _convert_tstz_w_secs(s, cursor):
+    try:
+        return DATETIME(s, cursor)
+        
+    except (DataError,), exc:
+        if exc.message != "unable to parse time":
+                raise
+
+        if regex.match('(\+|-)\d\d:\d\d:\d\d', s[-9:]) is None:
+                raise
+
+        # parsing doesn't succeed even if seconds are ":00" so truncate in
+        # any case
+        return DATETIME(s[:-3], cursor)
+
+def register_tstz_w_secs(oids=None, conn_or_curs=None):
+    """Register alternate type caster for TIMESTAMP WITH TIME ZONE.
+
+    The Python datetime module cannot handle time zones with
+    seconds in the UTC offset. There are, however, historical
+    "time zones" which contain such offsets, eg. "Asia/Calcutta".
+    In many cases those offsets represent true local time.
+
+    If you encounter "unable to parse time" on a perfectly valid
+    timestamp you likely want to try this type caster. It truncates
+    the seconds from the time zone data and retries casting
+    the timestamp. Note that this will generate timestamps
+    which are INACCURATE by the number of seconds truncated
+    (unless the seconds were 00).
+
+    <oids>
+            which OIDs to use this type caster for,
+            defaults to TIMESTAMP WITH TIME ZONE
+    <conn_or_curs>
+            a cursor or connection if you want to attach
+            this type caster to that only, defaults to
+            None meaning all connections and cursors
+    """
+    if oids is None:
+        oids = (1184,) # hardcoded from PostgreSQL headers
+
+    _ext.TSTZ_W_SECS = _ext.new_type(oids, 'TSTZ_W_SECS', _convert_tstz_w_secs)
+    _ext.register_type(TSTZ_W_SECS, conn_or_curs)
+
+    return _ext.TSTZ_W_SECS
+
+
 __all__ = [ k for k in locals().keys() if not k.startswith('_') ]
