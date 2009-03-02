@@ -210,9 +210,10 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
 
 /** type registration **/
 #define psyco_register_type_doc \
-"register_type(obj) -> None -- register obj with psycopg type system\n\n" \
+"register_type(obj, conn_or_curs) -> None -- register obj with psycopg type system\n\n" \
 ":Parameters:\n" \
-"  * `obj`: A type adapter created by `new_type()`"
+"  * `obj`: A type adapter created by `new_type()`" \
+"  * `conn_or_curs`: A connection, cursor or None"
 
 #define typecast_from_python_doc \
 "new_type(oids, name, adapter) -> new type object\n\n" \
@@ -243,7 +244,7 @@ psyco_register_type(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    if (obj != NULL) {
+    if (obj != NULL && obj != Py_None) {
         if (PyObject_TypeCheck(obj, &cursorType)) {
             _psyco_register_type_set(&(((cursorObject*)obj)->string_types), type);
         }
