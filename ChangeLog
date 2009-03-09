@@ -1,3 +1,9 @@
+2009-03-08  Federico Di Gregorio  <fog@initd.org>
+
+	* microprotocols.c: None is always adapted to NULL to avoid
+	errors when calling adapt on nested types without first checking
+	for None.
+
 2009-03-02  Federico Di Gregorio  <fog@initd.org>
 
 	* Applied modified patch from Karsten Hilbert to provide a
