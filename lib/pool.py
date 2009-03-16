@@ -136,7 +136,6 @@ class AbstractConnectionPool(object):
         if self.closed: raise PoolError("connection pool is closed")
         for conn in self._pool + list(self._used.values()):
             try:
-                print "Closing connection", conn
                 conn.close()
             except:
                 pass
