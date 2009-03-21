@@ -206,7 +206,14 @@ class psycopg_build_ext(build_ext):
                 pgversion = self.get_pg_config("version").split()[1]
             except:
                 pgversion = "7.4.0"
-            pgmajor, pgminor, pgpatch = pgversion.split('.')
+
+            try:
+                pgmajor, pgminor, pgpatch = pgversion.split('.')
+            except:
+                # Mm.. development version?
+                pgmajor, pgminor = pgversion.replace("devel", "").split('.')
+                pgminor = 0
+
             define_macros.append(("PG_VERSION_HEX", "0x%02X%02X%02X" %
                                   (int(pgmajor), int(pgminor), int(pgpatch))))
         except Warning, w:
