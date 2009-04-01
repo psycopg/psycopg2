@@ -26,6 +26,7 @@ class LargeObjectTests(unittest.TestCase):
                 pass
             else:
                 lo.unlink()
+        self.conn.close()
 
     def test_create(self):
         lo = self.conn.lobject()

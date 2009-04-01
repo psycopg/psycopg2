@@ -1,3 +1,7 @@
+2009-04-01  Federico Di Gregorio  <fog@initd.org>
+
+	* Applied patch from Menno Smits to fix lobject test failures.
+
 2009-03-08  Federico Di Gregorio  <fog@initd.org>
 
 	* microprotocols.c: None is always adapted to NULL to avoid
