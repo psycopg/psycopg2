@@ -131,7 +131,7 @@ class DatetimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
         try:
             self.check_time_tz("+01:15:42", 4542)
         except ValueError, exc:
-            self.assertEqual(exc.message, "time zone offset 4542 is not a "
+            self.assertEqual(str(exc), "time zone offset 4542 is not a "
                              "whole number of minutes")
         else:
             self.fail("Expected ValueError")
@@ -139,7 +139,7 @@ class DatetimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
         try:
             self.check_time_tz("-01:15:42", -4542)
         except ValueError, exc:
-            self.assertEqual(exc.message, "time zone offset -4542 is not a "
+            self.assertEqual(str(exc), "time zone offset -4542 is not a "
                              "whole number of minutes")
         else:
             self.fail("Expected ValueError")
@@ -175,7 +175,7 @@ class DatetimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
         try:
             self.check_datetime_tz("+01:15:42", 4542)
         except ValueError, exc:
-            self.assertEqual(exc.message, "time zone offset 4542 is not a "
+            self.assertEqual(str(exc), "time zone offset 4542 is not a "
                              "whole number of minutes")
         else:
             self.fail("Expected ValueError")
@@ -183,7 +183,7 @@ class DatetimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
         try:
             self.check_datetime_tz("-01:15:42", -4542)
         except ValueError, exc:
-            self.assertEqual(exc.message, "time zone offset -4542 is not a "
+            self.assertEqual(str(exc), "time zone offset -4542 is not a "
                              "whole number of minutes")
         else:
             self.fail("Expected ValueError")

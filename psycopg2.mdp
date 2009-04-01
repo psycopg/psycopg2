@@ -153,5 +153,4 @@
     <File name="psycopg/adapter_pfloat.h" subtype="Code" buildaction="Nothing" />
   </Contents>
   <compiler ctype="GccCompiler" />
-  <MonoDevelop.ChangeLogAddIn.ChangeLogInfo policy="UpdateNearestChangeLog" />
 </Project>
