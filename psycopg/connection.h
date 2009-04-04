@@ -43,6 +43,11 @@ extern "C" {
 
 extern HIDDEN PyTypeObject connectionType;
 
+struct connectionObject_notice {
+    struct connectionObject_notice *next;
+    const char *message;
+};
+
 typedef struct {
     PyObject_HEAD
 
@@ -66,6 +71,7 @@ typedef struct {
     /* notice processing */
     PyObject *notice_list;
     PyObject *notice_filter;
+    struct connectionObject_notice *notice_pending;
 
     /* notifies */
     PyObject *notifies;
@@ -75,10 +81,11 @@ typedef struct {
     PyObject *binary_types;   /* a set of typecasters for binary types */
 
     int equote;               /* use E''-style quotes for escaped strings */
-
 } connectionObject;
 
 /* C-callable functions in connection_int.c and connection_ext.c */
+HIDDEN void conn_notice_process(connectionObject *self);
+HIDDEN void conn_notice_clean(connectionObject *self);
 HIDDEN int  conn_connect(connectionObject *self);
 HIDDEN void conn_close(connectionObject *self);
 HIDDEN int  conn_commit(connectionObject *self);

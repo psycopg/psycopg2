@@ -39,14 +39,39 @@ conn_notice_callback(void *args, const char *message)
 
     Dprintf("conn_notice_callback: %s", message);
 
-    /* unfortunately the old protocl return COPY FROM errors only as notices,
+    /* unfortunately the old protocol return COPY FROM errors only as notices,
        so we need to filter them looking for such errors (but we do it
-       only if the protocol if <3, else we don't need that */
+       only if the protocol if <3, else we don't need that)
+       
+       NOTE: if we get here and the connection is unlocked then there is a
+       problem but this should happen because the notice callback is only
+       called from libpq and when we're inside libpq the connection is usually
+       locked.
+    */
 
     if (self->protocol < 3 && strncmp(message, "ERROR", 5) == 0)
         pq_set_critical(self, message);
     else {
-        PyObject *msg = PyString_FromString(message);
+        struct connectionObject_notice *notice =
+            (struct connectionObject_notice *)
+                PyMem_Malloc(sizeof(struct connectionObject_notice));
+        notice->message = strdup(message);
+        notice->next = self->notice_pending;
+        self->notice_pending = notice;
+    }
+}
+
+void
+conn_notice_process(connectionObject *self)
+{
+    pthread_mutex_lock(&self->lock);
+
+    struct connectionObject_notice *notice =  self->notice_pending;
+    
+    while (notice != NULL) {
+        PyObject *msg = PyString_FromString(notice->message);
+
+        Dprintf("conn_notice_process: %s", notice->message);
 
         PyList_Append(self->notice_list, msg);
         Py_DECREF(msg);
@@ -54,7 +79,32 @@ conn_notice_callback(void *args, const char *message)
         /* Remove the oldest item if the queue is getting too long. */
         if (PyList_GET_SIZE(self->notice_list) > CONN_NOTICES_LIMIT)
             PySequence_DelItem(self->notice_list, 0);
+        
+        notice = notice->next;
     }
+    
+    pthread_mutex_unlock(&self->lock);
+    
+    conn_notice_clean(self);  
+}
+
+void
+conn_notice_clean(connectionObject *self)
+{
+    pthread_mutex_lock(&self->lock);
+    
+    struct connectionObject_notice *tmp, *notice = self->notice_pending;
+    
+    while (notice != NULL) {
+        tmp = notice;
+        notice = notice->next;
+        free(tmp->message);
+        PyMem_Free(tmp);
+    }
+    
+    self->notice_pending = NULL;
+    
+    pthread_mutex_unlock(&self->lock);    
 }
 
 /* conn_connect - execute a connection to the database */

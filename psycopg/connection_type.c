@@ -430,6 +430,7 @@ connection_setup(connectionObject *self, const char *dsn)
     self->mark = 0;
     self->string_types = PyDict_New();
     self->binary_types = PyDict_New();
+    self->notice_pending = NULL;
 
     pthread_mutex_init(&(self->lock), NULL);
 
@@ -461,14 +462,17 @@ connection_dealloc(PyObject* obj)
     connectionObject *self = (connectionObject *)obj;
 
     if (self->closed == 0) conn_close(self);
+    
+    conn_notice_clean(self);
 
     if (self->dsn) free(self->dsn);
     if (self->encoding) free(self->encoding);
     if (self->critical) free(self->critical);
 
-    Py_CLEAR(self->notice_list);
-    Py_CLEAR(self->notifies);
     Py_CLEAR(self->async_cursor);
+    Py_CLEAR(self->notice_list);
+    Py_CLEAR(self->notice_filter);
+    Py_CLEAR(self->notifies);
     Py_CLEAR(self->string_types);
     Py_CLEAR(self->binary_types);
 

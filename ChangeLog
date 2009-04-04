@@ -1,3 +1,10 @@
+2009-04-04  Federico Di Gregorio  <fog@initd.org>
+
+	* connection_int.c(conn_notice_callback): removed all Python
+	calls because conn_notice_callback() can be called without a lock
+	on the GIL. Moved processing and cleanup of notices into their
+	own functions that are called while holding the GIL.
+
 2009-04-01  Federico Di Gregorio  <fog@initd.org>
 
 	* Applied patch from Menno Smits to fix failures in test_dates

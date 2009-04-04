@@ -20,7 +20,7 @@
  */
 
 /* IMPORTANT NOTE: no function in this file do its own connection locking
-   except for pg_execute and pq_fetch (that are somehow high-level. This means
+   except for pg_execute and pq_fetch (that are somehow high-level). This means
    that all the othe functions should be called while holding a lock to the
    connection.
 */
@@ -331,7 +331,7 @@ pq_execute_command_locked(connectionObject *conn, const char *query,
 
     retvalue = 0;
     IFCLEARPGRES(*pgres);
-
+    
  cleanup:
     return retvalue;
 }
@@ -427,6 +427,8 @@ pq_commit(connectionObject *conn)
 
     pthread_mutex_unlock(&conn->lock);
     Py_END_ALLOW_THREADS;
+    
+    conn_notice_process(conn);
 
     if (retvalue < 0)
         pq_complete_error(conn, &pgres, &error);
@@ -487,6 +489,8 @@ pq_abort(connectionObject *conn)
 
     pthread_mutex_unlock(&conn->lock);
     Py_END_ALLOW_THREADS;
+    
+    conn_notice_process(conn);
 
     if (retvalue < 0)
         pq_complete_error(conn, &pgres, &error);
@@ -543,6 +547,8 @@ pq_is_busy(connectionObject *conn)
     
     pthread_mutex_unlock(&(conn->lock));
     Py_END_ALLOW_THREADS;
+    
+    conn_notice_process(conn);
 
     return res;
 }
@@ -622,6 +628,8 @@ pq_execute(cursorObject *curs, const char *query, int async)
 
     pthread_mutex_unlock(&(curs->conn->lock));
     Py_END_ALLOW_THREADS;
+    
+    conn_notice_process(curs->conn);
 
     /* if the execute was sync, we call pq_fetch() immediately,
        to respect the old DBAPI-2.0 compatible behaviour */
@@ -1149,6 +1157,8 @@ pq_fetch(cursorObject *curs)
     }
 
     Dprintf("pq_fetch: fetching done; check for critical errors");
+
+    conn_notice_process(curs->conn);
 
     /* error checking, close the connection if necessary (some critical errors
        are not really critical, like a COPY FROM error: if that's the case we
