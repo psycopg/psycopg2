@@ -2,7 +2,6 @@
 import dbapi20
 import unittest
 import psycopg2
-import popen2
 
 import tests
 
