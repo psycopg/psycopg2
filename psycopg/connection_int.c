@@ -54,7 +54,7 @@ conn_notice_callback(void *args, const char *message)
     else {
         struct connectionObject_notice *notice =
             (struct connectionObject_notice *)
-                PyMem_Malloc(sizeof(struct connectionObject_notice));
+                malloc(sizeof(struct connectionObject_notice));
         notice->message = strdup(message);
         notice->next = self->notice_pending;
         self->notice_pending = notice;
@@ -99,7 +99,7 @@ conn_notice_clean(connectionObject *self)
         tmp = notice;
         notice = notice->next;
         free(tmp->message);
-        PyMem_Free(tmp);
+        free(tmp);
     }
     
     self->notice_pending = NULL;
