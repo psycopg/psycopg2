@@ -1,3 +1,8 @@
+2009-04-19  Federico Di Gregorio  <fog@initd.org>
+
+	* lib/extras.py: patch from Marko Kreen to implement missing dict
+	methods in DictRow.
+
 2009-04-04  Federico Di Gregorio  <fog@initd.org>
 
 	* connection_int.c(conn_notice_callback): removed all Python

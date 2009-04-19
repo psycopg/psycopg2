@@ -141,6 +141,17 @@ class DictRow(list):
         for n, v in self._index.items():
             yield n, list.__getitem__(self, v)
 
+    def iterkeys(self):
+        return self._index.iterkeys()
+
+    def itervalues(self):
+        return list.__iter__(self)
+
+    def copy(self):
+        return dict(self.items())
+
+    def __contains__(self, x):
+        return self._index.__contains__(x)
 
 class RealDictConnection(_connection):
     """A connection that uses RealDictCursor automatically."""
