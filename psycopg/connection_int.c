@@ -98,7 +98,7 @@ conn_notice_clean(connectionObject *self)
     while (notice != NULL) {
         tmp = notice;
         notice = notice->next;
-        free(tmp->message);
+        free((void*)tmp->message);
         free(tmp);
     }
     
@@ -249,6 +249,8 @@ conn_connect(connectionObject *self)
     self->protocol = 2;
 #endif
     Dprintf("conn_connect: using protocol %d", self->protocol);
+    
+    self->server_version = (int)PQserverVersion(pgconn);
 
     self->pgconn = pgconn;
     return 0;

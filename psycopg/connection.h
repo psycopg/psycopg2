@@ -63,6 +63,7 @@ typedef struct {
     long int mark;            /* number of commits/rollbacks done so far */
     int status;               /* status of the connection */
     int protocol;             /* protocol version */
+    int server_version;       /* server version */
 
     PGconn *pgconn;         /* the postgresql connection */
 
