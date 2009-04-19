@@ -1,5 +1,8 @@
 2009-04-19  Federico Di Gregorio  <fog@initd.org>
 
+	* psycopg/connection_type.c: patch from Gangadharan to avoid double
+	free of the connection object when calling close() implicitly.
+
 	* psycopg/connection_type.c: patch from Marko Kreen to implement
 	get_parameter_status().
 

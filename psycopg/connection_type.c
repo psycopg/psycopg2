@@ -498,6 +498,8 @@ static void
 connection_dealloc(PyObject* obj)
 {
     connectionObject *self = (connectionObject *)obj;
+    
+    PyObject_GC_UnTrack(self);
 
     if (self->closed == 0) conn_close(self);
     
