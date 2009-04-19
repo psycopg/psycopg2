@@ -1,5 +1,8 @@
 2009-04-19  Federico Di Gregorio  <fog@initd.org>
 
+	* psycopg/connection_type.c: patch from Marko Kreen to implement
+	get_parameter_status().
+
 	* psycopg/connection.*: exposed protocol_version and
 	server_version attributes on the connection object.
 

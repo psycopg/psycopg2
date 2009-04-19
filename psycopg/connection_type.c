@@ -231,6 +231,36 @@ psyco_conn_get_transaction_status(connectionObject *self, PyObject *args)
     return PyInt_FromLong((long)PQtransactionStatus(self->pgconn));
 }
 
+/* get_parameter_status method - Get server parameter status */
+
+#define psyco_conn_get_parameter_status_doc \
+"get_parameter_status(parameter) -- Get backend parameter status.\n\n" \
+"Potential values for ``parameter``:\n" \
+"  server_version, server_encoding, client_encoding, is_superuser,\n" \
+"  session_authorization, DateStyle, TimeZone, integer_datetimes,\n" \
+"  and standard_conforming_strings\n" \
+"If server did not report requested parameter, None is returned.\n\n" \
+"See libpq docs for PQparameterStatus() for further details."
+
+static PyObject *
+psyco_conn_get_parameter_status(connectionObject *self, PyObject *args)
+{
+    const char *param = NULL;
+    const char *val = NULL;
+
+    EXC_IF_CONN_CLOSED(self);
+
+    if (!PyArg_ParseTuple(args, "s", &param)) return NULL;
+
+    val = PQparameterStatus(self->pgconn, param);
+    if (!val) {
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
+    return PyString_FromString(val);
+}
+
+
 /* lobject method - allocate a new lobject */
 
 #define psyco_conn_lobject_doc \
@@ -353,6 +383,8 @@ static struct PyMethodDef connectionObject_methods[] = {
      METH_VARARGS, psyco_conn_set_client_encoding_doc},
     {"get_transaction_status", (PyCFunction)psyco_conn_get_transaction_status,
      METH_VARARGS, psyco_conn_get_transaction_status_doc},
+    {"get_parameter_status", (PyCFunction)psyco_conn_get_parameter_status,
+     METH_VARARGS, psyco_conn_get_parameter_status_doc},
     {"get_backend_pid", (PyCFunction)psyco_conn_get_backend_pid,
      METH_NOARGS, psyco_conn_get_backend_pid_doc},
     {"lobject", (PyCFunction)psyco_conn_lobject,
