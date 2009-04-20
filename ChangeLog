@@ -1,8 +1,12 @@
-2009-04-19  Federico Di Gregorio  <fog@initd.org>
+2009-04-20  Federico Di Gregorio  <fog@initd.org>
+
+	* Release 2.0.10.
 
 	* psycopg/cursor_type.c: patch from Gangadharan to avoid double
 	free of the cursor when the connection that creates it is closed
 	implicitly by dealloc.
+
+2009-04-19  Federico Di Gregorio  <fog@initd.org>
 
 	* psycopg/connection_type.c: patch from Gangadharan to avoid double
 	free of the connection object when calling close() implicitly.
