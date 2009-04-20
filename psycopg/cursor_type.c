@@ -1661,7 +1661,7 @@ static int
 cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
 {
     Dprintf("cursor_setup: init cursor object at %p", self);
-    Dprintf("cursor_setup:     parameters: name = %s, conn = %p", name, conn);
+    Dprintf("cursor_setup: parameters: name = %s, conn = %p", name, conn);
 
     if (name) {
         self->name = PyMem_Malloc(strlen(name)+1);
@@ -1717,6 +1717,8 @@ static void
 cursor_dealloc(PyObject* obj)
 {
     cursorObject *self = (cursorObject *)obj;
+    
+    PyObject_GC_UnTrack(self);
 
     if (self->name) PyMem_Free(self->name);
 
@@ -1734,8 +1736,7 @@ cursor_dealloc(PyObject* obj)
 
     Dprintf("cursor_dealloc: deleted cursor object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        obj, obj->ob_refcnt
-      );
+        obj, obj->ob_refcnt);
 
     obj->ob_type->tp_free(obj);
 }
