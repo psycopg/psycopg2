@@ -46,6 +46,7 @@ Operating System :: Unix
 import os
 import os.path
 import sys
+import re
 import subprocess
 import ConfigParser
 from distutils.core import setup, Extension
@@ -207,12 +208,17 @@ class psycopg_build_ext(build_ext):
             except:
                 pgversion = "7.4.0"
 
-            try:
-                pgmajor, pgminor, pgpatch = pgversion.split('.')
-            except:
-                # Mm.. development version?
-                pgmajor, pgminor = pgversion.replace("devel", "").split('.')
-                pgminor = 0
+            verre = re.compile(r"(\d+)\.(\d+)(?:(?:\.(\d+))|(devel|beta\d+))")
+            m = verre.match(pgversion)
+            if m:
+                pgmajor, pgminor, pgpatch = m.group(1, 2, 3)
+                if pgpatch is None or not pgpatch.isdigit():
+                    pgpatch = 0
+            else:
+                sys.stderr.write(
+                    "Error: could not determine PostgreSQL version from '%s'"
+                                                                % pgversion)
+                sys.exit(1)
 
             define_macros.append(("PG_VERSION_HEX", "0x%02X%02X%02X" %
                                   (int(pgmajor), int(pgminor), int(pgpatch))))
