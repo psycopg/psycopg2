@@ -1,3 +1,32 @@
+What's new in psycopg 2.0.10
+---------------------------
+
+* New features:
+  - A specialized type-caster that can parse time zones with seconds is
+    now available. Note that after enabling it (see extras.py) "wrong"
+    time zones will be parsed without raising an exception but the
+    result will be rounded.
+  - DictCursor can be used as a named cursor.
+  - DictRow now implements more dict methods.
+  - The connection object now expose PostgreSQL server version as the
+    .server_version attribute and the protocol version used as
+    .protocol_version.
+  - The connection object has a .get_parameter_status() methods that
+    can be used to obtain useful information from the server.
+    
+* Bug fixes:
+  - None is now correctly always adapted to NULL.
+  - Two double memory free errors provoked by multithreading and
+    garbage collection are now fixed.
+  - Fixed usage of internal Python code in the notice processor; this
+    should fix segfaults when receiving a lot of notices in
+    multithreaded programs.
+  - Should build again on MSVC and Solaris.
+  - Should build with development versions of PostgreSQL (ones with
+    -devel version string.)
+  - Fixed some tests that failed even when psycopg was right.
+
+
 What's new in psycopg 2.0.9
 ---------------------------
 
