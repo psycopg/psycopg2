@@ -1,0 +1,6 @@
+MANIFEST
+*.userprefs
+*.pidb
+dist/*
+build/*
+

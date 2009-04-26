@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="3.5" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.21022</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{CFD80D18-3EE5-49ED-992A-E6D433BC7641}</ProjectGuid>
+    <Compiler>
+      <Compiler ctype="GccCompiler" xmlns="" />
+    </Compiler>
+    <Language>C</Language>
+    <Target>Bin</Target>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>.</OutputPath>
+    <DefineSymbols>DEBUG MONODEVELOP</DefineSymbols>
+    <CodeGeneration>
+      <CodeGeneration ctype="CCompilationParameters" xmlns="" />
+    </CodeGeneration>
+    <CompileTarget>Bin</CompileTarget>
+    <CustomCommands>
+      <CustomCommands xmlns="">
+        <Command type="Build" command="/usr/bin/python setup.py build" workingdir="${ProjectDir}" />
+        <Command type="Clean" command="/usr/bin/python setup.py clean -a" workingdir="${ProjectDir}" />
+      </CustomCommands>
+    </CustomCommands>
+    <OutputName>psycopg2</OutputName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>bin\Release</OutputPath>
+    <DefineSymbols>MONODEVELOP</DefineSymbols>
+    <CodeGeneration>
+      <CodeGeneration ctype="CCompilationParameters" xmlns="" />
+    </CodeGeneration>
+    <OptimizationLevel>3</OptimizationLevel>
+    <OutputName>psycopg2</OutputName>
+    <CompileTarget>Bin</CompileTarget>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="AUTHORS" />
+    <None Include="ChangeLog" />
+    <None Include="INSTALL" />
+    <None Include="LICENSE" />
+    <None Include="MANIFEST.in" />
+    <None Include="NEWS" />
+    <None Include="README" />
+    <None Include="setup.cfg" />
+    <None Include="setup.py" />
+    <None Include="doc\async.txt" />
+    <None Include="doc\extensions.rst" />
+    <None Include="doc\HACKING" />
+    <None Include="doc\SUCCESS" />
+    <None Include="doc\TODO" />
+    <None Include="examples\binary.py" />
+    <None Include="examples\copy_from.py" />
+    <None Include="examples\copy_to.py" />
+    <None Include="examples\cursor.py" />
+    <None Include="examples\dialtone.py" />
+    <None Include="examples\dict.py" />
+    <None Include="examples\dt.py" />
+    <None Include="examples\encoding.py" />
+    <None Include="examples\fetch.py" />
+    <None Include="examples\lastrowid.py" />
+    <None Include="examples\mogrify.py" />
+    <None Include="examples\myfirstrecipe.py" />
+    <None Include="examples\notify.py" />
+    <None Include="examples\simple.py" />
+    <None Include="examples\somehackers.jpg" />
+    <None Include="examples\threads.py" />
+    <None Include="examples\typecast.py" />
+    <None Include="examples\tz.py" />
+    <None Include="examples\usercast.py" />
+    <None Include="examples\whereareyou.jpg" />
+    <None Include="lib\errorcodes.py" />
+    <None Include="lib\extensions.py" />
+    <None Include="lib\extras.py" />
+    <None Include="lib\__init__.py" />
+    <None Include="lib\pool.py" />
+    <None Include="lib\psycopg1.py" />
+    <None Include="lib\tz.py" />
+    <None Include="psycopg\adapter_asis.h" />
+    <None Include="psycopg\adapter_binary.h" />
+    <None Include="psycopg\adapter_datetime.h" />
+    <None Include="psycopg\adapter_list.h" />
+    <None Include="psycopg\adapter_mxdatetime.h" />
+    <None Include="psycopg\adapter_pboolean.h" />
+    <None Include="psycopg\adapter_qstring.h" />
+    <None Include="psycopg\config.h" />
+    <None Include="psycopg\connection.h" />
+    <None Include="psycopg\cursor.h" />
+    <None Include="psycopg\microprotocols.h" />
+    <None Include="psycopg\microprotocols_proto.h" />
+    <None Include="psycopg\pgtypes.h" />
+    <None Include="psycopg\pgversion.h" />
+    <None Include="psycopg\pqpath.h" />
+    <None Include="psycopg\psycopg.h" />
+    <None Include="psycopg\python.h" />
+    <None Include="psycopg\typecast.h" />
+    <None Include="psycopg\typecast_binary.h" />
+    <None Include="scripts\buildtypes.py" />
+    <None Include="scripts\ext2html.py" />
+    <None Include="scripts\makedocs.py" />
+    <None Include="scripts\maketypes.sh" />
+    <None Include="ZPsycopgDA\dtml\add.dtml" />
+    <None Include="ZPsycopgDA\dtml\browse.dtml" />
+    <None Include="ZPsycopgDA\dtml\edit.dtml" />
+    <None Include="ZPsycopgDA\dtml\table_info.dtml" />
+    <None Include="ZPsycopgDA\icons\bin.gif" />
+    <None Include="ZPsycopgDA\icons\date.gif" />
+    <None Include="ZPsycopgDA\icons\datetime.gif" />
+    <None Include="ZPsycopgDA\icons\field.gif" />
+    <None Include="ZPsycopgDA\icons\float.gif" />
+    <None Include="ZPsycopgDA\icons\int.gif" />
+    <None Include="ZPsycopgDA\icons\stable.gif" />
+    <None Include="ZPsycopgDA\icons\table.gif" />
+    <None Include="ZPsycopgDA\icons\text.gif" />
+    <None Include="ZPsycopgDA\icons\time.gif" />
+    <None Include="ZPsycopgDA\icons\view.gif" />
+    <None Include="ZPsycopgDA\icons\what.gif" />
+    <None Include="ZPsycopgDA\DA.py" />
+    <None Include="ZPsycopgDA\db.py" />
+    <None Include="ZPsycopgDA\__init__.py" />
+    <None Include="ZPsycopgDA\pool.py" />
+    <None Include="tests\dbapi20.py" />
+    <None Include="tests\extras_dictcursor.py" />
+    <None Include="tests\__init__.py" />
+    <None Include="tests\test_psycopg2_dbapi20.py" />
+    <None Include="tests\test_transaction.py" />
+    <None Include="tests\types_basic.py" />
+    <None Include="tests\bugX000.py" />
+    <None Include="tests\types_extras.py" />
+    <None Include="tests\test_connection.py" />
+    <None Include="tests\test_dates.py" />
+    <None Include="tests\test_lobject.py" />
+    <None Include="tests\test_quote.py" />
+    <None Include="psycopg\lobject.h" />
+    <None Include="psycopg\typecast_basic.c.old" />
+    <None Include="sandbox\test_isready_connection_closed.py" />
+    <None Include="psycopg\adapter_pfloat.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="psycopg\adapter_asis.c" />
+    <Compile Include="psycopg\adapter_binary.c" />
+    <Compile Include="psycopg\adapter_datetime.c" />
+    <Compile Include="psycopg\adapter_list.c" />
+    <Compile Include="psycopg\adapter_mxdatetime.c" />
+    <Compile Include="psycopg\adapter_pboolean.c" />
+    <Compile Include="psycopg\adapter_qstring.c" />
+    <Compile Include="psycopg\connection_int.c" />
+    <Compile Include="psycopg\connection_type.c" />
+    <Compile Include="psycopg\cursor_int.c" />
+    <Compile Include="psycopg\cursor_type.c" />
+    <Compile Include="psycopg\microprotocols.c" />
+    <Compile Include="psycopg\microprotocols_proto.c" />
+    <Compile Include="psycopg\pqpath.c" />
+    <Compile Include="psycopg\psycopgmodule.c" />
+    <Compile Include="psycopg\typecast.c" />
+    <Compile Include="psycopg\typecast_array.c" />
+    <Compile Include="psycopg\typecast_basic.c" />
+    <Compile Include="psycopg\typecast_binary.c" />
+    <Compile Include="psycopg\typecast_builtins.c" />
+    <Compile Include="psycopg\typecast_datetime.c" />
+    <Compile Include="psycopg\typecast_mxdatetime.c" />
+    <Compile Include="psycopg\utils.c" />
+    <Compile Include="psycopg\lobject_int.c" />
+    <Compile Include="psycopg\lobject_type.c" />
+    <Compile Include="psycopg\adapter_pfloat.c" />
+  </ItemGroup>
+  <ProjectExtensions>
+    <MonoDevelop>
+      <Properties xmlns="">
+        <Policies>
+          <ChangeLogPolicy UpdateMode="Nearest" VcsIntegration="None" inheritsSet="Mono">
+            <MessageStyle FileSeparator=", " LineAlign="0" />
+          </ChangeLogPolicy>
+          <TextStylePolicy FileWidth="120" TabWidth="4" TabsToSpaces="False" NoTabsAfterNonTabs="False" RemoveTrailingWhitespace="True" EolMarker="Native" />
+        </Policies>
+      </Properties>
+    </MonoDevelop>
+  </ProjectExtensions>
+</Project>
