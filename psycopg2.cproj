@@ -7,7 +7,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{CFD80D18-3EE5-49ED-992A-E6D433BC7641}</ProjectGuid>
     <Compiler>
-      <Compiler ctype="GccCompiler" xmlns="" />
+      <Compiler ctype="GccCompiler" />
     </Compiler>
     <Language>C</Language>
     <Target>Bin</Target>
@@ -17,11 +17,11 @@
     <OutputPath>.</OutputPath>
     <DefineSymbols>DEBUG MONODEVELOP</DefineSymbols>
     <CodeGeneration>
-      <CodeGeneration ctype="CCompilationParameters" xmlns="" />
+      <CodeGeneration ctype="CCompilationParameters" />
     </CodeGeneration>
     <CompileTarget>Bin</CompileTarget>
     <CustomCommands>
-      <CustomCommands xmlns="">
+      <CustomCommands>
         <Command type="Build" command="/usr/bin/python setup.py build" workingdir="${ProjectDir}" />
         <Command type="Clean" command="/usr/bin/python setup.py clean -a" workingdir="${ProjectDir}" />
       </CustomCommands>
@@ -32,7 +32,7 @@
     <OutputPath>bin\Release</OutputPath>
     <DefineSymbols>MONODEVELOP</DefineSymbols>
     <CodeGeneration>
-      <CodeGeneration ctype="CCompilationParameters" xmlns="" />
+      <CodeGeneration ctype="CCompilationParameters" />
     </CodeGeneration>
     <OptimizationLevel>3</OptimizationLevel>
     <OutputName>psycopg2</OutputName>
@@ -170,12 +170,12 @@
   </ItemGroup>
   <ProjectExtensions>
     <MonoDevelop>
-      <Properties xmlns="">
+      <Properties>
         <Policies>
           <ChangeLogPolicy UpdateMode="Nearest" VcsIntegration="None" inheritsSet="Mono">
             <MessageStyle FileSeparator=", " LineAlign="0" />
           </ChangeLogPolicy>
-          <TextStylePolicy FileWidth="120" TabWidth="4" TabsToSpaces="False" NoTabsAfterNonTabs="False" RemoveTrailingWhitespace="True" EolMarker="Native" />
+          <TextStylePolicy FileWidth="144" TabWidth="4" TabsToSpaces="True" NoTabsAfterNonTabs="False" RemoveTrailingWhitespace="True" EolMarker="Native" />
         </Policies>
       </Properties>
     </MonoDevelop>

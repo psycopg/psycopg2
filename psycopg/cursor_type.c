@@ -326,7 +326,7 @@ _psyco_curs_execute(cursorObject *self,
 
     /* Any failure from here forward should 'goto fail' rather than 'return 0'
        directly. */
-    
+
     if (operation == NULL) { goto fail; }
 
     IFCLEARPGRES(self->pgres);
@@ -425,7 +425,7 @@ _psyco_curs_execute(cursorObject *self,
     }
 
     /* At this point, the SQL statement must be str, not unicode */
-    
+
     res = pq_execute(self, PyString_AS_STRING(self->query), async);
     Dprintf("psyco_curs_execute: res = %d, pgres = %p", res, self->pgres);
     if (res == -1) { goto fail; }
@@ -713,8 +713,13 @@ _psyco_curs_buildrow_fill(cursorObject *self, PyObject *res,
                 PyTuple_SET_ITEM(res, i, val);
             }
             else {
-                PySequence_SetItem(res, i, val);
+                int err = PySequence_SetItem(res, i, val);
                 Py_DECREF(val);
+                if (err == -1) {
+                    Py_DECREF(res);
+                    res = NULL;
+                    break;
+                }
             }
         }
         else {

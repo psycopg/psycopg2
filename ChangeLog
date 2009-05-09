@@ -1,5 +1,8 @@
 2009-05-10  Federico Di Gregorio  <fog@initd.org>
 
+	* psycopg/cursor_ext.c: now raise correct exception when fetching
+	using a custom row factory results in an error.
+
 	* lib/extras.py: applied DictRow "diet" patch from Marko Kreen.
 
 2009-04-21  Federico Di Gregorio  <fog@initd.org>
