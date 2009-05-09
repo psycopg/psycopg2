@@ -1,3 +1,17 @@
+What's new in psycopg 2.0.11
+---------------------------
+
+* New features:
+  - DictRow and RealDictRow now use less memory. If you inherit on them
+    remember to set __slots__ for your new attributes or be prepare to
+    go back to old memory usage.
+
+* Bug fixes:
+  - Fixed exeception in setup.py.
+  - More robust detection of PostgreSQL development versions.
+  - Fixed exception in RealDictCursor, introduced in 2.0.10.
+
+
 What's new in psycopg 2.0.10
 ---------------------------
 
@@ -13,7 +27,7 @@ What's new in psycopg 2.0.10
     .protocol_version.
   - The connection object has a .get_parameter_status() methods that
     can be used to obtain useful information from the server.
-    
+
 * Bug fixes:
   - None is now correctly always adapted to NULL.
   - Two double memory free errors provoked by multithreading and

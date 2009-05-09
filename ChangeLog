@@ -1,5 +1,7 @@
 2009-05-10  Federico Di Gregorio  <fog@initd.org>
 
+	* Release 2.0.11.
+
 	* lib/extras.py: fixed crash in fetchone() when prefetching using
 	a RealDictCursor.
 

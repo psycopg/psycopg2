@@ -1,6 +1,7 @@
 MANIFEST
+*~
 *.userprefs
 *.pidb
+*.pyc
 dist/*
 build/*
-

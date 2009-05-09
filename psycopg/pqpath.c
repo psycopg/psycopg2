@@ -628,7 +628,7 @@ pq_execute(cursorObject *curs, const char *query, int async)
 
     pthread_mutex_unlock(&(curs->conn->lock));
     Py_END_ALLOW_THREADS;
-    
+
     conn_notice_process(curs->conn);
 
     /* if the execute was sync, we call pq_fetch() immediately,
@@ -665,7 +665,7 @@ _pq_fetch_tuples(cursorObject *curs)
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(curs->conn->lock));
-    
+
     pgnfields = PQnfields(curs->pgres);
     pgbintuples = PQbinaryTuples(curs->pgres);
 
