@@ -222,7 +222,7 @@ class psycopg_build_ext(build_ext):
 
             define_macros.append(("PG_VERSION_HEX", "0x%02X%02X%02X" %
                                   (int(pgmajor), int(pgminor), int(pgpatch))))
-        except (Warning, w):
+        except Warning, w:
             if self.pg_config == self.DEFAULT_PG_CONFIG:
                 sys.stderr.write("Warning: %s" % str(w))
             else:

@@ -47,7 +47,22 @@ class ExtrasDictCursorTests(unittest.TestCase):
             for row in curs:
                 return row
         self._testWithPlainCursor(getter)
-        
+
+    def testDictCursorWithPlainCursorRealFetchOne(self):
+        self._testWithPlainCursorReal(lambda curs: curs.fetchone())
+
+    def testDictCursorWithPlainCursorRealFetchMany(self):
+        self._testWithPlainCursorReal(lambda curs: curs.fetchmany(100)[0])
+
+    def testDictCursorWithPlainCursorRealFetchAll(self):
+        self._testWithPlainCursorReal(lambda curs: curs.fetchall()[0])
+
+    def testDictCursorWithPlainCursorRealIter(self):
+        def getter(curs):
+            for row in curs:
+                return row
+        self._testWithPlainCursorReal(getter)
+
     def testDictCursorWithNamedCursorFetchOne(self):
         self._testWithNamedCursor(lambda curs: curs.fetchone())
 
@@ -76,6 +91,18 @@ class ExtrasDictCursorTests(unittest.TestCase):
         row = getter(curs)
         self.failUnless(row['foo'] == 'bar')
         self.failUnless(row[0] == 'bar')
+
+    def _testWithPlainCursorReal(self, getter):
+        curs = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        curs.execute("SELECT * FROM ExtrasDictCursorTests")
+        row = getter(curs)
+        self.failUnless(row['foo'] == 'bar')
+
+    def _testWithNamedCursorReal(self, getter):
+        curs = self.conn.cursor('aname', cursor_factory=psycopg2.extras.RealDictCursor)
+        curs.execute("SELECT * FROM ExtrasDictCursorTests")
+        row = getter(curs)
+        self.failUnless(row['foo'] == 'bar')
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

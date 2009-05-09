@@ -1,5 +1,8 @@
 2009-05-10  Federico Di Gregorio  <fog@initd.org>
 
+	* lib/extras.py: fixed crash in fetchone() when prefetching using
+	a RealDictCursor.
+
 	* psycopg/cursor_ext.c: now raise correct exception when fetching
 	using a custom row factory results in an error.
 
