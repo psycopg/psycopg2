@@ -107,6 +107,8 @@ class DictCursor(DictCursorBase):
 class DictRow(list):
     """A row object that allow by-colun-name access to data."""
 
+    __slots__ = ('_index',)
+
     def __init__(self, cursor):
         self._index = cursor.index
         self[:] = [None] * len(cursor.description)
@@ -191,6 +193,9 @@ class RealDictCursor(DictCursorBase):
             self._query_executed = 0           
 
 class RealDictRow(dict):
+
+    __slots__ = ('_column_mapping',)
+
     def __init__(self, cursor):
         dict.__init__(self)
         self._column_mapping = cursor.column_mapping

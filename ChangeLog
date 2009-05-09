@@ -1,3 +1,7 @@
+2009-05-10  Federico Di Gregorio  <fog@initd.org>
+
+	* lib/extras.py: applied DictRow "diet" patch from Marko Kreen.
+
 2009-04-21  Federico Di Gregorio  <fog@initd.org>
 
 	* setup.py: applied patch from Elvis Pranskevichus to make
