@@ -27,7 +27,7 @@ import pool
 
 import psycopg2
 from psycopg2.extensions import INTEGER, LONGINTEGER, FLOAT, BOOLEAN, DATE, TIME
-from psycopg2.extensions import register_type
+from psycopg2.extensions import TransactionRollbackError, register_type
 from psycopg2 import NUMBER, STRING, ROWID, DATETIME 
 
 
@@ -169,26 +169,18 @@ class DB(TM, dbi_db.DB):
                         c.execute(qs, query_data)
                     else:
                         c.execute(qs)
-                except psycopg2.OperationalError, e:
+                except TransactionRollbackError:
+                    # Ha, here we have to look like we are the ZODB raising conflict errrors, raising ZPublisher.Publish.Retry just doesn't work
+                    logging.debug("Serialization Error, retrying transaction", exc_info=True)
+                    raise ConflictError("TransactionRollbackError from psycopg2")
+                except psycopg2.OperationalError:
+                    logging.exception("Operational error on connection, closing it.")
                     try:
-                        self.close()
+                        # Only close our connection
+                        self.putconn(True)
                     except:
+                        logging.debug("Something went wrong when we tried to close the pool", exc_info=True)
                         pass
-                    self.open()
-                    try:
-                        if   query_data:
-                            c.execute(qs, query_data)
-                        else:
-                            c.execute(qs)
-                    except (psycopg2.ProgrammingError,
-                            psycopg2.IntegrityError), e:
-                        if e.args[0].find("concurrent update") > -1:
-                            raise ConflictError
-                        raise e
-                except (psycopg2.ProgrammingError, psycopg2.IntegrityError), e:
-                    if e.args[0].find("concurrent update") > -1:
-                        raise ConflictError
-                    raise e
                 if c.description is not None:
                     nselects += 1
                     if c.description != desc and nselects > 1:

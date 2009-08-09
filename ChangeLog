@@ -1,5 +1,8 @@
 2009-08-08  Federico Di Gregorio  <fog@initd.org>
 
+	* ZPsycopgDA/db.py: applied serialization error retry from Brian
+	Sutherland.
+
 	* Implemented connection.reset() method to reset the connection to
 	well-know default parameters. This is much faster than closing and
 	reopening the connection. (Suggested by a bug report by Glenn
