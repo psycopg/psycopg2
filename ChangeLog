@@ -1,5 +1,8 @@
 2009-08-08  Federico Di Gregorio  <fog@initd.org>
 
+	* setup.py: fixed version detection for PostgreSQL rc, as
+	suggested by Sok Ann Yap.
+
 	* ZPsycopgDA/db.py: applied serialization error retry from Brian
 	Sutherland.
 

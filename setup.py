@@ -208,7 +208,7 @@ class psycopg_build_ext(build_ext):
             except:
                 pgversion = "7.4.0"
 
-            verre = re.compile(r"(\d+)\.(\d+)(?:(?:\.(\d+))|(devel|beta\d+))")
+            verre = re.compile(r"(\d+)\.(\d+)(?:(?:\.(\d+))|(devel|(beta|rc)\d+))")
             m = verre.match(pgversion)
             if m:
                 pgmajor, pgminor, pgpatch = m.group(1, 2, 3)
