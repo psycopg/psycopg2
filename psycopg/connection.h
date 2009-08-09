@@ -87,6 +87,7 @@ typedef struct {
 /* C-callable functions in connection_int.c and connection_ext.c */
 HIDDEN void conn_notice_process(connectionObject *self);
 HIDDEN void conn_notice_clean(connectionObject *self);
+HIDDEN int  conn_setup(connectionObject *self, PGconn *pgconn);
 HIDDEN int  conn_connect(connectionObject *self);
 HIDDEN void conn_close(connectionObject *self);
 HIDDEN int  conn_commit(connectionObject *self);

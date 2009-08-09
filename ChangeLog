@@ -1,5 +1,10 @@
 2009-08-08  Federico Di Gregorio  <fog@initd.org>
 
+	* Implemented connection.reset() method to reset the connection to
+	well-know default parameters. This is much faster than closing and
+	reopening the connection. (Suggested by a bug report by Glenn
+	Maynard.)
+
 	* psycopg/cursor_type.c: unified size macro definitions in COPY TO
 	and COPY FROM operations: now the buffer for column names is 8192
 	bytes that should be enough even for very large tables.

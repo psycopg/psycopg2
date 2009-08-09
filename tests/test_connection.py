@@ -28,7 +28,19 @@ class ConnectionTests(unittest.TestCase):
         conn.close()
         self.assertEqual(curs.closed, True)
 
+    def test_reset(self):
+        conn = self.connect()
+        # switch isolation level, then reset
+        level = conn.isolation_level
+        conn.set_isolation_level(0)
+        self.assertEqual(conn.isolation_level, 0)
+        conn.reset()
+        # now the isolation level should be equal to saved one
+        self.assertEqual(conn.isolation_level, level)
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
+if __name__ == '__main__':
+    unittest.main(defaultTest='test_suite')

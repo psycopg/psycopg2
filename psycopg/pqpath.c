@@ -401,7 +401,8 @@ pq_begin_locked(connectionObject *conn, PGresult **pgres, char **error)
 /* pq_commit - send an END, if necessary
 
    This function should be called while holding the global interpreter
-   lock. */
+   lock.
+*/
 
 int
 pq_commit(connectionObject *conn)
@@ -427,7 +428,7 @@ pq_commit(connectionObject *conn)
 
     pthread_mutex_unlock(&conn->lock);
     Py_END_ALLOW_THREADS;
-    
+
     conn_notice_process(conn);
 
     if (retvalue < 0)
@@ -489,7 +490,70 @@ pq_abort(connectionObject *conn)
 
     pthread_mutex_unlock(&conn->lock);
     Py_END_ALLOW_THREADS;
-    
+
+    conn_notice_process(conn);
+
+    if (retvalue < 0)
+        pq_complete_error(conn, &pgres, &error);
+
+    return retvalue;
+}
+
+/* pq_reset - reset the connection
+
+   This function should be called while holding the global interpreter
+   lock.
+
+   The _locked version of this function should be called on a locked
+   connection without holding the global interpreter lock.
+*/
+
+int
+pq_reset_locked(connectionObject *conn, PGresult **pgres, char **error)
+{
+    int retvalue = -1;
+
+    Dprintf("pq_reset_locked: pgconn = %p, isolevel = %ld, status = %d",
+            conn->pgconn, conn->isolation_level, conn->status);
+
+    conn->mark += 1;
+    pq_clear_async(conn);
+
+    if (conn->isolation_level > 0 && conn->status == CONN_STATUS_BEGIN) {
+        retvalue = pq_execute_command_locked(conn, "ABORT", pgres, error);
+        if (retvalue != 0) return retvalue;
+    }
+
+    retvalue = pq_execute_command_locked(conn, "RESET ALL", pgres, error);
+    if (retvalue != 0) return retvalue;
+
+    retvalue = pq_execute_command_locked(conn,
+        "SET SESSION AUTHORIZATION DEFAULT", pgres, error);
+    if (retvalue != 0) return retvalue;
+
+    conn->status = CONN_STATUS_READY;
+
+    return retvalue;
+}
+
+int
+pq_reset(connectionObject *conn)
+{
+    int retvalue = -1;
+    PGresult *pgres = NULL;
+    char *error = NULL;
+
+    Dprintf("pq_reset: pgconn = %p, isolevel = %ld, status = %d",
+            conn->pgconn, conn->isolation_level, conn->status);
+
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&conn->lock);
+
+    retvalue = pq_reset_locked(conn, &pgres, &error);
+
+    pthread_mutex_unlock(&conn->lock);
+    Py_END_ALLOW_THREADS;
+
     conn_notice_process(conn);
 
     if (retvalue < 0)

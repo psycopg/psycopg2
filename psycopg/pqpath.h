@@ -39,6 +39,7 @@ HIDDEN int pq_commit(connectionObject *conn);
 HIDDEN int pq_abort_locked(connectionObject *conn, PGresult **pgres,
                            char **error);
 HIDDEN int pq_abort(connectionObject *conn);
+HIDDEN int pq_reset(connectionObject *conn);
 HIDDEN int pq_is_busy(connectionObject *conn);
 
 HIDDEN void pq_set_critical(connectionObject *conn, const char *msg);

@@ -107,12 +107,11 @@ conn_notice_clean(connectionObject *self)
     pthread_mutex_unlock(&self->lock);    
 }
 
-/* conn_connect - execute a connection to the database */
+/* conn_setup - setup and read basic information about the connection */
 
 int
-conn_connect(connectionObject *self)
+conn_setup(connectionObject *self, PGconn *pgconn)
 {
-    PGconn *pgconn;
     PGresult *pgres;
     const char *data, *tmp;
     const char *scs;    /* standard-conforming strings */
@@ -129,27 +128,9 @@ conn_connect(connectionObject *self)
     static const char lvl2a[] = "repeatable read";
     static const char lvl2b[] = "serializable";
 
-    Py_BEGIN_ALLOW_THREADS;
-    pgconn = PQconnectdb(self->dsn);
-    Py_END_ALLOW_THREADS;
-
-    Dprintf("conn_connect: new postgresql connection at %p", pgconn);
-
-    if (pgconn == NULL)
-    {
-        Dprintf("conn_connect: PQconnectdb(%s) FAILED", self->dsn);
-        PyErr_SetString(OperationalError, "PQconnectdb() failed");
-        return -1;
-    }
-    else if (PQstatus(pgconn) == CONNECTION_BAD)
-    {
-        Dprintf("conn_connect: PQconnectdb(%s) returned BAD", self->dsn);
-        PyErr_SetString(OperationalError, PQerrorMessage(pgconn));
-        PQfinish(pgconn);
-        return -1;
-    }
-
-    PQsetNoticeProcessor(pgconn, conn_notice_callback, (void*)self);
+    if (self->encoding) free(self->encoding);
+    self->equote = 0;
+    self->isolation_level = 0;
 
     /*
      * The presence of the 'standard_conforming_strings' parameter
@@ -236,6 +217,41 @@ conn_connect(connectionObject *self)
         self->isolation_level = 2;
     CLEARPGRES(pgres);
 
+    return 0;
+}
+
+/* conn_connect - execute a connection to the database */
+
+int
+conn_connect(connectionObject *self)
+{
+    PGconn *pgconn;
+
+    Py_BEGIN_ALLOW_THREADS;
+    pgconn = PQconnectdb(self->dsn);
+    Py_END_ALLOW_THREADS;
+
+    Dprintf("conn_connect: new postgresql connection at %p", pgconn);
+
+    if (pgconn == NULL)
+    {
+        Dprintf("conn_connect: PQconnectdb(%s) FAILED", self->dsn);
+        PyErr_SetString(OperationalError, "PQconnectdb() failed");
+        return -1;
+    }
+    else if (PQstatus(pgconn) == CONNECTION_BAD)
+    {
+        Dprintf("conn_connect: PQconnectdb(%s) returned BAD", self->dsn);
+        PyErr_SetString(OperationalError, PQerrorMessage(pgconn));
+        PQfinish(pgconn);
+        return -1;
+    }
+
+    PQsetNoticeProcessor(pgconn, conn_notice_callback, (void*)self);
+
+    if (conn_setup(self, pgconn) == -1)
+        return -1;
+
     if (PQsetnonblocking(pgconn, 1) != 0) {
         Dprintf("conn_connect: PQsetnonblocking() FAILED");
         PyErr_SetString(OperationalError, "PQsetnonblocking() failed");
@@ -249,7 +265,7 @@ conn_connect(connectionObject *self)
     self->protocol = 2;
 #endif
     Dprintf("conn_connect: using protocol %d", self->protocol);
-    
+
     self->server_version = (int)PQserverVersion(pgconn);
 
     self->pgconn = pgconn;

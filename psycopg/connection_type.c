@@ -351,6 +351,31 @@ psyco_conn_get_backend_pid(connectionObject *self)
     return PyInt_FromLong((long)PQbackendPID(self->pgconn));
 }
 
+/* reset the currect connection */
+
+#define psyco_conn_reset_doc \
+"reset() -- Reset current connection to defaults."
+
+static PyObject *
+psyco_conn_reset(connectionObject *self)
+{
+    int res;
+
+    EXC_IF_CONN_CLOSED(self);
+
+    if (pq_reset(self) < 0)
+        return NULL;
+
+    pthread_mutex_lock(&self->lock);
+    res = conn_setup(self, self->pgconn);
+    pthread_mutex_unlock(&self->lock);
+    if (res < 0)
+        return NULL;
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 #endif
 
 static PyObject *
@@ -389,6 +414,8 @@ static struct PyMethodDef connectionObject_methods[] = {
      METH_NOARGS, psyco_conn_get_backend_pid_doc},
     {"lobject", (PyCFunction)psyco_conn_lobject,
      METH_VARARGS|METH_KEYWORDS, psyco_conn_lobject_doc},
+    {"reset", (PyCFunction)psyco_conn_reset,
+     METH_NOARGS, psyco_conn_reset_doc},
 #endif
     {NULL}
 };
@@ -469,6 +496,7 @@ connection_setup(connectionObject *self, const char *dsn)
     self->string_types = PyDict_New();
     self->binary_types = PyDict_New();
     self->notice_pending = NULL;
+    self->encoding = NULL;
 
     pthread_mutex_init(&(self->lock), NULL);
 
