@@ -1127,8 +1127,6 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
 
 #ifdef PSYCOPG_EXTENSIONS
 
-#define COPY_BUFFER_SIZE 8192
-
 static int _psyco_curs_copy_columns(PyObject *columns, char *columnlist)
 {
     PyObject *col, *coliter;
@@ -1201,7 +1199,7 @@ _psyco_curs_has_read_check(PyObject* o, void* var)
 static PyObject *
 psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
-    char query_buffer[COPY_BUFFER_SIZE];
+    char query_buffer[DEFAULT_COPYBUFF];
     Py_ssize_t query_size;
     char *query;
     const char *table_name;
@@ -1241,10 +1239,10 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
             PyErr_NoMemory();
             return NULL;
         }
-        query_size = PyOS_snprintf(query, COPY_BUFFER_SIZE,
+        query_size = PyOS_snprintf(query, DEFAULT_COPYBUFF,
             "COPY %s%s FROM stdin WITH DELIMITER AS %s NULL AS %s",
             table_name, columnlist, quoted_delimiter, quoted_null);
-        if (query_size >= COPY_BUFFER_SIZE) {
+        if (query_size >= DEFAULT_COPYBUFF) {
             /* Got truncated, allocate dynamically */
             query = (char *)PyMem_Malloc((query_size + 1) * sizeof(char));
             PyOS_snprintf(query, query_size + 1,
@@ -1254,10 +1252,10 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
         PyMem_Free(quoted_null);
     }
     else {
-        query_size = PyOS_snprintf(query, COPY_BUFFER_SIZE,
+        query_size = PyOS_snprintf(query, DEFAULT_COPYBUFF,
            "COPY %s%s FROM stdin WITH DELIMITER AS %s",
            table_name, columnlist, quoted_delimiter);
-        if (query_size >= COPY_BUFFER_SIZE) {
+        if (query_size >= DEFAULT_COPYBUFF) {
             /* Got truncated, allocate dynamically */
             query = (char *)PyMem_Malloc((query_size + 1) * sizeof(char));
             PyOS_snprintf(query, query_size + 1,
@@ -1310,7 +1308,7 @@ static PyObject *
 psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
     char *query = NULL;
-    char query_buffer[COPY_BUFFER_SIZE];
+    char query_buffer[DEFAULT_COPYBUFF];
     size_t query_size;
     char columnlist[DEFAULT_COPYBUFF];
     const char *table_name;
@@ -1344,10 +1342,10 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
             PyErr_NoMemory();
             return NULL;
         }
-        query_size = PyOS_snprintf(query, COPY_BUFFER_SIZE,
+        query_size = PyOS_snprintf(query, DEFAULT_COPYBUFF,
             "COPY %s%s TO stdout WITH DELIMITER AS %s"
             " NULL AS %s", table_name, columnlist, quoted_delimiter, quoted_null);
-        if (query_size >= COPY_BUFFER_SIZE) {
+        if (query_size >= DEFAULT_COPYBUFF) {
             /* Got truncated, allocate dynamically */
             query = (char *)PyMem_Malloc((query_size + 1) * sizeof(char));
             PyOS_snprintf(query, query_size + 1,
@@ -1357,10 +1355,10 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
         PyMem_Free(quoted_null);
     }
     else {
-        query_size = PyOS_snprintf(query, COPY_BUFFER_SIZE,
+        query_size = PyOS_snprintf(query, DEFAULT_COPYBUFF,
             "COPY %s%s TO stdout WITH DELIMITER AS %s",
             table_name, columnlist, quoted_delimiter);
-        if (query_size >= COPY_BUFFER_SIZE) {
+        if (query_size >= DEFAULT_COPYBUFF) {
             /* Got truncated, allocate dynamically */
             query = (char *)PyMem_Malloc((query_size + 1) * sizeof(char));
             PyOS_snprintf(query, query_size + 1,

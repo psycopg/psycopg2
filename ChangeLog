@@ -1,3 +1,9 @@
+2009-08-08  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/cursor_type.c: unified size macro definitions in COPY TO
+	and COPY FROM operations: now the buffer for column names is 8192
+	bytes that should be enough even for very large tables.
+
 2009-05-19  Federico Di Gregorio  <fog@initd.org>
 
 	* Applied patch from Robert Munro to fix version check
