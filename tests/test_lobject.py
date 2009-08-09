@@ -98,6 +98,11 @@ class LargeObjectTests(unittest.TestCase):
         lo = self.conn.lobject()
         self.assertEqual(lo.write("some data"), len("some data"))
 
+    def test_write_large(self):
+        lo = self.conn.lobject()
+        data = "data" * 1000000
+        self.assertEqual(lo.write(data), len(data))
+
     def test_read(self):
         lo = self.conn.lobject()
         length = lo.write("some data")
@@ -106,6 +111,16 @@ class LargeObjectTests(unittest.TestCase):
         lo = self.conn.lobject(lo.oid)
         self.assertEqual(lo.read(4), "some")
         self.assertEqual(lo.read(), " data")
+
+    def test_read_large(self):
+        lo = self.conn.lobject()
+        data = "data" * 1000000
+        length = lo.write("some"+data)
+        lo.close()
+
+        lo = self.conn.lobject(lo.oid)
+        self.assertEqual(lo.read(4), "some")
+        self.assertEqual(lo.read(), data)
 
     def test_seek_tell(self):
         lo = self.conn.lobject()

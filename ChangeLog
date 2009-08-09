@@ -1,5 +1,9 @@
 2009-08-08  Federico Di Gregorio  <fog@initd.org>
 
+	* psycopg/lobject_int.c: fixed problem with writing large data using
+	lo_write: apparently the large objects code does not like non-blocking
+	connections.
+
 	* setup.py: fixed version detection for PostgreSQL rc, as
 	suggested by Sok Ann Yap.
 
