@@ -1,5 +1,7 @@
 2009-08-08  Federico Di Gregorio  <fog@initd.org>
 
+	* Release 2.0.12.
+
 	* psycopg/lobject_int.c: fixed problem with writing large data using
 	lo_write: apparently the large objects code does not like non-blocking
 	connections.
@@ -22,7 +24,7 @@
 2009-05-19  Federico Di Gregorio  <fog@initd.org>
 
 	* Applied patch from Robert Munro to fix version check
-	in ZPSycopgDA.
+	in ZPsycopgDA.
 
 2009-05-10  Federico Di Gregorio  <fog@initd.org>
 

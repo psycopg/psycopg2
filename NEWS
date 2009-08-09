@@ -1,3 +1,20 @@
+What's new in psycopg 2.0.12
+---------------------------
+
+* New features:
+  - The connection object now has a reset() method that can be used to
+    reset the connection to its default state.
+
+* Bug fixes:
+  - copy_to() and copy_from() now accept a much larger number of columns.
+  - Fixed PostgreSQL version detection.
+  - Fixed ZPsycopgDA version check.
+  - Fixed regression in ZPsycopgDA that made it behave wrongly when
+    receiving serialization errors: now the query is re-issued as it
+    should be by propagating the correct exception to Zope.
+  - Writing "large" large objects should now work.
+
+
 What's new in psycopg 2.0.11
 ---------------------------
 
