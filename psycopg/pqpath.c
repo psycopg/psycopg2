@@ -773,7 +773,7 @@ pq_execute(cursorObject *curs, const char *query, int async)
 
     if (async == 0) {
         IFCLEARPGRES(curs->pgres);
-        Dprintf("pq_execute: executing SYNC query:");
+        Dprintf("pq_execute: executing SYNC query: pgconn = %p", curs->conn->pgconn);
         Dprintf("    %-.200s", query);
         if (!psyco_green()) {
             curs->pgres = PQexec(curs->conn->pgconn, query);
@@ -799,7 +799,7 @@ pq_execute(cursorObject *curs, const char *query, int async)
     else if (async == 1) {
         int ret;
 
-        Dprintf("pq_execute: executing ASYNC query:");
+        Dprintf("pq_execute: executing ASYNC query: pgconn = %p", curs->conn->pgconn);
         Dprintf("    %-.200s", query);
 
         IFCLEARPGRES(curs->pgres);
@@ -1402,7 +1402,7 @@ pq_fetch(cursorObject *curs)
         break;
 
     default:
-        Dprintf("pq_fetch: uh-oh, something FAILED");
+        Dprintf("pq_fetch: uh-oh, something FAILED: pgconn = %p", curs->conn);
         pq_raise(curs->conn, curs, NULL);
         IFCLEARPGRES(curs->pgres);
         ex = -1;
