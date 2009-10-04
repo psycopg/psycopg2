@@ -65,6 +65,8 @@ void
 conn_notice_process(connectionObject *self)
 {
     struct connectionObject_notice *notice;
+    PyObject *msg;
+
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
 
@@ -73,7 +75,7 @@ conn_notice_process(connectionObject *self)
     while (notice != NULL) {
         Py_BLOCK_THREADS;
 
-        PyObject *msg = PyString_FromString(notice->message);
+        msg = PyString_FromString(notice->message);
 
         Dprintf("conn_notice_process: %s", notice->message);
 
@@ -122,10 +124,6 @@ conn_notice_clean(connectionObject *self)
 int
 conn_setup(connectionObject *self, PGconn *pgconn)
 {
-    Py_BEGIN_ALLOW_THREADS;
-    pthread_mutex_lock(&self->lock);
-    Py_BLOCK_THREADS;
-
     PGresult *pgres;
     const char *data, *tmp;
     const char *scs;    /* standard-conforming strings */
@@ -141,6 +139,10 @@ conn_setup(connectionObject *self, PGconn *pgconn)
     static const char lvl1b[] = "read committed";
     static const char lvl2a[] = "repeatable read";
     static const char lvl2b[] = "serializable";
+
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&self->lock);
+    Py_BLOCK_THREADS;
 
     if (self->encoding) free(self->encoding);
     self->equote = 0;
