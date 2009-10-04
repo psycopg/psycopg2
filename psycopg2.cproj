@@ -139,6 +139,7 @@
     <None Include="psycopg\typecast_basic.c.old" />
     <None Include="sandbox\test_isready_connection_closed.py" />
     <None Include="psycopg\adapter_pfloat.h" />
+    <None Include="README.async" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="psycopg\adapter_asis.c" />
@@ -175,8 +176,8 @@
           <ChangeLogPolicy UpdateMode="Nearest" VcsIntegration="None" inheritsSet="Mono">
             <MessageStyle FileSeparator=", " LineAlign="0" />
           </ChangeLogPolicy>
-          <TextStylePolicy FileWidth="144" RemoveTrailingWhitespace="True" inheritsSet="VisualStudio" inheritsScope="text/plain" />
-          <TextStylePolicy NoTabsAfterNonTabs="True" RemoveTrailingWhitespace="True" inheritsSet="Mono" inheritsScope="text/plain" scope="text/x-changelog" />
+          <TextStylePolicy FileWidth="144" NoTabsAfterNonTabs="False" inheritsSet="Mono" inheritsScope="text/x-python" />
+          <TextStylePolicy TabWidth="8" TabsToSpaces="False" inheritsSet="Mono" inheritsScope="text/x-python" scope="text/x-changelog" />
         </Policies>
       </Properties>
     </MonoDevelop>
