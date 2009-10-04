@@ -89,10 +89,12 @@ class psycopg_build_ext(build_ext):
           "The name of the pg_config binary and/or full path to find it"),
         ('have-ssl', None,
          "Compile with OpenSSL built PostgreSQL libraries (Windows only)."),
+        ('static-libpq', None,
+         "Statically link the PostgreSQL client library"),
     ])
 
     boolean_options = build_ext.boolean_options[:]
-    boolean_options.extend(('use-pydatetime', 'have-ssl'))
+    boolean_options.extend(('use-pydatetime', 'have-ssl', 'static-libpq'))
 
     DEFAULT_PG_CONFIG = "pg_config"
 
@@ -194,7 +196,12 @@ class psycopg_build_ext(build_ext):
         build_ext.finalize_options(self)
 
         self.include_dirs.append(".")
-        self.libraries.append("pq")
+        if static_libpq:
+            if not self.link_objects: self.link_objects = []
+            self.link_objects.append(
+                    os.path.join(self.get_pg_config("libdir"), "libpq.a"))
+        else:
+            self.libraries.append("pq")
 
         try:
             self.library_dirs.append(self.get_pg_config("libdir"))
@@ -387,6 +394,11 @@ if parser.has_option('build_ext', 'have_ssl'):
     have_ssl = int(parser.get('build_ext', 'have_ssl'))
 else:
     have_ssl = 0
+
+if parser.has_option('build_ext', 'static_libpq'):
+    static_libpq = int(parser.get('build_ext', 'static_libpq'))
+else:
+    static_libpq = 0
 
 # build the extension
 

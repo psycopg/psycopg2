@@ -1,5 +1,8 @@
 2009-10-04  Federico Di Gregorio  <fog@initd.org>
 
+	* setup.py: applied patch from Christian Jacobsen to link to static
+	version of libpq.
+
 	* lib/extras.py: added support for UUID arrays.
 
 	* psycopg/connection_int.c: applied patch from Richard Davies to avoid
