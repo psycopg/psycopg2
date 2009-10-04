@@ -684,7 +684,7 @@ static PyObject *
 _psyco_curs_buildrow_fill(cursorObject *self, PyObject *res,
                           int row, int n, int istuple)
 {
-    int i, len;
+    int i, len, err;
     const char *str;
     PyObject *val;
 
@@ -713,7 +713,7 @@ _psyco_curs_buildrow_fill(cursorObject *self, PyObject *res,
                 PyTuple_SET_ITEM(res, i, val);
             }
             else {
-                int err = PySequence_SetItem(res, i, val);
+                err = PySequence_SetItem(res, i, val);
                 Py_DECREF(val);
                 if (err == -1) {
                     Py_DECREF(res);

@@ -35,6 +35,7 @@
 static void
 conn_notice_callback(void *args, const char *message)
 {
+    struct connectionObject_notice *notice;
     connectionObject *self = (connectionObject *)args;
 
     Dprintf("conn_notice_callback: %s", message);
@@ -52,8 +53,7 @@ conn_notice_callback(void *args, const char *message)
     if (self->protocol < 3 && strncmp(message, "ERROR", 5) == 0)
         pq_set_critical(self, message);
     else {
-        struct connectionObject_notice *notice =
-            (struct connectionObject_notice *)
+        notice = (struct connectionObject_notice *)
                 malloc(sizeof(struct connectionObject_notice));
         notice->message = strdup(message);
         notice->next = self->notice_pending;
@@ -64,10 +64,11 @@ conn_notice_callback(void *args, const char *message)
 void
 conn_notice_process(connectionObject *self)
 {
+    struct connectionObject_notice *notice;
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
 
-    struct connectionObject_notice *notice =  self->notice_pending;
+    notice =  self->notice_pending;
 
     while (notice != NULL) {
         Py_BLOCK_THREADS;
@@ -97,10 +98,11 @@ conn_notice_process(connectionObject *self)
 void
 conn_notice_clean(connectionObject *self)
 {
+    struct connectionObject_notice *tmp, *notice;
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
 
-    struct connectionObject_notice *tmp, *notice = self->notice_pending;
+    notice = self->notice_pending;
 
     while (notice != NULL) {
         tmp = notice;
