@@ -1,5 +1,18 @@
+What's new in psycopg 2.0.13
+----------------------------
+
+* New features:
+  - Support for UUID arrays.
+  - It is now possible to build psycopg linking to a static libpq
+    library.
+
+* Bug fixes:
+  - Fixed a deadlock related to using the same connection with
+    multiple cursors from different threads.
+
+
 What's new in psycopg 2.0.12
----------------------------
+----------------------------
 
 * New features:
   - The connection object now has a reset() method that can be used to
@@ -16,7 +29,7 @@ What's new in psycopg 2.0.12
 
 
 What's new in psycopg 2.0.11
----------------------------
+----------------------------
 
 * New features:
   - DictRow and RealDictRow now use less memory. If you inherit on them
@@ -30,7 +43,7 @@ What's new in psycopg 2.0.11
 
 
 What's new in psycopg 2.0.10
----------------------------
+----------------------------
 
 * New features:
   - A specialized type-caster that can parse time zones with seconds is
