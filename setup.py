@@ -174,6 +174,7 @@ class psycopg_build_ext(build_ext):
         if compiler_is_msvc:
             # MSVC requires an explicit "libpq"
             self.libraries.remove("pq")
+            self.libraries.append("secur32")
             self.libraries.append("libpq")
             self.libraries.append("shfolder")
             for path in self.library_dirs:
