@@ -340,13 +340,34 @@ try:
             
         __str__ = getquoted
 
-    def register_uuid(oid=None, conn_or_curs=None):
+    def register_uuid(oids=None, conn_or_curs=None):
         """Create the UUID type and an uuid.UUID adapter."""
-        if not oid: oid = 2950
-        _ext.UUID = _ext.new_type((oid, ), "UUID",
+        if not oids:
+            oid1 = 2950
+            oid2 = 2951
+        elif type(oids) == list:
+            oid1, oid2 = oids
+        else:
+            oid1 = oids
+            oid2 = 2951
+
+        def parseUUIDARRAY(data, cursor):
+            if data is None:
+                return None
+            elif data == '{}':
+                return []
+            else:
+                return [((len(x) > 0 and x != 'NULL') and uuid.UUID(x) or None)
+                        for x in data[1:-1].split(',')]
+
+        _ext.UUID = _ext.new_type((oid1, ), "UUID",
                 lambda data, cursor: data and uuid.UUID(data) or None)
+        _ext.UUIDARRAY = _ext.new_type((oid2,), "UUID[]", parseUUIDARRAY)
+
         _ext.register_type(_ext.UUID, conn_or_curs)
+        _ext.register_type(_ext.UUIDARRAY, conn_or_curs)
         _ext.register_adapter(uuid.UUID, UUID_adapter)
+
         return _ext.UUID
 
 except ImportError, e:

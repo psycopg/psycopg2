@@ -42,12 +42,32 @@ class TypesExtrasTests(unittest.TestCase):
             psycopg2.extras.register_uuid()
         except:
             return
-        u = uuid.UUID('9c6d5a77-7256-457e-9461-347b4358e350');
+        u = uuid.UUID('9c6d5a77-7256-457e-9461-347b4358e350')
         s = self.execute("SELECT %s AS foo", (u,))
         self.failUnless(u == s)
         # must survive NULL cast to a uuid
         s = self.execute("SELECT NULL::uuid AS foo")
         self.failUnless(s is None)
+
+    def testUUIDARRAY(self):
+        try:
+            import uuid
+            psycopg2.extras.register_uuid()
+        except:
+            return
+        u = [uuid.UUID('9c6d5a77-7256-457e-9461-347b4358e350'), uuid.UUID('9c6d5a77-7256-457e-9461-347b4358e352')]
+        s = self.execute("SELECT %s AS foo", (u,))
+        self.failUnless(u == s)
+        # array with a NULL element
+        u = [uuid.UUID('9c6d5a77-7256-457e-9461-347b4358e350'), None]
+        s = self.execute("SELECT %s AS foo", (u,))
+        self.failUnless(u == s)
+        # must survive NULL cast to a uuid[]
+        s = self.execute("SELECT NULL::uuid[] AS foo")
+        self.failUnless(s is None)
+        # what about empty arrays?
+        s = self.execute("SELECT '{}'::uuid[] AS foo")
+        self.failUnless(type(s) == list and len(s) == 0)
 
     def testINET(self):
         psycopg2.extras.register_inet()
