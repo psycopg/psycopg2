@@ -76,4 +76,16 @@ print "Large object with oid", loid, "removed"
 
 conn.commit()
 
+# this will create a very large object with a new random oid.
+lobj = conn.lobject()
+loid = lobj.oid
+print "Created a new large object with oid", loid
+
+print "Manually importing a lot of data into the object:"
+data = "data" * 1000000
+len = lobj.write(data)
+print "  imported", len, "bytes of data"
+
+conn.rollback()
+
 print "\nNow try to load the new images, to check it worked!"
