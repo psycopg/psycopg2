@@ -64,11 +64,14 @@ conn_notice_callback(void *args, const char *message)
 void
 conn_notice_process(connectionObject *self)
 {
+    Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
 
     struct connectionObject_notice *notice =  self->notice_pending;
-    
+
     while (notice != NULL) {
+        Py_BLOCK_THREADS;
+
         PyObject *msg = PyString_FromString(notice->message);
 
         Dprintf("conn_notice_process: %s", notice->message);
@@ -79,22 +82,26 @@ conn_notice_process(connectionObject *self)
         /* Remove the oldest item if the queue is getting too long. */
         if (PyList_GET_SIZE(self->notice_list) > CONN_NOTICES_LIMIT)
             PySequence_DelItem(self->notice_list, 0);
-        
+
+        Py_UNBLOCK_THREADS;
+
         notice = notice->next;
     }
-    
+
     pthread_mutex_unlock(&self->lock);
-    
-    conn_notice_clean(self);  
+    Py_END_ALLOW_THREADS;
+
+    conn_notice_clean(self);
 }
 
 void
 conn_notice_clean(connectionObject *self)
 {
+    Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
-    
+
     struct connectionObject_notice *tmp, *notice = self->notice_pending;
-    
+
     while (notice != NULL) {
         tmp = notice;
         notice = notice->next;
@@ -104,7 +111,8 @@ conn_notice_clean(connectionObject *self)
     
     self->notice_pending = NULL;
     
-    pthread_mutex_unlock(&self->lock);    
+    pthread_mutex_unlock(&self->lock);
+    Py_END_ALLOW_THREADS;    
 }
 
 /* conn_setup - setup and read basic information about the connection */
@@ -112,6 +120,10 @@ conn_notice_clean(connectionObject *self)
 int
 conn_setup(connectionObject *self, PGconn *pgconn)
 {
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&self->lock);
+    Py_BLOCK_THREADS;
+
     PGresult *pgres;
     const char *data, *tmp;
     const char *scs;    /* standard-conforming strings */
@@ -160,26 +172,32 @@ conn_setup(connectionObject *self, PGconn *pgconn)
     Dprintf("conn_connect: server requires E'' quotes: %s",
         self->equote ? "YES" : "NO");
 
-    Py_BEGIN_ALLOW_THREADS;
+    Py_UNBLOCK_THREADS;
     pgres = PQexec(pgconn, datestyle);
-    Py_END_ALLOW_THREADS;
+    Py_BLOCK_THREADS;
 
     if (pgres == NULL || PQresultStatus(pgres) != PGRES_COMMAND_OK ) {
         PyErr_SetString(OperationalError, "can't set datestyle to ISO");
         PQfinish(pgconn);
         IFCLEARPGRES(pgres);
+        Py_UNBLOCK_THREADS;
+        pthread_mutex_unlock(&self->lock);
+        Py_BLOCK_THREADS;
         return -1;
     }
     CLEARPGRES(pgres);
 
-    Py_BEGIN_ALLOW_THREADS;
+    Py_UNBLOCK_THREADS;
     pgres = PQexec(pgconn, encoding);
-    Py_END_ALLOW_THREADS;
+    Py_BLOCK_THREADS;
 
     if (pgres == NULL || PQresultStatus(pgres) != PGRES_TUPLES_OK) {
         PyErr_SetString(OperationalError, "can't fetch client_encoding");
         PQfinish(pgconn);
         IFCLEARPGRES(pgres);
+        Py_UNBLOCK_THREADS;
+        pthread_mutex_unlock(&self->lock);
+        Py_BLOCK_THREADS;
         return -1;
     }
     tmp = PQgetvalue(pgres, 0, 0);
@@ -188,6 +206,9 @@ conn_setup(connectionObject *self, PGconn *pgconn)
         PyErr_NoMemory();
         PQfinish(pgconn);
         IFCLEARPGRES(pgres);
+        Py_UNBLOCK_THREADS;
+        pthread_mutex_unlock(&self->lock);
+        Py_BLOCK_THREADS;
         return -1;
     }
     for (i=0 ; i < strlen(tmp) ; i++)
@@ -195,15 +216,18 @@ conn_setup(connectionObject *self, PGconn *pgconn)
     self->encoding[i] = '\0';
     CLEARPGRES(pgres);
 
-    Py_BEGIN_ALLOW_THREADS;
+    Py_UNBLOCK_THREADS;
     pgres = PQexec(pgconn, isolevel);
-    Py_END_ALLOW_THREADS;
+    Py_BLOCK_THREADS;
 
     if (pgres == NULL || PQresultStatus(pgres) != PGRES_TUPLES_OK) {
         PyErr_SetString(OperationalError,
                          "can't fetch default_isolation_level");
         PQfinish(pgconn);
         IFCLEARPGRES(pgres);
+        Py_UNBLOCK_THREADS;
+        pthread_mutex_unlock(&self->lock);
+        Py_BLOCK_THREADS;
         return -1;
     }
     data = PQgetvalue(pgres, 0, 0);
@@ -216,6 +240,10 @@ conn_setup(connectionObject *self, PGconn *pgconn)
     else
         self->isolation_level = 2;
     CLEARPGRES(pgres);
+
+    Py_UNBLOCK_THREADS;
+    pthread_mutex_unlock(&self->lock);
+    Py_END_ALLOW_THREADS;
 
     return 0;
 }

@@ -366,9 +366,7 @@ psyco_conn_reset(connectionObject *self)
     if (pq_reset(self) < 0)
         return NULL;
 
-    pthread_mutex_lock(&self->lock);
     res = conn_setup(self, self->pgconn);
-    pthread_mutex_unlock(&self->lock);
     if (res < 0)
         return NULL;
 
