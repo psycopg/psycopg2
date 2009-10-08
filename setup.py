@@ -106,6 +106,8 @@ class psycopg_build_ext(build_ext):
         self.use_pg_dll = 1
         self.pgdir = None
         self.mx_include_dir = None
+        self.use_pydatetime = 1
+        self.have_ssl = have_ssl
 
         self.pg_config = self.autodetect_pg_config_path()
 
@@ -184,7 +186,7 @@ class psycopg_build_ext(build_ext):
                 if os.path.isfile(os.path.join(path, "ms", "libpq.lib")):
                     self.library_dirs.append(os.path.join(path, "ms"))
                     break
-            if have_ssl:
+            if self.have_ssl:
                 self.libraries.append("libeay32")
                 self.libraries.append("ssleay32")
                 self.libraries.append("user32")
