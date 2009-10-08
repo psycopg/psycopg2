@@ -61,10 +61,13 @@ version_flags   = ['dt', 'dec']
 PLATFORM_IS_WINDOWS = sys.platform.lower().startswith('win')
 
 def get_pg_config(kind, pg_config="pg_config"):
-    p = subprocess.Popen([pg_config, "--" + kind],
-                         stdin=subprocess.PIPE,
-                         stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE)
+    try:
+      p = subprocess.Popen([pg_config, "--" + kind],
+                           stdin=subprocess.PIPE,
+                           stdout=subprocess.PIPE,
+                           stderr=subprocess.PIPE)
+    except OSError:
+        raise Warning("Unable to find 'pg_config' file")
     p.stdin.close()
     r = p.stdout.readline().strip()
     if not r:
