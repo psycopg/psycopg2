@@ -44,7 +44,7 @@ pfloat_str(pfloatObject *self)
     else if (isinf(n))
         return PyString_FromString("'Infinity'::float");
     else
-        return PyObject_Str(self->wrapped);
+        return PyObject_Repr(self->wrapped);
 }
 
 static PyObject *
