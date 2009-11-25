@@ -74,6 +74,7 @@ PyObject *
 microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
 {
     PyObject *adapter, *key;
+    char buffer[256];
 
     /* we don't check for exact type conformance as specified in PEP 246
        because the ISQLQuote type is abstract and there is no way to get a
@@ -114,7 +115,8 @@ microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
     }
 
     /* else set the right exception and return NULL */
-    psyco_set_error(ProgrammingError, NULL, "can't adapt", NULL, NULL);
+    PyOS_snprintf(buffer, 255, "can't adapt type '%s'", obj->ob_type->tp_name);
+    psyco_set_error(ProgrammingError, NULL, buffer, NULL, NULL);
     return NULL;
 }
 

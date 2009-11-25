@@ -78,6 +78,15 @@ class TypesExtrasTests(unittest.TestCase):
         s = self.execute("SELECT NULL::inet AS foo")
         self.failUnless(s is None)
 
+    def test_adapt_fail(self):
+        class Foo(object): pass
+        self.assertRaises(psycopg2.ProgrammingError,
+            psycopg2.extensions.adapt, Foo(), psycopg2.extensions.ISQLQuote, None)
+        try:
+            psycopg2.extensions.adapt(Foo(), psycopg2.extensions.ISQLQuote, None)
+        except psycopg2.ProgrammingError, err:
+            self.failUnless(str(err) == "can't adapt type 'Foo'")
+
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

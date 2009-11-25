@@ -1,5 +1,8 @@
 2009-11-25  Federico Di Gregorio  <fog@initd.org>
 
+	* psycopg/microprotocols.c: "can't adapt" message now includes full
+	type information (adapted patch from Eric Chamberlain).
+
 	* tests/types_basic.py: fixed test broken by float precision fix.
 
 2009-11-09  Federico Di Gregorio  <fog@initd.org>
