@@ -1,3 +1,7 @@
+2009-11-25  Federico Di Gregorio  <fog@initd.org>
+
+	* tests/types_basic.py: fixed test broken by float precision fix.
+
 2009-11-09  Federico Di Gregorio  <fog@initd.org>
 
 	* psycopg/adapter_pfloat.c: applied patch from Remy Blankto fix float

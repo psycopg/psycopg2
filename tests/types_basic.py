@@ -50,9 +50,9 @@ class TypesBasicTests(unittest.TestCase):
         self.failUnless(s == 1971, "wrong integer quoting: " + str(s))
         s = self.execute("SELECT %s AS foo", (1971L,))
         self.failUnless(s == 1971L, "wrong integer quoting: " + str(s))
-        # Python 2.4 defaults to Decimal?
+        # Python 2.4 defaults to Decimal? (Apparently it does not.)
         if sys.version_info[0] >= 2 and sys.version_info[1] >= 4:
-            s = self.execute("SELECT %s AS foo", (19.10,))
+            s = self.execute("SELECT %s AS foo", (decimal.Decimal("19.10"),))
             self.failUnless(s - decimal.Decimal("19.10") == 0,
                             "wrong decimal quoting: " + str(s))
         else:
