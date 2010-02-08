@@ -111,4 +111,4 @@ class SQL_IN(object):
     __str__ = getquoted
 
 
-__all__ = [ k for k in locals().keys() if not k.startswith('_') ]
+__all__ = filter(lambda k: not k.startswith('_'), locals().keys())

@@ -471,4 +471,4 @@ def register_tstz_w_secs(oids=None, conn_or_curs=None):
     return _ext.TSTZ_W_SECS
 
 
-__all__ = [ k for k in locals().keys() if not k.startswith('_') ]
+__all__ = filter(lambda k: not k.startswith('_'), locals().keys())

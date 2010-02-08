@@ -83,4 +83,5 @@ from _psycopg import __version__
 import psycopg2.extensions as _ext
 _ext.register_adapter(tuple, _ext.SQL_IN)
 
-__all__ = [ k for k in locals().keys() if not k.startswith('_') ]
+__all__ = filter(lambda k: not k.startswith('_'), locals().keys())
+
