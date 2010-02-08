@@ -3,5 +3,6 @@ MANIFEST
 *.userprefs
 *.pidb
 *.pyc
+*.sw[po]
 dist/*
 build/*
