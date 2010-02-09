@@ -225,11 +225,10 @@ Asynchronous queries
 
 .. warning::
 
-    Asynchronous queries are not enabled for 2.0
+    Psycopg support for asynchronous queries is still experimental and the
+    informations reported here may be out of date.
 
-    .. todo::
-
-        I think this is false now: async queries seem working right now...
+    Discussion testing and suggestions are welcome.
 
 Program code can initiate an asynchronous query by passing an ``async=1`` flag
 to the :meth:`cursor.execute` or :meth:`cursor.callproc` methods. A very
@@ -251,10 +250,6 @@ a number of different ways:
    current query and will block until the query is aborted or fully executed.
    The return value is ``True`` if the query was successfully aborted or
    ``False`` if it was executed. Query result are discarded in both cases.
-   
-   .. todo::
-
-        Can't see any ``connection.cancel`` method.
    
 3) :meth:`cursor.execute` is called again on the same cursor
    (:obj:`.execute()` on a different cursor will simply raise an exception).
