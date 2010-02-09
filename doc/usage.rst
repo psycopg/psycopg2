@@ -62,6 +62,35 @@ The main entry point of Psycopg are:
   
 
 
+.. index:: Transaction, Begin, Commit, Rollback, Autocommit
+
+Transactions control
+--------------------
+
+In Psycopg transactions are handled by the :class:`connection` class. By
+default, every time a command is sent to the database (using one of the
+:class:`cursor`\ s created by the connection), a new transaction is created.
+The following database commands will be executed in the context of the same
+transaction -- not only the commands issued by the first cursor, but the ones
+issued by all the cursors created by the same connection.  Should any command
+fail, the transaction will be aborted and no further command will be executed
+until a call to the :meth:`connection.rollback` method.
+
+The connection is responsible to terminate its transaction, calling either the
+:meth:`commit` or :meth:`rollback` method.  Committed changes are immediately
+made persistent into the database.  Closing the connection using the
+:meth:`close` method or destroying the connection object (calling ``del`` or
+letting it fall out of scope) will result in an implicit :meth:`rollback`
+call.
+
+It is possible to set the connection in *autocommit* mode: this way all the
+commands executed will be immediately committed and no rollback is possible. A
+few commands (e.g. ``CREATE DATABASE``) require to be run outside any
+transaction: in order to be able to run these commands from Psycopg, the
+session must be in autocommit mode.  Read the documentation for
+:meth:`connection.set_isolation_level` to know how to change the commit mode.
+
+
 .. index:: Security, SQL injection
 
 .. _sql-injection:
