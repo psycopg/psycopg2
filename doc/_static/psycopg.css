@@ -1,5 +1,10 @@
 @import url("default.css");
 
+div.admonition-todo {
+    background-color: #ffa;
+    border: 1px solid #ee2;
+}
+
 div.dbapi-extension {
     background-color: #f5ffd4;
     border: 1px solid #bda;
