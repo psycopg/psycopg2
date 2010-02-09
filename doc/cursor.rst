@@ -339,42 +339,67 @@ The ``cursor`` class
         This method currently does nothing but it is safe to call it.
 
 
+    .. method:: copy_from(file, table, sep='\\t', null='\\N', columns=None)
+ 
+        Read data *from* the file-like object :obj:`file` appending them to
+        the table named :obj:`table`.  :obj:`file` must have both ``read()``
+        and ``readline()`` method.  See :ref:`copy` for an overview. ::
+
+            >>> f = StringIO("42\tfoo\n74\tbar\n")
+            >>> cur.copy_from(f, 'test', columns=('num', 'data'))
+
+            >>> cur.execute("select * from test where id > 5;")
+            >>> cur.fetchall()
+            [(7, 42, 'foo'), (8, 74, 'bar')]
+
+        The optional argument :obj:`sep` is the columns separator and
+        :obj:`null` represents ``NULL`` values in the file.
+
+        The :obj:`columns` argument is a sequence of field names: if not
+        ``None`` only the specified fields will be included in the dump.
+
+        .. versionchanged:: 2.0.6
+            added the :obj:`columns` parameter.
+
+    .. method:: copy_to(file, table, sep='\\t', null='\\N', columns=None)
+
+        Write the content of the table named :obj:`table` *to* the file-like object :obj:`file`.  :obj:`file` must have a ``write()`` method. See
+        :ref:`copy` for an overview. ::
+
+            >>> cur.copy_to(sys.stdout, 'test', sep="|")
+            1|100|abc'def
+            2|\N|dada
+
+        The optional argument :obj:`sep` is the columns separator and
+        :obj:`null` represents ``NULL`` values in the file.
+
+        The :obj:`columns` argument is a sequence representing the fields
+        where the read data will be entered. Its length and column type should
+        match the content of the read file.
+
+        .. versionchanged:: 2.0.6
+            added the :obj:`columns` parameter.
+
     .. method:: copy_expert(sql, file [, size])
 
-        Submit a user-composed COPY statement.
+        Submit a user-composed ``COPY`` statement. The method is useful to
+        handle all the parameters that PostgreSQL makes available (see
+        |COPY|__ command documentation).
+
+            >>> cur.copy_expert("COPY test TO STDOUT WITH CSV HEADER", sys.stdout)
+            id,num,data
+            1,100,abc'def
+            2,,dada
 
         :obj:`file` must be an open, readable file for ``COPY FROM`` or an
         open, writeable file for ``COPY TO``. The optional :obj:`size`
         argument, when specified for a ``COPY FROM`` statement, will be passed
-        to file's read method to control the read buffer size.
+        to file's read method to control the read buffer size. 
 
-        .. todo:: 
+        .. |COPY| replace:: ``COPY``
+        .. __: http://www.postgresql.org/docs/8.4/static/sql-copy.html
 
-            I'm sure copy_expert can be described better!
-
-    .. method:: copy_from(file, table, sep='\t', null='\N', columns=None)
-     
-        Read data *from* the file-like object :obj:`file` appending them to
-        the table named :obj:`table`.  See :ref:`copy`.
-        
-        :obj:`file` must have both ``read()`` and ``readline()`` method.
-
-        The optional arguments: :obj:`sep` is the columns separator and
-        :obj:`null` represents ``NULL`` values in the file.
-
-        .. todo:: columns argument in copy_from
-
-    .. method:: copy_to(file, table, sep='\t', null='\N', columns=None)
-
-        Write the content of the table named :obj:`table` *to* the file-like
-        object :obj:`file`.  See :ref:`copy`.
-        
-        :obj:`file` must have a ``write()`` method.
-
-        The optional arguments: :obj:`sep` is the columns separator and
-        :obj:`null` represents ``NULL`` values in the file.
-
-        .. todo:: columns argument in copy_to
+        .. versionadded:: 2.0.6
 
     .. attribute:: row_factory
 
