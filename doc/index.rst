@@ -1,0 +1,57 @@
+=================================================
+Psycopg -- PostgreSQL database adapter for Python
+=================================================
+
+.. sectionauthor:: Daniele Varrazzo <daniele.varrazzo@gmail.com>
+
+Psycopg is a PostgreSQL_ database adapter for the Python_ programming
+language.  Its main advantages are that it supports the full Python |DBAPI 2.0|
+and it is thread safe (threads can share the connections). It was designed for
+heavily multi-threaded applications that create and destroy lots of cursors and
+make a conspicuous number of concurrent INSERTs or UPDATEs. The psycopg
+distribution includes ZPsycopgDA, a Zope_ Database Adapter.
+
+Psycopg 2 is an almost complete rewrite of the psycopg 1.1.x branch. Psycopg 2
+features complete libpq_ v3 protocol, `COPY TO/COPY FROM`__ and full object
+adaptation for all basic Python 2.3 types: strings (including unicode), ints,
+longs, floats, buffers (binary objects), booleans, `mx.DateTime`_ and builtin
+datetime types. It also supports unicode queries and Python lists mapped to
+PostgreSQL arrays.
+
+.. _PostgreSQL: http://www.postgresql.org/
+.. _Python: http://www.python.org/
+.. _Zope: http://www.zope.org/
+.. _libpq: http://www.postgresql.org/docs/8.4/static/libpq.html
+.. __: http://www.postgresql.org/docs/8.4/static/sql-copy.html
+
+Contents:
+
+.. toctree::
+   :maxdepth: 2
+
+   usage
+   module
+   connection
+   cursor
+   advanced
+   extensions
+   tz
+   extras
+
+.. ifconfig:: todo_include_todos
+
+    .. note::
+
+        **To Do items in the documentation**
+
+        .. todolist::
+
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
+
+

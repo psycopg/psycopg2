@@ -1,0 +1,258 @@
+The :mod:`psycopg2` module content
+==================================
+
+.. sectionauthor:: Daniele Varrazzo <daniele.varrazzo@gmail.com>
+
+.. module:: psycopg2
+
+The module interface respects the standard defined in the |DBAPI 2.0|.
+
+.. index:: 
+    single: Connection string
+    double: Connection; Parameters
+    single: Username; Connection
+    single: Password; Connection
+    single: Host; Connection
+    single: Port; Connection
+    single: DSN (Database Source Name)
+
+.. function:: connect(dsn or params[, connection_factory])
+
+    Create a new database session and return a new :class:`connection` object.
+
+    You can specify the connection parameters either as a string::
+
+        conn = psycopg2.connect("dbname=test user=postgres password=secret")
+
+    or using a set of keyword arguments::
+
+        conn = psycopg2.connect(database="test", user="postgres", password="secret")
+
+    The full list of available parameters is:
+    
+    - ``dbname`` the database name (only in dsn string)
+    - ``database`` the database name (only as keyword argument)
+    - ``user`` user name used to authenticate
+    - ``password`` password used to authenticate
+    - ``host`` database host address (defaults to UNIX socket if not provided)
+    - ``port`` connection port number (defaults to 5432 if not provided)
+    - ``sslmode`` `SSL TCP/IP negotiation`__ mode
+
+    .. __: http://www.postgresql.org/docs/8.4/static/libpq-ssl.html#LIBPQ-SSL-SSLMODE-STATEMENTS
+
+    Using the :obj:`connection_factory` parameter a different class or
+    connections factory can be specified. It should be a callable object
+    taking a :obj:`dsn` argument. See :ref:`subclassing-connection` for
+    details.
+
+.. data:: apilevel
+
+    String constant stating the supported DB API level.  For :mod:`psycopg2` is
+    ``2.0``.
+
+.. data:: threadsafety
+
+    Integer constant stating the level of thread safety the interface
+    supports.  For :mod:`psycopg2` is ``2``, i.e. threads can share the module
+    and the connection. See :ref:`thread-safety` for details.
+
+.. data:: paramstyle
+
+    String constant stating the type of parameter marker formatting expected
+    by the interface.  For :mod:`psycopg2` is ``pyformat``.  See also
+    :ref:`query-parameters`.
+
+
+.. index:: Exceptions
+
+Exceptions
+----------
+
+In compliance with the |DBAPI 2.0|, the module makes informations about errors
+available through the following exceptions:
+
+.. todo::
+    There are actually a couple of extra extensions defined in _psycopg and
+    imported in the connection, but not in this module: shouldn't be there
+    them too?
+    
+
+.. exception:: Warning 
+            
+    Exception raised for important warnings like data truncations while
+    inserting, etc. It is a subclass of the Python |StandardError|_ (defined in
+    the module exceptions).
+            
+.. exception:: Error 
+
+    Exception that is the base class of all other error exceptions. You can
+    use this to catch all errors with one single ``except`` statement. Warnings
+    are not considered errors and thus should not use this class as base. It
+    is a subclass of the Python |StandardError|_ (defined in the module
+    exceptions).
+    
+.. exception:: InterfaceError
+
+    Exception raised for errors that are related to the database interface
+    rather than the database itself.  It is a subclass of :exc:`Error`.
+
+.. exception:: DatabaseError
+
+    Exception raised for errors that are related to the database.  It is a
+    subclass of :exc:`Error`.
+    
+.. exception:: DataError
+  
+    Exception raised for errors that are due to problems with the processed
+    data like division by zero, numeric value out of range, etc. It is a
+    subclass of :exc:`DatabaseError`.
+    
+.. exception:: OperationalError
+  
+    Exception raised for errors that are related to the database's operation
+    and not necessarily under the control of the programmer, e.g. an
+    unexpected disconnect occurs, the data source name is not found, a
+    transaction could not be processed, a memory allocation error occurred
+    during processing, etc.  It is a subclass of :exc:`DatabaseError`.
+    
+.. exception:: IntegrityError             
+  
+    Exception raised when the relational integrity of the database is
+    affected, e.g. a foreign key check fails.  It is a subclass of
+    :exc:`DatabaseError`.
+    
+.. exception:: InternalError 
+              
+    Exception raised when the database encounters an internal error, e.g. the
+    cursor is not valid anymore, the transaction is out of sync, etc.  It is a
+    subclass of :exc:`DatabaseError`.
+    
+.. exception:: ProgrammingError
+  
+    Exception raised for programming errors, e.g. table not found or already
+    exists, syntax error in the SQL statement, wrong number of parameters
+    specified, etc.  It is a subclass of :exc:`DatabaseError`.
+    
+.. exception:: NotSupportedError
+  
+    Exception raised in case a method or database API was used which is not
+    supported by the database, e.g. requesting a .rollback() on a connection
+    that does not support transaction or has transactions turned off.  It is a
+    subclass of :exc:`DatabaseError`.
+
+
+This is the exception inheritance layout:
+
+- |StandardError|_ 
+
+  - :exc:`Warning`
+  - :exc:`Error`
+
+    - :exc:`InterfaceError`
+    - :exc:`DatabaseError`
+
+      - :exc:`DataError`
+      - :exc:`OperationalError`
+      - :exc:`IntegrityError`
+      - :exc:`InternalError`
+      - :exc:`ProgrammingError`
+      - :exc:`NotSupportedError`
+
+
+.. |StandardError| replace:: ``StandardError``
+.. _StandardError: http://docs.python.org/library/exceptions.html#exceptions.StandardError
+
+
+.. _type-objects-and-costructors:
+
+Type Objects and Constructors
+-----------------------------
+
+.. note:: This section is mostly copied verbatim from the |DBAPI 2.0|_
+    specification.  While these objects are exposed in compliance to the
+    DBAPI, Psycopg offers very accurate tools to convert data between Python
+    and PostgreSQL formats.  See :ref:`adapting-new-types` and
+    :ref:`type-casting-from-sql-to-python`
+
+Many databases need to have the input in a particular format for
+binding to an operation's input parameters.  For example, if an
+input is destined for a DATE column, then it must be bound to the
+database in a particular string format.  Similar problems exist
+for "Row ID" columns or large binary items (e.g. blobs or RAW
+columns).  This presents problems for Python since the parameters
+to the .execute*() method are untyped.  When the database module
+sees a Python string object, it doesn't know if it should be bound
+as a simple CHAR column, as a raw BINARY item, or as a DATE.
+
+To overcome this problem, a module must provide the constructors
+defined below to create objects that can hold special values.
+When passed to the cursor methods, the module can then detect the
+proper type of the input parameter and bind it accordingly.
+
+A Cursor Object's description attribute returns information about
+each of the result columns of a query.  The type_code must compare
+equal to one of Type Objects defined below. Type Objects may be
+equal to more than one type code (e.g. DATETIME could be equal to
+the type codes for date, time and timestamp columns; see the
+Implementation Hints below for details).
+
+The module exports the following constructors and singletons:
+    
+.. function:: Date(year,month,day)
+
+    This function constructs an object holding a date value.
+        
+.. function:: Time(hour,minute,second)
+
+    This function constructs an object holding a time value.
+            
+.. function:: Timestamp(year,month,day,hour,minute,second)
+
+    This function constructs an object holding a time stamp value.
+
+.. function:: DateFromTicks(ticks)
+
+    This function constructs an object holding a date value from the given
+    ticks value (number of seconds since the epoch; see the documentation of
+    the standard Python time module for details).
+
+.. function:: TimeFromTicks(ticks)
+  
+    This function constructs an object holding a time value from the given
+    ticks value (number of seconds since the epoch; see the documentation of
+    the standard Python time module for details).
+    
+.. function:: TimestampFromTicks(ticks)
+
+    This function constructs an object holding a time stamp value from the
+    given ticks value (number of seconds since the epoch; see the
+    documentation of the standard Python time module for details).
+
+.. function:: Binary(string)
+  
+    This function constructs an object capable of holding a binary (long)
+    string value.
+    
+
+.. data:: STRING
+
+    This type object is used to describe columns in a database that are
+    string-based (e.g. CHAR).
+
+.. data:: BINARY
+
+    This type object is used to describe (long) binary columns in a database
+    (e.g. LONG, RAW, BLOBs).
+    
+.. data:: NUMBER
+
+    This type object is used to describe numeric columns in a database.
+
+.. data:: DATETIME
+  
+    This type object is used to describe date/time columns in a database.
+    
+.. data:: ROWID
+  
+    This type object is used to describe the "Row ID" column in a database.
+

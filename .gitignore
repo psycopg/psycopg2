@@ -6,3 +6,4 @@ MANIFEST
 *.sw[po]
 dist/*
 build/*
+doc/_build/*
