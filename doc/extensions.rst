@@ -39,6 +39,10 @@ functionalities defined by the |DBAPI 2.0|.
 .. todo:: finish module extensions
 
 
+
+.. index::
+    pair: Isolation level; Constants
+
 .. _isolation-level-constants:
 
 Isolation level constants
@@ -88,6 +92,10 @@ one of the following constants:
     PostgreSQL documentation.
 
 
+
+.. index::
+    pair: Transaction status; Constants
+
 .. _transaction-status-constants:
 
 Transaction status constants
@@ -116,6 +124,10 @@ can be read using the :meth:`connection.get_transaction_status()` method.
 
     Reported if the connection with the server is bad.
 
+
+
+.. index::
+    pair: Connection status; Constants
 
 .. _connection-status-constants:
 

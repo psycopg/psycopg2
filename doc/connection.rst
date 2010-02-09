@@ -27,8 +27,8 @@ The ``connection`` class
         :class:`extensions.cursor`. See :ref:`subclassing-cursor` for details.
 
 
-    .. index:
-        pair: Transaction, Commit
+    .. index::
+        pair: Transaction; Commit
 
     .. method:: commit()
           
@@ -37,8 +37,8 @@ The ``connection`` class
         :meth:`connection.set_isolation_level()`.
         
 
-    .. index:
-        pair: Transaction, Rollback
+    .. index::
+        pair: Transaction; Rollback
 
     .. method:: rollback()
 
@@ -74,8 +74,8 @@ The ``connection`` class
         connection.
 
 
-    .. index:
-        single: Autocommit
+    .. index::
+        pair: Transaction; Autocommit
         pair: Transaction; Isolation level
 
     .. attribute:: isolation_level
