@@ -47,6 +47,7 @@ The ``cursor`` class
         The type_code can be interpreted by comparing it to the Type Objects
         specified in the section :ref:`type-objects-and-constructors`.
 
+
     .. method:: close()
           
         Close the cursor now (rather than whenever ``__del__`` is called).
@@ -59,10 +60,17 @@ The ``cursor`` class
         Read-only boolean attribute: specifies if the cursor is closed
         (``True``) or not (``False``).
 
+        .. extension::
+
+            The :attr:`closed` attribute is a Psycopg extension to the
+            |DBAPI|.
+
+
     .. attribute:: connection
 
         Read-only attribute returning a reference to the :class:`connection`
         object on which the cursor was created.
+
 
     .. attribute:: name
 
@@ -70,9 +78,18 @@ The ``cursor`` class
         creates as named cursor by :meth:`connection.cursor`, or ``None`` if
         it is a client side cursor.  See :ref:`server-side-cursors`.
 
+        .. extension::
+
+            The :attr:`name` attribute is a Psycopg extension to the |DBAPI|.
+
+
+    
     .. |execute*| replace:: :obj:`execute*()`
 
     .. _execute*:
+
+    .. rubric:: Commands execution methods
+
 
     .. method:: execute(operation [, parameters] [, async]) 
       
@@ -100,11 +117,21 @@ The ``cursor`` class
         ready for return via |fetch*|_ methods. See
         :ref:`asynchronous-queries`.
 
+        .. extension::
+
+            The :obj:`async` parameter is a Psycopg extension to the |DBAPI|.
+
+
     .. method:: mogrify(operation [, parameters)
 
         Return a query string after arguments binding. The string returned is
         exactly the one that would be sent to the database running the
         :meth:`execute()` method or similar.
+
+        .. extension::
+
+            The :meth:`mogrify` method is a Psycopg extension to the |DBAPI|.
+
         
     .. method:: executemany(operation, seq_of_parameters)
       
@@ -117,6 +144,7 @@ The ``cursor`` class
         
         Parameters are bounded to the query using the same rules described in
         the :meth:`execute()` method.
+
 
     .. method:: callproc(procname [, parameters] [, async])
             
@@ -135,41 +163,24 @@ The ``cursor`` class
         ready for return via |fetch*|_ methods. See
         :ref:`asynchronous-queries`.
 
-    .. attribute:: query
+        .. extension::
 
-        Read-only attribute containing the body of the last query sent to the
-        backend (including bound arguments). ``None`` if no query has been
-        executed yet::
+            The :obj:`async` parameter is a Psycopg extension to the |DBAPI|.
 
-            >>> cur.execute("INSERT INTO test (num, data) VALUES (%s, %s)", (42, 'bar'))
-            >>> cur.query 
-            "INSERT INTO test (num, data) VALUES (42, E'bar')"
 
-    .. attribute:: statusmessage
+    .. method:: setinputsizes(sizes)
+      
+        This method is exported in compliance with the |DBAPI|. It currently
+        does nothing but it is safe to call it.
 
-        Return the message returned by the last command::
-
-            >>> cur.execute("INSERT INTO test (num, data) VALUES (%s, %s)", (42, 'bar'))
-            >>> cur.statusmessage 
-            'INSERT 0 1'
-
-    .. method:: isready()
-
-        Return ``False`` if the backend is still processing an asynchronous
-        query or ``True`` if data is ready to be fetched by one of the
-        |fetch*|_ methods.  See :ref:`asynchronous-queries`.
-
-    .. method:: fileno()
-
-        Return the file descriptor associated with the current connection and
-        make possible to use a cursor in a context where a file object would
-        be expected (like in a :func:`select()` call).  See
-        :ref:`asynchronous-queries`.
 
 
     .. |fetch*| replace:: :obj:`fetch*()`
 
     .. _fetch*:
+
+    .. rubric:: Results retrieval methods
+
 
     The following methods are used to read data from the database after an
     :meth:`execute()` call.
@@ -188,6 +199,7 @@ The ``cursor`` class
             (2, None, 'dada')
             (4, 42, 'bar')
 
+
     .. method:: fetchone()
 
         Fetch the next row of a query result set, returning a single tuple,
@@ -200,6 +212,7 @@ The ``cursor`` class
         An :exc:`Error` (or subclass) exception is raised if the previous call
         to |execute*|_ did not produce any result set or no call was issued
         yet.
+
 
     .. method:: fetchmany([size=cursor.arraysize])
       
@@ -231,6 +244,7 @@ The ``cursor`` class
         is best for it to retain the same value from one :meth:`fetchmany()`
         call to the next.
 
+
     .. method:: fetchall()
 
         Fetch all (remaining) rows of a query result, returning them as a list
@@ -246,6 +260,7 @@ The ``cursor`` class
         An :exc:`Error` (or subclass) exception is raised if the previous call
         to |execute*|_ did not produce any result set or no call was issued
         yet.
+
 
     .. method:: scroll(value[,mode='relative'])
 
@@ -265,6 +280,7 @@ The ``cursor`` class
         The method can be used both for client-side cursors and server-side
         (named) cursors.
 
+
     .. attribute:: arraysize
           
         This read/write attribute specifies the number of rows to fetch at a
@@ -278,6 +294,7 @@ The ``cursor`` class
 
         .. todo:: copied from DB API: better specify what psycopg2 does with
             arraysize
+
 
     .. attribute:: rowcount 
           
@@ -293,7 +310,8 @@ The ``cursor`` class
             The |DBAPI|_ interface reserves to redefine the latter case to
             have the object return ``None`` instead of -1 in future versions
             of the specification.
-            
+        
+
     .. attribute:: rownumber
 
         This read-only attribute provides the current 0-based index of the
@@ -303,6 +321,7 @@ The ``cursor`` class
         The index can be seen as index of the cursor in a sequence (the result
         set). The next fetch operation will fetch the row indexed by
         :attr:`rownumber` in that sequence.
+
 
     .. index:: oid
 
@@ -330,14 +349,71 @@ The ``cursor`` class
         This method is not supported (PostgreSQL does not have multiple data
         sets) and will raise a :exc:`NotSupportedError` exception.
 
-    .. method:: setinputsizes(sizes)
-      
-        This method currently does nothing but it is safe to call it.
 
     .. method:: setoutputsize(size [, column])
       
-        This method currently does nothing but it is safe to call it.
+        This method is exported in compliance with the |DBAPI|. It currently
+        does nothing but it is safe to call it.
 
+
+    .. attribute:: query
+
+        Read-only attribute containing the body of the last query sent to the
+        backend (including bound arguments). ``None`` if no query has been
+        executed yet::
+
+            >>> cur.execute("INSERT INTO test (num, data) VALUES (%s, %s)", (42, 'bar'))
+            >>> cur.query 
+            "INSERT INTO test (num, data) VALUES (42, E'bar')"
+
+        .. extension::
+
+            The :attr:`query` attribute is a Psycopg extension to the |DBAPI|.
+
+
+    .. attribute:: statusmessage
+
+        Return the message returned by the last command::
+
+            >>> cur.execute("INSERT INTO test (num, data) VALUES (%s, %s)", (42, 'bar'))
+            >>> cur.statusmessage 
+            'INSERT 0 1'
+
+        .. extension::
+
+            The :attr:`statusmessage` attribute is a Psycopg extension to the
+            |DBAPI|.
+
+
+    .. method:: isready()
+
+        Return ``False`` if the backend is still processing an asynchronous
+        query or ``True`` if data is ready to be fetched by one of the
+        |fetch*|_ methods.  See :ref:`asynchronous-queries`.
+
+        .. extension::
+
+            The :meth:`isready` method is a Psycopg extension to the |DBAPI|.
+
+
+    .. method:: fileno()
+
+        Return the file descriptor associated with the current connection and
+        make possible to use a cursor in a context where a file object would
+        be expected (like in a :func:`select()` call).  See
+        :ref:`asynchronous-queries`.
+
+        .. extension::
+
+            The :meth:`isready` method is a Psycopg extension to the |DBAPI|.
+
+
+
+    .. rubric:: COPY-related methods
+
+    .. extension::
+
+        The ``COPY`` support is a Psycopg extension to the |DBAPI|.
 
     .. method:: copy_from(file, table, sep='\\t', null='\\N', columns=None)
  
@@ -361,6 +437,7 @@ The ``cursor`` class
         .. versionchanged:: 2.0.6
             added the :obj:`columns` parameter.
 
+
     .. method:: copy_to(file, table, sep='\\t', null='\\N', columns=None)
 
         Write the content of the table named :obj:`table` *to* the file-like object :obj:`file`.  :obj:`file` must have a ``write()`` method. See
@@ -379,6 +456,7 @@ The ``cursor`` class
 
         .. versionchanged:: 2.0.6
             added the :obj:`columns` parameter.
+
 
     .. method:: copy_expert(sql, file [, size])
 
@@ -400,6 +478,9 @@ The ``cursor`` class
         .. __: http://www.postgresql.org/docs/8.4/static/sql-copy.html
 
         .. versionadded:: 2.0.6
+
+
+    .. rubric:: Stuff to put elsewhere...
 
     .. attribute:: row_factory
 

@@ -26,6 +26,10 @@ The ``connection`` class
         cursors. The class returned should be a subclass of
         :class:`extensions.cursor`. See :ref:`subclassing-cursor` for details.
 
+        .. extension::
+
+            The :obj:`name` and :obj:`cursor_factory` parameters are Psycopg
+            extensions to the DB API.
 
     .. index::
         pair: Transaction; Commit
@@ -59,14 +63,27 @@ The ``connection`` class
         selected: see :meth:`connection.set_isolation_level()`).
 
 
-    The above methods are the only ones defined by the |DBAPI|_ protocol.
-    The Psycopg connection objects exports the following additional methods
-    and attributes.
+    .. index::
+        single: Exceptions; In the connection class
+
+    .. rubric:: Excetptions as connection class attributes
+
+    The :class:`connection` also exposes the same `Error` classes available in
+    the :mod:`psycopg2` module as attributes.
+
+
+    .. extension::
+
+        The above methods are the only ones defined by the |DBAPI|_ protocol.
+        The Psycopg connection objects exports the following additional
+        methods and attributes.
+
 
     .. attribute:: closed
 
         Read-only attribute reporting whether the database connection is open
         (0) or closed (1).
+
 
     .. attribute:: dsn
 
@@ -253,10 +270,4 @@ The ``connection`` class
 
         .. todo:: describe string_types
 
-
-    .. index::
-        single: Exceptions; In the connection class
-
-    The :class:`connection` also exposes the same `Error` classes available in
-    the :mod:`psycopg2` module as attributes.
 

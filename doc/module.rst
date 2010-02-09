@@ -45,6 +45,12 @@ The module interface respects the standard defined in the |DBAPI|_.
     taking a :obj:`dsn` argument. See :ref:`subclassing-connection` for
     details.
 
+    .. extension::
+
+        The :obj:`connection_factory` parameter is a Psycopg extension to the
+        |DBAPI|.
+
+
 .. data:: apilevel
 
     String constant stating the supported DB API level.  For :mod:`psycopg2` is
@@ -70,12 +76,6 @@ Exceptions
 
 In compliance with the |DBAPI|, the module makes informations about errors
 available through the following exceptions:
-
-.. todo::
-    There are actually a couple of extra extensions defined in _psycopg and
-    imported in the connection, but not in this module: shouldn't be there
-    them too?
-    
 
 .. exception:: Warning 
             
