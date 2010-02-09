@@ -276,7 +276,7 @@ The ``cursor`` class
         a single row at a time. It may also be used in the implementation of
         :meth:`executemany()`.
 
-        .. todo:: copied from dbapi: better specify what psycopg does with
+        .. todo:: copied from dbapi: better specify what psycopg2 does with
             arraysize
 
     .. attribute:: rowcount 

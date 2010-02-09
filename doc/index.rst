@@ -11,7 +11,7 @@ heavily multi-threaded applications that create and destroy lots of cursors and
 make a conspicuous number of concurrent INSERTs or UPDATEs. The psycopg
 distribution includes ZPsycopgDA, a Zope_ Database Adapter.
 
-Psycopg 2 is an almost complete rewrite of the psycopg 1.1.x branch. Psycopg 2
+Psycopg 2 is an almost complete rewrite of the Psycopg 1.1.x branch. Psycopg 2
 features complete libpq_ v3 protocol, `COPY TO/COPY FROM`__ and full object
 adaptation for all basic Python 2.3 types: strings (including unicode), ints,
 longs, floats, buffers (binary objects), booleans, `mx.DateTime`_ and builtin

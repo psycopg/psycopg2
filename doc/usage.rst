@@ -6,7 +6,7 @@ Basic module usage
 .. index::
     pair: Example; Usage
 
-The basic psycopg usage is common to all the database adapters implementing
+The basic Psycopg usage is common to all the database adapters implementing
 the |DBAPI 2.0| protocol. Here is an interactive session showing some of the
 basic commands::
 
@@ -21,7 +21,7 @@ basic commands::
     # Execute a command: this creates a new table
     >>> cur.execute("CREATE TABLE test (id serial PRIMARY KEY, num integer, data varchar);")
 
-    # Pass data to fill a query placeholders and let psycopg perform
+    # Pass data to fill a query placeholders and let Psycopg perform
     # the correct conversion (no more SQL injections!)
     >>> cur.execute("INSERT INTO test (num, data) VALUES (%s, %s)", 
     ...      (100, "abc'def"))

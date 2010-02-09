@@ -234,7 +234,7 @@ Program code can initiate an asynchronous query by passing an ``async=1`` flag
 to the :meth:`cursor.execute` or :meth:`cursor.callproc` methods. A very
 simple example, from the connection to the query::
 
-    conn = psycopg.connect(database='test')
+    conn = psycopg2.connect(database='test')
     curs = conn.cursor()
     curs.execute("SELECT * from test WHERE fielda > %s", (1971,), async=1)
     
@@ -275,10 +275,10 @@ asynchronous queries:
 A code snippet that shows how to use the cursor object in a :func:`select()`
 call::
 
-    import psycopg
+    import psycopg2
     import select
         
-    conn = psycopg.connect(database='test')
+    conn = psycopg2.connect(database='test')
     curs = conn.cursor()
     curs.execute("SELECT * from test WHERE fielda > %s", (1971,), async=1)
 
