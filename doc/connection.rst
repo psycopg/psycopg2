@@ -91,6 +91,28 @@ The ``connection`` class
         .. __: http://www.postgresql.org/docs/8.4/static/multibyte.html
 
 
+    .. index::
+        double: Client; Logging
+
+    .. attribute:: notices
+
+        A list containing all the database messages sent to the client during
+        the session.::
+
+            >>> cur.execute("CREATE TABLE foo (id serial PRIMARY KEY);")
+            >>> conn.notices 
+            ['NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "foo_pkey" for table "foo"\n',
+             'NOTICE:  CREATE TABLE will create implicit sequence "foo_id_seq" for serial column "foo.id"\n']
+
+        To avoid a leak in case excessive notices are generated, only the last
+        50 messages are kept.
+
+        You can configure what messages to receive using `PostgreSQL logging
+        configuration parameters`__ such as ``log_statement``,
+        ``client_min_messages``, ``log_min_duration_statement`` etc.
+        
+        .. __: http://www.postgresql.org/docs/8.4/static/runtime-config-logging.html
+
     .. method:: get_backend_pid()
 
         Returns the process ID (PID) of the backend server process handling
@@ -173,10 +195,6 @@ The ``connection`` class
     .. attribute:: notifies
 
         .. todo:: describe conn.notifies
-
-    .. attribute:: notices
-
-        .. todo:: describe conn.notices
 
     .. attribute:: binary_types
 
