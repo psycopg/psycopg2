@@ -59,7 +59,7 @@ The ``connection`` class
         selected: see :meth:`connection.set_isolation_level()`).
 
 
-    The above methods are the only ones defined by the |DBAPI 2.0|_ protocol.
+    The above methods are the only ones defined by the |DBAPI|_ protocol.
     The Psycopg connection objects exports the following additional methods
     and attributes.
 

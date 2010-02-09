@@ -260,7 +260,7 @@ The ``cursor`` class
         :exc:`ProgrammingError` is raised and the cursor position is not
         changed.
 
-        .. todo:: dbapi says should have been IndexError...
+        .. todo:: DB API says should have been IndexError...
 
         The method can be used both for client-side cursors and server-side
         (named) cursors.
@@ -276,7 +276,7 @@ The ``cursor`` class
         a single row at a time. It may also be used in the implementation of
         :meth:`executemany()`.
 
-        .. todo:: copied from dbapi: better specify what psycopg2 does with
+        .. todo:: copied from DB API: better specify what psycopg2 does with
             arraysize
 
     .. attribute:: rowcount 
@@ -290,7 +290,7 @@ The ``cursor`` class
         determined by the interface.
 
         .. note::
-            The |DBAPI 2.0|_ interface reserves to redefine the latter case to
+            The |DBAPI|_ interface reserves to redefine the latter case to
             have the object return ``None`` instead of -1 in future versions
             of the specification.
             

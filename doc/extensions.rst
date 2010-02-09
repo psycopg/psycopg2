@@ -1,12 +1,12 @@
-:mod:`psycopg2.extensions` -- Extensions to the DBAPI
-=====================================================
+:mod:`psycopg2.extensions` -- Extensions to the DB API
+======================================================
 
 .. sectionauthor:: Daniele Varrazzo <daniele.varrazzo@gmail.com>
 
 .. module:: psycopg2.extensions
 
 The module contains a few objects and function extending the minimum set of
-functionalities defined by the |DBAPI 2.0|.
+functionalities defined by the |DBAPI|.
 
 
 .. class:: connection

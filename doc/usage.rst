@@ -7,7 +7,7 @@ Basic module usage
     pair: Example; Usage
 
 The basic Psycopg usage is common to all the database adapters implementing
-the |DBAPI 2.0| protocol. Here is an interactive session showing some of the
+the |DBAPI|_ protocol. Here is an interactive session showing some of the
 basic commands::
 
     >>> import psycopg2
@@ -326,7 +326,7 @@ Thread safety
 The Psycopg module is *thread-safe*: threads can access the same database
 using separate session (by creating a :class:`connection` per thread) or using
 the same session (accessing to the same connection and creating separate
-:class:`cursor`\ s). In |DBAPI 2.0|_ parlance, Psycopg is *level 2 thread safe*.
+:class:`cursor`\ s). In |DBAPI|_ parlance, Psycopg is *level 2 thread safe*.
 
 
 

@@ -90,9 +90,9 @@ pygments_style = 'sphinx'
 todo_include_todos = True
 
 rst_epilog = """
-.. |DBAPI 2.0| replace:: `DBAPI 2.0`_
+.. |DBAPI| replace:: DB API 2.0
 
-.. _DBAPI 2.0: http://www.python.org/dev/peps/pep-0249/
+.. _DBAPI: http://www.python.org/dev/peps/pep-0249/
 
 .. _transaction isolation level:
     http://www.postgresql.org/docs/8.4/static/transaction-iso.html

@@ -5,7 +5,7 @@ Psycopg -- PostgreSQL database adapter for Python
 .. sectionauthor:: Daniele Varrazzo <daniele.varrazzo@gmail.com>
 
 Psycopg is a PostgreSQL_ database adapter for the Python_ programming
-language.  Its main advantages are that it supports the full Python |DBAPI 2.0|
+language.  Its main advantages are that it supports the full Python |DBAPI|_
 and it is thread safe (threads can share the connections). It was designed for
 heavily multi-threaded applications that create and destroy lots of cursors and
 make a conspicuous number of concurrent INSERTs or UPDATEs. The psycopg

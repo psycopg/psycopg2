@@ -5,7 +5,7 @@ The :mod:`psycopg2` module content
 
 .. module:: psycopg2
 
-The module interface respects the standard defined in the |DBAPI 2.0|.
+The module interface respects the standard defined in the |DBAPI|_.
 
 .. index:: 
     single: Connection string
@@ -68,7 +68,7 @@ The module interface respects the standard defined in the |DBAPI 2.0|.
 Exceptions
 ----------
 
-In compliance with the |DBAPI 2.0|, the module makes informations about errors
+In compliance with the |DBAPI|, the module makes informations about errors
 available through the following exceptions:
 
 .. todo::
@@ -168,9 +168,9 @@ This is the exception inheritance layout:
 Type Objects and Constructors
 -----------------------------
 
-.. note:: This section is mostly copied verbatim from the |DBAPI 2.0|_
+.. note:: This section is mostly copied verbatim from the |DBAPI|_
     specification.  While these objects are exposed in compliance to the
-    DBAPI, Psycopg offers very accurate tools to convert data between Python
+    DB API, Psycopg offers very accurate tools to convert data between Python
     and PostgreSQL formats.  See :ref:`adapting-new-types` and
     :ref:`type-casting-from-sql-to-python`
 
