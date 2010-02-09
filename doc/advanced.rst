@@ -155,6 +155,67 @@ read::
 
 
 .. index::
+    pair: Asynchronous; Notifications
+    pair: LISTEN; SQL command
+    pair: NOTIFY; SQL command
+
+.. _async-notify:
+
+Asynchronous notifications
+--------------------------
+
+Psycopg allows asynchronous interaction with other database sessions using the
+facilities offered by PostgreSQL commands |LISTEN|_ and |NOTIFY|_. Please
+refer to the PostgreSQL documentation for examples of how to use this form of
+communications.
+
+Notifications received are made available in the :attr:`connection.notifies`
+list. Notifications can be sent from Python code simply using a ``NOTIFY``
+command in a :meth:`cursor.execute` call.
+
+Because of the way sessions interact with notifications (see |NOTIFY|_
+documentation), you should keep the connection in autocommit mode while
+sending and receiveng notification.
+
+.. |LISTEN| replace:: ``LISTEN``
+.. _LISTEN: http://www.postgresql.org/docs/8.4/static/sql-listen.html
+.. |NOTIFY| replace:: ``NOTIFY``
+.. _NOTIFY: http://www.postgresql.org/docs/8.4/static/sql-notify.html
+
+Example::
+
+    import sys
+    import select
+    import psycopg2
+    import psycopg2.extensions
+
+    conn = psycopg2.connect(DSN)
+    conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+
+    curs = conn.cursor()
+    curs.execute("LISTEN test;")
+
+    print "Waiting for 'NOTIFY test'"
+    while 1:
+        if select.select([curs],[],[],5)==([],[],[]):
+            print "Timeout"
+        else:
+            if curs.isready():
+                print "Got NOTIFY:", curs.connection.notifies.pop()
+
+Running the script and executing the command ``NOTIFY test`` in a separate
+:program:`psql` shell, the output may look similar to::
+
+    Waiting for 'NOTIFY test'
+    Timeout
+    Timeout
+    Got NOTIFY: (6535, 'test')
+    Timeout
+    ...
+
+
+
+.. index::
     double: Asynchronous; Query
     
 .. _asynchronous-queries:

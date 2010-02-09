@@ -133,6 +133,17 @@ The ``connection`` class
         .. __: http://www.postgresql.org/docs/8.4/static/runtime-config-logging.html
 
 
+    .. attribute:: notifies
+
+        List containing asynchronous notifications received by the session.
+
+        Received notifications have the form of a 2 items tuple
+        ``(pid,name)``, where ``pid`` is the PID of the backend that sent the
+        notification and ``name`` is the signal name specified in the
+        ``NOTIFY`` command.
+
+        For other details see :ref:`async-notify`.
+
     .. index::
         pair: Backend; PID
 
@@ -233,10 +244,6 @@ The ``connection`` class
         :class:`psycopg2.extensions.lobject`.
 
         .. todo:: conn.lobject details
-
-    .. attribute:: notifies
-
-        .. todo:: describe conn.notifies
 
     .. attribute:: binary_types
 
