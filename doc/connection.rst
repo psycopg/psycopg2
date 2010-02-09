@@ -121,7 +121,7 @@ The ``connection`` class
     .. method:: get_transaction_status()
 
         Return the current session transaction status as an integer.  Symbolic
-        constants for the vaules are defined in the module
+        constants for the values are defined in the module
         :mod:`psycopg2.extensions`: see :ref:`transaction-status-constants`
         for the available values.
 
@@ -131,7 +131,7 @@ The ``connection`` class
 
     .. attribute:: protocol_version
 
-        A read-ony integer representing frontend/backend protocol being used.
+        A read-only integer representing frontend/backend protocol being used.
         It can be 2 or 3.
 
         .. seealso:: libpq docs for `PQprotocolVersion()`__ for details.

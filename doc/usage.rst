@@ -143,7 +143,7 @@ is converted into the SQL command::
 
 Named arguments are supported too using ``%(name)s`` placeholders.  Using named
 arguments the values can be passed to the query in any order and many
-placeholder can use the the same values::
+placeholder can use the same values::
 
     >>> cur.execute(
     ...     """INSERT INTO some_table (an_int, a_date, another_date, a_string)
@@ -296,7 +296,7 @@ all the returned records, transferring them to the client process. If the
 query returned an huge amount of data, a proportionally large amount of memory
 will be allocated by the client.
 
-If the dataset is too large to be pratically handled on the client side, it is
+If the dataset is too large to be practically handled on the client side, it is
 possible to create a *server side* cursor. Using this kind of cursor it is
 possible to transfer to the client only a controlled amount of data, so that a
 large dataset can be examined without keeping it entirely in memory.

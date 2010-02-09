@@ -163,7 +163,7 @@ This is the exception inheritance layout:
 .. _StandardError: http://docs.python.org/library/exceptions.html#exceptions.StandardError
 
 
-.. _type-objects-and-costructors:
+.. _type-objects-and-constructors:
 
 Type Objects and Constructors
 -----------------------------

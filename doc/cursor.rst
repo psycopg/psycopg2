@@ -45,7 +45,7 @@ The ``cursor`` class
         |execute*|_ methods yet.
         
         The type_code can be interpreted by comparing it to the Type Objects
-        specified in the section :ref:`type-objects-and-costructors`.
+        specified in the section :ref:`type-objects-and-constructors`.
 
     .. method:: close()
           
@@ -171,13 +171,13 @@ The ``cursor`` class
 
     .. _fetch*:
 
-    The followig methods are used to read data from the database after an
+    The following methods are used to read data from the database after an
     :meth:`execute()` call.
 
     .. note::
 
         :class:`cursor` objects are iterable, so, instead of calling
-        explicitely :meth:`fetchone()` in a loop, the object itself can be
+        explicitly :meth:`fetchone()` in a loop, the object itself can be
         used::
 
             >>> cur.execute("SELECT * FROM test;")
@@ -286,7 +286,7 @@ The ``cursor`` class
         affected (for DML statements like ``UPDATE`` or ``INSERT``).
         
         The attribute is -1 in case no |execute*| has been performed on
-        the cursor or the rowcount of the last operation is cannot be
+        the cursor or the row count of the last operation if it can't be
         determined by the interface.
 
         .. note::

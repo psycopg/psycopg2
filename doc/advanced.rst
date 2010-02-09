@@ -104,7 +104,7 @@ Type casting of SQL types into Python values
 
 PostgreSQL objects read from the database can be adapted to Python objects
 through an user-defined adapting function.  An adapter function takes two
-argments: the object string representation as returned by PostgreSQL and the
+arguments: the object string representation as returned by PostgreSQL and the
 cursor currently being read, and should return a new Python object.  For
 example, the following function parses a PostgreSQL ``point`` into the
 previously defined ``Point`` class::
@@ -164,7 +164,7 @@ Asynchronous queries
 
 .. warning::
 
-    Async quaeries are not enabled for 2.0
+    Asynchronous queries are not enabled for 2.0
 
     .. todo::
 
@@ -183,7 +183,7 @@ doomed to fail (and raise an exception) until the original cursor (the one
 executing the query) complete the asynchronous operation. This can happen in
 a number of different ways:
 
-1) one of the :obj:`.fetch*()` methods is called, effectively blocking untill
+1) one of the :obj:`.fetch*()` methods is called, effectively blocking until
    data has been sent from the backend to the client, terminating the query.
    
 2) :meth:`connection.cancel` is called. This method tries to abort the
@@ -204,7 +204,7 @@ Note that calling :obj:`.execute()` two times in a row will not abort the
 former query and will temporarily go to synchronous mode until the first of
 the two queries is executed.
 
-Cursors now have some extra methods that make them usefull during
+Cursors now have some extra methods that make them useful during
 asynchronous queries:
 
 :meth:`cursor.fileno`
