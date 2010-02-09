@@ -109,8 +109,8 @@ problems::
     >>> SQL = "INSERT INTO authors (name) VALUES ('%s');" # NEVER DO THIS
     >>> data = ("O'Reilly", )
     >>> cur.execute(SQL % data) # THIS WILL FAIL MISERABLY
-    ProgrammingError: syntax error at or near "Really"
-    LINE 1: INSERT INTO authors (name) VALUES ('O'Really')
+    ProgrammingError: syntax error at or near "Reilly"
+    LINE 1: INSERT INTO authors (name) VALUES ('O'Reilly')
                                                   ^
 
 If the variable containing the data to be sent to the database comes from an
