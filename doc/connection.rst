@@ -26,17 +26,26 @@ The ``connection`` class
         cursors. The class returned should be a subclass of
         :class:`extensions.cursor`. See :ref:`subclassing-cursor` for details.
 
+
+    .. index:
+        pair: Transaction, Commit
+
     .. method:: commit()
           
         Commit any pending transaction to the database. Psycopg can be set to
         perform automatic commits at each operation, see
         :meth:`connection.set_isolation_level()`.
         
+
+    .. index:
+        pair: Transaction, Rollback
+
     .. method:: rollback()
 
         Roll back to the start of any pending transaction.  Closing a
         connection without committing the changes first will cause an implicit
         rollback to be performed.
+
 
     .. method:: close()
               
@@ -48,6 +57,7 @@ The ``connection`` class
         connection without committing the changes first will cause an implicit
         rollback to be performed (unless a different isolation level has been
         selected: see :meth:`connection.set_isolation_level()`).
+
 
     The above methods are the only ones defined by the |DBAPI 2.0|_ protocol.
     The Psycopg connection objects exports the following additional methods
@@ -62,6 +72,11 @@ The ``connection`` class
 
         Read-only string containing the connection string used by the
         connection.
+
+
+    .. index:
+        single: Autocommit
+        pair: Transaction; Isolation level
 
     .. attribute:: isolation_level
     .. method:: set_isolation_level(level)
@@ -81,6 +96,10 @@ The ``connection`` class
 
             >>> conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
+
+    .. index::
+        pair: Client; Encoding
+
     .. attribute:: encoding
     .. method:: set_client_encoding(enc)
 
@@ -92,7 +111,7 @@ The ``connection`` class
 
 
     .. index::
-        double: Client; Logging
+        pair: Client; Logging
 
     .. attribute:: notices
 
@@ -113,6 +132,10 @@ The ``connection`` class
         
         .. __: http://www.postgresql.org/docs/8.4/static/runtime-config-logging.html
 
+
+    .. index::
+        pair: Backend; PID
+
     .. method:: get_backend_pid()
 
         Returns the process ID (PID) of the backend server process handling
@@ -124,6 +147,10 @@ The ``connection`` class
         .. seealso:: libpq docs for `PQbackendPID()`__ for details.
 
             .. __: http://www.postgresql.org/docs/8.4/static/libpq-status.html#AEN33590
+
+
+    .. index::
+        pair: Server; Parameters
 
     .. method:: get_parameter_status(parameter)
     
@@ -140,6 +167,10 @@ The ``connection`` class
 
             .. __: http://www.postgresql.org/docs/8.4/static/libpq-status.html#AEN33499
 
+
+    .. index::
+        pair: Transaction; Status
+
     .. method:: get_transaction_status()
 
         Return the current session transaction status as an integer.  Symbolic
@@ -151,6 +182,10 @@ The ``connection`` class
 
             .. __: http://www.postgresql.org/docs/8.4/static/libpq-status.html#AEN33480
 
+
+    .. index::
+        pair: Protocol; Version
+
     .. attribute:: protocol_version
 
         A read-only integer representing frontend/backend protocol being used.
@@ -159,6 +194,10 @@ The ``connection`` class
         .. seealso:: libpq docs for `PQprotocolVersion()`__ for details.
 
             .. __: http://www.postgresql.org/docs/8.4/static/libpq-status.html#AEN33546
+
+
+    .. index::
+        pair: Server; Version
 
     .. attribute:: server_version
 
@@ -172,6 +211,9 @@ The ``connection`` class
 
             .. __: http://www.postgresql.org/docs/8.4/static/libpq-status.html#AEN33556
 
+
+    .. index::
+        pair: Connection; Status
 
     .. attribute:: status
 
@@ -204,6 +246,9 @@ The ``connection`` class
 
         .. todo:: describe string_types
 
+
+    .. index::
+        single: Exceptions; In the connection class
 
     The :class:`connection` also exposes the same `Error` classes available in
     the :mod:`psycopg2` module as attributes.
