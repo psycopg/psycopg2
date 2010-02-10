@@ -458,7 +458,7 @@ def register_tstz_w_secs(oids=None, conn_or_curs=None):
         oids = (1184,) # hardcoded from PostgreSQL headers
 
     _ext.TSTZ_W_SECS = _ext.new_type(oids, 'TSTZ_W_SECS', _convert_tstz_w_secs)
-    _ext.register_type(TSTZ_W_SECS, conn_or_curs)
+    _ext.register_type(_ext.TSTZ_W_SECS, conn_or_curs)
 
     return _ext.TSTZ_W_SECS
 

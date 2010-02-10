@@ -1,3 +1,8 @@
+2010-02-10  Federico Di Gregorio  <fog@initd.org>
+
+	* lib/extras.py: fixed register_tstz_w_secs() error as reported by
+	Karsten Hilbert.
+
 2009-11-25  Federico Di Gregorio  <fog@initd.org>
 
 	* psycopg/microprotocols.c: "can't adapt" message now includes full
