@@ -216,7 +216,7 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
 #define psyco_register_type_doc \
 "register_type(obj, conn_or_curs) -> None -- register obj with psycopg type system\n\n" \
 ":Parameters:\n" \
-"  * `obj`: A type adapter created by `new_type()`" \
+"  * `obj`: A type adapter created by `new_type()`\n" \
 "  * `conn_or_curs`: A connection, cursor or None"
 
 #define typecast_from_python_doc \
