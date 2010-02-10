@@ -9,3 +9,13 @@ div.dbapi-extension {
     background-color: #f5ffd4;
     border: 1px solid #bda;
 }
+
+tt.sql {
+    font-size: 1em;
+    background-color: #fff;
+}
+
+a > tt.sql:hover {
+    text-decoration: underline;
+}
+
