@@ -371,14 +371,14 @@ Psycopg :class:`cursor` objects provide an interface to the efficient
 PostgreSQL |COPY|__ command to move data from files to tables and back.
 The methods exposed are:
 
-:meth:`cursor.copy_to()`
-    Writes the content of a table *to* a file-like object (``COPY table TO
-    file`` syntax). The target file must have a ``write()`` method.
-
 :meth:`cursor.copy_from()`
     Reads data *from* a file-like object appending them to a database table
     (``COPY table FROM file`` syntax). The source file must have both
     ``read()`` and ``readline()`` method.
+
+:meth:`cursor.copy_to()`
+    Writes the content of a table *to* a file-like object (``COPY table TO
+    file`` syntax). The target file must have a ``write()`` method.
 
 :meth:`cursor.copy_expert()`
     Allows to handle more specific cases and to use all the |COPY| features

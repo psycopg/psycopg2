@@ -419,7 +419,15 @@ The ``cursor`` class
  
         Read data *from* the file-like object :obj:`file` appending them to
         the table named :obj:`table`.  :obj:`file` must have both ``read()``
-        and ``readline()`` method.  See :ref:`copy` for an overview. ::
+        and ``readline()`` method.  See :ref:`copy` for an overview.
+
+        The optional argument :obj:`sep` is the columns separator and
+        :obj:`null` represents ``NULL`` values in the file.
+
+        The :obj:`columns` argument is a sequence containing the name of the
+        fields where the read data will be entered.  Its length and column
+        type should match the content of the read file.  If not specifies, it
+        is assumed that the entire table matches the file structure. ::
 
             >>> f = StringIO("42\tfoo\n74\tbar\n")
             >>> cur.copy_from(f, 'test', columns=('num', 'data'))
@@ -428,12 +436,6 @@ The ``cursor`` class
             >>> cur.fetchall()
             [(7, 42, 'foo'), (8, 74, 'bar')]
 
-        The optional argument :obj:`sep` is the columns separator and
-        :obj:`null` represents ``NULL`` values in the file.
-
-        The :obj:`columns` argument is a sequence of field names: if not
-        ``None`` only the specified fields will be included in the dump.
-
         .. versionchanged:: 2.0.6
             added the :obj:`columns` parameter.
 
@@ -441,18 +443,17 @@ The ``cursor`` class
     .. method:: copy_to(file, table, sep='\\t', null='\\N', columns=None)
 
         Write the content of the table named :obj:`table` *to* the file-like object :obj:`file`.  :obj:`file` must have a ``write()`` method. See
-        :ref:`copy` for an overview. ::
-
-            >>> cur.copy_to(sys.stdout, 'test', sep="|")
-            1|100|abc'def
-            2|\N|dada
+        :ref:`copy` for an overview.
 
         The optional argument :obj:`sep` is the columns separator and
         :obj:`null` represents ``NULL`` values in the file.
 
-        The :obj:`columns` argument is a sequence representing the fields
-        where the read data will be entered. Its length and column type should
-        match the content of the read file.
+        The :obj:`columns` argument is a sequence of field names: if not
+        ``None`` only the specified fields will be included in the dump. ::
+
+            >>> cur.copy_to(sys.stdout, 'test', sep="|")
+            1|100|abc'def
+            2|\N|dada
 
         .. versionchanged:: 2.0.6
             added the :obj:`columns` parameter.
@@ -464,15 +465,15 @@ The ``cursor`` class
         handle all the parameters that PostgreSQL makes available (see
         |COPY|__ command documentation).
 
+        :obj:`file` must be an open, readable file for ``COPY FROM`` or an
+        open, writeable file for ``COPY TO``. The optional :obj:`size`
+        argument, when specified for a ``COPY FROM`` statement, will be passed
+        to file's read method to control the read buffer size. ::
+
             >>> cur.copy_expert("COPY test TO STDOUT WITH CSV HEADER", sys.stdout)
             id,num,data
             1,100,abc'def
             2,,dada
-
-        :obj:`file` must be an open, readable file for ``COPY FROM`` or an
-        open, writeable file for ``COPY TO``. The optional :obj:`size`
-        argument, when specified for a ``COPY FROM`` statement, will be passed
-        to file's read method to control the read buffer size. 
 
         .. |COPY| replace:: ``COPY``
         .. __: http://www.postgresql.org/docs/8.4/static/sql-copy.html
