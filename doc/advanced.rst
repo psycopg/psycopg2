@@ -49,7 +49,7 @@ An example of cursor subclass performing logging is::
     single: Objects; Creating new adapters
     single: Adaptation; Creating new adapters
     single: Data types; Creating new adapters
-    
+
 .. _adapting-new-types:
 
 Adapting new Python types to SQL syntax
@@ -61,33 +61,37 @@ by the :func:`psycopg2.extensions.adapt()` function.
 
 The :meth:`cursor.execute()` method adapts its arguments to the
 :class:`psycopg2.extensions.ISQLQuote` protocol.  Objects that conform to this
-protocol expose a ``getquoted()`` method returning the SQL representation of
-the object as a string.
+protocol expose a :meth:`getquoted()` method returning the SQL representation
+of the object as a string.
 
 The easiest way to adapt an object to an SQL string is to register an adapter
 function via the :func:`psycopg2.extensions.register_adapter()` function.  The
 adapter function must take the value to be adapted as argument and return a
 conform object.  A convenient object is the :func:`psycopg2.extensions.AsIs`
-wrapper, whose ``getquoted()`` result is simply the ``str()``\ ingification of
-the wrapped object.
+wrapper, whose :meth:`getquoted()` result is simply the ``str()``\ ing
+conversion of the wrapped object.
 
-Example: mapping of a ``Point`` class into the ``point`` PostgreSQL geometric
-type::
+Example: mapping of a :data:`Point` class into the |point|_ PostgreSQL
+geometric type::
 
     from psycopg2.extensions import adapt, register_adapter, AsIs
-    
+
     class Point(object):
         def __init__(self, x, y):
             self.x = x
             self.y = y
-    
+
     def adapt_point(point):
         return AsIs("'(%s, %s)'" % (adapt(point.x), adapt(point.y)))
-        
+
     register_adapter(Point, adapt_point)
-    
-    curs.execute("INSERT INTO atable (apoint) VALUES (%s)", 
+
+    curs.execute("INSERT INTO atable (apoint) VALUES (%s)",
                  (Point(1.23, 4.56),))
+
+
+.. |point| replace:: ``point``
+.. _point: http://www.postgresql.org/docs/8.4/static/datatype-geometric.html#AEN6084
 
 The above function call results in the SQL command::
 
@@ -99,8 +103,8 @@ The above function call results in the SQL command::
 
 .. _type-casting-from-sql-to-python:
 
-Type casting of SQL types into Python values
---------------------------------------------
+Type casting of SQL types into Python objects
+---------------------------------------------
 
 PostgreSQL objects read from the database can be adapted to Python objects
 through an user-defined adapting function.  An adapter function takes two
@@ -111,13 +115,13 @@ previously defined ``Point`` class::
 
     def cast_point(value, curs):
         if value is not None:
-        	# Convert from (f1, f2) syntax using a regular expression.
-            m = re.match("\((.*),(.*)\)", value) 
+            # Convert from (f1, f2) syntax using a regular expression.
+            m = re.match(r"\(([^)]+),([^)]+)\)", value)
             if m:
                 return Point(float(m.group(1)), float(m.group(2)))
-                
+
 To create a mapping from the PostgreSQL type (either standard or user-defined),
-its ``oid`` must be known. It can be retrieved either by the second column of
+its OID must be known. It can be retrieved either by the second column of
 the cursor description::
 
     curs.execute("SELECT NULL::point")
@@ -132,11 +136,11 @@ namespace for system objects is ``pg_catalog``)::
                  ON typnamespace = pg_namespace.oid
          WHERE typname = %(typename)s
            AND nspname = %(namespace)s""",
-                {'typename': 'point', 'namespace': 'pg_catalog'})
-        
+        {'typename': 'point', 'namespace': 'pg_catalog'})
+
     point_oid = curs.fetchone()[0]
 
-After you know the object ``oid``, you must can and register the new type::
+After you know the object OID, you must can and register the new type::
 
     POINT = psycopg2.extensions.new_type((point_oid,), "POINT", cast_point)
     psycopg2.extensions.register_type(POINT)
@@ -144,7 +148,7 @@ After you know the object ``oid``, you must can and register the new type::
 The :func:`psycopg2.extensions.new_type()` function binds the object oids
 (more than one can be specified) to the adapter function.
 :func:`psycopg2.extensions.register_type()` completes the spell.  Conversion
-is automatically performed when a column whose type is a registered ``oid`` is
+is automatically performed when a column whose type is a registered OID is
 read::
 
     >>> curs.execute("SELECT '(10.2,20.3)'::point")
@@ -217,7 +221,7 @@ Running the script and executing the command ``NOTIFY test`` in a separate
 
 .. index::
     double: Asynchronous; Query
-    
+
 .. _asynchronous-queries:
 
 Asynchronous queries
@@ -237,7 +241,7 @@ simple example, from the connection to the query::
     conn = psycopg2.connect(database='test')
     curs = conn.cursor()
     curs.execute("SELECT * from test WHERE fielda > %s", (1971,), async=1)
-    
+
 From then on any query on other cursors derived from the same connection is
 doomed to fail (and raise an exception) until the original cursor (the one
 executing the query) complete the asynchronous operation. This can happen in
@@ -245,12 +249,12 @@ a number of different ways:
 
 1) one of the :obj:`.fetch*()` methods is called, effectively blocking until
    data has been sent from the backend to the client, terminating the query.
-   
+
 2) :meth:`connection.cancel` is called. This method tries to abort the
    current query and will block until the query is aborted or fully executed.
    The return value is ``True`` if the query was successfully aborted or
    ``False`` if it was executed. Query result are discarded in both cases.
-   
+
 3) :meth:`cursor.execute` is called again on the same cursor
    (:obj:`.execute()` on a different cursor will simply raise an exception).
    This waits for the complete execution of the current query, discard any
@@ -271,13 +275,13 @@ asynchronous queries:
 :meth:`cursor.isready`
     Returns ``False`` if the backend is still processing the query or ``True``
     if data is ready to be fetched (by one of the :obj:`.fetch*()` methods).
-      
+
 A code snippet that shows how to use the cursor object in a :func:`select()`
 call::
 
     import psycopg2
     import select
-        
+
     conn = psycopg2.connect(database='test')
     curs = conn.cursor()
     curs.execute("SELECT * from test WHERE fielda > %s", (1971,), async=1)

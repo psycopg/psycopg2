@@ -23,7 +23,7 @@ basic commands::
 
     # Pass data to fill a query placeholders and let Psycopg perform
     # the correct conversion (no more SQL injections!)
-    >>> cur.execute("INSERT INTO test (num, data) VALUES (%s, %s)", 
+    >>> cur.execute("INSERT INTO test (num, data) VALUES (%s, %s)",
     ...      (100, "abc'def"))
 
     # Query the database and obtain data as Python objects
@@ -46,7 +46,7 @@ The main entry point of Psycopg are:
 
 - The class :class:`connection` encapsulates a database session. It allows to:
 
-  - terminate the session using the methods :meth:`connection.commit()` and 
+  - terminate the session using the methods :meth:`connection.commit()` and
     :meth:`connection.rollback()`,
 
   - create new :class:`cursor`\ s to execute database commands and queries
@@ -59,7 +59,7 @@ The main entry point of Psycopg are:
 
   - retrieve data using the methods :meth:`cursor.fetchone()`,
     :meth:`cursor.fetchmany()`, :meth:`cursor.fetchall()`.
-  
+
 
 
 .. index:: Transaction, Begin, Commit, Rollback, Autocommit
@@ -154,7 +154,7 @@ Passing parameters to SQL queries
 ---------------------------------
 
 Psycopg casts Python variables to SQL literals by type.  `Standard Python types
-are already adapted to the proper SQL literal`__. 
+are already adapted to the proper SQL literal`__.
 
 .. __: python-types-adaptation_
 
@@ -184,7 +184,7 @@ Notice that:
 - The Python string operator ``%`` is not used: the :meth:`cursor.execute()`
   method accepts a tuple or dictionary of values as second parameter.
   |sql-warn|__.
-  
+
   .. |sql-warn| replace:: **Never** use ``%`` or ``+`` to merge values
       into queries
 
@@ -218,7 +218,7 @@ Adaptation of Python values to SQL types
 ----------------------------------------
 
 Many standards Python types are adapted into SQL and returned as Python
-objects when a query is executed. 
+objects when a query is executed.
 
 If you need to convert other Python types to and from PostgreSQL data types,
 see :ref:`adapting-new-types` and :ref:`type-casting-from-sql-to-python`.
@@ -301,12 +301,19 @@ the SQL string that would be sent to the database.
     >>> cur.mogrify("SELECT %s IN %s;", (10, (10, 20, 30)))
     'SELECT 10 IN (10, 20, 30);'
 
-  .. note:: 
+  .. note::
 
     SQL doesn't allow an empty list in the IN operator, so your code should
     guard against empty tuples.
 
+  .. note::
 
+    In order to use the tuple adapter, your application must import the module
+    :mod:`psycopg2.extensions`.
+
+    .. todo:: is this a bug or a feature?
+
+  .. versionadded:: 2.0.6
 
 .. index::
     pair: Server side; Cursor
@@ -359,7 +366,7 @@ the same session (accessing to the same connection and creating separate
 
 
 
-.. index:: 
+.. index::
     pair: COPY; SQL command
 
 .. _copy:
