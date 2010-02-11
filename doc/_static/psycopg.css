@@ -6,13 +6,13 @@ div.admonition-todo {
 }
 
 div.dbapi-extension {
-    background-color: #f5ffd4;
-    border: 1px solid #bda;
+    background-color: #eef;
+    border: 1px solid #aaf;
 }
 
 tt.sql {
     font-size: 1em;
-    background-color: #fff;
+    background-color: transparent;
 }
 
 a > tt.sql:hover {

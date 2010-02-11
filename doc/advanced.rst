@@ -21,6 +21,9 @@ but other uses are possible. :class:`cursor` is much more interesting, because
 it is the class where query building, execution and result type-casting into
 Python variables happens.
 
+.. index::
+    single: Example; Cursor subclass
+
 An example of cursor subclass performing logging is::
 
     import psycopg2
@@ -57,21 +60,24 @@ Adapting new Python types to SQL syntax
 
 Any Python class or type can be adapted to an SQL string.  Adaptation mechanism
 is similar to the Object Adaptation proposed in the :pep:`246` and is exposed
-by the :func:`psycopg2.extensions.adapt()` function.
+by the :func:`psycopg2.extensions.adapt` function.
 
-The :meth:`cursor.execute()` method adapts its arguments to the
-:class:`psycopg2.extensions.ISQLQuote` protocol.  Objects that conform to this
-protocol expose a :meth:`getquoted()` method returning the SQL representation
+The :meth:`~cursor.execute` method adapts its arguments to the
+:class:`~psycopg2.extensions.ISQLQuote` protocol.  Objects that conform to this
+protocol expose a :meth:`!getquoted` method returning the SQL representation
 of the object as a string.
 
 The easiest way to adapt an object to an SQL string is to register an adapter
-function via the :func:`psycopg2.extensions.register_adapter()` function.  The
+function via the :func:`~psycopg2.extensions.register_adapter` function.  The
 adapter function must take the value to be adapted as argument and return a
-conform object.  A convenient object is the :func:`psycopg2.extensions.AsIs`
-wrapper, whose :meth:`getquoted()` result is simply the ``str()``\ ing
+conform object.  A convenient object is the :class:`~psycopg2.extensions.AsIs`
+wrapper, whose :meth:`!getquoted` result is simply the :meth:`!str`\ ing
 conversion of the wrapped object.
 
-Example: mapping of a :data:`Point` class into the |point|_ PostgreSQL
+.. index::
+    single: Example; Types adaptation
+
+Example: mapping of a :class:`!Point` class into the |point|_ PostgreSQL
 geometric type::
 
     from psycopg2.extensions import adapt, register_adapter, AsIs
@@ -90,7 +96,7 @@ geometric type::
                  (Point(1.23, 4.56),))
 
 
-.. |point| replace:: ``point``
+.. |point| replace:: :sql:`point`
 .. _point: http://www.postgresql.org/docs/8.4/static/datatype-geometric.html#AEN6084
 
 The above function call results in the SQL command::
@@ -110,25 +116,30 @@ PostgreSQL objects read from the database can be adapted to Python objects
 through an user-defined adapting function.  An adapter function takes two
 arguments: the object string representation as returned by PostgreSQL and the
 cursor currently being read, and should return a new Python object.  For
-example, the following function parses a PostgreSQL ``point`` into the
-previously defined ``Point`` class::
+example, the following function parses the PostgreSQL :sql:`point`
+representation into the previously defined :class:`!Point` class::
 
     def cast_point(value, curs):
-        if value is not None:
-            # Convert from (f1, f2) syntax using a regular expression.
-            m = re.match(r"\(([^)]+),([^)]+)\)", value)
-            if m:
-                return Point(float(m.group(1)), float(m.group(2)))
+        if value is None:
+            return None
 
-To create a mapping from the PostgreSQL type (either standard or user-defined),
-its OID must be known. It can be retrieved either by the second column of
-the cursor description::
+        # Convert from (f1, f2) syntax using a regular expression.
+        m = re.match(r"\(([^)]+),([^)]+)\)", value)
+        if m:
+            return Point(float(m.group(1)), float(m.group(2)))
+        else:
+            raise InterfaceError("bad point representation: %r" % value)
+                
+
+In order to create a mapping from a PostgreSQL type (either standard or
+user-defined), its OID must be known. It can be retrieved either by the second
+column of the :attr:`cursor.description`::
 
     curs.execute("SELECT NULL::point")
     point_oid = curs.description[0][1]   # usually returns 600
 
 or by querying the system catalogs for the type name and namespace (the
-namespace for system objects is ``pg_catalog``)::
+namespace for system objects is :sql:`pg_catalog`)::
 
     curs.execute("""
         SELECT pg_type.oid
@@ -145,9 +156,9 @@ After you know the object OID, you must can and register the new type::
     POINT = psycopg2.extensions.new_type((point_oid,), "POINT", cast_point)
     psycopg2.extensions.register_type(POINT)
 
-The :func:`psycopg2.extensions.new_type()` function binds the object oids
+The :func:`~psycopg2.extensions.new_type` function binds the object OIDs
 (more than one can be specified) to the adapter function.
-:func:`psycopg2.extensions.register_type()` completes the spell.  Conversion
+:func:`~psycopg2.extensions.register_type` completes the spell.  Conversion
 is automatically performed when a column whose type is a registered OID is
 read::
 
@@ -174,17 +185,20 @@ refer to the PostgreSQL documentation for examples of how to use this form of
 communications.
 
 Notifications received are made available in the :attr:`connection.notifies`
-list. Notifications can be sent from Python code simply using a ``NOTIFY``
-command in a :meth:`cursor.execute` call.
+list. Notifications can be sent from Python code simply using a :sql:`NOTIFY`
+command in an :meth:`~cursor.execute` call.
 
 Because of the way sessions interact with notifications (see |NOTIFY|_
-documentation), you should keep the connection in autocommit mode while
-sending and receiveng notification.
+documentation), you should keep the connection in :ref:`autocommit
+<autocommit>` mode while sending and receiveng notification.
 
-.. |LISTEN| replace:: ``LISTEN``
+.. |LISTEN| replace:: :sql:`LISTEN`
 .. _LISTEN: http://www.postgresql.org/docs/8.4/static/sql-listen.html
-.. |NOTIFY| replace:: ``NOTIFY``
+.. |NOTIFY| replace:: :sql:`NOTIFY`
 .. _NOTIFY: http://www.postgresql.org/docs/8.4/static/sql-notify.html
+
+.. index::
+    single: Example; Asynchronous notification
 
 Example::
 
@@ -207,7 +221,7 @@ Example::
             if curs.isready():
                 print "Got NOTIFY:", curs.connection.notifies.pop()
 
-Running the script and executing the command ``NOTIFY test`` in a separate
+Running the script and executing the command :sql:`NOTIFY test` in a separate
 :program:`psql` shell, the output may look similar to::
 
     Waiting for 'NOTIFY test'
@@ -232,11 +246,11 @@ Asynchronous queries
     Psycopg support for asynchronous queries is still experimental and the
     informations reported here may be out of date.
 
-    Discussion testing and suggestions are welcome.
+    Discussion, testing and suggestions are welcome.
 
 Program code can initiate an asynchronous query by passing an ``async=1`` flag
-to the :meth:`cursor.execute` or :meth:`cursor.callproc` methods. A very
-simple example, from the connection to the query::
+to the :meth:`~cursor.execute` or :meth:`~cursor.callproc` cursor methods. A
+very simple example, from the connection to the query::
 
     conn = psycopg2.connect(database='test')
     curs = conn.cursor()
@@ -247,7 +261,7 @@ doomed to fail (and raise an exception) until the original cursor (the one
 executing the query) complete the asynchronous operation. This can happen in
 a number of different ways:
 
-1) one of the :obj:`.fetch*()` methods is called, effectively blocking until
+1) one of the :meth:`!fetch*` methods is called, effectively blocking until
    data has been sent from the backend to the client, terminating the query.
 
 2) :meth:`connection.cancel` is called. This method tries to abort the
@@ -255,28 +269,31 @@ a number of different ways:
    The return value is ``True`` if the query was successfully aborted or
    ``False`` if it was executed. Query result are discarded in both cases.
 
-3) :meth:`cursor.execute` is called again on the same cursor
-   (:obj:`.execute()` on a different cursor will simply raise an exception).
+3) :meth:`~cursor.execute` is called again on the same cursor
+   (:meth:`!execute` on a different cursor will simply raise an exception).
    This waits for the complete execution of the current query, discard any
    data and execute the new one.
 
-Note that calling :obj:`.execute()` two times in a row will not abort the
+Note that calling :meth:`!execute` two times in a row will not abort the
 former query and will temporarily go to synchronous mode until the first of
 the two queries is executed.
 
 Cursors now have some extra methods that make them useful during
 asynchronous queries:
 
-:meth:`cursor.fileno`
+:meth:`~cursor.fileno`
     Returns the file descriptor associated with the current connection and
     make possible to use a cursor in a context where a file object would be
-    expected (like in a :func:`select()` call).
+    expected (like in a :func:`select` call).
 
-:meth:`cursor.isready`
+:meth:`~cursor.isready`
     Returns ``False`` if the backend is still processing the query or ``True``
-    if data is ready to be fetched (by one of the :obj:`.fetch*()` methods).
+    if data is ready to be fetched (by one of the :meth:`!fetch*` methods).
 
-A code snippet that shows how to use the cursor object in a :func:`select()`
+.. index::
+    single: Example; Asynchronous query
+
+A code snippet that shows how to use the cursor object in a :func:`!select`
 call::
 
     import psycopg2

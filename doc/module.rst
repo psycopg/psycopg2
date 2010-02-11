@@ -30,19 +30,19 @@ The module interface respects the standard defined in the |DBAPI|_.
 
     The full list of available parameters is:
     
-    - ``dbname`` the database name (only in dsn string)
-    - ``database`` the database name (only as keyword argument)
-    - ``user`` user name used to authenticate
-    - ``password`` password used to authenticate
-    - ``host`` database host address (defaults to UNIX socket if not provided)
-    - ``port`` connection port number (defaults to 5432 if not provided)
-    - ``sslmode`` `SSL TCP/IP negotiation`__ mode
+    - :obj:`!dbname` -- the database name (only in dsn string)
+    - :obj:`!database` -- the database name (only as keyword argument)
+    - :obj:`!user` -- user name used to authenticate
+    - :obj:`!password` -- password used to authenticate
+    - :obj:`!host` -- database host address (defaults to UNIX socket if not provided)
+    - :obj:`!port` -- connection port number (defaults to 5432 if not provided)
+    - :obj:`!sslmode` -- `SSL TCP/IP negotiation`__ mode
 
     .. __: http://www.postgresql.org/docs/8.4/static/libpq-ssl.html#LIBPQ-SSL-SSLMODE-STATEMENTS
 
-    Using the :obj:`connection_factory` parameter a different class or
+    Using the :obj:`!connection_factory` parameter a different class or
     connections factory can be specified. It should be a callable object
-    taking a :obj:`dsn` argument. See :ref:`subclassing-connection` for
+    taking a :obj:`!dsn` argument. See :ref:`subclassing-connection` for
     details.
 
     .. extension::
@@ -69,27 +69,29 @@ The module interface respects the standard defined in the |DBAPI|_.
     :ref:`query-parameters`.
 
 
-.. index:: Exceptions
+
+.. index:: 
+    single: Exceptions; DB API
+
+.. _dbapi-exceptions:
 
 Exceptions
 ----------
 
-In compliance with the |DBAPI|, the module makes informations about errors
+In compliance with the |DBAPI|_, the module makes informations about errors
 available through the following exceptions:
 
 .. exception:: Warning 
             
     Exception raised for important warnings like data truncations while
-    inserting, etc. It is a subclass of the Python |StandardError|_ (defined in
-    the module exceptions).
+    inserting, etc. It is a subclass of the Python |StandardError|_.
             
 .. exception:: Error 
 
     Exception that is the base class of all other error exceptions. You can
     use this to catch all errors with one single ``except`` statement. Warnings
     are not considered errors and thus should not use this class as base. It
-    is a subclass of the Python |StandardError|_ (defined in the module
-    exceptions).
+    is a subclass of the Python |StandardError|_.
     
 .. exception:: InterfaceError
 
@@ -136,30 +138,43 @@ available through the following exceptions:
 .. exception:: NotSupportedError
   
     Exception raised in case a method or database API was used which is not
-    supported by the database, e.g. requesting a .rollback() on a connection
-    that does not support transaction or has transactions turned off.  It is a
-    subclass of :exc:`DatabaseError`.
+    supported by the database, e.g. requesting a :meth:`!rollback` on a
+    connection that does not support transaction or has transactions turned
+    off.  It is a subclass of :exc:`DatabaseError`.
+
+
+.. extension::
+
+    The :mod:`psycopg2.extensions` module exports a few other exception that
+    may be raised by Psycopg: currently
+    :exc:`~psycopg2.extensions.QueryCanceledError` and
+    :exc:`~psycopg2.extensions.TransactionRollbackError`. These exceptions are
+    not exposed by the main :mod:`!psycopg2` module but can be imported by the
+    :mod:`~psycopg2.extensions` module.  All the additional exceptions are
+    subclasses of standard |DBAPI| exceptions, so trapping them specifically
+    is not required.
 
 
 This is the exception inheritance layout:
 
-- |StandardError|_ 
+.. parsed-literal::
 
-  - :exc:`Warning`
-  - :exc:`Error`
+    |StandardError|_ 
+    \|__ :exc:`Warning`
+    \|__ :exc:`Error`
+        \|__ :exc:`InterfaceError`
+        \|__ :exc:`DatabaseError`
+            \|__ :exc:`DataError`
+            \|__ :exc:`OperationalError`
+            \|   \|__ :exc:`psycopg2.extensions.QueryCanceledError`
+            \|   \|__ :exc:`psycopg2.extensions.TransactionRollbackError`
+            \|__ :exc:`IntegrityError`
+            \|__ :exc:`InternalError`
+            \|__ :exc:`ProgrammingError`
+            \|__ :exc:`NotSupportedError`
 
-    - :exc:`InterfaceError`
-    - :exc:`DatabaseError`
 
-      - :exc:`DataError`
-      - :exc:`OperationalError`
-      - :exc:`IntegrityError`
-      - :exc:`InternalError`
-      - :exc:`ProgrammingError`
-      - :exc:`NotSupportedError`
-
-
-.. |StandardError| replace:: ``StandardError``
+.. |StandardError| replace:: :exc:`!StandardError`
 .. _StandardError: http://docs.python.org/library/exceptions.html#exceptions.StandardError
 
 

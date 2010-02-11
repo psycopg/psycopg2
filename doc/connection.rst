@@ -9,7 +9,7 @@ The ``connection`` class
     a database session.
 
     Connections are created using the factory function
-    :func:`psycopg2.connect()`.
+    :func:`~psycopg2.connect`.
 
     Connections are thread safe and can be shared among many thread. See
     :ref:`thread-safety` for details.
@@ -18,18 +18,19 @@ The ``connection`` class
           
         Return a new :class:`cursor` object using the connection.
 
-        If :obj:`name` is specified, the returned cursor will be a *server
+        If :obj:`!name` is specified, the returned cursor will be a *server
         side* (or *named*) cursor. Otherwise the cursor will be *client side*.
         See :ref:`server-side-cursors` for further details.
 
-        The ``cursor_factory`` argument can be used to create non-standard
+        The :obj:`!cursor_factory` argument can be used to create non-standard
         cursors. The class returned should be a subclass of
-        :class:`extensions.cursor`. See :ref:`subclassing-cursor` for details.
+        :class:`psycopg2.extensions.cursor`. See :ref:`subclassing-cursor` for
+        details.
 
         .. extension::
 
-            The :obj:`name` and :obj:`cursor_factory` parameters are Psycopg
-            extensions to the DB API.
+            The :obj:`!name` and :obj:`!cursor_factory` parameters are Psycopg
+            extensions to the |DBAPI|.
 
     .. index::
         pair: Transaction; Commit
@@ -38,7 +39,7 @@ The ``connection`` class
           
         Commit any pending transaction to the database. Psycopg can be set to
         perform automatic commits at each operation, see
-        :meth:`connection.set_isolation_level()`.
+        :meth:`~connection.set_isolation_level`.
         
 
     .. index::
@@ -53,14 +54,14 @@ The ``connection`` class
 
     .. method:: close()
               
-        Close the connection now (rather than whenever ``__del__`` is called).
-        The connection will be unusable from this point forward; a
-        :exc:`psycopg2.Error` (or subclass) exception will be raised if any
-        operation is attempted with the connection.  The same applies to all
-        cursor objects trying to use the connection.  Note that closing a
-        connection without committing the changes first will cause an implicit
-        rollback to be performed (unless a different isolation level has been
-        selected: see :meth:`connection.set_isolation_level()`).
+        Close the connection now (rather than whenever :meth:`__del__` is
+        called).  The connection will be unusable from this point forward; an
+        :exc:`~psycopg2.InterfaceError` will be raised if any operation is
+        attempted with the connection.  The same applies to all cursor objects
+        trying to use the connection.  Note that closing a connection without
+        committing the changes first will cause an implicit rollback to be
+        performed (unless a different isolation level has been selected: see
+        :meth:`~connection.set_isolation_level`).
 
 
     .. index::
@@ -68,13 +69,13 @@ The ``connection`` class
 
     .. rubric:: Excetptions as connection class attributes
 
-    The :class:`connection` also exposes the same `Error` classes available in
-    the :mod:`psycopg2` module as attributes.
+    The :class:`!connection` also exposes as attributes the same exceptions
+    available in the :mod:`psycopg2` module.  See :ref:`dbapi-exceptions`.
 
 
     .. extension::
 
-        The above methods are the only ones defined by the |DBAPI|_ protocol.
+        The above methods are the only ones defined by the |DBAPI| protocol.
         The Psycopg connection objects exports the following additional
         methods and attributes.
 
@@ -95,6 +96,8 @@ The ``connection`` class
         pair: Transaction; Autocommit
         pair: Transaction; Isolation level
 
+    .. _autocommit:
+
     .. attribute:: isolation_level
     .. method:: set_isolation_level(level)
 
@@ -106,10 +109,11 @@ The ``connection`` class
         the module :mod:`psycopg2.extensions`: see
         :ref:`isolation-level-constants` for the available values.
 
-        The default level is ``READ COMMITTED``: in this level a transaction
-        is automatically started every time a database command is executed. If
-        you want an *autocommit* mode, set the connection in ``AUTOCOMMIT``
-        mode before executing any command::
+        The default level is :sql:`READ COMMITTED`: in this level a transaction
+        is automatically started every time a database command is executed.  If
+        you want an *autocommit* mode,  switch to
+        :obj:`~psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT`
+        before executing any command::
 
             >>> conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
@@ -133,7 +137,7 @@ The ``connection`` class
     .. attribute:: notices
 
         A list containing all the database messages sent to the client during
-        the session.::
+        the session. ::
 
             >>> cur.execute("CREATE TABLE foo (id serial PRIMARY KEY);")
             >>> conn.notices 
@@ -155,9 +159,9 @@ The ``connection`` class
         List containing asynchronous notifications received by the session.
 
         Received notifications have the form of a 2 items tuple
-        ``(pid,name)``, where ``pid`` is the PID of the backend that sent the
-        notification and ``name`` is the signal name specified in the
-        ``NOTIFY`` command.
+        :samp:`({pid},{name})`, where :samp:`{pid}` is the PID of the backend
+        that sent the notification and :samp:`{name}` is the signal name
+        specified in the :sql:`NOTIFY` command.
 
         For other details see :ref:`async-notify`.
 
@@ -233,7 +237,7 @@ The ``connection`` class
 
         The number is formed by converting the major, minor, and revision
         numbers into two-decimal-digit numbers and appending them together.
-        For example, version 8.1.5 will be returned as 80105,
+        For example, version 8.1.5 will be returned as ``80105``.
         
         .. seealso:: libpq docs for `PQserverVersion()`__ for details.
 
@@ -261,13 +265,4 @@ The ``connection`` class
         :class:`psycopg2.extensions.lobject`.
 
         .. todo:: conn.lobject details
-
-    .. attribute:: binary_types
-
-        .. todo:: describe binary_types
-
-    .. attribute:: string_types
-
-        .. todo:: describe string_types
-
 
