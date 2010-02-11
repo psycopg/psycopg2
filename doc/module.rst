@@ -145,21 +145,20 @@ available through the following exceptions:
 
 .. extension::
 
-    The :mod:`psycopg2.extensions` module exports a few other exception that
-    may be raised by Psycopg: currently
+    Psycopg may raise a few other, more specialized, exceptions: currently
     :exc:`~psycopg2.extensions.QueryCanceledError` and
-    :exc:`~psycopg2.extensions.TransactionRollbackError`. These exceptions are
-    not exposed by the main :mod:`!psycopg2` module but can be imported by the
-    :mod:`~psycopg2.extensions` module.  All the additional exceptions are
-    subclasses of standard |DBAPI| exceptions, so trapping them specifically
-    is not required.
+    :exc:`~psycopg2.extensions.TransactionRollbackError` are defined. These
+    exceptions are not exposed by the main :mod:`!psycopg2` module but are
+    made available by the :mod:`~psycopg2.extensions` module.  All the
+    additional exceptions are subclasses of standard |DBAPI| exceptions, so
+    trapping them specifically is not required.
 
 
 This is the exception inheritance layout:
 
 .. parsed-literal::
 
-    |StandardError|_ 
+    |StandardError|
     \|__ :exc:`Warning`
     \|__ :exc:`Error`
         \|__ :exc:`InterfaceError`
