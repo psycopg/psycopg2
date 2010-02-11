@@ -247,8 +247,8 @@ the SQL string that would be sent to the database.
     single: Float; Adaptation
     single: Decimal; Adaptation
 
-- Numeric objects: ``int``, ``long``, ``float``, ``Decimal`` are converted in
-  the PostgreSQL numerical representation::
+- Numeric objects: :class:`!int`, :class:`!long`, :class:`!float`,
+  :class:`!Decimal` are converted in the PostgreSQL numerical representation::
 
     >>> cur.mogrify("SELECT %s, %s, %s, %s;", (10, 10L, 10.0, Decimal("10.00")))
     >>> 'SELECT 10, 10, 10.0, 10.00;'
@@ -260,11 +260,11 @@ the SQL string that would be sent to the database.
     single: bytea; Adaptation
     single: Binary string
 
-- String types: ``str``, ``unicode`` are converted in SQL string syntax.
-  ``buffer`` is converted in PostgreSQL binary string syntax, suitable for
-  :sql:`bytea` fields.
-
-  .. todo:: unicode not working?
+- String types: :class:`!str`, :class:`!unicode` are converted in SQL string
+  syntax.  :class:`!buffer` is converted in PostgreSQL binary string syntax,
+  suitable for :sql:`bytea` fields. When reading textual fields, either
+  :class:`!str` or :class:`!unicode` can be received: see
+  :ref:`unicode-handling`.
 
 .. index::
     single: Date objects; Adaptation
@@ -272,10 +272,11 @@ the SQL string that would be sent to the database.
     single: Interval objects; Adaptation
     single: mx.DateTime; Adaptation
 
-- Date and time objects: builtin ``datetime``, ``date``, ``time``.
-  ``timedelta`` are converted into PostgreSQL's :sql:`timestamp`, :sql:`date`,
-  :sql:`time`, :sql:`interval` data types.  Time zones are supported too.  The
-  Egenix `mx.DateTime`_ objects are adapted the same way::
+- Date and time objects: builtin :class:`!datetime`, :class:`!date`,
+  :class:`!time`.  :class:`!timedelta` are converted into PostgreSQL's
+  :sql:`timestamp`, :sql:`date`, :sql:`time`, :sql:`interval` data types.
+  Time zones are supported too.  The Egenix `mx.DateTime`_ objects are adapted
+  the same way::
 
     >>> dt = datetime.datetime.now()
     >>> dt
@@ -320,6 +321,79 @@ the SQL string that would be sent to the database.
   .. versionadded:: 2.0.6
     the tuple :sql:`IN` adaptation.
 
+
+.. index::
+    single: Unicode
+
+.. _unicode-handling:
+
+Unicode handling
+^^^^^^^^^^^^^^^^
+
+Psycopg can exchange Unicode data with a PostgreSQL database.  Python
+:class:`!unicode` objects are automatically *encoded* in the client encoding
+defined on the database connection (the `PostgreSQL encoding`__, available in
+:attr:`connection.encoding`, is translated into a `Python codec`__ using an
+:data:`~psycopg2.extensions.encodings` mapping)::
+
+    >>> print u, type(u)
+    àèìòù€ <type 'unicode'>
+
+    >>> cur.execute("INSERT INTO test (num, data) VALUES (%s,%s);", (74, u))
+
+.. __: http://www.postgresql.org/docs/8.4/static/multibyte.html
+.. __: http://docs.python.org/library/codecs.html#standard-encodings
+
+When reading data from the database, the strings returned are usually 8 bit
+:class:`!str` objects encoded in the database client encoding::
+
+    >>> print conn.encoding
+    UTF8
+
+    >>> cur.execute("SELECT data FROM test WHERE num = 74")
+    >>> x = cur.fetchone()[0]
+    >>> print x, type(x), repr(x)
+    àèìòù€ <type 'str'> '\xc3\xa0\xc3\xa8\xc3\xac\xc3\xb2\xc3\xb9\xe2\x82\xac'
+
+    >>> conn.set_client_encoding('LATIN9')
+
+    >>> cur.execute("SELECT data FROM test WHERE num = 74")
+    >>> x = cur.fetchone()[0]
+    >>> print type(x), repr(x)
+    <type 'str'> '\xe0\xe8\xec\xf2\xf9\xa4'
+
+In order to obtain :class:`!unicode` objects instead, it is possible to
+register a typecaster so that PostgreSQL textual types are automatically
+*decoded* using the current client encoding::
+
+    >>> psycopg2.extensions.register_type(psycopg2.extensions.UNICODE, cur)
+
+    >>> cur.execute("SELECT data FROM test WHERE num = 74")
+    >>> x = cur.fetchone()[0]
+    >>> print x, type(x), repr(x)
+    àèìòù€ <type 'unicode'> u'\xe0\xe8\xec\xf2\xf9\u20ac'
+
+In the above example, the :data:`~psycopg2.extensions.UNICODE` typecaster is
+registered only on the cursor. It is also possible to register typecasters on
+the connection or globally: see the function
+:func:`~psycopg2.extensions.register_type` and
+:ref:`type-casting-from-sql-to-python` for details.
+
+.. note::
+
+    If you want to receive uniformly all your database input in Unicode, you
+    can register the related typecasters globally as soon as Psycopg is
+    imported::
+
+        import psycopg2
+        import psycopg2.extensions
+        psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
+        psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
+
+    and then forget about this story.
+
+
+
 .. index::
     pair: Server side; Cursor
     pair: Named; Cursor
@@ -345,7 +419,7 @@ large dataset can be examined without keeping it entirely in memory.
 Server side cursor are created in PostgreSQL using the |DECLARE|_ command and
 subsequently handled using :sql:`MOVE`, :sql:`FETCH` and :sql:`CLOSE` commands.
 
-Psycopg wraps the database server side cursor in *named cursors*. A name
+Psycopg wraps the database server side cursor in *named cursors*. A named
 cursor is created using the :meth:`~connection.cursor` method specifying the
 :obj:`!name` parameter. Such cursor will behave mostly like a regular cursor,
 allowing the user to move in the dataset using the :meth:`~cursor.scroll`

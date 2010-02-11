@@ -236,6 +236,7 @@ The module exports a few exceptions in addition to the :ref:`standard ones
     It is a subclass of :exc:`~psycopg2.OperationalError`
 
 
+
 .. index::
     pair: Isolation level; Constants
 
@@ -359,4 +360,37 @@ can be read from the :data:`~connection.status` attribute.
 
     Used internally.
 
+
+
+Additional database types
+-------------------------
+
+The :mod:`!extensions` module includes typecasters for many standard
+PostgreSQL types.  These objects allow the conversion of returned data into
+Python objects.  All the typecasters are automatically registered, except
+:data:`UNICODE` and :data:`UNICODEARRAY`: you can register them using
+:func:`register_type` in order to receive Unicode objects instead of strings
+from the database.  See :ref:`unicode-handling` for details.
+
+.. data:: BINARYARRAY
+.. data:: BOOLEAN
+.. data:: BOOLEANARRAY
+.. data:: DATE
+.. data:: DATEARRAY
+.. data:: DATETIMEARRAY
+.. data:: DECIMALARRAY
+.. data:: FLOAT
+.. data:: FLOATARRAY
+.. data:: INTEGER
+.. data:: INTEGERARRAY
+.. data:: INTERVAL
+.. data:: INTERVALARRAY
+.. data:: LONGINTEGER
+.. data:: LONGINTEGERARRAY
+.. data:: ROWIDARRAY
+.. data:: STRINGARRAY
+.. data:: TIME
+.. data:: TIMEARRAY
+.. data:: UNICODE
+.. data:: UNICODEARRAY
 
