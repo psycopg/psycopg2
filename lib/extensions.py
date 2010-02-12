@@ -110,7 +110,5 @@ class SQL_IN(object):
 
     __str__ = getquoted
 
-register_adapter(tuple, SQL_IN)
-
 
 __all__ = [ k for k in locals().keys() if not k.startswith('_') ]

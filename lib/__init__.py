@@ -60,8 +60,9 @@ if sys.version_info[0] >= 2 and sys.version_info[1] >= 4:
         warnings.warn(
             "can't import decimal module probably needed by _psycopg",
             RuntimeWarning)
-from psycopg2 import tz
 del sys, warnings
+
+from psycopg2 import tz
 
 # Import the DBAPI-2.0 stuff into top-level module.
 
@@ -76,5 +77,10 @@ from _psycopg import NotSupportedError, OperationalError
 
 from _psycopg import connect, apilevel, threadsafety, paramstyle
 from _psycopg import __version__
+
+# Register default adapters.
+
+import psycopg2.extensions as _ext
+_ext.register_adapter(tuple, _ext.SQL_IN)
 
 __all__ = [ k for k in locals().keys() if not k.startswith('_') ]

@@ -29,7 +29,6 @@ functions or used to set the .tzinfo_factory attribute in cursors.
 import datetime
 import time
 
-
 ZERO = datetime.timedelta(0)
 
 class FixedOffsetTimezone(datetime.tzinfo):
