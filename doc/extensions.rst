@@ -135,24 +135,24 @@ deal with Python objects adaptation:
 
 
 .. class:: Boolean
-.. class:: Float
-.. class:: SQL_IN
+           Float
+           SQL_IN
 
-Specialized adapters for builtin objects.
+        Specialized adapters for builtin objects.
 
 .. class:: DateFromPy
-.. class:: TimeFromPy
-.. class:: TimestampFromPy
-.. class:: IntervalFromPy
+           TimeFromPy
+           TimestampFromPy
+           IntervalFromPy
 
-Specialized adapters for Python datetime objects.
+        Specialized adapters for Python datetime objects.
 
 .. class:: DateFromMx
-.. class:: TimeFromMx
-.. class:: TimestampFromMx
-.. class:: IntervalFromMx
+           TimeFromMx
+           TimestampFromMx
+           IntervalFromMx
 
-Specialized adapters for `mx.DateTime`_ objects.
+        Specialized adapters for `mx.DateTime`_ objects.
 
 .. data:: adapters
 
@@ -209,7 +209,8 @@ details.
 .. data:: encodings
 
     Mapping from `PostgreSQL encoding`__ names to `Python codec`__ names.
-    Used by Psycopg when adapting or casting unicode strings.
+    Used by Psycopg when adapting or casting unicode strings. See
+    :ref:`unicode-handling`.
 
     .. __: http://www.postgresql.org/docs/8.4/static/multibyte.html
     .. __: http://docs.python.org/library/codecs.html#standard-encodings
@@ -373,24 +374,24 @@ Python objects.  All the typecasters are automatically registered, except
 from the database.  See :ref:`unicode-handling` for details.
 
 .. data:: BINARYARRAY
-.. data:: BOOLEAN
-.. data:: BOOLEANARRAY
-.. data:: DATE
-.. data:: DATEARRAY
-.. data:: DATETIMEARRAY
-.. data:: DECIMALARRAY
-.. data:: FLOAT
-.. data:: FLOATARRAY
-.. data:: INTEGER
-.. data:: INTEGERARRAY
-.. data:: INTERVAL
-.. data:: INTERVALARRAY
-.. data:: LONGINTEGER
-.. data:: LONGINTEGERARRAY
-.. data:: ROWIDARRAY
-.. data:: STRINGARRAY
-.. data:: TIME
-.. data:: TIMEARRAY
-.. data:: UNICODE
-.. data:: UNICODEARRAY
+          BOOLEAN
+          BOOLEANARRAY
+          DATE
+          DATEARRAY
+          DATETIMEARRAY
+          DECIMALARRAY
+          FLOAT
+          FLOATARRAY
+          INTEGER
+          INTEGERARRAY
+          INTERVAL
+          INTERVALARRAY
+          LONGINTEGER
+          LONGINTEGERARRAY
+          ROWIDARRAY
+          STRINGARRAY
+          TIME
+          TIMEARRAY
+          UNICODE
+          UNICODEARRAY
 
