@@ -1,5 +1,7 @@
 2010-02-10  Federico Di Gregorio  <fog@initd.org>
 
+	* lib/extensions.py: Binary was not imported from _psycopg; now it is
+
 	* lib/__init__: SQL_IN adapter is now automatically registered.
 
 	* ZPsycopgDA/db.py: removed logging debug calls; psycopg does
