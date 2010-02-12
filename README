@@ -1,28 +1,32 @@
-psycopg - Python-PostgreSQL Database Adapter
+psycopg2 - Python-PostgreSQL Database Adapter
 ********************************************
 
-psycopg is a PostgreSQL database adapter for the Python programming
+psycopg2 is a PostgreSQL database adapter for the Python programming
 language. This is version 2, a complete rewrite of the original code to
 provide new-style classes for connection and cursor objects and other
-sweet candies. Like the original, psycopg 2 was written with the aim of
+sweet candies. Like the original, psycopg2 was written with the aim of
 being very small and fast, and stable as a rock.
 
-psycopg is different from the other database adapter because it was
+psycopg2 is different from the other database adapter because it was
 designed for heavily multi-threaded applications that create and destroy
 lots of cursors and make a conspicuous number of concurrent INSERTs or
-UPDATEs. psycopg 2 also provide full asycronous operations for the really
+UPDATEs. psycopg2 also provide full asycronous operations for the really
 brave programmer.
 
 There are confirmed reports of psycopg 1.x compiling and running on Linux
-and FreeBSD on i386, Solaris, MacOS X and win32 architectures. psycopg 2
+and FreeBSD on i386, Solaris, MacOS X and win32 architectures. psycopg2
 does not introduce build-wise incompatible changes so it should be able to
 compile on all architectures just as its predecessor did.
 
-Now go read the INSTALL file. More information about psycopg extensions to
+Now go read the INSTALL file. More information about psycopg2 extensions to
 the DBAPI-2.0 is available in the files located in the doc/ direcory.
+Example code can be found in the examples/ directory. If you make any changes
+to the code make sure to run the unit tests localed in tests/.
 
-psycopg is free software ("free as in freedom" but I like beer too.)
-Licensing information is available in the LICENSE file.
+psycopg2 is free software ("free as in freedom" but I like beer too.)
+It is licensed under the GNU Lesser General Public License, version 3 or
+later plus an exception to allow OpenSSL (libpq) linking; see LICENSE for
+more details.
 
 
 Contributors

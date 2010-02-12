@@ -1,24 +1,32 @@
-psycopg and the GPL
-===================
+psycopg2 and the LGPL
+=====================
 
-psycopg is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version. See file COPYING for details.
+psycopg2 is free software: you can redistribute it and/or modify it
+under the terms of the GNU Lesser General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-As a special exception, specific permission is granted for the GPLed
-code in this distribition to be linked to OpenSSL and PostgreSQL libpq
-without invoking GPL clause 2(b).
+psycopg2 is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+License for more details.
 
-Note that the GPL was chosen to avoid proprietary adapters based on
-psycopg code. Using psycopg in a proprietary product (even bundling
-psycopg with the proprietary product) is fine as long as:
+In addition, as a special exception, the copyright holders give
+permission to link this program with the OpenSSL library (or with
+modified versions of OpenSSL that use the same license as OpenSSL),
+and distribute linked combinations including the two.
 
- 1. psycopg is called from Python only using only the provided API
-    (i.e., no linking with C code and no C modules based on it); and
+You must obey the GNU Lesser General Public License in all respects for
+all of the code used other than OpenSSL. If you modify file(s) with this
+exception, you may extend this exception to your version of the file(s),
+but you are not obligated to do so. If you do not wish to do so, delete
+this exception statement from your version. If you delete this exception
+statement from all source files in the program, then also delete it here.
 
- 2. all the other points of the GPL are respected (you offer a copy
-    of psycopg's source code, and so on.)
+You should have received a copy of the GNU Lesser General Public License
+along with psycopg2 (see the doc/ directory.)
+If not, see <http://www.gnu.org/licenses/>.
+
 
 Alternative licenses
 ====================
@@ -44,17 +52,3 @@ psycopg/microprotocol*.{h,c}:
     be misrepresented as being the original software.
  
  3. This notice may not be removed or altered from any source distribution.
-
-psycopg is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-Proprietary licenses
-====================
-
-A non-exclusive license is available for companies that want to include
-psycopg in their proprietary products without respecting the spirit of the
-GPL. The price of the license is one day of development done by the author,
-at the consulting fee he applies to his usual customers at the day of the
-request.

@@ -52,7 +52,6 @@
     <None Include="doc\extensions.rst" />
     <None Include="doc\HACKING" />
     <None Include="doc\SUCCESS" />
-    <None Include="doc\TODO" />
     <None Include="examples\binary.py" />
     <None Include="examples\copy_from.py" />
     <None Include="examples\copy_to.py" />
@@ -168,6 +167,7 @@
     <Compile Include="psycopg\lobject_int.c" />
     <Compile Include="psycopg\lobject_type.c" />
     <Compile Include="psycopg\adapter_pfloat.c" />
+    <Compile Include="psycopg\adapter_pdecimal.c" />
   </ItemGroup>
   <ProjectExtensions>
     <MonoDevelop>

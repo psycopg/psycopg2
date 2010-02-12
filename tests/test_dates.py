@@ -1,11 +1,10 @@
 #!/usr/bin/env python
+
 import math
 import unittest
-
+import tests
 import psycopg2
 from psycopg2.tz import FixedOffsetTimezone
-import tests
-
 
 class CommonDatetimeTestsMixin:
 
@@ -380,3 +379,5 @@ if not hasattr(psycopg2._psycopg, 'MXDATETIME'):
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
+if __name__ == "__main__":
+    unittest.main()

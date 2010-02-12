@@ -1,6 +1,6 @@
 """
 Using a tuple as a bound variable in "SELECT ... IN (...)" clauses
-in PostgreSQL using psycopg 2
+in PostgreSQL using psycopg2
 
 Some time ago someone asked on the psycopg mailing list how to have a
 bound variable expand to the right SQL for an SELECT IN clause:
@@ -18,29 +18,29 @@ only for simple types and this problem has no elegant solution (short or
 writing a wrapper class returning the pre-quoted text in an __str__
 method.
 
-But psycopg 2 offers a simple and elegant solution by partially
-implementing the Object Adaptation from PEP 246. psycopg 2 (still in
-beta and currently labeled as 1.99.9) moves the type-casting logic into
-external adapters and a somehow broken adapt() function.
+But psycopg2 offers a simple and elegant solution by partially
+implementing the Object Adaptation from PEP 246. psycopg2 moves
+the type-casting logic into external adapters and a somehow
+broken adapt() function.
 
-While the original adapt() takes 3 arguments, psycopg's one only takes
+While the original adapt() takes 3 arguments, psycopg2's one only takes
 1: the bound variable to be adapted. The result is an object supporting
-a not-yet well defined protocol that we can call IPsycopgSQLQuote:
+a not-yet well defined protocol that we can call ISQLQuote:
 
-    class IPsycopgSQLQuote:
+    class ISQLQuote:
 
         def getquoted(self):
             "Returns a quoted string representing the bound variable."
 
-	def getbinary(self):
-	    "Returns a binary quoted string representing the bound variable."
-	    
-	def getbuffer(self):
+        def getbinary(self):
+           "Returns a binary quoted string representing the bound variable."
+    
+        def getbuffer(self):
             "Returns the wrapped object itself."
 
         __str__ = getquoted
 
-Then one of the functions (usually .getquoted()) is called by psycopg at
+Then one of the functions (usually .getquoted()) is called by psycopg2 at
 the right time to obtain the right, sql-quoted representation for the
 corresponding bound variable.
 
@@ -52,19 +52,23 @@ Then the solution to the original problem is now obvious: write an
 adapter that adapts tuple objects into the right SQL string, by calling
 recursively adapt() on each element.
 
-Note: psycopg 2 adapter code is still very young and will probably move
-to a more 'standard' (3 arguments) implementation for the adapt()
-function; as long as that does not slow down too much query execution.
-
-Psycopg 2 development can be tracked on the psycopg mailing list:
+psycopg2 development can be tracked on the psycopg mailing list:
 
    http://lists.initd.org/mailman/listinfo/psycopg
 
-and on the psycopg 2 wiki:
-
-   http://wiki.initd.org/Projects/Psycopg2
-
 """
+
+# Copyright (C) 2001-2010 Federico Di Gregorio  <fog@debian.org>
+#
+# psycopg2 is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# psycopg2 is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+# License for more details.
 
 import psycopg2
 import psycopg2.extensions

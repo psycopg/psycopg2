@@ -12,17 +12,25 @@ This module holds all the extensions to the DBAPI-2.0 provided by psycopg.
 """
 # psycopg/extensions.py - DBAPI-2.0 extensions specific to psycopg
 #
-# Copyright (C) 2003-2004 Federico Di Gregorio  <fog@debian.org>
+# Copyright (C) 2003-2010 Federico Di Gregorio  <fog@debian.org>
 #
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version.
+# psycopg2 is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTIBILITY
-# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-# for more details.
+# In addition, as a special exception, the copyright holders give
+# permission to link this program with the OpenSSL library (or with
+# modified versions of OpenSSL that use the same license as OpenSSL),
+# and distribute linked combinations including the two.
+#
+# You must obey the GNU Lesser General Public License in all respects for
+# all of the code used other than OpenSSL.
+#
+# psycopg2 is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+# License for more details.
 
 from _psycopg import UNICODE, INTEGER, LONGINTEGER, BOOLEAN, FLOAT
 from _psycopg import TIME, DATE, INTERVAL

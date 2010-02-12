@@ -1,9 +1,8 @@
 #!/usr/bin/env python
-import unittest
 
+import unittest
 import psycopg2
 import tests
-
 
 class ConnectionTests(unittest.TestCase):
 
@@ -42,5 +41,5 @@ class ConnectionTests(unittest.TestCase):
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
-    unittest.main(defaultTest='test_suite')
+if __name__ == "__main__":
+    unittest.main()
