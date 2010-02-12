@@ -1,5 +1,10 @@
 2010-02-10  Federico Di Gregorio  <fog@initd.org>
 
+	* ZPsycopgDA/db.py: removed logging debug calls; psycopg does
+	not depend on the logger module.
+
+2010-02-12  Federico Di Gregorio  <fog@initd.org>
+
 	* License migration: psycopg2 is now LGPL3 + OpenSSL exception.
 
 	* TODO file was never updated so lets remove it.

@@ -169,15 +169,15 @@ class DB(TM, dbi_db.DB):
                         c.execute(qs)
                 except TransactionRollbackError:
                     # Ha, here we have to look like we are the ZODB raising conflict errrors, raising ZPublisher.Publish.Retry just doesn't work
-                    logging.debug("Serialization Error, retrying transaction", exc_info=True)
+                    #logging.debug("Serialization Error, retrying transaction", exc_info=True)
                     raise ConflictError("TransactionRollbackError from psycopg2")
                 except psycopg2.OperationalError:
-                    logging.exception("Operational error on connection, closing it.")
+                    #logging.exception("Operational error on connection, closing it.")
                     try:
                         # Only close our connection
                         self.putconn(True)
                     except:
-                        logging.debug("Something went wrong when we tried to close the pool", exc_info=True)
+                        #logging.debug("Something went wrong when we tried to close the pool", exc_info=True)
                         pass
                 if c.description is not None:
                     nselects += 1
