@@ -46,19 +46,20 @@ The main entry point of Psycopg are:
 
 - The class :class:`connection` encapsulates a database session. It allows to:
 
-  - terminate the session using the methods :meth:`~connection.commit` and
-    :meth:`~connection.rollback`,
+  - create new :class:`cursor`\s using the :meth:`~connection.cursor` method to
+    execute database commands and queries,
 
-  - create new :class:`cursor`\ s to execute database commands and queries
-    using the method :meth:`~connection.cursor`.
+  - terminate the session using the methods :meth:`~connection.commit` or
+    :meth:`~connection.rollback`.
 
 - The class :class:`cursor` allows interaction with the database:
 
-  - send command using methods such as :meth:`~cursor.execute` and
-    :meth:`~cursor.executemany`,
+  - send commands to the database using methods such as :meth:`~cursor.execute`
+    and :meth:`~cursor.executemany`,
 
-  - retrieve data using methods such as :meth:`~cursor.fetchone`,
-    :meth:`~cursor.fetchmany`, :meth:`~cursor.fetchall`.
+  - retrieve data from the database using methods such as
+    :meth:`~cursor.fetchone`, :meth:`~cursor.fetchmany`,
+    :meth:`~cursor.fetchall`.
 
 
 
@@ -187,7 +188,7 @@ easily craft a malformed string, either gaining access to unauthorized data or
 performing destructive operations on the database. This form of attack is
 called `SQL injection`_ and is known to be one of the most widespread forms of
 attack to servers. Before continuing, please print `this page`__ as a memo and
-hang it onto your desktop.
+hang it onto your desk.
 
 .. _SQL injection: http://en.wikipedia.org/wiki/SQL_injection
 .. __: http://xkcd.com/327/
