@@ -275,7 +275,13 @@ The ``cursor`` class
         .. note:: 
 
             According to the |DBAPI|_, the exception raised for a cursor out
-            of bound should have been :exc:`!IndexError`.
+            of bound should have been :exc:`!IndexError`.  The best option is
+            probably to catch both exceptions in your code::
+
+                try:
+                    cur.scroll(1000 * 1000)
+                except (ProgrammingError, IndexError), exc:
+                    deal_with_it(exc)
 
 
     .. attribute:: arraysize
