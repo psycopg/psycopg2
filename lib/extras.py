@@ -97,7 +97,7 @@ class DictCursorBase(_cursor):
         return res
 
 class DictConnection(_connection):
-    """A connection that uses DictCursor automatically."""
+    """A connection that uses :class:`DictCursor` automatically."""
     def cursor(self, name=None):
         if name is None:
             return _connection.cursor(self, cursor_factory=DictCursor)
@@ -180,7 +180,7 @@ class DictRow(list):
         return self._index.__contains__(x)
 
 class RealDictConnection(_connection):
-    """A connection that uses RealDictCursor automatically."""
+    """A connection that uses :class:`RealDictCursor` automatically."""
     def cursor(self, name=None):
         if name is None:
             return _connection.cursor(self, cursor_factory=RealDictCursor)
@@ -193,7 +193,7 @@ class RealDictCursor(DictCursorBase):
     Note that this cursor is extremely specialized and does not allow
     the normal access (using integer indices) to fetched data. If you need
     to access database rows both as a dictionary and a list, then use
-    the generic DictCursor instead of RealDictCursor.
+    the generic :class:`DictCursor` instead of :class:`!RealDictCursor`.
     """
 
     def __init__(self, *args, **kwargs):
@@ -218,6 +218,7 @@ class RealDictCursor(DictCursorBase):
             self._query_executed = 0
 
 class RealDictRow(dict):
+    """A ``dict`` subclass representing a data record."""
 
     __slots__ = ('_column_mapping')
 
@@ -232,13 +233,16 @@ class RealDictRow(dict):
 
 
 class LoggingConnection(_connection):
-    """A connection that logs all queries to a file or logger object."""
+    """A connection that logs all queries to a file or logger__ object.
+
+    .. __: http://docs.python.org/library/logging.html
+    """
 
     def initialize(self, logobj):
-        """Initialize the connection to log to `logobj`.
+        """Initialize the connection to log to ``logobj``.
 
-        The `logobj` parameter can be an open file object or a Logger instance
-        from the standard logging module.
+        The ``logobj`` parameter can be an open file object or a Logger
+        instance from the standard logging module.
         """
         self._logobj = logobj
         if logging and isinstance(logobj, logging.Logger):
@@ -294,12 +298,13 @@ class LoggingCursor(_cursor):
 class MinTimeLoggingConnection(LoggingConnection):
     """A connection that logs queries based on execution time.
     
-    This is just an example of how to sub-class LoggingConnection to provide
-    some extra filtering for the logged queries. Both the `.inizialize()` and
-    `.filter()` methods are overwritten to make sure that only queries
-    executing for more than `mintime` ms are logged.
+    This is just an example of how to sub-class :class:`LoggingConnection` to
+    provide some extra filtering for the logged queries. Both the
+    :meth:`inizialize` and :meth:`filter` methods are overwritten to make sure
+    that only queries executing for more than ``mintime`` ms are logged.
     
-    Note that this connection uses the specialized cursor MinTimeLoggingCursor.
+    Note that this connection uses the specialized cursor
+    :class:`MinTimeLoggingCursor`.
     """
     def initialize(self, logobj, mintime=0):
         LoggingConnection.initialize(self, logobj)
@@ -318,7 +323,7 @@ class MinTimeLoggingConnection(LoggingConnection):
             return _connection.cursor(self, name, cursor_factory=MinTimeLoggingCursor)
     
 class MinTimeLoggingCursor(LoggingCursor):
-    """The cursor sub-class companion to MinTimeLoggingConnection."""
+    """The cursor sub-class companion to :class:`MinTimeLoggingConnection`."""
 
     def execute(self, query, vars=None, async=0):
         self.timestamp = time.time()
@@ -335,7 +340,11 @@ try:
     import uuid
 
     class UUID_adapter(object):
-        """Adapt Python's uuid.UUID type to PostgreSQL's uuid."""
+        """Adapt Python's uuid.UUID__ type to PostgreSQL's uuid__.
+
+        .. __: http://docs.python.org/library/uuid.html
+        .. __: http://www.postgresql.org/docs/8.4/static/datatype-uuid.html
+        """
         
         def __init__(self, uuid):
             self._uuid = uuid
@@ -440,7 +449,7 @@ def _convert_tstz_w_secs(s, cursor):
         return DATETIME(s[:-3], cursor)
 
 def register_tstz_w_secs(oids=None, conn_or_curs=None):
-    """Register alternate type caster for TIMESTAMP WITH TIME ZONE.
+    """Register alternate type caster for :sql:`TIMESTAMP WITH TIME ZONE`.
 
     The Python datetime module cannot handle time zones with
     seconds in the UTC offset. There are, however, historical
@@ -451,16 +460,16 @@ def register_tstz_w_secs(oids=None, conn_or_curs=None):
     timestamp you likely want to try this type caster. It truncates
     the seconds from the time zone data and retries casting
     the timestamp. Note that this will generate timestamps
-    which are INACCURATE by the number of seconds truncated
+    which are **inaccurate** by the number of seconds truncated
     (unless the seconds were 00).
 
-    <oids>
+    :param oids:
             which OIDs to use this type caster for,
-            defaults to TIMESTAMP WITH TIME ZONE
-    <conn_or_curs>
+            defaults to :sql:`TIMESTAMP WITH TIME ZONE`
+    :param conn_or_curs:
             a cursor or connection if you want to attach
             this type caster to that only, defaults to
-            None meaning all connections and cursors
+            ``None`` meaning all connections and cursors
     """
     if oids is None:
         oids = (1184,) # hardcoded from PostgreSQL headers

@@ -227,7 +227,9 @@ Many standards Python types are adapted into SQL and returned as Python
 objects when a query is executed.
 
 If you need to convert other Python types to and from PostgreSQL data types,
-see :ref:`adapting-new-types` and :ref:`type-casting-from-sql-to-python`.
+see :ref:`adapting-new-types` and :ref:`type-casting-from-sql-to-python`.  You
+can also find a few other specialized adapters in the :mod:`psycopg2.extras`
+module.
 
 In the following examples the method :meth:`~cursor.mogrify` is used to show
 the SQL string that would be sent to the database.
