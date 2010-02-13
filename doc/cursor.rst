@@ -482,19 +482,3 @@ The ``cursor`` class
 
         .. versionadded:: 2.0.6
 
-
-    .. rubric:: Stuff to put elsewhere...
-
-    .. attribute:: row_factory
-
-        .. todo:: cursor.row_factory
-
-    .. attribute:: typecaster
-
-        .. todo:: cursor.typecaster
-
-    .. attribute:: tzinfo_factory
-
-        .. todo:: tzinfo_factory
-
-
