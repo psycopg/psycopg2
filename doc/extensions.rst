@@ -29,8 +29,6 @@ functionalities defined by the |DBAPI|_.
 
     For a complete description of the class, see :class:`cursor`.
 
-    .. todo:: row factories
-
 .. class:: lobject
 
     .. todo:: class lobject
