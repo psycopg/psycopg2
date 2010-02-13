@@ -431,7 +431,7 @@ static struct {
         NotSupportedError_doc },
 #ifdef PSYCOPG_EXTENSIONS
     { "psycopg2.extensions.QueryCanceledError", &QueryCanceledError,
-      &OperationalError, OperationalError_doc },
+      &OperationalError, QueryCanceledError_doc },
     { "psycopg2.extensions.TransactionRollbackError",
       &TransactionRollbackError, &OperationalError,
       TransactionRollbackError_doc },

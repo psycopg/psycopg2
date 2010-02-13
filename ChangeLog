@@ -4,6 +4,8 @@
 
 	* Fixed Inet constructor.
 
+	* Fixed docstring for 'QueryCanceledError' exception.
+
 2010-02-10  Federico Di Gregorio  <fog@initd.org>
 
 	* lib/extensions.py: Binary was not imported from _psycopg; now it is
