@@ -92,6 +92,39 @@ available through the following exceptions:
     use this to catch all errors with one single ``except`` statement. Warnings
     are not considered errors and thus should not use this class as base. It
     is a subclass of the Python |StandardError|_.
+
+    .. attribute:: pgerror
+
+        String representing the error message returned by the backend,
+        ``None`` if not available.
+
+    .. attribute:: pgcode
+
+        String representing the error code returned by the backend, ``None``
+        if not available.  The :mod:`~psycopg2.errorcodes` module contains
+        symbolic constants representing PostgreSQL error codes.
+
+    .. extension::
+
+        The :attr:`~Error.pgerror` and :attr:`~Error.pgcode` attributes are
+        Psycopg extensions. ::
+
+            >>> try:
+            ...     cur.execute("SELECT * FROM barf")
+            >>> except Exception, e:
+            ....    pass
+
+            >>> e.pgcode
+            >>> '42P01'
+            >>> print e.pgerror
+            ERROR:  relation "barf" does not exist
+            LINE 1: SELECT * FROM barf
+                                  ^
+
+    .. versionchanged:: 2.0.7 added :attr:`Error.pgerror` and
+        :attr:`Error.pgcode` attributes.
+
+
     
 .. exception:: InterfaceError
 
