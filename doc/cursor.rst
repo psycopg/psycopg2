@@ -482,3 +482,12 @@ The ``cursor`` class
 
         .. versionadded:: 2.0.6
 
+
+    .. attribute:: tzinfo_factory
+
+        The time zone factory used to handle data types such as
+        :sql:`TIMESTAMP WITH TIME ZONE`.  It should be a |tzinfo|_ object.
+        See also the :mod:`psycopg2.tz` module.
+
+        .. |tzinfo| replace:: :class:`!tzinfo`
+        .. _tzinfo: http://docs.python.org/library/datetime.html#tzinfo-objects
