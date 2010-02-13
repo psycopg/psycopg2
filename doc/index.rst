@@ -38,6 +38,7 @@ Contents:
    extensions
    tz
    extras
+   errorcodes
 
 .. ifconfig:: todo_include_todos
 
