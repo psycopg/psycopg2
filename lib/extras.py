@@ -399,7 +399,7 @@ class Inet(object):
     by passing an evil value to the initializer.
     """
     def __init__(self, addr):
-        self.addr
+        self.addr = addr
     
     def prepare(self, conn):
         self._conn = conn
