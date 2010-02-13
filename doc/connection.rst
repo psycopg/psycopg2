@@ -198,6 +198,8 @@ The ``connection`` class
 
             .. __: http://www.postgresql.org/docs/8.4/static/libpq-status.html#AEN33590
 
+        .. versionadded:: 2.0.8
+
 
     .. index::
         pair: Server; Parameters
@@ -216,6 +218,8 @@ The ``connection`` class
         .. seealso:: libpq docs for `PQparameterStatus()`__ for details.
 
             .. __: http://www.postgresql.org/docs/8.4/static/libpq-status.html#AEN33499
+
+        .. versionadded:: 2.0.12
 
 
     .. index::
@@ -245,6 +249,8 @@ The ``connection`` class
 
             .. __: http://www.postgresql.org/docs/8.4/static/libpq-status.html#AEN33546
 
+        .. versionadded:: 2.0.12
+
 
     .. index::
         pair: Server; Version
@@ -260,6 +266,8 @@ The ``connection`` class
         .. seealso:: libpq docs for `PQserverVersion()`__ for details.
 
             .. __: http://www.postgresql.org/docs/8.4/static/libpq-status.html#AEN33556
+
+        .. versionadded:: 2.0.12
 
 
     .. index::
@@ -284,3 +292,4 @@ The ``connection`` class
 
         .. todo:: conn.lobject details
 
+        .. versionadded:: 2.0.8

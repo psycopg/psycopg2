@@ -136,7 +136,7 @@ INET data type
 Fractional time zones
 ---------------------
 
-.. versionadded:: 2.0.10
-
 .. autofunction:: register_tstz_w_secs
+
+    .. versionadded:: 2.0.9
 

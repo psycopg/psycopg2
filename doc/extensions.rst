@@ -33,6 +33,7 @@ functionalities defined by the |DBAPI|_.
 
     .. todo:: class lobject
 
+    .. versionadded:: 2.0.8
 
 
 .. _sql-adaptation-objects:
@@ -226,13 +227,22 @@ The module exports a few exceptions in addition to the :ref:`standard ones
 
 .. exception:: QueryCanceledError
 
-    Error related to database operation (disconnect, memory allocation etc).
-    It is a subclass of :exc:`~psycopg2.OperationalError`
+    (subclasses :exc:`~psycopg2.OperationalError`)
+
+    Error related to SQL query cancelation.  It can be trapped specifically to
+    detect a timeout.
+
+    .. versionadded:: 2.0.7
+
 
 .. exception:: TransactionRollbackError
 
-    Error causing transaction rollback (deadlocks, serialisation failures, etc).
-    It is a subclass of :exc:`~psycopg2.OperationalError`
+    (subclasses :exc:`~psycopg2.OperationalError`)
+
+    Error causing transaction rollback (deadlocks, serialisation failures,
+    etc).  It can be trapped specifically to detect a deadlock.
+
+    .. versionadded:: 2.0.7
 
 
 

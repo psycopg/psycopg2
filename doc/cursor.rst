@@ -68,6 +68,8 @@ The ``cursor`` class
             The :attr:`closed` attribute is a Psycopg extension to the
             |DBAPI|.
 
+        .. versionadded:: 2.0.7
+
 
     .. attribute:: connection
 
