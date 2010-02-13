@@ -107,15 +107,18 @@ available through the following exceptions:
     .. extension::
 
         The :attr:`~Error.pgerror` and :attr:`~Error.pgcode` attributes are
-        Psycopg extensions. ::
+        Psycopg extensions.
+
+        .. doctest::
+            :options: +NORMALIZE_WHITESPACE
 
             >>> try:
             ...     cur.execute("SELECT * FROM barf")
-            >>> except Exception, e:
-            ....    pass
+            ... except Exception, e:
+            ...     pass
 
             >>> e.pgcode
-            >>> '42P01'
+            '42P01'
             >>> print e.pgerror
             ERROR:  relation "barf" does not exist
             LINE 1: SELECT * FROM barf

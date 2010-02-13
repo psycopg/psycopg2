@@ -10,6 +10,13 @@ More advanced topics
 .. _subclassing-connection:
 .. _subclassing-cursor:
 
+.. testsetup:: *
+
+    import re
+
+    cur.execute("CREATE TABLE atable (apoint point)")
+    conn.commit()
+
 Connection and cursor factories
 -------------------------------
 
@@ -42,8 +49,8 @@ An example of cursor subclass performing logging is::
                 raise
 
     conn = psycopg2.connect(DSN)
-    curs = conn.cursor(cursor_factory=LoggingCursor)
-    curs.execute("INSERT INTO mytable VALUES (%s, %s, %s);",
+    cur = conn.cursor(cursor_factory=LoggingCursor)
+    cur.execute("INSERT INTO mytable VALUES (%s, %s, %s);",
                  (10, 20, 30))
 
 
@@ -78,22 +85,24 @@ conversion of the wrapped object.
     single: Example; Types adaptation
 
 Example: mapping of a :class:`!Point` class into the |point|_ PostgreSQL
-geometric type::
+geometric type:
 
-    from psycopg2.extensions import adapt, register_adapter, AsIs
+.. doctest::
 
-    class Point(object):
-        def __init__(self, x, y):
-            self.x = x
-            self.y = y
+    >>> from psycopg2.extensions import adapt, register_adapter, AsIs
 
-    def adapt_point(point):
-        return AsIs("'(%s, %s)'" % (adapt(point.x), adapt(point.y)))
+    >>> class Point(object):
+    ...    def __init__(self, x, y):
+    ...        self.x = x
+    ...        self.y = y
 
-    register_adapter(Point, adapt_point)
+    >>> def adapt_point(point):
+    ...     return AsIs("'(%s, %s)'" % (adapt(point.x), adapt(point.y)))
 
-    curs.execute("INSERT INTO atable (apoint) VALUES (%s)",
-                 (Point(1.23, 4.56),))
+    >>> register_adapter(Point, adapt_point)
+
+    >>> cur.execute("INSERT INTO atable (apoint) VALUES (%s)",
+    ...             (Point(1.23, 4.56),))
 
 
 .. |point| replace:: :sql:`point`
@@ -117,55 +126,54 @@ through an user-defined adapting function.  An adapter function takes two
 arguments: the object string representation as returned by PostgreSQL and the
 cursor currently being read, and should return a new Python object.  For
 example, the following function parses the PostgreSQL :sql:`point`
-representation into the previously defined :class:`!Point` class::
+representation into the previously defined :class:`!Point` class:
 
-    def cast_point(value, curs):
-        if value is None:
-            return None
-
-        # Convert from (f1, f2) syntax using a regular expression.
-        m = re.match(r"\(([^)]+),([^)]+)\)", value)
-        if m:
-            return Point(float(m.group(1)), float(m.group(2)))
-        else:
-            raise InterfaceError("bad point representation: %r" % value)
+    >>> def cast_point(value, cur):
+    ...    if value is None:
+    ...        return None
+    ...
+    ...    # Convert from (f1, f2) syntax using a regular expression.
+    ...    m = re.match(r"\(([^)]+),([^)]+)\)", value)
+    ...    if m:
+    ...        return Point(float(m.group(1)), float(m.group(2)))
+    ...    else:
+    ...        raise InterfaceError("bad point representation: %r" % value)
                 
 
 In order to create a mapping from a PostgreSQL type (either standard or
 user-defined), its OID must be known. It can be retrieved either by the second
-column of the :attr:`cursor.description`::
+column of the :attr:`cursor.description`:
 
-    curs.execute("SELECT NULL::point")
-    point_oid = curs.description[0][1]   # usually returns 600
+    >>> cur.execute("SELECT NULL::point")
+    >>> point_oid = cur.description[0][1]   # usually returns 600
 
 or by querying the system catalogs for the type name and namespace (the
-namespace for system objects is :sql:`pg_catalog`)::
+namespace for system objects is :sql:`pg_catalog`):
 
-    curs.execute("""
-        SELECT pg_type.oid
-          FROM pg_type JOIN pg_namespace
-                 ON typnamespace = pg_namespace.oid
-         WHERE typname = %(typename)s
-           AND nspname = %(namespace)s""",
-        {'typename': 'point', 'namespace': 'pg_catalog'})
+    >>> cur.execute("""
+    ...    SELECT pg_type.oid
+    ...      FROM pg_type JOIN pg_namespace
+    ...             ON typnamespace = pg_namespace.oid
+    ...     WHERE typname = %(typename)s
+    ...       AND nspname = %(namespace)s""",
+    ...    {'typename': 'point', 'namespace': 'pg_catalog'})
+    >>> point_oid = cur.fetchone()[0]
 
-    point_oid = curs.fetchone()[0]
+After you know the object OID, you must can and register the new type:
 
-After you know the object OID, you must can and register the new type::
-
-    POINT = psycopg2.extensions.new_type((point_oid,), "POINT", cast_point)
-    psycopg2.extensions.register_type(POINT)
+    >>> POINT = psycopg2.extensions.new_type((point_oid,), "POINT", cast_point)
+    >>> psycopg2.extensions.register_type(POINT)
 
 The :func:`~psycopg2.extensions.new_type` function binds the object OIDs
 (more than one can be specified) to the adapter function.
 :func:`~psycopg2.extensions.register_type` completes the spell.  Conversion
 is automatically performed when a column whose type is a registered OID is
-read::
+read:
 
-    >>> curs.execute("SELECT '(10.2,20.3)'::point")
-    >>> point = curs.fetchone()[0]
+    >>> cur.execute("SELECT '(10.2,20.3)'::point")
+    >>> point = cur.fetchone()[0]
     >>> print type(point), point.x, point.y
-    <class '__main__.Point'> 10.2 20.3
+    <class 'Point'> 10.2 20.3
 
 
 
@@ -318,3 +326,11 @@ call::
         print row
 
 
+.. testcode::
+    :hide:
+
+    conn.rollback()
+    cur.execute("DROP TABLE atable")
+    conn.commit()
+    cur.close()
+    conn.close()

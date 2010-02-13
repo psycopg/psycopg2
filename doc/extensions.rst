@@ -5,6 +5,11 @@
 
 .. module:: psycopg2.extensions
 
+.. testsetup:: *
+
+    from psycopg2.extensions import AsIs, QuotedString, ISOLATION_LEVEL_AUTOCOMMIT
+    from psycopg2._psycopg import Binary
+
 The module contains a few objects and function extending the minimum set of
 functionalities defined by the |DBAPI|_.
 
@@ -94,7 +99,7 @@ deal with Python objects adaptation:
 
     .. method:: getquoted()
 
-        Return the :meth:`str` conversion of the wrapped object. ::
+        Return the :meth:`str` conversion of the wrapped object.
 
             >>> AsIs(42).getquoted()
             '42'

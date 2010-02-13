@@ -5,6 +5,12 @@
 
 .. module:: psycopg2.extras
 
+.. testsetup::
+
+    import psycopg2.extras
+
+    create_test_table()
+
 This module is a generic place used to hold little helper functions and
 classes until a better place in the distribution is found.
 
@@ -22,11 +28,13 @@ similar to the Python dictionaries instead of the tuples. You can use it
 either passing :class:`DictConnection` as :obj:`!connection_factory` argument
 to the :func:`~psycopg2.connect` function or passing :class:`DictCursor` as
 the :class:`!cursor_factory` argument to the :meth:`~connection.cursor` method
-of a regular :class:`connection`. ::
+of a regular :class:`connection`.
 
-    >>> conn = psycopg2.connect(database='test')
-    >>> cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    >>> cur.execute("SELECT * FROM test")
+    >>> dict_cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    >>> dict_cur.execute("INSERT INTO test (num, data) VALUES(%s, %s)",
+    ...                  (100, "abc'def"))
+    >>> dict_cur.execute("SELECT * FROM test")
+    >>> rec = dict_cur.fetchone()
     >>> rec['id']
     1
     >>> rec['num']
@@ -85,17 +93,15 @@ UUID data type
 .. versionadded:: 2.0.9
 .. versionchanged:: 2.0.13 added UUID array support.
 
-::
-
     >>> psycopg2.extras.register_uuid()
-
-    # Python UUID can be used in SQL queries
+    <psycopg2._psycopg.type object at 0x...>
+    >>>
+    >>> # Python UUID can be used in SQL queries
+    >>> import uuid
     >>> psycopg2.extensions.adapt(uuid.uuid4()).getquoted()
-    "'1ad2b180-c17e-46ad-ad94-e1f0dfc7c34b'::uuid"
-
-    # PostgreSQL UUID are transformed into Python UUID objects.
-    >>> conn = psycopg2.connect(database='test')
-    >>> cur = conn.cursor()
+    "'...-...-...-...-...'::uuid"
+    >>>
+    >>> # PostgreSQL UUID are transformed into Python UUID objects.
     >>> cur.execute("SELECT 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'::uuid")
     >>> cur.fetchone()[0]
     UUID('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11')
@@ -112,12 +118,9 @@ UUID data type
 
 INET data type
 --------------
-::
 
     >>> psycopg2.extras.register_inet()
-
-    >>> conn = psycopg2.connect(database='test')
-    >>> cur = conn.cursor()
+    <psycopg2._psycopg.type object at 0x...>
     >>> cur.execute("SELECT '192.168.0.1'::inet")
     >>> cur.fetchone()[0].addr
     '192.168.0.1'

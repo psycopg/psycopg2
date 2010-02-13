@@ -22,7 +22,8 @@ sys.path.append(os.path.abspath('.'))
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.todo', 'sphinx.ext.ifconfig' ]
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.todo', 'sphinx.ext.ifconfig',
+              'sphinx.ext.doctest']
 
 # Specific extensions for Psycopg documentation.
 extensions += [ 'dbapi_extension', 'sql_role' ]
@@ -222,3 +223,31 @@ latex_documents = [
 
 # If false, no module index is generated.
 #latex_use_modindex = True
+
+
+doctest_global_setup = """
+
+import os
+import psycopg2
+
+def test_connect():
+    try:
+        dsn = os.environ['PSYCOPG2_DSN']
+    except KeyError:
+        assert False, "You need to set the environment variable PSYCOPG2_DSN" \
+                " in order to test the documentation!"
+    return psycopg2.connect(dsn)
+
+conn = test_connect()
+cur = conn.cursor()
+
+def create_test_table():
+    try:
+        cur.execute("CREATE TABLE test (id SERIAL PRIMARY KEY, num INT, data TEXT)")
+    except:
+        conn.rollback()
+    cur.execute("DELETE FROM test")
+    cur.execute("SELECT setval('test_id_seq', 1, False)")
+    conn.commit()
+
+"""

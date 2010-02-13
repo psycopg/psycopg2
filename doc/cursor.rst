@@ -3,6 +3,19 @@ The ``cursor`` class
 
 .. sectionauthor:: Daniele Varrazzo <daniele.varrazzo@gmail.com>
 
+.. testsetup:: *
+
+    from StringIO import StringIO
+    import sys
+
+    create_test_table()
+
+    # initial data
+    cur.executemany("INSERT INTO test (num, data) VALUES (%s, %s)",
+        [(100, "abc'def"), (None, 'dada'), (42, 'bar')])
+    conn.commit()
+
+
 .. class:: cursor
 
     Allows Python code to execute PostgreSQL command in a database session.
@@ -123,7 +136,7 @@ The ``cursor`` class
 
         Return a query string after arguments binding. The string returned is
         exactly the one that would be sent to the database running the
-        :meth:`~cursor.execute` method or similar. ::
+        :meth:`~cursor.execute` method or similar.
 
             >>> cur.mogrify("INSERT INTO test (num, data) VALUES (%s, %s)", (42, 'bar'))
             "INSERT INTO test (num, data) VALUES (42, E'bar')"
@@ -189,7 +202,7 @@ The ``cursor`` class
 
         :class:`cursor` objects are iterable, so, instead of calling
         explicitly :meth:`~cursor.fetchone` in a loop, the object itself can
-        be used::
+        be used:
 
             >>> cur.execute("SELECT * FROM test;")
             >>> for record in cur:
@@ -197,17 +210,17 @@ The ``cursor`` class
             ...
             (1, 100, "abc'def")
             (2, None, 'dada')
-            (4, 42, 'bar')
+            (3, 42, 'bar')
 
 
     .. method:: fetchone()
 
         Fetch the next row of a query result set, returning a single tuple,
-        or ``None`` when no more data is available::
+        or ``None`` when no more data is available:
 
-            >>> cur.execute("SELECT * FROM test WHERE id = %s", (4,))
+            >>> cur.execute("SELECT * FROM test WHERE id = %s", (3,))
             >>> cur.fetchone()
-            (4, 42, 'bar')
+            (3, 42, 'bar')
         
         A :exc:`~psycopg2.ProgrammingError` is raised if the previous call
         to |execute*|_ did not produce any result set or no call was issued
@@ -224,13 +237,13 @@ The ``cursor`` class
         the number of rows to be fetched. The method should try to fetch as
         many rows as indicated by the size parameter. If this is not possible
         due to the specified number of rows not being available, fewer rows
-        may be returned::
+        may be returned:
 
             >>> cur.execute("SELECT * FROM test;")
             >>> cur.fetchmany(2)
             [(1, 100, "abc'def"), (2, None, 'dada')]
             >>> cur.fetchmany(2)
-            [(4, 42, 'bar')]
+            [(3, 42, 'bar')]
             >>> cur.fetchmany(2)
             []
 
@@ -252,7 +265,7 @@ The ``cursor`` class
 
             >>> cur.execute("SELECT * FROM test;")
             >>> cur.fetchall()
-            [(1, 100, "abc'def"), (2, None, 'dada'), (4, 42, 'bar')]
+            [(1, 100, "abc'def"), (2, None, 'dada'), (3, 42, 'bar')]
 
         A :exc:`~psycopg2.ProgrammingError` is raised if the previous call to
         |execute*|_ did not produce any result set or no call was issued yet.
@@ -278,7 +291,7 @@ The ``cursor`` class
 
             According to the |DBAPI|_, the exception raised for a cursor out
             of bound should have been :exc:`!IndexError`.  The best option is
-            probably to catch both exceptions in your code::
+            probably to catch both exceptions in your code:
 
                 try:
                     cur.scroll(1000 * 1000)
@@ -359,7 +372,7 @@ The ``cursor`` class
 
         Read-only attribute containing the body of the last query sent to the
         backend (including bound arguments). ``None`` if no query has been
-        executed yet::
+        executed yet:
 
             >>> cur.execute("INSERT INTO test (num, data) VALUES (%s, %s)", (42, 'bar'))
             >>> cur.query 
@@ -373,7 +386,7 @@ The ``cursor`` class
     .. attribute:: statusmessage
 
         Read-only attribute containing the message returned by the last
-        command::
+        command:
 
             >>> cur.execute("INSERT INTO test (num, data) VALUES (%s, %s)", (42, 'bar'))
             >>> cur.statusmessage 
@@ -429,14 +442,13 @@ The ``cursor`` class
         The :obj:`!columns` argument is a sequence containing the name of the
         fields where the read data will be entered.  Its length and column
         type should match the content of the read file.  If not specifies, it
-        is assumed that the entire table matches the file structure. ::
+        is assumed that the entire table matches the file structure.
 
             >>> f = StringIO("42\tfoo\n74\tbar\n")
             >>> cur.copy_from(f, 'test', columns=('num', 'data'))
-
             >>> cur.execute("select * from test where id > 5;")
             >>> cur.fetchall()
-            [(7, 42, 'foo'), (8, 74, 'bar')]
+            [(6, 42, 'foo'), (7, 74, 'bar')]
 
         .. versionchanged:: 2.0.6
             added the :obj:`columns` parameter.
@@ -452,11 +464,12 @@ The ``cursor`` class
         :obj:`!null` represents :sql:`NULL` values in the file.
 
         The :obj:`!columns` argument is a sequence of field names: if not
-        ``None`` only the specified fields will be included in the dump. ::
+        ``None`` only the specified fields will be included in the dump.
 
             >>> cur.copy_to(sys.stdout, 'test', sep="|")
             1|100|abc'def
             2|\N|dada
+            ...
 
         .. versionchanged:: 2.0.6
             added the :obj:`columns` parameter.
@@ -472,12 +485,13 @@ The ``cursor`` class
         open, writeable file for :sql:`COPY TO`. The optional :obj:`!size`
         argument, when specified for a :sql:`COPY FROM` statement, will be
         passed to :obj:`!file`\ 's read method to control the read buffer
-        size. ::
+        size.
 
             >>> cur.copy_expert("COPY test TO STDOUT WITH CSV HEADER", sys.stdout)
             id,num,data
             1,100,abc'def
             2,,dada
+            ...
 
         .. |COPY| replace:: :sql:`COPY`
         .. __: http://www.postgresql.org/docs/8.4/static/sql-copy.html

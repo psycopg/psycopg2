@@ -3,6 +3,11 @@ The ``connection`` class
 
 .. sectionauthor:: Daniele Varrazzo <daniele.varrazzo@gmail.com>
 
+.. testsetup::
+
+    from pprint import pprint
+    import psycopg2.extensions
+
 .. class:: connection
 
     Handles the connection to a PostgreSQL database instance. It encapsulates
@@ -155,12 +160,16 @@ The ``connection`` class
     .. attribute:: notices
 
         A list containing all the database messages sent to the client during
-        the session. ::
+        the session.
+
+        .. doctest::
+            :options: NORMALIZE_WHITESPACE
 
             >>> cur.execute("CREATE TABLE foo (id serial PRIMARY KEY);")
-            >>> conn.notices 
+            >>> pprint(conn.notices)
             ['NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "foo_pkey" for table "foo"\n',
              'NOTICE:  CREATE TABLE will create implicit sequence "foo_id_seq" for serial column "foo.id"\n']
+            >>> cur.execute("DROP TABLE foo;")
 
         To avoid a leak in case excessive notices are generated, only the last
         50 messages are kept.

@@ -15,7 +15,7 @@ basic commands::
     # Connect to an existing database
     >>> conn = psycopg2.connect("dbname=test user=postgres")
 
-    # Open a curstor to perform database operations
+    # Open a cursor to perform database operations
     >>> cur = conn.cursor()
 
     # Execute a command: this creates a new table
