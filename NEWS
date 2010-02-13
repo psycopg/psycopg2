@@ -167,7 +167,7 @@ What's new in psycopg 2.0.7
     and infrequently used so this should improve performance.
   - New QueryCanceledError and TransactionRollbackError exceptions
     have been added to the psycopg2.extensions module.  They can be
-    used to detect deadlocks and statement timeouts respectively.
+    used to detect statement timeouts and deadlocks respectively.
   - Cursor objects now have a "closed" attribute. (#164)
   - If psycopg has been built with debug support, it is now necessary
     to set the PSYCOPG_DEBUG environment variable to turn on debug
