@@ -32,6 +32,7 @@ The ``connection`` class
             The :obj:`!name` and :obj:`!cursor_factory` parameters are Psycopg
             extensions to the |DBAPI|.
 
+
     .. index::
         pair: Transaction; Commit
 
@@ -84,6 +85,23 @@ The ``connection`` class
 
         Read-only attribute reporting whether the database connection is open
         (0) or closed (1).
+
+
+    .. method:: reset
+
+        Reset the connection to the default.
+
+        The method rolls back an eventual pending transaction and executes the
+        PostgreSQL |RESET|_ and |SET SESSION AUTHORIZATION|__ to revert the
+        session to the default values.
+
+        .. |RESET| replace:: :sql:`RESET`
+        .. _RESET: http://www.postgresql.org/docs/8.4/static/sql-reset.html
+
+        .. |SET SESSION AUTHORIZATION| replace:: :sql:`SET SESSION AUTHORIZATION`
+        .. __: http://www.postgresql.org/docs/8.4/static/sql-set-session-authorization.html
+
+        .. versionadded:: 2.0.12
 
 
     .. attribute:: dsn
