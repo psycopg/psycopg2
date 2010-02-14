@@ -139,6 +139,15 @@
     <None Include="sandbox\test_isready_connection_closed.py" />
     <None Include="psycopg\adapter_pfloat.h" />
     <None Include="README.async" />
+    <None Include="psycopg2da\adapter.py" />
+    <None Include="psycopg2da\configure.zcml" />
+    <None Include="psycopg2da\DEPENDENCIES.cfg" />
+    <None Include="psycopg2da\__init__.py" />
+    <None Include="psycopg2da\PACKAGE.cfg" />
+    <None Include="psycopg2da\psycopg2da-configure.zcml" />
+    <None Include="psycopg2da\PUBLICATION.cfg" />
+    <None Include="psycopg2da\README.txt" />
+    <None Include="psycopg2da\tests.py" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="psycopg\adapter_asis.c" />
