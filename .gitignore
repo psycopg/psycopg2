@@ -7,3 +7,4 @@ MANIFEST
 dist/*
 build/*
 doc/_build/*
+doc/html/*

@@ -37,13 +37,12 @@ How to build psycopg documentation
     creating ~/pd/lib/python2.6/site-packages/psycopg2
     ...
 
-- Have the ``doc`` dir in the PYTHONPATH and run ``make`` from there::
+- Move to the ``doc`` dir and run ``make`` from there::
 
     (pd)~/pd/psycopg2$ cd doc/
-    (pd)~/pd/psycopg2/doc$ export PYTHONPATH=$(pwd):$PYTHONPATH
     (pd)~/pd/psycopg2/doc$ make html
     Running Sphinx v0.6.4
     ...
 
-You should have the  in ``_build/html`` now.
+You should have the rendered documentation in ``./html`` now.
 
