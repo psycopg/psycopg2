@@ -8,6 +8,8 @@ The ``connection`` class
     from pprint import pprint
     import psycopg2.extensions
 
+    drop_test_table('foo')
+
 .. class:: connection
 
     Handles the connection to a PostgreSQL database instance. It encapsulates
@@ -169,7 +171,6 @@ The ``connection`` class
             >>> pprint(conn.notices)
             ['NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "foo_pkey" for table "foo"\n',
              'NOTICE:  CREATE TABLE will create implicit sequence "foo_id_seq" for serial column "foo.id"\n']
-            >>> cur.execute("DROP TABLE foo;")
 
         To avoid a leak in case excessive notices are generated, only the last
         50 messages are kept.
