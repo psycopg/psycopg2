@@ -241,13 +241,17 @@ def test_connect():
 conn = test_connect()
 cur = conn.cursor()
 
-def create_test_table():
+def drop_test_table(name):
+    cur.execute("SAVEPOINT drop_test_table;")
     try:
-        cur.execute("CREATE TABLE test (id SERIAL PRIMARY KEY, num INT, data TEXT)")
+        cur.execute("DROP TABLE %s;" % name)
     except:
-        conn.rollback()
-    cur.execute("DELETE FROM test")
-    cur.execute("SELECT setval('test_id_seq', 1, False)")
+        cur.execute("ROLLBACK TO SAVEPOINT drop_test_table;")
+    conn.commit()
+
+def create_test_table():
+    drop_test_table('test')
+    cur.execute("CREATE TABLE test (id SERIAL PRIMARY KEY, num INT, data TEXT)")
     conn.commit()
 
 """
