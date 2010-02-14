@@ -8,6 +8,7 @@
 .. testsetup::
 
     import psycopg2.extras
+    from psycopg2.extras import Inet
 
     create_test_table()
 
@@ -120,20 +121,27 @@ UUID data type
 .. index::
     pair: INET; Data types
 
-INET data type
---------------
+:sql:`inet` data type
+----------------------
+
+.. versionadded:: 2.0.9
+
+.. doctest::
 
     >>> psycopg2.extras.register_inet()
     <psycopg2._psycopg.type object at 0x...>
-    >>> cur.execute("SELECT '192.168.0.1'::inet")
+
+    >>> cur.mogrify("SELECT %s", (Inet('127.0.0.1/32'),))
+    "SELECT E'127.0.0.1/32'::inet"
+
+    >>> cur.execute("SELECT '192.168.0.1/24'::inet")
     >>> cur.fetchone()[0].addr
-    '192.168.0.1'
+    '192.168.0.1/24'
+
 
 .. autofunction:: register_inet()
 
 .. autoclass:: Inet
-
-.. todo:: Adapter non registered: how to register it?
 
 
 
