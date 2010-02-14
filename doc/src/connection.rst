@@ -293,13 +293,23 @@ The ``connection`` class
 
     .. method:: lobject([oid [, mode [, new_oid [, new_file [, lobject_factory]]]]])
 
-        Return a new database large object.
+        Return a new database large object. See :ref:`large-objects` for an
+        overview.
 
-        The ``lobject_factory`` argument can be used to create non-standard
-        lobjects by passing a class different from the default. Note that the
-        new class *should* be a sub-class of
-        :class:`psycopg2.extensions.lobject`.
+        :param oid: The OID of the object to read or write. 0 to create
+            a new large object and and have its OID assigned automatically.
+        :param mode: Access mode to the object: can be ``r``, ``w``,
+            ``rw`` or ``n`` (meaning don't open it).
+        :param new_oid: Create a new object using the specified OID. The
+            function raises :exc:`OperationalError` if the OID is already in
+            use. Default is 0, meaning assign a new one automatically.
+        :param new_file: The name of a file to be imported in the the database
+            (using the |lo_import|_ function)
+        :param lobject_factory: Subclass of
+            :class:`~psycopg2.extensions.lobject` to be instantiated.
+        :rtype: :obj:`~psycopg2.extensions.lobject`
 
-        .. todo:: conn.lobject details
+        .. |lo_import| replace:: :func:`!lo_import`
+        .. _lo_import: http://www.postgresql.org/docs/8.4/static/lo-interfaces.html#AEN36307
 
         .. versionadded:: 2.0.8

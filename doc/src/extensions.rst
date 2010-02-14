@@ -34,11 +34,63 @@ functionalities defined by the |DBAPI|_.
 
     For a complete description of the class, see :class:`cursor`.
 
-.. class:: lobject
+.. class:: lobject(conn [, oid [, mode [, new_oid [, new_file ]]]])
 
-    .. todo:: class lobject
+    Wrapper for a PostgreSQL large object. See :ref:`large-objects` for an
+    overview.
 
+    The class can be subclassed: see the :meth:`connection.lobject` to know
+    how to specify a :class:`!lobject` subclass.
+    
     .. versionadded:: 2.0.8
+
+    .. attribute:: oid
+
+        Database OID of the object.
+
+    .. attribute:: mode
+
+        The mode the database was open (``r``, ``w``, ``rw`` or ``n``).
+
+    .. method:: read(bytes=-1)
+
+        Read a chunk of data from the current file position. If -1 (default)
+        read all the remaining data.
+
+    .. method:: write(str)
+
+        Write a string to the large object. Return the number of bytes
+        written.
+
+    .. method:: export(file_name)
+
+        Export the large object content to the file system.
+        
+        The method uses the efficient |lo_export|_ libpq function.
+        
+        .. |lo_export| replace:: :func:`!lo_export`
+        .. _lo_export: http://www.postgresql.org/docs/8.4/static/lo-interfaces.html#AEN36330
+
+    .. method:: seek(offset, whence=0)
+
+        Set the lobject current position.
+
+    .. method:: tell()
+
+        Return the lobject current position.
+
+    .. method:: close()
+
+        Close the object.
+
+    .. attribute:: closed
+
+        Boolean attribute specifying if the object is closed.
+
+    .. method:: unlink()
+
+        Close the object and remove it from the database.
+
 
 
 .. _sql-adaptation-objects:

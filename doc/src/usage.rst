@@ -63,37 +63,6 @@ The main entry point of Psycopg are:
 
 
 
-.. index:: Transaction, Begin, Commit, Rollback, Autocommit
-
-.. _transactions-control:
-
-Transactions control
---------------------
-
-In Psycopg transactions are handled by the :class:`connection` class. By
-default, every time a command is sent to the database (using one of the
-:class:`cursor`\ s created by the connection), a new transaction is created.
-The following database commands will be executed in the context of the same
-transaction -- not only the commands issued by the first cursor, but the ones
-issued by all the cursors created by the same connection.  Should any command
-fail, the transaction will be aborted and no further command will be executed
-until a call to the :meth:`connection.rollback` method.
-
-The connection is responsible to terminate its transaction, calling either the
-:meth:`~connection.commit` or :meth:`~connection.rollback` method.  Committed
-changes are immediately made persistent into the database.  Closing the
-connection using the :meth:`~connection.close` method or destroying the
-connection object (calling :meth:`!__del__` or letting it fall out of scope)
-will result in an implicit :meth:`!rollback` call.
-
-It is possible to set the connection in *autocommit* mode: this way all the
-commands executed will be immediately committed and no rollback is possible. A
-few commands (e.g. :sql:`CREATE DATABASE`) require to be run outside any
-transaction: in order to be able to run these commands from Psycopg, the
-session must be in autocommit mode.  Read the documentation for
-:meth:`connection.set_isolation_level` to know how to change the commit mode.
-
-
 .. index::
     pair: Query; Parameters
 
@@ -397,6 +366,38 @@ the connection or globally: see the function
 
 
 
+.. index:: Transaction, Begin, Commit, Rollback, Autocommit
+
+.. _transactions-control:
+
+Transactions control
+--------------------
+
+In Psycopg transactions are handled by the :class:`connection` class. By
+default, every time a command is sent to the database (using one of the
+:class:`cursor`\ s created by the connection), a new transaction is created.
+The following database commands will be executed in the context of the same
+transaction -- not only the commands issued by the first cursor, but the ones
+issued by all the cursors created by the same connection.  Should any command
+fail, the transaction will be aborted and no further command will be executed
+until a call to the :meth:`connection.rollback` method.
+
+The connection is responsible to terminate its transaction, calling either the
+:meth:`~connection.commit` or :meth:`~connection.rollback` method.  Committed
+changes are immediately made persistent into the database.  Closing the
+connection using the :meth:`~connection.close` method or destroying the
+connection object (calling :meth:`!__del__` or letting it fall out of scope)
+will result in an implicit :meth:`!rollback` call.
+
+It is possible to set the connection in *autocommit* mode: this way all the
+commands executed will be immediately committed and no rollback is possible. A
+few commands (e.g. :sql:`CREATE DATABASE`) require to be run outside any
+transaction: in order to be able to run these commands from Psycopg, the
+session must be in autocommit mode.  Read the documentation for
+:meth:`connection.set_isolation_level` to know how to change the commit mode.
+
+
+
 .. index::
     pair: Server side; Cursor
     pair: Named; Cursor
@@ -480,3 +481,30 @@ examples.
 .. __: http://www.postgresql.org/docs/8.4/static/sql-copy.html
 
 
+
+.. index::
+    single: Large objects
+
+.. _large-objects:
+
+Access to PostgreSQL large objects
+----------------------------------
+
+PostgreSQL offers support to `large objects`__, which provide stream-style
+access to user data that is stored in a special large-object structure. They
+are useful with data values too large to be manipulated conveniently as a
+whole.
+
+.. __: http://www.postgresql.org/docs/8.4/static/largeobjects.html
+
+Psycopg allows access to the large object using the
+:class:`~psycopg2.extensions.lobject` class. Objects are generated using the
+:meth:`connection.lobject` factory method.
+
+Psycopg large object support efficient import/export with file system files
+using the |lo_import|_ and |lo_export|_ libpq functions.
+
+.. |lo_import| replace:: :func:`!lo_import`
+.. _lo_import: http://www.postgresql.org/docs/8.4/static/lo-interfaces.html#AEN36307
+.. |lo_export| replace:: :func:`!lo_export`
+.. _lo_export: http://www.postgresql.org/docs/8.4/static/lo-interfaces.html#AEN36330
