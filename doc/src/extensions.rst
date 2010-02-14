@@ -7,8 +7,7 @@
 
 .. testsetup:: *
 
-    from psycopg2.extensions import AsIs, QuotedString, ISOLATION_LEVEL_AUTOCOMMIT
-    from psycopg2._psycopg import Binary
+    from psycopg2.extensions import AsIs, Binary, QuotedString, ISOLATION_LEVEL_AUTOCOMMIT
 
 The module contains a few objects and function extending the minimum set of
 functionalities defined by the |DBAPI|_.
