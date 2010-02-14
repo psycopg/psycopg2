@@ -3,19 +3,19 @@ More advanced topics
 
 .. sectionauthor:: Daniele Varrazzo <daniele.varrazzo@gmail.com>
 
-.. index::
-    double: Subclassing; Cursor
-    double: Subclassing; Connection
-
-.. _subclassing-connection:
-.. _subclassing-cursor:
-
 .. testsetup:: *
 
     import re
 
     cur.execute("CREATE TABLE atable (apoint point)")
     conn.commit()
+
+.. index::
+    double: Subclassing; Cursor
+    double: Subclassing; Connection
+
+.. _subclassing-connection:
+.. _subclassing-cursor:
 
 Connection and cursor factories
 -------------------------------
@@ -145,7 +145,9 @@ user-defined), its OID must be known. It can be retrieved either by the second
 column of the :attr:`cursor.description`:
 
     >>> cur.execute("SELECT NULL::point")
-    >>> point_oid = cur.description[0][1]   # usually returns 600
+    >>> point_oid = cur.description[0][1]
+    >>> point_oid
+    600
 
 or by querying the system catalogs for the type name and namespace (the
 namespace for system objects is :sql:`pg_catalog`):
@@ -158,6 +160,8 @@ namespace for system objects is :sql:`pg_catalog`):
     ...       AND nspname = %(namespace)s""",
     ...    {'typename': 'point', 'namespace': 'pg_catalog'})
     >>> point_oid = cur.fetchone()[0]
+    >>> point_oid
+    600
 
 After you know the object OID, you must can and register the new type:
 
