@@ -40,6 +40,15 @@ Contents:
    extras
    errorcodes
 
+
+.. ifconfig:: builder != 'text'
+
+    .. rubric:: Indices and tables
+
+    * :ref:`genindex`
+    * :ref:`search`
+
+
 .. ifconfig:: todo_include_todos
 
     .. note::
@@ -47,12 +56,4 @@ Contents:
         **To Do items in the documentation**
 
         .. todolist::
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`search`
-
 

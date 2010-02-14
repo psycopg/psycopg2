@@ -8,3 +8,4 @@ dist/*
 build/*
 doc/_build/*
 doc/html/*
+doc/psycopg2.txt
