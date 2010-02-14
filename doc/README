@@ -20,13 +20,6 @@ How to build psycopg documentation
     ...
     Finished processing dependencies for sphinx
 
-- Checkout the psycopg branch containing the documentation::
-
-    (pd)~/pd$ git clone git://github.com/dvarrazzo/psycopg2.git 
-    (pd)~/pd$ cd psycopg2/
-    (pd)~/pd/psycopg2$ git branch 
-    * docs
-
 - Build psycopg2 and ensure the package can be imported (it will be used for
   reading the version number, autodocs etc.)::
 
@@ -40,9 +33,10 @@ How to build psycopg documentation
 - Move to the ``doc`` dir and run ``make`` from there::
 
     (pd)~/pd/psycopg2$ cd doc/
-    (pd)~/pd/psycopg2/doc$ make html
+    (pd)~/pd/psycopg2/doc$ make
     Running Sphinx v0.6.4
     ...
 
-You should have the rendered documentation in ``./html`` now.
+You should have the rendered documentation in ``./html`` and the text file
+``psycopg2.txt`` now.
 

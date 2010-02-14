@@ -6,6 +6,6 @@ MANIFEST
 *.sw[po]
 dist/*
 build/*
-doc/_build/*
+doc/src/_build/*
 doc/html/*
 doc/psycopg2.txt
