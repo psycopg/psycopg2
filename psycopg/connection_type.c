@@ -289,7 +289,7 @@ psyco_conn_lobject(connectionObject *self, PyObject *args, PyObject *keywds)
     
     if (!PyArg_ParseTupleAndKeywords(args, keywds, "|izizO", kwlist,
                                      &oid, &smode, &new_oid, &new_file, 
-				     &factory)) {
+                                     &factory)) {
         return NULL;
     }
 
@@ -311,22 +311,22 @@ psyco_conn_lobject(connectionObject *self, PyObject *args, PyObject *keywds)
            mode = INV_READ;
         else if (smode[0] == 'w')
            mode = INV_WRITE;
-	else if (smode[0] == 'n')
-	   mode = -1;
+        else if (smode[0] == 'n')
+           mode = -1;
         else {
             PyErr_SetString(PyExc_TypeError,
                 "mode should be one of 'r', 'w' or 'rw'");
-	    return NULL;
-	}
+            return NULL;
+        }
     }
 
     if (factory == NULL) factory = (PyObject *)&lobjectType;
     if (new_file)
         obj = PyObject_CallFunction(factory, "Oiiis", 
-	    self, oid, mode, new_oid, new_file);    
+            self, oid, mode, new_oid, new_file);
     else
         obj = PyObject_CallFunction(factory, "Oiii",
-	    self, oid, mode, new_oid);
+            self, oid, mode, new_oid);
 
     if (obj == NULL) return NULL;
     if (PyObject_IsInstance(obj, (PyObject *)&lobjectType) == 0) {
