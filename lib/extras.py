@@ -410,11 +410,14 @@ class Inet(object):
     def __init__(self, addr):
         self.addr = addr
     
+    def __repr__(self):
+        return "%s(%r)" % (self.__class__.__name__, self.addr)
+
     def prepare(self, conn):
         self._conn = conn
     
     def getquoted(self):
-        obj = adapt(self.addr)
+        obj = _A(self.addr)
         if hasattr(obj, 'prepare'):
             obj.prepare(self._conn)
         return obj.getquoted()+"::inet"
@@ -428,6 +431,7 @@ def register_inet(oid=None, conn_or_curs=None):
     _ext.INET = _ext.new_type((oid, ), "INET",
             lambda data, cursor: data and Inet(data) or None)
     _ext.register_type(_ext.INET, conn_or_curs)
+    _ext.register_adapter(Inet, lambda x: x)
     return _ext.INET
 
 
