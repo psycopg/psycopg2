@@ -42,7 +42,8 @@ of a regular :class:`connection`.
     >>> rec['data']
     "abc'def"
 
-    # The records still support indexing as the original tuple
+The records still support indexing as the original tuple:
+
     >>> rec[2]
     "abc'def"
 
@@ -93,14 +94,17 @@ UUID data type
 .. versionadded:: 2.0.9
 .. versionchanged:: 2.0.13 added UUID array support.
 
+.. doctest::
+
     >>> psycopg2.extras.register_uuid()
     <psycopg2._psycopg.type object at 0x...>
-    >>>
+
     >>> # Python UUID can be used in SQL queries
     >>> import uuid
-    >>> psycopg2.extensions.adapt(uuid.uuid4()).getquoted()
-    "'...-...-...-...-...'::uuid"
-    >>>
+    >>> my_uuid = uuid.UUID('{12345678-1234-5678-1234-567812345678}')
+    >>> psycopg2.extensions.adapt(my_uuid).getquoted()
+    "'12345678-1234-5678-1234-567812345678'::uuid"
+
     >>> # PostgreSQL UUID are transformed into Python UUID objects.
     >>> cur.execute("SELECT 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'::uuid")
     >>> cur.fetchone()[0]
