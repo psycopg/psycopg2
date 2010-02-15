@@ -1,3 +1,7 @@
+2010-02-15  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* lib/errorcodes.py: Updated to PostgreSQL 8.4; added lookup() function.
+
 2010-02-12  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* Stop the loop variable used to create __all__ leaking in the module.
