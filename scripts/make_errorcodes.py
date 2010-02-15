@@ -71,6 +71,11 @@ def parse_errors(url):
             errcode = tr.tt.string.encode("ascii")
             assert len(errcode) == 5
             errlabel = tr('td')[1].string.replace(" ", "_").encode("ascii")
+
+            # double check the columns are equal
+            cond_name = tr('td')[2].string.upper().encode("ascii")
+            assert errlabel == cond_name, tr
+
             errors[class_][errcode] = errlabel
 
     return classes, errors

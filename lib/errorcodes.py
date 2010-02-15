@@ -30,9 +30,9 @@ This module contains symbolic names for all PostgreSQL error codes.
 #
 
 def lookup(code, _cache={}):
-    """Lookup a code error and return its symbolic name.
+    """Lookup an error code or class code and return its symbolic name.
 
-    Raise KeyError if the code is not found.
+    Raise :exc:`KeyError` if the code is not found.
     """
     if _cache:
         return _cache[code]

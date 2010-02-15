@@ -3,13 +3,20 @@
 
 .. sectionauthor:: Daniele Varrazzo <daniele.varrazzo@gmail.com>
 
+.. index::
+    single: Error; Codes
+
 .. module:: psycopg2.errorcodes
+
+.. testsetup:: *
+
+    from psycopg2 import errorcodes
 
 .. versionadded:: 2.0.6
 
-This module contains symbolic names for all PostgreSQL error codes.
-Subclasses of :exc:`~psycopg2.Error` make the PostgreSQL error code available
-in the :attr:`~psycopg2.Error.pgcode` attribute.
+This module contains symbolic names for all PostgreSQL error codes and error
+classes codes.  Subclasses of :exc:`~psycopg2.Error` make the PostgreSQL error
+code available in the :attr:`~psycopg2.Error.pgcode` attribute.
 
 From PostgreSQL documentation:
 
@@ -30,12 +37,36 @@ From PostgreSQL documentation:
     recognize the specific error code can still be able to infer what to do
     from the error class.
 
-
 .. seealso:: `PostgreSQL Error Codes table`__
 
     .. __: http://www.postgresql.org/docs/8.4/static/errcodes-appendix.html#ERRCODES-TABLE
 
 
-.. todo:: errors table
+An example of the available constants defined in the module:
+
+    >>> errorcodes.CLASS_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION
+    '42'
+    >>> errorcodes.UNDEFINED_TABLE
+    '42P01'
+
+Constants representing all the error values documented by PostgreSQL versions
+between 8.1 and 8.4 are included in the module.
+
+
+.. autofunction:: lookup(code)
+
+    .. doctest::
+
+        >>> try:
+        ...     cur.execute("SELECT ouch FROM aargh;")
+        ... except Exception, e:
+        ...     pass
+        ...
+        >>> errorcodes.lookup(e.pgcode[:2])
+        'CLASS_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION'
+        >>> errorcodes.lookup(e.pgcode)
+        'UNDEFINED_TABLE'
+
+    .. versionadded:: 2.0.14
 
 

@@ -1,5 +1,9 @@
 @import url("default.css");
 
+blockquote {
+    font-style: italic;
+}
+
 div.admonition-todo {
     background-color: #ffa;
     border: 1px solid #ee2;
