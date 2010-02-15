@@ -129,7 +129,7 @@ class DictCursor(DictCursorBase):
             self._query_executed = 0
 
 class DictRow(list):
-    """A row object that allow by-colun-name access to data."""
+    """A row object that allow by-colmun-name access to data."""
 
     __slots__ = ('_index',)
 
