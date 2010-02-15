@@ -25,7 +25,8 @@ PostgreSQL arrays.
 .. |COPY-TO-FROM| replace:: :sql:`COPY TO/COPY FROM`
 .. __: http://www.postgresql.org/docs/8.4/static/sql-copy.html
 
-Contents:
+
+.. rubric:: Contents
 
 .. toctree::
    :maxdepth: 2
