@@ -1,0 +1,81 @@
+Frequently Asked Questions
+==========================
+
+.. sectionauthor:: Daniele Varrazzo <daniele.varrazzo@gmail.com>
+
+Here are a few gotchas you may encounter using :mod:`psycopg2`.  Feel free to
+suggest new entries!
+
+
+.. cssclass:: faq
+
+Why does :mod:`!psycopg2` leave database sessions "idle in transaction"?
+    Psycopg normally starts a new transaction the first time a query is
+    executed, e.g. calling :meth:`cursor.execute`, even if the command is a
+    :sql:`SELECT`.  The transaction is not closed until an explicit
+    :meth:`~connection.commit` or :meth:`~connection.rollback`.
+
+    If you are writing a long-living program, you should probably ensure to
+    call one of the transaction closing methods before leaving the connection
+    unused for a long time (which may also be a few seconds, depending on the
+    concurrency level in your database).  Alternatively you can use a
+    connection in :ref:`autocommit <autocommit>` mode to avoid a new
+    transaction to be started at the first command.
+
+Why does :meth:`!cursor.execute` raise the exception *can't adapt*?
+    Psycopg converts Python objects in a SQL string representation by looking
+    at the object class.  The exception is raised when you are trying to pass
+    as query parameter an object for which there is no adapter registered for
+    its class.  See :ref:`adapting-new-types` for informations.
+
+I can't pass an integer or a float parameter to my query: it says *a number is required*, but *it is* a number!
+    In your query string, you always have to use ``%s``  placeholders,
+    event when passing a number.  All Python objects are converted by Psycopg
+    in their SQL representation, so they get passed to the query as strings.
+    See :ref:`query-parameters`. ::
+
+        >>> cur.execute("INSERT INTO numbers VALUES (%d)", (42,)) # WRONG
+        >>> cur.execute("INSERT INTO numbers VALUES (%s)", (42,)) # correct
+
+I try to execute a query but it fails with the error *not all arguments converted during string formatting* (or *object does not support indexing*). Why?
+    Psycopg always require positional arguments to be passed as a tuple, even
+    when the query takes a single parameter.  And remember that to make a
+    single item tuple in Python you need a comma!  See :ref:`query-parameters`.
+    ::
+
+        >>> cur.execute("INSERT INTO foo VALUES (%s)", "bar")    # WRONG
+        >>> cur.execute("INSERT INTO foo VALUES (%s)", ("bar"))  # WRONG
+        >>> cur.execute("INSERT INTO foo VALUES (%s)", ("bar",)) # correct
+
+I receive the error *current transaction is aborted, commands ignored until end of transaction block* and can't do anything else!
+    There was a problem *in the previous* command to the database, which
+    resulted in an error.  The database will not recover automatically from
+    this condition: you must run a :meth:`~connection.rollback` before sending
+    new commands to the session (if this seems too harsh, remember that
+    PostgreSQL supports nested transactions using the |SAVEPOINT|_ command).
+
+    .. |SAVEPOINT| replace:: :sql:`SAVEPOINT`
+    .. _SAVEPOINT: http://www.postgresql.org/docs/8.4/static/sql-savepoint.html
+
+Why do i get the error *current transaction is aborted, commands ignored until end of transaction block* when I use :mod:`!multiprocessing` (or any other forking system) and not when use :mod:`!threading`?
+    Psycopg's connections can't be shared across processes (but are thread
+    safe).  If you are forking the Python process ensure to create a new
+    connection in each forked child.
+
+My database is Unicode, but I receive all the strings as UTF-8 :class:`str`. Can I receive :class:`unicode` objects instead?
+    The following magic formula will do the trick::
+
+        psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
+        psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
+
+    See :ref:`unicode-handling` for the gory details.
+
+I can't compile :mod:`!psycopg2`: the compiler says *error: Python.h: No such file or directory*. What am I missing?
+    You need to install a Python development package: it is usually called
+    ``python-dev``.
+
+I can't compile :mod:`!psycopg2`: the compiler says *error: libpq-fe.h: No such file or directory*. What am I missing?
+    You need to install the development version of the libpq: the package is
+    usually called ``libpq-dev``.
+
+

@@ -40,6 +40,7 @@ PostgreSQL arrays.
    tz
    extras
    errorcodes
+   faq
 
 
 .. ifconfig:: builder != 'text'

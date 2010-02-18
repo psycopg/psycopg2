@@ -134,14 +134,15 @@ The ``connection`` class
         the module :mod:`psycopg2.extensions`: see
         :ref:`isolation-level-constants` for the available values.
 
-        The default level is :sql:`READ COMMITTED`: in this level a transaction
-        is automatically started every time a database command is executed.  If
-        you want an *autocommit* mode,  switch to
-        :const:`~psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT`
-        before executing any command::
+        The default level is :sql:`READ COMMITTED`: at this level a
+        transaction is automatically started the first time a database command
+        is executed.  If you want an *autocommit* mode, switch to
+        :const:`~psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT` before
+        executing any command::
 
             >>> conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
+        See also :ref:`transactions-control`.
 
     .. index::
         pair: Client; Encoding

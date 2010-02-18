@@ -321,10 +321,12 @@ set to one of the following constants:
 
     No transaction is started when command are issued and no
     :meth:`~connection.commit` or :meth:`~connection.rollback` is required.
-    Some PostgreSQL command such as :sql:`CREATE DATABASE` can't run into a
-    transaction: to run such command use::
+    Some PostgreSQL command such as :sql:`CREATE DATABASE` or :sql:`VACUUM`
+    can't run into a transaction: to run such command use::
 
         >>> conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+
+    See also :ref:`transactions-control`.
 
 .. data:: ISOLATION_LEVEL_READ_UNCOMMITTED
 
