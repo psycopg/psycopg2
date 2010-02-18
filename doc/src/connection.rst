@@ -25,18 +25,18 @@ The ``connection`` class
           
         Return a new :class:`cursor` object using the connection.
 
-        If :obj:`!name` is specified, the returned cursor will be a *server
+        If `name` is specified, the returned cursor will be a *server
         side* (or *named*) cursor. Otherwise the cursor will be *client side*.
         See :ref:`server-side-cursors` for further details.
 
-        The :obj:`!cursor_factory` argument can be used to create non-standard
+        The `cursor_factory` argument can be used to create non-standard
         cursors. The class returned should be a subclass of
         :class:`psycopg2.extensions.cursor`. See :ref:`subclassing-cursor` for
         details.
 
         .. extension::
 
-            The :obj:`!name` and :obj:`!cursor_factory` parameters are Psycopg
+            The `name` and `cursor_factory` parameters are Psycopg
             extensions to the |DBAPI|.
 
 
@@ -137,7 +137,7 @@ The ``connection`` class
         The default level is :sql:`READ COMMITTED`: in this level a transaction
         is automatically started every time a database command is executed.  If
         you want an *autocommit* mode,  switch to
-        :obj:`~psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT`
+        :const:`~psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT`
         before executing any command::
 
             >>> conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
@@ -307,7 +307,7 @@ The ``connection`` class
             (using the |lo_import|_ function)
         :param lobject_factory: Subclass of
             :class:`~psycopg2.extensions.lobject` to be instantiated.
-        :rtype: :obj:`~psycopg2.extensions.lobject`
+        :rtype: :class:`~psycopg2.extensions.lobject`
 
         .. |lo_import| replace:: :func:`!lo_import`
         .. _lo_import: http://www.postgresql.org/docs/8.4/static/lo-interfaces.html#AEN36307

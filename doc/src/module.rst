@@ -30,24 +30,24 @@ The module interface respects the standard defined in the |DBAPI|_.
 
     The full list of available parameters is:
     
-    - :obj:`!dbname` -- the database name (only in dsn string)
-    - :obj:`!database` -- the database name (only as keyword argument)
-    - :obj:`!user` -- user name used to authenticate
-    - :obj:`!password` -- password used to authenticate
-    - :obj:`!host` -- database host address (defaults to UNIX socket if not provided)
-    - :obj:`!port` -- connection port number (defaults to 5432 if not provided)
-    - :obj:`!sslmode` -- `SSL TCP/IP negotiation`__ mode
+    - `dbname` -- the database name (only in dsn string)
+    - `database` -- the database name (only as keyword argument)
+    - `user` -- user name used to authenticate
+    - `password` -- password used to authenticate
+    - `host` -- database host address (defaults to UNIX socket if not provided)
+    - `port` -- connection port number (defaults to 5432 if not provided)
+    - `sslmode` -- `SSL TCP/IP negotiation`__ mode
 
     .. __: http://www.postgresql.org/docs/8.4/static/libpq-ssl.html#LIBPQ-SSL-SSLMODE-STATEMENTS
 
-    Using the :obj:`!connection_factory` parameter a different class or
+    Using the `connection_factory` parameter a different class or
     connections factory can be specified. It should be a callable object
-    taking a :obj:`!dsn` argument. See :ref:`subclassing-connection` for
+    taking a `dsn` argument. See :ref:`subclassing-connection` for
     details.
 
     .. extension::
 
-        The :obj:`connection_factory` parameter is a Psycopg extension to the
+        The `connection_factory` parameter is a Psycopg extension to the
         |DBAPI|.
 
 

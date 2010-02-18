@@ -425,7 +425,7 @@ subsequently handled using :sql:`MOVE`, :sql:`FETCH` and :sql:`CLOSE` commands.
 
 Psycopg wraps the database server side cursor in *named cursors*. A named
 cursor is created using the :meth:`~connection.cursor` method specifying the
-:obj:`!name` parameter. Such cursor will behave mostly like a regular cursor,
+`name` parameter. Such cursor will behave mostly like a regular cursor,
 allowing the user to move in the dataset using the :meth:`~cursor.scroll`
 methog and to read the data using :meth:`~cursor.fetchone` and
 :meth:`~cursor.fetchmany` methods.

@@ -6,7 +6,7 @@
 .. module:: psycopg2.tz
 
 This module holds two different tzinfo implementations that can be used as the
-:obj:`tzinfo` argument to datetime constructors, directly passed to Psycopg
+`tzinfo` argument to datetime constructors, directly passed to Psycopg
 functions or used to set the :attr:`cursor.tzinfo_factory` attribute in
 cursors. 
 
