@@ -1,9 +1,24 @@
 What's new in psycopg 2.0.14
 ----------------------------
 
-* It seems we're now good citizens of the free software ecosystem
-  and that big big big companies and people ranting on the
-  pgsql-hackers mailing list we'll now not dislike us.
+* New features:
+  - Support for adapting tuples to PostgreSQL arrays is now enabled by
+    default and does not require importing psycopg2.extensions anymore.
+  - "can't adapt" error message now includes full type information.
+  - Thank to Daniele Varazzo (piro) psycopg2's source package now includes
+    full documentation in HTML and plain text format.
+
+* Bug fixes:
+  - No loss of precision when using floats anymore.
+  - decimal.Decimal nan and infinity correctly converted to PostgreSQL
+    numeric NaN values (note that PostgreSQL numeric type does not support
+    infinity but just NaNs.)
+  - psycopg2.extensions now includes Binary.
+
+* It seems we're good citizens of the free software ecosystem and that big
+  big big companies and people ranting on the pgsql-hackers mailing list
+  we'll now not dislike us. *g* (See LICENSE file for the details.)
+
 
 What's new in psycopg 2.0.13
 ----------------------------
