@@ -1,3 +1,8 @@
+2010-02-15  Federico Di Gregorio  <fog@initd.org>
+
+	* Added new Decimal adapter that correctly converts NaN and infinity
+	to PostgreSQL NaN numeric values. Also added tests.
+
 2010-02-15  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* lib/errorcodes.py: Updated to PostgreSQL 8.4; added lookup() function.

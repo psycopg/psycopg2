@@ -59,15 +59,25 @@ class TypesBasicTests(unittest.TestCase):
         self.failUnless(s == 1971, "wrong integer quoting: " + str(s))
         s = self.execute("SELECT %s AS foo", (1971L,))
         self.failUnless(s == 1971L, "wrong integer quoting: " + str(s))
-        # Python 2.4 defaults to Decimal? (Apparently it does not.)
+        if sys.version_info[0] < 2 or sys.version_info[1] < 4:
+            s = self.execute("SELECT %s AS foo", (19.10,))
+            self.failUnless(abs(s - 19.10) < 0.001,
+                        "wrong float quoting: " + str(s))
+
+    def testDecimal(self):
         if sys.version_info[0] >= 2 and sys.version_info[1] >= 4:
             s = self.execute("SELECT %s AS foo", (decimal.Decimal("19.10"),))
             self.failUnless(s - decimal.Decimal("19.10") == 0,
                             "wrong decimal quoting: " + str(s))
-        else:
-            s = self.execute("SELECT %s AS foo", (19.10,))
-            self.failUnless(abs(s - 19.10) < 0.001,
-                            "wrong float quoting: " + str(s))
+            s = self.execute("SELECT %s AS foo", (decimal.Decimal("NaN"),))
+            self.failUnless(str(s) == "NaN", "wrong decimal quoting: " + str(s))
+            self.failUnless(type(s) == decimal.Decimal, "wrong decimal conversion: " + repr(s))
+            s = self.execute("SELECT %s AS foo", (decimal.Decimal("infinity"),))
+            self.failUnless(str(s) == "NaN", "wrong decimal quoting: " + str(s))
+            self.failUnless(type(s) == decimal.Decimal, "wrong decimal conversion: " + repr(s))
+            s = self.execute("SELECT %s AS foo", (decimal.Decimal("-infinity"),))
+            self.failUnless(str(s) == "NaN", "wrong decimal quoting: " + str(s))
+            self.failUnless(type(s) == decimal.Decimal, "wrong decimal conversion: " + repr(s))
 
     def testFloat(self):
         s = self.execute("SELECT %s AS foo", (float("nan"),))

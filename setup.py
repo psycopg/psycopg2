@@ -341,7 +341,8 @@ sources = [
     'connection_type.c', 'connection_int.c', 'cursor_type.c', 'cursor_int.c',
     'lobject_type.c', 'lobject_int.c',
     'adapter_qstring.c', 'adapter_pboolean.c', 'adapter_binary.c',
-    'adapter_asis.c', 'adapter_list.c', 'adapter_datetime.c', 'adapter_pfloat.c',
+    'adapter_asis.c', 'adapter_list.c', 'adapter_datetime.c',
+    'adapter_pfloat.c', 'adapter_pdecimal.c',
     'utils.c']
 
 parser = ConfigParser.ConfigParser()

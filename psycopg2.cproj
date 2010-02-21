@@ -148,6 +148,7 @@
     <None Include="psycopg2da\PUBLICATION.cfg" />
     <None Include="psycopg2da\README.txt" />
     <None Include="psycopg2da\tests.py" />
+    <None Include="psycopg\adapter_pdecimal.h" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="psycopg\adapter_asis.c" />

@@ -41,6 +41,7 @@
 #include "psycopg/adapter_binary.h"
 #include "psycopg/adapter_pboolean.h"
 #include "psycopg/adapter_pfloat.h"
+#include "psycopg/adapter_pdecimal.h"
 #include "psycopg/adapter_asis.h"
 #include "psycopg/adapter_list.h"
 #include "psycopg/typecast_binary.h"
@@ -276,6 +277,7 @@ static void
 psyco_adapters_init(PyObject *mod)
 {
     PyObject *call;
+    PyTypeObject *type;
 
     microprotocols_add(&PyFloat_Type, NULL, (PyObject*)&pfloatType);
     microprotocols_add(&PyInt_Type, NULL, (PyObject*)&asisType);
@@ -286,8 +288,9 @@ psyco_adapters_init(PyObject *mod)
     microprotocols_add(&PyUnicode_Type, NULL, (PyObject*)&qstringType);
     microprotocols_add(&PyBuffer_Type, NULL, (PyObject*)&binaryType);
     microprotocols_add(&PyList_Type, NULL, (PyObject*)&listType);
-    microprotocols_add((PyTypeObject*)psyco_GetDecimalType(),
-                       NULL, (PyObject*)&asisType);
+
+    if ((type = (PyTypeObject*)psyco_GetDecimalType()) != NULL)
+        microprotocols_add(type, NULL, (PyObject*)&pdecimalType);
 
     /* the module has already been initialized, so we can obtain the callable
        objects directly from its dictionary :) */
@@ -579,13 +582,13 @@ psyco_is_main_interp(void)
    the float type.
 
     If decimals are not to be used, return NULL.
-   */
+*/
 
 PyObject *
 psyco_GetDecimalType(void)
 {
-    PyObject *decimalType = NULL;
     static PyObject *cachedType = NULL;
+    PyObject *decimalType = NULL;
     PyObject *decimal;
 
     /* Use the cached object if running from the main interpreter. */
@@ -603,8 +606,7 @@ psyco_GetDecimalType(void)
     }
     else {
         PyErr_Clear();
-        decimalType = (PyObject *)&PyFloat_Type;
-        Py_INCREF(decimalType);
+        decimalType = NULL;
     }
 
     /* Store the object from future uses. */
@@ -637,6 +639,8 @@ static PyMethodDef psycopgMethods[] = {
     {"Boolean",  (PyCFunction)psyco_Boolean,
      METH_VARARGS, psyco_Float_doc},
     {"Float",  (PyCFunction)psyco_Float,
+     METH_VARARGS, psyco_Decimal_doc},
+    {"Decimal",  (PyCFunction)psyco_Decimal,
      METH_VARARGS, psyco_Boolean_doc},
     {"Binary",  (PyCFunction)psyco_Binary,
      METH_VARARGS, psyco_Binary_doc},
@@ -702,6 +706,7 @@ init_psycopg(void)
     isqlquoteType.ob_type  = &PyType_Type;
     pbooleanType.ob_type   = &PyType_Type;
     pfloatType.ob_type     = &PyType_Type;
+    pdecimalType.ob_type   = &PyType_Type;
     asisType.ob_type       = &PyType_Type;
     listType.ob_type       = &PyType_Type;
     chunkType.ob_type      = &PyType_Type;
@@ -714,6 +719,7 @@ init_psycopg(void)
     if (PyType_Ready(&isqlquoteType) == -1) return;
     if (PyType_Ready(&pbooleanType) == -1) return;
     if (PyType_Ready(&pfloatType) == -1) return;
+    if (PyType_Ready(&pdecimalType) == -1) return;
     if (PyType_Ready(&asisType) == -1) return;
     if (PyType_Ready(&listType) == -1) return;
     if (PyType_Ready(&chunkType) == -1) return;
@@ -815,6 +821,7 @@ init_psycopg(void)
     isqlquoteType.tp_alloc = PyType_GenericAlloc;
     pbooleanType.tp_alloc = PyType_GenericAlloc;
     pfloatType.tp_alloc = PyType_GenericAlloc;
+    pdecimalType.tp_alloc = PyType_GenericAlloc;
     connectionType.tp_alloc = PyType_GenericAlloc;
     asisType.tp_alloc = PyType_GenericAlloc;
     qstringType.tp_alloc = PyType_GenericAlloc;

@@ -19,11 +19,19 @@ Global
 		Policies = $0
 		$0.TextStylePolicy = $1
 		$1.FileWidth = 120
-		$1.TabWidth = 4
-		$1.TabsToSpaces = True
 		$1.NoTabsAfterNonTabs = False
-		$1.RemoveTrailingWhitespace = True
-		$1.EolMarker = Native
+		$0.DotNetNamingPolicy = $2
+		$2.DirectoryNamespaceAssociation = None
+		$2.ResourceNamePolicy = FileName
+		$0.TextStylePolicy = $3
+		$3.NoTabsAfterNonTabs = False
+		$3.inheritsSet = Mono
+		$3.inheritsScope = text/x-python
+		$3.scope = text/plain
+		$0.StandardHeader = $4
+		$4.Text = 
+		$4.IncludeInNewFiles = False
+		$4.inheritsSet = MITX11License
 		name = psycopg2
 	EndGlobalSection
 EndGlobal
