@@ -48,8 +48,6 @@
     <None Include="README" />
     <None Include="setup.cfg" />
     <None Include="setup.py" />
-    <None Include="doc\async.txt" />
-    <None Include="doc\extensions.rst" />
     <None Include="doc\HACKING" />
     <None Include="doc\SUCCESS" />
     <None Include="examples\binary.py" />
@@ -149,6 +147,28 @@
     <None Include="psycopg2da\README.txt" />
     <None Include="psycopg2da\tests.py" />
     <None Include="psycopg\adapter_pdecimal.h" />
+    <None Include="doc\ChangeLog-1.x" />
+    <None Include="doc\COPYING" />
+    <None Include="doc\COPYING.LESSER" />
+    <None Include="doc\Makefile" />
+    <None Include="doc\pep-0249.txt" />
+    <None Include="doc\README" />
+    <None Include="doc\src\advanced.rst" />
+    <None Include="doc\src\conf.py" />
+    <None Include="doc\src\connection.rst" />
+    <None Include="doc\src\cursor.rst" />
+    <None Include="doc\src\errorcodes.rst" />
+    <None Include="doc\src\extensions.rst" />
+    <None Include="doc\src\extras.rst" />
+    <None Include="doc\src\index.rst" />
+    <None Include="doc\src\Makefile" />
+    <None Include="doc\src\module.rst" />
+    <None Include="doc\src\tz.rst" />
+    <None Include="doc\src\usage.rst" />
+    <None Include="doc\src\tools\lib\dbapi_extension.py" />
+    <None Include="doc\src\tools\lib\sql_role.py" />
+    <None Include="doc\src\tools\stitch_text.py" />
+    <None Include="doc\src\_static\psycopg.css" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="psycopg\adapter_asis.c" />
