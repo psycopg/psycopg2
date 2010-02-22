@@ -23,3 +23,6 @@ a > tt.sql:hover {
     text-decoration: underline;
 }
 
+dl.faq dt {
+    font-weight: bold;
+}

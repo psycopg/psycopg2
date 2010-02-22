@@ -31,7 +31,7 @@ The ``cursor`` class
     :meth:`~connection.commit` methods.
 
     Cursors are *not* thread safe: a multithread application can create
-    many cursors from the same same connection and should use each cursor from
+    many cursors from the same connection and should use each cursor from
     a single thread. See :ref:`thread-safety` for details.
 
  
@@ -121,7 +121,7 @@ The ``cursor`` class
         The method returns `None`. If a query was executed, the returned
         values can be retrieved using |fetch*|_ methods.
 
-        If :obj:`!async` is ``True``, query execution will be asynchronous:
+        If `async` is ``True``, query execution will be asynchronous:
         the function returns immediately while the query is executed by the
         backend.  Use the :meth:`~cursor.isready` method to see if the data is
         ready for return via |fetch*|_ methods. See
@@ -129,7 +129,7 @@ The ``cursor`` class
 
         .. extension::
 
-            The :obj:`async` parameter is a Psycopg extension to the |DBAPI|.
+            The `async` parameter is a Psycopg extension to the |DBAPI|.
 
 
     .. method:: mogrify(operation [, parameters])
@@ -150,7 +150,7 @@ The ``cursor`` class
       
         Prepare a database operation (query or command) and then execute it
         against all parameter tuples or mappings found in the sequence
-        :obj:`!seq_of_parameters`.
+        `seq_of_parameters`.
         
         The function is mostly useful for commands that update the database:
         any result set returned by the query is discarded.
@@ -170,7 +170,7 @@ The ``cursor`` class
         The procedure may also provide a result set as output. This must then
         be made available through the standard |fetch*|_ methods.
 
-        If :obj:`!async` is ``True``, procedure execution will be asynchronous:
+        If `async` is ``True``, procedure execution will be asynchronous:
         the function returns immediately while the procedure is executed by
         the backend.  Use the :meth:`~cursor.isready` method to see if the
         data is ready for return via |fetch*|_ methods. See
@@ -178,7 +178,7 @@ The ``cursor`` class
 
         .. extension::
 
-            The :obj:`async` parameter is a Psycopg extension to the |DBAPI|.
+            The `async` parameter is a Psycopg extension to the |DBAPI|.
 
 
     .. method:: setinputsizes(sizes)
@@ -276,7 +276,7 @@ The ``cursor`` class
         Scroll the cursor in the result set to a new position according
         to mode.
 
-        If :obj:`!mode` is ``relative`` (default), value is taken as offset to
+        If `mode` is ``relative`` (default), value is taken as offset to
         the current position in the result set, if set to ``absolute``,
         value states an absolute target position.
 
@@ -347,7 +347,7 @@ The ``cursor`` class
         PostgreSQL currently advices to not create OIDs on the tables and the
         default for |CREATE-TABLE|__ is to not support them. The
         |INSERT-RETURNING|__ syntax available from PostgreSQL 8.3 allows more
-        flexibility:
+        flexibility.
 
         .. |CREATE-TABLE| replace:: :sql:`CREATE TABLE`
         .. __: http://www.postgresql.org/docs/8.4/static/sql-createtable.html
@@ -441,15 +441,15 @@ The ``cursor`` class
 
     .. method:: copy_from(file, table, sep='\\t', null='\\N', columns=None)
  
-        Read data *from* the file-like object :obj:`!file` appending them to
-        the table named :obj:`!table`.  :obj:`!file` must have both
+        Read data *from* the file-like object `file` appending them to
+        the table named `table`.  `file` must have both
         :meth:`!read` and :meth:`!readline` method.  See :ref:`copy` for an
         overview.
 
-        The optional argument :obj:`!sep` is the columns separator and
-        :obj:`!null` represents :sql:`NULL` values in the file.
+        The optional argument `sep` is the columns separator and
+        `null` represents :sql:`NULL` values in the file.
 
-        The :obj:`!columns` argument is a sequence containing the name of the
+        The `columns` argument is a sequence containing the name of the
         fields where the read data will be entered.  Its length and column
         type should match the content of the read file.  If not specifies, it
         is assumed that the entire table matches the file structure.
@@ -461,19 +461,19 @@ The ``cursor`` class
             [(6, 42, 'foo'), (7, 74, 'bar')]
 
         .. versionchanged:: 2.0.6
-            added the :obj:`columns` parameter.
+            added the `columns` parameter.
 
 
     .. method:: copy_to(file, table, sep='\\t', null='\\N', columns=None)
 
-        Write the content of the table named :obj:`!table` *to* the file-like
-        object :obj:`!file`.  :obj:`!file` must have a :meth:`!write` method.
+        Write the content of the table named `table` *to* the file-like
+        object `file`.  `file` must have a :meth:`!write` method.
         See :ref:`copy` for an overview.
 
-        The optional argument :obj:`!sep` is the columns separator and
-        :obj:`!null` represents :sql:`NULL` values in the file.
+        The optional argument `sep` is the columns separator and
+        `null` represents :sql:`NULL` values in the file.
 
-        The :obj:`!columns` argument is a sequence of field names: if not
+        The `columns` argument is a sequence of field names: if not
         ``None`` only the specified fields will be included in the dump.
 
             >>> cur.copy_to(sys.stdout, 'test', sep="|")
@@ -482,7 +482,7 @@ The ``cursor`` class
             ...
 
         .. versionchanged:: 2.0.6
-            added the :obj:`columns` parameter.
+            added the `columns` parameter.
 
 
     .. method:: copy_expert(sql, file [, size])
@@ -491,10 +491,10 @@ The ``cursor`` class
         handle all the parameters that PostgreSQL makes available (see
         |COPY|__ command documentation).
 
-        :obj:`!file` must be an open, readable file for :sql:`COPY FROM` or an
-        open, writeable file for :sql:`COPY TO`. The optional :obj:`!size`
+        `file` must be an open, readable file for :sql:`COPY FROM` or an
+        open, writeable file for :sql:`COPY TO`. The optional `size`
         argument, when specified for a :sql:`COPY FROM` statement, will be
-        passed to :obj:`!file`\ 's read method to control the read buffer
+        passed to `file`\ 's read method to control the read buffer
         size.
 
             >>> cur.copy_expert("COPY test TO STDOUT WITH CSV HEADER", sys.stdout)

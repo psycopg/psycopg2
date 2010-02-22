@@ -26,7 +26,7 @@ Dictionary-like cursor
 
 The dict cursors allow to access to the retrieved records using an iterface
 similar to the Python dictionaries instead of the tuples. You can use it
-either passing :class:`DictConnection` as :obj:`!connection_factory` argument
+either passing :class:`DictConnection` as `connection_factory` argument
 to the :func:`~psycopg2.connect` function or passing :class:`DictCursor` as
 the :class:`!cursor_factory` argument to the :meth:`~connection.cursor` method
 of a regular :class:`connection`.

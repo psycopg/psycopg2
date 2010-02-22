@@ -118,9 +118,11 @@ query:
     >>> cur.execute("INSERT INTO numbers VALUES (%s)", (42,)) # correct
 
 - For positional variables binding, *the second argument must always be a
-  tuple*, even if it contains a single variable::
+  tuple*, even if it contains a single variable.  And remember that Python
+  requires a comma to create a single element tuple::
 
     >>> cur.execute("INSERT INTO foo VALUES (%s)", "bar")    # WRONG
+    >>> cur.execute("INSERT INTO foo VALUES (%s)", ("bar"))  # WRONG
     >>> cur.execute("INSERT INTO foo VALUES (%s)", ("bar",)) # correct
 
 - Only variable values should be bound via this method: it shouldn't be used
@@ -374,7 +376,7 @@ Transactions control
 --------------------
 
 In Psycopg transactions are handled by the :class:`connection` class. By
-default, every time a command is sent to the database (using one of the
+default, the first time a command is sent to the database (using one of the
 :class:`cursor`\ s created by the connection), a new transaction is created.
 The following database commands will be executed in the context of the same
 transaction -- not only the commands issued by the first cursor, but the ones
@@ -391,9 +393,9 @@ will result in an implicit :meth:`!rollback` call.
 
 It is possible to set the connection in *autocommit* mode: this way all the
 commands executed will be immediately committed and no rollback is possible. A
-few commands (e.g. :sql:`CREATE DATABASE`) require to be run outside any
-transaction: in order to be able to run these commands from Psycopg, the
-session must be in autocommit mode.  Read the documentation for
+few commands (e.g. :sql:`CREATE DATABASE`, :sql:`VACUUM`...) require to be run
+outside any transaction: in order to be able to run these commands from
+Psycopg, the session must be in autocommit mode.  Read the documentation for
 :meth:`connection.set_isolation_level` to know how to change the commit mode.
 
 
@@ -425,7 +427,7 @@ subsequently handled using :sql:`MOVE`, :sql:`FETCH` and :sql:`CLOSE` commands.
 
 Psycopg wraps the database server side cursor in *named cursors*. A named
 cursor is created using the :meth:`~connection.cursor` method specifying the
-:obj:`!name` parameter. Such cursor will behave mostly like a regular cursor,
+`name` parameter. Such cursor will behave mostly like a regular cursor,
 allowing the user to move in the dataset using the :meth:`~cursor.scroll`
 methog and to read the data using :meth:`~cursor.fetchone` and
 :meth:`~cursor.fetchmany` methods.

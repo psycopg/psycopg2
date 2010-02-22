@@ -18,7 +18,7 @@ functionalities defined by the |DBAPI|_.
     Is the class usually returned by the :func:`~psycopg2.connect` function.
     It is exposed by the :mod:`extensions` module in order to allow
     subclassing to extend its behaviour: the subclass should be passed to the
-    :func:`!connect` function using the :obj:`!connection_factory` parameter.
+    :func:`!connect` function using the `connection_factory` parameter.
     See also :ref:`subclassing-connection`.
 
     For a complete description of the class, see :class:`connection`.
@@ -28,7 +28,7 @@ functionalities defined by the |DBAPI|_.
     It is the class usually returnded by the :meth:`connection.cursor`
     method. It is exposed by the :mod:`extensions` module in order to allow
     subclassing to extend its behaviour: the subclass should be passed to the
-    :meth:`!cursor` method using the :obj:`!cursor_factory` parameter. See
+    :meth:`!cursor` method using the `cursor_factory` parameter. See
     also :ref:`subclassing-cursor`.
 
     For a complete description of the class, see :class:`cursor`.
@@ -104,7 +104,7 @@ deal with Python objects adaptation:
 
 .. function:: adapt(obj)
 
-    Return the SQL representation of :obj:`obj` as a string.  Raise a
+    Return the SQL representation of `obj` as a string.  Raise a
     :exc:`~psycopg2.ProgrammingError` if how to adapt the object is unknown.
     In order to allow new objects to be adapted, register a new adapter for it
     using the :func:`register_adapter` function.
@@ -115,9 +115,9 @@ deal with Python objects adaptation:
 
 .. function:: register_adapter(class, adapter)
 
-    Register a new adapter for the objects of class :data:`class`.
+    Register a new adapter for the objects of class `class`.
 
-    :data:`adapter` should be a function taking a single argument (the object
+    `adapter` should be a function taking a single argument (the object
     to adapt) and returning an object conforming the :class:`ISQLQuote`
     protocol (e.g. exposing a :meth:`!getquoted` method).  The :class:`AsIs` is
     often useful for this task.
@@ -233,10 +233,10 @@ details.
     :param name: the name of the new type adapter.
     :param adapter: the adaptation function.
 
-    The object OID can be read from the :data:`cursor.description` attribute
+    The object OID can be read from the :attr:`cursor.description` attribute
     or by querying from the PostgreSQL catalog.
 
-    :data:`adapter` should have signature :samp:`fun({value}, {cur})` where
+    `adapter` should have signature :samp:`fun({value}, {cur})` where
     :samp:`{value}` is the string representation returned by PostgreSQL and
     :samp:`{cur}` is the cursor from which data are read. In case of
     :sql:`NULL`, :samp:`{value}` is ``None``. The adapter should return the
@@ -248,7 +248,7 @@ details.
 
     Register a type caster created using :func:`new_type`.
 
-    If :obj:`!scope` is specified, it should be a :class:`connection` or a
+    If `scope` is specified, it should be a :class:`connection` or a
     :class:`cursor`: the type caster will be effective only limited to the
     specified object.  Otherwise it will be globally registered.
 
@@ -321,10 +321,12 @@ set to one of the following constants:
 
     No transaction is started when command are issued and no
     :meth:`~connection.commit` or :meth:`~connection.rollback` is required.
-    Some PostgreSQL command such as :sql:`CREATE DATABASE` can't run into a
-    transaction: to run such command use::
+    Some PostgreSQL command such as :sql:`CREATE DATABASE` or :sql:`VACUUM`
+    can't run into a transaction: to run such command use::
 
         >>> conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+
+    See also :ref:`transactions-control`.
 
 .. data:: ISOLATION_LEVEL_READ_UNCOMMITTED
 
@@ -399,7 +401,7 @@ Connection status constants
 ---------------------------
 
 These values represent the possible status of a connection: the current value
-can be read from the :data:`~connection.status` attribute.
+can be read from the :attr:`~connection.status` attribute.
 
 .. data:: STATUS_SETUP
 
@@ -415,7 +417,7 @@ can be read from the :data:`~connection.status` attribute.
 
 .. data:: STATUS_IN_TRANSACTION
 
-    An alias for :data:`STATUS_BEGIN`
+    An alias for :const:`STATUS_BEGIN`
 
 .. data:: STATUS_SYNC
 
