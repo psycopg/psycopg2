@@ -8,9 +8,8 @@ recursive-include debian *
 recursive-include doc README TODO HACKING SUCCESS COPYING* ChangeLog-1.x pep-0249.txt 
 recursive-include doc *.txt *.html *.css *.js Makefile
 recursive-include doc/src *.rst *.py *.css Makefile
-prune doc/src/_build
 recursive-include doc/html *
-prune doc/html/_sources
+prune doc/src/_build
 recursive-include scripts *.py *.sh
 include scripts/maketypes.sh scripts/buildtypes.py
 include AUTHORS README INSTALL LICENSE ChangeLog 
