@@ -169,6 +169,7 @@
     <None Include="doc\src\tools\lib\sql_role.py" />
     <None Include="doc\src\tools\stitch_text.py" />
     <None Include="doc\src\_static\psycopg.css" />
+    <None Include="doc\src\faq.rst" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="psycopg\adapter_asis.c" />

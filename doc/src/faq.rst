@@ -78,4 +78,26 @@ I can't compile :mod:`!psycopg2`: the compiler says *error: libpq-fe.h: No such 
     You need to install the development version of the libpq: the package is
     usually called ``libpq-dev``.
 
+When should I save and re-use a cursor as opposed to creating a new one as needed?
+    Cursors are lightweight objects and creating lots of them should not pose
+    any kind of problem. But note that cursors used to fetch result sets will
+    cache the data and use memory in proportion to the result set size. Our
+    suggestion is to almost always create a new cursor and dispose old ones as
+    soon as the data is not required anymore (call :meth:`~cursor.close` on
+    them.) The only exception are tight loops where one usually use the same
+    cursor for a whole bunch of INSERTs or UPDATEs.
 
+When should I save and re-use a connection as opposed to creating a new one as needed?
+    Creating a connection can be slow (think of SSL over TCP) so the best
+    practice is to create a single connection and keep it open as long as
+    required. It is also good practice to rollback or commit frequently (even
+    after a single SELECT statement) to make sure the backend is never left
+    "idle in transaction".
+
+What are the advantages or disadvantages of using named cursors?
+    The only disadvantages is that they use up resources on the server and
+    that there is a little overhead because a at least two queries (one to
+    create the cursor and one to fetch the initial result set) are issued to
+    the backend. The advantage is that data is fetched one chunk at a time:
+    using small :meth:`~cursor.fetchmany` values it is possible to use very
+    little memory on the client and to skip or discard parts of the result set.
