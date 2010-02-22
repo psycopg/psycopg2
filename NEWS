@@ -5,7 +5,7 @@ What's new in psycopg 2.0.14
   - Support for adapting tuples to PostgreSQL arrays is now enabled by
     default and does not require importing psycopg2.extensions anymore.
   - "can't adapt" error message now includes full type information.
-  - Thank to Daniele Varazzo (piro) psycopg2's source package now includes
+  - Thank to Daniele Varrazzo (piro) psycopg2's source package now includes
     full documentation in HTML and plain text format.
 
 * Bug fixes:
