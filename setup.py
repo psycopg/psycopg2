@@ -56,7 +56,7 @@ from distutils.sysconfig import get_python_inc
 from distutils.ccompiler import get_default_compiler
 
 PSYCOPG_VERSION = '2.0.14'
-version_flags   = ['dt', 'dec']
+version_flags   = ['release-candidate-1', 'dt', 'dec']
 
 PLATFORM_IS_WINDOWS = sys.platform.lower().startswith('win')
 
