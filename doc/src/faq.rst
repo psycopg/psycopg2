@@ -85,14 +85,15 @@ When should I save and re-use a cursor as opposed to creating a new one as neede
     suggestion is to almost always create a new cursor and dispose old ones as
     soon as the data is not required anymore (call :meth:`~cursor.close` on
     them.) The only exception are tight loops where one usually use the same
-    cursor for a whole bunch of INSERTs or UPDATEs.
+    cursor for a whole bunch of :sql:`INSERT`\s or :sql:`UPDATE`\s.
 
 When should I save and re-use a connection as opposed to creating a new one as needed?
     Creating a connection can be slow (think of SSL over TCP) so the best
     practice is to create a single connection and keep it open as long as
     required. It is also good practice to rollback or commit frequently (even
-    after a single SELECT statement) to make sure the backend is never left
-    "idle in transaction".
+    after a single :sql:`SELECT` statement) to make sure the backend is never
+    left "idle in transaction".  See also :mod:`psycopg2.pool` for lightweight
+    connection pooling.
 
 What are the advantages or disadvantages of using named cursors?
     The only disadvantages is that they use up resources on the server and

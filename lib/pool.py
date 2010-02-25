@@ -197,9 +197,9 @@ class PersistentConnectionPool(AbstractConnectionPool):
     """A pool that assigns persistent connections to different threads. 
 
     Note that this connection pool generates by itself the required keys
-    using the current thread id.  This means that untill a thread put away
+    using the current thread id.  This means that until a thread puts away
     a connection it will always get the same connection object by successive
-    .getconn() calls. This also means that a thread can't use more than one
+    :meth:`!getconn` calls. This also means that a thread can't use more than one
     single connection from the pool.
     """
 

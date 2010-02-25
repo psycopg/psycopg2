@@ -38,6 +38,7 @@ PostgreSQL arrays.
    advanced
    extensions
    tz
+   pool
    extras
    errorcodes
    faq
