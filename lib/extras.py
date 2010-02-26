@@ -97,7 +97,7 @@ class DictCursorBase(_cursor):
         return res
 
 class DictConnection(_connection):
-    """A connection that uses :class:`DictCursor` automatically."""
+    """A connection that uses `DictCursor` automatically."""
     def cursor(self, name=None):
         if name is None:
             return _connection.cursor(self, cursor_factory=DictCursor)
@@ -180,7 +180,7 @@ class DictRow(list):
         return self._index.__contains__(x)
 
 class RealDictConnection(_connection):
-    """A connection that uses :class:`RealDictCursor` automatically."""
+    """A connection that uses `RealDictCursor` automatically."""
     def cursor(self, name=None):
         if name is None:
             return _connection.cursor(self, cursor_factory=RealDictCursor)
@@ -193,7 +193,7 @@ class RealDictCursor(DictCursorBase):
     Note that this cursor is extremely specialized and does not allow
     the normal access (using integer indices) to fetched data. If you need
     to access database rows both as a dictionary and a list, then use
-    the generic :class:`DictCursor` instead of :class:`!RealDictCursor`.
+    the generic `DictCursor` instead of `!RealDictCursor`.
     """
 
     def __init__(self, *args, **kwargs):
@@ -298,13 +298,13 @@ class LoggingCursor(_cursor):
 class MinTimeLoggingConnection(LoggingConnection):
     """A connection that logs queries based on execution time.
     
-    This is just an example of how to sub-class :class:`LoggingConnection` to
+    This is just an example of how to sub-class `LoggingConnection` to
     provide some extra filtering for the logged queries. Both the
-    :meth:`inizialize` and :meth:`filter` methods are overwritten to make sure
+    `inizialize()` and `filter()` methods are overwritten to make sure
     that only queries executing for more than ``mintime`` ms are logged.
     
     Note that this connection uses the specialized cursor
-    :class:`MinTimeLoggingCursor`.
+    `MinTimeLoggingCursor`.
     """
     def initialize(self, logobj, mintime=0):
         LoggingConnection.initialize(self, logobj)
@@ -323,7 +323,7 @@ class MinTimeLoggingConnection(LoggingConnection):
             return _connection.cursor(self, name, cursor_factory=MinTimeLoggingCursor)
     
 class MinTimeLoggingCursor(LoggingCursor):
-    """The cursor sub-class companion to :class:`MinTimeLoggingConnection`."""
+    """The cursor sub-class companion to `MinTimeLoggingConnection`."""
 
     def execute(self, query, vars=None, async=0):
         self.timestamp = time.time()

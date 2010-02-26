@@ -19,7 +19,7 @@ The ``cursor`` class
 .. class:: cursor
 
     Allows Python code to execute PostgreSQL command in a database session.
-    Cursors are created by the :meth:`connection.cursor` method: they are
+    Cursors are created by the `connection.cursor()` method: they are
     bound to the connection for the entire lifetime and all the commands are
     executed in the context of the database session wrapped by the connection.
 
@@ -27,8 +27,8 @@ The ``cursor`` class
     changes done to the database by a cursor are immediately visible by the
     other cursors. Cursors created from different connections can or can not
     be isolated, depending on the connections' :ref:`isolation level
-    <transactions-control>`. See also :meth:`~connection.rollback` and
-    :meth:`~connection.commit` methods.
+    <transactions-control>`. See also `~connection.rollback()` and
+    `~connection.commit()` methods.
 
     Cursors are *not* thread safe: a multithread application can create
     many cursors from the same connection and should use each cursor from
@@ -66,9 +66,9 @@ The ``cursor`` class
 
     .. method:: close()
           
-        Close the cursor now (rather than whenever :meth:`!__del__` is
+        Close the cursor now (rather than whenever `!__del__()` is
         called).  The cursor will be unusable from this point forward; an
-        :exc:`~psycopg2.InterfaceError` will be raised if any operation is
+        `~psycopg2.InterfaceError` will be raised if any operation is
         attempted with the cursor.
             
     .. attribute:: closed
@@ -78,7 +78,7 @@ The ``cursor`` class
 
         .. extension::
 
-            The :attr:`closed` attribute is a Psycopg extension to the
+            The `closed` attribute is a Psycopg extension to the
             |DBAPI|.
 
         .. versionadded:: 2.0.7
@@ -86,23 +86,23 @@ The ``cursor`` class
 
     .. attribute:: connection
 
-        Read-only attribute returning a reference to the :class:`connection`
+        Read-only attribute returning a reference to the `connection`
         object on which the cursor was created.
 
 
     .. attribute:: name
 
         Read-only attribute containing the name of the cursor if it was
-        creates as named cursor by :meth:`connection.cursor`, or ``None`` if
+        creates as named cursor by `connection.cursor()`, or ``None`` if
         it is a client side cursor.  See :ref:`server-side-cursors`.
 
         .. extension::
 
-            The :attr:`name` attribute is a Psycopg extension to the |DBAPI|.
+            The `name` attribute is a Psycopg extension to the |DBAPI|.
 
 
     
-    .. |execute*| replace:: :meth:`execute*`
+    .. |execute*| replace:: `execute*()`
 
     .. _execute*:
 
@@ -123,7 +123,7 @@ The ``cursor`` class
 
         If `async` is ``True``, query execution will be asynchronous:
         the function returns immediately while the query is executed by the
-        backend.  Use the :meth:`~cursor.isready` method to see if the data is
+        backend.  Use the `~cursor.isready()` method to see if the data is
         ready for return via |fetch*|_ methods. See
         :ref:`asynchronous-queries`.
 
@@ -136,14 +136,14 @@ The ``cursor`` class
 
         Return a query string after arguments binding. The string returned is
         exactly the one that would be sent to the database running the
-        :meth:`~cursor.execute` method or similar.
+        `~cursor.execute()` method or similar.
 
             >>> cur.mogrify("INSERT INTO test (num, data) VALUES (%s, %s)", (42, 'bar'))
             "INSERT INTO test (num, data) VALUES (42, E'bar')"
 
         .. extension::
 
-            The :meth:`mogrify` method is a Psycopg extension to the |DBAPI|.
+            The `mogrify()` method is a Psycopg extension to the |DBAPI|.
 
         
     .. method:: executemany(operation, seq_of_parameters)
@@ -156,7 +156,7 @@ The ``cursor`` class
         any result set returned by the query is discarded.
         
         Parameters are bounded to the query using the same rules described in
-        the :meth:`~cursor.execute` method.
+        the `~cursor.execute()` method.
 
 
     .. method:: callproc(procname [, parameters] [, async])
@@ -172,7 +172,7 @@ The ``cursor`` class
 
         If `async` is ``True``, procedure execution will be asynchronous:
         the function returns immediately while the procedure is executed by
-        the backend.  Use the :meth:`~cursor.isready` method to see if the
+        the backend.  Use the `~cursor.isready()` method to see if the
         data is ready for return via |fetch*|_ methods. See
         :ref:`asynchronous-queries`.
 
@@ -188,7 +188,7 @@ The ``cursor`` class
 
 
 
-    .. |fetch*| replace:: :meth:`!fetch*`
+    .. |fetch*| replace:: `!fetch*()`
 
     .. _fetch*:
 
@@ -196,12 +196,12 @@ The ``cursor`` class
 
 
     The following methods are used to read data from the database after an
-    :meth:`~cursor.execute` call.
+    `~cursor.execute()` call.
 
     .. note::
 
-        :class:`cursor` objects are iterable, so, instead of calling
-        explicitly :meth:`~cursor.fetchone` in a loop, the object itself can
+        `cursor` objects are iterable, so, instead of calling
+        explicitly `~cursor.fetchone()` in a loop, the object itself can
         be used:
 
             >>> cur.execute("SELECT * FROM test;")
@@ -222,7 +222,7 @@ The ``cursor`` class
             >>> cur.fetchone()
             (3, 42, 'bar')
         
-        A :exc:`~psycopg2.ProgrammingError` is raised if the previous call
+        A `~psycopg2.ProgrammingError` is raised if the previous call
         to |execute*|_ did not produce any result set or no call was issued
         yet.
 
@@ -233,7 +233,7 @@ The ``cursor`` class
         tuples. An empty list is returned when no more rows are available.
         
         The number of rows to fetch per call is specified by the parameter.
-        If it is not given, the cursor's :attr:`~cursor.arraysize` determines
+        If it is not given, the cursor's `~cursor.arraysize` determines
         the number of rows to be fetched. The method should try to fetch as
         many rows as indicated by the size parameter. If this is not possible
         due to the specified number of rows not being available, fewer rows
@@ -247,14 +247,14 @@ The ``cursor`` class
             >>> cur.fetchmany(2)
             []
 
-        A :exc:`~psycopg2.ProgrammingError` is raised if the previous call to
+        A `~psycopg2.ProgrammingError` is raised if the previous call to
         |execute*|_ did not produce any result set or no call was issued yet.
         
         Note there are performance considerations involved with the size
         parameter.  For optimal performance, it is usually best to use the
-        :attr:`~cursor.arraysize` attribute.  If the size parameter is used,
+        `~cursor.arraysize` attribute.  If the size parameter is used,
         then it is best for it to retain the same value from one
-        :meth:`fetchmany` call to the next.
+        `fetchmany()` call to the next.
 
 
     .. method:: fetchall()
@@ -267,7 +267,7 @@ The ``cursor`` class
             >>> cur.fetchall()
             [(1, 100, "abc'def"), (2, None, 'dada'), (3, 42, 'bar')]
 
-        A :exc:`~psycopg2.ProgrammingError` is raised if the previous call to
+        A `~psycopg2.ProgrammingError` is raised if the previous call to
         |execute*|_ did not produce any result set or no call was issued yet.
 
 
@@ -281,7 +281,7 @@ The ``cursor`` class
         value states an absolute target position.
 
         If the scroll operation would leave the result set, a
-        :exc:`~psycopg2.ProgrammingError` is raised and the cursor position is
+        `~psycopg2.ProgrammingError` is raised and the cursor position is
         not changed.
 
         The method can be used both for client-side cursors and
@@ -290,7 +290,7 @@ The ``cursor`` class
         .. note:: 
 
             According to the |DBAPI|_, the exception raised for a cursor out
-            of bound should have been :exc:`!IndexError`.  The best option is
+            of bound should have been `!IndexError`.  The best option is
             probably to catch both exceptions in your code::
 
                 try:
@@ -302,7 +302,7 @@ The ``cursor`` class
     .. attribute:: arraysize
           
         This read/write attribute specifies the number of rows to fetch at a
-        time with :meth:`~cursor.fetchmany`. It defaults to 1 meaning to fetch
+        time with `~cursor.fetchmany()`. It defaults to 1 meaning to fetch
         a single row at a time.
         
 
@@ -332,7 +332,7 @@ The ``cursor`` class
 
         The index can be seen as index of the cursor in a sequence (the result
         set). The next fetch operation will fetch the row indexed by
-        :attr:`rownumber` in that sequence.
+        `rownumber` in that sequence.
 
 
     .. index:: oid
@@ -359,7 +359,7 @@ The ``cursor`` class
     .. method:: nextset()
     
         This method is not supported (PostgreSQL does not have multiple data
-        sets) and will raise a :exc:`~psycopg2.NotSupportedError` exception.
+        sets) and will raise a `~psycopg2.NotSupportedError` exception.
 
 
     .. method:: setoutputsize(size [, column])
@@ -380,7 +380,7 @@ The ``cursor`` class
 
         .. extension::
 
-            The :attr:`query` attribute is a Psycopg extension to the |DBAPI|.
+            The `query` attribute is a Psycopg extension to the |DBAPI|.
 
 
     .. attribute:: statusmessage
@@ -394,7 +394,7 @@ The ``cursor`` class
 
         .. extension::
 
-            The :attr:`statusmessage` attribute is a Psycopg extension to the
+            The `statusmessage` attribute is a Psycopg extension to the
             |DBAPI|.
 
 
@@ -406,28 +406,28 @@ The ``cursor`` class
 
         .. extension::
 
-            The :meth:`isready` method is a Psycopg extension to the |DBAPI|.
+            The `isready()` method is a Psycopg extension to the |DBAPI|.
 
 
     .. method:: fileno()
 
         Return the file descriptor associated with the current connection and
         make possible to use a cursor in a context where a file object would
-        be expected (like in a :func:`select` call).  See
+        be expected (like in a `select()` call).  See
         :ref:`asynchronous-queries`.
 
         .. extension::
 
-            The :meth:`fileno` method is a Psycopg extension to the |DBAPI|.
+            The `fileno()` method is a Psycopg extension to the |DBAPI|.
 
 
     .. attribute:: tzinfo_factory
 
         The time zone factory used to handle data types such as
         :sql:`TIMESTAMP WITH TIME ZONE`.  It should be a |tzinfo|_ object.
-        See also the :mod:`psycopg2.tz` module.
+        See also the `psycopg2.tz` module.
 
-        .. |tzinfo| replace:: :class:`!tzinfo`
+        .. |tzinfo| replace:: `!tzinfo`
         .. _tzinfo: http://docs.python.org/library/datetime.html#tzinfo-objects
 
 
@@ -443,7 +443,7 @@ The ``cursor`` class
  
         Read data *from* the file-like object `file` appending them to
         the table named `table`.  `file` must have both
-        :meth:`!read` and :meth:`!readline` method.  See :ref:`copy` for an
+        `!read()` and `!readline()` method.  See :ref:`copy` for an
         overview.
 
         The optional argument `sep` is the columns separator and
@@ -467,7 +467,7 @@ The ``cursor`` class
     .. method:: copy_to(file, table, sep='\\t', null='\\N', columns=None)
 
         Write the content of the table named `table` *to* the file-like
-        object `file`.  `file` must have a :meth:`!write` method.
+        object `file`.  `file` must have a `!write()` method.
         See :ref:`copy` for an overview.
 
         The optional argument `sep` is the columns separator and

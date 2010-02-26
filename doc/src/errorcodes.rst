@@ -1,4 +1,4 @@
-:mod:`psycopg2.errorcodes` -- Error codes defined by PostgreSQL
+`psycopg2.errorcodes` -- Error codes defined by PostgreSQL
 ===============================================================
 
 .. sectionauthor:: Daniele Varrazzo <daniele.varrazzo@gmail.com>
@@ -15,8 +15,8 @@
 .. versionadded:: 2.0.6
 
 This module contains symbolic names for all PostgreSQL error codes and error
-classes codes.  Subclasses of :exc:`~psycopg2.Error` make the PostgreSQL error
-code available in the :attr:`~psycopg2.Error.pgcode` attribute.
+classes codes.  Subclasses of `~psycopg2.Error` make the PostgreSQL error
+code available in the `~psycopg2.Error.pgcode` attribute.
 
 From PostgreSQL documentation:
 

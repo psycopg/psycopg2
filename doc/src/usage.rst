@@ -41,25 +41,25 @@ basic commands::
 
 The main entry point of Psycopg are:
 
-- The function :func:`~psycopg2.connect` creates a new database session and
-  returns a new :class:`connection` instance.
+- The function `~psycopg2.connect()` creates a new database session and
+  returns a new `connection` instance.
 
-- The class :class:`connection` encapsulates a database session. It allows to:
+- The class `connection` encapsulates a database session. It allows to:
 
-  - create new :class:`cursor`\s using the :meth:`~connection.cursor` method to
+  - create new `cursor`\s using the `~connection.cursor()` method to
     execute database commands and queries,
 
-  - terminate the session using the methods :meth:`~connection.commit` or
-    :meth:`~connection.rollback`.
+  - terminate the session using the methods `~connection.commit()` or
+    `~connection.rollback()`.
 
-- The class :class:`cursor` allows interaction with the database:
+- The class `cursor` allows interaction with the database:
 
-  - send commands to the database using methods such as :meth:`~cursor.execute`
-    and :meth:`~cursor.executemany`,
+  - send commands to the database using methods such as `~cursor.execute()`
+    and `~cursor.executemany()`,
 
   - retrieve data from the database using methods such as
-    :meth:`~cursor.fetchone`, :meth:`~cursor.fetchmany`,
-    :meth:`~cursor.fetchall`.
+    `~cursor.fetchone()`, `~cursor.fetchmany()`,
+    `~cursor.fetchall()`.
 
 
 
@@ -101,7 +101,7 @@ While the mechanism resembles regular Python strings manipulation, there are a
 few subtle differences you should care about when passing parameters to a
 query:
 
-- The Python string operator ``%`` is not used: the :meth:`~cursor.execute`
+- The Python string operator ``%`` is not used: the `~cursor.execute()`
   method accepts a tuple or dictionary of values as second parameter.
   |sql-warn|__.
 
@@ -127,7 +127,7 @@ query:
 
 - Only variable values should be bound via this method: it shouldn't be used
   to set table or field names. For these elements, ordinary string formatting
-  should be used before running :meth:`~cursor.execute`.
+  should be used before running `~cursor.execute()`.
 
 
 
@@ -177,7 +177,7 @@ reliable. It is really the case to stress this point:
     string.  Not even at gunpoint.
 
 The correct way to pass variables in a SQL command is using the second
-argument of the :meth:`~cursor.execute` method::
+argument of the `~cursor.execute()` method::
 
     >>> SQL = "INSERT INTO authors (name) VALUES (%s);" # Notice: no quotes
     >>> data = ("O'Reilly", )
@@ -199,10 +199,10 @@ objects when a query is executed.
 
 If you need to convert other Python types to and from PostgreSQL data types,
 see :ref:`adapting-new-types` and :ref:`type-casting-from-sql-to-python`.  You
-can also find a few other specialized adapters in the :mod:`psycopg2.extras`
+can also find a few other specialized adapters in the `psycopg2.extras`
 module.
 
-In the following examples the method :meth:`~cursor.mogrify` is used to show
+In the following examples the method `~cursor.mogrify()` is used to show
 the SQL string that would be sent to the database.
 
 .. index::
@@ -221,8 +221,8 @@ the SQL string that would be sent to the database.
     single: Float; Adaptation
     single: Decimal; Adaptation
 
-- Numeric objects: :class:`!int`, :class:`!long`, :class:`!float`,
-  :class:`!Decimal` are converted in the PostgreSQL numerical representation::
+- Numeric objects: `!int`, `!long`, `!float`,
+  `!Decimal` are converted in the PostgreSQL numerical representation::
 
     >>> cur.mogrify("SELECT %s, %s, %s, %s;", (10, 10L, 10.0, Decimal("10.00")))
     >>> 'SELECT 10, 10, 10.0, 10.00;'
@@ -234,10 +234,10 @@ the SQL string that would be sent to the database.
     single: bytea; Adaptation
     single: Binary string
 
-- String types: :class:`!str`, :class:`!unicode` are converted in SQL string
-  syntax.  :class:`!buffer` is converted in PostgreSQL binary string syntax,
+- String types: `!str`, `!unicode` are converted in SQL string
+  syntax.  `!buffer` is converted in PostgreSQL binary string syntax,
   suitable for :sql:`bytea` fields. When reading textual fields, either
-  :class:`!str` or :class:`!unicode` can be received: see
+  `!str` or `!unicode` can be received: see
   :ref:`unicode-handling`.
 
 .. index::
@@ -246,8 +246,8 @@ the SQL string that would be sent to the database.
     single: Interval objects; Adaptation
     single: mx.DateTime; Adaptation
 
-- Date and time objects: builtin :class:`!datetime`, :class:`!date`,
-  :class:`!time`.  :class:`!timedelta` are converted into PostgreSQL's
+- Date and time objects: builtin `!datetime`, `!date`,
+  `!time`.  `!timedelta` are converted into PostgreSQL's
   :sql:`timestamp`, :sql:`date`, :sql:`time`, :sql:`interval` data types.
   Time zones are supported too.  The Egenix `mx.DateTime`_ objects are adapted
   the same way::
@@ -289,7 +289,7 @@ the SQL string that would be sent to the database.
   .. note::
 
     The IN adapter is automatically registered when the
-    :mod:`~psycopg2.extensions` module is imported.  This behaviour may change
+    `~psycopg2.extensions` module is imported.  This behaviour may change
     in the future and the adapter will probably be always active.
 
   .. versionadded:: 2.0.6
@@ -305,10 +305,10 @@ Unicode handling
 ^^^^^^^^^^^^^^^^
 
 Psycopg can exchange Unicode data with a PostgreSQL database.  Python
-:class:`!unicode` objects are automatically *encoded* in the client encoding
+`!unicode` objects are automatically *encoded* in the client encoding
 defined on the database connection (the `PostgreSQL encoding`__, available in
-:attr:`connection.encoding`, is translated into a `Python codec`__ using an
-:data:`~psycopg2.extensions.encodings` mapping)::
+`connection.encoding`, is translated into a `Python codec`__ using an
+`~psycopg2.extensions.encodings` mapping)::
 
     >>> print u, type(u)
     àèìòù€ <type 'unicode'>
@@ -319,7 +319,7 @@ defined on the database connection (the `PostgreSQL encoding`__, available in
 .. __: http://docs.python.org/library/codecs.html#standard-encodings
 
 When reading data from the database, the strings returned are usually 8 bit
-:class:`!str` objects encoded in the database client encoding::
+`!str` objects encoded in the database client encoding::
 
     >>> print conn.encoding
     UTF8
@@ -336,7 +336,7 @@ When reading data from the database, the strings returned are usually 8 bit
     >>> print type(x), repr(x)
     <type 'str'> '\xe0\xe8\xec\xf2\xf9\xa4'
 
-In order to obtain :class:`!unicode` objects instead, it is possible to
+In order to obtain `!unicode` objects instead, it is possible to
 register a typecaster so that PostgreSQL textual types are automatically
 *decoded* using the current client encoding::
 
@@ -347,10 +347,10 @@ register a typecaster so that PostgreSQL textual types are automatically
     >>> print x, type(x), repr(x)
     àèìòù€ <type 'unicode'> u'\xe0\xe8\xec\xf2\xf9\u20ac'
 
-In the above example, the :data:`~psycopg2.extensions.UNICODE` typecaster is
+In the above example, the `~psycopg2.extensions.UNICODE` typecaster is
 registered only on the cursor. It is also possible to register typecasters on
 the connection or globally: see the function
-:func:`~psycopg2.extensions.register_type` and
+`~psycopg2.extensions.register_type()` and
 :ref:`type-casting-from-sql-to-python` for details.
 
 .. note::
@@ -375,28 +375,28 @@ the connection or globally: see the function
 Transactions control
 --------------------
 
-In Psycopg transactions are handled by the :class:`connection` class. By
+In Psycopg transactions are handled by the `connection` class. By
 default, the first time a command is sent to the database (using one of the
-:class:`cursor`\ s created by the connection), a new transaction is created.
+`cursor`\ s created by the connection), a new transaction is created.
 The following database commands will be executed in the context of the same
 transaction -- not only the commands issued by the first cursor, but the ones
 issued by all the cursors created by the same connection.  Should any command
 fail, the transaction will be aborted and no further command will be executed
-until a call to the :meth:`connection.rollback` method.
+until a call to the `connection.rollback()` method.
 
 The connection is responsible to terminate its transaction, calling either the
-:meth:`~connection.commit` or :meth:`~connection.rollback` method.  Committed
+`~connection.commit()` or `~connection.rollback()` method.  Committed
 changes are immediately made persistent into the database.  Closing the
-connection using the :meth:`~connection.close` method or destroying the
-connection object (calling :meth:`!__del__` or letting it fall out of scope)
-will result in an implicit :meth:`!rollback` call.
+connection using the `~connection.close()` method or destroying the
+connection object (calling `!__del__()` or letting it fall out of scope)
+will result in an implicit `!rollback()` call.
 
 It is possible to set the connection in *autocommit* mode: this way all the
 commands executed will be immediately committed and no rollback is possible. A
 few commands (e.g. :sql:`CREATE DATABASE`, :sql:`VACUUM`...) require to be run
 outside any transaction: in order to be able to run these commands from
 Psycopg, the session must be in autocommit mode.  Read the documentation for
-:meth:`connection.set_isolation_level` to know how to change the commit mode.
+`connection.set_isolation_level()` to know how to change the commit mode.
 
 
 
@@ -412,7 +412,7 @@ Psycopg, the session must be in autocommit mode.  Read the documentation for
 Server side cursors
 -------------------
 
-When a database query is executed, the Psycopg :class:`cursor` usually fetches
+When a database query is executed, the Psycopg `cursor` usually fetches
 all the records returned by the backend, transferring them to the client
 process. If the query returned an huge amount of data, a proportionally large
 amount of memory will be allocated by the client.
@@ -426,11 +426,11 @@ Server side cursor are created in PostgreSQL using the |DECLARE|_ command and
 subsequently handled using :sql:`MOVE`, :sql:`FETCH` and :sql:`CLOSE` commands.
 
 Psycopg wraps the database server side cursor in *named cursors*. A named
-cursor is created using the :meth:`~connection.cursor` method specifying the
+cursor is created using the `~connection.cursor()` method specifying the
 `name` parameter. Such cursor will behave mostly like a regular cursor,
-allowing the user to move in the dataset using the :meth:`~cursor.scroll`
-methog and to read the data using :meth:`~cursor.fetchone` and
-:meth:`~cursor.fetchmany` methods.
+allowing the user to move in the dataset using the `~cursor.scroll()`
+methog and to read the data using `~cursor.fetchone()` and
+`~cursor.fetchmany()` methods.
 
 .. |DECLARE| replace:: :sql:`DECLARE`
 .. _DECLARE: http://www.postgresql.org/docs/8.4/static/sql-declare.html
@@ -445,9 +445,9 @@ Thread safety
 -------------
 
 The Psycopg module is *thread-safe*: threads can access the same database
-using separate session (by creating a :class:`connection` per thread) or using
+using separate session (by creating a `connection` per thread) or using
 the same session (accessing to the same connection and creating separate
-:class:`cursor`\ s). In |DBAPI|_ parlance, Psycopg is *level 2 thread safe*.
+`cursor`\ s). In |DBAPI|_ parlance, Psycopg is *level 2 thread safe*.
 
 
 
@@ -459,20 +459,20 @@ the same session (accessing to the same connection and creating separate
 Using COPY TO and COPY FROM
 ---------------------------
 
-Psycopg :class:`cursor` objects provide an interface to the efficient
+Psycopg `cursor` objects provide an interface to the efficient
 PostgreSQL |COPY|__ command to move data from files to tables and back.
 The methods exposed are:
 
-:meth:`~cursor.copy_from`
+`~cursor.copy_from()`
     Reads data *from* a file-like object appending them to a database table
     (:sql:`COPY table FROM file` syntax). The source file must have both
-    :meth:`!read` and :meth:`!readline` method.
+    `!read()` and `!readline()` method.
 
-:meth:`~cursor.copy_to`
+`~cursor.copy_to()`
     Writes the content of a table *to* a file-like object (:sql:`COPY table TO
-    file` syntax). The target file must have a :meth:`write` method.
+    file` syntax). The target file must have a `write()` method.
 
-:meth:`~cursor.copy_expert`
+`~cursor.copy_expert()`
     Allows to handle more specific cases and to use all the :sql:`COPY`
     features available in PostgreSQL.
 
@@ -500,13 +500,13 @@ whole.
 .. __: http://www.postgresql.org/docs/8.4/static/largeobjects.html
 
 Psycopg allows access to the large object using the
-:class:`~psycopg2.extensions.lobject` class. Objects are generated using the
-:meth:`connection.lobject` factory method.
+`~psycopg2.extensions.lobject` class. Objects are generated using the
+`connection.lobject()` factory method.
 
 Psycopg large object support efficient import/export with file system files
 using the |lo_import|_ and |lo_export|_ libpq functions.
 
-.. |lo_import| replace:: :func:`!lo_import`
+.. |lo_import| replace:: `!lo_import()`
 .. _lo_import: http://www.postgresql.org/docs/8.4/static/lo-interfaces.html#AEN36307
-.. |lo_export| replace:: :func:`!lo_export`
+.. |lo_export| replace:: `!lo_export()`
 .. _lo_export: http://www.postgresql.org/docs/8.4/static/lo-interfaces.html#AEN36330

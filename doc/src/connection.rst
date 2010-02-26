@@ -16,14 +16,14 @@ The ``connection`` class
     a database session.
 
     Connections are created using the factory function
-    :func:`~psycopg2.connect`.
+    `~psycopg2.connect()`.
 
     Connections are thread safe and can be shared among many thread. See
     :ref:`thread-safety` for details.
 
     .. method:: cursor([name] [, cursor_factory])
           
-        Return a new :class:`cursor` object using the connection.
+        Return a new `cursor` object using the connection.
 
         If `name` is specified, the returned cursor will be a *server
         side* (or *named*) cursor. Otherwise the cursor will be *client side*.
@@ -31,7 +31,7 @@ The ``connection`` class
 
         The `cursor_factory` argument can be used to create non-standard
         cursors. The class returned should be a subclass of
-        :class:`psycopg2.extensions.cursor`. See :ref:`subclassing-cursor` for
+        `psycopg2.extensions.cursor`. See :ref:`subclassing-cursor` for
         details.
 
         .. extension::
@@ -47,7 +47,7 @@ The ``connection`` class
           
         Commit any pending transaction to the database. Psycopg can be set to
         perform automatic commits at each operation, see
-        :meth:`~connection.set_isolation_level`.
+        `~connection.set_isolation_level()`.
         
 
     .. index::
@@ -62,14 +62,14 @@ The ``connection`` class
 
     .. method:: close()
               
-        Close the connection now (rather than whenever :meth:`__del__` is
+        Close the connection now (rather than whenever `__del__()` is
         called).  The connection will be unusable from this point forward; an
-        :exc:`~psycopg2.InterfaceError` will be raised if any operation is
+        `~psycopg2.InterfaceError` will be raised if any operation is
         attempted with the connection.  The same applies to all cursor objects
         trying to use the connection.  Note that closing a connection without
         committing the changes first will cause an implicit rollback to be
         performed (unless a different isolation level has been selected: see
-        :meth:`~connection.set_isolation_level`).
+        `~connection.set_isolation_level()`).
 
 
     .. index::
@@ -77,8 +77,8 @@ The ``connection`` class
 
     .. rubric:: Excetptions as connection class attributes
 
-    The :class:`!connection` also exposes as attributes the same exceptions
-    available in the :mod:`psycopg2` module.  See :ref:`dbapi-exceptions`.
+    The `!connection` also exposes as attributes the same exceptions
+    available in the `psycopg2` module.  See :ref:`dbapi-exceptions`.
 
 
     .. extension::
@@ -131,13 +131,13 @@ The ``connection`` class
         database between concurrent transactions.
 
         The value set or read is an integer: symbolic constants are defined in
-        the module :mod:`psycopg2.extensions`: see
+        the module `psycopg2.extensions`: see
         :ref:`isolation-level-constants` for the available values.
 
         The default level is :sql:`READ COMMITTED`: at this level a
         transaction is automatically started the first time a database command
         is executed.  If you want an *autocommit* mode, switch to
-        :const:`~psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT` before
+        `~psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT` before
         executing any command::
 
             >>> conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
@@ -240,7 +240,7 @@ The ``connection`` class
 
         Return the current session transaction status as an integer.  Symbolic
         constants for the values are defined in the module
-        :mod:`psycopg2.extensions`: see :ref:`transaction-status-constants`
+        `psycopg2.extensions`: see :ref:`transaction-status-constants`
         for the available values.
 
         .. seealso:: libpq docs for `PQtransactionStatus()`__ for details.
@@ -288,7 +288,7 @@ The ``connection`` class
 
         A read-only integer representing the status of the connection.
         Symbolic constants for the values are defined in the module 
-        :mod:`psycopg2.extensions`: see :ref:`connection-status-constants`
+        `psycopg2.extensions`: see :ref:`connection-status-constants`
         for the available values.
 
 
@@ -302,15 +302,15 @@ The ``connection`` class
         :param mode: Access mode to the object: can be ``r``, ``w``,
             ``rw`` or ``n`` (meaning don't open it).
         :param new_oid: Create a new object using the specified OID. The
-            function raises :exc:`OperationalError` if the OID is already in
+            function raises `OperationalError` if the OID is already in
             use. Default is 0, meaning assign a new one automatically.
         :param new_file: The name of a file to be imported in the the database
             (using the |lo_import|_ function)
         :param lobject_factory: Subclass of
-            :class:`~psycopg2.extensions.lobject` to be instantiated.
-        :rtype: :class:`~psycopg2.extensions.lobject`
+            `~psycopg2.extensions.lobject` to be instantiated.
+        :rtype: `~psycopg2.extensions.lobject`
 
-        .. |lo_import| replace:: :func:`!lo_import`
+        .. |lo_import| replace:: `!lo_import()`
         .. _lo_import: http://www.postgresql.org/docs/8.4/static/lo-interfaces.html#AEN36307
 
         .. versionadded:: 2.0.8

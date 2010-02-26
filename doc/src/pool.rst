@@ -18,7 +18,7 @@ directly into the client application.
 
     New *minconn* connections are created automatically. The pool will support
     a maximum of about *maxconn* connections.  *\*args* and *\*\*kwargs* are
-    passed to the :func:`~psycopg2.connect` function.
+    passed to the `~psycopg2.connect()` function.
 
     The following methods are expected to be implemented by subclasses:
 
@@ -38,7 +38,7 @@ directly into the client application.
         eventually in use by the application.
 
 
-The following classes are :class:`AbstractConnectionPool` subclasses ready to
+The following classes are `AbstractConnectionPool` subclasses ready to
 be used.
 
 .. autoclass:: SimpleConnectionPool

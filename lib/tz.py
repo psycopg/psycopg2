@@ -35,7 +35,7 @@ class FixedOffsetTimezone(datetime.tzinfo):
     """Fixed offset in minutes east from UTC.
 
     This is exactly the implementation__ found in Python 2.3.x documentation,
-    with a small change to the :meth:`!__init__` method to allow for pickling
+    with a small change to the `!__init__()` method to allow for pickling
     and a default name in the form ``sHH:MM`` (``s`` is the sign.).
 
     .. __: http://docs.python.org/library/datetime.html#datetime-tzinfo

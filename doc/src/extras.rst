@@ -1,4 +1,4 @@
-:mod:`psycopg2.extras` -- Miscellaneous goodies for Psycopg 2
+`psycopg2.extras` -- Miscellaneous goodies for Psycopg 2
 =============================================================
 
 .. sectionauthor:: Daniele Varrazzo <daniele.varrazzo@gmail.com>
@@ -26,10 +26,10 @@ Dictionary-like cursor
 
 The dict cursors allow to access to the retrieved records using an iterface
 similar to the Python dictionaries instead of the tuples. You can use it
-either passing :class:`DictConnection` as `connection_factory` argument
-to the :func:`~psycopg2.connect` function or passing :class:`DictCursor` as
-the :class:`!cursor_factory` argument to the :meth:`~connection.cursor` method
-of a regular :class:`connection`.
+either passing `DictConnection` as `connection_factory` argument
+to the `~psycopg2.connect()` function or passing `DictCursor` as
+the `!cursor_factory` argument to the `~connection.cursor()` method
+of a regular `connection`.
 
     >>> dict_cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     >>> dict_cur.execute("INSERT INTO test (num, data) VALUES(%s, %s)",

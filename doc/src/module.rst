@@ -1,4 +1,4 @@
-The :mod:`psycopg2` module content
+The `psycopg2` module content
 ==================================
 
 .. sectionauthor:: Daniele Varrazzo <daniele.varrazzo@gmail.com>
@@ -18,7 +18,7 @@ The module interface respects the standard defined in the |DBAPI|_.
 
 .. function:: connect(dsn or params[, connection_factory])
 
-    Create a new database session and return a new :class:`connection` object.
+    Create a new database session and return a new `connection` object.
 
     You can specify the connection parameters either as a string::
 
@@ -53,19 +53,19 @@ The module interface respects the standard defined in the |DBAPI|_.
 
 .. data:: apilevel
 
-    String constant stating the supported DB API level.  For :mod:`psycopg2` is
+    String constant stating the supported DB API level.  For `psycopg2` is
     ``2.0``.
 
 .. data:: threadsafety
 
     Integer constant stating the level of thread safety the interface
-    supports.  For :mod:`psycopg2` is ``2``, i.e. threads can share the module
+    supports.  For `psycopg2` is ``2``, i.e. threads can share the module
     and the connection. See :ref:`thread-safety` for details.
 
 .. data:: paramstyle
 
     String constant stating the type of parameter marker formatting expected
-    by the interface.  For :mod:`psycopg2` is ``pyformat``.  See also
+    by the interface.  For `psycopg2` is ``pyformat``.  See also
     :ref:`query-parameters`.
 
 
@@ -101,12 +101,12 @@ available through the following exceptions:
     .. attribute:: pgcode
 
         String representing the error code returned by the backend, ``None``
-        if not available.  The :mod:`~psycopg2.errorcodes` module contains
+        if not available.  The `~psycopg2.errorcodes` module contains
         symbolic constants representing PostgreSQL error codes.
 
     .. extension::
 
-        The :attr:`~Error.pgerror` and :attr:`~Error.pgcode` attributes are
+        The `~Error.pgerror` and `~Error.pgcode` attributes are
         Psycopg extensions.
 
         .. doctest::
@@ -124,26 +124,26 @@ available through the following exceptions:
             LINE 1: SELECT * FROM barf
                                   ^
 
-    .. versionchanged:: 2.0.7 added :attr:`Error.pgerror` and
-        :attr:`Error.pgcode` attributes.
+    .. versionchanged:: 2.0.7 added `Error.pgerror` and
+        `Error.pgcode` attributes.
 
 
     
 .. exception:: InterfaceError
 
     Exception raised for errors that are related to the database interface
-    rather than the database itself.  It is a subclass of :exc:`Error`.
+    rather than the database itself.  It is a subclass of `Error`.
 
 .. exception:: DatabaseError
 
     Exception raised for errors that are related to the database.  It is a
-    subclass of :exc:`Error`.
+    subclass of `Error`.
     
 .. exception:: DataError
   
     Exception raised for errors that are due to problems with the processed
     data like division by zero, numeric value out of range, etc. It is a
-    subclass of :exc:`DatabaseError`.
+    subclass of `DatabaseError`.
     
 .. exception:: OperationalError
   
@@ -151,41 +151,41 @@ available through the following exceptions:
     and not necessarily under the control of the programmer, e.g. an
     unexpected disconnect occurs, the data source name is not found, a
     transaction could not be processed, a memory allocation error occurred
-    during processing, etc.  It is a subclass of :exc:`DatabaseError`.
+    during processing, etc.  It is a subclass of `DatabaseError`.
     
 .. exception:: IntegrityError             
   
     Exception raised when the relational integrity of the database is
     affected, e.g. a foreign key check fails.  It is a subclass of
-    :exc:`DatabaseError`.
+    `DatabaseError`.
     
 .. exception:: InternalError 
               
     Exception raised when the database encounters an internal error, e.g. the
     cursor is not valid anymore, the transaction is out of sync, etc.  It is a
-    subclass of :exc:`DatabaseError`.
+    subclass of `DatabaseError`.
     
 .. exception:: ProgrammingError
   
     Exception raised for programming errors, e.g. table not found or already
     exists, syntax error in the SQL statement, wrong number of parameters
-    specified, etc.  It is a subclass of :exc:`DatabaseError`.
+    specified, etc.  It is a subclass of `DatabaseError`.
     
 .. exception:: NotSupportedError
   
     Exception raised in case a method or database API was used which is not
-    supported by the database, e.g. requesting a :meth:`!rollback` on a
+    supported by the database, e.g. requesting a `!rollback()` on a
     connection that does not support transaction or has transactions turned
-    off.  It is a subclass of :exc:`DatabaseError`.
+    off.  It is a subclass of `DatabaseError`.
 
 
 .. extension::
 
     Psycopg may raise a few other, more specialized, exceptions: currently
-    :exc:`~psycopg2.extensions.QueryCanceledError` and
-    :exc:`~psycopg2.extensions.TransactionRollbackError` are defined. These
-    exceptions are not exposed by the main :mod:`!psycopg2` module but are
-    made available by the :mod:`~psycopg2.extensions` module.  All the
+    `~psycopg2.extensions.QueryCanceledError` and
+    `~psycopg2.extensions.TransactionRollbackError` are defined. These
+    exceptions are not exposed by the main `!psycopg2` module but are
+    made available by the `~psycopg2.extensions` module.  All the
     additional exceptions are subclasses of standard |DBAPI| exceptions, so
     trapping them specifically is not required.
 
@@ -195,21 +195,21 @@ This is the exception inheritance layout:
 .. parsed-literal::
 
     |StandardError|
-    \|__ :exc:`Warning`
-    \|__ :exc:`Error`
-        \|__ :exc:`InterfaceError`
-        \|__ :exc:`DatabaseError`
-            \|__ :exc:`DataError`
-            \|__ :exc:`OperationalError`
-            \|   \|__ :exc:`psycopg2.extensions.QueryCanceledError`
-            \|   \|__ :exc:`psycopg2.extensions.TransactionRollbackError`
-            \|__ :exc:`IntegrityError`
-            \|__ :exc:`InternalError`
-            \|__ :exc:`ProgrammingError`
-            \|__ :exc:`NotSupportedError`
+    \|__ `Warning`
+    \|__ `Error`
+        \|__ `InterfaceError`
+        \|__ `DatabaseError`
+            \|__ `DataError`
+            \|__ `OperationalError`
+            \|   \|__ `psycopg2.extensions.QueryCanceledError`
+            \|   \|__ `psycopg2.extensions.TransactionRollbackError`
+            \|__ `IntegrityError`
+            \|__ `InternalError`
+            \|__ `ProgrammingError`
+            \|__ `NotSupportedError`
 
 
-.. |StandardError| replace:: :exc:`!StandardError`
+.. |StandardError| replace:: `!StandardError`
 .. _StandardError: http://docs.python.org/library/exceptions.html#exceptions.StandardError
 
 
