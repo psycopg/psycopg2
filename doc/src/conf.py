@@ -96,7 +96,7 @@ pygments_style = 'sphinx'
 #modindex_common_prefix = []
 
 # Include TODO items in the documentation
-todo_include_todos = True
+todo_include_todos = False
 
 rst_epilog = """
 .. |DBAPI| replace:: DB API 2.0
