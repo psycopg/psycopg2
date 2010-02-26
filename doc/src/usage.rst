@@ -286,15 +286,13 @@ the SQL string that would be sent to the database.
     SQL doesn't allow an empty list in the IN operator, so your code should
     guard against empty tuples.
 
-  .. note::
-
-    The IN adapter is automatically registered when the
-    `~psycopg2.extensions` module is imported.  This behaviour may change
-    in the future and the adapter will probably be always active.
-
   .. versionadded:: 2.0.6
-    the tuple :sql:`IN` adaptation.
+     the tuple :sql:`IN` adaptation.
 
+  .. versionchanged:: 2.0.14
+     the tuple :sql:`IN` adapter is always active.  In previous releases it
+     was necessary to import the `~psycopg2.extensions` module to have it
+     registered.
 
 .. index::
     single: Unicode

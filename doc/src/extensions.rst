@@ -182,7 +182,7 @@ deal with Python objects adaptation:
             >>> Binary("\x00\x08\x0F").getquoted()
             "'\\\\000\\\\010\\\\017'"
 
-    .. versionchanged:: 2.0.14(ish)
+    .. versionchanged:: 2.0.14
         previously the adapter was not exposed by the `extensions`
         module. In older version it can be imported from the implementation
         module `!psycopg2._psycopg`.
