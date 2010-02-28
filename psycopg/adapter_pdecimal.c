@@ -42,14 +42,29 @@
 static PyObject *
 pdecimal_str(pdecimalObject *self)
 {
-    PyObject *res = NULL;
-    PyObject *check = PyObject_CallMethod(self->wrapped, "is_finite", NULL);
-
+    PyObject *check, *res = NULL;
+#if PY_VERSION_HEX < 0x02050000
+    check = PyObject_CallMethod(self->wrapped, "_isnan", NULL);
+    if (PyInt_AsLong(check) == 1) {
+        res = PyString_FromString("'NaN'::numeric");
+        goto end;
+    }
+    Py_DECREF(check);
+    check = PyObject_CallMethod(self->wrapped, "_isinfinity", NULL);
+    if (abs(PyInt_AsLong(check)) == 1) {
+        res = PyString_FromString("'NaN'::numeric");
+        goto end;
+    }
+    res = PyObject_Str(self->wrapped);
+#else
+    check = PyObject_CallMethod(self->wrapped, "is_finite", NULL);
     if (check == Py_True)
         res = PyObject_Str(self->wrapped);
     else
         res = PyString_FromString("'NaN'::numeric");
+#endif
 
+   end:
     Py_DECREF(check);
     return res;
 }

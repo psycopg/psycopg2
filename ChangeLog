@@ -1,3 +1,10 @@
+2010-02-28  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/adapt_decimal.c: Python 2.4 decimal type does not support
+	.isfinite() and two different calls to ._isinfinity() and ._isnan() are
+	required. This fixes both a test failure and a segfault.
+
+
 2010-02-15  Federico Di Gregorio  <fog@initd.org>
 
 	* Added new Decimal adapter that correctly converts NaN and infinity
