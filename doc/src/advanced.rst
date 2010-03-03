@@ -149,7 +149,7 @@ column of the `cursor.description`:
     >>> point_oid
     600
 
-or by querying the system catalogs for the type name and namespace (the
+or by querying the system catalog for the type name and namespace (the
 namespace for system objects is :sql:`pg_catalog`):
 
     >>> cur.execute("""
@@ -163,7 +163,7 @@ namespace for system objects is :sql:`pg_catalog`):
     >>> point_oid
     600
 
-After you know the object OID, you must can and register the new type:
+After you know the object OID, you can create and register the new type:
 
     >>> POINT = psycopg2.extensions.new_type((point_oid,), "POINT", cast_point)
     >>> psycopg2.extensions.register_type(POINT)

@@ -57,8 +57,8 @@ The main entry point of Psycopg are:
   - send commands to the database using methods such as `~cursor.execute()`
     and `~cursor.executemany()`,
 
-  - retrieve data from the database using methods such as
-    `~cursor.fetchone()`, `~cursor.fetchmany()`,
+  - retrieve data from the database :ref:`by iteration <cursor-iterable>` or
+    using methods such as `~cursor.fetchone()`, `~cursor.fetchmany()`,
     `~cursor.fetchall()`.
 
 
@@ -305,7 +305,7 @@ Unicode handling
 Psycopg can exchange Unicode data with a PostgreSQL database.  Python
 `!unicode` objects are automatically *encoded* in the client encoding
 defined on the database connection (the `PostgreSQL encoding`__, available in
-`connection.encoding`, is translated into a `Python codec`__ using an
+`connection.encoding`, is translated into a `Python codec`__ using the
 `~psycopg2.extensions.encodings` mapping)::
 
     >>> print u, type(u)
@@ -427,7 +427,7 @@ Psycopg wraps the database server side cursor in *named cursors*. A named
 cursor is created using the `~connection.cursor()` method specifying the
 `name` parameter. Such cursor will behave mostly like a regular cursor,
 allowing the user to move in the dataset using the `~cursor.scroll()`
-methog and to read the data using `~cursor.fetchone()` and
+method and to read the data using `~cursor.fetchone()` and
 `~cursor.fetchmany()` methods.
 
 .. |DECLARE| replace:: :sql:`DECLARE`
@@ -443,7 +443,7 @@ Thread safety
 -------------
 
 The Psycopg module is *thread-safe*: threads can access the same database
-using separate session (by creating a `connection` per thread) or using
+using separate sessions (by creating a `connection` per thread) or using
 the same session (accessing to the same connection and creating separate
 `cursor`\ s). In |DBAPI|_ parlance, Psycopg is *level 2 thread safe*.
 

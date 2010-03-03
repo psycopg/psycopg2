@@ -198,6 +198,8 @@ The ``cursor`` class
     The following methods are used to read data from the database after an
     `~cursor.execute()` call.
 
+    .. _cursor-iterable:
+
     .. note::
 
         `cursor` objects are iterable, so, instead of calling
