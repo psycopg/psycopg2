@@ -1,3 +1,8 @@
+2010-03-11  Federico Di Gregorio  <fog@initd.org>
+
+	* setup.py: one-liner from Devrim GÜNDÜZ to build with PostgreSQL
+	alpha.
+
 2010-02-28  Federico Di Gregorio  <fog@initd.org>
 
 	* psycopg/adapt_decimal.c: Python 2.4 decimal type does not support
