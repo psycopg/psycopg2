@@ -104,7 +104,7 @@ deal with Python objects adaptation:
 
 .. function:: adapt(obj)
 
-    Return the SQL representation of `obj` as a string.  Raise a
+    Return the SQL representation of *obj* as a string.  Raise a
     `~psycopg2.ProgrammingError` if how to adapt the object is unknown.
     In order to allow new objects to be adapted, register a new adapter for it
     using the `register_adapter()` function.
@@ -115,9 +115,9 @@ deal with Python objects adaptation:
 
 .. function:: register_adapter(class, adapter)
 
-    Register a new adapter for the objects of class `class`.
+    Register a new adapter for the objects of class *class*.
 
-    `adapter` should be a function taking a single argument (the object
+    *adapter* should be a function taking a single argument (the object
     to adapt) and returning an object conforming the `ISQLQuote`
     protocol (e.g. exposing a `!getquoted()` method).  The `AsIs` is
     often useful for this task.
@@ -236,19 +236,20 @@ details.
     The object OID can be read from the `cursor.description` attribute
     or by querying from the PostgreSQL catalog.
 
-    `adapter` should have signature :samp:`fun({value}, {cur})` where
-    :samp:`{value}` is the string representation returned by PostgreSQL and
-    :samp:`{cur}` is the cursor from which data are read. In case of
-    :sql:`NULL`, :samp:`{value}` is ``None``. The adapter should return the
+    *adapter* should have signature :samp:`fun({value}, {cur})` where
+    *value* is the string representation returned by PostgreSQL and
+    *cur* is the cursor from which data are read. In case of
+    :sql:`NULL`, *value* will be ``None``. The adapter should return the
     converted object.
 
     See :ref:`type-casting-from-sql-to-python` for an usage example.
+
 
 .. function:: register_type(obj [, scope])
 
     Register a type caster created using `new_type()`.
 
-    If `scope` is specified, it should be a `connection` or a
+    If *scope* is specified, it should be a `connection` or a
     `cursor`: the type caster will be effective only limited to the
     specified object.  Otherwise it will be globally registered.
 
@@ -330,9 +331,9 @@ set to one of the following constants:
 
 .. data:: ISOLATION_LEVEL_READ_UNCOMMITTED
 
-    The :sql:`READ UNCOMMITTED` isolation level is defined in the SQL standard but not available in
-    the |MVCC| model of PostgreSQL: it is replaced by the stricter :sql:`READ
-    COMMITTED`.
+    The :sql:`READ UNCOMMITTED` isolation level is defined in the SQL standard
+    but not available in the |MVCC| model of PostgreSQL: it is replaced by the
+    stricter :sql:`READ COMMITTED`.
 
 .. data:: ISOLATION_LEVEL_READ_COMMITTED
 
