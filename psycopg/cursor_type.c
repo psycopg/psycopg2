@@ -442,13 +442,29 @@ _psyco_curs_execute(cursorObject *self,
 static PyObject *
 psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
-    long int async = 0;
+    long int async;
     PyObject *vars = NULL, *operation = NULL;
 
     static char *kwlist[] = {"query", "vars", "async", NULL};
 
+    async = self->conn->async;
+
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|Ol", kwlist,
                                      &operation, &vars, &async)) {
+        return NULL;
+    }
+
+    if (async != self->conn->async) {
+        if (async == 0)
+            psyco_set_error(ProgrammingError, (PyObject*)self,
+                            "can't execute a synchronous query "
+                            "from an asynchronous cursor",
+                            NULL, NULL);
+        else
+            psyco_set_error(ProgrammingError, (PyObject*)self,
+                            "can't execute an asynchronous query "
+                            "from a synchronous cursor",
+                            NULL, NULL);
         return NULL;
     }
 
@@ -507,6 +523,12 @@ psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
     if (self->name != NULL) {
         psyco_set_error(ProgrammingError, (PyObject*)self,
                 "can't call .executemany() on named cursors", NULL, NULL);
+        return NULL;
+    }
+
+    if (self->conn->async == 1) {
+        psyco_set_error(ProgrammingError, (PyObject*)self,
+                "can't call .executemany() on async cursors", NULL, NULL);
         return NULL;
     }
 
@@ -943,16 +965,33 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
     const char *procname = NULL;
     char *sql = NULL;
-    long int async = 0;
+    long int async;
     Py_ssize_t procname_len, i, nparameters = 0, sl = 0;
     PyObject *parameters = Py_None;
     PyObject *operation = NULL;
     PyObject *res = NULL;
 
+    async = self->conn->async;
+
     if (!PyArg_ParseTuple(args, "s#|Ol",
           &procname, &procname_len, &parameters, &async
        ))
     { return NULL; }
+
+    if (async != self->conn->async) {
+        if (async == 0)
+            psyco_set_error(ProgrammingError, (PyObject*)self,
+                            "can't do a synchronous function call "
+                            "from an asynchronous cursor",
+                            NULL, NULL);
+        else
+            psyco_set_error(ProgrammingError, (PyObject*)self,
+                            "can't do an asynchronous function call "
+                            "from a synchronous cursor",
+                            NULL, NULL);
+        return NULL;
+    }
+
 
     EXC_IF_CURS_CLOSED(self);
 
