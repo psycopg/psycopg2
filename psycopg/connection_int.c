@@ -413,8 +413,6 @@ conn_set_client_encoding(connectionObject *self, const char *enc)
        issue any query to the backend */
     if (strcmp(self->encoding, enc) == 0) return 0;
 
-    /* TODO: check for async query here and raise error if necessary */
-
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
 

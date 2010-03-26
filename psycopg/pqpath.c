@@ -680,6 +680,10 @@ pq_execute(cursorObject *curs, const char *query, int async)
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(curs->conn->lock));
 
+    /* FIXME: we should first try to cancel the query, otherwise we will block
+       until it completes AND until we get the result back */
+    pq_clear_async(curs->conn);
+
     if (pq_begin_locked(curs->conn, &pgres, &error) < 0) {
         pthread_mutex_unlock(&(curs->conn->lock));
         Py_BLOCK_THREADS;
@@ -704,15 +708,9 @@ pq_execute(cursorObject *curs, const char *query, int async)
     }
 
     else if (async == 1) {
-        /* first of all, let see if the previous query has already ended, if
-           not what should we do? just block and discard data or execute
-           another query? */
-        pq_clear_async(curs->conn);
-
         Dprintf("pq_execute: executing ASYNC query:");
         Dprintf("    %-.200s", query);
 
-        /* then we can go on and send a new query without fear */
         IFCLEARPGRES(curs->pgres);
         if (PQsendQuery(curs->conn->pgconn, query) == 0) {
             pthread_mutex_unlock(&(curs->conn->lock));
@@ -1128,50 +1126,6 @@ pq_fetch(cursorObject *curs)
 
     /* even if we fail, we remove any information about the previous query */
     curs_reset(curs);
-
-    /* we check the result from the previous execute; if the result is not
-       already there, we need to consume some input and go to sleep until we
-       get something edible to eat */
-    if (!curs->pgres) {
-
-        Dprintf("pq_fetch: no data: entering polling loop");
-
-        while (pq_is_busy(curs->conn) > 0) {
-            fd_set rfds;
-            struct timeval tv;
-            int sval, sock;
-
-            Py_BEGIN_ALLOW_THREADS;
-            pthread_mutex_lock(&(curs->conn->lock));
-
-            sock = PQsocket(curs->conn->pgconn);
-            FD_ZERO(&rfds);
-            FD_SET(sock, &rfds);
-
-            /* set a default timeout of 5 seconds
-               TODO: make use of the timeout, maybe allowing the user to
-               make a non-blocking (timeouted) call to fetchXXX */
-            tv.tv_sec = 5;
-            tv.tv_usec = 0;
-
-            Dprintf("pq_fetch: entering PDflush() loop");
-            while (PQflush(curs->conn->pgconn) != 0);
-            sval = select(sock+1, &rfds, NULL, NULL, &tv);
-
-            pthread_mutex_unlock(&(curs->conn->lock));
-            Py_END_ALLOW_THREADS;
-        }
-
-        Py_BEGIN_ALLOW_THREADS;
-        pthread_mutex_lock(&(curs->conn->lock));
-
-        Dprintf("pq_fetch: data is probably ready");
-        IFCLEARPGRES(curs->pgres);
-        curs->pgres = PQgetResult(curs->conn->pgconn);
-
-        pthread_mutex_unlock(&(curs->conn->lock));
-        Py_END_ALLOW_THREADS;
-    }
 
     /* check for PGRES_FATAL_ERROR result */
     /* FIXME: I am not sure we need to check for critical error here.

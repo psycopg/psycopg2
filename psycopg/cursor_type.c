@@ -67,6 +67,7 @@ psyco_curs_close(cursorObject *self, PyObject *args)
     }
 
     self->closed = 1;
+    pq_clear_async(self->conn);
     Dprintf("psyco_curs_close: cursor at %p closed", self);
 
     Py_INCREF(Py_None);
@@ -312,19 +313,6 @@ _psyco_curs_execute(cursorObject *self,
 {
     int res = 0;
     PyObject *fquery, *cvt = NULL;
-
-    Py_BEGIN_ALLOW_THREADS;
-    pthread_mutex_lock(&(self->conn->lock));
-    if (self->conn->async_cursor != NULL
-        && self->conn->async_cursor != (PyObject*)self) {
-        pthread_mutex_unlock(&(self->conn->lock));
-        Py_BLOCK_THREADS;
-        psyco_set_error(ProgrammingError, (PyObject*)self,
-                         "asynchronous query already in execution", NULL, NULL);
-        return 0;
-    }
-    pthread_mutex_unlock(&(self->conn->lock));
-    Py_END_ALLOW_THREADS;
 
     operation = _psyco_curs_validate_sql_basic(self, operation);
 
@@ -1083,6 +1071,10 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
         return NULL;
 
     EXC_IF_CURS_CLOSED(self);
+
+    if (self->conn->async == 1) {
+        if (_psyco_curs_prefetch(self) < 0) return NULL;
+    }
 
     /* if the cursor is not named we have the full result set and we can do
        our own calculations to scroll; else we just delegate the scrolling
