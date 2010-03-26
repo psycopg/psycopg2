@@ -283,19 +283,25 @@ pq_resolve_critical(connectionObject *conn, int close)
    note that this function does block because it needs to wait for the full
    result sets of the previous query to clear them.
 
-
    this function does not call any Py_*_ALLOW_THREADS macros */
 
-static void
+void
 pq_clear_async(connectionObject *conn)
 {
     PGresult *pgres;
 
-    do {
+    /* this will get all pending results (if the submitted query consisted of
+       many parts, i.e. "select 1; select 2", there will be many) and also
+       finalize asynchronous processing so the connection will be ready to
+       accept another query */
+    for (;;) {
         pgres = PQgetResult(conn->pgconn);
         Dprintf("pq_clear_async: clearing PGresult at %p", pgres);
-        IFCLEARPGRES(pgres);
-    } while (pgres != NULL);
+        if (pgres == NULL)
+            break;
+        CLEARPGRES(pgres);
+    }
+    conn->async_cursor = NULL;
 }
 
 /* pg_execute_command_locked - execute a no-result query on a locked connection.
