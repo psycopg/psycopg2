@@ -612,20 +612,46 @@ pq_is_busy(connectionObject *conn)
         PyTuple_SET_ITEM(notify, 1, PyString_FromString(pgn->relname));
         PyList_Append(conn->notifies, notify);
         Py_UNBLOCK_THREADS;
-        free(pgn);
+        PQfreemem(pgn);
     }
 
     res = PQisBusy(conn->pgconn);
-    
+
     pthread_mutex_unlock(&(conn->lock));
     Py_END_ALLOW_THREADS;
-    
+
     conn_notice_process(conn);
 
     return res;
 }
 
-/* pq_execute - execute a query, possibly asyncronously
+
+/* pq_flush - flush output and return connection status
+
+   a status of 1 means that a some data is still pending to be flushed, while a
+   status of 0 means that there is no data waiting to be sent. -1 means an
+   error and an exception will be set accordingly.
+
+   this function locks the connection object
+   this function call Py_*_ALLOW_THREADS macros */
+
+int
+pq_flush(connectionObject *conn)
+{
+    int res;
+
+    Dprintf("pq_flush: flushing output");
+
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&(conn->lock));
+    res = PQflush(conn->pgconn);
+    pthread_mutex_unlock(&(conn->lock));
+    Py_END_ALLOW_THREADS;
+
+    return res;
+}
+
+/* pq_execute - execute a query, possibly asynchronously
 
    this fucntion locks the connection object
    this function call Py_*_ALLOW_THREADS macros */
