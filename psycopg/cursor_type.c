@@ -656,20 +656,19 @@ _psyco_curs_prefetch(cursorObject *self)
 {
     int i = 0;
 
-    /* check if the fetching cursor is the one that did the asynchronous query
-       and raise an exception if not */
-    Py_BEGIN_ALLOW_THREADS;
-    pthread_mutex_lock(&(self->conn->lock));
-    if (self->conn->async_cursor != NULL
-        && self->conn->async_cursor != (PyObject*)self) {
-        pthread_mutex_unlock(&(self->conn->lock));
-        Py_BLOCK_THREADS;
-        psyco_set_error(ProgrammingError, (PyObject*)self,
-                         "asynchronous fetch by wrong cursor", NULL, NULL);
-        return -2;
+    /* check if there is an asynchronous query in progess and block until data
+       is read from it */
+    if (self->conn->async_cursor) {
+        /* first check if it's the right cursor */
+        if (self->conn->async_cursor != (PyObject*)self) {
+            psyco_set_error(ProgrammingError, (PyObject*)self,
+                            "asynchronous fetch by wrong cursor", NULL, NULL);
+            return -2;
+        }
+        /* now get the result */
+        Dprintf("_psyco_curs_prefetch: blocking until all data is read");
+        curs_get_last_result(self);
     }
-    pthread_mutex_unlock(&(self->conn->lock));
-    Py_END_ALLOW_THREADS;
 
     if (self->pgres == NULL || self->needsfetch) {
         self->needsfetch = 0;

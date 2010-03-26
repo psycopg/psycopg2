@@ -54,3 +54,28 @@ curs_reset(cursorObject *self)
     self->casts = NULL;
     Py_XDECREF(tmp);
 }
+
+/*
+ * curs_get_last_result
+ *
+ * read all results from the connection, save the last one
+ */
+
+void
+curs_get_last_result(cursorObject *self) {
+    PGresult *pgres;
+
+    IFCLEARPGRES(self->pgres);
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&(self->conn->lock));
+    /* read all results: there can be multiple if the client sent multiple
+       statements */
+    while ((pgres = PQgetResult(self->conn->pgconn)) != NULL) {
+        IFCLEARPGRES(self->pgres);
+        self->pgres = pgres;
+    }
+    self->conn->async_cursor = NULL;
+    pthread_mutex_unlock(&(self->conn->lock));
+    Py_END_ALLOW_THREADS;
+    self->needsfetch = 1;
+}

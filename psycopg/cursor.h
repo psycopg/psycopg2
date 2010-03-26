@@ -86,6 +86,7 @@ typedef struct {
 
 /* C-callable functions in cursor_int.c and cursor_ext.c */
 HIDDEN void curs_reset(cursorObject *self);
+HIDDEN void curs_get_last_result(cursorObject *self);
 
 /* exception-raising macros */
 #define EXC_IF_CURS_CLOSED(self) \
