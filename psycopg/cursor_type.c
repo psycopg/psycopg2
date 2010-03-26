@@ -1497,18 +1497,14 @@ psyco_curs_copy_expert(cursorObject *self, PyObject *args, PyObject *kwargs)
 "fileno() -> int -- Return file descriptor associated to database connection."
 
 static PyObject *
-psyco_curs_fileno(cursorObject *self, PyObject *args)
+psyco_curs_fileno(cursorObject *self)
 {
     long int socket;
 
-    if (!PyArg_ParseTuple(args, "")) return NULL;
     EXC_IF_CURS_CLOSED(self);
 
-    /* note how we call PQflush() to make sure the user will use
-       select() in the safe way! */
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
-    PQflush(self->conn->pgconn);
     socket = (long int)PQsocket(self->conn->pgconn);
     pthread_mutex_unlock(&(self->conn->lock));
     Py_END_ALLOW_THREADS;
@@ -1516,43 +1512,31 @@ psyco_curs_fileno(cursorObject *self, PyObject *args)
     return PyInt_FromLong(socket);
 }
 
-/* extension: isready - return true if data from async execute is ready */
+/* extension: poll - return true if data from async execute is ready */
 
-#define psyco_curs_isready_doc \
-"isready() -> bool -- Return True if data is ready after an async query."
+#define psyco_curs_poll_doc \
+"poll() -- return POLL_OK if the query has been fully processed, "       \
+ "POLL_READ if the query has been sent and the application should be "   \
+ "waiting for the result to arrive or POLL_WRITE is the query is still " \
+ "being sent."
 
 static PyObject *
-psyco_curs_isready(cursorObject *self, PyObject *args)
+psyco_curs_poll(cursorObject *self)
 {
-    int res;
-    
-    if (!PyArg_ParseTuple(args, "")) return NULL;
     EXC_IF_CURS_CLOSED(self);
 
-    /* pq_is_busy does its own locking, we don't need anything special but if
-       the cursor is ready we need to fetch the result and free the connection
-       for the next query. if -1 is returned we raise an exception. */
+    Dprintf("curs_poll: polling with status %d", self->conn->async_status);
 
-    res = pq_is_busy(self->conn);
-    
-    if (res == 1) {
-        Py_INCREF(Py_False);
-        return Py_False;
+    if (self->conn->async_status == ASYNC_WRITE) {
+        return curs_poll_send(self);
     }
-    else if (res == -1) {
-        return NULL;
+    else if (self->conn->async_status == ASYNC_READ) {
+        return curs_poll_fetch(self);
     }
     else {
-        IFCLEARPGRES(self->pgres);
-        Py_BEGIN_ALLOW_THREADS;
-        pthread_mutex_lock(&(self->conn->lock));
-        self->pgres = PQgetResult(self->conn->pgconn);
-        self->conn->async_cursor = NULL;
-        pthread_mutex_unlock(&(self->conn->lock));
-        Py_END_ALLOW_THREADS;
-        self->needsfetch = 1;
-        Py_INCREF(Py_True);
-        return Py_True;
+        PyErr_Format(OperationalError, "unexpected execution status: %d",
+                     self->conn->async_status);
+        return NULL;
     }
 }
 
@@ -1634,10 +1618,10 @@ static struct PyMethodDef cursorObject_methods[] = {
 #ifdef PSYCOPG_EXTENSIONS
     {"mogrify", (PyCFunction)psyco_curs_mogrify,
      METH_VARARGS|METH_KEYWORDS, psyco_curs_mogrify_doc},
+    {"poll", (PyCFunction)psyco_curs_poll,
+     METH_VARARGS, psyco_curs_poll_doc},
     {"fileno", (PyCFunction)psyco_curs_fileno,
-     METH_VARARGS, psyco_curs_fileno_doc},
-    {"isready", (PyCFunction)psyco_curs_isready,
-     METH_VARARGS, psyco_curs_isready_doc},
+     METH_NOARGS, psyco_curs_fileno_doc},
     {"copy_from", (PyCFunction)psyco_curs_copy_from,
      METH_VARARGS|METH_KEYWORDS, psyco_curs_copy_from_doc},
     {"copy_to", (PyCFunction)psyco_curs_copy_to,

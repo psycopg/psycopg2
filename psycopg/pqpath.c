@@ -661,6 +661,7 @@ pq_execute(cursorObject *curs, const char *query, int async)
 {
     PGresult *pgres = NULL;
     char *error = NULL;
+    int async_status = ASYNC_WRITE;
 
     /* if the status of the connection is critical raise an exception and
        definitely close the connection */
@@ -720,6 +721,16 @@ pq_execute(cursorObject *curs, const char *query, int async)
             return -1;
         }
         Dprintf("pq_execute: async query sent to backend");
+
+        if (PQflush(curs->conn->pgconn) == 0) {
+            /* the query got fully sent to the server */
+            Dprintf("pq_execute: query got flushed immediately");
+            /* the async status will be ASYNC_READ */
+            async_status = ASYNC_READ;
+        }
+        else {
+            async_status = ASYNC_WRITE;
+        }
     }
 
     pthread_mutex_unlock(&(curs->conn->lock));
@@ -734,6 +745,7 @@ pq_execute(cursorObject *curs, const char *query, int async)
         if (pq_fetch(curs) == -1) return -1;
     }
     else {
+        curs->conn->async_status = async_status;
         curs->conn->async_cursor = (PyObject*)curs;
     }
 

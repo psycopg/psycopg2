@@ -79,3 +79,56 @@ curs_get_last_result(cursorObject *self) {
     Py_END_ALLOW_THREADS;
     self->needsfetch = 1;
 }
+
+/* curs_poll_send - handle cursor polling when flushing output */
+
+PyObject *
+curs_poll_send(cursorObject *self)
+{
+    int res;
+
+    /* flush queued output to the server */
+    res = pq_flush(self->conn);
+
+    if (res == 1) {
+        /* some data still waiting to be flushed */
+        Dprintf("cur_poll_send: returning %d", PSYCO_POLL_WRITE);
+        return PyInt_FromLong(PSYCO_POLL_WRITE);
+    }
+    else if (res == 0) {
+        /* all data flushed, start waiting for results */
+        Dprintf("cur_poll_send: returning %d", PSYCO_POLL_READ);
+        return PyInt_FromLong(PSYCO_POLL_READ);
+    }
+    else {
+        /* unexpected result */
+        PyErr_SetString(OperationalError, PQerrorMessage(self->conn->pgconn));
+        return NULL;
+    }
+}
+
+/* curs_poll_fetch - handle cursor polling when reading result */
+
+PyObject *
+curs_poll_fetch(cursorObject *self)
+{
+    int is_busy;
+
+    /* consume the input */
+    is_busy = pq_is_busy(self->conn);
+    if (is_busy == -1) {
+        /* there was an error, raise the exception */
+        return NULL;
+    }
+    else if (is_busy == 1) {
+        /* the connection is busy, tell the user to wait more */
+        Dprintf("cur_poll_fetch: returning %d", PSYCO_POLL_READ);
+        return PyInt_FromLong(PSYCO_POLL_READ);
+    }
+
+    /* all data has arrived */
+    curs_get_last_result(self);
+
+    Dprintf("cur_poll_fetch: returning %d", PSYCO_POLL_OK);
+    return PyInt_FromLong(PSYCO_POLL_OK);
+}

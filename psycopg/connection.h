@@ -52,6 +52,10 @@ extern "C" {
 #define CONN_STATUS_SENT_TRANSACTION_ISOLATION 12
 #define CONN_STATUS_GET_TRANSACTION_ISOLATION  13
 
+/* async query execution status */
+#define ASYNC_READ  1
+#define ASYNC_WRITE 2
+
 /* polling result, try to keep in sync with PostgresPollingStatusType from
    libpq-fe.h */
 #define PSYCO_POLL_READ  1
@@ -97,6 +101,7 @@ typedef struct {
     PGconn *pgconn;           /* the postgresql connection */
 
     PyObject *async_cursor;   /* a cursor executing an asynchronous query */
+    int async_status;         /* asynchronous execution status */
 
     /* notice processing */
     PyObject *notice_list;
