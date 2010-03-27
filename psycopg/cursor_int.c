@@ -74,6 +74,7 @@ curs_get_last_result(cursorObject *self) {
         IFCLEARPGRES(self->pgres);
         self->pgres = pgres;
     }
+    Py_XDECREF(self->conn->async_cursor);
     self->conn->async_cursor = NULL;
     pthread_mutex_unlock(&(self->conn->lock));
     Py_END_ALLOW_THREADS;

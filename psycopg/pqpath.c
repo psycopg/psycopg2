@@ -299,6 +299,7 @@ pq_clear_async(connectionObject *conn)
         Dprintf("pq_clear_async: clearing PGresult at %p", pgres);
         CLEARPGRES(pgres);
     }
+    Py_XDECREF(conn->async_cursor);
     conn->async_cursor = NULL;
 }
 
@@ -746,6 +747,7 @@ pq_execute(cursorObject *curs, const char *query, int async)
     }
     else {
         curs->conn->async_status = async_status;
+        Py_INCREF(curs);
         curs->conn->async_cursor = (PyObject*)curs;
     }
 
