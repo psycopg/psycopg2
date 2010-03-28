@@ -64,6 +64,7 @@ HIDDEN Py_ssize_t lobject_write(lobjectObject *self, const char *buf,
                                 size_t len);
 HIDDEN int lobject_seek(lobjectObject *self, int pos, int whence);
 HIDDEN int lobject_tell(lobjectObject *self);
+HIDDEN int lobject_truncate(lobjectObject *self, size_t len);
 HIDDEN int lobject_close(lobjectObject *self);
 
 #define lobject_is_closed(self) \

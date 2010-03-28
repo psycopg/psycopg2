@@ -3,6 +3,7 @@ import os
 import shutil
 import tempfile
 import unittest
+import warnings
 
 import psycopg2
 import psycopg2.extensions
@@ -260,6 +261,69 @@ class LargeObjectTests(unittest.TestCase):
         self.assertTrue(os.path.exists(filename))
         self.assertEqual(open(filename, "rb").read(), "some data")
 
+
+class LargeObjectTruncateTests(LargeObjectTests):
+
+    skip = None
+
+    def setUp(self):
+        LargeObjectTests.setUp(self)
+
+        if self.skip is None:
+            self.skip = False
+            if self.conn.server_version < 80300:
+                warnings.warn("Large object truncate tests skipped, "
+                              "the server does not support them")
+                self.skip = True
+
+            if not hasattr(psycopg2.extensions.lobject, 'truncate'):
+                warnings.warn("Large object truncate tests skipped, "
+                              "psycopg2 has been built against an old library")
+                self.skip = True
+
+    def test_truncate(self):
+        if self.skip:
+            return
+
+        lo = self.conn.lobject()
+        lo.write("some data")
+        lo.close()
+
+        lo = self.conn.lobject(lo.oid, "w")
+        lo.truncate(4)
+
+        # seek position unchanged
+        self.assertEqual(lo.tell(), 0)
+        # data truncated
+        self.assertEqual(lo.read(), "some")
+
+        lo.truncate(6)
+        lo.seek(0)
+        # large object extended with zeroes
+        self.assertEqual(lo.read(), "some\x00\x00")
+
+        lo.truncate()
+        lo.seek(0)
+        # large object empty
+        self.assertEqual(lo.read(), "")
+
+    def test_truncate_after_close(self):
+        if self.skip:
+            return
+
+        lo = self.conn.lobject()
+        lo.close()
+        self.assertRaises(psycopg2.InterfaceError, lo.truncate)
+
+    def test_truncate_after_commit(self):
+        if self.skip:
+            return
+
+        lo = self.conn.lobject()
+        self.lo_oid = lo.oid
+        self.conn.commit()
+
+        self.assertRaises(psycopg2.ProgrammingError, lo.truncate)
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

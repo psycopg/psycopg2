@@ -78,6 +78,19 @@ functionalities defined by the |DBAPI|_.
 
         Return the lobject current position.
 
+    .. method:: truncate(len=0)
+
+        .. versionadded:: 2.0.15
+
+        Truncate the lobject to the given size.
+
+	The method will only be available if psycopg has been built against libpq
+	from PostgreSQL 8.3 or later and can only be used with PostgreSQL servers
+	running these versions. It uses the |lo_truncate|_ libpq function.
+
+        .. |lo_truncate| replace:: `!lo_truncate()`
+        .. _lo_truncate: http://www.postgresql.org/docs/8.4/static/lo-interfaces.html#AEN36420
+
     .. method:: close()
 
         Close the object.

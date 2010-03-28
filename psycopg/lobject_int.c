@@ -333,6 +333,36 @@ lobject_export(lobjectObject *self, const char *filename)
     return retvalue;
 }
 
+#if PG_VERSION_HEX >= 0x080300
+
+int
+lobject_truncate(lobjectObject *self, size_t len)
+{
+    int retvalue;
+    PGresult *pgres = NULL;
+    char *error = NULL;
+
+    Dprintf("lobject_truncate: fd = %d, len = %d",
+            self->fd, len);
+
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&(self->conn->lock));
+
+    retvalue = lo_truncate(self->conn->pgconn, self->fd, len);
+    Dprintf("lobject_truncate: result = %d", retvalue);
+    if (retvalue < 0)
+        collect_error(self->conn, &error);
+
+    pthread_mutex_unlock(&(self->conn->lock));
+    Py_END_ALLOW_THREADS;
+
+    if (retvalue < 0)
+        pq_complete_error(self->conn, &pgres, &error);
+    return retvalue;
+
+}
+
+#endif /* PG_VERSION_HEX >= 0x080300 */
 
 #endif
 
