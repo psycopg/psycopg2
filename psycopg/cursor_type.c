@@ -1061,15 +1061,16 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
         return NULL;
 
     EXC_IF_CURS_CLOSED(self);
-
-    if (self->conn->async == 1) {
-        if (_psyco_curs_prefetch(self) < 0) return NULL;
-    }
+    EXC_IF_ASYNC_IN_PROGRESS(self, scroll)
 
     /* if the cursor is not named we have the full result set and we can do
        our own calculations to scroll; else we just delegate the scrolling
        to the MOVE SQL statement */
     if (self->name == NULL) {
+        /* the prefetch will be a noop for sync executions, because they
+           always set self->pgres  and never touch self->needsfetch, but for
+           async queries we need to parse the result and set self->rowcount */
+        if (_psyco_curs_prefetch(self) < 0) return NULL;
         if (strcmp(mode, "relative") == 0) {
             newpos = self->row + value;
         } else if (strcmp( mode, "absolute") == 0) {
