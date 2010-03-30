@@ -59,18 +59,30 @@ curs_reset(cursorObject *self)
  * curs_get_last_result
  *
  * read all results from the connection, save the last one
+ * returns 0 if all results were read, 1 if there are remaining results, but
+ * their retrieval would block, -1 if there was an error
  */
 
-void
+int
 curs_get_last_result(cursorObject *self) {
     PGresult *pgres;
 
     IFCLEARPGRES(self->pgres);
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
-    /* read all results: there can be multiple if the client sent multiple
+    /* read one result, there can be multiple if the client sent multiple
        statements */
     while ((pgres = PQgetResult(self->conn->pgconn)) != NULL) {
+        if (PQisBusy(self->conn->pgconn) == 1) {
+            /* there is another result waiting, need to tell the client to
+               wait more */
+            Dprintf("curs_get_last_result: gut result, but more are pending");
+            self->pgres = pgres;
+            pthread_mutex_unlock(&(self->conn->lock));
+            Py_BLOCK_THREADS;
+            return 1;
+        }
+        Dprintf("curs_get_last_result: got result %p", pgres);
         IFCLEARPGRES(self->pgres);
         self->pgres = pgres;
     }
@@ -79,6 +91,7 @@ curs_get_last_result(cursorObject *self) {
     pthread_mutex_unlock(&(self->conn->lock));
     Py_END_ALLOW_THREADS;
     self->needsfetch = 1;
+    return 0;
 }
 
 /* curs_poll_send - handle cursor polling when flushing output */
@@ -114,6 +127,7 @@ PyObject *
 curs_poll_fetch(cursorObject *self)
 {
     int is_busy;
+    int last_result;
 
     /* consume the input */
     is_busy = pq_is_busy(self->conn);
@@ -127,9 +141,19 @@ curs_poll_fetch(cursorObject *self)
         return PyInt_FromLong(PSYCO_POLL_READ);
     }
 
-    /* all data has arrived */
-    curs_get_last_result(self);
-
-    Dprintf("cur_poll_fetch: returning %d", PSYCO_POLL_OK);
-    return PyInt_FromLong(PSYCO_POLL_OK);
+    /* data has arrived, try to fetch all of it or, if it failed, tell the
+       user to wait more */
+    last_result = curs_get_last_result(self);
+    if (last_result == 0) {
+        Dprintf("cur_poll_fetch: returning %d", PSYCO_POLL_OK);
+        return PyInt_FromLong(PSYCO_POLL_OK);
+    }
+    else if (last_result == 1) {
+        Dprintf("cur_poll_fetch: got result, but data remaining, "
+                "returning %d", PSYCO_POLL_READ);
+        return PyInt_FromLong(PSYCO_POLL_READ);
+    }
+    else {
+        return NULL;
+    }
 }

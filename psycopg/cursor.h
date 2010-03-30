@@ -86,7 +86,7 @@ typedef struct {
 
 /* C-callable functions in cursor_int.c and cursor_ext.c */
 HIDDEN void curs_reset(cursorObject *self);
-HIDDEN void curs_get_last_result(cursorObject *self);
+HIDDEN int curs_get_last_result(cursorObject *self);
 HIDDEN PyObject *curs_poll_send(cursorObject *self);
 HIDDEN PyObject *curs_poll_fetch(cursorObject *self);
 
