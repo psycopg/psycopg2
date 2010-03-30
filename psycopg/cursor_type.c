@@ -305,7 +305,7 @@ static PyObject *_psyco_curs_validate_sql_basic(
 }
 
 #define psyco_curs_execute_doc \
-"execute(query, vars=None, async=0) -- Execute query with bound vars."
+"execute(query, vars=None) -- Execute query with bound vars."
 
 static int
 _psyco_curs_execute(cursorObject *self,
@@ -442,29 +442,12 @@ _psyco_curs_execute(cursorObject *self,
 static PyObject *
 psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
-    long int async;
     PyObject *vars = NULL, *operation = NULL;
 
-    static char *kwlist[] = {"query", "vars", "async", NULL};
+    static char *kwlist[] = {"query", "vars", NULL};
 
-    async = self->conn->async;
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|Ol", kwlist,
-                                     &operation, &vars, &async)) {
-        return NULL;
-    }
-
-    if (async != self->conn->async) {
-        if (async == 0)
-            psyco_set_error(ProgrammingError, (PyObject*)self,
-                            "can't execute a synchronous query "
-                            "from an asynchronous cursor",
-                            NULL, NULL);
-        else
-            psyco_set_error(ProgrammingError, (PyObject*)self,
-                            "can't execute an asynchronous query "
-                            "from a synchronous cursor",
-                            NULL, NULL);
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|O", kwlist,
+                                     &operation, &vars)) {
         return NULL;
     }
 
@@ -489,7 +472,7 @@ psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
 
     EXC_IF_CURS_CLOSED(self);
 
-    if (_psyco_curs_execute(self, operation, vars, async)) {
+    if (_psyco_curs_execute(self, operation, vars, self->conn->async)) {
         Py_INCREF(Py_None);
         return Py_None;
     }
@@ -958,40 +941,22 @@ psyco_curs_fetchall(cursorObject *self, PyObject *args)
 /* callproc method - execute a stored procedure */
 
 #define psyco_curs_callproc_doc \
-"callproc(procname, parameters=None, async=0) -- Execute stored procedure."
+"callproc(procname, parameters=None) -- Execute stored procedure."
 
 static PyObject *
 psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
     const char *procname = NULL;
     char *sql = NULL;
-    long int async;
     Py_ssize_t procname_len, i, nparameters = 0, sl = 0;
     PyObject *parameters = Py_None;
     PyObject *operation = NULL;
     PyObject *res = NULL;
 
-    async = self->conn->async;
-
-    if (!PyArg_ParseTuple(args, "s#|Ol",
-          &procname, &procname_len, &parameters, &async
+    if (!PyArg_ParseTuple(args, "s#|O",
+          &procname, &procname_len, &parameters
        ))
     { return NULL; }
-
-    if (async != self->conn->async) {
-        if (async == 0)
-            psyco_set_error(ProgrammingError, (PyObject*)self,
-                            "can't do a synchronous function call "
-                            "from an asynchronous cursor",
-                            NULL, NULL);
-        else
-            psyco_set_error(ProgrammingError, (PyObject*)self,
-                            "can't do an asynchronous function call "
-                            "from a synchronous cursor",
-                            NULL, NULL);
-        return NULL;
-    }
-
 
     EXC_IF_CURS_CLOSED(self);
 
@@ -1021,7 +986,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
     operation = PyString_FromString(sql);
     PyMem_Free((void*)sql);
 
-    if (_psyco_curs_execute(self, operation, parameters, async)) {
+    if (_psyco_curs_execute(self, operation, parameters, self->conn->async)) {
         Py_INCREF(parameters);
         res = parameters;
     }

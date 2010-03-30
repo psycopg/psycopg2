@@ -112,10 +112,10 @@ class DictCursor(DictCursorBase):
         DictCursorBase.__init__(self, *args, **kwargs)
         self._prefetch = 1
 
-    def execute(self, query, vars=None, async=0):
+    def execute(self, query, vars=None):
         self.index = {}
         self._query_executed = 1
-        return _cursor.execute(self, query, vars, async)
+        return _cursor.execute(self, query, vars)
 
     def callproc(self, procname, vars=None):
         self.index = {}
@@ -201,10 +201,10 @@ class RealDictCursor(DictCursorBase):
         DictCursorBase.__init__(self, *args, **kwargs)
         self._prefetch = 0
 
-    def execute(self, query, vars=None, async=0):
+    def execute(self, query, vars=None):
         self.column_mapping = []
         self._query_executed = 1
-        return _cursor.execute(self, query, vars, async)
+        return _cursor.execute(self, query, vars)
 
     def callproc(self, procname, vars=None):
         self.column_mapping = []
@@ -282,9 +282,9 @@ class LoggingConnection(_connection):
 class LoggingCursor(_cursor):
     """A cursor that logs queries using its connection logging facilities."""
 
-    def execute(self, query, vars=None, async=0):
+    def execute(self, query, vars=None):
         try:
-            return _cursor.execute(self, query, vars, async)
+            return _cursor.execute(self, query, vars)
         finally:
             self.connection.log(self.query, self)
 
@@ -325,9 +325,9 @@ class MinTimeLoggingConnection(LoggingConnection):
 class MinTimeLoggingCursor(LoggingCursor):
     """The cursor sub-class companion to `MinTimeLoggingConnection`."""
 
-    def execute(self, query, vars=None, async=0):
+    def execute(self, query, vars=None):
         self.timestamp = time.time()
-        return LoggingCursor.execute(self, query, vars, async)
+        return LoggingCursor.execute(self, query, vars)
     
     def callproc(self, procname, vars=None):
         self.timestamp = time.time()
