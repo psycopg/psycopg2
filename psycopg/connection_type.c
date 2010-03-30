@@ -134,6 +134,7 @@ static PyObject *
 psyco_conn_commit(connectionObject *self, PyObject *args)
 {
     EXC_IF_CONN_CLOSED(self);
+    EXC_IF_CONN_ASYNC(self, commit);
 
     if (!PyArg_ParseTuple(args, "")) return NULL;
 
@@ -154,6 +155,7 @@ static PyObject *
 psyco_conn_rollback(connectionObject *self, PyObject *args)
 {
     EXC_IF_CONN_CLOSED(self);
+    EXC_IF_CONN_ASYNC(self, rollback);
 
     if (!PyArg_ParseTuple(args, "")) return NULL;
 
@@ -178,6 +180,7 @@ psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
     int level = 1;
 
     EXC_IF_CONN_CLOSED(self);
+    EXC_IF_CONN_ASYNC(self, set_isolation_level);
 
     if (!PyArg_ParseTuple(args, "i", &level)) return NULL;
 
@@ -211,6 +214,7 @@ psyco_conn_set_client_encoding(connectionObject *self, PyObject *args)
     size_t i, j;
 
     EXC_IF_CONN_CLOSED(self);
+    EXC_IF_CONN_ASYNC(self, set_client_encoding);
 
     if (!PyArg_ParseTuple(args, "s", &enc)) return NULL;
 
@@ -309,6 +313,7 @@ psyco_conn_lobject(connectionObject *self, PyObject *args, PyObject *keywds)
     }
 
     EXC_IF_CONN_CLOSED(self);
+    EXC_IF_CONN_ASYNC(self, lobject);
 
     Dprintf("psyco_conn_lobject: new lobject for connection at %p", self);
     Dprintf("psyco_conn_lobject:     parameters: oid = %d, mode = %s",
@@ -381,6 +386,7 @@ psyco_conn_reset(connectionObject *self)
     int res;
 
     EXC_IF_CONN_CLOSED(self);
+    EXC_IF_CONN_ASYNC(self, reset);
 
     if (pq_reset(self) < 0)
         return NULL;

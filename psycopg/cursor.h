@@ -106,6 +106,17 @@ if ((self)->mark != (self)->conn->mark) {                                  \
     PyErr_SetString(ProgrammingError, "named cursor isn't valid anymore"); \
     return NULL; }
 
+#define EXC_IF_CURS_ASYNC(self, cmd) if ((self)->conn->async == 1) { \
+    PyErr_SetString(ProgrammingError, #cmd " cannot be used "        \
+    "in asynchronous mode");                                         \
+    return NULL; }
+
+#define EXC_IF_ASYNC_IN_PROGRESS(self, cmd) \
+if ((self)->conn->async_cursor != NULL) {   \
+    PyErr_SetString(ProgrammingError, #cmd " cannot be used "        \
+    "while an asynchronous query is underway");                      \
+    return NULL; }
+
 #ifdef __cplusplus
 }
 #endif

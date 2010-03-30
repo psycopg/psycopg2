@@ -398,7 +398,6 @@ pq_begin_locked(connectionObject *conn, PGresult **pgres, char **error)
         return 0;
     }
 
-    pq_clear_async(conn);
     result = pq_execute_command_locked(conn, query[conn->isolation_level],
                                        pgres, error);
     if (result == 0)
@@ -432,7 +431,6 @@ pq_commit(connectionObject *conn)
     pthread_mutex_lock(&conn->lock);
     conn->mark += 1;
 
-    pq_clear_async(conn);
     retvalue = pq_execute_command_locked(conn, "COMMIT", &pgres, &error);
 
     pthread_mutex_unlock(&conn->lock);
@@ -464,7 +462,6 @@ pq_abort_locked(connectionObject *conn, PGresult **pgres, char **error)
     }
 
     conn->mark += 1;
-    pq_clear_async(conn);
     retvalue = pq_execute_command_locked(conn, "ROLLBACK", pgres, error);
     if (retvalue == 0)
         conn->status = CONN_STATUS_READY;
@@ -526,7 +523,6 @@ pq_reset_locked(connectionObject *conn, PGresult **pgres, char **error)
             conn->pgconn, conn->isolation_level, conn->status);
 
     conn->mark += 1;
-    pq_clear_async(conn);
 
     if (conn->isolation_level > 0 && conn->status == CONN_STATUS_BEGIN) {
         retvalue = pq_execute_command_locked(conn, "ABORT", pgres, error);
@@ -681,10 +677,6 @@ pq_execute(cursorObject *curs, const char *query, int async)
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(curs->conn->lock));
-
-    /* FIXME: we should first try to cancel the query, otherwise we will block
-       until it completes AND until we get the result back */
-    pq_clear_async(curs->conn);
 
     if (pq_begin_locked(curs->conn, &pgres, &error) < 0) {
         pthread_mutex_unlock(&(curs->conn->lock));

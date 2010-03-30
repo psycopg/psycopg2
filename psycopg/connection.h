@@ -137,6 +137,11 @@ HIDDEN PyObject *conn_poll_fetch(connectionObject *self);
     PyErr_SetString(InterfaceError, "connection already closed"); \
     return NULL; }
 
+#define EXC_IF_CONN_ASYNC(self, cmd) if ((self)->async == 1) { \
+    PyErr_SetString(ProgrammingError, #cmd " cannot be used "  \
+    "in asynchronous mode");                                   \
+    return NULL; }
+
 #ifdef __cplusplus
 }
 #endif

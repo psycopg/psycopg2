@@ -57,6 +57,7 @@ psyco_curs_close(cursorObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "")) return NULL;
 
     EXC_IF_CURS_CLOSED(self);
+    EXC_IF_ASYNC_IN_PROGRESS(self, close);
 
     if (self->name != NULL) {
         char buffer[128];
@@ -67,7 +68,6 @@ psyco_curs_close(cursorObject *self, PyObject *args)
     }
 
     self->closed = 1;
-    pq_clear_async(self->conn);
     Dprintf("psyco_curs_close: cursor at %p closed", self);
 
     Py_INCREF(Py_None);
@@ -471,6 +471,7 @@ psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
     }
 
     EXC_IF_CURS_CLOSED(self);
+    EXC_IF_ASYNC_IN_PROGRESS(self, execute);
 
     if (_psyco_curs_execute(self, operation, vars, self->conn->async)) {
         Py_INCREF(Py_None);
@@ -502,16 +503,11 @@ psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
     }
 
     EXC_IF_CURS_CLOSED(self);
+    EXC_IF_CURS_ASYNC(self, executemany);
 
     if (self->name != NULL) {
         psyco_set_error(ProgrammingError, (PyObject*)self,
                 "can't call .executemany() on named cursors", NULL, NULL);
-        return NULL;
-    }
-
-    if (self->conn->async == 1) {
-        psyco_set_error(ProgrammingError, (PyObject*)self,
-                "can't call .executemany() on async cursors", NULL, NULL);
         return NULL;
     }
 
@@ -528,7 +524,7 @@ psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
         }
         else {
             if (self->rowcount == -1)
-		rowcount = -1;
+                rowcount = -1;
             else if (rowcount >= 0)
                 rowcount += self->rowcount;
             Py_DECREF(v);
@@ -649,20 +645,6 @@ _psyco_curs_prefetch(cursorObject *self)
 {
     int i = 0;
 
-    /* check if there is an asynchronous query in progess and block until data
-       is read from it */
-    if (self->conn->async_cursor != NULL) {
-        /* first check if it's the right cursor */
-        if (self->conn->async_cursor != (PyObject*)self) {
-            psyco_set_error(ProgrammingError, (PyObject*)self,
-                            "asynchronous fetch by wrong cursor", NULL, NULL);
-            return -2;
-        }
-        /* now get the result */
-        Dprintf("_psyco_curs_prefetch: blocking until all data is read");
-        curs_get_last_result(self);
-    }
-
     if (self->pgres == NULL || self->needsfetch) {
         self->needsfetch = 0;
         Dprintf("_psyco_curs_prefetch: trying to fetch data");
@@ -759,7 +741,8 @@ psyco_curs_fetchone(cursorObject *self, PyObject *args)
 
     if (args && !PyArg_ParseTuple(args, "")) return NULL;
 
-    EXC_IF_CURS_CLOSED(self)
+    EXC_IF_CURS_CLOSED(self);
+    EXC_IF_ASYNC_IN_PROGRESS(self, fetchone);
     if (_psyco_curs_prefetch(self) < 0) return NULL;
     EXC_IF_NO_TUPLES(self);
 
@@ -820,6 +803,7 @@ psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
     }
 
     EXC_IF_CURS_CLOSED(self);
+    EXC_IF_ASYNC_IN_PROGRESS(self, fetchmany);
     if (_psyco_curs_prefetch(self) < 0) return NULL;
     EXC_IF_NO_TUPLES(self);
 
@@ -892,6 +876,7 @@ psyco_curs_fetchall(cursorObject *self, PyObject *args)
     }
 
     EXC_IF_CURS_CLOSED(self);
+    EXC_IF_ASYNC_IN_PROGRESS(self, fetchall);
     if (_psyco_curs_prefetch(self) < 0) return NULL;
     EXC_IF_NO_TUPLES(self);
 
@@ -959,6 +944,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
     { return NULL; }
 
     EXC_IF_CURS_CLOSED(self);
+    EXC_IF_ASYNC_IN_PROGRESS(self, callproc);
 
     if (self->name != NULL) {
         psyco_set_error(ProgrammingError, (PyObject*)self,
@@ -1223,6 +1209,7 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
         return NULL;
 
     EXC_IF_CURS_CLOSED(self);
+    EXC_IF_CURS_ASYNC(self, copy_from);
 
     quoted_delimiter = psycopg_escape_string((PyObject*)self->conn, sep, 0, NULL, NULL);
     if (quoted_delimiter == NULL) {
@@ -1327,6 +1314,7 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
         return NULL;
 
     EXC_IF_CURS_CLOSED(self);
+    EXC_IF_CURS_ASYNC(self, copy_to);
     quoted_delimiter = psycopg_escape_string((PyObject*)self->conn, sep, 0, NULL, NULL);
     if (quoted_delimiter == NULL) {
         PyErr_NoMemory();
@@ -1410,6 +1398,7 @@ psyco_curs_copy_expert(cursorObject *self, PyObject *args, PyObject *kwargs)
     { return NULL; }
 
     EXC_IF_CURS_CLOSED(self);
+    EXC_IF_CURS_ASYNC(self, copy_expert);
 
     sql = _psyco_curs_validate_sql_basic(self, sql);
     
