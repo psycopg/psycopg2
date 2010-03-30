@@ -421,14 +421,12 @@ psyco_conn_poll(connectionObject *self)
 
     case CONN_STATUS_SEND_DATESTYLE:
     case CONN_STATUS_SEND_CLIENT_ENCODING:
-    case CONN_STATUS_SEND_TRANSACTION_ISOLATION:
         /* these mean that we need to wait for the socket to become writable
            to send the rest of our query */
         return conn_poll_send(self);
 
     case CONN_STATUS_GET_DATESTYLE:
     case CONN_STATUS_GET_CLIENT_ENCODING:
-    case CONN_STATUS_GET_TRANSACTION_ISOLATION:
         /* these mean that we are waiting for the results of the queries */
         return conn_poll_fetch(self);
 

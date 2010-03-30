@@ -404,11 +404,6 @@ conn_poll_send(connectionObject *self)
         query = psyco_client_encoding;
         next_status = CONN_STATUS_SENT_CLIENT_ENCODING;
         break;
-    case CONN_STATUS_SEND_TRANSACTION_ISOLATION:
-        /* get the default isolevel */
-        query = psyco_transaction_isolation;
-        next_status = CONN_STATUS_SENT_TRANSACTION_ISOLATION;
-        break;
     default:
         /* unexpected state, error out */
         PyErr_Format(OperationalError,
@@ -443,9 +438,6 @@ conn_poll_send(connectionObject *self)
             break;
         case CONN_STATUS_SENT_CLIENT_ENCODING:
             next_status = CONN_STATUS_GET_CLIENT_ENCODING;
-            break;
-        case CONN_STATUS_SENT_TRANSACTION_ISOLATION:
-            next_status = CONN_STATUS_GET_TRANSACTION_ISOLATION;
             break;
         }
     }
@@ -526,17 +518,17 @@ conn_poll_fetch(connectionObject *self)
             return NULL;
         }
         Dprintf("conn_poll_fetch: got client_encoding %s", self->encoding);
-        next_status = CONN_STATUS_SEND_TRANSACTION_ISOLATION;
-    }
-    else if (self->status == CONN_STATUS_GET_TRANSACTION_ISOLATION) {
-        /* got the default isolevel */
-        self->isolation_level = conn_get_isolation_level(pgres);
-        Dprintf("conn_poll_fetch: got isolevel %ld", self->isolation_level);
 
         /* since this is the last step, set the other instance variables now */
         self->equote = conn_get_standard_conforming_strings(self->pgconn);
         self->protocol = conn_get_protocol_version(self->pgconn);
         self->server_version = (int) PQserverVersion(self->pgconn);
+        /*
+         * asynchronous connections always use isolation level 0, the user is
+         * expected to manage the transactions himself, by sending
+         * (asynchronously) BEGIN and COMMIT statements.
+         */
+        self->isolation_level = 0;
 
         Py_BEGIN_ALLOW_THREADS;
         pthread_mutex_lock(&(self->lock));
