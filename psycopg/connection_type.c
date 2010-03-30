@@ -426,7 +426,9 @@ psyco_conn_poll(connectionObject *self)
     switch (self->status) {
 
     case CONN_STATUS_SEND_DATESTYLE:
+    case CONN_STATUS_SENT_DATESTYLE:
     case CONN_STATUS_SEND_CLIENT_ENCODING:
+    case CONN_STATUS_SENT_CLIENT_ENCODING:
         /* these mean that we need to wait for the socket to become writable
            to send the rest of our query */
         return conn_poll_send(self);

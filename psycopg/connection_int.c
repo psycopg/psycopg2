@@ -387,7 +387,7 @@ conn_connect(connectionObject *self, long int async)
 PyObject *
 conn_poll_send(connectionObject *self)
 {
-    const char *query;
+    const char *query = NULL;
     int next_status;
     int ret;
 
@@ -404,6 +404,12 @@ conn_poll_send(connectionObject *self)
         query = psyco_client_encoding;
         next_status = CONN_STATUS_SENT_CLIENT_ENCODING;
         break;
+    case CONN_STATUS_SENT_DATESTYLE:
+    case CONN_STATUS_SENT_CLIENT_ENCODING:
+        /* the query has only been partially sent */
+        query = NULL;
+        next_status = self->status;
+        break;
     default:
         /* unexpected state, error out */
         PyErr_Format(OperationalError,
@@ -416,12 +422,14 @@ conn_poll_send(connectionObject *self)
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->lock));
 
-    if (PQsendQuery(self->pgconn, query) != 1) {
-        pthread_mutex_unlock(&(self->lock));
-        Py_BLOCK_THREADS;
-        PyErr_SetString(OperationalError,
-                        PQerrorMessage(self->pgconn));
-        return NULL;
+    if (query != NULL) {
+        if (PQsendQuery(self->pgconn, query) != 1) {
+            pthread_mutex_unlock(&(self->lock));
+            Py_BLOCK_THREADS;
+            PyErr_SetString(OperationalError,
+                            PQerrorMessage(self->pgconn));
+            return NULL;
+        }
     }
 
     if (PQflush(self->pgconn) == 0) {
