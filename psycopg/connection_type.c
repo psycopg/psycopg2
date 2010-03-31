@@ -74,8 +74,8 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *keywds)
         return NULL;
     }
 
-    if (name != NULL && self->async) {
-        PyErr_SetString(OperationalError,
+    if (name != NULL && self->async == 1) {
+        PyErr_SetString(ProgrammingError,
                         "asynchronous connections "
                         "cannot produce named cursors");
         return NULL;
