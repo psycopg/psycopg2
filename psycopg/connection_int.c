@@ -234,7 +234,6 @@ conn_setup(connectionObject *self, PGconn *pgconn)
 
     if (pgres == NULL || PQresultStatus(pgres) != PGRES_COMMAND_OK ) {
         PyErr_SetString(OperationalError, "can't set datestyle to ISO");
-        PQfinish(pgconn);
         IFCLEARPGRES(pgres);
         Py_UNBLOCK_THREADS;
         pthread_mutex_unlock(&self->lock);
@@ -249,7 +248,6 @@ conn_setup(connectionObject *self, PGconn *pgconn)
 
     if (pgres == NULL || PQresultStatus(pgres) != PGRES_TUPLES_OK) {
         PyErr_SetString(OperationalError, "can't fetch client_encoding");
-        PQfinish(pgconn);
         IFCLEARPGRES(pgres);
         Py_UNBLOCK_THREADS;
         pthread_mutex_unlock(&self->lock);
@@ -260,7 +258,6 @@ conn_setup(connectionObject *self, PGconn *pgconn)
     /* conn_get_encoding returns a malloc'd string */
     self->encoding = conn_get_encoding(pgres);
     if (self->encoding == NULL) {
-        PQfinish(pgconn);
         Py_UNBLOCK_THREADS;
         pthread_mutex_unlock(&self->lock);
         Py_BLOCK_THREADS;
@@ -274,7 +271,6 @@ conn_setup(connectionObject *self, PGconn *pgconn)
     if (pgres == NULL || PQresultStatus(pgres) != PGRES_TUPLES_OK) {
         PyErr_SetString(OperationalError,
                          "can't fetch default_isolation_level");
-        PQfinish(pgconn);
         IFCLEARPGRES(pgres);
         Py_UNBLOCK_THREADS;
         pthread_mutex_unlock(&self->lock);
@@ -298,7 +294,7 @@ conn_sync_connect(connectionObject *self)
     PGconn *pgconn;
 
     Py_BEGIN_ALLOW_THREADS;
-    pgconn = PQconnectdb(self->dsn);
+    self->pgconn = pgconn = PQconnectdb(self->dsn);
     Py_END_ALLOW_THREADS;
 
     Dprintf("conn_connect: new postgresql connection at %p", pgconn);
@@ -313,7 +309,6 @@ conn_sync_connect(connectionObject *self)
     {
         Dprintf("conn_connect: PQconnectdb(%s) returned BAD", self->dsn);
         PyErr_SetString(OperationalError, PQerrorMessage(pgconn));
-        PQfinish(pgconn);
         return -1;
     }
 
@@ -325,7 +320,6 @@ conn_sync_connect(connectionObject *self)
     if (PQsetnonblocking(pgconn, 1) != 0) {
         Dprintf("conn_connect: PQsetnonblocking() FAILED");
         PyErr_SetString(OperationalError, "PQsetnonblocking() failed");
-        PQfinish(pgconn);
         return -1;
     }
 
@@ -334,7 +328,6 @@ conn_sync_connect(connectionObject *self)
 
     self->server_version = (int)PQserverVersion(pgconn);
 
-    self->pgconn = pgconn;
     return 0;
 }
 
@@ -343,7 +336,7 @@ conn_async_connect(connectionObject *self)
 {
     PGconn *pgconn;
 
-    pgconn = PQconnectStart(self->dsn);
+    self->pgconn = pgconn = PQconnectStart(self->dsn);
 
     Dprintf("conn_connect: new postgresql connection at %p", pgconn);
 
@@ -357,14 +350,12 @@ conn_async_connect(connectionObject *self)
     {
         Dprintf("conn_connect: PQconnectdb(%s) returned BAD", self->dsn);
         PyErr_SetString(OperationalError, PQerrorMessage(pgconn));
-        PQfinish(pgconn);
         return -1;
     }
 
     PQsetNoticeProcessor(pgconn, conn_notice_callback, (void*)self);
 
     self->status = CONN_STATUS_ASYNC;
-    self->pgconn = pgconn;
 
     return 0;
 }
@@ -508,7 +499,6 @@ conn_poll_fetch(connectionObject *self)
                           PQresultStatus(pgres) != PGRES_TUPLES_OK)) {
         PyErr_SetString(OperationalError, "can't issue "
                         "initial connection queries");
-        PQfinish(self->pgconn);
         IFCLEARPGRES(pgres);
         return NULL;
     }
@@ -522,7 +512,6 @@ conn_poll_fetch(connectionObject *self)
         /* got the client_encoding */
         self->encoding = conn_get_encoding(pgres);
         if (self->encoding == NULL) {
-            PQfinish(self->pgconn);
             return NULL;
         }
         Dprintf("conn_poll_fetch: got client_encoding %s", self->encoding);
@@ -546,7 +535,6 @@ conn_poll_fetch(connectionObject *self)
             Dprintf("conn_async_connect: PQsetnonblocking() FAILED");
             Py_BLOCK_THREADS;
             PyErr_SetString(OperationalError, "PQsetnonblocking() failed");
-            PQfinish(self->pgconn);
             return NULL;
         }
 
