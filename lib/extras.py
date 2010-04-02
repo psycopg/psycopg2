@@ -484,4 +484,28 @@ def register_tstz_w_secs(oids=None, conn_or_curs=None):
     return _ext.TSTZ_W_SECS
 
 
+import select
+from psycopg2.extensions import POLL_OK, POLL_READ, POLL_WRITE
+from psycopg2 import OperationalError
+
+def wait_select(conn, curs=None):
+    """Wait until a connection or cursor has data available.
+
+    The function is an example of a wait callback to be registered with
+    `~psycopg2.extensions.set_wait_callback()`. This function uses `!select()`
+    to wait for data available.
+    """
+    poll = (curs or conn).poll
+    while 1:
+        state = poll()
+        if state == POLL_OK:
+            break
+        elif state == POLL_READ:
+            select.select([conn.fileno()], [], [])
+        elif state == POLL_WRITE:
+            select.select([], [conn.fileno()], [])
+        else:
+            raise OperationalError("bad state from poll: %s" % state)
+
+
 __all__ = filter(lambda k: not k.startswith('_'), locals().keys())

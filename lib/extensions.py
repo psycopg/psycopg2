@@ -60,6 +60,11 @@ from _psycopg import ISQLQuote
 
 from _psycopg import QueryCanceledError, TransactionRollbackError
 
+try:
+    from _psycopg import set_wait_callback
+except ImportError:
+    pass
+
 """Isolation level values."""
 ISOLATION_LEVEL_AUTOCOMMIT     = 0
 ISOLATION_LEVEL_READ_COMMITTED = 1 
@@ -83,6 +88,7 @@ STATUS_IN_TRANSACTION = STATUS_BEGIN
 POLL_OK    = 0
 POLL_READ  = 1
 POLL_WRITE = 2
+POLL_ERROR = 3
 
 """Backend transaction status values."""
 TRANSACTION_STATUS_IDLE    = 0

@@ -32,6 +32,7 @@
 #include "psycopg/psycopg.h"
 #include "psycopg/connection.h"
 #include "psycopg/cursor.h"
+#include "psycopg/green.h"
 #include "psycopg/lobject.h"
 #include "psycopg/typecast.h"
 #include "psycopg/microprotocols.h"
@@ -691,6 +692,11 @@ static PyMethodDef psycopgMethods[] = {
      METH_VARARGS, psyco_TimestampFromMx_doc},
     {"IntervalFromMx",  (PyCFunction)psyco_IntervalFromMx,
      METH_VARARGS, psyco_IntervalFromMx_doc},
+#endif
+
+#ifdef PSYCOPG_EXTENSIONS
+    {"set_wait_callback",  (PyCFunction)psyco_set_wait_callback,
+     METH_O, psyco_set_wait_callback_doc},
 #endif
 
     {NULL, NULL, 0, NULL}        /* Sentinel */

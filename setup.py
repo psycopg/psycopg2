@@ -343,7 +343,7 @@ sources = [
     'adapter_qstring.c', 'adapter_pboolean.c', 'adapter_binary.c',
     'adapter_asis.c', 'adapter_list.c', 'adapter_datetime.c',
     'adapter_pfloat.c', 'adapter_pdecimal.c',
-    'utils.c']
+    'green.c', 'utils.c']
 
 parser = ConfigParser.ConfigParser()
 parser.read('setup.cfg')
