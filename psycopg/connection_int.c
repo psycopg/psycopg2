@@ -33,6 +33,7 @@
 #include "psycopg/connection.h"
 #include "psycopg/cursor.h"
 #include "psycopg/pqpath.h"
+#include "psycopg/green.h"
 
 /* conn_notice_callback - process notices */
 
@@ -319,12 +320,24 @@ int
 conn_sync_connect(connectionObject *self)
 {
     PGconn *pgconn;
+    PyObject *wait_rv;
+    int green;
 
-    Py_BEGIN_ALLOW_THREADS;
-    self->pgconn = pgconn = PQconnectdb(self->dsn);
-    Py_END_ALLOW_THREADS;
-
-    Dprintf("conn_connect: new postgresql connection at %p", pgconn);
+    /* store this value to prevent inconsistencies due to a change
+     * in the middle of the function. */
+    green = psyco_green();
+    if (!green) {
+        Py_BEGIN_ALLOW_THREADS;
+        self->pgconn = pgconn = PQconnectdb(self->dsn);
+        Py_END_ALLOW_THREADS;
+        Dprintf("conn_connect: new postgresql connection at %p", pgconn);
+    }
+    else {
+        Py_BEGIN_ALLOW_THREADS;
+        self->pgconn = pgconn = PQconnectStart(self->dsn);
+        Py_END_ALLOW_THREADS;
+        Dprintf("conn_connect: new green postgresql connection at %p", pgconn);
+    }
 
     if (pgconn == NULL)
     {
@@ -341,17 +354,38 @@ conn_sync_connect(connectionObject *self)
 
     PQsetNoticeProcessor(pgconn, conn_notice_callback, (void*)self);
 
-    if (conn_setup(self, pgconn) == -1)
+#ifdef HAVE_PQPROTOCOL3
+    self->protocol = PQprotocolVersion(pgconn);
+#else
+    self->protocol = 2;
+#endif
+
+    Dprintf("conn_connect: using protocol %d", self->protocol);
+
+    self->server_version = (int)PQserverVersion(pgconn);
+
+    /* if the connection is green, wait to finish connection */
+    if (green) {
+        wait_rv = psyco_wait((PyObject *)self, Py_None);
+        if (wait_rv) {
+            Py_DECREF(wait_rv);
+        } else {
+            return -1;
+        }
+    }
+
+    /* From here the connection is considered ready: with the new status,
+     * poll() will use PQisBusy instead of PQconnectPoll.
+     */
+    self->status = CONN_STATUS_READY;
+
+    if (conn_setup(self, self->pgconn) == -1) {
         return -1;
+    }
 
     if (pq_set_non_blocking(self, 1, 1) != 0) {
         return -1;
     }
-
-    self->protocol = conn_get_protocol_version(pgconn);
-    Dprintf("conn_connect: using protocol %d", self->protocol);
-
-    self->server_version = (int)PQserverVersion(pgconn);
 
     return 0;
 }

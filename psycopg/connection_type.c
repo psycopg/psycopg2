@@ -702,7 +702,7 @@ connection_setup(connectionObject *self, const char *dsn, long int async)
     self->notifies = PyList_New(0);
     self->closed = 0;
     self->async = async;
-    self->status = async ? CONN_STATUS_SETUP : CONN_STATUS_READY;
+    self->status = CONN_STATUS_SETUP;
     self->critical = NULL;
     self->async_cursor = NULL;
     self->async_status = ASYNC_DONE;
