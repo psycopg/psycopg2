@@ -399,8 +399,6 @@ psyco_conn_reset(connectionObject *self)
     return Py_None;
 }
 
-#endif
-
 static PyObject *
 psyco_conn_get_exception(PyObject *self, void *closure)
 {
@@ -411,13 +409,13 @@ psyco_conn_get_exception(PyObject *self, void *closure)
 }
 
 #define psyco_conn_poll_doc \
-"poll() -- return POLL_OK if the connection has been estabilished, " \
+"poll() -- return POLL_OK if the operation has finished, "           \
  "POLL_READ if the application should be waiting "                   \
  "for the socket to be readable or POLL_WRITE "                      \
  "if the socket should be writable."
 
 static PyObject *
-psyco_conn_poll(connectionObject *self)
+psyco_conn_poll_async(connectionObject *self)
 {
     PostgresPollingStatusType poll_status;
 
@@ -524,6 +522,18 @@ psyco_conn_poll(connectionObject *self)
     return PyInt_FromLong(PSYCO_POLL_WRITE);
 }
 
+static PyObject *
+psyco_conn_poll(connectionObject *self)
+{
+    EXC_IF_CONN_CLOSED(self);
+
+    if (self->async) {
+        return psyco_conn_poll_async(self);
+    } else {
+        return conn_poll_green(self);
+    }
+}
+
 
 /* extension: fileno - return the file descriptor of the connection */
 
@@ -578,6 +588,9 @@ psyco_conn_isexecuting(connectionObject *self)
     Py_INCREF(Py_False);
     return Py_False;
 }
+
+#endif  /* PSYCOPG_EXTENSIONS */
+
 
 /** the connection object **/
 

@@ -629,6 +629,47 @@ conn_poll_ready(connectionObject *self)
     }
 }
 
+/* conn_poll_green - poll a *sync* connection with external wait */
+
+PyObject *
+conn_poll_green(connectionObject *self)
+{
+    int res = PSYCO_POLL_ERROR;
+
+    switch (self->status) {
+    case CONN_STATUS_SETUP:
+        Dprintf("conn_poll: status = CONN_STATUS_SETUP");
+        self->status = CONN_STATUS_ASYNC;
+        res =  PSYCO_POLL_WRITE;
+        break;
+
+    case CONN_STATUS_ASYNC:
+        Dprintf("conn_poll: status = CONN_STATUS_ASYNC");
+        switch (PQconnectPoll(self->pgconn)) {
+        case PGRES_POLLING_OK:
+            res = PSYCO_POLL_OK;
+            break;
+        case PGRES_POLLING_READING:
+            res = PSYCO_POLL_READ;
+            break;
+        case PGRES_POLLING_WRITING:
+            res = PSYCO_POLL_WRITE;
+            break;
+        case PGRES_POLLING_FAILED:
+        case PGRES_POLLING_ACTIVE:
+            res = PSYCO_POLL_ERROR;
+            break;
+        }
+        break;
+
+    default:
+        Dprintf("conn_poll: in unexpected state");
+        res = PSYCO_POLL_ERROR;
+    }
+
+    return PyInt_FromLong(res);
+}
+
 /* conn_close - do anything needed to shut down the connection */
 
 void

@@ -59,6 +59,7 @@ extern "C" {
 #define PSYCO_POLL_OK    0
 #define PSYCO_POLL_READ  1
 #define PSYCO_POLL_WRITE 2
+#define PSYCO_POLL_ERROR 3
 
 /* Hard limit on the notices stored by the Python connection */
 #define CONN_NOTICES_LIMIT 50
@@ -134,6 +135,7 @@ HIDDEN int  conn_set_client_encoding(connectionObject *self, const char *enc);
 HIDDEN PyObject *conn_poll_send(connectionObject *self);
 HIDDEN PyObject *conn_poll_fetch(connectionObject *self);
 HIDDEN PyObject *conn_poll_ready(connectionObject *self);
+HIDDEN PyObject *conn_poll_green(connectionObject *self);
 
 /* exception-raising macros */
 #define EXC_IF_CONN_CLOSED(self) if ((self)->closed > 0) { \
