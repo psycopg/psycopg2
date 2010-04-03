@@ -696,6 +696,29 @@ conn_poll_green(connectionObject *self)
         }
         break;
 
+    case CONN_STATUS_READY:
+    case CONN_STATUS_BEGIN:
+        Dprintf("conn_poll: status = CONN_STATUS_READY/BEGIN");
+        switch (self->async_status) {
+        case ASYNC_READ:
+            if (0 == PQconsumeInput(self->pgconn)) {
+                PyErr_SetString(OperationalError, PQerrorMessage(self->pgconn));
+                res = PSYCO_POLL_ERROR;
+            }
+            if (PQisBusy(self->pgconn)) {
+                res = PSYCO_POLL_READ;
+            } else {
+                res = PSYCO_POLL_OK;
+            }
+            break;
+
+        default:
+            Dprintf("conn_poll: in unexpected async status: %d",
+                    self->async_status);
+            res = PSYCO_POLL_ERROR;
+        }
+        break;
+
     default:
         Dprintf("conn_poll: in unexpected state");
         res = PSYCO_POLL_ERROR;
