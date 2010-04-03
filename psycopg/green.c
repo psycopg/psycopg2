@@ -56,6 +56,25 @@ psyco_set_wait_callback(PyObject *self, PyObject *obj)
 }
 
 
+/* Return the currently registered wait callback function.
+ *
+ * The function is exported by the _psycopg module.
+ */
+PyObject *
+psyco_get_wait_callback(PyObject *self, PyObject *obj)
+{
+    PyObject *ret;
+
+    ret = wait_callback;
+    if (!ret) {
+        ret = Py_None;
+    }
+
+    Py_INCREF(ret);
+    return ret;
+}
+
+
 /* Return nonzero if a wait callback should be called. */
 int
 psyco_green()

@@ -697,6 +697,8 @@ static PyMethodDef psycopgMethods[] = {
 #ifdef PSYCOPG_EXTENSIONS
     {"set_wait_callback",  (PyCFunction)psyco_set_wait_callback,
      METH_O, psyco_set_wait_callback_doc},
+    {"get_wait_callback",  (PyCFunction)psyco_get_wait_callback,
+     METH_NOARGS, psyco_get_wait_callback_doc},
 #endif
 
     {NULL, NULL, 0, NULL}        /* Sentinel */

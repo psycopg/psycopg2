@@ -61,7 +61,7 @@ from _psycopg import ISQLQuote
 from _psycopg import QueryCanceledError, TransactionRollbackError
 
 try:
-    from _psycopg import set_wait_callback
+    from _psycopg import set_wait_callback, get_wait_callback
 except ImportError:
     pass
 
