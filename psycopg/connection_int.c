@@ -701,6 +701,7 @@ conn_poll_green(connectionObject *self)
         Dprintf("conn_poll: status = CONN_STATUS_READY/BEGIN");
         switch (self->async_status) {
         case ASYNC_READ:
+            Dprintf("conn_poll: async_status = ASYNC_READ");
             if (0 == PQconsumeInput(self->pgconn)) {
                 PyErr_SetString(OperationalError, PQerrorMessage(self->pgconn));
                 res = PSYCO_POLL_ERROR;
@@ -709,6 +710,22 @@ conn_poll_green(connectionObject *self)
                 res = PSYCO_POLL_READ;
             } else {
                 res = PSYCO_POLL_OK;
+            }
+            break;
+
+        case ASYNC_WRITE:
+            Dprintf("conn_poll: async_status = ASYNC_WRITE");
+            switch (PQflush(self->pgconn)) {
+            case  0:  /* success */
+                res = PSYCO_POLL_OK;
+                break;
+            case  1:  /* would block */
+                res = PSYCO_POLL_WRITE;
+                break;
+            case -1:  /* error */
+                PyErr_SetString(OperationalError, PQerrorMessage(self->pgconn));
+                res = PSYCO_POLL_ERROR;
+                break;
             }
             break;
 

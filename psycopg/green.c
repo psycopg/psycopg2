@@ -144,7 +144,7 @@ psyco_exec_green(connectionObject *conn, const char *command)
 {
     PGconn *pgconn = conn->pgconn;
     PGresult *result = NULL, *res;
-    PyObject *cb;
+    PyObject *cb, *pyrv;
 
     if (!(cb = have_wait_callback())) {
         goto end;
@@ -153,18 +153,26 @@ psyco_exec_green(connectionObject *conn, const char *command)
     /* Send the query asynchronously */
     Dprintf("psyco_exec_green: sending query async");
     if (0 == PQsendQuery(pgconn, command)) {
-        /* TODO: not handling the case of block during send */
         Dprintf("psyco_exec_green: PQsendQuery returned 0");
         goto clear;
     }
 
-    /* Loop reading data using the user-provided wait function */
-    conn->async_status = ASYNC_READ;
-    PyObject *pyrv;
+    /* Ensure the query reached the server. */
+    conn->async_status = ASYNC_WRITE;
 
     pyrv = PyObject_CallFunctionObjArgs(cb, conn, NULL, NULL);
     if (!pyrv) {
-        Dprintf("psyco_exec_green: error in callback");
+        Dprintf("psyco_exec_green: error in callback sending query");
+        goto clear;
+    }
+    Py_DECREF(pyrv);
+
+    /* Loop reading data using the user-provided wait function */
+    conn->async_status = ASYNC_READ;
+
+    pyrv = PyObject_CallFunctionObjArgs(cb, conn, NULL, NULL);
+    if (!pyrv) {
+        Dprintf("psyco_exec_green: error in callback reading result");
         goto clear;
     }
     Py_DECREF(pyrv);
