@@ -724,7 +724,12 @@ conn_poll_green(connectionObject *self)
         res = PSYCO_POLL_ERROR;
     }
 
-    return PyInt_FromLong(res);
+    if (!(res == PSYCO_POLL_ERROR && PyErr_Occurred())) {
+        return PyInt_FromLong(res);
+    } else {
+        /* There is an error and an exception is already in place */
+        return NULL;
+    }
 }
 
 /* conn_close - do anything needed to shut down the connection */
