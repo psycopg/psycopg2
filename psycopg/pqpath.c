@@ -40,6 +40,7 @@
 #include "psycopg/pqpath.h"
 #include "psycopg/connection.h"
 #include "psycopg/cursor.h"
+#include "psycopg/green.h"
 #include "psycopg/typecast.h"
 #include "psycopg/pgtypes.h"
 #include "psycopg/pgversion.h"
@@ -694,14 +695,23 @@ pq_execute(cursorObject *curs, const char *query, int async)
         IFCLEARPGRES(curs->pgres);
         Dprintf("pq_execute: executing SYNC query:");
         Dprintf("    %-.200s", query);
-        curs->pgres = PQexec(curs->conn->pgconn, query);
+        if (!psyco_green()) {
+            curs->pgres = PQexec(curs->conn->pgconn, query);
+        }
+        else {
+            Py_BLOCK_THREADS;
+            curs->pgres = psyco_exec_green(curs->conn, query);
+            Py_UNBLOCK_THREADS;
+        }
 
         /* dont let pgres = NULL go to pq_fetch() */
         if (curs->pgres == NULL) {
             pthread_mutex_unlock(&(curs->conn->lock));
             Py_BLOCK_THREADS;
-            PyErr_SetString(OperationalError,
-                            PQerrorMessage(curs->conn->pgconn));
+            if (!PyErr_Occurred()) {
+                PyErr_SetString(OperationalError,
+                                PQerrorMessage(curs->conn->pgconn));
+            }
             return -1;
         }
     }
