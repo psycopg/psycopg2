@@ -26,7 +26,8 @@
 #ifndef PSYCOPG_GREEN_H
 #define PSYCOPG_GREEN_H 1
 
-struct PyObject;
+#include <libpq-fe.h>
+#include "psycopg/connection.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -50,6 +51,7 @@ extern "C" {
 HIDDEN PyObject *psyco_set_wait_callback(PyObject *self, PyObject *obj);
 HIDDEN int psyco_green(void);
 HIDDEN PyObject *psyco_wait(PyObject *conn, PyObject *curs);
+HIDDEN PGresult *psyco_exec_green(connectionObject *conn, const char *command);
 
 #ifdef __cplusplus
 }
