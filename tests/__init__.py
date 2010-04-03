@@ -8,6 +8,13 @@ dbhost = os.environ.get('PSYCOPG2_TESTDB_HOST', None)
 dbport = os.environ.get('PSYCOPG2_TESTDB_PORT', None)
 dbuser = os.environ.get('PSYCOPG2_TESTDB_USER', None)
 
+# Check if we want to test psycopg's green path.
+green = os.environ.get('PSYCOPG2_TEST_GREEN', None)
+if green:
+    import psycopg2.extensions
+    import psycopg2.extras
+    psycopg2.extensions.set_wait_callback(psycopg2.extras.wait_select)
+
 # Construct a DSN to connect to the test database:
 dsn = 'dbname=%s' % dbname
 if dbhost is not None:
