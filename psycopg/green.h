@@ -34,23 +34,26 @@ extern "C" {
 #endif
 
 #define psyco_set_wait_callback_doc \
-"set_wait_callback(f) -- Register a callback function to block waiting for data.\n" \
+"Register a callback function to block waiting for data.\n" \
 "\n" \
 "The callback should have signature :samp:`fun({conn})` and\n" \
 "is called to wait for data available whenever a blocking function from the\n" \
-"libpq is called.  Use `!register_wait_function(None)` to revert to the\n" \
-"original behaviour (using blocking libpq functions).\n" \
+"libpq is called.  Use `!set_wait_callback(None)` to revert to the\n" \
+"original behaviour (i.e. using blocking libpq functions).\n" \
 "\n" \
 "The function is an hook to allow coroutine-based libraries (such as\n" \
-"eventlet_ or gevent_) to switch when Psycopg is blocked, allowing\n" \
+"Eventlet_ or gevent_) to switch when Psycopg is blocked, allowing\n" \
 "other coroutines to run concurrently.\n" \
 "\n" \
 "See `~psycopg2.extras.wait_select()` for an example of a wait callback\n" \
-"implementation.\n"
+"implementation.\n" \
+"\n" \
+".. _Eventlet: http://eventlet.net/\n" \
+".. _gevent: http://www.gevent.org/\n"
 HIDDEN PyObject *psyco_set_wait_callback(PyObject *self, PyObject *obj);
 
 #define psyco_get_wait_callback_doc \
-"get_wait_callback() -- Return the currently registered wait callback.\n" \
+"Return the currently registered wait callback.\n" \
 "\n" \
 "Return `None` if no callback is currently registered.\n"
 HIDDEN PyObject *psyco_get_wait_callback(PyObject *self, PyObject *obj);

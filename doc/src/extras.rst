@@ -155,3 +155,11 @@ Fractional time zones
 
     .. versionadded:: 2.0.9
 
+.. index::
+   pair: Example; Coroutine;
+
+Coroutine support
+-----------------
+
+.. autofunction:: wait_select(conn)
+

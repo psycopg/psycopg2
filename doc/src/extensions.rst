@@ -106,6 +106,14 @@ functionalities defined by the |DBAPI|_.
         Close the object and remove it from the database.
 
 
+.. autofunction:: set_wait_callback(f)
+
+    .. versionadded:: 2.2.0
+
+.. autofunction:: get_wait_callback()
+
+    .. versionadded:: 2.2.0
+
 
 .. _sql-adaptation-objects:
 
@@ -456,7 +464,9 @@ Poll constants
 .. versionadded:: 2.2.0
 
 These values can be returned by `connection.poll()` during asynchronous
-connection and communication. See :ref:`async-support`.
+connection and communication.  They match the values in the libpq enum
+`!PostgresPollingStatusType`.  See :ref:`async-support` and
+:ref:`green-support`.
 
 .. data:: POLL_OK
 
@@ -480,6 +490,12 @@ connection and communication. See :ref:`async-support`.
     For example::
 
         select.select([], [conn.fileno()], [])
+
+.. data:: POLL_ERROR
+
+    There was a problem during connection polling. This value should actually
+    never be returned: in case of poll error usually an exception containing
+    the relevant details is raised.
 
 
 

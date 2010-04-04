@@ -362,6 +362,75 @@ this will be probably implemented in a future release.
 
 
 
+
+.. index::
+    single: Greenlet, Coroutine, eventlet, gevent, Wait callback
+
+.. _green-support:
+
+Support to coroutine libraries
+------------------------------
+
+.. versionadded:: 2.2.0
+
+Psycopg can be used together with coroutine_\-based libraries, and participate
+to cooperative multithread.
+
+Coroutine-based libraries (such as Eventlet_ or gevent_) can usually patch the
+Python standard library in order to enable a coroutine switch in presence of
+blocking I/O: the process is usually referred as making the system *green*, in
+reference to greenlet_, the basic Python micro-thread library.
+
+Because Psycopg is a C extension module, it is not possible for coroutine
+libraries to patch it: Psycopg instead enables cooperative multithreading by
+allowing the registration of a *wait callback* using the
+`psycopg2.extensions.set_wait_callback()` function. When a wait callback is
+registered, Psycopg will use `libpq non-blocking calls`__ instead of the regular
+blocking ones, and will delegate to the callback the responsibility to wait
+for available data.
+
+This way of working is less flexible of complete asynchronous I/O, but has the
+advantage of maintaining a complete |DBAPI| semantics: from the point of view
+of the end user, all Psycopg functions and objects will work transparently
+in the coroutine environment (the calling coroutine will be blocked while
+other coroutines can be scheduled to run), allowing non modified code and
+third party libraries (such as SQLAlchemy_) to be used in coroutine-based
+programs.
+
+Notice that, while I/O correctly yields control to other coroutines, each
+connection has a lock allowing a single cursor at time to communicate with the
+backend: such lock is not *green*, so blocking against it would block the
+entire program waiting for data, not the single coroutine. Therefore,
+programmers are advised to either avoid to share connections between coroutines
+or to use a library-friendly lock to synchronize shares connections, e.g. for
+pooling.
+
+Coroutine libraries authors should provide a callback implementation (and
+probably register it) to make Psycopg as green as they want. An example
+callback (using `!select()` to block) is provided as
+`psycopg2.extras.wait_select()`: it boils down to something similar to::
+
+    def wait_select(conn):
+        while 1:
+            state = conn.poll()
+            if state == extensions.POLL_OK:
+                break
+            elif state == extensions.POLL_READ:
+                select.select([conn.fileno()], [], [])
+            elif state == extensions.POLL_WRITE:
+                select.select([], [conn.fileno()], [])
+            else:
+                raise OperationalError("bad state from poll: %s" % state)
+
+.. _coroutine: http://en.wikipedia.org/wiki/Coroutine
+.. _greenlet: http://pypi.python.org/pypi/greenlet
+.. _Eventlet: http://eventlet.net/
+.. _gevent: http://www.gevent.org/
+.. _SQLAlchemy: http://www.sqlalchemy.org/
+.. __: http://www.postgresql.org/docs/8.4/static/libpq-async.html
+
+
+
 .. testcode::
     :hide:
 

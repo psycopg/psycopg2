@@ -321,7 +321,7 @@ The ``connection`` class
 
     .. versionadded:: 2.2.0
 
-    .. seealso:: :ref:`Asynchronous support <async-support>`.
+    .. seealso:: :ref:`async-support` and :ref:`green-support`.
 
 
     .. attribute:: async
@@ -338,9 +338,11 @@ The ``connection`` class
         Return one of the constants defined in :ref:`poll-constants`. If it
         returns `~psycopg2.extensions.POLL_OK` then the connection has been
         estabilished or the query results are available on the client.
-        Otherwise wait until the file descriptor returned by
-        `~connection.fileno()` is ready to read or to write, as explained in
-        :ref:`async-support`.
+        Otherwise wait until the file descriptor returned by `fileno()` is
+        ready to read or to write, as explained in :ref:`async-support`.
+        `poll()` should be also used by the function installed by
+        `~psycopg2.extensions.set_wait_callback()` as explained in
+        :ref:`green-support`.
 
         `poll()` is also used to receive asynchronous notifications from the
         database: see :ref:`async-notify` from further details.
