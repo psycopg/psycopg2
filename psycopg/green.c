@@ -115,7 +115,7 @@ have_wait_callback()
  * The function returns the return value of the called function.
  */
 PyObject *
-psyco_wait(PyObject *conn, PyObject *curs)
+psyco_wait(connectionObject *conn)
 {
     PyObject *rv;
     PyObject *cb;
@@ -125,7 +125,7 @@ psyco_wait(PyObject *conn, PyObject *curs)
         return NULL;
     }
 
-    rv = PyObject_CallFunctionObjArgs(cb, conn, curs, NULL);
+    rv = PyObject_CallFunctionObjArgs(cb, conn, NULL);
     Py_DECREF(cb);
 
     return rv;
@@ -160,7 +160,7 @@ psyco_exec_green(connectionObject *conn, const char *command)
     /* Ensure the query reached the server. */
     conn->async_status = ASYNC_WRITE;
 
-    pyrv = PyObject_CallFunctionObjArgs(cb, conn, NULL, NULL);
+    pyrv = PyObject_CallFunctionObjArgs(cb, conn, NULL);
     if (!pyrv) {
         Dprintf("psyco_exec_green: error in callback sending query");
         goto clear;
@@ -170,7 +170,7 @@ psyco_exec_green(connectionObject *conn, const char *command)
     /* Loop reading data using the user-provided wait function */
     conn->async_status = ASYNC_READ;
 
-    pyrv = PyObject_CallFunctionObjArgs(cb, conn, NULL, NULL);
+    pyrv = PyObject_CallFunctionObjArgs(cb, conn, NULL);
     if (!pyrv) {
         Dprintf("psyco_exec_green: error in callback reading result");
         goto clear;

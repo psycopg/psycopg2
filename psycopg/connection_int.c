@@ -366,7 +366,7 @@ conn_sync_connect(connectionObject *self)
 
     /* if the connection is green, wait to finish connection */
     if (green) {
-        wait_rv = psyco_wait((PyObject *)self, Py_None);
+        wait_rv = psyco_wait(self);
         if (wait_rv) {
             Py_DECREF(wait_rv);
         } else {

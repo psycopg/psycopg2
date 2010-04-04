@@ -36,7 +36,7 @@ extern "C" {
 #define psyco_set_wait_callback_doc \
 "set_wait_callback(f) -- Register a callback function to block waiting for data.\n" \
 "\n" \
-"The callback must should signature :samp:`fun({conn}, {cur}=None)` and\n" \
+"The callback should have signature :samp:`fun({conn})` and\n" \
 "is called to wait for data available whenever a blocking function from the\n" \
 "libpq is called.  Use `!register_wait_function(None)` to revert to the\n" \
 "original behaviour (using blocking libpq functions).\n" \
@@ -56,7 +56,7 @@ HIDDEN PyObject *psyco_set_wait_callback(PyObject *self, PyObject *obj);
 HIDDEN PyObject *psyco_get_wait_callback(PyObject *self, PyObject *obj);
 
 HIDDEN int psyco_green(void);
-HIDDEN PyObject *psyco_wait(PyObject *conn, PyObject *curs);
+HIDDEN PyObject *psyco_wait(connectionObject *conn);
 HIDDEN PGresult *psyco_exec_green(connectionObject *conn, const char *command);
 
 #ifdef __cplusplus

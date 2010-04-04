@@ -488,16 +488,15 @@ import select
 from psycopg2.extensions import POLL_OK, POLL_READ, POLL_WRITE
 from psycopg2 import OperationalError
 
-def wait_select(conn, curs=None):
+def wait_select(conn):
     """Wait until a connection or cursor has data available.
 
     The function is an example of a wait callback to be registered with
     `~psycopg2.extensions.set_wait_callback()`. This function uses `!select()`
     to wait for data available.
     """
-    poll = (curs or conn).poll
     while 1:
-        state = poll()
+        state = conn.poll()
         if state == POLL_OK:
             break
         elif state == POLL_READ:
