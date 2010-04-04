@@ -33,6 +33,7 @@
 HIDDEN PyObject *wait_callback = NULL;
 
 PyObject *have_wait_callback(void);
+void psyco_clear_result_blocking(connectionObject *conn);
 
 /* Register a callback function to block waiting for data.
  *
@@ -163,6 +164,7 @@ psyco_exec_green(connectionObject *conn, const char *command)
     pyrv = PyObject_CallFunctionObjArgs(cb, conn, NULL);
     if (!pyrv) {
         Dprintf("psyco_exec_green: error in callback sending query");
+        psyco_clear_result_blocking(conn);
         goto clear;
     }
     Py_DECREF(pyrv);
@@ -173,6 +175,7 @@ psyco_exec_green(connectionObject *conn, const char *command)
     pyrv = PyObject_CallFunctionObjArgs(cb, conn, NULL);
     if (!pyrv) {
         Dprintf("psyco_exec_green: error in callback reading result");
+        psyco_clear_result_blocking(conn);
         goto clear;
     }
     Py_DECREF(pyrv);
@@ -197,3 +200,23 @@ end:
     return result;
 }
 
+
+/* Discard the result of the currenly executed query, blocking.
+ *
+ * This function doesn't honour the wait callback: it can be used in case of
+ * emergency if the callback fails in order to put the connection back into a
+ * consistent state.
+ *
+ * If any command was issued before clearing the result, libpq would fail with
+ * the error "another command is already in progress".
+ */
+void
+psyco_clear_result_blocking(connectionObject *conn)
+{
+    PGresult *res;
+
+    Dprintf("psyco_clear_result_blocking");
+    while (NULL != (res = PQgetResult(conn->pgconn))) {
+        PQclear(res);
+    }
+}

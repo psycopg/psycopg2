@@ -52,6 +52,22 @@ class GreenTests(unittest.TestCase):
 
         self.fail("sending a large query didn't trigger block on write.")
 
+    def test_error_in_callback(self):
+        conn = self.connect()
+        curs = conn.cursor()
+        curs.execute("select 1")  # have a BEGIN
+        curs.fetchone()
+
+        # now try to do something that will fail in the callback
+        psycopg2.extensions.set_wait_callback(lambda conn: 1/0)
+        self.assertRaises(ZeroDivisionError, curs.execute, "select 2")
+
+        # check that the connection is left in an usable state
+        psycopg2.extensions.set_wait_callback(psycopg2.extras.wait_select)
+        conn.rollback()
+        curs.execute("select 2")
+        self.assertEqual(2, curs.fetchone()[0])
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
