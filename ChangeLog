@@ -1,3 +1,9 @@
+2010-04-05  Federico Di Gregorio  <fog@initd.org>
+
+	* Fixed problem with asynchronous NOTIFYs.
+
+	* Integrated async pacthes from Jan's git tree.
+
 2010-03-13  Federico Di Gregorio  <fog@initd.org>
 
 	* Release 2.0.14.

@@ -76,10 +76,10 @@ STATUS_ASYNC    = 4
 # This is a usefull mnemonic to check if the connection is in a transaction
 STATUS_IN_TRANSACTION = STATUS_BEGIN
 
-"""psycopg async connection polling values"""
+"""psycopg asynchronous connection polling values"""
+POLL_OK    = 0
 POLL_READ  = 1
 POLL_WRITE = 2
-POLL_OK    = 3
 
 """Backend transaction status values."""
 TRANSACTION_STATUS_IDLE    = 0

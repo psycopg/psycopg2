@@ -39,5 +39,5 @@ while 1:
     if select.select([curs],[],[],5)==([],[],[]):
         print "Timeout"
     else:
-        if curs.isready():
+        if not curs.poll():
             print "Got NOTIFY: %s" % str(curs.connection.notifies.pop()) 

@@ -1485,13 +1485,8 @@ psyco_curs_poll(cursorObject *self)
     if (self->conn->async_status == ASYNC_WRITE) {
         return curs_poll_send(self);
     }
-    else if (self->conn->async_status == ASYNC_READ) {
+    else  {
         return curs_poll_fetch(self);
-    }
-    else {
-        PyErr_Format(OperationalError, "unexpected execution status: %d",
-                     self->conn->async_status);
-        return NULL;
     }
 }
 

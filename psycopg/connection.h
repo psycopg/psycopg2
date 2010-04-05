@@ -53,11 +53,10 @@ extern "C" {
 #define ASYNC_READ  1
 #define ASYNC_WRITE 2
 
-/* polling result, try to keep in sync with PostgresPollingStatusType from
-   libpq-fe.h */
+/* polling result */
+#define PSYCO_POLL_OK    0
 #define PSYCO_POLL_READ  1
 #define PSYCO_POLL_WRITE 2
-#define PSYCO_POLL_OK    3
 
 /* Hard limit on the notices stored by the Python connection */
 #define CONN_NOTICES_LIMIT 50

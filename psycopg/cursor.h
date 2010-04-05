@@ -62,10 +62,10 @@ typedef struct {
     PyObject   *pgstatus;  /* last message from the server after an execute */
     Oid         lastoid;   /* last oid from an insert or InvalidOid */
 
-    PyObject *casts;      /* an array (tuple) of typecast functions */
-    PyObject *caster;     /* the current typecaster object */
+    PyObject *casts;       /* an array (tuple) of typecast functions */
+    PyObject *caster;      /* the current typecaster object */
 
-    PyObject *copyfile;   /* file-like used during COPY TO/FROM ops */
+    PyObject  *copyfile;   /* file-like used during COPY TO/FROM ops */
     Py_ssize_t copysize;   /* size of the copy buffer during COPY TO/FROM ops */
 #define DEFAULT_COPYSIZE 16384
 #define DEFAULT_COPYBUFF  8132

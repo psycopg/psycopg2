@@ -141,9 +141,16 @@ curs_poll_fetch(cursorObject *self)
         return PyInt_FromLong(PSYCO_POLL_READ);
     }
 
-    /* data has arrived, try to fetch all of it or, if it failed, tell the
-       user to wait more */
-    last_result = curs_get_last_result(self);
+    /* try to fetch the data only if this was a poll following a read
+       request; else just return POLL_OK to the user: this is necessary
+       because of asynchronous NOTIFYs that can be sent by the backend
+       even if the user didn't asked for them */
+
+    if (self->conn->async_status == ASYNC_READ)
+        last_result = curs_get_last_result(self);
+    else
+        last_result = 0;
+
     if (last_result == 0) {
         Dprintf("cur_poll_fetch: returning %d", PSYCO_POLL_OK);
         return PyInt_FromLong(PSYCO_POLL_OK);
