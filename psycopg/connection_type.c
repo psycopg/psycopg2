@@ -37,6 +37,7 @@
 #include "psycopg/psycopg.h"
 #include "psycopg/connection.h"
 #include "psycopg/cursor.h"
+#include "psycopg/pqpath.h"
 #include "psycopg/lobject.h"
 
 /** DBAPI methods **/
@@ -65,6 +66,20 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *keywds)
     }
 
     EXC_IF_CONN_CLOSED(self);
+
+    if (self->status != CONN_STATUS_READY &&
+        self->status != CONN_STATUS_BEGIN) {
+        PyErr_SetString(OperationalError,
+                        "asynchronous connection attempt underway");
+        return NULL;
+    }
+
+    if (name != NULL && self->async) {
+        PyErr_SetString(OperationalError,
+                        "asynchronous connections "
+                        "cannot produce named cursors");
+        return NULL;
+    }
 
     Dprintf("psyco_conn_cursor: new cursor for connection at %p", self);
     Dprintf("psyco_conn_cursor:     parameters: name = %s", name);
@@ -389,6 +404,172 @@ psyco_conn_get_exception(PyObject *self, void *closure)
     return exception;
 }
 
+#define psyco_conn_poll_doc \
+"poll() -- return POLL_OK if the connection has been estabilished, " \
+ "POLL_READ if the application should be waiting "                   \
+ "for the socket to be readable or POLL_WRITE "                      \
+ "if the socket should be writable."
+
+static PyObject *
+psyco_conn_poll(connectionObject *self)
+{
+    PostgresPollingStatusType poll_status;
+
+    Dprintf("conn_poll: polling with status %d", self->status);
+
+    switch (self->status) {
+
+    case CONN_STATUS_SEND_DATESTYLE:
+    case CONN_STATUS_SEND_CLIENT_ENCODING:
+    case CONN_STATUS_SEND_TRANSACTION_ISOLATION:
+        /* these mean that we need to wait for the socket to become writable
+           to send the rest of our query */
+        return conn_poll_send(self);
+
+    case CONN_STATUS_GET_DATESTYLE:
+    case CONN_STATUS_GET_CLIENT_ENCODING:
+    case CONN_STATUS_GET_TRANSACTION_ISOLATION:
+        /* these mean that we are waiting for the results of the queries */
+        return conn_poll_fetch(self);
+
+    case CONN_STATUS_ASYNC:
+        /* this means we are in the middle of a PQconnectPoll loop */
+        break;
+
+    case CONN_STATUS_READY:
+        /* we have completed the connection setup */
+        return PyInt_FromLong(PSYCO_POLL_OK);
+
+    default:
+        /* everything else is an error */
+        PyErr_SetString(OperationalError,
+                        "not in asynchronous connection attempt");
+        return NULL;
+
+    }
+
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&self->lock);
+
+    poll_status = PQconnectPoll(self->pgconn);
+
+    if (poll_status == PGRES_POLLING_READING) {
+        pthread_mutex_unlock(&(self->lock));
+        Py_BLOCK_THREADS;
+        Dprintf("conn_poll: returing POLL_READ");
+        return PyInt_FromLong(PSYCO_POLL_READ);
+    }
+
+    if (poll_status == PGRES_POLLING_WRITING) {
+        pthread_mutex_unlock(&(self->lock));
+        Py_BLOCK_THREADS;
+        Dprintf("conn_poll: returing POLL_WRITE");
+        return PyInt_FromLong(PSYCO_POLL_WRITE);
+    }
+
+    if (poll_status == PGRES_POLLING_FAILED) {
+        pthread_mutex_unlock(&(self->lock));
+        Py_BLOCK_THREADS;
+        PyErr_SetString(OperationalError, PQerrorMessage(self->pgconn));
+        return NULL;
+    }
+
+    /* the only other thing that PQconnectPoll can return is PGRES_POLLING_OK,
+       but make sure */
+    if (poll_status != PGRES_POLLING_OK) {
+        pthread_mutex_unlock(&(self->lock));
+        Py_BLOCK_THREADS;
+        PyErr_Format(OperationalError,
+                     "unexpected result from PQconnectPoll: %d", poll_status);
+        return NULL;
+    }
+
+    Dprintf("conn_poll: got POLL_OK");
+
+    /* the connection is built, but we want to do a few other things before we
+       let the user use it */
+
+    self->equote = conn_get_standard_conforming_strings(self->pgconn);
+
+    Dprintf("conn_poll: got standard_conforming_strings");
+
+    /*
+     * Here is the tricky part, we need to figure the datestyle,
+     * client_encoding and isolevel, all using nonblocking calls.  To do that
+     * we will keep telling the user to poll, while we are waiting for our
+     * asynchronous queries to complete.
+     */
+    pthread_mutex_unlock(&(self->lock));
+    Py_END_ALLOW_THREADS;
+    /* the next operation the client will do is send a query, so ask him to
+       wait for a writable condition */
+    self->status = CONN_STATUS_SEND_DATESTYLE;
+    Dprintf("conn_poll: connection is built, retrning %d",
+            PSYCO_POLL_WRITE);
+    return PyInt_FromLong(PSYCO_POLL_WRITE);
+}
+
+
+/* extension: fileno - return the file descriptor of the connection */
+
+#define psyco_conn_fileno_doc \
+"fileno() -> int -- Return file descriptor associated to database connection."
+
+static PyObject *
+psyco_conn_fileno(connectionObject *self)
+{
+    long int socket;
+
+    EXC_IF_CONN_CLOSED(self);
+
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&(self->lock));
+    socket = (long int)PQsocket(self->pgconn);
+    pthread_mutex_unlock(&(self->lock));
+    Py_END_ALLOW_THREADS;
+
+    return PyInt_FromLong(socket);
+}
+
+
+/* extension: issync - tell if the connection is synchronous */
+
+#define psyco_conn_issync_doc \
+"issync() -> bool -- Return True if the connection is synchronous."
+
+static PyObject *
+psyco_conn_issync(connectionObject *self)
+{
+    if (self->async) {
+        Py_INCREF(Py_False);
+        return Py_False;
+    }
+    else {
+        Py_INCREF(Py_True);
+        return Py_True;
+    }
+}
+
+
+/* extension: executing - check for asynchronous operations */
+
+#define psyco_conn_executing_doc                           \
+"executing() -> bool -- Return True if the connection is " \
+ "executing an asynchronous operation."
+
+static PyObject *
+psyco_conn_executing(connectionObject *self)
+{
+    if (self->async_cursor == NULL) {
+        Py_INCREF(Py_False);
+        return Py_False;
+    }
+    else {
+        Py_INCREF(Py_True);
+        return Py_True;
+    }
+}
+
 /** the connection object **/
 
 
@@ -418,6 +599,14 @@ static struct PyMethodDef connectionObject_methods[] = {
      METH_VARARGS|METH_KEYWORDS, psyco_conn_lobject_doc},
     {"reset", (PyCFunction)psyco_conn_reset,
      METH_NOARGS, psyco_conn_reset_doc},
+    {"poll", (PyCFunction)psyco_conn_poll,
+     METH_NOARGS, psyco_conn_lobject_doc},
+    {"fileno", (PyCFunction)psyco_conn_fileno,
+     METH_NOARGS, psyco_conn_fileno_doc},
+    {"issync", (PyCFunction)psyco_conn_issync,
+     METH_NOARGS, psyco_conn_issync_doc},
+    {"executing", (PyCFunction)psyco_conn_executing,
+     METH_NOARGS, psyco_conn_executing_doc},
 #endif
     {NULL}
 };
@@ -476,21 +665,22 @@ static struct PyGetSetDef connectionObject_getsets[] = {
 /* initialization and finalization methods */
 
 static int
-connection_setup(connectionObject *self, const char *dsn)
+connection_setup(connectionObject *self, const char *dsn, long int async)
 {
     char *pos;
     int res;
 
-    Dprintf("connection_setup: init connection object at %p, refcnt = "
-        FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt
+    Dprintf("connection_setup: init connection object at %p, "
+	    "async %ld, refcnt = " FORMAT_CODE_PY_SSIZE_T,
+            self, async, ((PyObject *)self)->ob_refcnt
       );
 
     self->dsn = strdup(dsn);
     self->notice_list = PyList_New(0);
     self->notifies = PyList_New(0);
     self->closed = 0;
-    self->status = CONN_STATUS_READY;
+    self->async = async;
+    self->status = async ? CONN_STATUS_ASYNC : CONN_STATUS_READY;
     self->critical = NULL;
     self->async_cursor = NULL;
     self->pgconn = NULL;
@@ -502,7 +692,7 @@ connection_setup(connectionObject *self, const char *dsn)
 
     pthread_mutex_init(&(self->lock), NULL);
 
-    if (conn_connect(self) != 0) {
+    if (conn_connect(self, async) != 0) {
         Dprintf("connection_init: FAILED");
         res = -1;
     }
@@ -560,11 +750,12 @@ static int
 connection_init(PyObject *obj, PyObject *args, PyObject *kwds)
 {
     const char *dsn;
+    long int async = 0;
 
-    if (!PyArg_ParseTuple(args, "s", &dsn))
+    if (!PyArg_ParseTuple(args, "s|l", &dsn, &async))
         return -1;
 
-    return connection_setup((connectionObject *)obj, dsn);
+    return connection_setup((connectionObject *)obj, dsn, async);
 }
 
 static PyObject *

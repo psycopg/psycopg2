@@ -123,35 +123,16 @@ conn_notice_clean(connectionObject *self)
     Py_END_ALLOW_THREADS;    
 }
 
-/* conn_setup - setup and read basic information about the connection */
+/*
+ * the conn_get_* family of functions makes it easier to obtain the connection
+ * parameters from query results or by interrogating the connection itself
+*/
 
 int
-conn_setup(connectionObject *self, PGconn *pgconn)
+conn_get_standard_conforming_strings(PGconn *pgconn)
 {
-    PGresult *pgres;
-    const char *data, *tmp;
-    const char *scs;    /* standard-conforming strings */
-    size_t i;
-
-    /* we need the initial date style to be ISO, for typecasters; if the user
-       later change it, she must know what she's doing... */
-    static const char datestyle[] = "SET DATESTYLE TO 'ISO'";
-    static const char encoding[]  = "SHOW client_encoding";
-    static const char isolevel[]  = "SHOW default_transaction_isolation";
-
-    static const char lvl1a[] = "read uncommitted";
-    static const char lvl1b[] = "read committed";
-    static const char lvl2a[] = "repeatable read";
-    static const char lvl2b[] = "serializable";
-
-    Py_BEGIN_ALLOW_THREADS;
-    pthread_mutex_lock(&self->lock);
-    Py_BLOCK_THREADS;
-
-    if (self->encoding) free(self->encoding);
-    self->equote = 0;
-    self->isolation_level = 0;
-
+    int equote;
+    const char *scs;
     /*
      * The presence of the 'standard_conforming_strings' parameter
      * means that the server _accepts_ the E'' quote.
@@ -173,15 +154,82 @@ conn_setup(connectionObject *self, PGconn *pgconn)
         scs ? scs : "unavailable");
 
 #ifndef PSYCOPG_OWN_QUOTING
-    self->equote = (scs && (0 == strcmp("off", scs)));
+    equote = (scs && (0 == strcmp("off", scs)));
 #else
-    self->equote = (scs != NULL);
+    equote = (scs != NULL);
 #endif
     Dprintf("conn_connect: server requires E'' quotes: %s",
-        self->equote ? "YES" : "NO");
+            equote ? "YES" : "NO");
+
+    return equote;
+}
+
+char *
+conn_get_encoding(PGresult *pgres)
+{
+    char *tmp, *encoding;
+    size_t i;
+
+    tmp = PQgetvalue(pgres, 0, 0);
+    encoding = malloc(strlen(tmp)+1);
+    if (encoding == NULL) {
+        PyErr_NoMemory();
+        IFCLEARPGRES(pgres);
+        return NULL;
+    }
+    for (i=0 ; i < strlen(tmp) ; i++)
+        encoding[i] = toupper(tmp[i]);
+    encoding[i] = '\0';
+    CLEARPGRES(pgres);
+
+    return encoding;
+}
+
+int
+conn_get_isolation_level(PGresult *pgres)
+{
+    static const char lvl1a[] = "read uncommitted";
+    static const char lvl1b[] = "read committed";
+    char *isolation_level = PQgetvalue(pgres, 0, 0);
+
+    CLEARPGRES(pgres);
+
+    if ((strncmp(lvl1a, isolation_level, strlen(isolation_level)) == 0)
+        || (strncmp(lvl1b, isolation_level, strlen(isolation_level)) == 0))
+        return 1;
+    else /* if it's not one of the lower ones, it's SERIALIZABLE */
+        return 2;
+}
+
+int
+conn_get_protocol_version(PGconn *pgconn)
+{
+#ifdef HAVE_PQPROTOCOL3
+        return PQprotocolVersion(pgconn);
+#else
+        return 2;
+#endif
+}
+
+/* conn_setup - setup and read basic information about the connection */
+
+int
+conn_setup(connectionObject *self, PGconn *pgconn)
+{
+    PGresult *pgres;
+
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&self->lock);
+    Py_BLOCK_THREADS;
+
+    if (self->encoding) free(self->encoding);
+    self->equote = 0;
+    self->isolation_level = 0;
+
+    self->equote = conn_get_standard_conforming_strings(pgconn);
 
     Py_UNBLOCK_THREADS;
-    pgres = PQexec(pgconn, datestyle);
+    pgres = PQexec(pgconn, psyco_datestyle);
     Py_BLOCK_THREADS;
 
     if (pgres == NULL || PQresultStatus(pgres) != PGRES_COMMAND_OK ) {
@@ -196,7 +244,7 @@ conn_setup(connectionObject *self, PGconn *pgconn)
     CLEARPGRES(pgres);
 
     Py_UNBLOCK_THREADS;
-    pgres = PQexec(pgconn, encoding);
+    pgres = PQexec(pgconn, psyco_client_encoding);
     Py_BLOCK_THREADS;
 
     if (pgres == NULL || PQresultStatus(pgres) != PGRES_TUPLES_OK) {
@@ -208,24 +256,19 @@ conn_setup(connectionObject *self, PGconn *pgconn)
         Py_BLOCK_THREADS;
         return -1;
     }
-    tmp = PQgetvalue(pgres, 0, 0);
-    self->encoding = malloc(strlen(tmp)+1);
+
+    /* conn_get_encoding returns a malloc'd string */
+    self->encoding = conn_get_encoding(pgres);
     if (self->encoding == NULL) {
-        PyErr_NoMemory();
         PQfinish(pgconn);
-        IFCLEARPGRES(pgres);
         Py_UNBLOCK_THREADS;
         pthread_mutex_unlock(&self->lock);
         Py_BLOCK_THREADS;
         return -1;
     }
-    for (i=0 ; i < strlen(tmp) ; i++)
-        self->encoding[i] = toupper(tmp[i]);
-    self->encoding[i] = '\0';
-    CLEARPGRES(pgres);
 
     Py_UNBLOCK_THREADS;
-    pgres = PQexec(pgconn, isolevel);
+    pgres = PQexec(pgconn, psyco_transaction_isolation);
     Py_BLOCK_THREADS;
 
     if (pgres == NULL || PQresultStatus(pgres) != PGRES_TUPLES_OK) {
@@ -238,16 +281,7 @@ conn_setup(connectionObject *self, PGconn *pgconn)
         Py_BLOCK_THREADS;
         return -1;
     }
-    data = PQgetvalue(pgres, 0, 0);
-    if ((strncmp(lvl1a, data, strlen(lvl1a)) == 0)
-        || (strncmp(lvl1b, data, strlen(lvl1b)) == 0))
-        self->isolation_level = 1;
-    else if ((strncmp(lvl2a, data, strlen(lvl2a)) == 0)
-        || (strncmp(lvl2b, data, strlen(lvl2b)) == 0))
-        self->isolation_level = 2;
-    else
-        self->isolation_level = 2;
-    CLEARPGRES(pgres);
+    self->isolation_level = conn_get_isolation_level(pgres);
 
     Py_UNBLOCK_THREADS;
     pthread_mutex_unlock(&self->lock);
@@ -259,7 +293,7 @@ conn_setup(connectionObject *self, PGconn *pgconn)
 /* conn_connect - execute a connection to the database */
 
 int
-conn_connect(connectionObject *self)
+conn_sync_connect(connectionObject *self)
 {
     PGconn *pgconn;
 
@@ -295,17 +329,253 @@ conn_connect(connectionObject *self)
         return -1;
     }
 
-#ifdef HAVE_PQPROTOCOL3
-    self->protocol = PQprotocolVersion(pgconn);
-#else
-    self->protocol = 2;
-#endif
+    self->protocol = conn_get_protocol_version(pgconn);
     Dprintf("conn_connect: using protocol %d", self->protocol);
 
     self->server_version = (int)PQserverVersion(pgconn);
 
     self->pgconn = pgconn;
     return 0;
+}
+
+static int
+conn_async_connect(connectionObject *self)
+{
+    PGconn *pgconn;
+
+    pgconn = PQconnectStart(self->dsn);
+
+    Dprintf("conn_connect: new postgresql connection at %p", pgconn);
+
+    if (pgconn == NULL)
+    {
+        Dprintf("conn_connect: PQconnectStart(%s) FAILED", self->dsn);
+        PyErr_SetString(OperationalError, "PQconnectStart() failed");
+        return -1;
+    }
+    else if (PQstatus(pgconn) == CONNECTION_BAD)
+    {
+        Dprintf("conn_connect: PQconnectdb(%s) returned BAD", self->dsn);
+        PyErr_SetString(OperationalError, PQerrorMessage(pgconn));
+        PQfinish(pgconn);
+        return -1;
+    }
+
+    PQsetNoticeProcessor(pgconn, conn_notice_callback, (void*)self);
+
+    self->status = CONN_STATUS_ASYNC;
+    self->pgconn = pgconn;
+
+    return 0;
+}
+
+int
+conn_connect(connectionObject *self, long int async)
+{
+   if (async == 1) {
+      Dprintf("con_connect: connecting in ASYNC mode");
+      return conn_async_connect(self);
+    }
+    else {
+      Dprintf("con_connect: connecting in SYNC mode");
+      return conn_sync_connect(self);
+    }
+}
+
+/* conn_poll_send - handle connection polling when flushing output */
+
+PyObject *
+conn_poll_send(connectionObject *self)
+{
+    const char *query;
+    int next_status;
+    int ret;
+
+    Dprintf("conn_poll_send: status %d", self->status);
+
+    switch (self->status) {
+    case CONN_STATUS_SEND_DATESTYLE:
+        /* set the datestyle */
+        query = psyco_datestyle;
+        next_status = CONN_STATUS_SENT_DATESTYLE;
+        break;
+    case CONN_STATUS_SEND_CLIENT_ENCODING:
+        /* get the client_encoding */
+        query = psyco_client_encoding;
+        next_status = CONN_STATUS_SENT_CLIENT_ENCODING;
+        break;
+    case CONN_STATUS_SEND_TRANSACTION_ISOLATION:
+        /* get the default isolevel */
+        query = psyco_transaction_isolation;
+        next_status = CONN_STATUS_SENT_TRANSACTION_ISOLATION;
+        break;
+    default:
+        /* unexpected state, error out */
+        PyErr_Format(OperationalError,
+                     "unexpected state: %d", self->status);
+        return NULL;
+    }
+
+    Dprintf("conn_poll_send: sending query %-.200s", query);
+
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&(self->lock));
+
+    if (PQsendQuery(self->pgconn, query) != 1) {
+        pthread_mutex_unlock(&(self->lock));
+        Py_BLOCK_THREADS;
+        PyErr_SetString(OperationalError,
+                        PQerrorMessage(self->pgconn));
+        return NULL;
+    }
+
+    if (PQflush(self->pgconn) == 0) {
+        /* the query got fully sent to the server */
+        Dprintf("conn_poll_send: query got flushed immediately");
+        /* the return value will be POLL_READ */
+        ret = PSYCO_POLL_READ;
+
+        /* advance the next status, since we skip over the "waiting for the
+           query to be sent" status */
+        switch (next_status) {
+        case CONN_STATUS_SENT_DATESTYLE:
+            next_status = CONN_STATUS_GET_DATESTYLE;
+            break;
+        case CONN_STATUS_SENT_CLIENT_ENCODING:
+            next_status = CONN_STATUS_GET_CLIENT_ENCODING;
+            break;
+        case CONN_STATUS_SENT_TRANSACTION_ISOLATION:
+            next_status = CONN_STATUS_GET_TRANSACTION_ISOLATION;
+            break;
+        }
+    }
+    else {
+        /* query did not get sent completely, tell the client to wait for the
+           socket to become writable */
+        ret = PSYCO_POLL_WRITE;
+    }
+
+    self->status = next_status;
+    Dprintf("conn_poll_send: next status is %d, returning %d",
+            self->status, ret);
+
+    pthread_mutex_unlock(&(self->lock));
+    Py_END_ALLOW_THREADS;
+
+    return PyInt_FromLong(ret);
+}
+
+/* curs_poll_fetch - handle connection polling when reading result */
+
+PyObject *
+conn_poll_fetch(connectionObject *self)
+{
+    PGresult *pgres;
+    int is_busy;
+    int next_status;
+    int ret;
+
+    Dprintf("conn_poll_fetch: status %d", self->status);
+
+    /* consume the input */
+    is_busy = pq_is_busy(self);
+    if (is_busy == -1) {
+        /* there was an error, raise the exception */
+        return NULL;
+    }
+    else if (is_busy == 1) {
+        /* the connection is busy, tell the user to wait more */
+        Dprintf("conn_poll_fetch: connection busy, returning %d",
+                PSYCO_POLL_READ);
+        return PyInt_FromLong(PSYCO_POLL_READ);
+    }
+
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&(self->lock));
+
+    /* connection no longer busy, process input */
+    pgres = PQgetResult(self->pgconn);
+
+    /* do the rest while holding the GIL, we won't be calling into any
+       blocking API */
+    pthread_mutex_unlock(&(self->lock));
+    Py_END_ALLOW_THREADS;
+
+    Dprintf("conn_poll_fetch: got result %p", pgres);
+
+    /* we expect COMMAND_OK (from SET) or TUPLES_OK (from SHOW) */
+    if (pgres == NULL || (PQresultStatus(pgres) != PGRES_COMMAND_OK &&
+                          PQresultStatus(pgres) != PGRES_TUPLES_OK)) {
+        PyErr_SetString(OperationalError, "can't issue "
+                        "initial connection queries");
+        PQfinish(self->pgconn);
+        IFCLEARPGRES(pgres);
+        return NULL;
+    }
+
+    if (self->status == CONN_STATUS_GET_DATESTYLE) {
+        /* got the result from SET DATESTYLE*/
+        Dprintf("conn_poll_fetch: datestyle set");
+        next_status = CONN_STATUS_SEND_CLIENT_ENCODING;
+    }
+    else if (self->status == CONN_STATUS_GET_CLIENT_ENCODING) {
+        /* got the client_encoding */
+        self->encoding = conn_get_encoding(pgres);
+        if (self->encoding == NULL) {
+            PQfinish(self->pgconn);
+            return NULL;
+        }
+        Dprintf("conn_poll_fetch: got client_encoding %s", self->encoding);
+        next_status = CONN_STATUS_SEND_TRANSACTION_ISOLATION;
+    }
+    else if (self->status == CONN_STATUS_GET_TRANSACTION_ISOLATION) {
+        /* got the default isolevel */
+        self->isolation_level = conn_get_isolation_level(pgres);
+        Dprintf("conn_poll_fetch: got isolevel %ld", self->isolation_level);
+
+        /* since this is the last step, set the other instance variables now */
+        self->equote = conn_get_standard_conforming_strings(self->pgconn);
+        self->protocol = conn_get_protocol_version(self->pgconn);
+        self->server_version = (int) PQserverVersion(self->pgconn);
+
+        Py_BEGIN_ALLOW_THREADS;
+        pthread_mutex_lock(&(self->lock));
+
+        /* set the connection to nonblocking */
+        if (PQsetnonblocking(self->pgconn, 1) != 0) {
+            Dprintf("conn_async_connect: PQsetnonblocking() FAILED");
+            Py_BLOCK_THREADS;
+            PyErr_SetString(OperationalError, "PQsetnonblocking() failed");
+            PQfinish(self->pgconn);
+            return NULL;
+        }
+
+        pthread_mutex_unlock(&(self->lock));
+        Py_END_ALLOW_THREADS;
+
+        /* next status is going to READY */
+        next_status = CONN_STATUS_READY;
+    }
+    else {
+        /* unexpected state, error out */
+        PyErr_Format(OperationalError,
+                     "unexpected state: %d", self->status);
+        return NULL;
+    }
+
+    /* clear any leftover result, there should be none, but the protocol
+       requires calling PQgetResult until you get a NULL */
+    pq_clear_async(self);
+
+    self->status = next_status;
+
+    /* if the curent status is READY it means we got the result of the
+       last initialization query, so we return POLL_OK, otherwise we need to
+       send another query, so return POLL_WRITE */
+    ret = self->status == CONN_STATUS_READY ? PSYCO_POLL_OK : PSYCO_POLL_WRITE;
+    Dprintf("conn_poll_fetch: next status is %d, returning %d",
+            self->status, ret);
+    return PyInt_FromLong(ret);
 }
 
 /* conn_close - do anything needed to shut down the connection */

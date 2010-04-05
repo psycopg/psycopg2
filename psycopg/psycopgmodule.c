@@ -90,6 +90,7 @@ HIDDEN int psycopg_debug_enabled = 0;
 "- ``user`` -- user name used to authenticate\n"                           \
 "- ``password`` -- password used to authenticate\n"                        \
 "- ``sslmode`` -- SSL mode (see PostgreSQL documentation)\n\n"             \
+"- ``async`` -- if the connection should provide asynchronous API\n\n"     \
 "If the ``connection_factory`` keyword argument is not provided this\n"    \
 "function always return an instance of the `connection` class.\n"          \
 "Else the given sub-class of `extensions.connection` will be used to\n"    \
@@ -118,14 +119,16 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
     const char *database=NULL, *user=NULL, *password=NULL;
     const char *host=NULL, *sslmode=NULL;
     char port[16];
+    int async = 0;
 
     static char *kwlist[] = {"dsn", "database", "host", "port",
                              "user", "password", "sslmode",
-                             "connection_factory", NULL};
+                             "connection_factory", "async", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sssOsssO", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sssOsssOi", kwlist,
                                      &dsn_static, &database, &host, &pyport,
-                                     &user, &password, &sslmode, &factory)) {
+                                     &user, &password, &sslmode,
+                                     &factory, &async)) {
         return NULL;
     }
 
@@ -190,11 +193,11 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
 
     {
       const char *dsn = (dsn_static != NULL ? dsn_static : dsn_dynamic);
-      Dprintf("psyco_connect: dsn = '%s'", dsn);
+      Dprintf("psyco_connect: dsn = '%s', async = %d", dsn, async);
 
       /* allocate connection, fill with errors and return it */
       if (factory == NULL) factory = (PyObject *)&connectionType;
-      conn = PyObject_CallFunction(factory, "s", dsn);
+      conn = PyObject_CallFunction(factory, "si", dsn, async);
     }
 
     goto cleanup;

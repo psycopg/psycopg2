@@ -41,9 +41,32 @@ extern "C" {
 #define CONN_STATUS_BEGIN 2
 #define CONN_STATUS_SYNC  3
 #define CONN_STATUS_ASYNC 4
+/* async connection building statuses */
+#define CONN_STATUS_SEND_DATESTYLE             5
+#define CONN_STATUS_SENT_DATESTYLE             6
+#define CONN_STATUS_GET_DATESTYLE              7
+#define CONN_STATUS_SEND_CLIENT_ENCODING       8
+#define CONN_STATUS_SENT_CLIENT_ENCODING       9
+#define CONN_STATUS_GET_CLIENT_ENCODING        10
+#define CONN_STATUS_SEND_TRANSACTION_ISOLATION 11
+#define CONN_STATUS_SENT_TRANSACTION_ISOLATION 12
+#define CONN_STATUS_GET_TRANSACTION_ISOLATION  13
+
+/* polling result, try to keep in sync with PostgresPollingStatusType from
+   libpq-fe.h */
+#define PSYCO_POLL_READ  1
+#define PSYCO_POLL_WRITE 2
+#define PSYCO_POLL_OK    3
 
 /* Hard limit on the notices stored by the Python connection */
 #define CONN_NOTICES_LIMIT 50
+
+/* we need the initial date style to be ISO, for typecasters; if the user
+   later change it, she must know what she's doing... these are the queries we
+   need to issue */
+#define psyco_datestyle "SET DATESTYLE TO 'ISO'"
+#define psyco_client_encoding  "SHOW client_encoding"
+#define psyco_transaction_isolation "SHOW default_transaction_isolation"
 
 extern HIDDEN PyTypeObject connectionType;
 
@@ -66,12 +89,14 @@ typedef struct {
     long int isolation_level; /* isolation level for this connection */
     long int mark;            /* number of commits/rollbacks done so far */
     int status;               /* status of the connection */
+
+    long int async;           /* 1 means the connection is async */
     int protocol;             /* protocol version */
     int server_version;       /* server version */
 
-    PGconn *pgconn;         /* the postgresql connection */
+    PGconn *pgconn;           /* the postgresql connection */
 
-    PyObject *async_cursor;
+    PyObject *async_cursor;   /* a cursor executing an asynchronous query */
 
     /* notice processing */
     PyObject *notice_list;
@@ -89,15 +114,21 @@ typedef struct {
 } connectionObject;
 
 /* C-callable functions in connection_int.c and connection_ext.c */
+HIDDEN int  conn_get_standard_conforming_strings(PGconn *pgconn);
+HIDDEN char *conn_get_encoding(PGresult *pgres);
+HIDDEN int  conn_get_isolation_level(PGresult *pgres);
+HIDDEN int  conn_get_protocol_version(PGconn *pgconn);
 HIDDEN void conn_notice_process(connectionObject *self);
 HIDDEN void conn_notice_clean(connectionObject *self);
 HIDDEN int  conn_setup(connectionObject *self, PGconn *pgconn);
-HIDDEN int  conn_connect(connectionObject *self);
+HIDDEN int  conn_connect(connectionObject *self, long int async);
 HIDDEN void conn_close(connectionObject *self);
 HIDDEN int  conn_commit(connectionObject *self);
 HIDDEN int  conn_rollback(connectionObject *self);
 HIDDEN int  conn_switch_isolation_level(connectionObject *self, int level);
 HIDDEN int  conn_set_client_encoding(connectionObject *self, const char *enc);
+HIDDEN PyObject *conn_poll_send(connectionObject *self);
+HIDDEN PyObject *conn_poll_fetch(connectionObject *self);
 
 /* exception-raising macros */
 #define EXC_IF_CONN_CLOSED(self) if ((self)->closed > 0) { \
