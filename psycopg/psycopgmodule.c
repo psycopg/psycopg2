@@ -197,7 +197,18 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
 
       /* allocate connection, fill with errors and return it */
       if (factory == NULL) factory = (PyObject *)&connectionType;
-      conn = PyObject_CallFunction(factory, "si", dsn, async);
+      /* Here we are breaking the connection.__init__ interface defined
+       * by psycopg2. So, if not requiring an async conn, avoid passing
+       * the async parameter. */
+      /* TODO: would it be possible to avoid an additional parameter
+       * to the conn constructor? A subclass? (but it would require mixins
+       * to further subclass) Another dsn parameter (but is not really
+       * a connection parameter that can be configured) */
+      if (!async) {
+        conn = PyObject_CallFunction(factory, "s", dsn);
+      } else {
+        conn = PyObject_CallFunction(factory, "si", dsn, async);
+      }
     }
 
     goto cleanup;
