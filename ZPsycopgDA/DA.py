@@ -16,7 +16,7 @@
 # their work without bothering about the module dependencies.
 
 
-ALLOWED_PSYCOPG_VERSIONS = ('2.0.14',)
+ALLOWED_PSYCOPG_VERSIONS = ('2.2.0',)
 
 import sys
 import time
