@@ -256,9 +256,13 @@ conn_setup(connectionObject *self, PGconn *pgconn)
 
     self->equote = conn_get_standard_conforming_strings(pgconn);
 
-    Py_UNBLOCK_THREADS;
-    pgres = PQexec(pgconn, psyco_datestyle);
-    Py_BLOCK_THREADS;
+    if (!psyco_green()) {
+        Py_UNBLOCK_THREADS;
+        pgres = PQexec(pgconn, psyco_datestyle);
+        Py_BLOCK_THREADS;
+    } else {
+        pgres = psyco_exec_green(self, psyco_datestyle);
+    }
 
     if (pgres == NULL || PQresultStatus(pgres) != PGRES_COMMAND_OK ) {
         PyErr_SetString(OperationalError, "can't set datestyle to ISO");
@@ -270,9 +274,13 @@ conn_setup(connectionObject *self, PGconn *pgconn)
     }
     CLEARPGRES(pgres);
 
-    Py_UNBLOCK_THREADS;
-    pgres = PQexec(pgconn, psyco_client_encoding);
-    Py_BLOCK_THREADS;
+    if (!psyco_green()) {
+        Py_UNBLOCK_THREADS;
+        pgres = PQexec(pgconn, psyco_client_encoding);
+        Py_BLOCK_THREADS;
+    } else {
+        pgres = psyco_exec_green(self, psyco_client_encoding);
+    }
 
     if (pgres == NULL || PQresultStatus(pgres) != PGRES_TUPLES_OK) {
         PyErr_SetString(OperationalError, "can't fetch client_encoding");
@@ -292,9 +300,13 @@ conn_setup(connectionObject *self, PGconn *pgconn)
         return -1;
     }
 
-    Py_UNBLOCK_THREADS;
-    pgres = PQexec(pgconn, psyco_transaction_isolation);
-    Py_BLOCK_THREADS;
+    if (!psyco_green()) {
+        Py_UNBLOCK_THREADS;
+        pgres = PQexec(pgconn, psyco_transaction_isolation);
+        Py_BLOCK_THREADS;
+    } else {
+        pgres = psyco_exec_green(self, psyco_transaction_isolation);
+    }
 
     if (pgres == NULL || PQresultStatus(pgres) != PGRES_TUPLES_OK) {
         PyErr_SetString(OperationalError,
@@ -379,11 +391,11 @@ conn_sync_connect(connectionObject *self)
      */
     self->status = CONN_STATUS_READY;
 
-    if (conn_setup(self, self->pgconn) == -1) {
+    if (pq_set_non_blocking(self, 1, 1) != 0) {
         return -1;
     }
 
-    if (pq_set_non_blocking(self, 1, 1) != 0) {
+    if (conn_setup(self, self->pgconn) == -1) {
         return -1;
     }
 
