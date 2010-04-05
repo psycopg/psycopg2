@@ -658,7 +658,7 @@ _psyco_curs_prefetch(cursorObject *self)
 
     /* check if there is an asynchronous query in progess and block until data
        is read from it */
-    if (self->conn->async_cursor) {
+    if (self->conn->async_cursor != NULL) {
         /* first check if it's the right cursor */
         if (self->conn->async_cursor != (PyObject*)self) {
             psyco_set_error(ProgrammingError, (PyObject*)self,
