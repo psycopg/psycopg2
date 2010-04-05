@@ -294,11 +294,9 @@ pq_clear_async(connectionObject *conn)
        many parts, i.e. "select 1; select 2", there will be many) and also
        finalize asynchronous processing so the connection will be ready to
        accept another query */
-    for (;;) {
-        pgres = PQgetResult(conn->pgconn);
+
+    while ((pgres = PQgetResult(conn->pgconn)) != NULL) {
         Dprintf("pq_clear_async: clearing PGresult at %p", pgres);
-        if (pgres == NULL)
-            break;
         CLEARPGRES(pgres);
     }
     conn->async_cursor = NULL;
