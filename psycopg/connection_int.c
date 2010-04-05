@@ -760,21 +760,22 @@ conn_close(connectionObject *self)
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
 
-    if (self->closed == 0)
-        self->closed = 1;
-
     /* execute a forced rollback on the connection (but don't check the
        result, we're going to close the pq connection anyway */
     if (self->pgconn && self->closed == 1) {
         PGresult *pgres = NULL;
         char *error = NULL;
 
-        if (pq_abort_locked(self, &pgres, &error) < 0) {
+        if (pq_abort_locked(self, &pgres, &error, &_save) < 0) {
             IFCLEARPGRES(pgres);
             if (error)
                 free (error);
         }
     }
+
+    if (self->closed == 0)
+        self->closed = 1;
+
     if (self->pgconn) {
         PQfinish(self->pgconn);
         Dprintf("conn_close: PQfinish called");
@@ -825,7 +826,7 @@ conn_switch_isolation_level(connectionObject *self, int level)
     /* if the current isolation level is > 0 we need to abort the current
        transaction before changing; that all folks! */
     if (self->isolation_level != level && self->isolation_level > 0) {
-        res = pq_abort_locked(self, &pgres, &error);
+        res = pq_abort_locked(self, &pgres, &error, &_save);
     }
     self->isolation_level = level;
 
@@ -862,10 +863,10 @@ conn_set_client_encoding(connectionObject *self, const char *enc)
 
     /* abort the current transaction, to set the encoding ouside of
        transactions */
-    res = pq_abort_locked(self, &pgres, &error);
+    res = pq_abort_locked(self, &pgres, &error, &_save);
 
     if (res == 0) {
-        res = pq_execute_command_locked(self, query, &pgres, &error);
+        res = pq_execute_command_locked(self, query, &pgres, &error, &_save);
         if (res == 0) {
             /* no error, we can proceeed and store the new encoding */
             if (self->encoding) free(self->encoding);

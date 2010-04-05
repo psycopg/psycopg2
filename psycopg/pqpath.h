@@ -38,10 +38,10 @@
 HIDDEN int pq_fetch(cursorObject *curs);
 HIDDEN int pq_execute(cursorObject *curs, const char *query, int async);
 HIDDEN int pq_begin_locked(connectionObject *conn, PGresult **pgres,
-                           char **error);
+                           char **error, PyThreadState **tstate);
 HIDDEN int pq_commit(connectionObject *conn);
 HIDDEN int pq_abort_locked(connectionObject *conn, PGresult **pgres,
-                           char **error);
+                           char **error, PyThreadState **tstate);
 HIDDEN int pq_abort(connectionObject *conn);
 HIDDEN int pq_reset(connectionObject *conn);
 HIDDEN int pq_is_busy(connectionObject *conn);
@@ -53,7 +53,8 @@ HIDDEN void pq_set_critical(connectionObject *conn, const char *msg);
 
 HIDDEN int pq_execute_command_locked(connectionObject *conn,
                                      const char *query,
-                                     PGresult **pgres, char **error);
+                                     PGresult **pgres, char **error,
+                                     PyThreadState **tstate);
 HIDDEN void pq_complete_error(connectionObject *conn, PGresult **pgres,
                               char **error);
 

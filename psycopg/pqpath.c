@@ -334,17 +334,29 @@ pq_set_non_blocking(connectionObject *conn, int arg, int pyerr)
 
    On error, -1 is returned, and the pgres argument will hold the
    relevant result structure.
+
+   The tstate parameter should be the pointer of the _save variable created by
+   Py_BEGIN_ALLOW_THREADS: this enables the function to acquire and release
+   again the GIL if needed, i.e. if a Python wait callback must be invoked.
  */
 int
 pq_execute_command_locked(connectionObject *conn, const char *query,
-                          PGresult **pgres, char **error)
+                          PGresult **pgres, char **error,
+                          PyThreadState **tstate)
 {
     int pgstatus, retvalue = -1;
 
     Dprintf("pq_execute_command_locked: pgconn = %p, query = %s",
             conn->pgconn, query);
     *error = NULL;
-    *pgres = PQexec(conn->pgconn, query);
+
+    if (!psyco_green()) {
+        *pgres = PQexec(conn->pgconn, query);
+    } else {
+        PyEval_RestoreThread(*tstate);
+        *pgres = psyco_exec_green(conn, query);
+        *tstate = PyEval_SaveThread();
+    }
     if (*pgres == NULL) {
         const char *msg;
 
@@ -406,7 +418,8 @@ pq_complete_error(connectionObject *conn, PGresult **pgres, char **error)
    relevant result structure.
  */
 int
-pq_begin_locked(connectionObject *conn, PGresult **pgres, char **error)
+pq_begin_locked(connectionObject *conn, PGresult **pgres, char **error,
+                PyThreadState **tstate)
 {
     const char *query[] = {
         NULL,
@@ -423,7 +436,7 @@ pq_begin_locked(connectionObject *conn, PGresult **pgres, char **error)
     }
 
     result = pq_execute_command_locked(conn, query[conn->isolation_level],
-                                       pgres, error);
+                                       pgres, error, tstate);
     if (result == 0)
         conn->status = CONN_STATUS_BEGIN;
 
@@ -455,7 +468,7 @@ pq_commit(connectionObject *conn)
     pthread_mutex_lock(&conn->lock);
     conn->mark += 1;
 
-    retvalue = pq_execute_command_locked(conn, "COMMIT", &pgres, &error);
+    retvalue = pq_execute_command_locked(conn, "COMMIT", &pgres, &error, &_save);
 
     pthread_mutex_unlock(&conn->lock);
     Py_END_ALLOW_THREADS;
@@ -473,7 +486,8 @@ pq_commit(connectionObject *conn)
 }
 
 int
-pq_abort_locked(connectionObject *conn, PGresult **pgres, char **error)
+pq_abort_locked(connectionObject *conn, PGresult **pgres, char **error,
+                PyThreadState **tstate)
 {
     int retvalue = -1;
 
@@ -486,7 +500,7 @@ pq_abort_locked(connectionObject *conn, PGresult **pgres, char **error)
     }
 
     conn->mark += 1;
-    retvalue = pq_execute_command_locked(conn, "ROLLBACK", pgres, error);
+    retvalue = pq_execute_command_locked(conn, "ROLLBACK", pgres, error, tstate);
     if (retvalue == 0)
         conn->status = CONN_STATUS_READY;
 
@@ -516,7 +530,7 @@ pq_abort(connectionObject *conn)
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&conn->lock);
 
-    retvalue = pq_abort_locked(conn, &pgres, &error);
+    retvalue = pq_abort_locked(conn, &pgres, &error, &_save);
 
     pthread_mutex_unlock(&conn->lock);
     Py_END_ALLOW_THREADS;
@@ -539,7 +553,8 @@ pq_abort(connectionObject *conn)
 */
 
 int
-pq_reset_locked(connectionObject *conn, PGresult **pgres, char **error)
+pq_reset_locked(connectionObject *conn, PGresult **pgres, char **error,
+                PyThreadState **tstate)
 {
     int retvalue = -1;
 
@@ -549,15 +564,15 @@ pq_reset_locked(connectionObject *conn, PGresult **pgres, char **error)
     conn->mark += 1;
 
     if (conn->isolation_level > 0 && conn->status == CONN_STATUS_BEGIN) {
-        retvalue = pq_execute_command_locked(conn, "ABORT", pgres, error);
+        retvalue = pq_execute_command_locked(conn, "ABORT", pgres, error, tstate);
         if (retvalue != 0) return retvalue;
     }
 
-    retvalue = pq_execute_command_locked(conn, "RESET ALL", pgres, error);
+    retvalue = pq_execute_command_locked(conn, "RESET ALL", pgres, error, tstate);
     if (retvalue != 0) return retvalue;
 
     retvalue = pq_execute_command_locked(conn,
-        "SET SESSION AUTHORIZATION DEFAULT", pgres, error);
+        "SET SESSION AUTHORIZATION DEFAULT", pgres, error, tstate);
     if (retvalue != 0) return retvalue;
 
     conn->status = CONN_STATUS_READY;
@@ -578,7 +593,7 @@ pq_reset(connectionObject *conn)
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&conn->lock);
 
-    retvalue = pq_reset_locked(conn, &pgres, &error);
+    retvalue = pq_reset_locked(conn, &pgres, &error, &_save);
 
     pthread_mutex_unlock(&conn->lock);
     Py_END_ALLOW_THREADS;
@@ -684,7 +699,7 @@ pq_execute(cursorObject *curs, const char *query, int async)
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(curs->conn->lock));
 
-    if (pq_begin_locked(curs->conn, &pgres, &error) < 0) {
+    if (pq_begin_locked(curs->conn, &pgres, &error, &_save) < 0) {
         pthread_mutex_unlock(&(curs->conn->lock));
         Py_BLOCK_THREADS;
         pq_complete_error(curs->conn, &pgres, &error);
