@@ -1065,13 +1065,18 @@ _pq_copy_in(cursorObject *curs)
         o = PyObject_CallFunction(func, NULL);
         if (o == NULL) goto clear;
         if (o == Py_None || PyString_GET_SIZE(o) == 0) break;
+        Py_BEGIN_ALLOW_THREADS;
         rv = PQputline(curs->conn->pgconn, PyString_AS_STRING(o));
+        Py_END_ALLOW_THREADS;
         Py_DECREF(o);
         if (0 != rv) goto clear;
     }
     Py_XDECREF(o);
+
+    Py_BEGIN_ALLOW_THREADS;
     PQputline(curs->conn->pgconn, "\\.\n");
     PQendcopy(curs->conn->pgconn);
+    Py_END_ALLOW_THREADS;
 
     /* if for some reason we're using a protocol 3 libpq to connect to a
        protocol 2 backend we still need to cycle on the result set */
