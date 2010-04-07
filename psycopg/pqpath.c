@@ -921,14 +921,23 @@ _pq_copy_in_v3(cursorObject *curs)
     /* COPY FROM implementation when protocol 3 is available: this function
        uses the new PQputCopyData() and can detect errors and set the correct
        exception */
-    PyObject *o;
+    PyObject *o, *func, *size;
     Py_ssize_t length = 0;
     int res, error = 0;
 
+    if (!(func = PyObject_GetAttrString(curs->copyfile, "read"))) {
+        Dprintf("_pq_copy_in_v3: can't get o.read");
+        return -1;
+    }
+    if (!(size = PyInt_FromSsize_t(curs->copysize))) {
+        Dprintf("_pq_copy_in_v3: can't get int from copysize");
+        Py_DECREF(func);
+        return -1;
+    }
+
     while (1) {
-        o = PyObject_CallMethod(curs->copyfile, "read",
-            CONV_CODE_PY_SSIZE_T, curs->copysize);
-        if (!o || !PyString_Check(o) || (length = PyString_Size(o)) == -1) {
+        o = PyObject_CallFunctionObjArgs(func, size, NULL);
+        if (!(o && PyString_Check(o) && (length = PyString_GET_SIZE(o)) != -1)) {
             error = 1;
         }
         if (length == 0 || length > INT_MAX || error == 1) break;
@@ -957,6 +966,8 @@ _pq_copy_in_v3(cursorObject *curs)
     }
 
     Py_XDECREF(o);
+    Py_DECREF(func);
+    Py_DECREF(size);
 
     Dprintf("_pq_copy_in_v3: error = %d", error);
 
@@ -1000,19 +1011,26 @@ _pq_copy_in(cursorObject *curs)
     /* COPY FROM implementation when protocol 3 is not available: this
        function can't fail but the backend will send an ERROR notice that will
        be catched by our notice collector */
-    PyObject *o;
+    PyObject *o, *func;
+
+    if (!(func = PyObject_GetAttrString(curs->copyfile, "readline"))) {
+        Dprintf("_pq_copy_in: can't get o.readline");
+        return -1;
+    }
 
     while (1) {
-        o = PyObject_CallMethod(curs->copyfile, "readline", NULL);
+        o = PyObject_CallFunction(func, NULL);
         if (o == NULL) return -1;
         if (o == Py_None || PyString_GET_SIZE(o) == 0) break;
         if (PQputline(curs->conn->pgconn, PyString_AS_STRING(o)) != 0) {
             Py_DECREF(o);
+            Py_DECREF(func);
             return -1;
         }
         Py_DECREF(o);
     }
     Py_XDECREF(o);
+    Py_DECREF(func);
     PQputline(curs->conn->pgconn, "\\.\n");
     PQendcopy(curs->conn->pgconn);
 
@@ -1032,10 +1050,15 @@ _pq_copy_in(cursorObject *curs)
 static int
 _pq_copy_out_v3(cursorObject *curs)
 {
-    PyObject *tmp = NULL;
+    PyObject *tmp = NULL, *func;
 
     char *buffer;
     Py_ssize_t len;
+
+    if (!(func = PyObject_GetAttrString(curs->copyfile, "write"))) {
+        Dprintf("_pq_copy_out_v3: can't get o.write");
+        return -1;
+    }
 
     while (1) {
         Py_BEGIN_ALLOW_THREADS;
@@ -1043,19 +1066,21 @@ _pq_copy_out_v3(cursorObject *curs)
         Py_END_ALLOW_THREADS;
 
         if (len > 0 && buffer) {
-            tmp = PyObject_CallMethod(curs->copyfile,
-                            "write", "s#", buffer, len);
+            tmp = PyObject_CallFunction(func, "s#", buffer, len);
             PQfreemem(buffer);
-            if (tmp == NULL)
+            if (tmp == NULL) {
+                Py_DECREF(func);
                 return -1;
-            else
+            } else {
                 Py_DECREF(tmp);
+            }
         }
         /* we break on len == 0 but note that that should *not* happen,
            because we are not doing an async call (if it happens blame
            postgresql authors :/) */
         else if (len <= 0) break;
     }
+    Py_DECREF(func);
 
     if (len == -2) {
         pq_raise(curs->conn, curs, NULL);
@@ -1076,11 +1101,16 @@ _pq_copy_out_v3(cursorObject *curs)
 static int
 _pq_copy_out(cursorObject *curs)
 {
-    PyObject *tmp = NULL;
+    PyObject *tmp = NULL, *func;
 
     char buffer[4096];
     int status, ll=0;
     Py_ssize_t len;
+
+    if (!(func = PyObject_GetAttrString(curs->copyfile, "write"))) {
+        Dprintf("_pq_copy_out: can't get o.write");
+        return -1;
+    }
 
     while (1) {
         Py_BEGIN_ALLOW_THREADS;
@@ -1098,15 +1128,20 @@ _pq_copy_out(cursorObject *curs)
             ll = 1;
         }
         else {
+            Py_DECREF(func);
             return -1;
         }
 
-        tmp = PyObject_CallMethod(curs->copyfile, "write", "s#", buffer, len);
-        if (tmp == NULL)
+        tmp = PyObject_CallFunction(func, "s#", buffer, len);
+        if (tmp == NULL) {
+            Py_DECREF(func);
             return -1;
-        else
+        } else {
             Py_DECREF(tmp);
+        }
     }
+
+    Py_DECREF(func);
 
     status = 1;
     if (PQendcopy(curs->conn->pgconn) != 0)
