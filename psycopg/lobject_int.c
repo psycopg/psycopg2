@@ -205,7 +205,7 @@ lobject_write(lobjectObject *self, const char *buf, size_t len)
     PGresult *pgres = NULL;
     char *error = NULL;
 
-    Dprintf("lobject_writing: fd = %d, len = %d",
+    Dprintf("lobject_writing: fd = %d, len = " FORMAT_CODE_PY_SSIZE_T,
             self->fd, len);
 
     Py_BEGIN_ALLOW_THREADS;
@@ -342,7 +342,7 @@ lobject_truncate(lobjectObject *self, size_t len)
     PGresult *pgres = NULL;
     char *error = NULL;
 
-    Dprintf("lobject_truncate: fd = %d, len = %d",
+    Dprintf("lobject_truncate: fd = %d, len = " FORMAT_CODE_PY_SSIZE_T,
             self->fd, len);
 
     Py_BEGIN_ALLOW_THREADS;
