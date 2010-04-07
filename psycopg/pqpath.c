@@ -303,6 +303,29 @@ pq_clear_async(connectionObject *conn)
     conn->async_cursor = NULL;
 }
 
+
+/* pq_set_non_blocking - set the nonblocking status on a connection.
+
+   Accepted arg values are 1 (nonblocking) and 0 (blocking).
+
+   Return 0 if everything ok, else nonzero.
+
+   In case of error, if pyerr is nonzero, set a Python exception.
+ */
+int
+pq_set_non_blocking(connectionObject *conn, int arg, int pyerr)
+{
+    int ret = PQsetnonblocking(conn->pgconn, arg);
+    if (0 != ret) {
+        Dprintf("PQsetnonblocking(%d) FAILED", arg);
+        if (pyerr) {
+            PyErr_SetString(OperationalError, "PQsetnonblocking() failed");
+        }
+    }
+    return ret;
+}
+
+
 /* pg_execute_command_locked - execute a no-result query on a locked connection.
 
    This function should only be called on a locked connection without

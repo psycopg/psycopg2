@@ -47,6 +47,7 @@ HIDDEN int pq_reset(connectionObject *conn);
 HIDDEN int pq_is_busy(connectionObject *conn);
 HIDDEN int pq_flush(connectionObject *conn);
 HIDDEN void pq_clear_async(connectionObject *conn);
+HIDDEN int pq_set_non_blocking(connectionObject *conn, int arg, int pyerr);
 
 HIDDEN void pq_set_critical(connectionObject *conn, const char *msg);
 

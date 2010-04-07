@@ -317,9 +317,7 @@ conn_sync_connect(connectionObject *self)
     if (conn_setup(self, pgconn) == -1)
         return -1;
 
-    if (PQsetnonblocking(pgconn, 1) != 0) {
-        Dprintf("conn_connect: PQsetnonblocking() FAILED");
-        PyErr_SetString(OperationalError, "PQsetnonblocking() failed");
+    if (pq_set_non_blocking(self, 1, 1) != 0) {
         return -1;
     }
 
