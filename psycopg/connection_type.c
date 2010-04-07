@@ -547,11 +547,7 @@ psyco_conn_fileno(connectionObject *self)
 
     EXC_IF_CONN_CLOSED(self);
 
-    Py_BEGIN_ALLOW_THREADS;
-    pthread_mutex_lock(&(self->lock));
     socket = (long int)PQsocket(self->pgconn);
-    pthread_mutex_unlock(&(self->lock));
-    Py_END_ALLOW_THREADS;
 
     return PyInt_FromLong(socket);
 }
