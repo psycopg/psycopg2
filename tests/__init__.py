@@ -27,6 +27,7 @@ import test_transaction
 import types_basic
 import types_extras
 import test_lobject
+import test_copy
 import test_async
 
 def test_suite():
@@ -41,6 +42,7 @@ def test_suite():
     suite.addTest(types_basic.test_suite())
     suite.addTest(types_extras.test_suite())
     suite.addTest(test_lobject.test_suite())
+    suite.addTest(test_copy.test_suite())
     suite.addTest(test_async.test_suite())
     return suite
 
