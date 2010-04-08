@@ -21,6 +21,8 @@ functionalities defined by the |DBAPI|_.
     `!connect()` function using the `connection_factory` parameter.
     See also :ref:`subclassing-connection`.
 
+    Subclasses should have constructor signature :samp:`({dsn}, {async}=0)`.
+
     For a complete description of the class, see `connection`.
 
 .. class:: cursor
@@ -80,13 +82,13 @@ functionalities defined by the |DBAPI|_.
 
     .. method:: truncate(len=0)
 
-        .. versionadded:: 2.0.15
+        .. versionadded:: 2.2.0
 
         Truncate the lobject to the given size.
 
-	The method will only be available if psycopg has been built against libpq
-	from PostgreSQL 8.3 or later and can only be used with PostgreSQL servers
-	running these versions. It uses the |lo_truncate|_ libpq function.
+        The method will only be available if Psycopg has been built against libpq
+        from PostgreSQL 8.3 or later and can only be used with PostgreSQL servers
+        running these versions. It uses the |lo_truncate|_ libpq function.
 
         .. |lo_truncate| replace:: `!lo_truncate()`
         .. _lo_truncate: http://www.postgresql.org/docs/8.4/static/lo-interfaces.html#AEN36420
@@ -440,6 +442,40 @@ can be read from the `~connection.status` attribute.
 .. data:: STATUS_ASYNC
 
     Used internally.
+
+
+
+.. index::
+    pair: Poll status; Constants
+
+.. _poll-constants:
+
+Poll constants
+--------------
+
+.. versionadded:: 2.2.0
+
+These values can be returned by `connection.poll()` and `cursor.poll()` during
+asynchronous communication. See :ref:`async-support`.
+
+.. data:: POLL_OK
+
+    The data is available (or the file descriptor is ready for writing): there
+    is no need to block anymore.
+
+.. data:: POLL_READ
+
+    Upon receiving this value, the callback should wait for the connection
+    file descriptor to be ready *for reading*. For example::
+
+        select.select([conn.fileno()], [], [])
+
+.. data:: POLL_WRITE
+
+    Upon receiving this value, the callback should wait for the connection
+    file descriptor to be ready *for writing*. For example::
+
+        select.select([], [conn.fileno()], [])
 
 
 

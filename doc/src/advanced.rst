@@ -246,88 +246,83 @@ Running the script and executing the command :sql:`NOTIFY test` in a separate
 
 
 .. index::
-    double: Asynchronous; Query
+    double: Asynchronous; Connection
 
-.. _asynchronous-queries:
+.. _async-support:
 
-Asynchronous queries
+Asynchronous support
 --------------------
 
-.. warning::
+.. versionadded:: 2.2.0
 
-    Psycopg support for asynchronous queries is still experimental and the
-    informations reported here may be out of date.
+Psycopg can issue asynchronous queries to a Postgresql database. An asynchronous
+communication style is estabilished passing the parameter *async*\=1 to the
+`~psycopg2.connect()` function: the returned connection will work in
+asynchronous mode.
 
-    Discussion, testing and suggestions are welcome.
+In asynchronous mode, a Psycopg connection will rely on the caller to poll for
+the socket file descriptor ready to accept data or a query result ready to be
+read from the server. The caller can use the method `~cursor.fileno()` to get
+the connection file descriptor and `~cursor.poll()` to make communication
+proceed. An application can use a loop like the one below to transfer data
+between the client and the server::
 
-Program code can initiate an asynchronous query by passing an ``async=1`` flag
-to the `~cursor.execute()` or `~cursor.callproc()` cursor methods. A
-very simple example, from the connection to the query::
+    def wait(conn_or_cur):
+        while 1:
+            state = conn_or_cur.poll()
+            if state == psycopg2.extensions.POLL_OK:
+                break
+            elif state == psycopg2.extensions.POLL_WRITE:
+                select.select([], [conn_or_cur.fileno()], [])
+            elif state == psycopg2.extensions.POLL_READ:
+                select.select([conn_or_cur.fileno()], [], [])
+            else:
+                raise psycopg2.OperationalError("poll() returned %s" % state)
 
-    conn = psycopg2.connect(database='test')
+After `!poll()` has returned `~psycopg2.extensions.POLL_OK`, the results are
+available in the cursor for regular reading::
+
+    curs.execute("SELECT * FROM foo;")
+    wait(curs)
+    for record in curs:
+        # use it...
+
+The same loop should also be used to accomplish a connection with the server:
+the connection is usable only after `connection.poll()` has returned `!POLL_OK`.
+The `!connection` has a `~connection.fileno()` method too, so it is possible to
+use the same interface for the wait loop::
+
+    conn = psycopg2.connect(database='test', async=1)
+    wait(conn)
+    # Now you can have a cursor.
     curs = conn.cursor()
-    curs.execute("SELECT * from test WHERE fielda > %s", (1971,), async=1)
 
-From then on any query on other cursors derived from the same connection is
-doomed to fail (and raise an exception) until the original cursor (the one
-executing the query) complete the asynchronous operation. This can happen in
-a number of different ways:
+Notice that there are a few other requirements to be met in order to have a
+completely non-blocking connection attempt: see the libpq documentation for
+|PQconnectStart|_.
 
-1) one of the `!fetch*()` methods is called, effectively blocking until
-   data has been sent from the backend to the client, terminating the query.
+.. |PQconnectStart| replace:: `!PQconnectStart()`
+.. _PQconnectStart: http://www.postgresql.org/docs/8.4/static/libpq-connect.html#AEN33199
 
-2) `connection.cancel()` is called. This method tries to abort the
-   current query and will block until the query is aborted or fully executed.
-   The return value is ``True`` if the query was successfully aborted or
-   ``False`` if it was executed. Query result are discarded in both cases.
+When an asynchronous query is being executed, `connection.executing()` returns
+`True`. Two cursors can't execute concurrent queries on the same asynchronous
+connection.
 
-3) `~cursor.execute()` is called again on the same cursor
-   (`!execute()` on a different cursor will simply raise an exception).
-   This waits for the complete execution of the current query, discard any
-   data and execute the new one.
+There are several limitations in using asynchronous connections: the connection
+is always in :ref:`autocommit <autocommit>` mode and it is not possible to
+change it using `~connection.set_isolation_level()`. So transaction are not
+started at each query and is not possible to use methods `~connection.commit()`
+and `~connection.rollback()`: you can manually control transactions using
+`~cursor.execute()` to send commands :sql:`BEGIN`, :sql:`COMMIT` and
+:sql:`ROLLBACK`.
 
-Note that calling `!execute()` two times in a row will not abort the
-former query and will temporarily go to synchronous mode until the first of
-the two queries is executed.
+With asynchronous connections it is also not possible to use
+`~connection.set_client_encoding()`, `~cursor.executemany()`, :ref:`large
+objects <large-objects>`, :ref:`named cursors <server-side-cursors>`.
 
-Cursors now have some extra methods that make them useful during
-asynchronous queries:
+:ref:`COPY commands <copy>` are not supported either in asynchronous mode, but
+this will be probably implemented in a future release.
 
-`~cursor.fileno()`
-    Returns the file descriptor associated with the current connection and
-    make possible to use a cursor in a context where a file object would be
-    expected (like in a `select()` call).
-
-`~cursor.isready()`
-    Returns ``False`` if the backend is still processing the query or ``True``
-    if data is ready to be fetched (by one of the `!fetch*()` methods).
-
-.. index::
-    single: Example; Asynchronous query
-
-A code snippet that shows how to use the cursor object in a `!select()`
-call::
-
-    import psycopg2
-    import select
-
-    conn = psycopg2.connect(database='test')
-    curs = conn.cursor()
-    curs.execute("SELECT * from test WHERE fielda > %s", (1971,), async=1)
-
-    # wait for input with a maximum timeout of 5 seconds
-    query_ended = False
-    while not query_ended:
-        rread, rwrite, rspec = select([curs, another_file], [], [], 5)
-
-    if curs.isready():
-       query_ended = True
-
-    # manage input from other sources like other_file, etc.
-
-    print "Query Results:"
-    for row in curs:
-        print row
 
 
 .. testcode::
