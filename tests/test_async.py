@@ -274,5 +274,16 @@ class AsyncTests(unittest.TestCase):
         # it should be the result of the second query
         self.assertEquals(cur.fetchone()[0], "b" * 10000)
 
+    def test_async_subclass(self):
+        class MyConn(psycopg2.extensions.connection):
+            def __init__(self, dsn, async=0):
+                psycopg2.extensions.connection.__init__(self, dsn, async=async)
+
+        conn = psycopg2.connect(tests.dsn, connection_factory=MyConn, async=True)
+        self.assert_(isinstance(conn, MyConn))
+        self.assert_(not conn.issync())
+        conn.close()
+
+
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
