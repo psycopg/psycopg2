@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="3.5" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -170,6 +170,9 @@
     <None Include="doc\src\tools\stitch_text.py" />
     <None Include="doc\src\_static\psycopg.css" />
     <None Include="doc\src\faq.rst" />
+    <None Include="tests\test_async.py" />
+    <None Include="tests\test_copy.py" />
+    <None Include="tests\bug_gc.py" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="psycopg\adapter_asis.c" />
