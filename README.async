@@ -1,8 +1,0 @@
-Asynchronous support in psycopg
-*******************************
-
-The support for asynchronous queries in psycopg is only half-backed and
-won't work unless a good deal of time is put into fixing bugs. Currently
-I (the author) have no need for asycnhronous queries but patches are
-welcome. Also welcome are short tests that show how the async path fails
-(miserably) so that I can at least fix obvious problems.
