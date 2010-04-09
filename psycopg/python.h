@@ -39,6 +39,7 @@
   #define PY_SSIZE_T_MIN INT_MIN
   #define PY_SSIZE_T_MAX INT_MAX
   #define PY_FORMAT_SIZE_T ""
+  #define PyInt_FromSsize_t(x) PyInt_FromLong((x))
 
   #define readbufferproc getreadbufferproc
   #define writebufferproc getwritebufferproc
