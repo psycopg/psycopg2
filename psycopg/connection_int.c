@@ -353,7 +353,7 @@ conn_async_connect(connectionObject *self)
 
     PQsetNoticeProcessor(pgconn, conn_notice_callback, (void*)self);
 
-    self->status = CONN_STATUS_ASYNC;
+    self->status = CONN_STATUS_SETUP;
 
     return 0;
 }
