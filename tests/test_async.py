@@ -299,7 +299,6 @@ class AsyncTests(unittest.TestCase):
         self.assert_(not conn.issync())
         conn.close()
 
-
     def test_flush_on_write(self):
         # a very large query requires a flush loop to be sent to the backend
         curs = self.conn.cursor()
@@ -314,6 +313,34 @@ class AsyncTests(unittest.TestCase):
                 return
 
         self.fail("sending a large query didn't trigger block on write.")
+
+    def test_sync_poll(self):
+        cur = self.sync_conn.cursor()
+        # polling a sync cursor works
+        cur.poll()
+
+    def test_async_poll_wrong_cursor(self):
+        cur1 = self.conn.cursor()
+        cur2 = self.conn.cursor()
+        cur1.execute("select 1")
+
+        # polling a cursor that's not currently executing is an error
+        self.assertRaises(psycopg2.ProgrammingError, cur2.poll)
+
+        self.wait_for_query(cur1)
+        self.assertEquals(cur1.fetchone()[0], 1)
+
+    def test_async_fetch_wrong_cursor(self):
+        cur1 = self.conn.cursor()
+        cur2 = self.conn.cursor()
+        cur1.execute("select 1")
+
+        self.wait_for_query(cur1)
+        self.assertFalse(self.conn.executing())
+        # fetching from a cursor with no results is an error
+        self.assertRaises(psycopg2.ProgrammingError, cur2.fetchone)
+        # fetching from the correct cursor works
+        self.assertEquals(cur1.fetchone()[0], 1)
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

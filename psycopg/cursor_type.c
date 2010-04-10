@@ -1480,6 +1480,12 @@ psyco_curs_poll(cursorObject *self)
 {
     EXC_IF_CURS_CLOSED(self);
 
+    if (self->conn->async_cursor != NULL &&
+        self->conn->async_cursor != (PyObject *) self) {
+        PyErr_SetString(ProgrammingError, "poll with wrong cursor");
+        return NULL;
+    }
+
     Dprintf("curs_poll: polling with status %d", self->conn->async_status);
 
     if (self->conn->async_status == ASYNC_WRITE) {
