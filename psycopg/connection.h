@@ -37,6 +37,7 @@ extern "C" {
 #endif
 
 /* connection status */
+#define CONN_STATUS_SETUP 0
 #define CONN_STATUS_READY 1
 #define CONN_STATUS_BEGIN 2
 #define CONN_STATUS_SYNC  3

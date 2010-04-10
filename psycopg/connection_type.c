@@ -425,6 +425,12 @@ psyco_conn_poll(connectionObject *self)
 
     switch (self->status) {
 
+    case CONN_STATUS_SETUP:
+        /* according to libpq documentation the user should start by waiting
+           for the socket to become writable */
+        self->status = CONN_STATUS_ASYNC;
+        return PyInt_FromLong(PSYCO_POLL_WRITE);
+
     case CONN_STATUS_SEND_DATESTYLE:
     case CONN_STATUS_SENT_DATESTYLE:
     case CONN_STATUS_SEND_CLIENT_ENCODING:
@@ -686,7 +692,7 @@ connection_setup(connectionObject *self, const char *dsn, long int async)
     self->notifies = PyList_New(0);
     self->closed = 0;
     self->async = async;
-    self->status = async ? CONN_STATUS_ASYNC : CONN_STATUS_READY;
+    self->status = async ? CONN_STATUS_SETUP : CONN_STATUS_READY;
     self->critical = NULL;
     self->async_cursor = NULL;
     self->pgconn = NULL;
