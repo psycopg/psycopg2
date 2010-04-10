@@ -572,14 +572,27 @@ psyco_conn_issync(connectionObject *self)
 static PyObject *
 psyco_conn_executing(connectionObject *self)
 {
-    if (self->async_cursor == NULL) {
+    /* synchronous connections will always return False */
+    if (self->async == 0) {
         Py_INCREF(Py_False);
         return Py_False;
     }
-    else {
+
+    /* check if the connection is still being built */
+    if (self->status != CONN_STATUS_READY) {
         Py_INCREF(Py_True);
         return Py_True;
     }
+
+    /* check if there is a query being executed */
+    if (self->async_cursor != NULL) {
+        Py_INCREF(Py_True);
+        return Py_True;
+    }
+
+    /* otherwise it's not executing */
+    Py_INCREF(Py_False);
+    return Py_False;
 }
 
 /** the connection object **/
