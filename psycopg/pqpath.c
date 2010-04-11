@@ -725,6 +725,8 @@ pq_execute(cursorObject *curs, const char *query, int async)
     }
 
     else if (async == 1) {
+        int ret;
+
         Dprintf("pq_execute: executing ASYNC query:");
         Dprintf("    %-.200s", query);
 
@@ -738,14 +740,20 @@ pq_execute(cursorObject *curs, const char *query, int async)
         }
         Dprintf("pq_execute: async query sent to backend");
 
-        if (PQflush(curs->conn->pgconn) == 0) {
+        ret = PQflush(curs->conn->pgconn);
+        if (ret == 0) {
             /* the query got fully sent to the server */
             Dprintf("pq_execute: query got flushed immediately");
             /* the async status will be ASYNC_READ */
             async_status = ASYNC_READ;
         }
-        else {
+        else if (ret == 1) {
+            /* not all of the query got sent to the server */
             async_status = ASYNC_WRITE;
+        }
+        else {
+            /* there was an error */
+            return -1;
         }
     }
 
