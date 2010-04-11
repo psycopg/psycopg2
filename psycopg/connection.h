@@ -51,6 +51,7 @@ extern "C" {
 #define CONN_STATUS_GET_CLIENT_ENCODING        10
 
 /* async query execution status */
+#define ASYNC_DONE  0
 #define ASYNC_READ  1
 #define ASYNC_WRITE 2
 

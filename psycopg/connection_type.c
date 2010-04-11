@@ -695,6 +695,7 @@ connection_setup(connectionObject *self, const char *dsn, long int async)
     self->status = async ? CONN_STATUS_SETUP : CONN_STATUS_READY;
     self->critical = NULL;
     self->async_cursor = NULL;
+    self->async_status = ASYNC_DONE;
     self->pgconn = NULL;
     self->mark = 0;
     self->string_types = PyDict_New();

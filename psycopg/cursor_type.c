@@ -1491,7 +1491,10 @@ psyco_curs_poll(cursorObject *self)
     if (self->conn->async_status == ASYNC_WRITE) {
         return curs_poll_send(self);
     }
-    else  {
+    else {
+        /* this gets called both for ASYNC_READ and ASYNC_DONE, because even
+           if the async query is complete, we still might want to check for
+           NOTIFYs */
         return curs_poll_fetch(self);
     }
 }

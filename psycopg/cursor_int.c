@@ -112,6 +112,7 @@ curs_poll_send(cursorObject *self)
     else if (res == 0) {
         /* all data flushed, start waiting for results */
         Dprintf("cur_poll_send: returning %d", PSYCO_POLL_READ);
+        self->conn->async_status = ASYNC_READ;
         return PyInt_FromLong(PSYCO_POLL_READ);
     }
     else {
@@ -153,6 +154,11 @@ curs_poll_fetch(cursorObject *self)
 
     if (last_result == 0) {
         Dprintf("cur_poll_fetch: returning %d", PSYCO_POLL_OK);
+        /* self->conn->async_status cannot be ASYNC_WRITE here, because we
+           never execute curs_poll_fetch in ASYNC_WRITE state, so we can
+           safely set it to ASYNC_DONE because we either fetched the result or
+           there is no result to fetch */
+        self->conn->async_status = ASYNC_DONE;
         return PyInt_FromLong(PSYCO_POLL_OK);
     }
     else if (last_result == 1) {
