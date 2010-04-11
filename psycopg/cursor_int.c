@@ -67,7 +67,6 @@ int
 curs_get_last_result(cursorObject *self) {
     PGresult *pgres;
 
-    IFCLEARPGRES(self->pgres);
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
     /* read one result, there can be multiple if the client sent multiple
@@ -76,7 +75,8 @@ curs_get_last_result(cursorObject *self) {
         if (PQisBusy(self->conn->pgconn) == 1) {
             /* there is another result waiting, need to tell the client to
                wait more */
-            Dprintf("curs_get_last_result: gut result, but more are pending");
+            Dprintf("curs_get_last_result: got result, but more are pending");
+            IFCLEARPGRES(self->pgres);
             self->pgres = pgres;
             pthread_mutex_unlock(&(self->conn->lock));
             Py_BLOCK_THREADS;
@@ -90,8 +90,10 @@ curs_get_last_result(cursorObject *self) {
     self->conn->async_cursor = NULL;
     pthread_mutex_unlock(&(self->conn->lock));
     Py_END_ALLOW_THREADS;
-    self->needsfetch = 1;
-    return 0;
+    /* fetch the tuples (if there are any) and build the result. We don't care
+       if pq_fetch return 0 or 1, but if there was an error, we want to signal
+       it to the caller. */
+    return pq_fetch(self) == -1 ? -1 : 0;
 }
 
 /* curs_poll_send - handle cursor polling when flushing output */

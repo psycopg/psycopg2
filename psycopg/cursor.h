@@ -46,7 +46,6 @@ typedef struct {
 
     int closed:1;            /* 1 if the cursor is closed */
     int notuples:1;          /* 1 if the command was not a SELECT query */
-    int needsfetch:1;        /* 1 if a call to pq_fetch is pending */
 
     long int rowcount;       /* number of rows affected by last execute */
     long int columns;        /* number of columns fetched from the db */

@@ -645,8 +645,7 @@ _psyco_curs_prefetch(cursorObject *self)
 {
     int i = 0;
 
-    if (self->pgres == NULL || self->needsfetch) {
-        self->needsfetch = 0;
+    if (self->pgres == NULL) {
         Dprintf("_psyco_curs_prefetch: trying to fetch data");
         do {
             i = pq_fetch(self);
@@ -1067,10 +1066,6 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
        our own calculations to scroll; else we just delegate the scrolling
        to the MOVE SQL statement */
     if (self->name == NULL) {
-        /* the prefetch will be a noop for sync executions, because they
-           always set self->pgres  and never touch self->needsfetch, but for
-           async queries we need to parse the result and set self->rowcount */
-        if (_psyco_curs_prefetch(self) < 0) return NULL;
         if (strcmp(mode, "relative") == 0) {
             newpos = self->row + value;
         } else if (strcmp( mode, "absolute") == 0) {

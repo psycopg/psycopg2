@@ -338,6 +338,29 @@ class AsyncTests(unittest.TestCase):
         # fetching from the correct cursor works
         self.assertEquals(cur1.fetchone()[0], 1)
 
+    def test_error(self):
+        cur = self.conn.cursor()
+        cur.execute("insert into table1 values (%s)", (1, ))
+        self.wait(cur)
+        cur.execute("insert into table1 values (%s)", (1, ))
+        # this should fail
+        self.assertRaises(psycopg2.IntegrityError, self.wait, cur)
+        cur.execute("insert into table1 values (%s); "
+                    "insert into table1 values (%s)", (2, 2))
+        # this should fail as well
+        self.assertRaises(psycopg2.IntegrityError, self.wait, cur)
+        # but this should work
+        cur.execute("insert into table1 values (%s)", (2, ))
+        self.wait(cur)
+        # and the cursor should be usable afterwards
+        cur.execute("insert into table1 values (%s)", (3, ))
+        self.wait(cur)
+        cur.execute("select * from table1 order by id")
+        self.wait(cur)
+        self.assertEquals(cur.fetchall(), [(1, ), (2, ), (3, )])
+        cur.execute("delete from table1")
+        self.wait(cur)
+
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
