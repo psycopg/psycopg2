@@ -361,6 +361,15 @@ class AsyncTests(unittest.TestCase):
         cur.execute("delete from table1")
         self.wait(cur)
 
+    def test_error_two_cursors(self):
+        cur = self.conn.cursor()
+        cur2 = self.conn.cursor()
+        cur.execute("select * from no_such_table")
+        self.assertRaises(psycopg2.ProgrammingError, self.wait, cur)
+        cur2.execute("select 1")
+        self.wait(cur2)
+        self.assertEquals(cur2.fetchone()[0], 1)
+
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
