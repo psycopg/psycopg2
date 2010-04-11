@@ -14,6 +14,21 @@ else:
     import py3tests as tests
 
 
+class PollableStub(object):
+    """A 'pollable' wrapper allowing analysis of the `poll()` calls."""
+    def __init__(self, pollable):
+        self.pollable = pollable
+        self.polls = []
+
+    def fileno(self):
+        return self.pollable.fileno()
+
+    def poll(self):
+        rv = self.pollable.poll()
+        self.polls.append(rv)
+        return rv
+
+
 class AsyncTests(unittest.TestCase):
 
     def setUp(self):
@@ -284,6 +299,21 @@ class AsyncTests(unittest.TestCase):
         self.assert_(not conn.issync())
         conn.close()
 
+
+    def test_flush_on_write(self):
+        # a very large query requires a flush loop to be sent to the backend
+        curs = self.conn.cursor()
+        for mb in 1, 5, 10, 20, 50:
+            size = mb * 1024 * 1024
+            print "\nplease wait: sending", mb, "MB query to the server",
+            stub = PollableStub(curs)
+            curs.execute("select %s;", ('x' * size,))
+            self.wait(stub)
+            self.assertEqual(size, len(curs.fetchone()[0]))
+            if stub.polls.count(psycopg2.extensions.POLL_WRITE) > 1:
+                return
+
+        self.fail("sending a large query didn't trigger block on write.")
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
