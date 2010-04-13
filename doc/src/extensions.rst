@@ -199,7 +199,7 @@ deal with Python objects adaptation:
 
     .. versionchanged:: 2.0.14
         previously the adapter was not exposed by the `extensions`
-        module. In older version it can be imported from the implementation
+        module. In older versions it can be imported from the implementation
         module `!psycopg2._psycopg`.
 
 
@@ -495,6 +495,7 @@ from the database.  See :ref:`unicode-handling` for details.
           DATE
           DATEARRAY
           DATETIMEARRAY
+          DECIMAL
           DECIMALARRAY
           FLOAT
           FLOATARRAY
@@ -511,3 +512,7 @@ from the database.  See :ref:`unicode-handling` for details.
           UNICODE
           UNICODEARRAY
 
+.. versionchanged:: 2.2.0
+        previously the `DECIMAL` typecaster was not exposed by the
+        `extensions` module. In older versions it can be imported from the
+        implementation module `!psycopg2._psycopg`.

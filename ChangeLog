@@ -1,3 +1,7 @@
+2010-04-13  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* lib/extensions.py: DECIMAL typecaster imported from _psycopg.
+
 2010-04-05  Federico Di Gregorio  <fog@initd.org>
 
 	* Fixed problem with asynchronous NOTIFYs.
