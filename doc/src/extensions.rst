@@ -512,7 +512,24 @@ from the database.  See :ref:`unicode-handling` for details.
           UNICODE
           UNICODEARRAY
 
+Typecasters to convert time-related data types to Python `!datetime` objects:
+
+.. data:: PYDATE
+          PYDATETIME
+          PYINTERVAL
+          PYTIME
+
+Typecasters to convert time-related data types to `mx.DateTime`_ objects. Only
+available if Psycopg was compiled with `!mx` support.
+
+.. data:: MXDATE
+          MXDATETIME
+          MXINTERVAL
+          MXTIME
+
 .. versionchanged:: 2.2.0
-        previously the `DECIMAL` typecaster was not exposed by the
-        `extensions` module. In older versions it can be imported from the
-        implementation module `!psycopg2._psycopg`.
+        previously the `DECIMAL` typecaster and the specific time-related
+        typecasters (`!PY*` and `!MX*`) were not exposed by the `extensions`
+        module. In older versions they can be imported from the implementation
+        module `!psycopg2._psycopg`.
+

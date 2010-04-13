@@ -41,11 +41,14 @@ from _psycopg import UNICODEARRAY
 
 from _psycopg import Binary, Boolean, Float, QuotedString, AsIs
 try:
+    from _psycopg import MXDATE, MXDATETIME, MXINTERVAL, MXTIME
     from _psycopg import DateFromMx, TimeFromMx, TimestampFromMx
     from _psycopg import IntervalFromMx
 except:
     pass
+
 try:
+    from _psycopg import PYDATE, PYDATETIME, PYINTERVAL, PYTIME
     from _psycopg import DateFromPy, TimeFromPy, TimestampFromPy
     from _psycopg import IntervalFromPy
 except:

@@ -2,6 +2,8 @@
 
 	* lib/extensions.py: DECIMAL typecaster imported from _psycopg.
 
+	* lib/extensions.py: PY* and MX* time typecaster imported from _psycopg.
+
 2010-04-05  Federico Di Gregorio  <fog@initd.org>
 
 	* Fixed problem with asynchronous NOTIFYs.
