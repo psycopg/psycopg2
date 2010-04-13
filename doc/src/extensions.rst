@@ -489,43 +489,52 @@ Python objects.  All the typecasters are automatically registered, except
 `register_type()` in order to receive Unicode objects instead of strings
 from the database.  See :ref:`unicode-handling` for details.
 
-.. data:: BINARYARRAY
-          BOOLEAN
-          BOOLEANARRAY
+.. data:: BOOLEAN
           DATE
+          DECIMAL
+          FLOAT
+          INTEGER
+          INTERVAL
+          LONGINTEGER
+          TIME
+          UNICODE
+
+    Typecasters for basic types. Notice that a few other ones (`~psycopg2.BINARY`,
+    `~psycopg2.DATETIME`, `~psycopg2.NUMBER`, `~psycopg2.ROWID`,
+    `~psycopg2.STRING`) are exposed by the `psycopg2` module for |DBAPI|_
+    compliance.
+
+.. data:: BINARYARRAY
+          BOOLEANARRAY
           DATEARRAY
           DATETIMEARRAY
-          DECIMAL
           DECIMALARRAY
-          FLOAT
           FLOATARRAY
-          INTEGER
           INTEGERARRAY
-          INTERVAL
           INTERVALARRAY
-          LONGINTEGER
           LONGINTEGERARRAY
           ROWIDARRAY
           STRINGARRAY
-          TIME
           TIMEARRAY
-          UNICODE
           UNICODEARRAY
 
-Typecasters to convert time-related data types to Python `!datetime` objects:
+    Typecasters to convert arrays of sql types into Python lists.
 
 .. data:: PYDATE
           PYDATETIME
           PYINTERVAL
           PYTIME
 
-Typecasters to convert time-related data types to `mx.DateTime`_ objects. Only
-available if Psycopg was compiled with `!mx` support.
+    Typecasters to convert time-related data types to Python `!datetime`
+    objects.
 
 .. data:: MXDATE
           MXDATETIME
           MXINTERVAL
           MXTIME
+
+    Typecasters to convert time-related data types to `mx.DateTime`_ objects.
+    Only available if Psycopg was compiled with `!mx` support.
 
 .. versionchanged:: 2.2.0
         previously the `DECIMAL` typecaster and the specific time-related
