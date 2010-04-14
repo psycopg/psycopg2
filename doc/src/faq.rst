@@ -70,6 +70,20 @@ My database is Unicode, but I receive all the strings as UTF-8 `str`. Can I rece
 
     See :ref:`unicode-handling` for the gory details.
 
+Psycopg converts :sql:`decimal`\/\ :sql:`numeric` database types into Python `!Decimal` objects. Can I have `!float` instead?
+    You can register the `~psycopg2.extensions.FLOAT` typecaster to be used in
+    place of `~psycopg2.extensions.DECIMAL`::
+
+        DEC2FLOAT = psycopg2.extensions.new_type(
+            psycopg2.extensions.DECIMAL.values,
+            'DEC2FLOAT',
+            psycopg2.extensions.FLOAT)
+        psycopg2.extensions.register_type(DEC2FLOAT)
+
+    See :ref:`type-casting-from-sql-to-python` to read the relevant
+    documentation. If you find `!psycopg2.extensions.DECIMAL` not avalable, use
+    `!psycopg2._psycopg.DECIMAL` instead.
+
 I can't compile `!psycopg2`: the compiler says *error: Python.h: No such file or directory*. What am I missing?
     You need to install a Python development package: it is usually called
     ``python-dev``.
