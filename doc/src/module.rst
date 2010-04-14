@@ -16,7 +16,7 @@ The module interface respects the standard defined in the |DBAPI|_.
     single: Port; Connection
     single: DSN (Database Source Name)
 
-.. function:: connect(dsn or params[, connection_factory])
+.. function:: connect(dsn or params [, connection_factory] [, async=0])
 
     Create a new database session and return a new `connection` object.
 
@@ -40,15 +40,18 @@ The module interface respects the standard defined in the |DBAPI|_.
 
     .. __: http://www.postgresql.org/docs/8.4/static/libpq-ssl.html#LIBPQ-SSL-SSLMODE-STATEMENTS
 
-    Using the `connection_factory` parameter a different class or
+    Using the *connection_factory* parameter a different class or
     connections factory can be specified. It should be a callable object
-    taking a `dsn` argument. See :ref:`subclassing-connection` for
+    taking a *dsn* argument. See :ref:`subclassing-connection` for
     details.
+
+    Using *async*\=1 an asynchronous connection will be created: see
+    :ref:`async-support` to know about advantages and limitations.
 
     .. extension::
 
-        The `connection_factory` parameter is a Psycopg extension to the
-        |DBAPI|.
+        The parameters *connection_factory* and *async* are Psycopg extensions
+        to the |DBAPI|.
 
 
 .. data:: apilevel

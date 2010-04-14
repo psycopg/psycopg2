@@ -33,7 +33,7 @@ This module holds all the extensions to the DBAPI-2.0 provided by psycopg.
 # License for more details.
 
 from _psycopg import UNICODE, INTEGER, LONGINTEGER, BOOLEAN, FLOAT
-from _psycopg import TIME, DATE, INTERVAL
+from _psycopg import TIME, DATE, INTERVAL, DECIMAL
 from _psycopg import BINARYARRAY, BOOLEANARRAY, DATEARRAY, DATETIMEARRAY
 from _psycopg import DECIMALARRAY, FLOATARRAY, INTEGERARRAY, INTERVALARRAY
 from _psycopg import LONGINTEGERARRAY, ROWIDARRAY, STRINGARRAY, TIMEARRAY
@@ -41,11 +41,14 @@ from _psycopg import UNICODEARRAY
 
 from _psycopg import Binary, Boolean, Float, QuotedString, AsIs
 try:
+    from _psycopg import MXDATE, MXDATETIME, MXINTERVAL, MXTIME
     from _psycopg import DateFromMx, TimeFromMx, TimestampFromMx
     from _psycopg import IntervalFromMx
 except:
     pass
+
 try:
+    from _psycopg import PYDATE, PYDATETIME, PYINTERVAL, PYTIME
     from _psycopg import DateFromPy, TimeFromPy, TimestampFromPy
     from _psycopg import IntervalFromPy
 except:

@@ -21,6 +21,8 @@ functionalities defined by the |DBAPI|_.
     `!connect()` function using the `connection_factory` parameter.
     See also :ref:`subclassing-connection`.
 
+    Subclasses should have constructor signature :samp:`({dsn}, {async}=0)`.
+
     For a complete description of the class, see `connection`.
 
 .. class:: cursor
@@ -80,13 +82,13 @@ functionalities defined by the |DBAPI|_.
 
     .. method:: truncate(len=0)
 
-        .. versionadded:: 2.0.15
+        .. versionadded:: 2.2.0
 
         Truncate the lobject to the given size.
 
-	The method will only be available if psycopg has been built against libpq
-	from PostgreSQL 8.3 or later and can only be used with PostgreSQL servers
-	running these versions. It uses the |lo_truncate|_ libpq function.
+        The method will only be available if Psycopg has been built against libpq
+        from PostgreSQL 8.3 or later and can only be used with PostgreSQL servers
+        running these versions. It uses the |lo_truncate|_ libpq function.
 
         .. |lo_truncate| replace:: `!lo_truncate()`
         .. _lo_truncate: http://www.postgresql.org/docs/8.4/static/lo-interfaces.html#AEN36420
@@ -197,7 +199,7 @@ deal with Python objects adaptation:
 
     .. versionchanged:: 2.0.14
         previously the adapter was not exposed by the `extensions`
-        module. In older version it can be imported from the implementation
+        module. In older versions it can be imported from the implementation
         module `!psycopg2._psycopg`.
 
 
@@ -443,6 +445,40 @@ can be read from the `~connection.status` attribute.
 
 
 
+.. index::
+    pair: Poll status; Constants
+
+.. _poll-constants:
+
+Poll constants
+--------------
+
+.. versionadded:: 2.2.0
+
+These values can be returned by `connection.poll()` and `cursor.poll()` during
+asynchronous communication. See :ref:`async-support`.
+
+.. data:: POLL_OK
+
+    The data is available (or the file descriptor is ready for writing): there
+    is no need to block anymore.
+
+.. data:: POLL_READ
+
+    Upon receiving this value, the callback should wait for the connection
+    file descriptor to be ready *for reading*. For example::
+
+        select.select([conn.fileno()], [], [])
+
+.. data:: POLL_WRITE
+
+    Upon receiving this value, the callback should wait for the connection
+    file descriptor to be ready *for writing*. For example::
+
+        select.select([], [conn.fileno()], [])
+
+
+
 Additional database types
 -------------------------
 
@@ -453,25 +489,56 @@ Python objects.  All the typecasters are automatically registered, except
 `register_type()` in order to receive Unicode objects instead of strings
 from the database.  See :ref:`unicode-handling` for details.
 
-.. data:: BINARYARRAY
-          BOOLEAN
-          BOOLEANARRAY
+.. data:: BOOLEAN
           DATE
+          DECIMAL
+          FLOAT
+          INTEGER
+          INTERVAL
+          LONGINTEGER
+          TIME
+          UNICODE
+
+    Typecasters for basic types. Notice that a few other ones (`~psycopg2.BINARY`,
+    `~psycopg2.DATETIME`, `~psycopg2.NUMBER`, `~psycopg2.ROWID`,
+    `~psycopg2.STRING`) are exposed by the `psycopg2` module for |DBAPI|_
+    compliance.
+
+.. data:: BINARYARRAY
+          BOOLEANARRAY
           DATEARRAY
           DATETIMEARRAY
           DECIMALARRAY
-          FLOAT
           FLOATARRAY
-          INTEGER
           INTEGERARRAY
-          INTERVAL
           INTERVALARRAY
-          LONGINTEGER
           LONGINTEGERARRAY
           ROWIDARRAY
           STRINGARRAY
-          TIME
           TIMEARRAY
-          UNICODE
           UNICODEARRAY
+
+    Typecasters to convert arrays of sql types into Python lists.
+
+.. data:: PYDATE
+          PYDATETIME
+          PYINTERVAL
+          PYTIME
+
+    Typecasters to convert time-related data types to Python `!datetime`
+    objects.
+
+.. data:: MXDATE
+          MXDATETIME
+          MXINTERVAL
+          MXTIME
+
+    Typecasters to convert time-related data types to `mx.DateTime`_ objects.
+    Only available if Psycopg was compiled with `!mx` support.
+
+.. versionchanged:: 2.2.0
+        previously the `DECIMAL` typecaster and the specific time-related
+        typecasters (`!PY*` and `!MX*`) were not exposed by the `extensions`
+        module. In older versions they can be imported from the implementation
+        module `!psycopg2._psycopg`.
 

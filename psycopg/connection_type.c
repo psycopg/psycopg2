@@ -757,8 +757,9 @@ connection_init(PyObject *obj, PyObject *args, PyObject *kwds)
 {
     const char *dsn;
     long int async = 0;
+    static char *kwlist[] = {"dsn", "async", NULL};
 
-    if (!PyArg_ParseTuple(args, "s|l", &dsn, &async))
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|l", kwlist, &dsn, &async))
         return -1;
 
     return connection_setup((connectionObject *)obj, dsn, async);

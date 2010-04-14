@@ -314,3 +314,37 @@ The ``connection`` class
         .. _lo_import: http://www.postgresql.org/docs/8.4/static/lo-interfaces.html#AEN36307
 
         .. versionadded:: 2.0.8
+
+
+
+    .. rubric:: Methods related to asynchronous support.
+
+    .. seealso:: :ref:`Asynchronous support <async-support>`.
+
+
+    .. method:: issync()
+
+        Return `True` if the connection is synchronous, `False` if asynchronous.
+
+
+    .. method:: poll()
+
+        Used during an asynchronous connection attempt, make communication
+        proceed if it wouldn't block.
+
+        Return one of the constants defined in :ref:`poll-constants`. If it
+        returns `~psycopg2.extensions.POLL_OK` the connection has been
+        estabilished. Otherwise wait until the file descriptor is ready as
+        explained in :ref:`async-support`.
+
+
+    .. method:: fileno()
+
+        Return the file descriptor associated with the connection to read the
+        status during asynchronous communication.
+
+
+    .. method:: executing()
+
+        Return `True` if the connection is executing an asynchronous operation.
+

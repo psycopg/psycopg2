@@ -109,7 +109,7 @@ The ``cursor`` class
     .. rubric:: Commands execution methods
 
 
-    .. method:: execute(operation [, parameters] [, async]) 
+    .. method:: execute(operation [, parameters])
       
         Prepare and execute a database operation (query or command).
 
@@ -120,16 +120,6 @@ The ``cursor`` class
         
         The method returns `None`. If a query was executed, the returned
         values can be retrieved using |fetch*|_ methods.
-
-        If `async` is ``True``, query execution will be asynchronous:
-        the function returns immediately while the query is executed by the
-        backend.  Use the `~cursor.isready()` method to see if the data is
-        ready for return via |fetch*|_ methods. See
-        :ref:`asynchronous-queries`.
-
-        .. extension::
-
-            The `async` parameter is a Psycopg extension to the |DBAPI|.
 
 
     .. method:: mogrify(operation [, parameters])
@@ -159,7 +149,7 @@ The ``cursor`` class
         the `~cursor.execute()` method.
 
 
-    .. method:: callproc(procname [, parameters] [, async])
+    .. method:: callproc(procname [, parameters])
             
         Call a stored database procedure with the given name. The sequence of
         parameters must contain one entry for each argument that the procedure
@@ -169,16 +159,6 @@ The ``cursor`` class
         
         The procedure may also provide a result set as output. This must then
         be made available through the standard |fetch*|_ methods.
-
-        If `async` is ``True``, procedure execution will be asynchronous:
-        the function returns immediately while the procedure is executed by
-        the backend.  Use the `~cursor.isready()` method to see if the
-        data is ready for return via |fetch*|_ methods. See
-        :ref:`asynchronous-queries`.
-
-        .. extension::
-
-            The `async` parameter is a Psycopg extension to the |DBAPI|.
 
 
     .. method:: setinputsizes(sizes)
@@ -400,29 +380,6 @@ The ``cursor`` class
             |DBAPI|.
 
 
-    .. method:: isready()
-
-        Return ``False`` if the backend is still processing an asynchronous
-        query or ``True`` if data is ready to be fetched by one of the
-        |fetch*|_ methods.  See :ref:`asynchronous-queries`.
-
-        .. extension::
-
-            The `isready()` method is a Psycopg extension to the |DBAPI|.
-
-
-    .. method:: fileno()
-
-        Return the file descriptor associated with the current connection and
-        make possible to use a cursor in a context where a file object would
-        be expected (like in a `select()` call).  See
-        :ref:`asynchronous-queries`.
-
-        .. extension::
-
-            The `fileno()` method is a Psycopg extension to the |DBAPI|.
-
-
     .. attribute:: tzinfo_factory
 
         The time zone factory used to handle data types such as
@@ -431,6 +388,33 @@ The ``cursor`` class
 
         .. |tzinfo| replace:: `!tzinfo`
         .. _tzinfo: http://docs.python.org/library/datetime.html#tzinfo-objects
+
+
+
+    .. rubric:: Methods related to asynchronous support.
+
+    .. extension::
+
+        :ref:`Asynchronous support <async-support>` is a Psycopg extension to
+        the |DBAPI|.
+
+
+    .. method:: poll()
+
+        Used during asynchronous queries, make asynchronous communication
+        proceed if it wouldn't block.
+
+        Return `~psycopg2.extensions.POLL_OK` if the query has been fully
+        processed, `~psycopg2.extensions.POLL_READ` if the query has been sent
+        and the application should be waiting for the result to arrive or
+        `~psycopg2.extensions.POLL_WRITE` is the query is still being sent.
+
+
+    .. method:: fileno()
+
+        Return the file descriptor associated with the current connection to
+        make possible to use a cursor in a context where a file object would
+        be expected (like in a `select()` call).
 
 
 
