@@ -301,7 +301,6 @@ class AsyncTests(unittest.TestCase):
         curs = self.conn.cursor()
         for mb in 1, 5, 10, 20, 50:
             size = mb * 1024 * 1024
-            print "\nplease wait: sending", mb, "MB query to the server",
             stub = PollableStub(curs)
             curs.execute("select %s;", ('x' * size,))
             self.wait(stub)
@@ -324,7 +323,7 @@ class AsyncTests(unittest.TestCase):
         # polling a cursor that's not currently executing is an error
         self.assertRaises(psycopg2.ProgrammingError, cur2.poll)
 
-        self.wait_for_query(cur1)
+        self.wait(cur1)
         self.assertEquals(cur1.fetchone()[0], 1)
 
     def test_async_fetch_wrong_cursor(self):
@@ -332,7 +331,7 @@ class AsyncTests(unittest.TestCase):
         cur2 = self.conn.cursor()
         cur1.execute("select 1")
 
-        self.wait_for_query(cur1)
+        self.wait(cur1)
         self.assertFalse(self.conn.executing())
         # fetching from a cursor with no results is an error
         self.assertRaises(psycopg2.ProgrammingError, cur2.fetchone)
