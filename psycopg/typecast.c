@@ -381,9 +381,12 @@ typecast_dealloc(PyObject *obj)
 {
     typecastObject *self = (typecastObject*)obj;
 
+    PyObject_GC_UnTrack(self);
+
     Py_CLEAR(self->values);
     Py_CLEAR(self->name);
     Py_CLEAR(self->pcast);
+    Py_CLEAR(self->bcast);
 
     obj->ob_type->tp_free(obj);
 }
@@ -396,6 +399,7 @@ typecast_traverse(PyObject *obj, visitproc visit, void *arg)
     Py_VISIT(self->values);
     Py_VISIT(self->name);
     Py_VISIT(self->pcast);
+    Py_VISIT(self->bcast);
     return 0;
 }
 
@@ -587,7 +591,7 @@ typecast_cast(PyObject *obj, const char *str, Py_ssize_t len, PyObject *curs)
     PyObject *old, *res = NULL;
     typecastObject *self = (typecastObject *)obj;
 
-    /* we don't incref, the caster *can't* die at this point */
+    Py_INCREF(obj);
     old = ((cursorObject*)curs)->caster;
     ((cursorObject*)curs)->caster = obj;
 
@@ -602,6 +606,7 @@ typecast_cast(PyObject *obj, const char *str, Py_ssize_t len, PyObject *curs)
     }
 
     ((cursorObject*)curs)->caster = old;
+    Py_DECREF(obj);
 
     return res;
 }
