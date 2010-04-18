@@ -1441,59 +1441,6 @@ psyco_curs_copy_expert(cursorObject *self, PyObject *args, PyObject *kwargs)
     return res;
 }
 
-/* extension: fileno - return the file descripor of the connection */
-
-#define psyco_curs_fileno_doc \
-"fileno() -> int -- Return file descriptor associated to database connection."
-
-static PyObject *
-psyco_curs_fileno(cursorObject *self)
-{
-    long int socket;
-
-    EXC_IF_CURS_CLOSED(self);
-
-    Py_BEGIN_ALLOW_THREADS;
-    pthread_mutex_lock(&(self->conn->lock));
-    socket = (long int)PQsocket(self->conn->pgconn);
-    pthread_mutex_unlock(&(self->conn->lock));
-    Py_END_ALLOW_THREADS;
-
-    return PyInt_FromLong(socket);
-}
-
-/* extension: poll - return true if data from async execute is ready */
-
-#define psyco_curs_poll_doc \
-"poll() -- return POLL_OK if the query has been fully processed, "       \
- "POLL_READ if the query has been sent and the application should be "   \
- "waiting for the result to arrive or POLL_WRITE is the query is still " \
- "being sent."
-
-static PyObject *
-psyco_curs_poll(cursorObject *self)
-{
-    EXC_IF_CURS_CLOSED(self);
-
-    if (self->conn->async_cursor != NULL &&
-        self->conn->async_cursor != (PyObject *) self) {
-        PyErr_SetString(ProgrammingError, "poll with wrong cursor");
-        return NULL;
-    }
-
-    Dprintf("curs_poll: polling with status %d", self->conn->async_status);
-
-    if (self->conn->async_status == ASYNC_WRITE) {
-        return curs_poll_send(self);
-    }
-    else {
-        /* this gets called both for ASYNC_READ and ASYNC_DONE, because even
-           if the async query is complete, we still might want to check for
-           NOTIFYs */
-        return curs_poll_fetch(self);
-    }
-}
-
 /* extension: closed - return true if cursor is closed*/
 
 #define psyco_curs_closed_doc \
@@ -1572,10 +1519,6 @@ static struct PyMethodDef cursorObject_methods[] = {
 #ifdef PSYCOPG_EXTENSIONS
     {"mogrify", (PyCFunction)psyco_curs_mogrify,
      METH_VARARGS|METH_KEYWORDS, psyco_curs_mogrify_doc},
-    {"poll", (PyCFunction)psyco_curs_poll,
-     METH_VARARGS, psyco_curs_poll_doc},
-    {"fileno", (PyCFunction)psyco_curs_fileno,
-     METH_NOARGS, psyco_curs_fileno_doc},
     {"copy_from", (PyCFunction)psyco_curs_copy_from,
      METH_VARARGS|METH_KEYWORDS, psyco_curs_copy_from_doc},
     {"copy_to", (PyCFunction)psyco_curs_copy_to,

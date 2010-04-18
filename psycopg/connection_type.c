@@ -449,8 +449,11 @@ psyco_conn_poll(connectionObject *self)
         break;
 
     case CONN_STATUS_READY:
-        /* we have completed the connection setup */
-        return PyInt_FromLong(PSYCO_POLL_OK);
+    case CONN_STATUS_BEGIN:
+        /* The connection is ready, but we might be in an asynchronous query,
+           or we just might want to check for NOTIFYs.  For synchronous
+           connections the status might be BEGIN, not READY. */
+        return conn_poll_ready(self);
 
     default:
         /* everything else is an error */

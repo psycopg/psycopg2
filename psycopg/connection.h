@@ -132,6 +132,7 @@ HIDDEN int  conn_switch_isolation_level(connectionObject *self, int level);
 HIDDEN int  conn_set_client_encoding(connectionObject *self, const char *enc);
 HIDDEN PyObject *conn_poll_send(connectionObject *self);
 HIDDEN PyObject *conn_poll_fetch(connectionObject *self);
+HIDDEN PyObject *conn_poll_ready(connectionObject *self);
 
 /* exception-raising macros */
 #define EXC_IF_CONN_CLOSED(self) if ((self)->closed > 0) { \

@@ -564,6 +564,44 @@ conn_poll_fetch(connectionObject *self)
     return PyInt_FromLong(ret);
 }
 
+/* conn_poll_ready - handle connection polling when it is already open */
+
+PyObject *
+conn_poll_ready(connectionObject *self)
+{
+    int is_busy;
+
+    /* if there is an asynchronous query underway, poll it */
+    if (self->async_cursor != NULL) {
+        if (self->async_status == ASYNC_WRITE) {
+            return curs_poll_send((cursorObject *) self->async_cursor);
+        }
+        else {
+            /* this gets called both for ASYNC_READ and ASYNC_DONE, because
+               even if the async query is complete, we still might want to
+               check for NOTIFYs */
+            return curs_poll_fetch((cursorObject *) self->async_cursor);
+        }
+    }
+
+    /* otherwise just check for NOTIFYs */
+    is_busy = pq_is_busy(self);
+    if (is_busy == -1) {
+        /* there was an error, raise the exception */
+        return NULL;
+    }
+    else if (is_busy == 1) {
+        /* the connection is busy, tell the user to wait more */
+        Dprintf("conn_poll_ready: returning %d", PSYCO_POLL_READ);
+        return PyInt_FromLong(PSYCO_POLL_READ);
+    }
+    else {
+        /* connection is idle */
+        Dprintf("conn_poll_ready: returning %d", PSYCO_POLL_OK);
+        return PyInt_FromLong(PSYCO_POLL_OK);
+    }
+}
+
 /* conn_close - do anything needed to shut down the connection */
 
 void
