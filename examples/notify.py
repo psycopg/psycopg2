@@ -36,8 +36,8 @@ curs.execute("listen test")
 
 print "Waiting for 'NOTIFY test'"
 while 1:
-    if select.select([curs],[],[],5)==([],[],[]):
+    if select.select([curs.connection],[],[],5)==([],[],[]):
         print "Timeout"
     else:
-        if not curs.poll():
+        if not curs.connection.poll():
             print "Got NOTIFY: %s" % str(curs.connection.notifies.pop()) 
