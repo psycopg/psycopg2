@@ -347,7 +347,7 @@ The ``connection`` class
         its status during asynchronous communication.
 
 
-    .. method:: executing()
+    .. method:: isexecuting()
 
         Return `True` if the connection is executing an asynchronous operation.
 

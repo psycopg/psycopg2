@@ -334,7 +334,7 @@ client and available using the regular cursor methods:
     >>> acurs.fetchone()[0]
     42
 
-When an asynchronous query is being executed, `connection.executing()` returns
+When an asynchronous query is being executed, `connection.isexecuting()` returns
 `True`. Two cursors can't execute concurrent queries on the same asynchronous
 connection.
 

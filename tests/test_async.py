@@ -80,13 +80,13 @@ class AsyncTests(unittest.TestCase):
 
     def test_async_select(self):
         cur = self.conn.cursor()
-        self.assertFalse(self.conn.executing())
+        self.assertFalse(self.conn.isexecuting())
         cur.execute("select 'a'")
-        self.assertTrue(self.conn.executing())
+        self.assertTrue(self.conn.isexecuting())
 
         self.wait(cur)
 
-        self.assertFalse(self.conn.executing())
+        self.assertFalse(self.conn.isexecuting())
         self.assertEquals(cur.fetchone()[0], "a")
 
     def test_async_callproc(self):
@@ -96,10 +96,10 @@ class AsyncTests(unittest.TestCase):
         except psycopg2.ProgrammingError:
             # PG <8.1 did not have pg_sleep
             return
-        self.assertTrue(self.conn.executing())
+        self.assertTrue(self.conn.isexecuting())
 
         self.wait(cur)
-        self.assertFalse(self.conn.executing())
+        self.assertFalse(self.conn.isexecuting())
         self.assertEquals(cur.fetchall()[0][0], '')
 
     def test_async_after_async(self):
@@ -158,7 +158,7 @@ class AsyncTests(unittest.TestCase):
 
         # a commit should not work in asynchronous mode
         self.assertRaises(psycopg2.ProgrammingError, self.conn.commit)
-        self.assertTrue(self.conn.executing())
+        self.assertTrue(self.conn.isexecuting())
 
         # but a manual commit should
         self.wait(cur)
@@ -180,12 +180,12 @@ class AsyncTests(unittest.TestCase):
         cur = self.conn.cursor()
 
         cur.execute("select 'c'")
-        self.assertTrue(self.conn.executing())
+        self.assertTrue(self.conn.isexecuting())
 
         # getting transaction status works
         self.assertEquals(self.conn.get_transaction_status(),
                           extensions.TRANSACTION_STATUS_ACTIVE)
-        self.assertTrue(self.conn.executing())
+        self.assertTrue(self.conn.isexecuting())
 
         # setting connection encoding should fail
         self.assertRaises(psycopg2.ProgrammingError,
@@ -198,7 +198,7 @@ class AsyncTests(unittest.TestCase):
     def test_reset_while_async(self):
         cur = self.conn.cursor()
         cur.execute("select 'c'")
-        self.assertTrue(self.conn.executing())
+        self.assertTrue(self.conn.isexecuting())
 
         # a reset should fail
         self.assertRaises(psycopg2.ProgrammingError, self.conn.reset)
@@ -218,7 +218,7 @@ class AsyncTests(unittest.TestCase):
         # but after it's done it should work
         self.wait(cur)
         self.assertEquals(list(cur), [(1, ), (2, ), (3, )])
-        self.assertFalse(self.conn.executing())
+        self.assertFalse(self.conn.isexecuting())
 
     def test_copy_while_async(self):
         cur = self.conn.cursor()
@@ -248,7 +248,7 @@ class AsyncTests(unittest.TestCase):
 
         # scroll should fail if a query is underway
         self.assertRaises(psycopg2.ProgrammingError, cur.scroll, 1)
-        self.assertTrue(self.conn.executing())
+        self.assertTrue(self.conn.isexecuting())
 
         # but after it's done it should work
         self.wait(cur)
@@ -350,7 +350,7 @@ class AsyncTests(unittest.TestCase):
         cur1.execute("select 1")
 
         self.wait(cur1)
-        self.assertFalse(self.conn.executing())
+        self.assertFalse(self.conn.isexecuting())
         # fetching from a cursor with no results is an error
         self.assertRaises(psycopg2.ProgrammingError, cur2.fetchone)
         # fetching from the correct cursor works

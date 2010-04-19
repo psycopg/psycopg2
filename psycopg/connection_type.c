@@ -547,14 +547,14 @@ psyco_conn_fileno(connectionObject *self)
 }
 
 
-/* extension: executing - check for asynchronous operations */
+/* extension: isexecuting - check for asynchronous operations */
 
-#define psyco_conn_executing_doc                           \
-"executing() -> bool -- Return True if the connection is " \
+#define psyco_conn_isexecuting_doc                           \
+"isexecuting() -> bool -- Return True if the connection is " \
  "executing an asynchronous operation."
 
 static PyObject *
-psyco_conn_executing(connectionObject *self)
+psyco_conn_isexecuting(connectionObject *self)
 {
     /* synchronous connections will always return False */
     if (self->async == 0) {
@@ -612,8 +612,8 @@ static struct PyMethodDef connectionObject_methods[] = {
      METH_NOARGS, psyco_conn_lobject_doc},
     {"fileno", (PyCFunction)psyco_conn_fileno,
      METH_NOARGS, psyco_conn_fileno_doc},
-    {"executing", (PyCFunction)psyco_conn_executing,
-     METH_NOARGS, psyco_conn_executing_doc},
+    {"isexecuting", (PyCFunction)psyco_conn_isexecuting,
+     METH_NOARGS, psyco_conn_isexecuting_doc},
 #endif
     {NULL}
 };
