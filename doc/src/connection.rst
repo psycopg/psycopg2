@@ -329,19 +329,22 @@ The ``connection`` class
 
     .. method:: poll()
 
-        Used during an asynchronous connection attempt, make communication
+        Used during an asynchronous connection attempt, or when a cursor is
+        executing a query on an asynchronous connection, make communication
         proceed if it wouldn't block.
 
         Return one of the constants defined in :ref:`poll-constants`. If it
-        returns `~psycopg2.extensions.POLL_OK` the connection has been
-        estabilished. Otherwise wait until the file descriptor is ready as
-        explained in :ref:`async-support`.
+        returns `~psycopg2.extensions.POLL_OK` then the connection has been
+        estabilished or the query results are available on the client.
+        Otherwise wait until the file descriptor returned by
+        `~connection.fileno()` is ready to read or to write, as explained in
+        :ref:`async-support`.
 
 
     .. method:: fileno()
 
-        Return the file descriptor associated with the connection to read the
-        status during asynchronous communication.
+        Return the file descriptor underlying the connection: useful to read
+        its status during asynchronous communication.
 
 
     .. method:: executing()

@@ -455,25 +455,29 @@ Poll constants
 
 .. versionadded:: 2.2.0
 
-These values can be returned by `connection.poll()` and `cursor.poll()` during
-asynchronous communication. See :ref:`async-support`.
+These values can be returned by `connection.poll()` during asynchronous
+connection and communication. See :ref:`async-support`.
 
 .. data:: POLL_OK
 
-    The data is available (or the file descriptor is ready for writing): there
-    is no need to block anymore.
+    The data being read is available, or the file descriptor is ready for
+    writing: reading or writing will not block.
 
 .. data:: POLL_READ
 
-    Upon receiving this value, the callback should wait for the connection
-    file descriptor to be ready *for reading*. For example::
+    Some data is being read from the backend, but it is not available yet on
+    the client and reading would block.  Upon receiving this value, the client
+    should wait for the connection file descriptor to be ready *for reading*.
+    For example::
 
         select.select([conn.fileno()], [], [])
 
 .. data:: POLL_WRITE
 
-    Upon receiving this value, the callback should wait for the connection
-    file descriptor to be ready *for writing*. For example::
+    Some data is being sent to the backend but the connection file descriptor
+    can't currently accept new data.  Upon receiving this value, the client
+    should wait for the connection file descriptor to be ready *for writing*.
+    For example::
 
         select.select([], [conn.fileno()], [])
 

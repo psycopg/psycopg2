@@ -390,34 +390,6 @@ The ``cursor`` class
         .. _tzinfo: http://docs.python.org/library/datetime.html#tzinfo-objects
 
 
-
-    .. rubric:: Methods related to asynchronous support.
-
-    .. extension::
-
-        :ref:`Asynchronous support <async-support>` is a Psycopg extension to
-        the |DBAPI|.
-
-
-    .. method:: poll()
-
-        Used during asynchronous queries, make asynchronous communication
-        proceed if it wouldn't block.
-
-        Return `~psycopg2.extensions.POLL_OK` if the query has been fully
-        processed, `~psycopg2.extensions.POLL_READ` if the query has been sent
-        and the application should be waiting for the result to arrive or
-        `~psycopg2.extensions.POLL_WRITE` is the query is still being sent.
-
-
-    .. method:: fileno()
-
-        Return the file descriptor associated with the current connection to
-        make possible to use a cursor in a context where a file object would
-        be expected (like in a `select()` call).
-
-
-
     .. rubric:: COPY-related methods
 
     .. extension::

@@ -6,9 +6,26 @@ More advanced topics
 .. testsetup:: *
 
     import re
+    import select
 
     cur.execute("CREATE TABLE atable (apoint point)")
     conn.commit()
+
+    def wait(conn):
+        while 1:
+            state = conn.poll()
+            if state == psycopg2.extensions.POLL_OK:
+                break
+            elif state == psycopg2.extensions.POLL_WRITE:
+                select.select([], [conn.fileno()], [])
+            elif state == psycopg2.extensions.POLL_READ:
+                select.select([conn.fileno()], [], [])
+            else:
+                raise psycopg2.OperationalError("poll() returned %s" % state)
+
+    aconn = psycopg2.connect(database='test', async=1)
+    wait(aconn)
+    acurs = aconn.cursor()
 
 .. index::
     double: Subclassing; Cursor
@@ -255,47 +272,48 @@ Asynchronous support
 
 .. versionadded:: 2.2.0
 
-Psycopg can issue asynchronous queries to a Postgresql database. An asynchronous
+Psycopg can issue asynchronous queries to a PostgreSQL database. An asynchronous
 communication style is estabilished passing the parameter *async*\=1 to the
 `~psycopg2.connect()` function: the returned connection will work in
-asynchronous mode.
+*asynchronous mode*.
 
-In asynchronous mode, a Psycopg connection will rely on the caller to poll for
-the socket file descriptor ready to accept data or a query result ready to be
-read from the server. The caller can use the method `~cursor.fileno()` to get
-the connection file descriptor and `~cursor.poll()` to make communication
-proceed. An application can use a loop like the one below to transfer data
-between the client and the server::
+In asynchronous mode, a Psycopg connection will rely on the caller to poll the
+socket file descriptor, checking if it is ready to accept data or if a query
+result has been transferred and is ready to be read on the client. The caller
+can use the method `~connection.fileno()` to get the connection file
+descriptor and `~connection.poll()` to make communication proceed according to
+the current connection state.
 
-    def wait(conn_or_cur):
+The following is an example loop using methods `!fileno()` and `!poll()`
+together with the Python |select()|_ function in order to carry on
+asynchronous operations with Psycopg::
+
+    def wait(conn):
         while 1:
-            state = conn_or_cur.poll()
+            state = conn.poll()
             if state == psycopg2.extensions.POLL_OK:
                 break
             elif state == psycopg2.extensions.POLL_WRITE:
-                select.select([], [conn_or_cur.fileno()], [])
+                select.select([], [conn.fileno()], [])
             elif state == psycopg2.extensions.POLL_READ:
-                select.select([conn_or_cur.fileno()], [], [])
+                select.select([conn.fileno()], [], [])
             else:
                 raise psycopg2.OperationalError("poll() returned %s" % state)
 
-After `!poll()` has returned `~psycopg2.extensions.POLL_OK`, the results are
-available in the cursor for regular reading::
+.. |select()| replace:: `!select()`
+.. _select(): http://docs.python.org/library/select.html#select.select
 
-    curs.execute("SELECT * FROM foo;")
-    wait(curs)
-    for record in curs:
-        # use it...
+The above loop of course would block an entire application: in a real
+asynchronous framework, `!select()` would be called on many file descriptors
+waiting for any of them to be ready.  Nonetheless the function can be used to
+connect to a PostgreSQL server only using nonblocking commands and the
+connection obtained can be used to perform further nonblocking queries.  After
+`!poll()` has returned `~psycopg2.extensions.POLL_OK`, and thus `!wait()` has
+returned, the connection can be safely used:
 
-The same loop should also be used to accomplish a connection with the server:
-the connection is usable only after `connection.poll()` has returned `!POLL_OK`.
-The `!connection` has a `~connection.fileno()` method too, so it is possible to
-use the same interface for the wait loop::
-
-    conn = psycopg2.connect(database='test', async=1)
-    wait(conn)
-    # Now you can have a cursor.
-    curs = conn.cursor()
+    >>> aconn = psycopg2.connect(database='test', async=1)
+    >>> wait(aconn)
+    >>> acurs = aconn.cursor()
 
 Notice that there are a few other requirements to be met in order to have a
 completely non-blocking connection attempt: see the libpq documentation for
@@ -304,17 +322,29 @@ completely non-blocking connection attempt: see the libpq documentation for
 .. |PQconnectStart| replace:: `!PQconnectStart()`
 .. _PQconnectStart: http://www.postgresql.org/docs/8.4/static/libpq-connect.html#AEN33199
 
+The same loop should be also used to perform nonblocking queries: after
+sending a query via `~cursor.execute()` or `~cursor.callproc()`, call
+`!poll()` on the connection available from `cursor.connection` until it
+returns `!POLL_OK`, at which pont the query has been completely sent to the
+server and, if it produced data, the results have been transferred to the
+client and available using the regular cursor methods:
+
+    >>> acurs.execute("SELECT pg_sleep(5); SELECT 42;")
+    >>> wait(acurs.connection)
+    >>> acurs.fetchone()[0]
+    42
+
 When an asynchronous query is being executed, `connection.executing()` returns
 `True`. Two cursors can't execute concurrent queries on the same asynchronous
 connection.
 
-There are several limitations in using asynchronous connections: the connection
-is always in :ref:`autocommit <autocommit>` mode and it is not possible to
-change it using `~connection.set_isolation_level()`. So transaction are not
-started at each query and is not possible to use methods `~connection.commit()`
-and `~connection.rollback()`: you can manually control transactions using
-`~cursor.execute()` to send commands :sql:`BEGIN`, :sql:`COMMIT` and
-:sql:`ROLLBACK`.
+There are several limitations in using asynchronous connections: the
+connection is always in :ref:`autocommit <autocommit>` mode and it is not
+possible to change it using `~connection.set_isolation_level()`. So a
+transaction is not implicitly started at the first query and is not possible
+to use methods `~connection.commit()` and `~connection.rollback()`: you can
+manually control transactions using `~cursor.execute()` to send database
+commands such as :sql:`BEGIN`, :sql:`COMMIT` and :sql:`ROLLBACK`.
 
 With asynchronous connections it is also not possible to use
 `~connection.set_client_encoding()`, `~cursor.executemany()`, :ref:`large
@@ -328,6 +358,7 @@ this will be probably implemented in a future release.
 .. testcode::
     :hide:
 
+    aconn.close()
     conn.rollback()
     cur.execute("DROP TABLE atable")
     conn.commit()
