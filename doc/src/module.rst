@@ -309,3 +309,8 @@ The module exports the following constructors and singletons:
   
     This type object is used to describe the "Row ID" column in a database.
 
+
+.. testcode::
+    :hide:
+
+    conn.rollback()

@@ -466,3 +466,8 @@ The ``cursor`` class
 
         .. versionadded:: 2.0.6
 
+
+.. testcode::
+    :hide:
+
+    conn.rollback()

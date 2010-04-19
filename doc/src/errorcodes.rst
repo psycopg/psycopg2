@@ -70,3 +70,7 @@ between 8.1 and 8.4 are included in the module.
     .. versionadded:: 2.0.14
 
 
+.. testcode::
+    :hide:
+
+    conn.rollback()

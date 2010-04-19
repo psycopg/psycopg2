@@ -351,3 +351,8 @@ The ``connection`` class
 
         Return `True` if the connection is executing an asynchronous operation.
 
+
+.. testcode::
+    :hide:
+
+    conn.rollback()
