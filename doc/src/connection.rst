@@ -322,9 +322,9 @@ The ``connection`` class
     .. seealso:: :ref:`Asynchronous support <async-support>`.
 
 
-    .. method:: issync()
+    .. attribute:: async
 
-        Return `True` if the connection is synchronous, `False` if asynchronous.
+        Read only attribute: 1 if the connection is asynchronous, 0 otherwse.
 
 
     .. method:: poll()

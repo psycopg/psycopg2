@@ -68,8 +68,8 @@ class AsyncTests(unittest.TestCase):
         cur = self.conn.cursor()
         sync_cur = self.sync_conn.cursor()
 
-        self.assertEquals(self.conn.issync(), False)
-        self.assertEquals(self.sync_conn.issync(), True)
+        self.assert_(self.conn.async)
+        self.assert_(not self.sync_conn.async)
 
         # the async connection should be in isolevel 0
         self.assertEquals(self.conn.isolation_level, 0)
@@ -297,7 +297,7 @@ class AsyncTests(unittest.TestCase):
 
         conn = psycopg2.connect(tests.dsn, connection_factory=MyConn, async=True)
         self.assert_(isinstance(conn, MyConn))
-        self.assert_(not conn.issync())
+        self.assert_(conn.async)
         conn.close()
 
     def test_flush_on_write(self):

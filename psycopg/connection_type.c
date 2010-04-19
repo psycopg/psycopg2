@@ -547,25 +547,6 @@ psyco_conn_fileno(connectionObject *self)
 }
 
 
-/* extension: issync - tell if the connection is synchronous */
-
-#define psyco_conn_issync_doc \
-"issync() -> bool -- Return True if the connection is synchronous."
-
-static PyObject *
-psyco_conn_issync(connectionObject *self)
-{
-    if (self->async) {
-        Py_INCREF(Py_False);
-        return Py_False;
-    }
-    else {
-        Py_INCREF(Py_True);
-        return Py_True;
-    }
-}
-
-
 /* extension: executing - check for asynchronous operations */
 
 #define psyco_conn_executing_doc                           \
@@ -631,8 +612,6 @@ static struct PyMethodDef connectionObject_methods[] = {
      METH_NOARGS, psyco_conn_lobject_doc},
     {"fileno", (PyCFunction)psyco_conn_fileno,
      METH_NOARGS, psyco_conn_fileno_doc},
-    {"issync", (PyCFunction)psyco_conn_issync,
-     METH_NOARGS, psyco_conn_issync_doc},
     {"executing", (PyCFunction)psyco_conn_executing,
      METH_NOARGS, psyco_conn_executing_doc},
 #endif
@@ -654,6 +633,8 @@ static struct PyMemberDef connectionObject_members[] = {
     {"notifies", T_OBJECT, offsetof(connectionObject, notifies), RO},
     {"dsn", T_STRING, offsetof(connectionObject, dsn), RO,
         "The current connection string."},
+    {"async", T_LONG, offsetof(connectionObject, async), RO,
+        "True if the connection is asynchronous."},
     {"status", T_INT,
         offsetof(connectionObject, status), RO,
         "The current transaction status."},
