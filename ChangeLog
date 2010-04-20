@@ -4,6 +4,19 @@
 
 	* lib/extensions.py: PY* and MX* time typecaster imported from _psycopg.
 
+2010-04-11  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* psycopg/connection_type.c: Correctly parse keywords in connect().
+
+2010-04-07  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* psycopg/pqpath.c: Ensure running COPY in blocking mode.
+
+	* psycopg/pqpath.c: Free the GIL in blocking operations in V2 COPY FROM.
+
+	* psycopg/pqpath.c: Evaluate Python objects only once outside the COPY I/O
+	loops.
+
 2010-04-05  Federico Di Gregorio  <fog@initd.org>
 
 	* Fixed problem with asynchronous NOTIFYs.
