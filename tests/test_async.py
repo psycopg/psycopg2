@@ -388,6 +388,15 @@ class AsyncTests(unittest.TestCase):
         self.wait(cur2)
         self.assertEquals(cur2.fetchone()[0], 1)
 
+    def test_notices(self):
+        del self.conn.notices[:]
+        cur = self.conn.cursor()
+        cur.execute("create temp table chatty (id serial primary key);")
+        self.wait(cur)
+        self.assertEqual("CREATE TABLE", cur.statusmessage)
+        self.assert_(self.conn.notices)
+
+
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

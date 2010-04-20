@@ -37,6 +37,13 @@ class ConnectionTests(unittest.TestCase):
         # now the isolation level should be equal to saved one
         self.assertEqual(conn.isolation_level, level)
 
+    def test_notices(self):
+        conn = self.connect()
+        cur = conn.cursor()
+        cur.execute("create temp table chatty (id serial primary key);")
+        self.assertEqual("CREATE TABLE", cur.statusmessage)
+        self.assert_(conn.notices)
+        conn.close()
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

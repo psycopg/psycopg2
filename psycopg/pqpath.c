@@ -761,8 +761,6 @@ pq_execute(cursorObject *curs, const char *query, int async)
     pthread_mutex_unlock(&(curs->conn->lock));
     Py_END_ALLOW_THREADS;
 
-    conn_notice_process(curs->conn);
-
     /* if the execute was sync, we call pq_fetch() immediately,
        to respect the old DBAPI-2.0 compatible behaviour */
     if (async == 0) {
