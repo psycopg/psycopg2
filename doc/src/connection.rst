@@ -319,6 +319,8 @@ The ``connection`` class
 
     .. rubric:: Methods related to asynchronous support.
 
+    .. versionadded:: 2.2.0
+
     .. seealso:: :ref:`Asynchronous support <async-support>`.
 
 
@@ -339,6 +341,9 @@ The ``connection`` class
         Otherwise wait until the file descriptor returned by
         `~connection.fileno()` is ready to read or to write, as explained in
         :ref:`async-support`.
+
+        `poll()` is also used to receive asynchronous notifications from the
+        database: see :ref:`async-notify` from further details.
 
 
     .. method:: fileno()

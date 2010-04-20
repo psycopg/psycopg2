@@ -219,19 +219,20 @@ command in an `~cursor.execute()` call.
 
 Because of the way sessions interact with notifications (see |NOTIFY|_
 documentation), you should keep the connection in :ref:`autocommit
-<autocommit>` mode while sending and receiveng notification.
+<autocommit>` mode if you wish to receive or send notifications in a timely
+manner.
 
 .. |LISTEN| replace:: :sql:`LISTEN`
 .. _LISTEN: http://www.postgresql.org/docs/8.4/static/sql-listen.html
 .. |NOTIFY| replace:: :sql:`NOTIFY`
 .. _NOTIFY: http://www.postgresql.org/docs/8.4/static/sql-notify.html
 
-.. index::
-    single: Example; Asynchronous notification
+Notification are received using the `~connection.poll()` method. A simple
+application could poll the connection from time to time to check if something
+new has arrived. A better strategy is to use some I/O completion function such
+as |select()|_ to sleep until awaken from the kernel when there is some data to
+read on the connection, thereby using no CPU unless there is something to read::
 
-Example::
-
-    import sys
     import select
     import psycopg2
     import psycopg2.extensions
@@ -244,11 +245,12 @@ Example::
 
     print "Waiting for 'NOTIFY test'"
     while 1:
-        if select.select([curs],[],[],5)==([],[],[]):
+        if select.select([conn],[],[],5) == ([],[],[]):
             print "Timeout"
         else:
-            if curs.isready():
-                print "Got NOTIFY:", curs.connection.notifies.pop()
+            conn.poll()
+            while conn.notifies:
+                print "Got NOTIFY:", conn.notifies.pop()
 
 Running the script and executing the command :sql:`NOTIFY test` in a separate
 :program:`psql` shell, the output may look similar to::
@@ -273,7 +275,7 @@ Asynchronous support
 .. versionadded:: 2.2.0
 
 Psycopg can issue asynchronous queries to a PostgreSQL database. An asynchronous
-communication style is estabilished passing the parameter *async*\=1 to the
+communication style is established passing the parameter *async*\=1 to the
 `~psycopg2.connect()` function: the returned connection will work in
 *asynchronous mode*.
 
