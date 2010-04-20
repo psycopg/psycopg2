@@ -135,6 +135,8 @@ HIDDEN int  conn_set_client_encoding(connectionObject *self, const char *enc);
 HIDDEN PyObject *conn_poll_connect_send(connectionObject *self);
 HIDDEN PyObject *conn_poll_connect_fetch(connectionObject *self);
 HIDDEN PyObject *conn_poll_ready(connectionObject *self);
+HIDDEN PyObject *conn_poll_send(connectionObject *self);
+HIDDEN PyObject *conn_poll_fetch(connectionObject *self);
 HIDDEN PyObject *conn_poll_green(connectionObject *self);
 
 /* exception-raising macros */

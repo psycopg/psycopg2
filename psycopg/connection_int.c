@@ -649,13 +649,13 @@ conn_poll_ready(connectionObject *self)
     /* if there is an asynchronous query underway, poll it */
     if (self->async_cursor != NULL) {
         if (self->async_status == ASYNC_WRITE) {
-            return curs_poll_send((cursorObject *) self->async_cursor);
+            return conn_poll_send(self);
         }
         else {
             /* this gets called both for ASYNC_READ and ASYNC_DONE, because
                even if the async query is complete, we still might want to
                check for NOTIFYs */
-            return curs_poll_fetch((cursorObject *) self->async_cursor);
+            return conn_poll_fetch(self);
         }
     }
 
@@ -674,6 +674,86 @@ conn_poll_ready(connectionObject *self)
         /* connection is idle */
         Dprintf("conn_poll_ready: returning %d", PSYCO_POLL_OK);
         return PyInt_FromLong(PSYCO_POLL_OK);
+    }
+}
+
+/* conn_poll_send - poll the connection when flushing data to the backend */
+
+PyObject *
+conn_poll_send(connectionObject *self)
+{
+    int res;
+
+    /* flush queued output to the server */
+    res = pq_flush(self);
+
+    if (res == 1) {
+        /* some data still waiting to be flushed */
+        Dprintf("conn_poll_send: returning %d", PSYCO_POLL_WRITE);
+        return PyInt_FromLong(PSYCO_POLL_WRITE);
+    }
+    else if (res == 0) {
+        /* all data flushed, start waiting for results */
+        Dprintf("conn_poll_send: returning %d", PSYCO_POLL_READ);
+        self->async_status = ASYNC_READ;
+        return PyInt_FromLong(PSYCO_POLL_READ);
+    }
+    else {
+        /* unexpected result */
+        PyErr_SetString(OperationalError, PQerrorMessage(self->pgconn));
+        return NULL;
+    }
+}
+
+/* conn_poll_fetch - poll the connection when reading results from the backend
+ *
+ * Assume self->async_cursor is not null: use such cursor to store results.
+ */
+
+PyObject *
+conn_poll_fetch(connectionObject *self)
+{
+    int is_busy;
+    int last_result;
+
+    /* consume the input */
+    is_busy = pq_is_busy(self);
+    if (is_busy == -1) {
+        /* there was an error, raise the exception */
+        return NULL;
+    }
+    else if (is_busy == 1) {
+        /* the connection is busy, tell the user to wait more */
+        Dprintf("conn_poll_fetch: returning %d", PSYCO_POLL_READ);
+        return PyInt_FromLong(PSYCO_POLL_READ);
+    }
+
+    /* try to fetch the data only if this was a poll following a read
+       request; else just return POLL_OK to the user: this is necessary
+       because of asynchronous NOTIFYs that can be sent by the backend
+       even if the user didn't asked for them */
+
+    if (self->async_status == ASYNC_READ)
+        last_result = curs_get_last_result((cursorObject *)self->async_cursor);
+    else
+        last_result = 0;
+
+    if (last_result == 0) {
+        Dprintf("conn_poll_fetch: returning %d", PSYCO_POLL_OK);
+        /* self->async_status cannot be ASYNC_WRITE here, because we
+           never execute curs_poll_fetch in ASYNC_WRITE state, so we can
+           safely set it to ASYNC_DONE because we either fetched the result or
+           there is no result to fetch */
+        self->async_status = ASYNC_DONE;
+        return PyInt_FromLong(PSYCO_POLL_OK);
+    }
+    else if (last_result == 1) {
+        Dprintf("conn_poll_fetch: got result, but data remaining, "
+                "returning %d", PSYCO_POLL_READ);
+        return PyInt_FromLong(PSYCO_POLL_READ);
+    }
+    else {
+        return NULL;
     }
 }
 
