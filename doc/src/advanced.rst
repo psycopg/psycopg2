@@ -228,7 +228,7 @@ manner.
 .. _NOTIFY: http://www.postgresql.org/docs/8.4/static/sql-notify.html
 
 Notification are received after every query execution. If the user is interested
-in receiveing notification but not in performing any query, the
+in receiving notification but not in performing any query, the
 `~connection.poll()` method can be used to check for notification without
 wasting resources.
 
