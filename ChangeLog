@@ -1,3 +1,7 @@
+2010-04-20  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* lib/pqpath.c: Fixed reference leak in notify reception.
+
 2010-04-13  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* lib/extensions.py: DECIMAL typecaster imported from _psycopg.

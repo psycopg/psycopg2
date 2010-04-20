@@ -631,6 +631,7 @@ pq_is_busy(connectionObject *conn)
         PyTuple_SET_ITEM(notify, 0, PyInt_FromLong((long)pgn->be_pid));
         PyTuple_SET_ITEM(notify, 1, PyString_FromString(pgn->relname));
         PyList_Append(conn->notifies, notify);
+        Py_DECREF(notify);
         Py_UNBLOCK_THREADS;
         PQfreemem(pgn);
     }
