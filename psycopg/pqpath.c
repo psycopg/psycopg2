@@ -603,8 +603,6 @@ int
 pq_is_busy(connectionObject *conn)
 {
     int res;
-    PGnotify *pgn;
-
     Dprintf("pq_is_busy: consuming input");
 
     Py_BEGIN_ALLOW_THREADS;
@@ -618,30 +616,13 @@ pq_is_busy(connectionObject *conn)
         return -1;
     }
 
-
-    /* now check for notifies */
-    while ((pgn = PQnotifies(conn->pgconn)) != NULL) {
-        PyObject *notify;
-
-        Dprintf("curs_is_busy: got NOTIFY from pid %d, msg = %s",
-                (int) pgn->be_pid, pgn->relname);
-
-        Py_BLOCK_THREADS;
-        notify = PyTuple_New(2);
-        PyTuple_SET_ITEM(notify, 0, PyInt_FromLong((long)pgn->be_pid));
-        PyTuple_SET_ITEM(notify, 1, PyString_FromString(pgn->relname));
-        PyList_Append(conn->notifies, notify);
-        Py_DECREF(notify);
-        Py_UNBLOCK_THREADS;
-        PQfreemem(pgn);
-    }
-
     res = PQisBusy(conn->pgconn);
 
     pthread_mutex_unlock(&(conn->lock));
     Py_END_ALLOW_THREADS;
 
     conn_notice_process(conn);
+    conn_notifies_process(conn);
 
     return res;
 }
@@ -1327,13 +1308,13 @@ pq_fetch(cursorObject *curs)
         break;
     }
 
-    Dprintf("pq_fetch: fetching done; check for critical errors");
-
     conn_notice_process(curs->conn);
+    conn_notifies_process(curs->conn);
 
     /* error checking, close the connection if necessary (some critical errors
        are not really critical, like a COPY FROM error: if that's the case we
        raise the exception but we avoid to close the connection) */
+    Dprintf("pq_fetch: fetching done; check for critical errors");
     if (curs->conn->critical) {
         if (ex == -1) {
             pq_resolve_critical(curs->conn, 1);

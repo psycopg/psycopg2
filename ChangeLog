@@ -2,6 +2,8 @@
 
 	* lib/pqpath.c: Fixed reference leak in notify reception.
 
+	* Notifies are collected if available after every query execution.
+
 2010-04-13  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* lib/extensions.py: DECIMAL typecaster imported from _psycopg.

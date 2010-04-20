@@ -123,6 +123,33 @@ conn_notice_clean(connectionObject *self)
     Py_END_ALLOW_THREADS;    
 }
 
+
+/* conn_notifies_process - make received notification available
+ *
+ * The function should be called with the connection lock and holding the GIL.
+ */
+
+void
+conn_notifies_process(connectionObject *self)
+{
+    PGnotify *pgn;
+
+    while ((pgn = PQnotifies(self->pgconn)) != NULL) {
+        PyObject *notify;
+
+        Dprintf("conn_notifies_process: got NOTIFY from pid %d, msg = %s",
+                (int) pgn->be_pid, pgn->relname);
+
+        notify = PyTuple_New(2);
+        PyTuple_SET_ITEM(notify, 0, PyInt_FromLong((long)pgn->be_pid));
+        PyTuple_SET_ITEM(notify, 1, PyString_FromString(pgn->relname));
+        PyList_Append(self->notifies, notify);
+        Py_DECREF(notify);
+        PQfreemem(pgn);
+    }
+}
+
+
 /*
  * the conn_get_* family of functions makes it easier to obtain the connection
  * parameters from query results or by interrogating the connection itself

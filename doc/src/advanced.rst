@@ -227,11 +227,16 @@ manner.
 .. |NOTIFY| replace:: :sql:`NOTIFY`
 .. _NOTIFY: http://www.postgresql.org/docs/8.4/static/sql-notify.html
 
-Notification are received using the `~connection.poll()` method. A simple
-application could poll the connection from time to time to check if something
-new has arrived. A better strategy is to use some I/O completion function such
-as |select()|_ to sleep until awaken from the kernel when there is some data to
-read on the connection, thereby using no CPU unless there is something to read::
+Notification are received after every query execution. If the user is interested
+in receiveing notification but not in performing any query, the
+`~connection.poll()` method can be used to check for notification without
+wasting resources.
+
+A simple application could poll the connection from time to time to check if
+something new has arrived. A better strategy is to use some I/O completion
+function such as |select()|_ to sleep until awaken from the kernel when there is
+some data to read on the connection, thereby using no CPU unless there is
+something to read::
 
     import select
     import psycopg2
