@@ -435,12 +435,12 @@ psyco_conn_poll_async(connectionObject *self)
     case CONN_STATUS_SENT_CLIENT_ENCODING:
         /* these mean that we need to wait for the socket to become writable
            to send the rest of our query */
-        return conn_poll_send(self);
+        return conn_poll_connect_send(self);
 
     case CONN_STATUS_GET_DATESTYLE:
     case CONN_STATUS_GET_CLIENT_ENCODING:
         /* these mean that we are waiting for the results of the queries */
-        return conn_poll_fetch(self);
+        return conn_poll_connect_fetch(self);
 
     case CONN_STATUS_ASYNC:
         /* this means we are in the middle of a PQconnectPoll loop */

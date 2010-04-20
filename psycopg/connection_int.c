@@ -444,16 +444,17 @@ conn_connect(connectionObject *self, long int async)
     }
 }
 
-/* conn_poll_send - handle connection polling when flushing output */
+/* conn_poll_connect_send - handle connection polling when flushing output
+   during asynchronous connection attempt. */
 
 PyObject *
-conn_poll_send(connectionObject *self)
+conn_poll_connect_send(connectionObject *self)
 {
     const char *query = NULL;
     int next_status;
     int ret;
 
-    Dprintf("conn_poll_send: status %d", self->status);
+    Dprintf("conn_poll_connect_send: status %d", self->status);
 
     switch (self->status) {
     case CONN_STATUS_SEND_DATESTYLE:
@@ -479,7 +480,7 @@ conn_poll_send(connectionObject *self)
         return NULL;
     }
 
-    Dprintf("conn_poll_send: sending query %-.200s", query);
+    Dprintf("conn_poll_connect_send: sending query %-.200s", query);
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->lock));
@@ -496,7 +497,7 @@ conn_poll_send(connectionObject *self)
 
     if (PQflush(self->pgconn) == 0) {
         /* the query got fully sent to the server */
-        Dprintf("conn_poll_send: query got flushed immediately");
+        Dprintf("conn_poll_connect_send: query got flushed immediately");
         /* the return value will be POLL_READ */
         ret = PSYCO_POLL_READ;
 
@@ -518,7 +519,7 @@ conn_poll_send(connectionObject *self)
     }
 
     self->status = next_status;
-    Dprintf("conn_poll_send: next status is %d, returning %d",
+    Dprintf("conn_poll_connect_send: next status is %d, returning %d",
             self->status, ret);
 
     pthread_mutex_unlock(&(self->lock));
@@ -527,17 +528,18 @@ conn_poll_send(connectionObject *self)
     return PyInt_FromLong(ret);
 }
 
-/* curs_poll_fetch - handle connection polling when reading result */
+/* conn_poll_connect_fetch - handle connection polling when reading result
+   during asynchronous connection attempt. */
 
 PyObject *
-conn_poll_fetch(connectionObject *self)
+conn_poll_connect_fetch(connectionObject *self)
 {
     PGresult *pgres;
     int is_busy;
     int next_status;
     int ret;
 
-    Dprintf("conn_poll_fetch: status %d", self->status);
+    Dprintf("conn_poll_connect_fetch: status %d", self->status);
 
     /* consume the input */
     is_busy = pq_is_busy(self);
@@ -547,7 +549,7 @@ conn_poll_fetch(connectionObject *self)
     }
     else if (is_busy == 1) {
         /* the connection is busy, tell the user to wait more */
-        Dprintf("conn_poll_fetch: connection busy, returning %d",
+        Dprintf("conn_poll_connect_fetch: connection busy, returning %d",
                 PSYCO_POLL_READ);
         return PyInt_FromLong(PSYCO_POLL_READ);
     }
@@ -563,7 +565,7 @@ conn_poll_fetch(connectionObject *self)
     pthread_mutex_unlock(&(self->lock));
     Py_END_ALLOW_THREADS;
 
-    Dprintf("conn_poll_fetch: got result %p", pgres);
+    Dprintf("conn_poll_connect_fetch: got result %p", pgres);
 
     /* we expect COMMAND_OK (from SET) or TUPLES_OK (from SHOW) */
     if (pgres == NULL || (PQresultStatus(pgres) != PGRES_COMMAND_OK &&
@@ -576,7 +578,7 @@ conn_poll_fetch(connectionObject *self)
 
     if (self->status == CONN_STATUS_GET_DATESTYLE) {
         /* got the result from SET DATESTYLE*/
-        Dprintf("conn_poll_fetch: datestyle set");
+        Dprintf("conn_poll_connect_fetch: datestyle set");
         next_status = CONN_STATUS_SEND_CLIENT_ENCODING;
     }
     else if (self->status == CONN_STATUS_GET_CLIENT_ENCODING) {
@@ -585,7 +587,7 @@ conn_poll_fetch(connectionObject *self)
         if (self->encoding == NULL) {
             return NULL;
         }
-        Dprintf("conn_poll_fetch: got client_encoding %s", self->encoding);
+        Dprintf("conn_poll_connect_fetch: got client_encoding %s", self->encoding);
 
         /* since this is the last step, set the other instance variables now */
         self->equote = conn_get_standard_conforming_strings(self->pgconn);
@@ -632,7 +634,7 @@ conn_poll_fetch(connectionObject *self)
        last initialization query, so we return POLL_OK, otherwise we need to
        send another query, so return POLL_WRITE */
     ret = self->status == CONN_STATUS_READY ? PSYCO_POLL_OK : PSYCO_POLL_WRITE;
-    Dprintf("conn_poll_fetch: next status is %d, returning %d",
+    Dprintf("conn_poll_connect_fetch: next status is %d, returning %d",
             self->status, ret);
     return PyInt_FromLong(ret);
 }
