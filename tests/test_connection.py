@@ -45,6 +45,10 @@ class ConnectionTests(unittest.TestCase):
         self.assert_(conn.notices)
         conn.close()
 
+    def test_server_version(self):
+        conn = self.connect()
+        self.assert_(conn.server_version)
+
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

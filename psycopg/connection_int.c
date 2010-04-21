@@ -374,8 +374,6 @@ conn_sync_connect(connectionObject *self)
 
     Dprintf("conn_connect: using protocol %d", self->protocol);
 
-    self->server_version = (int)PQserverVersion(pgconn);
-
     /* if the connection is green, wait to finish connection */
     if (green) {
         wait_rv = psyco_wait(self);
@@ -385,6 +383,8 @@ conn_sync_connect(connectionObject *self)
             return -1;
         }
     }
+
+    self->server_version = (int)PQserverVersion(pgconn);
 
     /* From here the connection is considered ready: with the new status,
      * poll() will use PQisBusy instead of PQconnectPoll.
