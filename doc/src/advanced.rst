@@ -429,6 +429,9 @@ callback (using `!select()` to block) is provided as
 .. _SQLAlchemy: http://www.sqlalchemy.org/
 .. __: http://www.postgresql.org/docs/8.4/static/libpq-async.html
 
+.. warning::
+    :ref:`COPY commands <copy>` are currently not supported when a wait callback
+    is registered, but they will be probably implemented in a future release.
 
 
 .. testcode::

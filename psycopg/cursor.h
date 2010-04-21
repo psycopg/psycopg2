@@ -116,6 +116,12 @@ if ((self)->conn->async_cursor != NULL) {   \
     "while an asynchronous query is underway");                      \
     return NULL; }
 
+#define EXC_IF_GREEN(cmd) \
+if (psyco_green()) {   \
+    PyErr_SetString(PyExc_NotImplementedError, #cmd " cannot be used " \
+    "with an asynchronous callback (yet).");                           \
+    return NULL; }
+
 #ifdef __cplusplus
 }
 #endif
