@@ -741,6 +741,24 @@ conn_poll_green(connectionObject *self)
             }
             break;
 
+        case ASYNC_DONE:
+            Dprintf("conn_poll: async_status = ASYNC_DONE");
+            /* We haven't asked anything: just check for notifications. */
+            switch (pq_is_busy(self)) {
+            case 0: /* will not block */
+                res = PSYCO_POLL_OK;
+                break;
+            case 1: /* will block */
+                res = PSYCO_POLL_READ;
+                break;
+            case -1: /* ouch, error */
+                break;
+            default:
+                Dprintf("conn_poll: unexpected result from pq_is_busy");
+                break;
+            }
+            break;
+
         default:
             Dprintf("conn_poll: in unexpected async status: %d",
                     self->async_status);
