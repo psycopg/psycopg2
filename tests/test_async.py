@@ -74,6 +74,11 @@ class AsyncTests(unittest.TestCase):
         # the async connection should be in isolevel 0
         self.assertEquals(self.conn.isolation_level, 0)
 
+        # check other properties to be found on the connection
+        self.assert_(self.conn.server_version)
+        self.assert_(self.conn.protocol_version in (2,3))
+        self.assert_(self.conn.encoding in psycopg2.extensions.encodings)
+
     def test_async_named_cursor(self):
         self.assertRaises(psycopg2.ProgrammingError,
                           self.conn.cursor, "name")

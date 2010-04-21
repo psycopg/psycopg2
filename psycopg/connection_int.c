@@ -232,12 +232,24 @@ conn_get_isolation_level(PGresult *pgres)
 int
 conn_get_protocol_version(PGconn *pgconn)
 {
+    int ret;
+
 #ifdef HAVE_PQPROTOCOL3
-        return PQprotocolVersion(pgconn);
+    ret = PQprotocolVersion(pgconn);
 #else
-        return 2;
+    ret = 2;
 #endif
+
+    Dprintf("conn_connect: using protocol %d", ret);
+    return ret;
 }
+
+int
+conn_get_server_version(PGconn *pgconn)
+{
+    return (int)PQserverVersion(pgconn);
+}
+
 
 /* conn_setup - setup and read basic information about the connection */
 
@@ -249,12 +261,6 @@ conn_setup(connectionObject *self, PGconn *pgconn)
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
     Py_BLOCK_THREADS;
-
-    if (self->encoding) free(self->encoding);
-    self->equote = 0;
-    self->isolation_level = 0;
-
-    self->equote = conn_get_standard_conforming_strings(pgconn);
 
     if (!psyco_green()) {
         Py_UNBLOCK_THREADS;
@@ -366,14 +372,6 @@ conn_sync_connect(connectionObject *self)
 
     PQsetNoticeProcessor(pgconn, conn_notice_callback, (void*)self);
 
-#ifdef HAVE_PQPROTOCOL3
-    self->protocol = PQprotocolVersion(pgconn);
-#else
-    self->protocol = 2;
-#endif
-
-    Dprintf("conn_connect: using protocol %d", self->protocol);
-
     /* if the connection is green, wait to finish connection */
     if (green) {
         wait_rv = psyco_wait(self);
@@ -384,7 +382,9 @@ conn_sync_connect(connectionObject *self)
         }
     }
 
-    self->server_version = (int)PQserverVersion(pgconn);
+    self->equote = conn_get_standard_conforming_strings(pgconn);
+    self->server_version = conn_get_server_version(pgconn);
+    self->protocol = conn_get_protocol_version(self->pgconn);
 
     /* From here the connection is considered ready: with the new status,
      * poll() will use PQisBusy instead of PQconnectPoll.
@@ -592,7 +592,7 @@ conn_poll_connect_fetch(connectionObject *self)
         /* since this is the last step, set the other instance variables now */
         self->equote = conn_get_standard_conforming_strings(self->pgconn);
         self->protocol = conn_get_protocol_version(self->pgconn);
-        self->server_version = (int) PQserverVersion(self->pgconn);
+        self->server_version = conn_get_server_version(self->pgconn);
         /*
          * asynchronous connections always use isolation level 0, the user is
          * expected to manage the transactions himself, by sending
@@ -600,19 +600,11 @@ conn_poll_connect_fetch(connectionObject *self)
          */
         self->isolation_level = 0;
 
-        Py_BEGIN_ALLOW_THREADS;
-        pthread_mutex_lock(&(self->lock));
-
-        /* set the connection to nonblocking */
-        if (PQsetnonblocking(self->pgconn, 1) != 0) {
-            Dprintf("conn_async_connect: PQsetnonblocking() FAILED");
-            Py_BLOCK_THREADS;
-            PyErr_SetString(OperationalError, "PQsetnonblocking() failed");
+        /* FIXME: this is a bug: the above queries were sent to the server
+          with a blocking connection */
+        if (pq_set_non_blocking(self, 1, 1) != 0) {
             return NULL;
         }
-
-        pthread_mutex_unlock(&(self->lock));
-        Py_END_ALLOW_THREADS;
 
         /* next status is going to READY */
         next_status = CONN_STATUS_READY;
