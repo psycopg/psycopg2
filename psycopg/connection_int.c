@@ -721,6 +721,9 @@ conn_poll_green(connectionObject *self)
             if (PQisBusy(self->pgconn)) {
                 res = PSYCO_POLL_READ;
             } else {
+                /* Reading complete: set the async status so that a spare poll()
+                   will only look for NOTIFYs */
+                self->async_status = ASYNC_DONE;
                 res = PSYCO_POLL_OK;
             }
             break;
@@ -729,7 +732,10 @@ conn_poll_green(connectionObject *self)
             Dprintf("conn_poll: async_status = ASYNC_WRITE");
             switch (PQflush(self->pgconn)) {
             case  0:  /* success */
-                res = PSYCO_POLL_OK;
+                /* we've finished pushing the query to the server. Let's start
+                  reading the results. */
+                self->async_status = ASYNC_READ;
+                res = PSYCO_POLL_READ;
                 break;
             case  1:  /* would block */
                 res = PSYCO_POLL_WRITE;

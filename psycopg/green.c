@@ -158,23 +158,15 @@ psyco_exec_green(connectionObject *conn, const char *command)
         goto clear;
     }
 
-    /* Ensure the query reached the server. */
+    /* Enter the poll loop with a write. When writing is finished the poll
+       implementation will set the status to ASYNC_READ without exiting the
+       loop. If read is finished the status is finally set to ASYNC_DONE.
+    */
     conn->async_status = ASYNC_WRITE;
 
     pyrv = PyObject_CallFunctionObjArgs(cb, conn, NULL);
     if (!pyrv) {
-        Dprintf("psyco_exec_green: error in callback sending query");
-        psyco_clear_result_blocking(conn);
-        goto clear;
-    }
-    Py_DECREF(pyrv);
-
-    /* Loop reading data using the user-provided wait function */
-    conn->async_status = ASYNC_READ;
-
-    pyrv = PyObject_CallFunctionObjArgs(cb, conn, NULL);
-    if (!pyrv) {
-        Dprintf("psyco_exec_green: error in callback reading result");
+        Dprintf("psyco_exec_green: error in wait callback");
         psyco_clear_result_blocking(conn);
         goto clear;
     }
@@ -195,6 +187,7 @@ psyco_exec_green(connectionObject *conn, const char *command)
     }
 
 clear:
+    conn->async_status = ASYNC_DONE;
     Py_DECREF(cb);
 end:
     return result;
