@@ -699,7 +699,8 @@ conn_poll_send(connectionObject *self)
 
 /* conn_poll_fetch - poll the connection when reading results from the backend
  *
- * Assume self->async_cursor is not null: use such cursor to store results.
+ * If self_curs is available, use it to store the result of the last query.
+ * Also unlink it when finished.
  */
 
 PyObject *
@@ -725,10 +726,23 @@ conn_poll_fetch(connectionObject *self)
        because of asynchronous NOTIFYs that can be sent by the backend
        even if the user didn't asked for them */
 
-    if (self->async_status == ASYNC_READ)
-        last_result = curs_get_last_result((cursorObject *)self->async_cursor);
-    else
+    if (self->async_status == ASYNC_READ && self->async_cursor) {
+        cursorObject *curs = (cursorObject *)self->async_cursor;
+        IFCLEARPGRES(curs->pgres);
+        curs->pgres = pq_get_last_result(self);
+
+        /* fetch the tuples (if there are any) and build the result. We don't
+         * care if pq_fetch return 0 or 1, but if there was an error, we want to
+         * signal it to the caller. */
+        last_result = pq_fetch(curs) == -1 ? -1 : 0;
+
+        /* We have finished with our async_cursor */
+        Py_XDECREF(self->async_cursor);
+        self->async_cursor = NULL;
+    }
+    else {
         last_result = 0;
+    }
 
     if (last_result == 0) {
         Dprintf("conn_poll_fetch: returning %d", PSYCO_POLL_OK);
