@@ -59,9 +59,9 @@ conn.close()
         self.notify('foo', 1);
 
         t0 = time.time()
-        ready = select.select([self.conn], [], [], 2)
+        ready = select.select([self.conn], [], [], 5)
         t1 = time.time()
-        self.assert_(0.99 < t1 - t0 < 1.2, t1 - t0)
+        self.assert_(0.99 < t1 - t0 < 4, t1 - t0)
 
         self.assertEqual(0, len(self.conn.notifies))
         self.assertEqual(extensions.POLL_OK, self.conn.poll())
