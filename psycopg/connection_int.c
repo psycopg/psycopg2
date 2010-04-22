@@ -791,6 +791,35 @@ _conn_poll_connecting(connectionObject *self)
 }
 
 
+/* Advance to the next state after an attempt of flushing output */
+int
+_conn_poll_advance_write(connectionObject *self, int flush)
+{
+    int res;
+
+    switch (flush) {
+    case  0:  /* success */
+        /* we've finished pushing the query to the server. Let's start
+          reading the results. */
+        Dprintf("conn_poll: async_status -> ASYNC_READ");
+        self->async_status = ASYNC_READ;
+        res = PSYCO_POLL_READ;
+        break;
+    case  1:  /* would block */
+        res = PSYCO_POLL_WRITE;
+        break;
+    case -1:  /* error */
+        PyErr_SetString(OperationalError, PQerrorMessage(self->pgconn));
+        res = PSYCO_POLL_ERROR;
+        break;
+    default:
+        Dprintf("conn_poll: unexpected result from flush: %d", flush);
+        res = PSYCO_POLL_ERROR;
+        break;
+    }
+    return res;
+}
+
 /* Advance to the next state after a call to a pq_is_busy* function */
 int
 _conn_poll_advance_read(connectionObject *self, int busy)
@@ -829,21 +858,7 @@ _conn_poll_query(connectionObject *self)
     switch (self->async_status) {
     case ASYNC_WRITE:
         Dprintf("conn_poll: async_status = ASYNC_WRITE");
-        switch (PQflush(self->pgconn)) {
-        case  0:  /* success */
-            /* we've finished pushing the query to the server. Let's start
-              reading the results. */
-            self->async_status = ASYNC_READ;
-            res = PSYCO_POLL_READ;
-            break;
-        case  1:  /* would block */
-            res = PSYCO_POLL_WRITE;
-            break;
-        case -1:  /* error */
-            PyErr_SetString(OperationalError, PQerrorMessage(self->pgconn));
-            res = PSYCO_POLL_ERROR;
-            break;
-        }
+        res = _conn_poll_advance_write(self, PQflush(self->pgconn));
         break;
 
     case ASYNC_READ:
