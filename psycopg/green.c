@@ -29,6 +29,7 @@
 #include "psycopg/psycopg.h"
 #include "psycopg/green.h"
 #include "psycopg/connection.h"
+#include "psycopg/pqpath.h"
 
 HIDDEN PyObject *wait_callback = NULL;
 
@@ -143,8 +144,7 @@ psyco_wait(connectionObject *conn)
 PGresult *
 psyco_exec_green(connectionObject *conn, const char *command)
 {
-    PGconn *pgconn = conn->pgconn;
-    PGresult *result = NULL, *res;
+    PGresult *result = NULL;
     PyObject *cb, *pyrv;
 
     if (!(cb = have_wait_callback())) {
@@ -153,7 +153,7 @@ psyco_exec_green(connectionObject *conn, const char *command)
 
     /* Send the query asynchronously */
     Dprintf("psyco_exec_green: sending query async");
-    if (0 == PQsendQuery(pgconn, command)) {
+    if (0 == PQsendQuery(conn->pgconn, command)) {
         Dprintf("psyco_exec_green: PQsendQuery returned 0");
         goto clear;
     }
@@ -172,19 +172,8 @@ psyco_exec_green(connectionObject *conn, const char *command)
     }
     Py_DECREF(pyrv);
 
-    /* Now we can read the data without fear of blocking.
-     * Read until PQgetResult gives a NULL */
-    while (NULL != (res = PQgetResult(pgconn))) {
-        if (result) {
-            /* TODO too bad: we are discarding results from all the queries
-             * except the last. We could have populated `nextset()` with it
-             * but it would be an incompatible change (apps currently issue
-             * groups of queries expecting to receive the last result: they
-             * would start receiving the first instead). */
-            PQclear(result);
-        }
-        result = res;
-    }
+    /* Now we can read the data without fear of blocking. */
+    result = pq_get_last_result(conn);
 
 clear:
     conn->async_status = ASYNC_DONE;

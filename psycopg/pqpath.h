@@ -35,6 +35,7 @@
 #define CLEARPGRES(pgres)    PQclear(pgres); pgres = NULL
 
 /* exported functions */
+HIDDEN PGresult *pq_get_last_result(connectionObject *conn);
 HIDDEN int pq_fetch(cursorObject *curs);
 HIDDEN int pq_execute(cursorObject *curs, const char *query, int async);
 HIDDEN int pq_begin_locked(connectionObject *conn, PGresult **pgres,

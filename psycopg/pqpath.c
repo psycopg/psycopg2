@@ -782,6 +782,33 @@ pq_execute(cursorObject *curs, const char *query, int async)
     return 1-async;
 }
 
+/* Return the last result available on the connection.
+ *
+ * The function will block will block only if a command is active and the
+ * necessary response data has not yet been read by PQconsumeInput.
+ *
+ * The result should be disposed using PQclear()
+ */
+PGresult *
+pq_get_last_result(connectionObject *conn)
+{
+    PGresult *result = NULL, *res;
+
+    /* Read until PQgetResult gives a NULL */
+    while (NULL != (res = PQgetResult(conn->pgconn))) {
+        if (result) {
+            /* TODO too bad: we are discarding results from all the queries
+             * except the last. We could have populated `nextset()` with it
+             * but it would be an incompatible change (apps currently issue
+             * groups of queries expecting to receive the last result: they
+             * would start receiving the first instead). */
+            PQclear(result);
+        }
+        result = res;
+    }
+
+    return result;
+}
 
 /* pq_fetch - fetch data after a query
 
