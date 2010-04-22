@@ -40,9 +40,14 @@ extern "C" {
 #define CONN_STATUS_SETUP 0
 #define CONN_STATUS_READY 1
 #define CONN_STATUS_BEGIN 2
+/* async connection building statuses */
+#define CONN_STATUS_CONNECTING            20
+#define CONN_STATUS_DATESTYLE             21
+#define CONN_STATUS_CLIENT_ENCODING       22
+
+/* TODO: REMOVE THOSE */
 #define CONN_STATUS_SYNC  3
 #define CONN_STATUS_ASYNC 4
-/* async connection building statuses */
 #define CONN_STATUS_SEND_DATESTYLE             5
 #define CONN_STATUS_SENT_DATESTYLE             6
 #define CONN_STATUS_GET_DATESTYLE              7

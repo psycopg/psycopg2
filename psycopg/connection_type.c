@@ -426,8 +426,12 @@ psyco_conn_poll_async(connectionObject *self)
     case CONN_STATUS_SETUP:
         /* according to libpq documentation the user should start by waiting
            for the socket to become writable */
-        self->status = CONN_STATUS_ASYNC;
+        self->status = CONN_STATUS_CONNECTING;
         return PyInt_FromLong(PSYCO_POLL_WRITE);
+
+    case CONN_STATUS_CONNECTING:
+        /* this means we are in the middle of a PQconnectPoll loop */
+        break;
 
     case CONN_STATUS_SEND_DATESTYLE:
     case CONN_STATUS_SENT_DATESTYLE:
@@ -441,10 +445,6 @@ psyco_conn_poll_async(connectionObject *self)
     case CONN_STATUS_GET_CLIENT_ENCODING:
         /* these mean that we are waiting for the results of the queries */
         return conn_poll_connect_fetch(self);
-
-    case CONN_STATUS_ASYNC:
-        /* this means we are in the middle of a PQconnectPoll loop */
-        break;
 
     case CONN_STATUS_READY:
     case CONN_STATUS_BEGIN:
