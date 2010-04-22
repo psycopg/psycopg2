@@ -147,14 +147,13 @@ psyco_exec_green(connectionObject *conn, const char *command)
     PGresult *result = NULL;
     PyObject *cb, *pyrv;
 
+    Dprintf("psyco_exec_green: executing query async");
     if (!(cb = have_wait_callback())) {
         goto end;
     }
 
     /* Send the query asynchronously */
-    Dprintf("psyco_exec_green: sending query async");
-    if (0 == PQsendQuery(conn->pgconn, command)) {
-        Dprintf("psyco_exec_green: PQsendQuery returned 0");
+    if (0 == pq_send_query(conn, command)) {
         goto clear;
     }
 

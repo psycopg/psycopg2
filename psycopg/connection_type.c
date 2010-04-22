@@ -408,129 +408,19 @@ psyco_conn_get_exception(PyObject *self, void *closure)
     return exception;
 }
 
-#define psyco_conn_poll_doc \
-"poll() -- return POLL_OK if the operation has finished, "           \
- "POLL_READ if the application should be waiting "                   \
- "for the socket to be readable or POLL_WRITE "                      \
- "if the socket should be writable."
-
-static PyObject *
-psyco_conn_poll_async(connectionObject *self)
-{
-    PostgresPollingStatusType poll_status;
-
-    Dprintf("conn_poll: polling with status %d", self->status);
-
-    switch (self->status) {
-
-    case CONN_STATUS_SETUP:
-        /* according to libpq documentation the user should start by waiting
-           for the socket to become writable */
-        self->status = CONN_STATUS_CONNECTING;
-        return PyInt_FromLong(PSYCO_POLL_WRITE);
-
-    case CONN_STATUS_CONNECTING:
-        /* this means we are in the middle of a PQconnectPoll loop */
-        break;
-
-    case CONN_STATUS_SEND_DATESTYLE:
-    case CONN_STATUS_SENT_DATESTYLE:
-    case CONN_STATUS_SEND_CLIENT_ENCODING:
-    case CONN_STATUS_SENT_CLIENT_ENCODING:
-        /* these mean that we need to wait for the socket to become writable
-           to send the rest of our query */
-        return conn_poll_connect_send(self);
-
-    case CONN_STATUS_GET_DATESTYLE:
-    case CONN_STATUS_GET_CLIENT_ENCODING:
-        /* these mean that we are waiting for the results of the queries */
-        return conn_poll_connect_fetch(self);
-
-    case CONN_STATUS_READY:
-    case CONN_STATUS_BEGIN:
-        /* The connection is ready, but we might be in an asynchronous query,
-           or we just might want to check for NOTIFYs.  For synchronous
-           connections the status might be BEGIN, not READY. */
-        return conn_poll_ready(self);
-
-    default:
-        /* everything else is an error */
-        PyErr_SetString(OperationalError,
-                        "not in asynchronous connection attempt");
-        return NULL;
-
-    }
-
-    Py_BEGIN_ALLOW_THREADS;
-    pthread_mutex_lock(&self->lock);
-
-    poll_status = PQconnectPoll(self->pgconn);
-
-    if (poll_status == PGRES_POLLING_READING) {
-        pthread_mutex_unlock(&(self->lock));
-        Py_BLOCK_THREADS;
-        Dprintf("conn_poll: returing POLL_READ");
-        return PyInt_FromLong(PSYCO_POLL_READ);
-    }
-
-    if (poll_status == PGRES_POLLING_WRITING) {
-        pthread_mutex_unlock(&(self->lock));
-        Py_BLOCK_THREADS;
-        Dprintf("conn_poll: returing POLL_WRITE");
-        return PyInt_FromLong(PSYCO_POLL_WRITE);
-    }
-
-    if (poll_status == PGRES_POLLING_FAILED) {
-        pthread_mutex_unlock(&(self->lock));
-        Py_BLOCK_THREADS;
-        PyErr_SetString(OperationalError, PQerrorMessage(self->pgconn));
-        return NULL;
-    }
-
-    /* the only other thing that PQconnectPoll can return is PGRES_POLLING_OK,
-       but make sure */
-    if (poll_status != PGRES_POLLING_OK) {
-        pthread_mutex_unlock(&(self->lock));
-        Py_BLOCK_THREADS;
-        PyErr_Format(OperationalError,
-                     "unexpected result from PQconnectPoll: %d", poll_status);
-        return NULL;
-    }
-
-    Dprintf("conn_poll: got POLL_OK");
-
-    /* the connection is built, but we want to do a few other things before we
-       let the user use it */
-
-    self->equote = conn_get_standard_conforming_strings(self->pgconn);
-
-    Dprintf("conn_poll: got standard_conforming_strings");
-
-    /*
-     * Here is the tricky part, we need to figure the datestyle,
-     * client_encoding and isolevel, all using nonblocking calls.  To do that
-     * we will keep telling the user to poll, while we are waiting for our
-     * asynchronous queries to complete.
-     */
-    pthread_mutex_unlock(&(self->lock));
-    Py_END_ALLOW_THREADS;
-    /* the next operation the client will do is send a query, so ask him to
-       wait for a writable condition */
-    self->status = CONN_STATUS_SEND_DATESTYLE;
-    Dprintf("conn_poll: connection is built, retrning %d",
-            PSYCO_POLL_WRITE);
-    return PyInt_FromLong(PSYCO_POLL_WRITE);
-}
-
 static PyObject *
 psyco_conn_poll(connectionObject *self)
 {
+    int res;
+
     EXC_IF_CONN_CLOSED(self);
 
-    if (self->async) {
-        return psyco_conn_poll_async(self);
+    res = conn_poll(self);
+    if (res != PSYCO_POLL_ERROR || !PyErr_Occurred()) {
+        return PyInt_FromLong(res);
     } else {
-        return conn_poll_green(self);
+        /* There is an error and an exception is already in place */
+        return NULL;
     }
 }
 

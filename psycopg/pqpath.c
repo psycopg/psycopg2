@@ -803,6 +803,27 @@ pq_execute(cursorObject *curs, const char *query, int async)
     return 1-async;
 }
 
+/* send an async query to the backend.
+ *
+ * Return 1 if command succeeded, else 0.
+ *
+ * The function should be called helding the connection lock and the GIL.
+ */
+int
+pq_send_query(connectionObject *conn, const char *query)
+{
+    int rv;
+
+    Dprintf("pq_send_query: sending ASYNC query:");
+    Dprintf("    %-.200s", query);
+
+    if (0 == (rv = PQsendQuery(conn->pgconn, query))) {
+        Dprintf("pq_send_query: error: %s", PQerrorMessage(conn->pgconn));
+    }
+
+    return rv;
+}
+
 /* Return the last result available on the connection.
  *
  * The function will block will block only if a command is active and the
