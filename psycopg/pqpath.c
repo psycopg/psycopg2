@@ -643,6 +643,27 @@ pq_is_busy(connectionObject *conn)
     return res;
 }
 
+/* pq_is_busy_locked - equivalent to pq_is_busy but we already have the lock
+ *
+ * The function should be called with the lock and holding the GIL.
+ */
+
+int
+pq_is_busy_locked(connectionObject *conn)
+{
+    Dprintf("pq_is_busy_locked: consuming input");
+
+    if (PQconsumeInput(conn->pgconn) == 0) {
+        Dprintf("pq_is_busy_locked: PQconsumeInput() failed");
+        PyErr_SetString(OperationalError, PQerrorMessage(conn->pgconn));
+        return -1;
+    }
+
+    /* We can't call conn_notice_process/conn_notifies_process because
+      they try to get the lock. We don't need anyway them because at the end of
+      the loop we are in (async reading) pq_fetch will be called. */
+    return PQisBusy(conn->pgconn);
+}
 
 /* pq_flush - flush output and return connection status
 

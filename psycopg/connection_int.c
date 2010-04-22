@@ -791,6 +791,32 @@ _conn_poll_connecting(connectionObject *self)
 }
 
 
+/* Advance to the next state after a call to a pq_is_busy* function */
+int
+_conn_poll_advance_read(connectionObject *self, int busy)
+{
+    int res;
+
+    switch (busy) {
+    case 0: /* result is ready */
+        res = PSYCO_POLL_OK;
+        Dprintf("conn_poll: async_status -> ASYNC_DONE");
+        self->async_status = ASYNC_DONE;
+        break;
+    case 1: /* result not ready: fd would block */
+        res = PSYCO_POLL_READ;
+        break;
+    case -1: /* ouch, error */
+        res = PSYCO_POLL_ERROR;
+        break;
+    default:
+        Dprintf("conn_poll: unexpected result from pq_is_busy: %d", busy);
+        res = PSYCO_POLL_ERROR;
+        break;
+    }
+    return res;
+}
+
 /* Poll the connection for the send query/retrieve result phase
 
   Advance the async_status (usually going WRITE -> READ -> DONE) but don't
@@ -822,42 +848,29 @@ _conn_poll_query(connectionObject *self)
 
     case ASYNC_READ:
         Dprintf("conn_poll: async_status = ASYNC_READ");
-        if (0 == PQconsumeInput(self->pgconn)) {
-            PyErr_SetString(OperationalError, PQerrorMessage(self->pgconn));
-            res = PSYCO_POLL_ERROR;
+        if (self->async) {
+            res = _conn_poll_advance_read(self, pq_is_busy(self));
         }
-        if (PQisBusy(self->pgconn)) {
-            res = PSYCO_POLL_READ;
-        } else {
-            /* Reading complete: set the async status so that a spare poll()
-               will only look for NOTIFYs */
-            self->async_status = ASYNC_DONE;
-            res = PSYCO_POLL_OK;
+        else {
+            /* we are a green connection being polled as result of a query.
+              this means that our caller has the lock and we are being called
+              from the callback. If we tried to acquire the lock now it would
+              be a deadlock. */
+            res = _conn_poll_advance_read(self, pq_is_busy_locked(self));
         }
         break;
 
     case ASYNC_DONE:
         Dprintf("conn_poll: async_status = ASYNC_DONE");
         /* We haven't asked anything: just check for notifications. */
-        switch (pq_is_busy(self)) {
-        case 0: /* will not block */
-            res = PSYCO_POLL_OK;
-            break;
-        case 1: /* will block */
-            res = PSYCO_POLL_READ;
-            break;
-        case -1: /* ouch, error */
-            break;
-        default:
-            Dprintf("conn_poll: unexpected result from pq_is_busy");
-            break;
-        }
+        res = _conn_poll_advance_read(self, pq_is_busy(self));
         break;
 
     default:
         Dprintf("conn_poll: in unexpected async status: %d",
                 self->async_status);
         res = PSYCO_POLL_ERROR;
+        break;
     }
 
     return res;
