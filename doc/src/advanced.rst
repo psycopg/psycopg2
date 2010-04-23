@@ -364,7 +364,7 @@ this will be probably implemented in a future release.
 
 
 .. index::
-    single: Greenlet, Coroutine, eventlet, gevent, Wait callback
+    single: Greenlet, Coroutine, Eventlet, gevent, Wait callback
 
 .. _green-support:
 
@@ -374,12 +374,12 @@ Support to coroutine libraries
 .. versionadded:: 2.2.0
 
 Psycopg can be used together with coroutine_\-based libraries, and participate
-to cooperative multithread.
+to cooperative multithreading.
 
 Coroutine-based libraries (such as Eventlet_ or gevent_) can usually patch the
-Python standard library in order to enable a coroutine switch in presence of
+Python standard library in order to enable a coroutine switch in the presence of
 blocking I/O: the process is usually referred as making the system *green*, in
-reference to greenlet_, the basic Python micro-thread library.
+reference to the `green threads`_.
 
 Because Psycopg is a C extension module, it is not possible for coroutine
 libraries to patch it: Psycopg instead enables cooperative multithreading by
@@ -387,22 +387,23 @@ allowing the registration of a *wait callback* using the
 `psycopg2.extensions.set_wait_callback()` function. When a wait callback is
 registered, Psycopg will use `libpq non-blocking calls`__ instead of the regular
 blocking ones, and will delegate to the callback the responsibility to wait
-for available data.
+for the socket to become readable or writable.
 
-This way of working is less flexible of complete asynchronous I/O, but has the
-advantage of maintaining a complete |DBAPI| semantics: from the point of view
-of the end user, all Psycopg functions and objects will work transparently
-in the coroutine environment (the calling coroutine will be blocked while
-other coroutines can be scheduled to run), allowing non modified code and
-third party libraries (such as SQLAlchemy_) to be used in coroutine-based
-programs.
+Working this way, the caller does not have the complete freedom to schedule the
+socket check whenever they want as with an :ref:`asynchronous connection
+<async-support>`, but has the advantage of maintaining a complete |DBAPI|
+semantics: from the point of view of the end user, all Psycopg functions and
+objects will work transparently in the coroutine environment (blocking the
+calling green thread and giving other green threads the possibility to be
+scheduled), allowing non modified code and third party libraries (such as
+SQLAlchemy_) to be used in coroutine-based programs.
 
 Notice that, while I/O correctly yields control to other coroutines, each
-connection has a lock allowing a single cursor at time to communicate with the
+connection has a lock allowing a single cursor at a time to communicate with the
 backend: such lock is not *green*, so blocking against it would block the
 entire program waiting for data, not the single coroutine. Therefore,
-programmers are advised to either avoid to share connections between coroutines
-or to use a library-friendly lock to synchronize shares connections, e.g. for
+programmers are advised to either avoid sharing connections between coroutines
+or to use a library-friendly lock to synchronize shared connections, e.g. for
 pooling.
 
 Coroutine libraries authors should provide a callback implementation (and
@@ -424,6 +425,7 @@ callback (using `!select()` to block) is provided as
 
 .. _coroutine: http://en.wikipedia.org/wiki/Coroutine
 .. _greenlet: http://pypi.python.org/pypi/greenlet
+.. _green threads: http://en.wikipedia.org/wiki/Green_threads
 .. _Eventlet: http://eventlet.net/
 .. _gevent: http://www.gevent.org/
 .. _SQLAlchemy: http://www.sqlalchemy.org/
