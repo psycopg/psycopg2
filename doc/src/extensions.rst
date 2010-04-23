@@ -427,29 +427,22 @@ Connection status constants
 These values represent the possible status of a connection: the current value
 can be read from the `~connection.status` attribute.
 
-.. data:: STATUS_SETUP
-
-    Used internally.
+It is possible to find the connection in other status than the one shown below.
+Those are the only states in which a working connection is expected to be found
+during the execution of regular Python client code: other states are for
+internal usage and Python code should not rely on them.
 
 .. data:: STATUS_READY
 
-    Connection established.
+    Connection established. No transaction in progress.
 
 .. data:: STATUS_BEGIN
 
-    Connection established. A transaction is in progress.
+    Connection established. A transaction is currently in progress.
 
 .. data:: STATUS_IN_TRANSACTION
 
     An alias for `STATUS_BEGIN`
-
-.. data:: STATUS_SYNC
-
-    Used internally.
-
-.. data:: STATUS_ASYNC
-
-    Used internally.
 
 
 
