@@ -114,9 +114,9 @@ have_wait_callback()
  * raise `InterfaceError` if it is not. Use `psyco_green()` to check if
  * the function is to be called.
  *
- * The function returns the return value of the called function.
+ * Return 0 on success, else nonzero and set a Python exception.
  */
-PyObject *
+int
 psyco_wait(connectionObject *conn)
 {
     PyObject *rv;
@@ -124,13 +124,19 @@ psyco_wait(connectionObject *conn)
 
     Dprintf("psyco_wait");
     if (!(cb = have_wait_callback())) {
-        return NULL;
+        return -1;
     }
 
     rv = PyObject_CallFunctionObjArgs(cb, conn, NULL);
     Py_DECREF(cb);
 
-    return rv;
+    if (NULL != rv) {
+        Py_DECREF(rv);
+        return 0;
+    } else {
+        Dprintf("psyco_wait: error in wait callback");
+        return -1;
+    }
 }
 
 /* Replacement for PQexec using the user-provided wait function.
@@ -145,16 +151,10 @@ PGresult *
 psyco_exec_green(connectionObject *conn, const char *command)
 {
     PGresult *result = NULL;
-    PyObject *cb, *pyrv;
-
-    Dprintf("psyco_exec_green: executing query async");
-    if (!(cb = have_wait_callback())) {
-        goto end;
-    }
 
     /* Send the query asynchronously */
     if (0 == pq_send_query(conn, command)) {
-        goto clear;
+        goto end;
     }
 
     /* Enter the poll loop with a write. When writing is finished the poll
@@ -163,21 +163,16 @@ psyco_exec_green(connectionObject *conn, const char *command)
     */
     conn->async_status = ASYNC_WRITE;
 
-    pyrv = PyObject_CallFunctionObjArgs(cb, conn, NULL);
-    if (!pyrv) {
-        Dprintf("psyco_exec_green: error in wait callback");
+    if (0 != psyco_wait(conn)) {
         psyco_clear_result_blocking(conn);
-        goto clear;
+        goto end;
     }
-    Py_DECREF(pyrv);
 
     /* Now we can read the data without fear of blocking. */
     result = pq_get_last_result(conn);
 
-clear:
-    conn->async_status = ASYNC_DONE;
-    Py_DECREF(cb);
 end:
+    conn->async_status = ASYNC_DONE;
     return result;
 }
 

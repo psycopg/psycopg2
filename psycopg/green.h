@@ -59,7 +59,7 @@ HIDDEN PyObject *psyco_set_wait_callback(PyObject *self, PyObject *obj);
 HIDDEN PyObject *psyco_get_wait_callback(PyObject *self, PyObject *obj);
 
 HIDDEN int psyco_green(void);
-HIDDEN PyObject *psyco_wait(connectionObject *conn);
+HIDDEN int psyco_wait(connectionObject *conn);
 HIDDEN PGresult *psyco_exec_green(connectionObject *conn, const char *command);
 
 #ifdef __cplusplus

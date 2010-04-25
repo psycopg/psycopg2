@@ -346,7 +346,6 @@ static int
 _conn_sync_connect(connectionObject *self)
 {
     PGconn *pgconn;
-    PyObject *wait_rv;
     int green;
 
     /* store this value to prevent inconsistencies due to a change
@@ -382,10 +381,7 @@ _conn_sync_connect(connectionObject *self)
 
     /* if the connection is green, wait to finish connection */
     if (green) {
-        wait_rv = psyco_wait(self);
-        if (wait_rv) {
-            Py_DECREF(wait_rv);
-        } else {
+        if (0 != psyco_wait(self)) {
             return -1;
         }
     }
