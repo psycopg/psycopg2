@@ -24,9 +24,9 @@
  */
 
 #define PSYCOPG_MODULE
-#include "psycopg/config.h"
 #include "psycopg/python.h"
 #include "psycopg/psycopg.h"
+#include "psycopg/config.h"
 #include "psycopg/green.h"
 #include "psycopg/connection.h"
 #include "psycopg/pqpath.h"
