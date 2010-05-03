@@ -1,3 +1,8 @@
+2010-05-03  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* psycopg/adapter_binary.c: Adapt buffer objects using an explicit cast on
+	the string literal (bug reported by Peter Eisentraut)
+
 2010-04-20  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* lib/pqpath.c: Fixed reference leak in notify reception.

@@ -157,9 +157,9 @@ binary_quote(binaryObject *self)
         if (len > 0)
             self->buffer = PyString_FromFormat(
                 (self->conn && ((connectionObject*)self->conn)->equote)
-                    ? "E'%s'" : "'%s'" , to);
+                    ? "E'%s'::bytea" : "'%s'::bytea" , to);
         else
-            self->buffer = PyString_FromString("''");
+            self->buffer = PyString_FromString("''::bytea");
 
         PQfreemem(to);
     }

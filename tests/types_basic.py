@@ -96,7 +96,7 @@ class TypesBasicTests(unittest.TestCase):
     def testBinaryEmptyString(self):
         # test to make sure an empty Binary is converted to an empty string
         b = psycopg2.Binary('')
-        self.assertEqual(str(b), "''")
+        self.assertEqual(str(b), "''::bytea")
 
     def testBinaryRoundTrip(self):
         # test to make sure buffers returned by psycopg2 are
@@ -113,6 +113,21 @@ class TypesBasicTests(unittest.TestCase):
         self.failUnless(s == ['one', 'two', 'three'],
                         "wrong array quoting " + str(s))
 
+    def testTypeRoundtripBinary(self):
+        o1 = buffer("".join(map(chr, range(256))))
+        o2 = self.execute("select %s;", (o1,))
+        self.assertEqual(type(o1), type(o2))
+
+        # Test with an empty buffer
+        o1 = buffer("")
+        o2 = self.execute("select %s;", (o1,))
+        self.assertEqual(type(o1), type(o2))
+
+    def testTypeRoundtripBinaryArray(self):
+        o1 = buffer("".join(map(chr, range(256))))
+        o1 = [o1]
+        o2 = self.execute("select %s;", (o1,))
+        self.assertEqual(type(o1[0]), type(o2[0]))
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
