@@ -78,7 +78,7 @@ DSTDIFF = DSTOFFSET - STDOFFSET
 class LocalTimezone(datetime.tzinfo):
     """Platform idea of local timezone.
 
-    This is the exact implementation from the Pyhton 2.3 documentation.
+    This is the exact implementation from the Python 2.3 documentation.
     """
     
     def utcoffset(self, dt):
