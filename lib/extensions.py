@@ -42,6 +42,7 @@ from _psycopg import UNICODEARRAY
 from _psycopg import Binary, Boolean, Float, QuotedString, AsIs
 try:
     from _psycopg import MXDATE, MXDATETIME, MXINTERVAL, MXTIME
+    from _psycopg import MXDATEARRAY, MXDATETIMEARRAY, MXINTERVALARRAY, MXTIMEARRAY
     from _psycopg import DateFromMx, TimeFromMx, TimestampFromMx
     from _psycopg import IntervalFromMx
 except:
@@ -49,6 +50,7 @@ except:
 
 try:
     from _psycopg import PYDATE, PYDATETIME, PYINTERVAL, PYTIME
+    from _psycopg import PYDATEARRAY, PYDATETIMEARRAY, PYINTERVALARRAY, PYTIMEARRAY
     from _psycopg import DateFromPy, TimeFromPy, TimestampFromPy
     from _psycopg import IntervalFromPy
 except:

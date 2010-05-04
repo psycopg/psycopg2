@@ -537,6 +537,10 @@ from the database.  See :ref:`unicode-handling` for details.
           PYDATETIME
           PYINTERVAL
           PYTIME
+          PYDATEARRAY
+          PYDATETIMEARRAY
+          PYINTERVALARRAY
+          PYTIMEARRAY
 
     Typecasters to convert time-related data types to Python `!datetime`
     objects.
@@ -545,6 +549,10 @@ from the database.  See :ref:`unicode-handling` for details.
           MXDATETIME
           MXINTERVAL
           MXTIME
+          MXDATEARRAY
+          MXDATETIMEARRAY
+          MXINTERVALARRAY
+          MXTIMEARRAY
 
     Typecasters to convert time-related data types to `mx.DateTime`_ objects.
     Only available if Psycopg was compiled with `!mx` support.
