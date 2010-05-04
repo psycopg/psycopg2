@@ -57,6 +57,7 @@ static PyObject *
 pydatetime_str(pydatetimeObject *self)
 {
     if (self->type <= PSYCO_DATETIME_TIMESTAMP) {
+        PyObject *tz;
 
         /* Select the right PG type to cast into. */
         char *fmt = NULL;
@@ -68,7 +69,10 @@ pydatetime_str(pydatetimeObject *self)
             fmt = "'%s'::date";
             break;
         case PSYCO_DATETIME_TIMESTAMP:
-            fmt = "'%s'::timestamp";
+            tz = PyObject_GetAttrString(self->wrapped, "tzinfo");
+            if (!tz) { return NULL; }
+            fmt = (tz == Py_None) ? "'%s'::timestamp" : "'%s'::timestamptz";
+            Py_DECREF(tz);
             break;
         }
 

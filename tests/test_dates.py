@@ -250,6 +250,7 @@ class DatetimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
     def _test_type_roundtrip(self, o1):
         o2 = self.execute("select %s;", (o1,))
         self.assertEqual(type(o1), type(o2))
+        return o2
 
     def _test_type_roundtrip_array(self, o1):
         o1 = [o1]
@@ -262,7 +263,17 @@ class DatetimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
 
     def test_type_roundtrip_datetime(self):
         from datetime import datetime
-        self._test_type_roundtrip(datetime(2010,05,03,10,20,30))
+        dt = self._test_type_roundtrip(datetime(2010,05,03,10,20,30))
+        self.assertEqual(None, dt.tzinfo)
+
+    def test_type_roundtrip_datetimetz(self):
+        from datetime import datetime
+        import psycopg2.tz
+        tz = psycopg2.tz.FixedOffsetTimezone(8*60)
+        dt1 = datetime(2010,05,03,10,20,30, tzinfo=tz)
+        dt2 = self._test_type_roundtrip(dt1)
+        self.assertNotEqual(None, dt2.tzinfo)
+        self.assertEqual(dt1, dt2)
 
     def test_type_roundtrip_time(self):
         from datetime import time
