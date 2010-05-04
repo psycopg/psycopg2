@@ -2,6 +2,9 @@
 
 	* Added typecasters for arrays of specific MX/Py time-related types.
 
+	* psycopg/adapter_[mx]datetime.c: Explicit cast of the SQL representation
+	of time-related objects.
+
 2010-05-03  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* psycopg/adapter_binary.c: Adapt buffer objects using an explicit cast on

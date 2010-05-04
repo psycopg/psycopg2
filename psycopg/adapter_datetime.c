@@ -57,10 +57,25 @@ static PyObject *
 pydatetime_str(pydatetimeObject *self)
 {
     if (self->type <= PSYCO_DATETIME_TIMESTAMP) {
+
+        /* Select the right PG type to cast into. */
+        char *fmt = NULL;
+        switch (self->type) {
+        case PSYCO_DATETIME_TIME:
+            fmt = "'%s'::time";
+            break;
+        case PSYCO_DATETIME_DATE:
+            fmt = "'%s'::date";
+            break;
+        case PSYCO_DATETIME_TIMESTAMP:
+            fmt = "'%s'::timestamp";
+            break;
+        }
+
         PyObject *res = NULL;
         PyObject *iso = PyObject_CallMethod(self->wrapped, "isoformat", NULL);
         if (iso) {
-            res = PyString_FromFormat("'%s'", PyString_AsString(iso));
+            res = PyString_FromFormat(fmt, PyString_AsString(iso));
             Py_DECREF(iso);
         }
         return res;
@@ -78,7 +93,7 @@ pydatetime_str(pydatetimeObject *self)
         }
         buffer[6] = '\0';
 
-        return PyString_FromFormat("'%d days %d.%s seconds'",
+        return PyString_FromFormat("'%d days %d.%s seconds'::interval",
                                    obj->days, obj->seconds, buffer);
     }
 }

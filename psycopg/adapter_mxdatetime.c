@@ -56,10 +56,10 @@ mxdatetime_str(mxdatetimeObject *self)
     case PSYCO_MXDATETIME_DATE:
         dt = (mxDateTimeObject *)self->wrapped;
         if (dt->year >= 1)
-            PyOS_snprintf(buf, sizeof(buf) - 1, "'%04ld-%02d-%02d'",
+            PyOS_snprintf(buf, sizeof(buf) - 1, "'%04ld-%02d-%02d'::date",
                           dt->year, (int)dt->month, (int)dt->day);
         else
-            PyOS_snprintf(buf, sizeof(buf) - 1, "'%04ld-%02d-%02d BC'",
+            PyOS_snprintf(buf, sizeof(buf) - 1, "'%04ld-%02d-%02d BC'::date",
                           1 - dt->year, (int)dt->month, (int)dt->day);
         break;
 
@@ -67,12 +67,12 @@ mxdatetime_str(mxdatetimeObject *self)
         dt = (mxDateTimeObject *)self->wrapped;
         if (dt->year >= 1)
             PyOS_snprintf(buf, sizeof(buf) - 1,
-                          "'%04ld-%02d-%02dT%02d:%02d:%09.6f'",
+                          "'%04ld-%02d-%02dT%02d:%02d:%09.6f'::timestamp",
                           dt->year, (int)dt->month, (int)dt->day,
                           (int)dt->hour, (int)dt->minute, dt->second);
         else
             PyOS_snprintf(buf, sizeof(buf) - 1,
-                          "'%04ld-%02d-%02dT%02d:%02d:%09.6f BC'",
+                          "'%04ld-%02d-%02dT%02d:%02d:%09.6f BC'::timestamp",
                           1 - dt->year, (int)dt->month, (int)dt->day,
                           (int)dt->hour, (int)dt->minute, dt->second);
         break;
@@ -85,16 +85,16 @@ mxdatetime_str(mxdatetimeObject *self)
            time */
         dtd = (mxDateTimeDeltaObject *)self->wrapped;
         if (0 <= dtd->seconds && dtd->seconds < 24*3600) {
-            PyOS_snprintf(buf, sizeof(buf) - 1, "'%02d:%02d:%09.6f'",
+            PyOS_snprintf(buf, sizeof(buf) - 1, "'%02d:%02d:%09.6f'::time",
                           (int)dtd->hour, (int)dtd->minute, dtd->second);
         } else {
             double ss = dtd->hour*3600.0 + dtd->minute*60.0 + dtd->second;
 
             if (dtd->seconds >= 0)
-                PyOS_snprintf(buf, sizeof(buf) - 1, "'%ld days %.6f seconds'",
+                PyOS_snprintf(buf, sizeof(buf) - 1, "'%ld days %.6f seconds'::interval",
                               dtd->day, ss);
             else
-                PyOS_snprintf(buf, sizeof(buf) - 1, "'-%ld days -%.6f seconds'",
+                PyOS_snprintf(buf, sizeof(buf) - 1, "'-%ld days -%.6f seconds'::interval",
                               dtd->day, ss);
         }
         break;
