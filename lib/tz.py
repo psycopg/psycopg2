@@ -49,6 +49,10 @@ class FixedOffsetTimezone(datetime.tzinfo):
         if name is not None:
             self._name = name
 
+    def __repr__(self):
+        return "psycopg2.tz.FixedOffsetTimezone(offset=%r, name=%r)" \
+            % (self._offset.seconds // 60, self._name)
+
     def utcoffset(self, dt):
         return self._offset
 
