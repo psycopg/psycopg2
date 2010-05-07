@@ -389,7 +389,7 @@ psyco_DateFromTicks(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "d", &ticks))
         return NULL;
 
-    t = (time_t)round(ticks);
+    t = (time_t)floor(ticks);
     if (localtime_r(&t, &tm)) {
         args = Py_BuildValue("iii", tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday);
         if (args) {
@@ -411,7 +411,7 @@ psyco_TimeFromTicks(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args,"d", &ticks))
         return NULL;
 
-    t = (time_t)round(ticks);
+    t = (time_t)floor(ticks);
     ticks -= (double)t;
     if (localtime_r(&t, &tm)) {
         args = Py_BuildValue("iid", tm.tm_hour, tm.tm_min,
