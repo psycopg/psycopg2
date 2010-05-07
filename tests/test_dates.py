@@ -496,8 +496,8 @@ class FromTicksTestCase(unittest.TestCase):
     def test_time_value_error_sec_59_99(self):
         from datetime import time
         s = psycopg2.TimeFromTicks(1273173119.99992)
-        self.assertEqual(s.adapted,
-            time(20, 11, 59, 999920))
+        self.assertEqual(s.adapted.replace(hour=0),
+            time(0, 11, 59, 999920))
 
 
 def test_suite():
