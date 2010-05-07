@@ -1,3 +1,10 @@
+2010-05-07  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* psycopg/adapter_datetime.c: Fixed TimestampFromTicks for second
+	values > 59.5.
+
+	Bug reported and fixed by Jozsef Szalay on 2010-05-06 at 14:11:59.999920.
+
 2010-05-04  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* Added typecasters for arrays of specific MX/Py time-related types.

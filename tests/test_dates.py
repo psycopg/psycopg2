@@ -478,6 +478,17 @@ if not hasattr(psycopg2._psycopg, 'MXDATETIME'):
     del mxDateTimeTests
 
 
+class TimestampFromTicksTestCase(unittest.TestCase):
+    # bug "TimestampFromTicks() throws ValueError (2-2.0.14)"
+    # reported by Jozsef Szalay on 2010-05-06
+    def test_value_error_sec_59_99(self):
+        from datetime import datetime
+        s = psycopg2.TimestampFromTicks(1273173119.99992)
+        self.assertEqual(s.adapted,
+            datetime(2010, 5, 6, 14, 11, 59, 999920,
+                tzinfo=FixedOffsetTimezone(-5 * 60)))
+
+
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

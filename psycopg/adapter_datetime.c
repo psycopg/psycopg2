@@ -435,7 +435,7 @@ psyco_TimestampFromTicks(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "d", &ticks))
         return NULL;
 
-    t = (time_t)round(ticks);
+    t = (time_t)floor(ticks);
     ticks -= (double)t;
     if (localtime_r(&t, &tm)) {
         PyObject *value = Py_BuildValue("iiiiidO",
