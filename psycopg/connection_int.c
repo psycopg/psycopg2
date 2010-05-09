@@ -265,11 +265,13 @@ conn_setup(connectionObject *self, PGconn *pgconn)
     pthread_mutex_lock(&self->lock);
     Py_BLOCK_THREADS;
 
-    if (pq_set_non_blocking(self, 1, 1) != 0) {
+    int green = psyco_green();
+
+    if (green && (pq_set_non_blocking(self, 1, 1) != 0)) {
         return -1;
     }
 
-    if (!psyco_green()) {
+    if (!green) {
         Py_UNBLOCK_THREADS;
         pgres = PQexec(pgconn, psyco_datestyle);
         Py_BLOCK_THREADS;
@@ -287,7 +289,7 @@ conn_setup(connectionObject *self, PGconn *pgconn)
     }
     CLEARPGRES(pgres);
 
-    if (!psyco_green()) {
+    if (!green) {
         Py_UNBLOCK_THREADS;
         pgres = PQexec(pgconn, psyco_client_encoding);
         Py_BLOCK_THREADS;
@@ -314,7 +316,7 @@ conn_setup(connectionObject *self, PGconn *pgconn)
     }
     CLEARPGRES(pgres);
 
-    if (!psyco_green()) {
+    if (!green) {
         Py_UNBLOCK_THREADS;
         pgres = PQexec(pgconn, psyco_transaction_isolation);
         Py_BLOCK_THREADS;

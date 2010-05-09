@@ -1041,12 +1041,6 @@ _pq_copy_in_v3(cursorObject *curs)
         goto exit;
     }
 
-    /* Put the connection in blocking mode */
-    if (0 != pq_set_non_blocking(curs->conn, 0, 1)) {
-        error = 1;
-        goto exit;
-    }
-
     while (1) {
         o = PyObject_CallFunctionObjArgs(func, size, NULL);
         if (!(o && PyString_Check(o) && (length = PyString_GET_SIZE(o)) != -1)) {
@@ -1112,10 +1106,6 @@ _pq_copy_in_v3(cursorObject *curs)
         }
     }
 
-/* clear: */
-    /* Ignoring error value: if this failed, we have worse problems. */
-    pq_set_non_blocking(curs->conn, 1, 0);
-
 exit:
     Py_XDECREF(func);
     Py_XDECREF(size);
@@ -1137,21 +1127,16 @@ _pq_copy_in(cursorObject *curs)
         goto exit;
     }
 
-    /* Put the connection in blocking mode */
-    if (0 != pq_set_non_blocking(curs->conn, 0, 1)) {
-        goto exit;
-    }
-
     while (1) {
         int rv;
         o = PyObject_CallFunction(func, NULL);
-        if (o == NULL) goto clear;
+        if (o == NULL) goto exit;
         if (o == Py_None || PyString_GET_SIZE(o) == 0) break;
         Py_BEGIN_ALLOW_THREADS;
         rv = PQputline(curs->conn->pgconn, PyString_AS_STRING(o));
         Py_END_ALLOW_THREADS;
         Py_DECREF(o);
-        if (0 != rv) goto clear;
+        if (0 != rv) goto exit;
     }
     Py_XDECREF(o);
 
@@ -1170,10 +1155,6 @@ _pq_copy_in(cursorObject *curs)
     }
 
     ret = 1;
-
-clear:
-    /* Ignoring error value: if this failed, we have worse problems. */
-    pq_set_non_blocking(curs->conn, 1, 0);
 
 exit:
     Py_XDECREF(func);
@@ -1195,11 +1176,6 @@ _pq_copy_out_v3(cursorObject *curs)
         goto exit;
     }
 
-    /* Put the connection in blocking mode */
-    if (0 != pq_set_non_blocking(curs->conn, 0, 1)) {
-        goto exit;
-    }
-
     while (1) {
         Py_BEGIN_ALLOW_THREADS;
         len = PQgetCopyData(curs->conn->pgconn, &buffer, 0);
@@ -1209,7 +1185,7 @@ _pq_copy_out_v3(cursorObject *curs)
             tmp = PyObject_CallFunction(func, "s#", buffer, len);
             PQfreemem(buffer);
             if (tmp == NULL) {
-                goto clear;
+                goto exit;
             } else {
                 Py_DECREF(tmp);
             }
@@ -1222,7 +1198,7 @@ _pq_copy_out_v3(cursorObject *curs)
 
     if (len == -2) {
         pq_raise(curs->conn, curs, NULL);
-        goto clear;
+        goto exit;
     }
 
     /* and finally we grab the operation result from the backend */
@@ -1233,10 +1209,6 @@ _pq_copy_out_v3(cursorObject *curs)
         IFCLEARPGRES(curs->pgres);
     }
     ret = 1;
-
-clear:
-    /* Ignoring error value: if this failed, we have worse problems. */
-    pq_set_non_blocking(curs->conn, 1, 0);
 
 exit:
     Py_XDECREF(func);
@@ -1258,11 +1230,6 @@ _pq_copy_out(cursorObject *curs)
         goto exit;
     }
 
-    /* Put the connection in blocking mode */
-    if (0 != pq_set_non_blocking(curs->conn, 0, 1)) {
-        goto exit;
-    }
-
     while (1) {
         Py_BEGIN_ALLOW_THREADS;
         status = PQgetline(curs->conn->pgconn, buffer, 4096);
@@ -1279,12 +1246,12 @@ _pq_copy_out(cursorObject *curs)
             ll = 1;
         }
         else {
-            goto clear;
+            goto exit;
         }
 
         tmp = PyObject_CallFunction(func, "s#", buffer, len);
         if (tmp == NULL) {
-            goto clear;
+            goto exit;
         } else {
             Py_DECREF(tmp);
         }
@@ -1302,10 +1269,6 @@ _pq_copy_out(cursorObject *curs)
             pq_raise(curs->conn, curs, NULL);
         IFCLEARPGRES(curs->pgres);
     }
-
-clear:
-    /* Ignoring error value: if this failed, we have worse problems. */
-    pq_set_non_blocking(curs->conn, 1, 0);
 
 exit:
     Py_XDECREF(func);

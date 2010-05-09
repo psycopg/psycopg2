@@ -211,11 +211,9 @@ lobject_write(lobjectObject *self, const char *buf, size_t len)
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
 
-    PQsetnonblocking(self->conn->pgconn, 0);
     written = lo_write(self->conn->pgconn, self->fd, buf, len);
     if (written < 0)
         collect_error(self->conn, &error);
-    PQsetnonblocking(self->conn->pgconn, 1);
 
     pthread_mutex_unlock(&(self->conn->lock));
     Py_END_ALLOW_THREADS;
