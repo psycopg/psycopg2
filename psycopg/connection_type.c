@@ -39,6 +39,7 @@
 #include "psycopg/cursor.h"
 #include "psycopg/pqpath.h"
 #include "psycopg/lobject.h"
+#include "psycopg/green.h"
 
 /** DBAPI methods **/
 
@@ -314,6 +315,7 @@ psyco_conn_lobject(connectionObject *self, PyObject *args, PyObject *keywds)
 
     EXC_IF_CONN_CLOSED(self);
     EXC_IF_CONN_ASYNC(self, lobject);
+    EXC_IF_GREEN(lobject);
 
     Dprintf("psyco_conn_lobject: new lobject for connection at %p", self);
     Dprintf("psyco_conn_lobject:     parameters: oid = %d, mode = %s",

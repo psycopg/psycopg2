@@ -435,6 +435,9 @@ callback (using `!select()` to block) is provided as
     :ref:`COPY commands <copy>` are currently not supported when a wait callback
     is registered, but they will be probably implemented in a future release.
 
+    :ref:`Large objects <large-objects>` are not supported either: they are
+    not compatible with asynchronous connections.
+
 
 .. testcode::
     :hide:

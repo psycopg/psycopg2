@@ -50,13 +50,13 @@ def test_suite():
     suite.addTest(test_transaction.test_suite())
     suite.addTest(types_basic.test_suite())
     suite.addTest(types_extras.test_suite())
-    suite.addTest(test_lobject.test_suite())
 
     if not green:
+        suite.addTest(test_lobject.test_suite())
         suite.addTest(test_copy.test_suite())
     else:
         import warnings
-        warnings.warn("copy not implemented in green mode: skipping tests")
+        warnings.warn("copy/lobjects not implemented in green mode: skipping tests")
 
     suite.addTest(test_notify.test_suite())
     suite.addTest(test_async.test_suite())

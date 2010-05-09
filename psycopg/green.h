@@ -62,6 +62,12 @@ HIDDEN int psyco_green(void);
 HIDDEN int psyco_wait(connectionObject *conn);
 HIDDEN PGresult *psyco_exec_green(connectionObject *conn, const char *command);
 
+#define EXC_IF_GREEN(cmd) \
+if (psyco_green()) {   \
+    PyErr_SetString(ProgrammingError, #cmd " cannot be used "       \
+    "with an asynchronous callback.");                              \
+    return NULL; }
+
 #ifdef __cplusplus
 }
 #endif
