@@ -97,8 +97,6 @@
     <None Include="psycopg\typecast.h" />
     <None Include="psycopg\typecast_binary.h" />
     <None Include="scripts\buildtypes.py" />
-    <None Include="scripts\ext2html.py" />
-    <None Include="scripts\makedocs.py" />
     <None Include="scripts\maketypes.sh" />
     <None Include="ZPsycopgDA\dtml\add.dtml" />
     <None Include="ZPsycopgDA\dtml\browse.dtml" />
@@ -133,10 +131,8 @@
     <None Include="tests\test_lobject.py" />
     <None Include="tests\test_quote.py" />
     <None Include="psycopg\lobject.h" />
-    <None Include="psycopg\typecast_basic.c.old" />
     <None Include="sandbox\test_isready_connection_closed.py" />
     <None Include="psycopg\adapter_pfloat.h" />
-    <None Include="README.async" />
     <None Include="psycopg2da\adapter.py" />
     <None Include="psycopg2da\configure.zcml" />
     <None Include="psycopg2da\DEPENDENCIES.cfg" />
@@ -173,6 +169,35 @@
     <None Include="tests\test_async.py" />
     <None Include="tests\test_copy.py" />
     <None Include="tests\bug_gc.py" />
+    <None Include="tests\test_green.py" />
+    <None Include="tests\test_notify.py" />
+    <None Include="scripts\make_errorcodes.py" />
+    <None Include="sandbox\array.py" />
+    <None Include="sandbox\async.py" />
+    <None Include="sandbox\crash.py" />
+    <None Include="sandbox\domainoid.py" />
+    <None Include="sandbox\gtk.py" />
+    <None Include="sandbox\iter.py" />
+    <None Include="sandbox\leak.test.py" />
+    <None Include="sandbox\misc_dbapi_test.py" />
+    <None Include="sandbox\named.py" />
+    <None Include="sandbox\pbool.py" />
+    <None Include="sandbox\stress.py" />
+    <None Include="sandbox\stress2.py" />
+    <None Include="sandbox\test.py" />
+    <None Include="sandbox\test814.py" />
+    <None Include="sandbox\test_copy2.csv" />
+    <None Include="sandbox\test_copy2.py" />
+    <None Include="sandbox\test_notices.py" />
+    <None Include="sandbox\test-psycopg2-datetime-systematic.py" />
+    <None Include="sandbox\textfloat.py" />
+    <None Include="sandbox\trigger-commit-fail.py" />
+    <None Include="sandbox\trigger_double_dealloc.py" />
+    <None Include="sandbox\typecrash.py" />
+    <None Include="sandbox\tzhalf.py" />
+    <None Include="sandbox\valgrind-python.supp" />
+    <None Include="psycopg\green.h" />
+    <None Include="doc\src\pool.rst" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="psycopg\adapter_asis.c" />
@@ -202,6 +227,7 @@
     <Compile Include="psycopg\lobject_type.c" />
     <Compile Include="psycopg\adapter_pfloat.c" />
     <Compile Include="psycopg\adapter_pdecimal.c" />
+    <Compile Include="psycopg\green.c" />
   </ItemGroup>
   <ProjectExtensions>
     <MonoDevelop>
@@ -210,8 +236,8 @@
           <ChangeLogPolicy UpdateMode="Nearest" VcsIntegration="None" inheritsSet="Mono">
             <MessageStyle FileSeparator=", " LineAlign="0" />
           </ChangeLogPolicy>
-          <TextStylePolicy FileWidth="144" NoTabsAfterNonTabs="False" inheritsSet="Mono" inheritsScope="text/x-python" />
-          <TextStylePolicy TabWidth="8" TabsToSpaces="False" inheritsSet="Mono" inheritsScope="text/x-python" scope="text/x-changelog" />
+          <TextStylePolicy FileWidth="144" RemoveTrailingWhitespace="True" inheritsSet="VisualStudio" inheritsScope="text/plain" />
+          <TextStylePolicy NoTabsAfterNonTabs="True" RemoveTrailingWhitespace="True" inheritsSet="Mono" inheritsScope="text/plain" scope="text/x-changelog" />
         </Policies>
       </Properties>
     </MonoDevelop>
