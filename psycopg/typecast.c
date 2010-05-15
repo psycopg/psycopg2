@@ -435,6 +435,15 @@ typecast_call(PyObject *obj, PyObject *args, PyObject *kwargs)
         return NULL;
     }
 
+    // If the string is not a string but a None value we're being called
+    // from a Python-defined caster. There is no need to convert, just
+    // return it.
+
+    if (string == Py_None) {
+        Py_INCREF(string);
+        return string;
+    }
+
     return typecast_cast(obj,
                          PyString_AsString(string), PyString_Size(string),
                          cursor);

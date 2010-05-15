@@ -1,3 +1,8 @@
+2010-04-05  Federico Di Gregorio  <fog@initd.org>
+
+	* typecast.c: Fixed problem related to receiving None from Python
+	when a string was expected.
+
 2010-05-07  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* psycopg/adapter_datetime.c: Fixed TimestampFromTicks for second

@@ -198,6 +198,7 @@
     <None Include="sandbox\valgrind-python.supp" />
     <None Include="psycopg\green.h" />
     <None Include="doc\src\pool.rst" />
+    <None Include="sandbox\dec2float.py" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="psycopg\adapter_asis.c" />
