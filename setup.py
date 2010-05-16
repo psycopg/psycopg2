@@ -189,6 +189,7 @@ class psycopg_build_ext(build_ext):
             if self.have_ssl:
                 self.libraries.append("libeay32")
                 self.libraries.append("ssleay32")
+                self.libraries.append("crypt32")
                 self.libraries.append("user32")
                 self.libraries.append("gdi32")
 
