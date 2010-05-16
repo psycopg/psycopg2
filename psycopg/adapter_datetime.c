@@ -56,6 +56,8 @@ extern HIDDEN PyObject *pyPsycopgTzLOCAL;
 static PyObject *
 pydatetime_str(pydatetimeObject *self)
 {
+    PyObject *res = NULL;
+    PyObject *iso;
     if (self->type <= PSYCO_DATETIME_TIMESTAMP) {
         PyObject *tz;
 
@@ -76,8 +78,7 @@ pydatetime_str(pydatetimeObject *self)
             break;
         }
 
-        PyObject *res = NULL;
-        PyObject *iso = PyObject_CallMethod(self->wrapped, "isoformat", NULL);
+        iso = PyObject_CallMethod(self->wrapped, "isoformat", NULL);
         if (iso) {
             res = PyString_FromFormat(fmt, PyString_AsString(iso));
             Py_DECREF(iso);

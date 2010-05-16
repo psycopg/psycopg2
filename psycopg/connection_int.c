@@ -256,6 +256,7 @@ int
 conn_setup(connectionObject *self, PGconn *pgconn)
 {
     PGresult *pgres;
+    int green;
 
     self->equote = conn_get_standard_conforming_strings(pgconn);
     self->server_version = conn_get_server_version(pgconn);
@@ -265,7 +266,7 @@ conn_setup(connectionObject *self, PGconn *pgconn)
     pthread_mutex_lock(&self->lock);
     Py_BLOCK_THREADS;
 
-    int green = psyco_green();
+    green = psyco_green();
 
     if (green && (pq_set_non_blocking(self, 1, 1) != 0)) {
         return -1;
