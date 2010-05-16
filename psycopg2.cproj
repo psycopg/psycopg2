@@ -44,7 +44,6 @@
     <None Include="INSTALL" />
     <None Include="LICENSE" />
     <None Include="MANIFEST.in" />
-    <None Include="NEWS" />
     <None Include="README" />
     <None Include="setup.cfg" />
     <None Include="setup.py" />
@@ -199,6 +198,8 @@
     <None Include="psycopg\green.h" />
     <None Include="doc\src\pool.rst" />
     <None Include="sandbox\dec2float.py" />
+    <None Include="NEWS-2.0" />
+    <None Include="NEWS-2.2" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="psycopg\adapter_asis.c" />

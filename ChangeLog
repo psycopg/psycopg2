@@ -1,4 +1,8 @@
-2010-04-05  Federico Di Gregorio  <fog@initd.org>
+2010-05-16  Federico Di Gregorio  <fog@initd.org>
+
+	* Release 2.2.0.
+
+2010-05-15  Federico Di Gregorio  <fog@initd.org>
 
 	* typecast.c: Fixed problem related to receiving None from Python
 	when a string was expected.

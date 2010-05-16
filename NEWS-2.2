@@ -1,0 +1,32 @@
+What's new in psycopg 2.2.0
+---------------------------
+
+This is the first release of the new 2.2 series, supporting not just one but
+two different ways of executing asynchronous queries, thanks to Jan and Daniele
+(with a little help from me and others, but they did 99% of the work so they
+deserve their names here in the news.)
+
+psycopg now supports both classic select() loops and "green" coroutine
+libraries. It is all in the documentation, so just point your browser to
+doc/html/advanced.html.
+
+* Other new features:
+  - truncate() method for lobjects.
+  - COPY functions are now a little bit faster.
+  - All builtin PostgreSQL to Python typecasters are now available from the
+    psycopg2.extensions module.
+  - Notifications from the backend are now available right after the execute()
+    call (before client code needed to call isbusy() to ensure NOTIFY
+    reception.)
+  - Better timezone support.
+  - Lots of documentation updates.
+
+* Bug fixes:
+  - Fixed some gc/refcounting problems.
+  - Fixed reference leak in NOTIFY reception.
+  - Fixed problem with PostgreSQL not casting string literals to the correct
+    types in some situations: psycopg now add an explicit cast to dates, times
+    and bytea representations.
+  - Fixed TimestampFromTicks() and TimeFromTicks() for seconds >= 59.5.
+  - Fixed spurious exception raised when calling C typecasters from Python
+    ones.

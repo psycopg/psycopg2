@@ -12,5 +12,5 @@ recursive-include doc/html *
 prune doc/src/_build
 recursive-include scripts *.py *.sh
 include scripts/maketypes.sh scripts/buildtypes.py
-include AUTHORS README INSTALL LICENSE ChangeLog 
+include AUTHORS README INSTALL LICENSE NEWS-2.0 NEWS-2.2 ChangeLog 
 include PKG-INFO MANIFEST.in MANIFEST setup.py setup.cfg
