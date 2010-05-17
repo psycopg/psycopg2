@@ -1,3 +1,9 @@
+2010-05-17  Federico Di Gregorio  <fog@initd.org>
+
+	* Release 2.2.1.
+
+	* Builds again on Windows.
+
 2010-05-16  Federico Di Gregorio  <fog@initd.org>
 
 	* Release 2.2.0.
