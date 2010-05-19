@@ -198,6 +198,12 @@ class psycopg_build_ext(build_ext):
         self.libraries.append('ssl')
         self.libraries.append('crypto')
 
+    def finalize_linux2(self):
+        """Finalize build system configuration on GNU/Linux platform."""
+        # tell piro that GCC is fine and dandy, but not so MS compilers
+        for ext in self.extensions:
+            ext.extra_compile_args.append('-Wdeclaration-after-statement')
+
     def finalize_options(self):
         """Complete the build system configuation."""
         build_ext.finalize_options(self)
