@@ -11,9 +11,16 @@ dbuser = os.environ.get('PSYCOPG2_TESTDB_USER', None)
 # Check if we want to test psycopg's green path.
 green = os.environ.get('PSYCOPG2_TEST_GREEN', None)
 if green:
+    if green == '1':
+        from psycopg2.extras import wait_select as wait_callback
+    elif green == 'eventlet':
+        from eventlet.support.psycopg2_patcher import eventlet_wait_callback \
+            as wait_callback
+    else:
+        raise ValueError("please set 'PSYCOPG2_TEST_GREEN' to a valid value")
+
     import psycopg2.extensions
-    import psycopg2.extras
-    psycopg2.extensions.set_wait_callback(psycopg2.extras.wait_select)
+    psycopg2.extensions.set_wait_callback(wait_callback)
 
 # Construct a DSN to connect to the test database:
 dsn = 'dbname=%s' % dbname
