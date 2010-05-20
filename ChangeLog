@@ -3,6 +3,8 @@
 	* psycopg/typecast_datetime.c: Round seconds in historical timezones to
 	the nearest minute.
 
+	* lib/extras.py: register_tstz_w_secs() is now no-op.
+
 2010-05-17  Federico Di Gregorio  <fog@initd.org>
 
 	* Release 2.2.1.

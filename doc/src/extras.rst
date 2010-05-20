@@ -155,6 +155,9 @@ Fractional time zones
 
     .. versionadded:: 2.0.9
 
+    .. versionchanged:: 2.2.0
+        function is no-op: see :ref:`tz-handling`.
+
 .. index::
    pair: Example; Coroutine;
 
