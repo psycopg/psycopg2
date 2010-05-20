@@ -124,24 +124,16 @@ class DatetimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
         self.check_time_tz("+01:15", 4500)
         self.check_time_tz("-01:15", -4500)
         # The Python datetime module does not support time zone
-        # offsets that are not a whole number of minutes, so we get an
-        # error here.  Check that we are generating an understandable
-        # error message.
-        try:
-            self.check_time_tz("+01:15:42", 4542)
-        except ValueError, exc:
-            self.assertEqual(str(exc), "time zone offset 4542 is not a "
-                             "whole number of minutes")
-        else:
-            self.fail("Expected ValueError")
-
-        try:
-            self.check_time_tz("-01:15:42", -4542)
-        except ValueError, exc:
-            self.assertEqual(str(exc), "time zone offset -4542 is not a "
-                             "whole number of minutes")
-        else:
-            self.fail("Expected ValueError")
+        # offsets that are not a whole number of minutes.
+        # We round the offset to the nearest minute.
+        self.check_time_tz("+01:15:00",  60 * (60 + 15))
+        self.check_time_tz("+01:15:29",  60 * (60 + 15))
+        self.check_time_tz("+01:15:30",  60 * (60 + 16))
+        self.check_time_tz("+01:15:59",  60 * (60 + 16))
+        self.check_time_tz("-01:15:00", -60 * (60 + 15))
+        self.check_time_tz("-01:15:29", -60 * (60 + 15))
+        self.check_time_tz("-01:15:30", -60 * (60 + 16))
+        self.check_time_tz("-01:15:59", -60 * (60 + 16))
 
     def check_datetime_tz(self, str_offset, offset):
         from datetime import datetime, timedelta
@@ -168,24 +160,16 @@ class DatetimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
         self.check_datetime_tz("+01:15", 4500)
         self.check_datetime_tz("-01:15", -4500)
         # The Python datetime module does not support time zone
-        # offsets that are not a whole number of minutes, so we get an
-        # error here.  Check that we are generating an understandable
-        # error message.
-        try:
-            self.check_datetime_tz("+01:15:42", 4542)
-        except ValueError, exc:
-            self.assertEqual(str(exc), "time zone offset 4542 is not a "
-                             "whole number of minutes")
-        else:
-            self.fail("Expected ValueError")
-
-        try:
-            self.check_datetime_tz("-01:15:42", -4542)
-        except ValueError, exc:
-            self.assertEqual(str(exc), "time zone offset -4542 is not a "
-                             "whole number of minutes")
-        else:
-            self.fail("Expected ValueError")
+        # offsets that are not a whole number of minutes.
+        # We round the offset to the nearest minute.
+        self.check_datetime_tz("+01:15:00",  60 * (60 + 15))
+        self.check_datetime_tz("+01:15:29",  60 * (60 + 15))
+        self.check_datetime_tz("+01:15:30",  60 * (60 + 16))
+        self.check_datetime_tz("+01:15:59",  60 * (60 + 16))
+        self.check_datetime_tz("-01:15:00", -60 * (60 + 15))
+        self.check_datetime_tz("-01:15:29", -60 * (60 + 15))
+        self.check_datetime_tz("-01:15:30", -60 * (60 + 16))
+        self.check_datetime_tz("-01:15:59", -60 * (60 + 16))
 
     def test_parse_time_no_timezone(self):
         self.assertEqual(self.TIME("13:30:29", self.curs).tzinfo, None)

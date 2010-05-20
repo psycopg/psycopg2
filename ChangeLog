@@ -1,3 +1,8 @@
+2010-05-20  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* psycopg/typecast_datetime.c: Round seconds in historical timezones to
+	the nearest minute.
+
 2010-05-17  Federico Di Gregorio  <fog@initd.org>
 
 	* Release 2.2.1.

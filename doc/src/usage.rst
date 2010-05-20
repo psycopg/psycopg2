@@ -365,6 +365,38 @@ the connection or globally: see the function
     and then forget about this story.
 
 
+.. index::
+    single: Time Zones
+
+.. _tz-handling:
+
+Time zones handling
+^^^^^^^^^^^^^^^^^^^
+
+The PostgreSQL type :sql:`timestamp with time zone` is converted into Python
+`!datetime` objects with a `!tzinfo` attribute set to a
+`~psycopg2.tz.FixedOffsetTimezone` instance.
+
+    >>> cur.execute("SET TIME ZONE 'Europe/Rome';")  # UTC + 1 hour
+    >>> cur.execute("SELECT '2010-01-01 10:30:45'::timestamptz;")
+    >>> cur.fetchone()[0].tzinfo
+    psycopg2.tz.FixedOffsetTimezone(offset=60, name=None)
+
+Notice that only time zones with an integer number of minutes are supported:
+this is a limitation of the Python `!datetime` module.  A few historical time
+zones had seconds in the UTC offset: these time zones will have the offset
+rounded to the nearest minute, with an error of up to 30 seconds.
+
+    >>> cur.execute("SET TIME ZONE 'Asia/Calcutta';")  # offset was +5:53:20
+    >>> cur.execute("SELECT '1930-01-01 10:30:45'::timestamptz;")
+    >>> cur.fetchone()[0].tzinfo
+    psycopg2.tz.FixedOffsetTimezone(offset=353, name=None)
+
+.. versionchanged:: 2.2.2
+    timezones with seconds are supported (with rounding). Previously such
+    timezones raised an error.  In order to deal with them in previous
+    versions use `psycopg2.extras.register_tstz_w_secs`.
+
 
 .. index:: Transaction, Begin, Commit, Rollback, Autocommit
 

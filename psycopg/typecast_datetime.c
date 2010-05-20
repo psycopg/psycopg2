@@ -134,15 +134,11 @@ typecast_PYDATETIME_cast(const char *str, Py_ssize_t len, PyObject *curs)
             Dprintf("typecast_PYDATETIME_cast: UTC offset = %ds", tz);
 
             /* The datetime module requires that time zone offsets be
-               a whole number of minutes, so fail if we have a time
-               zone with a seconds offset.
-             */
-            if (tz % 60 != 0) {
-                PyErr_Format(PyExc_ValueError, "time zone offset %d is not "
-                             "a whole number of minutes", tz);
-                return NULL;
-            }
-            tzinfo = PyObject_CallFunction(tzinfo_factory, "i", tz / 60);
+               a whole number of minutes, so truncate the seconds to the
+               closest minute. */
+            // printf("%d %d %d\n", tz, tzmin, round(tz / 60.0));
+            tzinfo = PyObject_CallFunction(tzinfo_factory, "i",
+                (int)round(tz / 60.0));
         } else {
             Py_INCREF(Py_None);
             tzinfo = Py_None;
@@ -192,15 +188,10 @@ typecast_PYTIME_cast(const char *str, Py_ssize_t len, PyObject *curs)
         Dprintf("typecast_PYTIME_cast: UTC offset = %ds", tz);
 
         /* The datetime module requires that time zone offsets be
-           a whole number of minutes, so fail if we have a time
-           zone with a seconds offset.
-        */
-        if (tz % 60 != 0) {
-            PyErr_Format(PyExc_ValueError, "time zone offset %d is not "
-                         "a whole number of minutes", tz);
-            return NULL;
-        }
-        tzinfo = PyObject_CallFunction(tzinfo_factory, "i", tz / 60);
+           a whole number of minutes, so truncate the seconds to the
+           closest minute. */
+        tzinfo = PyObject_CallFunction(tzinfo_factory, "i",
+            (int)round(tz / 60.0));
     } else {
         Py_INCREF(Py_None);
         tzinfo = Py_None;
