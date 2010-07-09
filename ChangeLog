@@ -1,3 +1,8 @@
+2010-07-09  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* psycopg/cursor_type.c: executemany() propagates exceptions raised by the
+	iterable to the caller.
+
 2010-05-20  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* psycopg/typecast_datetime.c: Round seconds in historical timezones to

@@ -534,8 +534,13 @@ psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
     Py_XDECREF(iter);
     self->rowcount = rowcount;
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    if (!PyErr_Occurred()) {
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
+    else {
+        return NULL;
+    }
 }
 
 
