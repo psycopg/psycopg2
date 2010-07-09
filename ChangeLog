@@ -3,6 +3,10 @@
 	* psycopg/cursor_type.c: executemany() propagates exceptions raised by the
 	iterable to the caller.
 
+	* lib/pool.py: dropped logging.basicConfig() call.  It messes up with
+	projects using logging but where no handler is installed on the root
+	logger.  Bug reported by Joe Abbate.
+
 2010-05-20  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* psycopg/typecast_datetime.c: Round seconds in historical timezones to

@@ -28,9 +28,6 @@ import psycopg2
 
 try:
     import logging
-    # do basic initialization if the module is not already initialized
-    logging.basicConfig(level=logging.INFO,
-                        format='%(asctime)s %(levelname)s %(message)s')
     # create logger object for psycopg2 module and sub-modules
     _logger = logging.getLogger("psycopg2")
     def dbg(*args):
