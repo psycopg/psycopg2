@@ -71,6 +71,20 @@ class CopyTests(unittest.TestCase):
         curs.execute("select * from tcopy order by id")
         self.assertEqual([(i, None) for i in range(10)], curs.fetchall())
 
+    def test_copy_from_cols_err(self):
+        curs = self.conn.cursor()
+        f = StringIO()
+        for i in xrange(10):
+            f.write("%s\n" % (i,))
+
+        f.seek(0)
+        def cols():
+            raise ZeroDivisionError()
+            yield 'id'
+
+        self.assertRaises(ZeroDivisionError,
+            curs.copy_from, MinimalRead(f), "tcopy", columns=cols())
+
     def test_copy_to(self):
         curs = self.conn.cursor()
         try:

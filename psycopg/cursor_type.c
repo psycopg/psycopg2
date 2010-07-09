@@ -1151,6 +1151,11 @@ static int _psyco_curs_copy_columns(PyObject *columns, char *columnlist)
     }
     Py_DECREF(coliter);
 
+    /* Error raised by the coliter generator */
+    if (PyErr_Occurred()) {
+        return -1;
+    }
+
     if (offset == 2) {
         return 0;
     }

@@ -7,6 +7,9 @@
 	projects using logging but where no handler is installed on the root
 	logger.  Bug reported by Joe Abbate.
 
+	* psycopg/cursor_type.c: exceptions raised in the columns iterator of the
+	copy methods propagated to the caller.
+
 2010-05-20  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* psycopg/typecast_datetime.c: Round seconds in historical timezones to
