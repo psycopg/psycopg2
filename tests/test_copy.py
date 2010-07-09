@@ -54,9 +54,22 @@ class CopyTests(unittest.TestCase):
         # Trying to trigger a "would block" error
         curs = self.conn.cursor()
         try:
-            self._copy_from(curs, nrecs=10*1024, srec=10*1024, copykw={'size': 20*1024*1024})
+            self._copy_from(curs, nrecs=10*1024, srec=10*1024,
+                copykw={'size': 20*1024*1024})
         finally:
             curs.close()
+
+    def test_copy_from_cols(self):
+        curs = self.conn.cursor()
+        f = StringIO()
+        for i in xrange(10):
+            f.write("%s\n" % (i,))
+
+        f.seek(0)
+        curs.copy_from(MinimalRead(f), "tcopy", columns=['id'])
+
+        curs.execute("select * from tcopy order by id")
+        self.assertEqual([(i, None) for i in range(10)], curs.fetchall())
 
     def test_copy_to(self):
         curs = self.conn.cursor()
