@@ -27,6 +27,7 @@ and classes untill a better place in the distribution is found.
 
 import os
 import time
+import warnings
 import re as regex
 
 try:
@@ -443,7 +444,7 @@ def register_tstz_w_secs(oids=None, conn_or_curs=None):
     These are now correctly handled by the default type caster, so currently
     the function doesn't do anything.
     """
-    pass
+    warnings.warn("deprecated", DeprecationWarning)
 
 
 import select
