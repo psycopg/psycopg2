@@ -1,3 +1,7 @@
+2010-07-18  Federico Di Gregorio  <fog@initd.org>
+
+	* Release 2.2.2.
+
 2010-07-09  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* psycopg/cursor_type.c: executemany() propagates exceptions raised by the

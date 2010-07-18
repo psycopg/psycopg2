@@ -1,3 +1,17 @@
+What's new in psycopg 2.2.2
+---------------------------
+
+* Bux fixes:
+  - the call to logging.basicConfig() in pool.py has been dropped: it was
+    messing with some projects using logging (and a library should not
+    initialize the logging system anyway.)
+  - psycopg now correctly handles time zones with seconds in the UTC offset.
+    The old register_tstz_w_secs() function is deprecated and will raise a
+    warning if called.
+  - Exceptions raised by the column iterator are propagated.
+  - Exceptions raised by executemany() interators are propagated.
+
+
 What's new in psycopg 2.2.1
 ---------------------------
 
