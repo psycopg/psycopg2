@@ -309,7 +309,7 @@ The module exports a few exceptions in addition to the :ref:`standard ones
 
     (subclasses `~psycopg2.OperationalError`)
 
-    Error related to SQL query cancelation.  It can be trapped specifically to
+    Error related to SQL query cancellation.  It can be trapped specifically to
     detect a timeout.
 
     .. versionadded:: 2.0.7

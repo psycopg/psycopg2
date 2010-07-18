@@ -153,7 +153,7 @@ HIDDEN char *psycopg_escape_string(PyObject *conn,
 
 #ifdef PSYCOPG_EXTENSIONS
 #define QueryCanceledError_doc \
-"Error related to SQL query cancelation."
+"Error related to SQL query cancellation."
 
 #define TransactionRollbackError_doc \
 "Error causing transaction rollback (deadlocks, serialisation failures, etc)."

@@ -114,7 +114,7 @@ class psycopg_build_ext(build_ext):
     def get_compiler(self):
         """Return the name of the C compiler used to compile extensions.
 
-        If a compiler was not explicitely set (on the command line, for
+        If a compiler was not explicitly set (on the command line, for
         example), fall back on the default compiler.
         """
         if self.compiler:

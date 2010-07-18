@@ -1553,7 +1553,7 @@ static struct PyMemberDef cursorObject_members[] = {
     {"rowcount", T_LONG, OFFSETOF(rowcount), RO,
         "Number of rows read from the backend in the last command."},
     {"arraysize", T_LONG, OFFSETOF(arraysize), 0,
-        "Number of records `fetchmany()` must fetch if not explicitely " \
+        "Number of records `fetchmany()` must fetch if not explicitly " \
         "specified."},
     {"description", T_OBJECT, OFFSETOF(description), RO,
         "Cursor description as defined in DBAPI-2.0."},

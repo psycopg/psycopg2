@@ -204,8 +204,8 @@ class DeadlockSerializationTests(unittest.TestCase):
                 error, psycopg2.extensions.TransactionRollbackError))
 
 
-class QueryCancelationTests(unittest.TestCase):
-    """Tests for query cancelation."""
+class QueryCancellationTests(unittest.TestCase):
+    """Tests for query cancellation."""
 
     def setUp(self):
         self.conn = psycopg2.connect(tests.dsn)
