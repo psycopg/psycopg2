@@ -282,6 +282,12 @@ conn_get_server_version(PGconn *pgconn)
     return (int)PQserverVersion(pgconn);
 }
 
+PGcancel *
+conn_get_cancel(PGconn *pgconn)
+{
+    return PQgetCancel(pgconn);
+}
+
 
 /* Return 1 if the server datestyle allows us to work without problems,
    0 if it needs to be set to something better, e.g. ISO. */
@@ -317,6 +323,12 @@ conn_setup(connectionObject *self, PGconn *pgconn)
     /* conn_get_encoding returns a malloc'd string */
     self->encoding = conn_get_encoding(pgconn);
     if (self->encoding == NULL) {
+        return -1;
+    }
+
+    self->cancel = conn_get_cancel(self->pgconn);
+    if (self->cancel == NULL) {
+        PyErr_SetString(OperationalError, "can't get cancellation key");
         return -1;
     }
 
@@ -645,6 +657,11 @@ _conn_poll_setup_async(connectionObject *self)
         if (self->encoding == NULL) {
             break;
         }
+        self->cancel = conn_get_cancel(self->pgconn);
+        if (self->cancel == NULL) {
+            PyErr_SetString(OperationalError, "can't get cancellation key");
+            break;
+        }
 
         /* asynchronous connections always use isolation level 0, the user is
          * expected to manage the transactions himself, by sending
@@ -782,8 +799,10 @@ conn_close(connectionObject *self)
 
     if (self->pgconn) {
         PQfinish(self->pgconn);
+        PQfreeCancel(self->cancel);
         Dprintf("conn_close: PQfinish called");
         self->pgconn = NULL;
+        self->cancel = NULL;
     }
 
     pthread_mutex_unlock(&self->lock);

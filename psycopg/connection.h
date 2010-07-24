@@ -101,6 +101,7 @@ typedef struct {
     int server_version;       /* server version */
 
     PGconn *pgconn;           /* the postgresql connection */
+    PGcancel *cancel;         /* the cancellation structure */
 
     PyObject *async_cursor;   /* a cursor executing an asynchronous query */
     int async_status;         /* asynchronous execution status */

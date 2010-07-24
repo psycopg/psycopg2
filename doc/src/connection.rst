@@ -264,6 +264,26 @@ The ``connection`` class
         (0) or closed (1).
 
 
+    .. method:: cancel
+
+        Cancel the current database operation.
+
+        The method interrupts the processing of the current operation. If no
+        query is being executed, it does nothing. You can call this function
+        from a different thread than the one currently executing a database
+        operation, for instance if you want to cancel a long running query if a
+        button is pushed in the UI. Interrupting query execution will cause the
+        cancelled method to raise a
+        `~psycopg2.extensions.QueryCanceledError`. Note that the termination
+        of the query is not guaranteed to succeed: see the documentation for
+        |PQcancel|_.
+
+        .. |PQcancel| replace:: `!PQcancel()`
+        .. _PQcancel: http://www.postgresql.org/docs/8.4/static/libpq-cancel.html#AEN34765
+
+        .. versionadded:: 2.2.3
+
+
     .. method:: reset
 
         Reset the connection to the default.

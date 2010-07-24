@@ -46,6 +46,7 @@ import test_copy
 import test_notify
 import test_async
 import test_green
+import test_cancel
 
 def test_suite():
     suite = unittest.TestSuite()
@@ -64,6 +65,7 @@ def test_suite():
     suite.addTest(test_notify.test_suite())
     suite.addTest(test_async.test_suite())
     suite.addTest(test_green.test_suite())
+    suite.addTest(test_cancel.test_suite())
     return suite
 
 if __name__ == '__main__':
