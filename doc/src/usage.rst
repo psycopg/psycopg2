@@ -537,6 +537,6 @@ Psycopg large object support efficient import/export with file system files
 using the |lo_import|_ and |lo_export|_ libpq functions.
 
 .. |lo_import| replace:: `!lo_import()`
-.. _lo_import: http://www.postgresql.org/docs/8.4/static/lo-interfaces.html#AEN36307
+.. _lo_import: http://www.postgresql.org/docs/8.4/static/lo-interfaces.html#LO-IMPORT
 .. |lo_export| replace:: `!lo_export()`
-.. _lo_export: http://www.postgresql.org/docs/8.4/static/lo-interfaces.html#AEN36330
+.. _lo_export: http://www.postgresql.org/docs/8.4/static/lo-interfaces.html#LO-EXPORT

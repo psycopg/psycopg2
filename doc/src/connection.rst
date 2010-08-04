@@ -207,7 +207,7 @@ The ``connection`` class
 
         .. seealso:: libpq docs for `PQbackendPID()`__ for details.
 
-            .. __: http://www.postgresql.org/docs/8.4/static/libpq-status.html#AEN33590
+            .. __: http://www.postgresql.org/docs/8.4/static/libpq-status.html#LIBPQ-PQBACKENDPID
 
         .. versionadded:: 2.0.8
 
@@ -228,7 +228,7 @@ The ``connection`` class
 
         .. seealso:: libpq docs for `PQparameterStatus()`__ for details.
 
-            .. __: http://www.postgresql.org/docs/8.4/static/libpq-status.html#AEN33499
+            .. __: http://www.postgresql.org/docs/8.4/static/libpq-status.html#LIBPQ-PQPARAMETERSTATUS
 
         .. versionadded:: 2.0.12
 
@@ -245,7 +245,7 @@ The ``connection`` class
 
         .. seealso:: libpq docs for `PQtransactionStatus()`__ for details.
 
-            .. __: http://www.postgresql.org/docs/8.4/static/libpq-status.html#AEN33480
+            .. __: http://www.postgresql.org/docs/8.4/static/libpq-status.html#LIBPQ-PQTRANSACTIONSTATUS
 
 
     .. index::
@@ -258,7 +258,7 @@ The ``connection`` class
 
         .. seealso:: libpq docs for `PQprotocolVersion()`__ for details.
 
-            .. __: http://www.postgresql.org/docs/8.4/static/libpq-status.html#AEN33546
+            .. __: http://www.postgresql.org/docs/8.4/static/libpq-status.html#LIBPQ-PQPROTOCOLVERSION
 
         .. versionadded:: 2.0.12
 
@@ -276,7 +276,7 @@ The ``connection`` class
         
         .. seealso:: libpq docs for `PQserverVersion()`__ for details.
 
-            .. __: http://www.postgresql.org/docs/8.4/static/libpq-status.html#AEN33556
+            .. __: http://www.postgresql.org/docs/8.4/static/libpq-status.html#LIBPQ-PQSERVERVERSION
 
         .. versionadded:: 2.0.12
 
@@ -311,7 +311,7 @@ The ``connection`` class
         :rtype: `~psycopg2.extensions.lobject`
 
         .. |lo_import| replace:: `!lo_import()`
-        .. _lo_import: http://www.postgresql.org/docs/8.4/static/lo-interfaces.html#AEN36307
+        .. _lo_import: http://www.postgresql.org/docs/8.4/static/lo-interfaces.html#LO-IMPORT
 
         .. versionadded:: 2.0.8
 

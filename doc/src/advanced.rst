@@ -123,7 +123,7 @@ geometric type:
 
 
 .. |point| replace:: :sql:`point`
-.. _point: http://www.postgresql.org/docs/8.4/static/datatype-geometric.html#AEN6084
+.. _point: http://www.postgresql.org/docs/8.4/static/datatype-geometric.html#DATATYPE-GEOMETRIC
 
 The above function call results in the SQL command::
 
@@ -327,7 +327,7 @@ completely non-blocking connection attempt: see the libpq documentation for
 |PQconnectStart|_.
 
 .. |PQconnectStart| replace:: `!PQconnectStart()`
-.. _PQconnectStart: http://www.postgresql.org/docs/8.4/static/libpq-connect.html#AEN33199
+.. _PQconnectStart: http://www.postgresql.org/docs/8.4/static/libpq-connect.html#LIBPQ-PQCONNECTSTART
 
 The same loop should be also used to perform nonblocking queries: after
 sending a query via `~cursor.execute()` or `~cursor.callproc()`, call
