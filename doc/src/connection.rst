@@ -75,7 +75,7 @@ The ``connection`` class
     .. index::
         single: Exceptions; In the connection class
 
-    .. rubric:: Excetptions as connection class attributes
+    .. rubric:: Exceptions as connection class attributes
 
     The `!connection` also exposes as attributes the same exceptions
     available in the `psycopg2` module.  See :ref:`dbapi-exceptions`.
