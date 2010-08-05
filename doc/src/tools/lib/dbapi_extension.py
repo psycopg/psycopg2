@@ -11,6 +11,7 @@
 
 from docutils import nodes
 
+from sphinx.locale import _
 from sphinx.util.compat import Directive, make_admonition
 
 class extension_node(nodes.Admonition, nodes.Element): pass
