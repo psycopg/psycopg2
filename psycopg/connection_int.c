@@ -743,18 +743,15 @@ conn_close(connectionObject *self)
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
 
-    /* execute a forced rollback on the connection (but don't check the
-       result, we're going to close the pq connection anyway */
-    if (self->pgconn && self->closed == 1) {
-        PGresult *pgres = NULL;
-        char *error = NULL;
-
-        if (pq_abort_locked(self, &pgres, &error, &_save) < 0) {
-            IFCLEARPGRES(pgres);
-            if (error)
-                free (error);
-        }
-    }
+    /* We used to call pq_abort_locked here, but the idea of issuing a
+     * rollback on close/GC has been considered inappropriate.
+     *
+     * Dropping the connection on the server has the same effect as the
+     * transaction is automatically rolled back. Some middleware, such as
+     * PgBouncer, have problem with connections closed in the middle of the
+     * transaction though: to avoid these problems the transaction should be
+     * closed only in status CONN_STATUS_READY.
+     */
 
     if (self->closed == 0)
         self->closed = 1;
@@ -763,8 +760,8 @@ conn_close(connectionObject *self)
         PQfinish(self->pgconn);
         Dprintf("conn_close: PQfinish called");
         self->pgconn = NULL;
-   }
-   
+    }
+
     pthread_mutex_unlock(&self->lock);
     Py_END_ALLOW_THREADS;
 }

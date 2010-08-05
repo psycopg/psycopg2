@@ -1,3 +1,10 @@
+2010-08-05  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* psycopg/connection_int.c: don't execute a ROLLBACK on close()/GC.
+	The command wasn't sent since 2.2.0 due to a bug, but after a ML
+	discussion this behaviour proved more correct so the bug has become a
+	feature.
+
 2010-07-18  Federico Di Gregorio  <fog@initd.org>
 
 	* Release 2.2.2.

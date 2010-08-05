@@ -67,10 +67,28 @@ The ``connection`` class
         `~psycopg2.InterfaceError` will be raised if any operation is
         attempted with the connection.  The same applies to all cursor objects
         trying to use the connection.  Note that closing a connection without
-        committing the changes first will cause an implicit rollback to be
-        performed (unless a different isolation level has been selected: see
+        committing the changes first will cause any pending change to be
+        discarded as if a :sql:`ROLLBACK` was performed (unless a different
+        isolation level has been selected: see
         `~connection.set_isolation_level()`).
 
+        .. index::
+            single: PgBouncer; unclean server
+
+        .. versionchanged:: 2.2
+            previously an explicit :sql:`ROLLBACK` was issued by Psycopg on
+            `!close()`. The command could have been sent to the backend at an
+            inappropriate time, so Psycopg currently relies on the backend to
+            implicitly discard uncommitted changes. Some middleware are known
+            to behave incorrectly though when the connection is closed during
+            a transaction (when `~connection.status` is
+            `~psycopg2.extensions.STATUS_IN_TRANSACTION`), e.g. PgBouncer_
+            reports an ``unclean server`` and discards the connection. To
+            avoid this problem you can ensure to terminate the transaction
+            with a `~connection.commit()`/`~connection.rollback()` before
+            closing.
+
+            .. _PgBouncer: http://pgbouncer.projects.postgresql.org/
 
     .. index::
         single: Exceptions; In the connection class
