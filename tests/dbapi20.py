@@ -11,14 +11,25 @@
     -- Ian Bicking
 '''
 
-__rcs_id__  = '$Id: dbapi20.py,v 1.10 2003/10/09 03:14:14 zenzen Exp $'
-__version__ = '$Revision: 1.10 $'[11:-2]
-__author__ = 'Stuart Bishop <zen@shangri-la.dropbear.id.au>'
+__rcs_id__  = '$Id: dbapi20.py,v 1.11 2005/01/02 02:41:01 zenzen Exp $'
+__version__ = '$Revision: 1.12 $'[11:-2]
+__author__ = 'Stuart Bishop <stuart@stuartbishop.net>'
 
 import unittest
 import time
+import sys
 
-# $Log: dbapi20.py,v $
+
+# Revision 1.12  2009/02/06 03:35:11  kf7xm
+# Tested okay with Python 3.0, includes last minute patches from Mark H.
+#
+# Revision 1.1.1.1.2.1  2008/09/20 19:54:59  rupole
+# Include latest changes from main branch
+# Updates for py3k
+#
+# Revision 1.11  2005/01/02 02:41:01  zenzen
+# Update author email address
+#
 # Revision 1.10  2003/10/09 03:14:14  zenzen
 # Add test for DB API 2.0 optional extension, where database exceptions
 # are exposed as attributes on the Connection object.
@@ -60,6 +71,10 @@ import time
 #   nothing
 # - Fix bugs in test_setoutputsize_basic and test_setinputsizes
 #
+def str2bytes(sval):
+    if sys.version_info < (3,0) and isinstance(sval, str):
+        sval = sval.decode("latin1")
+    return sval.encode("latin1")
 
 class DatabaseAPI20Test(unittest.TestCase):
     ''' Test a database self.driver for DB API 2.0 compatibility.
@@ -174,8 +189,13 @@ class DatabaseAPI20Test(unittest.TestCase):
     def test_Exceptions(self):
         # Make sure required exceptions exist, and are in the
         # defined heirarchy.
-        self.failUnless(issubclass(self.driver.Warning,StandardError))
-        self.failUnless(issubclass(self.driver.Error,StandardError))
+        if sys.version[0] == '3': #under Python 3 StardardError no longer exists
+            self.failUnless(issubclass(self.driver.Warning,Exception))
+            self.failUnless(issubclass(self.driver.Error,Exception))
+        else:
+            self.failUnless(issubclass(self.driver.Warning,StandardError))
+            self.failUnless(issubclass(self.driver.Error,StandardError))
+
         self.failUnless(
             issubclass(self.driver.InterfaceError,self.driver.Error)
             )
@@ -703,7 +723,7 @@ class DatabaseAPI20Test(unittest.TestCase):
             that returns two result sets, first the 
 	    number of rows in booze then "name from booze"
         '''
-        raise NotImplementedError,'Helper not implemented'
+        raise NotImplementedError('Helper not implemented')
         #sql="""
         #    create procedure deleteme as
         #    begin
@@ -715,7 +735,7 @@ class DatabaseAPI20Test(unittest.TestCase):
 
     def help_nextset_tearDown(self,cur):
         'If cleaning up is needed after nextSetTest'
-        raise NotImplementedError,'Helper not implemented'
+        raise NotImplementedError('Helper not implemented')
         #cur.execute("drop procedure deleteme")
 
     def test_nextset(self):
@@ -748,7 +768,7 @@ class DatabaseAPI20Test(unittest.TestCase):
             con.close()
 
     def test_nextset(self):
-        raise NotImplementedError,'Drivers need to override this test'
+        raise NotImplementedError('Drivers need to override this test')
 
     def test_arraysize(self):
         # Not much here - rest of the tests for this are in test_fetchmany
@@ -783,7 +803,7 @@ class DatabaseAPI20Test(unittest.TestCase):
 
     def test_setoutputsize(self):
         # Real test for setoutputsize is driver dependant
-        raise NotImplementedError,'Driver need to override this test'
+        raise NotImplementedError('Driver needed to override this test')
 
     def test_None(self):
         con = self._connect()
@@ -820,8 +840,8 @@ class DatabaseAPI20Test(unittest.TestCase):
         # self.assertEqual(str(t1),str(t2))
 
     def test_Binary(self):
-        b = self.driver.Binary('Something')
-        b = self.driver.Binary('')
+        b = self.driver.Binary(str2bytes('Something'))
+        b = self.driver.Binary(str2bytes(''))
 
     def test_STRING(self):
         self.failUnless(hasattr(self.driver,'STRING'),
