@@ -1,3 +1,7 @@
+2010-09-23  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* lib/errorcodes.py: Added PostgreSQL 9.0 error codes.
+
 2010-08-05  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* psycopg/connection_int.c: don't execute a ROLLBACK on close()/GC.
