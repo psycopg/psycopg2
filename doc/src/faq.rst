@@ -33,7 +33,7 @@ I receive the error *current transaction is aborted, commands ignored until end 
     PostgreSQL supports nested transactions using the |SAVEPOINT|_ command).
 
     .. |SAVEPOINT| replace:: :sql:`SAVEPOINT`
-    .. _SAVEPOINT: http://www.postgresql.org/docs/8.4/static/sql-savepoint.html
+    .. _SAVEPOINT: http://www.postgresql.org/docs/9.0/static/sql-savepoint.html
 
 Why do i get the error *current transaction is aborted, commands ignored until end of transaction block* when I use `!multiprocessing` (or any other forking system) and not when use `!threading`?
     Psycopg's connections can't be shared across processes (but are thread

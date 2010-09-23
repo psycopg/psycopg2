@@ -70,7 +70,7 @@ functionalities defined by the |DBAPI|_.
         The method uses the efficient |lo_export|_ libpq function.
         
         .. |lo_export| replace:: `!lo_export()`
-        .. _lo_export: http://www.postgresql.org/docs/8.4/static/lo-interfaces.html#LO-EXPORT
+        .. _lo_export: http://www.postgresql.org/docs/9.0/static/lo-interfaces.html#LO-EXPORT
 
     .. method:: seek(offset, whence=0)
 
@@ -91,7 +91,7 @@ functionalities defined by the |DBAPI|_.
         running these versions. It uses the |lo_truncate|_ libpq function.
 
         .. |lo_truncate| replace:: `!lo_truncate()`
-        .. _lo_truncate: http://www.postgresql.org/docs/8.4/static/lo-interfaces.html#LO-TRUNCATE
+        .. _lo_truncate: http://www.postgresql.org/docs/9.0/static/lo-interfaces.html#LO-TRUNCATE
 
     .. method:: close()
 
@@ -291,7 +291,7 @@ details.
     Used by Psycopg when adapting or casting unicode strings. See
     :ref:`unicode-handling`.
 
-    .. __: http://www.postgresql.org/docs/8.4/static/multibyte.html
+    .. __: http://www.postgresql.org/docs/9.0/static/multibyte.html
     .. __: http://docs.python.org/library/codecs.html#standard-encodings
 
 

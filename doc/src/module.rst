@@ -38,7 +38,7 @@ The module interface respects the standard defined in the |DBAPI|_.
     - `port` -- connection port number (defaults to 5432 if not provided)
     - `sslmode` -- `SSL TCP/IP negotiation`__ mode
 
-    .. __: http://www.postgresql.org/docs/8.4/static/libpq-ssl.html#LIBPQ-SSL-SSLMODE-STATEMENTS
+    .. __: http://www.postgresql.org/docs/9.0/static/libpq-ssl.html#LIBPQ-SSL-SSLMODE-STATEMENTS
 
     Using the *connection_factory* parameter a different class or
     connections factory can be specified. It should be a callable object

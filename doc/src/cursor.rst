@@ -332,10 +332,10 @@ The ``cursor`` class
         flexibility.
 
         .. |CREATE-TABLE| replace:: :sql:`CREATE TABLE`
-        .. __: http://www.postgresql.org/docs/8.4/static/sql-createtable.html
+        .. __: http://www.postgresql.org/docs/9.0/static/sql-createtable.html
 
         .. |INSERT-RETURNING| replace:: :sql:`INSERT ... RETURNING`
-        .. __: http://www.postgresql.org/docs/8.4/static/sql-insert.html
+        .. __: http://www.postgresql.org/docs/9.0/static/sql-insert.html
 
 
     .. method:: nextset()
@@ -462,7 +462,7 @@ The ``cursor`` class
             ...
 
         .. |COPY| replace:: :sql:`COPY`
-        .. __: http://www.postgresql.org/docs/8.4/static/sql-copy.html
+        .. __: http://www.postgresql.org/docs/9.0/static/sql-copy.html
 
         .. versionadded:: 2.0.6
 

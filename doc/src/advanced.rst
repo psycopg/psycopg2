@@ -123,7 +123,7 @@ geometric type:
 
 
 .. |point| replace:: :sql:`point`
-.. _point: http://www.postgresql.org/docs/8.4/static/datatype-geometric.html#DATATYPE-GEOMETRIC
+.. _point: http://www.postgresql.org/docs/9.0/static/datatype-geometric.html#DATATYPE-GEOMETRIC
 
 The above function call results in the SQL command::
 
@@ -223,9 +223,9 @@ documentation), you should keep the connection in :ref:`autocommit
 manner.
 
 .. |LISTEN| replace:: :sql:`LISTEN`
-.. _LISTEN: http://www.postgresql.org/docs/8.4/static/sql-listen.html
+.. _LISTEN: http://www.postgresql.org/docs/9.0/static/sql-listen.html
 .. |NOTIFY| replace:: :sql:`NOTIFY`
-.. _NOTIFY: http://www.postgresql.org/docs/8.4/static/sql-notify.html
+.. _NOTIFY: http://www.postgresql.org/docs/9.0/static/sql-notify.html
 
 Notification are received after every query execution. If the user is interested
 in receiving notification but not in performing any query, the
@@ -327,7 +327,7 @@ completely non-blocking connection attempt: see the libpq documentation for
 |PQconnectStart|_.
 
 .. |PQconnectStart| replace:: `!PQconnectStart()`
-.. _PQconnectStart: http://www.postgresql.org/docs/8.4/static/libpq-connect.html#LIBPQ-PQCONNECTSTART
+.. _PQconnectStart: http://www.postgresql.org/docs/9.0/static/libpq-connect.html#LIBPQ-PQCONNECTSTART
 
 The same loop should be also used to perform nonblocking queries: after
 sending a query via `~cursor.execute()` or `~cursor.callproc()`, call
@@ -429,7 +429,7 @@ callback (using `!select()` to block) is provided as
 .. _Eventlet: http://eventlet.net/
 .. _gevent: http://www.gevent.org/
 .. _SQLAlchemy: http://www.sqlalchemy.org/
-.. __: http://www.postgresql.org/docs/8.4/static/libpq-async.html
+.. __: http://www.postgresql.org/docs/9.0/static/libpq-async.html
 
 .. warning::
     :ref:`COPY commands <copy>` are currently not supported when a wait callback

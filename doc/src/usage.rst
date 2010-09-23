@@ -313,7 +313,7 @@ defined on the database connection (the `PostgreSQL encoding`__, available in
 
     >>> cur.execute("INSERT INTO test (num, data) VALUES (%s,%s);", (74, u))
 
-.. __: http://www.postgresql.org/docs/8.4/static/multibyte.html
+.. __: http://www.postgresql.org/docs/9.0/static/multibyte.html
 .. __: http://docs.python.org/library/codecs.html#standard-encodings
 
 When reading data from the database, the strings returned are usually 8 bit
@@ -463,7 +463,7 @@ method and to read the data using `~cursor.fetchone()` and
 `~cursor.fetchmany()` methods.
 
 .. |DECLARE| replace:: :sql:`DECLARE`
-.. _DECLARE: http://www.postgresql.org/docs/8.4/static/sql-declare.html
+.. _DECLARE: http://www.postgresql.org/docs/9.0/static/sql-declare.html
 
 
 
@@ -510,7 +510,7 @@ Please refer to the documentation of the single methods for details and
 examples.
 
 .. |COPY| replace:: :sql:`COPY`
-.. __: http://www.postgresql.org/docs/8.4/static/sql-copy.html
+.. __: http://www.postgresql.org/docs/9.0/static/sql-copy.html
 
 
 
@@ -527,7 +527,7 @@ access to user data that is stored in a special large-object structure. They
 are useful with data values too large to be manipulated conveniently as a
 whole.
 
-.. __: http://www.postgresql.org/docs/8.4/static/largeobjects.html
+.. __: http://www.postgresql.org/docs/9.0/static/largeobjects.html
 
 Psycopg allows access to the large object using the
 `~psycopg2.extensions.lobject` class. Objects are generated using the
@@ -537,6 +537,6 @@ Psycopg large object support efficient import/export with file system files
 using the |lo_import|_ and |lo_export|_ libpq functions.
 
 .. |lo_import| replace:: `!lo_import()`
-.. _lo_import: http://www.postgresql.org/docs/8.4/static/lo-interfaces.html#LO-IMPORT
+.. _lo_import: http://www.postgresql.org/docs/9.0/static/lo-interfaces.html#LO-IMPORT
 .. |lo_export| replace:: `!lo_export()`
-.. _lo_export: http://www.postgresql.org/docs/8.4/static/lo-interfaces.html#LO-EXPORT
+.. _lo_export: http://www.postgresql.org/docs/9.0/static/lo-interfaces.html#LO-EXPORT

@@ -21,9 +21,9 @@ PostgreSQL arrays.
 .. _PostgreSQL: http://www.postgresql.org/
 .. _Python: http://www.python.org/
 .. _Zope: http://www.zope.org/
-.. _libpq: http://www.postgresql.org/docs/8.4/static/libpq.html
+.. _libpq: http://www.postgresql.org/docs/9.0/static/libpq.html
 .. |COPY-TO-FROM| replace:: :sql:`COPY TO/COPY FROM`
-.. __: http://www.postgresql.org/docs/8.4/static/sql-copy.html
+.. __: http://www.postgresql.org/docs/9.0/static/sql-copy.html
 
 
 .. rubric:: Contents

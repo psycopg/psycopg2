@@ -103,10 +103,10 @@ The ``connection`` class
         session to the default values.
 
         .. |RESET| replace:: :sql:`RESET`
-        .. _RESET: http://www.postgresql.org/docs/8.4/static/sql-reset.html
+        .. _RESET: http://www.postgresql.org/docs/9.0/static/sql-reset.html
 
         .. |SET SESSION AUTHORIZATION| replace:: :sql:`SET SESSION AUTHORIZATION`
-        .. __: http://www.postgresql.org/docs/8.4/static/sql-set-session-authorization.html
+        .. __: http://www.postgresql.org/docs/9.0/static/sql-set-session-authorization.html
 
         .. versionadded:: 2.0.12
 
@@ -154,7 +154,7 @@ The ``connection`` class
         is the encoding defined by the database. It should be one of the
         `characters set supported by PostgreSQL`__
 
-        .. __: http://www.postgresql.org/docs/8.4/static/multibyte.html
+        .. __: http://www.postgresql.org/docs/9.0/static/multibyte.html
 
 
     .. index::
@@ -180,7 +180,7 @@ The ``connection`` class
         configuration parameters`__ such as ``log_statement``,
         ``client_min_messages``, ``log_min_duration_statement`` etc.
         
-        .. __: http://www.postgresql.org/docs/8.4/static/runtime-config-logging.html
+        .. __: http://www.postgresql.org/docs/9.0/static/runtime-config-logging.html
 
 
     .. attribute:: notifies
@@ -207,7 +207,7 @@ The ``connection`` class
 
         .. seealso:: libpq docs for `PQbackendPID()`__ for details.
 
-            .. __: http://www.postgresql.org/docs/8.4/static/libpq-status.html#LIBPQ-PQBACKENDPID
+            .. __: http://www.postgresql.org/docs/9.0/static/libpq-status.html#LIBPQ-PQBACKENDPID
 
         .. versionadded:: 2.0.8
 
@@ -228,7 +228,7 @@ The ``connection`` class
 
         .. seealso:: libpq docs for `PQparameterStatus()`__ for details.
 
-            .. __: http://www.postgresql.org/docs/8.4/static/libpq-status.html#LIBPQ-PQPARAMETERSTATUS
+            .. __: http://www.postgresql.org/docs/9.0/static/libpq-status.html#LIBPQ-PQPARAMETERSTATUS
 
         .. versionadded:: 2.0.12
 
@@ -245,7 +245,7 @@ The ``connection`` class
 
         .. seealso:: libpq docs for `PQtransactionStatus()`__ for details.
 
-            .. __: http://www.postgresql.org/docs/8.4/static/libpq-status.html#LIBPQ-PQTRANSACTIONSTATUS
+            .. __: http://www.postgresql.org/docs/9.0/static/libpq-status.html#LIBPQ-PQTRANSACTIONSTATUS
 
 
     .. index::
@@ -258,7 +258,7 @@ The ``connection`` class
 
         .. seealso:: libpq docs for `PQprotocolVersion()`__ for details.
 
-            .. __: http://www.postgresql.org/docs/8.4/static/libpq-status.html#LIBPQ-PQPROTOCOLVERSION
+            .. __: http://www.postgresql.org/docs/9.0/static/libpq-status.html#LIBPQ-PQPROTOCOLVERSION
 
         .. versionadded:: 2.0.12
 
@@ -276,7 +276,7 @@ The ``connection`` class
         
         .. seealso:: libpq docs for `PQserverVersion()`__ for details.
 
-            .. __: http://www.postgresql.org/docs/8.4/static/libpq-status.html#LIBPQ-PQSERVERVERSION
+            .. __: http://www.postgresql.org/docs/9.0/static/libpq-status.html#LIBPQ-PQSERVERVERSION
 
         .. versionadded:: 2.0.12
 
@@ -311,7 +311,7 @@ The ``connection`` class
         :rtype: `~psycopg2.extensions.lobject`
 
         .. |lo_import| replace:: `!lo_import()`
-        .. _lo_import: http://www.postgresql.org/docs/8.4/static/lo-interfaces.html#LO-IMPORT
+        .. _lo_import: http://www.postgresql.org/docs/9.0/static/lo-interfaces.html#LO-IMPORT
 
         .. versionadded:: 2.0.8
 
