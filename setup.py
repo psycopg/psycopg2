@@ -55,7 +55,7 @@ from distutils.command.build_ext import build_ext
 from distutils.sysconfig import get_python_inc
 from distutils.ccompiler import get_default_compiler
 
-PSYCOPG_VERSION = '2.2.2'
+PSYCOPG_VERSION = '2.2.3-devel'
 version_flags   = ['dt', 'dec']
 
 PLATFORM_IS_WINDOWS = sys.platform.lower().startswith('win')
