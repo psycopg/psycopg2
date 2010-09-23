@@ -326,7 +326,7 @@ The ``connection`` class
 
     .. attribute:: async
 
-        Read only attribute: 1 if the connection is asynchronous, 0 otherwse.
+        Read only attribute: 1 if the connection is asynchronous, 0 otherwise.
 
 
     .. method:: poll()
