@@ -423,6 +423,10 @@ class Inet(object):
             obj.prepare(self._conn)
         return obj.getquoted()+"::inet"
 
+    def __conform__(self, foo):
+        if foo is _ext.ISQLQuote:
+            return self
+
     def __str__(self):
         return str(self.addr)
         
@@ -432,7 +436,6 @@ def register_inet(oid=None, conn_or_curs=None):
     _ext.INET = _ext.new_type((oid, ), "INET",
             lambda data, cursor: data and Inet(data) or None)
     _ext.register_type(_ext.INET, conn_or_curs)
-    _ext.register_adapter(Inet, lambda x: x)
     return _ext.INET
 
 

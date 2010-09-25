@@ -79,6 +79,19 @@ class TypesExtrasTests(unittest.TestCase):
         s = self.execute("SELECT NULL::inet AS foo")
         self.failUnless(s is None)
 
+    def test_inet_conform(self):
+        from psycopg2.extras import Inet
+        i = Inet("192.168.1.0/24")
+        a = psycopg2.extensions.adapt(i)
+        a.prepare(self.conn)
+        self.assertEqual("E'192.168.1.0/24'::inet", a.getquoted())
+
+        # adapts ok with unicode too
+        i = Inet(u"192.168.1.0/24")
+        a = psycopg2.extensions.adapt(i)
+        a.prepare(self.conn)
+        self.assertEqual("E'192.168.1.0/24'::inet", a.getquoted())
+
     def test_adapt_fail(self):
         class Foo(object): pass
         self.assertRaises(psycopg2.ProgrammingError,
