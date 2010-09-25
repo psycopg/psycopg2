@@ -18,8 +18,10 @@ try:
     import decimal
 except:
     pass
+import re
 import sys
 import unittest
+import warnings
 
 import psycopg2
 import psycopg2.extras
@@ -100,6 +102,61 @@ class TypesExtrasTests(unittest.TestCase):
             psycopg2.extensions.adapt(Foo(), psycopg2.extensions.ISQLQuote, None)
         except psycopg2.ProgrammingError, err:
             self.failUnless(str(err) == "can't adapt type 'Foo'")
+
+
+class HstoreTestCase(unittest.TestCase):
+    def setUp(self):
+        self.conn = psycopg2.connect(tests.dsn)
+
+    def test_adapt_8(self):
+        if self.conn.server_version >= 90000:
+            warnings.warn("skipping dict adaptation with PG pre-9 syntax")
+            return
+
+        from psycopg2.extras import HstoreAdapter
+
+        o = {'a': '1', 'b': "'", 'c': None, 'd': u'\xe0'}
+        a = HstoreAdapter(o)
+        a.prepare(self.conn)
+        q = a.getquoted()
+
+        self.assert_(q.startswith("(("), q)
+        self.assert_(q.endswith("))"), q)
+        ii = q[1:-1].split("||")
+        ii.sort()
+
+        self.assertEqual(ii[0], "(E'a' => E'1')")
+        self.assertEqual(ii[1], "(E'b' => E'''')")
+        self.assertEqual(ii[2], "(E'c' => NULL)")
+        encc = u'\xe0'.encode(psycopg2.extensions.encodings[self.conn.encoding])
+        self.assertEqual(ii[3], "(E'd' => E'%s')" % encc)
+
+    def test_adapt_9(self):
+        if self.conn.server_version < 90000:
+            warnings.warn("skipping dict adaptation with PG 9 syntax")
+            return
+
+        from psycopg2.extras import HstoreAdapter
+
+        o = {'a': '1', 'b': "'", 'c': None, 'd': u'\xe0'}
+        a = HstoreAdapter(o)
+        a.prepare(self.conn)
+        q = a.getquoted()
+
+        m = re.match(r'hstore\(ARRAY\[([^\]]+)\], ARRAY\[([^\]]+)\]\)', q)
+        self.assert_(m, repr(q))
+
+        kk = m.group(1).split(", ")
+        vv = m.group(2).split(", ")
+        ii = zip(kk, vv)
+        ii.sort()
+
+        self.assertEqual(ii[0], ("E'a'", "E'1'"))
+        self.assertEqual(ii[1], ("E'b'", "E''''"))
+        self.assertEqual(ii[2], ("E'c'", "NULL"))
+        encc = u'\xe0'.encode(psycopg2.extensions.encodings[self.conn.encoding])
+        self.assertEqual(ii[3], ("E'd'", "E'%s'" % encc))
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

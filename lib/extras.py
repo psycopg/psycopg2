@@ -473,4 +473,47 @@ def wait_select(conn):
             raise OperationalError("bad state from poll: %s" % state)
 
 
+class HstoreAdapter(object):
+    """Adapt a Python dict to the hstore syntax."""
+    def __init__(self, wrapped):
+        self.wrapped = wrapped
+
+    def prepare(self, conn):
+        self.conn = conn
+
+        # select the most efficient getquoted implementation
+        if conn.server_version >= 90000:
+            self.getquoted = self._getquoted_9
+
+    def _getquoted_8(self):
+        """Use the operators available in PG pre-9.0."""
+        adapt = _ext.adapt
+        rv = []
+        for k, v in self.wrapped.iteritems():
+            k = adapt(k)
+            k.prepare(self.conn)
+            k = k.getquoted()
+
+            if v is not None:
+                v = adapt(v)
+                v.prepare(self.conn)
+                v = v.getquoted()
+            else:
+                v = 'NULL'
+
+            rv.append("(%s => %s)" % (k, v))
+
+        return "(" + '||'.join(rv) + ")"
+
+    getquoted = _getquoted_8
+
+    def _getquoted_9(self):
+        """Use the hstore(text[], text[]) function."""
+        k = _ext.adapt(self.wrapped.keys())
+        k.prepare(self.conn)
+        v = _ext.adapt(self.wrapped.values())
+        v.prepare(self.conn)
+        return "hstore(%s, %s)" % (k.getquoted(), v.getquoted())
+
+
 __all__ = filter(lambda k: not k.startswith('_'), locals().keys())
