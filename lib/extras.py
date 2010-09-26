@@ -523,18 +523,13 @@ class HstoreAdapter(object):
 
     _re_hstore = regex.compile(r"""
         # hstore key:
-        "( # catch in quotes
-            (?: # many of
-                [^"] # either not a quote
-                # or a quote escaped, i.e. preceded by an odd number of backslashes
-                | [^\\] (?:\\\\)* \\"
-            )*
-        )"
+        # a string of normal or escaped chars
+        "((?: [^"\\] | \\. )*)"
         \s*=>\s* # hstore value
         (?:
             NULL # the value can be null - not catched
-            # or the same quoted string of the key
-            | "((?:[^"] | [^\\] (?:\\\\)* \\" )*)"
+            # or a quoted string like the key
+            | "((?: [^"\\] | \\. )*)"
         )
         (?:\s*,\s*|$) # pairs separated by comma or end of string.
     """, regex.VERBOSE)
