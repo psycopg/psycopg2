@@ -209,6 +209,30 @@ class HstoreTestCase(unittest.TestCase):
         self.assertEqual(t[1], {})
         self.assertEqual(t[2], {'a': 'b'})
 
+    def test_roundtrip(self):
+        from psycopg2.extras import register_hstore
+        register_hstore(self.conn)
+        cur = self.conn.cursor()
+
+        def ok(d):
+            cur.execute("select %s", (d,))
+            d1 = cur.fetchone()[0]
+            self.assertEqual(len(d), len(d1))
+            for k in d:
+                self.assert_(k in d1, k)
+                self.assertEqual(d[k], d1[k])
+
+        ok({})
+        ok({'a': 'b', 'c': None})
+
+        ab = map(chr, range(32, 128))
+        ok(dict(zip(ab, ab)))
+        ok({''.join(ab): ''.join(ab)})
+
+        self.conn.set_client_encoding('latin1')
+        ab = map(chr, range(1, 256))
+        ok({''.join(ab): ''.join(ab)})
+        ok(dict(zip(ab, ab)))
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
