@@ -157,6 +157,33 @@ class HstoreTestCase(unittest.TestCase):
         encc = u'\xe0'.encode(psycopg2.extensions.encodings[self.conn.encoding])
         self.assertEqual(ii[3], ("E'd'", "E'%s'" % encc))
 
+    def test_parse(self):
+        from psycopg2.extras import parse_hstore
+
+        def ok(s, d):
+            self.assertEqual(parse_hstore(s, None), d)
+
+        ok(None, None)
+        ok('', {})
+        ok('"a"=>"1", "b"=>"2"', {'a': '1', 'b': '2'})
+        ok('"a"  => "1" ,"b"  =>  "2"', {'a': '1', 'b': '2'})
+        ok('"a"=>NULL, "b"=>"2"', {'a': None, 'b': '2'})
+        ok('"a"=>"\'", "\'"=>"2"', {'a': "'", "'": '2'})
+        ok('"a"=>"1", "b"=>NULL', {'a': '1', 'b': None})
+        ok(r'"a\\"=>"1"', {'a\\': '1'})
+        ok(r'"a\""=>"1"', {'a"': '1'})
+        ok(r'"a\\\""=>"1"', {r'a\"': '1'})
+        ok(r'"a\\\\\""=>"1"', {r'a\\"': '1'})
+
+        def ko(s):
+            self.assertRaises(psycopg2.InterfaceError, parse_hstore, s, None)
+
+        ko('a')
+        ko('"a"')
+        ko(r'"a\\""=>"1"')
+        ko(r'"a\\\\""=>"1"')
+        ko('"a=>"1"')
+        ko('"a"=>"1", "b"=>NUL')
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

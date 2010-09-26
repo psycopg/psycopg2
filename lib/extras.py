@@ -35,7 +35,7 @@ try:
 except:
     logging = None
 
-from psycopg2 import DATETIME, DataError
+from psycopg2 import DATETIME, DataError, InterfaceError
 from psycopg2 import extensions as _ext
 from psycopg2.extensions import cursor as _cursor
 from psycopg2.extensions import connection as _connection
@@ -514,6 +514,56 @@ class HstoreAdapter(object):
         v = _ext.adapt(self.wrapped.values())
         v.prepare(self.conn)
         return "hstore(%s, %s)" % (k.getquoted(), v.getquoted())
+
+_re_hstore = regex.compile(r"""
+    # hstore key:
+    "( # catch in quotes
+        (?: # many of
+            [^"] # either not a quote
+            # or a quote escaped, i.e. preceded by an odd number of backslashes
+            | [^\\] (?:\\\\)* \\"
+        )*
+    )"
+    \s*=>\s* # hstore value
+    (?:
+        NULL # the value can be null - not catched
+        # or the same quoted string of the key
+        | "((?:[^"] | [^\\] (?:\\\\)* \\" )*)"
+    )
+    (?:\s*,\s*|$) # pairs separated by comma or end of string.
+""", regex.VERBOSE)
+
+def parse_hstore(s, cur):
+    """Parse an hstore representation in a Python string.
+
+    The hstore is represented as something like::
+
+        "a"=>"1", "b"=>"2"
+
+    with backslash-escaped strings.
+    """
+    if s is None:
+        return None
+
+    rv = {}
+    start = 0
+    for m in _re_hstore.finditer(s):
+        if m is None or m.start() != start:
+            raise InterfaceError(
+                "error parsing hstore pair at char %d" % start)
+        k = m.group(1).decode("string_escape")
+        v = m.group(2)
+        if v is not None:
+            v = v.decode("string_escape")
+
+        rv[k] = v
+        start = m.end()
+
+    if start < len(s):
+        raise InterfaceError(
+            "error parsing hstore: unparsed data after char %d" % start)
+
+    return rv
 
 
 __all__ = filter(lambda k: not k.startswith('_'), locals().keys())
