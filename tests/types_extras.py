@@ -158,10 +158,10 @@ class HstoreTestCase(unittest.TestCase):
         self.assertEqual(ii[3], ("E'd'", "E'%s'" % encc))
 
     def test_parse(self):
-        from psycopg2.extras import parse_hstore
+        from psycopg2.extras import HstoreAdapter
 
         def ok(s, d):
-            self.assertEqual(parse_hstore(s, None), d)
+            self.assertEqual(HstoreAdapter.parse(s, None), d)
 
         ok(None, None)
         ok('', {})
@@ -176,7 +176,8 @@ class HstoreTestCase(unittest.TestCase):
         ok(r'"a\\\\\""=>"1"', {r'a\\"': '1'})
 
         def ko(s):
-            self.assertRaises(psycopg2.InterfaceError, parse_hstore, s, None)
+            self.assertRaises(psycopg2.InterfaceError,
+                HstoreAdapter.parse, s, None)
 
         ko('a')
         ko('"a"')
