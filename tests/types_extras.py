@@ -186,6 +186,29 @@ class HstoreTestCase(unittest.TestCase):
         ko('"a=>"1"')
         ko('"a"=>"1", "b"=>NUL')
 
+    def test_register_conn(self):
+        from psycopg2.extras import register_hstore
+
+        register_hstore(self.conn)
+        cur = self.conn.cursor()
+        cur.execute("select null::hstore, ''::hstore, 'a => b'::hstore")
+        t = cur.fetchone()
+        self.assert_(t[0] is None)
+        self.assertEqual(t[1], {})
+        self.assertEqual(t[2], {'a': 'b'})
+
+    def test_register_curs(self):
+        from psycopg2.extras import register_hstore
+
+        cur = self.conn.cursor()
+        register_hstore(cur)
+        cur.execute("select null::hstore, ''::hstore, 'a => b'::hstore")
+        t = cur.fetchone()
+        self.assert_(t[0] is None)
+        self.assertEqual(t[1], {})
+        self.assertEqual(t[2], {'a': 'b'})
+
+
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

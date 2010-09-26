@@ -567,5 +567,48 @@ class HstoreAdapter(object):
 
     parse = classmethod(parse)
 
+def register_hstore(conn_or_curs):
+    """Register adapter/typecaster for dict/hstore reading/writing.
+
+    The adapter must be registered on a connection or cursor as the hstore
+    oid is different in every database.
+
+    Raise `~psycopg2.ProgrammingError` if hstore is not installed in the
+    target database.
+    """
+    if hasattr(conn_or_curs, 'execute'):
+        conn = conn_or_curs.connection
+        curs = conn_or_curs
+    else:
+        conn = conn_or_curs
+        curs = conn_or_curs.cursor()
+
+    # Store the transaction status of the connection to revert it after use
+    conn_status = conn.status
+
+    # get the oid for the hstore
+    curs.execute("""\
+SELECT t.oid, typarray
+FROM pg_type t JOIN pg_namespace ns
+    ON typnamespace = ns.oid
+WHERE typname = 'hstore' and nspname = 'public';
+""")
+    oids = curs.fetchone()
+
+    # revert the status of the connection as before the command
+    if (conn_status != _ext.STATUS_IN_TRANSACTION
+    and conn.isolation_level != _ext.ISOLATION_LEVEL_AUTOCOMMIT):
+        conn.rollback()
+
+    if oids is None:
+        raise psycopg2.ProgrammingError(
+            "hstore type not found in the database. "
+            "please install it from your 'contrib/hstore.sql' file")
+
+    # create and register the typecaster
+    HSTORE = _ext.new_type((oids[0],), "HSTORE", HstoreAdapter.parse)
+    _ext.register_type(HSTORE, conn_or_curs)
+    _ext.register_adapter(dict, HstoreAdapter)
+
 
 __all__ = filter(lambda k: not k.startswith('_'), locals().keys())
