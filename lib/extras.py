@@ -487,6 +487,9 @@ class HstoreAdapter(object):
 
     def _getquoted_8(self):
         """Use the operators available in PG pre-9.0."""
+        if not self.wrapped:
+            return "''::hstore"
+
         adapt = _ext.adapt
         rv = []
         for k, v in self.wrapped.iteritems():
@@ -509,6 +512,9 @@ class HstoreAdapter(object):
 
     def _getquoted_9(self):
         """Use the hstore(text[], text[]) function."""
+        if not self.wrapped:
+            return "''::hstore"
+
         k = _ext.adapt(self.wrapped.keys())
         k.prepare(self.conn)
         v = _ext.adapt(self.wrapped.values())
