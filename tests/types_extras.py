@@ -209,6 +209,19 @@ class HstoreTestCase(unittest.TestCase):
         self.assertEqual(t[1], {})
         self.assertEqual(t[2], {'a': 'b'})
 
+    def test_register_unicode(self):
+        from psycopg2.extras import register_hstore
+
+        register_hstore(self.conn, unicode=True)
+        cur = self.conn.cursor()
+        cur.execute("select null::hstore, ''::hstore, 'a => b'::hstore")
+        t = cur.fetchone()
+        self.assert_(t[0] is None)
+        self.assertEqual(t[1], {})
+        self.assertEqual(t[2], {u'a': u'b'})
+        self.assert_(isinstance(t[2].keys()[0], unicode))
+        self.assert_(isinstance(t[2].values()[0], unicode))
+
     def test_roundtrip(self):
         from psycopg2.extras import register_hstore
         register_hstore(self.conn)
@@ -233,6 +246,29 @@ class HstoreTestCase(unittest.TestCase):
         ab = map(chr, range(1, 256))
         ok({''.join(ab): ''.join(ab)})
         ok(dict(zip(ab, ab)))
+
+    def test_roundtrip_unicode(self):
+        from psycopg2.extras import register_hstore
+        register_hstore(self.conn, unicode=True)
+        cur = self.conn.cursor()
+
+        def ok(d):
+            cur.execute("select %s", (d,))
+            d1 = cur.fetchone()[0]
+            self.assertEqual(len(d), len(d1))
+            for k, v in d1.iteritems():
+                self.assert_(k in d, k)
+                self.assertEqual(d[k], v)
+                self.assert_(isinstance(k, unicode))
+                self.assert_(v is None or isinstance(v, unicode))
+
+        ok({})
+        ok({'a': 'b', 'c': None, 'd': u'\u20ac', u'\u2603': 'e'})
+
+        ab = map(unichr, range(1, 1024))
+        ok({u''.join(ab): u''.join(ab)})
+        ok(dict(zip(ab, ab)))
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
