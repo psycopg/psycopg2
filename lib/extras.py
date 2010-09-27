@@ -482,9 +482,9 @@ class HstoreAdapter(object):
     def prepare(self, conn):
         self.conn = conn
 
-        # select the most efficient getquoted implementation
-        if conn.server_version >= 90000:
-            self.getquoted = self._getquoted_9
+        # use an old-style getquoted implementation if required
+        if conn.server_version < 90000:
+            self.getquoted = self._getquoted_8
 
     def _getquoted_8(self):
         """Use the operators available in PG pre-9.0."""
@@ -509,8 +509,6 @@ class HstoreAdapter(object):
 
         return "(" + '||'.join(rv) + ")"
 
-    getquoted = _getquoted_8
-
     def _getquoted_9(self):
         """Use the hstore(text[], text[]) function."""
         if not self.wrapped:
@@ -521,6 +519,8 @@ class HstoreAdapter(object):
         v = _ext.adapt(self.wrapped.values())
         v.prepare(self.conn)
         return "hstore(%s, %s)" % (k.getquoted(), v.getquoted())
+
+    getquoted = _getquoted_9
 
     _re_hstore = regex.compile(r"""
         # hstore key:
