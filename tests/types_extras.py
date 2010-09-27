@@ -222,6 +222,27 @@ class HstoreTestCase(unittest.TestCase):
         self.assert_(isinstance(t[2].keys()[0], unicode))
         self.assert_(isinstance(t[2].values()[0], unicode))
 
+    def test_register_globally(self):
+        from psycopg2.extras import register_hstore, HstoreAdapter
+
+        oids = HstoreAdapter.get_oids(self.conn)
+        try:
+            register_hstore(self.conn, globally=True)
+            conn2 = psycopg2.connect(self.conn.dsn)
+            cur2 = self.conn.cursor()
+            cur2.execute("select 'a => b'::hstore")
+            r = cur2.fetchone()
+            self.assert_(isinstance(r[0], dict))
+            conn2.close()
+        finally:
+            psycopg2.extensions.string_types.pop(oids[0])
+
+        # verify the caster is not around anymore
+        cur = self.conn.cursor()
+        cur.execute("select 'a => b'::hstore")
+        r = cur.fetchone()
+        self.assert_(isinstance(r[0], str))
+
     def test_roundtrip(self):
         from psycopg2.extras import register_hstore
         register_hstore(self.conn)
