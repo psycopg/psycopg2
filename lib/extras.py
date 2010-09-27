@@ -615,19 +615,23 @@ WHERE typname = 'hstore' and nspname = 'public';
     get_oids = classmethod(get_oids)
 
 def register_hstore(conn_or_curs, globally=False, unicode=False):
-    """Register adapter/typecaster for dict/hstore reading/writing.
+    """Register adapter and typecaster for `dict`\-\ |hstore| conversions.
 
-    The function must receive a connection or cursor as the :sql:`hstore` oid
-    is different in every database. The typecaster will be registered only on
-    the connection or cursor passed as argument. If your application uses a
-    single database you can pass *globally*\=True to have hstore registered
-    on all the connections.
+    The function must receive a connection or cursor as the |hstore| oid is
+    different in each database. The typecaster will normally be registered
+    only on the connection or cursor passed as argument. If your application
+    uses a single database you can pass *globally*\=True to have the typecaster
+    registered on all the connections.
 
-    By default the returned dicts have string keys and values: use
-    *unicode*\=True to return `unicode` objects instead.
+    By default the returned dicts will have `str` objects as keys and values:
+    use *unicode*\=True to return `unicode` objects instead.  When adapting a
+    dictionary both `str` and `unicode` keys and values are handled (the
+    `unicode` values will be converted according to the current
+    `~connection.encoding`).
 
-    Raise `~psycopg2.ProgrammingError` if the :sql:`hstore` type is not
-    installed in the target database.
+    The |hstore| contrib module must be already installed in the database
+    (executing the ``hstore.sql`` script in your ``contrib`` directory).
+    Raise `~psycopg2.ProgrammingError` if the type is not found.
     """
     oids = HstoreAdapter.get_oids(conn_or_curs)
     if oids is None:

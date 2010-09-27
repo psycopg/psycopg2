@@ -93,20 +93,25 @@ Logging cursor
 Hstore data type
 ----------------
 
-Python `dict` objects can be converted into the PostgreSQL |hstore|_ data
-type. Only dictionaries with string/unicode keys and values are supported.
-None are also allowed as values.
+.. versionadded:: 2.2.3
 
-The |hstore| type has received a lot of improvements in the PostgreSQL 9.0
-release and the Psycopg adapter uses a more efficient representation if the
-new release is detected.
+The |hstore|_ data type is a key-value store embedded in PostgreSQL.  It has
+been available for several server versions but with the release 9.0 it has
+been greatly improved in capacity and usefulness with the addiction of many
+functions.  It supports GiST or GIN indexes allowing search by keys or
+key/value pairs as well as regular BTree indexes for equality, uniqueness etc.
 
+Psycopg can convert Python `dict` objects to and from |hstore| structures.
+Only dictionaries with string/unicode keys and values are supported.  `None`
+is also allowed as value.  Psycopg uses a more efficient |hstore|
+representation when dealing with PostgreSQL 9.0 but previous server versions
+are supportes as well.  By default the adapter/typecaster are disabled: they
+can be enabled using the `register_hstore()` function.
+
+.. autofunction:: register_hstore
 
 .. |hstore| replace:: :sql:`hstore`
 .. _hstore: http://www.postgresql.org/docs/9.0/static/hstore.html
-
-
-.. autofunction:: register_hstore
 
 
 
