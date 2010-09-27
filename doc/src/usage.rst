@@ -186,6 +186,7 @@ argument of the `~cursor.execute()` method::
 
 
 .. index::
+    single: Adaptation
     pair: Objects; Adaptation
     single: Data types; Adaptation
 
@@ -293,6 +294,15 @@ the SQL string that would be sent to the database.
      the tuple :sql:`IN` adapter is always active.  In previous releases it
      was necessary to import the `~psycopg2.extensions` module to have it
      registered.
+
+- Python dictionaries are converted into the |hstore|_ data type. See
+  `~psycopg2.extras.register_hstore()` for further details.
+
+  .. |hstore| replace:: :sql:`hstore`
+  .. _hstore: http://www.postgresql.org/docs/9.0/static/hstore.html
+
+  .. versionadded:: 2.2.3
+     the :sql:`hstore` adaptation.
 
 .. index::
     single: Unicode

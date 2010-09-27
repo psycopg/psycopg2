@@ -87,6 +87,30 @@ Logging cursor
 
 
 .. index::
+    pair: hstore; Data types
+    pair: dict; Adaptation
+
+Hstore data type
+----------------
+
+Python `dict` objects can be converted into the PostgreSQL |hstore|_ data
+type. Only dictionaries with string/unicode keys and values are supported.
+None are also allowed as values.
+
+The |hstore| type has received a lot of improvements in the PostgreSQL 9.0
+release and the Psycopg adapter uses a more efficient representation if the
+new release is detected.
+
+
+.. |hstore| replace:: :sql:`hstore`
+.. _hstore: http://www.postgresql.org/docs/9.0/static/hstore.html
+
+
+.. autofunction:: register_hstore
+
+
+
+.. index::
     pair: UUID; Data types
 
 UUID data type

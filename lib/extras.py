@@ -620,14 +620,14 @@ def register_hstore(conn_or_curs, globally=False, unicode=False):
     The function must receive a connection or cursor as the :sql:`hstore` oid
     is different in every database. The typecaster will be registered only on
     the connection or cursor passed as argument. If your application uses a
-    single database you can pass *globally*=True to have hstore registered on
-    all the connections.
-
-    Raise `~psycopg2.ProgrammingError` if hstore is not installed in the
-    target database.
+    single database you can pass *globally*\=True to have hstore registered
+    on all the connections.
 
     By default the returned dicts have string keys and values: use
-    *unicode*=True to return `unicode` objects instead.
+    *unicode*\=True to return `unicode` objects instead.
+
+    Raise `~psycopg2.ProgrammingError` if the :sql:`hstore` type is not
+    installed in the target database.
     """
     oids = HstoreAdapter.get_oids(conn_or_curs)
     if oids is None:
