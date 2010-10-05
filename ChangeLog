@@ -8,6 +8,14 @@
 	* psycopg/connection_int.c: Fixed access to freed memory in
 	conn_get_isolation_level(). Bug reported by Anton Kovalev.
 
+2010-10-06  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* Merged James Henstridge work on two-phase commit support.
+
+	2008-05-12  James Henstridge  <james@jamesh.id.au>
+
+		* beginnings of a TPC test harness
+
 2010-10-05  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* psycopg/cursor_type.c: Common code in execute() and mogrify() merged.
