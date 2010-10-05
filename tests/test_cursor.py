@@ -21,6 +21,37 @@ class CursorTests(unittest.TestCase):
         cur.close()
         conn.close()
 
+    def test_mogrify_unicode(self):
+        conn = self.connect()
+        cur = conn.cursor()
+
+        # test consistency between execute and mogrify.
+
+        # unicode query containing only ascii data
+        cur.execute(u"SELECT 'foo';")
+        self.assertEqual('foo', cur.fetchone()[0])
+        self.assertEqual("SELECT 'foo';", cur.mogrify(u"SELECT 'foo';"))
+
+        conn.set_client_encoding('UTF8')
+        snowman = u"\u2603"
+
+        # unicode query with non-ascii data
+        cur.execute(u"SELECT '%s';" % snowman)
+        self.assertEqual(snowman.encode('utf8'), cur.fetchone()[0])
+        self.assertEqual("SELECT '%s';" % snowman.encode('utf8'),
+            cur.mogrify(u"SELECT '%s';" % snowman).replace("E'", "'"))
+
+        # unicode args
+        cur.execute("SELECT %s;", (snowman,))
+        self.assertEqual(snowman.encode("utf-8"), cur.fetchone()[0])
+        self.assertEqual("SELECT '%s';" % snowman.encode('utf8'),
+            cur.mogrify("SELECT %s;", (snowman,)).replace("E'", "'"))
+
+        # unicode query and args
+        cur.execute(u"SELECT %s;", (snowman,))
+        self.assertEqual(snowman.encode("utf-8"), cur.fetchone()[0])
+        self.assertEqual("SELECT '%s';" % snowman.encode('utf8'),
+            cur.mogrify(u"SELECT %s;", (snowman,)).replace("E'", "'"))
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

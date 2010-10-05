@@ -568,10 +568,52 @@ psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
 "mogrify(query, vars=None) -> str -- Return query after vars binding."
 
 static PyObject *
+_psyco_curs_mogrify(cursorObject *self,
+                   PyObject *operation, PyObject *vars)
+{
+    PyObject *fquery = NULL, *cvt = NULL;
+
+    operation = _psyco_curs_validate_sql_basic(self, operation);
+    if (operation == NULL) { goto cleanup; }
+
+    Dprintf("psyco_curs_mogrify: starting mogrify");
+
+    /* here we are, and we have a sequence or a dictionary filled with
+       objects to be substituted (bound variables). we try to be smart and do
+       the right thing (i.e., what the user expects) */
+
+    if (vars && vars != Py_None)
+    {
+        if (_mogrify(vars, operation, self->conn, &cvt) == -1) {
+            goto cleanup;
+        }
+    }
+
+    if (vars && cvt) {
+        if (!(fquery = _psyco_curs_merge_query_args(self, operation, cvt))) {
+            goto cleanup;
+        }
+
+        Dprintf("psyco_curs_mogrify: cvt->refcnt = " FORMAT_CODE_PY_SSIZE_T
+            ", fquery->refcnt = " FORMAT_CODE_PY_SSIZE_T,
+            cvt->ob_refcnt, fquery->ob_refcnt);
+    }
+    else {
+        fquery = operation;
+        Py_INCREF(fquery);
+    }
+
+cleanup:
+    Py_XDECREF(operation);
+    Py_XDECREF(cvt);
+
+    return fquery;
+}
+
+static PyObject *
 psyco_curs_mogrify(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
-    PyObject *vars = NULL, *cvt = NULL, *operation = NULL;
-    PyObject *fquery;
+    PyObject *vars = NULL, *operation = NULL;
 
     static char *kwlist[] = {"query", "vars", NULL};
 
@@ -580,43 +622,9 @@ psyco_curs_mogrify(cursorObject *self, PyObject *args, PyObject *kwargs)
         return NULL;
     }
 
-    if (PyUnicode_Check(operation)) {
-        PyErr_SetString(NotSupportedError,
-                        "unicode queries not yet supported");
-        return NULL;
-    }
-
     EXC_IF_CURS_CLOSED(self);
-    IFCLEARPGRES(self->pgres);
 
-    /* note that we don't overwrite the last query executed on the cursor, we
-       just *return* the new query with bound variables
-
-       TODO: refactor the common mogrification code (see psycopg_curs_execute
-       for comments, the code is amost identical) */
-
-    if (vars)
-    {
-        if(_mogrify(vars, operation, self->conn, &cvt) == -1) return NULL;
-    }
-
-    if (vars && cvt) {
-        if (!(fquery = _psyco_curs_merge_query_args(self, operation, cvt))) {
-            return NULL;
-        }
-
-        Dprintf("psyco_curs_execute: cvt->refcnt = " FORMAT_CODE_PY_SSIZE_T
-            ", fquery->refcnt = " FORMAT_CODE_PY_SSIZE_T,
-            cvt->ob_refcnt, fquery->ob_refcnt
-          );
-        Py_DECREF(cvt);
-    }
-    else {
-        fquery = operation;
-        Py_INCREF(operation);
-    }
-
-    return fquery;
+    return _psyco_curs_mogrify(self, operation, vars);
 }
 #endif
 
