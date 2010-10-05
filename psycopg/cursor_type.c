@@ -305,6 +305,72 @@ static PyObject *_psyco_curs_validate_sql_basic(
         return NULL;
 }
 
+/* Merge together a query string and its arguments.
+ *
+ * The arguments have been already adapted to SQL.
+ *
+ * Return a new reference to a string with the merged query,
+ * NULL and set an exception if any happened.
+ */
+static PyObject *
+_psyco_curs_merge_query_args(cursorObject *self,
+                             PyObject *query, PyObject *args)
+{
+    PyObject *fquery;
+
+    /* if PyString_Format() return NULL an error occured: if the error is
+       a TypeError we need to check the exception.args[0] string for the
+       values:
+
+           "not enough arguments for format string"
+           "not all arguments converted"
+
+       and return the appropriate ProgrammingError. we do that by grabbing
+       the curren exception (we will later restore it if the type or the
+       strings do not match.) */
+
+    if (!(fquery = PyString_Format(query, args))) {
+        PyObject *err, *arg, *trace;
+        int pe = 0;
+
+        PyErr_Fetch(&err, &arg, &trace);
+
+        if (err && PyErr_GivenExceptionMatches(err, PyExc_TypeError)) {
+            Dprintf("psyco_curs_execute: TypeError exception catched");
+            PyErr_NormalizeException(&err, &arg, &trace);
+
+            if (PyObject_HasAttrString(arg, "args")) {
+                PyObject *args = PyObject_GetAttrString(arg, "args");
+                PyObject *str = PySequence_GetItem(args, 0);
+                const char *s = PyString_AS_STRING(str);
+
+                Dprintf("psyco_curs_execute:     -> %s", s);
+
+                if (!strcmp(s, "not enough arguments for format string")
+                  || !strcmp(s, "not all arguments converted")) {
+                    Dprintf("psyco_curs_execute:     -> got a match");
+                    psyco_set_error(ProgrammingError, (PyObject*)self,
+                                     s, NULL, NULL);
+                    pe = 1;
+                }
+
+                Py_DECREF(args);
+                Py_DECREF(str);
+            }
+        }
+
+        /* if we did not manage our own exception, restore old one */
+        if (pe == 1) {
+            Py_XDECREF(err); Py_XDECREF(arg); Py_XDECREF(trace);
+        }
+        else {
+            PyErr_Restore(err, arg, trace);
+        }
+    }
+
+    return fquery;
+}
+
 #define psyco_curs_execute_doc \
 "execute(query, vars=None) -- Execute query with bound vars."
 
@@ -341,54 +407,7 @@ _psyco_curs_execute(cursorObject *self,
     }
 
     if (vars && cvt) {
-        /* if PyString_Format() return NULL an error occured: if the error is
-           a TypeError we need to check the exception.args[0] string for the
-           values:
-
-               "not enough arguments for format string"
-               "not all arguments converted"
-
-           and return the appropriate ProgrammingError. we do that by grabbing
-           the curren exception (we will later restore it if the type or the
-           strings do not match.) */
-
-        if (!(fquery = PyString_Format(operation, cvt))) {
-            PyObject *err, *arg, *trace;
-            int pe = 0;
-
-            PyErr_Fetch(&err, &arg, &trace);
-
-            if (err && PyErr_GivenExceptionMatches(err, PyExc_TypeError)) {
-                Dprintf("psyco_curs_execute: TypeError exception catched");
-                PyErr_NormalizeException(&err, &arg, &trace);
-
-                if (PyObject_HasAttrString(arg, "args")) {
-                    PyObject *args = PyObject_GetAttrString(arg, "args");
-                    PyObject *str = PySequence_GetItem(args, 0);
-                    const char *s = PyString_AS_STRING(str);
-
-                    Dprintf("psyco_curs_execute:     -> %s", s);
-
-                    if (!strcmp(s, "not enough arguments for format string")
-                      || !strcmp(s, "not all arguments converted")) {
-                        Dprintf("psyco_curs_execute:     -> got a match");
-                        psyco_set_error(ProgrammingError, (PyObject*)self,
-                                         s, NULL, NULL);
-                        pe = 1;
-                    }
-
-                    Py_DECREF(args);
-                    Py_DECREF(str);
-                }
-            }
-
-            /* if we did not manage our own exception, restore old one */
-            if (pe == 1) {
-                Py_XDECREF(err); Py_XDECREF(arg); Py_XDECREF(trace);
-            }
-            else {
-                PyErr_Restore(err, arg, trace);
-            }
+        if (!(fquery = _psyco_curs_merge_query_args(self, operation, cvt))) {
             goto fail;
         }
 
@@ -582,43 +601,7 @@ psyco_curs_mogrify(cursorObject *self, PyObject *args, PyObject *kwargs)
     }
 
     if (vars && cvt) {
-        if (!(fquery = PyString_Format(operation, cvt))) {
-            PyObject *err, *arg, *trace;
-            int pe = 0;
-
-            PyErr_Fetch(&err, &arg, &trace);
-
-            if (err && PyErr_GivenExceptionMatches(err, PyExc_TypeError)) {
-                Dprintf("psyco_curs_execute: TypeError exception catched");
-                PyErr_NormalizeException(&err, &arg, &trace);
-
-                if (PyObject_HasAttrString(arg, "args")) {
-                    PyObject *args = PyObject_GetAttrString(arg, "args");
-                    PyObject *str = PySequence_GetItem(args, 0);
-                    const char *s = PyString_AS_STRING(str);
-
-                    Dprintf("psyco_curs_execute:     -> %s", s);
-
-                    if (!strcmp(s, "not enough arguments for format string")
-                      || !strcmp(s, "not all arguments converted")) {
-                        Dprintf("psyco_curs_execute:     -> got a match");
-                        psyco_set_error(ProgrammingError, (PyObject*)self,
-                                         s, NULL, NULL);
-                        pe = 1;
-                    }
-
-                    Py_DECREF(args);
-                    Py_DECREF(str);
-                }
-            }
-
-            /* if we did not manage our own exception, restore old one */
-            if (pe == 1) {
-                Py_XDECREF(err); Py_XDECREF(arg); Py_XDECREF(trace);
-            }
-            else {
-                PyErr_Restore(err, arg, trace);
-            }
+        if (!(fquery = _psyco_curs_merge_query_args(self, operation, cvt))) {
             return NULL;
         }
 

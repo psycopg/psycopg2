@@ -1,3 +1,7 @@
+2010-10-05  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* psycopg/cursor_type.c: Common code in execute() and mogrify() merged.
+
 2010-09-23  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* lib/errorcodes.py: Added PostgreSQL 9.0 error codes.
