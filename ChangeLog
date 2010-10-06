@@ -12,6 +12,18 @@
 
 	* Merged James Henstridge work on two-phase commit support.
 
+	2008-07-23  James Henstridge  <james@jamesh.id.au>
+
+		* psycopg/connection_type.c (psyco_conn_xid): add a
+		Connection.xid() method that instantiates Xid objects.
+
+		* psycopg/psycopgmodule.c (init_psycopg): initialise the Xid
+		object type.
+
+		* psycopg/xid.h:
+		* psycopg/xid_type.c: Implement a basic transaction ID object for
+		use in two phase commit.
+
 	2008-05-12  James Henstridge  <james@jamesh.id.au>
 
 		* beginnings of a TPC test harness

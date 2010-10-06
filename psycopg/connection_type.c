@@ -40,6 +40,7 @@
 #include "psycopg/pqpath.h"
 #include "psycopg/lobject.h"
 #include "psycopg/green.h"
+#include "psycopg/xid.h"
 
 /** DBAPI methods **/
 
@@ -165,6 +166,18 @@ psyco_conn_rollback(connectionObject *self, PyObject *args)
 
     Py_INCREF(Py_None);
     return Py_None;
+}
+
+
+#define psyco_conn_xid_doc \
+"xid(format_id, gtrid, bqual) -- create a transaction identifier."
+
+static PyObject *
+psyco_conn_xid(connectionObject *self, PyObject *args, PyObject *kwargs)
+{
+    EXC_IF_CONN_CLOSED(self);
+
+    return PyObject_Call((PyObject *)&XidType, args, kwargs);
 }
 
 
@@ -494,6 +507,8 @@ static struct PyMethodDef connectionObject_methods[] = {
      METH_VARARGS, psyco_conn_commit_doc},
     {"rollback", (PyCFunction)psyco_conn_rollback,
      METH_VARARGS, psyco_conn_rollback_doc},
+    {"xid", (PyCFunction)psyco_conn_xid,
+     METH_VARARGS|METH_KEYWORDS, psyco_conn_xid_doc},
 #ifdef PSYCOPG_EXTENSIONS
     {"set_isolation_level", (PyCFunction)psyco_conn_set_isolation_level,
      METH_VARARGS, psyco_conn_set_isolation_level_doc},
