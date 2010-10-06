@@ -255,7 +255,7 @@ PyTypeObject XidType = {
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
 
-    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
+    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
     xid_doc, /*tp_doc*/
 
     (traverseproc)xid_traverse, /*tp_traverse*/

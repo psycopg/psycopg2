@@ -16,6 +16,7 @@
 
 		* psycopg/xid_type.c (xid_len, xid_getitem): implement sequence
 		behaviour, as required for transaction IDs.
+		(XidType): There is no point in allowing subclasses of Xid.
 
 	2008-07-23  James Henstridge  <james@jamesh.id.au>
 
