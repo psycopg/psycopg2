@@ -184,6 +184,47 @@ xid_repr(XidObject *self)
                                self->pg_xact_id ? self->pg_xact_id : "(null)");
 }
 
+static Py_ssize_t
+xid_len(XidObject *self)
+{
+    return 3;
+}
+
+static PyObject *
+xid_getitem(XidObject *self, Py_ssize_t item)
+{
+    if (item < 0)
+        item += 3;
+
+    switch (item) {
+    case 0:
+        Py_INCREF(self->format_id);
+        return self->format_id;
+    case 1:
+        Py_INCREF(self->gtrid);
+        return self->gtrid;
+    case 2:
+        Py_INCREF(self->bqual);
+        return self->bqual;
+    default:
+        PyErr_SetString(PyExc_IndexError, "index out of range");
+        return NULL;
+    }
+}
+
+static PySequenceMethods xid_sequence = {
+    (lenfunc)xid_len,          /* sq_length */
+    0,                         /* sq_concat */
+    0,                         /* sq_repeat */
+    (ssizeargfunc)xid_getitem, /* sq_item */
+    0,                         /* sq_slice */
+    0,                         /* sq_ass_item */
+    0,                         /* sq_ass_slice */
+    0,                         /* sq_contains */
+    0,                         /* sq_inplace_concat */
+    0,                         /* sq_inplace_repeat */
+};
+
 static const char xid_doc[] =
     "A transaction identifier used for two phase commit.";
 
@@ -203,7 +244,7 @@ PyTypeObject XidType = {
 
     (reprfunc)xid_repr, /*tp_repr*/
     0,          /*tp_as_number*/
-    0,          /*tp_as_sequence*/
+    &xid_sequence, /*tp_as_sequence*/
     0,          /*tp_as_mapping*/
     0,          /*tp_hash */
 

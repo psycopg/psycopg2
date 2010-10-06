@@ -12,6 +12,11 @@
 
 	* Merged James Henstridge work on two-phase commit support.
 
+	2008-07-24  James Henstridge  <james@jamesh.id.au>
+
+		* psycopg/xid_type.c (xid_len, xid_getitem): implement sequence
+		behaviour, as required for transaction IDs.
+
 	2008-07-23  James Henstridge  <james@jamesh.id.au>
 
 		* psycopg/connection_type.c (psyco_conn_xid): add a
