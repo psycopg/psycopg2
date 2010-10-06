@@ -14,6 +14,9 @@
 
 	2008-07-24  James Henstridge  <james@jamesh.id.au>
 
+		* tests/test_psycopg2_dbapi20.py (Psycopg2TPCTests): hook up two
+		phase commit tests.
+
 		* psycopg/xid_type.c (xid_len, xid_getitem): implement sequence
 		behaviour, as required for transaction IDs.
 		(XidType): There is no point in allowing subclasses of Xid.

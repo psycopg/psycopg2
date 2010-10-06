@@ -5,7 +5,7 @@
 import unittest
 
 
-class TwoPhaseCommitTest(unittest.TestCase):
+class TwoPhaseCommitTests(unittest.TestCase):
 
     driver = None
 
@@ -17,8 +17,8 @@ class TwoPhaseCommitTest(unittest.TestCase):
     _global_id_prefix = "dbapi20_tpc:"
 
     def make_xid(self, con):
-        id = TwoPhaseCommitTest._last_id
-        TwoPhaseCommitTest._last_id += 1
+        id = TwoPhaseCommitTests._last_id
+        TwoPhaseCommitTests._last_id += 1
         return con.xid(42, "%s%d" % (self._global_id_prefix, id), "qualifier")
 
     def test_xid(self):
@@ -28,9 +28,15 @@ class TwoPhaseCommitTest(unittest.TestCase):
         except self.driver.NotSupportedError:
             self.fail("Driver does not support transaction IDs.")
 
-        self.assertEuqals(xid[0], 42)
-        self.assertEuqals(xid[1], "global")
+        self.assertEquals(xid[0], 42)
+        self.assertEquals(xid[1], "global")
         self.assertEquals(xid[2], "bqual")
+
+        # Try some extremes for the transaction ID:
+        xid = con.xid(0, "", "")
+        self.assertEquals(tuple(xid), (0, "", ""))
+        xid = con.xid(0x7fffffff, "a" * 64, "b" * 64)
+        self.assertEquals(tuple(xid), (0x7fffffff, "a" * 64, "b" * 64))
 
     def test_tpc_begin(self):
         con = self.connect()

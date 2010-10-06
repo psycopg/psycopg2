@@ -75,7 +75,7 @@ xid_init(XidObject *self, PyObject *args, PyObject *kwargs)
                                      &format_id, &gtrid, &bqual))
         return -1;
 
-    if (format_id < 0 || format_id >= 0xffffffff) {
+    if (format_id < 0 || format_id > 0x7fffffff) {
         PyErr_SetString(PyExc_ValueError,
                         "format_id must be a non-negative 32-bit integer");
         return -1;
