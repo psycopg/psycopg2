@@ -41,7 +41,7 @@ chunk_dealloc(chunkObject *self)
         FORMAT_CODE_PY_SSIZE_T,
         self->base, self->len
       );
-    free(self->base);
+    PQfreemem(self->base);
     self->ob_type->tp_free((PyObject *) self);
 }
 
@@ -176,8 +176,8 @@ typecast_BINARY_cast(const char *s, Py_ssize_t l, PyObject *curs)
           Py_DECREF((PyObject *) chunk);
       }
       if (str != NULL) {
-          /* str's mem was allocated by PQunescapeBytea; must use free: */
-          free(str);
+          /* str's mem was allocated by PQunescapeBytea; must use PQfreemem: */
+          PQfreemem(str);
       }
       if (buffer != NULL) {
           /* We allocated buffer with PyMem_Malloc; must use PyMem_Free: */

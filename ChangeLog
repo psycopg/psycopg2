@@ -1,5 +1,8 @@
 2010-10-08  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
+	* psycopg/typecast_binary.c: use PQfreemem to free memory allocated by
+	the libpq. Bug reported by Anton Kovalev.
+
 	* dropped PSYCOPG_OWN_QUOTING.
 
 	* psycopg/connection_int.c: Fixed access to freed memory in
