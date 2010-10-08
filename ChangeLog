@@ -1,3 +1,8 @@
+2010-10-08  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* psycopg/connection_int.c: Fixed access to freed memory in
+	conn_get_isolation_level(). Bug reported by Anton Kovalev.
+
 2010-10-05  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* psycopg/cursor_type.c: Common code in execute() and mogrify() merged.

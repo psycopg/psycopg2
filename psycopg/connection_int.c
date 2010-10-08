@@ -217,15 +217,19 @@ conn_get_isolation_level(PGresult *pgres)
 {
     static const char lvl1a[] = "read uncommitted";
     static const char lvl1b[] = "read committed";
-    char *isolation_level = PQgetvalue(pgres, 0, 0);
+    int rv;
 
-    CLEARPGRES(pgres);
+    char *isolation_level = PQgetvalue(pgres, 0, 0);
 
     if ((strncmp(lvl1a, isolation_level, strlen(isolation_level)) == 0)
         || (strncmp(lvl1b, isolation_level, strlen(isolation_level)) == 0))
-        return 1;
+       rv = 1;
     else /* if it's not one of the lower ones, it's SERIALIZABLE */
-        return 2;
+        rv = 2;
+
+    CLEARPGRES(pgres);
+
+    return rv;
 }
 
 int
