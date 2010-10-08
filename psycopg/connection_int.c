@@ -928,3 +928,32 @@ conn_tpc_begin(connectionObject *self, XidObject *xid)
     return 0;
 }
 
+
+/* conn_tpc_command -- run one of the TPC-related PostgreSQL commands.
+ *
+ * The function doesn't change the connection state as it can be used
+ * for many commands and for recovered transactions. */
+
+int
+conn_tpc_command(connectionObject *self, const char *cmd, XidObject *xid)
+{
+    PGresult *pgres = NULL;
+    char *error = NULL;
+    int rv;
+
+    Dprintf("conn_tpc_command: %s", cmd);
+
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&self->lock);
+
+    rv = pq_tpc_command_locked(self, cmd, xid, &pgres, &error, &_save);
+
+    pthread_mutex_unlock(&self->lock);
+    Py_END_ALLOW_THREADS;
+
+    if (rv < 0) {
+        pq_complete_error(self, &pgres, &error);
+    }
+    return rv;
+}
+

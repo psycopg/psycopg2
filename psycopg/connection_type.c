@@ -70,7 +70,8 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *keywds)
     EXC_IF_CONN_CLOSED(self);
 
     if (self->status != CONN_STATUS_READY &&
-        self->status != CONN_STATUS_BEGIN) {
+        self->status != CONN_STATUS_BEGIN &&
+        self->status != CONN_STATUS_PREPARED) {
         PyErr_SetString(OperationalError,
                         "asynchronous connection attempt underway");
         return NULL;
@@ -231,6 +232,39 @@ exit:
 }
 
 
+#define psyco_conn_tpc_prepare_doc \
+"tpc_prepare() -- perform the first phase of a two-phase transaction."
+
+static PyObject *
+psyco_conn_tpc_prepare(connectionObject *self, PyObject *args)
+{
+    EXC_IF_CONN_CLOSED(self);
+    EXC_IF_CONN_ASYNC(self, tpc_prepare);
+    EXC_IF_TPC_PREPARED(self, tpc_prepare);
+
+    if (!PyArg_ParseTuple(args, "")) {
+        return NULL;
+    }
+
+    if (NULL == self->tpc_xid) {
+        PyErr_SetString(ProgrammingError,
+            "prepare must be called inside a two-phase transaction");
+        return NULL;
+    }
+
+    if (0 > conn_tpc_command(self, "PREPARE TRANSACTION", self->tpc_xid)) {
+        return NULL;
+    }
+
+    /* transaction prepared: set the state so that no operation
+     * can be performed until commit. */
+    self->status = CONN_STATUS_PREPARED;
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+
 #ifdef PSYCOPG_EXTENSIONS
 
 /* set_isolation_level method - switch connection isolation level */
@@ -245,6 +279,7 @@ psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
 
     EXC_IF_CONN_CLOSED(self);
     EXC_IF_CONN_ASYNC(self, set_isolation_level);
+    EXC_IF_TPC_PREPARED(self, set_isolation_level);
 
     if (!PyArg_ParseTuple(args, "i", &level)) return NULL;
 
@@ -279,6 +314,7 @@ psyco_conn_set_client_encoding(connectionObject *self, PyObject *args)
 
     EXC_IF_CONN_CLOSED(self);
     EXC_IF_CONN_ASYNC(self, set_client_encoding);
+    EXC_IF_TPC_PREPARED(self, set_client_encoding);
 
     if (!PyArg_ParseTuple(args, "s", &enc)) return NULL;
 
@@ -379,6 +415,7 @@ psyco_conn_lobject(connectionObject *self, PyObject *args, PyObject *keywds)
     EXC_IF_CONN_CLOSED(self);
     EXC_IF_CONN_ASYNC(self, lobject);
     EXC_IF_GREEN(lobject);
+    EXC_IF_TPC_PREPARED(self, lobject);
 
     Dprintf("psyco_conn_lobject: new lobject for connection at %p", self);
     Dprintf("psyco_conn_lobject:     parameters: oid = %d, mode = %s",
@@ -561,6 +598,8 @@ static struct PyMethodDef connectionObject_methods[] = {
      METH_VARARGS|METH_KEYWORDS, psyco_conn_xid_doc},
     {"tpc_begin", (PyCFunction)psyco_conn_tpc_begin,
      METH_VARARGS, psyco_conn_tpc_begin_doc},
+    {"tpc_prepare", (PyCFunction)psyco_conn_tpc_prepare,
+     METH_VARARGS, psyco_conn_tpc_prepare_doc},
 #ifdef PSYCOPG_EXTENSIONS
     {"set_isolation_level", (PyCFunction)psyco_conn_set_isolation_level,
      METH_VARARGS, psyco_conn_set_isolation_level_doc},

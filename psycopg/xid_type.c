@@ -319,3 +319,33 @@ XidObject *xid_ensure(PyObject *oxid)
     }
 }
 
+
+/* Return the PostgreSQL transaction_id for this XA xid.
+ *
+ * PostgreSQL wants just a string, while the DBAPI supports the XA standard
+ * and thus a triple. We use the same conversion algorithm implemented by JDBC
+ * in order to allow some form of interoperation.
+ *
+ * Return a buffer allocated with PyMem_Malloc. Use PyMem_Free to free it.
+ */
+char *
+xid_get_tid(XidObject *self)
+{
+    /* TODO: for the moment just use the string mashed up by James.
+     * later will implement the JDBC algorithm. */
+    char *buf;
+    Py_ssize_t bufsize = 0;
+
+    if (self->pg_xact_id) {
+        bufsize = 1 + strlen(self->pg_xact_id);
+    }
+
+    buf = (char *)PyMem_Malloc(bufsize);
+    if (buf) {
+        strncpy(buf, self->pg_xact_id, bufsize);
+    }
+
+    return buf;
+}
+
+

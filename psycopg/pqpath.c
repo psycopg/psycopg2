@@ -575,6 +575,7 @@ pq_reset_locked(connectionObject *conn, PGresult **pgres, char **error,
         "SET SESSION AUTHORIZATION DEFAULT", pgres, error, tstate);
     if (retvalue != 0) return retvalue;
 
+    /* should set the tpc xid to null: postponed until we get the GIL again */
     conn->status = CONN_STATUS_READY;
 
     return retvalue;
@@ -600,11 +601,57 @@ pq_reset(connectionObject *conn)
 
     conn_notice_process(conn);
 
-    if (retvalue < 0)
+    if (retvalue < 0) {
         pq_complete_error(conn, &pgres, &error);
-
+    }
+    else {
+        Py_CLEAR(conn->tpc_xid);
+    }
     return retvalue;
 }
+
+
+/* Call one of the PostgreSQL tpc-related commands.
+ *
+ * This function should only be called on a locked connection without
+ * holding the global interpreter lock. */
+
+int
+pq_tpc_command_locked(connectionObject *conn, const char *cmd, XidObject *xid,
+                  PGresult **pgres, char **error,
+                  PyThreadState **tstate)
+{
+    int rv = -1;
+    char *tid = NULL, *etid = NULL, *buf = NULL;
+    Py_ssize_t buflen;
+
+    Dprintf("_pq_tpc_command: pgconn = %p, command = %s",
+            conn->pgconn, cmd);
+
+    /* convert the xid into the postgres transaction_id and quote it. */
+    if (!(tid = xid_get_tid(xid))) { goto exit; }
+    if (!(etid = psycopg_escape_string((PyObject *)conn, tid, 0, NULL, NULL)))
+    { goto exit; }
+
+    /* prepare the command to the server */
+    buflen = 3 + strlen(cmd) + strlen(etid); /* add space, semicolon, zero */
+    if (!(buf = PyMem_Malloc(buflen))) {
+        PyErr_NoMemory();
+        goto exit;
+    }
+    if (0 > PyOS_snprintf(buf, buflen, "%s %s;", cmd, etid)) { goto exit; }
+
+    /* run the command and let it handle the error cases */
+    rv = pq_execute_command_locked(conn, buf, pgres, error, tstate);
+
+exit:
+    PyMem_Free(buf);
+    PyMem_Free(etid);
+    PyMem_Free(tid);
+
+    return rv;
+}
+
 
 /* pq_is_busy - consume input and return connection status
 

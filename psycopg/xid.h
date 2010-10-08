@@ -51,5 +51,6 @@ typedef struct {
 } XidObject;
 
 HIDDEN XidObject *xid_ensure(PyObject *oxid);
+HIDDEN char *xid_get_tid(XidObject *self);
 
 #endif /* PSYCOPG_XID_H */

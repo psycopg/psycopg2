@@ -80,8 +80,9 @@ ISOLATION_LEVEL_READ_UNCOMMITTED = ISOLATION_LEVEL_READ_COMMITTED
 STATUS_SETUP    = 0
 STATUS_READY    = 1
 STATUS_BEGIN    = 2
-STATUS_SYNC     = 3
-STATUS_ASYNC    = 4
+STATUS_SYNC     = 3  # currently unused
+STATUS_ASYNC    = 4  # currently unused
+STATUS_PREPARED = 5
 
 # This is a usefull mnemonic to check if the connection is in a transaction
 STATUS_IN_TRANSACTION = STATUS_BEGIN

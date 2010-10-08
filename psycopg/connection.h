@@ -38,9 +38,10 @@ extern "C" {
 #endif
 
 /* connection status */
-#define CONN_STATUS_SETUP 0
-#define CONN_STATUS_READY 1
-#define CONN_STATUS_BEGIN 2
+#define CONN_STATUS_SETUP       0
+#define CONN_STATUS_READY       1
+#define CONN_STATUS_BEGIN       2
+#define CONN_STATUS_PREPARED    5
 /* async connection building statuses */
 #define CONN_STATUS_CONNECTING            20
 #define CONN_STATUS_DATESTYLE             21
@@ -132,6 +133,8 @@ HIDDEN int  conn_switch_isolation_level(connectionObject *self, int level);
 HIDDEN int  conn_set_client_encoding(connectionObject *self, const char *enc);
 HIDDEN int  conn_poll(connectionObject *self);
 HIDDEN int  conn_tpc_begin(connectionObject *self, XidObject *xid);
+HIDDEN int  conn_tpc_command(connectionObject *self,
+                             const char *cmd, XidObject *xid);
 
 /* exception-raising macros */
 #define EXC_IF_CONN_CLOSED(self) if ((self)->closed > 0) { \
@@ -147,6 +150,12 @@ HIDDEN int  conn_tpc_begin(connectionObject *self, XidObject *xid);
     PyErr_Format(ProgrammingError, "%s cannot be used "     \
     "during a two-phase transaction", #cmd);                \
     return NULL; }
+
+#define EXC_IF_TPC_PREPARED(self, cmd)                        \
+    if ((self)->status == CONN_STATUS_PREPARED) {             \
+        PyErr_Format(ProgrammingError, "%s cannot be used "   \
+            "with a prepared two-phase transaction", #cmd);   \
+        return NULL; }
 
 #ifdef __cplusplus
 }

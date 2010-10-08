@@ -492,6 +492,7 @@ psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
 
     EXC_IF_CURS_CLOSED(self);
     EXC_IF_ASYNC_IN_PROGRESS(self, execute);
+    EXC_IF_TPC_PREPARED(self->conn, execute);
 
     if (_psyco_curs_execute(self, operation, vars, self->conn->async)) {
         Py_INCREF(Py_None);
@@ -511,12 +512,12 @@ psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
     PyObject *operation = NULL, *vars = NULL;
     PyObject *v, *iter = NULL;
     int rowcount = 0;
-    
+
     static char *kwlist[] = {"query", "vars_list", NULL};
 
     /* reset rowcount to -1 to avoid setting it when an exception is raised */
     self->rowcount = -1;
-    
+
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO", kwlist,
                                      &operation, &vars)) {
         return NULL;
@@ -524,6 +525,7 @@ psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
 
     EXC_IF_CURS_CLOSED(self);
     EXC_IF_CURS_ASYNC(self, executemany);
+    EXC_IF_TPC_PREPARED(self->conn, executemany);
 
     if (self->name != NULL) {
         psyco_set_error(ProgrammingError, (PyObject*)self,
@@ -746,6 +748,7 @@ psyco_curs_fetchone(cursorObject *self, PyObject *args)
         char buffer[128];
 
         EXC_IF_NO_MARK(self);
+        EXC_IF_TPC_PREPARED(self->conn, fetchone);
         PyOS_snprintf(buffer, 127, "FETCH FORWARD 1 FROM %s", self->name);
         if (pq_execute(self, buffer, 0) == -1) return NULL;
         if (_psyco_curs_prefetch(self) < 0) return NULL;
@@ -807,6 +810,7 @@ psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
         char buffer[128];
 
         EXC_IF_NO_MARK(self);
+        EXC_IF_TPC_PREPARED(self->conn, fetchone);
         PyOS_snprintf(buffer, 127, "FETCH FORWARD %d FROM %s",
             (int)size, self->name);
         if (pq_execute(self, buffer, 0) == -1) return NULL;
@@ -880,6 +884,7 @@ psyco_curs_fetchall(cursorObject *self, PyObject *args)
         char buffer[128];
 
         EXC_IF_NO_MARK(self);
+        EXC_IF_TPC_PREPARED(self->conn, fetchall);
         PyOS_snprintf(buffer, 127, "FETCH FORWARD ALL FROM %s", self->name);
         if (pq_execute(self, buffer, 0) == -1) return NULL;
         if (_psyco_curs_prefetch(self) < 0) return NULL;
@@ -941,6 +946,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
 
     EXC_IF_CURS_CLOSED(self);
     EXC_IF_ASYNC_IN_PROGRESS(self, callproc);
+    EXC_IF_TPC_PREPARED(self->conn, callproc);
 
     if (self->name != NULL) {
         psyco_set_error(ProgrammingError, (PyObject*)self,
@@ -1086,6 +1092,7 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
         char buffer[128];
 
         EXC_IF_NO_MARK(self);
+        EXC_IF_TPC_PREPARED(self->conn, scroll);
 
         if (strcmp(mode, "absolute") == 0) {
             PyOS_snprintf(buffer, 127, "MOVE ABSOLUTE %d FROM %s",
@@ -1209,6 +1216,8 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
     EXC_IF_CURS_CLOSED(self);
     EXC_IF_CURS_ASYNC(self, copy_from);
     EXC_IF_GREEN(copy_from);
+    EXC_IF_TPC_PREPARED(self->conn, copy_from);
+
 
     quoted_delimiter = psycopg_escape_string((PyObject*)self->conn, sep, 0, NULL, NULL);
     if (quoted_delimiter == NULL) {
@@ -1315,6 +1324,7 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
     EXC_IF_CURS_CLOSED(self);
     EXC_IF_CURS_ASYNC(self, copy_to);
     EXC_IF_GREEN(copy_to);
+    EXC_IF_TPC_PREPARED(self->conn, copy_to);
 
     quoted_delimiter = psycopg_escape_string((PyObject*)self->conn, sep, 0, NULL, NULL);
     if (quoted_delimiter == NULL) {
@@ -1401,6 +1411,7 @@ psyco_curs_copy_expert(cursorObject *self, PyObject *args, PyObject *kwargs)
     EXC_IF_CURS_CLOSED(self);
     EXC_IF_CURS_ASYNC(self, copy_expert);
     EXC_IF_GREEN(copy_expert);
+    EXC_IF_TPC_PREPARED(self->conn, copy_expert);
 
     sql = _psyco_curs_validate_sql_basic(self, sql);
     
