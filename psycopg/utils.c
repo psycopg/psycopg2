@@ -50,7 +50,6 @@ psycopg_escape_string(PyObject *obj, const char *from, Py_ssize_t len,
             return NULL;
     }
 
-    #ifndef PSYCOPG_OWN_QUOTING
     {
         #if PG_VERSION_HEX >= 0x080104
             int err;
@@ -60,37 +59,6 @@ psycopg_escape_string(PyObject *obj, const char *from, Py_ssize_t len,
         #endif
                 ql = PQescapeString(to+eq+1, from, len);
     }
-    #else
-    {
-        int i, j;
-    
-        for (i=0, j=eq+1; i<len; i++) {
-            switch(from[i]) {
-    
-            case '\'':
-                to[j++] = '\'';
-                to[j++] = '\'';
-                break;
-    
-            case '\\':
-                to[j++] = '\\';
-                to[j++] = '\\';
-                break;
-    
-            case '\0':
-                /* do nothing, embedded \0 are discarded */
-                break;
-    
-            default:
-                to[j++] = from[i];
-            }
-        }
-        to[j] = '\0';
-    
-        Dprintf("qstring_quote: to = %s", to);
-        ql = strlen(to);
-    }
-    #endif
 
     if (eq)
         to[0] = 'E';

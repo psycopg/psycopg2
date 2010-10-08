@@ -110,55 +110,6 @@ PyTypeObject chunkType = {
     chunk_doc                   /* tp_doc */
 };
 
-/* the function typecast_BINARY_cast_unescape is used when libpq does not
-   provide PQunescapeBytea: it convert all the \xxx octal sequences to the
-   proper byte value */
-
-#ifdef PSYCOPG_OWN_QUOTING
-static unsigned char *
-typecast_BINARY_cast_unescape(unsigned char *str, size_t *to_length)
-{
-    char *dstptr, *dststr;
-    int len, i;
-
-    len = strlen(str);
-    dststr = (char*)calloc(len, sizeof(char));
-    dstptr = dststr;
-
-    if (dststr == NULL) return NULL;
-
-    Py_BEGIN_ALLOW_THREADS;
-
-    for (i = 0; i < len; i++) {
-        if (str[i] == '\\') {
-            if ( ++i < len) {
-                if (str[i] == '\\') {
-                    *dstptr = '\\';
-                }
-                else {
-                    *dstptr = 0;
-                    *dstptr |= (str[i++] & 7) << 6;
-                    *dstptr |= (str[i++] & 7) << 3;
-                    *dstptr |= (str[i] & 7);
-                }
-            }
-        }
-        else {
-            *dstptr = str[i];
-        }
-        dstptr++;
-    }
-
-    Py_END_ALLOW_THREADS;
-
-    *to_length = (size_t)(dstptr-dststr);
-
-    return dststr;
-}
-
-#define PQunescapeBytea typecast_BINARY_cast_unescape
-#endif
-
 static PyObject *
 typecast_BINARY_cast(const char *s, Py_ssize_t l, PyObject *curs)
 {

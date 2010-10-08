@@ -174,18 +174,12 @@ conn_get_standard_conforming_strings(PGconn *pgconn)
      * not escaped strings (e.g. '\001' -> "\001"), relying on the
      * fact that the '\' will pass untouched the string parser.
      * In this case the E'' quotes are NOT to be used.
-     *
-     * The PSYCOPG_OWN_QUOTING implementation always returns escaped strings.
      */
     scs = PQparameterStatus(pgconn, "standard_conforming_strings");
     Dprintf("conn_connect: server standard_conforming_strings parameter: %s",
         scs ? scs : "unavailable");
 
-#ifndef PSYCOPG_OWN_QUOTING
     equote = (scs && (0 == strcmp("off", scs)));
-#else
-    equote = (scs != NULL);
-#endif
     Dprintf("conn_connect: server requires E'' quotes: %s",
             equote ? "YES" : "NO");
 

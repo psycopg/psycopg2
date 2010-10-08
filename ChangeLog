@@ -1,5 +1,7 @@
 2010-10-08  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
+	* dropped PSYCOPG_OWN_QUOTING.
+
 	* psycopg/connection_int.c: Fixed access to freed memory in
 	conn_get_isolation_level(). Bug reported by Anton Kovalev.
 
