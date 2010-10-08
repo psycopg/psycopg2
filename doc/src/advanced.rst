@@ -211,7 +211,7 @@ Asynchronous notifications
 Psycopg allows asynchronous interaction with other database sessions using the
 facilities offered by PostgreSQL commands |LISTEN|_ and |NOTIFY|_. Please
 refer to the PostgreSQL documentation for examples of how to use this form of
-communications.
+communication.
 
 Notifications received are made available in the `connection.notifies`
 list. Notifications can be sent from Python code simply using a :sql:`NOTIFY`
@@ -227,9 +227,9 @@ manner.
 .. |NOTIFY| replace:: :sql:`NOTIFY`
 .. _NOTIFY: http://www.postgresql.org/docs/9.0/static/sql-notify.html
 
-Notification are received after every query execution. If the user is interested
-in receiving notification but not in performing any query, the
-`~connection.poll()` method can be used to check for notification without
+Notifications are received after every query execution. If the user is
+interested in receiving notifications but not in performing any query, the
+`~connection.poll()` method can be used to check for new messages without
 wasting resources.
 
 A simple application could poll the connection from time to time to check if
@@ -332,7 +332,7 @@ completely non-blocking connection attempt: see the libpq documentation for
 The same loop should be also used to perform nonblocking queries: after
 sending a query via `~cursor.execute()` or `~cursor.callproc()`, call
 `!poll()` on the connection available from `cursor.connection` until it
-returns `!POLL_OK`, at which pont the query has been completely sent to the
+returns `!POLL_OK`, at which point the query has been completely sent to the
 server and, if it produced data, the results have been transferred to the
 client and available using the regular cursor methods:
 
