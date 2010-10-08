@@ -143,6 +143,11 @@ HIDDEN int  conn_tpc_begin(connectionObject *self, XidObject *xid);
     "in asynchronous mode");                                   \
     return NULL; }
 
+#define EXC_IF_TPC_BEGIN(self, cmd) if ((self)->tpc_xid) {  \
+    PyErr_Format(ProgrammingError, "%s cannot be used "     \
+    "during a two-phase transaction", #cmd);                \
+    return NULL; }
+
 #ifdef __cplusplus
 }
 #endif

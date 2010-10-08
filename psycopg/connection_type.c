@@ -137,6 +137,7 @@ psyco_conn_commit(connectionObject *self, PyObject *args)
 {
     EXC_IF_CONN_CLOSED(self);
     EXC_IF_CONN_ASYNC(self, commit);
+    EXC_IF_TPC_BEGIN(self, commit);
 
     if (!PyArg_ParseTuple(args, "")) return NULL;
 
@@ -158,6 +159,7 @@ psyco_conn_rollback(connectionObject *self, PyObject *args)
 {
     EXC_IF_CONN_CLOSED(self);
     EXC_IF_CONN_ASYNC(self, rollback);
+    EXC_IF_TPC_BEGIN(self, rollback);
 
     if (!PyArg_ParseTuple(args, "")) return NULL;
 
