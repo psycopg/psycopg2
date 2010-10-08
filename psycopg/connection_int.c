@@ -890,3 +890,41 @@ conn_set_client_encoding(connectionObject *self, const char *enc)
 
     return res;
 }
+
+
+/* conn_tpc_begin -- begin a two-phase commit.
+ *
+ * The state of a connection in the middle of a TPC is exactly the same
+ * of a normal transaction, in CONN_STATUS_BEGIN, but with the tpc_xid
+ * member set to the xid used. This allows to reuse all the code paths used
+ * in regular transactions, as PostgreSQL won't even know we are in a TPC
+ * until PREPARE. */
+
+int
+conn_tpc_begin(connectionObject *self, XidObject *xid)
+{
+    PGresult *pgres = NULL;
+    char *error = NULL;
+
+    Dprintf("conn_tpc_begin: starting transaction");
+
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&self->lock);
+
+    if (pq_begin_locked(self, &pgres, &error, &_save) < 0) {
+        pthread_mutex_unlock(&(self->lock));
+        Py_BLOCK_THREADS;
+        pq_complete_error(self, &pgres, &error);
+        return -1;
+    }
+
+    pthread_mutex_unlock(&self->lock);
+    Py_END_ALLOW_THREADS;
+
+    /* The transaction started ok, let's store this xid. */
+    Py_INCREF(xid);
+    self->tpc_xid = xid;
+
+    return 0;
+}
+

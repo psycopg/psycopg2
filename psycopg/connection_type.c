@@ -181,6 +181,54 @@ psyco_conn_xid(connectionObject *self, PyObject *args, PyObject *kwargs)
 }
 
 
+#define psyco_conn_tpc_begin_doc \
+"tpc_begin(xid) -- begin a TPC transaction with given transaction ID xid."
+
+static PyObject *
+psyco_conn_tpc_begin(connectionObject *self, PyObject *args)
+{
+    PyObject *rv = NULL;
+    XidObject *xid = NULL;
+    PyObject *oxid;
+
+    EXC_IF_CONN_CLOSED(self);
+    EXC_IF_CONN_ASYNC(self, tpc_begin);
+
+    if (!PyArg_ParseTuple(args, "O", &oxid)) {
+        goto exit;
+    }
+
+    if (NULL == (xid = xid_ensure(oxid))) {
+        goto exit;
+    }
+
+    /* check we are not in a transaction */
+    if (self->status != CONN_STATUS_READY) {
+        PyErr_SetString(ProgrammingError,
+            "tpc_begin must be called outside a transaction");
+        goto exit;
+    }
+
+    /* two phase commit and autocommit make no point */
+    if (self->isolation_level == 0) {
+        PyErr_SetString(ProgrammingError,
+            "tpc_begin can't be called in autocommit mode");
+        goto exit;
+    }
+
+    if (conn_tpc_begin(self, xid) < 0) {
+        goto exit;
+    }
+
+    Py_INCREF(Py_None);
+    rv = Py_None;
+
+exit:
+    Py_XDECREF(xid);
+    return rv;
+}
+
+
 #ifdef PSYCOPG_EXTENSIONS
 
 /* set_isolation_level method - switch connection isolation level */
@@ -509,6 +557,8 @@ static struct PyMethodDef connectionObject_methods[] = {
      METH_VARARGS, psyco_conn_rollback_doc},
     {"xid", (PyCFunction)psyco_conn_xid,
      METH_VARARGS|METH_KEYWORDS, psyco_conn_xid_doc},
+    {"tpc_begin", (PyCFunction)psyco_conn_tpc_begin,
+     METH_VARARGS, psyco_conn_tpc_begin_doc},
 #ifdef PSYCOPG_EXTENSIONS
     {"set_isolation_level", (PyCFunction)psyco_conn_set_isolation_level,
      METH_VARARGS, psyco_conn_set_isolation_level_doc},

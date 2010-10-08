@@ -31,6 +31,7 @@
 #include <libpq-fe.h>
 
 #include "psycopg/config.h"
+#include "psycopg/xid.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -87,6 +88,7 @@ typedef struct {
     long int isolation_level; /* isolation level for this connection */
     long int mark;            /* number of commits/rollbacks done so far */
     int status;               /* status of the connection */
+    XidObject *tpc_xid;       /* Transaction ID in two-phase commit */
 
     long int async;           /* 1 means the connection is async */
     int protocol;             /* protocol version */
@@ -110,6 +112,7 @@ typedef struct {
     PyObject *binary_types;   /* a set of typecasters for binary types */
 
     int equote;               /* use E''-style quotes for escaped strings */
+
 } connectionObject;
 
 /* C-callable functions in connection_int.c and connection_ext.c */
@@ -128,6 +131,7 @@ HIDDEN int  conn_rollback(connectionObject *self);
 HIDDEN int  conn_switch_isolation_level(connectionObject *self, int level);
 HIDDEN int  conn_set_client_encoding(connectionObject *self, const char *enc);
 HIDDEN int  conn_poll(connectionObject *self);
+HIDDEN int  conn_tpc_begin(connectionObject *self, XidObject *xid);
 
 /* exception-raising macros */
 #define EXC_IF_CONN_CLOSED(self) if ((self)->closed > 0) { \

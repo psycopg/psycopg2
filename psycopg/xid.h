@@ -50,4 +50,6 @@ typedef struct {
   PyObject *database;
 } XidObject;
 
+HIDDEN XidObject *xid_ensure(PyObject *oxid);
+
 #endif /* PSYCOPG_XID_H */
