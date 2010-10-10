@@ -320,13 +320,49 @@ XidObject *xid_ensure(PyObject *oxid)
 }
 
 
+/* Return a base64-encoded string. */
+
+static PyObject *
+_xid_encode64(PyObject *s)
+{
+    PyObject *base64 = NULL;
+    PyObject *encode = NULL;
+    PyObject *out = NULL;
+    PyObject *rv = NULL;
+
+    if (!(base64 = PyImport_ImportModule("base64"))) { goto exit; }
+    if (!(encode = PyObject_GetAttrString(base64, "b64encode"))) { goto exit; }
+    if (!(out = PyObject_CallFunctionObjArgs(encode, s, NULL))) { goto exit; }
+
+    /* we are going to use PyString_AS_STRING on this so let's ensure it. */
+    if (!PyString_Check(out)) {
+        PyErr_SetString(PyExc_TypeError,
+            "base64.b64encode didn't return a string");
+        goto exit;
+    }
+
+    rv = out;
+    out = NULL;
+
+exit:
+    Py_XDECREF(out);
+    Py_XDECREF(encode);
+    Py_XDECREF(base64);
+
+    return rv;
+}
+
 /* Return the PostgreSQL transaction_id for this XA xid.
  *
  * PostgreSQL wants just a string, while the DBAPI supports the XA standard
  * and thus a triple. We use the same conversion algorithm implemented by JDBC
  * in order to allow some form of interoperation.
  *
+ * The function must be called while holding the GIL.
  * Return a buffer allocated with PyMem_Malloc. Use PyMem_Free to free it.
+ *
+ * see also: the pgjdbc implementation
+ *   http://cvs.pgfoundry.org/cgi-bin/cvsweb.cgi/jdbc/pgjdbc/org/postgresql/xa/RecoveredXid.java?rev=1.2
  */
 char *
 xid_get_tid(XidObject *self)
@@ -334,6 +370,9 @@ xid_get_tid(XidObject *self)
     char *buf = NULL;
     long format_id;
     Py_ssize_t bufsize = 0;
+    PyObject *egtrid = NULL;
+    PyObject *ebqual = NULL;
+    PyObject *tid = NULL;
 
     format_id = PyInt_AsLong(self->format_id);
     if (-1 == format_id && PyErr_Occurred()) { goto exit; }
@@ -347,9 +386,15 @@ xid_get_tid(XidObject *self)
         strncpy(buf, PyString_AsString(self->gtrid), bufsize);
     }
     else {
-        /* TODO: for the moment just use the string mashed up by James.
-         * later will implement the JDBC algorithm. */
-        bufsize = 1 + strlen(self->pg_xact_id);
+        if (!(egtrid = _xid_encode64(self->gtrid))) { goto exit; }
+        if (!(ebqual = _xid_encode64(self->bqual))) { goto exit; }
+        if (!(tid = PyString_FromFormat("%ld_%s_%s",
+                format_id,
+                PyString_AS_STRING(egtrid),
+                PyString_AS_STRING(ebqual)))) {
+            goto exit;
+        }
+        bufsize = 1 + PyString_Size(tid);
         if (!(buf = (char *)PyMem_Malloc(bufsize))) {
             PyErr_NoMemory();
             goto exit;
@@ -358,6 +403,10 @@ xid_get_tid(XidObject *self)
     }
 
 exit:
+    Py_XDECREF(egtrid);
+    Py_XDECREF(ebqual);
+    Py_XDECREF(tid);
+
     return buf;
 }
 

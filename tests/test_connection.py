@@ -296,6 +296,18 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
             self.assertEqual(xid.owner, owner)
             self.assertEqual(xid.database, database)
 
+    def test_xid_encoding(self):
+        cnn = self.connect()
+        xid = cnn.xid(42, "gtrid", "bqual")
+        cnn.tpc_begin(xid)
+        cnn.tpc_prepare()
+
+        cnn = self.connect()
+        cur = cnn.cursor()
+        cur.execute("select gid from pg_prepared_xacts where database = %s;",
+            (tests.dbname,))
+        self.assertEqual('42_Z3RyaWQ=_YnF1YWw=', cur.fetchone()[0])
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
