@@ -265,6 +265,122 @@ psyco_conn_tpc_prepare(connectionObject *self, PyObject *args)
 }
 
 
+/* the type of conn_commit/conn_rollback */
+typedef int (*_finish_f)(connectionObject *self);
+
+/* Implement tpc_commit/tpc_rollback.
+ *
+ * This is a common framework performing the chechs and state manipulation
+ * common to the two functions.
+ *
+ * Parameters are:
+ * - self, args: passed by Python
+ * - opc_f: the function to call in case of one-phase commit/rollback
+ *          one of conn_commit/conn_rollback
+ * - tpc_cmd: the command to execute for a two-phase commit/rollback
+ *
+ * The function can be called in three cases:
+ * - If xid is specified, the status must be "ready";
+ *   issue the commit/rollback prepared.
+ * - if xid is not specified and status is "begin" with a xid,
+ *   issue a normal commit/rollback.
+ * - if xid is not specified and status is "prepared",
+ *   issue the commit/rollback prepared.
+ */
+static PyObject *
+_psyco_conn_tpc_finish(connectionObject *self, PyObject *args,
+    _finish_f opc_f, char *tpc_cmd)
+{
+    PyObject *oxid = NULL;
+    XidObject *xid = NULL;
+    PyObject *rv = NULL;
+
+    if (!PyArg_ParseTuple(args, "|O", &oxid)) { goto exit; }
+
+    if (oxid) {
+        if (!(xid = xid_ensure(oxid))) { goto exit; }
+    }
+
+    if (xid) {
+        /* committing/aborting a recovered transaction. */
+        if (self->status != CONN_STATUS_READY) {
+            PyErr_SetString(ProgrammingError,
+                "tpc_commit/tpc_rollback with a xid "
+                "must be called outside a transaction");
+            goto exit;
+        }
+        if (0 > conn_tpc_command(self, tpc_cmd, xid)) {
+            goto exit;
+        }
+    } else {
+        PyObject *tmp;
+
+        /* committing/aborting our own transaction. */
+        if (!self->tpc_xid) {
+            PyErr_SetString(ProgrammingError,
+                "tpc_commit/tpc_rollback with no parameter "
+                "must be called in a two-phase transaction");
+            goto exit;
+        }
+
+        switch (self->status) {
+          case CONN_STATUS_BEGIN:
+            if (0 > opc_f(self)) { goto exit; }
+            break;
+
+          case CONN_STATUS_PREPARED:
+            if (0 > conn_tpc_command(self, tpc_cmd, self->tpc_xid)) {
+                goto exit;
+            }
+            break;
+
+          default:
+            PyErr_SetString(InterfaceError,
+                "unexpected state in tpc_commit/tpc_rollback");
+            goto exit;
+        }
+
+        /* connection goes ready */
+        self->status = CONN_STATUS_READY;
+        tmp = (PyObject *)self->tpc_xid;
+        self->tpc_xid = NULL;
+        Py_DECREF(tmp);
+    }
+
+    Py_INCREF(Py_None);
+    rv = Py_None;
+
+exit:
+    Py_XDECREF(xid);
+    return rv;
+}
+
+#define psyco_conn_tpc_commit_doc \
+"tpc_commit([xid]) -- commit a transaction previously prepared."
+
+static PyObject *
+psyco_conn_tpc_commit(connectionObject *self, PyObject *args)
+{
+    EXC_IF_CONN_CLOSED(self);
+    EXC_IF_CONN_ASYNC(self, tpc_commit);
+
+    return _psyco_conn_tpc_finish(self, args,
+                                  conn_commit, "COMMIT PREPARED");
+}
+
+#define psyco_conn_tpc_rollback_doc \
+"tpc_rollback([xid]) -- abort a transaction previously prepared."
+
+static PyObject *
+psyco_conn_tpc_rollback(connectionObject *self, PyObject *args)
+{
+    EXC_IF_CONN_CLOSED(self);
+    EXC_IF_CONN_ASYNC(self, tpc_rollback);
+
+    return _psyco_conn_tpc_finish(self, args,
+                                  conn_rollback, "ROLLBACK PREPARED");
+}
+
 #ifdef PSYCOPG_EXTENSIONS
 
 /* set_isolation_level method - switch connection isolation level */
@@ -600,6 +716,10 @@ static struct PyMethodDef connectionObject_methods[] = {
      METH_VARARGS, psyco_conn_tpc_begin_doc},
     {"tpc_prepare", (PyCFunction)psyco_conn_tpc_prepare,
      METH_VARARGS, psyco_conn_tpc_prepare_doc},
+    {"tpc_commit", (PyCFunction)psyco_conn_tpc_commit,
+     METH_VARARGS, psyco_conn_tpc_commit_doc},
+    {"tpc_rollback", (PyCFunction)psyco_conn_tpc_rollback,
+     METH_VARARGS, psyco_conn_tpc_rollback_doc},
 #ifdef PSYCOPG_EXTENSIONS
     {"set_isolation_level", (PyCFunction)psyco_conn_set_isolation_level,
      METH_VARARGS, psyco_conn_set_isolation_level_doc},
