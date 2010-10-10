@@ -47,7 +47,7 @@ HIDDEN int pq_abort_locked(connectionObject *conn, PGresult **pgres,
 HIDDEN int pq_abort(connectionObject *conn);
 HIDDEN int pq_reset(connectionObject *conn);
 HIDDEN int pq_tpc_command_locked(connectionObject *conn,
-                                 const char *cmd, XidObject *xid,
+                                 const char *cmd, const char *tid,
                                  PGresult **pgres, char **error,
                                  PyThreadState **tstate);
 HIDDEN int pq_is_busy(connectionObject *conn);

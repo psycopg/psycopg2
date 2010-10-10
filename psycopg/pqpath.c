@@ -617,19 +617,17 @@ pq_reset(connectionObject *conn)
  * holding the global interpreter lock. */
 
 int
-pq_tpc_command_locked(connectionObject *conn, const char *cmd, XidObject *xid,
-                  PGresult **pgres, char **error,
-                  PyThreadState **tstate)
+pq_tpc_command_locked(connectionObject *conn, const char *cmd, const char *tid,
+                  PGresult **pgres, char **error, PyThreadState **tstate)
 {
     int rv = -1;
-    char *tid = NULL, *etid = NULL, *buf = NULL;
+    char *etid = NULL, *buf = NULL;
     Py_ssize_t buflen;
 
     Dprintf("_pq_tpc_command: pgconn = %p, command = %s",
             conn->pgconn, cmd);
 
     /* convert the xid into the postgres transaction_id and quote it. */
-    if (!(tid = xid_get_tid(xid))) { goto exit; }
     if (!(etid = psycopg_escape_string((PyObject *)conn, tid, 0, NULL, NULL)))
     { goto exit; }
 
@@ -647,7 +645,6 @@ pq_tpc_command_locked(connectionObject *conn, const char *cmd, XidObject *xid,
 exit:
     PyMem_Free(buf);
     PyMem_Free(etid);
-    PyMem_Free(tid);
 
     return rv;
 }

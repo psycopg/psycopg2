@@ -939,21 +939,30 @@ conn_tpc_command(connectionObject *self, const char *cmd, XidObject *xid)
 {
     PGresult *pgres = NULL;
     char *error = NULL;
-    int rv;
+    char *tid = NULL;
+    int rv = -1;
 
     Dprintf("conn_tpc_command: %s", cmd);
+
+    /* convert the xid into PostgreSQL transaction id while keeping the GIL */
+    if (!(tid = xid_get_tid(xid))) { goto exit; }
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
 
-    rv = pq_tpc_command_locked(self, cmd, xid, &pgres, &error, &_save);
+    if (0 > (rv = pq_tpc_command_locked(self, cmd, tid,
+                                        &pgres, &error, &_save))) {
+        pthread_mutex_unlock(&self->lock);
+        Py_BLOCK_THREADS;
+        pq_complete_error(self, &pgres, &error);
+        goto exit;
+    }
 
     pthread_mutex_unlock(&self->lock);
     Py_END_ALLOW_THREADS;
 
-    if (rv < 0) {
-        pq_complete_error(self, &pgres, &error);
-    }
+exit:
+    PyMem_Free(tid);
     return rv;
 }
 
