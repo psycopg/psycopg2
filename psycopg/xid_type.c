@@ -34,8 +34,6 @@
 #include "psycopg/psycopg.h"
 #include "psycopg/xid.h"
 
-static const char xid_prefix[] = "psycopg-v1";
-
 static PyMemberDef xid_members[] = {
     { "format_id", T_OBJECT, offsetof(XidObject, format_id), RO },
     { "gtrid", T_OBJECT, offsetof(XidObject, gtrid), RO },
@@ -51,7 +49,6 @@ xid_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
     XidObject *self = (XidObject *)type->tp_alloc(type, 0);
 
-    self->pg_xact_id = NULL;
     Py_INCREF(Py_None);
     self->format_id = Py_None;
     Py_INCREF(Py_None);
@@ -72,7 +69,7 @@ static int
 xid_init(XidObject *self, PyObject *args, PyObject *kwargs)
 {
     static char *kwlist[] = {"format_id", "gtrid", "bqual", NULL};
-    int format_id, i, gtrid_len, bqual_len, xid_len;
+    int format_id, i, gtrid_len, bqual_len;
     const char *gtrid, *bqual;
     PyObject *tmp;
 
@@ -117,21 +114,6 @@ xid_init(XidObject *self, PyObject *args, PyObject *kwargs)
         }
     }
 
-    /* Now we can construct the PostgreSQL transaction ID, which is of
-       the following form:
-
-         psycopg-v1:$FORMAT_ID:$GTRID_LEN:$GTRID$BQUAL
-
-       Where $FORMAT_ID is eight hex digits and $GTRID_LEN is 2 hex digits.
-    */
-    xid_len = strlen(xid_prefix) + 1 + 8 + 1 + 2 + 1 + gtrid_len + bqual_len + 1;
-    if (self->pg_xact_id)
-        free(self->pg_xact_id);
-    self->pg_xact_id = malloc(xid_len);
-    memset(self->pg_xact_id, '\0', xid_len);
-    snprintf(self->pg_xact_id, xid_len, "%s:%08X:%02X:%s%s",
-             xid_prefix, format_id, gtrid_len, gtrid, bqual);
-
     tmp = self->format_id;
     self->format_id = PyInt_FromLong(format_id);
     Py_XDECREF(tmp);
@@ -162,10 +144,6 @@ xid_traverse(XidObject *self, visitproc visit, void *arg)
 static void
 xid_dealloc(XidObject *self)
 {
-    if (self->pg_xact_id) {
-        free(self->pg_xact_id);
-        self->pg_xact_id = NULL;
-    }
     Py_CLEAR(self->format_id);
     Py_CLEAR(self->gtrid);
     Py_CLEAR(self->bqual);
@@ -180,13 +158,6 @@ static void
 xid_del(PyObject *self)
 {
     PyObject_GC_Del(self);
-}
-
-static PyObject *
-xid_repr(XidObject *self)
-{
-    return PyString_FromFormat("<Xid \"%s\">",
-                               self->pg_xact_id ? self->pg_xact_id : "(null)");
 }
 
 static Py_ssize_t
@@ -247,7 +218,7 @@ PyTypeObject XidType = {
 
     0,          /*tp_compare*/
 
-    (reprfunc)xid_repr, /*tp_repr*/
+    0,          /*tp_repr*/
     0,          /*tp_as_number*/
     &xid_sequence, /*tp_as_sequence*/
     0,          /*tp_as_mapping*/
@@ -399,7 +370,7 @@ xid_get_tid(XidObject *self)
             PyErr_NoMemory();
             goto exit;
         }
-        strncpy(buf, self->pg_xact_id, bufsize);
+        strncpy(buf, PyString_AS_STRING(tid), bufsize);
     }
 
 exit:

@@ -39,9 +39,6 @@ extern HIDDEN PyTypeObject XidType;
 typedef struct {
   PyObject_HEAD
 
-  /* the PosgreSQL string transaction ID */
-  char *pg_xact_id;
-
   /* the Python-style three-part transaction ID */
   PyObject *format_id;
   PyObject *gtrid;
