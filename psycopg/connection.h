@@ -135,6 +135,7 @@ HIDDEN int  conn_poll(connectionObject *self);
 HIDDEN int  conn_tpc_begin(connectionObject *self, XidObject *xid);
 HIDDEN int  conn_tpc_command(connectionObject *self,
                              const char *cmd, XidObject *xid);
+HIDDEN PyObject *conn_tpc_recover(connectionObject *self);
 
 /* exception-raising macros */
 #define EXC_IF_CONN_CLOSED(self) if ((self)->closed > 0) { \

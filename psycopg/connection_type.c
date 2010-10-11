@@ -381,6 +381,22 @@ psyco_conn_tpc_rollback(connectionObject *self, PyObject *args)
                                   conn_rollback, "ROLLBACK PREPARED");
 }
 
+#define psyco_conn_tpc_recover_doc \
+"tpc_recover() -- returns a list of pending transaction IDs."
+
+static PyObject *
+psyco_conn_tpc_recover(connectionObject *self, PyObject *args)
+{
+    EXC_IF_CONN_CLOSED(self);
+    EXC_IF_CONN_ASYNC(self, tpc_recover);
+    EXC_IF_TPC_PREPARED(self, tpc_recover);
+
+    if (!PyArg_ParseTuple(args, "")) { return NULL; }
+
+    return conn_tpc_recover(self);
+}
+
+
 #ifdef PSYCOPG_EXTENSIONS
 
 /* set_isolation_level method - switch connection isolation level */
@@ -720,6 +736,8 @@ static struct PyMethodDef connectionObject_methods[] = {
      METH_VARARGS, psyco_conn_tpc_commit_doc},
     {"tpc_rollback", (PyCFunction)psyco_conn_tpc_rollback,
      METH_VARARGS, psyco_conn_tpc_rollback_doc},
+    {"tpc_recover", (PyCFunction)psyco_conn_tpc_recover,
+     METH_VARARGS, psyco_conn_tpc_recover_doc},
 #ifdef PSYCOPG_EXTENSIONS
     {"set_isolation_level", (PyCFunction)psyco_conn_set_isolation_level,
      METH_VARARGS, psyco_conn_set_isolation_level_doc},

@@ -957,3 +957,36 @@ conn_tpc_command(connectionObject *self, const char *cmd, XidObject *xid)
     return rv;
 }
 
+/* conn_tpc_recover -- return a list of pending TPC Xid */
+
+PyObject *
+conn_tpc_recover(connectionObject *self)
+{
+    int status;
+    PyObject *xids = NULL;
+    PyObject *rv = NULL;
+    PyObject *tmp;
+
+    /* store the status to restore it. */
+    status = self->status;
+
+    if (!(xids = xid_recover((PyObject *)self))) { goto exit; }
+
+    if (status == CONN_STATUS_READY && self->status == CONN_STATUS_BEGIN) {
+        /* recover began a transaction: let's abort it. */
+        if (!(tmp = PyObject_CallMethod((PyObject *)self, "rollback", NULL))) {
+            goto exit;
+        }
+        Py_DECREF(tmp);
+    }
+
+    /* all fine */
+    rv = xids;
+    xids = NULL;
+
+exit:
+    Py_XDECREF(xids);
+
+    return rv;
+
+}
