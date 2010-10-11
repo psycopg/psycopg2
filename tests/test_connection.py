@@ -347,7 +347,7 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
                 if xid.database == tests.dbname ]
             self.assertEqual(1, len(xids))
             xid = xids[0]
-            self.assertEqual(xid.format_id, -2)
+            self.assertEqual(xid.format_id, None)
             self.assertEqual(xid.gtrid, tid)
             self.assertEqual(xid.bqual, None)
 

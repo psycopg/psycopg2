@@ -31,9 +31,6 @@
 
 #include "psycopg/config.h"
 
-/* value for the format_id when the xid doesn't follow the XA standard. */
-#define XID_UNPARSED (-2)
-
 extern HIDDEN PyTypeObject XidType;
 
 typedef struct {
