@@ -308,6 +308,51 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
             (tests.dbname,))
         self.assertEqual('42_Z3RyaWQ=_YnF1YWw=', cur.fetchone()[0])
 
+    def test_xid_roundtrip(self):
+        for fid, gtrid, bqual in [
+            (0, "", ""),
+            (42, "gtrid", "bqual"),
+            (0x7fffffff, "x" * 64, "y" * 64),
+        ]:
+            cnn = self.connect()
+            xid = cnn.xid(fid, gtrid, bqual)
+            cnn.tpc_begin(xid)
+            cnn.tpc_prepare()
+            cnn.close()
+
+            cnn = self.connect()
+            xids = [ xid for xid in cnn.tpc_recover()
+                if xid.database == tests.dbname ]
+            self.assertEqual(1, len(xids))
+            xid = xids[0]
+            self.assertEqual(xid.format_id, fid)
+            self.assertEqual(xid.gtrid, gtrid)
+            self.assertEqual(xid.bqual, bqual)
+
+            cnn.tpc_rollback(xid)
+
+    def test_unparsed_roundtrip(self):
+        for tid in [
+            '',
+            'hello, world!',
+            'x' * 199,  # PostgreSQL's limit in transaction id length
+        ]:
+            cnn = self.connect()
+            cnn.tpc_begin(tid)
+            cnn.tpc_prepare()
+            cnn.close()
+
+            cnn = self.connect()
+            xids = [ xid for xid in cnn.tpc_recover()
+                if xid.database == tests.dbname ]
+            self.assertEqual(1, len(xids))
+            xid = xids[0]
+            self.assertEqual(xid.format_id, -2)
+            self.assertEqual(xid.gtrid, tid)
+            self.assertEqual(xid.bqual, None)
+
+            cnn.tpc_rollback(xid)
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
