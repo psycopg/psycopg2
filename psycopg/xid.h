@@ -49,7 +49,7 @@ typedef struct {
 
 HIDDEN XidObject *xid_ensure(PyObject *oxid);
 HIDDEN XidObject *xid_from_string(PyObject *s);
-HIDDEN char *xid_get_tid(XidObject *self);
+HIDDEN PyObject *xid_get_tid(XidObject *self);
 HIDDEN PyObject *xid_recover(PyObject *conn);
 
 #endif /* PSYCOPG_XID_H */

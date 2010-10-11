@@ -348,32 +348,26 @@ exit:
  * see also: the pgjdbc implementation
  *   http://cvs.pgfoundry.org/cgi-bin/cvsweb.cgi/jdbc/pgjdbc/org/postgresql/xa/RecoveredXid.java?rev=1.2
  */
-char *
+PyObject *
 xid_get_tid(XidObject *self)
 {
-    char *buf = NULL;
-    Py_ssize_t bufsize = 0;
+    PyObject *rv = NULL;
     PyObject *egtrid = NULL;
     PyObject *ebqual = NULL;
     PyObject *format = NULL;
     PyObject *args = NULL;
-    PyObject *tid = NULL;
 
     if (Py_None == self->format_id) {
         /* Unparsed xid: return the gtrid. */
-        bufsize = 1 + PyString_Size(self->gtrid);
-        if (!(buf = (char *)PyMem_Malloc(bufsize))) {
-            PyErr_NoMemory();
-            goto exit;
-        }
-        strncpy(buf, PyString_AsString(self->gtrid), bufsize);
+        Py_INCREF(self->gtrid);
+        rv = self->gtrid;
     }
     else {
         /* XA xid: mash together the components. */
         if (!(egtrid = _xid_encode64(self->gtrid))) { goto exit; }
         if (!(ebqual = _xid_encode64(self->bqual))) { goto exit; }
 
-        /* tid = "%d_%s_%s" % (format_id, egtrid, ebqual) */
+        /* rv = "%d_%s_%s" % (format_id, egtrid, ebqual) */
         if (!(format = PyString_FromString("%d_%s_%s"))) { goto exit; }
 
         if (!(args = PyTuple_New(3))) { goto exit; }
@@ -382,14 +376,7 @@ xid_get_tid(XidObject *self)
         PyTuple_SET_ITEM(args, 1, egtrid); egtrid = NULL;
         PyTuple_SET_ITEM(args, 2, ebqual); ebqual = NULL;
 
-        if (!(tid = PyString_Format(format, args))) { goto exit; }
-
-        bufsize = 1 + PyString_Size(tid);
-        if (!(buf = (char *)PyMem_Malloc(bufsize))) {
-            PyErr_NoMemory();
-            goto exit;
-        }
-        strncpy(buf, PyString_AsString(tid), bufsize);
+        if (!(rv = PyString_Format(format, args))) { goto exit; }
     }
 
 exit:
@@ -397,9 +384,8 @@ exit:
     Py_XDECREF(format);
     Py_XDECREF(egtrid);
     Py_XDECREF(ebqual);
-    Py_XDECREF(tid);
 
-    return buf;
+    return rv;
 }
 
 

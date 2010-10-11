@@ -939,18 +939,20 @@ conn_tpc_command(connectionObject *self, const char *cmd, XidObject *xid)
 {
     PGresult *pgres = NULL;
     char *error = NULL;
-    char *tid = NULL;
+    PyObject *tid = NULL;
+    const char *ctid;
     int rv = -1;
 
     Dprintf("conn_tpc_command: %s", cmd);
 
     /* convert the xid into PostgreSQL transaction id while keeping the GIL */
     if (!(tid = xid_get_tid(xid))) { goto exit; }
+    if (!(ctid = PyString_AsString(tid))) { goto exit; }
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
 
-    if (0 > (rv = pq_tpc_command_locked(self, cmd, tid,
+    if (0 > (rv = pq_tpc_command_locked(self, cmd, ctid,
                                         &pgres, &error, &_save))) {
         pthread_mutex_unlock(&self->lock);
         Py_BLOCK_THREADS;
@@ -962,7 +964,7 @@ conn_tpc_command(connectionObject *self, const char *cmd, XidObject *xid)
     Py_END_ALLOW_THREADS;
 
 exit:
-    PyMem_Free(tid);
+    Py_XDECREF(tid);
     return rv;
 }
 
