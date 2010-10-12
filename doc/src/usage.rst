@@ -540,3 +540,54 @@ using the |lo_import|_ and |lo_export|_ libpq functions.
 .. _lo_import: http://www.postgresql.org/docs/9.0/static/lo-interfaces.html#LO-IMPORT
 .. |lo_export| replace:: `!lo_export()`
 .. _lo_export: http://www.postgresql.org/docs/9.0/static/lo-interfaces.html#LO-EXPORT
+
+
+
+.. index::
+    pair: Two-phase commit; Transaction
+
+.. _tpc:
+
+Two-Phase Commit protocol support
+---------------------------------
+
+.. versionadded:: 2.2.3
+
+Psycopg exposes the two-phase commit features available from PostgreSQL 8,1
+implementing the *two-phase commit extensions* proposed by the |DBAPI|.
+
+The |DBAPI| model of two-phase commit is inspired to the `XA specification`__,
+according to which transaction IDs are formed from three components:
+
+- a format ID (non-negative 32 bit integer)
+- a global transaction ID (string not longer than 64 bytes)
+- a branch qualifier (string not longer than 64 bytes)
+
+For a particular global transaction, the first two components will be the same
+for all the resources. Every resource will be assigned a different branch
+qualifier.
+
+According to the |DBAPI| specification, a transaction ID is created using the
+`connection.xid()` method. Once you have a transaction id, a distributed
+transaction can be started with `connection.tpc_begin()`, prepared using
+`~connection.tpc_prepare()` and completed using `~connection.tpc_commit()` or
+`~connection.tpc_rollback()`.  Transaction IDs can also be retrieved from the
+database using `~connection.tpc_recover()` and completed using the above
+`!tpc_commit()` and `!tpc_rollback()`.
+
+PostgreSQL doesn't follow the XA standard though, and the ID for a PostgreSQL
+prepared transaction can be any string up to 200 characters long. Psycopg can
+deal both with Xid objects created by the `!xid()` method and with
+transactions identified only by a string.
+
+The format in which the Xids are converted into strings passed to the
+database is the same employed by the `PostgreSQL JDBC driver`__: this should
+allow interoperation between tools written in Python and in Java. For example
+a recovery tool written in Python would be able to recognize the components of
+transactions produced by a Java program.
+
+For further details see the documentation for the above methods.
+
+.. __: http://www.opengroup.org/bookstore/catalog/c193.htm
+.. __: http://jdbc.postgresql.org/
+

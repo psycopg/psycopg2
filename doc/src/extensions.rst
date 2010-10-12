@@ -450,6 +450,15 @@ internal usage and Python code should not rely on them.
 
     An alias for `STATUS_BEGIN`
 
+.. data:: STATUS_PREPARED
+
+    The connection has been prepared for the second phase in a :ref:`two-phase
+    commit <tpc>` transaction. The connection can't be used to send commands
+    to the database until the transaction is finished with
+    `~connection.tpc_commit()` or `~connection.tpc_rollback()`.
+
+    .. versionadded:: 2.2.3
+
 
 
 .. index::

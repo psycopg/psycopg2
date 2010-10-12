@@ -90,6 +90,7 @@ The ``connection`` class
 
             .. _PgBouncer: http://pgbouncer.projects.postgresql.org/
 
+
     .. index::
         single: Exceptions; In the connection class
 
@@ -97,6 +98,157 @@ The ``connection`` class
 
     The `!connection` also exposes as attributes the same exceptions
     available in the `psycopg2` module.  See :ref:`dbapi-exceptions`.
+
+
+
+    .. index::
+        single: Two-phase commit; methods
+
+    .. rubric:: Two-phase commit support methods
+
+    .. versionadded:: 2.2.3
+
+    .. seealso:: :ref:`tpc` for an introductory explanation of these methods.
+
+    Note that PostgreSQL supports two-phase commit since release 8.1: these
+    methods raise `~psycopg2.NotSupportedError` if used with an older version
+    server.
+
+
+    .. _tpc_methods:
+
+    .. method:: xid(format_id, gtrid, bqual)
+
+        Returns a transaction ID object suitable for passing to the
+        `!tpc_*()` methods of this connection. The argument types and
+        constraints are explained in :ref:`tpc`.
+
+        The object returned can be accessed and unpacked as a 3 items tuple,
+        returning the arguments passed to the method. The same values are
+        available as attributes `!format_id`, `!gtrid`, `!bqual`.
+
+
+    .. method:: tpc_begin(xid)
+
+        Begins a TPC transaction with the given transaction ID *xid*.
+
+        This method should be called outside of a transaction (i.e. nothing
+        may have executed since the last `~connection.commit()` or
+        `~connection.rollback()` and `connection.status` is
+        `~psycopg2.extensions.STATUS_READY`).
+
+        Furthermore, it is an error to call `!commit()` or `!rollback()`
+        within the TPC transaction: in this case a `~psycopg2.ProgrammingError`
+        is raised.
+
+        The *xid* may be either an object returned by the `~connection.xid()`
+        method or a plain string: the latter allows to create a transaction
+        using the provided string as PostgreSQL transaction id. See also
+        `~connection.tpc_recover()`.
+
+
+    .. index::
+        pair: Transaction; Prepare
+
+    .. method:: tpc_prepare()
+
+        Performs the first phase of a transaction started with
+        `~connection.tpc_begin()`.  A `~psycopg2.ProgrammingError` is raised if
+        this method is used outside of a TPC transaction.
+
+        After calling `!tpc_prepare()`, no statements can be executed until
+        `~connection.tpc_commit()` or `~connection.tpc_rollback()` have been
+        called.  The `~connection.reset()` method can be used to restore the
+        status of the connection to `~psycopg2.extensions.STATUS_READY`: the
+        transaction will remained prepared in the database and will be
+        possible to finish it with `!tpc_commit(xid)` and
+        `!tpc_rollback(xid)`.
+
+        .. seealso:: the |PREPARE TRANSACTION|_ PostgreSQL command.
+
+        .. |PREPARE TRANSACTION| replace:: :sql:`PREPARE TRANSACTION`
+        .. _PREPARE TRANSACTION: http://www.postgresql.org/docs/9.0/static/sql-prepare-transaction.html
+
+
+    .. index::
+        pair: Commit; Prepared
+
+    .. method:: tpc_commit([xid])
+
+        When called with no arguments, `!tpc_commit()` commits a TPC
+        transaction previously prepared with `~connection.tpc_prepare()`.
+
+        If `!tpc_commit()` is called prior to `!tpc_prepare()`, a single phase
+        commit is performed.  A transaction manager may choose to do this if
+        only a single resource is participating in the global transaction.
+
+        When called with a transaction ID *xid*, the database commits
+        the given transaction.  If an invalid transaction ID is
+        provided, a `~psycopg2.ProgrammingError` will be raised.  This form
+        should be called outside of a transaction, and is intended for use in
+        recovery.
+
+        On return, the TPC transaction is ended.
+
+        .. seealso:: the |COMMIT PREPARED|_ PostgreSQL command.
+
+        .. |COMMIT PREPARED| replace:: :sql:`COMMIT PREPARED`
+        .. _COMMIT PREPARED: http://www.postgresql.org/docs/9.0/static/sql-commit-prepared.html
+
+
+    .. index::
+        pair: Rollback; Prepared
+
+    .. method:: tpc_rollback([xid])
+
+        When called with no arguments, `!tpc_rollback()` rolls back a TPC
+        transaction.  It may be called before or after
+        `~connection.tpc_prepare()`.
+
+        When called with a transaction ID *xid*, it rolls back the given
+        transaction.  If an invalid transaction ID is provided, a
+        `~psycopg2.ProgrammingError` is raised.  This form should be called
+        outside of a transaction, and is intended for use in recovery.
+
+        On return, the TPC transaction is ended.
+
+        .. seealso:: the |ROLLBACK PREPARED|_ PostgreSQL command.
+
+        .. |ROLLBACK PREPARED| replace:: :sql:`ROLLBACK PREPARED`
+        .. _ROLLBACK PREPARED: http://www.postgresql.org/docs/9.0/static/sql-rollback-prepared.html
+
+
+    .. index::
+        pair: Transaction; Recover
+
+    .. method:: tpc_recover()
+
+        Returns a list of pending transaction IDs suitable for use with
+        `!tpc_commit(xid)` or `!tpc_rollback(xid)`.
+
+        If a transaction was not initiated by Psycopg, the returned Xids will
+        have attributes `!format_id` and `!bqual` set to `None` and the
+        `!gtrid` set to the PostgreSQL transaction ID: such Xids are still
+        usable for recovery.  Psycopg uses the same algorithm of the
+        `PostgreSQL JDBC driver`__ to encode a XA triple in a string, so
+        transactions initiated by a program using such driver should be
+        unpacked correctly.
+
+        .. __: http://jdbc.postgresql.org/
+
+        Xids returned by `!tpc_recover()` have additional attributes populated
+        with the values read from the server:
+
+        - `!prepared`: timestamp with timezone reporting the time the
+          transaction was prepared
+        - `!owner`: name of the user who prepared the transaction
+        - `!database`: name of the database the transaction belongs to
+
+        .. seealso:: the |pg_prepared_xacts|_ system view.
+
+        .. |pg_prepared_xacts| replace:: `pg_prepared_xacts`
+        .. _pg_prepared_xacts: http://www.postgresql.org/docs/9.0/static/view-pg-prepared-xacts.html
+
 
 
     .. extension::
@@ -118,7 +270,9 @@ The ``connection`` class
 
         The method rolls back an eventual pending transaction and executes the
         PostgreSQL |RESET|_ and |SET SESSION AUTHORIZATION|__ to revert the
-        session to the default values.
+        session to the default values. A two-phase commit transaction prepared
+        using `~connection.tpc_prepare()` will remain in the database
+        available for recover.
 
         .. |RESET| replace:: :sql:`RESET`
         .. _RESET: http://www.postgresql.org/docs/9.0/static/sql-reset.html
