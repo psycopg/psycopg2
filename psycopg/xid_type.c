@@ -339,45 +339,42 @@ XidObject *xid_ensure(PyObject *oxid)
 }
 
 
+/* Encode or decode a string in base64. */
+
+static PyObject *
+_xid_base64_enc_dec(const char *funcname, PyObject *s)
+{
+    PyObject *base64 = NULL;
+    PyObject *func = NULL;
+    PyObject *rv = NULL;
+
+    if (!(base64 = PyImport_ImportModule("base64"))) { goto exit; }
+    if (!(func = PyObject_GetAttrString(base64, funcname))) { goto exit; }
+    rv = PyObject_CallFunctionObjArgs(func, s, NULL);
+
+exit:
+    Py_XDECREF(func);
+    Py_XDECREF(base64);
+
+    return rv;
+}
+
 /* Return a base64-encoded string. */
 
 static PyObject *
 _xid_encode64(PyObject *s)
 {
-    PyObject *base64 = NULL;
-    PyObject *encode = NULL;
-    PyObject *rv = NULL;
-
-    if (!(base64 = PyImport_ImportModule("base64"))) { goto exit; }
-    if (!(encode = PyObject_GetAttrString(base64, "b64encode"))) { goto exit; }
-    if (!(rv = PyObject_CallFunctionObjArgs(encode, s, NULL))) { goto exit; }
-
-exit:
-    Py_XDECREF(encode);
-    Py_XDECREF(base64);
-
-    return rv;
+    return _xid_base64_enc_dec("b64encode", s);
 }
 
-/* decode a base64-encoded string */
+/* Decode a base64-encoded string */
 
 static PyObject *
 _xid_decode64(PyObject *s)
 {
-    PyObject *base64 = NULL;
-    PyObject *decode = NULL;
-    PyObject *rv = NULL;
-
-    if (!(base64 = PyImport_ImportModule("base64"))) { goto exit; }
-    if (!(decode = PyObject_GetAttrString(base64, "b64decode"))) { goto exit; }
-    if (!(rv = PyObject_CallFunctionObjArgs(decode, s, NULL))) { goto exit; }
-
-exit:
-    Py_XDECREF(decode);
-    Py_XDECREF(base64);
-
-    return rv;
+    return _xid_base64_enc_dec("b64decode", s);
 }
+
 
 /* Return the PostgreSQL transaction_id for this XA xid.
  *
