@@ -188,6 +188,49 @@ xid_getitem(XidObject *self, Py_ssize_t item)
     }
 }
 
+static PyObject *
+xid_str(XidObject *self)
+{
+    return xid_get_tid(self);
+}
+
+static PyObject *
+xid_repr(XidObject *self)
+{
+    PyObject *rv = NULL;
+    PyObject *format = NULL;
+    PyObject *args = NULL;
+
+    if (Py_None == self->format_id) {
+        if (!(format = PyString_FromString("<Xid: %r (unparsed)>"))) {
+            goto exit;
+        }
+        if (!(args = PyTuple_New(1))) { goto exit; }
+        Py_INCREF(self->gtrid);
+        PyTuple_SET_ITEM(args, 0, self->gtrid);
+    }
+    else {
+        if (!(format = PyString_FromString("<Xid: (%r, %r, %r)>"))) {
+            goto exit;
+        }
+        if (!(args = PyTuple_New(3))) { goto exit; }
+        Py_INCREF(self->format_id);
+        PyTuple_SET_ITEM(args, 0, self->format_id);
+        Py_INCREF(self->gtrid);
+        PyTuple_SET_ITEM(args, 1, self->gtrid);
+        Py_INCREF(self->bqual);
+        PyTuple_SET_ITEM(args, 2, self->bqual);
+    }
+
+    rv = PyString_Format(format, args);
+
+exit:
+    Py_XDECREF(args);
+    Py_XDECREF(format);
+
+    return rv;
+}
+
 static PySequenceMethods xid_sequence = {
     (lenfunc)xid_len,          /* sq_length */
     0,                         /* sq_concat */
@@ -218,14 +261,14 @@ PyTypeObject XidType = {
 
     0,          /*tp_compare*/
 
-    0,          /*tp_repr*/
+    (reprfunc)xid_repr, /*tp_repr*/
     0,          /*tp_as_number*/
     &xid_sequence, /*tp_as_sequence*/
     0,          /*tp_as_mapping*/
     0,          /*tp_hash */
 
     0,          /*tp_call*/
-    0,          /*tp_str*/
+    (reprfunc)xid_str, /*tp_str*/
 
     0,          /*tp_getattro*/
     0,          /*tp_setattro*/
