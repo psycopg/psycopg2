@@ -826,6 +826,7 @@ init_psycopg(void)
     PyModule_AddObject(module, "cursor", (PyObject*)&cursorType);
     PyModule_AddObject(module, "ISQLQuote", (PyObject*)&isqlquoteType);
     PyModule_AddObject(module, "Notify", (PyObject*)&NotifyType);
+    PyModule_AddObject(module, "Xid", (PyObject*)&XidType);
 #ifdef PSYCOPG_EXTENSIONS
     PyModule_AddObject(module, "lobject", (PyObject*)&lobjectType);
 #endif
