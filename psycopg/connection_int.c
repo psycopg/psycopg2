@@ -727,6 +727,7 @@ conn_poll(connectionObject *self)
 
     case CONN_STATUS_READY:
     case CONN_STATUS_BEGIN:
+    case CONN_STATUS_PREPARED:
         res = _conn_poll_query(self);
 
         if (res == PSYCO_POLL_OK && self->async_cursor) {
