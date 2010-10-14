@@ -231,6 +231,20 @@ exit:
     return rv;
 }
 
+
+static const char xid_from_string_doc[] =
+    "Create a Xid object from a string representation.";
+
+static PyObject *
+xid_from_string_method(PyObject *cls, PyObject *args)
+{
+    PyObject *s = NULL;
+
+    if (!PyArg_ParseTuple(args, "O", &s)) { return NULL; }
+
+    return (PyObject *)xid_from_string(s);
+}
+
 static PySequenceMethods xid_sequence = {
     (lenfunc)xid_len,          /* sq_length */
     0,                         /* sq_concat */
@@ -243,6 +257,14 @@ static PySequenceMethods xid_sequence = {
     0,                         /* sq_inplace_concat */
     0,                         /* sq_inplace_repeat */
 };
+
+
+static struct PyMethodDef xid_methods[] = {
+    {"from_string", (PyCFunction)xid_from_string_method,
+     METH_VARARGS|METH_STATIC, xid_from_string_doc},
+    {NULL}
+};
+
 
 static const char xid_doc[] =
     "A transaction identifier used for two phase commit.";
@@ -288,7 +310,7 @@ PyTypeObject XidType = {
 
     /* Attribute descriptor and subclassing stuff */
 
-    0,          /*tp_methods*/
+    xid_methods, /*tp_methods*/
     xid_members, /*tp_members*/
     0,          /*tp_getset*/
     0,          /*tp_base*/
@@ -327,12 +349,8 @@ XidObject *xid_ensure(PyObject *oxid)
         Py_INCREF(oxid);
         rv = (XidObject *)oxid;
     }
-    else if (PyString_Check(oxid)) {
-        rv = xid_from_string(oxid);
-    }
     else {
-        PyErr_SetString(PyExc_TypeError,
-            "not a valid transaction id");
+        rv = xid_from_string(oxid);
     }
 
     return rv;
@@ -571,6 +589,11 @@ exit:
 XidObject *
 xid_from_string(PyObject *str) {
     XidObject *rv;
+
+    if (!PyString_Check(str)) {
+        PyErr_SetString(PyExc_TypeError, "not a valid transaction id");
+        return NULL;
+    }
 
     /* Try to parse an XA triple from the string. This may fail for several
      * reasons, such as the rules stated in Xid.__init__. */

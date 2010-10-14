@@ -353,6 +353,36 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
 
             cnn.tpc_rollback(xid)
 
+    def test_xid_construction(self):
+        from psycopg2.extensions import Xid
+
+        x1 = Xid(74, 'foo', 'bar')
+        self.assertEqual(74, x1.format_id)
+        self.assertEqual('foo', x1.gtrid)
+        self.assertEqual('bar', x1.bqual)
+
+    def test_xid_from_string(self):
+        from psycopg2.extensions import Xid
+
+        x2 = Xid.from_string('42_Z3RyaWQ=_YnF1YWw=')
+        self.assertEqual(42, x2.format_id)
+        self.assertEqual('gtrid', x2.gtrid)
+        self.assertEqual('bqual', x2.bqual)
+
+        x3 = Xid.from_string('99_xxx_yyy')
+        self.assertEqual(None, x3.format_id)
+        self.assertEqual('99_xxx_yyy', x3.gtrid)
+        self.assertEqual(None, x3.bqual)
+
+    def test_xid_to_string(self):
+        from psycopg2.extensions import Xid
+
+        x1 = Xid.from_string('42_Z3RyaWQ=_YnF1YWw=')
+        self.assertEqual(str(x1), '42_Z3RyaWQ=_YnF1YWw=')
+
+        x2 = Xid.from_string('99_xxx_yyy')
+        self.assertEqual(str(x2), '99_xxx_yyy')
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
