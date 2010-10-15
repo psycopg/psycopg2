@@ -105,6 +105,14 @@ conn.close()
         self.assertEqual(pid, self.conn.notifies[0][0])
         self.assertEqual('foo', self.conn.notifies[0][1])
 
+    def test_notify_object(self):
+        self.autocommit(self.conn)
+        self.listen('foo')
+        self.notify('foo').communicate()
+        self.conn.poll()
+        notify = self.conn.notifies[0]
+        self.assert_(isinstance(notify, psycopg2.extensions.Notify))
+
     def test_notify_attributes(self):
         self.autocommit(self.conn)
         self.listen('foo')
@@ -130,6 +138,21 @@ conn.close()
         self.assertEqual(pid, notify.pid)
         self.assertEqual('foo', notify.channel)
         self.assertEqual('Hello, world!', notify.payload)
+
+    def test_notify_init(self):
+        n = psycopg2.extensions.Notify(10, 'foo')
+        self.assertEqual(10, n.pid)
+        self.assertEqual('foo', n.channel)
+        self.assertEqual(None, n.payload)
+        (pid, channel) = n
+        self.assertEqual((pid, channel), (10, 'foo'))
+
+        n = psycopg2.extensions.Notify(42, 'bar', 'baz')
+        self.assertEqual(42, n.pid)
+        self.assertEqual('bar', n.channel)
+        self.assertEqual('baz', n.payload)
+        (pid, channel) = n
+        self.assertEqual((pid, channel), (42, 'bar'))
 
 
 def test_suite():
