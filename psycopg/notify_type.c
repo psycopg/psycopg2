@@ -103,6 +103,34 @@ notify_del(PyObject *self)
     PyObject_GC_Del(self);
 }
 
+static PyObject*
+notify_repr(NotifyObject *self)
+{
+    PyObject *rv = NULL;
+    PyObject *format = NULL;
+    PyObject *args = NULL;
+
+    if (!(format = PyString_FromString("Notify(%r, %r, %r)"))) {
+        goto exit;
+    }
+
+    if (!(args = PyTuple_New(3))) { goto exit; }
+    Py_INCREF(self->pid);
+    PyTuple_SET_ITEM(args, 0, self->pid);
+    Py_INCREF(self->channel);
+    PyTuple_SET_ITEM(args, 1, self->channel);
+    Py_INCREF(self->payload);
+    PyTuple_SET_ITEM(args, 2, self->payload);
+
+    rv = PyString_Format(format, args);
+
+exit:
+    Py_XDECREF(args);
+    Py_XDECREF(format);
+
+    return rv;
+}
+
 /* Notify can be accessed as a 2 items tuple for backward compatibility */
 
 static Py_ssize_t
@@ -161,7 +189,7 @@ PyTypeObject NotifyType = {
 
     0,          /*tp_compare*/
 
-    0,          /*tp_repr*/
+    (reprfunc)notify_repr, /*tp_repr*/
     0,          /*tp_as_number*/
     &notify_sequence, /*tp_as_sequence*/
     0,          /*tp_as_mapping*/
