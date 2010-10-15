@@ -383,6 +383,34 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
         x2 = Xid.from_string('99_xxx_yyy')
         self.assertEqual(str(x2), '99_xxx_yyy')
 
+    def test_xid_unicode(self):
+        cnn = self.connect()
+        x1 = cnn.xid(10, u'uni', u'code')
+        cnn.tpc_begin(x1)
+        cnn.tpc_prepare()
+        cnn.reset()
+        xid = [ xid for xid in cnn.tpc_recover()
+            if xid.database == tests.dbname ][0]
+        self.assertEqual(10, xid.format_id)
+        self.assertEqual('uni', xid.gtrid)
+        self.assertEqual('code', xid.bqual)
+
+    def test_xid_unicode_unparsed(self):
+        # We don't expect people shooting snowmen as transaction ids,
+        # so if something explodes in an encode error I don't mind.
+        # Let's just check uniconde is accepted as type.
+        cnn = self.connect()
+        cnn.set_client_encoding('utf8')
+        cnn.tpc_begin(u"transaction-id")
+        cnn.tpc_prepare()
+        cnn.reset()
+
+        xid = [ xid for xid in cnn.tpc_recover()
+            if xid.database == tests.dbname ][0]
+        self.assertEqual(None, xid.format_id)
+        self.assertEqual('transaction-id', xid.gtrid)
+        self.assertEqual(None, xid.bqual)
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

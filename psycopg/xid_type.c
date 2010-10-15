@@ -590,7 +590,7 @@ XidObject *
 xid_from_string(PyObject *str) {
     XidObject *rv;
 
-    if (!PyString_Check(str)) {
+    if (!(PyString_Check(str) || PyUnicode_Check(str))) {
         PyErr_SetString(PyExc_TypeError, "not a valid transaction id");
         return NULL;
     }
