@@ -34,6 +34,7 @@
 #include "psycopg/cursor.h"
 #include "psycopg/pqpath.h"
 #include "psycopg/green.h"
+#include "psycopg/notify.h"
 
 /* conn_notice_callback - process notices */
 
@@ -133,21 +134,47 @@ conn_notice_clean(connectionObject *self)
 void
 conn_notifies_process(connectionObject *self)
 {
-    PGnotify *pgn;
+    PGnotify *pgn = NULL;
+    PyObject *notify = NULL;
+    PyObject *pid = NULL, *channel = NULL, *payload = NULL;
+
+    /* TODO: we are called without the lock! */
 
     while ((pgn = PQnotifies(self->pgconn)) != NULL) {
-        PyObject *notify;
 
         Dprintf("conn_notifies_process: got NOTIFY from pid %d, msg = %s",
                 (int) pgn->be_pid, pgn->relname);
 
-        notify = PyTuple_New(2);
-        PyTuple_SET_ITEM(notify, 0, PyInt_FromLong((long)pgn->be_pid));
-        PyTuple_SET_ITEM(notify, 1, PyString_FromString(pgn->relname));
-        PyList_Append(self->notifies, notify);
-        Py_DECREF(notify);
-        PQfreemem(pgn);
+        if (!(pid = PyInt_FromLong((long)pgn->be_pid))) { goto error; }
+        if (!(channel = PyString_FromString(pgn->relname))) { goto error; }
+        if (!(payload = PyString_FromString(pgn->extra))) { goto error; }
+
+        if (!(notify = PyObject_CallFunctionObjArgs((PyObject *)&NotifyType,
+                pid, channel, payload, NULL))) {
+            goto error;
+        }
+
+        Py_DECREF(pid); pid = NULL;
+        Py_DECREF(channel); channel = NULL;
+        Py_DECREF(payload); payload = NULL;
+
+        PyList_Append(self->notifies, (PyObject *)notify);
+
+        Py_DECREF(notify); notify = NULL;
+        PQfreemem(pgn); pgn = NULL;
     }
+    return;  /* no error */
+
+error:
+    if (pgn) { PQfreemem(pgn); }
+    Py_XDECREF(notify);
+    Py_XDECREF(pid);
+    Py_XDECREF(channel);
+    Py_XDECREF(payload);
+
+    /* TODO: callers currently don't expect an error from us */
+    PyErr_Clear();
+
 }
 
 

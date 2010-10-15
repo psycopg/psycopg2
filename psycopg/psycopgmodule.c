@@ -34,6 +34,7 @@
 #include "psycopg/cursor.h"
 #include "psycopg/green.h"
 #include "psycopg/lobject.h"
+#include "psycopg/notify.h"
 #include "psycopg/typecast.h"
 #include "psycopg/microprotocols.h"
 #include "psycopg/microprotocols_proto.h"
@@ -732,6 +733,7 @@ init_psycopg(void)
     asisType.ob_type       = &PyType_Type;
     listType.ob_type       = &PyType_Type;
     chunkType.ob_type      = &PyType_Type;
+    NotifyType.ob_type     = &PyType_Type;
 
     if (PyType_Ready(&connectionType) == -1) return;
     if (PyType_Ready(&cursorType) == -1) return;
@@ -745,6 +747,7 @@ init_psycopg(void)
     if (PyType_Ready(&asisType) == -1) return;
     if (PyType_Ready(&listType) == -1) return;
     if (PyType_Ready(&chunkType) == -1) return;
+    if (PyType_Ready(&NotifyType) == -1) return;
 
 #ifdef PSYCOPG_EXTENSIONS
     lobjectType.ob_type    = &PyType_Type;
@@ -850,6 +853,7 @@ init_psycopg(void)
     listType.tp_alloc = PyType_GenericAlloc;
     chunkType.tp_alloc = PyType_GenericAlloc;
     pydatetimeType.tp_alloc = PyType_GenericAlloc;
+    NotifyType.tp_alloc = PyType_GenericAlloc;
 
 #ifdef PSYCOPG_EXTENSIONS
     lobjectType.tp_alloc = PyType_GenericAlloc;
