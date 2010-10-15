@@ -33,10 +33,32 @@
 #include "psycopg/psycopg.h"
 #include "psycopg/notify.h"
 
+static const char notify_doc[] =
+    "A notification received from the backend.\n\n"
+    "`!Notify` instances are made available upon reception on the\n"
+    "`~connection.notifies` member of the listening connection. The object\n"
+    "can be also accessed as a 2 items tuple returning the members\n"
+    ":samp:`({pid},{channel})` for backward compatibility.\n\n"
+    "See :ref:`async-notify` for details.";
+
+static const char pid_doc[] =
+    "The ID of the backend process that sent the notification.\n\n"
+    "Note: if the sending session was handled by Psycopg, you can use\n"
+    "`~connection.get_backend_pid()` to know its PID.";
+
+static const char channel_doc[] =
+    "The name of the channel to which the notification was sent.";
+
+static const char payload_doc[] =
+    "The payload message of the notification.\n\n"
+    "Attaching a payload to a notification is only available since\n"
+    "PostgreSQL 9.0: for notifications received from previous versions\n"
+    "of the server this member is always the empty string.";
+
 static PyMemberDef notify_members[] = {
-    { "pid", T_OBJECT, offsetof(NotifyObject, pid), RO },
-    { "channel", T_OBJECT, offsetof(NotifyObject, channel), RO },
-    { "payload", T_OBJECT, offsetof(NotifyObject, payload), RO },
+    { "pid", T_OBJECT, offsetof(NotifyObject, pid), RO, (char *)pid_doc },
+    { "channel", T_OBJECT, offsetof(NotifyObject, channel), RO, (char *)channel_doc },
+    { "payload", T_OBJECT, offsetof(NotifyObject, payload), RO, (char *)payload_doc },
     { NULL }
 };
 
@@ -171,9 +193,6 @@ static PySequenceMethods notify_sequence = {
     0,                         /* sq_inplace_repeat */
 };
 
-
-static const char notify_doc[] =
-    "A notification received from the backend.";
 
 PyTypeObject NotifyType = {
     PyObject_HEAD_INIT(NULL)

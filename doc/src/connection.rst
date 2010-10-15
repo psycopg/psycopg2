@@ -203,14 +203,16 @@ The ``connection`` class
 
     .. attribute:: notifies
 
-        List containing asynchronous notifications received by the session.
-
-        Received notifications have the form of a 2 items tuple
-        :samp:`({pid},{name})`, where :samp:`{pid}` is the PID of the backend
-        that sent the notification and :samp:`{name}` is the signal name
-        specified in the :sql:`NOTIFY` command.
+        List of `~psycopg2.extensions.Notify` objects containing asynchronous
+        notifications received by the session.
 
         For other details see :ref:`async-notify`.
+
+        .. versionchanged:: 2.2.3
+            Notifications are instances of the `!Notify` object. Previously the
+            list was composed by 2 items tuples :samp:`({pid},{channel})` and
+            the payload was not accessible. To keep backward compatibility,
+            `!Notify` objects can still be accessed as 2 items tuples.
 
     .. index::
         pair: Backend; PID

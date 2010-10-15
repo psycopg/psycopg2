@@ -208,14 +208,19 @@ read:
 Asynchronous notifications
 --------------------------
 
+.. versionchanged:: 2.2.3
+    Added `~psycopg2.extensions.Notify` object allowing to retrieve
+    the notification payload if connected to a PostgreSQL 9.0 server.
+
 Psycopg allows asynchronous interaction with other database sessions using the
 facilities offered by PostgreSQL commands |LISTEN|_ and |NOTIFY|_. Please
-refer to the PostgreSQL documentation for examples of how to use this form of
+refer to the PostgreSQL documentation for examples about how to use this form of
 communication.
 
-Notifications received are made available in the `connection.notifies`
-list. Notifications can be sent from Python code simply using a :sql:`NOTIFY`
-command in an `~cursor.execute()` call.
+Notifications are instances of the `~psycopg2.extensions.Notify` object made
+available upon reception in the `connection.notifies` list. Notifications can
+be sent from Python code simply using a :sql:`NOTIFY` command in an
+`~cursor.execute()` call.
 
 Because of the way sessions interact with notifications (see |NOTIFY|_
 documentation), you should keep the connection in :ref:`autocommit
@@ -248,7 +253,8 @@ something to read::
     curs = conn.cursor()
     curs.execute("LISTEN test;")
 
-    print "Waiting for 'NOTIFY test'"
+    # Payload only available since PostgreSQL 9.0
+    print "Waiting for 'NOTIFY test', 'hello'"
     while 1:
         if select.select([conn],[],[],5) == ([],[],[]):
             print "Timeout"
@@ -263,7 +269,7 @@ Running the script and executing the command :sql:`NOTIFY test` in a separate
     Waiting for 'NOTIFY test'
     Timeout
     Timeout
-    Got NOTIFY: (6535, 'test')
+    Got NOTIFY: Notify(6535, 'test', 'hello')
     Timeout
     ...
 

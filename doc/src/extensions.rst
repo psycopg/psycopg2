@@ -106,6 +106,12 @@ functionalities defined by the |DBAPI|_.
         Close the object and remove it from the database.
 
 
+.. autoclass:: Notify(pid, channel, payload=None)
+    :members: pid, channel, payload
+
+    .. versionadded:: 2.2.3
+
+
 .. autofunction:: set_wait_callback(f)
 
     .. versionadded:: 2.2.0
