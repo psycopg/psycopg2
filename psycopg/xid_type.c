@@ -34,13 +34,48 @@
 #include "psycopg/psycopg.h"
 #include "psycopg/xid.h"
 
+static const char xid_doc[] =
+    "A transaction identifier used for two-phase commit.\n\n"
+    "Usually returned by the connection methods `~connection.xid()` and\n"
+    "`~connection.tpc_recover()`.\n"
+    "`!Xid` instances can be unpacked as a 3-item tuples containing the items\n"
+    ":samp:`({format_id},{gtrid},{bqual})`.\n"
+    "The `!str()` of the object returns the *transaction ID* used\n"
+    "in the commands sent to the server.\n\n"
+    "See :ref:`tpc` for an introduction.";
+
+static const char format_id_doc[] =
+    "Format ID in a XA transaction.\n\n"
+    "A non-negative 32 bit integer.\n"
+    "`None` if the transaction doesn't follow the XA standard.";
+
+static const char gtrid_doc[] =
+    "Global transaction ID in a XA transaction.\n\n"
+    "If the transaction doesn't follow the XA standard, it is the plain\n"
+    "*transaction ID* used in the server commands.";
+
+static const char bqual_doc[] =
+    "Branch qualifier of the transaction.\n\n"
+    "In a XA transaction every resource participating to a transaction\n"
+    "receives a distinct branch qualifier.\n"
+    "`None` if the transaction doesn't follow the XA standard.";
+
+static const char prepared_doc[] =
+    "Timestamp (with timezone) in which a recovered transaction was prepared.";
+
+static const char owner_doc[] =
+    "Name of the user who prepared a recovered transaction.";
+
+static const char database_doc[] =
+    "Database the recovered transaction belongs to.";
+
 static PyMemberDef xid_members[] = {
-    { "format_id", T_OBJECT, offsetof(XidObject, format_id), RO },
-    { "gtrid", T_OBJECT, offsetof(XidObject, gtrid), RO },
-    { "bqual", T_OBJECT, offsetof(XidObject, bqual), RO },
-    { "prepared", T_OBJECT, offsetof(XidObject, prepared), RO },
-    { "owner", T_OBJECT, offsetof(XidObject, owner), RO },
-    { "database", T_OBJECT, offsetof(XidObject, database), RO },
+    { "format_id", T_OBJECT, offsetof(XidObject, format_id), RO, (char *)format_id_doc },
+    { "gtrid", T_OBJECT, offsetof(XidObject, gtrid), RO, (char *)gtrid_doc },
+    { "bqual", T_OBJECT, offsetof(XidObject, bqual), RO, (char *)bqual_doc },
+    { "prepared", T_OBJECT, offsetof(XidObject, prepared), RO, (char *)prepared_doc },
+    { "owner", T_OBJECT, offsetof(XidObject, owner), RO, (char *)owner_doc },
+    { "database", T_OBJECT, offsetof(XidObject, database), RO, (char *)database_doc },
     { NULL }
 };
 
@@ -233,7 +268,12 @@ exit:
 
 
 static const char xid_from_string_doc[] =
-    "Create a Xid object from a string representation.";
+    "Create a `!Xid` object from a string representation. Static method.\n\n"
+    "If *s* is a PostgreSQL transaction ID produced by a XA transaction,\n"
+    "the returned object will have `format_id`, `gtrid`, `bqual` set to\n"
+    "the values of the preparing XA id.\n"
+    "Otherwise only the `!gtrid` is populated with the unparsed string.\n"
+    "The operation is the inverse of the one performed by ``str(xid)``.";
 
 static PyObject *
 xid_from_string_method(PyObject *cls, PyObject *args)
@@ -244,6 +284,7 @@ xid_from_string_method(PyObject *cls, PyObject *args)
 
     return (PyObject *)xid_from_string(s);
 }
+
 
 static PySequenceMethods xid_sequence = {
     (lenfunc)xid_len,          /* sq_length */
@@ -258,16 +299,11 @@ static PySequenceMethods xid_sequence = {
     0,                         /* sq_inplace_repeat */
 };
 
-
 static struct PyMethodDef xid_methods[] = {
     {"from_string", (PyCFunction)xid_from_string_method,
      METH_VARARGS|METH_STATIC, xid_from_string_doc},
     {NULL}
 };
-
-
-static const char xid_doc[] =
-    "A transaction identifier used for two phase commit.";
 
 PyTypeObject XidType = {
     PyObject_HEAD_INIT(NULL)

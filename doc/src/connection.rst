@@ -119,13 +119,14 @@ The ``connection`` class
 
     .. method:: xid(format_id, gtrid, bqual)
 
-        Returns a transaction ID object suitable for passing to the
+        Returns a `~psycopg2.extensions.Xid` instance to be passed to the
         `!tpc_*()` methods of this connection. The argument types and
         constraints are explained in :ref:`tpc`.
 
-        The object returned can be accessed and unpacked as a 3 items tuple,
-        returning the arguments passed to the method. The same values are
-        available as attributes `!format_id`, `!gtrid`, `!bqual`.
+        The values passed to the method will be available on the returned
+        object as the members `!format_id`, `!gtrid`, `!bqual`. The object
+        also allows accessing to these members and unpacking as a 3-items
+        tuple.
 
 
     .. method:: tpc_begin(xid)
@@ -223,12 +224,14 @@ The ``connection`` class
 
     .. method:: tpc_recover()
 
-        Returns a list of pending transaction IDs suitable for use with
-        `!tpc_commit(xid)` or `!tpc_rollback(xid)`.
+        Returns a list of `~psycopg2.extensions.Xid` representing pending
+        transactions, suitable for use with `tpc_commit()` or
+        `tpc_rollback()`.
 
         If a transaction was not initiated by Psycopg, the returned Xids will
-        have attributes `!format_id` and `!bqual` set to `None` and the
-        `!gtrid` set to the PostgreSQL transaction ID: such Xids are still
+        have attributes `~psycopg2.extensions.Xid.format_id` and
+        `~psycopg2.extensions.Xid.bqual` set to `None` and the
+        `~psycopg2.extensions.Xid.gtrid` set to the PostgreSQL transaction ID: such Xids are still
         usable for recovery.  Psycopg uses the same algorithm of the
         `PostgreSQL JDBC driver`__ to encode a XA triple in a string, so
         transactions initiated by a program using such driver should be
@@ -236,13 +239,10 @@ The ``connection`` class
 
         .. __: http://jdbc.postgresql.org/
 
-        Xids returned by `!tpc_recover()` have additional attributes populated
-        with the values read from the server:
-
-        - `!prepared`: timestamp with timezone reporting the time the
-          transaction was prepared
-        - `!owner`: name of the user who prepared the transaction
-        - `!database`: name of the database the transaction belongs to
+        Xids returned by `!tpc_recover()` also have extra attributes 
+        `~psycopg2.extensions.Xid.prepared`, `~psycopg2.extensions.Xid.owner`, 
+        `~psycopg2.extensions.Xid.database` populated with the values read
+        from the server.
 
         .. seealso:: the |pg_prepared_xacts|_ system view.
 

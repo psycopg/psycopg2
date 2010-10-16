@@ -553,7 +553,7 @@ Two-Phase Commit protocol support
 
 .. versionadded:: 2.2.3
 
-Psycopg exposes the two-phase commit features available from PostgreSQL 8,1
+Psycopg exposes the two-phase commit features available since PostgreSQL 8.1
 implementing the *two-phase commit extensions* proposed by the |DBAPI|.
 
 The |DBAPI| model of two-phase commit is inspired to the `XA specification`__,
@@ -576,9 +576,10 @@ database using `~connection.tpc_recover()` and completed using the above
 `!tpc_commit()` and `!tpc_rollback()`.
 
 PostgreSQL doesn't follow the XA standard though, and the ID for a PostgreSQL
-prepared transaction can be any string up to 200 characters long. Psycopg can
-deal both with Xid objects created by the `!xid()` method and with
-transactions identified only by a string.
+prepared transaction can be any string up to 200 characters long.
+Psycopg's `~psycopg2.extensions.Xid` objects can represent both XA-style
+transactions IDs (such as the ones created by the `!xid()` method) and
+PostgreSQL transaction IDs identified by an unparsed string.
 
 The format in which the Xids are converted into strings passed to the
 database is the same employed by the `PostgreSQL JDBC driver`__: this should

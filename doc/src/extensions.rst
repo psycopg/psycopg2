@@ -112,6 +112,12 @@ functionalities defined by the |DBAPI|_.
     .. versionadded:: 2.2.3
 
 
+.. autoclass:: Xid(format_id, gtrid, bqual)
+    :members: format_id, gtrid, bqual, prepared, owner, database
+
+    .. automethod:: from_string(s)
+
+
 .. autofunction:: set_wait_callback(f)
 
     .. versionadded:: 2.2.0
