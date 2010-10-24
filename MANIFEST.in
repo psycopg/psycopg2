@@ -5,7 +5,7 @@ recursive-include ZPsycopgDA *.py *.gif *.dtml
 recursive-include psycopg2da * 
 recursive-include examples *.py somehackers.jpg whereareyou.jpg
 recursive-include debian *
-recursive-include doc README TODO HACKING SUCCESS COPYING* ChangeLog-1.x pep-0249.txt 
+recursive-include doc README HACKING SUCCESS COPYING* ChangeLog-1.x pep-0249.txt 
 recursive-include doc *.txt *.html *.css *.js Makefile
 recursive-include doc/src *.rst *.py *.css Makefile
 recursive-include doc/html *

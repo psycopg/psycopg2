@@ -4,6 +4,10 @@
 
 	* merged dev branches for 2 phase commit, notify payload, hstore adapter
 
+2010-10-22  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* MANIFEST.in: Dropped reference to removed TODO file: it breaks 'pip'.
+
 2010-10-08  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* psycopg/typecast_binary.c: use PQfreemem to free memory allocated by
