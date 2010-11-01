@@ -170,6 +170,11 @@ conn.close()
         self.assertNotEqual((10, 'foo'), Notify(20, 'foo'))
         self.assertNotEqual((10, 'foo'), Notify(10, 'bar'))
 
+    def test_hash(self):
+        from psycopg2.extensions import Notify
+        self.assertEqual(hash((10, 'foo')), hash(Notify(10, 'foo')))
+        self.assertNotEqual(hash(Notify(10, 'foo', 'bar')),
+            hash(Notify(10, 'foo')))
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

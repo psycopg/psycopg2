@@ -125,22 +125,24 @@ notify_del(PyObject *self)
     PyObject_GC_Del(self);
 }
 
-/* Convert a notify into a 3-items tuple.
- * This is done for help hashing and comparison, *not* for comparison
- * against other tuples, where the payload is discarded.
- */
+
+/* Convert a notify into a 2 or 3 items tuple. */
 static PyObject *
-notify_astuple(NotifyObject *self)
+notify_astuple(NotifyObject *self, int with_payload)
 {
     PyObject *tself;
-    if (!(tself = PyTuple_New(3))) { return NULL; }
+    if (!(tself = PyTuple_New(with_payload ? 3 : 2))) { return NULL; }
 
     Py_INCREF(self->pid);
     PyTuple_SET_ITEM(tself, 0, self->pid);
+
     Py_INCREF(self->channel);
     PyTuple_SET_ITEM(tself, 1, self->channel);
-    Py_INCREF(self->payload);
-    PyTuple_SET_ITEM(tself, 2, self->payload);
+
+    if (with_payload) {
+        Py_INCREF(self->payload);
+        PyTuple_SET_ITEM(tself, 2, self->payload);
+    }
 
     return tself;
 }
@@ -153,16 +155,12 @@ notify_richcompare(NotifyObject *self, PyObject *other, int op)
     PyObject *tother = NULL;
 
     if (Py_TYPE(other) == &NotifyType) {
-        if (!(tself = notify_astuple(self))) { goto exit; }
-        if (!(tother = notify_astuple((NotifyObject *)other))) { goto exit; }
+        if (!(tself = notify_astuple(self, 1))) { goto exit; }
+        if (!(tother = notify_astuple((NotifyObject *)other, 1))) { goto exit; }
         rv = PyObject_RichCompare(tself, tother, op);
     }
     else if (PyTuple_Check(other)) {
-        if (!(tself = PyTuple_New(2))) { goto exit; };
-        Py_INCREF(self->pid);
-        PyTuple_SET_ITEM(tself, 0, self->pid);
-        Py_INCREF(self->channel);
-        PyTuple_SET_ITEM(tself, 1, self->channel);
+        if (!(tself = notify_astuple(self, 0))) { goto exit; }
         rv = PyObject_RichCompare(tself, other, op);
     }
     else {
@@ -175,6 +173,24 @@ exit:
     Py_XDECREF(tother);
     return rv;
 }
+
+
+long
+notify_hash(NotifyObject *self)
+{
+    long rv = -1L;
+    PyObject *tself = NULL;
+
+    /* if self == a tuple, then their hashes are the same. */
+    int has_payload = PyObject_IsTrue(self->payload);
+    if (!(tself = notify_astuple(self, has_payload))) { goto exit; }
+    rv = PyObject_Hash(tself);
+
+exit:
+    Py_XDECREF(tself);
+    return rv;
+}
+
 
 static PyObject*
 notify_repr(NotifyObject *self)
@@ -263,7 +279,7 @@ PyTypeObject NotifyType = {
     0,          /*tp_as_number*/
     &notify_sequence, /*tp_as_sequence*/
     0,          /*tp_as_mapping*/
-    0,          /*tp_hash */
+    (hashfunc)notify_hash, /*tp_hash */
 
     0,          /*tp_call*/
     0,          /*tp_str*/
