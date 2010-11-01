@@ -104,6 +104,17 @@ class TypesExtrasTests(unittest.TestCase):
             self.failUnless(str(err) == "can't adapt type 'Foo'")
 
 
+def skip_if_no_hstore(f):
+    def skip_if_no_hstore_(self):
+        from psycopg2.extras import HstoreAdapter
+        oids = HstoreAdapter.get_oids(self.conn)
+        if oids is None:
+            warnings.warn("hstore not available in test database: skipping test")
+            return
+        return f(self)
+
+    return skip_if_no_hstore_
+
 class HstoreTestCase(unittest.TestCase):
     def setUp(self):
         self.conn = psycopg2.connect(tests.dsn)
@@ -187,6 +198,7 @@ class HstoreTestCase(unittest.TestCase):
         ko('"a=>"1"')
         ko('"a"=>"1", "b"=>NUL')
 
+    @skip_if_no_hstore
     def test_register_conn(self):
         from psycopg2.extras import register_hstore
 
@@ -198,6 +210,7 @@ class HstoreTestCase(unittest.TestCase):
         self.assertEqual(t[1], {})
         self.assertEqual(t[2], {'a': 'b'})
 
+    @skip_if_no_hstore
     def test_register_curs(self):
         from psycopg2.extras import register_hstore
 
@@ -209,6 +222,7 @@ class HstoreTestCase(unittest.TestCase):
         self.assertEqual(t[1], {})
         self.assertEqual(t[2], {'a': 'b'})
 
+    @skip_if_no_hstore
     def test_register_unicode(self):
         from psycopg2.extras import register_hstore
 
@@ -222,6 +236,7 @@ class HstoreTestCase(unittest.TestCase):
         self.assert_(isinstance(t[2].keys()[0], unicode))
         self.assert_(isinstance(t[2].values()[0], unicode))
 
+    @skip_if_no_hstore
     def test_register_globally(self):
         from psycopg2.extras import register_hstore, HstoreAdapter
 
@@ -243,6 +258,7 @@ class HstoreTestCase(unittest.TestCase):
         r = cur.fetchone()
         self.assert_(isinstance(r[0], str))
 
+    @skip_if_no_hstore
     def test_roundtrip(self):
         from psycopg2.extras import register_hstore
         register_hstore(self.conn)
@@ -268,6 +284,7 @@ class HstoreTestCase(unittest.TestCase):
         ok({''.join(ab): ''.join(ab)})
         ok(dict(zip(ab, ab)))
 
+    @skip_if_no_hstore
     def test_roundtrip_unicode(self):
         from psycopg2.extras import register_hstore
         register_hstore(self.conn, unicode=True)
