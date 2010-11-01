@@ -147,6 +147,24 @@ notify_astuple(NotifyObject *self, int with_payload)
     return tself;
 }
 
+/* note on Notify-tuple comparison.
+ *
+ * Such a comparison is required otherwise a check n == (pid, channel)
+ * would fail. We also want to compare two notifies, and the obvious meaning is
+ * "check that all the attributes are equal". Unfortunately this leads to an
+ * inconsistent situation:
+ *      Notify(pid, channel, payload1)
+ *   == (pid, channel)
+ *   == Notify(pid, channel, payload2)
+ * even when payload1 != payload2. We can probably live with that, but hashing
+ * makes things worse: hashability is a desirable property for a Notify, and
+ * to maintain compatibility we should put a notify object in the same bucket
+ * of a 2-item tuples... but we can't put all the payloads with the same
+ * (pid, channel) in the same bucket: it would be an extremely poor hash.
+ * So we maintain compatibility in the sense that notify without payload
+ * behave as 2-item tuples in term of hashability, but if a payload is present
+ * the (pid, channel) pair is no more equivalent as dict key to the Notify.
+ */
 static PyObject *
 notify_richcompare(NotifyObject *self, PyObject *other, int op)
 {
