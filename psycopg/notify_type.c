@@ -125,6 +125,57 @@ notify_del(PyObject *self)
     PyObject_GC_Del(self);
 }
 
+/* Convert a notify into a 3-items tuple.
+ * This is done for help hashing and comparison, *not* for comparison
+ * against other tuples, where the payload is discarded.
+ */
+static PyObject *
+notify_astuple(NotifyObject *self)
+{
+    PyObject *tself;
+    if (!(tself = PyTuple_New(3))) { return NULL; }
+
+    Py_INCREF(self->pid);
+    PyTuple_SET_ITEM(tself, 0, self->pid);
+    Py_INCREF(self->channel);
+    PyTuple_SET_ITEM(tself, 1, self->channel);
+    Py_INCREF(self->payload);
+    PyTuple_SET_ITEM(tself, 2, self->payload);
+
+    return tself;
+}
+
+static PyObject *
+notify_richcompare(NotifyObject *self, PyObject *other, int op)
+{
+    PyObject *rv = NULL;
+    PyObject *tself = NULL;
+    PyObject *tother = NULL;
+
+    if (Py_TYPE(other) == &NotifyType) {
+        if (!(tself = notify_astuple(self))) { goto exit; }
+        if (!(tother = notify_astuple((NotifyObject *)other))) { goto exit; }
+        rv = PyObject_RichCompare(tself, tother, op);
+    }
+    else if (PyTuple_Check(other)) {
+        if (!(tself = PyTuple_New(2))) { goto exit; };
+        Py_INCREF(self->pid);
+        PyTuple_SET_ITEM(tself, 0, self->pid);
+        Py_INCREF(self->channel);
+        PyTuple_SET_ITEM(tself, 1, self->channel);
+        rv = PyObject_RichCompare(tself, other, op);
+    }
+    else {
+        Py_INCREF(Py_False);
+        rv = Py_False;
+    }
+
+exit:
+    Py_XDECREF(tself);
+    Py_XDECREF(tother);
+    return rv;
+}
+
 static PyObject*
 notify_repr(NotifyObject *self)
 {
@@ -227,7 +278,7 @@ PyTypeObject NotifyType = {
     (traverseproc)notify_traverse, /*tp_traverse*/
     0,          /*tp_clear*/
 
-    0,          /*tp_richcompare*/
+    (richcmpfunc)notify_richcompare, /*tp_richcompare*/
     0,          /*tp_weaklistoffset*/
 
     0,          /*tp_iter*/

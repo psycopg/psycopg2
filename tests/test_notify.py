@@ -154,6 +154,22 @@ conn.close()
         (pid, channel) = n
         self.assertEqual((pid, channel), (42, 'bar'))
 
+    def test_compare(self):
+        data = [(10, 'foo'), (20, 'foo'), (10, 'foo', 'bar'), (10, 'foo', 'baz')]
+        for d1 in data:
+            for d2 in data:
+                n1 = psycopg2.extensions.Notify(*d1)
+                n2 = psycopg2.extensions.Notify(*d2)
+                self.assertEqual((n1 == n2), (d1 == d2))
+                self.assertEqual((n1 != n2), (d1 != d2))
+
+    def test_compare_tuple(self):
+        from psycopg2.extensions import Notify
+        self.assertEqual((10, 'foo'), Notify(10, 'foo'))
+        self.assertEqual((10, 'foo'), Notify(10, 'foo', 'bar'))
+        self.assertNotEqual((10, 'foo'), Notify(20, 'foo'))
+        self.assertNotEqual((10, 'foo'), Notify(10, 'bar'))
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
