@@ -143,7 +143,7 @@ conn.close()
         n = psycopg2.extensions.Notify(10, 'foo')
         self.assertEqual(10, n.pid)
         self.assertEqual('foo', n.channel)
-        self.assertEqual(None, n.payload)
+        self.assertEqual('', n.payload)
         (pid, channel) = n
         self.assertEqual((pid, channel), (10, 'foo'))
 

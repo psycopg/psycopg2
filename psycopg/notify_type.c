@@ -82,7 +82,7 @@ notify_init(NotifyObject *self, PyObject *args, PyObject *kwargs)
     }
 
     if (!payload) {
-        payload = Py_None;
+        payload = PyString_FromStringAndSize("", 0);
     }
 
     Py_CLEAR(self->pid);

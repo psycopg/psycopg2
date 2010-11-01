@@ -106,7 +106,7 @@ functionalities defined by the |DBAPI|_.
         Close the object and remove it from the database.
 
 
-.. autoclass:: Notify(pid, channel, payload=None)
+.. autoclass:: Notify(pid, channel, payload='')
     :members: pid, channel, payload
 
     .. versionadded:: 2.2.3
