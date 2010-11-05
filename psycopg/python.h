@@ -53,6 +53,10 @@
   #define CONV_CODE_PY_SSIZE_T "n"
 #endif
 
+#ifndef Py_TYPE
+  #define Py_TYPE(o) ((o)->ob_type)
+#endif
+
 /* FORMAT_CODE_PY_SSIZE_T is for Py_ssize_t: */
 #define FORMAT_CODE_PY_SSIZE_T "%" PY_FORMAT_SIZE_T "d"
 
