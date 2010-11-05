@@ -35,10 +35,11 @@ I receive the error *current transaction is aborted, commands ignored until end 
     .. |SAVEPOINT| replace:: :sql:`SAVEPOINT`
     .. _SAVEPOINT: http://www.postgresql.org/docs/9.0/static/sql-savepoint.html
 
-Why do i get the error *current transaction is aborted, commands ignored until end of transaction block* when I use `!multiprocessing` (or any other forking system) and not when use `!threading`?
+Why do I get the error *current transaction is aborted, commands ignored until end of transaction block* when I use `!multiprocessing` (or any other forking system) and not when use `!threading`?
     Psycopg's connections can't be shared across processes (but are thread
     safe).  If you are forking the Python process ensure to create a new
-    connection in each forked child.
+    connection in each forked child. See :ref:`thread-safety` for further
+    informations.
 
 
 Problems with type conversions

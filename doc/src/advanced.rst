@@ -404,17 +404,21 @@ calling green thread and giving other green threads the possibility to be
 scheduled), allowing non modified code and third party libraries (such as
 SQLAlchemy_) to be used in coroutine-based programs.
 
-Notice that, while I/O correctly yields control to other coroutines, each
-connection has a lock allowing a single cursor at a time to communicate with the
-backend: such lock is not *green*, so blocking against it would block the
-entire program waiting for data, not the single coroutine. Therefore,
-programmers are advised to either avoid sharing connections between coroutines
-or to use a library-friendly lock to synchronize shared connections, e.g. for
-pooling.
+.. warning::
+    Psycopg connections are not *green thread safe* and can't be used
+    concurrently by different green threads. Each connection has a lock
+    used to serialize requests from different cursors to the backend process.
+    The lock is held for the duration of the command: if the control switched
+    to a different thread and the latter tried to access the same connection,
+    the result would be a deadlock.
+
+    Therefore, programmers are advised to either avoid sharing connections
+    between coroutines or to use a library-friendly lock to synchronize shared
+    connections, e.g. for pooling.
 
 Coroutine libraries authors should provide a callback implementation (and
-probably register it) to make Psycopg as green as they want. An example
-callback (using `!select()` to block) is provided as
+possibly a method to register it) to make Psycopg as green as they want. An
+example callback (using `!select()` to block) is provided as
 `psycopg2.extras.wait_select()`: it boils down to something similar to::
 
     def wait_select(conn):

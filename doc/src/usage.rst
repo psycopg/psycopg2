@@ -477,17 +477,38 @@ method and to read the data using `~cursor.fetchone()` and
 
 
 
-.. index:: Thread safety, Multithread
+.. index:: Thread safety, Multithread, Multiprocess
 
 .. _thread-safety:
 
-Thread safety
--------------
+Thread and process safety
+-------------------------
 
-The Psycopg module is *thread-safe*: threads can access the same database
-using separate sessions (by creating a `connection` per thread) or using
-the same session (accessing to the same connection and creating separate
-`cursor`\ s). In |DBAPI|_ parlance, Psycopg is *level 2 thread safe*.
+The Psycopg module and the `connection` objects are *thread-safe*: many
+threads can access the same database either using separate sessions and
+creating a `!connection` per thread or using the same using the same
+connection and creating separate `cursor`\ s. In |DBAPI|_ parlance, Psycopg is
+*level 2 thread safe*.
+
+The difference between the above two approaches is that, using different
+connections, the commands will be executed in different sessions and will be
+served by different server processes. On the other hand, using many cursors on
+the same connection, all the commands will be executed in the same session
+(and in the same transaction if the connection is not in :ref:`autocommit
+<transactions-control>` mode), but they will be serialized.
+
+The above observations are only valid for regular threads: they don't apply to
+forked processes nor to green threads. `libpq` connections `shouldn't be used by a
+forked processes`__, so when using a module such as |multiprocessing|__ or a
+forking web deploy method such as FastCGI ensure to create the connections
+*after* the fork.
+
+.. __: http://www.postgresql.org/docs/9.0/static/libpq-connect.html#LIBPQ-CONNECT
+.. |multiprocessing| replace:: `!multiprocessing`
+.. __: http://docs.python.org/library/multiprocessing.html
+
+Connections shouldn't be shared either by different green threads: doing so
+may result in a deadlock. See :ref:`green-support` for further details.
 
 
 
