@@ -1,0 +1,27 @@
+What's new in psycopg 2.3
+-------------------------
+
+Psycopg 2.3 aims to expose some of the new features introduced in PostgreSQL
+9.0.
+
+* New features:
+
+  - `dict` to `hstore` adapter and `hstore` to `dict` typecaster, using both
+    9.0 and pre-9.0 syntax.
+  - Two-phase commit protocol support as per DBAPI specification.
+  - Support for payload in notifications received from the backed.
+
+* Other changes:
+
+  - `mogrify()` now supports unicode queries.
+  - Dropped deprecated Psycopg "own quoting".
+  - `errorcodes` knows a couple of new codes introduced in PostgreSQL 9.0.
+  - Never issue a ROLLBACK on close/GC. This behaviour was introduced as a bug
+    in release 2.2, but trying to send a command while being destroyed has been
+    considered not safe.
+
+* Bug fixes:
+
+  - Fixed use of `PQfreemem` instead of `free` in binary typecaster.
+  - Fixed access to freed memory in `conn_get_isolation_level()`.
+
