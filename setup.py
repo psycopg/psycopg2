@@ -30,7 +30,7 @@ brave programmer.
 classifiers = """\
 Development Status :: 5 - Production/Stable
 Intended Audience :: Developers
-License :: OSI Approved :: GNU Lesser General Public License (LGPL)
+License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)
 License :: OSI Approved :: Zope Public License
 Programming Language :: Python
 Programming Language :: C
@@ -57,7 +57,7 @@ from distutils.ccompiler import get_default_compiler
 
 # take a look at http://www.python.org/dev/peps/pep-0386/
 # for a consistent versioning pattern
-PSYCOPG_VERSION = '2.3.dev0'
+PSYCOPG_VERSION = '2.3a1'
 
 version_flags   = ['dt', 'dec']
 
