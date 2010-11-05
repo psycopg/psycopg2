@@ -55,7 +55,10 @@ from distutils.command.build_ext import build_ext
 from distutils.sysconfig import get_python_inc
 from distutils.ccompiler import get_default_compiler
 
-PSYCOPG_VERSION = '2.2.3-devel'
+# take a look at http://www.python.org/dev/peps/pep-0386/
+# for a consistent versioning pattern
+PSYCOPG_VERSION = '2.3.dev0'
+
 version_flags   = ['dt', 'dec']
 
 PLATFORM_IS_WINDOWS = sys.platform.lower().startswith('win')

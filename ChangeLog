@@ -1,3 +1,9 @@
+2010-11-05  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* setup.py: bumped to version 2.3.dev0
+
+	* merged dev branches for 2 phase commit, notify payload, hstore adapter
+
 2010-10-08  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* psycopg/typecast_binary.c: use PQfreemem to free memory allocated by
