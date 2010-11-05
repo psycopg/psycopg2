@@ -109,7 +109,7 @@ functionalities defined by the |DBAPI|_.
 .. autoclass:: Notify(pid, channel, payload='')
     :members: pid, channel, payload
 
-    .. versionadded:: 2.2.3
+    .. versionadded:: 2.3
 
 
 .. autoclass:: Xid(format_id, gtrid, bqual)
@@ -463,7 +463,7 @@ internal usage and Python code should not rely on them.
     to the database until the transaction is finished with
     `~connection.tpc_commit()` or `~connection.tpc_rollback()`.
 
-    .. versionadded:: 2.2.3
+    .. versionadded:: 2.3
 
 
 

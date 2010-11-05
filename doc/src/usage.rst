@@ -301,7 +301,7 @@ the SQL string that would be sent to the database.
   .. |hstore| replace:: :sql:`hstore`
   .. _hstore: http://www.postgresql.org/docs/9.0/static/hstore.html
 
-  .. versionadded:: 2.2.3
+  .. versionadded:: 2.3
      the :sql:`hstore` adaptation.
 
 .. index::
@@ -561,7 +561,7 @@ using the |lo_import|_ and |lo_export|_ libpq functions.
 Two-Phase Commit protocol support
 ---------------------------------
 
-.. versionadded:: 2.2.3
+.. versionadded:: 2.3
 
 Psycopg exposes the two-phase commit features available since PostgreSQL 8.1
 implementing the *two-phase commit extensions* proposed by the |DBAPI|.

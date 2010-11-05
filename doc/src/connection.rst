@@ -106,7 +106,7 @@ The ``connection`` class
 
     .. rubric:: Two-phase commit support methods
 
-    .. versionadded:: 2.2.3
+    .. versionadded:: 2.3
 
     .. seealso:: :ref:`tpc` for an introductory explanation of these methods.
 
@@ -362,7 +362,7 @@ The ``connection`` class
 
         For other details see :ref:`async-notify`.
 
-        .. versionchanged:: 2.2.3
+        .. versionchanged:: 2.3
             Notifications are instances of the `!Notify` object. Previously the
             list was composed by 2 items tuples :samp:`({pid},{channel})` and
             the payload was not accessible. To keep backward compatibility,

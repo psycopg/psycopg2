@@ -93,7 +93,7 @@ Logging cursor
 Hstore data type
 ----------------
 
-.. versionadded:: 2.2.3
+.. versionadded:: 2.3
 
 The |hstore|_ data type is a key-value store embedded in PostgreSQL.  It has
 been available for several server versions but with the release 9.0 it has

@@ -208,7 +208,7 @@ read:
 Asynchronous notifications
 --------------------------
 
-.. versionchanged:: 2.2.3
+.. versionchanged:: 2.3
     Added `~psycopg2.extensions.Notify` object allowing to retrieve
     the notification payload if connected to a PostgreSQL 9.0 server.
 
