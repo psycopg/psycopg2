@@ -53,6 +53,19 @@ class CursorTests(unittest.TestCase):
         self.assertEqual("SELECT '%s';" % snowman.encode('utf8'),
             cur.mogrify(u"SELECT %s;", (snowman,)).replace("E'", "'"))
 
+    def test_mogrify_decimal_explodes(self):
+        # issue #7: explodes on windows with python 2.5 and psycopg 2.2.2
+        try:
+            from decimal import Decimal
+        except:
+            return
+
+        conn = self.connect()
+        cur = conn.cursor()
+        self.assertEqual('SELECT 10.3;',
+            cur.mogrify("SELECT %s;", (Decimal("10.3"),)))
+
+
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
