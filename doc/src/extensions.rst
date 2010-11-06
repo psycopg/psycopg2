@@ -115,6 +115,8 @@ functionalities defined by the |DBAPI|_.
 .. autoclass:: Xid(format_id, gtrid, bqual)
     :members: format_id, gtrid, bqual, prepared, owner, database
 
+    .. versionadded:: 2.3
+
     .. automethod:: from_string(s)
 
 
