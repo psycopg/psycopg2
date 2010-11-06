@@ -234,6 +234,61 @@ class RealDictRow(dict):
         return dict.__setitem__(self, name, value)
 
 
+class NamedTupleConnection(_connection):
+    """A connection that uses `NamedTupleCursor` automatically."""
+    def cursor(self, *args, **kwargs):
+        kwargs['cursor_factory'] = NamedTupleCursor
+        return _connection.cursor(self, *args, **kwargs)
+
+class NamedTupleCursor(_cursor):
+    """A cursor that generates results as |namedtuple|__.
+
+    `!fetch*()` methods will return named tuples instead of regular tuples, so
+    their elements can be accessed both as regular numeric items as well as
+    attributes.
+
+        >>> nt_cur = conn.cursor(cursor_factory=psycopg2.extras.NamedTupleCursor)
+        >>> rec = nt_cur.fetchone()
+        >>> rec
+        Record(id=1, num=100, data="abc'def")
+        >>> rec[1]
+        100
+        >>> rec.data
+        "abc'def"
+
+    .. |namedtuple| replace:: `!namedtuple`
+    .. __: http://docs.python.org/release/2.6/library/collections.html#collections.namedtuple
+    """
+    def fetchone(self):
+        t = _cursor.fetchone(self)
+        if t is not None:
+            nt = self._make_nt()
+            return nt(*t)
+
+    def fetchmany(self, size=None):
+        nt = self._make_nt()
+        ts = _cursor.fetchmany(self, size)
+        return [nt(*t) for t in ts]
+
+    def fetchall(self):
+        nt = self._make_nt()
+        ts = _cursor.fetchall(self)
+        return [nt(*t) for t in ts]
+
+    def __iter__(self):
+        return iter(self.fetchall())
+
+    try:
+        from collections import namedtuple
+    except ImportError, _exc:
+        def _make_nt(self):
+            raise self._exc
+    else:
+        def _make_nt(self, namedtuple=namedtuple):
+            return namedtuple("Record",
+                " ".join([d[0] for d in self.description]))
+
+
 class LoggingConnection(_connection):
     """A connection that logs all queries to a file or logger__ object.
 

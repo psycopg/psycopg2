@@ -1,3 +1,7 @@
+2010-11-06  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* lib/extras.py: added NamedTupleCursor.
+
 2010-11-05  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* setup.py: bumped to version 2.3.dev0

@@ -105,6 +105,109 @@ class ExtrasDictCursorTests(unittest.TestCase):
         row = getter(curs)
         self.failUnless(row['foo'] == 'bar')
 
+
+def if_has_namedtuple(f):
+    def if_has_namedtuple_(self):
+        try:
+            from collections import namedtuple
+        except ImportError:
+            import warnings
+            warnings.warn("collections.namedtuple not available")
+        else:
+            return f(self)
+
+    if_has_namedtuple_.__name__ = f.__name__
+    return if_has_namedtuple_
+
+class NamedTupleCursorTest(unittest.TestCase):
+    def setUp(self):
+        from psycopg2.extras import NamedTupleConnection
+
+        try:
+            from collections import namedtuple
+        except ImportError:
+            self.conn = None
+            return
+
+        self.conn = psycopg2.connect(tests.dsn,
+            connection_factory=NamedTupleConnection)
+        curs = self.conn.cursor()
+        curs.execute("CREATE TEMPORARY TABLE nttest (i int, s text)")
+        curs.execute(
+            "INSERT INTO nttest VALUES (1, 'foo'), (2, 'bar'), (3, 'baz')")
+        self.conn.commit()
+
+    @if_has_namedtuple
+    def test_fetchone(self):
+        curs = self.conn.cursor()
+        curs.execute("select * from nttest where i = 1")
+        t = curs.fetchone()
+        self.assertEqual(t[0], 1)
+        self.assertEqual(t.i, 1)
+        self.assertEqual(t[1], 'foo')
+        self.assertEqual(t.s, 'foo')
+
+    @if_has_namedtuple
+    def test_fetchmany(self):
+        curs = self.conn.cursor()
+        curs.execute("select * from nttest order by 1")
+        res = curs.fetchmany(2)
+        self.assertEqual(2, len(res))
+        self.assertEqual(res[0].i, 1)
+        self.assertEqual(res[0].s, 'foo')
+        self.assertEqual(res[1].i, 2)
+        self.assertEqual(res[1].s, 'bar')
+
+    @if_has_namedtuple
+    def test_fetchall(self):
+        curs = self.conn.cursor()
+        curs.execute("select * from nttest order by 1")
+        res = curs.fetchall()
+        self.assertEqual(3, len(res))
+        self.assertEqual(res[0].i, 1)
+        self.assertEqual(res[0].s, 'foo')
+        self.assertEqual(res[1].i, 2)
+        self.assertEqual(res[1].s, 'bar')
+        self.assertEqual(res[2].i, 3)
+        self.assertEqual(res[2].s, 'baz')
+
+    @if_has_namedtuple
+    def test_iter(self):
+        curs = self.conn.cursor()
+        curs.execute("select * from nttest order by 1")
+        i = iter(curs)
+        t = i.next()
+        self.assertEqual(t.i, 1)
+        self.assertEqual(t.s, 'foo')
+        t = i.next()
+        self.assertEqual(t.i, 2)
+        self.assertEqual(t.s, 'bar')
+        t = i.next()
+        self.assertEqual(t.i, 3)
+        self.assertEqual(t.s, 'baz')
+        self.assertRaises(StopIteration, i.next)
+
+    def test_error_message(self):
+        try:
+            from collections import namedtuple
+        except ImportError:
+            # an import error somewhere
+            from psycopg2.extras import NamedTupleConnection
+            try:
+                self.conn = psycopg2.connect(tests.dsn,
+                    connection_factory=NamedTupleConnection)
+                curs = self.conn.cursor()
+                curs.execute("select 1")
+                curs.fetchone()
+            except ImportError:
+                pass
+            else:
+                self.fail("expecting ImportError")
+        else:
+            # skip the test
+            pass
+
+
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
