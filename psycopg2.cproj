@@ -199,7 +199,11 @@
     <None Include="doc\src\pool.rst" />
     <None Include="sandbox\dec2float.py" />
     <None Include="NEWS-2.0" />
-    <None Include="NEWS-2.2" />
+    <None Include="psycopg\notify.h" />
+    <None Include="psycopg\xid.h" />
+    <None Include="tests\dbapi20_tpc.py" />
+    <None Include="tests\test_cursor.py" />
+    <None Include="NEWS-2.3" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="psycopg\adapter_asis.c" />
@@ -230,6 +234,8 @@
     <Compile Include="psycopg\adapter_pfloat.c" />
     <Compile Include="psycopg\adapter_pdecimal.c" />
     <Compile Include="psycopg\green.c" />
+    <Compile Include="psycopg\notify_type.c" />
+    <Compile Include="psycopg\xid_type.c" />
   </ItemGroup>
   <ProjectExtensions>
     <MonoDevelop>

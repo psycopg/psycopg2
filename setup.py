@@ -55,9 +55,10 @@ from distutils.command.build_ext import build_ext
 from distutils.sysconfig import get_python_inc
 from distutils.ccompiler import get_default_compiler
 
-# take a look at http://www.python.org/dev/peps/pep-0386/
-# for a consistent versioning pattern
-PSYCOPG_VERSION = '2.3a1'
+# Take a look at http://www.python.org/dev/peps/pep-0386/
+# for a consistent versioning pattern.
+
+PSYCOPG_VERSION = '2.3.0-beta1'
 
 version_flags   = ['dt', 'dec']
 

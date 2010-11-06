@@ -18,26 +18,24 @@ and FreeBSD on i386, Solaris, MacOS X and win32 architectures. psycopg2
 does not introduce build-wise incompatible changes so it should be able to
 compile on all architectures just as its predecessor did.
 
-Now go read the INSTALL file. More information about psycopg2 extensions to
-the DBAPI-2.0 is available in the files located in the doc/ direcory.
-Example code can be found in the examples/ directory. If you make any changes
-to the code make sure to run the unit tests localed in tests/.
-
 psycopg2 is free software ("free as in freedom" but I like beer too.)
 It is licensed under the GNU Lesser General Public License, version 3 or
 later plus an exception to allow OpenSSL (libpq) linking; see LICENSE for
 more details.
 
+Documentation
+-------------
+
+Start by reading the INSTALL file. More information about psycopg2 extensions
+to the DBAPI-2.0 is available in the files located in the doc/ direcory.
+Example code can be found in the examples/ directory. If you make any changes
+to the code make sure to run the unit tests localed in tests/.
+
+Online documentation can be found at: http://initd.org/psycopg/
+
+If you stumble upon any bugs, please tell us at: http://psycopg.lighthouseapp.com/
 
 Contributors
 ------------
 
-A short list of contributors to psycopg2 follows (if you feel you belong
-to this list and you can't find yourself here just drop me a mail):
-
- * Kudos to piro for all the documentation work.
-
- * Peter Fein contributed a logging connection/cursor class that even if it
-   was not used directly heavily influenced the implementation currently in
-   psycopg2.extras.
-   
+For a list of contributors to the project, see the AUTHORS file.
