@@ -208,10 +208,6 @@ read:
 Asynchronous notifications
 --------------------------
 
-.. versionchanged:: 2.3
-    Added `~psycopg2.extensions.Notify` object allowing to retrieve
-    the notification payload if connected to a PostgreSQL 9.0 server.
-
 Psycopg allows asynchronous interaction with other database sessions using the
 facilities offered by PostgreSQL commands |LISTEN|_ and |NOTIFY|_. Please
 refer to the PostgreSQL documentation for examples about how to use this form of
@@ -219,7 +215,7 @@ communication.
 
 Notifications are instances of the `~psycopg2.extensions.Notify` object made
 available upon reception in the `connection.notifies` list. Notifications can
-be sent from Python code simply using a :sql:`NOTIFY` command in an
+be sent from Python code simply executing a :sql:`NOTIFY` command in an
 `~cursor.execute()` call.
 
 Because of the way sessions interact with notifications (see |NOTIFY|_
@@ -253,25 +249,33 @@ something to read::
     curs = conn.cursor()
     curs.execute("LISTEN test;")
 
-    # Payload only available since PostgreSQL 9.0
-    print "Waiting for 'NOTIFY test', 'hello'"
+    print "Waiting for notifications on channel 'test'"
     while 1:
         if select.select([conn],[],[],5) == ([],[],[]):
             print "Timeout"
         else:
             conn.poll()
             while conn.notifies:
-                print "Got NOTIFY:", conn.notifies.pop()
+                notify = conn.notifies.pop()
+                print "Got NOTIFY:", notify.pid, notify.channel, notify.payload
 
-Running the script and executing the command :sql:`NOTIFY test` in a separate
-:program:`psql` shell, the output may look similar to::
+Running the script and executing a command such as :sql:`NOTIFY test, 'hello'`
+in a separate :program:`psql` shell, the output may look similar to::
 
-    Waiting for 'NOTIFY test'
+    Waiting for notifications on channel 'test'
     Timeout
     Timeout
-    Got NOTIFY: Notify(6535, 'test', 'hello')
+    Got NOTIFY: 6535 test hello
     Timeout
     ...
+
+Notice that the payload is only available from PostgreSQL 9.0: notifications
+received from a previous version server will have the `!payload` attribute set
+to the empty string.
+
+.. versionchanged:: 2.3
+    Added `~psycopg2.extensions.Notify` object and handling notification
+    payload.
 
 
 
