@@ -14,6 +14,7 @@ psycopg 2.3 aims to expose some new features introduced in PostgreSQL 9.0.
 * Other features and changes:
 
   - `mogrify()` now supports unicode queries.
+  - subclasses of a type that can be adapted are adapted as the superclass.
   - `errorcodes` knows a couple of new codes introduced in PostgreSQL 9.0.
   - Dropped deprecated Psycopg "own quoting".
   - Never issue a ROLLBACK on close/GC. This behaviour was introduced as a bug

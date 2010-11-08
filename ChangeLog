@@ -4,6 +4,9 @@
 
 	* psycopg/microprotocols.c: fixed refcount bug.
 
+	* psycopg/microprotocols.c: use the adapter of an object superclass if
+	available.
+
 2010-11-06  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* lib/extras.py: added NamedTupleCursor.

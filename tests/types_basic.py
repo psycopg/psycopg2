@@ -129,6 +129,35 @@ class TypesBasicTests(unittest.TestCase):
         o2 = self.execute("select %s;", (o1,))
         self.assertEqual(type(o1[0]), type(o2[0]))
 
+
+class AdaptSubclassTest(unittest.TestCase):
+    def test_adapt_subtype(self):
+        from psycopg2.extensions import adapt
+        class Sub(str): pass
+        s1 = "hel'lo"
+        s2 = Sub(s1)
+        self.assertEqual(adapt(s1).getquoted(), adapt(s2).getquoted())
+
+    def test_adapt_most_specific(self):
+        from psycopg2.extensions import adapt, register_adapter, AsIs
+
+        class A(object): pass
+        class B(A): pass
+        class C(B): pass
+
+        register_adapter(A, lambda a: AsIs("a"))
+        register_adapter(B, lambda b: AsIs("b"))
+        self.assertEqual('b', adapt(C()).getquoted())
+
+    def test_no_mro_no_joy(self):
+        from psycopg2.extensions import adapt, register_adapter, AsIs
+
+        class A: pass
+        class B(A): pass
+
+        register_adapter(A, lambda a: AsIs("a"))
+        self.assertRaises(psycopg2.ProgrammingError, adapt, B())
+
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

@@ -75,12 +75,61 @@ microprotocols_add(PyTypeObject *type, PyObject *proto, PyObject *cast)
     return 0;
 }
 
+/* Check if one of `obj` superclasses has an adapter for `proto`.
+ *
+ * If it does, return a *borrowed reference* to the adapter, else NULL.
+ */
+static PyObject *
+_get_superclass_adapter(PyObject *obj, PyObject *proto)
+{
+    PyTypeObject *type;
+    PyObject *mro, *st;
+    PyObject *key, *adapter;
+    Py_ssize_t i, ii;
+
+    type = (PyTypeObject *)Py_TYPE(obj);
+    if (!(Py_TPFLAGS_HAVE_CLASS & type->tp_flags)) {
+        /* has no mro */
+        return NULL;
+    }
+
+    /* Walk the mro from the most specific subclass. */
+    mro = type->tp_mro;
+    for (i = 1, ii = PyTuple_GET_SIZE(mro); i < ii; ++i) {
+        st = PyTuple_GET_ITEM(mro, i);
+        key = PyTuple_Pack(2, st, proto);
+        adapter = PyDict_GetItem(psyco_adapters, key);
+        Py_DECREF(key);
+
+        if (adapter) {
+            Dprintf(
+                "microprotocols_adapt: using '%s' adapter to adapt '%s'",
+                ((PyTypeObject *)st)->tp_name, type->tp_name);
+
+            /* register this adapter as good for the subclass too,
+             * so that the next time it will be found in the fast path */
+
+            /* Well, no, maybe this is not a good idea.
+             * It would become a leak in case of dynamic
+             * classes generated in a loop (think namedtuples). */
+
+            /* key = PyTuple_Pack(2, (PyObject*)type, proto);
+             * PyDict_SetItem(psyco_adapters, key, adapter);
+             * Py_DECREF(key);
+             */
+            return adapter;
+        }
+    }
+    return NULL;
+}
+
+
 /* microprotocols_adapt - adapt an object to the built-in protocol */
 
 PyObject *
 microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
 {
-    PyObject *adapter, *key;
+    PyObject *adapter, *adapted, *key;
     char buffer[256];
 
     /* we don't check for exact type conformance as specified in PEP 246
@@ -99,13 +148,19 @@ microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
     adapter = PyDict_GetItem(psyco_adapters, key);
     Py_DECREF(key);
     if (adapter) {
-        PyObject *adapted = PyObject_CallFunctionObjArgs(adapter, obj, NULL);
+        adapted = PyObject_CallFunctionObjArgs(adapter, obj, NULL);
+        return adapted;
+    }
+
+    /* Check if a superclass can be adapted and use the same adapter. */
+    if (NULL != (adapter = _get_superclass_adapter(obj, proto))) {
+        adapted = PyObject_CallFunctionObjArgs(adapter, obj, NULL);
         return adapted;
     }
 
     /* try to have the protocol adapt this object*/
     if (PyObject_HasAttrString(proto, "__adapt__")) {
-        PyObject *adapted = PyObject_CallMethod(proto, "__adapt__", "O", obj);
+        adapted = PyObject_CallMethod(proto, "__adapt__", "O", obj);
         if (adapted && adapted != Py_None) return adapted;
         Py_XDECREF(adapted);
         if (PyErr_Occurred() && !PyErr_ExceptionMatches(PyExc_TypeError))
@@ -114,7 +169,7 @@ microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
 
     /* and finally try to have the object adapt itself */
     if (PyObject_HasAttrString(obj, "__conform__")) {
-        PyObject *adapted = PyObject_CallMethod(obj, "__conform__","O", proto);
+        adapted = PyObject_CallMethod(obj, "__conform__","O", proto);
         if (adapted && adapted != Py_None) return adapted;
         Py_XDECREF(adapted);
         if (PyErr_Occurred() && !PyErr_ExceptionMatches(PyExc_TypeError))
