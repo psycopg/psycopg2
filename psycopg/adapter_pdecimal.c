@@ -180,7 +180,7 @@ pdecimal_del(PyObject* self)
 static PyObject *
 pdecimal_repr(pdecimalObject *self)
 {
-    return PyString_FromFormat("<psycopg2._psycopg.Float object at %p>",
+    return PyString_FromFormat("<psycopg2._psycopg.Decimal object at %p>",
                                 self);
 }
 
