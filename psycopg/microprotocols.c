@@ -62,13 +62,16 @@ microprotocols_init(PyObject *dict)
 int
 microprotocols_add(PyTypeObject *type, PyObject *proto, PyObject *cast)
 {
+    PyObject *key;
+
     if (proto == NULL) proto = (PyObject*)&isqlquoteType;
 
     Dprintf("microprotocols_add: cast %p for (%s, ?)", cast, type->tp_name);
 
-    PyDict_SetItem(psyco_adapters,
-                   Py_BuildValue("(OO)", (PyObject*)type, proto),
-                   cast);
+    key = PyTuple_Pack(2, (PyObject*)type, proto);
+    PyDict_SetItem(psyco_adapters, key, cast);
+    Py_DECREF(key);
+
     return 0;
 }
 
@@ -92,7 +95,7 @@ microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
     Dprintf("microprotocols_adapt: trying to adapt %s", obj->ob_type->tp_name);
 
     /* look for an adapter in the registry */
-    key = Py_BuildValue("(OO)", (PyObject*)obj->ob_type, proto);
+    key = PyTuple_Pack(2, Py_TYPE(obj), proto);
     adapter = PyDict_GetItem(psyco_adapters, key);
     Py_DECREF(key);
     if (adapter) {

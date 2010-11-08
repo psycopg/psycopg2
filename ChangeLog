@@ -1,3 +1,9 @@
+2010-11-08  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* psycopg/microprotocols.c: use faster function to build tuples.
+
+	* psycopg/microprotocols.c: fixed refcount bug.
+
 2010-11-06  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* lib/extras.py: added NamedTupleCursor.
