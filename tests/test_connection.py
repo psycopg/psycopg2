@@ -79,8 +79,7 @@ def skip_if_tpc_disabled(f):
             mtp = 1
         else:
             mtp = int(cur.fetchone()[0])
-        finally:
-            cnn.close()
+        cnn.close()
 
         if not mtp:
             import warnings
