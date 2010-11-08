@@ -119,16 +119,9 @@ static int pthread_mutex_init(pthread_mutex_t *mutex, void* fake)
 /* to work around the fact that Windows does not have a gmtime_r function, or
    a proper gmtime function */
 #ifdef _WIN32
-static struct tm *gmtime_r(time_t *t, struct tm *tm)
-{
-  tm = gmtime(t);
-  return tm;
-}
-static struct tm *localtime_r(time_t *t, struct tm *tm)
-{
-  tm = localtime(t);
-  return tm;
-}
+#define gmtime_r(t, tm) (gmtime(t)?memcpy((tm), gmtime(t), sizeof(*(tm))):NULL)
+#define localtime_r(t, tm) (localtime(t)?memcpy((tm), localtime(t), sizeof(*(tm))):NULL)
+
 /* remove the inline keyword, since it doesn't work unless C++ file */
 #define inline
 
