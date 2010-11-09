@@ -726,7 +726,7 @@ _psyco_curs_buildrow_with_factory(cursorObject *self, int row)
     PyObject *res;
 
     n = PQnfields(self->pgres);
-    if ((res = PyObject_CallFunction(self->tuple_factory, "O", self))== NULL)
+    if (!(res = PyObject_CallFunctionObjArgs(self->tuple_factory, self, NULL)))
         return NULL;
 
     return _psyco_curs_buildrow_fill(self, res, row, n, 0);

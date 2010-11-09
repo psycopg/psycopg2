@@ -325,5 +325,5 @@ psyco_Binary(PyObject *module, PyObject *args)
     if (!PyArg_ParseTuple(args, "O", &str))
         return NULL;
 
-    return PyObject_CallFunction((PyObject *)&binaryType, "O", str);
+    return PyObject_CallFunctionObjArgs((PyObject *)&binaryType, str, NULL);
 }

@@ -254,5 +254,5 @@ psyco_Boolean(PyObject *module, PyObject *args)
     if (!PyArg_ParseTuple(args, "O", &obj))
         return NULL;
 
-    return PyObject_CallFunction((PyObject *)&pbooleanType, "O", obj);
+    return PyObject_CallFunctionObjArgs((PyObject *)&pbooleanType, obj, NULL);
 }

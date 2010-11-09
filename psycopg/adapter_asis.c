@@ -241,5 +241,5 @@ psyco_AsIs(PyObject *module, PyObject *args)
     if (!PyArg_ParseTuple(args, "O", &obj))
         return NULL;
 
-    return PyObject_CallFunction((PyObject *)&asisType, "O", obj);
+    return PyObject_CallFunctionObjArgs((PyObject *)&asisType, obj, NULL);
 }

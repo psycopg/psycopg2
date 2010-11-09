@@ -91,7 +91,7 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *keywds)
     if (name)
         obj = PyObject_CallFunction(factory, "Os", self, name);
     else
-        obj = PyObject_CallFunction(factory, "O", self);
+        obj = PyObject_CallFunctionObjArgs(factory, self, NULL);
 
     if (obj == NULL) return NULL;
     if (PyObject_IsInstance(obj, (PyObject *)&cursorType) == 0) {

@@ -246,5 +246,5 @@ psyco_Float(PyObject *module, PyObject *args)
     if (!PyArg_ParseTuple(args, "O", &obj))
         return NULL;
 
-    return PyObject_CallFunction((PyObject *)&pfloatType, "O", obj);
+    return PyObject_CallFunctionObjArgs((PyObject *)&pfloatType, obj, NULL);
 }
