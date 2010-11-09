@@ -2,6 +2,8 @@
 
 	* Replaced PyObject_CallFunction() with *ObjArgs() where more efficient.
 
+	* Dropped PyArg_ParseTuple() calls in functions taking no arguments.
+
 	* psycopg/microprotocols.c: small optimizations.
 
 2010-11-08  Daniele Varrazzo  <daniele.varrazzo@gmail.com>

@@ -136,7 +136,6 @@ qstring_str(qstringObject *self)
 static PyObject *
 qstring_getquoted(qstringObject *self, PyObject *args)
 {
-    if (!PyArg_ParseTuple(args, "")) return NULL;
     return qstring_str(self);
 }
 
@@ -196,7 +195,7 @@ static struct PyMemberDef qstringObject_members[] = {
 /* object method table */
 
 static PyMethodDef qstringObject_methods[] = {
-    {"getquoted", (PyCFunction)qstring_getquoted, METH_VARARGS,
+    {"getquoted", (PyCFunction)qstring_getquoted, METH_NOARGS,
      "getquoted() -> wrapped object value as SQL-quoted string"},
     {"prepare", (PyCFunction)qstring_prepare, METH_VARARGS,
      "prepare(conn) -> set encoding to conn->encoding and store conn"},

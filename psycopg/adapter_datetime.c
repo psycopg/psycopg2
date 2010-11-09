@@ -106,7 +106,6 @@ pydatetime_str(pydatetimeObject *self)
 static PyObject *
 pydatetime_getquoted(pydatetimeObject *self, PyObject *args)
 {
-    if (!PyArg_ParseTuple(args, "")) return NULL;
     return pydatetime_str(self);
 }
 
@@ -139,7 +138,7 @@ static struct PyMemberDef pydatetimeObject_members[] = {
 /* object method table */
 
 static PyMethodDef pydatetimeObject_methods[] = {
-    {"getquoted", (PyCFunction)pydatetime_getquoted, METH_VARARGS,
+    {"getquoted", (PyCFunction)pydatetime_getquoted, METH_NOARGS,
      "getquoted() -> wrapped object value as SQL date/time"},
     {"__conform__", (PyCFunction)pydatetime_conform, METH_VARARGS, NULL},
     {NULL}  /* Sentinel */

@@ -54,7 +54,6 @@ pfloat_str(pfloatObject *self)
 static PyObject *
 pfloat_getquoted(pfloatObject *self, PyObject *args)
 {
-    if (!PyArg_ParseTuple(args, "")) return NULL;
     return pfloat_str(self);
 }
 
@@ -86,7 +85,7 @@ static struct PyMemberDef pfloatObject_members[] = {
 /* object method table */
 
 static PyMethodDef pfloatObject_methods[] = {
-    {"getquoted", (PyCFunction)pfloat_getquoted, METH_VARARGS,
+    {"getquoted", (PyCFunction)pfloat_getquoted, METH_NOARGS,
      "getquoted() -> wrapped object value as SQL-quoted string"},
     {"__conform__", (PyCFunction)pfloat_conform, METH_VARARGS, NULL},
     {NULL}  /* Sentinel */

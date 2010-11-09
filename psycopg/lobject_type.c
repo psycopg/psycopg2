@@ -51,8 +51,6 @@
 static PyObject *
 psyco_lobj_close(lobjectObject *self, PyObject *args)
 {
-    if (!PyArg_ParseTuple(args, "")) return NULL;
-
     /* file-like objects can be closed multiple times and remember that
        closing the current transaction is equivalent to close all the
        opened large objects */
@@ -165,8 +163,6 @@ psyco_lobj_tell(lobjectObject *self, PyObject *args)
 {
     int pos;
 
-    if (!PyArg_ParseTuple(args, "")) return NULL;
-
     EXC_IF_LOBJ_CLOSED(self);
     EXC_IF_LOBJ_LEVEL0(self);
     EXC_IF_LOBJ_UNMARKED(self);
@@ -185,8 +181,6 @@ psyco_lobj_tell(lobjectObject *self, PyObject *args)
 static PyObject *
 psyco_lobj_unlink(lobjectObject *self, PyObject *args)
 {
-    if (!PyArg_ParseTuple(args, "")) return NULL;
-
     if (lobject_unlink(self) < 0)
     	return NULL;
 
@@ -266,11 +260,11 @@ static struct PyMethodDef lobjectObject_methods[] = {
     {"seek", (PyCFunction)psyco_lobj_seek,
      METH_VARARGS, psyco_lobj_seek_doc},
     {"tell", (PyCFunction)psyco_lobj_tell,
-     METH_VARARGS, psyco_lobj_tell_doc},
+     METH_NOARGS, psyco_lobj_tell_doc},
     {"close", (PyCFunction)psyco_lobj_close,
-     METH_VARARGS, psyco_lobj_close_doc},
+     METH_NOARGS, psyco_lobj_close_doc},
     {"unlink",(PyCFunction)psyco_lobj_unlink,
-     METH_VARARGS, psyco_lobj_unlink_doc},
+     METH_NOARGS, psyco_lobj_unlink_doc},
     {"export",(PyCFunction)psyco_lobj_export,
      METH_VARARGS, psyco_lobj_export_doc},
 #if PG_VERSION_HEX >= 0x080300

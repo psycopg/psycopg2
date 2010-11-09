@@ -87,16 +87,14 @@ list_quote(listObject *self)
 }
 
 static PyObject *
-list_str(listObject *self, PyObject *args)
+list_str(listObject *self)
 {
-    if (!PyArg_ParseTuple(args, "")) return NULL;
     return list_quote(self);
 }
 
 static PyObject *
 list_getquoted(listObject *self, PyObject *args)
 {
-    if (!PyArg_ParseTuple(args, "")) return NULL;
     return list_quote(self);
 }
 
@@ -148,7 +146,7 @@ static struct PyMemberDef listObject_members[] = {
 /* object method table */
 
 static PyMethodDef listObject_methods[] = {
-    {"getquoted", (PyCFunction)list_getquoted, METH_VARARGS,
+    {"getquoted", (PyCFunction)list_getquoted, METH_NOARGS,
      "getquoted() -> wrapped object value as SQL date/time"},
     {"prepare", (PyCFunction)list_prepare, METH_VARARGS,
      "prepare(conn) -> set encoding to conn->encoding"},

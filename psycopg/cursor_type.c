@@ -55,8 +55,6 @@ extern PyObject *pyPsycopgTzFixedOffsetTimezone;
 static PyObject *
 psyco_curs_close(cursorObject *self, PyObject *args)
 {
-    if (!PyArg_ParseTuple(args, "")) return NULL;
-
     EXC_IF_CURS_CLOSED(self);
     EXC_IF_ASYNC_IN_PROGRESS(self, close);
 
@@ -737,8 +735,6 @@ psyco_curs_fetchone(cursorObject *self, PyObject *args)
 {
     PyObject *res;
 
-    if (args && !PyArg_ParseTuple(args, "")) return NULL;
-
     EXC_IF_CURS_CLOSED(self);
     EXC_IF_ASYNC_IN_PROGRESS(self, fetchone);
     if (_psyco_curs_prefetch(self) < 0) return NULL;
@@ -871,10 +867,6 @@ psyco_curs_fetchall(cursorObject *self, PyObject *args)
     int i, size;
     PyObject *list, *res;
 
-    if (!PyArg_ParseTuple(args, "")) {
-        return NULL;
-    }
-
     EXC_IF_CURS_CLOSED(self);
     EXC_IF_ASYNC_IN_PROGRESS(self, fetchall);
     if (_psyco_curs_prefetch(self) < 0) return NULL;
@@ -994,8 +986,6 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
 static PyObject *
 psyco_curs_nextset(cursorObject *self, PyObject *args)
 {
-    if (!PyArg_ParseTuple(args, "")) return NULL;
-
     EXC_IF_CURS_CLOSED(self);
 
     PyErr_SetString(NotSupportedError, "not supported by PostgreSQL");
@@ -1510,21 +1500,21 @@ cursor_next(PyObject *self)
 static struct PyMethodDef cursorObject_methods[] = {
     /* DBAPI-2.0 core */
     {"close", (PyCFunction)psyco_curs_close,
-     METH_VARARGS, psyco_curs_close_doc},
+     METH_NOARGS, psyco_curs_close_doc},
     {"execute", (PyCFunction)psyco_curs_execute,
      METH_VARARGS|METH_KEYWORDS, psyco_curs_execute_doc},
     {"executemany", (PyCFunction)psyco_curs_executemany,
      METH_VARARGS|METH_KEYWORDS, psyco_curs_executemany_doc},
     {"fetchone", (PyCFunction)psyco_curs_fetchone,
-     METH_VARARGS, psyco_curs_fetchone_doc},
+     METH_NOARGS, psyco_curs_fetchone_doc},
     {"fetchmany", (PyCFunction)psyco_curs_fetchmany,
      METH_VARARGS|METH_KEYWORDS, psyco_curs_fetchmany_doc},
     {"fetchall", (PyCFunction)psyco_curs_fetchall,
-     METH_VARARGS, psyco_curs_fetchall_doc},
+     METH_NOARGS, psyco_curs_fetchall_doc},
     {"callproc", (PyCFunction)psyco_curs_callproc,
      METH_VARARGS, psyco_curs_callproc_doc},
     {"nextset", (PyCFunction)psyco_curs_nextset,
-     METH_VARARGS, psyco_curs_nextset_doc},
+     METH_NOARGS, psyco_curs_nextset_doc},
     {"setinputsizes", (PyCFunction)psyco_curs_setinputsizes,
      METH_VARARGS, psyco_curs_setinputsizes_doc},
     {"setoutputsize", (PyCFunction)psyco_curs_setoutputsize,

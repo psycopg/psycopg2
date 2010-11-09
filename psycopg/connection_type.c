@@ -118,8 +118,6 @@ psyco_conn_close(connectionObject *self, PyObject *args)
 {
     EXC_IF_CONN_CLOSED(self);
 
-    if (!PyArg_ParseTuple(args, "")) return NULL;
-
     Dprintf("psyco_conn_close: closing connection at %p", self);
     conn_close(self);
     Dprintf("psyco_conn_close: connection at %p closed", self);
@@ -140,8 +138,6 @@ psyco_conn_commit(connectionObject *self, PyObject *args)
     EXC_IF_CONN_ASYNC(self, commit);
     EXC_IF_TPC_BEGIN(self, commit);
 
-    if (!PyArg_ParseTuple(args, "")) return NULL;
-
     if (conn_commit(self) < 0)
         return NULL;
 
@@ -161,8 +157,6 @@ psyco_conn_rollback(connectionObject *self, PyObject *args)
     EXC_IF_CONN_CLOSED(self);
     EXC_IF_CONN_ASYNC(self, rollback);
     EXC_IF_TPC_BEGIN(self, rollback);
-
-    if (!PyArg_ParseTuple(args, "")) return NULL;
 
     if (conn_rollback(self) < 0)
         return NULL;
@@ -243,10 +237,6 @@ psyco_conn_tpc_prepare(connectionObject *self, PyObject *args)
     EXC_IF_CONN_CLOSED(self);
     EXC_IF_CONN_ASYNC(self, tpc_prepare);
     EXC_IF_TPC_PREPARED(self, tpc_prepare);
-
-    if (!PyArg_ParseTuple(args, "")) {
-        return NULL;
-    }
 
     if (NULL == self->tpc_xid) {
         PyErr_SetString(ProgrammingError,
@@ -396,8 +386,6 @@ psyco_conn_tpc_recover(connectionObject *self, PyObject *args)
     EXC_IF_TPC_PREPARED(self, tpc_recover);
     EXC_IF_TPC_NOT_SUPPORTED(self);
 
-    if (!PyArg_ParseTuple(args, "")) { return NULL; }
-
     return conn_tpc_recover(self);
 }
 
@@ -485,8 +473,6 @@ static PyObject *
 psyco_conn_get_transaction_status(connectionObject *self, PyObject *args)
 {
     EXC_IF_CONN_CLOSED(self);
-
-    if (!PyArg_ParseTuple(args, "")) return NULL;
 
     return PyInt_FromLong((long)PQtransactionStatus(self->pgconn));
 }
@@ -726,30 +712,30 @@ static struct PyMethodDef connectionObject_methods[] = {
     {"cursor", (PyCFunction)psyco_conn_cursor,
      METH_VARARGS|METH_KEYWORDS, psyco_conn_cursor_doc},
     {"close", (PyCFunction)psyco_conn_close,
-     METH_VARARGS, psyco_conn_close_doc},
+     METH_NOARGS, psyco_conn_close_doc},
     {"commit", (PyCFunction)psyco_conn_commit,
-     METH_VARARGS, psyco_conn_commit_doc},
+     METH_NOARGS, psyco_conn_commit_doc},
     {"rollback", (PyCFunction)psyco_conn_rollback,
-     METH_VARARGS, psyco_conn_rollback_doc},
+     METH_NOARGS, psyco_conn_rollback_doc},
     {"xid", (PyCFunction)psyco_conn_xid,
      METH_VARARGS|METH_KEYWORDS, psyco_conn_xid_doc},
     {"tpc_begin", (PyCFunction)psyco_conn_tpc_begin,
      METH_VARARGS, psyco_conn_tpc_begin_doc},
     {"tpc_prepare", (PyCFunction)psyco_conn_tpc_prepare,
-     METH_VARARGS, psyco_conn_tpc_prepare_doc},
+     METH_NOARGS, psyco_conn_tpc_prepare_doc},
     {"tpc_commit", (PyCFunction)psyco_conn_tpc_commit,
      METH_VARARGS, psyco_conn_tpc_commit_doc},
     {"tpc_rollback", (PyCFunction)psyco_conn_tpc_rollback,
      METH_VARARGS, psyco_conn_tpc_rollback_doc},
     {"tpc_recover", (PyCFunction)psyco_conn_tpc_recover,
-     METH_VARARGS, psyco_conn_tpc_recover_doc},
+     METH_NOARGS, psyco_conn_tpc_recover_doc},
 #ifdef PSYCOPG_EXTENSIONS
     {"set_isolation_level", (PyCFunction)psyco_conn_set_isolation_level,
      METH_VARARGS, psyco_conn_set_isolation_level_doc},
     {"set_client_encoding", (PyCFunction)psyco_conn_set_client_encoding,
      METH_VARARGS, psyco_conn_set_client_encoding_doc},
     {"get_transaction_status", (PyCFunction)psyco_conn_get_transaction_status,
-     METH_VARARGS, psyco_conn_get_transaction_status_doc},
+     METH_NOARGS, psyco_conn_get_transaction_status_doc},
     {"get_parameter_status", (PyCFunction)psyco_conn_get_parameter_status,
      METH_VARARGS, psyco_conn_get_parameter_status_doc},
     {"get_backend_pid", (PyCFunction)psyco_conn_get_backend_pid,

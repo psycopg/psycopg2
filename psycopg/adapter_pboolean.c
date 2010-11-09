@@ -62,7 +62,6 @@ pboolean_str(pbooleanObject *self)
 static PyObject *
 pboolean_getquoted(pbooleanObject *self, PyObject *args)
 {
-    if (!PyArg_ParseTuple(args, "")) return NULL;
     return pboolean_str(self);
 }
 
@@ -94,7 +93,7 @@ static struct PyMemberDef pbooleanObject_members[] = {
 /* object method table */
 
 static PyMethodDef pbooleanObject_methods[] = {
-    {"getquoted", (PyCFunction)pboolean_getquoted, METH_VARARGS,
+    {"getquoted", (PyCFunction)pboolean_getquoted, METH_NOARGS,
      "getquoted() -> wrapped object value as SQL-quoted string"},
     {"__conform__", (PyCFunction)pboolean_conform, METH_VARARGS, NULL},
     {NULL}  /* Sentinel */

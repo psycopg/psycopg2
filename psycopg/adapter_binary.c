@@ -111,7 +111,6 @@ binary_str(binaryObject *self)
 static PyObject *
 binary_getquoted(binaryObject *self, PyObject *args)
 {
-    if (!PyArg_ParseTuple(args, "")) return NULL;
     return binary_str(self);
 }
 
@@ -162,7 +161,7 @@ static struct PyMemberDef binaryObject_members[] = {
 /* object method table */
 
 static PyMethodDef binaryObject_methods[] = {
-    {"getquoted", (PyCFunction)binary_getquoted, METH_VARARGS,
+    {"getquoted", (PyCFunction)binary_getquoted, METH_NOARGS,
      "getquoted() -> wrapped object value as SQL-quoted binary string"},
     {"prepare", (PyCFunction)binary_prepare, METH_VARARGS,
      "prepare(conn) -> prepare for binary encoding using conn"},

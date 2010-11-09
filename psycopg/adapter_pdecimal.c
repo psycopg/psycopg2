@@ -84,7 +84,6 @@ end:
 static PyObject *
 pdecimal_getquoted(pdecimalObject *self, PyObject *args)
 {
-    if (!PyArg_ParseTuple(args, "")) return NULL;
     return pdecimal_str(self);
 }
 
@@ -116,7 +115,7 @@ static struct PyMemberDef pdecimalObject_members[] = {
 /* object method table */
 
 static PyMethodDef pdecimalObject_methods[] = {
-    {"getquoted", (PyCFunction)pdecimal_getquoted, METH_VARARGS,
+    {"getquoted", (PyCFunction)pdecimal_getquoted, METH_NOARGS,
      "getquoted() -> wrapped object value as SQL-quoted string"},
     {"__conform__", (PyCFunction)pdecimal_conform, METH_VARARGS, NULL},
     {NULL}  /* Sentinel */

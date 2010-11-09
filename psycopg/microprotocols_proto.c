@@ -48,8 +48,6 @@
 static PyObject *
 psyco_isqlquote_getquoted(isqlquoteObject *self, PyObject *args)
 {
-    if (!PyArg_ParseTuple(args, "")) return NULL;
-
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -62,8 +60,6 @@ psyco_isqlquote_getquoted(isqlquoteObject *self, PyObject *args)
 static PyObject *
 psyco_isqlquote_getbinary(isqlquoteObject *self, PyObject *args)
 {
-    if (!PyArg_ParseTuple(args, "")) return NULL;
-
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -76,8 +72,6 @@ psyco_isqlquote_getbinary(isqlquoteObject *self, PyObject *args)
 static PyObject *
 psyco_isqlquote_getbuffer(isqlquoteObject *self, PyObject *args)
 {
-    if (!PyArg_ParseTuple(args, "")) return NULL;
-
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -91,11 +85,11 @@ psyco_isqlquote_getbuffer(isqlquoteObject *self, PyObject *args)
 
 static struct PyMethodDef isqlquoteObject_methods[] = {
     {"getquoted", (PyCFunction)psyco_isqlquote_getquoted,
-     METH_VARARGS, psyco_isqlquote_getquoted_doc},
+     METH_NOARGS, psyco_isqlquote_getquoted_doc},
     {"getbinary", (PyCFunction)psyco_isqlquote_getbinary,
-     METH_VARARGS, psyco_isqlquote_getbinary_doc},
+     METH_NOARGS, psyco_isqlquote_getbinary_doc},
     {"getbuffer", (PyCFunction)psyco_isqlquote_getbuffer,
-     METH_VARARGS, psyco_isqlquote_getbuffer_doc},
+     METH_NOARGS, psyco_isqlquote_getbuffer_doc},
     /*    {"prepare", (PyCFunction)psyco_isqlquote_prepare,
           METH_VARARGS, psyco_isqlquote_prepare_doc}, */
     {NULL}
