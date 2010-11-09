@@ -7,6 +7,9 @@
 	* psycopg/microprotocols.c: use the adapter of an object superclass if
 	available.
 
+	* psycopg/adapter_pdecimal.c: fixed crash in pdecimal_str with Python
+	2.5.x releases in which is_finite() is not available.
+
 2010-11-06  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* lib/extras.py: added NamedTupleCursor.

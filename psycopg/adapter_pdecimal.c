@@ -43,29 +43,41 @@ static PyObject *
 pdecimal_str(pdecimalObject *self)
 {
     PyObject *check, *res = NULL;
-#if PY_VERSION_HEX < 0x02050000
-    check = PyObject_CallMethod(self->wrapped, "_isnan", NULL);
-    if (PyInt_AsLong(check) == 1) {
-        res = PyString_FromString("'NaN'::numeric");
-        goto end;
-    }
-    Py_DECREF(check);
-    check = PyObject_CallMethod(self->wrapped, "_isinfinity", NULL);
-    if (abs(PyInt_AsLong(check)) == 1) {
-        res = PyString_FromString("'NaN'::numeric");
-        goto end;
-    }
-    res = PyObject_Str(self->wrapped);
-#else
     check = PyObject_CallMethod(self->wrapped, "is_finite", NULL);
-    if (check == Py_True)
+    if (check == Py_True) {
         res = PyObject_Str(self->wrapped);
-    else
+        goto end;
+    }
+    else if (check) {
         res = PyString_FromString("'NaN'::numeric");
-#endif
+        goto end;
+    }
 
-   end:
+    /* is_finite() was introduced 2.5.1 < somewhere <= 2.5.4.
+     * We assume we are here because we didn't find the method. */
+    PyErr_Clear();
+
+    if (!(check = PyObject_CallMethod(self->wrapped, "_isnan", NULL))) {
+        goto end;
+    }
+    if (PyObject_IsTrue(check)) {
+        res = PyString_FromString("'NaN'::numeric");
+        goto end;
+    }
+
     Py_DECREF(check);
+    if (!(check = PyObject_CallMethod(self->wrapped, "_isinfinity", NULL))) {
+        goto end;
+    }
+    if (PyObject_IsTrue(check)) {
+        res = PyString_FromString("'NaN'::numeric");
+        goto end;
+    }
+
+    res = PyObject_Str(self->wrapped);
+
+end:
+    Py_XDECREF(check);
     return res;
 }
 

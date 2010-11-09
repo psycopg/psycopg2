@@ -25,6 +25,7 @@ psycopg 2.3 aims to expose some new features introduced in PostgreSQL 9.0.
 
   - Fixed use of `PQfreemem` instead of `free` in binary typecaster.
   - Fixed access to freed memory in `conn_get_isolation_level()`.
+  - Fixed crash during Decimal adaptation with a few 2.5.x Python versions.
 
 
 What's new in psycopg 2.2.2
