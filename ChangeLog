@@ -6,6 +6,8 @@
 
 	* psycopg/microprotocols.c: small optimizations.
 
+	* Avoid pointless string manipulation in NamedTupleCursor (ticket #10)
+
 2010-11-08  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* psycopg/microprotocols.c: use faster function to build tuples.
