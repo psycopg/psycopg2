@@ -129,7 +129,7 @@ _get_superclass_adapter(PyObject *obj, PyObject *proto)
 PyObject *
 microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
 {
-    PyObject *adapter, *adapted, *key;
+    PyObject *adapter, *adapted, *key, *meth;
     char buffer[256];
 
     /* we don't check for exact type conformance as specified in PEP 246
@@ -159,21 +159,41 @@ microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
     }
 
     /* try to have the protocol adapt this object*/
-    if (PyObject_HasAttrString(proto, "__adapt__")) {
-        adapted = PyObject_CallMethod(proto, "__adapt__", "O", obj);
+    if ((meth = PyObject_GetAttrString(proto, "__adapt__"))) {
+        adapted = PyObject_CallFunctionObjArgs(meth, obj, NULL);
+        Py_DECREF(meth);
         if (adapted && adapted != Py_None) return adapted;
         Py_XDECREF(adapted);
-        if (PyErr_Occurred() && !PyErr_ExceptionMatches(PyExc_TypeError))
-            return NULL;
+        if (PyErr_Occurred()) {
+            if (PyErr_ExceptionMatches(PyExc_TypeError)) {
+               PyErr_Clear();
+            } else {
+                return NULL;
+            }
+        }
+    }
+    else {
+        /* proto.__adapt__ not found. */
+        PyErr_Clear();
     }
 
     /* and finally try to have the object adapt itself */
-    if (PyObject_HasAttrString(obj, "__conform__")) {
-        adapted = PyObject_CallMethod(obj, "__conform__","O", proto);
+    if ((meth = PyObject_GetAttrString(obj, "__conform__"))) {
+        adapted = PyObject_CallFunctionObjArgs(meth, proto, NULL);
+        Py_DECREF(meth);
         if (adapted && adapted != Py_None) return adapted;
         Py_XDECREF(adapted);
-        if (PyErr_Occurred() && !PyErr_ExceptionMatches(PyExc_TypeError))
-            return NULL;
+        if (PyErr_Occurred()) {
+            if (PyErr_ExceptionMatches(PyExc_TypeError)) {
+               PyErr_Clear();
+            } else {
+                return NULL;
+            }
+        }
+    }
+    else {
+        /* obj.__conform__ not found. */
+        PyErr_Clear();
     }
 
     /* else set the right exception and return NULL */
