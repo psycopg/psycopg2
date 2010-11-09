@@ -88,7 +88,7 @@ _get_superclass_adapter(PyObject *obj, PyObject *proto)
     Py_ssize_t i, ii;
 
     type = (PyTypeObject *)Py_TYPE(obj);
-    if (!(Py_TPFLAGS_HAVE_CLASS & type->tp_flags)) {
+    if (!((Py_TPFLAGS_HAVE_CLASS & type->tp_flags) && type->tp_mro)) {
         /* has no mro */
         return NULL;
     }
