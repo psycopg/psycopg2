@@ -58,7 +58,7 @@ from distutils.ccompiler import get_default_compiler
 # Take a look at http://www.python.org/dev/peps/pep-0386/
 # for a consistent versioning pattern.
 
-PSYCOPG_VERSION = '2.3.0-beta1'
+PSYCOPG_VERSION = '2.3.0-beta2'
 
 version_flags   = ['dt', 'dec']
 
