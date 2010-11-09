@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import dbapi20
 import dbapi20_tpc
+from test_connection import skip_if_tpc_disabled
 import unittest
 import psycopg2
 
@@ -28,6 +29,13 @@ class Psycopg2TPCTests(dbapi20_tpc.TwoPhaseCommitTests):
     def connect(self):
         return psycopg2.connect(dsn=tests.dsn)
 
+    @skip_if_tpc_disabled
+    def test_tpc_commit_with_prepare(self):
+        super(Psycopg2TPCTests, self).test_tpc_commit_with_prepare()
+
+    @skip_if_tpc_disabled
+    def test_tpc_rollback_with_prepare(self):
+        super(Psycopg2TPCTests, self).test_tpc_rollback_with_prepare()
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
