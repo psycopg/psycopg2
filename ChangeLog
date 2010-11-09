@@ -2,6 +2,8 @@
 
 	* Replaced PyObject_CallFunction() with *ObjArgs() where more efficient.
 
+	* psycopg/microprotocols.c: small optimizations.
+
 2010-11-08  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* psycopg/microprotocols.c: use faster function to build tuples.

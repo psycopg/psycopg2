@@ -188,30 +188,41 @@ PyObject *
 microprotocol_getquoted(PyObject *obj, connectionObject *conn)
 {
     PyObject *res = NULL;
-    PyObject *tmp = microprotocols_adapt(
-        obj, (PyObject*)&isqlquoteType, NULL);
+    PyObject *prepare = NULL;
+    PyObject *adapted;
 
-    if (tmp != NULL) {
-        Dprintf("microprotocol_getquoted: adapted to %s",
-                tmp->ob_type->tp_name);
+    if (!(adapted = microprotocols_adapt(obj, (PyObject*)&isqlquoteType, NULL))) {
+       goto exit;
+    }
 
-        /* if requested prepare the object passing it the connection */
-        if (PyObject_HasAttrString(tmp, "prepare") && conn) {
-            res = PyObject_CallMethod(tmp, "prepare", "O", (PyObject*)conn);
-            if (res == NULL) {
-                Py_DECREF(tmp);
-                return NULL;
-            }
-            else {
+    Dprintf("microprotocol_getquoted: adapted to %s",
+            adapted->ob_type->tp_name);
+
+    /* if requested prepare the object passing it the connection */
+    if (conn) {
+        if ((prepare = PyObject_GetAttrString(adapted, "prepare"))) {
+            res = PyObject_CallFunctionObjArgs(
+                prepare, (PyObject *)conn, NULL);
+            if (res) {
                 Py_DECREF(res);
+                res = NULL;
+            } else {
+                goto exit;
             }
         }
-
-        /* call the getquoted method on tmp (that should exist because we
-           adapted to the right protocol) */
-        res = PyObject_CallMethod(tmp, "getquoted", NULL);
-        Py_DECREF(tmp);
+        else {
+            /* adapted.prepare not found */
+            PyErr_Clear();
+        }
     }
+
+    /* call the getquoted method on adapted (that should exist because we
+       adapted to the right protocol) */
+    res = PyObject_CallMethod(adapted, "getquoted", NULL);
+
+exit:
+    Py_XDECREF(adapted);
+    Py_XDECREF(prepare);
 
     /* we return res with one extra reference, the caller shall free it */
     return res;
