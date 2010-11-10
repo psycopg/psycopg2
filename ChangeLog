@@ -1,3 +1,7 @@
+2010-11-10  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* psycopg/green.c: functions unused outside the module marked static.
+
 2010-11-09  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* Replaced PyObject_CallFunction() with *ObjArgs() where more efficient.

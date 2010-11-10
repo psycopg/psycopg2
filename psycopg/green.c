@@ -33,8 +33,8 @@
 
 HIDDEN PyObject *wait_callback = NULL;
 
-PyObject *have_wait_callback(void);
-void psyco_clear_result_blocking(connectionObject *conn);
+static PyObject *have_wait_callback(void);
+static void psyco_clear_result_blocking(connectionObject *conn);
 
 /* Register a callback function to block waiting for data.
  *
@@ -94,7 +94,7 @@ psyco_green()
  *
  * The function returns a new reference: decref after use.
  */
-PyObject *
+static PyObject *
 have_wait_callback()
 {
     PyObject *cb;
@@ -186,7 +186,7 @@ end:
  * If any command was issued before clearing the result, libpq would fail with
  * the error "another command is already in progress".
  */
-void
+static void
 psyco_clear_result_blocking(connectionObject *conn)
 {
     PGresult *res;
