@@ -87,7 +87,8 @@ conn.close()
             pids[name] = int(self.notify(name).communicate()[0])
 
         self.assertEqual(0, len(self.conn.notifies))
-        self.assertEqual(extensions.POLL_OK, self.conn.poll())
+        for i in range(10):
+            self.assertEqual(extensions.POLL_OK, self.conn.poll())
         self.assertEqual(3, len(self.conn.notifies))
 
         names = dict.fromkeys(['foo', 'bar', 'baz'])

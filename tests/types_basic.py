@@ -80,6 +80,13 @@ class TypesBasicTests(unittest.TestCase):
             self.failUnless(type(s) == decimal.Decimal, "wrong decimal conversion: " + repr(s))
 
     def testFloat(self):
+        try:
+            float("nan")
+        except ValueError:
+            import warnings
+            warnings.warn("nan not available on this platform")
+            return
+
         s = self.execute("SELECT %s AS foo", (float("nan"),))
         self.failUnless(str(s) == "nan", "wrong float quoting: " + str(s))
         self.failUnless(type(s) == float, "wrong float conversion: " + repr(s))
