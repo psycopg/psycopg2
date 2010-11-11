@@ -48,6 +48,32 @@ class ConnectionTests(unittest.TestCase):
         self.assert_(conn.notices)
         conn.close()
 
+    def test_notices_consistent_order(self):
+        conn = self.connect()
+        cur = conn.cursor()
+        cur.execute("create temp table table1 (id serial); create temp table table2 (id serial);")
+        cur.execute("create temp table table3 (id serial); create temp table table4 (id serial);")
+        self.assertEqual(4, len(conn.notices))
+        self.assert_('table1' in conn.notices[0])
+        self.assert_('table2' in conn.notices[1])
+        self.assert_('table3' in conn.notices[2])
+        self.assert_('table4' in conn.notices[3])
+        conn.close()
+
+    def test_notices_limited(self):
+        conn = self.connect()
+        cur = conn.cursor()
+        for i in range(0, 100, 10):
+            sql = " ".join(["create temp table table%d (id serial);" % j for j in range(i, i+10)])
+            cur.execute(sql)
+
+        self.assertEqual(50, len(conn.notices))
+        self.assert_('table50' in conn.notices[0], conn.notices[0])
+        self.assert_('table51' in conn.notices[1], conn.notices[1])
+        self.assert_('table98' in conn.notices[-2], conn.notices[-2])
+        self.assert_('table99' in conn.notices[-1], conn.notices[-1])
+        conn.close()
+
     def test_server_version(self):
         conn = self.connect()
         self.assert_(conn.server_version)

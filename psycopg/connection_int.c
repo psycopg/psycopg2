@@ -71,32 +71,41 @@ void
 conn_notice_process(connectionObject *self)
 {
     struct connectionObject_notice *notice;
-    PyObject *msg;
+    Py_ssize_t nnotices;
+
+    if (NULL == self->notice_pending) {
+        return;
+    }
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
+    Py_BLOCK_THREADS;
 
     notice =  self->notice_pending;
+    nnotices = PyList_GET_SIZE(self->notice_list);
 
     while (notice != NULL) {
-        Py_BLOCK_THREADS;
-
+        PyObject *msg;
         msg = PyString_FromString(notice->message);
 
         Dprintf("conn_notice_process: %s", notice->message);
 
-        PyList_Append(self->notice_list, msg);
+        /* Respect the order in which notices were produced,
+           because in notice_list they are reversed (see ticket #9) */
+        PyList_Insert(self->notice_list, nnotices, msg);
         Py_DECREF(msg);
-
-        /* Remove the oldest item if the queue is getting too long. */
-        if (PyList_GET_SIZE(self->notice_list) > CONN_NOTICES_LIMIT)
-            PySequence_DelItem(self->notice_list, 0);
-
-        Py_UNBLOCK_THREADS;
 
         notice = notice->next;
     }
 
+    /* Remove the oldest item if the queue is getting too long. */
+    nnotices = PyList_GET_SIZE(self->notice_list);
+    if (nnotices > CONN_NOTICES_LIMIT) {
+        PySequence_DelSlice(self->notice_list,
+            0, nnotices - CONN_NOTICES_LIMIT);
+    }
+
+    Py_UNBLOCK_THREADS;
     pthread_mutex_unlock(&self->lock);
     Py_END_ALLOW_THREADS;
 
