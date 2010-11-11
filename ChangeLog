@@ -3,6 +3,9 @@
 	* lib/extras.py: build the namedtuple only once per execution, not once
 	per fetch.
 
+	* lib/extras.py: don't change the exception raised when fetching without a
+	result from NamedTupleCursor.
+
 2010-11-10  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* psycopg/green.c: functions unused outside the module marked static.

@@ -305,7 +305,7 @@ class NamedTupleCursor(_cursor):
             raise self._exc
     else:
         def _make_nt(self, namedtuple=namedtuple):
-            return namedtuple("Record", [d[0] for d in self.description])
+            return namedtuple("Record", [d[0] for d in self.description or ()])
 
 
 class LoggingConnection(_connection):

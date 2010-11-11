@@ -220,6 +220,15 @@ class NamedTupleCursorTest(unittest.TestCase):
         self.assertRaises(AttributeError, getattr, r, 'foo')
 
     @if_has_namedtuple
+    def test_no_result_no_surprise(self):
+        curs = self.conn.cursor()
+        curs.execute("update nttest set s = s")
+        self.assertRaises(psycopg2.ProgrammingError, curs.fetchone)
+
+        curs.execute("update nttest set s = s")
+        self.assertRaises(psycopg2.ProgrammingError, curs.fetchall)
+
+    @if_has_namedtuple
     def test_minimal_generation(self):
         # Instrument the class to verify it gets called the minimum number of times.
         from psycopg2.extras import NamedTupleCursor
