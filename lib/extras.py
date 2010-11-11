@@ -259,19 +259,39 @@ class NamedTupleCursor(_cursor):
     .. |namedtuple| replace:: `!namedtuple`
     .. __: http://docs.python.org/release/2.6/library/collections.html#collections.namedtuple
     """
+    Record = None
+
+    def execute(self, query, vars=None):
+        self.Record = None
+        return _cursor.execute(self, query, vars)
+
+    def executemany(self, query, vars):
+        self.Record = None
+        return _cursor.executemany(self, vars)
+
+    def callproc(self, procname, vars=None):
+        self.Record = None
+        return _cursor.callproc(self, procname, vars)
+
     def fetchone(self):
         t = _cursor.fetchone(self)
         if t is not None:
-            nt = self._make_nt()
+            nt = self.Record
+            if nt is None:
+                nt = self.Record = self._make_nt()
             return nt(*t)
 
     def fetchmany(self, size=None):
-        nt = self._make_nt()
+        nt = self.Record
+        if nt is None:
+            nt = self.Record = self._make_nt()
         ts = _cursor.fetchmany(self, size)
         return [nt(*t) for t in ts]
 
     def fetchall(self):
-        nt = self._make_nt()
+        nt = self.Record
+        if nt is None:
+            nt = self.Record = self._make_nt()
         ts = _cursor.fetchall(self)
         return [nt(*t) for t in ts]
 

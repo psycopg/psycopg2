@@ -207,6 +207,51 @@ class NamedTupleCursorTest(unittest.TestCase):
             # skip the test
             pass
 
+    @if_has_namedtuple
+    def test_record_updated(self):
+        curs = self.conn.cursor()
+        curs.execute("select 1 as foo;")
+        r = curs.fetchone()
+        self.assertEqual(r.foo, 1)
+
+        curs.execute("select 2 as bar;")
+        r = curs.fetchone()
+        self.assertEqual(r.bar, 2)
+        self.assertRaises(AttributeError, getattr, r, 'foo')
+
+    @if_has_namedtuple
+    def test_minimal_generation(self):
+        # Instrument the class to verify it gets called the minimum number of times.
+        from psycopg2.extras import NamedTupleCursor
+        f_orig = NamedTupleCursor._make_nt
+        calls = [0]
+        def f_patched(self_):
+            calls[0] += 1
+            return f_orig(self_)
+
+        NamedTupleCursor._make_nt = f_patched
+
+        try:
+            curs = self.conn.cursor()
+            curs.execute("select * from nttest order by 1")
+            curs.fetchone()
+            curs.fetchone()
+            curs.fetchone()
+            self.assertEqual(1, calls[0])
+
+            curs.execute("select * from nttest order by 1")
+            curs.fetchone()
+            curs.fetchall()
+            self.assertEqual(2, calls[0])
+
+            curs.execute("select * from nttest order by 1")
+            curs.fetchone()
+            curs.fetchmany(1)
+            self.assertEqual(3, calls[0])
+
+        finally:
+            NamedTupleCursor._make_nt = f_orig
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
