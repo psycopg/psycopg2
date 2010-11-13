@@ -24,8 +24,10 @@
 
 PYTHON := python$(PYTHON_VERSION)
 PYTHON_VERSION ?= $(shell $(PYTHON) -c 'import sys; print "%d.%d" % sys.version_info[:2]')
-ENV_DIR = $(shell pwd)/env/py-$(PYTHON_VERSION)
 BUILD_DIR = $(shell pwd)/build/lib.$(PYTHON_VERSION)
+ENV_DIR = $(shell pwd)/env/py-$(PYTHON_VERSION)
+ENV_BIN = $(ENV_DIR)/bin
+ENV_LIB = $(ENV_DIR)/lib
 
 TESTDB = psycopg2_test
 
@@ -40,8 +42,8 @@ PURELIB := $(patsubst lib/%,$(PACKAGE)/%,$(SOURCE_PY))
 VERSION := $(shell grep PSYCOPG_VERSION setup.py | head -1 | sed -e "s/.*'\(.*\)'/\1/")
 SDIST := dist/psycopg2-$(VERSION).tar.gz
 
-EASY_INSTALL = PYTHONPATH=$(ENV_DIR)/lib $(ENV_DIR)/bin/easy_install-$(PYTHON_VERSION) -d $(ENV_DIR)/lib -s $(ENV_DIR)/bin
-EZ_SETUP = $(ENV_DIR)/bin/ez_setup.py
+EASY_INSTALL = PYTHONPATH=$(ENV_LIB) $(ENV_BIN)/easy_install-$(PYTHON_VERSION) -d $(ENV_LIB) -s $(ENV_BIN)
+EZ_SETUP = $(ENV_BIN)/ez_setup.py
 
 .PHONY: env check runtests clean
 
@@ -67,18 +69,18 @@ runtests: package
 # It is not clean by 'make clean'
 
 env: easy_install
-	mkdir -p $(ENV_DIR)/bin
-	mkdir -p $(ENV_DIR)/lib
+	mkdir -p $(ENV_BIN)
+	mkdir -p $(ENV_LIB)
 	$(EASY_INSTALL) docutils
 	$(EASY_INSTALL) sphinx
 
 easy_install: ez_setup
-	PYTHONPATH=$(ENV_DIR)/lib $(PYTHON) $(EZ_SETUP) -d $(ENV_DIR)/lib -s $(ENV_DIR)/bin setuptools
+	PYTHONPATH=$(ENV_LIB) $(PYTHON) $(EZ_SETUP) -d $(ENV_LIB) -s $(ENV_BIN) setuptools
 
-ez_setup: $(EZ_SETUP)
-
-$(EZ_SETUP):
-	wget -O $@ http://peak.telecommunity.com/dist/ez_setup.py
+ez_setup:
+	mkdir -p $(ENV_BIN)
+	mkdir -p $(ENV_LIB)
+	wget -O $(EZ_SETUP) http://peak.telecommunity.com/dist/ez_setup.py
 
 check:
 	$(MAKE) testdb
@@ -114,10 +116,10 @@ MANIFEST: MANIFEST.in
 
 # docs depend on the build as it partly use introspection.
 doc/html/index.html: package $(SOURCE_DOC)
-	PYTHONPATH=$(ENV_DIR)/lib:$(BUILD_DIR) $(MAKE) SPHINXBUILD=$(ENV_DIR)/bin/sphinx-build -C doc html
+	PYTHONPATH=$(ENV_LIB):$(BUILD_DIR) $(MAKE) SPHINXBUILD=$(ENV_BIN)/sphinx-build -C doc html
 
 doc/psycopg2.txt: package $(SOURCE_DOC)
-	PYTHONPATH=$(ENV_DIR)/lib:$(BUILD_DIR) $(MAKE) SPHINXBUILD=$(ENV_DIR)/bin/sphinx-build -C doc text
+	PYTHONPATH=$(ENV_LIB):$(BUILD_DIR) $(MAKE) SPHINXBUILD=$(ENV_BIN)/sphinx-build -C doc text
 
 
 clean:
