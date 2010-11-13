@@ -55,7 +55,7 @@ package: $(PLATLIB) $(PURELIB)
 
 docs: docs-html docs-txt
 
-docs-html: doc/html/index.html
+docs-html: doc/html/genindex.html
 
 docs-txt: doc/psycopg2.txt
 
@@ -115,10 +115,10 @@ MANIFEST: MANIFEST.in
 	$(PYTHON) setup.py sdist --manifest-only
 
 # docs depend on the build as it partly use introspection.
-doc/html/index.html: package $(SOURCE_DOC)
+doc/html/genindex.html: $(PLATLIB) $(PURELIB) $(SOURCE_DOC)
 	PYTHONPATH=$(ENV_LIB):$(BUILD_DIR) $(MAKE) SPHINXBUILD=$(ENV_BIN)/sphinx-build -C doc html
 
-doc/psycopg2.txt: package $(SOURCE_DOC)
+doc/psycopg2.txt: $(PLATLIB) $(PURELIB) $(SOURCE_DOC)
 	PYTHONPATH=$(ENV_LIB):$(BUILD_DIR) $(MAKE) SPHINXBUILD=$(ENV_BIN)/sphinx-build -C doc text
 
 
