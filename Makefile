@@ -39,6 +39,14 @@ PACKAGE := $(BUILD_DIR)/psycopg2
 PLATLIB := $(PACKAGE)/_psycopg.so
 PURELIB := $(patsubst lib/%,$(PACKAGE)/%,$(SOURCE_PY))
 
+BUILD_OPT := --build-lib=$(BUILD_DIR)
+BUILD_EXT_OPT := --build-lib=$(BUILD_DIR)
+SDIST_OPT := --formats=gztar
+
+ifdef PG_CONFIG
+	BUILD_EXT_OPT += --pg-config=$(PG_CONFIG)
+endif
+
 VERSION := $(shell grep PSYCOPG_VERSION setup.py | head -1 | sed -e "s/.*'\(.*\)'/\1/")
 SDIST := dist/psycopg2-$(VERSION).tar.gz
 
@@ -100,14 +108,14 @@ testdb:
 
 
 $(PLATLIB): $(SOURCE_C)
-	$(PYTHON) setup.py build --build-lib $(BUILD_DIR)
+	$(PYTHON) setup.py build_ext $(BUILD_EXT_OPT)
 
 $(PACKAGE)/%.py: lib/%.py
-	$(PYTHON) setup.py build --build-lib $(BUILD_DIR)
+	$(PYTHON) setup.py build $(BUILD_OPT)
 
 
 $(SDIST): docs MANIFEST
-	$(PYTHON) setup.py sdist --formats=gztar
+	$(PYTHON) setup.py sdist $(SDIST_OPT)
 
 MANIFEST: MANIFEST.in
 	# Run twice as MANIFEST.in includes MANIFEST
