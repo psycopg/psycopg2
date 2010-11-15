@@ -34,6 +34,7 @@ TESTDB = psycopg2_test
 SOURCE_C := $(wildcard psycopg/*.c psycopg/*.h)
 SOURCE_PY := $(wildcard lib/*.py)
 SOURCE_DOC := $(wildcard doc/src/*.rst)
+SOURCE := $(SOURCE_C) $(SOURCE_PY) $(SOURCE_DOC)
 
 PACKAGE := $(BUILD_DIR)/psycopg2
 PLATLIB := $(PACKAGE)/_psycopg.so
@@ -114,10 +115,10 @@ $(PACKAGE)/%.py: lib/%.py
 	$(PYTHON) setup.py build $(BUILD_OPT)
 
 
-$(SDIST): docs MANIFEST
+$(SDIST): docs MANIFEST $(SOURCE)
 	$(PYTHON) setup.py sdist $(SDIST_OPT)
 
-MANIFEST: MANIFEST.in
+MANIFEST: MANIFEST.in $(SOURCE)
 	# Run twice as MANIFEST.in includes MANIFEST
 	$(PYTHON) setup.py sdist --manifest-only
 	$(PYTHON) setup.py sdist --manifest-only
