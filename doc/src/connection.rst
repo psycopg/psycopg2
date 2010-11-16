@@ -428,7 +428,9 @@ The ``connection`` class
     .. attribute:: protocol_version
 
         A read-only integer representing frontend/backend protocol being used.
-        It can be 2 or 3.
+        Currently Psycopg supports only protocol 3, which allows connection
+        to PostgreSQL server from version 7.4. Psycopg versions previous than
+        2.3 support both protocols 2 and 3.
 
         .. seealso:: libpq docs for `PQprotocolVersion()`__ for details.
 

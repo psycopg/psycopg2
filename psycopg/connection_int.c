@@ -295,6 +295,10 @@ conn_setup(connectionObject *self, PGconn *pgconn)
     self->equote = conn_get_standard_conforming_strings(pgconn);
     self->server_version = conn_get_server_version(pgconn);
     self->protocol = conn_get_protocol_version(self->pgconn);
+    if (3 != self->protocol) {
+        PyErr_SetString(InterfaceError, "only protocol 3 supported");
+        return -1;
+    }
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
@@ -636,6 +640,10 @@ _conn_poll_setup_async(connectionObject *self)
         self->equote = conn_get_standard_conforming_strings(self->pgconn);
         self->protocol = conn_get_protocol_version(self->pgconn);
         self->server_version = conn_get_server_version(self->pgconn);
+        if (3 != self->protocol) {
+            PyErr_SetString(InterfaceError, "only protocol 3 supported");
+            break;
+        }
 
         /* asynchronous connections always use isolation level 0, the user is
          * expected to manage the transactions himself, by sending
