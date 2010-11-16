@@ -222,22 +222,36 @@ conn_get_standard_conforming_strings(PGconn *pgconn)
     return equote;
 }
 
-char *
-conn_get_encoding(PGresult *pgres)
+/* Return a string containing the client_encoding setting.
+ *
+ * Return a new string allocated by malloc(): use free() to free it.
+ * Return NULL in case of failure.
+ */
+static char *
+conn_get_encoding(PGconn *pgconn)
 {
-    char *tmp, *encoding;
-    size_t i;
+    const char *tmp, *i;
+    char *encoding, *j;
 
-    tmp = PQgetvalue(pgres, 0, 0);
+    tmp = PQparameterStatus(pgconn, "client_encoding");
+    Dprintf("conn_connect: client encoding: %s", tmp ? tmp : "(none)");
+    if (!tmp) {
+        PyErr_SetString(OperationalError,
+            "server didn't return client encoding");
+        return NULL;
+    }
+
     encoding = malloc(strlen(tmp)+1);
     if (encoding == NULL) {
         PyErr_NoMemory();
-        IFCLEARPGRES(pgres);
         return NULL;
     }
-    for (i=0 ; i < strlen(tmp) ; i++)
-        encoding[i] = toupper(tmp[i]);
-    encoding[i] = '\0';
+
+    /* return in uppercase */
+    i = tmp;
+    j = encoding;
+    while (*i) { *j++ = toupper(*i++); }
+    *j = '\0';
 
     return encoding;
 }
@@ -293,6 +307,11 @@ conn_setup(connectionObject *self, PGconn *pgconn)
         PyErr_SetString(InterfaceError, "only protocol 3 supported");
         return -1;
     }
+    /* conn_get_encoding returns a malloc'd string */
+    self->encoding = conn_get_encoding(pgconn);
+    if (self->encoding == NULL) {
+        return -1;
+    }
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
@@ -315,33 +334,6 @@ conn_setup(connectionObject *self, PGconn *pgconn)
     if (pgres == NULL || PQresultStatus(pgres) != PGRES_COMMAND_OK ) {
         PyErr_SetString(OperationalError, "can't set datestyle to ISO");
         IFCLEARPGRES(pgres);
-        Py_UNBLOCK_THREADS;
-        pthread_mutex_unlock(&self->lock);
-        Py_BLOCK_THREADS;
-        return -1;
-    }
-    CLEARPGRES(pgres);
-
-    if (!green) {
-        Py_UNBLOCK_THREADS;
-        pgres = PQexec(pgconn, psyco_client_encoding);
-        Py_BLOCK_THREADS;
-    } else {
-        pgres = psyco_exec_green(self, psyco_client_encoding);
-    }
-
-    if (pgres == NULL || PQresultStatus(pgres) != PGRES_TUPLES_OK) {
-        PyErr_SetString(OperationalError, "can't fetch client_encoding");
-        IFCLEARPGRES(pgres);
-        Py_UNBLOCK_THREADS;
-        pthread_mutex_unlock(&self->lock);
-        Py_BLOCK_THREADS;
-        return -1;
-    }
-
-    /* conn_get_encoding returns a malloc'd string */
-    self->encoding = conn_get_encoding(pgres);
-    if (self->encoding == NULL) {
         Py_UNBLOCK_THREADS;
         pthread_mutex_unlock(&self->lock);
         Py_BLOCK_THREADS;
@@ -638,6 +630,11 @@ _conn_poll_setup_async(connectionObject *self)
             PyErr_SetString(InterfaceError, "only protocol 3 supported");
             break;
         }
+        /* conn_get_encoding returns a malloc'd string */
+        self->encoding = conn_get_encoding(self->pgconn);
+        if (self->encoding == NULL) {
+            break;
+        }
 
         /* asynchronous connections always use isolation level 0, the user is
          * expected to manage the transactions himself, by sending
@@ -667,40 +664,12 @@ _conn_poll_setup_async(connectionObject *self)
             }
             CLEARPGRES(pgres);
 
-            Dprintf("conn_poll: status -> CONN_STATUS_CLIENT_ENCODING");
-            self->status = CONN_STATUS_CLIENT_ENCODING;
-            if (0 == pq_send_query(self, psyco_client_encoding)) {
-                PyErr_SetString(OperationalError, PQerrorMessage(self->pgconn));
-                break;
-            }
-            Dprintf("conn_poll: async_status -> ASYNC_WRITE");
-            self->async_status = ASYNC_WRITE;
-            res = PSYCO_POLL_WRITE;
-        }
-        break;
-
-    case CONN_STATUS_CLIENT_ENCODING:
-        res = _conn_poll_query(self);
-        if (res == PSYCO_POLL_OK) {
-            res = PSYCO_POLL_ERROR;
-            pgres = pq_get_last_result(self);
-            if (pgres == NULL || PQresultStatus(pgres) != PGRES_TUPLES_OK) {
-                PyErr_SetString(OperationalError, "can't fetch client_encoding");
-                break;
-            }
-
-            /* conn_get_encoding returns a malloc'd string */
-            self->encoding = conn_get_encoding(pgres);
-            CLEARPGRES(pgres);
-            if (self->encoding == NULL) { break; }
-
             Dprintf("conn_poll: status -> CONN_STATUS_READY");
             self->status = CONN_STATUS_READY;
             res = PSYCO_POLL_OK;
         }
         break;
     }
-
     return res;
 }
 
@@ -732,7 +701,6 @@ conn_poll(connectionObject *self)
         break;
 
     case CONN_STATUS_DATESTYLE:
-    case CONN_STATUS_CLIENT_ENCODING:
         res = _conn_poll_setup_async(self);
         break;
 

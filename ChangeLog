@@ -6,6 +6,9 @@
 	* psycopg/connection_int.c: dropped support for protocol 2 at compile
 	time and protocol 2-specific code.
 
+	* psycopg/connection_int.c: don't run a query at connection to detect
+	client encoding: use PQparameterStatus() instead.
+
 2010-11-11  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* lib/extras.py: build the namedtuple only once per execution, not once

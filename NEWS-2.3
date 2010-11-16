@@ -15,6 +15,7 @@ psycopg 2.3 aims to expose some new features introduced in PostgreSQL 9.0.
 
   - Dropped support for protocol 2: Psycopg 2.3 can only connect to PostgreSQL
     servers with version at least 7.4.
+  - don't issue a query at every connection to detect the client encoding.
   - `mogrify()` now supports unicode queries.
   - subclasses of a type that can be adapted are adapted as the superclass.
   - `errorcodes` knows a couple of new codes introduced in PostgreSQL 9.0.
