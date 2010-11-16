@@ -266,13 +266,7 @@ int
 conn_get_protocol_version(PGconn *pgconn)
 {
     int ret;
-
-#ifdef HAVE_PQPROTOCOL3
     ret = PQprotocolVersion(pgconn);
-#else
-    ret = 2;
-#endif
-
     Dprintf("conn_connect: using protocol %d", ret);
     return ret;
 }

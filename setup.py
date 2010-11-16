@@ -393,11 +393,10 @@ else:
     sys.exit(1)
 
 # generate a nice version string to avoid confusion when users report bugs
+version_flags.append('pq3') # no more a choice
 for have in parser.get('build_ext', 'define').split(','):
     if have == 'PSYCOPG_EXTENSIONS':
         version_flags.append('ext')
-    elif have == 'HAVE_PQPROTOCOL3':
-        version_flags.append('pq3')
 if version_flags:
     PSYCOPG_VERSION_EX = PSYCOPG_VERSION + " (%s)" % ' '.join(version_flags)
 else:

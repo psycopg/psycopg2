@@ -780,7 +780,7 @@ static struct PyMemberDef connectionObject_members[] = {
         "A set of typecasters to convert binary values."},
     {"protocol_version", T_INT,
         offsetof(connectionObject, protocol), RO,
-        "Protocol version (2 or 3) used for this connection."},
+        "Protocol version used for this connection. Currently always 3."},
     {"server_version", T_INT,
         offsetof(connectionObject, server_version), RO,
         "Server version."},
