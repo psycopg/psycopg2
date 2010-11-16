@@ -292,6 +292,22 @@ conn_get_server_version(PGconn *pgconn)
 }
 
 
+/* Return 1 if the server datestyle allows us to work without problems,
+   0 if it needs to be set to something better, e.g. ISO. */
+static int
+conn_is_datestyle_ok(PGconn *pgconn)
+{
+    const char *ds;
+
+    ds = PQparameterStatus(pgconn, "DateStyle");
+    Dprintf("conn_connect: DateStyle %s", ds);
+
+    /* Return true if ds starts with "ISO"
+     * e.g. "ISO, DMY" is fine, "German" not. */
+    return (ds[0] == 'I' && ds[1] == 'S' && ds[2] == 'O');
+}
+
+
 /* conn_setup - setup and read basic information about the connection */
 
 int
@@ -323,23 +339,26 @@ conn_setup(connectionObject *self, PGconn *pgconn)
         return -1;
     }
 
-    if (!green) {
-        Py_UNBLOCK_THREADS;
-        pgres = PQexec(pgconn, psyco_datestyle);
-        Py_BLOCK_THREADS;
-    } else {
-        pgres = psyco_exec_green(self, psyco_datestyle);
-    }
+    if (!conn_is_datestyle_ok(self->pgconn)) {
+        if (!green) {
+            Py_UNBLOCK_THREADS;
+            Dprintf("conn_connect: exec query \"%s\";", psyco_datestyle);
+            pgres = PQexec(pgconn, psyco_datestyle);
+            Py_BLOCK_THREADS;
+        } else {
+            pgres = psyco_exec_green(self, psyco_datestyle);
+        }
 
-    if (pgres == NULL || PQresultStatus(pgres) != PGRES_COMMAND_OK ) {
-        PyErr_SetString(OperationalError, "can't set datestyle to ISO");
-        IFCLEARPGRES(pgres);
-        Py_UNBLOCK_THREADS;
-        pthread_mutex_unlock(&self->lock);
-        Py_BLOCK_THREADS;
-        return -1;
+        if (pgres == NULL || PQresultStatus(pgres) != PGRES_COMMAND_OK ) {
+            PyErr_SetString(OperationalError, "can't set datestyle to ISO");
+            IFCLEARPGRES(pgres);
+            Py_UNBLOCK_THREADS;
+            pthread_mutex_unlock(&self->lock);
+            Py_BLOCK_THREADS;
+            return -1;
+        }
+        CLEARPGRES(pgres);
     }
-    CLEARPGRES(pgres);
 
     if (!green) {
         Py_UNBLOCK_THREADS;
@@ -642,15 +661,24 @@ _conn_poll_setup_async(connectionObject *self)
          */
         self->isolation_level = 0;
 
-        Dprintf("conn_poll: status -> CONN_STATUS_DATESTYLE");
-        self->status = CONN_STATUS_DATESTYLE;
-        if (0 == pq_send_query(self, psyco_datestyle)) {
-            PyErr_SetString(OperationalError, PQerrorMessage(self->pgconn));
-            break;
+        /* If the datestyle is ISO or anything else good,
+         * we can skip the CONN_STATUS_DATESTYLE step. */
+        if (!conn_is_datestyle_ok(self->pgconn)) {
+            Dprintf("conn_poll: status -> CONN_STATUS_DATESTYLE");
+            self->status = CONN_STATUS_DATESTYLE;
+            if (0 == pq_send_query(self, psyco_datestyle)) {
+                PyErr_SetString(OperationalError, PQerrorMessage(self->pgconn));
+                break;
+            }
+            Dprintf("conn_poll: async_status -> ASYNC_WRITE");
+            self->async_status = ASYNC_WRITE;
+            res = PSYCO_POLL_WRITE;
         }
-        Dprintf("conn_poll: async_status -> ASYNC_WRITE");
-        self->async_status = ASYNC_WRITE;
-        res = PSYCO_POLL_WRITE;
+        else {
+            Dprintf("conn_poll: status -> CONN_STATUS_READY");
+            self->status = CONN_STATUS_READY;
+            res = PSYCO_POLL_OK;
+        }
         break;
 
     case CONN_STATUS_DATESTYLE:
