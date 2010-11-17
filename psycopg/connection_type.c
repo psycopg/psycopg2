@@ -415,11 +415,8 @@ psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
     }
 
     if (conn_switch_isolation_level(self, level) < 0) {
-        PyErr_SetString(OperationalError,
-                        PQerrorMessage(self->pgconn));
         return NULL;
     }
-
 
     Py_INCREF(Py_None);
     return Py_None;

@@ -1,3 +1,8 @@
+2010-11-17  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* psycopg/connection_type.c: don't clobber exception if
+	isolation_level_switch fails.
+
 2010-11-16  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* psycopg/connection_int.c: abort connection to protocol 2 server.
