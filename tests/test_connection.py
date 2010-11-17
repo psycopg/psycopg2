@@ -92,6 +92,74 @@ class ConnectionTests(unittest.TestCase):
         conn = self.connect()
         self.assert_(conn.encoding in psycopg2.extensions.encodings)
 
+    def test_isolation_level_autocommit(self):
+        cnn1 = self.connect()
+        cnn2 = self.connect()
+        cnn2.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+
+        cur1 = cnn1.cursor()
+        cur1.execute("drop table if exists isolevel;")
+        cur1.execute("create table isolevel (id integer);")
+        cur1.execute("select count(*) from isolevel;")
+        self.assertEqual(0, cur1.fetchone()[0])
+        cnn1.commit()
+
+        cur2 = cnn2.cursor()
+        cur2.execute("insert into isolevel values (10);")
+        cur1.execute("select count(*) from isolevel;")
+
+        self.assertEqual(1, cur1.fetchone()[0])
+
+    def test_isolation_level_read_committed(self):
+        cnn1 = self.connect()
+        cnn2 = self.connect()
+        cnn2.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_READ_COMMITTED)
+
+        cur1 = cnn1.cursor()
+        cur1.execute("drop table if exists isolevel;")
+        cur1.execute("create table isolevel (id integer);")
+        cur1.execute("select count(*) from isolevel;")
+        self.assertEqual(0, cur1.fetchone()[0])
+        cnn1.commit()
+
+        cur2 = cnn2.cursor()
+        cur2.execute("insert into isolevel values (10);")
+        cur2.execute("select count(*) from isolevel;")
+        self.assertEqual(1, cur2.fetchone()[0])
+
+        cur1.execute("insert into isolevel values (20);")
+        cnn1.commit()
+
+        cur2.execute("select count(*) from isolevel;")
+        self.assertEqual(2, cur2.fetchone()[0])
+
+    def test_isolation_level_serializable(self):
+        cnn1 = self.connect()
+        cnn2 = self.connect()
+        cnn2.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_SERIALIZABLE)
+
+        cur1 = cnn1.cursor()
+        cur1.execute("drop table if exists isolevel;")
+        cur1.execute("create table isolevel (id integer);")
+        cur1.execute("select count(*) from isolevel;")
+        self.assertEqual(0, cur1.fetchone()[0])
+        cnn1.commit()
+
+        cur2 = cnn2.cursor()
+        cur2.execute("insert into isolevel values (10);")
+        cur2.execute("select count(*) from isolevel;")
+        self.assertEqual(1, cur2.fetchone()[0])
+
+        cur1.execute("insert into isolevel values (20);")
+        cnn1.commit()
+
+        cur2.execute("select count(*) from isolevel;")
+        self.assertEqual(1, cur2.fetchone()[0])
+
+        cnn2.commit()
+        cur2.execute("select count(*) from isolevel;")
+        self.assertEqual(2, cur2.fetchone()[0])
+
 
 def skip_if_tpc_disabled(f):
     """Skip a test if the server has tpc support disabled."""
