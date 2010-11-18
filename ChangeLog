@@ -5,6 +5,8 @@
 
 	* psycopg/utils.c: compiler warning dropped.
 
+	* typecast.h: functions exported to drop warnings.
+
 2010-11-17  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* psycopg/connection_type.c: don't clobber exception if

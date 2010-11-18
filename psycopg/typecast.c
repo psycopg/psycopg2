@@ -34,16 +34,16 @@
 #include "psycopg/typecast.h"
 #include "psycopg/cursor.h"
 
-/* usefull function used by some typecasters */
+/* useful function used by some typecasters */
 
-static const char *
+const char *
 skip_until_space(const char *s)
 {
     while (*s && *s != ' ') s++;
     return s;
 }
 
-static const char *
+const char *
 skip_until_space2(const char *s, Py_ssize_t *len)
 {
     while (*len > 0 && *s && *s != ' ') {
