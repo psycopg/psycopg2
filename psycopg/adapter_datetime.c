@@ -39,17 +39,22 @@
 #include "psycopg/adapter_datetime.h"
 #include "psycopg/microprotocols_proto.h"
 
-
-/* the pointer to the datetime module API is initialized by the module init
-   code, we just need to grab it */
-extern HIDDEN PyObject* pyDateTimeModuleP;
-extern HIDDEN PyObject *pyDateTypeP;
-extern HIDDEN PyObject *pyTimeTypeP;
-extern HIDDEN PyObject *pyDateTimeTypeP;
-extern HIDDEN PyObject *pyDeltaTypeP;
-
 extern HIDDEN PyObject *pyPsycopgTzModule;
 extern HIDDEN PyObject *pyPsycopgTzLOCAL;
+
+int
+psyco_adapter_datetime_init(void)
+{
+    Dprintf("psyco_adapter_datetime_init: datetime init");
+
+    PyDateTime_IMPORT;
+
+    if (!PyDateTimeAPI) {
+        PyErr_SetString(PyExc_ImportError, "datetime initialization failed");
+        return -1;
+    }
+    return 0;
+}
 
 /* datetime_str, datetime_getquoted - return result of quoting */
 
@@ -298,7 +303,8 @@ psyco_Date(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "iii", &year, &month, &day))
         return NULL;
 
-    obj = PyObject_CallFunction(pyDateTypeP, "iii", year, month, day);
+    obj = PyObject_CallFunction((PyObject*)PyDateTimeAPI->DateType,
+                                "iii", year, month, day);
 
     if (obj) {
         res = PyObject_CallFunction((PyObject *)&pydatetimeType,
@@ -327,10 +333,10 @@ psyco_Time(PyObject *self, PyObject *args)
     second = floor(second);
 
     if (tzinfo == NULL)
-       obj = PyObject_CallFunction(pyTimeTypeP, "iiii",
+       obj = PyObject_CallFunction((PyObject*)PyDateTimeAPI->TimeType, "iiii",
             hours, minutes, (int)second, (int)round(micro));
     else
-       obj = PyObject_CallFunction(pyTimeTypeP, "iiiiO",
+       obj = PyObject_CallFunction((PyObject*)PyDateTimeAPI->TimeType, "iiiiO",
             hours, minutes, (int)second, (int)round(micro), tzinfo);
 
     if (obj) {
@@ -361,11 +367,13 @@ psyco_Timestamp(PyObject *self, PyObject *args)
     second = floor(second);
 
     if (tzinfo == NULL)
-        obj = PyObject_CallFunction(pyDateTimeTypeP, "iiiiiii",
+        obj = PyObject_CallFunction((PyObject*)PyDateTimeAPI->DateTimeType,
+            "iiiiiii",
             year, month, day, hour, minute, (int)second,
             (int)round(micro));
     else
-        obj = PyObject_CallFunction(pyDateTimeTypeP, "iiiiiiiO",
+        obj = PyObject_CallFunction((PyObject*)PyDateTimeAPI->DateTimeType,
+            "iiiiiiiO",
             year, month, day, hour, minute, (int)second,
             (int)round(micro), tzinfo);
 
@@ -462,7 +470,7 @@ psyco_DateFromPy(PyObject *self, PyObject *args)
 {
     PyObject *obj;
 
-    if (!PyArg_ParseTuple(args, "O!", pyDateTypeP, &obj))
+    if (!PyArg_ParseTuple(args, "O!", PyDateTimeAPI->DateType, &obj))
         return NULL;
 
     return PyObject_CallFunction((PyObject *)&pydatetimeType, "Oi", obj,
@@ -474,7 +482,7 @@ psyco_TimeFromPy(PyObject *self, PyObject *args)
 {
     PyObject *obj;
 
-    if (!PyArg_ParseTuple(args, "O!", pyTimeTypeP, &obj))
+    if (!PyArg_ParseTuple(args, "O!", PyDateTimeAPI->TimeType, &obj))
         return NULL;
 
     return PyObject_CallFunction((PyObject *)&pydatetimeType, "Oi", obj,
@@ -486,7 +494,7 @@ psyco_TimestampFromPy(PyObject *self, PyObject *args)
 {
     PyObject *obj;
 
-    if (!PyArg_ParseTuple(args, "O!", pyDateTimeTypeP, &obj))
+    if (!PyArg_ParseTuple(args, "O!", PyDateTimeAPI->DateTimeType, &obj))
         return NULL;
 
     return PyObject_CallFunction((PyObject *)&pydatetimeType, "Oi", obj,
@@ -498,7 +506,7 @@ psyco_IntervalFromPy(PyObject *self, PyObject *args)
 {
     PyObject *obj;
 
-    if (!PyArg_ParseTuple(args, "O!", pyDeltaTypeP, &obj))
+    if (!PyArg_ParseTuple(args, "O!", PyDateTimeAPI->DeltaType, &obj))
         return NULL;
 
     return PyObject_CallFunction((PyObject *)&pydatetimeType, "Oi", obj,

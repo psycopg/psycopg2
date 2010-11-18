@@ -7,6 +7,8 @@
 
 	* typecast.h: functions exported to drop warnings.
 
+	* datetime module initialized at is supposed to be.
+
 2010-11-17  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* psycopg/connection_type.c: don't clobber exception if

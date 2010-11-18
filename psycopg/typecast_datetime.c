@@ -26,14 +26,19 @@
 #include <math.h>
 #include "datetime.h"
 
+int
+psyco_typecast_datetime_init(void)
+{
+    Dprintf("psyco_typecast_datetime_init: datetime init");
 
-/* the pointer to the datetime module API is initialized by the module init
-   code, we just need to grab it */
-extern HIDDEN PyObject* pyDateTimeModuleP;
-extern HIDDEN PyObject *pyDateTypeP;
-extern HIDDEN PyObject *pyTimeTypeP;
-extern HIDDEN PyObject *pyDateTimeTypeP;
-extern HIDDEN PyObject *pyDeltaTypeP;
+    PyDateTime_IMPORT;
+
+    if (!PyDateTimeAPI) {
+        PyErr_SetString(PyExc_ImportError, "datetime initialization failed");
+        return -1;
+    }
+    return 0;
+}
 
 /** DATE - cast a date into a date python object **/
 
@@ -47,10 +52,12 @@ typecast_PYDATE_cast(const char *str, Py_ssize_t len, PyObject *curs)
 
     if (!strcmp(str, "infinity") || !strcmp(str, "-infinity")) {
         if (str[0] == '-') {
-            obj = PyObject_GetAttrString(pyDateTypeP, "min");
+            obj = PyObject_GetAttrString(
+                (PyObject*)PyDateTimeAPI->DateType, "min");
         }
         else {
-            obj = PyObject_GetAttrString(pyDateTypeP, "max");
+            obj = PyObject_GetAttrString(
+                (PyObject*)PyDateTimeAPI->DateType, "max");
         }
     }
 
@@ -66,7 +73,8 @@ typecast_PYDATE_cast(const char *str, Py_ssize_t len, PyObject *curs)
         }
         else {
             if (y > 9999) y = 9999;
-            obj = PyObject_CallFunction(pyDateTypeP, "iii", y, m, d);
+            obj = PyObject_CallFunction(
+                (PyObject*)PyDateTimeAPI->DateType, "iii", y, m, d);
         }
     }
     return obj;
@@ -89,10 +97,12 @@ typecast_PYDATETIME_cast(const char *str, Py_ssize_t len, PyObject *curs)
     /* check for infinity */
     if (!strcmp(str, "infinity") || !strcmp(str, "-infinity")) {
         if (str[0] == '-') {
-            obj = PyObject_GetAttrString(pyDateTimeTypeP, "min");
+            obj = PyObject_GetAttrString(
+                (PyObject*)PyDateTimeAPI->DateTimeType, "min");
         }
         else {
-            obj = PyObject_GetAttrString(pyDateTimeTypeP, "max");
+            obj = PyObject_GetAttrString(
+                (PyObject*)PyDateTimeAPI->DateTimeType, "max");
         }
     }
 
@@ -144,8 +154,9 @@ typecast_PYDATETIME_cast(const char *str, Py_ssize_t len, PyObject *curs)
             tzinfo = Py_None;
         }
         if (tzinfo != NULL) {
-            obj = PyObject_CallFunction(pyDateTimeTypeP, "iiiiiiiO",
-                 y, m, d, hh, mm, ss, us, tzinfo);
+            obj = PyObject_CallFunction(
+                (PyObject*)PyDateTimeAPI->DateTimeType, "iiiiiiiO",
+                y, m, d, hh, mm, ss, us, tzinfo);
             Dprintf("typecast_PYDATETIME_cast: tzinfo: %p, refcnt = "
                 FORMAT_CODE_PY_SSIZE_T,
                 tzinfo, tzinfo->ob_refcnt
@@ -197,7 +208,7 @@ typecast_PYTIME_cast(const char *str, Py_ssize_t len, PyObject *curs)
         tzinfo = Py_None;
     }
     if (tzinfo != NULL) {
-        obj = PyObject_CallFunction(pyTimeTypeP, "iiiiO",
+        obj = PyObject_CallFunction((PyObject*)PyDateTimeAPI->TimeType, "iiiiO",
                                     hh, mm, ss, us, tzinfo);
         Py_DECREF(tzinfo);
     }
@@ -308,7 +319,7 @@ typecast_PYINTERVAL_cast(const char *str, Py_ssize_t len, PyObject *curs)
 
     micro = (seconds - floor(seconds)) * 1000000.0;
     sec = (int)floor(seconds);
-    return PyObject_CallFunction(pyDeltaTypeP, "iii",
+    return PyObject_CallFunction((PyObject*)PyDateTimeAPI->DeltaType, "iii",
                                  days, sec, (int)round(micro));
 }
 
