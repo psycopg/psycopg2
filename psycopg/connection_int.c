@@ -265,11 +265,11 @@ conn_get_isolation_level(PGresult *pgres)
 
     char *isolation_level = PQgetvalue(pgres, 0, 0);
 
-    if ((strncmp(lvl1a, isolation_level, strlen(isolation_level)) == 0)
-        || (strncmp(lvl1b, isolation_level, strlen(isolation_level)) == 0))
-       rv = 1;
+    if ((strcmp(lvl1b, isolation_level) == 0)     /* most likely */
+        || (strcmp(lvl1a, isolation_level) == 0))
+        rv = ISOLATION_LEVEL_READ_COMMITTED;
     else /* if it's not one of the lower ones, it's SERIALIZABLE */
-        rv = 2;
+        rv = ISOLATION_LEVEL_SERIALIZABLE;
 
     CLEARPGRES(pgres);
 
@@ -659,7 +659,7 @@ _conn_poll_setup_async(connectionObject *self)
          * expected to manage the transactions himself, by sending
          * (asynchronously) BEGIN and COMMIT statements.
          */
-        self->isolation_level = 0;
+        self->isolation_level = ISOLATION_LEVEL_AUTOCOMMIT;
 
         /* If the datestyle is ISO or anything else good,
          * we can skip the CONN_STATUS_DATESTYLE step. */
@@ -830,20 +830,21 @@ conn_switch_isolation_level(connectionObject *self, int level)
     char *error = NULL;
     int res = 0;
 
-    /* if the current isolation level is equal to the requested one don't switch */
-    if (self->isolation_level == level) return 0;
-
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
 
-    /* if the current isolation level is > 0 we need to abort the current
-       transaction before changing; that all folks! */
-    if (self->isolation_level != level && self->isolation_level > 0) {
-        res = pq_abort_locked(self, &pgres, &error, &_save);
-    }
-    self->isolation_level = level;
+    /* if the current isolation level is equal to the requested one don't switch */
+    if (self->isolation_level != level) {
 
-    Dprintf("conn_switch_isolation_level: switched to level %d", level);
+        /* if the current isolation level is > 0 we need to abort the current
+           transaction before changing; that all folks! */
+        if (self->isolation_level != ISOLATION_LEVEL_AUTOCOMMIT) {
+            res = pq_abort_locked(self, &pgres, &error, &_save);
+        }
+        self->isolation_level = level;
+
+        Dprintf("conn_switch_isolation_level: switched to level %d", level);
+    }
 
     pthread_mutex_unlock(&self->lock);
     Py_END_ALLOW_THREADS;

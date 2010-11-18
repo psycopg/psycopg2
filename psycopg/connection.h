@@ -66,6 +66,13 @@ extern "C" {
 #define psyco_datestyle "SET DATESTYLE TO 'ISO'"
 #define psyco_transaction_isolation "SHOW default_transaction_isolation"
 
+/* possible values for isolation_level */
+typedef enum {
+    ISOLATION_LEVEL_AUTOCOMMIT      = 0,
+    ISOLATION_LEVEL_READ_COMMITTED  = 1,
+    ISOLATION_LEVEL_SERIALIZABLE    = 2,
+} conn_isolation_level_t;
+
 extern HIDDEN PyTypeObject connectionType;
 
 struct connectionObject_notice {

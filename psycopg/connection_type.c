@@ -209,7 +209,7 @@ psyco_conn_tpc_begin(connectionObject *self, PyObject *args)
     }
 
     /* two phase commit and autocommit make no point */
-    if (self->isolation_level == 0) {
+    if (self->isolation_level == ISOLATION_LEVEL_AUTOCOMMIT) {
         PyErr_SetString(ProgrammingError,
             "tpc_begin can't be called in autocommit mode");
         goto exit;
@@ -410,7 +410,7 @@ psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
 
     if (level < 0 || level > 2) {
         PyErr_SetString(PyExc_ValueError,
-                        "isolation level out of bounds (0,3)");
+            "isolation level must be between 0 and 2");
         return NULL;
     }
 

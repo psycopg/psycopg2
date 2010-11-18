@@ -129,7 +129,7 @@ lobject_close_locked(lobjectObject *self, char **error)
 {
     int retvalue;
 
-    if (self->conn->isolation_level == 0 ||
+    if (self->conn->isolation_level == ISOLATION_LEVEL_AUTOCOMMIT ||
         self->conn->mark != self->mark ||
         self->fd == -1)
         return 0;

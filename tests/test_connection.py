@@ -82,6 +82,20 @@ class ConnectionTests(unittest.TestCase):
         conn = self.connect()
         self.assert_(conn.protocol_version in (2,3), conn.protocol_version)
 
+
+class IsolationLevelsTestCase(unittest.TestCase):
+
+    def setUp(self):
+        conn = self.connect()
+        cur = conn.cursor()
+        cur.execute("drop table if exists isolevel;")
+        cur.execute("create table isolevel (id integer);")
+        conn.commit()
+        conn.close()
+
+    def connect(self):
+        return psycopg2.connect(tests.dsn)
+
     def test_isolation_level(self):
         conn = self.connect()
         self.assertEqual(
@@ -92,22 +106,78 @@ class ConnectionTests(unittest.TestCase):
         conn = self.connect()
         self.assert_(conn.encoding in psycopg2.extensions.encodings)
 
+    def test_set_isolation_level(self):
+        conn = self.connect()
+
+        conn.set_isolation_level(
+            psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+        self.assertEqual(conn.isolation_level,
+            psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+
+        conn.set_isolation_level(
+            psycopg2.extensions.ISOLATION_LEVEL_READ_COMMITTED)
+        self.assertEqual(conn.isolation_level,
+            psycopg2.extensions.ISOLATION_LEVEL_READ_COMMITTED)
+
+        conn.set_isolation_level(
+            psycopg2.extensions.ISOLATION_LEVEL_SERIALIZABLE)
+        self.assertEqual(conn.isolation_level,
+            psycopg2.extensions.ISOLATION_LEVEL_SERIALIZABLE)
+
+        self.assertRaises(ValueError, conn.set_isolation_level, -1)
+        self.assertRaises(ValueError, conn.set_isolation_level, 3)
+
+    def test_set_isolation_level_abort(self):
+        conn = self.connect()
+        cur = conn.cursor()
+
+        self.assertEqual(psycopg2.extensions.TRANSACTION_STATUS_IDLE,
+            conn.get_transaction_status())
+        cur.execute("insert into isolevel values (10);")
+        self.assertEqual(psycopg2.extensions.TRANSACTION_STATUS_INTRANS,
+            conn.get_transaction_status())
+
+        conn.set_isolation_level(
+            psycopg2.extensions.ISOLATION_LEVEL_SERIALIZABLE)
+        self.assertEqual(psycopg2.extensions.TRANSACTION_STATUS_IDLE,
+            conn.get_transaction_status())
+        cur.execute("select count(*) from isolevel;")
+        self.assertEqual(0, cur.fetchone()[0])
+
+        cur.execute("insert into isolevel values (10);")
+        self.assertEqual(psycopg2.extensions.TRANSACTION_STATUS_INTRANS,
+            conn.get_transaction_status())
+        conn.set_isolation_level(
+            psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+        self.assertEqual(psycopg2.extensions.TRANSACTION_STATUS_IDLE,
+            conn.get_transaction_status())
+        cur.execute("select count(*) from isolevel;")
+        self.assertEqual(0, cur.fetchone()[0])
+
+        cur.execute("insert into isolevel values (10);")
+        self.assertEqual(psycopg2.extensions.TRANSACTION_STATUS_IDLE,
+            conn.get_transaction_status())
+        conn.set_isolation_level(
+            psycopg2.extensions.ISOLATION_LEVEL_READ_COMMITTED)
+        self.assertEqual(psycopg2.extensions.TRANSACTION_STATUS_IDLE,
+            conn.get_transaction_status())
+        cur.execute("select count(*) from isolevel;")
+        self.assertEqual(1, cur.fetchone()[0])
+
     def test_isolation_level_autocommit(self):
         cnn1 = self.connect()
         cnn2 = self.connect()
         cnn2.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
         cur1 = cnn1.cursor()
-        cur1.execute("drop table if exists isolevel;")
-        cur1.execute("create table isolevel (id integer);")
         cur1.execute("select count(*) from isolevel;")
         self.assertEqual(0, cur1.fetchone()[0])
         cnn1.commit()
 
         cur2 = cnn2.cursor()
         cur2.execute("insert into isolevel values (10);")
-        cur1.execute("select count(*) from isolevel;")
 
+        cur1.execute("select count(*) from isolevel;")
         self.assertEqual(1, cur1.fetchone()[0])
 
     def test_isolation_level_read_committed(self):
@@ -116,22 +186,25 @@ class ConnectionTests(unittest.TestCase):
         cnn2.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_READ_COMMITTED)
 
         cur1 = cnn1.cursor()
-        cur1.execute("drop table if exists isolevel;")
-        cur1.execute("create table isolevel (id integer);")
         cur1.execute("select count(*) from isolevel;")
         self.assertEqual(0, cur1.fetchone()[0])
         cnn1.commit()
 
         cur2 = cnn2.cursor()
         cur2.execute("insert into isolevel values (10);")
+        cur1.execute("insert into isolevel values (20);")
+
         cur2.execute("select count(*) from isolevel;")
         self.assertEqual(1, cur2.fetchone()[0])
-
-        cur1.execute("insert into isolevel values (20);")
         cnn1.commit()
-
         cur2.execute("select count(*) from isolevel;")
         self.assertEqual(2, cur2.fetchone()[0])
+
+        cur1.execute("select count(*) from isolevel;")
+        self.assertEqual(1, cur1.fetchone()[0])
+        cnn2.commit()
+        cur1.execute("select count(*) from isolevel;")
+        self.assertEqual(2, cur1.fetchone()[0])
 
     def test_isolation_level_serializable(self):
         cnn1 = self.connect()
@@ -139,24 +212,26 @@ class ConnectionTests(unittest.TestCase):
         cnn2.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_SERIALIZABLE)
 
         cur1 = cnn1.cursor()
-        cur1.execute("drop table if exists isolevel;")
-        cur1.execute("create table isolevel (id integer);")
         cur1.execute("select count(*) from isolevel;")
         self.assertEqual(0, cur1.fetchone()[0])
         cnn1.commit()
 
         cur2 = cnn2.cursor()
         cur2.execute("insert into isolevel values (10);")
-        cur2.execute("select count(*) from isolevel;")
-        self.assertEqual(1, cur2.fetchone()[0])
-
         cur1.execute("insert into isolevel values (20);")
-        cnn1.commit()
 
         cur2.execute("select count(*) from isolevel;")
         self.assertEqual(1, cur2.fetchone()[0])
+        cnn1.commit()
+        cur2.execute("select count(*) from isolevel;")
+        self.assertEqual(1, cur2.fetchone()[0])
 
+        cur1.execute("select count(*) from isolevel;")
+        self.assertEqual(1, cur1.fetchone()[0])
         cnn2.commit()
+        cur1.execute("select count(*) from isolevel;")
+        self.assertEqual(2, cur1.fetchone()[0])
+
         cur2.execute("select count(*) from isolevel;")
         self.assertEqual(2, cur2.fetchone()[0])
 

@@ -409,7 +409,8 @@ pq_begin_locked(connectionObject *conn, PGresult **pgres, char **error,
     Dprintf("pq_begin_locked: pgconn = %p, isolevel = %ld, status = %d",
             conn->pgconn, conn->isolation_level, conn->status);
 
-    if (conn->isolation_level == 0 || conn->status != CONN_STATUS_READY) {
+    if (conn->isolation_level == ISOLATION_LEVEL_AUTOCOMMIT
+            || conn->status != CONN_STATUS_READY) {
         Dprintf("pq_begin_locked: transaction in progress");
         return 0;
     }
@@ -438,7 +439,8 @@ pq_commit(connectionObject *conn)
     Dprintf("pq_commit: pgconn = %p, isolevel = %ld, status = %d",
             conn->pgconn, conn->isolation_level, conn->status);
 
-    if (conn->isolation_level == 0 || conn->status != CONN_STATUS_BEGIN) {
+    if (conn->isolation_level == ISOLATION_LEVEL_AUTOCOMMIT
+           || conn->status != CONN_STATUS_BEGIN) {
         Dprintf("pq_commit: no transaction to commit");
         return 0;
     }
@@ -473,7 +475,8 @@ pq_abort_locked(connectionObject *conn, PGresult **pgres, char **error,
     Dprintf("pq_abort_locked: pgconn = %p, isolevel = %ld, status = %d",
             conn->pgconn, conn->isolation_level, conn->status);
 
-    if (conn->isolation_level == 0 || conn->status != CONN_STATUS_BEGIN) {
+    if (conn->isolation_level == ISOLATION_LEVEL_AUTOCOMMIT
+            || conn->status != CONN_STATUS_BEGIN) {
         Dprintf("pq_abort_locked: no transaction to abort");
         return 0;
     }
@@ -501,7 +504,8 @@ pq_abort(connectionObject *conn)
     Dprintf("pq_abort: pgconn = %p, isolevel = %ld, status = %d",
             conn->pgconn, conn->isolation_level, conn->status);
 
-    if (conn->isolation_level == 0 || conn->status != CONN_STATUS_BEGIN) {
+    if (conn->isolation_level == ISOLATION_LEVEL_AUTOCOMMIT
+           || conn->status != CONN_STATUS_BEGIN) {
         Dprintf("pq_abort: no transaction to abort");
         return 0;
     }
@@ -542,7 +546,8 @@ pq_reset_locked(connectionObject *conn, PGresult **pgres, char **error,
 
     conn->mark += 1;
 
-    if (conn->isolation_level > 0 && conn->status == CONN_STATUS_BEGIN) {
+    if (conn->isolation_level != ISOLATION_LEVEL_AUTOCOMMIT
+           && conn->status == CONN_STATUS_BEGIN) {
         retvalue = pq_execute_command_locked(conn, "ABORT", pgres, error, tstate);
         if (retvalue != 0) return retvalue;
     }

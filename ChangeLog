@@ -1,3 +1,8 @@
+2010-11-18  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* psycopg/connection.h: Added enum with possilbe isolation level states.
+	Also, general isolation levels cleanup and tests added.
+
 2010-11-17  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* psycopg/connection_type.c: don't clobber exception if
