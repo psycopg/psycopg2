@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-import unittest
-import warnings
+from testutils import unittest
 
 import psycopg2
 from psycopg2 import extensions
@@ -127,9 +126,8 @@ conn.close()
 
     def test_notify_payload(self):
         if self.conn.server_version < 90000:
-            warnings.warn("server version %s doesn't support notify payload: skipping test"
+            return self.skipTest("server version %s doesn't support notify payload"
                 % self.conn.server_version)
-            return
         self.autocommit(self.conn)
         self.listen('foo')
         pid = int(self.notify('foo', payload="Hello, world!").communicate()[0])

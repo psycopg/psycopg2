@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import unittest
+from testutils import unittest, decorate_all_tests
 from operator import attrgetter
 
 import psycopg2
@@ -82,13 +82,24 @@ class ConnectionTests(unittest.TestCase):
         conn = self.connect()
         self.assert_(conn.protocol_version in (2,3), conn.protocol_version)
 
+    def test_tpc_unsupported(self):
+        cnn = self.connect()
+        if cnn.server_version >= 80100:
+            return self.skipTest("tpc is supported")
+
+        self.assertRaises(psycopg2.NotSupportedError,
+            cnn.xid, 42, "foo", "bar")
+
 
 class IsolationLevelsTestCase(unittest.TestCase):
 
     def setUp(self):
         conn = self.connect()
         cur = conn.cursor()
-        cur.execute("drop table if exists isolevel;")
+        try:
+            cur.execute("drop table isolevel;")
+        except psycopg2.ProgrammingError:
+            conn.rollback()
         cur.execute("create table isolevel (id integer);")
         conn.commit()
         conn.close()
@@ -244,18 +255,16 @@ def skip_if_tpc_disabled(f):
         try:
             cur.execute("SHOW max_prepared_transactions;")
         except psycopg2.ProgrammingError:
-            # Server version too old: let's die a different death
-            mtp = 1
+            return self.skipTest(
+                "server too old: two phase transactions not supported.")
         else:
             mtp = int(cur.fetchone()[0])
         cnn.close()
 
         if not mtp:
-            import warnings
-            warnings.warn(
+            return self.skipTest(
                 "server not configured for two phase transactions. "
                 "set max_prepared_transactions to > 0 to run the test")
-            return
         return f(self)
 
     skip_if_tpc_disabled_.__name__ = f.__name__
@@ -274,9 +283,15 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
         cnn = self.connect()
         cnn.set_isolation_level(0)
         cur = cnn.cursor()
-        cur.execute(
-            "select gid from pg_prepared_xacts where database = %s",
-            (tests.dbname,))
+        try:
+            cur.execute(
+                "select gid from pg_prepared_xacts where database = %s",
+                (tests.dbname,))
+        except psycopg2.ProgrammingError:
+            cnn.rollback()
+            cnn.close()
+            return
+
         gids = [ r[0] for r in cur ]
         for gid in gids:
             cur.execute("rollback prepared %s;", (gid,))
@@ -285,7 +300,10 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
     def make_test_table(self):
         cnn = self.connect()
         cur = cnn.cursor()
-        cur.execute("DROP TABLE IF EXISTS test_tpc;")
+        try:
+            cur.execute("DROP TABLE test_tpc;")
+        except psycopg2.ProgrammingError:
+            cnn.rollback()
         cur.execute("CREATE TABLE test_tpc (data text);")
         cnn.commit()
         cnn.close()
@@ -314,7 +332,6 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
     def connect(self):
         return psycopg2.connect(tests.dsn)
 
-    @skip_if_tpc_disabled
     def test_tpc_commit(self):
         cnn = self.connect()
         xid = cnn.xid(1, "gtrid", "bqual")
@@ -356,7 +373,6 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
         self.assertEqual(0, self.count_xacts())
         self.assertEqual(1, self.count_test_records())
 
-    @skip_if_tpc_disabled
     def test_tpc_commit_recovered(self):
         cnn = self.connect()
         xid = cnn.xid(1, "gtrid", "bqual")
@@ -383,7 +399,6 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
         self.assertEqual(0, self.count_xacts())
         self.assertEqual(1, self.count_test_records())
 
-    @skip_if_tpc_disabled
     def test_tpc_rollback(self):
         cnn = self.connect()
         xid = cnn.xid(1, "gtrid", "bqual")
@@ -425,7 +440,6 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
         self.assertEqual(0, self.count_xacts())
         self.assertEqual(0, self.count_test_records())
 
-    @skip_if_tpc_disabled
     def test_tpc_rollback_recovered(self):
         cnn = self.connect()
         xid = cnn.xid(1, "gtrid", "bqual")
@@ -464,7 +478,6 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
         xns = cnn.tpc_recover()
         self.assertEqual(psycopg2.extensions.STATUS_BEGIN, cnn.status)
 
-    @skip_if_tpc_disabled
     def test_recovered_xids(self):
         # insert a few test xns
         cnn = self.connect()
@@ -495,7 +508,6 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
             self.assertEqual(xid.owner, owner)
             self.assertEqual(xid.database, database)
 
-    @skip_if_tpc_disabled
     def test_xid_encoding(self):
         cnn = self.connect()
         xid = cnn.xid(42, "gtrid", "bqual")
@@ -508,7 +520,6 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
             (tests.dbname,))
         self.assertEqual('42_Z3RyaWQ=_YnF1YWw=', cur.fetchone()[0])
 
-    @skip_if_tpc_disabled
     def test_xid_roundtrip(self):
         for fid, gtrid, bqual in [
             (0, "", ""),
@@ -532,7 +543,6 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
 
             cnn.tpc_rollback(xid)
 
-    @skip_if_tpc_disabled
     def test_unparsed_roundtrip(self):
         for tid in [
             '',
@@ -585,7 +595,6 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
         x2 = Xid.from_string('99_xxx_yyy')
         self.assertEqual(str(x2), '99_xxx_yyy')
 
-    @skip_if_tpc_disabled
     def test_xid_unicode(self):
         cnn = self.connect()
         x1 = cnn.xid(10, u'uni', u'code')
@@ -598,7 +607,6 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
         self.assertEqual('uni', xid.gtrid)
         self.assertEqual('code', xid.bqual)
 
-    @skip_if_tpc_disabled
     def test_xid_unicode_unparsed(self):
         # We don't expect people shooting snowmen as transaction ids,
         # so if something explodes in an encode error I don't mind.
@@ -614,6 +622,8 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
         self.assertEqual(None, xid.format_id)
         self.assertEqual('transaction-id', xid.gtrid)
         self.assertEqual(None, xid.bqual)
+
+decorate_all_tests(ConnectionTwoPhaseTests, skip_if_tpc_disabled)
 
 
 def test_suite():

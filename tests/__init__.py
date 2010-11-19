@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import os
-import unittest
+from testutils import unittest
 
 dbname = os.environ.get('PSYCOPG2_TESTDB', 'psycopg2_test')
 dbhost = os.environ.get('PSYCOPG2_TESTDB_HOST', None)
@@ -59,14 +59,8 @@ def test_suite():
     suite.addTest(test_transaction.test_suite())
     suite.addTest(types_basic.test_suite())
     suite.addTest(types_extras.test_suite())
-
-    if not green:
-        suite.addTest(test_lobject.test_suite())
-        suite.addTest(test_copy.test_suite())
-    else:
-        import warnings
-        warnings.warn("copy/lobjects not implemented in green mode: skipping tests")
-
+    suite.addTest(test_lobject.test_suite())
+    suite.addTest(test_copy.test_suite())
     suite.addTest(test_notify.test_suite())
     suite.addTest(test_async.test_suite())
     suite.addTest(test_green.test_suite())

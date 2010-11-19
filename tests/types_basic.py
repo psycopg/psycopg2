@@ -27,7 +27,7 @@ try:
 except:
     pass
 import sys
-import unittest
+from testutils import unittest
 
 import psycopg2
 import tests
@@ -78,14 +78,14 @@ class TypesBasicTests(unittest.TestCase):
             s = self.execute("SELECT %s AS foo", (decimal.Decimal("-infinity"),))
             self.failUnless(str(s) == "NaN", "wrong decimal quoting: " + str(s))
             self.failUnless(type(s) == decimal.Decimal, "wrong decimal conversion: " + repr(s))
+        else:
+            return self.skipTest("decimal not available")
 
     def testFloat(self):
         try:
             float("nan")
         except ValueError:
-            import warnings
-            warnings.warn("nan not available on this platform")
-            return
+            return self.skipTest("nan not available on this platform")
 
         s = self.execute("SELECT %s AS foo", (float("nan"),))
         self.failUnless(str(s) == "nan", "wrong float quoting: " + str(s))

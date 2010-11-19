@@ -2,16 +2,33 @@
 import os
 import shutil
 import tempfile
-import unittest
-import warnings
+from testutils import unittest, decorate_all_tests
 
 import psycopg2
 import psycopg2.extensions
 import tests
 
+def skip_if_no_lo(f):
+    def skip_if_no_lo_(self):
+        if self.conn.server_version < 80100:
+            return self.skipTest("large objects only supported from PG 8.1")
+        else:
+            return f(self)
 
-class LargeObjectTests(unittest.TestCase):
+    return skip_if_no_lo_
 
+def skip_if_green(f):
+    def skip_if_green_(self):
+        if tests.green:
+            return self.skipTest("libpq doesn't support LO in async mode")
+        else:
+            return f(self)
+
+    return skip_if_green_
+
+
+class LargeObjectMixin(object):
+    # doesn't derive from TestCase to avoid repeating tests twice.
     def setUp(self):
         self.conn = psycopg2.connect(tests.dsn)
         self.lo_oid = None
@@ -30,6 +47,8 @@ class LargeObjectTests(unittest.TestCase):
                 lo.unlink()
         self.conn.close()
 
+
+class LargeObjectTests(LargeObjectMixin, unittest.TestCase):
     def test_create(self):
         lo = self.conn.lobject()
         self.assertNotEqual(lo, None)
@@ -261,30 +280,25 @@ class LargeObjectTests(unittest.TestCase):
         self.assertTrue(os.path.exists(filename))
         self.assertEqual(open(filename, "rb").read(), "some data")
 
+decorate_all_tests(LargeObjectTests, skip_if_no_lo)
+decorate_all_tests(LargeObjectTests, skip_if_green)
 
-class LargeObjectTruncateTests(LargeObjectTests):
 
-    skip = None
+def skip_if_no_truncate(f):
+    def skip_if_no_truncate_(self):
+        if self.conn.server_version < 80300:
+            return self.skipTest(
+                "the server doesn't support large object truncate")
 
-    def setUp(self):
-        LargeObjectTests.setUp(self)
+        if not hasattr(psycopg2.extensions.lobject, 'truncate'):
+            return self.skipTest(
+                "psycopg2 has been built against a libpq "
+                "without large object truncate support.")
 
-        if self.skip is None:
-            self.skip = False
-            if self.conn.server_version < 80300:
-                warnings.warn("Large object truncate tests skipped, "
-                              "the server does not support them")
-                self.skip = True
+        return f(self)
 
-            if not hasattr(psycopg2.extensions.lobject, 'truncate'):
-                warnings.warn("Large object truncate tests skipped, "
-                              "psycopg2 has been built against an old library")
-                self.skip = True
-
+class LargeObjectTruncateTests(LargeObjectMixin, unittest.TestCase):
     def test_truncate(self):
-        if self.skip:
-            return
-
         lo = self.conn.lobject()
         lo.write("some data")
         lo.close()
@@ -308,22 +322,21 @@ class LargeObjectTruncateTests(LargeObjectTests):
         self.assertEqual(lo.read(), "")
 
     def test_truncate_after_close(self):
-        if self.skip:
-            return
-
         lo = self.conn.lobject()
         lo.close()
         self.assertRaises(psycopg2.InterfaceError, lo.truncate)
 
     def test_truncate_after_commit(self):
-        if self.skip:
-            return
-
         lo = self.conn.lobject()
         self.lo_oid = lo.oid
         self.conn.commit()
 
         self.assertRaises(psycopg2.ProgrammingError, lo.truncate)
+
+decorate_all_tests(LargeObjectTruncateTests, skip_if_no_lo)
+decorate_all_tests(LargeObjectTruncateTests, skip_if_green)
+decorate_all_tests(LargeObjectTruncateTests, skip_if_no_truncate)
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

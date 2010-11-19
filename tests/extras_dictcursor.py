@@ -16,7 +16,7 @@
 
 import psycopg2
 import psycopg2.extras
-import unittest
+from testutils import unittest
 
 import tests
 
@@ -111,8 +111,7 @@ def if_has_namedtuple(f):
         try:
             from collections import namedtuple
         except ImportError:
-            import warnings
-            warnings.warn("collections.namedtuple not available")
+            return self.skipTest("collections.namedtuple not available")
         else:
             return f(self)
 
@@ -133,8 +132,9 @@ class NamedTupleCursorTest(unittest.TestCase):
             connection_factory=NamedTupleConnection)
         curs = self.conn.cursor()
         curs.execute("CREATE TEMPORARY TABLE nttest (i int, s text)")
-        curs.execute(
-            "INSERT INTO nttest VALUES (1, 'foo'), (2, 'bar'), (3, 'baz')")
+        curs.execute("INSERT INTO nttest VALUES (1, 'foo')")
+        curs.execute("INSERT INTO nttest VALUES (2, 'bar')")
+        curs.execute("INSERT INTO nttest VALUES (3, 'baz')")
         self.conn.commit()
 
     @if_has_namedtuple

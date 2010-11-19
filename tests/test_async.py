@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import unittest
+from testutils import unittest
 
 import psycopg2
 from psycopg2 import extensions
@@ -98,14 +98,13 @@ class AsyncTests(unittest.TestCase):
         cur = self.conn.cursor()
         try:
             cur.callproc("pg_sleep", (0.1, ))
-        except psycopg2.ProgrammingError:
-            # PG <8.1 did not have pg_sleep
-            return
-        self.assertTrue(self.conn.isexecuting())
+            self.assertTrue(self.conn.isexecuting())
 
-        self.wait(cur)
-        self.assertFalse(self.conn.isexecuting())
-        self.assertEquals(cur.fetchall()[0][0], '')
+            self.wait(cur)
+            self.assertFalse(self.conn.isexecuting())
+            self.assertEquals(cur.fetchall()[0][0], '')
+        except psycopg2.ProgrammingError:
+            return self.skipTest("PG < 8.1 did not have pg_sleep")
 
     def test_async_after_async(self):
         cur = self.conn.cursor()
@@ -213,7 +212,11 @@ class AsyncTests(unittest.TestCase):
 
         cur.execute("begin")
         self.wait(cur)
-        cur.execute("insert into table1 values (1), (2), (3)")
+        cur.execute("""
+            insert into table1 values (1);
+            insert into table1 values (2);
+            insert into table1 values (3);
+        """)
         self.wait(cur)
         cur.execute("select id from table1 order by id")
 
@@ -247,7 +250,11 @@ class AsyncTests(unittest.TestCase):
 
     def test_async_scroll(self):
         cur = self.conn.cursor()
-        cur.execute("insert into table1 values (1), (2), (3)")
+        cur.execute("""
+            insert into table1 values (1);
+            insert into table1 values (2);
+            insert into table1 values (3);
+        """)
         self.wait(cur)
         cur.execute("select id from table1 order by id")
 
@@ -279,7 +286,11 @@ class AsyncTests(unittest.TestCase):
     def test_scroll(self):
         cur = self.sync_conn.cursor()
         cur.execute("create table table1 (id int)")
-        cur.execute("insert into table1 values (1), (2), (3)")
+        cur.execute("""
+            insert into table1 values (1);
+            insert into table1 values (2);
+            insert into table1 values (3);
+        """)
         cur.execute("select id from table1 order by id")
         cur.scroll(2)
         cur.scroll(-1)

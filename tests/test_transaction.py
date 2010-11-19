@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import threading
-import unittest
+from testutils import unittest
 
 import psycopg2
 from psycopg2.extensions import (
@@ -215,8 +215,11 @@ class QueryCancellationTests(unittest.TestCase):
         curs = self.conn.cursor()
         # Set a low statement timeout, then sleep for a longer period.
         curs.execute('SET statement_timeout TO 10')
-        self.assertRaises(psycopg2.extensions.QueryCanceledError,
-                          curs.execute, 'SELECT pg_sleep(50)')
+        try:
+            self.assertRaises(psycopg2.extensions.QueryCanceledError,
+                              curs.execute, 'SELECT pg_sleep(50)')
+        except psycopg2.ProgrammingError:
+            return self.skipTest("pg_sleep not available")
 
 
 def test_suite():

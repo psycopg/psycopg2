@@ -20,13 +20,34 @@ except:
     pass
 import re
 import sys
-import unittest
-import warnings
+from testutils import unittest
 
 import psycopg2
 import psycopg2.extras
 import tests
 
+
+def skip_if_no_uuid(f):
+    def skip_if_no_uuid_(self):
+        try:
+            cur = self.conn.cursor()
+            cur.execute("select typname from pg_type where typname = 'uuid'")
+            has = cur.fetchone()
+        finally:
+            self.conn.rollback()
+
+        if has:
+            return f(self)
+        else:
+            return self.skipTest("uuid type not available")
+
+    return skip_if_no_uuid_
+
+def filter_scs(conn, s):
+    if conn.get_parameter_status("standard_conforming_strings") == 'off':
+        return s
+    else:
+        return s.replace("E'", "'")
 
 class TypesExtrasTests(unittest.TestCase):
     """Test that all type conversions are working."""
@@ -39,12 +60,10 @@ class TypesExtrasTests(unittest.TestCase):
         curs.execute(*args)
         return curs.fetchone()[0]
 
+    @skip_if_no_uuid
     def testUUID(self):
-        try:
-            import uuid
-            psycopg2.extras.register_uuid()
-        except:
-            return
+        import uuid
+        psycopg2.extras.register_uuid()
         u = uuid.UUID('9c6d5a77-7256-457e-9461-347b4358e350')
         s = self.execute("SELECT %s AS foo", (u,))
         self.failUnless(u == s)
@@ -52,12 +71,10 @@ class TypesExtrasTests(unittest.TestCase):
         s = self.execute("SELECT NULL::uuid AS foo")
         self.failUnless(s is None)
 
+    @skip_if_no_uuid
     def testUUIDARRAY(self):
-        try:
-            import uuid
-            psycopg2.extras.register_uuid()
-        except:
-            return
+        import uuid
+        psycopg2.extras.register_uuid()
         u = [uuid.UUID('9c6d5a77-7256-457e-9461-347b4358e350'), uuid.UUID('9c6d5a77-7256-457e-9461-347b4358e352')]
         s = self.execute("SELECT %s AS foo", (u,))
         self.failUnless(u == s)
@@ -86,13 +103,17 @@ class TypesExtrasTests(unittest.TestCase):
         i = Inet("192.168.1.0/24")
         a = psycopg2.extensions.adapt(i)
         a.prepare(self.conn)
-        self.assertEqual("E'192.168.1.0/24'::inet", a.getquoted())
+        self.assertEqual(
+            filter_scs(self.conn, "E'192.168.1.0/24'::inet"),
+            a.getquoted())
 
         # adapts ok with unicode too
         i = Inet(u"192.168.1.0/24")
         a = psycopg2.extensions.adapt(i)
         a.prepare(self.conn)
-        self.assertEqual("E'192.168.1.0/24'::inet", a.getquoted())
+        self.assertEqual(
+            filter_scs(self.conn, "E'192.168.1.0/24'::inet"),
+            a.getquoted())
 
     def test_adapt_fail(self):
         class Foo(object): pass
@@ -109,8 +130,7 @@ def skip_if_no_hstore(f):
         from psycopg2.extras import HstoreAdapter
         oids = HstoreAdapter.get_oids(self.conn)
         if oids is None:
-            warnings.warn("hstore not available in test database: skipping test")
-            return
+            return self.skipTest("hstore not available in test database")
         return f(self)
 
     return skip_if_no_hstore_
@@ -121,8 +141,7 @@ class HstoreTestCase(unittest.TestCase):
 
     def test_adapt_8(self):
         if self.conn.server_version >= 90000:
-            warnings.warn("skipping dict adaptation with PG pre-9 syntax")
-            return
+            return self.skipTest("skipping dict adaptation with PG pre-9 syntax")
 
         from psycopg2.extras import HstoreAdapter
 
@@ -136,16 +155,15 @@ class HstoreTestCase(unittest.TestCase):
         ii = q[1:-1].split("||")
         ii.sort()
 
-        self.assertEqual(ii[0], "(E'a' => E'1')")
-        self.assertEqual(ii[1], "(E'b' => E'''')")
-        self.assertEqual(ii[2], "(E'c' => NULL)")
+        self.assertEqual(ii[0], filter_scs(self.conn, "(E'a' => E'1')"))
+        self.assertEqual(ii[1], filter_scs(self.conn, "(E'b' => E'''')"))
+        self.assertEqual(ii[2], filter_scs(self.conn, "(E'c' => NULL)"))
         encc = u'\xe0'.encode(psycopg2.extensions.encodings[self.conn.encoding])
-        self.assertEqual(ii[3], "(E'd' => E'%s')" % encc)
+        self.assertEqual(ii[3], filter_scs(self.conn, "(E'd' => E'%s')" % encc))
 
     def test_adapt_9(self):
         if self.conn.server_version < 90000:
-            warnings.warn("skipping dict adaptation with PG 9 syntax")
-            return
+            return self.skipTest("skipping dict adaptation with PG 9 syntax")
 
         from psycopg2.extras import HstoreAdapter
 

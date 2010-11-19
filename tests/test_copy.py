@@ -1,13 +1,22 @@
 #!/usr/bin/env python
 import os
 import string
-import unittest
+from testutils import unittest, decorate_all_tests
 from cStringIO import StringIO
 from itertools import cycle, izip
 
 import psycopg2
 import psycopg2.extensions
 import tests
+
+def skip_if_green(f):
+    def skip_if_green_(self):
+        if tests.green:
+            return self.skipTest("copy in async mode currently not supported")
+        else:
+            return f(self)
+
+    return skip_if_green_
 
 
 class MinimalRead(object):
@@ -28,6 +37,7 @@ class MinimalWrite(object):
 
     def write(self, data):
         return self.f.write(data)
+
 
 class CopyTests(unittest.TestCase):
 
@@ -123,6 +133,9 @@ class CopyTests(unittest.TestCase):
                 ntests += 1
 
         self.assertEqual(ntests, len(string.letters))
+
+decorate_all_tests(CopyTests, skip_if_green)
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
