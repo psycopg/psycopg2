@@ -118,12 +118,13 @@ query:
     >>> cur.execute("INSERT INTO numbers VALUES (%s)", (42,)) # correct
 
 - For positional variables binding, *the second argument must always be a
-  tuple*, even if it contains a single variable.  And remember that Python
+  sequence*, even if it contains a single variable.  And remember that Python
   requires a comma to create a single element tuple::
 
     >>> cur.execute("INSERT INTO foo VALUES (%s)", "bar")    # WRONG
     >>> cur.execute("INSERT INTO foo VALUES (%s)", ("bar"))  # WRONG
     >>> cur.execute("INSERT INTO foo VALUES (%s)", ("bar",)) # correct
+    >>> cur.execute("INSERT INTO foo VALUES (%s)", ["bar"])  # correct
 
 - Only variable values should be bound via this method: it shouldn't be used
   to set table or field names. For these elements, ordinary string formatting

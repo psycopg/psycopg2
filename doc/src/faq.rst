@@ -63,7 +63,7 @@ I can't pass an integer or a float parameter to my query: it says *a number is r
         >>> cur.execute("INSERT INTO numbers VALUES (%s)", (42,)) # correct
 
 I try to execute a query but it fails with the error *not all arguments converted during string formatting* (or *object does not support indexing*). Why?
-    Psycopg always require positional arguments to be passed as a tuple, even
+    Psycopg always require positional arguments to be passed as a sequence, even
     when the query takes a single parameter.  And remember that to make a
     single item tuple in Python you need a comma!  See :ref:`query-parameters`.
     ::
@@ -71,6 +71,7 @@ I try to execute a query but it fails with the error *not all arguments converte
         >>> cur.execute("INSERT INTO foo VALUES (%s)", "bar")    # WRONG
         >>> cur.execute("INSERT INTO foo VALUES (%s)", ("bar"))  # WRONG
         >>> cur.execute("INSERT INTO foo VALUES (%s)", ("bar",)) # correct
+        >>> cur.execute("INSERT INTO foo VALUES (%s)", ["bar"])  # correct
 
 My database is Unicode, but I receive all the strings as UTF-8 `str`. Can I receive `unicode` objects instead?
     The following magic formula will do the trick::
