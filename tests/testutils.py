@@ -12,7 +12,8 @@ except ImportError:
     unittest2 = None
 
 if hasattr(unittest, 'skipIf'):
-    from unittest2 import skip, skipIf
+    skip = unittest.skip
+    skipIf = unittest.skipIf
 
 else:
     import warnings
