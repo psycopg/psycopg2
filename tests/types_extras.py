@@ -145,7 +145,10 @@ class HstoreTestCase(unittest.TestCase):
 
         from psycopg2.extras import HstoreAdapter
 
-        o = {'a': '1', 'b': "'", 'c': None, 'd': u'\xe0'}
+        o = {'a': '1', 'b': "'", 'c': None}
+        if self.conn.encoding == 'UTF8':
+            o['d'] = u'\xe0'
+
         a = HstoreAdapter(o)
         a.prepare(self.conn)
         q = a.getquoted()
@@ -155,11 +158,13 @@ class HstoreTestCase(unittest.TestCase):
         ii = q[1:-1].split("||")
         ii.sort()
 
+        self.assertEqual(len(ii), len(o))
         self.assertEqual(ii[0], filter_scs(self.conn, "(E'a' => E'1')"))
         self.assertEqual(ii[1], filter_scs(self.conn, "(E'b' => E'''')"))
         self.assertEqual(ii[2], filter_scs(self.conn, "(E'c' => NULL)"))
-        encc = u'\xe0'.encode(psycopg2.extensions.encodings[self.conn.encoding])
-        self.assertEqual(ii[3], filter_scs(self.conn, "(E'd' => E'%s')" % encc))
+        if 'd' in o:
+            encc = u'\xe0'.encode(psycopg2.extensions.encodings[self.conn.encoding])
+            self.assertEqual(ii[3], filter_scs(self.conn, "(E'd' => E'%s')" % encc))
 
     def test_adapt_9(self):
         if self.conn.server_version < 90000:
@@ -167,7 +172,10 @@ class HstoreTestCase(unittest.TestCase):
 
         from psycopg2.extras import HstoreAdapter
 
-        o = {'a': '1', 'b': "'", 'c': None, 'd': u'\xe0'}
+        o = {'a': '1', 'b': "'", 'c': None}
+        if self.conn.encoding == 'UTF8':
+            o['d'] = u'\xe0'
+
         a = HstoreAdapter(o)
         a.prepare(self.conn)
         q = a.getquoted()
@@ -180,11 +188,13 @@ class HstoreTestCase(unittest.TestCase):
         ii = zip(kk, vv)
         ii.sort()
 
+        self.assertEqual(len(ii), len(o))
         self.assertEqual(ii[0], ("E'a'", "E'1'"))
         self.assertEqual(ii[1], ("E'b'", "E''''"))
         self.assertEqual(ii[2], ("E'c'", "NULL"))
-        encc = u'\xe0'.encode(psycopg2.extensions.encodings[self.conn.encoding])
-        self.assertEqual(ii[3], ("E'd'", "E'%s'" % encc))
+        if 'd' in o:
+            encc = u'\xe0'.encode(psycopg2.extensions.encodings[self.conn.encoding])
+            self.assertEqual(ii[3], ("E'd'", "E'%s'" % encc))
 
     def test_parse(self):
         from psycopg2.extras import HstoreAdapter
