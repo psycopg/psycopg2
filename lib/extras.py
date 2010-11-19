@@ -655,6 +655,7 @@ class HstoreAdapter(object):
 
     parse_unicode = classmethod(parse_unicode)
 
+    @classmethod
     def get_oids(self, conn_or_curs):
         """Return the oid of the hstore and hstore[] types.
 
@@ -670,13 +671,16 @@ class HstoreAdapter(object):
         # Store the transaction status of the connection to revert it after use
         conn_status = conn.status
 
+        # column typarray not available before PG 8.3
+        typarray = conn.server_version >= 80300 and "typarray" or "NULL"
+
         # get the oid for the hstore
         curs.execute("""\
-SELECT t.oid, typarray
+SELECT t.oid, %s
 FROM pg_type t JOIN pg_namespace ns
     ON typnamespace = ns.oid
 WHERE typname = 'hstore' and nspname = 'public';
-""")
+""" % typarray)
         oids = curs.fetchone()
 
         # revert the status of the connection as before the command
@@ -685,8 +689,6 @@ WHERE typname = 'hstore' and nspname = 'public';
             conn.rollback()
 
         return oids
-
-    get_oids = classmethod(get_oids)
 
 def register_hstore(conn_or_curs, globally=False, unicode=False):
     """Register adapter and typecaster for `dict`\-\ |hstore| conversions.
