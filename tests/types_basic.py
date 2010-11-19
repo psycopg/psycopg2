@@ -81,7 +81,7 @@ class TypesBasicTests(unittest.TestCase):
         else:
             return self.skipTest("decimal not available")
 
-    def testFloat(self):
+    def testFloatNan(self):
         try:
             float("nan")
         except ValueError:
@@ -90,6 +90,13 @@ class TypesBasicTests(unittest.TestCase):
         s = self.execute("SELECT %s AS foo", (float("nan"),))
         self.failUnless(str(s) == "nan", "wrong float quoting: " + str(s))
         self.failUnless(type(s) == float, "wrong float conversion: " + repr(s))
+
+    def testFloatInf(self):
+        try:
+            self.execute("select 'inf'::float")
+        except psycopg2.DataError:
+            return self.skipTest("inf::float not available on the server")
+
         s = self.execute("SELECT %s AS foo", (float("inf"),))
         self.failUnless(str(s) == "inf", "wrong float quoting: " + str(s))      
         self.failUnless(type(s) == float, "wrong float conversion: " + repr(s))
