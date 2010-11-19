@@ -37,9 +37,17 @@
 #include "psycopg/adapter_mxdatetime.h"
 #include "psycopg/microprotocols_proto.h"
 
-/* the pointer to the mxDateTime API is initialized by the module init code,
-   we just need to grab it */
-extern HIDDEN mxDateTimeModule_APIObject *mxDateTimeP;
+int
+psyco_adapter_mxdatetime_init(void)
+{
+    Dprintf("psyco_adapter_mxdatetime_init: mx.DateTime init");
+
+    if(mxDateTime_ImportModuleAndAPI()) {
+        PyErr_SetString(PyExc_ImportError, "mx.DateTime initialization failed");
+        return -1;
+    }
+    return 0;
+}
 
 
 /* mxdatetime_str, mxdatetime_getquoted - return result of quoting */
@@ -300,7 +308,7 @@ psyco_Date(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "iii", &year, &month, &day))
         return NULL;
 
-    mx = mxDateTimeP->DateTime_FromDateAndTime(year, month, day, 0, 0, 0.0);
+    mx = mxDateTime.DateTime_FromDateAndTime(year, month, day, 0, 0, 0.0);
     if (mx == NULL) return NULL;
 
     res = PyObject_CallFunction((PyObject *)&mxdatetimeType, "Oi", mx,
@@ -319,7 +327,7 @@ psyco_Time(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "iid", &hours, &minutes, &seconds))
         return NULL;
 
-    mx = mxDateTimeP->DateTimeDelta_FromTime(hours, minutes, seconds);
+    mx = mxDateTime.DateTimeDelta_FromTime(hours, minutes, seconds);
     if (mx == NULL) return NULL;
 
     res = PyObject_CallFunction((PyObject *)&mxdatetimeType, "Oi", mx,
@@ -340,7 +348,7 @@ psyco_Timestamp(PyObject *self, PyObject *args)
                           &hour, &minute, &second))
         return NULL;
 
-    mx = mxDateTimeP->DateTime_FromDateAndTime(year, month, day,
+    mx = mxDateTime.DateTime_FromDateAndTime(year, month, day,
                                                hour, minute, second);
     if (mx == NULL) return NULL;
 
@@ -359,7 +367,7 @@ psyco_DateFromTicks(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args,"d", &ticks))
         return NULL;
 
-    if (!(mx = mxDateTimeP->DateTime_FromTicks(ticks)))
+    if (!(mx = mxDateTime.DateTime_FromTicks(ticks)))
         return NULL;
 
     res = PyObject_CallFunction((PyObject *)&mxdatetimeType, "Oi", mx,
@@ -377,10 +385,10 @@ psyco_TimeFromTicks(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args,"d", &ticks))
         return NULL;
 
-    if (!(dt = mxDateTimeP->DateTime_FromTicks(ticks)))
+    if (!(dt = mxDateTime.DateTime_FromTicks(ticks)))
         return NULL;
 
-    if (!(mx = mxDateTimeP->DateTimeDelta_FromDaysAndSeconds(
+    if (!(mx = mxDateTime.DateTimeDelta_FromDaysAndSeconds(
             0, ((mxDateTimeObject*)dt)->abstime)))
     {
         Py_DECREF(dt);
@@ -403,7 +411,7 @@ psyco_TimestampFromTicks(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "d", &ticks))
         return NULL;
 
-    if (!(mx = mxDateTimeP->DateTime_FromTicks(ticks)))
+    if (!(mx = mxDateTime.DateTime_FromTicks(ticks)))
         return NULL;
 
     res = PyObject_CallFunction((PyObject *)&mxdatetimeType, "Oi", mx,
@@ -419,7 +427,7 @@ psyco_DateFromMx(PyObject *self, PyObject *args)
 {
     PyObject *mx;
 
-    if (!PyArg_ParseTuple(args, "O!", mxDateTimeP->DateTime_Type, &mx))
+    if (!PyArg_ParseTuple(args, "O!", mxDateTime.DateTime_Type, &mx))
         return NULL;
 
     return PyObject_CallFunction((PyObject *)&mxdatetimeType, "Oi", mx,
@@ -431,7 +439,7 @@ psyco_TimeFromMx(PyObject *self, PyObject *args)
 {
     PyObject *mx;
 
-    if (!PyArg_ParseTuple(args, "O!", mxDateTimeP->DateTimeDelta_Type, &mx))
+    if (!PyArg_ParseTuple(args, "O!", mxDateTime.DateTimeDelta_Type, &mx))
         return NULL;
 
     return PyObject_CallFunction((PyObject *)&mxdatetimeType, "Oi", mx,
@@ -443,7 +451,7 @@ psyco_TimestampFromMx(PyObject *self, PyObject *args)
 {
     PyObject *mx;
 
-    if (!PyArg_ParseTuple(args, "O!", mxDateTimeP->DateTime_Type, &mx))
+    if (!PyArg_ParseTuple(args, "O!", mxDateTime.DateTime_Type, &mx))
         return NULL;
 
     return PyObject_CallFunction((PyObject *)&mxdatetimeType, "Oi", mx,
@@ -455,7 +463,7 @@ psyco_IntervalFromMx(PyObject *self, PyObject *args)
 {
     PyObject *mx;
 
-    if (!PyArg_ParseTuple(args, "O!", mxDateTimeP->DateTime_Type, &mx))
+    if (!PyArg_ParseTuple(args, "O!", mxDateTime.DateTime_Type, &mx))
         return NULL;
 
     return PyObject_CallFunction((PyObject *)&mxdatetimeType, "Oi", mx,

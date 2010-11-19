@@ -53,7 +53,7 @@
 #ifdef HAVE_MXDATETIME
 #include <mxDateTime.h>
 #include "psycopg/adapter_mxdatetime.h"
-HIDDEN mxDateTimeModule_APIObject *mxDateTimeP = NULL;
+#include "psycopg/typecast_mxdatetime.h"
 #endif
 
 /* some module-level variables, like the datetime module */
@@ -320,9 +320,9 @@ psyco_adapters_init(PyObject *mod)
 #ifdef HAVE_MXDATETIME
     /* as above, we use the callable objects from the psycopg module */
     call = PyMapping_GetItemString(mod, "TimestampFromMx");
-    microprotocols_add(mxDateTimeP->DateTime_Type, NULL, call);
+    microprotocols_add(mxDateTime.DateTime_Type, NULL, call);
     call = PyMapping_GetItemString(mod, "TimeFromMx");
-    microprotocols_add(mxDateTimeP->DateTimeDelta_Type, NULL, call);
+    microprotocols_add(mxDateTime.DateTimeDelta_Type, NULL, call);
 #endif
 }
 
@@ -763,7 +763,8 @@ init_psycopg(void)
         PyErr_SetString(PyExc_ImportError, "can't import mx.DateTime module");
         return;
     }
-    mxDateTimeP = &mxDateTime;
+    if (psyco_adapter_mxdatetime_init()) { return; }
+    if (psyco_typecast_mxdatetime_init()) { return; }
 #endif
 
     /* import python builtin datetime module, if available */
