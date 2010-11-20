@@ -6,9 +6,10 @@ Compiling and installing psycopg
    option. psycopg2 will work correctly even with a non-thread-safe libpq but
    libpq will leak memory.
 
-While psycopg 1.x used autoconf for its build process psycopg 2 switched to
-the more pythonic setup.py. Before building psycopg look at setup.cfg file
-and change any settings to follow your system (or taste); then:
+psycopg2 uses distutils for its build process, so most of the process is
+executed by the setup.py script.  Before building psycopg look at
+setup.cfg file and change any settings to follow your system (or taste);
+then:
 
     python setup.py build
 

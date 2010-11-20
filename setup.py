@@ -14,17 +14,15 @@
 
 """Python-PostgreSQL Database Adapter
 
-psycopg is a PostgreSQL database adapter for the Python programming
-language. This is version 2, a complete rewrite of the original code to
-provide new-style classes for connection and cursor objects and other sweet
-candies. Like the original, psycopg 2 was written with the aim of being
-very small and fast, and stable as a rock.
+psycopg2 is a PostgreSQL database adapter for the Python programming
+language.  psycopg2 was written with the aim of being very small and fast,
+and stable as a rock.
 
-psycopg is different from the other database adapter because it was
+psycopg2 is different from the other database adapter because it was
 designed for heavily multi-threaded applications that create and destroy
 lots of cursors and make a conspicuous number of concurrent INSERTs or
-UPDATEs. psycopg 2 also provide full asycronous operations for the really
-brave programmer.
+UPDATEs. psycopg2 also provide full asycronous operations and support
+for coroutine libraries.
 """
 
 classifiers = """\
