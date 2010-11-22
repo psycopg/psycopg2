@@ -46,25 +46,16 @@ conn_notice_callback(void *args, const char *message)
 
     Dprintf("conn_notice_callback: %s", message);
 
-    /* unfortunately the old protocol return COPY FROM errors only as notices,
-       so we need to filter them looking for such errors (but we do it
-       only if the protocol if <3, else we don't need that)
-       
-       NOTE: if we get here and the connection is unlocked then there is a
+    /* NOTE: if we get here and the connection is unlocked then there is a
        problem but this should happen because the notice callback is only
        called from libpq and when we're inside libpq the connection is usually
        locked.
     */
-
-    if (self->protocol < 3 && strncmp(message, "ERROR", 5) == 0)
-        pq_set_critical(self, message);
-    else {
-        notice = (struct connectionObject_notice *)
-                malloc(sizeof(struct connectionObject_notice));
-        notice->message = strdup(message);
-        notice->next = self->notice_pending;
-        self->notice_pending = notice;
-    }
+    notice = (struct connectionObject_notice *)
+        malloc(sizeof(struct connectionObject_notice));
+    notice->message = strdup(message);
+    notice->next = self->notice_pending;
+    self->notice_pending = notice;
 }
 
 void
