@@ -30,6 +30,11 @@ import tests
 def skip_if_no_uuid(f):
     def skip_if_no_uuid_(self):
         try:
+            import uuid
+        except ImportError:
+            return self.skipTest("uuid not available in this Python version")
+
+        try:
             cur = self.conn.cursor()
             cur.execute("select typname from pg_type where typname = 'uuid'")
             has = cur.fetchone()
@@ -39,7 +44,7 @@ def skip_if_no_uuid(f):
         if has:
             return f(self)
         else:
-            return self.skipTest("uuid type not available")
+            return self.skipTest("uuid type not available on the server")
 
     return skip_if_no_uuid_
 
