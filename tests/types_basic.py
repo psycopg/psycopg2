@@ -96,6 +96,8 @@ class TypesBasicTests(unittest.TestCase):
             self.execute("select 'inf'::float")
         except psycopg2.DataError:
             return self.skipTest("inf::float not available on the server")
+        except ValueError:
+            return self.skipTest("inf not available on this platform")
 
         s = self.execute("SELECT %s AS foo", (float("inf"),))
         self.failUnless(str(s) == "inf", "wrong float quoting: " + str(s))      
