@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import time
+import threading
 from testutils import unittest, decorate_all_tests
 from operator import attrgetter
 
@@ -90,6 +92,24 @@ class ConnectionTests(unittest.TestCase):
         self.assertRaises(psycopg2.NotSupportedError,
             cnn.xid, 42, "foo", "bar")
 
+    def test_concurrent_execution(self):
+        def slave(cnn):
+            cur = cnn.cursor()
+            cur.execute("select pg_sleep(2)")
+            cur.close()
+
+        cnn1 = self.connect()
+        cnn2 = self.connect()
+
+        t1 = threading.Thread(target=slave, args=(cnn1,))
+        t2 = threading.Thread(target=slave, args=(cnn2,))
+        t0 = time.time()
+        t1.start()
+        t2.start()
+        t1.join()
+        t2.join()
+        self.assert_(time.time() - t0 < 3,
+            "something broken in concurrency")
 
 class IsolationLevelsTestCase(unittest.TestCase):
 
