@@ -623,6 +623,12 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
         self.assertEqual('transaction-id', xid.gtrid)
         self.assertEqual(None, xid.bqual)
 
+    def test_cancel_fails_prepared(self):
+        cnn = self.connect()
+        cnn.tpc_begin('cancel')
+        cnn.tpc_prepare()
+        self.assertRaises(psycopg2.ProgrammingError, cnn.cancel)
+
 decorate_all_tests(ConnectionTwoPhaseTests, skip_if_tpc_disabled)
 
 

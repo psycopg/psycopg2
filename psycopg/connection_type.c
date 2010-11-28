@@ -709,6 +709,7 @@ psyco_conn_cancel(connectionObject *self)
     char errbuf[256];
 
     EXC_IF_CONN_CLOSED(self);
+    EXC_IF_TPC_PREPARED(self, cancel);
 
     /* do not allow cancellation while the connection is being built */
     Dprintf("psyco_conn_cancel: cancelling with key %p", self->cancel);

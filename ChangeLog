@@ -2,6 +2,8 @@
 
 	* Cancel patch from Jan integrated.
 
+	* psycopg/connection_type.c: can't cancel a prepared connection
+
 2010-11-22  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* psycopg/connection_int.c: dropped notices hack to get COPY errors from
