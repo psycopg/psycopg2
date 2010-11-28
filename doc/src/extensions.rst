@@ -165,7 +165,7 @@ deal with Python objects adaptation:
 .. class:: ISQLQuote(wrapped_object)
 
     Represents the SQL adaptation protocol.  Objects conforming this protocol
-    should implement a `!getquoted()` method.
+    should implement a `getquoted()` and optionally a `prepare()` method.
 
     Adapters may subclass `!ISQLQuote`, but is not necessary: it is
     enough to expose a `!getquoted()` method to be conforming.
@@ -180,7 +180,21 @@ deal with Python objects adaptation:
         string representing the wrapped object. The `!ISQLQuote`
         implementation does nothing.
 
-.. class:: AsIs
+    .. method:: prepare(conn)
+
+        Prepare the adapter for a connection.  The method is optional: if
+        implemented, it will be invoked before `!getquoted()` with the
+        connection to adapt for as argument.
+
+        A conform object can implement this method if the SQL
+        representation depends on any server parameter, such as the server
+        version or the ``standard_conforming_string`` setting.  Container
+        objects may store the connection and use it to recursively prepare
+        contained objects: see the implementation for
+        ``psycopg2.extensions.SQL_IN`` for a simple example.
+
+
+.. class:: AsIs(object)
 
     Adapter conform to the `ISQLQuote` protocol useful for objects
     whose string representation is already valid as SQL representation.
@@ -192,7 +206,7 @@ deal with Python objects adaptation:
             >>> AsIs(42).getquoted()
             '42'
 
-.. class:: QuotedString
+.. class:: QuotedString(str)
 
     Adapter conform to the `ISQLQuote` protocol for string-like
     objects.
@@ -206,7 +220,7 @@ deal with Python objects adaptation:
             >>> QuotedString(r"O'Reilly").getquoted()
             "'O''Reilly'"
 
-.. class:: Binary
+.. class:: Binary(str)
 
     Adapter conform to the `ISQLQuote` protocol for binary objects.
 
