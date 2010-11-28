@@ -2,7 +2,7 @@
 
 import time
 import threading
-import unittest
+from testutils import unittest, skip_if_no_pg_sleep
 
 import tests
 import psycopg2
@@ -27,6 +27,7 @@ class CancelTests(unittest.TestCase):
     def test_empty_cancel(self):
         self.conn.cancel()
 
+    @skip_if_no_pg_sleep('conn')
     def test_cancel(self):
         errors = []
 
@@ -62,6 +63,7 @@ class CancelTests(unittest.TestCase):
 
         self.assertEqual(errors, [])
 
+    @skip_if_no_pg_sleep('conn')
     def test_async_cancel(self):
         async_conn = psycopg2.connect(tests.dsn, async=True)
         self.assertRaises(psycopg2.OperationalError, async_conn.cancel)

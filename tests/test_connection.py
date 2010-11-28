@@ -2,7 +2,7 @@
 
 import time
 import threading
-from testutils import unittest, decorate_all_tests
+from testutils import unittest, decorate_all_tests, skip_if_no_pg_sleep
 from operator import attrgetter
 
 import psycopg2
@@ -92,6 +92,7 @@ class ConnectionTests(unittest.TestCase):
         self.assertRaises(psycopg2.NotSupportedError,
             cnn.xid, 42, "foo", "bar")
 
+    @skip_if_no_pg_sleep('connect')
     def test_concurrent_execution(self):
         def slave(cnn):
             cur = cnn.cursor()
@@ -110,6 +111,7 @@ class ConnectionTests(unittest.TestCase):
         t2.join()
         self.assert_(time.time() - t0 < 3,
             "something broken in concurrency")
+
 
 class IsolationLevelsTestCase(unittest.TestCase):
 

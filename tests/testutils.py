@@ -44,4 +44,28 @@ def decorate_all_tests(cls, decorator):
     for n in dir(cls):
         if n.startswith('test'):
             setattr(cls, n, decorator(getattr(cls, n)))
-            
+
+
+def skip_if_no_pg_sleep(name):
+    """Decorator to skip a test if pg_sleep is not supported by the server.
+
+    Pass it the name of an attribute containing a connection or of a method
+    returning a connection.
+    """
+    def skip_if_no_pg_sleep_(f):
+        def skip_if_no_pg_sleep__(self):
+            cnn = getattr(self, name)
+            if callable(cnn):
+                cnn = cnn()
+
+            if cnn.server_version < 80100:
+                return self.skipTest(
+                    "server version %s doesn't support pg_sleep"
+                    % cnn.server_version)
+
+            return f(self)
+
+        skip_if_no_pg_sleep__.__name__ = f.__name__
+        return skip_if_no_pg_sleep__
+
+    return skip_if_no_pg_sleep_

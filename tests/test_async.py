@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from testutils import unittest
+from testutils import unittest, skip_if_no_pg_sleep
 
 import psycopg2
 from psycopg2 import extensions
@@ -94,17 +94,15 @@ class AsyncTests(unittest.TestCase):
         self.assertFalse(self.conn.isexecuting())
         self.assertEquals(cur.fetchone()[0], "a")
 
+    @skip_if_no_pg_sleep('conn')
     def test_async_callproc(self):
         cur = self.conn.cursor()
-        try:
-            cur.callproc("pg_sleep", (0.1, ))
-            self.assertTrue(self.conn.isexecuting())
+        cur.callproc("pg_sleep", (0.1, ))
+        self.assertTrue(self.conn.isexecuting())
 
-            self.wait(cur)
-            self.assertFalse(self.conn.isexecuting())
-            self.assertEquals(cur.fetchall()[0][0], '')
-        except psycopg2.ProgrammingError:
-            return self.skipTest("PG < 8.1 did not have pg_sleep")
+        self.wait(cur)
+        self.assertFalse(self.conn.isexecuting())
+        self.assertEquals(cur.fetchall()[0][0], '')
 
     def test_async_after_async(self):
         cur = self.conn.cursor()
