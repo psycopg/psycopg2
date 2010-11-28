@@ -39,6 +39,9 @@ class TypesBasicTests(unittest.TestCase):
     def setUp(self):
         self.conn = psycopg2.connect(tests.dsn)
 
+    def tearDown(self):
+        self.conn.close()
+
     def execute(self, *args):
         curs = self.conn.cursor()
         curs.execute(*args)

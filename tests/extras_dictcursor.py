@@ -137,6 +137,10 @@ class NamedTupleCursorTest(unittest.TestCase):
         curs.execute("INSERT INTO nttest VALUES (3, 'baz')")
         self.conn.commit()
 
+    def tearDown(self):
+        if self.conn is not None:
+            self.conn.close()
+
     @if_has_namedtuple
     def test_fetchone(self):
         curs = self.conn.cursor()
@@ -194,6 +198,8 @@ class NamedTupleCursorTest(unittest.TestCase):
             # an import error somewhere
             from psycopg2.extras import NamedTupleConnection
             try:
+                if self.conn is not None:
+                    self.conn.close()
                 self.conn = psycopg2.connect(tests.dsn,
                     connection_factory=NamedTupleConnection)
                 curs = self.conn.cursor()

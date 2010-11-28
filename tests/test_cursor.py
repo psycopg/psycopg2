@@ -7,11 +7,14 @@ import tests
 
 class CursorTests(unittest.TestCase):
 
-    def connect(self):
-        return psycopg2.connect(tests.dsn)
+    def setUp(self):
+        self.conn = psycopg2.connect(tests.dsn)
+
+    def tearDown(self):
+        self.conn.close()
 
     def test_executemany_propagate_exceptions(self):
-        conn = self.connect()
+        conn = self.conn
         cur = conn.cursor()
         cur.execute("create temp table test_exc (data int);")
         def buggygen():
@@ -19,10 +22,9 @@ class CursorTests(unittest.TestCase):
         self.assertRaises(ZeroDivisionError,
             cur.executemany, "insert into test_exc values (%s)", buggygen())
         cur.close()
-        conn.close()
 
     def test_mogrify_unicode(self):
-        conn = self.connect()
+        conn = self.conn
         cur = conn.cursor()
 
         # test consistency between execute and mogrify.
@@ -60,7 +62,7 @@ class CursorTests(unittest.TestCase):
         except:
             return
 
-        conn = self.connect()
+        conn = self.conn
         cur = conn.cursor()
         self.assertEqual('SELECT 10.3;',
             cur.mogrify("SELECT %s;", (Decimal("10.3"),)))

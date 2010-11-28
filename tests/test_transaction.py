@@ -211,6 +211,9 @@ class QueryCancellationTests(unittest.TestCase):
         self.conn = psycopg2.connect(tests.dsn)
         self.conn.set_isolation_level(ISOLATION_LEVEL_SERIALIZABLE)
 
+    def tearDown(self):
+        self.conn.close()
+
     @skip_if_no_pg_sleep('conn')
     def test_statement_timeout(self):
         curs = self.conn.cursor()

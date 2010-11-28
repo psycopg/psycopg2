@@ -60,6 +60,9 @@ class TypesExtrasTests(unittest.TestCase):
     def setUp(self):
         self.conn = psycopg2.connect(tests.dsn)
 
+    def tearDown(self):
+        self.conn.close()
+
     def execute(self, *args):
         curs = self.conn.cursor()
         curs.execute(*args)
@@ -143,6 +146,9 @@ def skip_if_no_hstore(f):
 class HstoreTestCase(unittest.TestCase):
     def setUp(self):
         self.conn = psycopg2.connect(tests.dsn)
+
+    def tearDown(self):
+        self.conn.close()
 
     def test_adapt_8(self):
         if self.conn.server_version >= 90000:
@@ -277,11 +283,13 @@ class HstoreTestCase(unittest.TestCase):
         try:
             register_hstore(self.conn, globally=True)
             conn2 = psycopg2.connect(self.conn.dsn)
-            cur2 = self.conn.cursor()
-            cur2.execute("select 'a => b'::hstore")
-            r = cur2.fetchone()
-            self.assert_(isinstance(r[0], dict))
-            conn2.close()
+            try:
+                cur2 = self.conn.cursor()
+                cur2.execute("select 'a => b'::hstore")
+                r = cur2.fetchone()
+                self.assert_(isinstance(r[0], dict))
+            finally:
+                conn2.close()
         finally:
             psycopg2.extensions.string_types.pop(oids[0])
 
