@@ -3,13 +3,14 @@ What's new in psycopg 2.3.0
 
 psycopg 2.3 aims to expose some new features introduced in PostgreSQL 9.0.
 
-* New features related to features introduced in PostgreSQL 9.0:
+* Main new fratures:
 
   - `dict` to `hstore` adapter and `hstore` to `dict` typecaster, using both
     9.0 and pre-9.0 syntax.
   - Two-phase commit protocol support as per DBAPI specification.
   - Support for payload in notifications received from the backed.
-  - namedtuple returning cursor.
+  - namedtuple-returning cursor.
+  - Query execution cancel.
 
 * Other features and changes:
 

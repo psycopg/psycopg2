@@ -281,7 +281,7 @@ The ``connection`` class
         .. |PQcancel| replace:: `!PQcancel()`
         .. _PQcancel: http://www.postgresql.org/docs/8.4/static/libpq-cancel.html#AEN34765
 
-        .. versionadded:: 2.2.3
+        .. versionadded:: 2.3
 
 
     .. method:: reset
