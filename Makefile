@@ -16,11 +16,7 @@
 #
 # Run the test::
 #
-#   make check  # but this requires setting up a test database with the correct user)
-#
-# or
-#
-#   make runtests  # requires the TESTDB in place
+#   make check  # this requires setting up a test database with the correct user
 
 PYTHON := python$(PYTHON_VERSION)
 PYTHON_VERSION ?= $(shell $(PYTHON) -c 'import sys; print "%d.%d" % sys.version_info[:2]')
@@ -68,10 +64,6 @@ docs-txt: doc/psycopg2.txt
 
 sdist: $(SDIST)
 
-runtests: package
-	PYTHONPATH=$(BUILD_DIR):.:$(PYTHONPATH) $(PYTHON) tests/__init__.py --verbose
-
-
 # The environment is currently required to build the documentation.
 # It is not clean by 'make clean'
 
@@ -90,8 +82,7 @@ ez_setup:
 	wget -O $(EZ_SETUP) http://peak.telecommunity.com/dist/ez_setup.py
 
 check:
-	$(MAKE) testdb
-	$(MAKE) runtests
+	PYTHONPATH=$(BUILD_DIR):.:$(PYTHONPATH) $(PYTHON) tests/__init__.py --verbose
 
 testdb:
 	@echo "* Creating $(TESTDB)"
