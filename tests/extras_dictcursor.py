@@ -85,6 +85,7 @@ class ExtrasDictCursorTests(unittest.TestCase):
         row = getter(curs)
         self.failUnless(row['foo'] == 'bar')
         self.failUnless(row[0] == 'bar')
+        return row
 
     def _testWithNamedCursor(self, getter):
         curs = self.conn.cursor('aname', cursor_factory=psycopg2.extras.DictCursor)
@@ -104,6 +105,12 @@ class ExtrasDictCursorTests(unittest.TestCase):
         curs.execute("SELECT * FROM ExtrasDictCursorTests")
         row = getter(curs)
         self.failUnless(row['foo'] == 'bar')
+
+    def testUpdateRow(self):
+        row = self._testWithPlainCursor(lambda curs: curs.fetchone())
+        row['foo'] = 'qux'
+        self.failUnless(row['foo'] == 'qux')
+        self.failUnless(row[0] == 'qux')
 
 
 def if_has_namedtuple(f):

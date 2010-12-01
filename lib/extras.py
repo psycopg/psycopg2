@@ -144,6 +144,11 @@ class DictRow(list):
             x = self._index[x]
         return list.__getitem__(self, x)
 
+    def __setitem__(self, x, v):
+        if type(x) != int:
+            x = self._index[x]
+        list.__setitem__(self, x, v)
+
     def items(self):
         res = []
         for n, v in self._index.items():

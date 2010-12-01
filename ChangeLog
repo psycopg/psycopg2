@@ -1,3 +1,7 @@
+2010-12-01  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* lib/extras.py: DictRow items can be updated. Patch by Alex Aster.
+
 2010-11-28  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* Cancel patch from Jan integrated.
