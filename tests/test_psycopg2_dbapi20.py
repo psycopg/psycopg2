@@ -2,7 +2,7 @@
 import dbapi20
 import dbapi20_tpc
 from test_connection import skip_if_tpc_disabled
-import unittest
+from testutils import unittest, decorate_all_tests
 import psycopg2
 
 import tests
@@ -23,19 +23,14 @@ class Psycopg2Tests(dbapi20.DatabaseAPI20Test):
         pass
 
 
-class Psycopg2TPCTests(dbapi20_tpc.TwoPhaseCommitTests):
+class Psycopg2TPCTests(dbapi20_tpc.TwoPhaseCommitTests, unittest.TestCase):
     driver = psycopg2
 
     def connect(self):
         return psycopg2.connect(dsn=tests.dsn)
 
-    @skip_if_tpc_disabled
-    def test_tpc_commit_with_prepare(self):
-        super(Psycopg2TPCTests, self).test_tpc_commit_with_prepare()
+decorate_all_tests(Psycopg2TPCTests, skip_if_tpc_disabled)
 
-    @skip_if_tpc_disabled
-    def test_tpc_rollback_with_prepare(self):
-        super(Psycopg2TPCTests, self).test_tpc_rollback_with_prepare()
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

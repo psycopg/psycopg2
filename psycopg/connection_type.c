@@ -209,7 +209,7 @@ psyco_conn_tpc_begin(connectionObject *self, PyObject *args)
     }
 
     /* two phase commit and autocommit make no point */
-    if (self->isolation_level == 0) {
+    if (self->isolation_level == ISOLATION_LEVEL_AUTOCOMMIT) {
         PyErr_SetString(ProgrammingError,
             "tpc_begin can't be called in autocommit mode");
         goto exit;
@@ -410,16 +410,13 @@ psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
 
     if (level < 0 || level > 2) {
         PyErr_SetString(PyExc_ValueError,
-                        "isolation level out of bounds (0,3)");
+            "isolation level must be between 0 and 2");
         return NULL;
     }
 
     if (conn_switch_isolation_level(self, level) < 0) {
-        PyErr_SetString(OperationalError,
-                        PQerrorMessage(self->pgconn));
         return NULL;
     }
-
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -700,6 +697,38 @@ psyco_conn_isexecuting(connectionObject *self)
     return Py_False;
 }
 
+
+/* extension: cancel - cancel the current operation */
+
+#define psyco_conn_cancel_doc                           \
+"cancel() -- cancel the current operation"
+
+static PyObject *
+psyco_conn_cancel(connectionObject *self)
+{
+    char errbuf[256];
+
+    EXC_IF_CONN_CLOSED(self);
+    EXC_IF_TPC_PREPARED(self, cancel);
+
+    /* do not allow cancellation while the connection is being built */
+    Dprintf("psyco_conn_cancel: cancelling with key %p", self->cancel);
+    if (self->status != CONN_STATUS_READY &&
+        self->status != CONN_STATUS_BEGIN) {
+        PyErr_SetString(OperationalError,
+                        "asynchronous connection attempt underway");
+        return NULL;
+    }
+
+    if (PQcancel(self->cancel, errbuf, sizeof(errbuf)) == 0) {
+        Dprintf("psyco_conn_cancel: cancelling failed: %s", errbuf);
+        PyErr_SetString(OperationalError, errbuf);
+        return NULL;
+    }
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 #endif  /* PSYCOPG_EXTENSIONS */
 
 
@@ -750,6 +779,8 @@ static struct PyMethodDef connectionObject_methods[] = {
      METH_NOARGS, psyco_conn_fileno_doc},
     {"isexecuting", (PyCFunction)psyco_conn_isexecuting,
      METH_NOARGS, psyco_conn_isexecuting_doc},
+    {"cancel", (PyCFunction)psyco_conn_cancel,
+     METH_NOARGS, psyco_conn_cancel_doc},
 #endif
     {NULL}
 };
@@ -780,7 +811,7 @@ static struct PyMemberDef connectionObject_members[] = {
         "A set of typecasters to convert binary values."},
     {"protocol_version", T_INT,
         offsetof(connectionObject, protocol), RO,
-        "Protocol version (2 or 3) used for this connection."},
+        "Protocol version used for this connection. Currently always 3."},
     {"server_version", T_INT,
         offsetof(connectionObject, server_version), RO,
         "Server version."},
@@ -830,6 +861,7 @@ connection_setup(connectionObject *self, const char *dsn, long int async)
     self->async_cursor = NULL;
     self->async_status = ASYNC_DONE;
     self->pgconn = NULL;
+    self->cancel = NULL;
     self->mark = 0;
     self->string_types = PyDict_New();
     self->binary_types = PyDict_New();

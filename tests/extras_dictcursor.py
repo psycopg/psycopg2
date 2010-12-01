@@ -16,7 +16,7 @@
 
 import psycopg2
 import psycopg2.extras
-import unittest
+from testutils import unittest
 
 import tests
 
@@ -85,6 +85,7 @@ class ExtrasDictCursorTests(unittest.TestCase):
         row = getter(curs)
         self.failUnless(row['foo'] == 'bar')
         self.failUnless(row[0] == 'bar')
+        return row
 
     def _testWithNamedCursor(self, getter):
         curs = self.conn.cursor('aname', cursor_factory=psycopg2.extras.DictCursor)
@@ -105,14 +106,19 @@ class ExtrasDictCursorTests(unittest.TestCase):
         row = getter(curs)
         self.failUnless(row['foo'] == 'bar')
 
+    def testUpdateRow(self):
+        row = self._testWithPlainCursor(lambda curs: curs.fetchone())
+        row['foo'] = 'qux'
+        self.failUnless(row['foo'] == 'qux')
+        self.failUnless(row[0] == 'qux')
+
 
 def if_has_namedtuple(f):
     def if_has_namedtuple_(self):
         try:
             from collections import namedtuple
         except ImportError:
-            import warnings
-            warnings.warn("collections.namedtuple not available")
+            return self.skipTest("collections.namedtuple not available")
         else:
             return f(self)
 
@@ -133,9 +139,14 @@ class NamedTupleCursorTest(unittest.TestCase):
             connection_factory=NamedTupleConnection)
         curs = self.conn.cursor()
         curs.execute("CREATE TEMPORARY TABLE nttest (i int, s text)")
-        curs.execute(
-            "INSERT INTO nttest VALUES (1, 'foo'), (2, 'bar'), (3, 'baz')")
+        curs.execute("INSERT INTO nttest VALUES (1, 'foo')")
+        curs.execute("INSERT INTO nttest VALUES (2, 'bar')")
+        curs.execute("INSERT INTO nttest VALUES (3, 'baz')")
         self.conn.commit()
+
+    def tearDown(self):
+        if self.conn is not None:
+            self.conn.close()
 
     @if_has_namedtuple
     def test_fetchone(self):
@@ -194,6 +205,8 @@ class NamedTupleCursorTest(unittest.TestCase):
             # an import error somewhere
             from psycopg2.extras import NamedTupleConnection
             try:
+                if self.conn is not None:
+                    self.conn.close()
                 self.conn = psycopg2.connect(tests.dsn,
                     connection_factory=NamedTupleConnection)
                 curs = self.conn.cursor()

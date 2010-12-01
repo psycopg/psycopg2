@@ -26,6 +26,7 @@
 #include <Python.h>
 #include <string.h>
 
+#define PSYCOPG_MODULE
 #include "psycopg/config.h"
 #include "psycopg/psycopg.h"
 #include "psycopg/connection.h"

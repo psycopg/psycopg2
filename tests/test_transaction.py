@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import threading
-import unittest
+from testutils import unittest, skip_if_no_pg_sleep
 
 import psycopg2
 from psycopg2.extensions import (
@@ -211,6 +211,10 @@ class QueryCancellationTests(unittest.TestCase):
         self.conn = psycopg2.connect(tests.dsn)
         self.conn.set_isolation_level(ISOLATION_LEVEL_SERIALIZABLE)
 
+    def tearDown(self):
+        self.conn.close()
+
+    @skip_if_no_pg_sleep('conn')
     def test_statement_timeout(self):
         curs = self.conn.cursor()
         # Set a low statement timeout, then sleep for a longer period.

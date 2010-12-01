@@ -45,7 +45,6 @@ extern "C" {
 /* async connection building statuses */
 #define CONN_STATUS_CONNECTING            20
 #define CONN_STATUS_DATESTYLE             21
-#define CONN_STATUS_CLIENT_ENCODING       22
 
 /* async query execution status */
 #define ASYNC_DONE  0
@@ -65,8 +64,14 @@ extern "C" {
    later change it, she must know what she's doing... these are the queries we
    need to issue */
 #define psyco_datestyle "SET DATESTYLE TO 'ISO'"
-#define psyco_client_encoding  "SHOW client_encoding"
 #define psyco_transaction_isolation "SHOW default_transaction_isolation"
+
+/* possible values for isolation_level */
+typedef enum {
+    ISOLATION_LEVEL_AUTOCOMMIT      = 0,
+    ISOLATION_LEVEL_READ_COMMITTED  = 1,
+    ISOLATION_LEVEL_SERIALIZABLE    = 2,
+} conn_isolation_level_t;
 
 extern HIDDEN PyTypeObject connectionType;
 
@@ -96,6 +101,7 @@ typedef struct {
     int server_version;       /* server version */
 
     PGconn *pgconn;           /* the postgresql connection */
+    PGcancel *cancel;         /* the cancellation structure */
 
     PyObject *async_cursor;   /* a cursor executing an asynchronous query */
     int async_status;         /* asynchronous execution status */
@@ -118,7 +124,6 @@ typedef struct {
 
 /* C-callable functions in connection_int.c and connection_ext.c */
 HIDDEN int  conn_get_standard_conforming_strings(PGconn *pgconn);
-HIDDEN char *conn_get_encoding(PGresult *pgres);
 HIDDEN int  conn_get_isolation_level(PGresult *pgres);
 HIDDEN int  conn_get_protocol_version(PGconn *pgconn);
 HIDDEN void conn_notice_process(connectionObject *self);

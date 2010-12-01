@@ -6,9 +6,10 @@ Compiling and installing psycopg
    option. psycopg2 will work correctly even with a non-thread-safe libpq but
    libpq will leak memory.
 
-While psycopg 1.x used autoconf for its build process psycopg 2 switched to
-the more pythonic setup.py. Before building psycopg look at setup.cfg file
-and change any settings to follow your system (or taste); then:
+psycopg2 uses distutils for its build process, so most of the process is
+executed by the setup.py script.  Before building psycopg look at
+setup.cfg file and change any settings to follow your system (or taste);
+then:
 
     python setup.py build
 
@@ -32,6 +33,45 @@ libpq-fe.h: No such file or directory
   check setup.cfg and make sure pg_config points to a valid pg_config
   executable. If you don't have a working pg_config try to play with the
   include_dirs variable (and note that a working pg_config is better.)
+
+
+Running the test suite
+======================
+
+The included Makefile allows to run all the tests included in the
+distribution. Just use:
+
+    make
+    make runtests
+
+The tests are run against a database called psycopg2_test on unix socket
+and standard port. You can configure a different database to run the test
+by setting the environment variables:
+
+- PSYCOPG2_TESTDB
+- PSYCOPG2_TESTDB_HOST
+- PSYCOPG2_TESTDB_PORT
+- PSYCOPG2_TESTDB_USER
+
+The database should be created before running the tests.
+
+The standard Python unittest is used to run the tests. But if unittest2 is
+found it will be used instead, with the result of having more informations
+about skipped tests.
+
+
+Building the documentation
+==========================
+
+In order to build the documentation included in the distribution, use
+
+    make env
+    make docs
+
+The first command will install all the dependencies (Sphinx, Docutils) in
+an 'env' directory in the project tree. The second command will build both
+the html format (in the 'doc/html' directory) and in plain text
+(doc/psycopg2.txt)
 
 
 Using setuptools and EasyInstall

@@ -173,11 +173,9 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres)
 
     if (pgres) {
         err = PQresultErrorMessage(pgres);
-#ifdef HAVE_PQPROTOCOL3
-        if (err != NULL && conn->protocol == 3) {
+        if (err != NULL) {
             code = PQresultErrorField(pgres, PG_DIAG_SQLSTATE);
         }
-#endif
     }
     if (err == NULL)
         err = PQerrorMessage(conn->pgconn);
@@ -194,25 +192,6 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres)
        (only if we got the SQLSTATE from the pgres, obviously) */
     if (code != NULL) {
         exc = exception_from_sqlstate(code);
-    }
-
-    /* if exc is still NULL psycopg was not built with HAVE_PQPROTOCOL3 or the
-       connection is using protocol 2: in both cases we default to comparing
-       error messages */
-    if (exc == NULL) {
-        if (!strncmp(err, "ERROR:  Cannot insert a duplicate key", 37)
-            || !strncmp(err, "ERROR:  ExecAppend: Fail to add null", 36)
-            || strstr(err, "referential integrity violation"))
-            exc = IntegrityError;
-        else if (strstr(err, "could not serialize") ||
-                 strstr(err, "deadlock detected"))
-#ifdef PSYCOPG_EXTENSIONS
-            exc = TransactionRollbackError;
-#else
-            exc = OperationalError;
-#endif
-        else
-            exc = ProgrammingError;
     }
 
     /* try to remove the initial "ERROR: " part from the postgresql error */
@@ -430,7 +409,8 @@ pq_begin_locked(connectionObject *conn, PGresult **pgres, char **error,
     Dprintf("pq_begin_locked: pgconn = %p, isolevel = %ld, status = %d",
             conn->pgconn, conn->isolation_level, conn->status);
 
-    if (conn->isolation_level == 0 || conn->status != CONN_STATUS_READY) {
+    if (conn->isolation_level == ISOLATION_LEVEL_AUTOCOMMIT
+            || conn->status != CONN_STATUS_READY) {
         Dprintf("pq_begin_locked: transaction in progress");
         return 0;
     }
@@ -459,7 +439,8 @@ pq_commit(connectionObject *conn)
     Dprintf("pq_commit: pgconn = %p, isolevel = %ld, status = %d",
             conn->pgconn, conn->isolation_level, conn->status);
 
-    if (conn->isolation_level == 0 || conn->status != CONN_STATUS_BEGIN) {
+    if (conn->isolation_level == ISOLATION_LEVEL_AUTOCOMMIT
+           || conn->status != CONN_STATUS_BEGIN) {
         Dprintf("pq_commit: no transaction to commit");
         return 0;
     }
@@ -494,7 +475,8 @@ pq_abort_locked(connectionObject *conn, PGresult **pgres, char **error,
     Dprintf("pq_abort_locked: pgconn = %p, isolevel = %ld, status = %d",
             conn->pgconn, conn->isolation_level, conn->status);
 
-    if (conn->isolation_level == 0 || conn->status != CONN_STATUS_BEGIN) {
+    if (conn->isolation_level == ISOLATION_LEVEL_AUTOCOMMIT
+            || conn->status != CONN_STATUS_BEGIN) {
         Dprintf("pq_abort_locked: no transaction to abort");
         return 0;
     }
@@ -522,7 +504,8 @@ pq_abort(connectionObject *conn)
     Dprintf("pq_abort: pgconn = %p, isolevel = %ld, status = %d",
             conn->pgconn, conn->isolation_level, conn->status);
 
-    if (conn->isolation_level == 0 || conn->status != CONN_STATUS_BEGIN) {
+    if (conn->isolation_level == ISOLATION_LEVEL_AUTOCOMMIT
+           || conn->status != CONN_STATUS_BEGIN) {
         Dprintf("pq_abort: no transaction to abort");
         return 0;
     }
@@ -563,7 +546,8 @@ pq_reset_locked(connectionObject *conn, PGresult **pgres, char **error,
 
     conn->mark += 1;
 
-    if (conn->isolation_level > 0 && conn->status == CONN_STATUS_BEGIN) {
+    if (conn->isolation_level != ISOLATION_LEVEL_AUTOCOMMIT
+           && conn->status == CONN_STATUS_BEGIN) {
         retvalue = pq_execute_command_locked(conn, "ABORT", pgres, error, tstate);
         if (retvalue != 0) return retvalue;
     }
@@ -1063,7 +1047,6 @@ _pq_fetch_tuples(cursorObject *curs)
     Py_END_ALLOW_THREADS;
 }
 
-#ifdef HAVE_PQPROTOCOL3
 static int
 _pq_copy_in_v3(cursorObject *curs)
 {
@@ -1155,57 +1138,7 @@ exit:
     Py_XDECREF(size);
     return (error == 0 ? 1 : -1);
 }
-#endif
 
-static int
-_pq_copy_in(cursorObject *curs)
-{
-    /* COPY FROM implementation when protocol 3 is not available: this
-       function can't fail but the backend will send an ERROR notice that will
-       be catched by our notice collector */
-    PyObject *o, *func = NULL;
-    int ret = -1;
-
-    if (!(func = PyObject_GetAttrString(curs->copyfile, "readline"))) {
-        Dprintf("_pq_copy_in: can't get o.readline");
-        goto exit;
-    }
-
-    while (1) {
-        int rv;
-        o = PyObject_CallFunction(func, NULL);
-        if (o == NULL) goto exit;
-        if (o == Py_None || PyString_GET_SIZE(o) == 0) break;
-        Py_BEGIN_ALLOW_THREADS;
-        rv = PQputline(curs->conn->pgconn, PyString_AS_STRING(o));
-        Py_END_ALLOW_THREADS;
-        Py_DECREF(o);
-        if (0 != rv) goto exit;
-    }
-    Py_XDECREF(o);
-
-    Py_BEGIN_ALLOW_THREADS;
-    PQputline(curs->conn->pgconn, "\\.\n");
-    PQendcopy(curs->conn->pgconn);
-    Py_END_ALLOW_THREADS;
-
-    /* if for some reason we're using a protocol 3 libpq to connect to a
-       protocol 2 backend we still need to cycle on the result set */
-    IFCLEARPGRES(curs->pgres);
-    while ((curs->pgres = PQgetResult(curs->conn->pgconn)) != NULL) {
-        if (PQresultStatus(curs->pgres) == PGRES_FATAL_ERROR)
-            pq_raise(curs->conn, curs, NULL);
-        IFCLEARPGRES(curs->pgres);
-    }
-
-    ret = 1;
-
-exit:
-    Py_XDECREF(func);
-    return ret;
-}
-
-#ifdef HAVE_PQPROTOCOL3
 static int
 _pq_copy_out_v3(cursorObject *curs)
 {
@@ -1258,66 +1191,6 @@ exit:
     Py_XDECREF(func);
     return ret;
 }
-#endif
-
-static int
-_pq_copy_out(cursorObject *curs)
-{
-    PyObject *tmp = NULL, *func;
-
-    char buffer[4096];
-    int status = -1, ll = 0;
-    Py_ssize_t len;
-
-    if (!(func = PyObject_GetAttrString(curs->copyfile, "write"))) {
-        Dprintf("_pq_copy_out: can't get o.write");
-        goto exit;
-    }
-
-    while (1) {
-        Py_BEGIN_ALLOW_THREADS;
-        status = PQgetline(curs->conn->pgconn, buffer, 4096);
-        Py_END_ALLOW_THREADS;
-        if (status == 0) {
-            if (!ll && buffer[0] == '\\' && buffer[1] == '.') break;
-
-            len = (Py_ssize_t) strlen(buffer);
-            buffer[len++] = '\n';
-            ll = 0;
-        }
-        else if (status == 1) {
-            len = 4096-1;
-            ll = 1;
-        }
-        else {
-            goto exit;
-        }
-
-        tmp = PyObject_CallFunction(func, "s#", buffer, len);
-        if (tmp == NULL) {
-            goto exit;
-        } else {
-            Py_DECREF(tmp);
-        }
-    }
-
-    status = 1;
-    if (PQendcopy(curs->conn->pgconn) != 0)
-        status = -1;
-
-    /* if for some reason we're using a protocol 3 libpq to connect to a
-       protocol 2 backend we still need to cycle on the result set */
-    IFCLEARPGRES(curs->pgres);
-    while ((curs->pgres = PQgetResult(curs->conn->pgconn)) != NULL) {
-        if (PQresultStatus(curs->pgres) == PGRES_FATAL_ERROR)
-            pq_raise(curs->conn, curs, NULL);
-        IFCLEARPGRES(curs->pgres);
-    }
-
-exit:
-    Py_XDECREF(func);
-    return status;
-}
 
 int
 pq_fetch(cursorObject *curs)
@@ -1368,12 +1241,7 @@ pq_fetch(cursorObject *curs)
 
     case PGRES_COPY_OUT:
         Dprintf("pq_fetch: data from a COPY TO (no tuples)");
-#ifdef HAVE_PQPROTOCOL3
-        if (curs->conn->protocol == 3)
-            ex = _pq_copy_out_v3(curs);
-        else
-#endif
-            ex = _pq_copy_out(curs);
+        ex = _pq_copy_out_v3(curs);
         curs->rowcount = -1;
         /* error caught by out glorious notice handler */
         if (PyErr_Occurred()) ex = -1;
@@ -1382,12 +1250,7 @@ pq_fetch(cursorObject *curs)
 
     case PGRES_COPY_IN:
         Dprintf("pq_fetch: data from a COPY FROM (no tuples)");
-#ifdef HAVE_PQPROTOCOL3
-        if (curs->conn->protocol == 3)
-            ex = _pq_copy_in_v3(curs);
-        else
-#endif
-            ex = _pq_copy_in(curs);
+        ex = _pq_copy_in_v3(curs);
         curs->rowcount = -1;
         /* error caught by out glorious notice handler */
         if (PyErr_Occurred()) ex = -1;

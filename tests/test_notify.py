@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-import unittest
-import warnings
+from testutils import unittest
 
 import psycopg2
 from psycopg2 import extensions
@@ -110,6 +109,7 @@ conn.close()
         self.autocommit(self.conn)
         self.listen('foo')
         self.notify('foo').communicate()
+        time.sleep(0.1)
         self.conn.poll()
         notify = self.conn.notifies[0]
         self.assert_(isinstance(notify, psycopg2.extensions.Notify))
@@ -118,6 +118,7 @@ conn.close()
         self.autocommit(self.conn)
         self.listen('foo')
         pid = int(self.notify('foo').communicate()[0])
+        time.sleep(0.1)
         self.conn.poll()
         self.assertEqual(1, len(self.conn.notifies))
         notify = self.conn.notifies[0]
@@ -127,12 +128,12 @@ conn.close()
 
     def test_notify_payload(self):
         if self.conn.server_version < 90000:
-            warnings.warn("server version %s doesn't support notify payload: skipping test"
+            return self.skipTest("server version %s doesn't support notify payload"
                 % self.conn.server_version)
-            return
         self.autocommit(self.conn)
         self.listen('foo')
         pid = int(self.notify('foo', payload="Hello, world!").communicate()[0])
+        time.sleep(0.1)
         self.conn.poll()
         self.assertEqual(1, len(self.conn.notifies))
         notify = self.conn.notifies[0]

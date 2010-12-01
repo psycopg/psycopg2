@@ -25,9 +25,18 @@
 
 #include "mxDateTime.h"
 
-/* the pointer to the mxDateTime API is initialized by the module init code,
-   we just need to grab it */
-extern HIDDEN mxDateTimeModule_APIObject *mxDateTimeP;
+int
+psyco_typecast_mxdatetime_init(void)
+{
+    Dprintf("psyco_typecast_mxdatetime_init: mx.DateTime init");
+
+    if(mxDateTime_ImportModuleAndAPI()) {
+        PyErr_SetString(PyExc_ImportError, "mx.DateTime initialization failed");
+        return -1;
+    }
+    return 0;
+}
+
 
 /** DATE - cast a date into mx.DateTime python object **/
 
@@ -45,10 +54,10 @@ typecast_MXDATE_cast(const char *str, Py_ssize_t len, PyObject *curs)
     /* check for infinity */
     if (!strcmp(str, "infinity") || !strcmp(str, "-infinity")) {
         if (str[0] == '-') {
-            return mxDateTimeP->DateTime_FromDateAndTime(-999998,1,1, 0,0,0);
+            return mxDateTime.DateTime_FromDateAndTime(-999998,1,1, 0,0,0);
         }
         else {
-            return mxDateTimeP->DateTime_FromDateAndTime(999999,12,31, 0,0,0);
+            return mxDateTime.DateTime_FromDateAndTime(999999,12,31, 0,0,0);
         }
     }
 
@@ -75,7 +84,7 @@ typecast_MXDATE_cast(const char *str, Py_ssize_t len, PyObject *curs)
 
     Dprintf("typecast_MXDATE_cast: fractionary seconds: %lf",
         (double)ss + (double)us/(double)1000000.0);
-    return mxDateTimeP->DateTime_FromDateAndTime(y, m, d, hh, mm,
+    return mxDateTime.DateTime_FromDateAndTime(y, m, d, hh, mm,
         (double)ss + (double)us/(double)1000000.0);
 }
 
@@ -102,7 +111,7 @@ typecast_MXTIME_cast(const char *str, Py_ssize_t len, PyObject *curs)
 
     Dprintf("typecast_MXTIME_cast: fractionary seconds: %lf",
         (double)ss + (double)us/(double)1000000.0);
-    return mxDateTimeP->DateTimeDelta_FromTime(hh, mm,
+    return mxDateTime.DateTimeDelta_FromTime(hh, mm,
         (double)ss + (double)us/(double)1000000.0);
 }
 
@@ -225,7 +234,7 @@ typecast_MXINTERVAL_cast(const char *str, Py_ssize_t len, PyObject *curs)
 
     Dprintf("typecast_MXINTERVAL_cast: days = %ld, seconds = %f",
             days, seconds);
-    return mxDateTimeP->DateTimeDelta_FromDaysAndSeconds(days, seconds);
+    return mxDateTime.DateTimeDelta_FromDaysAndSeconds(days, seconds);
 }
 
 /* psycopg defaults to using mx types */

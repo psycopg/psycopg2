@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-import unittest
-import warnings
+from testutils import unittest
 
 import psycopg2
 import psycopg2.extensions
@@ -61,9 +60,9 @@ class QuotingTestCase(unittest.TestCase):
         curs.execute("SHOW server_encoding")
         server_encoding = curs.fetchone()[0]
         if server_encoding != "UTF8":
-            warnings.warn("Unicode test skipped since server encoding is %s"
-                          % server_encoding)
-            return
+            return self.skipTest(
+                "Unicode test skipped since server encoding is %s"
+                    % server_encoding)
 
         data = u"""some data with \t chars
         to escape into, 'quotes', \u20ac euro sign and \\ a backslash too.

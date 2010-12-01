@@ -78,6 +78,8 @@ HIDDEN PyObject *psyco_TimestampFromTicks(PyObject *module, PyObject *args);
 
 #endif /* PSYCOPG_DEFAULT_MXDATETIME */
 
+HIDDEN int psyco_adapter_mxdatetime_init(void);
+
 HIDDEN PyObject *psyco_DateFromMx(PyObject *module, PyObject *args);
 #define psyco_DateFromMx_doc \
     "DateFromMx(mx) -> new date"

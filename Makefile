@@ -71,7 +71,7 @@ docs-txt: doc/psycopg2.txt
 sdist: $(SDIST)
 
 runtests: package
-	PSYCOPG2_TESTDB=$(TESTDB) PYTHONPATH=$(BUILD_DIR):. $(PYTHON) tests/__init__.py --verbose
+	PSYCOPG2_TESTDB=$(TESTDB) PYTHONPATH=$(BUILD_DIR):.:$(PYTHONPATH) $(PYTHON) tests/__init__.py --verbose
 
 
 # The environment is currently required to build the documentation.

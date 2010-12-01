@@ -14,17 +14,15 @@
 
 """Python-PostgreSQL Database Adapter
 
-psycopg is a PostgreSQL database adapter for the Python programming
-language. This is version 2, a complete rewrite of the original code to
-provide new-style classes for connection and cursor objects and other sweet
-candies. Like the original, psycopg 2 was written with the aim of being
-very small and fast, and stable as a rock.
+psycopg2 is a PostgreSQL database adapter for the Python programming
+language.  psycopg2 was written with the aim of being very small and fast,
+and stable as a rock.
 
-psycopg is different from the other database adapter because it was
+psycopg2 is different from the other database adapter because it was
 designed for heavily multi-threaded applications that create and destroy
 lots of cursors and make a conspicuous number of concurrent INSERTs or
-UPDATEs. psycopg 2 also provide full asycronous operations for the really
-brave programmer.
+UPDATEs. psycopg2 also provide full asycronous operations and support
+for coroutine libraries.
 """
 
 classifiers = """\
@@ -393,11 +391,10 @@ else:
     sys.exit(1)
 
 # generate a nice version string to avoid confusion when users report bugs
+version_flags.append('pq3') # no more a choice
 for have in parser.get('build_ext', 'define').split(','):
     if have == 'PSYCOPG_EXTENSIONS':
         version_flags.append('ext')
-    elif have == 'HAVE_PQPROTOCOL3':
-        version_flags.append('pq3')
 if version_flags:
     PSYCOPG_VERSION_EX = PSYCOPG_VERSION + " (%s)" % ' '.join(version_flags)
 else:
@@ -440,8 +437,8 @@ setup(name="psycopg2",
       long_description="\n".join(__doc__.split("\n")[2:]),
       classifiers=filter(None, classifiers.split("\n")),
       data_files=data_files,
-      package_dir={'psycopg2':'lib'},
-      packages=['psycopg2'],
+      package_dir={'psycopg2':'lib', 'psycopg2.tests': 'tests'},
+      packages=['psycopg2', 'psycopg2.tests'],
       cmdclass={ 'build_ext': psycopg_build_ext },
       ext_modules=ext)
 
