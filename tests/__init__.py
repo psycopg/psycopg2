@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import sys
 from testutils import unittest
 
 dbname = os.environ.get('PSYCOPG2_TESTDB', 'psycopg2_test')
@@ -30,6 +31,17 @@ if dbport is not None:
     dsn += ' port=%s' % dbport
 if dbuser is not None:
     dsn += ' user=%s' % dbuser
+
+# If connection to test db fails, bail out early.
+import psycopg2
+try:
+    cnn = psycopg2.connect(dsn)
+except Exception, e:
+    print "Failed connection to test db:", e.__class__.__name__, e
+    print "Please set env vars 'PSYCOPG2_TESTDB*' to valid values."
+    sys.exit(1)
+else:
+    cnn.close()
 
 import bugX000
 import extras_dictcursor
