@@ -3,24 +3,24 @@ What's new in psycopg 2.3.0
 
 psycopg 2.3 aims to expose some new features introduced in PostgreSQL 9.0.
 
-* Main new fratures:
+* Main new features:
 
   - `dict` to `hstore` adapter and `hstore` to `dict` typecaster, using both
     9.0 and pre-9.0 syntax.
   - Two-phase commit protocol support as per DBAPI specification.
   - Support for payload in notifications received from the backed.
-  - namedtuple-returning cursor.
+  - `namedtuple`-returning cursor.
   - Query execution cancel.
 
 * Other features and changes:
 
   - Dropped support for protocol 2: Psycopg 2.3 can only connect to PostgreSQL
     servers with version at least 7.4.
-  - don't issue a query at every connection to detect the client encoding
+  - Don't issue a query at every connection to detect the client encoding
     and to set the datestyle to ISO if it is already compatible with what
     expected.
   - `mogrify()` now supports unicode queries.
-  - subclasses of a type that can be adapted are adapted as the superclass.
+  - Subclasses of a type that can be adapted are adapted as the superclass.
   - `errorcodes` knows a couple of new codes introduced in PostgreSQL 9.0.
   - Dropped deprecated Psycopg "own quoting".
   - Never issue a ROLLBACK on close/GC. This behaviour was introduced as a bug
