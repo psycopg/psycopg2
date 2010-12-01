@@ -29,8 +29,6 @@ ENV_DIR = $(shell pwd)/env/py-$(PYTHON_VERSION)
 ENV_BIN = $(ENV_DIR)/bin
 ENV_LIB = $(ENV_DIR)/lib
 
-TESTDB = psycopg2_test
-
 SOURCE_C := $(wildcard psycopg/*.c psycopg/*.h)
 SOURCE_PY := $(wildcard lib/*.py)
 SOURCE_DOC := $(wildcard doc/src/*.rst)
@@ -71,7 +69,7 @@ docs-txt: doc/psycopg2.txt
 sdist: $(SDIST)
 
 runtests: package
-	PSYCOPG2_TESTDB=$(TESTDB) PYTHONPATH=$(BUILD_DIR):.:$(PYTHONPATH) $(PYTHON) tests/__init__.py --verbose
+	PYTHONPATH=$(BUILD_DIR):.:$(PYTHONPATH) $(PYTHON) tests/__init__.py --verbose
 
 
 # The environment is currently required to build the documentation.
