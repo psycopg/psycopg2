@@ -374,7 +374,11 @@ this will be probably implemented in a future release.
 
 
 .. index::
-    single: Greenlet, Coroutine, Eventlet, gevent, Wait callback
+    single: Greenlet
+    single: Coroutine
+    single: Eventlet
+    single: gevent
+    single: Wait callback
 
 .. _green-support:
 
