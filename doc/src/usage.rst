@@ -208,9 +208,9 @@ In the following examples the method `~cursor.mogrify()` is used to show
 the SQL string that would be sent to the database.
 
 .. index::
-    single: None; Adaptation
+    pair: None; Adaptation
     single: NULL; Adaptation
-    single: Boolean; Adaptation
+    pair: Boolean; Adaptation
 
 - Python ``None`` and boolean values are converted into the proper SQL
   literals::
@@ -219,6 +219,7 @@ the SQL string that would be sent to the database.
     >>> 'SELECT NULL, true, false;'
 
 .. index::
+    single: Adaptation; numbers
     single: Integer; Adaptation
     single: Float; Adaptation
     single: Decimal; Adaptation
@@ -230,7 +231,7 @@ the SQL string that would be sent to the database.
     >>> 'SELECT 10, 10, 10.0, 10.00;'
 
 .. index::
-    single: Strings; Adaptation
+    pair: Strings; Adaptation
     single: Unicode; Adaptation
     single: Buffer; Adaptation
     single: bytea; Adaptation
@@ -243,6 +244,7 @@ the SQL string that would be sent to the database.
   :ref:`unicode-handling`.
 
 .. index::
+    single: Adaptation; Date/Time objects
     single: Date objects; Adaptation
     single: Time objects; Adaptation
     single: Interval objects; Adaptation
@@ -266,7 +268,7 @@ the SQL string that would be sent to the database.
 
 .. index::
     single: Array; Adaptation
-    single: Lists; Adaptation
+    double: Lists; Adaptation
 
 - Python lists are converted into PostgreSQL :sql:`ARRAY`\ s::
 
@@ -274,7 +276,7 @@ the SQL string that would be sent to the database.
     'SELECT ARRAY[10, 20, 30];'
 
 .. index::
-    single: Tuple; Adaptation
+    double: Tuple; Adaptation
     single: IN operator
 
 - Python tuples are converted in a syntax suitable for the SQL :sql:`IN`
