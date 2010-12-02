@@ -158,10 +158,10 @@ The ``connection`` class
         this method is used outside of a TPC transaction.
 
         After calling `!tpc_prepare()`, no statements can be executed until
-        `~connection.tpc_commit()` or `~connection.tpc_rollback()` have been
+        `~connection.tpc_commit()` or `~connection.tpc_rollback()` will be
         called.  The `~connection.reset()` method can be used to restore the
         status of the connection to `~psycopg2.extensions.STATUS_READY`: the
-        transaction will remained prepared in the database and will be
+        transaction will remain prepared in the database and will be
         possible to finish it with `!tpc_commit(xid)` and
         `!tpc_rollback(xid)`.
 
