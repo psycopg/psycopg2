@@ -441,12 +441,18 @@ example callback (using `!select()` to block) is provided as
             else:
                 raise OperationalError("bad state from poll: %s" % state)
 
+Providing callback functions for the single coroutine libraries is out of
+psycopg2 scope, as the callback can be tied to the libraries' implementation
+details. You can check the `psycogreen`_ project for further informations and
+resources about the topic.
+
 .. _coroutine: http://en.wikipedia.org/wiki/Coroutine
 .. _greenlet: http://pypi.python.org/pypi/greenlet
 .. _green threads: http://en.wikipedia.org/wiki/Green_threads
 .. _Eventlet: http://eventlet.net/
 .. _gevent: http://www.gevent.org/
 .. _SQLAlchemy: http://www.sqlalchemy.org/
+.. _psycogreen: http://bitbucket.org/dvarrazzo/psycogreen/
 .. __: http://www.postgresql.org/docs/9.0/static/libpq-async.html
 
 .. warning::
