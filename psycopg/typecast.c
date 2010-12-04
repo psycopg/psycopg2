@@ -36,14 +36,16 @@
 
 /* useful function used by some typecasters */
 
-const char *
+#ifdef HAVE_MXDATETIME
+static const char *
 skip_until_space(const char *s)
 {
     while (*s && *s != ' ') s++;
     return s;
 }
+#endif
 
-const char *
+static const char *
 skip_until_space2(const char *s, Py_ssize_t *len)
 {
     while (*len > 0 && *s && *s != ' ') {

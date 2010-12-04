@@ -90,9 +90,4 @@ HIDDEN PyObject *typecast_from_python(
 HIDDEN PyObject *typecast_cast(
     PyObject *self, const char *str, Py_ssize_t len, PyObject *curs);
 
-/** utility functions **/
-
-HIDDEN const char *skip_until_space(const char *s);
-HIDDEN const char *skip_until_space2(const char *s, Py_ssize_t *len);
-
 #endif /* !defined(PSYCOPG_TYPECAST_H) */
