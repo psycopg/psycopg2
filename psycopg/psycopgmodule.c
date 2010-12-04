@@ -48,12 +48,10 @@
 #include "psycopg/adapter_asis.h"
 #include "psycopg/adapter_list.h"
 #include "psycopg/typecast_binary.h"
-#include "psycopg/typecast_datetime.h"
 
 #ifdef HAVE_MXDATETIME
 #include <mxDateTime.h>
 #include "psycopg/adapter_mxdatetime.h"
-#include "psycopg/typecast_mxdatetime.h"
 #endif
 
 /* some module-level variables, like the datetime module */
@@ -764,7 +762,6 @@ init_psycopg(void)
         return;
     }
     if (psyco_adapter_mxdatetime_init()) { return; }
-    if (psyco_typecast_mxdatetime_init()) { return; }
 #endif
 
     /* import python builtin datetime module, if available */
@@ -778,7 +775,6 @@ init_psycopg(void)
     /* Initialize the PyDateTimeAPI everywhere is used */
     PyDateTime_IMPORT;
     if (psyco_adapter_datetime_init()) { return; }
-    if (psyco_typecast_datetime_init()) { return; }
 
     pydatetimeType.ob_type = &PyType_Type;
     if (PyType_Ready(&pydatetimeType) == -1) return;

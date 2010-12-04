@@ -25,7 +25,7 @@
 
 #include "mxDateTime.h"
 
-int
+static int
 psyco_typecast_mxdatetime_init(void)
 {
     Dprintf("psyco_typecast_mxdatetime_init: mx.DateTime init");

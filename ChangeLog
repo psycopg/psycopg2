@@ -2,6 +2,9 @@
 
 	* setup.py: bumped to version 2.3.1.dev0
 
+	* datetime modules reorganized to work around CentOS 5.5 x86_64 buld
+	problem.  Closes ticket #23
+
 2010-12-01  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* lib/extras.py: DictRow items can be updated. Patch by Alex Aster.

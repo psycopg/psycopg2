@@ -277,6 +277,7 @@ typecast_init(PyObject *dict)
 
     /* register the date/time typecasters with their original names */
 #ifdef HAVE_MXDATETIME
+    if (psyco_typecast_mxdatetime_init()) { return -1; }
     for (i = 0; typecast_mxdatetime[i].name != NULL; i++) {
         typecastObject *t;
         Dprintf("typecast_init: initializing %s", typecast_mxdatetime[i].name);
@@ -285,6 +286,8 @@ typecast_init(PyObject *dict)
         PyDict_SetItem(dict, t->name, (PyObject *)t);
     }
 #endif
+
+    if (psyco_typecast_datetime_init()) { return -1; }
     for (i = 0; typecast_pydatetime[i].name != NULL; i++) {
         typecastObject *t;
         Dprintf("typecast_init: initializing %s", typecast_pydatetime[i].name);
