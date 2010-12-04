@@ -35,7 +35,7 @@ class CancelTests(unittest.TestCase):
             cur = conn.cursor()
             try:
                 self.assertRaises(psycopg2.extensions.QueryCanceledError,
-                                  cur.execute, "select pg_sleep(10000)")
+                                  cur.execute, "select pg_sleep(60)")
             # make sure the connection still works
                 conn.rollback()
                 cur.execute("select 1")
