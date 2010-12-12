@@ -19,7 +19,7 @@
 #   make check  # this requires setting up a test database with the correct user
 
 PYTHON := python$(PYTHON_VERSION)
-PYTHON_VERSION ?= $(shell $(PYTHON) -c 'import sys; print "%d.%d" % sys.version_info[:2]')
+PYTHON_VERSION ?= $(shell $(PYTHON) -c 'import sys; print ("%d.%d" % sys.version_info[:2])')
 BUILD_DIR = $(shell pwd)/build/lib.$(PYTHON_VERSION)
 ENV_DIR = $(shell pwd)/env/py-$(PYTHON_VERSION)
 ENV_BIN = $(ENV_DIR)/bin
