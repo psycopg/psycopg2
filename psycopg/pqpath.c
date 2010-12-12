@@ -43,7 +43,6 @@
 #include "psycopg/green.h"
 #include "psycopg/typecast.h"
 #include "psycopg/pgtypes.h"
-#include "psycopg/pgversion.h"
 
 
 /* Strip off the severity from a Postgres error message. */

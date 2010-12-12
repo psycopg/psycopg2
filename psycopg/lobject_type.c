@@ -36,7 +36,6 @@
 #include "psycopg/microprotocols.h"
 #include "psycopg/microprotocols_proto.h"
 #include "psycopg/pqpath.h"
-#include "pgversion.h"
 
 
 #ifdef PSYCOPG_EXTENSIONS
