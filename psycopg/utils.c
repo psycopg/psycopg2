@@ -23,14 +23,13 @@
  * License for more details.
  */
 
-#include <Python.h>
-#include <string.h>
-
 #define PSYCOPG_MODULE
-#include "psycopg/config.h"
 #include "psycopg/psycopg.h"
+
 #include "psycopg/connection.h"
 #include "psycopg/pgtypes.h"
+
+#include <string.h>
 #include <stdlib.h>
 
 char *

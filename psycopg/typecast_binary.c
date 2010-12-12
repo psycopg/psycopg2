@@ -25,7 +25,6 @@
 
 #include "typecast_binary.h"
 
-#include <libpq-fe.h>
 #include <stdlib.h>
 
 

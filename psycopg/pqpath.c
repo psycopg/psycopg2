@@ -29,20 +29,17 @@
    connection.
 */
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include <string.h>
-
 #define PSYCOPG_MODULE
-#include "psycopg/config.h"
-#include "psycopg/python.h"
 #include "psycopg/psycopg.h"
+
 #include "psycopg/pqpath.h"
 #include "psycopg/connection.h"
 #include "psycopg/cursor.h"
 #include "psycopg/green.h"
 #include "psycopg/typecast.h"
 #include "psycopg/pgtypes.h"
+
+#include <string.h>
 
 
 /* Strip off the severity from a Postgres error message. */

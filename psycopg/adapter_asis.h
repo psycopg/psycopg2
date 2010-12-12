@@ -26,11 +26,6 @@
 #ifndef PSYCOPG_ASIS_H
 #define PSYCOPG_ASIS_H 1
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-
-#include "psycopg/config.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif

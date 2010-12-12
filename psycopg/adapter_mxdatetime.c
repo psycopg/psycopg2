@@ -23,19 +23,18 @@
  * License for more details.
  */
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
+#define PSYCOPG_MODULE
+#include "psycopg/psycopg.h"
+
+/* TODO: check if still compiles ok: I have no mx on this box */
+#include "psycopg/adapter_mxdatetime.h"
+#include "psycopg/microprotocols_proto.h"
+
 #include <structmember.h>
 #include <stringobject.h>
 #include <mxDateTime.h>
 #include <string.h>
 
-#define PSYCOPG_MODULE
-#include "psycopg/config.h"
-#include "psycopg/python.h"
-#include "psycopg/psycopg.h"
-#include "psycopg/adapter_mxdatetime.h"
-#include "psycopg/microprotocols_proto.h"
 
 int
 psyco_adapter_mxdatetime_init(void)

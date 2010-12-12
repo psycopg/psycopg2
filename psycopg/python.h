@@ -26,8 +26,6 @@
 #ifndef PSYCOPG_PYTHON_H
 #define PSYCOPG_PYTHON_H 1
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
 #include <structmember.h>
 
 #if PY_VERSION_HEX < 0x02040000

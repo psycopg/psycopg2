@@ -26,10 +26,6 @@
 #ifndef PSYCOPG_NOTIFY_H
 #define PSYCOPG_NOTIFY_H 1
 
-#include <Python.h>
-
-#include "psycopg/config.h"
-
 extern HIDDEN PyTypeObject NotifyType;
 
 typedef struct {

@@ -23,19 +23,17 @@
  * License for more details.
  */
 
-#include <Python.h>
-#include <structmember.h>
-#include <string.h>
-
 #define PSYCOPG_MODULE
-#include "psycopg/config.h"
-#include "psycopg/python.h"
 #include "psycopg/psycopg.h"
+
 #include "psycopg/lobject.h"
 #include "psycopg/connection.h"
 #include "psycopg/microprotocols.h"
 #include "psycopg/microprotocols_proto.h"
 #include "psycopg/pqpath.h"
+
+#include <structmember.h>
+#include <string.h>
 
 
 #ifdef PSYCOPG_EXTENSIONS

@@ -26,11 +26,6 @@
 #ifndef PSYCOPG_CONNECTION_H
 #define PSYCOPG_CONNECTION_H 1
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include <libpq-fe.h>
-
-#include "psycopg/config.h"
 #include "psycopg/xid.h"
 
 #ifdef __cplusplus

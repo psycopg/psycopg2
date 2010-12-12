@@ -23,15 +23,13 @@
  * License for more details.
  */
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
+#define PSYCOPG_MODULE
+#include "psycopg/psycopg.h"
+
+#include "psycopg/notify.h"
+
 #include <structmember.h>
 
-#define PSYCOPG_MODULE
-#include "psycopg/config.h"
-#include "psycopg/python.h"
-#include "psycopg/psycopg.h"
-#include "psycopg/notify.h"
 
 static const char notify_doc[] =
     "A notification received from the backend.\n\n"

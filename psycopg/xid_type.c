@@ -24,15 +24,13 @@
  * License for more details.
  */
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
+#define PSYCOPG_MODULE
+#include "psycopg/psycopg.h"
+
+#include "psycopg/xid.h"
+
 #include <structmember.h>
 
-#define PSYCOPG_MODULE
-#include "psycopg/config.h"
-#include "psycopg/python.h"
-#include "psycopg/psycopg.h"
-#include "psycopg/xid.h"
 
 static const char xid_doc[] =
     "A transaction identifier used for two-phase commit.\n\n"

@@ -26,11 +26,8 @@
 #ifndef PSYCOPG_LOBJECT_H
 #define PSYCOPG_LOBJECT_H 1
 
-#include <Python.h>
-#include <libpq-fe.h>
 #include <libpq/libpq-fs.h>
 
-#include "psycopg/config.h"
 #include "psycopg/connection.h"
 
 #ifdef __cplusplus

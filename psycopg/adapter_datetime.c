@@ -23,8 +23,12 @@
  * License for more details.
  */
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
+#define PSYCOPG_MODULE
+#include "psycopg/psycopg.h"
+
+#include "psycopg/adapter_datetime.h"
+#include "psycopg/microprotocols_proto.h"
+
 #include <structmember.h>
 #include <stringobject.h>
 #include <datetime.h>
@@ -32,12 +36,6 @@
 #include <time.h>
 #include <string.h>
 
-#define PSYCOPG_MODULE
-#include "psycopg/config.h"
-#include "psycopg/python.h"
-#include "psycopg/psycopg.h"
-#include "psycopg/adapter_datetime.h"
-#include "psycopg/microprotocols_proto.h"
 
 extern HIDDEN PyObject *pyPsycopgTzModule;
 extern HIDDEN PyObject *pyPsycopgTzLOCAL;

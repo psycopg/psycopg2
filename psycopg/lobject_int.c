@@ -23,16 +23,14 @@
  * License for more details.
  */
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include <string.h>
-
 #define PSYCOPG_MODULE
-#include "psycopg/config.h"
 #include "psycopg/psycopg.h"
-#include "psycopg/connection.h"
+
 #include "psycopg/lobject.h"
+#include "psycopg/connection.h"
 #include "psycopg/pqpath.h"
+
+#include <string.h>
 
 #ifdef PSYCOPG_EXTENSIONS
 

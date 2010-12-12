@@ -23,13 +23,9 @@
  * License for more details.
  */
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-
 #define PSYCOPG_MODULE
-#include "psycopg/config.h"
-#include "psycopg/python.h"
 #include "psycopg/psycopg.h"
+
 #include "psycopg/connection.h"
 #include "psycopg/cursor.h"
 #include "psycopg/green.h"

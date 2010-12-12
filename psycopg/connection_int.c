@@ -23,18 +23,17 @@
  * License for more details.
  */
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include <string.h>
-
 #define PSYCOPG_MODULE
-#include "psycopg/config.h"
 #include "psycopg/psycopg.h"
+
 #include "psycopg/connection.h"
 #include "psycopg/cursor.h"
 #include "psycopg/pqpath.h"
 #include "psycopg/green.h"
 #include "psycopg/notify.h"
+
+#include <string.h>
+
 
 /* conn_notice_callback - process notices */
 
