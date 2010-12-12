@@ -51,8 +51,12 @@
   #define CONV_CODE_PY_SSIZE_T "n"
 #endif
 
-#ifndef Py_TYPE
-  #define Py_TYPE(o) (((PyObject*)(o))->ob_type)
+/* Macros defined in Python 2.6 */
+#ifndef Py_REFCNT
+#define Py_REFCNT(ob)           (((PyObject*)(ob))->ob_refcnt)
+#define Py_TYPE(ob)             (((PyObject*)(ob))->ob_type)
+#define Py_SIZE(ob)             (((PyVarObject*)(ob))->ob_size)
+#define PyVarObject_HEAD_INIT(x,n) PyObject_HEAD_INIT(x) n,
 #endif
 
 /* FORMAT_CODE_PY_SSIZE_T is for Py_ssize_t: */
