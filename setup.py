@@ -41,17 +41,27 @@ Operating System :: Microsoft :: Windows
 Operating System :: Unix
 """
 
+# Note: The setup.py must be compatible with both Python 2 and 3
+
 import os
 import os.path
 import sys
 import re
 import subprocess
-import ConfigParser
 from distutils.core import setup, Extension
 from distutils.errors import DistutilsFileError
 from distutils.command.build_ext import build_ext
 from distutils.sysconfig import get_python_inc
 from distutils.ccompiler import get_default_compiler
+try:
+    from distutils.command.build_py import build_py_2to3 as build_py
+except ImportError:
+    from distutils.command.build_py import build_py
+
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
 
 # Take a look at http://www.python.org/dev/peps/pep-0386/
 # for a consistent versioning pattern.
@@ -74,6 +84,8 @@ def get_pg_config(kind, pg_config="pg_config"):
     r = p.stdout.readline().strip()
     if not r:
         raise Warning(p.stderr.readline())
+    if not isinstance(r, str):
+        r = r.decode('ascii')
     return r
 
 class psycopg_build_ext(build_ext):
@@ -244,7 +256,8 @@ class psycopg_build_ext(build_ext):
 
             define_macros.append(("PG_VERSION_HEX", "0x%02X%02X%02X" %
                                   (int(pgmajor), int(pgminor), int(pgpatch))))
-        except Warning, w:
+        except Warning:
+            w = sys.exc_info() # work around py 2/3 different syntax
             if self.pg_config == self.DEFAULT_PG_CONFIG:
                 sys.stderr.write("Warning: %s" % str(w))
             else:
@@ -280,21 +293,24 @@ class psycopg_build_ext(build_ext):
         for settingName in ('pg_config', 'include_dirs', 'library_dirs'):
             try:
                 val = parser.get('build_ext', settingName)
-            except ConfigParser.NoOptionError:
+            except configparser.NoOptionError:
                 pass
             else:
                 if val.strip() != '':
                     return None
         # end of guard conditions
 
-        import _winreg
+        try:
+            import winreg
+        except ImportError:
+            import _winreg as winreg
 
         pg_inst_base_dir = None
         pg_config_path = None
 
-        reg = _winreg.ConnectRegistry(None, _winreg.HKEY_LOCAL_MACHINE)
+        reg = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
         try:
-            pg_inst_list_key = _winreg.OpenKey(reg,
+            pg_inst_list_key = winreg.OpenKey(reg,
                 'SOFTWARE\\PostgreSQL\\Installations'
               )
         except EnvironmentError:
@@ -304,23 +320,23 @@ class psycopg_build_ext(build_ext):
             try:
                 # Determine the name of the first subkey, if any:
                 try:
-                    first_sub_key_name = _winreg.EnumKey(pg_inst_list_key, 0)
+                    first_sub_key_name = winreg.EnumKey(pg_inst_list_key, 0)
                 except EnvironmentError:
                     first_sub_key_name = None
 
                 if first_sub_key_name is not None:
-                    pg_first_inst_key = _winreg.OpenKey(reg,
+                    pg_first_inst_key = winreg.OpenKey(reg,
                         'SOFTWARE\\PostgreSQL\\Installations\\'
                         + first_sub_key_name
                       )
                     try:
-                        pg_inst_base_dir = _winreg.QueryValueEx(
+                        pg_inst_base_dir = winreg.QueryValueEx(
                             pg_first_inst_key, 'Base Directory'
                           )[0]
                     finally:
-                        _winreg.CloseKey(pg_first_inst_key)
+                        winreg.CloseKey(pg_first_inst_key)
             finally:
-                _winreg.CloseKey(pg_inst_list_key)
+                winreg.CloseKey(pg_inst_list_key)
 
         if pg_inst_base_dir and os.path.exists(pg_inst_base_dir):
             pg_config_path = os.path.join(pg_inst_base_dir, 'bin',
@@ -377,7 +393,7 @@ depends = [
     'typecast_builtins.c', 'typecast_datetime.c',
 ]
 
-parser = ConfigParser.ConfigParser()
+parser = configparser.ConfigParser()
 parser.read('setup.cfg')
 
 # Choose a datetime module
@@ -441,8 +457,8 @@ else:
 
 # build the extension
 
-sources = map(lambda x: os.path.join('psycopg', x), sources)
-depends = map(lambda x: os.path.join('psycopg', x), depends)
+sources = [ os.path.join('psycopg', x) for x in sources]
+depends = [ os.path.join('psycopg', x) for x in depends]
 
 ext.append(Extension("psycopg2._psycopg", sources,
                      define_macros=define_macros,
@@ -461,10 +477,12 @@ setup(name="psycopg2",
       platforms = ["any"],
       description=__doc__.split("\n")[0],
       long_description="\n".join(__doc__.split("\n")[2:]),
-      classifiers=filter(None, classifiers.split("\n")),
+      classifiers=[x for x in classifiers.split("\n") if x],
       data_files=data_files,
       package_dir={'psycopg2':'lib', 'psycopg2.tests': 'tests'},
       packages=['psycopg2', 'psycopg2.tests'],
-      cmdclass={ 'build_ext': psycopg_build_ext },
+      cmdclass={
+          'build_ext': psycopg_build_ext,
+          'build_py': build_py, },
       ext_modules=ext)
 
