@@ -45,7 +45,7 @@ pdecimal_str(pdecimalObject *self)
         goto end;
     }
     else if (check) {
-        res = PyString_FromString("'NaN'::numeric");
+        res = Text_FromUTF8("'NaN'::numeric");
         goto end;
     }
 
@@ -57,7 +57,7 @@ pdecimal_str(pdecimalObject *self)
         goto end;
     }
     if (PyObject_IsTrue(check)) {
-        res = PyString_FromString("'NaN'::numeric");
+        res = Text_FromUTF8("'NaN'::numeric");
         goto end;
     }
 
@@ -66,7 +66,7 @@ pdecimal_str(pdecimalObject *self)
         goto end;
     }
     if (PyObject_IsTrue(check)) {
-        res = PyString_FromString("'NaN'::numeric");
+        res = Text_FromUTF8("'NaN'::numeric");
         goto end;
     }
 

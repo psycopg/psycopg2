@@ -38,7 +38,7 @@ static PyObject *
 asis_str(asisObject *self)
 {
     if (self->wrapped == Py_None) {
-        return PyString_FromString("NULL");
+        return Text_FromUTF8("NULL");
     }
     else {
         return PyObject_Str(self->wrapped);

@@ -83,7 +83,11 @@ _get_superclass_adapter(PyObject *obj, PyObject *proto)
     Py_ssize_t i, ii;
 
     type = Py_TYPE(obj);
-    if (!((Py_TPFLAGS_HAVE_CLASS & type->tp_flags) && type->tp_mro)) {
+    if (!(
+#if PY_MAJOR_VERSION < 3
+        (Py_TPFLAGS_HAVE_CLASS & type->tp_flags) &&
+#endif
+        type->tp_mro)) {
         /* has no mro */
         return NULL;
     }
@@ -134,7 +138,7 @@ microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
     /* None is always adapted to NULL */
     
     if (obj == Py_None)
-        return PyString_FromString("NULL");
+        return Text_FromUTF8("NULL");
 
     Dprintf("microprotocols_adapt: trying to adapt %s",
         Py_TYPE(obj)->tp_name);

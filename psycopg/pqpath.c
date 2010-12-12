@@ -980,14 +980,15 @@ _pq_fetch_tuples(cursorObject *curs)
         }
 
         Dprintf("_pq_fetch_tuples: using cast at %p (%s) for type %d",
-                cast, PyString_AS_STRING(((typecastObject*)cast)->name),
+                cast, Bytes_AS_STRING(((typecastObject*)cast)->name),
                 PQftype(curs->pgres,i));
         Py_INCREF(cast);
         PyTuple_SET_ITEM(curs->casts, i, cast);
 
         /* 1/ fill the other fields */
         PyTuple_SET_ITEM(dtitem, 0,
-                         PyString_FromString(PQfname(curs->pgres, i)));
+                         /* XXX guaranteed to be ASCII/UTF8? */
+                         Text_FromUTF8(PQfname(curs->pgres, i)));
         PyTuple_SET_ITEM(dtitem, 1, type);
 
         /* 2/ display size is the maximum size of this field result tuples. */
@@ -1066,13 +1067,13 @@ _pq_copy_in_v3(cursorObject *curs)
 
     while (1) {
         o = PyObject_CallFunctionObjArgs(func, size, NULL);
-        if (!(o && PyString_Check(o) && (length = PyString_GET_SIZE(o)) != -1)) {
+        if (!(o && Bytes_Check(o) && (length = Bytes_GET_SIZE(o)) != -1)) {
             error = 1;
         }
         if (length == 0 || length > INT_MAX || error == 1) break;
 
         Py_BEGIN_ALLOW_THREADS;
-        res = PQputCopyData(curs->conn->pgconn, PyString_AS_STRING(o),
+        res = PQputCopyData(curs->conn->pgconn, Bytes_AS_STRING(o),
             /* Py_ssize_t->int cast was validated above */
             (int) length);
         Dprintf("_pq_copy_in_v3: sent %d bytes of data; res = %d",
@@ -1219,7 +1220,7 @@ pq_fetch(cursorObject *curs)
 
     /* backend status message */
     Py_XDECREF(curs->pgstatus);
-    curs->pgstatus = PyString_FromString(PQcmdStatus(curs->pgres));
+    curs->pgstatus = Text_FromUTF8(PQcmdStatus(curs->pgres));
 
     switch(pgstatus) {
 

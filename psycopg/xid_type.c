@@ -150,11 +150,11 @@ xid_init(XidObject *self, PyObject *args, PyObject *kwargs)
     Py_XDECREF(tmp);
 
     tmp = self->gtrid;
-    self->gtrid = PyString_FromString(gtrid);
+    self->gtrid = Text_FromUTF8(gtrid);
     Py_XDECREF(tmp);
 
     tmp = self->bqual;
-    self->bqual = PyString_FromString(bqual);
+    self->bqual = Text_FromUTF8(bqual);
     Py_XDECREF(tmp);
 
     return 0;
@@ -233,7 +233,7 @@ xid_repr(XidObject *self)
     PyObject *args = NULL;
 
     if (Py_None == self->format_id) {
-        if (!(format = PyString_FromString("<Xid: %r (unparsed)>"))) {
+        if (!(format = Text_FromUTF8("<Xid: %r (unparsed)>"))) {
             goto exit;
         }
         if (!(args = PyTuple_New(1))) { goto exit; }
@@ -241,7 +241,7 @@ xid_repr(XidObject *self)
         PyTuple_SET_ITEM(args, 0, self->gtrid);
     }
     else {
-        if (!(format = PyString_FromString("<Xid: (%r, %r, %r)>"))) {
+        if (!(format = Text_FromUTF8("<Xid: (%r, %r, %r)>"))) {
             goto exit;
         }
         if (!(args = PyTuple_New(3))) { goto exit; }
@@ -253,7 +253,7 @@ xid_repr(XidObject *self)
         PyTuple_SET_ITEM(args, 2, self->bqual);
     }
 
-    rv = PyString_Format(format, args);
+    rv = Text_Format(format, args);
 
 exit:
     Py_XDECREF(args);
@@ -457,7 +457,7 @@ xid_get_tid(XidObject *self)
         if (!(ebqual = _xid_encode64(self->bqual))) { goto exit; }
 
         /* rv = "%d_%s_%s" % (format_id, egtrid, ebqual) */
-        if (!(format = PyString_FromString("%d_%s_%s"))) { goto exit; }
+        if (!(format = Text_FromUTF8("%d_%s_%s"))) { goto exit; }
 
         if (!(args = PyTuple_New(3))) { goto exit; }
         Py_INCREF(self->format_id);
@@ -465,7 +465,7 @@ xid_get_tid(XidObject *self)
         PyTuple_SET_ITEM(args, 1, egtrid); egtrid = NULL;
         PyTuple_SET_ITEM(args, 2, ebqual); ebqual = NULL;
 
-        if (!(rv = PyString_Format(format, args))) { goto exit; }
+        if (!(rv = Text_Format(format, args))) { goto exit; }
     }
 
 exit:
@@ -621,7 +621,7 @@ XidObject *
 xid_from_string(PyObject *str) {
     XidObject *rv;
 
-    if (!(PyString_Check(str) || PyUnicode_Check(str))) {
+    if (!(Bytes_Check(str) || PyUnicode_Check(str))) {
         PyErr_SetString(PyExc_TypeError, "not a valid transaction id");
         return NULL;
     }

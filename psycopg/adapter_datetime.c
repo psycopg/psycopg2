@@ -62,26 +62,30 @@ pydatetime_str(pydatetimeObject *self)
     if (self->type <= PSYCO_DATETIME_TIMESTAMP) {
         PyObject *tz;
 
-        /* Select the right PG type to cast into. */
+        /* Select the right PG type to cast into.
+         * fmt contains %s in Py2 and %U in Py3,
+         * So it can be used with the Text_FromFormatS macro */
         char *fmt = NULL;
         switch (self->type) {
         case PSYCO_DATETIME_TIME:
-            fmt = "'%s'::time";
+            fmt = "'" Text_S "'::time";
             break;
         case PSYCO_DATETIME_DATE:
-            fmt = "'%s'::date";
+            fmt = "'" Text_S "'::date";
             break;
         case PSYCO_DATETIME_TIMESTAMP:
             tz = PyObject_GetAttrString(self->wrapped, "tzinfo");
             if (!tz) { return NULL; }
-            fmt = (tz == Py_None) ? "'%s'::timestamp" : "'%s'::timestamptz";
+            fmt = (tz == Py_None)
+                ? "'" Text_S "'::timestamp"
+                : "'" Text_S "'::timestamptz";
             Py_DECREF(tz);
             break;
         }
 
         iso = PyObject_CallMethod(self->wrapped, "isoformat", NULL);
         if (iso) {
-            res = PyString_FromFormat(fmt, PyString_AsString(iso));
+            res = Text_FromFormatS(fmt, iso);
             Py_DECREF(iso);
         }
         return res;
@@ -89,7 +93,7 @@ pydatetime_str(pydatetimeObject *self)
     else {
         PyDateTime_Delta *obj = (PyDateTime_Delta*)self->wrapped;
 
-        char buffer[8]; 
+        char buffer[8];
         int i;
         int a = obj->microseconds;
 

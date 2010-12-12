@@ -119,7 +119,7 @@ psyco_lobj_read(lobjectObject *self, PyObject *args)
         return NULL;
     }
 
-    res = PyString_FromStringAndSize(buffer, size);
+    res = Bytes_FromStringAndSize(buffer, size);
     PyMem_Free(buffer);
     
     return res;

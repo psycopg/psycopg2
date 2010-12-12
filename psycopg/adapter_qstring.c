@@ -54,6 +54,7 @@ qstring_quote(qstringObject *self)
         if (str == NULL) return NULL;
     }
 
+#if PY_MAJOR_VERSION < 3
     /* if the wrapped object is a simple string, we don't know how to
        (re)encode it, so we pass it as-is */
     else if (PyString_Check(self->wrapped)) {
@@ -61,6 +62,7 @@ qstring_quote(qstringObject *self)
         /* INCREF to make it ref-wise identical to unicode one */
         Py_INCREF(str);
     }
+#endif
 
     /* if the wrapped object is not a string, this is an error */
     else {
@@ -70,7 +72,7 @@ qstring_quote(qstringObject *self)
     }
 
     /* encode the string into buffer */
-    PyString_AsStringAndSize(str, &s, &len);
+    Bytes_AsStringAndSize(str, &s, &len);
 
     /* Call qstring_escape with the GIL released, then reacquire the GIL
        before verifying that the results can fit into a Python string; raise
@@ -94,7 +96,8 @@ qstring_quote(qstringObject *self)
         return NULL;
     }
     
-    self->buffer = PyString_FromStringAndSize(buffer, qlen);
+    /* XXX need to decode in connection's encoding in 3.0 */
+    self->buffer = Text_FromUTF8AndSize(buffer, qlen);
     PyMem_Free(buffer);
     Py_DECREF(str);
 

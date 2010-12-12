@@ -45,7 +45,7 @@ list_quote(listObject *self)
 
     /* empty arrays are converted to NULLs (still searching for a way to
        insert an empty array in postgresql */
-    if (len == 0) return PyString_FromString("'{}'");
+    if (len == 0) return Text_FromUTF8("'{}'");
 
     tmp = PyTuple_New(len);
 
@@ -53,7 +53,7 @@ list_quote(listObject *self)
         PyObject *quoted;
     PyObject *wrapped = PyList_GET_ITEM(self->wrapped, i);
     if (wrapped == Py_None)
-        quoted = PyString_FromString("NULL");
+        quoted = Text_FromUTF8("NULL");
     else
         quoted = microprotocol_getquoted(wrapped,
                                    (connectionObject*)self->connection);
@@ -67,11 +67,15 @@ list_quote(listObject *self)
 
     /* now that we have a tuple of adapted objects we just need to join them
        and put "ARRAY[] around the result */
-    str = PyString_FromString(", ");
+    str = Text_FromUTF8(", ");
     joined = PyObject_CallMethod(str, "join", "(O)", tmp);
     if (joined == NULL) goto error;
 
+#if PY_MAJOR_VERSION < 3
     res = PyString_FromFormat("ARRAY[%s]", PyString_AsString(joined));
+#else
+    res = PyUnicode_FromFormat("ARRAY[%U]", joined);
+#endif
 
  error:
     Py_XDECREF(tmp);

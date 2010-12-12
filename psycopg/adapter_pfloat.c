@@ -40,9 +40,9 @@ pfloat_str(pfloatObject *self)
 {
     double n = PyFloat_AsDouble(self->wrapped);
     if (isnan(n))
-        return PyString_FromString("'NaN'::float");
+        return Text_FromUTF8("'NaN'::float");
     else if (isinf(n))
-        return PyString_FromString("'Infinity'::float");
+        return Text_FromUTF8("'Infinity'::float");
     else
         return PyObject_Repr(self->wrapped);
 }

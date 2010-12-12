@@ -39,17 +39,17 @@ pboolean_str(pbooleanObject *self)
 {
 #ifdef PSYCOPG_NEW_BOOLEAN
     if (PyObject_IsTrue(self->wrapped)) {
-        return PyString_FromString("true");
+        return Text_FromUTF8("true");
     }
     else {
-        return PyString_FromString("false");
+        return Text_FromUTF8("false");
     }
 #else
     if (PyObject_IsTrue(self->wrapped)) {
-        return PyString_FromString("'t'");
+        return Text_FromUTF8("'t'");
     }
     else {
-        return PyString_FromString("'f'");
+        return Text_FromUTF8("'f'");
     }
 #endif
 }

@@ -74,4 +74,66 @@
   #define FORMAT_CODE_SIZE_T "%zu"
 #endif
 
+/* Abstract from text type. Only supported for ASCII and UTF-8 */
+#if PY_MAJOR_VERSION < 3
+#define Text_Type PyString_Type
+#define Text_Check(s) PyString_Check(s)
+#define Text_Format(f,a) PyString_Format(f,a)
+#define Text_FromUTF8(s) PyString_FromString(s)
+#define Text_FromUTF8AndSize(s,n) PyString_FromStringAndSize(s,n)
+/* f must contain exactly a %s placeholder */
+#define Text_FromFormatS(f,s) PyString_FromFormat(f, PyString_AsString(s))
+#define Text_S "%s"
+#else
+#define Text_Type PyUnicode_Type
+#define Text_Check(s) PyUnicode_Check(s)
+#define Text_Format(f,a) PyUnicode_Format(f,a)
+#define Text_FromUTF8(s) PyUnicode_FromString(s)
+#define Text_FromUTF8AndSize(s,n) PyUnicode_FromStringAndSize(s,n)
+/* f must contain exactly a %U placeholder */
+#define Text_FromFormatS(f,s) PyUnicode_FromFormat(f, s)
+#define Text_S "%U"
+#endif
+
+#if PY_MAJOR_VERSION > 2
+#define PyInt_Type             PyLong_Type
+#define PyInt_AsLong           PyLong_AsLong
+#define PyInt_FromLong         PyLong_FromLong
+#define PyInt_FromSsize_t      PyLong_FromSsize_t
+#define PyString_FromFormat    PyUnicode_FromFormat
+#define Py_TPFLAGS_HAVE_ITER   0L
+#define Py_TPFLAGS_HAVE_RICHCOMPARE 0L
+#ifndef PyNumber_Int
+#define PyNumber_Int           PyNumber_Long
+#endif
+#endif  /* PY_MAJOR_VERSION > 2 */
+
+#if PY_MAJOR_VERSION < 3
+/* XXX BytesType -> Bytes_Type */
+#define BytesType PyString_Type
+#define Bytes_Check PyString_Check
+#define Bytes_AS_STRING PyString_AS_STRING
+#define Bytes_GET_SIZE PyString_GET_SIZE
+#define Bytes_Size PyString_Size
+#define Bytes_AsString PyString_AsString
+#define Bytes_AsStringAndSize PyString_AsStringAndSize
+#define Bytes_FromStringAndSize PyString_FromStringAndSize
+#else
+#define BytesType PyBytes_Type
+#define Bytes_Check PyBytes_Check
+#define Bytes_AS_STRING PyBytes_AS_STRING
+#define Bytes_GET_SIZE PyBytes_GET_SIZE
+#define Bytes_Size PyBytes_Size
+#define Bytes_AsString PyBytes_AsString
+#define Bytes_AsStringAndSize PyBytes_AsStringAndSize
+#define Bytes_FromStringAndSize PyBytes_FromStringAndSize
+#endif
+
+/* Mangle the module name into the name of the module init function */
+#if PY_MAJOR_VERSION > 2
+#define INIT_MODULE(m) PyInit_ ## m
+#else
+#define INIT_MODULE(m) init ## m
+#endif
+
 #endif /* !defined(PSYCOPG_PYTHON_H) */

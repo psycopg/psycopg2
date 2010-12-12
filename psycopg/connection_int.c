@@ -76,7 +76,8 @@ conn_notice_process(connectionObject *self)
 
     while (notice != NULL) {
         PyObject *msg;
-        msg = PyString_FromString(notice->message);
+        /* XXX possible other encode I think */
+        msg = Text_FromUTF8(notice->message);
 
         Dprintf("conn_notice_process: %s", notice->message);
 
@@ -145,8 +146,9 @@ conn_notifies_process(connectionObject *self)
                 (int) pgn->be_pid, pgn->relname);
 
         if (!(pid = PyInt_FromLong((long)pgn->be_pid))) { goto error; }
-        if (!(channel = PyString_FromString(pgn->relname))) { goto error; }
-        if (!(payload = PyString_FromString(pgn->extra))) { goto error; }
+        /* XXX in the connection encoding? */
+        if (!(channel = Text_FromUTF8(pgn->relname))) { goto error; }
+        if (!(payload = Text_FromUTF8(pgn->extra))) { goto error; }
 
         if (!(notify = PyObject_CallFunctionObjArgs((PyObject *)&NotifyType,
                 pid, channel, payload, NULL))) {
@@ -222,15 +224,35 @@ conn_encoding_to_codec(const char *enc)
 {
     char *tmp;
     Py_ssize_t size;
-    PyObject *pyenc;
+    PyObject *pyenc = NULL;
+    PyObject *pybenc = NULL;
     char *rv = NULL;
 
+    /* Find the Py codec name from the PG encoding */
     if (!(pyenc = PyDict_GetItemString(psycoEncodings, enc))) {
         PyErr_Format(OperationalError,
             "no Python codec for client encoding '%s'", enc);
         goto exit;
     }
-    if (-1 == PyString_AsStringAndSize(pyenc, &tmp, &size)) {
+
+    /* Convert the codec in a bytes string to extract the c string.
+     * At the end of the block we have pybenc with a new ref. */
+    if (PyUnicode_Check(pyenc)) {
+        if (!(pybenc = PyUnicode_AsEncodedString(pyenc, "ascii", NULL))) {
+            goto exit;
+        }
+    }
+    else if (Bytes_Check(pyenc)) {
+        Py_INCREF(pyenc);
+        pybenc = pyenc;
+    }
+    else {
+        PyErr_Format(PyExc_TypeError, "bad type for encoding: %s",
+            Py_TYPE(pyenc)->tp_name);
+        goto exit;
+    }
+
+    if (-1 == Bytes_AsStringAndSize(pybenc, &tmp, &size)) {
         goto exit;
     }
 
@@ -239,6 +261,7 @@ conn_encoding_to_codec(const char *enc)
 
 exit:
     /* pyenc is borrowed: no decref. */
+    Py_XDECREF(pybenc);
     return rv;
 }
 
@@ -1027,7 +1050,7 @@ conn_tpc_command(connectionObject *self, const char *cmd, XidObject *xid)
 
     /* convert the xid into PostgreSQL transaction id while keeping the GIL */
     if (!(tid = xid_get_tid(xid))) { goto exit; }
-    if (!(ctid = PyString_AsString(tid))) { goto exit; }
+    if (!(ctid = Bytes_AsString(tid))) { goto exit; }
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);

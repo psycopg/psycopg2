@@ -87,7 +87,7 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
        just before returning. we also init *new to NULL to exit with an error
        if we can't complete the mogrification */
     n = *new = NULL;
-    c = PyString_AsString(fmt);
+    c = Bytes_AsString(fmt);
 
     while(*c) {
         /* handle plain percent symbol in format string */
@@ -116,7 +116,7 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
             for (d = c + 2; *d && *d != ')'; d++);
 
             if (*d == ')') {
-                key = PyString_FromStringAndSize(c+2, (Py_ssize_t) (d-c-2));
+                key = Bytes_FromStringAndSize(c+2, (Py_ssize_t) (d-c-2));
                 value = PyObject_GetItem(var, key);
                 /* key has refcnt 1, value the original value + 1 */
 
@@ -144,7 +144,7 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
                        optimization over the adapting code and can go away in
                        the future if somebody finds a None adapter usefull. */
                     if (value == Py_None) {
-                        t = PyString_FromString("NULL");
+                        t = Text_FromUTF8("NULL");
                         PyDict_SetItem(n, key, t);
                         /* t is a new object, refcnt = 1, key is at 2 */
 
@@ -220,7 +220,7 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
             d = c+1;
 
             if (value == Py_None) {
-                PyTuple_SET_ITEM(n, index, PyString_FromString("NULL"));
+                PyTuple_SET_ITEM(n, index, Text_FromUTF8("NULL"));
                 while (*d && !isalpha(*d)) d++;
                 if (*d) *d = 's';
                 Py_DECREF(value);
@@ -267,7 +267,7 @@ static PyObject *_psyco_curs_validate_sql_basic(
         goto fail;
     }
 
-    if (PyString_Check(sql)) {
+    if (Bytes_Check(sql)) {
         /* Necessary for ref-count symmetry with the unicode case: */
         Py_INCREF(sql);
     }
@@ -314,7 +314,7 @@ _psyco_curs_merge_query_args(cursorObject *self,
        the curren exception (we will later restore it if the type or the
        strings do not match.) */
 
-    if (!(fquery = PyString_Format(query, args))) {
+    if (!(fquery = Text_Format(query, args))) {
         PyObject *err, *arg, *trace;
         int pe = 0;
 
@@ -327,7 +327,7 @@ _psyco_curs_merge_query_args(cursorObject *self,
             if (PyObject_HasAttrString(arg, "args")) {
                 PyObject *args = PyObject_GetAttrString(arg, "args");
                 PyObject *str = PySequence_GetItem(args, 0);
-                const char *s = PyString_AS_STRING(str);
+                const char *s = Bytes_AS_STRING(str);
 
                 Dprintf("psyco_curs_execute:     -> %s", s);
 
@@ -397,9 +397,15 @@ _psyco_curs_execute(cursorObject *self,
         }
 
         if (self->name != NULL) {
+            #if PY_MAJOR_VERSION < 3
             self->query = PyString_FromFormat(
                 "DECLARE %s CURSOR WITHOUT HOLD FOR %s",
                 self->name, PyString_AS_STRING(fquery));
+            #else
+            self->query = PyUnicode_FromFormat(
+                "DECLARE %s CURSOR WITHOUT HOLD FOR %U",
+                self->name, fquery);
+            #endif
             Py_DECREF(fquery);
         }
         else {
@@ -408,9 +414,15 @@ _psyco_curs_execute(cursorObject *self,
     }
     else {
         if (self->name != NULL) {
+            #if PY_MAJOR_VERSION < 3
             self->query = PyString_FromFormat(
                 "DECLARE %s CURSOR WITHOUT HOLD FOR %s",
                 self->name, PyString_AS_STRING(operation));
+            #else
+            self->query = PyUnicode_FromFormat(
+                "DECLARE %s CURSOR WITHOUT HOLD FOR %U",
+                self->name, operation);
+            #endif
         }
         else {
             /* Transfer reference ownership of the str in operation to
@@ -423,7 +435,7 @@ _psyco_curs_execute(cursorObject *self,
 
     /* At this point, the SQL statement must be str, not unicode */
 
-    res = pq_execute(self, PyString_AS_STRING(self->query), async);
+    res = pq_execute(self, Bytes_AS_STRING(self->query), async);
     Dprintf("psyco_curs_execute: res = %d, pgres = %p", res, self->pgres);
     if (res == -1) { goto fail; }
 
@@ -950,7 +962,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
     sql[sl-2] = ')';
     sql[sl-1] = '\0';
 
-    operation = PyString_FromString(sql);
+    operation = Text_FromUTF8(sql);
     PyMem_Free((void*)sql);
 
     if (_psyco_curs_execute(self, operation, parameters, self->conn->async)) {
@@ -1105,14 +1117,14 @@ static int _psyco_curs_copy_columns(PyObject *columns, char *columnlist)
     columnlist[0] = '(';
 
     while ((col = PyIter_Next(coliter)) != NULL) {
-        if (!PyString_Check(col)) {
+        if (!Bytes_Check(col)) {
             Py_DECREF(col);
             Py_DECREF(coliter);
             PyErr_SetString(PyExc_ValueError,
                 "elements in column list must be strings");
             return -1;
         }
-        PyString_AsStringAndSize(col, &colname, &collen);
+        Bytes_AsStringAndSize(col, &colname, &collen);
         if (offset + collen > DEFAULT_COPYBUFF - 2) {
             Py_DECREF(col);
             Py_DECREF(coliter);
@@ -1417,7 +1429,7 @@ psyco_curs_copy_expert(cursorObject *self, PyObject *args, PyObject *kwargs)
     self->copyfile = file;
 
     /* At this point, the SQL statement must be str, not unicode */
-    if (pq_execute(self, PyString_AS_STRING(sql), 0) != 1) { goto fail; }
+    if (pq_execute(self, Bytes_AS_STRING(sql), 0) != 1) { goto fail; }
 
     res = Py_None;
     Py_INCREF(res);

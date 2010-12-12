@@ -498,7 +498,7 @@ psyco_conn_get_parameter_status(connectionObject *self, PyObject *args)
         Py_INCREF(Py_None);
         return Py_None;
     }
-    return PyString_FromString(val);
+    return Text_FromUTF8(val);
 }
 
 

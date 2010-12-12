@@ -58,7 +58,13 @@ binary_quote(binaryObject *self)
     size_t len = 0;
 
     /* if we got a plain string or a buffer we escape it and save the buffer */
-    if (PyString_Check(self->wrapped) || PyBuffer_Check(self->wrapped)) {
+    if (Bytes_Check(self->wrapped)
+#if PY_MAJOR_VERSION < 3
+        || PyBuffer_Check(self->wrapped)
+#else
+        || PyMemoryView_Check(self->wrapped)
+#endif
+        ) {
         /* escape and build quoted buffer */
         if (PyObject_AsReadBuffer(self->wrapped, (const void **)&buffer,
                                   &buffer_len) < 0)
@@ -76,7 +82,7 @@ binary_quote(binaryObject *self)
                 (self->conn && ((connectionObject*)self->conn)->equote)
                     ? "E'%s'::bytea" : "'%s'::bytea" , to);
         else
-            self->buffer = PyString_FromString("''::bytea");
+            self->buffer = Text_FromUTF8("''::bytea");
 
         PQfreemem(to);
     }

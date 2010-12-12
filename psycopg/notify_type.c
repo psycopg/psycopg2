@@ -78,7 +78,8 @@ notify_init(NotifyObject *self, PyObject *args, PyObject *kwargs)
     }
 
     if (!payload) {
-        payload = PyString_FromStringAndSize("", 0);
+        /* XXX review encoding */
+        payload = Text_FromUTF8AndSize("", 0);
     }
 
     Py_CLEAR(self->pid);
@@ -213,7 +214,7 @@ notify_repr(NotifyObject *self)
     PyObject *format = NULL;
     PyObject *args = NULL;
 
-    if (!(format = PyString_FromString("Notify(%r, %r, %r)"))) {
+    if (!(format = Text_FromUTF8("Notify(%r, %r, %r)"))) {
         goto exit;
     }
 
@@ -225,7 +226,7 @@ notify_repr(NotifyObject *self)
     Py_INCREF(self->payload);
     PyTuple_SET_ITEM(args, 2, self->payload);
 
-    rv = PyString_Format(format, args);
+    rv = Text_Format(format, args);
 
 exit:
     Py_XDECREF(args);

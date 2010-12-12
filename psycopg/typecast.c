@@ -429,24 +429,22 @@ typecast_del(void *self)
 static PyObject *
 typecast_call(PyObject *obj, PyObject *args, PyObject *kwargs)
 {
-    PyObject *string, *cursor;
+    char *string;
+    Py_ssize_t length;
+    PyObject *cursor;
 
-    if (!PyArg_ParseTuple(args, "OO", &string, &cursor)) {
+    if (!PyArg_ParseTuple(args, "z#O", &string, &length, &cursor)) {
         return NULL;
     }
 
     // If the string is not a string but a None value we're being called
-    // from a Python-defined caster. There is no need to convert, just
-    // return it.
-
-    if (string == Py_None) {
-        Py_INCREF(string);
-        return string;
+    // from a Python-defined caster.
+    if (!string) {
+        Py_INCREF(Py_None);
+        return Py_None;
     }
 
-    return typecast_cast(obj,
-                         PyString_AsString(string), PyString_Size(string),
-                         cursor);
+    return typecast_cast(obj, string, length, cursor);
 }
 
 PyTypeObject typecastType = {
@@ -560,7 +558,7 @@ typecast_from_python(PyObject *self, PyObject *args, PyObject *keywds)
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds, "O!|O!OO", kwlist,
                                      &PyTuple_Type, &v,
-                                     &PyString_Type, &name,
+                                     &Text_Type, &name,
                                      &cast, &base)) {
         return NULL;
     }
@@ -585,7 +583,7 @@ typecast_from_c(typecastObject_initlist *type, PyObject *dict)
         }
     }
 
-    name = PyString_FromString(type->name);
+    name = Text_FromUTF8(type->name);
     if (!name) goto end;
 
     while (type->values[len] != 0) len++;
