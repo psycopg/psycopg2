@@ -452,8 +452,7 @@ typecast_call(PyObject *obj, PyObject *args, PyObject *kwargs)
 }
 
 PyTypeObject typecastType = {
-    PyObject_HEAD_INIT(NULL)
-    0,
+    PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.type",
     sizeof(typecastObject),
     0,

@@ -304,8 +304,7 @@ static struct PyMethodDef xid_methods[] = {
 };
 
 PyTypeObject XidType = {
-    PyObject_HEAD_INIT(NULL)
-    0,
+    PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2.extensions.Xid",
     sizeof(XidObject),
     0,

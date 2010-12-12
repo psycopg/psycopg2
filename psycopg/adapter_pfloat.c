@@ -169,8 +169,7 @@ pfloat_repr(pfloatObject *self)
 "Float(str) -> new Float adapter object"
 
 PyTypeObject pfloatType = {
-    PyObject_HEAD_INIT(NULL)
-    0,
+    PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.Float",
     sizeof(pfloatObject),
     0,

@@ -377,8 +377,7 @@ lobject_repr(lobjectObject *self)
 "A database large object."
 
 PyTypeObject lobjectType = {
-    PyObject_HEAD_INIT(NULL)
-    0,
+    PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.lobject",
     sizeof(lobjectObject),
     0,

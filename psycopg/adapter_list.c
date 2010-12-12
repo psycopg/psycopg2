@@ -239,8 +239,7 @@ list_repr(listObject *self)
 "List(list) -> new list wrapper object"
 
 PyTypeObject listType = {
-    PyObject_HEAD_INIT(NULL)
-    0,
+    PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.List",
     sizeof(listObject),
     0,

@@ -165,8 +165,7 @@ asis_repr(asisObject *self)
 "AsIs(str) -> new AsIs adapter object"
 
 PyTypeObject asisType = {
-    PyObject_HEAD_INIT(NULL)
-    0,
+    PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.AsIs",
     sizeof(asisObject),
     0,

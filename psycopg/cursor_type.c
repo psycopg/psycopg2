@@ -1719,8 +1719,7 @@ cursor_traverse(cursorObject *self, visitproc visit, void *arg)
 "A database cursor."
 
 PyTypeObject cursorType = {
-    PyObject_HEAD_INIT(NULL)
-    0,
+    PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.cursor",
     sizeof(cursorObject),
     0,

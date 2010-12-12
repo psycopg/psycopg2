@@ -199,8 +199,7 @@ pdecimal_repr(pdecimalObject *self)
 "Decimal(str) -> new Decimal adapter object"
 
 PyTypeObject pdecimalType = {
-    PyObject_HEAD_INIT(NULL)
-    0,
+    PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.Decimal",
     sizeof(pdecimalObject),
     0,

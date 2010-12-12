@@ -233,8 +233,7 @@ mxdatetime_repr(mxdatetimeObject *self)
 "MxDateTime(mx, type) -> new mx.DateTime wrapper object"
 
 PyTypeObject mxdatetimeType = {
-    PyObject_HEAD_INIT(NULL)
-    0,
+    PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.MxDateTime",
     sizeof(mxdatetimeObject),
     0,

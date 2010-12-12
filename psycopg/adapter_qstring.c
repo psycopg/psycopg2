@@ -291,8 +291,7 @@ qstring_repr(qstringObject *self)
 "QuotedString(str, enc) -> new quoted object with 'enc' encoding"
 
 PyTypeObject qstringType = {
-    PyObject_HEAD_INIT(NULL)
-    0,
+    PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.QuotedString",
     sizeof(qstringObject),
     0,

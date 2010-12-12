@@ -177,8 +177,7 @@ pboolean_repr(pbooleanObject *self)
 "Boolean(str) -> new Boolean adapter object"
 
 PyTypeObject pbooleanType = {
-    PyObject_HEAD_INIT(NULL)
-    0,
+    PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.Boolean",
     sizeof(pbooleanObject),
     0,

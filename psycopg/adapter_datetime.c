@@ -225,8 +225,7 @@ pydatetime_repr(pydatetimeObject *self)
 "datetime(datetime, type) -> new datetime wrapper object"
 
 PyTypeObject pydatetimeType = {
-    PyObject_HEAD_INIT(NULL)
-    0,
+    PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.datetime",
     sizeof(pydatetimeObject),
     0,

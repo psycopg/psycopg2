@@ -153,8 +153,7 @@ isqlquote_del(PyObject* self)
 "returning the SQL representation of the object.\n\n"
 
 PyTypeObject isqlquoteType = {
-    PyObject_HEAD_INIT(NULL)
-    0,
+    PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.ISQLQuote",
     sizeof(isqlquoteObject),
     0,

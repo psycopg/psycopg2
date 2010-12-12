@@ -249,8 +249,7 @@ binary_repr(binaryObject *self)
 "Binary(buffer) -> new binary object"
 
 PyTypeObject binaryType = {
-    PyObject_HEAD_INIT(NULL)
-    0,
+    PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.Binary",
     sizeof(binaryObject),
     0,

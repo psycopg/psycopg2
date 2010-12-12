@@ -278,8 +278,7 @@ static PySequenceMethods notify_sequence = {
 
 
 PyTypeObject NotifyType = {
-    PyObject_HEAD_INIT(NULL)
-    0,
+    PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2.extensions.Notify",
     sizeof(NotifyObject),
     0,

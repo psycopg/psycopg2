@@ -978,8 +978,7 @@ connection_traverse(connectionObject *self, visitproc visit, void *arg)
 "    ProgrammingError, IntegrityError, DataError, NotSupportedError"
 
 PyTypeObject connectionType = {
-    PyObject_HEAD_INIT(NULL)
-    0,
+    PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.connection",
     sizeof(connectionObject),
     0,
