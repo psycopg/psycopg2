@@ -149,8 +149,8 @@ binary_conform(binaryObject *self, PyObject *args)
 /* object member list */
 
 static struct PyMemberDef binaryObject_members[] = {
-    {"adapted", T_OBJECT, offsetof(binaryObject, wrapped), RO},
-    {"buffer", T_OBJECT, offsetof(binaryObject, buffer), RO},
+    {"adapted", T_OBJECT, offsetof(binaryObject, wrapped), READONLY},
+    {"buffer", T_OBJECT, offsetof(binaryObject, buffer), READONLY},
     {NULL}
 };
 

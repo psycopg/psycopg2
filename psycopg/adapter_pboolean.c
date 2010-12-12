@@ -83,7 +83,7 @@ pboolean_conform(pbooleanObject *self, PyObject *args)
 /* object member list */
 
 static struct PyMemberDef pbooleanObject_members[] = {
-    {"adapted", T_OBJECT, offsetof(pbooleanObject, wrapped), RO},
+    {"adapted", T_OBJECT, offsetof(pbooleanObject, wrapped), READONLY},
     {NULL}
 };
 

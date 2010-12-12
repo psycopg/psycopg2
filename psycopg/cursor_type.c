@@ -1540,29 +1540,29 @@ static struct PyMethodDef cursorObject_methods[] = {
 
 static struct PyMemberDef cursorObject_members[] = {
     /* DBAPI-2.0 basics */
-    {"rowcount", T_LONG, OFFSETOF(rowcount), RO,
+    {"rowcount", T_LONG, OFFSETOF(rowcount), READONLY,
         "Number of rows read from the backend in the last command."},
     {"arraysize", T_LONG, OFFSETOF(arraysize), 0,
         "Number of records `fetchmany()` must fetch if not explicitly " \
         "specified."},
-    {"description", T_OBJECT, OFFSETOF(description), RO,
+    {"description", T_OBJECT, OFFSETOF(description), READONLY,
         "Cursor description as defined in DBAPI-2.0."},
-    {"lastrowid", T_LONG, OFFSETOF(lastoid), RO,
+    {"lastrowid", T_LONG, OFFSETOF(lastoid), READONLY,
         "The ``oid`` of the last row inserted by the cursor."},
     /* DBAPI-2.0 extensions */
-    {"rownumber", T_LONG, OFFSETOF(row), RO,
+    {"rownumber", T_LONG, OFFSETOF(row), READONLY,
         "The current row position."},
-    {"connection", T_OBJECT, OFFSETOF(conn), RO,
+    {"connection", T_OBJECT, OFFSETOF(conn), READONLY,
         "The connection where the cursor comes from."},
 #ifdef PSYCOPG_EXTENSIONS
-    {"name", T_STRING, OFFSETOF(name), RO},
-    {"statusmessage", T_OBJECT, OFFSETOF(pgstatus), RO,
+    {"name", T_STRING, OFFSETOF(name), READONLY},
+    {"statusmessage", T_OBJECT, OFFSETOF(pgstatus), READONLY,
         "The return message of the last command."},
-    {"query", T_OBJECT, OFFSETOF(query), RO,
+    {"query", T_OBJECT, OFFSETOF(query), READONLY,
         "The last query text sent to the backend."},
     {"row_factory", T_OBJECT, OFFSETOF(tuple_factory), 0},
     {"tzinfo_factory", T_OBJECT, OFFSETOF(tzinfo_factory), 0},
-    {"typecaster", T_OBJECT, OFFSETOF(caster), RO},
+    {"typecaster", T_OBJECT, OFFSETOF(caster), READONLY},
     {"string_types", T_OBJECT, OFFSETOF(string_types), 0},
     {"binary_types", T_OBJECT, OFFSETOF(binary_types), 0},
 #endif

@@ -74,7 +74,7 @@ asis_conform(asisObject *self, PyObject *args)
 /* object member list */
 
 static struct PyMemberDef asisObject_members[] = {
-    {"adapted", T_OBJECT, offsetof(asisObject, wrapped), RO},
+    {"adapted", T_OBJECT, offsetof(asisObject, wrapped), READONLY},
     {NULL}
 };
 

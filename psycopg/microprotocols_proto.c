@@ -96,7 +96,7 @@ static struct PyMethodDef isqlquoteObject_methods[] = {
 
 static struct PyMemberDef isqlquoteObject_members[] = {
     /* DBAPI-2.0 extensions (exception objects) */
-    {"_wrapped", T_OBJECT, offsetof(isqlquoteObject, wrapped), RO},
+    {"_wrapped", T_OBJECT, offsetof(isqlquoteObject, wrapped), READONLY},
     {NULL}
 };
 

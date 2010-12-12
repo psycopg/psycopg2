@@ -133,8 +133,8 @@ pydatetime_conform(pydatetimeObject *self, PyObject *args)
 /* object member list */
 
 static struct PyMemberDef pydatetimeObject_members[] = {
-    {"adapted", T_OBJECT, offsetof(pydatetimeObject, wrapped), RO},
-    {"type", T_INT, offsetof(pydatetimeObject, type), RO},
+    {"adapted", T_OBJECT, offsetof(pydatetimeObject, wrapped), READONLY},
+    {"type", T_INT, offsetof(pydatetimeObject, type), READONLY},
     {NULL}
 };
 

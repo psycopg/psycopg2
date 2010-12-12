@@ -390,8 +390,8 @@ typecast_richcompare(PyObject *obj1, PyObject* obj2, int opid)
 }
 
 static struct PyMemberDef typecastObject_members[] = {
-    {"name", T_OBJECT, OFFSETOF(name), RO},
-    {"values", T_OBJECT, OFFSETOF(values), RO},
+    {"name", T_OBJECT, OFFSETOF(name), READONLY},
+    {"values", T_OBJECT, OFFSETOF(values), READONLY},
     {NULL}
 };
 

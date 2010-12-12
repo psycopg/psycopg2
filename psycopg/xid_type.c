@@ -68,12 +68,12 @@ static const char database_doc[] =
     "Database the recovered transaction belongs to.";
 
 static PyMemberDef xid_members[] = {
-    { "format_id", T_OBJECT, offsetof(XidObject, format_id), RO, (char *)format_id_doc },
-    { "gtrid", T_OBJECT, offsetof(XidObject, gtrid), RO, (char *)gtrid_doc },
-    { "bqual", T_OBJECT, offsetof(XidObject, bqual), RO, (char *)bqual_doc },
-    { "prepared", T_OBJECT, offsetof(XidObject, prepared), RO, (char *)prepared_doc },
-    { "owner", T_OBJECT, offsetof(XidObject, owner), RO, (char *)owner_doc },
-    { "database", T_OBJECT, offsetof(XidObject, database), RO, (char *)database_doc },
+    { "format_id", T_OBJECT, offsetof(XidObject, format_id), READONLY, (char *)format_id_doc },
+    { "gtrid", T_OBJECT, offsetof(XidObject, gtrid), READONLY, (char *)gtrid_doc },
+    { "bqual", T_OBJECT, offsetof(XidObject, bqual), READONLY, (char *)bqual_doc },
+    { "prepared", T_OBJECT, offsetof(XidObject, prepared), READONLY, (char *)prepared_doc },
+    { "owner", T_OBJECT, offsetof(XidObject, owner), READONLY, (char *)owner_doc },
+    { "database", T_OBJECT, offsetof(XidObject, database), READONLY, (char *)database_doc },
     { NULL }
 };
 

@@ -54,9 +54,9 @@ static const char payload_doc[] =
     "of the server this member is always the empty string.";
 
 static PyMemberDef notify_members[] = {
-    { "pid", T_OBJECT, offsetof(NotifyObject, pid), RO, (char *)pid_doc },
-    { "channel", T_OBJECT, offsetof(NotifyObject, channel), RO, (char *)channel_doc },
-    { "payload", T_OBJECT, offsetof(NotifyObject, payload), RO, (char *)payload_doc },
+    { "pid", T_OBJECT, offsetof(NotifyObject, pid), READONLY, (char *)pid_doc },
+    { "channel", T_OBJECT, offsetof(NotifyObject, channel), READONLY, (char *)channel_doc },
+    { "payload", T_OBJECT, offsetof(NotifyObject, payload), READONLY, (char *)payload_doc },
     { NULL }
 };
 

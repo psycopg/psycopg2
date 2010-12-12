@@ -181,9 +181,9 @@ qstring_conform(qstringObject *self, PyObject *args)
 /* object member list */
 
 static struct PyMemberDef qstringObject_members[] = {
-    {"adapted", T_OBJECT, offsetof(qstringObject, wrapped), RO},
-    {"buffer", T_OBJECT, offsetof(qstringObject, buffer), RO},
-    {"encoding", T_STRING, offsetof(qstringObject, encoding), RO},
+    {"adapted", T_OBJECT, offsetof(qstringObject, wrapped), READONLY},
+    {"buffer", T_OBJECT, offsetof(qstringObject, buffer), READONLY},
+    {"encoding", T_STRING, offsetof(qstringObject, encoding), READONLY},
     {NULL}
 };
 

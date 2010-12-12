@@ -136,7 +136,7 @@ list_conform(listObject *self, PyObject *args)
 /* object member list */
 
 static struct PyMemberDef listObject_members[] = {
-    {"adapted", T_OBJECT, offsetof(listObject, wrapped), RO},
+    {"adapted", T_OBJECT, offsetof(listObject, wrapped), READONLY},
     {NULL}
 };
 

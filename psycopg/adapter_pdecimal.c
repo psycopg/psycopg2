@@ -105,7 +105,7 @@ pdecimal_conform(pdecimalObject *self, PyObject *args)
 /* object member list */
 
 static struct PyMemberDef pdecimalObject_members[] = {
-    {"adapted", T_OBJECT, offsetof(pdecimalObject, wrapped), RO},
+    {"adapted", T_OBJECT, offsetof(pdecimalObject, wrapped), READONLY},
     {NULL}
 };
 

@@ -75,7 +75,7 @@ pfloat_conform(pfloatObject *self, PyObject *args)
 /* object member list */
 
 static struct PyMemberDef pfloatObject_members[] = {
-    {"adapted", T_OBJECT, offsetof(pfloatObject, wrapped), RO},
+    {"adapted", T_OBJECT, offsetof(pfloatObject, wrapped), READONLY},
     {NULL}
 };
 

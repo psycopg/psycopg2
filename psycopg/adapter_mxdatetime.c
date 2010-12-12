@@ -137,8 +137,8 @@ mxdatetime_conform(mxdatetimeObject *self, PyObject *args)
 /* object member list */
 
 static struct PyMemberDef mxdatetimeObject_members[] = {
-    {"adapted", T_OBJECT, offsetof(mxdatetimeObject, wrapped), RO},
-    {"type", T_INT, offsetof(mxdatetimeObject, type), RO},
+    {"adapted", T_OBJECT, offsetof(mxdatetimeObject, wrapped), READONLY},
+    {"type", T_INT, offsetof(mxdatetimeObject, type), READONLY},
     {NULL}
 };
 
