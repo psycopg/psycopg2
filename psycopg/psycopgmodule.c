@@ -713,20 +713,20 @@ init_psycopg(void)
     Dprintf("initpsycopg: initializing psycopg %s", PSYCOPG_VERSION);
 
     /* initialize all the new types and then the module */
-    connectionType.ob_type = &PyType_Type;
-    cursorType.ob_type     = &PyType_Type;
-    typecastType.ob_type   = &PyType_Type;
-    qstringType.ob_type    = &PyType_Type;
-    binaryType.ob_type     = &PyType_Type;
-    isqlquoteType.ob_type  = &PyType_Type;
-    pbooleanType.ob_type   = &PyType_Type;
-    pfloatType.ob_type     = &PyType_Type;
-    pdecimalType.ob_type   = &PyType_Type;
-    asisType.ob_type       = &PyType_Type;
-    listType.ob_type       = &PyType_Type;
-    chunkType.ob_type      = &PyType_Type;
-    NotifyType.ob_type     = &PyType_Type;
-    XidType.ob_type        = &PyType_Type;
+    Py_TYPE(&connectionType) = &PyType_Type;
+    Py_TYPE(&cursorType)     = &PyType_Type;
+    Py_TYPE(&typecastType)   = &PyType_Type;
+    Py_TYPE(&qstringType)    = &PyType_Type;
+    Py_TYPE(&binaryType)     = &PyType_Type;
+    Py_TYPE(&isqlquoteType)  = &PyType_Type;
+    Py_TYPE(&pbooleanType)   = &PyType_Type;
+    Py_TYPE(&pfloatType)     = &PyType_Type;
+    Py_TYPE(&pdecimalType)   = &PyType_Type;
+    Py_TYPE(&asisType)       = &PyType_Type;
+    Py_TYPE(&listType)       = &PyType_Type;
+    Py_TYPE(&chunkType)      = &PyType_Type;
+    Py_TYPE(&NotifyType)     = &PyType_Type;
+    Py_TYPE(&XidType)        = &PyType_Type;
 
     if (PyType_Ready(&connectionType) == -1) return;
     if (PyType_Ready(&cursorType) == -1) return;
@@ -744,13 +744,13 @@ init_psycopg(void)
     if (PyType_Ready(&XidType) == -1) return;
 
 #ifdef PSYCOPG_EXTENSIONS
-    lobjectType.ob_type    = &PyType_Type;
+    Py_TYPE(&lobjectType)    = &PyType_Type;
     if (PyType_Ready(&lobjectType) == -1) return;
 #endif
 
     /* import mx.DateTime module, if necessary */
 #ifdef HAVE_MXDATETIME
-    mxdatetimeType.ob_type = &PyType_Type;
+    Py_TYPE(&mxdatetimeType) = &PyType_Type;
     if (PyType_Ready(&mxdatetimeType) == -1) return;
     if (mxDateTime_ImportModuleAndAPI() != 0) {
         Dprintf("initpsycopg: why marc hide mx.DateTime again?!");
@@ -772,7 +772,7 @@ init_psycopg(void)
     PyDateTime_IMPORT;
     if (psyco_adapter_datetime_init()) { return; }
 
-    pydatetimeType.ob_type = &PyType_Type;
+    Py_TYPE(&pydatetimeType) = &PyType_Type;
     if (PyType_Ready(&pydatetimeType) == -1) return;
 
     /* import psycopg2.tz anyway (TODO: replace with C-level module?) */

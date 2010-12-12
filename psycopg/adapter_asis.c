@@ -94,7 +94,7 @@ asis_setup(asisObject *self, PyObject *obj)
 {
     Dprintf("asis_setup: init asis object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt
+        self, Py_REFCNT(self)
       );
 
     Py_INCREF(obj);
@@ -102,7 +102,7 @@ asis_setup(asisObject *self, PyObject *obj)
 
     Dprintf("asis_setup: good asis object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt
+        self, Py_REFCNT(self)
       );
     return 0;
 }
@@ -123,10 +123,10 @@ asis_dealloc(PyObject* obj)
 
     Dprintf("asis_dealloc: deleted asis object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        obj, obj->ob_refcnt
+        obj, Py_REFCNT(obj)
       );
 
-    obj->ob_type->tp_free(obj);
+    Py_TYPE(obj)->tp_free(obj);
 }
 
 static int

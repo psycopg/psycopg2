@@ -41,7 +41,7 @@ chunk_dealloc(chunkObject *self)
         self->base, self->len
       );
     PQfreemem(self->base);
-    self->ob_type->tp_free((PyObject *) self);
+    Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
 static PyObject *

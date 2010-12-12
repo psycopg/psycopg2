@@ -205,7 +205,7 @@ qstring_setup(qstringObject *self, PyObject *str, const char *enc)
 {
     Dprintf("qstring_setup: init qstring object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt
+        self, Py_REFCNT(self)
       );
 
     self->buffer = NULL;
@@ -219,7 +219,7 @@ qstring_setup(qstringObject *self, PyObject *str, const char *enc)
 
     Dprintf("qstring_setup: good qstring object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt
+        self, Py_REFCNT(self)
       );
     return 0;
 }
@@ -248,10 +248,10 @@ qstring_dealloc(PyObject* obj)
 
     Dprintf("qstring_dealloc: deleted qstring object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        obj, obj->ob_refcnt
+        obj, Py_REFCNT(obj)
       );
 
-    obj->ob_type->tp_free(obj);
+    Py_TYPE(obj)->tp_free(obj);
 }
 
 static int

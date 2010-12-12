@@ -118,7 +118,7 @@ isqlquote_dealloc(PyObject* obj)
 
     Py_XDECREF(self->wrapped);
 
-    obj->ob_type->tp_free(obj);
+    Py_TYPE(obj)->tp_free(obj);
 }
 
 static int

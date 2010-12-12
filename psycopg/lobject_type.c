@@ -315,7 +315,7 @@ lobject_setup(lobjectObject *self, connectionObject *conn,
         return -1;
 
    Dprintf("lobject_setup: good lobject object at %p, refcnt = "
-           FORMAT_CODE_PY_SSIZE_T, self, ((PyObject *)self)->ob_refcnt);
+           FORMAT_CODE_PY_SSIZE_T, self, Py_REFCNT(self));
    Dprintf("lobject_setup:    oid = %d, fd = %d", self->oid, self->fd);
    return 0;
 }
@@ -330,9 +330,9 @@ lobject_dealloc(PyObject* obj)
     Py_XDECREF((PyObject*)self->conn);
 
     Dprintf("lobject_dealloc: deleted lobject object at %p, refcnt = "
-            FORMAT_CODE_PY_SSIZE_T, obj, obj->ob_refcnt);
+            FORMAT_CODE_PY_SSIZE_T, obj, Py_REFCNT(obj));
 
-    obj->ob_type->tp_free(obj);
+    Py_TYPE(obj)->tp_free(obj);
 }
 
 static int

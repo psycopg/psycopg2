@@ -309,7 +309,7 @@ typecast_add(PyObject *obj, PyObject *dict, int binary)
 
     Dprintf("typecast_add: object at %p, values refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        obj, type->values->ob_refcnt
+        obj, Py_REFCNT(type->values)
       );
 
     if (dict == NULL)
@@ -407,7 +407,7 @@ typecast_dealloc(PyObject *obj)
     Py_CLEAR(self->pcast);
     Py_CLEAR(self->bcast);
 
-    obj->ob_type->tp_free(obj);
+    Py_TYPE(obj)->tp_free(obj);
 }
 
 static int
@@ -521,7 +521,7 @@ typecast_new(PyObject *name, PyObject *values, PyObject *cast, PyObject *base)
     if (obj == NULL) return NULL;
 
     Dprintf("typecast_new: new type at = %p, refcnt = " FORMAT_CODE_PY_SSIZE_T,
-      obj, obj->ob_refcnt);
+      obj, Py_REFCNT(obj));
 
     Py_INCREF(values);
     obj->values = values;

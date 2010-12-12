@@ -172,7 +172,7 @@ binary_setup(binaryObject *self, PyObject *str)
 {
     Dprintf("binary_setup: init binary object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt
+        self, Py_REFCNT(self)
       );
 
     self->buffer = NULL;
@@ -182,7 +182,7 @@ binary_setup(binaryObject *self, PyObject *str)
 
     Dprintf("binary_setup: good binary object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt);
+        self, Py_REFCNT(self));
     return 0;
 }
 
@@ -208,10 +208,10 @@ binary_dealloc(PyObject* obj)
 
     Dprintf("binary_dealloc: deleted binary object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        obj, obj->ob_refcnt
+        obj, Py_REFCNT(obj)
       );
 
-    obj->ob_type->tp_free(obj);
+    Py_TYPE(obj)->tp_free(obj);
 }
 
 static int

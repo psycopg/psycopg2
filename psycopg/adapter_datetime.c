@@ -154,7 +154,7 @@ pydatetime_setup(pydatetimeObject *self, PyObject *obj, int type)
 {
     Dprintf("pydatetime_setup: init datetime object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt);
+        self, Py_REFCNT(self));
 
     self->type = type;
     Py_INCREF(obj);
@@ -162,7 +162,7 @@ pydatetime_setup(pydatetimeObject *self, PyObject *obj, int type)
 
     Dprintf("pydatetime_setup: good pydatetime object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt);
+        self, Py_REFCNT(self));
     return 0;
 }
 
@@ -183,9 +183,9 @@ pydatetime_dealloc(PyObject* obj)
     Py_CLEAR(self->wrapped);
 
     Dprintf("mpydatetime_dealloc: deleted pydatetime object at %p, "
-            "refcnt = " FORMAT_CODE_PY_SSIZE_T, obj, obj->ob_refcnt);
+            "refcnt = " FORMAT_CODE_PY_SSIZE_T, obj, Py_REFCNT(obj));
 
-    obj->ob_type->tp_free(obj);
+    Py_TYPE(obj)->tp_free(obj);
 }
 
 static int

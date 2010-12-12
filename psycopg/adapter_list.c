@@ -158,7 +158,7 @@ list_setup(listObject *self, PyObject *obj, const char *enc)
 {
     Dprintf("list_setup: init list object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt
+        self, Py_REFCNT(self)
       );
 
     if (!PyList_Check(obj))
@@ -173,7 +173,7 @@ list_setup(listObject *self, PyObject *obj, const char *enc)
 
     Dprintf("list_setup: good list object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt
+        self, Py_REFCNT(self)
       );
     return 0;
 }
@@ -198,9 +198,9 @@ list_dealloc(PyObject* obj)
     if (self->encoding) free(self->encoding);
 
     Dprintf("list_dealloc: deleted list object at %p, "
-            "refcnt = " FORMAT_CODE_PY_SSIZE_T, obj, obj->ob_refcnt);
+            "refcnt = " FORMAT_CODE_PY_SSIZE_T, obj, Py_REFCNT(obj));
 
-    obj->ob_type->tp_free(obj);
+    Py_TYPE(obj)->tp_free(obj);
 }
 
 static int

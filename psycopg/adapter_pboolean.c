@@ -103,7 +103,7 @@ pboolean_setup(pbooleanObject *self, PyObject *obj)
 {
     Dprintf("pboolean_setup: init pboolean object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt
+        self, Py_REFCNT(self)
       );
 
     Py_INCREF(obj);
@@ -111,7 +111,7 @@ pboolean_setup(pbooleanObject *self, PyObject *obj)
 
     Dprintf("pboolean_setup: good pboolean object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt
+        self, Py_REFCNT(self)
       );
     return 0;
 }
@@ -134,10 +134,10 @@ pboolean_dealloc(PyObject* obj)
 
     Dprintf("pboolean_dealloc: deleted pboolean object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        obj, obj->ob_refcnt
+        obj, Py_REFCNT(obj)
       );
 
-    obj->ob_type->tp_free(obj);
+    Py_TYPE(obj)->tp_free(obj);
 }
 
 static int

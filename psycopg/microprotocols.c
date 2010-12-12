@@ -84,7 +84,7 @@ _get_superclass_adapter(PyObject *obj, PyObject *proto)
     PyObject *key, *adapter;
     Py_ssize_t i, ii;
 
-    type = (PyTypeObject *)Py_TYPE(obj);
+    type = Py_TYPE(obj);
     if (!((Py_TPFLAGS_HAVE_CLASS & type->tp_flags) && type->tp_mro)) {
         /* has no mro */
         return NULL;
@@ -138,7 +138,8 @@ microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
     if (obj == Py_None)
         return PyString_FromString("NULL");
 
-    Dprintf("microprotocols_adapt: trying to adapt %s", obj->ob_type->tp_name);
+    Dprintf("microprotocols_adapt: trying to adapt %s",
+        Py_TYPE(obj)->tp_name);
 
     /* look for an adapter in the registry */
     key = PyTuple_Pack(2, Py_TYPE(obj), proto);
@@ -194,7 +195,8 @@ microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
     }
 
     /* else set the right exception and return NULL */
-    PyOS_snprintf(buffer, 255, "can't adapt type '%s'", obj->ob_type->tp_name);
+    PyOS_snprintf(buffer, 255, "can't adapt type '%s'",
+        Py_TYPE(obj)->tp_name);
     psyco_set_error(ProgrammingError, NULL, buffer, NULL, NULL);
     return NULL;
 }
@@ -213,7 +215,7 @@ microprotocol_getquoted(PyObject *obj, connectionObject *conn)
     }
 
     Dprintf("microprotocol_getquoted: adapted to %s",
-            adapted->ob_type->tp_name);
+        Py_TYPE(adapted)->tp_name);
 
     /* if requested prepare the object passing it the connection */
     if (conn) {

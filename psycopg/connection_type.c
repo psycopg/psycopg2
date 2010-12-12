@@ -101,7 +101,7 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *keywds)
 
     Dprintf("psyco_conn_cursor: new cursor at %p: refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        obj, obj->ob_refcnt
+        obj, Py_REFCNT(obj)
       );
     return obj;
 }
@@ -578,7 +578,7 @@ psyco_conn_lobject(connectionObject *self, PyObject *args, PyObject *keywds)
     
     Dprintf("psyco_conn_lobject: new lobject at %p: refcnt = "
             FORMAT_CODE_PY_SSIZE_T,
-            obj, obj->ob_refcnt);
+            obj, Py_REFCNT(obj));
     return obj;
 }
 
@@ -846,7 +846,7 @@ connection_setup(connectionObject *self, const char *dsn, long int async)
 
     Dprintf("connection_setup: init connection object at %p, "
 	    "async %ld, refcnt = " FORMAT_CODE_PY_SSIZE_T,
-            self, async, ((PyObject *)self)->ob_refcnt
+            self, async, Py_REFCNT(self)
       );
 
     self->dsn = strdup(dsn);
@@ -875,7 +875,7 @@ connection_setup(connectionObject *self, const char *dsn, long int async)
     else {
         Dprintf("connection_setup: good connection object at %p, refcnt = "
             FORMAT_CODE_PY_SSIZE_T,
-            self, ((PyObject *)self)->ob_refcnt
+            self, Py_REFCNT(self)
           );
         res = 0;
     }
@@ -916,10 +916,10 @@ connection_dealloc(PyObject* obj)
 
     Dprintf("connection_dealloc: deleted connection object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        obj, obj->ob_refcnt
+        obj, Py_REFCNT(obj)
       );
 
-    obj->ob_type->tp_free(obj);
+    Py_TYPE(obj)->tp_free(obj);
 }
 
 static int

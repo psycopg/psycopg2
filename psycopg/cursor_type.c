@@ -130,7 +130,7 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
                 }
 
                 Dprintf("_mogrify: value refcnt: "
-                  FORMAT_CODE_PY_SSIZE_T " (+1)", value->ob_refcnt);
+                  FORMAT_CODE_PY_SSIZE_T " (+1)", Py_REFCNT(value));
 
                 if (n == NULL) {
                     n = PyDict_New();
@@ -183,7 +183,7 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
                 Py_DECREF(key); /* key has the original refcnt now */
                 Dprintf("_mogrify: after value refcnt: "
                     FORMAT_CODE_PY_SSIZE_T,
-                    value->ob_refcnt
+                    Py_REFCNT(value)
                   );
             }
             c = d;
@@ -594,7 +594,7 @@ _psyco_curs_mogrify(cursorObject *self,
 
         Dprintf("psyco_curs_mogrify: cvt->refcnt = " FORMAT_CODE_PY_SSIZE_T
             ", fquery->refcnt = " FORMAT_CODE_PY_SSIZE_T,
-            cvt->ob_refcnt, fquery->ob_refcnt);
+            Py_REFCNT(cvt), Py_REFCNT(fquery));
     }
     else {
         fquery = operation;
@@ -679,7 +679,7 @@ _psyco_curs_buildrow_fill(cursorObject *self, PyObject *res,
         if (val) {
             Dprintf("_psyco_curs_buildrow: val->refcnt = "
                 FORMAT_CODE_PY_SSIZE_T,
-                val->ob_refcnt
+                Py_REFCNT(val)
               );
             if (istuple) {
                 PyTuple_SET_ITEM(res, i, val);
@@ -1631,7 +1631,7 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
 
     Dprintf("cursor_setup: good cursor object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt
+        self, Py_REFCNT(self)
       );
     return 0;
 }
@@ -1659,9 +1659,9 @@ cursor_dealloc(PyObject* obj)
 
     Dprintf("cursor_dealloc: deleted cursor object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        obj, obj->ob_refcnt);
+        obj, Py_REFCNT(obj));
 
-    obj->ob_type->tp_free(obj);
+    Py_TYPE(obj)->tp_free(obj);
 }
 
 static int

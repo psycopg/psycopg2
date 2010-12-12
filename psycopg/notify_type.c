@@ -114,7 +114,7 @@ notify_dealloc(NotifyObject *self)
     Py_CLEAR(self->channel);
     Py_CLEAR(self->payload);
 
-    self->ob_type->tp_free((PyObject *)self);
+    Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
 static void

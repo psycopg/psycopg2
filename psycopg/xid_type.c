@@ -184,7 +184,7 @@ xid_dealloc(XidObject *self)
     Py_CLEAR(self->owner);
     Py_CLEAR(self->database);
 
-    self->ob_type->tp_free((PyObject *)self);
+    Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
 static void
