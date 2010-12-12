@@ -345,14 +345,37 @@ ext = [] ; data_files = []
 # sources
 
 sources = [
-    'psycopgmodule.c', 'pqpath.c',  'typecast.c',
+    'psycopgmodule.c',
+    'green.c', 'pqpath.c', 'utils.c',
+
+    'connection_int.c', 'connection_type.c',
+    'cursor_int.c', 'cursor_type.c',
+    'lobject_int.c', 'lobject_type.c',
+    'notify_type.c', 'xid_type.c',
+
+    'adapter_asis.c', 'adapter_binary.c', 'adapter_datetime.c',
+    'adapter_list.c', 'adapter_pboolean.c', 'adapter_pdecimal.c',
+    'adapter_pfloat.c', 'adapter_qstring.c',
     'microprotocols.c', 'microprotocols_proto.c',
-    'connection_type.c', 'connection_int.c', 'cursor_type.c', 'cursor_int.c',
-    'lobject_type.c', 'lobject_int.c', 'notify_type.c', 'xid_type.c',
-    'adapter_qstring.c', 'adapter_pboolean.c', 'adapter_binary.c',
-    'adapter_asis.c', 'adapter_list.c', 'adapter_datetime.c',
-    'adapter_pfloat.c', 'adapter_pdecimal.c',
-    'green.c', 'utils.c']
+    'typecast.c',
+]
+
+depends = [
+    # headers
+    'config.h', 'pgtypes.h', 'psycopg.h', 'python.h',
+    'connection.h', 'cursor.h', 'green.h', 'lobject.h',
+    'notify.h', 'pqpath.h', 'xid.h',
+
+    'adapter_asis.h', 'adapter_binary.h', 'adapter_datetime.h',
+    'adapter_list.h', 'adapter_pboolean.h', 'adapter_pdecimal.h',
+    'adapter_pfloat.h', 'adapter_qstring.h',
+    'microprotocols.h', 'microprotocols_proto.h',
+    'typecast.h', 'typecast_binary.h',
+
+    # included sources
+    'typecast_array.c', 'typecast_basic.c', 'typecast_binary.c',
+    'typecast_builtins.c', 'typecast_datetime.c',
+]
 
 parser = ConfigParser.ConfigParser()
 parser.read('setup.cfg')
@@ -371,6 +394,7 @@ if os.path.exists(mxincludedir):
     include_dirs.append(mxincludedir)
     define_macros.append(('HAVE_MXDATETIME','1'))
     sources.append('adapter_mxdatetime.c')
+    depends.extend(['adapter_mxdatetime.h', 'typecast_mxdatetime.c'])
     have_mxdatetime = True
     version_flags.append('mx')
 
@@ -418,10 +442,12 @@ else:
 # build the extension
 
 sources = map(lambda x: os.path.join('psycopg', x), sources)
+depends = map(lambda x: os.path.join('psycopg', x), depends)
 
 ext.append(Extension("psycopg2._psycopg", sources,
                      define_macros=define_macros,
                      include_dirs=include_dirs,
+                     depends=depends,
                      undef_macros=[]))
 setup(name="psycopg2",
       version=PSYCOPG_VERSION,
