@@ -26,6 +26,7 @@ and classes untill a better place in the distribution is found.
 # License for more details.
 
 import os
+import sys
 import time
 import codecs
 import warnings
@@ -47,7 +48,7 @@ class DictCursorBase(_cursor):
     """Base class for all dict-like cursors."""
 
     def __init__(self, *args, **kwargs):
-        if kwargs.has_key('row_factory'):
+        if 'row_factory' in kwargs:
             row_factory = kwargs['row_factory']
             del kwargs['row_factory']
         else:
@@ -140,20 +141,17 @@ class DictRow(list):
         self[:] = [None] * len(cursor.description)
 
     def __getitem__(self, x):
-        if type(x) != int:
+        if not isinstance(x, int):
             x = self._index[x]
         return list.__getitem__(self, x)
 
     def __setitem__(self, x, v):
-        if type(x) != int:
+        if not isinstance(x, int):
             x = self._index[x]
         list.__setitem__(self, x, v)
 
     def items(self):
-        res = []
-        for n, v in self._index.items():
-            res.append((n, list.__getitem__(self, v)))
-        return res
+        return list(self.iteritems())
 
     def keys(self):
         return self._index.keys()
@@ -162,7 +160,7 @@ class DictRow(list):
         return tuple(self[:])
 
     def has_key(self, x):
-        return self._index.has_key(x)
+        return x in self._index
 
     def get(self, x, default=None):
         try:
@@ -171,7 +169,7 @@ class DictRow(list):
             return default
 
     def iteritems(self):
-        for n, v in self._index.items():
+        for n, v in self._index.iteritems():
             yield n, list.__getitem__(self, v)
 
     def iterkeys(self):
@@ -181,10 +179,18 @@ class DictRow(list):
         return list.__iter__(self)
 
     def copy(self):
-        return dict(self.items())
+        return dict(self.iteritems())
 
     def __contains__(self, x):
-        return self._index.__contains__(x)
+        return x in self._index
+
+    # grop the crusty Py2 methods
+    if sys.version_info[0] > 2:
+        items = iteritems; del iteritems
+        keys = iterkeys; del iterkeys
+        values = itervalues; del itervalues
+        del has_key
+
 
 class RealDictConnection(_connection):
     """A connection that uses `RealDictCursor` automatically."""
@@ -615,7 +621,10 @@ class HstoreAdapter(object):
     """, regex.VERBOSE)
 
     # backslash decoder
-    _bsdec = codecs.getdecoder("string_escape")
+    if sys.version_info[0] < 3:
+        _bsdec = codecs.getdecoder("string_escape")
+    else:
+        _bsdec = codecs.getdecoder("unicode_escape")
 
     def parse(self, s, cur, _decoder=_bsdec):
         """Parse an hstore representation in a Python string.

@@ -18,7 +18,7 @@ class CursorTests(unittest.TestCase):
         cur = conn.cursor()
         cur.execute("create temp table test_exc (data int);")
         def buggygen():
-            yield 1/0
+            yield 1//0
         self.assertRaises(ZeroDivisionError,
             cur.executemany, "insert into test_exc values (%s)", buggygen())
         cur.close()

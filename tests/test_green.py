@@ -63,7 +63,7 @@ class GreenTests(unittest.TestCase):
         curs.fetchone()
 
         # now try to do something that will fail in the callback
-        psycopg2.extensions.set_wait_callback(lambda conn: 1/0)
+        psycopg2.extensions.set_wait_callback(lambda conn: 1//0)
         self.assertRaises(ZeroDivisionError, curs.execute, "select 2")
 
         # check that the connection is left in an usable state

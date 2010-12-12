@@ -100,7 +100,7 @@ class AbstractConnectionPool(object):
         if self.closed: raise PoolError("connection pool is closed")
         if key is None: key = self._getkey()
 	
-        if self._used.has_key(key):
+        if key in self._used:
             return self._used[key]
 
         if self._pool:
