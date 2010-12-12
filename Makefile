@@ -82,7 +82,7 @@ ez_setup:
 	wget -O $(EZ_SETUP) http://peak.telecommunity.com/dist/ez_setup.py
 
 check:
-	PYTHONPATH=$(BUILD_DIR):.:$(PYTHONPATH) $(PYTHON) tests/__init__.py --verbose
+	PYTHONPATH=$(BUILD_DIR):$(BUILD_DIR)/tests:$(PYTHONPATH) $(PYTHON) $(BUILD_DIR)/psycopg2/tests/__init__.py --verbose
 
 testdb:
 	@echo "* Creating $(TESTDB)"
