@@ -28,8 +28,6 @@
 
 #include "psycopg/notify.h"
 
-#include <structmember.h>
-
 
 static const char notify_doc[] =
     "A notification received from the backend.\n\n"

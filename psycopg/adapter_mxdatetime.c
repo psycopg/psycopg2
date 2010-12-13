@@ -30,8 +30,6 @@
 #include "psycopg/adapter_mxdatetime.h"
 #include "psycopg/microprotocols_proto.h"
 
-#include <structmember.h>
-#include <stringobject.h>
 #include <mxDateTime.h>
 #include <string.h>
 

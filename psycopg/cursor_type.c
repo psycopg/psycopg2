@@ -34,7 +34,6 @@
 #include "psycopg/microprotocols.h"
 #include "psycopg/microprotocols_proto.h"
 
-#include <structmember.h>
 #include <string.h>
 
 #include <stdlib.h>

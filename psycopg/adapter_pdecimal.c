@@ -29,7 +29,6 @@
 #include "psycopg/adapter_pdecimal.h"
 #include "psycopg/microprotocols_proto.h"
 
-#include <structmember.h>
 #include <floatobject.h>
 #include <math.h>
 

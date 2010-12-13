@@ -29,8 +29,6 @@
 #include "psycopg/adapter_datetime.h"
 #include "psycopg/microprotocols_proto.h"
 
-#include <structmember.h>
-#include <stringobject.h>
 #include <datetime.h>
 
 #include <time.h>

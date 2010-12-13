@@ -27,6 +27,9 @@
 #define PSYCOPG_PYTHON_H 1
 
 #include <structmember.h>
+#if PY_MAJOR_VERSION < 3
+#include <stringobject.h>
+#endif
 
 #if PY_VERSION_HEX < 0x02040000
 #  error "psycopg requires Python >= 2.4"

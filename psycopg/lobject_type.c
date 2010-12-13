@@ -32,7 +32,6 @@
 #include "psycopg/microprotocols_proto.h"
 #include "psycopg/pqpath.h"
 
-#include <structmember.h>
 #include <string.h>
 
 

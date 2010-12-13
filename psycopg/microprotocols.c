@@ -31,8 +31,6 @@
 #include "psycopg/cursor.h"
 #include "psycopg/connection.h"
 
-#include <structmember.h>
-
 
 /** the adapters registry **/
 

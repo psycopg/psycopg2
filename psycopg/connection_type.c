@@ -33,9 +33,6 @@
 #include "psycopg/green.h"
 #include "psycopg/xid.h"
 
-#include <structmember.h>
-#include <stringobject.h>
-
 #include <string.h>
 #include <ctype.h>
 

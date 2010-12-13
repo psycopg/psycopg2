@@ -29,8 +29,6 @@
 
 #include "psycopg/xid.h"
 
-#include <structmember.h>
-
 
 static const char xid_doc[] =
     "A transaction identifier used for two-phase commit.\n\n"

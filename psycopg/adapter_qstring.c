@@ -30,8 +30,6 @@
 #include "psycopg/adapter_qstring.h"
 #include "psycopg/microprotocols_proto.h"
 
-#include <structmember.h>
-#include <stringobject.h>
 #include <string.h>
 
 

@@ -26,8 +26,6 @@
 #define PSYCOPG_MODULE
 #include "psycopg/psycopg.h"
 
-#include <structmember.h>
-
 #include "psycopg/typecast.h"
 #include "psycopg/cursor.h"
 
