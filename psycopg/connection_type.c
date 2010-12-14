@@ -849,19 +849,12 @@ connection_setup(connectionObject *self, const char *dsn, long int async)
     self->dsn = strdup(dsn);
     self->notice_list = PyList_New(0);
     self->notifies = PyList_New(0);
-    self->closed = 0;
     self->async = async;
     self->status = CONN_STATUS_SETUP;
-    self->critical = NULL;
-    self->async_cursor = NULL;
     self->async_status = ASYNC_DONE;
-    self->pgconn = NULL;
-    self->cancel = NULL;
-    self->mark = 0;
     self->string_types = PyDict_New();
     self->binary_types = PyDict_New();
-    self->notice_pending = NULL;
-    self->encoding = NULL;
+    /* other fields have been zeroed by tp_alloc */
 
     pthread_mutex_init(&(self->lock), NULL);
 

@@ -1,5 +1,7 @@
 2010-12-14  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
+	* psycopg/connection_type.c: No need to put connection fields to zero.
+
 	* lib/extensions.py: Improved mapping from PG to Py encodings.
 
 	* psycopg/psycopgmodule.c: Added a few missing encodings: EUC_CN,
