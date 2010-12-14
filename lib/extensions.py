@@ -128,4 +128,12 @@ class SQL_IN(object):
     __str__ = getquoted
 
 
+# Add the "cleaned" version of the encodings to the key.
+# When the encoding is set its name is cleaned up from - and _ and turned
+# uppercase, so an encoding not respecting these rules wouldn't be found in the
+# encodings keys and would raise an exception with the unicode typecaster
+for k, v in encodings.items():
+    k = k.replace('_', '').replace('-', '').upper()
+    encodings[k] = v
+
 __all__ = filter(lambda k: not k.startswith('_'), locals().keys())

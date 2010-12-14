@@ -111,6 +111,14 @@ class ConnectionTests(unittest.TestCase):
         self.assert_(time.time() - t0 < 3,
             "something broken in concurrency")
 
+    def test_encoding_name(self):
+        self.conn.set_client_encoding("EUC_JP")
+        # conn.encoding is 'EUCJP' now.
+        cur = self.conn.cursor()
+        psycopg2.extensions.register_type(psycopg2.extensions.UNICODE, cur)
+        cur.execute("select 'foo'::text;")
+        self.assertEqual(cur.fetchone()[0], u'foo')
+
 
 class IsolationLevelsTestCase(unittest.TestCase):
 
