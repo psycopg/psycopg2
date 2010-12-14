@@ -328,21 +328,25 @@ static encodingPair encodings[] = {
     {"ABC",          "cp1258"},
     {"ALT",          "cp866"},
     {"BIG5",         "big5"},
+    {"EUC_CN",       "euccn"},
+    {"EUC_JIS_2004", "euc_jis_2004"},
     {"EUC_JP",       "euc_jp"},
     {"EUC_KR",       "euc_kr"},
     {"GB18030",      "gb18030"},
     {"GBK",          "gbk"},
-    {"ISO88591",     "iso8859_1"},
-    {"ISO885913",    "iso8859_13"},
-    {"ISO885914",    "iso8859_14"},
-    {"ISO885915",    "iso8859_15"},
-    {"ISO88592",     "iso8859_2"},
-    {"ISO88593",     "iso8859_3"},
-    {"ISO88595",     "iso8859_5"},
-    {"ISO88596",     "iso8859_6"},
-    {"ISO88597",     "iso8859_7"},
-    {"ISO88598",     "iso8859_8"},
-    {"ISO88599",     "iso8859_9"},
+    {"ISO_8859_1",   "iso8859_1"},
+    {"ISO_8859_2",   "iso8859_2"},
+    {"ISO_8859_3",   "iso8859_3"},
+    {"ISO_8859_5",   "iso8859_5"},
+    {"ISO_8859_6",   "iso8859_6"},
+    {"ISO_8859_7",   "iso8859_7"},
+    {"ISO_8859_8",   "iso8859_8"},
+    {"ISO_8859_9",   "iso8859_9"},
+    {"ISO_8859_10",  "iso8859_10"},
+    {"ISO_8859_13",  "iso8859_13"},
+    {"ISO_8859_14",  "iso8859_14"},
+    {"ISO_8859_15",  "iso8859_15"},
+    {"ISO_8859_16",  "iso8859_16"},
     {"JOHAB",        "johab"},
     {"KOI8",         "koi8_r"},
     {"KOI8R",        "koi8_r"},
@@ -356,10 +360,15 @@ static encodingPair encodings[] = {
     {"LATIN7",       "iso8859_13"},
     {"LATIN8",       "iso8859_14"},
     {"LATIN9",       "iso8859_15"},
+    {"LATIN10",      "iso8859_16"},
     {"Mskanji",      "cp932"},
     {"ShiftJIS",     "cp932"},
+    {"SHIFT_JIS_2004", "shift_jis_2004"},
     {"SJIS",         "cp932"},
-    {"SQL_ASCII",    "ascii"},
+    {"SQL_ASCII",    "ascii"},  /* XXX this is wrong: SQL_ASCII means "no
+                                 *  encoding" we should fix the unicode
+                                 *  typecaster to return a str or bytes in Py3
+                                 */
     {"TCVN",         "cp1258"},
     {"TCVN5712",     "cp1258"},
     {"UHC",          "cp949"},
@@ -388,10 +397,7 @@ static encodingPair encodings[] = {
     {"Windows950",   "cp950"},
 
 /* those are missing from Python:                */
-/*    {"EUC_CN", "?"},                           */
 /*    {"EUC_TW", "?"},                           */
-/*    {"LATIN10", "?"},                          */
-/*    {"ISO885916", "?"},                        */
 /*    {"MULE_INTERNAL", "?"},                    */
     {NULL, NULL}
 };
