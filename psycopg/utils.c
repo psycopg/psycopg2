@@ -70,3 +70,25 @@ psycopg_escape_string(PyObject *obj, const char *from, Py_ssize_t len,
         
     return to;
 }
+
+/* Duplicate a string.
+ *
+ * Allocate a new buffer on the Python heap containing the new string.
+ * 'len' is optional: if 0 the length is calculated.
+ *
+ * Return NULL and set an exception in case of error.
+ */
+char *
+psycopg_strdup(const char *from, Py_ssize_t len)
+{
+    char *rv;
+
+    if (!len) { len = strlen(from); }
+    if (!(rv = PyMem_Malloc(len + 1))) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+    strcpy(rv, from);
+    return rv;
+}
+

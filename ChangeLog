@@ -1,3 +1,7 @@
+2010-12-15  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* psycopg/utils.c: Added psycopg_strdup function.
+
 2010-12-14  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* psycopg/connection_type.c: No need to put connection fields to zero.
