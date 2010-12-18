@@ -83,6 +83,7 @@ typedef struct {
     char *dsn;              /* data source name */
     char *critical;         /* critical error on this connection */
     char *encoding;         /* current backend encoding */
+    char *codec;            /* python codec name for encoding */
 
     long int closed;          /* 1 means connection has been closed;
                                  2 that something horrible happened */

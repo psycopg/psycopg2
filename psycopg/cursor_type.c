@@ -272,21 +272,11 @@ static PyObject *_psyco_curs_validate_sql_basic(
         Py_INCREF(sql);
     }
     else if (PyUnicode_Check(sql)) {
-        PyObject *enc = PyDict_GetItemString(psycoEncodings,
-                                             self->conn->encoding);
-        /* enc is a borrowed reference; we won't decref it */
-
-        if (enc) {
-            sql = PyUnicode_AsEncodedString(sql, PyString_AsString(enc), NULL);
-            /* if there was an error during the encoding from unicode to the
-               target encoding, we just let the exception propagate */
-            if (sql == NULL) { goto fail; }
-        } else {
-            PyErr_Format(InterfaceError,
-                         "can't encode unicode SQL statement to %s",
-                         self->conn->encoding);
-            goto fail;
-        }
+        char *enc = self->conn->codec;
+        sql = PyUnicode_AsEncodedString(sql, enc, NULL);
+        /* if there was an error during the encoding from unicode to the
+           target encoding, we just let the exception propagate */
+        if (sql == NULL) { goto fail; }
     }
     else {
         /* the  is not unicode or string, raise an error */

@@ -212,38 +212,89 @@ conn_get_standard_conforming_strings(PGconn *pgconn)
     return equote;
 }
 
-/* Return a string containing the client_encoding setting.
+/* Convert a PostgreSQL encoding to a Python codec.
  *
- * Return a new string allocated by malloc(): use free() to free it.
- * Return NULL in case of failure.
+ * Return a new copy of the codec name allocated on the Python heap,
+ * NULL with exception in case of error.
  */
 static char *
-conn_get_encoding(PGconn *pgconn)
+conn_encoding_to_codec(const char *enc)
 {
-    const char *tmp, *i;
-    char *encoding, *j;
+    char *tmp;
+    Py_ssize_t size;
+    PyObject *pyenc;
+    char *rv = NULL;
+
+    if (!(pyenc = PyDict_GetItemString(psycoEncodings, enc))) {
+        PyErr_Format(OperationalError,
+            "no Python codec for client encoding '%s'", enc);
+        goto exit;
+    }
+    if (-1 == PyString_AsStringAndSize(pyenc, &tmp, &size)) {
+        goto exit;
+    }
+
+    /* have our own copy of the python codec name */
+    rv = psycopg_strdup(tmp, size);
+
+exit:
+    /* pyenc is borrowed: no decref. */
+    return rv;
+}
+
+/* Read the client encoding from the connection.
+ *
+ * Store the encoding in the pgconn->encoding field and the name of the
+ * matching python codec in codec. The buffers are allocated on the Python
+ * heap.
+ *
+ * Return 0 on success, else nonzero.
+ */
+static int
+conn_read_encoding(connectionObject *self, PGconn *pgconn)
+{
+    char *enc = NULL, *codec = NULL, *j;
+    const char *tmp;
+    int rv = -1;
 
     tmp = PQparameterStatus(pgconn, "client_encoding");
     Dprintf("conn_connect: client encoding: %s", tmp ? tmp : "(none)");
     if (!tmp) {
         PyErr_SetString(OperationalError,
             "server didn't return client encoding");
-        return NULL;
+        goto exit;
     }
 
-    encoding = malloc(strlen(tmp)+1);
-    if (encoding == NULL) {
+    if (!(enc = PyMem_Malloc(strlen(tmp)+1))) {
         PyErr_NoMemory();
-        return NULL;
+        goto exit;
     }
 
-    /* return in uppercase */
-    i = tmp;
-    j = encoding;
-    while (*i) { *j++ = toupper(*i++); }
+    /* turn encoding in uppercase */
+    j = enc;
+    while (*tmp) { *j++ = toupper(*tmp++); }
     *j = '\0';
 
-    return encoding;
+    /* Look for this encoding in Python codecs. */
+    if (!(codec = conn_encoding_to_codec(enc))) {
+        goto exit;
+    }
+
+    /* Good, success: store the encoding/codec in the connection. */
+    PyMem_Free(self->encoding);
+    self->encoding = enc;
+    enc = NULL;
+
+    PyMem_Free(self->codec);
+    self->codec = codec;
+    codec = NULL;
+
+    rv = 0;
+
+exit:
+    PyMem_Free(enc);
+    PyMem_Free(codec);
+    return rv;
 }
 
 int
@@ -319,9 +370,8 @@ conn_setup(connectionObject *self, PGconn *pgconn)
         PyErr_SetString(InterfaceError, "only protocol 3 supported");
         return -1;
     }
-    /* conn_get_encoding returns a malloc'd string */
-    self->encoding = conn_get_encoding(pgconn);
-    if (self->encoding == NULL) {
+
+    if (conn_read_encoding(self, pgconn)) {
         return -1;
     }
 
@@ -651,9 +701,7 @@ _conn_poll_setup_async(connectionObject *self)
             PyErr_SetString(InterfaceError, "only protocol 3 supported");
             break;
         }
-        /* conn_get_encoding returns a malloc'd string */
-        self->encoding = conn_get_encoding(self->pgconn);
-        if (self->encoding == NULL) {
+        if (conn_read_encoding(self, self->pgconn)) {
             break;
         }
         self->cancel = conn_get_cancel(self->pgconn);
@@ -873,10 +921,14 @@ conn_set_client_encoding(connectionObject *self, const char *enc)
     char *error = NULL;
     char query[48];
     int res = 0;
+    char *codec;
 
     /* If the current encoding is equal to the requested one we don't
        issue any query to the backend */
     if (strcmp(self->encoding, enc) == 0) return 0;
+
+    /* We must know what python codec this encoding is. */
+    if (!(codec = conn_encoding_to_codec(enc))) { return -1; }
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
@@ -886,19 +938,29 @@ conn_set_client_encoding(connectionObject *self, const char *enc)
 
     /* abort the current transaction, to set the encoding ouside of
        transactions */
-    res = pq_abort_locked(self, &pgres, &error, &_save);
-
-    if (res == 0) {
-        res = pq_execute_command_locked(self, query, &pgres, &error, &_save);
-        if (res == 0) {
-            /* no error, we can proceeed and store the new encoding */
-            if (self->encoding) free(self->encoding);
-            self->encoding = strdup(enc);
-            Dprintf("conn_set_client_encoding: set encoding to %s",
-                    self->encoding);
-        }
+    if ((res = pq_abort_locked(self, &pgres, &error, &_save))) {
+        goto endlock;
     }
 
+    if ((res = pq_execute_command_locked(self, query, &pgres, &error, &_save))) {
+        goto endlock;
+    }
+
+    /* no error, we can proceeed and store the new encoding */
+    PyMem_Free(self->encoding);
+    if (!(self->encoding = psycopg_strdup(enc, 0))) {
+        res = 1;  /* don't call pq_complete_error below */
+        goto endlock;
+    }
+
+    /* Store the python codec too. */
+    PyMem_Free(self->codec);
+    self->codec = codec;
+
+    Dprintf("conn_set_client_encoding: set encoding to %s (codec: %s)",
+            self->encoding, self->codec);
+
+endlock:
 
     pthread_mutex_unlock(&self->lock);
     Py_END_ALLOW_THREADS;

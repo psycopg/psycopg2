@@ -49,22 +49,9 @@ qstring_quote(qstringObject *self)
     Dprintf("qstring_quote: encoding to %s", self->encoding);
 
     if (PyUnicode_Check(self->wrapped) && self->encoding) {
-        PyObject *enc = PyDict_GetItemString(psycoEncodings, self->encoding);
-        /* note that enc is a borrowed reference */
-
-        if (enc) {
-            const char *s = PyString_AsString(enc);
-            Dprintf("qstring_quote: encoding unicode object to %s", s);
-            str = PyUnicode_AsEncodedString(self->wrapped, s, NULL);
-            Dprintf("qstring_quote: got encoded object at %p", str);
-            if (str == NULL) return NULL;
-        }
-        else {
-            /* can't find the right encoder, raise exception */
-            PyErr_Format(InterfaceError,
-                         "can't encode unicode string to %s", self->encoding);
-            return NULL;
-        }
+        str = PyUnicode_AsEncodedString(self->wrapped, self->encoding, NULL);
+        Dprintf("qstring_quote: got encoded object at %p", str);
+        if (str == NULL) return NULL;
     }
 
     /* if the wrapped object is a simple string, we don't know how to
@@ -144,8 +131,8 @@ qstring_prepare(qstringObject *self, PyObject *args)
        we don't need the encoding if that's not the case */
     if (PyUnicode_Check(self->wrapped)) {
         if (self->encoding) free(self->encoding);
-        self->encoding = strdup(conn->encoding);
-        Dprintf("qstring_prepare: set encoding to %s", conn->encoding);
+        self->encoding = strdup(conn->codec);
+        Dprintf("qstring_prepare: set encoding to %s", conn->codec);
     }
 
     Py_CLEAR(self->conn);

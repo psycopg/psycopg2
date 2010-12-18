@@ -425,35 +425,38 @@ psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
 static PyObject *
 psyco_conn_set_client_encoding(connectionObject *self, PyObject *args)
 {
-    const char *enc = NULL;
-    char *buffer;
-    size_t i, j;
+    const char *enc;
+    char *buffer, *dest;
+    PyObject *rv = NULL;
+    Py_ssize_t len;
 
     EXC_IF_CONN_CLOSED(self);
     EXC_IF_CONN_ASYNC(self, set_client_encoding);
     EXC_IF_TPC_PREPARED(self, set_client_encoding);
 
-    if (!PyArg_ParseTuple(args, "s", &enc)) return NULL;
+    if (!PyArg_ParseTuple(args, "s#", &enc, &len)) return NULL;
 
     /* convert to upper case and remove '-' and '_' from string */
-    buffer = PyMem_Malloc(strlen(enc)+1);
-    for (i=j=0 ; i < strlen(enc) ; i++) {
-        if (enc[i] == '_' || enc[i] == '-')
-            continue;
-        else
-            buffer[j++] = toupper(enc[i]);
+    if (!(dest = buffer = PyMem_Malloc(len+1))) {
+        return PyErr_NoMemory();
     }
-    buffer[j] = '\0';
+
+    while (*enc) {
+        if (*enc == '_' || *enc == '-') {
+            ++enc;
+        }
+        else {
+            *dest++ = toupper(*enc++);
+        }
+    }
+    *dest = '\0';
 
     if (conn_set_client_encoding(self, buffer) == 0) {
-        PyMem_Free(buffer);
         Py_INCREF(Py_None);
-        return Py_None;
+        rv = Py_None;
     }
-    else {
-        PyMem_Free(buffer);
-        return NULL;
-    }
+    PyMem_Free(buffer);
+    return rv;
 }
 
 /* get_transaction_status method - Get backend transaction status */
@@ -892,7 +895,8 @@ connection_dealloc(PyObject* obj)
     conn_notice_clean(self);
 
     if (self->dsn) free(self->dsn);
-    if (self->encoding) free(self->encoding);
+    PyMem_Free(self->encoding);
+    PyMem_Free(self->codec);
     if (self->critical) free(self->critical);
 
     Py_CLEAR(self->async_cursor);

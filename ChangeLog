@@ -1,3 +1,8 @@
+2010-12-18  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* connection.h: added codec attribute to avoid repeated codec name
+	lookups during unicode query/params manipulations.
+
 2010-12-15  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
 	* psycopg/utils.c: Added psycopg_strdup function.

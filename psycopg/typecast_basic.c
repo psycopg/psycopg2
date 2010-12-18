@@ -82,21 +82,12 @@ typecast_STRING_cast(const char *s, Py_ssize_t len, PyObject *curs)
 static PyObject *
 typecast_UNICODE_cast(const char *s, Py_ssize_t len, PyObject *curs)
 {
-    PyObject *enc;
+    char *enc;
 
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
 
-    enc = PyDict_GetItemString(psycoEncodings,
-                               ((cursorObject*)curs)->conn->encoding);
-    if (enc) {
-        return PyUnicode_Decode(s, len, PyString_AsString(enc), NULL);
-    }
-    else {
-       PyErr_Format(InterfaceError,
-                    "can't decode into unicode string from %s",
-                    ((cursorObject*)curs)->conn->encoding);
-       return NULL;
-    }
+    enc = ((cursorObject*)curs)->conn->codec;
+    return PyUnicode_Decode(s, len, enc, NULL);
 }
 
 /** BOOLEAN - cast boolean value into right python object **/
