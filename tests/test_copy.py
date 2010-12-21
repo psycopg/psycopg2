@@ -7,11 +7,11 @@ from itertools import cycle, izip
 
 import psycopg2
 import psycopg2.extensions
-import tests
+from testconfig import dsn, green
 
 def skip_if_green(f):
     def skip_if_green_(self):
-        if tests.green:
+        if green:
             return self.skipTest("copy in async mode currently not supported")
         else:
             return f(self)
@@ -42,7 +42,7 @@ class MinimalWrite(object):
 class CopyTests(unittest.TestCase):
 
     def setUp(self):
-        self.conn = psycopg2.connect(tests.dsn)
+        self.conn = psycopg2.connect(dsn)
         curs = self.conn.cursor()
         curs.execute('''
             CREATE TEMPORARY TABLE tcopy (

@@ -2,9 +2,9 @@
 
 import math
 import unittest
-import tests
 import psycopg2
 from psycopg2.tz import FixedOffsetTimezone
+from testconfig import dsn
 
 class CommonDatetimeTestsMixin:
 
@@ -75,7 +75,7 @@ class DatetimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
     """Tests for the datetime based date handling in psycopg2."""
 
     def setUp(self):
-        self.conn = psycopg2.connect(tests.dsn)
+        self.conn = psycopg2.connect(dsn)
         self.curs = self.conn.cursor()
         self.DATE = psycopg2._psycopg.PYDATE
         self.TIME = psycopg2._psycopg.PYTIME
@@ -293,7 +293,7 @@ class mxDateTimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
     """Tests for the mx.DateTime based date handling in psycopg2."""
 
     def setUp(self):
-        self.conn = psycopg2.connect(tests.dsn)
+        self.conn = psycopg2.connect(dsn)
         self.curs = self.conn.cursor()
         self.DATE = psycopg2._psycopg.MXDATE
         self.TIME = psycopg2._psycopg.MXTIME

@@ -7,12 +7,12 @@ from operator import attrgetter
 
 import psycopg2
 import psycopg2.extensions
-import tests
+from testconfig import dsn, dbname
 
 class ConnectionTests(unittest.TestCase):
 
     def setUp(self):
-        self.conn = psycopg2.connect(tests.dsn)
+        self.conn = psycopg2.connect(dsn)
 
     def tearDown(self):
         if not self.conn.closed:
@@ -95,7 +95,7 @@ class ConnectionTests(unittest.TestCase):
     @skip_if_no_pg_sleep('conn')
     def test_concurrent_execution(self):
         def slave():
-            cnn = psycopg2.connect(tests.dsn)
+            cnn = psycopg2.connect(dsn)
             cur = cnn.cursor()
             cur.execute("select pg_sleep(2)")
             cur.close()
@@ -141,7 +141,7 @@ class IsolationLevelsTestCase(unittest.TestCase):
                 conn.close()
 
     def connect(self):
-        conn = psycopg2.connect(tests.dsn)
+        conn = psycopg2.connect(dsn)
         self._conns.append(conn)
         return conn
 
@@ -333,7 +333,7 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
         try:
             cur.execute(
                 "select gid from pg_prepared_xacts where database = %s",
-                (tests.dbname,))
+                (dbname,))
         except psycopg2.ProgrammingError:
             cnn.rollback()
             cnn.close()
@@ -362,7 +362,7 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
         cur.execute("""
             select count(*) from pg_prepared_xacts
             where database = %s;""",
-            (tests.dbname,))
+            (dbname,))
         rv = cur.fetchone()[0]
         cnn.close()
         return rv
@@ -377,7 +377,7 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
         return rv
 
     def connect(self):
-        conn = psycopg2.connect(tests.dsn)
+        conn = psycopg2.connect(dsn)
         self._conns.append(conn)
         return conn
 
@@ -540,13 +540,13 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
             select gid, prepared, owner, database
             from pg_prepared_xacts
             where database = %s;""",
-            (tests.dbname,))
+            (dbname,))
         okvals = cur.fetchall()
         okvals.sort()
 
         cnn = self.connect()
         xids = cnn.tpc_recover()
-        xids = [ xid for xid in xids if xid.database == tests.dbname ]
+        xids = [ xid for xid in xids if xid.database == dbname ]
         xids.sort(key=attrgetter('gtrid'))
 
         # check the values returned
@@ -566,7 +566,7 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
         cnn = self.connect()
         cur = cnn.cursor()
         cur.execute("select gid from pg_prepared_xacts where database = %s;",
-            (tests.dbname,))
+            (dbname,))
         self.assertEqual('42_Z3RyaWQ=_YnF1YWw=', cur.fetchone()[0])
 
     def test_xid_roundtrip(self):
@@ -583,7 +583,7 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
 
             cnn = self.connect()
             xids = [ xid for xid in cnn.tpc_recover()
-                if xid.database == tests.dbname ]
+                if xid.database == dbname ]
             self.assertEqual(1, len(xids))
             xid = xids[0]
             self.assertEqual(xid.format_id, fid)
@@ -605,7 +605,7 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
 
             cnn = self.connect()
             xids = [ xid for xid in cnn.tpc_recover()
-                if xid.database == tests.dbname ]
+                if xid.database == dbname ]
             self.assertEqual(1, len(xids))
             xid = xids[0]
             self.assertEqual(xid.format_id, None)
@@ -651,7 +651,7 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
         cnn.tpc_prepare()
         cnn.reset()
         xid = [ xid for xid in cnn.tpc_recover()
-            if xid.database == tests.dbname ][0]
+            if xid.database == dbname ][0]
         self.assertEqual(10, xid.format_id)
         self.assertEqual('uni', xid.gtrid)
         self.assertEqual('code', xid.bqual)
@@ -667,7 +667,7 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
         cnn.reset()
 
         xid = [ xid for xid in cnn.tpc_recover()
-            if xid.database == tests.dbname ][0]
+            if xid.database == dbname ][0]
         self.assertEqual(None, xid.format_id)
         self.assertEqual('transaction-id', xid.gtrid)
         self.assertEqual(None, xid.bqual)

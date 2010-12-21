@@ -5,13 +5,12 @@ from testutils import unittest, skip_if_no_pg_sleep
 import psycopg2
 from psycopg2.extensions import (
     ISOLATION_LEVEL_SERIALIZABLE, STATUS_BEGIN, STATUS_READY)
-import tests
-
+from testconfig import dsn
 
 class TransactionTests(unittest.TestCase):
 
     def setUp(self):
-        self.conn = psycopg2.connect(tests.dsn)
+        self.conn = psycopg2.connect(dsn)
         self.conn.set_isolation_level(ISOLATION_LEVEL_SERIALIZABLE)
         curs = self.conn.cursor()
         curs.execute('''
@@ -75,7 +74,7 @@ class DeadlockSerializationTests(unittest.TestCase):
     """Test deadlock and serialization failure errors."""
 
     def connect(self):
-        conn = psycopg2.connect(tests.dsn)
+        conn = psycopg2.connect(dsn)
         conn.set_isolation_level(ISOLATION_LEVEL_SERIALIZABLE)
         return conn
 
@@ -208,7 +207,7 @@ class QueryCancellationTests(unittest.TestCase):
     """Tests for query cancellation."""
 
     def setUp(self):
-        self.conn = psycopg2.connect(tests.dsn)
+        self.conn = psycopg2.connect(dsn)
         self.conn.set_isolation_level(ISOLATION_LEVEL_SERIALIZABLE)
 
     def tearDown(self):

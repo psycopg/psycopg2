@@ -17,15 +17,14 @@
 import psycopg2
 import psycopg2.extras
 from testutils import unittest
-
-import tests
+from testconfig import dsn
 
 
 class ExtrasDictCursorTests(unittest.TestCase):
     """Test if DictCursor extension class works."""
 
     def setUp(self):
-        self.conn = psycopg2.connect(tests.dsn)
+        self.conn = psycopg2.connect(dsn)
         curs = self.conn.cursor()
         curs.execute("CREATE TEMPORARY TABLE ExtrasDictCursorTests (foo text)")
         curs.execute("INSERT INTO ExtrasDictCursorTests VALUES ('bar')")
@@ -135,7 +134,7 @@ class NamedTupleCursorTest(unittest.TestCase):
             self.conn = None
             return
 
-        self.conn = psycopg2.connect(tests.dsn,
+        self.conn = psycopg2.connect(dsn,
             connection_factory=NamedTupleConnection)
         curs = self.conn.cursor()
         curs.execute("CREATE TEMPORARY TABLE nttest (i int, s text)")
@@ -207,7 +206,7 @@ class NamedTupleCursorTest(unittest.TestCase):
             try:
                 if self.conn is not None:
                     self.conn.close()
-                self.conn = psycopg2.connect(tests.dsn,
+                self.conn = psycopg2.connect(dsn,
                     connection_factory=NamedTupleConnection)
                 curs = self.conn.cursor()
                 curs.execute("select 1")

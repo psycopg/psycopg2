@@ -6,18 +6,14 @@ import time
 import unittest
 import gc
 
-import sys
-if sys.version_info < (3,):
-    import tests
-else:
-    import py3tests as tests
+from testconfig import dsn
 
 class StolenReferenceTestCase(unittest.TestCase):
     def test_stolen_reference_bug(self):
         def fish(val, cur):
             gc.collect()
             return 42
-        conn = psycopg2.connect(tests.dsn)
+        conn = psycopg2.connect(dsn)
         UUID = psycopg2.extensions.new_type((2950,), "UUID", fish)
         psycopg2.extensions.register_type(UUID, conn)
         curs = conn.cursor()

@@ -3,7 +3,7 @@ from testutils import unittest
 
 import psycopg2
 import psycopg2.extensions
-import tests
+from testconfig import dsn
 
 class QuotingTestCase(unittest.TestCase):
     r"""Checks the correct quoting of strings and binary objects.
@@ -24,7 +24,7 @@ class QuotingTestCase(unittest.TestCase):
     http://www.postgresql.org/docs/8.1/static/runtime-config-compatible.html
     """
     def setUp(self):
-        self.conn = psycopg2.connect(tests.dsn)
+        self.conn = psycopg2.connect(dsn)
 
     def tearDown(self):
         self.conn.close()

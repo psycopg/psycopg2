@@ -2,11 +2,11 @@
 import os
 import shutil
 import tempfile
-from testutils import unittest, decorate_all_tests
 
 import psycopg2
 import psycopg2.extensions
-import tests
+from testconfig import dsn, green
+from testutils import unittest, decorate_all_tests
 
 def skip_if_no_lo(f):
     def skip_if_no_lo_(self):
@@ -19,7 +19,7 @@ def skip_if_no_lo(f):
 
 def skip_if_green(f):
     def skip_if_green_(self):
-        if tests.green:
+        if green:
             return self.skipTest("libpq doesn't support LO in async mode")
         else:
             return f(self)
@@ -30,7 +30,7 @@ def skip_if_green(f):
 class LargeObjectMixin(object):
     # doesn't derive from TestCase to avoid repeating tests twice.
     def setUp(self):
-        self.conn = psycopg2.connect(tests.dsn)
+        self.conn = psycopg2.connect(dsn)
         self.lo_oid = None
         self.tmpdir = None
 

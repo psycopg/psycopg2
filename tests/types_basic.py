@@ -30,14 +30,14 @@ import sys
 from testutils import unittest
 
 import psycopg2
-import tests
+from testconfig import dsn
 
 
 class TypesBasicTests(unittest.TestCase):
     """Test that all type conversions are working."""
 
     def setUp(self):
-        self.conn = psycopg2.connect(tests.dsn)
+        self.conn = psycopg2.connect(dsn)
 
     def tearDown(self):
         self.conn.close()

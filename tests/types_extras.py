@@ -24,7 +24,7 @@ from testutils import unittest
 
 import psycopg2
 import psycopg2.extras
-import tests
+from testconfig import dsn
 
 
 def skip_if_no_uuid(f):
@@ -58,7 +58,7 @@ class TypesExtrasTests(unittest.TestCase):
     """Test that all type conversions are working."""
 
     def setUp(self):
-        self.conn = psycopg2.connect(tests.dsn)
+        self.conn = psycopg2.connect(dsn)
 
     def tearDown(self):
         self.conn.close()
@@ -145,7 +145,7 @@ def skip_if_no_hstore(f):
 
 class HstoreTestCase(unittest.TestCase):
     def setUp(self):
-        self.conn = psycopg2.connect(tests.dsn)
+        self.conn = psycopg2.connect(dsn)
 
     def tearDown(self):
         self.conn.close()
