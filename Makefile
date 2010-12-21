@@ -48,11 +48,11 @@ SDIST := dist/psycopg2-$(VERSION).tar.gz
 EASY_INSTALL = PYTHONPATH=$(ENV_LIB) $(ENV_BIN)/easy_install-$(PYTHON_VERSION) -d $(ENV_LIB) -s $(ENV_BIN)
 EZ_SETUP = $(ENV_BIN)/ez_setup.py
 
-.PHONY: env check runtests clean
+.PHONY: env check clean
 
 default: package
 
-all: package runtests sdist
+all: package sdist
 
 package: $(PLATLIB) $(PURELIB)
 
@@ -82,7 +82,7 @@ ez_setup:
 	wget -O $(EZ_SETUP) http://peak.telecommunity.com/dist/ez_setup.py
 
 check:
-	PYTHONPATH=$(BUILD_DIR):$(BUILD_DIR)/tests:$(PYTHONPATH) $(PYTHON) $(BUILD_DIR)/psycopg2/tests/__init__.py --verbose
+	PYTHONPATH=$(BUILD_DIR):$(PYTHONPATH) $(PYTHON) -c "from psycopg2 import tests; tests.unittest.main(defaultTest='tests.test_suite')" --verbose
 
 testdb:
 	@echo "* Creating $(TESTDB)"
