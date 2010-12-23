@@ -376,6 +376,9 @@ sources = [
     'typecast.c',
 ]
 
+if sys.version_info[0] >= 3:
+    sources.append('bytes_format.c')
+
 depends = [
     # headers
     'config.h', 'pgtypes.h', 'psycopg.h', 'python.h',
