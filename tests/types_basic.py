@@ -126,11 +126,12 @@ class TypesBasicTests(unittest.TestCase):
         self.failUnless(str(buf2) == s, "wrong binary quoting")
 
     def testArray(self):
+        s = self.execute("SELECT %s AS foo", ([],))
+        self.failUnlessEqual(s, [])
         s = self.execute("SELECT %s AS foo", ([[1,2],[3,4]],))
-        self.failUnless(s == [[1,2],[3,4]], "wrong array quoting " + str(s))
+        self.failUnlessEqual(s, [[1,2],[3,4]])
         s = self.execute("SELECT %s AS foo", (['one', 'two', 'three'],))
-        self.failUnless(s == ['one', 'two', 'three'],
-                        "wrong array quoting " + str(s))
+        self.failUnlessEqual(s, ['one', 'two', 'three'])
 
     def testTypeRoundtripBinary(self):
         o1 = buffer("".join(map(chr, range(256))))

@@ -45,7 +45,7 @@ list_quote(listObject *self)
 
     /* empty arrays are converted to NULLs (still searching for a way to
        insert an empty array in postgresql */
-    if (len == 0) return Text_FromUTF8("'{}'");
+    if (len == 0) return Bytes_FromString("'{}'::text[]");
 
     tmp = PyTuple_New(len);
 
