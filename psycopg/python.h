@@ -81,18 +81,12 @@
 #define Text_Format(f,a) PyString_Format(f,a)
 #define Text_FromUTF8(s) PyString_FromString(s)
 #define Text_FromUTF8AndSize(s,n) PyString_FromStringAndSize(s,n)
-/* f must contain exactly a %s placeholder */
-#define Text_FromFormatS(f,s) PyString_FromFormat(f, PyString_AsString(s))
-#define Text_S "%s"
 #else
 #define Text_Type PyUnicode_Type
 #define Text_Check(s) PyUnicode_Check(s)
 #define Text_Format(f,a) PyUnicode_Format(f,a)
 #define Text_FromUTF8(s) PyUnicode_FromString(s)
 #define Text_FromUTF8AndSize(s,n) PyUnicode_FromStringAndSize(s,n)
-/* f must contain exactly a %U placeholder */
-#define Text_FromFormatS(f,s) PyUnicode_FromFormat(f, s)
-#define Text_S "%U"
 #endif
 
 #if PY_MAJOR_VERSION > 2

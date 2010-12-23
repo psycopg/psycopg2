@@ -62,30 +62,37 @@ pydatetime_str(pydatetimeObject *self)
     if (self->type <= PSYCO_DATETIME_TIMESTAMP) {
         PyObject *tz;
 
-        /* Select the right PG type to cast into.
-         * fmt contains %s in Py2 and %U in Py3,
-         * So it can be used with the Text_FromFormatS macro */
+        /* Select the right PG type to cast into. */
         char *fmt = NULL;
         switch (self->type) {
         case PSYCO_DATETIME_TIME:
-            fmt = "'" Text_S "'::time";
+            fmt = "'%s'::time";
             break;
         case PSYCO_DATETIME_DATE:
-            fmt = "'" Text_S "'::date";
+            fmt = "'%s'::date";
             break;
         case PSYCO_DATETIME_TIMESTAMP:
             tz = PyObject_GetAttrString(self->wrapped, "tzinfo");
             if (!tz) { return NULL; }
-            fmt = (tz == Py_None)
-                ? "'" Text_S "'::timestamp"
-                : "'" Text_S "'::timestamptz";
+            fmt = (tz == Py_None) ? "'%s'::timestamp" : "'%s'::timestamptz";
             Py_DECREF(tz);
             break;
         }
 
         iso = PyObject_CallMethod(self->wrapped, "isoformat", NULL);
         if (iso) {
-            res = Text_FromFormatS(fmt, iso);
+#if PY_MAJOR_VERSION > 2
+            {
+                PyObject *biso;
+                if (!(biso = PyUnicode_AsEncodedString(iso, "ascii", NULL))) {
+                    Py_DECREF(iso);
+                    return NULL;
+                }
+                Py_DECREF(iso);
+                iso = biso;
+            }
+#endif
+            res = Bytes_FromFormat(fmt, Bytes_AsString(iso));
             Py_DECREF(iso);
         }
         return res;
@@ -103,8 +110,8 @@ pydatetime_str(pydatetimeObject *self)
         }
         buffer[6] = '\0';
 
-        return PyString_FromFormat("'%d days %d.%s seconds'::interval",
-                                   obj->days, obj->seconds, buffer);
+        return Bytes_FromFormat("'%d days %d.%s seconds'::interval",
+                                obj->days, obj->seconds, buffer);
     }
 }
 
