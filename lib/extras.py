@@ -141,12 +141,12 @@ class DictRow(list):
         self[:] = [None] * len(cursor.description)
 
     def __getitem__(self, x):
-        if not isinstance(x, int):
+        if not isinstance(x, (int, slice)):
             x = self._index[x]
         return list.__getitem__(self, x)
 
     def __setitem__(self, x, v):
-        if not isinstance(x, int):
+        if not isinstance(x, (int, slice)):
             x = self._index[x]
         list.__setitem__(self, x, v)
 
