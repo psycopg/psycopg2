@@ -235,20 +235,8 @@ conn_encoding_to_codec(const char *enc)
         goto exit;
     }
 
-    /* Convert the codec in a bytes string to extract the c string.
-     * At the end of the block we have pybenc with a new ref. */
-    if (PyUnicode_Check(pyenc)) {
-        if (!(pybenc = PyUnicode_AsEncodedString(pyenc, "ascii", NULL))) {
-            goto exit;
-        }
-    }
-    else if (Bytes_Check(pyenc)) {
-        Py_INCREF(pyenc);
-        pybenc = pyenc;
-    }
-    else {
-        PyErr_Format(PyExc_TypeError, "bad type for encoding: %s",
-            Py_TYPE(pyenc)->tp_name);
+    /* Convert the codec in a bytes string to extract the c string. */
+    if (!(pybenc = psycopg_ensure_bytes(pyenc))) {
         goto exit;
     }
 

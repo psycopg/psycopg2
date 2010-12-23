@@ -55,63 +55,77 @@ psyco_adapter_datetime_init(void)
 /* datetime_str, datetime_getquoted - return result of quoting */
 
 static PyObject *
+_pydatetime_string_date_time(pydatetimeObject *self)
+{
+    PyObject *rv = NULL;
+    PyObject *iso = NULL;
+    PyObject *biso = NULL;
+    PyObject *tz;
+
+    /* Select the right PG type to cast into. */
+    char *fmt = NULL;
+    switch (self->type) {
+    case PSYCO_DATETIME_TIME:
+        fmt = "'%s'::time";
+        break;
+    case PSYCO_DATETIME_DATE:
+        fmt = "'%s'::date";
+        break;
+    case PSYCO_DATETIME_TIMESTAMP:
+        tz = PyObject_GetAttrString(self->wrapped, "tzinfo");
+        if (!tz) { goto error; }
+        fmt = (tz == Py_None) ? "'%s'::timestamp" : "'%s'::timestamptz";
+        Py_DECREF(tz);
+        break;
+    }
+
+    if (!(iso = PyObject_CallMethod(self->wrapped, "isoformat", NULL))) {
+        goto error;
+    }
+
+    if (!(biso = psycopg_ensure_bytes(iso))) {
+        goto error;
+    }
+
+    rv = Bytes_FromFormat(fmt, Bytes_AsString(biso));
+
+    Py_DECREF(biso);
+    Py_DECREF(iso);
+    return rv;
+
+error:
+    Py_XDECREF(biso);
+    Py_XDECREF(iso);
+    return rv;
+}
+
+static PyObject *
+_pydatetime_string_delta(pydatetimeObject *self)
+{
+    PyDateTime_Delta *obj = (PyDateTime_Delta*)self->wrapped;
+
+    char buffer[8];
+    int i;
+    int a = obj->microseconds;
+
+    for (i=0; i < 6 ; i++) {
+        buffer[5-i] = '0' + (a % 10);
+        a /= 10;
+    }
+    buffer[6] = '\0';
+
+    return Bytes_FromFormat("'%d days %d.%s seconds'::interval",
+                            obj->days, obj->seconds, buffer);
+}
+
+static PyObject *
 pydatetime_str(pydatetimeObject *self)
 {
-    PyObject *res = NULL;
-    PyObject *iso;
     if (self->type <= PSYCO_DATETIME_TIMESTAMP) {
-        PyObject *tz;
-
-        /* Select the right PG type to cast into. */
-        char *fmt = NULL;
-        switch (self->type) {
-        case PSYCO_DATETIME_TIME:
-            fmt = "'%s'::time";
-            break;
-        case PSYCO_DATETIME_DATE:
-            fmt = "'%s'::date";
-            break;
-        case PSYCO_DATETIME_TIMESTAMP:
-            tz = PyObject_GetAttrString(self->wrapped, "tzinfo");
-            if (!tz) { return NULL; }
-            fmt = (tz == Py_None) ? "'%s'::timestamp" : "'%s'::timestamptz";
-            Py_DECREF(tz);
-            break;
-        }
-
-        iso = PyObject_CallMethod(self->wrapped, "isoformat", NULL);
-        if (iso) {
-#if PY_MAJOR_VERSION > 2
-            {
-                PyObject *biso;
-                if (!(biso = PyUnicode_AsEncodedString(iso, "ascii", NULL))) {
-                    Py_DECREF(iso);
-                    return NULL;
-                }
-                Py_DECREF(iso);
-                iso = biso;
-            }
-#endif
-            res = Bytes_FromFormat(fmt, Bytes_AsString(iso));
-            Py_DECREF(iso);
-        }
-        return res;
+        return _pydatetime_string_date_time(self);
     }
     else {
-        PyDateTime_Delta *obj = (PyDateTime_Delta*)self->wrapped;
-
-        char buffer[8];
-        int i;
-        int a = obj->microseconds;
-
-        for (i=0; i < 6 ; i++) {
-            buffer[5-i] = '0' + (a % 10);
-            a /= 10;
-        }
-        buffer[6] = '\0';
-
-        return Bytes_FromFormat("'%d days %d.%s seconds'::interval",
-                                obj->days, obj->seconds, buffer);
+        return _pydatetime_string_delta(self);
     }
 }
 
