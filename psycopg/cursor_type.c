@@ -314,7 +314,7 @@ _psyco_curs_merge_query_args(cursorObject *self,
        the curren exception (we will later restore it if the type or the
        strings do not match.) */
 
-    if (!(fquery = Text_Format(query, args))) {
+    if (!(fquery = Bytes_Format(query, args))) {
         PyObject *err, *arg, *trace;
         int pe = 0;
 
@@ -397,15 +397,9 @@ _psyco_curs_execute(cursorObject *self,
         }
 
         if (self->name != NULL) {
-            #if PY_MAJOR_VERSION < 3
-            self->query = PyString_FromFormat(
+            self->query = Bytes_FromFormat(
                 "DECLARE %s CURSOR WITHOUT HOLD FOR %s",
-                self->name, PyString_AS_STRING(fquery));
-            #else
-            self->query = PyUnicode_FromFormat(
-                "DECLARE %s CURSOR WITHOUT HOLD FOR %U",
-                self->name, fquery);
-            #endif
+                self->name, Bytes_AS_STRING(fquery));
             Py_DECREF(fquery);
         }
         else {
@@ -414,15 +408,9 @@ _psyco_curs_execute(cursorObject *self,
     }
     else {
         if (self->name != NULL) {
-            #if PY_MAJOR_VERSION < 3
-            self->query = PyString_FromFormat(
+            self->query = Bytes_FromFormat(
                 "DECLARE %s CURSOR WITHOUT HOLD FOR %s",
-                self->name, PyString_AS_STRING(operation));
-            #else
-            self->query = PyUnicode_FromFormat(
-                "DECLARE %s CURSOR WITHOUT HOLD FOR %U",
-                self->name, operation);
-            #endif
+                self->name, Bytes_AS_STRING(operation));
         }
         else {
             /* Transfer reference ownership of the str in operation to
