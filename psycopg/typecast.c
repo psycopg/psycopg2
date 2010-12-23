@@ -427,6 +427,24 @@ typecast_del(void *self)
 }
 
 static PyObject *
+typecast_repr(PyObject *self)
+{
+    PyObject *name = ((typecastObject *)self)->name;
+    PyObject *bname;
+    PyObject *rv;
+
+    if (!(bname = psycopg_ensure_bytes(name))) {
+        return NULL;
+    }
+
+    rv = PyString_FromFormat("<%s '%s' at %p>",
+        Py_TYPE(self)->tp_name, PyBytes_AS_STRING(name), self);
+
+    Py_DECREF(bname);
+    return rv;
+}
+
+static PyObject *
 typecast_call(PyObject *obj, PyObject *args, PyObject *kwargs)
 {
     char *string;
@@ -458,7 +476,7 @@ PyTypeObject typecastType = {
     0,          /*tp_getattr*/
     0,          /*tp_setattr*/
     typecast_cmp, /*tp_compare*/
-    0,          /*tp_repr*/
+    typecast_repr, /*tp_repr*/
     0,          /*tp_as_number*/
     0,          /*tp_as_sequence*/
     0,          /*tp_as_mapping*/
