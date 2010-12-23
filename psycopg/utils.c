@@ -92,3 +92,29 @@ psycopg_strdup(const char *from, Py_ssize_t len)
     return rv;
 }
 
+/* Ensure a Python object is a bytes string.
+ *
+ * Useful when a char * is required out of it.
+ *
+ * Return a new reference. NULL on error.
+ */
+PyObject *
+psycopg_ensure_bytes(PyObject *obj)
+{
+    PyObject *rv = NULL;
+
+    if (PyUnicode_CheckExact(obj)) {
+        rv = PyUnicode_AsUTF8String(obj);
+    }
+    else if (Bytes_CheckExact(obj)) {
+        Py_INCREF(obj);
+        rv = obj;
+    }
+    else {
+        PyErr_Format(PyExc_TypeError, "I'm not into ensuring %s as bytes",
+            obj ? Py_TYPE(obj)->tp_name : "NULL");
+    }
+
+    return rv;
+}
+

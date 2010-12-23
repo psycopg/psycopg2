@@ -106,6 +106,7 @@
 /* XXX BytesType -> Bytes_Type */
 #define BytesType PyString_Type
 #define Bytes_Check PyString_Check
+#define Bytes_CheckExact PyString_CheckExact
 #define Bytes_AS_STRING PyString_AS_STRING
 #define Bytes_GET_SIZE PyString_GET_SIZE
 #define Bytes_Size PyString_Size
@@ -120,6 +121,7 @@
 
 #define BytesType PyBytes_Type
 #define Bytes_Check PyBytes_Check
+#define Bytes_CheckExact PyBytes_CheckExact
 #define Bytes_AS_STRING PyBytes_AS_STRING
 #define Bytes_GET_SIZE PyBytes_GET_SIZE
 #define Bytes_Size PyBytes_Size
