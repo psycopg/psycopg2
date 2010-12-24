@@ -144,7 +144,7 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
                        optimization over the adapting code and can go away in
                        the future if somebody finds a None adapter usefull. */
                     if (value == Py_None) {
-                        t = Text_FromUTF8("NULL");
+                        t = Bytes_FromString("NULL");
                         PyDict_SetItem(n, key, t);
                         /* t is a new object, refcnt = 1, key is at 2 */
 
@@ -220,7 +220,7 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
             d = c+1;
 
             if (value == Py_None) {
-                PyTuple_SET_ITEM(n, index, Text_FromUTF8("NULL"));
+                PyTuple_SET_ITEM(n, index, Bytes_FromString("NULL"));
                 while (*d && !isalpha(*d)) d++;
                 if (*d) *d = 's';
                 Py_DECREF(value);
@@ -950,7 +950,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
     sql[sl-2] = ')';
     sql[sl-1] = '\0';
 
-    operation = Text_FromUTF8(sql);
+    operation = Bytes_FromString(sql);
     PyMem_Free((void*)sql);
 
     if (_psyco_curs_execute(self, operation, parameters, self->conn->async)) {

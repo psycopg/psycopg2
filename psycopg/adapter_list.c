@@ -53,7 +53,7 @@ list_quote(listObject *self)
         PyObject *quoted;
     PyObject *wrapped = PyList_GET_ITEM(self->wrapped, i);
     if (wrapped == Py_None)
-        quoted = Text_FromUTF8("NULL");
+        quoted = Bytes_FromString("NULL");
     else
         quoted = microprotocol_getquoted(wrapped,
                                    (connectionObject*)self->connection);
@@ -67,15 +67,11 @@ list_quote(listObject *self)
 
     /* now that we have a tuple of adapted objects we just need to join them
        and put "ARRAY[] around the result */
-    str = Text_FromUTF8(", ");
+    str = Bytes_FromString(", ");
     joined = PyObject_CallMethod(str, "join", "(O)", tmp);
     if (joined == NULL) goto error;
 
-#if PY_MAJOR_VERSION < 3
-    res = PyString_FromFormat("ARRAY[%s]", PyString_AsString(joined));
-#else
-    res = PyUnicode_FromFormat("ARRAY[%U]", joined);
-#endif
+    res = Bytes_FromFormat("ARRAY[%s]", Bytes_AsString(joined));
 
  error:
     Py_XDECREF(tmp);

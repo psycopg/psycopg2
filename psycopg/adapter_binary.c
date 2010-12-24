@@ -62,6 +62,7 @@ binary_quote(binaryObject *self)
 #if PY_MAJOR_VERSION < 3
         || PyBuffer_Check(self->wrapped)
 #else
+        || PyByteArray_Check(self->wrapped)
         || PyMemoryView_Check(self->wrapped)
 #endif
         ) {
@@ -78,11 +79,11 @@ binary_quote(binaryObject *self)
         }
 
         if (len > 0)
-            self->buffer = PyString_FromFormat(
+            self->buffer = Bytes_FromFormat(
                 (self->conn && ((connectionObject*)self->conn)->equote)
                     ? "E'%s'::bytea" : "'%s'::bytea" , to);
         else
-            self->buffer = Text_FromUTF8("''::bytea");
+            self->buffer = Bytes_FromString("''::bytea");
 
         PQfreemem(to);
     }
@@ -97,15 +98,21 @@ binary_quote(binaryObject *self)
 }
 
 /* binary_str, binary_getquoted - return result of quoting */
-
+/* XXX what is the point of this method? */
 static PyObject *
 binary_str(binaryObject *self)
 {
     if (self->buffer == NULL) {
-        binary_quote(self);
+        if (!(binary_quote(self))) {
+            return NULL;
+        }
     }
-    Py_XINCREF(self->buffer);
+#if PY_MAJOR_VERSION < 3
+    Py_INCREF(self->buffer);
     return self->buffer;
+#else
+    return PyUnicode_FromEncodedObject(self->buffer, "ascii", "replace");
+#endif
 }
 
 static PyObject *

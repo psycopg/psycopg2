@@ -203,7 +203,10 @@ microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
     return NULL;
 }
 
-/* microprotocol_getquoted - utility function that adapt and call getquoted */
+/* microprotocol_getquoted - utility function that adapt and call getquoted.
+ *
+ * Return a bytes string, NULL on error.
+ */
 
 PyObject *
 microprotocol_getquoted(PyObject *obj, connectionObject *conn)
@@ -240,6 +243,16 @@ microprotocol_getquoted(PyObject *obj, connectionObject *conn)
     /* call the getquoted method on adapted (that should exist because we
        adapted to the right protocol) */
     res = PyObject_CallMethod(adapted, "getquoted", NULL);
+
+    /* Convert to bytes. */
+    if (res && PyUnicode_CheckExact(res)) {
+        PyObject *b;
+        const char *codec;
+        codec = (conn && conn->codec) ? conn->codec : "utf8";
+        b = PyUnicode_AsEncodedString(res, codec, NULL);
+        Py_DECREF(res);
+        res = b;
+    }
 
 exit:
     Py_XDECREF(adapted);

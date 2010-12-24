@@ -95,9 +95,8 @@ qstring_quote(qstringObject *self)
         Py_DECREF(str);
         return NULL;
     }
-    
-    /* XXX need to decode in connection's encoding in 3.0 */
-    self->buffer = Text_FromUTF8AndSize(buffer, qlen);
+
+    self->buffer = Bytes_FromStringAndSize(buffer, qlen);
     PyMem_Free(buffer);
     Py_DECREF(str);
 
