@@ -68,6 +68,12 @@ class TypesBasicTests(unittest.TestCase):
             self.failUnless(abs(s - 19.10) < 0.001,
                         "wrong float quoting: " + str(s))
 
+    def testBoolean(self):
+        x = self.execute("SELECT %s as foo", (False,))
+        self.assert_(x is False)
+        x = self.execute("SELECT %s as foo", (True,))
+        self.assert_(x is True)
+
     def testDecimal(self):
         if sys.version_info[0:2] >= (2, 4):
             s = self.execute("SELECT %s AS foo", (decimal.Decimal("19.10"),))
