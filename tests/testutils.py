@@ -4,6 +4,8 @@
 
 # Use unittest2 if available. Otherwise mock a skip facility with warnings.
 
+import sys
+
 try:
     import unittest2
     unittest = unittest2
@@ -69,3 +71,24 @@ def skip_if_no_pg_sleep(name):
         return skip_if_no_pg_sleep__
 
     return skip_if_no_pg_sleep_
+
+def skip_on_python2(f):
+    """Skip a test on Python 3 and following."""
+    def skip_on_python2_(self):
+        if sys.version_info[0] < 3:
+            return self.skipTest("skipped because Python 2")
+        else:
+            return f(self)
+
+    return skip_on_python2_
+
+def skip_on_python3(f):
+    """Skip a test on Python 3 and following."""
+    def skip_on_python3_(self):
+        if sys.version_info[0] >= 3:
+            return self.skipTest("skipped because Python 3")
+        else:
+            return f(self)
+
+    return skip_on_python3_
+

@@ -27,6 +27,7 @@ try:
 except:
     pass
 import sys
+import testutils
 from testutils import unittest
 
 import psycopg2
@@ -62,13 +63,13 @@ class TypesBasicTests(unittest.TestCase):
         self.failUnless(s == 1971, "wrong integer quoting: " + str(s))
         s = self.execute("SELECT %s AS foo", (1971L,))
         self.failUnless(s == 1971L, "wrong integer quoting: " + str(s))
-        if sys.version_info[0] < 2 or sys.version_info[1] < 4:
+        if sys.version_info[0:2] < (2, 4):
             s = self.execute("SELECT %s AS foo", (19.10,))
             self.failUnless(abs(s - 19.10) < 0.001,
                         "wrong float quoting: " + str(s))
 
     def testDecimal(self):
-        if sys.version_info[0] >= 2 and sys.version_info[1] >= 4:
+        if sys.version_info[0:2] >= (2, 4):
             s = self.execute("SELECT %s AS foo", (decimal.Decimal("19.10"),))
             self.failUnless(s - decimal.Decimal("19.10") == 0,
                             "wrong decimal quoting: " + str(s))
@@ -101,29 +102,44 @@ class TypesBasicTests(unittest.TestCase):
             return self.skipTest("inf::float not available on the server")
         except ValueError:
             return self.skipTest("inf not available on this platform")
-
         s = self.execute("SELECT %s AS foo", (float("inf"),))
         self.failUnless(str(s) == "inf", "wrong float quoting: " + str(s))      
         self.failUnless(type(s) == float, "wrong float conversion: " + repr(s))
 
     def testBinary(self):
-        s = ''.join([chr(x) for x in range(256)])
-        b = psycopg2.Binary(s)
-        buf = self.execute("SELECT %s::bytea AS foo", (b,))
-        self.failUnless(str(buf) == s, "wrong binary quoting")
+        if sys.version_info[0] < 3:
+            s = ''.join([chr(x) for x in range(256)])
+            b = psycopg2.Binary(s)
+            buf = self.execute("SELECT %s::bytea AS foo", (b,))
+            self.assertEqual(s, str(buf))
+        else:
+            s = bytes(range(256))
+            b = psycopg2.Binary(s)
+            buf = self.execute("SELECT %s::bytea AS foo", (b,))
+            self.assertEqual(s, buf)
 
     def testBinaryEmptyString(self):
         # test to make sure an empty Binary is converted to an empty string
-        b = psycopg2.Binary('')
-        self.assertEqual(str(b), "''::bytea")
+        if sys.version_info[0] < 3:
+            b = psycopg2.Binary('')
+            self.assertEqual(str(b), "''::bytea")
+        else:
+            b = psycopg2.Binary(bytes([]))
+            self.assertEqual(str(b), "''::bytea")
 
     def testBinaryRoundTrip(self):
         # test to make sure buffers returned by psycopg2 are
         # understood by execute:
-        s = ''.join([chr(x) for x in range(256)])
-        buf = self.execute("SELECT %s::bytea AS foo", (psycopg2.Binary(s),))
-        buf2 = self.execute("SELECT %s::bytea AS foo", (buf,))
-        self.failUnless(str(buf2) == s, "wrong binary quoting")
+        if sys.version_info[0] < 3:
+            s = ''.join([chr(x) for x in range(256)])
+            buf = self.execute("SELECT %s::bytea AS foo", (psycopg2.Binary(s),))
+            buf2 = self.execute("SELECT %s::bytea AS foo", (buf,))
+            self.assertEqual(s, str(buf2))
+        else:
+            s = bytes(range(256))
+            buf = self.execute("SELECT %s::bytea AS foo", (psycopg2.Binary(s),))
+            buf2 = self.execute("SELECT %s::bytea AS foo", (buf,))
+            self.assertEqual(s, buf2)
 
     def testArray(self):
         s = self.execute("SELECT %s AS foo", ([],))
@@ -133,7 +149,8 @@ class TypesBasicTests(unittest.TestCase):
         s = self.execute("SELECT %s AS foo", (['one', 'two', 'three'],))
         self.failUnlessEqual(s, ['one', 'two', 'three'])
 
-    def testTypeRoundtripBinary(self):
+    @testutils.skip_on_python3
+    def testTypeRoundtripBuffer(self):
         o1 = buffer("".join(map(chr, range(256))))
         o2 = self.execute("select %s;", (o1,))
         self.assertEqual(type(o1), type(o2))
@@ -143,11 +160,52 @@ class TypesBasicTests(unittest.TestCase):
         o2 = self.execute("select %s;", (o1,))
         self.assertEqual(type(o1), type(o2))
 
-    def testTypeRoundtripBinaryArray(self):
+    @testutils.skip_on_python3
+    def testTypeRoundtripBufferArray(self):
         o1 = buffer("".join(map(chr, range(256))))
         o1 = [o1]
         o2 = self.execute("select %s;", (o1,))
         self.assertEqual(type(o1[0]), type(o2[0]))
+
+    @testutils.skip_on_python2
+    def testTypeRoundtripBytes(self):
+        o1 = bytes(range(256))
+        o2 = self.execute("select %s;", (o1,))
+        self.assertEqual(memoryview, type(o2))
+
+        # Test with an empty buffer
+        o1 = bytes([])
+        o2 = self.execute("select %s;", (o1,))
+        self.assertEqual(memoryview, type(o2))
+
+    @testutils.skip_on_python2
+    def testTypeRoundtripBytesArray(self):
+        o1 = bytes(range(256))
+        o1 = [o1]
+        o2 = self.execute("select %s;", (o1,))
+        self.assertEqual(memoryview, type(o2[0]))
+
+    @testutils.skip_on_python2
+    def testAdaptBytearray(self):
+        o1 = bytearray(range(256))
+        o2 = self.execute("select %s;", (o1,))
+        self.assertEqual(memoryview, type(o2))
+
+        # Test with an empty buffer
+        o1 = bytearray([])
+        o2 = self.execute("select %s;", (o1,))
+        self.assertEqual(memoryview, type(o2))
+
+    @testutils.skip_on_python2
+    def testAdaptMemoryview(self):
+        o1 = memoryview(bytes(range(256)))
+        o2 = self.execute("select %s;", (o1,))
+        self.assertEqual(memoryview, type(o2))
+
+        # Test with an empty buffer
+        o1 = memoryview(bytes([]))
+        o2 = self.execute("select %s;", (o1,))
+        self.assertEqual(memoryview, type(o2))
 
 
 class AdaptSubclassTest(unittest.TestCase):
@@ -169,6 +227,7 @@ class AdaptSubclassTest(unittest.TestCase):
         register_adapter(B, lambda b: AsIs("b"))
         self.assertEqual('b', adapt(C()).getquoted())
 
+    @testutils.skip_on_python3
     def test_no_mro_no_joy(self):
         from psycopg2.extensions import adapt, register_adapter, AsIs
 
@@ -177,6 +236,17 @@ class AdaptSubclassTest(unittest.TestCase):
 
         register_adapter(A, lambda a: AsIs("a"))
         self.assertRaises(psycopg2.ProgrammingError, adapt, B())
+
+    @testutils.skip_on_python2
+    def test_adapt_subtype_3(self):
+        from psycopg2.extensions import adapt, register_adapter, AsIs
+
+        class A: pass
+        class B(A): pass
+
+        register_adapter(A, lambda a: AsIs("a"))
+        self.assertEqual("a", adapt(B()).getquoted())
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
