@@ -118,3 +118,27 @@ psycopg_ensure_bytes(PyObject *obj)
     return rv;
 }
 
+/* Take a Python object and return text from it.
+ *
+ * On Py3 this means converting bytes to unicode. On Py2 bytes are fine.
+ *
+ * The function is ref neutral: steals a ref from obj and adds one to the
+ * return value.  It is safe to call it on NULL.
+ */
+PyObject *
+psycopg_ensure_text(PyObject *obj)
+{
+#if PY_MAJOR_VERSION < 3
+    return obj;
+#else
+    if (obj) {
+        /* bytes to unicode in Py3 */
+        PyObject *rv = PyUnicode_FromEncodedObject(obj, "utf8", "replace");
+        Py_DECREF(obj);
+        return rv;
+    }
+    else {
+        return NULL;
+    }
+#endif
+}
