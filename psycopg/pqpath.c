@@ -987,8 +987,7 @@ _pq_fetch_tuples(cursorObject *curs)
 
         /* 1/ fill the other fields */
         PyTuple_SET_ITEM(dtitem, 0,
-                         /* XXX guaranteed to be ASCII/UTF8? */
-                         Text_FromUTF8(PQfname(curs->pgres, i)));
+             conn_text_from_chars(curs->conn, PQfname(curs->pgres, i)));
         PyTuple_SET_ITEM(dtitem, 1, type);
 
         /* 2/ display size is the maximum size of this field result tuples. */
@@ -1220,7 +1219,7 @@ pq_fetch(cursorObject *curs)
 
     /* backend status message */
     Py_XDECREF(curs->pgstatus);
-    curs->pgstatus = Text_FromUTF8(PQcmdStatus(curs->pgres));
+    curs->pgstatus = conn_text_from_chars(curs->conn, PQcmdStatus(curs->pgres));
 
     switch(pgstatus) {
 

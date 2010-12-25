@@ -35,6 +35,23 @@
 #include <string.h>
 
 
+/* Return a new "string" from a char* from the database.
+ *
+ * On Py2 just get a string, on Py3 decode it in the connection codec.
+ *
+ * Use a fallback if the connection is NULL.
+ */
+PyObject *
+conn_text_from_chars(connectionObject *self, const char *str)
+{
+#if PY_MAJOR_VERSION < 3
+        return PyString_FromString(str);
+#else
+        const char *codec = self ? self->codec : "ascii";
+        return PyUnicode_Decode(str, strlen(str), codec, "replace");
+#endif
+}
+
 /* conn_notice_callback - process notices */
 
 static void
@@ -76,9 +93,7 @@ conn_notice_process(connectionObject *self)
 
     while (notice != NULL) {
         PyObject *msg;
-        /* XXX possible other encode I think */
-        msg = Text_FromUTF8(notice->message);
-
+        msg = conn_text_from_chars(self, notice->message);
         Dprintf("conn_notice_process: %s", notice->message);
 
         /* Respect the order in which notices were produced,
@@ -146,9 +161,8 @@ conn_notifies_process(connectionObject *self)
                 (int) pgn->be_pid, pgn->relname);
 
         if (!(pid = PyInt_FromLong((long)pgn->be_pid))) { goto error; }
-        /* XXX in the connection encoding? */
-        if (!(channel = Text_FromUTF8(pgn->relname))) { goto error; }
-        if (!(payload = Text_FromUTF8(pgn->extra))) { goto error; }
+        if (!(channel = conn_text_from_chars(self, pgn->relname))) { goto error; }
+        if (!(payload = conn_text_from_chars(self, pgn->extra))) { goto error; }
 
         if (!(notify = PyObject_CallFunctionObjArgs((PyObject *)&NotifyType,
                 pid, channel, payload, NULL))) {

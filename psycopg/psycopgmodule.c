@@ -582,26 +582,26 @@ psyco_set_error(PyObject *exc, PyObject *curs, const char *msg,
     PyObject *err = PyObject_CallFunction(exc, "s", msg);
 
     if (err) {
+        connectionObject *conn = NULL;
+        if (curs) {
+            PyObject_SetAttrString(err, "cursor", curs);
+            conn = ((cursorObject *)curs)->conn;
+        }
+
         if (pgerror) {
-            /* XXX is this always ASCII? If not, it needs
-               to be decoded properly for Python 3. */
-            t = Text_FromUTF8(pgerror);
+            t = conn_text_from_chars(conn, pgerror);
             PyObject_SetAttrString(err, "pgerror", t);
             Py_DECREF(t);
         }
 
         if (pgcode) {
-            /* XXX likewise */
-            t = Text_FromUTF8(pgcode);
+            t = conn_text_from_chars(conn, pgcode);
             PyObject_SetAttrString(err, "pgcode", t);
             Py_DECREF(t);
         }
 
-        if (curs)
-            PyObject_SetAttrString(err, "cursor", curs);
-
         PyErr_SetObject(exc, err);
-    Py_DECREF(err);
+        Py_DECREF(err);
     }
 }
 

@@ -78,8 +78,7 @@ notify_init(NotifyObject *self, PyObject *args, PyObject *kwargs)
     }
 
     if (!payload) {
-        /* XXX review encoding */
-        payload = Text_FromUTF8AndSize("", 0);
+        payload = Text_FromUTF8("");
     }
 
     Py_CLEAR(self->pid);
