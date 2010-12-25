@@ -119,7 +119,7 @@ _pydatetime_string_delta(pydatetimeObject *self)
 }
 
 static PyObject *
-pydatetime_str(pydatetimeObject *self)
+pydatetime_getquoted(pydatetimeObject *self, PyObject *args)
 {
     if (self->type <= PSYCO_DATETIME_TIMESTAMP) {
         return _pydatetime_string_date_time(self);
@@ -130,9 +130,9 @@ pydatetime_str(pydatetimeObject *self)
 }
 
 static PyObject *
-pydatetime_getquoted(pydatetimeObject *self, PyObject *args)
+pydatetime_str(pydatetimeObject *self)
 {
-    return pydatetime_str(self);
+    return psycopg_ensure_text(pydatetime_getquoted(self, NULL));
 }
 
 static PyObject *

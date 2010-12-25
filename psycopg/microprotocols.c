@@ -138,7 +138,7 @@ microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
     /* None is always adapted to NULL */
     
     if (obj == Py_None)
-        return Text_FromUTF8("NULL");
+        return Bytes_FromString("NULL");
 
     Dprintf("microprotocols_adapt: trying to adapt %s",
         Py_TYPE(obj)->tp_name);

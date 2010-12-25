@@ -36,21 +36,34 @@
 /** the Float object **/
 
 static PyObject *
-pfloat_str(pfloatObject *self)
+pfloat_getquoted(pfloatObject *self, PyObject *args)
 {
+    PyObject *rv;
     double n = PyFloat_AsDouble(self->wrapped);
     if (isnan(n))
-        return Text_FromUTF8("'NaN'::float");
+        rv = Bytes_FromString("'NaN'::float");
     else if (isinf(n))
-        return Text_FromUTF8("'Infinity'::float");
-    else
-        return PyObject_Repr(self->wrapped);
+        rv = Bytes_FromString("'Infinity'::float");
+    else {
+        rv = PyObject_Repr(self->wrapped);
+
+#if PY_MAJOR_VERSION > 2
+        /* unicode to bytes in Py3 */
+        if (rv) {
+            PyObject *tmp = PyUnicode_AsUTF8String(rv);
+            Py_DECREF(rv);
+            rv = tmp;
+        }
+#endif
+    }
+
+    return rv;
 }
 
 static PyObject *
-pfloat_getquoted(pfloatObject *self, PyObject *args)
+pfloat_str(pfloatObject *self)
 {
-    return pfloat_str(self);
+    return psycopg_ensure_text(pfloat_getquoted(self, NULL));
 }
 
 static PyObject *

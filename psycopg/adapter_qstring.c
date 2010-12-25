@@ -106,7 +106,7 @@ qstring_quote(qstringObject *self)
 /* qstring_str, qstring_getquoted - return result of quoting */
 
 static PyObject *
-qstring_str(qstringObject *self)
+qstring_getquoted(qstringObject *self, PyObject *args)
 {
     if (self->buffer == NULL) {
         qstring_quote(self);
@@ -116,9 +116,9 @@ qstring_str(qstringObject *self)
 }
 
 static PyObject *
-qstring_getquoted(qstringObject *self, PyObject *args)
+qstring_str(qstringObject *self)
 {
-    return qstring_str(self);
+    return psycopg_ensure_text(qstring_getquoted(self, NULL));
 }
 
 static PyObject *

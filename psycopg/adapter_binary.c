@@ -98,27 +98,23 @@ binary_quote(binaryObject *self)
 }
 
 /* binary_str, binary_getquoted - return result of quoting */
-/* XXX what is the point of this method? */
+
 static PyObject *
-binary_str(binaryObject *self)
+binary_getquoted(binaryObject *self, PyObject *args)
 {
     if (self->buffer == NULL) {
         if (!(binary_quote(self))) {
             return NULL;
         }
     }
-#if PY_MAJOR_VERSION < 3
     Py_INCREF(self->buffer);
     return self->buffer;
-#else
-    return PyUnicode_FromEncodedObject(self->buffer, "ascii", "replace");
-#endif
 }
 
 static PyObject *
-binary_getquoted(binaryObject *self, PyObject *args)
+binary_str(binaryObject *self)
 {
-    return binary_str(self);
+    return psycopg_ensure_text(binary_getquoted(self, NULL));
 }
 
 static PyObject *

@@ -35,29 +35,29 @@
 /** the Boolean object **/
 
 static PyObject *
-pboolean_str(pbooleanObject *self)
+pboolean_getquoted(pbooleanObject *self, PyObject *args)
 {
 #ifdef PSYCOPG_NEW_BOOLEAN
     if (PyObject_IsTrue(self->wrapped)) {
-        return Text_FromUTF8("true");
+        return Bytes_FromString("true");
     }
     else {
-        return Text_FromUTF8("false");
+        return Bytes_FromString("false");
     }
 #else
     if (PyObject_IsTrue(self->wrapped)) {
-        return Text_FromUTF8("'t'");
+        return Bytes_FromString("'t'");
     }
     else {
-        return Text_FromUTF8("'f'");
+        return Bytes_FromString("'f'");
     }
 #endif
 }
 
 static PyObject *
-pboolean_getquoted(pbooleanObject *self, PyObject *args)
+pboolean_str(pbooleanObject *self)
 {
-    return pboolean_str(self);
+    return psycopg_ensure_text(pboolean_getquoted(self, NULL));
 }
 
 static PyObject *

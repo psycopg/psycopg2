@@ -36,7 +36,7 @@
 /** the Decimal object **/
 
 static PyObject *
-pdecimal_str(pdecimalObject *self)
+pdecimal_getquoted(pdecimalObject *self, PyObject *args)
 {
     PyObject *check, *res = NULL;
     check = PyObject_CallMethod(self->wrapped, "is_finite", NULL);
@@ -45,7 +45,7 @@ pdecimal_str(pdecimalObject *self)
         goto end;
     }
     else if (check) {
-        res = Text_FromUTF8("'NaN'::numeric");
+        res = Bytes_FromString("'NaN'::numeric");
         goto end;
     }
 
@@ -57,7 +57,7 @@ pdecimal_str(pdecimalObject *self)
         goto end;
     }
     if (PyObject_IsTrue(check)) {
-        res = Text_FromUTF8("'NaN'::numeric");
+        res = Bytes_FromString("'NaN'::numeric");
         goto end;
     }
 
@@ -66,11 +66,19 @@ pdecimal_str(pdecimalObject *self)
         goto end;
     }
     if (PyObject_IsTrue(check)) {
-        res = Text_FromUTF8("'NaN'::numeric");
+        res = Bytes_FromString("'NaN'::numeric");
         goto end;
     }
 
     res = PyObject_Str(self->wrapped);
+#if PY_MAJOR_VERSION > 2
+    /* unicode to bytes in Py3 */
+    if (res) {
+        PyObject *tmp = PyUnicode_AsUTF8String(res);
+        Py_DECREF(res);
+        res = tmp;
+    }
+#endif
 
 end:
     Py_XDECREF(check);
@@ -78,9 +86,9 @@ end:
 }
 
 static PyObject *
-pdecimal_getquoted(pdecimalObject *self, PyObject *args)
+pdecimal_str(pdecimalObject *self)
 {
-    return pdecimal_str(self);
+    return psycopg_ensure_text(pdecimal_getquoted(self, NULL));
 }
 
 static PyObject *

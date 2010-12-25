@@ -35,20 +35,31 @@
 /** the AsIs object **/
 
 static PyObject *
-asis_str(asisObject *self)
+asis_getquoted(asisObject *self, PyObject *args)
 {
+    PyObject *rv;
     if (self->wrapped == Py_None) {
-        return Bytes_FromString("NULL");
+        rv = Bytes_FromString("NULL");
     }
     else {
-        return PyObject_Str(self->wrapped);
+        rv = PyObject_Str(self->wrapped);
+#if PY_MAJOR_VERSION > 2
+        /* unicode to bytes in Py3 */
+        if (rv) {
+            PyObject *tmp = PyUnicode_AsUTF8String(rv);
+            Py_DECREF(rv);
+            rv = tmp;
+        }
+#endif
     }
+
+    return rv;
 }
 
 static PyObject *
-asis_getquoted(asisObject *self, PyObject *args)
+asis_str(asisObject *self)
 {
-    return asis_str(self);
+    return psycopg_ensure_text(asis_getquoted(self, NULL));
 }
 
 static PyObject *
