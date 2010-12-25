@@ -430,17 +430,17 @@ static PyObject *
 typecast_repr(PyObject *self)
 {
     PyObject *name = ((typecastObject *)self)->name;
-    PyObject *bname;
     PyObject *rv;
 
-    if (!(bname = psycopg_ensure_bytes(name))) {
+    Py_INCREF(name);
+    if (!(name = psycopg_ensure_bytes(name))) {
         return NULL;
     }
 
     rv = PyString_FromFormat("<%s '%s' at %p>",
         Py_TYPE(self)->tp_name, PyBytes_AS_STRING(name), self);
 
-    Py_DECREF(bname);
+    Py_DECREF(name);
     return rv;
 }
 

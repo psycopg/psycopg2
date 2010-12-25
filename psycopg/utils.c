@@ -96,23 +96,30 @@ psycopg_strdup(const char *from, Py_ssize_t len)
  *
  * Useful when a char * is required out of it.
  *
- * Return a new reference. NULL on error.
+ * The function is ref neutral: steals a ref from obj and adds one to the
+ * return value. This also means that you shouldn't call the function on a
+ * borrowed ref, if having the object unallocated is not what you want.
+ *
+ * It is safe to call the function on NULL.
  */
 PyObject *
 psycopg_ensure_bytes(PyObject *obj)
 {
     PyObject *rv = NULL;
+    if (!obj) { return NULL; }
 
     if (PyUnicode_CheckExact(obj)) {
         rv = PyUnicode_AsUTF8String(obj);
+        Py_DECREF(obj);
     }
     else if (Bytes_CheckExact(obj)) {
-        Py_INCREF(obj);
         rv = obj;
     }
     else {
-        PyErr_Format(PyExc_TypeError, "I'm not into ensuring %s as bytes",
-            obj ? Py_TYPE(obj)->tp_name : "NULL");
+        PyErr_Format(PyExc_TypeError,
+            "Expected bytes or unicode string, got %s instead",
+            Py_TYPE(obj)->tp_name);
+        Py_DECREF(obj);  /* steal the ref anyway */
     }
 
     return rv;

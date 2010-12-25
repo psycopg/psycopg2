@@ -59,7 +59,6 @@ _pydatetime_string_date_time(pydatetimeObject *self)
 {
     PyObject *rv = NULL;
     PyObject *iso = NULL;
-    PyObject *biso = NULL;
     PyObject *tz;
 
     /* Select the right PG type to cast into. */
@@ -79,22 +78,17 @@ _pydatetime_string_date_time(pydatetimeObject *self)
         break;
     }
 
-    if (!(iso = PyObject_CallMethod(self->wrapped, "isoformat", NULL))) {
+    if (!(iso = psycopg_ensure_bytes(
+            PyObject_CallMethod(self->wrapped, "isoformat", NULL)))) {
         goto error;
     }
 
-    if (!(biso = psycopg_ensure_bytes(iso))) {
-        goto error;
-    }
+    rv = Bytes_FromFormat(fmt, Bytes_AsString(iso));
 
-    rv = Bytes_FromFormat(fmt, Bytes_AsString(biso));
-
-    Py_DECREF(biso);
     Py_DECREF(iso);
     return rv;
 
 error:
-    Py_XDECREF(biso);
     Py_XDECREF(iso);
     return rv;
 }

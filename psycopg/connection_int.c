@@ -239,7 +239,6 @@ conn_encoding_to_codec(const char *enc)
     char *tmp;
     Py_ssize_t size;
     PyObject *pyenc = NULL;
-    PyObject *pybenc = NULL;
     char *rv = NULL;
 
     /* Find the Py codec name from the PG encoding */
@@ -250,11 +249,12 @@ conn_encoding_to_codec(const char *enc)
     }
 
     /* Convert the codec in a bytes string to extract the c string. */
-    if (!(pybenc = psycopg_ensure_bytes(pyenc))) {
+    Py_INCREF(pyenc);
+    if (!(pyenc = psycopg_ensure_bytes(pyenc))) {
         goto exit;
     }
 
-    if (-1 == Bytes_AsStringAndSize(pybenc, &tmp, &size)) {
+    if (-1 == Bytes_AsStringAndSize(pyenc, &tmp, &size)) {
         goto exit;
     }
 
@@ -262,8 +262,7 @@ conn_encoding_to_codec(const char *enc)
     rv = psycopg_strdup(tmp, size);
 
 exit:
-    /* pyenc is borrowed: no decref. */
-    Py_XDECREF(pybenc);
+    Py_XDECREF(pyenc);
     return rv;
 }
 
