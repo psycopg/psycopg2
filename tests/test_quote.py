@@ -1,9 +1,10 @@
 #!/usr/bin/env python
+import sys
 from testutils import unittest
+from testconfig import dsn
 
 import psycopg2
 import psycopg2.extensions
-from testconfig import dsn
 
 class QuotingTestCase(unittest.TestCase):
     r"""Checks the correct quoting of strings and binary objects.
@@ -77,6 +78,55 @@ class QuotingTestCase(unittest.TestCase):
 
         self.assertEqual(res, data)
         self.assert_(not self.conn.notices)
+
+    def test_latin1(self):
+        self.conn.set_client_encoding('LATIN1')
+        curs = self.conn.cursor()
+        if sys.version_info[0] < 3:
+            data = ''.join(map(chr, range(32, 127) + range(160, 256)))
+        else:
+            data = bytes(range(32, 127) + range(160, 256)).decode('latin1')
+
+        # as string
+        curs.execute("SELECT %s::text;", (data,))
+        res = curs.fetchone()[0]
+        self.assertEqual(res, data)
+        self.assert_(not self.conn.notices)
+
+        # as unicode
+        if sys.version_info[0] < 3:
+            psycopg2.extensions.register_type(psycopg2.extensions.UNICODE, self.conn)
+            data = data.decode('latin1')
+
+            curs.execute("SELECT %s::text;", (data,))
+            res = curs.fetchone()[0]
+            self.assertEqual(res, data)
+            self.assert_(not self.conn.notices)
+
+    def test_koi8(self):
+        self.conn.set_client_encoding('KOI8')
+        curs = self.conn.cursor()
+        if sys.version_info[0] < 3:
+            data = ''.join(map(chr, range(32, 127) + range(128, 256)))
+        else:
+            data = bytes(range(32, 127) + range(128, 256)).decode('koi8_r')
+
+        # as string
+        curs.execute("SELECT %s::text;", (data,))
+        res = curs.fetchone()[0]
+        self.assertEqual(res, data)
+        self.assert_(not self.conn.notices)
+
+        # as unicode
+        if sys.version_info[0] < 3:
+            psycopg2.extensions.register_type(psycopg2.extensions.UNICODE, self.conn)
+            data = data.decode('koi8_r')
+
+            curs.execute("SELECT %s::text;", (data,))
+            res = curs.fetchone()[0]
+            self.assertEqual(res, data)
+            self.assert_(not self.conn.notices)
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
