@@ -105,7 +105,7 @@ class CopyTests(unittest.TestCase):
 
     def _copy_from(self, curs, nrecs, srec, copykw):
         f = StringIO()
-        for i, c in izip(xrange(nrecs), cycle(string.letters)):
+        for i, c in izip(xrange(nrecs), cycle(string.ascii_letters)):
             l = c * srec
             f.write("%s\t%s\n" % (i,l))
 
@@ -116,9 +116,9 @@ class CopyTests(unittest.TestCase):
         self.assertEqual(nrecs, curs.fetchone()[0])
 
         curs.execute("select data from tcopy where id < %s order by id",
-                (len(string.letters),))
+                (len(string.ascii_letters),))
         for i, (l,) in enumerate(curs):
-            self.assertEqual(l, string.letters[i] * srec)
+            self.assertEqual(l, string.ascii_letters[i] * srec)
 
     def _copy_to(self, curs, srec):
         f = StringIO()
@@ -128,11 +128,11 @@ class CopyTests(unittest.TestCase):
         ntests = 0
         for line in f:
             n, s = line.split()
-            if int(n) < len(string.letters):
-                self.assertEqual(s, string.letters[int(n)] * srec)
+            if int(n) < len(string.ascii_letters):
+                self.assertEqual(s, string.ascii_letters[int(n)] * srec)
                 ntests += 1
 
-        self.assertEqual(ntests, len(string.letters))
+        self.assertEqual(ntests, len(string.ascii_letters))
 
 decorate_all_tests(CopyTests, skip_if_green)
 
