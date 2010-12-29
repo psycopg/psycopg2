@@ -116,7 +116,7 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
             for (d = c + 2; *d && *d != ')'; d++);
 
             if (*d == ')') {
-                key = Bytes_FromStringAndSize(c+2, (Py_ssize_t) (d-c-2));
+                key = Text_FromUTF8AndSize(c+2, (Py_ssize_t) (d-c-2));
                 value = PyObject_GetItem(var, key);
                 /* key has refcnt 1, value the original value + 1 */
 

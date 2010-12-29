@@ -207,8 +207,7 @@ PyBytes_Format(PyObject *format, PyObject *args)
                                "incomplete format key");
                     goto error;
                 }
-                key = PyBytes_FromStringAndSize(keystart,
-                                                 keylen);
+                key = PyUnicode_FromStringAndSize(keystart, keylen);
                 if (key == NULL)
                     goto error;
                 if (args_owned) {
