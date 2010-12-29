@@ -640,7 +640,27 @@ typecast_cast(PyObject *obj, const char *str, Py_ssize_t len, PyObject *curs)
         res = self->ccast(str, len, curs);
     }
     else if (self->pcast) {
-        res = PyObject_CallFunction(self->pcast, "s#O", str, len, curs);
+        PyObject *s;
+        /* XXX we have bytes in the adapters and strings in the typecasters.
+         * are you sure this is ok?
+         * Notice that this way it is about impossible to create a python
+         * typecaster on a binary type. */
+        if (str) {
+#if PY_MAJOR_VERSION < 3
+            s = PyString_FromStringAndSize(str, len);
+#else
+            s = PyUnicode_Decode(str, len,
+                ((cursorObject *)curs)->conn->codec, NULL);
+#endif
+        }
+        else {
+            Py_INCREF(Py_None);
+            s = Py_None;
+        }
+        if (s) {
+            res = PyObject_CallFunctionObjArgs(self->pcast, s, curs, NULL);
+            Py_DECREF(s);
+        }
     }
     else {
         PyErr_SetString(Error, "internal error: no casting function found");
