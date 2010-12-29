@@ -508,7 +508,7 @@ class Inet(object):
         obj = _A(self.addr)
         if hasattr(obj, 'prepare'):
             obj.prepare(self._conn)
-        return obj.getquoted()+"::inet"
+        return obj.getquoted() + b("::inet")
 
     def __conform__(self, foo):
         if foo is _ext.ISQLQuote:

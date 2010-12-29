@@ -114,7 +114,7 @@ class TypesExtrasTests(unittest.TestCase):
         a = psycopg2.extensions.adapt(i)
         a.prepare(self.conn)
         self.assertEqual(
-            filter_scs(self.conn, "E'192.168.1.0/24'::inet"),
+            filter_scs(self.conn, b("E'192.168.1.0/24'::inet")),
             a.getquoted())
 
         # adapts ok with unicode too
@@ -122,7 +122,7 @@ class TypesExtrasTests(unittest.TestCase):
         a = psycopg2.extensions.adapt(i)
         a.prepare(self.conn)
         self.assertEqual(
-            filter_scs(self.conn, "E'192.168.1.0/24'::inet"),
+            filter_scs(self.conn, b("E'192.168.1.0/24'::inet")),
             a.getquoted())
 
     def test_adapt_fail(self):
