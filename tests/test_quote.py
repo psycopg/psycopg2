@@ -5,6 +5,7 @@ from testconfig import dsn
 
 import psycopg2
 import psycopg2.extensions
+from psycopg2.extensions import b
 
 class QuotingTestCase(unittest.TestCase):
     r"""Checks the correct quoting of strings and binary objects.
@@ -44,14 +45,20 @@ class QuotingTestCase(unittest.TestCase):
         self.assert_(not self.conn.notices)
 
     def test_binary(self):
-        data = """some data with \000\013 binary
+        data = b("""some data with \000\013 binary
         stuff into, 'quotes' and \\ a backslash too.
-        """
-        data += "".join(map(chr, range(256)))
+        """)
+        if sys.version_info[0] < 3:
+            data += "".join(map(chr, range(256)))
+        else:
+            data += bytes(range(256))
 
         curs = self.conn.cursor()
         curs.execute("SELECT %s::bytea;", (psycopg2.Binary(data),))
-        res = str(curs.fetchone()[0])
+        if sys.version_info[0] < 3:
+            res = str(curs.fetchone()[0])
+        else:
+            res = curs.fetchone()[0].tobytes()
 
         self.assertEqual(res, data)
         self.assert_(not self.conn.notices)

@@ -29,9 +29,10 @@ except:
 import sys
 import testutils
 from testutils import unittest
+from testconfig import dsn
 
 import psycopg2
-from testconfig import dsn
+from psycopg2.extensions import b
 
 
 class TypesBasicTests(unittest.TestCase):
@@ -231,7 +232,7 @@ class AdaptSubclassTest(unittest.TestCase):
 
         register_adapter(A, lambda a: AsIs("a"))
         register_adapter(B, lambda b: AsIs("b"))
-        self.assertEqual('b', adapt(C()).getquoted())
+        self.assertEqual(b('b'), adapt(C()).getquoted())
 
     @testutils.skip_on_python3
     def test_no_mro_no_joy(self):
@@ -251,7 +252,7 @@ class AdaptSubclassTest(unittest.TestCase):
         class B(A): pass
 
         register_adapter(A, lambda a: AsIs("a"))
-        self.assertEqual("a", adapt(B()).getquoted())
+        self.assertEqual(b("a"), adapt(B()).getquoted())
 
 
 def test_suite():
