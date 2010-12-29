@@ -100,6 +100,16 @@ TRANSACTION_STATUS_INTRANS = 2
 TRANSACTION_STATUS_INERROR = 3
 TRANSACTION_STATUS_UNKNOWN = 4
 
+import sys as _sys
+
+# Return bytes from a string
+if _sys.version_info[0] < 3:
+    def b(s):
+        return s
+else:
+    def b(s):
+        return s.encode('utf8')
+
 def register_adapter(typ, callable):
     """Register 'callable' as an ISQLQuote adapter for type 'typ'."""
     adapters[(typ, ISQLQuote)] = callable
