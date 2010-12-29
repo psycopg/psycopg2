@@ -4,6 +4,7 @@ from testutils import unittest
 import psycopg2
 from psycopg2 import extensions
 from testconfig import dsn
+from testutils import script_to_py3
 
 import sys
 import time
@@ -52,7 +53,7 @@ conn.close()
 """
             % { 'dsn': dsn, 'sec': sec, 'name': name, 'payload': payload})
 
-        return Popen([sys.executable, '-c', script], stdout=PIPE)
+        return Popen([sys.executable, '-c', script_to_py3(script)], stdout=PIPE)
 
     def test_notifies_received_on_poll(self):
         self.autocommit(self.conn)
