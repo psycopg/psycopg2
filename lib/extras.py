@@ -42,6 +42,7 @@ from psycopg2 import extensions as _ext
 from psycopg2.extensions import cursor as _cursor
 from psycopg2.extensions import connection as _connection
 from psycopg2.extensions import adapt as _A
+from psycopg2.extensions import b
 
 
 class DictCursorBase(_cursor):
@@ -574,7 +575,7 @@ class HstoreAdapter(object):
     def _getquoted_8(self):
         """Use the operators available in PG pre-9.0."""
         if not self.wrapped:
-            return "''::hstore"
+            return b("''::hstore")
 
         adapt = _ext.adapt
         rv = []
@@ -588,22 +589,23 @@ class HstoreAdapter(object):
                 v.prepare(self.conn)
                 v = v.getquoted()
             else:
-                v = 'NULL'
+                v = b('NULL')
 
-            rv.append("(%s => %s)" % (k, v))
+            # XXX this b'ing is painfully inefficient!
+            rv.append(b("(") + k + b(" => ") + v + b(")"))
 
-        return "(" + '||'.join(rv) + ")"
+        return b("(") + b('||').join(rv) + b(")")
 
     def _getquoted_9(self):
         """Use the hstore(text[], text[]) function."""
         if not self.wrapped:
-            return "''::hstore"
+            return b("''::hstore")
 
         k = _ext.adapt(self.wrapped.keys())
         k.prepare(self.conn)
         v = _ext.adapt(self.wrapped.values())
         v.prepare(self.conn)
-        return "hstore(%s, %s)" % (k.getquoted(), v.getquoted())
+        return b("hstore(") + k.getquoted() + b(", ") + v.getquoted() + b(")")
 
     getquoted = _getquoted_9
 
@@ -620,13 +622,8 @@ class HstoreAdapter(object):
         (?:\s*,\s*|$) # pairs separated by comma or end of string.
     """, regex.VERBOSE)
 
-    # backslash decoder
-    if sys.version_info[0] < 3:
-        _bsdec = codecs.getdecoder("string_escape")
-    else:
-        _bsdec = codecs.getdecoder("unicode_escape")
-
-    def parse(self, s, cur, _decoder=_bsdec):
+    @classmethod
+    def parse(self, s, cur, _bsdec=regex.compile(r"\\(.)")):
         """Parse an hstore representation in a Python string.
 
         The hstore is represented as something like::
@@ -644,10 +641,10 @@ class HstoreAdapter(object):
             if m is None or m.start() != start:
                 raise psycopg2.InterfaceError(
                     "error parsing hstore pair at char %d" % start)
-            k = _decoder(m.group(1))[0]
+            k = _bsdec.sub(r'\1', m.group(1))
             v = m.group(2)
             if v is not None:
-                v = _decoder(v)[0]
+                v = _bsdec.sub(r'\1', v)
 
             rv[k] = v
             start = m.end()
@@ -658,16 +655,14 @@ class HstoreAdapter(object):
 
         return rv
 
-    parse = classmethod(parse)
-
+    @classmethod
     def parse_unicode(self, s, cur):
         """Parse an hstore returning unicode keys and values."""
-        codec = codecs.getdecoder(_ext.encodings[cur.connection.encoding])
-        bsdec = self._bsdec
-        decoder = lambda s: codec(bsdec(s)[0])
-        return self.parse(s, cur, _decoder=decoder)
+        if s is None:
+            return None
 
-    parse_unicode = classmethod(parse_unicode)
+        s = s.decode(_ext.encodings[cur.connection.encoding])
+        return self.parse(s, cur)
 
     @classmethod
     def get_oids(self, conn_or_curs):
@@ -713,11 +708,11 @@ def register_hstore(conn_or_curs, globally=False, unicode=False):
     uses a single database you can pass *globally*\=True to have the typecaster
     registered on all the connections.
 
-    By default the returned dicts will have `str` objects as keys and values:
+    On Python 2, by default the returned dicts will have `str` objects as keys and values:
     use *unicode*\=True to return `unicode` objects instead.  When adapting a
     dictionary both `str` and `unicode` keys and values are handled (the
     `unicode` values will be converted according to the current
-    `~connection.encoding`).
+    `~connection.encoding`). The option is not available on Python 3.
 
     The |hstore| contrib module must be already installed in the database
     (executing the ``hstore.sql`` script in your ``contrib`` directory).
@@ -730,7 +725,7 @@ def register_hstore(conn_or_curs, globally=False, unicode=False):
             "please install it from your 'contrib/hstore.sql' file")
 
     # create and register the typecaster
-    if unicode:
+    if sys.version_info[0] < 3 and unicode:
         cast = HstoreAdapter.parse_unicode
     else:
         cast = HstoreAdapter.parse

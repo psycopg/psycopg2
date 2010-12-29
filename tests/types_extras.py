@@ -24,6 +24,8 @@ from testutils import unittest
 
 import psycopg2
 import psycopg2.extras
+from psycopg2.extensions import b
+
 from testconfig import dsn
 
 
@@ -164,18 +166,17 @@ class HstoreTestCase(unittest.TestCase):
         a.prepare(self.conn)
         q = a.getquoted()
 
-        self.assert_(q.startswith("(("), q)
-        self.assert_(q.endswith("))"), q)
-        ii = q[1:-1].split("||")
+        self.assert_(q.startswith(b("((")), q)
+        ii = q[1:-1].split(b("||"))
         ii.sort()
 
         self.assertEqual(len(ii), len(o))
-        self.assertEqual(ii[0], filter_scs(self.conn, "(E'a' => E'1')"))
-        self.assertEqual(ii[1], filter_scs(self.conn, "(E'b' => E'''')"))
-        self.assertEqual(ii[2], filter_scs(self.conn, "(E'c' => NULL)"))
+        self.assertEqual(ii[0], filter_scs(self.conn, b("(E'a' => E'1')")))
+        self.assertEqual(ii[1], filter_scs(self.conn, b("(E'b' => E'''')")))
+        self.assertEqual(ii[2], filter_scs(self.conn, b("(E'c' => NULL)")))
         if 'd' in o:
             encc = u'\xe0'.encode(psycopg2.extensions.encodings[self.conn.encoding])
-            self.assertEqual(ii[3], filter_scs(self.conn, "(E'd' => E'%s')" % encc))
+            self.assertEqual(ii[3], filter_scs(self.conn, b("(E'd' => E'") + encc + b("')")))
 
     def test_adapt_9(self):
         if self.conn.server_version < 90000:
@@ -191,21 +192,21 @@ class HstoreTestCase(unittest.TestCase):
         a.prepare(self.conn)
         q = a.getquoted()
 
-        m = re.match(r'hstore\(ARRAY\[([^\]]+)\], ARRAY\[([^\]]+)\]\)', q)
+        m = re.match(b(r'hstore\(ARRAY\[([^\]]+)\], ARRAY\[([^\]]+)\]\)'), q)
         self.assert_(m, repr(q))
 
-        kk = m.group(1).split(", ")
-        vv = m.group(2).split(", ")
+        kk = m.group(1).split(b(", "))
+        vv = m.group(2).split(b(", "))
         ii = zip(kk, vv)
         ii.sort()
 
         self.assertEqual(len(ii), len(o))
-        self.assertEqual(ii[0], ("E'a'", "E'1'"))
-        self.assertEqual(ii[1], ("E'b'", "E''''"))
-        self.assertEqual(ii[2], ("E'c'", "NULL"))
+        self.assertEqual(ii[0], (b("E'a'"), b("E'1'")))
+        self.assertEqual(ii[1], (b("E'b'"), b("E''''")))
+        self.assertEqual(ii[2], (b("E'c'"), b("NULL")))
         if 'd' in o:
             encc = u'\xe0'.encode(psycopg2.extensions.encodings[self.conn.encoding])
-            self.assertEqual(ii[3], ("E'd'", "E'%s'" % encc))
+            self.assertEqual(ii[3], (b("E'd'"), b("E'") + encc + b("'")))
 
     def test_parse(self):
         from psycopg2.extras import HstoreAdapter
@@ -321,7 +322,11 @@ class HstoreTestCase(unittest.TestCase):
         ok({''.join(ab): ''.join(ab)})
 
         self.conn.set_client_encoding('latin1')
-        ab = map(chr, range(1, 256))
+        if sys.version_info[0] < 3:
+            ab = map(chr, range(32, 127) + range(160, 255))
+        else:
+            ab = bytes(range(32, 127) + range(160, 255)).decode('latin1')
+
         ok({''.join(ab): ''.join(ab)})
         ok(dict(zip(ab, ab)))
 
