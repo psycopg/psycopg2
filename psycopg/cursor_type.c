@@ -1105,11 +1105,8 @@ static int _psyco_curs_copy_columns(PyObject *columns, char *columnlist)
     columnlist[0] = '(';
 
     while ((col = PyIter_Next(coliter)) != NULL) {
-        if (!Bytes_Check(col)) {
-            Py_DECREF(col);
+        if (!(col = psycopg_ensure_bytes(col))) {
             Py_DECREF(coliter);
-            PyErr_SetString(PyExc_ValueError,
-                "elements in column list must be strings");
             return -1;
         }
         Bytes_AsStringAndSize(col, &colname, &collen);
