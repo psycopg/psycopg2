@@ -1050,7 +1050,7 @@ conn_tpc_command(connectionObject *self, const char *cmd, XidObject *xid)
     Dprintf("conn_tpc_command: %s", cmd);
 
     /* convert the xid into PostgreSQL transaction id while keeping the GIL */
-    if (!(tid = xid_get_tid(xid))) { goto exit; }
+    if (!(tid = psycopg_ensure_bytes(xid_get_tid(xid)))) { goto exit; }
     if (!(ctid = Bytes_AsString(tid))) { goto exit; }
 
     Py_BEGIN_ALLOW_THREADS;

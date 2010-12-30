@@ -399,7 +399,11 @@ _xid_base64_enc_dec(const char *funcname, PyObject *s)
 
     if (!(base64 = PyImport_ImportModule("base64"))) { goto exit; }
     if (!(func = PyObject_GetAttrString(base64, funcname))) { goto exit; }
-    rv = PyObject_CallFunctionObjArgs(func, s, NULL);
+
+    Py_INCREF(s);
+    if (!(s = psycopg_ensure_bytes(s))) { goto exit; }
+    rv = psycopg_ensure_text(PyObject_CallFunctionObjArgs(func, s, NULL));
+    Py_DECREF(s);
 
 exit:
     Py_XDECREF(func);
