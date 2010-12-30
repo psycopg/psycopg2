@@ -1065,19 +1065,50 @@ _pq_copy_in_v3(cursorObject *curs)
     }
 
     while (1) {
-        o = PyObject_CallFunctionObjArgs(func, size, NULL);
-        if (!(o && Bytes_Check(o) && (length = Bytes_GET_SIZE(o)) != -1)) {
+        if (!(o = PyObject_CallFunctionObjArgs(func, size, NULL))) {
+            Dprintf("_pq_copy_in_v3: read() failed");
             error = 1;
+            break;
         }
-        if (length == 0 || length > INT_MAX || error == 1) break;
+
+        /* a file may return unicode in Py3: encode in client encoding. */
+#if PY_MAJOR_VERSION > 2
+        if (PyUnicode_Check(o)) {
+            PyObject *tmp;
+            if (!(tmp = PyUnicode_AsEncodedString(o, curs->conn->codec, NULL))) {
+                Dprintf("_pq_copy_in_v3: encoding() failed");
+                error = 1;
+                break;
+            }
+            Py_DECREF(o);
+            o = tmp;
+        }
+#endif
+
+        if (!Bytes_Check(o)) {
+            Dprintf("_pq_copy_in_v3: got %s instead of bytes",
+                Py_TYPE(o)->tp_name);
+            error = 1;
+            break;
+        }
+
+        if (0 == (length = Bytes_GET_SIZE(o))) {
+            break;
+        }
+        if (length > INT_MAX) {
+            Dprintf("_pq_copy_in_v3: bad length: " FORMAT_CODE_PY_SSIZE_T,
+                length);
+            error = 1;
+            break;
+        }
 
         Py_BEGIN_ALLOW_THREADS;
         res = PQputCopyData(curs->conn->pgconn, Bytes_AS_STRING(o),
             /* Py_ssize_t->int cast was validated above */
             (int) length);
-        Dprintf("_pq_copy_in_v3: sent %d bytes of data; res = %d",
-            (int) length, res);
-            
+        Dprintf("_pq_copy_in_v3: sent " FORMAT_CODE_PY_SSIZE_T " bytes of data; res = %d",
+            length, res);
+
         if (res == 0) {
             /* FIXME: in theory this should not happen but adding a check
                here would be a nice idea */
@@ -1105,6 +1136,7 @@ _pq_copy_in_v3(cursorObject *curs)
     else if (error == 2)
         res = PQputCopyEnd(curs->conn->pgconn, "error in PQputCopyData() call");
     else
+        /* XXX would be nice to propagate the exeption */
         res = PQputCopyEnd(curs->conn->pgconn, "error in .read() call");
 
     IFCLEARPGRES(curs->pgres);
