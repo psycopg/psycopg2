@@ -78,10 +78,6 @@
 #define PSYCOPG_MODULE
 #include "psycopg/psycopg.h"
 
-#ifndef Py_USING_UNICODE
-#define Py_USING_UNICODE 1
-#endif
-
 /* Helpers for formatstring */
 
 Py_LOCAL_INLINE(PyObject *)
@@ -118,9 +114,6 @@ PyBytes_Format(PyObject *format, PyObject *args)
     Py_ssize_t reslen, rescnt, fmtcnt;
     int args_owned = 0;
     PyObject *result, *orig_args;
-#ifdef Py_USING_UNICODE
-    PyObject *v, *w;
-#endif
     PyObject *dict = NULL;
     if (format == NULL || !PyBytes_Check(format) || args == NULL) {
         PyErr_BadInternalCall();
@@ -165,19 +158,11 @@ PyBytes_Format(PyObject *format, PyObject *args)
             int prec = -1;
             int c = '\0';
             int fill;
-            int isnumok;
             PyObject *v = NULL;
             PyObject *temp = NULL;
             char *pbuf;
             int sign;
             Py_ssize_t len;
-            char formatbuf[FORMATBUFLEN];
-                 /* For format{int,char}() */
-#ifdef Py_USING_UNICODE
-            char *fmt_start = fmt;
-            Py_ssize_t argidx_start = argidx;
-#endif
-
             fmt++;
             if (*fmt == '(') {
                 char *keystart;
@@ -454,53 +439,6 @@ PyBytes_Format(PyObject *format, PyObject *args)
     if (_PyBytes_Resize(&result, reslen - rescnt))
         return NULL;
     return result;
-
-#ifdef Py_USING_UNICODE
- unicode:
-    if (args_owned) {
-        Py_DECREF(args);
-        args_owned = 0;
-    }
-    /* Fiddle args right (remove the first argidx arguments) */
-    if (PyTuple_Check(orig_args) && argidx > 0) {
-        PyObject *v;
-        Py_ssize_t n = PyTuple_GET_SIZE(orig_args) - argidx;
-        v = PyTuple_New(n);
-        if (v == NULL)
-            goto error;
-        while (--n >= 0) {
-            PyObject *w = PyTuple_GET_ITEM(orig_args, n + argidx);
-            Py_INCREF(w);
-            PyTuple_SET_ITEM(v, n, w);
-        }
-        args = v;
-    } else {
-        Py_INCREF(orig_args);
-        args = orig_args;
-    }
-    args_owned = 1;
-    /* Take what we have of the result and let the Unicode formatting
-       function format the rest of the input. */
-    rescnt = res - PyBytes_AS_STRING(result);
-    if (_PyBytes_Resize(&result, rescnt))
-        goto error;
-    fmtcnt = PyBytes_GET_SIZE(format) - \
-             (fmt - PyBytes_AS_STRING(format));
-    format = PyUnicode_Decode(fmt, fmtcnt, NULL, NULL);
-    if (format == NULL)
-        goto error;
-    v = PyUnicode_Format(format, args);
-    Py_DECREF(format);
-    if (v == NULL)
-        goto error;
-    /* Paste what we have (result) to what the Unicode formatting
-       function returned (v) and return the result (or error) */
-    w = PyUnicode_Concat(result, v);
-    Py_DECREF(result);
-    Py_DECREF(v);
-    Py_DECREF(args);
-    return w;
-#endif /* Py_USING_UNICODE */
 
  error:
     Py_DECREF(result);
