@@ -96,15 +96,7 @@ getnextarg(PyObject *args, Py_ssize_t arglen, Py_ssize_t *p_argidx)
     return NULL;
 }
 
-/* fmt%(v1,v2,...) is roughly equivalent to sprintf(fmt, v1, v2, ...)
-
-   FORMATBUFLEN is the length of the buffer in which the ints &
-   chars are formatted. XXX This is a magic number. Each formatting
-   routine does bounds checking to ensure no overflow, but a better
-   solution may be to malloc a buffer of appropriate size for each
-   format. For now, the current solution is sufficient.
-*/
-#define FORMATBUFLEN (size_t)120
+/* fmt%(v1,v2,...) is roughly equivalent to sprintf(fmt, v1, v2, ...) */
 
 PyObject *
 PyBytes_Format(PyObject *format, PyObject *args)
@@ -153,15 +145,11 @@ PyBytes_Format(PyObject *format, PyObject *args)
         }
         else {
             /* Got a format specifier */
-            int flags = 0;
             Py_ssize_t width = -1;
-            int prec = -1;
             int c = '\0';
-            int fill;
             PyObject *v = NULL;
             PyObject *temp = NULL;
             char *pbuf;
-            int sign;
             Py_ssize_t len;
             fmt++;
             if (*fmt == '(') {
@@ -209,88 +197,8 @@ PyBytes_Format(PyObject *format, PyObject *args)
                 argidx = -2;
             }
             while (--fmtcnt >= 0) {
-                switch (c = *fmt++) {
-                case '-': flags |= F_LJUST; continue;
-                case '+': flags |= F_SIGN; continue;
-                case ' ': flags |= F_BLANK; continue;
-                case '#': flags |= F_ALT; continue;
-                case '0': flags |= F_ZERO; continue;
-                }
+                c = *fmt++;
                 break;
-            }
-            if (c == '*') {
-                v = getnextarg(args, arglen, &argidx);
-                if (v == NULL)
-                    goto error;
-                if (!PyLong_Check(v)) {
-                    PyErr_SetString(PyExc_TypeError,
-                                    "* wants int");
-                    goto error;
-                }
-                width = PyLong_AsLong(v);
-                if (width < 0) {
-                    flags |= F_LJUST;
-                    width = -width;
-                }
-                if (--fmtcnt >= 0)
-                    c = *fmt++;
-            }
-            else if (c >= 0 && isdigit(c)) {
-                width = c - '0';
-                while (--fmtcnt >= 0) {
-                    c = Py_CHARMASK(*fmt++);
-                    if (!isdigit(c))
-                        break;
-                    if ((width*10) / 10 != width) {
-                        PyErr_SetString(
-                            PyExc_ValueError,
-                            "width too big");
-                        goto error;
-                    }
-                    width = width*10 + (c - '0');
-                }
-            }
-            if (c == '.') {
-                prec = 0;
-                if (--fmtcnt >= 0)
-                    c = *fmt++;
-                if (c == '*') {
-                    v = getnextarg(args, arglen, &argidx);
-                    if (v == NULL)
-                        goto error;
-                    if (!PyLong_Check(v)) {
-                        PyErr_SetString(
-                            PyExc_TypeError,
-                            "* wants int");
-                        goto error;
-                    }
-                    prec = PyLong_AsLong(v);
-                    if (prec < 0)
-                        prec = 0;
-                    if (--fmtcnt >= 0)
-                        c = *fmt++;
-                }
-                else if (c >= 0 && isdigit(c)) {
-                    prec = c - '0';
-                    while (--fmtcnt >= 0) {
-                        c = Py_CHARMASK(*fmt++);
-                        if (!isdigit(c))
-                            break;
-                        if ((prec*10) / 10 != prec) {
-                            PyErr_SetString(
-                                PyExc_ValueError,
-                                "prec too big");
-                            goto error;
-                        }
-                        prec = prec*10 + (c - '0');
-                    }
-                }
-            } /* prec */
-            if (fmtcnt >= 0) {
-                if (c == 'h' || c == 'l' || c == 'L') {
-                    if (--fmtcnt >= 0)
-                        c = *fmt++;
-                }
             }
             if (fmtcnt < 0) {
                 PyErr_SetString(PyExc_ValueError,
@@ -302,8 +210,6 @@ PyBytes_Format(PyObject *format, PyObject *args)
                 if (v == NULL)
                     goto error;
             }
-            sign = 0;
-            fill = ' ';
             switch (c) {
             case '%':
                 pbuf = "%";
@@ -319,22 +225,8 @@ PyBytes_Format(PyObject *format, PyObject *args)
                 }
                 temp = v;
                 Py_INCREF(v);
-                /* Fall through */
-            case 'r':
-                if (c == 'r')
-                    temp = PyObject_Repr(v);
-                if (temp == NULL)
-                    goto error;
-                if (!PyBytes_Check(temp)) {
-                    PyErr_SetString(PyExc_TypeError,
-                      "%s argument has non-string str()");
-                    Py_DECREF(temp);
-                    goto error;
-                }
                 pbuf = PyBytes_AS_STRING(temp);
                 len = PyBytes_GET_SIZE(temp);
-                if (prec >= 0 && len > prec)
-                    len = prec;
                 break;
             default:
                 PyErr_Format(PyExc_ValueError,
@@ -345,21 +237,9 @@ PyBytes_Format(PyObject *format, PyObject *args)
                                PyBytes_AsString(format)));
                 goto error;
             }
-            if (sign) {
-                if (*pbuf == '-' || *pbuf == '+') {
-                    sign = *pbuf++;
-                    len--;
-                }
-                else if (flags & F_SIGN)
-                    sign = '+';
-                else if (flags & F_BLANK)
-                    sign = ' ';
-                else
-                    sign = 0;
-            }
             if (width < len)
                 width = len;
-            if (rescnt - (sign != 0) < width) {
+            if (rescnt < width) {
                 reslen -= rescnt;
                 rescnt = width + fmtcnt + 100;
                 reslen += rescnt;
@@ -374,43 +254,6 @@ PyBytes_Format(PyObject *format, PyObject *args)
                 }
                 res = PyBytes_AS_STRING(result)
                     + reslen - rescnt;
-            }
-            if (sign) {
-                if (fill != ' ')
-                    *res++ = sign;
-                rescnt--;
-                if (width > len)
-                    width--;
-            }
-            if ((flags & F_ALT) && (c == 'x' || c == 'X')) {
-                assert(pbuf[0] == '0');
-                assert(pbuf[1] == c);
-                if (fill != ' ') {
-                    *res++ = *pbuf++;
-                    *res++ = *pbuf++;
-                }
-                rescnt -= 2;
-                width -= 2;
-                if (width < 0)
-                    width = 0;
-                len -= 2;
-            }
-            if (width > len && !(flags & F_LJUST)) {
-                do {
-                    --rescnt;
-                    *res++ = fill;
-                } while (--width > len);
-            }
-            if (fill == ' ') {
-                if (sign)
-                    *res++ = sign;
-                if ((flags & F_ALT) &&
-                    (c == 'x' || c == 'X')) {
-                    assert(pbuf[0] == '0');
-                    assert(pbuf[1] == c);
-                    *res++ = *pbuf++;
-                    *res++ = *pbuf++;
-                }
             }
             Py_MEMCPY(res, pbuf, len);
             res += len;
