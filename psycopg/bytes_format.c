@@ -24,7 +24,9 @@
  */
 
 /* This implementation is based on the PyString_Format function available in
- * Python 2.7.1. Original license follows.
+ * Python 2.7.1. The function is altered to be used with both Python 2 strings
+ * and Python 3 bytes and is stripped of the support of formats different than
+ * 's'. Original license follows.
  *
  * PYTHON SOFTWARE FOUNDATION LICENSE VERSION 2
  * --------------------------------------------
@@ -99,7 +101,7 @@ getnextarg(PyObject *args, Py_ssize_t arglen, Py_ssize_t *p_argidx)
 /* fmt%(v1,v2,...) is roughly equivalent to sprintf(fmt, v1, v2, ...) */
 
 PyObject *
-PyBytes_Format(PyObject *format, PyObject *args)
+Bytes_Format(PyObject *format, PyObject *args)
 {
     char *fmt, *res;
     Py_ssize_t arglen, argidx;
@@ -107,18 +109,18 @@ PyBytes_Format(PyObject *format, PyObject *args)
     int args_owned = 0;
     PyObject *result, *orig_args;
     PyObject *dict = NULL;
-    if (format == NULL || !PyBytes_Check(format) || args == NULL) {
+    if (format == NULL || !Bytes_Check(format) || args == NULL) {
         PyErr_BadInternalCall();
         return NULL;
     }
     orig_args = args;
-    fmt = PyBytes_AS_STRING(format);
-    fmtcnt = PyBytes_GET_SIZE(format);
+    fmt = Bytes_AS_STRING(format);
+    fmtcnt = Bytes_GET_SIZE(format);
     reslen = rescnt = fmtcnt + 100;
-    result = PyBytes_FromStringAndSize((char *)NULL, reslen);
+    result = Bytes_FromStringAndSize((char *)NULL, reslen);
     if (result == NULL)
         return NULL;
-    res = PyBytes_AsString(result);
+    res = Bytes_AsString(result);
     if (PyTuple_Check(args)) {
         arglen = PyTuple_GET_SIZE(args);
         argidx = 0;
@@ -128,16 +130,16 @@ PyBytes_Format(PyObject *format, PyObject *args)
         argidx = -2;
     }
     if (Py_TYPE(args)->tp_as_mapping && !PyTuple_Check(args) &&
-        !PyObject_TypeCheck(args, &PyBytes_Type))
+        !PyObject_TypeCheck(args, &Bytes_Type))
         dict = args;
     while (--fmtcnt >= 0) {
         if (*fmt != '%') {
             if (--rescnt < 0) {
                 rescnt = fmtcnt + 100;
                 reslen += rescnt;
-                if (_PyBytes_Resize(&result, reslen))
+                if (_Bytes_Resize(&result, reslen))
                     return NULL;
-                res = PyBytes_AS_STRING(result)
+                res = Bytes_AS_STRING(result)
                     + reslen - rescnt;
                 --rescnt;
             }
@@ -180,7 +182,7 @@ PyBytes_Format(PyObject *format, PyObject *args)
                                "incomplete format key");
                     goto error;
                 }
-                key = PyUnicode_FromStringAndSize(keystart, keylen);
+                key = Text_FromUTF8AndSize(keystart, keylen);
                 if (key == NULL)
                     goto error;
                 if (args_owned) {
@@ -217,7 +219,7 @@ PyBytes_Format(PyObject *format, PyObject *args)
                 break;
             case 's':
                 /* only bytes! */
-                if (!PyBytes_CheckExact(v)) {
+                if (!Bytes_CheckExact(v)) {
                     PyErr_Format(PyExc_ValueError,
                                     "only bytes values expected, got %s",
                                     Py_TYPE(v)->tp_name);
@@ -225,8 +227,8 @@ PyBytes_Format(PyObject *format, PyObject *args)
                 }
                 temp = v;
                 Py_INCREF(v);
-                pbuf = PyBytes_AS_STRING(temp);
-                len = PyBytes_GET_SIZE(temp);
+                pbuf = Bytes_AS_STRING(temp);
+                len = Bytes_GET_SIZE(temp);
                 break;
             default:
                 PyErr_Format(PyExc_ValueError,
@@ -234,7 +236,7 @@ PyBytes_Format(PyObject *format, PyObject *args)
                   "at index %zd",
                   c, c,
                   (Py_ssize_t)(fmt - 1 -
-                               PyBytes_AsString(format)));
+                               Bytes_AsString(format)));
                 goto error;
             }
             if (width < len)
@@ -248,11 +250,11 @@ PyBytes_Format(PyObject *format, PyObject *args)
                     Py_XDECREF(temp);
                     return PyErr_NoMemory();
                 }
-                if (_PyBytes_Resize(&result, reslen)) {
+                if (_Bytes_Resize(&result, reslen)) {
                     Py_XDECREF(temp);
                     return NULL;
                 }
-                res = PyBytes_AS_STRING(result)
+                res = Bytes_AS_STRING(result)
                     + reslen - rescnt;
             }
             Py_MEMCPY(res, pbuf, len);
@@ -279,7 +281,7 @@ PyBytes_Format(PyObject *format, PyObject *args)
     if (args_owned) {
         Py_DECREF(args);
     }
-    if (_PyBytes_Resize(&result, reslen - rescnt))
+    if (_Bytes_Resize(&result, reslen - rescnt))
         return NULL;
     return result;
 

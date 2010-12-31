@@ -362,7 +362,7 @@ ext = [] ; data_files = []
 
 sources = [
     'psycopgmodule.c',
-    'green.c', 'pqpath.c', 'utils.c',
+    'green.c', 'pqpath.c', 'utils.c', 'bytes_format.c',
 
     'connection_int.c', 'connection_type.c',
     'cursor_int.c', 'cursor_type.c',
@@ -375,9 +375,6 @@ sources = [
     'microprotocols.c', 'microprotocols_proto.c',
     'typecast.c',
 ]
-
-if sys.version_info[0] >= 3:
-    sources.append('bytes_format.c')
 
 depends = [
     # headers

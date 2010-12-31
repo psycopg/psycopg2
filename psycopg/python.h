@@ -103,8 +103,7 @@
 #endif  /* PY_MAJOR_VERSION > 2 */
 
 #if PY_MAJOR_VERSION < 3
-/* XXX BytesType -> Bytes_Type */
-#define BytesType PyString_Type
+#define Bytes_Type PyString_Type
 #define Bytes_Check PyString_Check
 #define Bytes_CheckExact PyString_CheckExact
 #define Bytes_AS_STRING PyString_AS_STRING
@@ -115,11 +114,11 @@
 #define Bytes_FromString PyString_FromString
 #define Bytes_FromStringAndSize PyString_FromStringAndSize
 #define Bytes_FromFormat PyString_FromFormat
-#define Bytes_Format PyString_Format
+#define _Bytes_Resize _PyString_Resize
 
 #else
 
-#define BytesType PyBytes_Type
+#define Bytes_Type PyBytes_Type
 #define Bytes_Check PyBytes_Check
 #define Bytes_CheckExact PyBytes_CheckExact
 #define Bytes_AS_STRING PyBytes_AS_STRING
@@ -130,11 +129,11 @@
 #define Bytes_FromString PyBytes_FromString
 #define Bytes_FromStringAndSize PyBytes_FromStringAndSize
 #define Bytes_FromFormat PyBytes_FromFormat
-#define Bytes_Format PyBytes_Format
-
-HIDDEN PyObject *PyBytes_Format(PyObject *format, PyObject *args);
+#define _Bytes_Resize _PyBytes_Resize
 
 #endif
+
+HIDDEN PyObject *Bytes_Format(PyObject *format, PyObject *args);
 
 /* Mangle the module name into the name of the module init function */
 #if PY_MAJOR_VERSION > 2
