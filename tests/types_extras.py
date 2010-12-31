@@ -349,6 +349,22 @@ class HstoreTestCase(unittest.TestCase):
         ok(dict(zip(ab, ab)))
 
 
+class AdaptTypeTestCase(unittest.TestCase):
+    def setUp(self):
+        self.conn = psycopg2.connect(tests.dsn)
+
+    def tearDown(self):
+        self.conn.close()
+
+    def test_none_in_record(self):
+        curs = self.conn.cursor()
+        s = curs.mogrify("SELECT %s;", [(42, None)])
+        self.assertEqual("SELECT (42, NULL);", s)
+        curs.execute("SELECT %s;", [(42, None)])
+        d = curs.fetchone()[0]
+        self.assertEqual("(42,)", d)
+
+
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
