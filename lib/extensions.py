@@ -132,10 +132,11 @@ class SQL_IN(object):
         for obj in pobjs:
             if hasattr(obj, 'prepare'):
                 obj.prepare(self._conn)
-        qobjs = [str(o.getquoted()) for o in pobjs]
-        return '(' + ', '.join(qobjs) + ')'
+        qobjs = [o.getquoted() for o in pobjs]
+        return b('(') + b(', ').join(qobjs) + b(')')
 
-    __str__ = getquoted
+    def __str__(self):
+        return str(self.getquoted())
 
 
 class NoneAdapter(object):
@@ -147,8 +148,8 @@ class NoneAdapter(object):
     def __init__(self, obj):
         pass
 
-    def getquoted(self):
-        return "NULL"
+    def getquoted(self, _null=b("NULL")):
+        return _null
 
 
 # Add the "cleaned" version of the encodings to the key.

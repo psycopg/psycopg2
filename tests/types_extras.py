@@ -356,7 +356,7 @@ class HstoreTestCase(unittest.TestCase):
 
 class AdaptTypeTestCase(unittest.TestCase):
     def setUp(self):
-        self.conn = psycopg2.connect(tests.dsn)
+        self.conn = psycopg2.connect(dsn)
 
     def tearDown(self):
         self.conn.close()
@@ -364,7 +364,7 @@ class AdaptTypeTestCase(unittest.TestCase):
     def test_none_in_record(self):
         curs = self.conn.cursor()
         s = curs.mogrify("SELECT %s;", [(42, None)])
-        self.assertEqual("SELECT (42, NULL);", s)
+        self.assertEqual(b("SELECT (42, NULL);"), s)
         curs.execute("SELECT %s;", [(42, None)])
         d = curs.fetchone()[0]
         self.assertEqual("(42,)", d)
@@ -385,7 +385,7 @@ class AdaptTypeTestCase(unittest.TestCase):
             self.assertEqual(ext.adapt(None).getquoted(), "NOPE!")
 
             s = curs.mogrify("SELECT %s;", (None,))
-            self.assertEqual("SELECT NULL;", s)
+            self.assertEqual(b("SELECT NULL;"), s)
 
         finally:
             ext.register_adapter(type(None), orig_adapter)
