@@ -31,6 +31,7 @@ Intended Audience :: Developers
 License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)
 License :: OSI Approved :: Zope Public License
 Programming Language :: Python
+Programming Language :: Python :: 3
 Programming Language :: C
 Programming Language :: SQL
 Topic :: Database
