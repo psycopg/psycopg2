@@ -82,6 +82,7 @@ from _psycopg import __version__
 
 import psycopg2.extensions as _ext
 _ext.register_adapter(tuple, _ext.SQL_IN)
+_ext.register_adapter(type(None), _ext.NoneAdapter)
 
 __all__ = filter(lambda k: not k.startswith('_'), locals().keys())
 

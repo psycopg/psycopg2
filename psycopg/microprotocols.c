@@ -135,11 +135,6 @@ microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
     /* we don't check for exact type conformance as specified in PEP 246
        because the ISQLQuote type is abstract and there is no way to get a
        quotable object to be its instance */
-       
-    /* None is always adapted to NULL */
-    
-    if (obj == Py_None)
-        return PyString_FromString("NULL");
 
     Dprintf("microprotocols_adapt: trying to adapt %s", obj->ob_type->tp_name);
 
