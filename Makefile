@@ -62,6 +62,9 @@ docs-html: doc/html/genindex.html
 
 docs-txt: doc/psycopg2.txt
 
+# for PyPI documentation
+docs-zip: doc/docs.zip
+
 sdist: $(SDIST)
 
 # The environment is currently required to build the documentation.
@@ -119,6 +122,8 @@ doc/html/genindex.html: $(PLATLIB) $(PURELIB) $(SOURCE_DOC)
 doc/psycopg2.txt: $(PLATLIB) $(PURELIB) $(SOURCE_DOC)
 	PYTHONPATH=$(ENV_LIB):$(BUILD_DIR) $(MAKE) SPHINXBUILD=$(ENV_BIN)/sphinx-build -C doc text
 
+doc/docs.zip: doc/html/genindex.html
+	(cd doc/html && zip -r ../docs.zip *)
 
 clean:
 	rm -rf build MANIFEST

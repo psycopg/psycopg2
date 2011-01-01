@@ -354,6 +354,42 @@ class HstoreTestCase(unittest.TestCase):
         ok(dict(zip(ab, ab)))
 
 
+class AdaptTypeTestCase(unittest.TestCase):
+    def setUp(self):
+        self.conn = psycopg2.connect(tests.dsn)
+
+    def tearDown(self):
+        self.conn.close()
+
+    def test_none_in_record(self):
+        curs = self.conn.cursor()
+        s = curs.mogrify("SELECT %s;", [(42, None)])
+        self.assertEqual("SELECT (42, NULL);", s)
+        curs.execute("SELECT %s;", [(42, None)])
+        d = curs.fetchone()[0]
+        self.assertEqual("(42,)", d)
+
+    def test_none_fast_path(self):
+        # the None adapter is not actually invoked in regular adaptation
+        ext = psycopg2.extensions
+
+        class WonkyAdapter(object):
+            def __init__(self, obj): pass
+            def getquoted(self): return "NOPE!"
+
+        curs = self.conn.cursor()
+
+        orig_adapter = ext.adapters[type(None), ext.ISQLQuote]
+        try:
+            ext.register_adapter(type(None), WonkyAdapter)
+            self.assertEqual(ext.adapt(None).getquoted(), "NOPE!")
+
+            s = curs.mogrify("SELECT %s;", (None,))
+            self.assertEqual("SELECT NULL;", s)
+
+        finally:
+            ext.register_adapter(type(None), orig_adapter)
+
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

@@ -138,6 +138,19 @@ class SQL_IN(object):
     __str__ = getquoted
 
 
+class NoneAdapter(object):
+    """Adapt None to NULL.
+
+    This adapter is not used normally as a fast path in mogrify uses NULL,
+    but it makes easier to adapt composite types.
+    """
+    def __init__(self, obj):
+        pass
+
+    def getquoted(self):
+        return "NULL"
+
+
 # Add the "cleaned" version of the encodings to the key.
 # When the encoding is set its name is cleaned up from - and _ and turned
 # uppercase, so an encoding not respecting these rules wouldn't be found in the
@@ -145,5 +158,6 @@ class SQL_IN(object):
 for k, v in encodings.items():
     k = k.replace('_', '').replace('-', '').upper()
     encodings[k] = v
+
 
 __all__ = filter(lambda k: not k.startswith('_'), locals().keys())

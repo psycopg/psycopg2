@@ -373,6 +373,10 @@ conn_is_datestyle_ok(PGconn *pgconn)
     ds = PQparameterStatus(pgconn, "DateStyle");
     Dprintf("conn_connect: DateStyle %s", ds);
 
+    /* pgbouncer does not pass on DateStyle */
+    if (ds == NULL)
+      return 0;
+
     /* Return true if ds starts with "ISO"
      * e.g. "ISO, DMY" is fine, "German" not. */
     return (ds[0] == 'I' && ds[1] == 'S' && ds[2] == 'O');

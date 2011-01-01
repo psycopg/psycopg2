@@ -66,7 +66,7 @@ except ImportError:
 # Take a look at http://www.python.org/dev/peps/pep-0386/
 # for a consistent versioning pattern.
 
-PSYCOPG_VERSION = '2.3.2.dev0'
+PSYCOPG_VERSION = '2.3.3.dev0'
 
 version_flags   = ['dt', 'dec']
 
@@ -471,8 +471,8 @@ setup(name="psycopg2",
       maintainer_email="fog@initd.org",
       author="Federico Di Gregorio",
       author_email="fog@initd.org",
-      url="http://initd.org/tracker/psycopg",
-      download_url = "http://initd.org/pub/software/psycopg2",
+      url="http://initd.org/psycopg/",
+      download_url = "http://initd.org/psycopg/download/",
       license="GPL with exceptions or ZPL",
       platforms = ["any"],
       description=__doc__.split("\n")[0],

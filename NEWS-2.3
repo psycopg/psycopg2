@@ -1,11 +1,25 @@
-What's new in psycopg 2.3.2
+What's new in psycopg 2.3.3
 ---------------------------
+
+* Changes:
 
   - Improved PostgreSQL-Python encodings mapping. Added a few
     missing encodings: EUC_CN, EUC_JIS_2004, ISO885910, ISO885916,
     LATIN10, SHIFT_JIS_2004.
   - Dropped repeated dictionary lookups with unicode query/parameters.
   - Empty lists correctly roundtrip Python -> PostgreSQL -> Python.
+
+* Bug fixes
+
+  - Fixed adaptation of None in composite types (ticket #26). Bug report by
+    Karsten Hilbert.
+
+
+What's new in psycopg 2.3.2
+---------------------------
+
+  - Fixed segfault with middleware not passing DateStyle to the client
+    (ticket #24). Bug report and patch by Marti Raudsepp.
 
 
 What's new in psycopg 2.3.1
