@@ -158,6 +158,55 @@ can be enabled using the `register_hstore()` function.
 
 
 .. index::
+    pair: Composite types; Data types
+    pair: tuple; Adaptation
+    pair: namedtuple; Adaptation
+
+Composite types casting
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. versionadded:: 2.3.3
+
+Using `register_composite()` it is possible to cast a PostgreSQL composite
+type (e.g. created with |CREATE TYPE|_ command) into a Python named tuple, or
+into a regular tuple if `!collections.namedtuple()` is not found.
+
+.. |CREATE TYPE| replace:: :sql:`CREATE TYPE`
+.. _CREATE TYPE: http://www.postgresql.org/docs/9.0/static/sql-createtype.html
+
+.. doctest::
+
+    >>> cur.execute("CREATE TYPE card AS (value int, suit text);")
+    >>> psycopg2.extras.register_composite('card', cur)
+    <psycopg2.extras.CompositeCaster object at 0x...>
+
+    >>> cur.execute("select (8, 'hearts')::card")
+    >>> cur.fetchone()[0]
+    card(value=8, suit='hearts')
+
+Nested composite types are handled as expected, but the type of the composite
+components must be registered as well.
+
+.. doctest::
+
+    >>> cur.execute("CREATE TYPE card_back AS (face card, back text);")
+    >>> psycopg2.extras.register_composite('card_back', cur)
+    <psycopg2.extras.CompositeCaster object at 0x...>
+
+    >>> cur.execute("select ((8, 'hearts'), 'blue')::card_back")
+    >>> cur.fetchone()[0]
+    card_back(face=card(value=8, suit='hearts'), back='blue')
+
+Adaptation from Python tuples to composite types is automatic instead and
+requires no adapter registration.
+
+.. autofunction:: register_composite
+
+.. autoclass:: CompositeCaster
+
+
+
+.. index::
     pair: UUID; Data types
 
 UUID data type

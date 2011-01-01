@@ -20,6 +20,8 @@ except:
     pass
 import re
 import sys
+from datetime import date
+
 from testutils import unittest
 
 import psycopg2
@@ -384,6 +386,158 @@ class AdaptTypeTestCase(unittest.TestCase):
 
         finally:
             ext.register_adapter(type(None), orig_adapter)
+
+    def test_tokenization(self):
+        from psycopg2.extras import CompositeCaster
+        def ok(s, v):
+            self.assertEqual(CompositeCaster.tokenize(s), v)
+
+        ok("(,)", [None, None])
+        ok('(hello,,10.234,2010-11-11)', ['hello', None, '10.234', '2010-11-11'])
+        ok('(10,"""")', ['10', '"'])
+        ok('(10,",")', ['10', ','])
+        ok(r'(10,"\\")', ['10', '\\'])
+        ok(r'''(10,"\\',""")''', ['10', '''\\',"'''])
+        ok('(10,"(20,""(30,40)"")")', ['10', '(20,"(30,40)")'])
+        ok('(10,"(20,""(30,""""(40,50)"""")"")")', ['10', '(20,"(30,""(40,50)"")")'])
+        ok('(,"(,""(a\nb\tc)"")")', [None, '(,"(a\nb\tc)")'])
+        ok('(\x01,\x02,\x03,\x04,\x05,\x06,\x07,\x08,"\t","\n","\x0b",'
+           '"\x0c","\r",\x0e,\x0f,\x10,\x11,\x12,\x13,\x14,\x15,\x16,'
+           '\x17,\x18,\x19,\x1a,\x1b,\x1c,\x1d,\x1e,\x1f," ",!,"""",#,'
+           '$,%,&,\',"(",")",*,+,",",-,.,/,0,1,2,3,4,5,6,7,8,9,:,;,<,=,>,?,'
+           '@,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,[,"\\\\",],'
+           '^,_,`,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,{,|,},'
+           '~,\x7f)',
+           map(chr, range(1, 128)))
+        ok('(,"\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f'
+           '\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f !'
+           '""#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\\\]'
+           '^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f")',
+           [None, ''.join(map(chr, range(1, 128)))])
+
+    def test_cast_composite(self):
+        oid = self._create_type("type_isd",
+            [('anint', 'integer'), ('astring', 'text'), ('adate', 'date')])
+
+        t = psycopg2.extras.register_composite("type_isd", self.conn)
+        self.assertEqual(t.name, 'type_isd')
+        self.assertEqual(t.oid, oid)
+        self.assert_(issubclass(t.type, tuple))
+        self.assertEqual(t.attnames, ['anint', 'astring', 'adate'])
+        self.assertEqual(t.atttypes, [23,25,1082])
+
+        curs = self.conn.cursor()
+        r = (10, 'hello', date(2011,1,2))
+        curs.execute("select %s::type_isd;", (r,))
+        v = curs.fetchone()[0]
+        self.assert_(isinstance(v, t.type))
+        self.assertEqual(v[0], 10)
+        self.assertEqual(v[1], "hello")
+        self.assertEqual(v[2], date(2011,1,2))
+
+        try:
+            from collections import namedtuple
+        except ImportError:
+            pass
+        else:
+            self.assert_(t.type is not tuple)
+            self.assertEqual(v.anint, 10)
+            self.assertEqual(v.astring, "hello")
+            self.assertEqual(v.adate, date(2011,1,2))
+
+    def test_cast_nested(self):
+        self._create_type("type_is",
+            [("anint", "integer"), ("astring", "text")])
+        self._create_type("type_r_dt",
+            [("adate", "date"), ("apair", "type_is")])
+        self._create_type("type_r_ft",
+            [("afloat", "float8"), ("anotherpair", "type_r_dt")])
+
+        psycopg2.extras.register_composite("type_is", self.conn)
+        psycopg2.extras.register_composite("type_r_dt", self.conn)
+        psycopg2.extras.register_composite("type_r_ft", self.conn)
+
+        curs = self.conn.cursor()
+        r = (0.25, (date(2011,1,2), (42, "hello")))
+        curs.execute("select %s::type_r_ft;", (r,))
+        v = curs.fetchone()[0]
+
+        self.assertEqual(r, v)
+
+        try:
+            from collections import namedtuple
+        except ImportError:
+            pass
+        else:
+            self.assertEqual(v.anotherpair.apair.astring, "hello")
+
+    def test_register_on_cursor(self):
+        self._create_type("type_ii", [("a", "integer"), ("b", "integer")])
+
+        curs1 = self.conn.cursor()
+        curs2 = self.conn.cursor()
+        psycopg2.extras.register_composite("type_ii", curs1)
+        curs1.execute("select (1,2)::type_ii")
+        self.assertEqual(curs1.fetchone()[0], (1,2))
+        curs2.execute("select (1,2)::type_ii")
+        self.assertEqual(curs2.fetchone()[0], "(1,2)")
+
+    def test_register_on_connection(self):
+        self._create_type("type_ii", [("a", "integer"), ("b", "integer")])
+
+        conn1 = psycopg2.connect(self.conn.dsn)
+        conn2 = psycopg2.connect(self.conn.dsn)
+        try:
+            psycopg2.extras.register_composite("type_ii", conn1)
+            curs1 = conn1.cursor()
+            curs2 = conn2.cursor()
+            curs1.execute("select (1,2)::type_ii")
+            self.assertEqual(curs1.fetchone()[0], (1,2))
+            curs2.execute("select (1,2)::type_ii")
+            self.assertEqual(curs2.fetchone()[0], "(1,2)")
+        finally:
+            conn1.close()
+            conn2.close()
+
+    def test_register_globally(self):
+        self._create_type("type_ii", [("a", "integer"), ("b", "integer")])
+
+        conn1 = psycopg2.connect(self.conn.dsn)
+        conn2 = psycopg2.connect(self.conn.dsn)
+        try:
+            t = psycopg2.extras.register_composite("type_ii", conn1, globally=True)
+            try:
+                curs1 = conn1.cursor()
+                curs2 = conn2.cursor()
+                curs1.execute("select (1,2)::type_ii")
+                self.assertEqual(curs1.fetchone()[0], (1,2))
+                curs2.execute("select (1,2)::type_ii")
+                self.assertEqual(curs2.fetchone()[0], (1,2))
+            finally:
+                del psycopg2.extensions.string_types[t.oid]
+
+        finally:
+            conn1.close()
+            conn2.close()
+
+    def _create_type(self, name, fields):
+        curs = self.conn.cursor()
+        try:
+            curs.execute("drop type %s cascade;" % name)
+        except psycopg2.ProgrammingError:
+            self.conn.rollback()
+
+        curs.execute("create type %s as (%s);" % (name,
+            ", ".join(["%s %s" % p for p in fields])))
+        curs.execute("""\
+            SELECT t.oid
+            FROM pg_type t JOIN pg_namespace ns ON typnamespace = ns.oid
+            WHERE typname = %s and nspname = 'public';
+            """, (name,))
+        oid = curs.fetchone()[0]
+        self.conn.commit()
+        return oid
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

@@ -629,6 +629,29 @@ psyco_curs_mogrify(cursorObject *self, PyObject *args, PyObject *kwargs)
 #endif
 
 
+/* cast method - convert an oid/string into a Python object */
+#define psyco_curs_cast_doc \
+"cast(oid, s) -> value\n\n" \
+"Convert the string s to a Python object according to its oid.\n\n" \
+"Look for a typecaster first in the cursor, then in its connection," \
+"then in the global register. If no suitable typecaster is found," \
+"leave the value as a string."
+
+static PyObject *
+psyco_curs_cast(cursorObject *self, PyObject *args)
+{
+    PyObject *oid;
+    PyObject *s;
+    PyObject *cast;
+
+    if (!PyArg_ParseTuple(args, "OO", &oid, &s))
+        return NULL;
+
+    cast = curs_get_cast(self, oid);
+    return PyObject_CallFunctionObjArgs(cast, s, (PyObject *)self, NULL);
+}
+
+
 /* fetchone method - fetch one row of results */
 
 #define psyco_curs_fetchone_doc \
@@ -1524,6 +1547,8 @@ static struct PyMethodDef cursorObject_methods[] = {
      METH_VARARGS|METH_KEYWORDS, psyco_curs_scroll_doc},
     /* psycopg extensions */
 #ifdef PSYCOPG_EXTENSIONS
+    {"cast", (PyCFunction)psyco_curs_cast,
+     METH_VARARGS, psyco_curs_cast_doc},
     {"mogrify", (PyCFunction)psyco_curs_mogrify,
      METH_VARARGS|METH_KEYWORDS, psyco_curs_mogrify_doc},
     {"copy_from", (PyCFunction)psyco_curs_copy_from,
