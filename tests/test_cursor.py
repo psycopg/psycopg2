@@ -67,6 +67,38 @@ class CursorTests(unittest.TestCase):
         self.assertEqual('SELECT 10.3;',
             cur.mogrify("SELECT %s;", (Decimal("10.3"),)))
 
+    def test_cast(self):
+        curs = self.conn.cursor()
+
+        self.assertEqual(42, curs.cast(20, '42'))
+        self.assertAlmostEqual(3.14, curs.cast(700, '3.14'))
+
+        try:
+            from decimal import Decimal
+        except ImportError:
+            self.assertAlmostEqual(123.45, curs.cast(1700, '123.45'))
+        else:
+            self.assertEqual(Decimal('123.45'), curs.cast(1700, '123.45'))
+
+        from datetime import date
+        self.assertEqual(date(2011,1,2), curs.cast(1082, '2011-01-02'))
+        self.assertEqual("who am i?", curs.cast(705, 'who am i?'))  # unknown
+
+    def test_cast_specificity(self):
+        curs = self.conn.cursor()
+        self.assertEqual("foo", curs.cast(705, 'foo'))
+
+        D = psycopg2.extensions.new_type((705,), "DOUBLING", lambda v, c: v * 2)
+        psycopg2.extensions.register_type(D, self.conn)
+        self.assertEqual("foofoo", curs.cast(705, 'foo'))
+
+        T = psycopg2.extensions.new_type((705,), "TREBLING", lambda v, c: v * 3)
+        psycopg2.extensions.register_type(T, curs)
+        self.assertEqual("foofoofoo", curs.cast(705, 'foo'))
+
+        curs2 = self.conn.cursor()
+        self.assertEqual("foofoo", curs2.cast(705, 'foo'))
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

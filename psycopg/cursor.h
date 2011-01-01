@@ -84,6 +84,7 @@ typedef struct {
 } cursorObject;
 
 /* C-callable functions in cursor_int.c and cursor_ext.c */
+HIDDEN PyObject *curs_get_cast(cursorObject *self, PyObject *oid);
 HIDDEN void curs_reset(cursorObject *self);
 
 /* exception-raising macros */
