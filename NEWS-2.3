@@ -1,6 +1,13 @@
 What's new in psycopg 2.3.3
 ---------------------------
 
+* New features:
+
+  - Added `register_composite()` function to cast PostgreSQL composite types
+    into Python tuples/namedtuples.
+
+* Bug fixes:
+
   - Fixed adaptation of None in composite types (ticket #26). Bug report by
     Karsten Hilbert.
 
