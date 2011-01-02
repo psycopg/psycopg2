@@ -43,6 +43,7 @@ except Exception, e:
 else:
     cnn.close()
 
+import bug_gc
 import bugX000
 import extras_dictcursor
 import test_dates
@@ -62,6 +63,7 @@ import test_cancel
 
 def test_suite():
     suite = unittest.TestSuite()
+    suite.addTest(bug_gc.test_suite())
     suite.addTest(bugX000.test_suite())
     suite.addTest(extras_dictcursor.test_suite())
     suite.addTest(test_dates.test_suite())
