@@ -348,20 +348,13 @@ psyco_Time(PyObject *self, PyObject *args)
     return res;
 }
 
-PyObject *
-psyco_Timestamp(PyObject *self, PyObject *args)
+static PyObject *
+_psyco_Timestamp(int year, int month, int day,
+                 int hour, int minute, double second, PyObject *tzinfo)
 {
+    double micro;
+    PyObject *obj;
     PyObject *res = NULL;
-    PyObject *tzinfo = NULL;
-    int year, month, day;
-    int hour=0, minute=0; /* default to midnight */
-    double micro, second=0.0;
-
-    PyObject* obj = NULL;
-
-    if (!PyArg_ParseTuple(args, "lii|iidO", &year, &month, &day,
-                          &hour, &minute, &second, &tzinfo))
-        return NULL;
 
     micro = (second - floor(second)) * 1000000.0;
     second = floor(second);
@@ -384,6 +377,21 @@ psyco_Timestamp(PyObject *self, PyObject *args)
     }
 
     return res;
+}
+
+PyObject *
+psyco_Timestamp(PyObject *self, PyObject *args)
+{
+    PyObject *tzinfo = NULL;
+    int year, month, day;
+    int hour=0, minute=0; /* default to midnight */
+    double second=0.0;
+
+    if (!PyArg_ParseTuple(args, "lii|iidO", &year, &month, &day,
+                          &hour, &minute, &second, &tzinfo))
+        return NULL;
+
+    return _psyco_Timestamp(year, month, day, hour, minute, second, tzinfo);
 }
 
 PyObject *
@@ -446,20 +454,12 @@ psyco_TimestampFromTicks(PyObject *self, PyObject *args)
     t = (time_t)floor(ticks);
     ticks -= (double)t;
     if (localtime_r(&t, &tm)) {
-        PyObject *value = Py_BuildValue("iiiiidO",
-            tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday,
-            tm.tm_hour, tm.tm_min,
-            (double)tm.tm_sec + ticks,
+        res = _psyco_Timestamp(
+            tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
+            tm.tm_hour, tm.tm_min, (double)tm.tm_sec + ticks,
             pyPsycopgTzLOCAL);
-        if (value) {
-            /* FIXME: not decref'ing the value here is a memory leak
-	       but, on the other hand, if we decref we get a clean nice
-	       segfault (on my 64 bit Python 2.4 box). So this leaks
-	       will stay until after 2.0.7 when we'll try to plug it */
-            res = psyco_Timestamp(self, value);
-        }
     }
-    
+
     return res;
 }
 
