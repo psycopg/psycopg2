@@ -104,7 +104,8 @@ $(PLATLIB): $(SOURCE_C)
 	$(PYTHON) setup.py build_ext $(BUILD_EXT_OPT)
 
 $(PACKAGE)/%.py: lib/%.py
-	$(PYTHON) setup.py build $(BUILD_OPT)
+	$(PYTHON) setup.py build_py $(BUILD_OPT)
+	touch $@
 
 
 $(SDIST): docs MANIFEST $(SOURCE)
