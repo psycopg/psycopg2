@@ -122,20 +122,6 @@ The ``cursor`` class
         values can be retrieved using |fetch*|_ methods.
 
 
-    .. method:: mogrify(operation [, parameters])
-
-        Return a query string after arguments binding. The string returned is
-        exactly the one that would be sent to the database running the
-        `~cursor.execute()` method or similar.
-
-            >>> cur.mogrify("INSERT INTO test (num, data) VALUES (%s, %s)", (42, 'bar'))
-            "INSERT INTO test (num, data) VALUES (42, E'bar')"
-
-        .. extension::
-
-            The `mogrify()` method is a Psycopg extension to the |DBAPI|.
-
-        
     .. method:: executemany(operation, seq_of_parameters)
       
         Prepare a database operation (query or command) and then execute it
@@ -165,6 +151,34 @@ The ``cursor`` class
       
         This method is exposed in compliance with the |DBAPI|. It currently
         does nothing but it is safe to call it.
+
+
+    .. method:: mogrify(operation [, parameters])
+
+        Return a query string after arguments binding. The string returned is
+        exactly the one that would be sent to the database running the
+        `~cursor.execute()` method or similar.
+
+            >>> cur.mogrify("INSERT INTO test (num, data) VALUES (%s, %s)", (42, 'bar'))
+            "INSERT INTO test (num, data) VALUES (42, E'bar')"
+
+        .. extension::
+
+            The `mogrify()` method is a Psycopg extension to the |DBAPI|.
+
+    .. method:: cast(oid, s)
+
+        Convert a value from the PostgreSQL string representation to a Python
+        object.
+
+        Use the most specific of the typecasters registered by
+        `~psycopg2.extensions.register_type()`.
+
+        .. versionadded:: 2.3.3
+
+        .. extension::
+
+            The `cast()` method is a Psycopg extension to the |DBAPI|.
 
 
 

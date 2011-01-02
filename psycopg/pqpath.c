@@ -954,19 +954,7 @@ _pq_fetch_tuples(cursorObject *curs)
 
         type = PyInt_FromLong(ftype);
         Dprintf("_pq_fetch_tuples: looking for cast %d:", ftype);
-        if (curs->string_types != NULL && curs->string_types != Py_None) {
-            cast = PyDict_GetItem(curs->string_types, type);
-            Dprintf("_pq_fetch_tuples:     per-cursor dict: %p", cast);
-        }
-        if (cast == NULL) {
-            cast = PyDict_GetItem(curs->conn->string_types, type);
-            Dprintf("_pq_fetch_tuples:     per-connection dict: %p", cast);
-        }
-        if (cast == NULL) {
-            cast = PyDict_GetItem(psyco_types, type);
-            Dprintf("_pq_fetch_tuples:     global dict: %p", cast);
-        }
-        if (cast == NULL) cast = psyco_default_cast;
+        cast = curs_get_cast(curs, type);
 
         /* else if we got binary tuples and if we got a field that
            is binary use the default cast

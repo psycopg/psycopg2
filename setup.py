@@ -73,14 +73,14 @@ version_flags   = ['dt', 'dec']
 
 PLATFORM_IS_WINDOWS = sys.platform.lower().startswith('win')
 
-def get_pg_config(kind, pg_config="pg_config"):
+def get_pg_config(kind, pg_config):
     try:
       p = subprocess.Popen([pg_config, "--" + kind],
                            stdin=subprocess.PIPE,
                            stdout=subprocess.PIPE,
                            stderr=subprocess.PIPE)
     except OSError:
-        raise Warning("Unable to find 'pg_config' file")
+        raise Warning("Unable to find 'pg_config' file in '%s'" % pg_config)
     p.stdin.close()
     r = p.stdout.readline().strip()
     if not r:
@@ -114,8 +114,6 @@ class psycopg_build_ext(build_ext):
     boolean_options = build_ext.boolean_options[:]
     boolean_options.extend(('use-pydatetime', 'have-ssl', 'static-libpq'))
 
-    DEFAULT_PG_CONFIG = "pg_config"
-
     def initialize_options(self):
         build_ext.initialize_options(self)
         self.use_pg_dll = 1
@@ -123,8 +121,7 @@ class psycopg_build_ext(build_ext):
         self.mx_include_dir = None
         self.use_pydatetime = 1
         self.have_ssl = have_ssl
-
-        self.pg_config = self.autodetect_pg_config_path()
+        self.pg_config = None
 
     def get_compiler(self):
         """Return the name of the C compiler used to compile extensions.
@@ -222,6 +219,20 @@ class psycopg_build_ext(build_ext):
     def finalize_options(self):
         """Complete the build system configuation."""
         build_ext.finalize_options(self)
+        if self.pg_config is None:
+            self.pg_config = self.autodetect_pg_config_path()
+        if self.pg_config is None:
+            sys.stderr.write("""\
+Error: pg_config executable not found.
+
+Please add the directory containing pg_config to the PATH
+or specify the full executable path with the option:
+
+    python setup.py build_ext --pg-config /path/to/pg_config build ...
+
+or with the pg_config option in 'setup.cfg'.
+""")
+            sys.exit(1)
 
         self.include_dirs.append(".")
         if static_libpq:
@@ -258,23 +269,25 @@ class psycopg_build_ext(build_ext):
             define_macros.append(("PG_VERSION_HEX", "0x%02X%02X%02X" %
                                   (int(pgmajor), int(pgminor), int(pgpatch))))
         except Warning:
-            w = sys.exc_info() # work around py 2/3 different syntax
-            if self.pg_config == self.DEFAULT_PG_CONFIG:
-                sys.stderr.write("Warning: %s" % str(w))
-            else:
-                sys.stderr.write("Error: %s" % str(w))
-                sys.exit(1)
+            w = sys.exc_info()[1] # work around py 2/3 different syntax
+            sys.stderr.write("Error: %s\n" % w)
+            sys.exit(1)
 
         if hasattr(self, "finalize_" + sys.platform):
             getattr(self, "finalize_" + sys.platform)()
 
     def autodetect_pg_config_path(self):
-        res = None
-
         if PLATFORM_IS_WINDOWS:
-            res = self.autodetect_pg_config_path_windows()
+            return self.autodetect_pg_config_path_windows()
+        else:
+            return self.autodetect_pg_config_path_posix()
 
-        return res or self.DEFAULT_PG_CONFIG
+    def autodetect_pg_config_path_posix(self):
+        exename = 'pg_config'
+        for dir in os.environ['PATH'].split(os.pathsep):
+            fn = os.path.join(dir, exename)
+            if os.path.isfile(fn):
+                return fn
 
     def autodetect_pg_config_path_windows(self):
         # Find the first PostgreSQL installation listed in the registry and

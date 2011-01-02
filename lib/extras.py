@@ -735,4 +735,146 @@ def register_hstore(conn_or_curs, globally=False, unicode=False):
     _ext.register_adapter(dict, HstoreAdapter)
 
 
+class CompositeCaster(object):
+    """Helps conversion of a PostgreSQL composite type into a Python object.
+
+    The class is usually created by the `register_composite()` function.
+
+    .. attribute:: name
+
+        The name of the PostgreSQL type.
+
+    .. attribute:: oid
+
+        The oid of the PostgreSQL type.
+
+    .. attribute:: type
+
+        The type of the Python objects returned. If `!collections.namedtuple()`
+        is available, it is a named tuple with attributes equal to the type
+        components. Otherwise it is just the `tuple` object.
+
+    .. attribute:: attnames
+
+        List of component names of the type to be casted.
+
+    .. attribute:: atttypes
+
+        List of component type oids of the type to be casted.
+
+    """
+    def __init__(self, name, oid, attrs):
+        self.name = name
+        self.oid = oid
+
+        self.attnames = [ a[0] for a in attrs ]
+        self.atttypes = [ a[1] for a in attrs ]
+        self.type = self._create_type(name, self.attnames)
+        self.typecaster = _ext.new_type((oid,), name, self.parse)
+
+    def parse(self, s, curs):
+        if s is None:
+            return None
+
+        tokens = self.tokenize(s)
+        if len(tokens) != len(self.atttypes):
+            raise psycopg2.DataError(
+                "expecting %d components for the type %s, %d found instead",
+                (len(self.atttypes), self.name, len(self.tokens)))
+
+        attrs = [ curs.cast(oid, token)
+            for oid, token in zip(self.atttypes, tokens) ]
+        return self.type(*attrs)
+
+    _re_tokenize = regex.compile(r"""
+  \(? ([,\)])                       # an empty token, representing NULL
+| \(? " ((?: [^"] | "")*) " [,)]    # or a quoted string
+| \(? ([^",\)]+) [,\)]              # or an unquoted string
+    """, regex.VERBOSE)
+
+    _re_undouble = regex.compile(r'(["\\])\1')
+
+    @classmethod
+    def tokenize(self, s):
+        rv = []
+        for m in self._re_tokenize.finditer(s):
+            if m is None:
+                raise psycopg2.InterfaceError("can't parse type: %r", s)
+            if m.group(1):
+                rv.append(None)
+            elif m.group(2):
+                rv.append(self._re_undouble.sub(r"\1", m.group(2)))
+            else:
+                rv.append(m.group(3))
+
+        return rv
+
+    def _create_type(self, name, attnames):
+        try:
+            from collections import namedtuple
+        except ImportError:
+            return tuple
+        else:
+            return namedtuple(name, attnames)
+
+    @classmethod
+    def _from_db(self, name, conn_or_curs):
+        """Return a `CompositeCaster` instance for the type *name*.
+
+        Raise `ProgrammingError` if the type is not found.
+        """
+        if hasattr(conn_or_curs, 'execute'):
+            conn = conn_or_curs.connection
+            curs = conn_or_curs
+        else:
+            conn = conn_or_curs
+            curs = conn_or_curs.cursor()
+
+        # Store the transaction status of the connection to revert it after use
+        conn_status = conn.status
+
+        # get the type oid and attributes
+        curs.execute("""\
+SELECT t.oid, attname, atttypid
+FROM pg_type t
+JOIN pg_namespace ns ON typnamespace = ns.oid
+JOIN pg_attribute a ON attrelid = typrelid
+WHERE typname = %s and nspname = 'public';
+""", (name, ))
+
+        recs = curs.fetchall()
+
+        # revert the status of the connection as before the command
+        if (conn_status != _ext.STATUS_IN_TRANSACTION
+        and conn.isolation_level != _ext.ISOLATION_LEVEL_AUTOCOMMIT):
+            conn.rollback()
+
+        if not recs:
+            raise psycopg2.ProgrammingError(
+                "PostgreSQL type '%s' not found" % name)
+
+        type_oid = recs[0][0]
+        type_attrs = [ (r[1], r[2]) for r in recs ]
+
+        return CompositeCaster(name, type_oid, type_attrs)
+
+def register_composite(name, conn_or_curs, globally=False):
+    """Register a typecaster to convert a composite type into a tuple.
+
+    :param name: the name of a PostgreSQL composite type, e.g. created using
+        the |CREATE TYPE|_ command
+    :param conn_or_curs: a connection or cursor used to find the type oid and
+        components; the typecaster is registered in a scope limited to this
+        object, unless *globally* is set to `True`
+    :param globally: if `False` (default) register the typecaster only on
+        *conn_or_curs*, otherwise register it globally
+    :return: the registered `CompositeCaster` instance responsible for the
+        conversion
+    """
+    caster = CompositeCaster._from_db(name, conn_or_curs)
+    _ext.register_type(caster.typecaster, not globally and conn_or_curs or None)
+
+    return caster
+
+
 __all__ = filter(lambda k: not k.startswith('_'), locals().keys())

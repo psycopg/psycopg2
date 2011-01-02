@@ -28,6 +28,41 @@
 
 #include "psycopg/cursor.h"
 #include "psycopg/pqpath.h"
+#include "psycopg/typecast.h"
+
+/* curs_get_cast - return the type caster for an oid.
+ *
+ * Return the most specific type caster, from cursor to connection to global.
+ * If no type caster is found, return the default one.
+ *
+ * Return a borrowed reference.
+ */
+
+PyObject *
+curs_get_cast(cursorObject *self, PyObject *oid)
+{
+    PyObject *cast;
+
+    /* cursor lookup */
+    if (self->string_types != NULL && self->string_types != Py_None) {
+        cast = PyDict_GetItem(self->string_types, oid);
+        Dprintf("curs_get_cast:        per-cursor dict: %p", cast);
+        if (cast) { return cast; }
+    }
+
+    /* connection lookup */
+    cast = PyDict_GetItem(self->conn->string_types, oid);
+    Dprintf("curs_get_cast:        per-connection dict: %p", cast);
+    if (cast) { return cast; }
+
+    /* global lookup */
+    cast = PyDict_GetItem(psyco_types, oid);
+    Dprintf("curs_get_cast:        global dict: %p", cast);
+    if (cast) { return cast; }
+
+    /* fallback */
+    return psyco_default_cast;
+}
 
 #include <string.h>
 

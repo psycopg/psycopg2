@@ -27,12 +27,14 @@ ENV_LIB = $(ENV_DIR)/lib
 
 SOURCE_C := $(wildcard psycopg/*.c psycopg/*.h)
 SOURCE_PY := $(wildcard lib/*.py)
+SOURCE_TESTS := $(wildcard tests/*.py)
 SOURCE_DOC := $(wildcard doc/src/*.rst)
-SOURCE := $(SOURCE_C) $(SOURCE_PY) $(SOURCE_DOC)
+SOURCE := $(SOURCE_C) $(SOURCE_PY) $(SOURCE_TESTS) $(SOURCE_DOC)
 
 PACKAGE := $(BUILD_DIR)/psycopg2
 PLATLIB := $(PACKAGE)/_psycopg.so
-PURELIB := $(patsubst lib/%,$(PACKAGE)/%,$(SOURCE_PY))
+PURELIB := $(patsubst lib/%,$(PACKAGE)/%,$(SOURCE_PY)) \
+           $(patsubst tests/%,$(PACKAGE)/tests/%,$(SOURCE_TESTS))
 
 BUILD_OPT := --build-lib=$(BUILD_DIR)
 BUILD_EXT_OPT := --build-lib=$(BUILD_DIR)
@@ -104,8 +106,12 @@ $(PLATLIB): $(SOURCE_C)
 	$(PYTHON) setup.py build_ext $(BUILD_EXT_OPT)
 
 $(PACKAGE)/%.py: lib/%.py
-	$(PYTHON) setup.py build $(BUILD_OPT)
+	$(PYTHON) setup.py build_py $(BUILD_OPT)
+	touch $@
 
+$(PACKAGE)/tests/%.py: tests/%.py
+	$(PYTHON) setup.py build_py $(BUILD_OPT)
+	touch $@
 
 $(SDIST): docs MANIFEST $(SOURCE)
 	$(PYTHON) setup.py sdist $(SDIST_OPT)

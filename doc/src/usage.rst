@@ -280,7 +280,7 @@ the SQL string that would be sent to the database.
     single: IN operator
 
 - Python tuples are converted in a syntax suitable for the SQL :sql:`IN`
-  operator::
+  operator and to represent a composite type::
 
     >>> cur.mogrify("SELECT %s IN %s;", (10, (10, 20, 30)))
     'SELECT 10 IN (10, 20, 30);'
@@ -290,6 +290,10 @@ the SQL string that would be sent to the database.
     SQL doesn't allow an empty list in the IN operator, so your code should
     guard against empty tuples.
 
+  If you want PostgreSQL composite types to be converted into a Python
+  tuple/namedtuple you can use the `~psycopg2.extras.register_composite()`
+  function.
+
   .. versionadded:: 2.0.6
      the tuple :sql:`IN` adaptation.
 
@@ -297,6 +301,10 @@ the SQL string that would be sent to the database.
      the tuple :sql:`IN` adapter is always active.  In previous releases it
      was necessary to import the `~psycopg2.extensions` module to have it
      registered.
+
+  .. versionchanged:: 2.3
+     named tuples are adapted like regular tuples and can thus be used to
+     represent composite types.
 
 - Python dictionaries are converted into the |hstore|_ data type. See
   `~psycopg2.extras.register_hstore()` for further details.
@@ -306,6 +314,7 @@ the SQL string that would be sent to the database.
 
   .. versionadded:: 2.3
      the :sql:`hstore` adaptation.
+
 
 .. index::
     single: Unicode
