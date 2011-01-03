@@ -410,6 +410,18 @@ class AsyncTests(unittest.TestCase):
         self.assertEqual("CREATE TABLE", cur.statusmessage)
         self.assert_(self.conn.notices)
 
+    def test_async_cursor_gone(self):
+        cur = self.conn.cursor()
+        cur.execute("select 42;");
+        del cur
+        self.assertRaises(psycopg2.InterfaceError, self.wait, self.conn)
+
+        # The connection is still usable
+        cur = self.conn.cursor()
+        cur.execute("select 42;");
+        self.wait(self.conn)
+        self.assertEqual(cur.fetchone(), (42,))
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

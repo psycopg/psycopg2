@@ -76,6 +76,8 @@ typedef struct {
     PyObject *string_types;   /* a set of typecasters for string types */
     PyObject *binary_types;   /* a set of typecasters for binary types */
 
+    PyObject *weakreflist;    /* list of weak references */
+
 } cursorObject;
 
 /* C-callable functions in cursor_int.c and cursor_ext.c */

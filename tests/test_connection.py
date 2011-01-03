@@ -119,6 +119,14 @@ class ConnectionTests(unittest.TestCase):
         cur.execute("select 'foo'::text;")
         self.assertEqual(cur.fetchone()[0], u'foo')
 
+    def test_weakref(self):
+        from weakref import ref
+        conn = psycopg2.connect(self.conn.dsn)
+        w = ref(conn)
+        conn.close()
+        del conn
+        self.assert_(w() is None)
+
 
 class IsolationLevelsTestCase(unittest.TestCase):
 

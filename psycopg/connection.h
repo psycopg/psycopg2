@@ -99,7 +99,7 @@ typedef struct {
     PGconn *pgconn;           /* the postgresql connection */
     PGcancel *cancel;         /* the cancellation structure */
 
-    PyObject *async_cursor;   /* a cursor executing an asynchronous query */
+    PyObject *async_cursor;   /* weakref to a cursor executing an asynchronous query */
     int async_status;         /* asynchronous execution status */
 
     /* notice processing */
@@ -115,6 +115,7 @@ typedef struct {
     PyObject *binary_types;   /* a set of typecasters for binary types */
 
     int equote;               /* use E''-style quotes for escaped strings */
+    PyObject *weakreflist;    /* list of weak references */
 
 } connectionObject;
 

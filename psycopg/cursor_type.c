@@ -779,7 +779,8 @@ psyco_curs_fetchone(cursorObject *self, PyObject *args)
     /* if the query was async aggresively free pgres, to allow
        successive requests to reallocate it */
     if (self->row >= self->rowcount
-        && self->conn->async_cursor == (PyObject*)self)
+        && self->conn->async_cursor
+        && PyWeakref_GetObject(self->conn->async_cursor) == (PyObject*)self)
         IFCLEARPGRES(self->pgres);
 
     return res;
@@ -855,7 +856,8 @@ psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
     /* if the query was async aggresively free pgres, to allow
        successive requests to reallocate it */
     if (self->row >= self->rowcount
-        && self->conn->async_cursor == (PyObject*)self)
+        && self->conn->async_cursor
+        && PyWeakref_GetObject(self->conn->async_cursor) == (PyObject*)self)
         IFCLEARPGRES(self->pgres);
 
     return list;
@@ -919,7 +921,8 @@ psyco_curs_fetchall(cursorObject *self, PyObject *args)
     /* if the query was async aggresively free pgres, to allow
        successive requests to reallocate it */
     if (self->row >= self->rowcount
-        && self->conn->async_cursor == (PyObject*)self)
+        && self->conn->async_cursor
+        && PyWeakref_GetObject(self->conn->async_cursor) == (PyObject*)self)
         IFCLEARPGRES(self->pgres);
 
     return list;
@@ -1626,6 +1629,7 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
 
     self->string_types = NULL;
     self->binary_types = NULL;
+    self->weakreflist = NULL;
 
     Py_INCREF(Py_None);
     self->description = Py_None;
@@ -1651,7 +1655,11 @@ static void
 cursor_dealloc(PyObject* obj)
 {
     cursorObject *self = (cursorObject *)obj;
-    
+
+    if (self->weakreflist) {
+        PyObject_ClearWeakRefs(obj);
+    }
+
     PyObject_GC_UnTrack(self);
 
     if (self->name) PyMem_Free(self->name);
@@ -1752,14 +1760,15 @@ PyTypeObject cursorType = {
     0,          /*tp_as_buffer*/
 
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_ITER |
-      Py_TPFLAGS_HAVE_GC, /*tp_flags*/
+      Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_HAVE_WEAKREFS ,
+                /*tp_flags*/
     cursorType_doc, /*tp_doc*/
 
     (traverseproc)cursor_traverse, /*tp_traverse*/
     0,          /*tp_clear*/
 
     0,          /*tp_richcompare*/
-    0,          /*tp_weaklistoffset*/
+    offsetof(cursorObject, weakreflist), /*tp_weaklistoffset*/
 
     cursor_iter, /*tp_iter*/
     cursor_next, /*tp_iternext*/

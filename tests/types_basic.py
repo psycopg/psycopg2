@@ -232,7 +232,11 @@ class AdaptSubclassTest(unittest.TestCase):
 
         register_adapter(A, lambda a: AsIs("a"))
         register_adapter(B, lambda b: AsIs("b"))
-        self.assertEqual(b('b'), adapt(C()).getquoted())
+        try:
+            self.assertEqual(b('b'), adapt(C()).getquoted())
+        finally:
+           del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
+           del psycopg2.extensions.adapters[B, psycopg2.extensions.ISQLQuote]
 
     @testutils.skip_on_python3
     def test_no_mro_no_joy(self):
@@ -242,7 +246,11 @@ class AdaptSubclassTest(unittest.TestCase):
         class B(A): pass
 
         register_adapter(A, lambda a: AsIs("a"))
-        self.assertRaises(psycopg2.ProgrammingError, adapt, B())
+        try:
+            self.assertRaises(psycopg2.ProgrammingError, adapt, B())
+        finally:
+           del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
+
 
     @testutils.skip_on_python2
     def test_adapt_subtype_3(self):
@@ -252,7 +260,10 @@ class AdaptSubclassTest(unittest.TestCase):
         class B(A): pass
 
         register_adapter(A, lambda a: AsIs("a"))
-        self.assertEqual(b("a"), adapt(B()).getquoted())
+        try:
+            self.assertEqual(b("a"), adapt(B()).getquoted())
+        finally:
+           del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
 
 
 def test_suite():

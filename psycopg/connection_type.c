@@ -300,8 +300,6 @@ _psyco_conn_tpc_finish(connectionObject *self, PyObject *args,
             goto exit;
         }
     } else {
-        PyObject *tmp;
-
         /* committing/aborting our own transaction. */
         if (!self->tpc_xid) {
             PyErr_SetString(ProgrammingError,
@@ -327,11 +325,10 @@ _psyco_conn_tpc_finish(connectionObject *self, PyObject *args,
             goto exit;
         }
 
+        Py_CLEAR(self->tpc_xid);
+
         /* connection goes ready */
         self->status = CONN_STATUS_READY;
-        tmp = (PyObject *)self->tpc_xid;
-        self->tpc_xid = NULL;
-        Py_DECREF(tmp);
     }
 
     Py_INCREF(Py_None);
@@ -887,11 +884,15 @@ static void
 connection_dealloc(PyObject* obj)
 {
     connectionObject *self = (connectionObject *)obj;
-    
+
+    if (self->weakreflist) {
+        PyObject_ClearWeakRefs(obj);
+    }
+
     PyObject_GC_UnTrack(self);
 
     if (self->closed == 0) conn_close(self);
-    
+
     conn_notice_clean(self);
 
     if (self->dsn) free(self->dsn);
@@ -899,6 +900,7 @@ connection_dealloc(PyObject* obj)
     PyMem_Free(self->codec);
     if (self->critical) free(self->critical);
 
+    Py_CLEAR(self->tpc_xid);
     Py_CLEAR(self->async_cursor);
     Py_CLEAR(self->notice_list);
     Py_CLEAR(self->notice_filter);
@@ -952,6 +954,7 @@ connection_repr(connectionObject *self)
 static int
 connection_traverse(connectionObject *self, visitproc visit, void *arg)
 {
+    Py_VISIT(self->tpc_xid);
     Py_VISIT(self->async_cursor);
     Py_VISIT(self->notice_list);
     Py_VISIT(self->notice_filter);
@@ -993,14 +996,16 @@ PyTypeObject connectionType = {
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
 
-    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC |
+        Py_TPFLAGS_HAVE_WEAKREFS,
+                /*tp_flags*/
     connectionType_doc, /*tp_doc*/
 
     (traverseproc)connection_traverse, /*tp_traverse*/
     0,          /*tp_clear*/
 
     0,          /*tp_richcompare*/
-    0,          /*tp_weaklistoffset*/
+    offsetof(connectionObject, weakreflist), /* tp_weaklistoffset */
 
     0,          /*tp_iter*/
     0,          /*tp_iternext*/

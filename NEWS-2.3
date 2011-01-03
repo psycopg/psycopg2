@@ -5,6 +5,7 @@ What's new in psycopg 2.3.3
 
   - Added `register_composite()` function to cast PostgreSQL composite types
     into Python tuples/namedtuples.
+  - Connections and cursors are weakly referenceable.
   - The build script refuses to guess values if pg_config is not found.
   - Improved PostgreSQL-Python encodings mapping. Added a few
     missing encodings: EUC_CN, EUC_JIS_2004, ISO885910, ISO885916,
@@ -16,6 +17,7 @@ What's new in psycopg 2.3.3
 
   - Fixed adaptation of None in composite types (ticket #26). Bug report by
     Karsten Hilbert.
+  - Fixed several reference leaks in less common code paths.
 
 
 What's new in psycopg 2.3.2

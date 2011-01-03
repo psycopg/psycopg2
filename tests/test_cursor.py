@@ -100,6 +100,13 @@ class CursorTests(unittest.TestCase):
         curs2 = self.conn.cursor()
         self.assertEqual("foofoo", curs2.cast(705, 'foo'))
 
+    def test_weakref(self):
+        from weakref import ref
+        curs = self.conn.cursor()
+        w = ref(curs)
+        del curs
+        self.assert_(w() is None)
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
