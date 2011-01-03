@@ -792,7 +792,8 @@ psyco_curs_fetchone(cursorObject *self, PyObject *args)
     /* if the query was async aggresively free pgres, to allow
        successive requests to reallocate it */
     if (self->row >= self->rowcount
-        && self->conn->async_cursor == (PyObject*)self)
+        && self->conn->async_cursor
+        && PyWeakref_GetObject(self->conn->async_cursor) == (PyObject*)self)
         IFCLEARPGRES(self->pgres);
 
     return res;
@@ -868,7 +869,8 @@ psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
     /* if the query was async aggresively free pgres, to allow
        successive requests to reallocate it */
     if (self->row >= self->rowcount
-        && self->conn->async_cursor == (PyObject*)self)
+        && self->conn->async_cursor
+        && PyWeakref_GetObject(self->conn->async_cursor) == (PyObject*)self)
         IFCLEARPGRES(self->pgres);
 
     return list;
@@ -932,7 +934,8 @@ psyco_curs_fetchall(cursorObject *self, PyObject *args)
     /* if the query was async aggresively free pgres, to allow
        successive requests to reallocate it */
     if (self->row >= self->rowcount
-        && self->conn->async_cursor == (PyObject*)self)
+        && self->conn->async_cursor
+        && PyWeakref_GetObject(self->conn->async_cursor) == (PyObject*)self)
         IFCLEARPGRES(self->pgres);
 
     return list;

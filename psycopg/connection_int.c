@@ -752,7 +752,17 @@ conn_poll(connectionObject *self)
         if (res == PSYCO_POLL_OK && self->async_cursor) {
             /* An async query has just finished: parse the tuple in the
              * target cursor. */
-            cursorObject *curs = (cursorObject *)self->async_cursor;
+            cursorObject *curs;
+            PyObject *py_curs = PyWeakref_GetObject(self->async_cursor);
+            if (Py_None == py_curs) {
+                pq_clear_async(self);
+                PyErr_SetString(InterfaceError,
+                    "the asynchronous cursor has disappeared");
+                res = PSYCO_POLL_ERROR;
+                break;
+            }
+
+            curs = (cursorObject *)py_curs;
             IFCLEARPGRES(curs->pgres);
             curs->pgres = pq_get_last_result(self);
 
@@ -764,8 +774,7 @@ conn_poll(connectionObject *self)
             }
 
             /* We have finished with our async_cursor */
-            Py_XDECREF(self->async_cursor);
-            self->async_cursor = NULL;
+            Py_CLEAR(self->async_cursor);
         }
         break;
 
