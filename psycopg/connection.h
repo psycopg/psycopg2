@@ -119,6 +119,7 @@ typedef struct {
     PyObject *binary_types;   /* a set of typecasters for binary types */
 
     int equote;               /* use E''-style quotes for escaped strings */
+    PyObject *weakreflist;    /* list of weak references */
 
 } connectionObject;
 

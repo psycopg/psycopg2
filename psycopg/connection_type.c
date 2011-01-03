@@ -867,6 +867,7 @@ connection_setup(connectionObject *self, const char *dsn, long int async)
     self->binary_types = PyDict_New();
     self->notice_pending = NULL;
     self->encoding = NULL;
+    self->weakreflist = NULL;
 
     pthread_mutex_init(&(self->lock), NULL);
 
@@ -896,11 +897,15 @@ static void
 connection_dealloc(PyObject* obj)
 {
     connectionObject *self = (connectionObject *)obj;
-    
+
+    if (self->weakreflist) {
+        PyObject_ClearWeakRefs(obj);
+    }
+
     PyObject_GC_UnTrack(self);
 
     if (self->closed == 0) conn_close(self);
-    
+
     conn_notice_clean(self);
 
     if (self->dsn) free(self->dsn);
@@ -1002,14 +1007,16 @@ PyTypeObject connectionType = {
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
 
-    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC |
+        Py_TPFLAGS_HAVE_WEAKREFS,
+                /*tp_flags*/
     connectionType_doc, /*tp_doc*/
 
     (traverseproc)connection_traverse, /*tp_traverse*/
     0,          /*tp_clear*/
 
     0,          /*tp_richcompare*/
-    0,          /*tp_weaklistoffset*/
+    offsetof(connectionObject, weakreflist), /* tp_weaklistoffset */
 
     0,          /*tp_iter*/
     0,          /*tp_iternext*/

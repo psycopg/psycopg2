@@ -111,6 +111,14 @@ class ConnectionTests(unittest.TestCase):
         self.assert_(time.time() - t0 < 3,
             "something broken in concurrency")
 
+    def test_weakref(self):
+        from weakref import ref
+        conn = psycopg2.connect(self.conn.dsn)
+        w = ref(conn)
+        conn.close()
+        del conn
+        self.assert_(w() is None)
+
 
 class IsolationLevelsTestCase(unittest.TestCase):
 
