@@ -237,7 +237,7 @@ Bytes_Format(PyObject *format, PyObject *args)
             default:
                 PyErr_Format(PyExc_ValueError,
                   "unsupported format character '%c' (0x%x) "
-                  "at index %zd",
+                  "at index " FORMAT_CODE_PY_SSIZE_T,
                   c, c,
                   (Py_ssize_t)(fmt - 1 -
                                Bytes_AsString(format)));
