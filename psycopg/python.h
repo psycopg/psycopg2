@@ -97,6 +97,7 @@
 #define PyString_FromFormat    PyUnicode_FromFormat
 #define Py_TPFLAGS_HAVE_ITER   0L
 #define Py_TPFLAGS_HAVE_RICHCOMPARE 0L
+#define Py_TPFLAGS_HAVE_WEAKREFS 0L
 #ifndef PyNumber_Int
 #define PyNumber_Int           PyNumber_Long
 #endif
