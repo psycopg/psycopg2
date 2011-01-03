@@ -166,7 +166,11 @@ class AdaptSubclassTest(unittest.TestCase):
 
         register_adapter(A, lambda a: AsIs("a"))
         register_adapter(B, lambda b: AsIs("b"))
-        self.assertEqual('b', adapt(C()).getquoted())
+        try:
+            self.assertEqual('b', adapt(C()).getquoted())
+        finally:
+           del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
+           del psycopg2.extensions.adapters[B, psycopg2.extensions.ISQLQuote]
 
     def test_no_mro_no_joy(self):
         from psycopg2.extensions import adapt, register_adapter, AsIs
@@ -175,7 +179,11 @@ class AdaptSubclassTest(unittest.TestCase):
         class B(A): pass
 
         register_adapter(A, lambda a: AsIs("a"))
-        self.assertRaises(psycopg2.ProgrammingError, adapt, B())
+        try:
+            self.assertRaises(psycopg2.ProgrammingError, adapt, B())
+        finally:
+           del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
