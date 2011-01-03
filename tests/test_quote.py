@@ -71,7 +71,7 @@ class QuotingTestCase(unittest.TestCase):
             if not 0xD800 <= u <= 0xDFFF ]))    # surrogate area
         self.conn.set_client_encoding('UNICODE')
 
-        psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
+        psycopg2.extensions.register_type(psycopg2.extensions.UNICODE, self.conn)
         curs.execute("SELECT %s::text;", (data,))
         res = curs.fetchone()[0]
 
