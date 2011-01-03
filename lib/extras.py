@@ -765,7 +765,7 @@ class CompositeCaster(object):
 
         self.attnames = [ a[0] for a in attrs ]
         self.atttypes = [ a[1] for a in attrs ]
-        self.type = self._create_type(name, self.attnames)
+        self._create_type(name, self.attnames)
         self.typecaster = _ext.new_type((oid,), name, self.parse)
 
     def parse(self, s, curs):
@@ -780,7 +780,7 @@ class CompositeCaster(object):
 
         attrs = [ curs.cast(oid, token)
             for oid, token in zip(self.atttypes, tokens) ]
-        return self.type(*attrs)
+        return self._ctor(*attrs)
 
     _re_tokenize = regex.compile(r"""
   \(? ([,\)])                       # an empty token, representing NULL
@@ -809,9 +809,11 @@ class CompositeCaster(object):
         try:
             from collections import namedtuple
         except ImportError:
-            return tuple
+            self.type = tuple
+            self._ctor = lambda *args: tuple(args)
         else:
-            return namedtuple(name, attnames)
+            self.type = namedtuple(name, attnames)
+            self._ctor = self.type
 
     @classmethod
     def _from_db(self, name, conn_or_curs):
