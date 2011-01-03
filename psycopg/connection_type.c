@@ -305,8 +305,6 @@ _psyco_conn_tpc_finish(connectionObject *self, PyObject *args,
             goto exit;
         }
     } else {
-        PyObject *tmp;
-
         /* committing/aborting our own transaction. */
         if (!self->tpc_xid) {
             PyErr_SetString(ProgrammingError,
@@ -332,11 +330,10 @@ _psyco_conn_tpc_finish(connectionObject *self, PyObject *args,
             goto exit;
         }
 
+        Py_CLEAR(self->tpc_xid);
+
         /* connection goes ready */
         self->status = CONN_STATUS_READY;
-        tmp = (PyObject *)self->tpc_xid;
-        self->tpc_xid = NULL;
-        Py_DECREF(tmp);
     }
 
     Py_INCREF(Py_None);
@@ -912,6 +909,7 @@ connection_dealloc(PyObject* obj)
     if (self->encoding) free(self->encoding);
     if (self->critical) free(self->critical);
 
+    Py_CLEAR(self->tpc_xid);
     Py_CLEAR(self->async_cursor);
     Py_CLEAR(self->notice_list);
     Py_CLEAR(self->notice_filter);
@@ -965,6 +963,7 @@ connection_repr(connectionObject *self)
 static int
 connection_traverse(connectionObject *self, visitproc visit, void *arg)
 {
+    Py_VISIT(self->tpc_xid);
     Py_VISIT(self->async_cursor);
     Py_VISIT(self->notice_list);
     Py_VISIT(self->notice_filter);
