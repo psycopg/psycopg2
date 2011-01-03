@@ -62,6 +62,11 @@
 #define PyVarObject_HEAD_INIT(x,n) PyObject_HEAD_INIT(x) n,
 #endif
 
+/* Missing at least in Python 2.4 */
+#ifndef Py_MEMCPY
+#define Py_MEMCPY memcpy
+#endif
+
 /* FORMAT_CODE_PY_SSIZE_T is for Py_ssize_t: */
 #define FORMAT_CODE_PY_SSIZE_T "%" PY_FORMAT_SIZE_T "d"
 

@@ -438,7 +438,7 @@ typecast_repr(PyObject *self)
     }
 
     rv = PyString_FromFormat("<%s '%s' at %p>",
-        Py_TYPE(self)->tp_name, PyBytes_AS_STRING(name), self);
+        Py_TYPE(self)->tp_name, Bytes_AS_STRING(name), self);
 
     Py_DECREF(name);
     return rv;
