@@ -71,7 +71,8 @@ psyco_lobj_close(lobjectObject *self, PyObject *args)
 static PyObject *
 psyco_lobj_write(lobjectObject *self, PyObject *args)
 {
-    int len, res=0;
+    int res = 0;
+    Py_ssize_t len;
     const char *buffer;
 
     if (!PyArg_ParseTuple(args, "s#", &buffer, &len)) return NULL;
@@ -80,7 +81,7 @@ psyco_lobj_write(lobjectObject *self, PyObject *args)
     EXC_IF_LOBJ_LEVEL0(self);
     EXC_IF_LOBJ_UNMARKED(self);
 
-    if ((res = lobject_write(self, buffer, len)) < 0) return NULL;
+    if ((res = lobject_write(self, buffer, (size_t)len)) < 0) return NULL;
 
     return PyInt_FromLong((long)res);
 }
