@@ -52,6 +52,7 @@ from distutils.errors import DistutilsFileError
 from distutils.command.build_ext import build_ext
 from distutils.sysconfig import get_python_inc
 from distutils.ccompiler import get_default_compiler
+from distutils.dep_util import newer_group
 
 # Take a look at http://www.python.org/dev/peps/pep-0386/
 # for a consistent versioning pattern.
@@ -129,6 +130,25 @@ class psycopg_build_ext(build_ext):
 
     def get_pg_config(self, kind):
         return get_pg_config(kind, self.pg_config)
+
+    def build_extension(self, ext):
+        build_ext.build_extension(self, ext)
+
+        # For MSVC compiler and Python 2.6/2.7 (aka VS 2008), re-insert the
+        #  Manifest into the resulting .pyd file.
+        sysVer = sys.version_info[:2]
+        if self.get_compiler().lower().startswith('msvc') and \
+                sysVer in ((2,6), (2,7)):
+          sources = list(ext.sources)
+
+          ext_path = self.get_ext_fullpath(ext.name)
+          depends = sources + ext.depends
+          if not (self.force or newer_group(depends, ext_path, 'newer')):
+              return
+
+          self.compiler.spawn(['mt.exe', '-nologo', '-manifest',
+                os.path.join('psycopg', '_psycopg.vc9.manifest'),
+                '-outputresource:%s;2' % (os.path.join(self.build_lib, 'psycopg2', '_psycopg.pyd'))])
 
     def finalize_win32(self):
         """Finalize build system configuration on win32 platform."""
