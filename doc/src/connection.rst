@@ -490,13 +490,14 @@ The ``connection`` class
 
     .. method:: lobject([oid [, mode [, new_oid [, new_file [, lobject_factory]]]]])
 
-        Return a new database large object. See :ref:`large-objects` for an
-        overview.
+        Return a new database large object as a `~psycopg2.extensions.lobject`
+        instance.
+
+        See :ref:`large-objects` for an overview.
 
         :param oid: The OID of the object to read or write. 0 to create
             a new large object and and have its OID assigned automatically.
-        :param mode: Access mode to the object: can be ``r``, ``w``,
-            ``rw`` or ``n`` (meaning don't open it).
+        :param mode: Access mode to the object, see below.
         :param new_oid: Create a new object using the specified OID. The
             function raises `OperationalError` if the OID is already in
             use. Default is 0, meaning assign a new one automatically.
@@ -504,13 +505,31 @@ The ``connection`` class
             (using the |lo_import|_ function)
         :param lobject_factory: Subclass of
             `~psycopg2.extensions.lobject` to be instantiated.
-        :rtype: `~psycopg2.extensions.lobject`
 
         .. |lo_import| replace:: `!lo_import()`
         .. _lo_import: http://www.postgresql.org/docs/9.0/static/lo-interfaces.html#LO-IMPORT
 
+        Available values for *mode* are:
+
+        ======= =========
+        *mode*  meaning
+        ======= =========
+        ``r``   Open for read only
+        ``w``   Open for write only
+        ``rw``  Open for read/write
+        ``n``   Don't open the file
+        ``b``   Don't decode read data (return data as `str` in Python 2 or `bytes` in Python 3)
+        ``t``   Decode read data according to `connection.encoding` (return data as `unicode` in Python 2 or `str` in Python 3)
+        ======= =========
+
+        ``b`` and ``t`` can be specified together with a read/write mode. If
+        neither ``b`` nor ``t`` is specified, the default is ``b`` in Python 2
+        and ``t`` in Python 3.
+
         .. versionadded:: 2.0.8
 
+        .. versionchanged:: 2.3.3 added ``b`` and ``t`` mode and unicode
+            support.
 
 
     .. rubric:: Methods related to asynchronous support.

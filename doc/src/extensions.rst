@@ -51,17 +51,29 @@ functionalities defined by the |DBAPI|_.
 
     .. attribute:: mode
 
-        The mode the database was open (``r``, ``w``, ``rw`` or ``n``).
+        The mode the database was open. See `connection.lobject()` for a
+        description of the available modes.
 
     .. method:: read(bytes=-1)
 
         Read a chunk of data from the current file position. If -1 (default)
         read all the remaining data.
 
+        The result is an Unicode string (decoded according to
+        `connection.encoding`) if the file was open in ``t`` mode, a bytes
+        string for ``b`` mode.
+
+        .. versionchanged:: 2.3.3
+            added Unicode support.
+
     .. method:: write(str)
 
         Write a string to the large object. Return the number of bytes
-        written.
+        written. Unicode strings are encoded in the `connection.encoding`
+        before writing.
+
+        .. versionchanged:: 2.3.3
+            added Unicode support.
 
     .. method:: export(file_name)
 
