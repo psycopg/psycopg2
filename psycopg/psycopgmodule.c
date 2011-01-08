@@ -760,10 +760,12 @@ static struct PyModuleDef psycopgmodule = {
 PyMODINIT_FUNC
 INIT_MODULE(_psycopg)(void)
 {
+#if PY_VERSION_HEX < 0x03020000
     static void *PSYCOPG_API[PSYCOPG_API_pointers];
+    PyObject *c_api_object;
+#endif
 
     PyObject *module = NULL, *dict;
-    PyObject *c_api_object;
 
 #ifdef PSYCOPG_DEBUG
     if (getenv("PSYCOPG_DEBUG"))
@@ -861,9 +863,12 @@ INIT_MODULE(_psycopg)(void)
     /* PyBoxer_API[PyBoxer_Fake_NUM] = (void *)PyBoxer_Fake; */
 
     /* Create a CObject containing the API pointer array's address */
+    /* If anybody asks for a PyCapsule we'll deal with it. */
+#if PY_VERSION_HEX < 0x03020000
     c_api_object = PyCObject_FromVoidPtr((void *)PSYCOPG_API, NULL);
     if (c_api_object != NULL)
         PyModule_AddObject(module, "_C_API", c_api_object);
+#endif
 
     /* other mixed initializations of module-level variables */
     psycoEncodings = PyDict_New();
