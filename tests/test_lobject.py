@@ -167,8 +167,33 @@ class LargeObjectTests(LargeObjectMixin, unittest.TestCase):
         lo.close()
 
         lo = self.conn.lobject(lo.oid)
-        self.assertEqual(lo.read(4), b("some"))
+        x = lo.read(4)
+        self.assertEqual(type(x), type(''))
+        self.assertEqual(x, "some")
+        self.assertEqual(lo.read(), " data")
+
+    def test_read_binary(self):
+        lo = self.conn.lobject()
+        length = lo.write(b("some data"))
+        lo.close()
+
+        lo = self.conn.lobject(lo.oid, "rb")
+        x = lo.read(4)
+        self.assertEqual(type(x), type(b('')))
+        self.assertEqual(x, "some")
         self.assertEqual(lo.read(), b(" data"))
+
+    def test_read_text(self):
+        lo = self.conn.lobject()
+        snowman = u"\u2603"
+        length = lo.write(u"some data " + snowman)
+        lo.close()
+
+        lo = self.conn.lobject(lo.oid, "rt")
+        x = lo.read(4)
+        self.assertEqual(type(x), type(u''))
+        self.assertEqual(x, u"some")
+        self.assertEqual(lo.read(), u" data " + snowman)
 
     def test_read_large(self):
         lo = self.conn.lobject()
