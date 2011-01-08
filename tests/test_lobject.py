@@ -182,7 +182,11 @@ class LargeObjectTests(LargeObjectMixin, unittest.TestCase):
         filename = os.path.join(self.tmpdir, "data.txt")
         lo.export(filename)
         self.assertTrue(os.path.exists(filename))
-        self.assertEqual(open(filename, "rb").read(), b("some data"))
+        f = open(filename, "rb")
+        try:
+            self.assertEqual(f.read(), b("some data"))
+        finally:
+            f.close()
 
     def test_close_twice(self):
         lo = self.conn.lobject()
@@ -224,7 +228,11 @@ class LargeObjectTests(LargeObjectMixin, unittest.TestCase):
         filename = os.path.join(self.tmpdir, "data.txt")
         lo.export(filename)
         self.assertTrue(os.path.exists(filename))
-        self.assertEqual(open(filename, "rb").read(), b("some data"))
+        f = open(filename, "rb")
+        try:
+            self.assertEqual(f.read(), b("some data"))
+        finally:
+            f.close()
 
     def test_close_after_commit(self):
         lo = self.conn.lobject()
@@ -279,7 +287,11 @@ class LargeObjectTests(LargeObjectMixin, unittest.TestCase):
         filename = os.path.join(self.tmpdir, "data.txt")
         lo.export(filename)
         self.assertTrue(os.path.exists(filename))
-        self.assertEqual(open(filename, "rb").read(), b("some data"))
+        f = open(filename, "rb")
+        try:
+            self.assertEqual(f.read(), b("some data"))
+        finally:
+            f.close()
 
 decorate_all_tests(LargeObjectTests, skip_if_no_lo)
 decorate_all_tests(LargeObjectTests, skip_if_green)

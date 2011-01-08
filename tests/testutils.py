@@ -121,5 +121,9 @@ def script_to_py3(script):
     if main("lib2to3.fixes", ['--no-diffs', '-w', '-n', f.name]):
         raise Exception('py3 conversion failed')
 
-    return open(f.name).read()
+    f2 = open(f.name)
+    try:
+        return f2.read()
+    finally:
+        f2.close()
 
