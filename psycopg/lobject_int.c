@@ -129,6 +129,21 @@ lobject_close_locked(lobjectObject *self, char **error)
 {
     int retvalue;
 
+    Dprintf("lobject_close_locked: conn->closed %ld", self->conn->closed);
+    switch (self->conn->closed) {
+    case 0:
+        /* Connection is open, go ahead */
+        break;
+    case 1:
+        /* Connection is closed, return a success */
+        return 0;
+        break;
+    default:
+        PyErr_SetString(OperationalError, "the connection is broken");
+        return -1;
+        break;
+    }
+
     if (self->conn->isolation_level == ISOLATION_LEVEL_AUTOCOMMIT ||
         self->conn->mark != self->mark ||
         self->fd == -1)

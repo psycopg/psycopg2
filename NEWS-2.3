@@ -7,12 +7,14 @@ What's new in psycopg 2.3.3
     into Python tuples/namedtuples.
   - The build script refuses to guess values if pg_config is not found.
   - Connections and cursors are weakly referenceable.
-  - Fixed several reference leaks in less common code paths.
 
 * Bug fixes:
 
   - Fixed adaptation of None in composite types (ticket #26). Bug report by
     Karsten Hilbert.
+  - Fixed several reference leaks in less common code paths.
+  - Fixed segfault when a large object is closed and its connection no more
+    available.
 
 
 What's new in psycopg 2.3.2

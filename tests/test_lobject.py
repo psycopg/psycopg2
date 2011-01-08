@@ -60,6 +60,10 @@ class LargeObjectMixin(object):
     def tearDown(self):
         if self.tmpdir:
             shutil.rmtree(self.tmpdir, ignore_errors=True)
+
+        if self.conn.closed:
+            return
+
         if self.lo_oid is not None:
             self.conn.rollback()
             try:
@@ -105,6 +109,11 @@ class LargeObjectTests(LargeObjectMixin, unittest.TestCase):
         lo2 = self.conn.lobject(lo.oid, "n")
         self.assertEqual(lo2.oid, lo.oid)
         self.assertEqual(lo2.closed, True)
+
+    def test_close_connection_gone(self):
+        lo = self.conn.lobject()
+        self.conn.close()
+        lo.close()
 
     def test_create_with_oid(self):
         # Create and delete a large object to get an unused Oid.
