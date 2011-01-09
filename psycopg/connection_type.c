@@ -514,15 +514,16 @@ static PyObject *
 psyco_conn_lobject(connectionObject *self, PyObject *args, PyObject *keywds)
 {
     Oid oid=InvalidOid, new_oid=InvalidOid;
-    char *smode = NULL, *new_file = NULL;
-    int mode=0;
-    PyObject *obj, *factory = NULL;
+    char *new_file = NULL;
+    const char *smode = "";
+    PyObject *factory = (PyObject *)&lobjectType;
+    PyObject *obj;
 
     static char *kwlist[] = {"oid", "mode", "new_oid", "new_file",
                              "cursor_factory", NULL};
-    
+
     if (!PyArg_ParseTupleAndKeywords(args, keywds, "|izizO", kwlist,
-                                     &oid, &smode, &new_oid, &new_file, 
+                                     &oid, &smode, &new_oid, &new_file,
                                      &factory)) {
         return NULL;
     }
@@ -537,33 +538,13 @@ psyco_conn_lobject(connectionObject *self, PyObject *args, PyObject *keywds)
             oid, smode);
     Dprintf("psyco_conn_lobject:     parameters: new_oid = %d, new_file = %s",
             new_oid, new_file);
-    
-    /* build a mode number out of the mode string: right now we only accept
-       'r', 'w' and 'rw' (but note that 'w' implies 'rw' because PostgreSQL
-       backend does that. */
-    if (smode) {
-        if (strncmp("rw", smode, 2) == 0)
-            mode = INV_READ+INV_WRITE;
-        else if (smode[0] == 'r')
-           mode = INV_READ;
-        else if (smode[0] == 'w')
-           mode = INV_WRITE;
-        else if (smode[0] == 'n')
-           mode = -1;
-        else {
-            PyErr_SetString(PyExc_TypeError,
-                "mode should be one of 'r', 'w' or 'rw'");
-            return NULL;
-        }
-    }
 
-    if (factory == NULL) factory = (PyObject *)&lobjectType;
     if (new_file)
-        obj = PyObject_CallFunction(factory, "Oiiis", 
-            self, oid, mode, new_oid, new_file);
+        obj = PyObject_CallFunction(factory, "Oisis",
+            self, oid, smode, new_oid, new_file);
     else
-        obj = PyObject_CallFunction(factory, "Oiii",
-            self, oid, mode, new_oid);
+        obj = PyObject_CallFunction(factory, "Oisi",
+            self, oid, smode, new_oid);
 
     if (obj == NULL) return NULL;
     if (PyObject_IsInstance(obj, (PyObject *)&lobjectType) == 0) {
@@ -572,7 +553,7 @@ psyco_conn_lobject(connectionObject *self, PyObject *args, PyObject *keywds)
         Py_DECREF(obj);
         return NULL;
     }
-    
+
     Dprintf("psyco_conn_lobject: new lobject at %p: refcnt = "
             FORMAT_CODE_PY_SSIZE_T,
             obj, Py_REFCNT(obj));

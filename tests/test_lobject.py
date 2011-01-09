@@ -84,7 +84,7 @@ class LargeObjectTests(LargeObjectMixin, unittest.TestCase):
     def test_create(self):
         lo = self.conn.lobject()
         self.assertNotEqual(lo, None)
-        self.assertEqual(lo.mode, "w")
+        self.assertEqual(lo.mode[0], "w")
 
     def test_open_non_existent(self):
         # By creating then removing a large object, we get an Oid that
@@ -98,12 +98,12 @@ class LargeObjectTests(LargeObjectMixin, unittest.TestCase):
         lo2 = self.conn.lobject(lo.oid)
         self.assertNotEqual(lo2, None)
         self.assertEqual(lo2.oid, lo.oid)
-        self.assertEqual(lo2.mode, "r")
+        self.assertEqual(lo2.mode[0], "r")
 
     def test_open_for_write(self):
         lo = self.conn.lobject()
         lo2 = self.conn.lobject(lo.oid, "w")
-        self.assertEqual(lo2.mode, "w")
+        self.assertEqual(lo2.mode[0], "w")
         lo2.write(b("some data"))
 
     def test_open_mode_n(self):
