@@ -71,19 +71,48 @@ psyco_lobj_close(lobjectObject *self, PyObject *args)
 static PyObject *
 psyco_lobj_write(lobjectObject *self, PyObject *args)
 {
-    int res = 0;
+    char *buffer;
     Py_ssize_t len;
-    const char *buffer;
+    Py_ssize_t res;
+    PyObject *obj;
+    PyObject *data = NULL;
+    PyObject *rv = NULL;
 
-    if (!PyArg_ParseTuple(args, "s#", &buffer, &len)) return NULL;
+    if (!PyArg_ParseTuple(args, "O", &obj)) return NULL;
 
     EXC_IF_LOBJ_CLOSED(self);
     EXC_IF_LOBJ_LEVEL0(self);
     EXC_IF_LOBJ_UNMARKED(self);
 
-    if ((res = lobject_write(self, buffer, (size_t)len)) < 0) return NULL;
+    if (Bytes_Check(obj)) {
+        Py_INCREF(obj);
+        data = obj;
+    }
+    else if (PyUnicode_Check(obj)) {
+        if (!(data = PyUnicode_AsEncodedString(obj, self->conn->codec, NULL))) {
+            goto exit;
+        }
+    }
+    else {
+        PyErr_Format(PyExc_TypeError,
+            "lobject.write requires a string; got %s instead",
+            Py_TYPE(obj)->tp_name);
+        goto exit;
+    }
 
-    return PyInt_FromLong((long)res);
+    if (-1 == Bytes_AsStringAndSize(data, &buffer, &len)) {
+        goto exit;
+    }
+
+    if (0 > (res = lobject_write(self, buffer, (size_t)len))) {
+        goto exit;
+    }
+
+    rv = PyInt_FromLong((long)res);
+
+exit:
+    Py_XDECREF(data);
+    return rv;
 }
 
 /* read method - read data from the lobject */
@@ -120,9 +149,13 @@ psyco_lobj_read(lobjectObject *self, PyObject *args)
         return NULL;
     }
 
-    res = Bytes_FromStringAndSize(buffer, size);
+    if (self->mode & LOBJECT_BINARY) {
+        res = Bytes_FromStringAndSize(buffer, size);
+    } else {
+        res = PyUnicode_Decode(buffer, size, self->conn->codec, NULL);
+    }
     PyMem_Free(buffer);
-    
+
     return res;
 }
 

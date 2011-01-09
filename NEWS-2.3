@@ -6,6 +6,9 @@ What's new in psycopg 2.3.3
   - Added `register_composite()` function to cast PostgreSQL composite types
     into Python tuples/namedtuples.
   - Connections and cursors are weakly referenceable.
+  - Added 'b' and 't' mode to large objects: write can deal with both bytes
+    strings and unicode; read can return either bytes strings or decoded
+    unicode.
   - The build script refuses to guess values if pg_config is not found.
   - Improved PostgreSQL-Python encodings mapping. Added a few
     missing encodings: EUC_CN, EUC_JIS_2004, ISO885910, ISO885916,
