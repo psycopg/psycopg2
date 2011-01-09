@@ -307,30 +307,6 @@ class IsolationLevelsTestCase(unittest.TestCase):
         self.assertEqual(2, cur2.fetchone()[0])
 
 
-def skip_if_tpc_disabled(f):
-    """Skip a test if the server has tpc support disabled."""
-    def skip_if_tpc_disabled_(self):
-        cnn = self.connect()
-        cur = cnn.cursor()
-        try:
-            cur.execute("SHOW max_prepared_transactions;")
-        except psycopg2.ProgrammingError:
-            return self.skipTest(
-                "server too old: two phase transactions not supported.")
-        else:
-            mtp = int(cur.fetchone()[0])
-        cnn.close()
-
-        if not mtp:
-            return self.skipTest(
-                "server not configured for two phase transactions. "
-                "set max_prepared_transactions to > 0 to run the test")
-        return f(self)
-
-    skip_if_tpc_disabled_.__name__ = f.__name__
-    return skip_if_tpc_disabled_
-
-
 class ConnectionTwoPhaseTests(unittest.TestCase):
     def setUp(self):
         self._conns = []
@@ -345,7 +321,6 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
         for conn in self._conns:
             if not conn.closed:
                 conn.close()
-
 
     def clear_test_xacts(self):
         """Rollback all the prepared transaction in the testing db."""
@@ -700,6 +675,7 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
         cnn.tpc_prepare()
         self.assertRaises(psycopg2.ProgrammingError, cnn.cancel)
 
+from testutils import skip_if_tpc_disabled
 decorate_all_tests(ConnectionTwoPhaseTests, skip_if_tpc_disabled)
 
 

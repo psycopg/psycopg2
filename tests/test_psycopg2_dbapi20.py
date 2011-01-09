@@ -24,7 +24,7 @@
 
 import dbapi20
 import dbapi20_tpc
-from test_connection import skip_if_tpc_disabled
+from testutils import skip_if_tpc_disabled
 from testutils import unittest, decorate_all_tests
 import psycopg2
 

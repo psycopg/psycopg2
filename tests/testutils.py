@@ -88,3 +88,30 @@ def skip_if_no_pg_sleep(name):
         return skip_if_no_pg_sleep__
 
     return skip_if_no_pg_sleep_
+
+
+def skip_if_tpc_disabled(f):
+    """Skip a test if the server has tpc support disabled."""
+    def skip_if_tpc_disabled_(self):
+        from psycopg2 import ProgrammingError
+        cnn = self.connect()
+        cur = cnn.cursor()
+        try:
+            cur.execute("SHOW max_prepared_transactions;")
+        except ProgrammingError:
+            return self.skipTest(
+                "server too old: two phase transactions not supported.")
+        else:
+            mtp = int(cur.fetchone()[0])
+        cnn.close()
+
+        if not mtp:
+            return self.skipTest(
+                "server not configured for two phase transactions. "
+                "set max_prepared_transactions to > 0 to run the test")
+        return f(self)
+
+    skip_if_tpc_disabled_.__name__ = f.__name__
+    return skip_if_tpc_disabled_
+
+
