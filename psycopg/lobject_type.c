@@ -71,19 +71,48 @@ psyco_lobj_close(lobjectObject *self, PyObject *args)
 static PyObject *
 psyco_lobj_write(lobjectObject *self, PyObject *args)
 {
-    int res = 0;
+    char *buffer;
     Py_ssize_t len;
-    const char *buffer;
+    Py_ssize_t res;
+    PyObject *obj;
+    PyObject *data = NULL;
+    PyObject *rv = NULL;
 
-    if (!PyArg_ParseTuple(args, "s#", &buffer, &len)) return NULL;
+    if (!PyArg_ParseTuple(args, "O", &obj)) return NULL;
 
     EXC_IF_LOBJ_CLOSED(self);
     EXC_IF_LOBJ_LEVEL0(self);
     EXC_IF_LOBJ_UNMARKED(self);
 
-    if ((res = lobject_write(self, buffer, (size_t)len)) < 0) return NULL;
+    if (Bytes_Check(obj)) {
+        Py_INCREF(obj);
+        data = obj;
+    }
+    else if (PyUnicode_Check(obj)) {
+        if (!(data = PyUnicode_AsEncodedString(obj, self->conn->codec, NULL))) {
+            goto exit;
+        }
+    }
+    else {
+        PyErr_Format(PyExc_TypeError,
+            "lobject.write requires a string; got %s instead",
+            Py_TYPE(obj)->tp_name);
+        goto exit;
+    }
 
-    return PyInt_FromLong((long)res);
+    if (-1 == Bytes_AsStringAndSize(data, &buffer, &len)) {
+        goto exit;
+    }
+
+    if (0 > (res = lobject_write(self, buffer, (size_t)len))) {
+        goto exit;
+    }
+
+    rv = PyInt_FromLong((long)res);
+
+exit:
+    Py_XDECREF(data);
+    return rv;
 }
 
 /* read method - read data from the lobject */
@@ -120,9 +149,13 @@ psyco_lobj_read(lobjectObject *self, PyObject *args)
         return NULL;
     }
 
-    res = Bytes_FromStringAndSize(buffer, size);
+    if (self->mode & LOBJECT_BINARY) {
+        res = Bytes_FromStringAndSize(buffer, size);
+    } else {
+        res = PyUnicode_Decode(buffer, size, self->conn->codec, NULL);
+    }
     PyMem_Free(buffer);
-    
+
     return res;
 }
 
@@ -277,7 +310,7 @@ static struct PyMemberDef lobjectObject_members[] = {
     {"oid", T_UINT, offsetof(lobjectObject, oid), READONLY,
         "The backend OID associated to this lobject."},
     {"mode", T_STRING, offsetof(lobjectObject, smode), READONLY,
-        "Open mode ('r', 'w', 'rw' or 'n')."},
+        "Open mode."},
     {NULL}
 };
 
@@ -293,7 +326,7 @@ static struct PyGetSetDef lobjectObject_getsets[] = {
 
 static int
 lobject_setup(lobjectObject *self, connectionObject *conn,
-              Oid oid, int mode, Oid new_oid, const char *new_file)
+              Oid oid, const char *smode, Oid new_oid, const char *new_file)
 {
     Dprintf("lobject_setup: init lobject object at %p", self);
 
@@ -311,7 +344,7 @@ lobject_setup(lobjectObject *self, connectionObject *conn,
     self->fd = -1;
     self->oid = InvalidOid;
 
-    if (lobject_open(self, conn, oid, mode, new_oid, new_file) == -1)
+    if (lobject_open(self, conn, oid, smode, new_oid, new_file) == -1)
         return -1;
 
    Dprintf("lobject_setup: good lobject object at %p, refcnt = "
@@ -328,6 +361,7 @@ lobject_dealloc(PyObject* obj)
     if (lobject_close(self) < 0)
         PyErr_Print();
     Py_XDECREF((PyObject*)self->conn);
+    PyMem_Free(self->smode);
 
     Dprintf("lobject_dealloc: deleted lobject object at %p, refcnt = "
             FORMAT_CODE_PY_SSIZE_T, obj, Py_REFCNT(obj));
@@ -339,16 +373,16 @@ static int
 lobject_init(PyObject *obj, PyObject *args, PyObject *kwds)
 {
     Oid oid=InvalidOid, new_oid=InvalidOid;
-    int mode=0;
+    const char *smode = "";
     const char *new_file = NULL;
     PyObject *conn;
 
-    if (!PyArg_ParseTuple(args, "O|iiis",
-         &conn, &oid, &mode, &new_oid, &new_file))
+    if (!PyArg_ParseTuple(args, "O|iziz",
+         &conn, &oid, &smode, &new_oid, &new_file))
         return -1;
 
     return lobject_setup((lobjectObject *)obj,
-        (connectionObject *)conn, oid, mode, new_oid, new_file);
+        (connectionObject *)conn, oid, smode, new_oid, new_file);
 }
 
 static PyObject *

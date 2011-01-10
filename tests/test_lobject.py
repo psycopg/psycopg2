@@ -84,7 +84,7 @@ class LargeObjectTests(LargeObjectMixin, unittest.TestCase):
     def test_create(self):
         lo = self.conn.lobject()
         self.assertNotEqual(lo, None)
-        self.assertEqual(lo.mode, "w")
+        self.assertEqual(lo.mode[0], "w")
 
     def test_open_non_existent(self):
         # By creating then removing a large object, we get an Oid that
@@ -98,12 +98,12 @@ class LargeObjectTests(LargeObjectMixin, unittest.TestCase):
         lo2 = self.conn.lobject(lo.oid)
         self.assertNotEqual(lo2, None)
         self.assertEqual(lo2.oid, lo.oid)
-        self.assertEqual(lo2.mode, "r")
+        self.assertEqual(lo2.mode[0], "r")
 
     def test_open_for_write(self):
         lo = self.conn.lobject()
         lo2 = self.conn.lobject(lo.oid, "w")
-        self.assertEqual(lo2.mode, "w")
+        self.assertEqual(lo2.mode[0], "w")
         lo2.write(b("some data"))
 
     def test_open_mode_n(self):
@@ -167,8 +167,33 @@ class LargeObjectTests(LargeObjectMixin, unittest.TestCase):
         lo.close()
 
         lo = self.conn.lobject(lo.oid)
-        self.assertEqual(lo.read(4), b("some"))
+        x = lo.read(4)
+        self.assertEqual(type(x), type(''))
+        self.assertEqual(x, "some")
+        self.assertEqual(lo.read(), " data")
+
+    def test_read_binary(self):
+        lo = self.conn.lobject()
+        length = lo.write(b("some data"))
+        lo.close()
+
+        lo = self.conn.lobject(lo.oid, "rb")
+        x = lo.read(4)
+        self.assertEqual(type(x), type(b('')))
+        self.assertEqual(x, "some")
         self.assertEqual(lo.read(), b(" data"))
+
+    def test_read_text(self):
+        lo = self.conn.lobject()
+        snowman = u"\u2603"
+        length = lo.write(u"some data " + snowman)
+        lo.close()
+
+        lo = self.conn.lobject(lo.oid, "rt")
+        x = lo.read(4)
+        self.assertEqual(type(x), type(u''))
+        self.assertEqual(x, u"some")
+        self.assertEqual(lo.read(), u" data " + snowman)
 
     def test_read_large(self):
         lo = self.conn.lobject()

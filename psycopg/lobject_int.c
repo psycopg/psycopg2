@@ -43,15 +43,118 @@ collect_error(connectionObject *conn, char **error)
         *error = strdup(msg);
 }
 
+
+/* Check if the mode passed to the large object is valid.
+ * In case of success return a value >= 0
+ * On error return a value < 0 and set an exception.
+ *
+ * Valid mode are [r|w|rw|n][t|b]
+ */
+static int
+_lobject_parse_mode(const char *mode)
+{
+    int rv = 0;
+    size_t pos = 0;
+
+    if (0 == strncmp("rw", mode, 2)) {
+        rv |= LOBJECT_READ | LOBJECT_WRITE;
+        pos += 2;
+    }
+    else {
+        switch (mode[0]) {
+        case 'r':
+            rv |= LOBJECT_READ;
+            pos += 1;
+            break;
+        case 'w':
+            rv |= LOBJECT_WRITE;
+            pos += 1;
+            break;
+        case 'n':
+            pos += 1;
+            break;
+        default:
+            rv |= LOBJECT_READ;
+            break;
+        }
+    }
+
+    switch (mode[pos]) {
+        case 't':
+            rv |= LOBJECT_TEXT;
+            pos += 1;
+            break;
+        case 'b':
+            rv |= LOBJECT_BINARY;
+            pos += 1;
+            break;
+        default:
+#if PY_MAJOR_VERSION < 3
+            rv |= LOBJECT_BINARY;
+#else
+            rv |= LOBJECT_TEXT;
+#endif
+            break;
+    }
+
+    if (pos != strlen(mode)) {
+        PyErr_Format(PyExc_ValueError,
+            "bad mode for lobject: '%s'", mode);
+        rv = -1;
+    }
+
+    return rv;
+}
+
+
+/* Return a string representing the lobject mode.
+ *
+ * The return value is a new string allocated on the Python heap.
+ */
+static char *
+_lobject_unparse_mode(int mode)
+{
+    char *buf;
+    char *c;
+
+    /* the longest is 'rwt' */
+    c = buf = PyMem_Malloc(4);
+
+    if (mode & LOBJECT_READ) { *c++ = 'r'; }
+    if (mode & LOBJECT_WRITE) { *c++ = 'w'; }
+
+    if (buf == c) {
+        /* neither read nor write */
+        *c++ = 'n';
+    }
+    else {
+        if (mode & LOBJECT_TEXT) {
+            *c++ = 't';
+        }
+        else {
+            *c++ = 'b';
+        }
+    }
+    *c = '\0';
+
+    return buf;
+}
+
 /* lobject_open - create a new/open an existing lo */
 
 int
 lobject_open(lobjectObject *self, connectionObject *conn,
-              Oid oid, int mode, Oid new_oid, const char *new_file)
+              Oid oid, const char *smode, Oid new_oid, const char *new_file)
 {
     int retvalue = -1;
     PGresult *pgres = NULL;
     char *error = NULL;
+    int pgmode = 0;
+    int mode;
+
+    if (0 > (mode = _lobject_parse_mode(smode))) {
+        return -1;
+    }
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
@@ -78,19 +181,19 @@ lobject_open(lobjectObject *self, connectionObject *conn,
             goto end;
         }
 
-        mode = INV_WRITE;
+        mode = (mode & ~LOBJECT_READ) | LOBJECT_WRITE;
     }
     else {
         self->oid = oid;
-        if (mode == 0) mode = INV_READ;
     }
 
-    /* if the oid is a real one we try to open with the given mode,
-       unless the mode is -1, meaning "don't open!" */
-    if (mode != -1) {
-        self->fd = lo_open(self->conn->pgconn, self->oid, mode);
-        Dprintf("lobject_open: large object opened with fd = %d",
-            self->fd);
+    /* if the oid is a real one we try to open with the given mode */
+    if (mode & LOBJECT_READ) { pgmode |= INV_READ; }
+    if (mode & LOBJECT_WRITE) { pgmode |= INV_WRITE; }
+    if (pgmode) {
+        self->fd = lo_open(self->conn->pgconn, self->oid, pgmode);
+        Dprintf("lobject_open: large object opened with mode = %i fd = %d",
+            pgmode, self->fd);
 
         if (self->fd == -1) {
             collect_error(self->conn, &error);
@@ -98,17 +201,10 @@ lobject_open(lobjectObject *self, connectionObject *conn,
             goto end;
         }
     }
+
     /* set the mode for future reference */
-    switch (mode) {
-    case -1:
-        self->smode = "n"; break;
-    case INV_READ:
-        self->smode = "r"; break;
-    case INV_WRITE:
-        self->smode = "w"; break;
-    case INV_READ+INV_WRITE:
-        self->smode = "rw"; break;
-    }
+    self->mode = mode;
+    self->smode = _lobject_unparse_mode(mode);
     retvalue = 0;
 
  end:
