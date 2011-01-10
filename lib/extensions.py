@@ -32,38 +32,38 @@ This module holds all the extensions to the DBAPI-2.0 provided by psycopg.
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-from _psycopg import UNICODE, INTEGER, LONGINTEGER, BOOLEAN, FLOAT
-from _psycopg import TIME, DATE, INTERVAL, DECIMAL
-from _psycopg import BINARYARRAY, BOOLEANARRAY, DATEARRAY, DATETIMEARRAY
-from _psycopg import DECIMALARRAY, FLOATARRAY, INTEGERARRAY, INTERVALARRAY
-from _psycopg import LONGINTEGERARRAY, ROWIDARRAY, STRINGARRAY, TIMEARRAY
-from _psycopg import UNICODEARRAY
+from psycopg2._psycopg import UNICODE, INTEGER, LONGINTEGER, BOOLEAN, FLOAT
+from psycopg2._psycopg import TIME, DATE, INTERVAL, DECIMAL
+from psycopg2._psycopg import BINARYARRAY, BOOLEANARRAY, DATEARRAY, DATETIMEARRAY
+from psycopg2._psycopg import DECIMALARRAY, FLOATARRAY, INTEGERARRAY, INTERVALARRAY
+from psycopg2._psycopg import LONGINTEGERARRAY, ROWIDARRAY, STRINGARRAY, TIMEARRAY
+from psycopg2._psycopg import UNICODEARRAY
 
-from _psycopg import Binary, Boolean, Float, QuotedString, AsIs
+from psycopg2._psycopg import Binary, Boolean, Float, QuotedString, AsIs
 try:
-    from _psycopg import MXDATE, MXDATETIME, MXINTERVAL, MXTIME
-    from _psycopg import MXDATEARRAY, MXDATETIMEARRAY, MXINTERVALARRAY, MXTIMEARRAY
-    from _psycopg import DateFromMx, TimeFromMx, TimestampFromMx
-    from _psycopg import IntervalFromMx
-except:
+    from psycopg2._psycopg import MXDATE, MXDATETIME, MXINTERVAL, MXTIME
+    from psycopg2._psycopg import MXDATEARRAY, MXDATETIMEARRAY, MXINTERVALARRAY, MXTIMEARRAY
+    from psycopg2._psycopg import DateFromMx, TimeFromMx, TimestampFromMx
+    from psycopg2._psycopg import IntervalFromMx
+except ImportError:
     pass
 
 try:
-    from _psycopg import PYDATE, PYDATETIME, PYINTERVAL, PYTIME
-    from _psycopg import PYDATEARRAY, PYDATETIMEARRAY, PYINTERVALARRAY, PYTIMEARRAY
-    from _psycopg import DateFromPy, TimeFromPy, TimestampFromPy
-    from _psycopg import IntervalFromPy
-except:
+    from psycopg2._psycopg import PYDATE, PYDATETIME, PYINTERVAL, PYTIME
+    from psycopg2._psycopg import PYDATEARRAY, PYDATETIMEARRAY, PYINTERVALARRAY, PYTIMEARRAY
+    from psycopg2._psycopg import DateFromPy, TimeFromPy, TimestampFromPy
+    from psycopg2._psycopg import IntervalFromPy
+except ImportError:
     pass
 
-from _psycopg import adapt, adapters, encodings, connection, cursor, lobject, Xid
-from _psycopg import string_types, binary_types, new_type, register_type
-from _psycopg import ISQLQuote, Notify
+from psycopg2._psycopg import adapt, adapters, encodings, connection, cursor, lobject, Xid
+from psycopg2._psycopg import string_types, binary_types, new_type, register_type
+from psycopg2._psycopg import ISQLQuote, Notify
 
-from _psycopg import QueryCanceledError, TransactionRollbackError
+from psycopg2._psycopg import QueryCanceledError, TransactionRollbackError
 
 try:
-    from _psycopg import set_wait_callback, get_wait_callback
+    from psycopg2._psycopg import set_wait_callback, get_wait_callback
 except ImportError:
     pass
 
