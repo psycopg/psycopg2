@@ -1,7 +1,31 @@
 #!/usr/bin/env python
+
+# test_lobject.py - unit test for large objects support
+#
+# Copyright (C) 2008-2011 James Henstridge  <james@jamesh.id.au>
+#
+# psycopg2 is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# In addition, as a special exception, the copyright holders give
+# permission to link this program with the OpenSSL library (or with
+# modified versions of OpenSSL that use the same license as OpenSSL),
+# and distribute linked combinations including the two.
+#
+# You must obey the GNU Lesser General Public License in all respects for
+# all of the code used other than OpenSSL.
+#
+# psycopg2 is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+# License for more details.
+
 import os
 import shutil
 import tempfile
+from testutils import unittest, decorate_all_tests, skip_if_tpc_disabled
 
 import psycopg2
 import psycopg2.extensions
@@ -31,13 +55,17 @@ def skip_if_green(f):
 class LargeObjectMixin(object):
     # doesn't derive from TestCase to avoid repeating tests twice.
     def setUp(self):
-        self.conn = psycopg2.connect(dsn)
+        self.conn = self.connect()
         self.lo_oid = None
         self.tmpdir = None
 
     def tearDown(self):
         if self.tmpdir:
             shutil.rmtree(self.tmpdir, ignore_errors=True)
+
+        if self.conn.closed:
+            return
+
         if self.lo_oid is not None:
             self.conn.rollback()
             try:
@@ -47,6 +75,9 @@ class LargeObjectMixin(object):
             else:
                 lo.unlink()
         self.conn.close()
+
+    def connect(self):
+        return psycopg2.connect(dsn)
 
 
 class LargeObjectTests(LargeObjectMixin, unittest.TestCase):
@@ -83,6 +114,11 @@ class LargeObjectTests(LargeObjectMixin, unittest.TestCase):
         lo2 = self.conn.lobject(lo.oid, "n")
         self.assertEqual(lo2.oid, lo.oid)
         self.assertEqual(lo2.closed, True)
+
+    def test_close_connection_gone(self):
+        lo = self.conn.lobject()
+        self.conn.close()
+        lo.close()
 
     def test_create_with_oid(self):
         # Create and delete a large object to get an unused Oid.
@@ -292,6 +328,28 @@ class LargeObjectTests(LargeObjectMixin, unittest.TestCase):
             self.assertEqual(f.read(), b("some data"))
         finally:
             f.close()
+
+    @skip_if_tpc_disabled
+    def test_read_after_tpc_commit(self):
+        self.conn.tpc_begin('test_lobject')
+        lo = self.conn.lobject()
+        self.lo_oid = lo.oid
+        self.conn.tpc_commit()
+
+        self.assertRaises(psycopg2.ProgrammingError, lo.read, 5)
+
+    @skip_if_tpc_disabled
+    def test_read_after_tpc_prepare(self):
+        self.conn.tpc_begin('test_lobject')
+        lo = self.conn.lobject()
+        self.lo_oid = lo.oid
+        self.conn.tpc_prepare()
+
+        try:
+            self.assertRaises(psycopg2.ProgrammingError, lo.read, 5)
+        finally:
+            self.conn.tpc_commit()
+
 
 decorate_all_tests(LargeObjectTests, skip_if_no_lo)
 decorate_all_tests(LargeObjectTests, skip_if_green)

@@ -18,6 +18,8 @@ What's new in psycopg 2.3.3
   - Fixed adaptation of None in composite types (ticket #26). Bug report by
     Karsten Hilbert.
   - Fixed several reference leaks in less common code paths.
+  - Fixed segfault when a large object is closed and its connection no more
+    available.
 
 
 What's new in psycopg 2.3.2

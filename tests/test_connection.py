@@ -1,5 +1,27 @@
 #!/usr/bin/env python
 
+# test_connection.py - unit test for connection attributes
+#
+# Copyright (C) 2008-2011 James Henstridge  <james@jamesh.id.au>
+#
+# psycopg2 is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# In addition, as a special exception, the copyright holders give
+# permission to link this program with the OpenSSL library (or with
+# modified versions of OpenSSL that use the same license as OpenSSL),
+# and distribute linked combinations including the two.
+#
+# You must obey the GNU Lesser General Public License in all respects for
+# all of the code used other than OpenSSL.
+#
+# psycopg2 is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+# License for more details.
+
 import time
 import threading
 from testutils import unittest, decorate_all_tests, skip_if_no_pg_sleep
@@ -293,30 +315,6 @@ class IsolationLevelsTestCase(unittest.TestCase):
         self.assertEqual(2, cur2.fetchone()[0])
 
 
-def skip_if_tpc_disabled(f):
-    """Skip a test if the server has tpc support disabled."""
-    def skip_if_tpc_disabled_(self):
-        cnn = self.connect()
-        cur = cnn.cursor()
-        try:
-            cur.execute("SHOW max_prepared_transactions;")
-        except psycopg2.ProgrammingError:
-            return self.skipTest(
-                "server too old: two phase transactions not supported.")
-        else:
-            mtp = int(cur.fetchone()[0])
-        cnn.close()
-
-        if not mtp:
-            return self.skipTest(
-                "server not configured for two phase transactions. "
-                "set max_prepared_transactions to > 0 to run the test")
-        return f(self)
-
-    skip_if_tpc_disabled_.__name__ = f.__name__
-    return skip_if_tpc_disabled_
-
-
 class ConnectionTwoPhaseTests(unittest.TestCase):
     def setUp(self):
         self._conns = []
@@ -331,7 +329,6 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
         for conn in self._conns:
             if not conn.closed:
                 conn.close()
-
 
     def clear_test_xacts(self):
         """Rollback all the prepared transaction in the testing db."""
@@ -686,6 +683,7 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
         cnn.tpc_prepare()
         self.assertRaises(psycopg2.ProgrammingError, cnn.cancel)
 
+from testutils import skip_if_tpc_disabled
 decorate_all_tests(ConnectionTwoPhaseTests, skip_if_tpc_disabled)
 
 
