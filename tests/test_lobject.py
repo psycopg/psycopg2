@@ -144,7 +144,7 @@ class LargeObjectTests(LargeObjectMixin, unittest.TestCase):
         fp.close()
 
         lo = self.conn.lobject(0, "r", 0, filename)
-        self.assertEqual(lo.read(), b("some data"))
+        self.assertEqual(lo.read(), "some data")
 
     def test_close(self):
         lo = self.conn.lobject()
@@ -180,7 +180,7 @@ class LargeObjectTests(LargeObjectMixin, unittest.TestCase):
         lo = self.conn.lobject(lo.oid, "rb")
         x = lo.read(4)
         self.assertEqual(type(x), type(b('')))
-        self.assertEqual(x, "some")
+        self.assertEqual(x, b("some"))
         self.assertEqual(lo.read(), b(" data"))
 
     def test_read_text(self):
@@ -197,13 +197,16 @@ class LargeObjectTests(LargeObjectMixin, unittest.TestCase):
 
     def test_read_large(self):
         lo = self.conn.lobject()
-        data = b("data") * 1000000
-        length = lo.write(b("some") + data)
+        data = "data" * 1000000
+        length = lo.write("some" + data)
         lo.close()
 
         lo = self.conn.lobject(lo.oid)
-        self.assertEqual(lo.read(4), b("some"))
-        self.assertEqual(lo.read(), data)
+        self.assertEqual(lo.read(4), "some")
+        data1 = lo.read()
+        # avoid dumping megacraps in the console in case of error
+        self.assert_(data == data1,
+            "%r... != %r..." % (data[:100], data1[:100]))
 
     def test_seek_tell(self):
         lo = self.conn.lobject()
@@ -214,17 +217,17 @@ class LargeObjectTests(LargeObjectMixin, unittest.TestCase):
 
         self.assertEqual(lo.seek(5, 0), 5)
         self.assertEqual(lo.tell(), 5)
-        self.assertEqual(lo.read(), b("data"))
+        self.assertEqual(lo.read(), "data")
 
         # SEEK_CUR: relative current location
         lo.seek(5)
         self.assertEqual(lo.seek(2, 1), 7)
         self.assertEqual(lo.tell(), 7)
-        self.assertEqual(lo.read(), b("ta"))
+        self.assertEqual(lo.read(), "ta")
 
         # SEEK_END: relative to end of file
         self.assertEqual(lo.seek(-2, 2), length - 2)
-        self.assertEqual(lo.read(), b("ta"))
+        self.assertEqual(lo.read(), "ta")
 
     def test_unlink(self):
         lo = self.conn.lobject()
