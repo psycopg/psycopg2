@@ -25,7 +25,7 @@
 import os
 import shutil
 import tempfile
-from testutils import unittest, decorate_all_tests
+from testutils import unittest, decorate_all_tests, skip_if_tpc_disabled
 
 import psycopg2
 import psycopg2.extensions
@@ -53,7 +53,7 @@ def skip_if_green(f):
 class LargeObjectMixin(object):
     # doesn't derive from TestCase to avoid repeating tests twice.
     def setUp(self):
-        self.conn = psycopg2.connect(tests.dsn)
+        self.conn = self.connect()
         self.lo_oid = None
         self.tmpdir = None
 
@@ -73,6 +73,9 @@ class LargeObjectMixin(object):
             else:
                 lo.unlink()
         self.conn.close()
+
+    def connect(self):
+        return psycopg2.connect(tests.dsn)
 
 
 class LargeObjectTests(LargeObjectMixin, unittest.TestCase):
@@ -311,6 +314,28 @@ class LargeObjectTests(LargeObjectMixin, unittest.TestCase):
         lo.export(filename)
         self.assertTrue(os.path.exists(filename))
         self.assertEqual(open(filename, "rb").read(), "some data")
+
+    @skip_if_tpc_disabled
+    def test_read_after_tpc_commit(self):
+        self.conn.tpc_begin('test_lobject')
+        lo = self.conn.lobject()
+        self.lo_oid = lo.oid
+        self.conn.tpc_commit()
+
+        self.assertRaises(psycopg2.ProgrammingError, lo.read, 5)
+
+    @skip_if_tpc_disabled
+    def test_read_after_tpc_prepare(self):
+        self.conn.tpc_begin('test_lobject')
+        lo = self.conn.lobject()
+        self.lo_oid = lo.oid
+        self.conn.tpc_prepare()
+
+        try:
+            self.assertRaises(psycopg2.ProgrammingError, lo.read, 5)
+        finally:
+            self.conn.tpc_commit()
+
 
 decorate_all_tests(LargeObjectTests, skip_if_no_lo)
 decorate_all_tests(LargeObjectTests, skip_if_green)

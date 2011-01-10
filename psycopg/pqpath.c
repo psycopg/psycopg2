@@ -610,6 +610,8 @@ pq_tpc_command_locked(connectionObject *conn, const char *cmd, const char *tid,
     Dprintf("_pq_tpc_command: pgconn = %p, command = %s",
             conn->pgconn, cmd);
 
+    conn->mark += 1;
+
     /* convert the xid into the postgres transaction_id and quote it. */
     if (!(etid = psycopg_escape_string((PyObject *)conn, tid, 0, NULL, NULL)))
     { goto exit; }
