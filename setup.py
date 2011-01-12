@@ -58,6 +58,12 @@ try:
     from distutils.command.build_py import build_py_2to3 as build_py
 except ImportError:
     from distutils.command.build_py import build_py
+else:
+    # Configure distutils to run our custom 2to3 fixers as well
+    from lib2to3.refactor import get_fixers_from_package
+    build_py.fixer_names = get_fixers_from_package('lib2to3.fixes')
+    build_py.fixer_names.append('fix_b')
+    sys.path.insert(0, 'scripts')
 
 try:
     import configparser
