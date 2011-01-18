@@ -77,7 +77,7 @@ def skip_if_no_pg_sleep(name):
             if callable(cnn):
                 cnn = cnn()
 
-            if cnn.server_version < 80100:
+            if cnn.server_version < 80200:
                 return self.skipTest(
                     "server version %s doesn't support pg_sleep"
                     % cnn.server_version)
