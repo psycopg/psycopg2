@@ -333,6 +333,18 @@ class HstoreTestCase(unittest.TestCase):
         ok(dict(zip(ab, ab)))
 
 
+def skip_if_no_composite(f):
+    def skip_if_no_composite_(self):
+        if self.conn.server_version < 80000:
+            return self.skipTest(
+                "server version %s doesn't support composite types"
+                % self.conn.server_version)
+
+        return f(self)
+
+    skip_if_no_composite_.__name__ = f.__name__
+    return skip_if_no_composite_
+
 class AdaptTypeTestCase(unittest.TestCase):
     def setUp(self):
         self.conn = psycopg2.connect(tests.dsn)
@@ -340,6 +352,7 @@ class AdaptTypeTestCase(unittest.TestCase):
     def tearDown(self):
         self.conn.close()
 
+    @skip_if_no_composite
     def test_none_in_record(self):
         curs = self.conn.cursor()
         s = curs.mogrify("SELECT %s;", [(42, None)])
@@ -397,6 +410,7 @@ class AdaptTypeTestCase(unittest.TestCase):
            '^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f")',
            [None, ''.join(map(chr, range(1, 128)))])
 
+    @skip_if_no_composite
     def test_cast_composite(self):
         oid = self._create_type("type_isd",
             [('anint', 'integer'), ('astring', 'text'), ('adate', 'date')])
@@ -427,6 +441,7 @@ class AdaptTypeTestCase(unittest.TestCase):
             self.assertEqual(v.astring, "hello")
             self.assertEqual(v.adate, date(2011,1,2))
 
+    @skip_if_no_composite
     def test_cast_nested(self):
         self._create_type("type_is",
             [("anint", "integer"), ("astring", "text")])
@@ -453,6 +468,7 @@ class AdaptTypeTestCase(unittest.TestCase):
         else:
             self.assertEqual(v.anotherpair.apair.astring, "hello")
 
+    @skip_if_no_composite
     def test_register_on_cursor(self):
         self._create_type("type_ii", [("a", "integer"), ("b", "integer")])
 
@@ -464,6 +480,7 @@ class AdaptTypeTestCase(unittest.TestCase):
         curs2.execute("select (1,2)::type_ii")
         self.assertEqual(curs2.fetchone()[0], "(1,2)")
 
+    @skip_if_no_composite
     def test_register_on_connection(self):
         self._create_type("type_ii", [("a", "integer"), ("b", "integer")])
 
@@ -481,6 +498,7 @@ class AdaptTypeTestCase(unittest.TestCase):
             conn1.close()
             conn2.close()
 
+    @skip_if_no_composite
     def test_register_globally(self):
         self._create_type("type_ii", [("a", "integer"), ("b", "integer")])
 
