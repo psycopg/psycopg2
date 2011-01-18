@@ -35,7 +35,7 @@ def filter_scs(conn, s):
     if conn.get_parameter_status("standard_conforming_strings") == 'off':
         return s
     else:
-        return s.replace("E'", "'")
+        return s.replace(b("E'"), b("'"))
 
 class TypesExtrasTests(unittest.TestCase):
     """Test that all type conversions are working."""
