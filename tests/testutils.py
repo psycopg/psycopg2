@@ -65,6 +65,29 @@ def decorate_all_tests(cls, decorator):
             setattr(cls, n, decorator(getattr(cls, n)))
 
 
+def skip_if_no_uuid(f):
+    """Decorator to skip a test if uuid is not supported by Py/PG."""
+    def skip_if_no_uuid_(self):
+        try:
+            import uuid
+        except ImportError:
+            return self.skipTest("uuid not available in this Python version")
+
+        try:
+            cur = self.conn.cursor()
+            cur.execute("select typname from pg_type where typname = 'uuid'")
+            has = cur.fetchone()
+        finally:
+            self.conn.rollback()
+
+        if has:
+            return f(self)
+        else:
+            return self.skipTest("uuid type not available on the server")
+
+    return skip_if_no_uuid_
+
+
 def skip_if_no_pg_sleep(name):
     """Decorator to skip a test if pg_sleep is not supported by the server.
 

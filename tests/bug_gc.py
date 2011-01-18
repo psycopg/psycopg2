@@ -34,15 +34,23 @@ if sys.version_info < (3,):
 else:
     import py3tests as tests
 
+from testutils import skip_if_no_uuid
+
 class StolenReferenceTestCase(unittest.TestCase):
+    def setUp(self):
+        self.conn = psycopg2.connect(tests.dsn)
+
+    def tearDown(self):
+        self.conn.close()
+
+    @skip_if_no_uuid
     def test_stolen_reference_bug(self):
         def fish(val, cur):
             gc.collect()
             return 42
-        conn = psycopg2.connect(tests.dsn)
         UUID = psycopg2.extensions.new_type((2950,), "UUID", fish)
-        psycopg2.extensions.register_type(UUID, conn)
-        curs = conn.cursor()
+        psycopg2.extensions.register_type(UUID, self.conn)
+        curs = self.conn.cursor()
         curs.execute("select 'b5219e01-19ab-4994-b71e-149225dc51e4'::uuid")
         curs.fetchone()
 

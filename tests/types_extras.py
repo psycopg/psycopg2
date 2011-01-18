@@ -22,33 +22,12 @@ import re
 import sys
 from datetime import date
 
-from testutils import unittest
+from testutils import unittest, skip_if_no_uuid
 
 import psycopg2
 import psycopg2.extras
 import tests
 
-
-def skip_if_no_uuid(f):
-    def skip_if_no_uuid_(self):
-        try:
-            import uuid
-        except ImportError:
-            return self.skipTest("uuid not available in this Python version")
-
-        try:
-            cur = self.conn.cursor()
-            cur.execute("select typname from pg_type where typname = 'uuid'")
-            has = cur.fetchone()
-        finally:
-            self.conn.rollback()
-
-        if has:
-            return f(self)
-        else:
-            return self.skipTest("uuid type not available on the server")
-
-    return skip_if_no_uuid_
 
 def filter_scs(conn, s):
     if conn.get_parameter_status("standard_conforming_strings") == 'off':
