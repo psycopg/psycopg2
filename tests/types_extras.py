@@ -201,13 +201,16 @@ class HstoreTestCase(unittest.TestCase):
         ii = zip(kk, vv)
         ii.sort()
 
+        def f(*args):
+            return tuple([filter_scs(self.conn, s) for s in args])
+
         self.assertEqual(len(ii), len(o))
-        self.assertEqual(ii[0], ("E'a'", "E'1'"))
-        self.assertEqual(ii[1], ("E'b'", "E''''"))
-        self.assertEqual(ii[2], ("E'c'", "NULL"))
+        self.assertEqual(ii[0], f("E'a'", "E'1'"))
+        self.assertEqual(ii[1], f("E'b'", "E''''"))
+        self.assertEqual(ii[2], f("E'c'", "NULL"))
         if 'd' in o:
             encc = u'\xe0'.encode(psycopg2.extensions.encodings[self.conn.encoding])
-            self.assertEqual(ii[3], ("E'd'", "E'%s'" % encc))
+            self.assertEqual(ii[3], f("E'd'", "E'%s'" % encc))
 
     def test_parse(self):
         from psycopg2.extras import HstoreAdapter
