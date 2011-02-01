@@ -194,7 +194,7 @@ __ac_permissions__ = (
 
 # add icons
 
-misc_={'conn': ImageFile('Shared/DC/ZRDB/www/DBAdapterFolder_icon.gif')}
+misc_={'conn': ImageFile('icons/DBAdapterFolder_icon.gif', globals())}
 
 for icon in ('table', 'view', 'stable', 'what', 'field', 'text', 'bin',
              'int', 'float', 'date', 'time', 'datetime'):
