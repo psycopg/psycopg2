@@ -26,4 +26,4 @@ def initialize(context):
         permission = 'Add Z Psycopg 2 Database Connections',
         constructors = (DA.manage_addZPsycopgConnectionForm,
                         DA.manage_addZPsycopgConnection),
-        icon = SOFTWARE_HOME + '/Shared/DC/ZRDB/www/DBAdapterFolder_icon.gif')
+        icon = 'icons/DBAdapterFolder_icon.gif')
