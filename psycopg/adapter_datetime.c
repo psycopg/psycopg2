@@ -387,7 +387,7 @@ psyco_Timestamp(PyObject *self, PyObject *args)
     int hour=0, minute=0; /* default to midnight */
     double second=0.0;
 
-    if (!PyArg_ParseTuple(args, "lii|iidO", &year, &month, &day,
+    if (!PyArg_ParseTuple(args, "iii|iidO", &year, &month, &day,
                           &hour, &minute, &second, &tzinfo))
         return NULL;
 
