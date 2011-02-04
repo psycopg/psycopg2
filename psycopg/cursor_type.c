@@ -799,6 +799,56 @@ psyco_curs_fetchone(cursorObject *self, PyObject *args)
     return res;
 }
 
+/* Efficient cursor.next() implementation for named cursors.
+ *
+ * Fetch several records at time. Return NULL when the cursor is exhausted.
+ */
+static PyObject *
+psyco_curs_next_named(cursorObject *self)
+{
+    PyObject *res;
+
+    Dprintf("psyco_curs_next_named");
+    EXC_IF_CURS_CLOSED(self);
+    EXC_IF_ASYNC_IN_PROGRESS(self, next);
+    if (_psyco_curs_prefetch(self) < 0) return NULL;
+    EXC_IF_NO_TUPLES(self);
+
+    EXC_IF_NO_MARK(self);
+    EXC_IF_TPC_PREPARED(self->conn, next);
+
+    Dprintf("psyco_curs_next_named: row %ld", self->row);
+    Dprintf("psyco_curs_next_named: rowcount = %ld", self->rowcount);
+    if (self->row >= self->rowcount) {
+        char buffer[128];
+        /* FIXME: use a cursor member for the size */
+        PyOS_snprintf(buffer, 127, "FETCH FORWARD 10 FROM %s", self->name);
+        if (pq_execute(self, buffer, 0) == -1) return NULL;
+        if (_psyco_curs_prefetch(self) < 0) return NULL;
+    }
+
+    /* We exhausted the data: return NULL to stop iteration. */
+    if (self->row >= self->rowcount) {
+        return NULL;
+    }
+
+    if (self->tuple_factory == Py_None)
+        res = _psyco_curs_buildrow(self, self->row);
+    else
+        res = _psyco_curs_buildrow_with_factory(self, self->row);
+
+    self->row++; /* move the counter to next line */
+
+    /* if the query was async aggresively free pgres, to allow
+       successive requests to reallocate it */
+    if (self->row >= self->rowcount
+        && self->conn->async_cursor
+        && PyWeakref_GetObject(self->conn->async_cursor) == (PyObject*)self)
+        IFCLEARPGRES(self->pgres);
+
+    return res;
+}
+
 
 /* fetch many - fetch some results */
 
@@ -1510,14 +1560,20 @@ cursor_next(PyObject *self)
 {
     PyObject *res;
 
-    /* we don't parse arguments: psyco_curs_fetchone will do that for us */
-    res = psyco_curs_fetchone((cursorObject*)self, NULL);
+    if (NULL == ((cursorObject*)self)->name) {
+        /* we don't parse arguments: psyco_curs_fetchone will do that for us */
+        res = psyco_curs_fetchone((cursorObject*)self, NULL);
 
-    /* convert a None to NULL to signal the end of iteration */
-    if (res && res == Py_None) {
-        Py_DECREF(res);
-        res = NULL;
+        /* convert a None to NULL to signal the end of iteration */
+        if (res && res == Py_None) {
+            Py_DECREF(res);
+            res = NULL;
+        }
     }
+    else {
+        res = psyco_curs_next_named((cursorObject*)self);
+    }
+
     return res;
 }
 
