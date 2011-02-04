@@ -142,6 +142,21 @@ class CursorTests(unittest.TestCase):
             "named cursor records fetched in 2 roundtrips (delta: %s)"
             % (t2 - t1))
 
+    def test_iter_named_cursor_default_arraysize(self):
+        curs = self.conn.cursor('tmp')
+        curs.execute('select generate_series(1,50)')
+        rv = [ (r[0], curs.rownumber) for r in curs ]
+        # everything swallowed in one gulp
+        self.assertEqual(rv, [(i,i) for i in range(1,51)])
+
+    def test_iter_named_cursor_arraysize(self):
+        curs = self.conn.cursor('tmp')
+        curs.arraysize = 30
+        curs.execute('select generate_series(1,50)')
+        rv = [ (r[0], curs.rownumber) for r in curs ]
+        # everything swallowed in two gulps
+        self.assertEqual(rv, [(i,((i - 1) % 30) + 1) for i in range(1,51)])
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

@@ -821,8 +821,13 @@ psyco_curs_next_named(cursorObject *self)
     Dprintf("psyco_curs_next_named: rowcount = %ld", self->rowcount);
     if (self->row >= self->rowcount) {
         char buffer[128];
-        /* FIXME: use a cursor member for the size */
-        PyOS_snprintf(buffer, 127, "FETCH FORWARD 10 FROM %s", self->name);
+
+        /* fetch 'arraysize' records, but shun the default value of 1 */
+        long int size = self->arraysize;
+        if (size == 1) { size = 2000L; }
+
+        PyOS_snprintf(buffer, 127, "FETCH FORWARD %ld FROM %s",
+            size, self->name);
         if (pq_execute(self, buffer, 0) == -1) return NULL;
         if (_psyco_curs_prefetch(self) < 0) return NULL;
     }
