@@ -149,3 +149,43 @@ psycopg_ensure_text(PyObject *obj)
     }
 #endif
 }
+
+/* Check if a file derives from TextIOBase.
+ *
+ * Return 1 if it does, else 0, -1 on errors.
+ */
+int
+psycopg_is_text_file(PyObject *f)
+{
+    /* NULL before any call.
+     * then io.TextIOBase if exists, else None. */
+    static PyObject *base;
+
+    /* Try to import os.TextIOBase */
+    if (NULL == base) {
+        PyObject *m;
+        Dprintf("psycopg_is_text_file: importing io.TextIOBase");
+        if (!(m = PyImport_ImportModule("io"))) {
+            Dprintf("psycopg_is_text_file: io module not found");
+            PyErr_Clear();
+            Py_INCREF(Py_None);
+            base = Py_None;
+        }
+        else {
+            if (!(base = PyObject_GetAttrString(m, "TextIOBase"))) {
+                Dprintf("psycopg_is_text_file: io.TextIOBase not found");
+                PyErr_Clear();
+                Py_INCREF(Py_None);
+                base = Py_None;
+            }
+        }
+        Py_XDECREF(m);
+    }
+
+    if (base != Py_None) {
+        return PyObject_IsInstance(f, base);
+    } else {
+        return 0;
+    }
+}
+

@@ -123,6 +123,7 @@ HIDDEN char *psycopg_escape_string(PyObject *conn,
 HIDDEN char *psycopg_strdup(const char *from, Py_ssize_t len);
 HIDDEN PyObject * psycopg_ensure_bytes(PyObject *obj);
 HIDDEN PyObject * psycopg_ensure_text(PyObject *obj);
+HIDDEN int psycopg_is_text_file(PyObject *f);
 
 /* Exceptions docstrings */
 #define Error_doc \

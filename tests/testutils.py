@@ -151,6 +151,19 @@ def skip_if_tpc_disabled(f):
     return skip_if_tpc_disabled_
 
 
+def skip_if_no_iobase(f):
+    """Skip a test if io.TextIOBase is not available."""
+    def skip_if_no_iobase_(self):
+        try:
+            from io import TextIOBase
+        except ImportError:
+            return self.skipTest("io.TextIOBase not found.")
+        else:
+            return f(self)
+
+    return skip_if_no_iobase_
+
+
 def skip_on_python2(f):
     """Skip a test on Python 3 and following."""
     def skip_on_python2_(self):

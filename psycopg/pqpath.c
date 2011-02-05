@@ -1163,7 +1163,9 @@ static int
 _pq_copy_out_v3(cursorObject *curs)
 {
     PyObject *tmp = NULL, *func;
+    PyObject *obj = NULL;
     int ret = -1;
+    int is_text;
 
     char *buffer;
     Py_ssize_t len;
@@ -1173,14 +1175,28 @@ _pq_copy_out_v3(cursorObject *curs)
         goto exit;
     }
 
+    /* if the file is text we must pass it unicode. */
+    if (-1 == (is_text = psycopg_is_text_file(curs->copyfile))) {
+        goto exit;
+    }
+
     while (1) {
         Py_BEGIN_ALLOW_THREADS;
         len = PQgetCopyData(curs->conn->pgconn, &buffer, 0);
         Py_END_ALLOW_THREADS;
 
         if (len > 0 && buffer) {
-            tmp = PyObject_CallFunction(func, "s#", buffer, len);
+            if (is_text) {
+                obj = PyUnicode_Decode(buffer, len, curs->conn->codec, NULL);
+            } else {
+                obj = Bytes_FromStringAndSize(buffer, len);
+            }
+
             PQfreemem(buffer);
+            if (!obj) { goto exit; }
+            tmp = PyObject_CallFunctionObjArgs(func, obj, NULL);
+            Py_DECREF(obj);
+
             if (tmp == NULL) {
                 goto exit;
             } else {
