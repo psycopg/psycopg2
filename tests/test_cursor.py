@@ -22,6 +22,7 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
+import time
 import unittest
 import psycopg2
 import psycopg2.extensions
@@ -127,6 +128,34 @@ class CursorTests(unittest.TestCase):
         w = ref(curs)
         del curs
         self.assert_(w() is None)
+
+    def test_iter_named_cursor_efficient(self):
+        curs = self.conn.cursor('tmp')
+        # if these records are fetched in the same roundtrip their
+        # timestamp will not be influenced by the pause in Python world.
+        curs.execute("""select clock_timestamp() from generate_series(1,2)""")
+        i = iter(curs)
+        t1 = i.next()[0]
+        time.sleep(0.2)
+        t2 = i.next()[0]
+        self.assert_((t2 - t1).microseconds * 1e-6 < 0.1,
+            "named cursor records fetched in 2 roundtrips (delta: %s)"
+            % (t2 - t1))
+
+    def test_iter_named_cursor_default_arraysize(self):
+        curs = self.conn.cursor('tmp')
+        curs.execute('select generate_series(1,50)')
+        rv = [ (r[0], curs.rownumber) for r in curs ]
+        # everything swallowed in one gulp
+        self.assertEqual(rv, [(i,i) for i in range(1,51)])
+
+    def test_iter_named_cursor_arraysize(self):
+        curs = self.conn.cursor('tmp')
+        curs.arraysize = 30
+        curs.execute('select generate_series(1,50)')
+        rv = [ (r[0], curs.rownumber) for r in curs ]
+        # everything swallowed in two gulps
+        self.assertEqual(rv, [(i,((i - 1) % 30) + 1) for i in range(1,51)])
 
 
 def test_suite():

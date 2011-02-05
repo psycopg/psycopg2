@@ -208,6 +208,11 @@ The ``cursor`` class
             (2, None, 'dada')
             (3, 42, 'bar')
 
+        .. versionchanged:: 2.3.3
+            iterating over a :ref:`named cursor <server-side-cursors>`
+            fetches `~cursor.arraysize` records at time from the backend.
+            Previously only one record was fetched per roundtrip, resulting
+             in unefficient iteration.
 
     .. method:: fetchone()
 
@@ -300,6 +305,18 @@ The ``cursor`` class
         This read/write attribute specifies the number of rows to fetch at a
         time with `~cursor.fetchmany()`. It defaults to 1 meaning to fetch
         a single row at a time.
+
+        The attribute is also used when iterating a :ref:`named cursor
+        <server-side-cursors>`: when syntax such as ``for i in cursor:`` is
+        used, in order to avoid an excessive number of network roundtrips, the
+        cursor will actually fetch `!arraysize` records at time from the
+        backend. For this task the default value of 1 is a poor value: if
+        `!arraysize` is 1, a default value of 2000 will be used instead. If
+        you really want to retrieve one record at time from the backend use
+        `fetchone()` in a loop.
+
+        .. versionchanged:: 2.3.3
+            `!arraysize` used in named cursor iteration.
         
 
     .. attribute:: rowcount 
