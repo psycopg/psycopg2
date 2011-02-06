@@ -26,12 +26,13 @@ import time
 import unittest
 import psycopg2
 import psycopg2.extensions
-import tests
+from psycopg2.extensions import b
+from testconfig import dsn
 
 class CursorTests(unittest.TestCase):
 
     def setUp(self):
-        self.conn = psycopg2.connect(tests.dsn)
+        self.conn = psycopg2.connect(dsn)
 
     def tearDown(self):
         self.conn.close()
@@ -41,7 +42,7 @@ class CursorTests(unittest.TestCase):
         cur = conn.cursor()
         cur.execute("create temp table test_exc (data int);")
         def buggygen():
-            yield 1/0
+            yield 1//0
         self.assertRaises(ZeroDivisionError,
             cur.executemany, "insert into test_exc values (%s)", buggygen())
         cur.close()
@@ -55,28 +56,28 @@ class CursorTests(unittest.TestCase):
         # unicode query containing only ascii data
         cur.execute(u"SELECT 'foo';")
         self.assertEqual('foo', cur.fetchone()[0])
-        self.assertEqual("SELECT 'foo';", cur.mogrify(u"SELECT 'foo';"))
+        self.assertEqual(b("SELECT 'foo';"), cur.mogrify(u"SELECT 'foo';"))
 
         conn.set_client_encoding('UTF8')
         snowman = u"\u2603"
 
         # unicode query with non-ascii data
         cur.execute(u"SELECT '%s';" % snowman)
-        self.assertEqual(snowman.encode('utf8'), cur.fetchone()[0])
-        self.assertEqual("SELECT '%s';" % snowman.encode('utf8'),
-            cur.mogrify(u"SELECT '%s';" % snowman).replace("E'", "'"))
+        self.assertEqual(snowman.encode('utf8'), b(cur.fetchone()[0]))
+        self.assertEqual(("SELECT '%s';" % snowman).encode('utf8'),
+            cur.mogrify(u"SELECT '%s';" % snowman).replace(b("E'"), b("'")))
 
         # unicode args
         cur.execute("SELECT %s;", (snowman,))
-        self.assertEqual(snowman.encode("utf-8"), cur.fetchone()[0])
-        self.assertEqual("SELECT '%s';" % snowman.encode('utf8'),
-            cur.mogrify("SELECT %s;", (snowman,)).replace("E'", "'"))
+        self.assertEqual(snowman.encode("utf-8"), b(cur.fetchone()[0]))
+        self.assertEqual(("SELECT '%s';" % snowman).encode('utf8'),
+            cur.mogrify("SELECT %s;", (snowman,)).replace(b("E'"), b("'")))
 
         # unicode query and args
         cur.execute(u"SELECT %s;", (snowman,))
-        self.assertEqual(snowman.encode("utf-8"), cur.fetchone()[0])
-        self.assertEqual("SELECT '%s';" % snowman.encode('utf8'),
-            cur.mogrify(u"SELECT %s;", (snowman,)).replace("E'", "'"))
+        self.assertEqual(snowman.encode("utf-8"), b(cur.fetchone()[0]))
+        self.assertEqual(("SELECT '%s';" % snowman).encode('utf8'),
+            cur.mogrify(u"SELECT %s;", (snowman,)).replace(b("E'"), b("'")))
 
     def test_mogrify_decimal_explodes(self):
         # issue #7: explodes on windows with python 2.5 and psycopg 2.2.2
@@ -87,7 +88,7 @@ class CursorTests(unittest.TestCase):
 
         conn = self.conn
         cur = conn.cursor()
-        self.assertEqual('SELECT 10.3;',
+        self.assertEqual(b('SELECT 10.3;'),
             cur.mogrify("SELECT %s;", (Decimal("10.3"),)))
 
     def test_cast(self):

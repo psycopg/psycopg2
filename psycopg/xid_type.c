@@ -24,15 +24,11 @@
  * License for more details.
  */
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include <structmember.h>
-
 #define PSYCOPG_MODULE
-#include "psycopg/config.h"
-#include "psycopg/python.h"
 #include "psycopg/psycopg.h"
+
 #include "psycopg/xid.h"
+
 
 static const char xid_doc[] =
     "A transaction identifier used for two-phase commit.\n\n"
@@ -70,12 +66,12 @@ static const char database_doc[] =
     "Database the recovered transaction belongs to.";
 
 static PyMemberDef xid_members[] = {
-    { "format_id", T_OBJECT, offsetof(XidObject, format_id), RO, (char *)format_id_doc },
-    { "gtrid", T_OBJECT, offsetof(XidObject, gtrid), RO, (char *)gtrid_doc },
-    { "bqual", T_OBJECT, offsetof(XidObject, bqual), RO, (char *)bqual_doc },
-    { "prepared", T_OBJECT, offsetof(XidObject, prepared), RO, (char *)prepared_doc },
-    { "owner", T_OBJECT, offsetof(XidObject, owner), RO, (char *)owner_doc },
-    { "database", T_OBJECT, offsetof(XidObject, database), RO, (char *)database_doc },
+    { "format_id", T_OBJECT, offsetof(XidObject, format_id), READONLY, (char *)format_id_doc },
+    { "gtrid", T_OBJECT, offsetof(XidObject, gtrid), READONLY, (char *)gtrid_doc },
+    { "bqual", T_OBJECT, offsetof(XidObject, bqual), READONLY, (char *)bqual_doc },
+    { "prepared", T_OBJECT, offsetof(XidObject, prepared), READONLY, (char *)prepared_doc },
+    { "owner", T_OBJECT, offsetof(XidObject, owner), READONLY, (char *)owner_doc },
+    { "database", T_OBJECT, offsetof(XidObject, database), READONLY, (char *)database_doc },
     { NULL }
 };
 
@@ -154,11 +150,11 @@ xid_init(XidObject *self, PyObject *args, PyObject *kwargs)
     Py_XDECREF(tmp);
 
     tmp = self->gtrid;
-    self->gtrid = PyString_FromString(gtrid);
+    self->gtrid = Text_FromUTF8(gtrid);
     Py_XDECREF(tmp);
 
     tmp = self->bqual;
-    self->bqual = PyString_FromString(bqual);
+    self->bqual = Text_FromUTF8(bqual);
     Py_XDECREF(tmp);
 
     return 0;
@@ -186,7 +182,7 @@ xid_dealloc(XidObject *self)
     Py_CLEAR(self->owner);
     Py_CLEAR(self->database);
 
-    self->ob_type->tp_free((PyObject *)self);
+    Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
 static void
@@ -237,7 +233,7 @@ xid_repr(XidObject *self)
     PyObject *args = NULL;
 
     if (Py_None == self->format_id) {
-        if (!(format = PyString_FromString("<Xid: %r (unparsed)>"))) {
+        if (!(format = Text_FromUTF8("<Xid: %r (unparsed)>"))) {
             goto exit;
         }
         if (!(args = PyTuple_New(1))) { goto exit; }
@@ -245,7 +241,7 @@ xid_repr(XidObject *self)
         PyTuple_SET_ITEM(args, 0, self->gtrid);
     }
     else {
-        if (!(format = PyString_FromString("<Xid: (%r, %r, %r)>"))) {
+        if (!(format = Text_FromUTF8("<Xid: (%r, %r, %r)>"))) {
             goto exit;
         }
         if (!(args = PyTuple_New(3))) { goto exit; }
@@ -257,7 +253,7 @@ xid_repr(XidObject *self)
         PyTuple_SET_ITEM(args, 2, self->bqual);
     }
 
-    rv = PyString_Format(format, args);
+    rv = Text_Format(format, args);
 
 exit:
     Py_XDECREF(args);
@@ -306,8 +302,7 @@ static struct PyMethodDef xid_methods[] = {
 };
 
 PyTypeObject XidType = {
-    PyObject_HEAD_INIT(NULL)
-    0,
+    PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2.extensions.Xid",
     sizeof(XidObject),
     0,
@@ -404,7 +399,11 @@ _xid_base64_enc_dec(const char *funcname, PyObject *s)
 
     if (!(base64 = PyImport_ImportModule("base64"))) { goto exit; }
     if (!(func = PyObject_GetAttrString(base64, funcname))) { goto exit; }
-    rv = PyObject_CallFunctionObjArgs(func, s, NULL);
+
+    Py_INCREF(s);
+    if (!(s = psycopg_ensure_bytes(s))) { goto exit; }
+    rv = psycopg_ensure_text(PyObject_CallFunctionObjArgs(func, s, NULL));
+    Py_DECREF(s);
 
 exit:
     Py_XDECREF(func);
@@ -462,7 +461,7 @@ xid_get_tid(XidObject *self)
         if (!(ebqual = _xid_encode64(self->bqual))) { goto exit; }
 
         /* rv = "%d_%s_%s" % (format_id, egtrid, ebqual) */
-        if (!(format = PyString_FromString("%d_%s_%s"))) { goto exit; }
+        if (!(format = Text_FromUTF8("%d_%s_%s"))) { goto exit; }
 
         if (!(args = PyTuple_New(3))) { goto exit; }
         Py_INCREF(self->format_id);
@@ -470,7 +469,7 @@ xid_get_tid(XidObject *self)
         PyTuple_SET_ITEM(args, 1, egtrid); egtrid = NULL;
         PyTuple_SET_ITEM(args, 2, ebqual); ebqual = NULL;
 
-        if (!(rv = PyString_Format(format, args))) { goto exit; }
+        if (!(rv = Text_Format(format, args))) { goto exit; }
     }
 
 exit:
@@ -626,7 +625,7 @@ XidObject *
 xid_from_string(PyObject *str) {
     XidObject *rv;
 
-    if (!(PyString_Check(str) || PyUnicode_Check(str))) {
+    if (!(Bytes_Check(str) || PyUnicode_Check(str))) {
         PyErr_SetString(PyExc_TypeError, "not a valid transaction id");
         return NULL;
     }

@@ -23,24 +23,19 @@
  * License for more details.
  */
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include <structmember.h>
-#include <stringobject.h>
-
-#include <string.h>
-#include <ctype.h>
-
 #define PSYCOPG_MODULE
-#include "psycopg/config.h"
-#include "psycopg/python.h"
 #include "psycopg/psycopg.h"
+
 #include "psycopg/connection.h"
 #include "psycopg/cursor.h"
 #include "psycopg/pqpath.h"
 #include "psycopg/lobject.h"
 #include "psycopg/green.h"
 #include "psycopg/xid.h"
+
+#include <string.h>
+#include <ctype.h>
+
 
 /** DBAPI methods **/
 
@@ -103,7 +98,7 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *keywds)
 
     Dprintf("psyco_conn_cursor: new cursor at %p: refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        obj, obj->ob_refcnt
+        obj, Py_REFCNT(obj)
       );
     return obj;
 }
@@ -427,35 +422,38 @@ psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
 static PyObject *
 psyco_conn_set_client_encoding(connectionObject *self, PyObject *args)
 {
-    const char *enc = NULL;
-    char *buffer;
-    size_t i, j;
+    const char *enc;
+    char *buffer, *dest;
+    PyObject *rv = NULL;
+    Py_ssize_t len;
 
     EXC_IF_CONN_CLOSED(self);
     EXC_IF_CONN_ASYNC(self, set_client_encoding);
     EXC_IF_TPC_PREPARED(self, set_client_encoding);
 
-    if (!PyArg_ParseTuple(args, "s", &enc)) return NULL;
+    if (!PyArg_ParseTuple(args, "s#", &enc, &len)) return NULL;
 
     /* convert to upper case and remove '-' and '_' from string */
-    buffer = PyMem_Malloc(strlen(enc)+1);
-    for (i=j=0 ; i < strlen(enc) ; i++) {
-        if (enc[i] == '_' || enc[i] == '-')
-            continue;
-        else
-            buffer[j++] = toupper(enc[i]);
+    if (!(dest = buffer = PyMem_Malloc(len+1))) {
+        return PyErr_NoMemory();
     }
-    buffer[j] = '\0';
+
+    while (*enc) {
+        if (*enc == '_' || *enc == '-') {
+            ++enc;
+        }
+        else {
+            *dest++ = toupper(*enc++);
+        }
+    }
+    *dest = '\0';
 
     if (conn_set_client_encoding(self, buffer) == 0) {
-        PyMem_Free(buffer);
         Py_INCREF(Py_None);
-        return Py_None;
+        rv = Py_None;
     }
-    else {
-        PyMem_Free(buffer);
-        return NULL;
-    }
+    PyMem_Free(buffer);
+    return rv;
 }
 
 /* get_transaction_status method - Get backend transaction status */
@@ -497,7 +495,7 @@ psyco_conn_get_parameter_status(connectionObject *self, PyObject *args)
         Py_INCREF(Py_None);
         return Py_None;
     }
-    return PyString_FromString(val);
+    return conn_text_from_chars(self, val);
 }
 
 
@@ -516,15 +514,16 @@ static PyObject *
 psyco_conn_lobject(connectionObject *self, PyObject *args, PyObject *keywds)
 {
     Oid oid=InvalidOid, new_oid=InvalidOid;
-    char *smode = NULL, *new_file = NULL;
-    int mode=0;
-    PyObject *obj, *factory = NULL;
+    char *new_file = NULL;
+    const char *smode = "";
+    PyObject *factory = (PyObject *)&lobjectType;
+    PyObject *obj;
 
     static char *kwlist[] = {"oid", "mode", "new_oid", "new_file",
                              "cursor_factory", NULL};
-    
+
     if (!PyArg_ParseTupleAndKeywords(args, keywds, "|izizO", kwlist,
-                                     &oid, &smode, &new_oid, &new_file, 
+                                     &oid, &smode, &new_oid, &new_file,
                                      &factory)) {
         return NULL;
     }
@@ -539,33 +538,13 @@ psyco_conn_lobject(connectionObject *self, PyObject *args, PyObject *keywds)
             oid, smode);
     Dprintf("psyco_conn_lobject:     parameters: new_oid = %d, new_file = %s",
             new_oid, new_file);
-    
-    /* build a mode number out of the mode string: right now we only accept
-       'r', 'w' and 'rw' (but note that 'w' implies 'rw' because PostgreSQL
-       backend does that. */
-    if (smode) {
-        if (strncmp("rw", smode, 2) == 0)
-            mode = INV_READ+INV_WRITE;
-        else if (smode[0] == 'r')
-           mode = INV_READ;
-        else if (smode[0] == 'w')
-           mode = INV_WRITE;
-        else if (smode[0] == 'n')
-           mode = -1;
-        else {
-            PyErr_SetString(PyExc_TypeError,
-                "mode should be one of 'r', 'w' or 'rw'");
-            return NULL;
-        }
-    }
 
-    if (factory == NULL) factory = (PyObject *)&lobjectType;
     if (new_file)
-        obj = PyObject_CallFunction(factory, "Oiiis", 
-            self, oid, mode, new_oid, new_file);
+        obj = PyObject_CallFunction(factory, "Oisis",
+            self, oid, smode, new_oid, new_file);
     else
-        obj = PyObject_CallFunction(factory, "Oiii",
-            self, oid, mode, new_oid);
+        obj = PyObject_CallFunction(factory, "Oisi",
+            self, oid, smode, new_oid);
 
     if (obj == NULL) return NULL;
     if (PyObject_IsInstance(obj, (PyObject *)&lobjectType) == 0) {
@@ -574,10 +553,10 @@ psyco_conn_lobject(connectionObject *self, PyObject *args, PyObject *keywds)
         Py_DECREF(obj);
         return NULL;
     }
-    
+
     Dprintf("psyco_conn_lobject: new lobject at %p: refcnt = "
             FORMAT_CODE_PY_SSIZE_T,
-            obj, obj->ob_refcnt);
+            obj, Py_REFCNT(obj));
     return obj;
 }
 
@@ -786,31 +765,31 @@ static struct PyMethodDef connectionObject_methods[] = {
 
 static struct PyMemberDef connectionObject_members[] = {
 #ifdef PSYCOPG_EXTENSIONS
-    {"closed", T_LONG, offsetof(connectionObject, closed), RO,
+    {"closed", T_LONG, offsetof(connectionObject, closed), READONLY,
         "True if the connection is closed."},
     {"isolation_level", T_LONG,
-        offsetof(connectionObject, isolation_level), RO,
+        offsetof(connectionObject, isolation_level), READONLY,
         "The current isolation level."},
-    {"encoding", T_STRING, offsetof(connectionObject, encoding), RO,
+    {"encoding", T_STRING, offsetof(connectionObject, encoding), READONLY,
         "The current client encoding."},
-    {"notices", T_OBJECT, offsetof(connectionObject, notice_list), RO},
-    {"notifies", T_OBJECT, offsetof(connectionObject, notifies), RO},
-    {"dsn", T_STRING, offsetof(connectionObject, dsn), RO,
+    {"notices", T_OBJECT, offsetof(connectionObject, notice_list), READONLY},
+    {"notifies", T_OBJECT, offsetof(connectionObject, notifies), READONLY},
+    {"dsn", T_STRING, offsetof(connectionObject, dsn), READONLY,
         "The current connection string."},
-    {"async", T_LONG, offsetof(connectionObject, async), RO,
+    {"async", T_LONG, offsetof(connectionObject, async), READONLY,
         "True if the connection is asynchronous."},
     {"status", T_INT,
-        offsetof(connectionObject, status), RO,
+        offsetof(connectionObject, status), READONLY,
         "The current transaction status."},
-    {"string_types", T_OBJECT, offsetof(connectionObject, string_types), RO,
+    {"string_types", T_OBJECT, offsetof(connectionObject, string_types), READONLY,
         "A set of typecasters to convert textual values."},
-    {"binary_types", T_OBJECT, offsetof(connectionObject, binary_types), RO,
+    {"binary_types", T_OBJECT, offsetof(connectionObject, binary_types), READONLY,
         "A set of typecasters to convert binary values."},
     {"protocol_version", T_INT,
-        offsetof(connectionObject, protocol), RO,
+        offsetof(connectionObject, protocol), READONLY,
         "Protocol version used for this connection. Currently always 3."},
     {"server_version", T_INT,
-        offsetof(connectionObject, server_version), RO,
+        offsetof(connectionObject, server_version), READONLY,
         "Server version."},
 #endif
     {NULL}
@@ -845,26 +824,18 @@ connection_setup(connectionObject *self, const char *dsn, long int async)
 
     Dprintf("connection_setup: init connection object at %p, "
 	    "async %ld, refcnt = " FORMAT_CODE_PY_SSIZE_T,
-            self, async, ((PyObject *)self)->ob_refcnt
+            self, async, Py_REFCNT(self)
       );
 
     self->dsn = strdup(dsn);
     self->notice_list = PyList_New(0);
     self->notifies = PyList_New(0);
-    self->closed = 0;
     self->async = async;
     self->status = CONN_STATUS_SETUP;
-    self->critical = NULL;
-    self->async_cursor = NULL;
     self->async_status = ASYNC_DONE;
-    self->pgconn = NULL;
-    self->cancel = NULL;
-    self->mark = 0;
     self->string_types = PyDict_New();
     self->binary_types = PyDict_New();
-    self->notice_pending = NULL;
-    self->encoding = NULL;
-    self->weakreflist = NULL;
+    /* other fields have been zeroed by tp_alloc */
 
     pthread_mutex_init(&(self->lock), NULL);
 
@@ -875,7 +846,7 @@ connection_setup(connectionObject *self, const char *dsn, long int async)
     else {
         Dprintf("connection_setup: good connection object at %p, refcnt = "
             FORMAT_CODE_PY_SSIZE_T,
-            self, ((PyObject *)self)->ob_refcnt
+            self, Py_REFCNT(self)
           );
         res = 0;
     }
@@ -906,7 +877,8 @@ connection_dealloc(PyObject* obj)
     conn_notice_clean(self);
 
     if (self->dsn) free(self->dsn);
-    if (self->encoding) free(self->encoding);
+    PyMem_Free(self->encoding);
+    PyMem_Free(self->codec);
     if (self->critical) free(self->critical);
 
     Py_CLEAR(self->tpc_xid);
@@ -921,10 +893,10 @@ connection_dealloc(PyObject* obj)
 
     Dprintf("connection_dealloc: deleted connection object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        obj, obj->ob_refcnt
+        obj, Py_REFCNT(obj)
       );
 
-    obj->ob_type->tp_free(obj);
+    Py_TYPE(obj)->tp_free(obj);
 }
 
 static int
@@ -984,8 +956,7 @@ connection_traverse(connectionObject *self, visitproc visit, void *arg)
 "    ProgrammingError, IntegrityError, DataError, NotSupportedError"
 
 PyTypeObject connectionType = {
-    PyObject_HEAD_INIT(NULL)
-    0,
+    PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.connection",
     sizeof(connectionObject),
     0,

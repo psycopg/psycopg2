@@ -23,15 +23,13 @@
  * License for more details.
  */
 
-#include <Python.h>
-#include <string.h>
-
 #define PSYCOPG_MODULE
-#include "psycopg/config.h"
 #include "psycopg/psycopg.h"
+
 #include "psycopg/connection.h"
 #include "psycopg/pgtypes.h"
-#include "psycopg/pgversion.h"
+
+#include <string.h>
 #include <stdlib.h>
 
 char *
@@ -72,3 +70,122 @@ psycopg_escape_string(PyObject *obj, const char *from, Py_ssize_t len,
         
     return to;
 }
+
+/* Duplicate a string.
+ *
+ * Allocate a new buffer on the Python heap containing the new string.
+ * 'len' is optional: if 0 the length is calculated.
+ *
+ * Return NULL and set an exception in case of error.
+ */
+char *
+psycopg_strdup(const char *from, Py_ssize_t len)
+{
+    char *rv;
+
+    if (!len) { len = strlen(from); }
+    if (!(rv = PyMem_Malloc(len + 1))) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+    strcpy(rv, from);
+    return rv;
+}
+
+/* Ensure a Python object is a bytes string.
+ *
+ * Useful when a char * is required out of it.
+ *
+ * The function is ref neutral: steals a ref from obj and adds one to the
+ * return value. This also means that you shouldn't call the function on a
+ * borrowed ref, if having the object unallocated is not what you want.
+ *
+ * It is safe to call the function on NULL.
+ */
+PyObject *
+psycopg_ensure_bytes(PyObject *obj)
+{
+    PyObject *rv = NULL;
+    if (!obj) { return NULL; }
+
+    if (PyUnicode_CheckExact(obj)) {
+        rv = PyUnicode_AsUTF8String(obj);
+        Py_DECREF(obj);
+    }
+    else if (Bytes_CheckExact(obj)) {
+        rv = obj;
+    }
+    else {
+        PyErr_Format(PyExc_TypeError,
+            "Expected bytes or unicode string, got %s instead",
+            Py_TYPE(obj)->tp_name);
+        Py_DECREF(obj);  /* steal the ref anyway */
+    }
+
+    return rv;
+}
+
+/* Take a Python object and return text from it.
+ *
+ * On Py3 this means converting bytes to unicode. On Py2 bytes are fine.
+ *
+ * The function is ref neutral: steals a ref from obj and adds one to the
+ * return value.  It is safe to call it on NULL.
+ */
+PyObject *
+psycopg_ensure_text(PyObject *obj)
+{
+#if PY_MAJOR_VERSION < 3
+    return obj;
+#else
+    if (obj) {
+        /* bytes to unicode in Py3 */
+        PyObject *rv = PyUnicode_FromEncodedObject(obj, "utf8", "replace");
+        Py_DECREF(obj);
+        return rv;
+    }
+    else {
+        return NULL;
+    }
+#endif
+}
+
+/* Check if a file derives from TextIOBase.
+ *
+ * Return 1 if it does, else 0, -1 on errors.
+ */
+int
+psycopg_is_text_file(PyObject *f)
+{
+    /* NULL before any call.
+     * then io.TextIOBase if exists, else None. */
+    static PyObject *base;
+
+    /* Try to import os.TextIOBase */
+    if (NULL == base) {
+        PyObject *m;
+        Dprintf("psycopg_is_text_file: importing io.TextIOBase");
+        if (!(m = PyImport_ImportModule("io"))) {
+            Dprintf("psycopg_is_text_file: io module not found");
+            PyErr_Clear();
+            Py_INCREF(Py_None);
+            base = Py_None;
+        }
+        else {
+            if (!(base = PyObject_GetAttrString(m, "TextIOBase"))) {
+                Dprintf("psycopg_is_text_file: io.TextIOBase not found");
+                PyErr_Clear();
+                Py_INCREF(Py_None);
+                base = Py_None;
+            }
+        }
+        Py_XDECREF(m);
+    }
+
+    if (base != Py_None) {
+        return PyObject_IsInstance(f, base);
+    } else {
+        return 0;
+    }
+}
+

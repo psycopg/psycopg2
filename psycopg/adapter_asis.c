@@ -22,37 +22,44 @@
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
  * License for more details.
  */
- 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include <structmember.h>
-#include <stringobject.h>
-#include <string.h>
 
 #define PSYCOPG_MODULE
-#include "psycopg/config.h"
-#include "psycopg/python.h"
 #include "psycopg/psycopg.h"
+
 #include "psycopg/adapter_asis.h"
 #include "psycopg/microprotocols_proto.h"
+
+#include <string.h>
+
 
 /** the AsIs object **/
 
 static PyObject *
-asis_str(asisObject *self)
+asis_getquoted(asisObject *self, PyObject *args)
 {
+    PyObject *rv;
     if (self->wrapped == Py_None) {
-        return PyString_FromString("NULL");
+        rv = Bytes_FromString("NULL");
     }
     else {
-        return PyObject_Str(self->wrapped);
+        rv = PyObject_Str(self->wrapped);
+#if PY_MAJOR_VERSION > 2
+        /* unicode to bytes in Py3 */
+        if (rv) {
+            PyObject *tmp = PyUnicode_AsUTF8String(rv);
+            Py_DECREF(rv);
+            rv = tmp;
+        }
+#endif
     }
+
+    return rv;
 }
 
 static PyObject *
-asis_getquoted(asisObject *self, PyObject *args)
+asis_str(asisObject *self)
 {
-    return asis_str(self);
+    return psycopg_ensure_text(asis_getquoted(self, NULL));
 }
 
 static PyObject *
@@ -76,7 +83,7 @@ asis_conform(asisObject *self, PyObject *args)
 /* object member list */
 
 static struct PyMemberDef asisObject_members[] = {
-    {"adapted", T_OBJECT, offsetof(asisObject, wrapped), RO},
+    {"adapted", T_OBJECT, offsetof(asisObject, wrapped), READONLY},
     {NULL}
 };
 
@@ -96,7 +103,7 @@ asis_setup(asisObject *self, PyObject *obj)
 {
     Dprintf("asis_setup: init asis object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt
+        self, Py_REFCNT(self)
       );
 
     Py_INCREF(obj);
@@ -104,7 +111,7 @@ asis_setup(asisObject *self, PyObject *obj)
 
     Dprintf("asis_setup: good asis object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt
+        self, Py_REFCNT(self)
       );
     return 0;
 }
@@ -125,10 +132,10 @@ asis_dealloc(PyObject* obj)
 
     Dprintf("asis_dealloc: deleted asis object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        obj, obj->ob_refcnt
+        obj, Py_REFCNT(obj)
       );
 
-    obj->ob_type->tp_free(obj);
+    Py_TYPE(obj)->tp_free(obj);
 }
 
 static int
@@ -167,8 +174,7 @@ asis_repr(asisObject *self)
 "AsIs(str) -> new AsIs adapter object"
 
 PyTypeObject asisType = {
-    PyObject_HEAD_INIT(NULL)
-    0,
+    PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.AsIs",
     sizeof(asisObject),
     0,

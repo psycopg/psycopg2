@@ -23,13 +23,9 @@
  * License for more details.
  */
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-
 #define PSYCOPG_MODULE
-#include "psycopg/config.h"
-#include "psycopg/python.h"
 #include "psycopg/psycopg.h"
+
 #include "psycopg/connection.h"
 #include "psycopg/cursor.h"
 #include "psycopg/green.h"
@@ -130,17 +126,38 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
         return NULL;
     }
 
+#if PY_MAJOR_VERSION < 3
     if (pyport && PyString_Check(pyport)) {
-      PyObject *pyint = PyInt_FromString(PyString_AsString(pyport), NULL, 10);
-      if (!pyint) goto fail;
-      /* Must use PyInt_AsLong rather than PyInt_AS_LONG, because
-       * PyInt_FromString can return a PyLongObject: */
-      iport = PyInt_AsLong(pyint);
-      Py_DECREF(pyint);
+        PyObject *pyint = PyInt_FromString(PyString_AsString(pyport), NULL, 10);
+        if (!pyint) goto fail;
+        /* Must use PyInt_AsLong rather than PyInt_AS_LONG, because
+         * PyInt_FromString can return a PyLongObject: */
+        iport = PyInt_AsLong(pyint);
+        Py_DECREF(pyint);
+        if (iport == -1 && PyErr_Occurred())
+            goto fail;
     }
     else if (pyport && PyInt_Check(pyport)) {
-      iport = PyInt_AsLong(pyport);
+        iport = PyInt_AsLong(pyport);
+        if (iport == -1 && PyErr_Occurred())
+            goto fail;
     }
+#else
+    if (pyport && PyUnicode_Check(pyport)) {
+        PyObject *pyint = PyObject_CallFunction((PyObject*)&PyLong_Type,
+                                                "Oi", pyport, 10);
+        if (!pyint) goto fail;
+        iport = PyLong_AsLong(pyint);
+        Py_DECREF(pyint);
+        if (iport == -1 && PyErr_Occurred())
+            goto fail;
+    }
+    else if (pyport && PyLong_Check(pyport)) {
+        iport = PyLong_AsLong(pyport);
+        if (iport == -1 && PyErr_Occurred())
+            goto fail;
+    }
+#endif
     else if (pyport != NULL) {
       PyErr_SetString(PyExc_TypeError, "port must be a string or int");
       goto fail;
@@ -292,13 +309,23 @@ psyco_adapters_init(PyObject *mod)
     PyTypeObject *type;
 
     microprotocols_add(&PyFloat_Type, NULL, (PyObject*)&pfloatType);
+#if PY_MAJOR_VERSION < 3
     microprotocols_add(&PyInt_Type, NULL, (PyObject*)&asisType);
+#endif
     microprotocols_add(&PyLong_Type, NULL, (PyObject*)&asisType);
     microprotocols_add(&PyBool_Type, NULL, (PyObject*)&pbooleanType);
 
+#if PY_MAJOR_VERSION < 3
     microprotocols_add(&PyString_Type, NULL, (PyObject*)&qstringType);
+#endif
     microprotocols_add(&PyUnicode_Type, NULL, (PyObject*)&qstringType);
+#if PY_MAJOR_VERSION < 3
     microprotocols_add(&PyBuffer_Type, NULL, (PyObject*)&binaryType);
+#else
+    microprotocols_add(&PyBytes_Type, NULL, (PyObject*)&binaryType);
+    microprotocols_add(&PyByteArray_Type, NULL, (PyObject*)&binaryType);
+    microprotocols_add(&PyMemoryView_Type, NULL, (PyObject*)&binaryType);
+#endif
     microprotocols_add(&PyList_Type, NULL, (PyObject*)&listType);
 
     if ((type = (PyTypeObject*)psyco_GetDecimalType()) != NULL)
@@ -329,7 +356,32 @@ psyco_adapters_init(PyObject *mod)
    Fill the module's postgresql<->python encoding table */
 
 static encodingPair encodings[] = {
-    {"SQL_ASCII",    "ascii"},
+    {"ABC",          "cp1258"},
+    {"ALT",          "cp866"},
+    {"BIG5",         "big5"},
+    {"EUC_CN",       "euccn"},
+    {"EUC_JIS_2004", "euc_jis_2004"},
+    {"EUC_JP",       "euc_jp"},
+    {"EUC_KR",       "euc_kr"},
+    {"GB18030",      "gb18030"},
+    {"GBK",          "gbk"},
+    {"ISO_8859_1",   "iso8859_1"},
+    {"ISO_8859_2",   "iso8859_2"},
+    {"ISO_8859_3",   "iso8859_3"},
+    {"ISO_8859_5",   "iso8859_5"},
+    {"ISO_8859_6",   "iso8859_6"},
+    {"ISO_8859_7",   "iso8859_7"},
+    {"ISO_8859_8",   "iso8859_8"},
+    {"ISO_8859_9",   "iso8859_9"},
+    {"ISO_8859_10",  "iso8859_10"},
+    {"ISO_8859_13",  "iso8859_13"},
+    {"ISO_8859_14",  "iso8859_14"},
+    {"ISO_8859_15",  "iso8859_15"},
+    {"ISO_8859_16",  "iso8859_16"},
+    {"JOHAB",        "johab"},
+    {"KOI8",         "koi8_r"},
+    {"KOI8R",        "koi8_r"},
+    {"KOI8U",        "koi8_u"},
     {"LATIN1",       "iso8859_1"},
     {"LATIN2",       "iso8859_2"},
     {"LATIN3",       "iso8859_3"},
@@ -339,46 +391,30 @@ static encodingPair encodings[] = {
     {"LATIN7",       "iso8859_13"},
     {"LATIN8",       "iso8859_14"},
     {"LATIN9",       "iso8859_15"},
-    {"ISO88591",     "iso8859_1"},
-    {"ISO88592",     "iso8859_2"},
-    {"ISO88593",     "iso8859_3"},
-    {"ISO88595",     "iso8859_5"},
-    {"ISO88596",     "iso8859_6"},
-    {"ISO88597",     "iso8859_7"},
-    {"ISO885913",    "iso8859_13"},
-    {"ISO88598",     "iso8859_8"},
-    {"ISO88599",     "iso8859_9"},
-    {"ISO885914",    "iso8859_14"},
-    {"ISO885915",    "iso8859_15"},
-    {"UNICODE",      "utf_8"}, /* Not valid in 8.2, backward compatibility */
-    {"UTF8",         "utf_8"},
-    {"WIN950",       "cp950"},
-    {"Windows950",   "cp950"},
-    {"BIG5",         "big5"},
-    {"EUC_JP",       "euc_jp"},
-    {"EUC_KR",       "euc_kr"},
-    {"GB18030",      "gb18030"},
-    {"GBK",          "gbk"},
-    {"WIN936",       "gbk"},
-    {"Windows936",   "gbk"},
-    {"JOHAB",        "johab"},
-    {"KOI8",         "koi8_r"}, /* in PG: KOI8 == KOI8R == KOI8-R == KOI8-U
-                                   but in Python there is koi8_r AND koi8_u */
-    {"KOI8R",        "koi8_r"},
-    {"SJIS",         "cp932"},
+    {"LATIN10",      "iso8859_16"},
     {"Mskanji",      "cp932"},
     {"ShiftJIS",     "cp932"},
-    {"WIN932",       "cp932"},
-    {"Windows932",   "cp932"},
+    {"SHIFT_JIS_2004", "shift_jis_2004"},
+    {"SJIS",         "cp932"},
+    {"SQL_ASCII",    "ascii"},  /* XXX this is wrong: SQL_ASCII means "no
+                                 *  encoding" we should fix the unicode
+                                 *  typecaster to return a str or bytes in Py3
+                                 */
+    {"TCVN",         "cp1258"},
+    {"TCVN5712",     "cp1258"},
     {"UHC",          "cp949"},
-    {"WIN949",       "cp949"},
-    {"Windows949",   "cp949"},
+    {"UNICODE",      "utf_8"}, /* Not valid in 8.2, backward compatibility */
+    {"UTF8",         "utf_8"},
+    {"VSCII",        "cp1258"},
+    {"WIN",          "cp1251"},
     {"WIN866",       "cp866"},
-    {"ALT",          "cp866"},
     {"WIN874",       "cp874"},
+    {"WIN932",       "cp932"},
+    {"WIN936",       "gbk"},
+    {"WIN949",       "cp949"},
+    {"WIN950",       "cp950"},
     {"WIN1250",      "cp1250"},
     {"WIN1251",      "cp1251"},
-    {"WIN",          "cp1251"},
     {"WIN1252",      "cp1252"},
     {"WIN1253",      "cp1253"},
     {"WIN1254",      "cp1254"},
@@ -386,16 +422,13 @@ static encodingPair encodings[] = {
     {"WIN1256",      "cp1256"},
     {"WIN1257",      "cp1257"},
     {"WIN1258",      "cp1258"},
-    {"ABC",          "cp1258"},
-    {"TCVN",         "cp1258"},
-    {"TCVN5712",     "cp1258"},
-    {"VSCII",        "cp1258"},
+    {"Windows932",   "cp932"},
+    {"Windows936",   "gbk"},
+    {"Windows949",   "cp949"},
+    {"Windows950",   "cp950"},
 
 /* those are missing from Python:                */
-/*    {"EUC_CN", "?"},                           */
 /*    {"EUC_TW", "?"},                           */
-/*    {"LATIN10", "?"},                          */
-/*    {"ISO885916", "?"},                        */
 /*    {"MULE_INTERNAL", "?"},                    */
     {NULL, NULL}
 };
@@ -405,7 +438,7 @@ static void psyco_encodings_fill(PyObject *dict)
     encodingPair *enc;
 
     for (enc = encodings; enc->pgenc != NULL; enc++) {
-        PyObject *value = PyString_FromString(enc->pyenc);
+        PyObject *value = Text_FromUTF8(enc->pyenc);
         PyDict_SetItemString(dict, enc->pgenc, value);
         Py_DECREF(value);
     }
@@ -470,12 +503,18 @@ psyco_errors_init(void)
         dict = PyDict_New();
 
         if (exctable[i].docstr) {
-            str = PyString_FromString(exctable[i].docstr);
+            str = Text_FromUTF8(exctable[i].docstr);
             PyDict_SetItemString(dict, "__doc__", str);
         }
 
-        if (exctable[i].base == 0)
+        if (exctable[i].base == 0) {
+            #if PY_MAJOR_VERSION < 3
             base = PyExc_StandardError;
+            #else
+            /* StandardError is gone in 3.0 */
+            base = NULL;
+            #endif
+        }
         else
             base = *exctable[i].base;
 
@@ -543,23 +582,26 @@ psyco_set_error(PyObject *exc, PyObject *curs, const char *msg,
     PyObject *err = PyObject_CallFunction(exc, "s", msg);
 
     if (err) {
+        connectionObject *conn = NULL;
+        if (curs) {
+            PyObject_SetAttrString(err, "cursor", curs);
+            conn = ((cursorObject *)curs)->conn;
+        }
+
         if (pgerror) {
-            t = PyString_FromString(pgerror);
+            t = conn_text_from_chars(conn, pgerror);
             PyObject_SetAttrString(err, "pgerror", t);
             Py_DECREF(t);
         }
 
         if (pgcode) {
-            t = PyString_FromString(pgcode);
+            t = conn_text_from_chars(conn, pgcode);
             PyObject_SetAttrString(err, "pgcode", t);
             Py_DECREF(t);
         }
 
-        if (curs)
-            PyObject_SetAttrString(err, "cursor", curs);
-
         PyErr_SetObject(exc, err);
-    Py_DECREF(err);
+        Py_DECREF(err);
     }
 }
 
@@ -701,13 +743,29 @@ static PyMethodDef psycopgMethods[] = {
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
-PyMODINIT_FUNC
-init_psycopg(void)
-{
-    static void *PSYCOPG_API[PSYCOPG_API_pointers];
+#if PY_MAJOR_VERSION > 2
+static struct PyModuleDef psycopgmodule = {
+        PyModuleDef_HEAD_INIT,
+        "_psycopg",
+        NULL,
+        -1,
+        psycopgMethods,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+};
+#endif
 
-    PyObject *module, *dict;
+PyMODINIT_FUNC
+INIT_MODULE(_psycopg)(void)
+{
+#if PY_VERSION_HEX < 0x03020000
+    static void *PSYCOPG_API[PSYCOPG_API_pointers];
     PyObject *c_api_object;
+#endif
+
+    PyObject *module = NULL, *dict;
 
 #ifdef PSYCOPG_DEBUG
     if (getenv("PSYCOPG_DEBUG"))
@@ -717,51 +775,51 @@ init_psycopg(void)
     Dprintf("initpsycopg: initializing psycopg %s", PSYCOPG_VERSION);
 
     /* initialize all the new types and then the module */
-    connectionType.ob_type = &PyType_Type;
-    cursorType.ob_type     = &PyType_Type;
-    typecastType.ob_type   = &PyType_Type;
-    qstringType.ob_type    = &PyType_Type;
-    binaryType.ob_type     = &PyType_Type;
-    isqlquoteType.ob_type  = &PyType_Type;
-    pbooleanType.ob_type   = &PyType_Type;
-    pfloatType.ob_type     = &PyType_Type;
-    pdecimalType.ob_type   = &PyType_Type;
-    asisType.ob_type       = &PyType_Type;
-    listType.ob_type       = &PyType_Type;
-    chunkType.ob_type      = &PyType_Type;
-    NotifyType.ob_type     = &PyType_Type;
-    XidType.ob_type        = &PyType_Type;
+    Py_TYPE(&connectionType) = &PyType_Type;
+    Py_TYPE(&cursorType)     = &PyType_Type;
+    Py_TYPE(&typecastType)   = &PyType_Type;
+    Py_TYPE(&qstringType)    = &PyType_Type;
+    Py_TYPE(&binaryType)     = &PyType_Type;
+    Py_TYPE(&isqlquoteType)  = &PyType_Type;
+    Py_TYPE(&pbooleanType)   = &PyType_Type;
+    Py_TYPE(&pfloatType)     = &PyType_Type;
+    Py_TYPE(&pdecimalType)   = &PyType_Type;
+    Py_TYPE(&asisType)       = &PyType_Type;
+    Py_TYPE(&listType)       = &PyType_Type;
+    Py_TYPE(&chunkType)      = &PyType_Type;
+    Py_TYPE(&NotifyType)     = &PyType_Type;
+    Py_TYPE(&XidType)        = &PyType_Type;
 
-    if (PyType_Ready(&connectionType) == -1) return;
-    if (PyType_Ready(&cursorType) == -1) return;
-    if (PyType_Ready(&typecastType) == -1) return;
-    if (PyType_Ready(&qstringType) == -1) return;
-    if (PyType_Ready(&binaryType) == -1) return;
-    if (PyType_Ready(&isqlquoteType) == -1) return;
-    if (PyType_Ready(&pbooleanType) == -1) return;
-    if (PyType_Ready(&pfloatType) == -1) return;
-    if (PyType_Ready(&pdecimalType) == -1) return;
-    if (PyType_Ready(&asisType) == -1) return;
-    if (PyType_Ready(&listType) == -1) return;
-    if (PyType_Ready(&chunkType) == -1) return;
-    if (PyType_Ready(&NotifyType) == -1) return;
-    if (PyType_Ready(&XidType) == -1) return;
+    if (PyType_Ready(&connectionType) == -1) goto exit;
+    if (PyType_Ready(&cursorType) == -1) goto exit;
+    if (PyType_Ready(&typecastType) == -1) goto exit;
+    if (PyType_Ready(&qstringType) == -1) goto exit;
+    if (PyType_Ready(&binaryType) == -1) goto exit;
+    if (PyType_Ready(&isqlquoteType) == -1) goto exit;
+    if (PyType_Ready(&pbooleanType) == -1) goto exit;
+    if (PyType_Ready(&pfloatType) == -1) goto exit;
+    if (PyType_Ready(&pdecimalType) == -1) goto exit;
+    if (PyType_Ready(&asisType) == -1) goto exit;
+    if (PyType_Ready(&listType) == -1) goto exit;
+    if (PyType_Ready(&chunkType) == -1) goto exit;
+    if (PyType_Ready(&NotifyType) == -1) goto exit;
+    if (PyType_Ready(&XidType) == -1) goto exit;
 
 #ifdef PSYCOPG_EXTENSIONS
-    lobjectType.ob_type    = &PyType_Type;
-    if (PyType_Ready(&lobjectType) == -1) return;
+    Py_TYPE(&lobjectType)    = &PyType_Type;
+    if (PyType_Ready(&lobjectType) == -1) goto exit;
 #endif
 
     /* import mx.DateTime module, if necessary */
 #ifdef HAVE_MXDATETIME
-    mxdatetimeType.ob_type = &PyType_Type;
-    if (PyType_Ready(&mxdatetimeType) == -1) return;
+    Py_TYPE(&mxdatetimeType) = &PyType_Type;
+    if (PyType_Ready(&mxdatetimeType) == -1) goto exit;
     if (mxDateTime_ImportModuleAndAPI() != 0) {
         Dprintf("initpsycopg: why marc hide mx.DateTime again?!");
         PyErr_SetString(PyExc_ImportError, "can't import mx.DateTime module");
-        return;
+        goto exit;
     }
-    if (psyco_adapter_mxdatetime_init()) { return; }
+    if (psyco_adapter_mxdatetime_init()) { goto exit; }
 #endif
 
     /* import python builtin datetime module, if available */
@@ -769,22 +827,22 @@ init_psycopg(void)
     if (pyDateTimeModuleP == NULL) {
         Dprintf("initpsycopg: can't import datetime module");
         PyErr_SetString(PyExc_ImportError, "can't import datetime module");
-        return;
+        goto exit;
     }
 
     /* Initialize the PyDateTimeAPI everywhere is used */
     PyDateTime_IMPORT;
-    if (psyco_adapter_datetime_init()) { return; }
+    if (psyco_adapter_datetime_init()) { goto exit; }
 
-    pydatetimeType.ob_type = &PyType_Type;
-    if (PyType_Ready(&pydatetimeType) == -1) return;
+    Py_TYPE(&pydatetimeType) = &PyType_Type;
+    if (PyType_Ready(&pydatetimeType) == -1) goto exit;
 
     /* import psycopg2.tz anyway (TODO: replace with C-level module?) */
     pyPsycopgTzModule = PyImport_ImportModule("psycopg2.tz");
     if (pyPsycopgTzModule == NULL) {
         Dprintf("initpsycopg: can't import psycopg2.tz module");
         PyErr_SetString(PyExc_ImportError, "can't import psycopg2.tz module");
-        return;
+        goto exit;
     }
     pyPsycopgTzLOCAL =
         PyObject_GetAttrString(pyPsycopgTzModule, "LOCAL");
@@ -792,16 +850,25 @@ init_psycopg(void)
         PyObject_GetAttrString(pyPsycopgTzModule, "FixedOffsetTimezone");
 
     /* initialize the module and grab module's dictionary */
+#if PY_MAJOR_VERSION < 3
     module = Py_InitModule("_psycopg", psycopgMethods);
+#else
+    module = PyModule_Create(&psycopgmodule);
+#endif
+    if (!module) { goto exit; }
+
     dict = PyModule_GetDict(module);
 
     /* initialize all the module's exported functions */
     /* PyBoxer_API[PyBoxer_Fake_NUM] = (void *)PyBoxer_Fake; */
 
     /* Create a CObject containing the API pointer array's address */
+    /* If anybody asks for a PyCapsule we'll deal with it. */
+#if PY_VERSION_HEX < 0x03020000
     c_api_object = PyCObject_FromVoidPtr((void *)PSYCOPG_API, NULL);
     if (c_api_object != NULL)
         PyModule_AddObject(module, "_C_API", c_api_object);
+#endif
 
     /* other mixed initializations of module-level variables */
     psycoEncodings = PyDict_New();
@@ -810,9 +877,9 @@ init_psycopg(void)
     /* set some module's parameters */
     PyModule_AddStringConstant(module, "__version__", PSYCOPG_VERSION);
     PyModule_AddStringConstant(module, "__doc__", "psycopg PostgreSQL driver");
-    PyModule_AddObject(module, "apilevel", PyString_FromString(APILEVEL));
+    PyModule_AddObject(module, "apilevel", Text_FromUTF8(APILEVEL));
     PyModule_AddObject(module, "threadsafety", PyInt_FromLong(THREADSAFETY));
-    PyModule_AddObject(module, "paramstyle", PyString_FromString(PARAMSTYLE));
+    PyModule_AddObject(module, "paramstyle", Text_FromUTF8(PARAMSTYLE));
 
     /* put new types in module dictionary */
     PyModule_AddObject(module, "connection", (PyObject*)&connectionType);
@@ -864,4 +931,11 @@ init_psycopg(void)
 #endif
 
     Dprintf("initpsycopg: module initialization complete");
+
+exit:
+#if PY_MAJOR_VERSION > 2
+    return module;
+#else
+    return;
+#endif
 }

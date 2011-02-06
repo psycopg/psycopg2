@@ -23,18 +23,13 @@
  * License for more details.
  */
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include <structmember.h>
-
 #define PSYCOPG_MODULE
-#include "psycopg/config.h"
-#include "psycopg/python.h"
 #include "psycopg/psycopg.h"
-#include "psycopg/cursor.h"
-#include "psycopg/connection.h"
+
 #include "psycopg/microprotocols.h"
 #include "psycopg/microprotocols_proto.h"
+#include "psycopg/cursor.h"
+#include "psycopg/connection.h"
 
 
 /** the adapters registry **/
@@ -87,8 +82,12 @@ _get_superclass_adapter(PyObject *obj, PyObject *proto)
     PyObject *key, *adapter;
     Py_ssize_t i, ii;
 
-    type = (PyTypeObject *)Py_TYPE(obj);
-    if (!((Py_TPFLAGS_HAVE_CLASS & type->tp_flags) && type->tp_mro)) {
+    type = Py_TYPE(obj);
+    if (!(
+#if PY_MAJOR_VERSION < 3
+        (Py_TPFLAGS_HAVE_CLASS & type->tp_flags) &&
+#endif
+        type->tp_mro)) {
         /* has no mro */
         return NULL;
     }
@@ -136,7 +135,8 @@ microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
        because the ISQLQuote type is abstract and there is no way to get a
        quotable object to be its instance */
 
-    Dprintf("microprotocols_adapt: trying to adapt %s", obj->ob_type->tp_name);
+    Dprintf("microprotocols_adapt: trying to adapt %s",
+        Py_TYPE(obj)->tp_name);
 
     /* look for an adapter in the registry */
     key = PyTuple_Pack(2, Py_TYPE(obj), proto);
@@ -192,12 +192,16 @@ microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
     }
 
     /* else set the right exception and return NULL */
-    PyOS_snprintf(buffer, 255, "can't adapt type '%s'", obj->ob_type->tp_name);
+    PyOS_snprintf(buffer, 255, "can't adapt type '%s'",
+        Py_TYPE(obj)->tp_name);
     psyco_set_error(ProgrammingError, NULL, buffer, NULL, NULL);
     return NULL;
 }
 
-/* microprotocol_getquoted - utility function that adapt and call getquoted */
+/* microprotocol_getquoted - utility function that adapt and call getquoted.
+ *
+ * Return a bytes string, NULL on error.
+ */
 
 PyObject *
 microprotocol_getquoted(PyObject *obj, connectionObject *conn)
@@ -211,7 +215,7 @@ microprotocol_getquoted(PyObject *obj, connectionObject *conn)
     }
 
     Dprintf("microprotocol_getquoted: adapted to %s",
-            adapted->ob_type->tp_name);
+        Py_TYPE(adapted)->tp_name);
 
     /* if requested prepare the object passing it the connection */
     if (conn) {
@@ -234,6 +238,16 @@ microprotocol_getquoted(PyObject *obj, connectionObject *conn)
     /* call the getquoted method on adapted (that should exist because we
        adapted to the right protocol) */
     res = PyObject_CallMethod(adapted, "getquoted", NULL);
+
+    /* Convert to bytes. */
+    if (res && PyUnicode_CheckExact(res)) {
+        PyObject *b;
+        const char *codec;
+        codec = (conn && conn->codec) ? conn->codec : "utf8";
+        b = PyUnicode_AsEncodedString(res, codec, NULL);
+        Py_DECREF(res);
+        res = b;
+    }
 
 exit:
     Py_XDECREF(adapted);

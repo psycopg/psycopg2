@@ -26,23 +26,20 @@ from testutils import unittest
 
 import psycopg2
 from psycopg2 import extensions
+from testconfig import dsn
+from testutils import script_to_py3
 
+import sys
 import time
 import select
 import signal
 from subprocess import Popen, PIPE
 
-import sys
-if sys.version_info < (3,):
-    import tests
-else:
-    import py3tests as tests
-
 
 class NotifiesTests(unittest.TestCase):
 
     def setUp(self):
-        self.conn = psycopg2.connect(tests.dsn)
+        self.conn = psycopg2.connect(dsn)
 
     def tearDown(self):
         self.conn.close()
@@ -77,9 +74,9 @@ curs.execute("NOTIFY " %(name)r %(payload)r)
 curs.close()
 conn.close()
 """
-            % { 'dsn': tests.dsn, 'sec': sec, 'name': name, 'payload': payload})
+            % { 'dsn': dsn, 'sec': sec, 'name': name, 'payload': payload})
 
-        return Popen([sys.executable, '-c', script], stdout=PIPE)
+        return Popen([sys.executable, '-c', script_to_py3(script)], stdout=PIPE)
 
     def test_notifies_received_on_poll(self):
         self.autocommit(self.conn)

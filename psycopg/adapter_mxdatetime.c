@@ -23,19 +23,16 @@
  * License for more details.
  */
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include <structmember.h>
-#include <stringobject.h>
+#define PSYCOPG_MODULE
+#include "psycopg/psycopg.h"
+
+/* TODO: check if still compiles ok: I have no mx on this box */
+#include "psycopg/adapter_mxdatetime.h"
+#include "psycopg/microprotocols_proto.h"
+
 #include <mxDateTime.h>
 #include <string.h>
 
-#define PSYCOPG_MODULE
-#include "psycopg/config.h"
-#include "psycopg/python.h"
-#include "psycopg/psycopg.h"
-#include "psycopg/adapter_mxdatetime.h"
-#include "psycopg/microprotocols_proto.h"
 
 int
 psyco_adapter_mxdatetime_init(void)
@@ -138,8 +135,8 @@ mxdatetime_conform(mxdatetimeObject *self, PyObject *args)
 /* object member list */
 
 static struct PyMemberDef mxdatetimeObject_members[] = {
-    {"adapted", T_OBJECT, offsetof(mxdatetimeObject, wrapped), RO},
-    {"type", T_INT, offsetof(mxdatetimeObject, type), RO},
+    {"adapted", T_OBJECT, offsetof(mxdatetimeObject, wrapped), READONLY},
+    {"type", T_INT, offsetof(mxdatetimeObject, type), READONLY},
     {NULL}
 };
 
@@ -159,7 +156,7 @@ mxdatetime_setup(mxdatetimeObject *self, PyObject *obj, int type)
 {
     Dprintf("mxdatetime_setup: init mxdatetime object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt
+        self, Py_REFCNT(self)
       );
 
     self->type = type;
@@ -168,7 +165,7 @@ mxdatetime_setup(mxdatetimeObject *self, PyObject *obj, int type)
 
     Dprintf("mxdatetime_setup: good mxdatetime object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt
+        self, Py_REFCNT(self)
       );
     return 0;
 }
@@ -191,10 +188,10 @@ mxdatetime_dealloc(PyObject* obj)
 
     Dprintf("mxdatetime_dealloc: deleted mxdatetime object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        obj, obj->ob_refcnt
+        obj, Py_REFCNT(obj)
       );
 
-    obj->ob_type->tp_free(obj);
+    Py_TYPE(obj)->tp_free(obj);
 }
 
 static int
@@ -234,8 +231,7 @@ mxdatetime_repr(mxdatetimeObject *self)
 "MxDateTime(mx, type) -> new mx.DateTime wrapper object"
 
 PyTypeObject mxdatetimeType = {
-    PyObject_HEAD_INIT(NULL)
-    0,
+    PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.MxDateTime",
     sizeof(mxdatetimeObject),
     0,

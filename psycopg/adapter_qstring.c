@@ -23,21 +23,14 @@
  * License for more details.
  */
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include <structmember.h>
-#include <stringobject.h>
-
-#include <libpq-fe.h>
-#include <string.h>
-
 #define PSYCOPG_MODULE
-#include "psycopg/config.h"
-#include "psycopg/python.h"
 #include "psycopg/psycopg.h"
+
 #include "psycopg/connection.h"
 #include "psycopg/adapter_qstring.h"
 #include "psycopg/microprotocols_proto.h"
+
+#include <string.h>
 
 
 /* qstring_quote - do the quote process on plain and unicode strings */
@@ -56,24 +49,12 @@ qstring_quote(qstringObject *self)
     Dprintf("qstring_quote: encoding to %s", self->encoding);
 
     if (PyUnicode_Check(self->wrapped) && self->encoding) {
-        PyObject *enc = PyDict_GetItemString(psycoEncodings, self->encoding);
-        /* note that enc is a borrowed reference */
-
-        if (enc) {
-            const char *s = PyString_AsString(enc);
-            Dprintf("qstring_quote: encoding unicode object to %s", s);
-            str = PyUnicode_AsEncodedString(self->wrapped, s, NULL);
-            Dprintf("qstring_quote: got encoded object at %p", str);
-            if (str == NULL) return NULL;
-        }
-        else {
-            /* can't find the right encoder, raise exception */
-            PyErr_Format(InterfaceError,
-                         "can't encode unicode string to %s", self->encoding);
-            return NULL;
-        }
+        str = PyUnicode_AsEncodedString(self->wrapped, self->encoding, NULL);
+        Dprintf("qstring_quote: got encoded object at %p", str);
+        if (str == NULL) return NULL;
     }
 
+#if PY_MAJOR_VERSION < 3
     /* if the wrapped object is a simple string, we don't know how to
        (re)encode it, so we pass it as-is */
     else if (PyString_Check(self->wrapped)) {
@@ -81,6 +62,7 @@ qstring_quote(qstringObject *self)
         /* INCREF to make it ref-wise identical to unicode one */
         Py_INCREF(str);
     }
+#endif
 
     /* if the wrapped object is not a string, this is an error */
     else {
@@ -90,7 +72,7 @@ qstring_quote(qstringObject *self)
     }
 
     /* encode the string into buffer */
-    PyString_AsStringAndSize(str, &s, &len);
+    Bytes_AsStringAndSize(str, &s, &len);
 
     /* Call qstring_escape with the GIL released, then reacquire the GIL
        before verifying that the results can fit into a Python string; raise
@@ -113,8 +95,8 @@ qstring_quote(qstringObject *self)
         Py_DECREF(str);
         return NULL;
     }
-    
-    self->buffer = PyString_FromStringAndSize(buffer, qlen);
+
+    self->buffer = Bytes_FromStringAndSize(buffer, qlen);
     PyMem_Free(buffer);
     Py_DECREF(str);
 
@@ -124,7 +106,7 @@ qstring_quote(qstringObject *self)
 /* qstring_str, qstring_getquoted - return result of quoting */
 
 static PyObject *
-qstring_str(qstringObject *self)
+qstring_getquoted(qstringObject *self, PyObject *args)
 {
     if (self->buffer == NULL) {
         qstring_quote(self);
@@ -134,9 +116,9 @@ qstring_str(qstringObject *self)
 }
 
 static PyObject *
-qstring_getquoted(qstringObject *self, PyObject *args)
+qstring_str(qstringObject *self)
 {
-    return qstring_str(self);
+    return psycopg_ensure_text(qstring_getquoted(self, NULL));
 }
 
 static PyObject *
@@ -151,8 +133,8 @@ qstring_prepare(qstringObject *self, PyObject *args)
        we don't need the encoding if that's not the case */
     if (PyUnicode_Check(self->wrapped)) {
         if (self->encoding) free(self->encoding);
-        self->encoding = strdup(conn->encoding);
-        Dprintf("qstring_prepare: set encoding to %s", conn->encoding);
+        self->encoding = strdup(conn->codec);
+        Dprintf("qstring_prepare: set encoding to %s", conn->codec);
     }
 
     Py_CLEAR(self->conn);
@@ -186,9 +168,9 @@ qstring_conform(qstringObject *self, PyObject *args)
 /* object member list */
 
 static struct PyMemberDef qstringObject_members[] = {
-    {"adapted", T_OBJECT, offsetof(qstringObject, wrapped), RO},
-    {"buffer", T_OBJECT, offsetof(qstringObject, buffer), RO},
-    {"encoding", T_STRING, offsetof(qstringObject, encoding), RO},
+    {"adapted", T_OBJECT, offsetof(qstringObject, wrapped), READONLY},
+    {"buffer", T_OBJECT, offsetof(qstringObject, buffer), READONLY},
+    {"encoding", T_STRING, offsetof(qstringObject, encoding), READONLY},
     {NULL}
 };
 
@@ -210,7 +192,7 @@ qstring_setup(qstringObject *self, PyObject *str, const char *enc)
 {
     Dprintf("qstring_setup: init qstring object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt
+        self, Py_REFCNT(self)
       );
 
     self->buffer = NULL;
@@ -224,7 +206,7 @@ qstring_setup(qstringObject *self, PyObject *str, const char *enc)
 
     Dprintf("qstring_setup: good qstring object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt
+        self, Py_REFCNT(self)
       );
     return 0;
 }
@@ -253,10 +235,10 @@ qstring_dealloc(PyObject* obj)
 
     Dprintf("qstring_dealloc: deleted qstring object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        obj, obj->ob_refcnt
+        obj, Py_REFCNT(obj)
       );
 
-    obj->ob_type->tp_free(obj);
+    Py_TYPE(obj)->tp_free(obj);
 }
 
 static int
@@ -296,8 +278,7 @@ qstring_repr(qstringObject *self)
 "QuotedString(str, enc) -> new quoted object with 'enc' encoding"
 
 PyTypeObject qstringType = {
-    PyObject_HEAD_INIT(NULL)
-    0,
+    PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.QuotedString",
     sizeof(qstringObject),
     0,

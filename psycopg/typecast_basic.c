@@ -25,6 +25,7 @@
 
 /** INTEGER - cast normal integers (4 bytes) to python int **/
 
+#if PY_MAJOR_VERSION < 3
 static PyObject *
 typecast_INTEGER_cast(const char *s, Py_ssize_t len, PyObject *curs)
 {
@@ -37,6 +38,9 @@ typecast_INTEGER_cast(const char *s, Py_ssize_t len, PyObject *curs)
     }
     return PyInt_FromString((char *)s, NULL, 0);
 }
+#else
+#define typecast_INTEGER_cast typecast_LONGINTEGER_cast
+#endif
 
 /** LONGINTEGER - cast long integers (8 bytes) to python long **/
 
@@ -59,44 +63,42 @@ static PyObject *
 typecast_FLOAT_cast(const char *s, Py_ssize_t len, PyObject *curs)
 {
     PyObject *str = NULL, *flo = NULL;
-    char *pend;
 
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
-    str = PyString_FromStringAndSize(s, len);
-    flo = PyFloat_FromString(str, &pend);
+    str = Text_FromUTF8AndSize(s, len);
+#if PY_MAJOR_VERSION < 3
+    flo = PyFloat_FromString(str, NULL);
+#else
+    flo = PyFloat_FromString(str);
+#endif
     Py_DECREF(str);
     return flo;
 }
 
 /** STRING - cast strings of any type to python string **/
 
+#if PY_MAJOR_VERSION < 3
 static PyObject *
 typecast_STRING_cast(const char *s, Py_ssize_t len, PyObject *curs)
 {
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
     return PyString_FromStringAndSize(s, len);
 }
+#else
+#define typecast_STRING_cast typecast_UNICODE_cast
+#endif
 
 /** UNICODE - cast strings of any type to a python unicode object **/
 
 static PyObject *
 typecast_UNICODE_cast(const char *s, Py_ssize_t len, PyObject *curs)
 {
-    PyObject *enc;
+    char *enc;
 
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
 
-    enc = PyDict_GetItemString(psycoEncodings,
-                               ((cursorObject*)curs)->conn->encoding);
-    if (enc) {
-        return PyUnicode_Decode(s, len, PyString_AsString(enc), NULL);
-    }
-    else {
-       PyErr_Format(InterfaceError,
-                    "can't decode into unicode string from %s",
-                    ((cursorObject*)curs)->conn->encoding);
-       return NULL;
-    }
+    enc = ((cursorObject*)curs)->conn->codec;
+    return PyUnicode_Decode(s, len, enc, NULL);
 }
 
 /** BOOLEAN - cast boolean value into right python object **/

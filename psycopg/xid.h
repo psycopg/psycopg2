@@ -27,10 +27,6 @@
 #ifndef PSYCOPG_XID_H
 #define PSYCOPG_XID_H 1
 
-#include <Python.h>
-
-#include "psycopg/config.h"
-
 extern HIDDEN PyTypeObject XidType;
 
 typedef struct {

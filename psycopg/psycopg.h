@@ -120,6 +120,11 @@ HIDDEN void psyco_set_error(PyObject *exc, PyObject *curs,  const char *msg,
 HIDDEN char *psycopg_escape_string(PyObject *conn,
               const char *from, Py_ssize_t len, char *to, Py_ssize_t *tolen);
 
+HIDDEN char *psycopg_strdup(const char *from, Py_ssize_t len);
+HIDDEN PyObject * psycopg_ensure_bytes(PyObject *obj);
+HIDDEN PyObject * psycopg_ensure_text(PyObject *obj);
+HIDDEN int psycopg_is_text_file(PyObject *f);
+
 /* Exceptions docstrings */
 #define Error_doc \
 "Base class for error exceptions."

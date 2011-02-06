@@ -23,15 +23,11 @@
  * License for more details.
  */
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include <structmember.h>
-
 #define PSYCOPG_MODULE
-#include "psycopg/config.h"
-#include "psycopg/python.h"
 #include "psycopg/psycopg.h"
+
 #include "psycopg/notify.h"
+
 
 static const char notify_doc[] =
     "A notification received from the backend.\n\n"
@@ -56,9 +52,9 @@ static const char payload_doc[] =
     "of the server this member is always the empty string.";
 
 static PyMemberDef notify_members[] = {
-    { "pid", T_OBJECT, offsetof(NotifyObject, pid), RO, (char *)pid_doc },
-    { "channel", T_OBJECT, offsetof(NotifyObject, channel), RO, (char *)channel_doc },
-    { "payload", T_OBJECT, offsetof(NotifyObject, payload), RO, (char *)payload_doc },
+    { "pid", T_OBJECT, offsetof(NotifyObject, pid), READONLY, (char *)pid_doc },
+    { "channel", T_OBJECT, offsetof(NotifyObject, channel), READONLY, (char *)channel_doc },
+    { "payload", T_OBJECT, offsetof(NotifyObject, payload), READONLY, (char *)payload_doc },
     { NULL }
 };
 
@@ -82,7 +78,7 @@ notify_init(NotifyObject *self, PyObject *args, PyObject *kwargs)
     }
 
     if (!payload) {
-        payload = PyString_FromStringAndSize("", 0);
+        payload = Text_FromUTF8("");
     }
 
     Py_CLEAR(self->pid);
@@ -116,7 +112,7 @@ notify_dealloc(NotifyObject *self)
     Py_CLEAR(self->channel);
     Py_CLEAR(self->payload);
 
-    self->ob_type->tp_free((PyObject *)self);
+    Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
 static void
@@ -217,7 +213,7 @@ notify_repr(NotifyObject *self)
     PyObject *format = NULL;
     PyObject *args = NULL;
 
-    if (!(format = PyString_FromString("Notify(%r, %r, %r)"))) {
+    if (!(format = Text_FromUTF8("Notify(%r, %r, %r)"))) {
         goto exit;
     }
 
@@ -229,7 +225,7 @@ notify_repr(NotifyObject *self)
     Py_INCREF(self->payload);
     PyTuple_SET_ITEM(args, 2, self->payload);
 
-    rv = PyString_Format(format, args);
+    rv = Text_Format(format, args);
 
 exit:
     Py_XDECREF(args);
@@ -280,8 +276,7 @@ static PySequenceMethods notify_sequence = {
 
 
 PyTypeObject NotifyType = {
-    PyObject_HEAD_INIT(NULL)
-    0,
+    PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2.extensions.Notify",
     sizeof(NotifyObject),
     0,

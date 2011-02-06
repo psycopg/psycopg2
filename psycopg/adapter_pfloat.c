@@ -23,38 +23,47 @@
  * License for more details.
  */
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include <structmember.h>
-#include <floatobject.h>
-#include <math.h>
-
 #define PSYCOPG_MODULE
-#include "psycopg/config.h"
-#include "psycopg/python.h"
 #include "psycopg/psycopg.h"
+
 #include "psycopg/adapter_pfloat.h"
 #include "psycopg/microprotocols_proto.h"
+
+#include <floatobject.h>
+#include <math.h>
 
 
 /** the Float object **/
 
 static PyObject *
-pfloat_str(pfloatObject *self)
+pfloat_getquoted(pfloatObject *self, PyObject *args)
 {
+    PyObject *rv;
     double n = PyFloat_AsDouble(self->wrapped);
     if (isnan(n))
-        return PyString_FromString("'NaN'::float");
+        rv = Bytes_FromString("'NaN'::float");
     else if (isinf(n))
-        return PyString_FromString("'Infinity'::float");
-    else
-        return PyObject_Repr(self->wrapped);
+        rv = Bytes_FromString("'Infinity'::float");
+    else {
+        rv = PyObject_Repr(self->wrapped);
+
+#if PY_MAJOR_VERSION > 2
+        /* unicode to bytes in Py3 */
+        if (rv) {
+            PyObject *tmp = PyUnicode_AsUTF8String(rv);
+            Py_DECREF(rv);
+            rv = tmp;
+        }
+#endif
+    }
+
+    return rv;
 }
 
 static PyObject *
-pfloat_getquoted(pfloatObject *self, PyObject *args)
+pfloat_str(pfloatObject *self)
 {
-    return pfloat_str(self);
+    return psycopg_ensure_text(pfloat_getquoted(self, NULL));
 }
 
 static PyObject *
@@ -78,7 +87,7 @@ pfloat_conform(pfloatObject *self, PyObject *args)
 /* object member list */
 
 static struct PyMemberDef pfloatObject_members[] = {
-    {"adapted", T_OBJECT, offsetof(pfloatObject, wrapped), RO},
+    {"adapted", T_OBJECT, offsetof(pfloatObject, wrapped), READONLY},
     {NULL}
 };
 
@@ -98,7 +107,7 @@ pfloat_setup(pfloatObject *self, PyObject *obj)
 {
     Dprintf("pfloat_setup: init pfloat object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt
+        self, Py_REFCNT(self)
       );
 
     Py_INCREF(obj);
@@ -106,7 +115,7 @@ pfloat_setup(pfloatObject *self, PyObject *obj)
 
     Dprintf("pfloat_setup: good pfloat object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt
+        self, Py_REFCNT(self)
       );
     return 0;
 }
@@ -129,10 +138,10 @@ pfloat_dealloc(PyObject* obj)
 
     Dprintf("pfloat_dealloc: deleted pfloat object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        obj, obj->ob_refcnt
+        obj, Py_REFCNT(obj)
       );
 
-    obj->ob_type->tp_free(obj);
+    Py_TYPE(obj)->tp_free(obj);
 }
 
 static int
@@ -172,8 +181,7 @@ pfloat_repr(pfloatObject *self)
 "Float(str) -> new Float adapter object"
 
 PyTypeObject pfloatType = {
-    PyObject_HEAD_INIT(NULL)
-    0,
+    PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.Float",
     sizeof(pfloatObject),
     0,

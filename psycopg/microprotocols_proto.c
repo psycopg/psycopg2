@@ -23,18 +23,12 @@
  * License for more details.
  */
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include <structmember.h>
-#include <stringobject.h>
+#define PSYCOPG_MODULE
+#include "psycopg/psycopg.h"
+
+#include "psycopg/microprotocols_proto.h"
 
 #include <string.h>
-
-#define PSYCOPG_MODULE
-#include "psycopg/config.h"
-#include "psycopg/python.h"
-#include "psycopg/psycopg.h"
-#include "psycopg/microprotocols_proto.h"
 
 
 /** void protocol implementation **/
@@ -99,7 +93,7 @@ static struct PyMethodDef isqlquoteObject_methods[] = {
 
 static struct PyMemberDef isqlquoteObject_members[] = {
     /* DBAPI-2.0 extensions (exception objects) */
-    {"_wrapped", T_OBJECT, offsetof(isqlquoteObject, wrapped), RO},
+    {"_wrapped", T_OBJECT, offsetof(isqlquoteObject, wrapped), READONLY},
     {NULL}
 };
 
@@ -121,7 +115,7 @@ isqlquote_dealloc(PyObject* obj)
 
     Py_XDECREF(self->wrapped);
 
-    obj->ob_type->tp_free(obj);
+    Py_TYPE(obj)->tp_free(obj);
 }
 
 static int
@@ -156,8 +150,7 @@ isqlquote_del(PyObject* self)
 "returning the SQL representation of the object.\n\n"
 
 PyTypeObject isqlquoteType = {
-    PyObject_HEAD_INIT(NULL)
-    0,
+    PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.ISQLQuote",
     sizeof(isqlquoteObject),
     0,

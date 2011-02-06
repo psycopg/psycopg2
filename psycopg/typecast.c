@@ -23,14 +23,9 @@
  * License for more details.
  */
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include <structmember.h>
-
 #define PSYCOPG_MODULE
-#include "psycopg/config.h"
 #include "psycopg/psycopg.h"
-#include "psycopg/python.h"
+
 #include "psycopg/typecast.h"
 #include "psycopg/cursor.h"
 
@@ -312,7 +307,7 @@ typecast_add(PyObject *obj, PyObject *dict, int binary)
 
     Dprintf("typecast_add: object at %p, values refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        obj, type->values->ob_refcnt
+        obj, Py_REFCNT(type->values)
       );
 
     if (dict == NULL)
@@ -393,8 +388,8 @@ typecast_richcompare(PyObject *obj1, PyObject* obj2, int opid)
 }
 
 static struct PyMemberDef typecastObject_members[] = {
-    {"name", T_OBJECT, OFFSETOF(name), RO},
-    {"values", T_OBJECT, OFFSETOF(values), RO},
+    {"name", T_OBJECT, OFFSETOF(name), READONLY},
+    {"values", T_OBJECT, OFFSETOF(values), READONLY},
     {NULL}
 };
 
@@ -410,7 +405,7 @@ typecast_dealloc(PyObject *obj)
     Py_CLEAR(self->pcast);
     Py_CLEAR(self->bcast);
 
-    obj->ob_type->tp_free(obj);
+    Py_TYPE(obj)->tp_free(obj);
 }
 
 static int
@@ -432,31 +427,46 @@ typecast_del(void *self)
 }
 
 static PyObject *
+typecast_repr(PyObject *self)
+{
+    PyObject *name = ((typecastObject *)self)->name;
+    PyObject *rv;
+
+    Py_INCREF(name);
+    if (!(name = psycopg_ensure_bytes(name))) {
+        return NULL;
+    }
+
+    rv = PyString_FromFormat("<%s '%s' at %p>",
+        Py_TYPE(self)->tp_name, Bytes_AS_STRING(name), self);
+
+    Py_DECREF(name);
+    return rv;
+}
+
+static PyObject *
 typecast_call(PyObject *obj, PyObject *args, PyObject *kwargs)
 {
-    PyObject *string, *cursor;
+    char *string;
+    Py_ssize_t length;
+    PyObject *cursor;
 
-    if (!PyArg_ParseTuple(args, "OO", &string, &cursor)) {
+    if (!PyArg_ParseTuple(args, "z#O", &string, &length, &cursor)) {
         return NULL;
     }
 
     // If the string is not a string but a None value we're being called
-    // from a Python-defined caster. There is no need to convert, just
-    // return it.
-
-    if (string == Py_None) {
-        Py_INCREF(string);
-        return string;
+    // from a Python-defined caster.
+    if (!string) {
+        Py_INCREF(Py_None);
+        return Py_None;
     }
 
-    return typecast_cast(obj,
-                         PyString_AsString(string), PyString_Size(string),
-                         cursor);
+    return typecast_cast(obj, string, length, cursor);
 }
 
 PyTypeObject typecastType = {
-    PyObject_HEAD_INIT(NULL)
-    0,
+    PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.type",
     sizeof(typecastObject),
     0,
@@ -466,7 +476,7 @@ PyTypeObject typecastType = {
     0,          /*tp_getattr*/
     0,          /*tp_setattr*/
     typecast_cmp, /*tp_compare*/
-    0,          /*tp_repr*/
+    typecast_repr, /*tp_repr*/
     0,          /*tp_as_number*/
     0,          /*tp_as_sequence*/
     0,          /*tp_as_mapping*/
@@ -524,7 +534,7 @@ typecast_new(PyObject *name, PyObject *values, PyObject *cast, PyObject *base)
     if (obj == NULL) return NULL;
 
     Dprintf("typecast_new: new type at = %p, refcnt = " FORMAT_CODE_PY_SSIZE_T,
-      obj, obj->ob_refcnt);
+      obj, Py_REFCNT(obj));
 
     Py_INCREF(values);
     obj->values = values;
@@ -566,7 +576,7 @@ typecast_from_python(PyObject *self, PyObject *args, PyObject *keywds)
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds, "O!|O!OO", kwlist,
                                      &PyTuple_Type, &v,
-                                     &PyString_Type, &name,
+                                     &Text_Type, &name,
                                      &cast, &base)) {
         return NULL;
     }
@@ -591,7 +601,7 @@ typecast_from_c(typecastObject_initlist *type, PyObject *dict)
         }
     }
 
-    name = PyString_FromString(type->name);
+    name = Text_FromUTF8(type->name);
     if (!name) goto end;
 
     while (type->values[len] != 0) len++;
@@ -630,7 +640,27 @@ typecast_cast(PyObject *obj, const char *str, Py_ssize_t len, PyObject *curs)
         res = self->ccast(str, len, curs);
     }
     else if (self->pcast) {
-        res = PyObject_CallFunction(self->pcast, "s#O", str, len, curs);
+        PyObject *s;
+        /* XXX we have bytes in the adapters and strings in the typecasters.
+         * are you sure this is ok?
+         * Notice that this way it is about impossible to create a python
+         * typecaster on a binary type. */
+        if (str) {
+#if PY_MAJOR_VERSION < 3
+            s = PyString_FromStringAndSize(str, len);
+#else
+            s = PyUnicode_Decode(str, len,
+                ((cursorObject *)curs)->conn->codec, NULL);
+#endif
+        }
+        else {
+            Py_INCREF(Py_None);
+            s = Py_None;
+        }
+        if (s) {
+            res = PyObject_CallFunctionObjArgs(self->pcast, s, curs, NULL);
+            Py_DECREF(s);
+        }
     }
     else {
         PyErr_SetString(Error, "internal error: no casting function found");

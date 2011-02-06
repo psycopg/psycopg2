@@ -574,7 +574,8 @@ whole.
 
 Psycopg allows access to the large object using the
 `~psycopg2.extensions.lobject` class. Objects are generated using the
-`connection.lobject()` factory method.
+`connection.lobject()` factory method. Data can be retrieved either as bytes
+or as Unicode strings.
 
 Psycopg large object support efficient import/export with file system files
 using the |lo_import|_ and |lo_export|_ libpq functions.

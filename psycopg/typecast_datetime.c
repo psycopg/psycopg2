@@ -159,7 +159,7 @@ typecast_PYDATETIME_cast(const char *str, Py_ssize_t len, PyObject *curs)
                 y, m, d, hh, mm, ss, us, tzinfo);
             Dprintf("typecast_PYDATETIME_cast: tzinfo: %p, refcnt = "
                 FORMAT_CODE_PY_SSIZE_T,
-                tzinfo, tzinfo->ob_refcnt
+                tzinfo, Py_REFCNT(tzinfo)
               );
             Py_DECREF(tzinfo);
         }

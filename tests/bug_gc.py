@@ -28,17 +28,13 @@ import time
 import unittest
 import gc
 
-import sys
-if sys.version_info < (3,):
-    import tests
-else:
-    import py3tests as tests
+from testconfig import dsn
 
 from testutils import skip_if_no_uuid
 
 class StolenReferenceTestCase(unittest.TestCase):
     def setUp(self):
-        self.conn = psycopg2.connect(tests.dsn)
+        self.conn = psycopg2.connect(dsn)
 
     def tearDown(self):
         self.conn.close()

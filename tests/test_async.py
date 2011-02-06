@@ -32,12 +32,7 @@ import time
 import select
 import StringIO
 
-import sys
-if sys.version_info < (3,):
-    import tests
-else:
-    import py3tests as tests
-
+from testconfig import dsn
 
 class PollableStub(object):
     """A 'pollable' wrapper allowing analysis of the `poll()` calls."""
@@ -57,8 +52,8 @@ class PollableStub(object):
 class AsyncTests(unittest.TestCase):
 
     def setUp(self):
-        self.sync_conn = psycopg2.connect(tests.dsn)
-        self.conn = psycopg2.connect(tests.dsn, async=True)
+        self.sync_conn = psycopg2.connect(dsn)
+        self.conn = psycopg2.connect(dsn, async=True)
 
         self.wait(self.conn)
 
@@ -333,7 +328,7 @@ class AsyncTests(unittest.TestCase):
             def __init__(self, dsn, async=0):
                 psycopg2.extensions.connection.__init__(self, dsn, async=async)
 
-        conn = psycopg2.connect(tests.dsn, connection_factory=MyConn, async=True)
+        conn = psycopg2.connect(dsn, connection_factory=MyConn, async=True)
         self.assert_(isinstance(conn, MyConn))
         self.assert_(conn.async)
         conn.close()
