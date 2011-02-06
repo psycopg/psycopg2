@@ -1,3 +1,143 @@
+What's new in psycopg 2.4
+-------------------------
+
+* New features and changes:
+
+  - Added `register_composite()` function to cast PostgreSQL composite types
+    into Python tuples/namedtuples.
+  - More efficient iteration on named cursors.
+  - The build script refuses to guess values if pg_config is not found.
+  - Connections and cursors are weakly referenceable.
+  - Added 'b' and 't' mode to large objects: write can deal with both bytes
+    strings and unicode; read can return either bytes strings or decoded
+    unicode.
+  - COPY sends Unicode data to files implementing io.TextIOBase.
+  - The build script refuses to guess values if pg_config is not found.
+  - Improved PostgreSQL-Python encodings mapping. Added a few
+    missing encodings: EUC_CN, EUC_JIS_2004, ISO885910, ISO885916,
+    LATIN10, SHIFT_JIS_2004.
+  - Dropped repeated dictionary lookups with unicode query/parameters.
+  - Empty lists correctly roundtrip Python -> PostgreSQL -> Python.
+
+* Bug fixes:
+
+  - Fixed adaptation of None in composite types (ticket #26). Bug report by
+    Karsten Hilbert.
+  - Fixed several reference leaks in less common code paths.
+  - Fixed segfault when a large object is closed and its connection no more
+    available.
+  - Added missing icon to ZPsycopgDA package, not available in Zope 2.12.9
+    (ticket #30). Bug report and patch by Pumukel.
+
+
+What's new in psycopg 2.3.2
+---------------------------
+
+  - Fixed segfault with middleware not passing DateStyle to the client
+    (ticket #24). Bug report and patch by Marti Raudsepp.
+
+
+What's new in psycopg 2.3.1
+---------------------------
+
+  - Fixed build problem on CentOS 5.5 x86_64 (ticket #23).
+
+
+What's new in psycopg 2.3.0
+---------------------------
+
+psycopg 2.3 aims to expose some new features introduced in PostgreSQL 9.0.
+
+* Main new features:
+
+  - `dict` to `hstore` adapter and `hstore` to `dict` typecaster, using both
+    9.0 and pre-9.0 syntax.
+  - Two-phase commit protocol support as per DBAPI specification.
+  - Support for payload in notifications received from the backed.
+  - `namedtuple`-returning cursor.
+  - Query execution cancel.
+
+* Other features and changes:
+
+  - Dropped support for protocol 2: Psycopg 2.3 can only connect to PostgreSQL
+    servers with version at least 7.4.
+  - Don't issue a query at every connection to detect the client encoding
+    and to set the datestyle to ISO if it is already compatible with what
+    expected.
+  - `mogrify()` now supports unicode queries.
+  - Subclasses of a type that can be adapted are adapted as the superclass.
+  - `errorcodes` knows a couple of new codes introduced in PostgreSQL 9.0.
+  - Dropped deprecated Psycopg "own quoting".
+  - Never issue a ROLLBACK on close/GC. This behaviour was introduced as a bug
+    in release 2.2, but trying to send a command while being destroyed has been
+    considered not safe.
+
+* Bug fixes:
+
+  - Fixed use of `PQfreemem` instead of `free` in binary typecaster.
+  - Fixed access to freed memory in `conn_get_isolation_level()`.
+  - Fixed crash during Decimal adaptation with a few 2.5.x Python versions
+    (ticket #7).
+  - Fixed notices order (ticket #9).
+
+
+What's new in psycopg 2.2.2
+---------------------------
+
+* Bux fixes:
+
+  - the call to logging.basicConfig() in pool.py has been dropped: it was
+    messing with some projects using logging (and a library should not
+    initialize the logging system anyway.)
+  - psycopg now correctly handles time zones with seconds in the UTC offset.
+    The old register_tstz_w_secs() function is deprecated and will raise a
+    warning if called.
+  - Exceptions raised by the column iterator are propagated.
+  - Exceptions raised by executemany() interators are propagated.
+
+
+What's new in psycopg 2.2.1
+---------------------------
+
+* Bux fixes:
+
+  - psycopg now builds again on MS Windows.
+
+
+What's new in psycopg 2.2.0
+---------------------------
+
+This is the first release of the new 2.2 series, supporting not just one but
+two different ways of executing asynchronous queries, thanks to Jan and Daniele
+(with a little help from me and others, but they did 99% of the work so they
+deserve their names here in the news.)
+
+psycopg now supports both classic select() loops and "green" coroutine
+libraries. It is all in the documentation, so just point your browser to
+doc/html/advanced.html.
+
+* Other new features:
+
+  - truncate() method for lobjects.
+  - COPY functions are now a little bit faster.
+  - All builtin PostgreSQL to Python typecasters are now available from the
+    psycopg2.extensions module.
+  - Notifications from the backend are now available right after the execute()
+    call (before client code needed to call isbusy() to ensure NOTIFY
+    reception.)
+  - Better timezone support.
+  - Lots of documentation updates.
+
+* Bug fixes:
+
+  - Fixed some gc/refcounting problems.
+  - Fixed reference leak in NOTIFY reception.
+  - Fixed problem with PostgreSQL not casting string literals to the correct
+    types in some situations: psycopg now add an explicit cast to dates, times
+    and bytea representations.
+  - Fixed TimestampFromTicks() and TimeFromTicks() for seconds >= 59.5.
+  - Fixed spurious exception raised when calling C typecasters from Python
+    ones.
 What's new in psycopg 2.0.14
 ----------------------------
 
