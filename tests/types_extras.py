@@ -525,6 +525,24 @@ class AdaptTypeTestCase(unittest.TestCase):
             conn1.close()
             conn2.close()
 
+    @skip_if_no_composite
+    def test_composite_namespace(self):
+        curs = self.conn.cursor()
+        curs.execute("""
+            select nspname from pg_namespace
+            where nspname = 'typens';
+            """)
+        if not curs.fetchone():
+            curs.execute("create schema typens;")
+            self.conn.commit()
+
+        self._create_type("typens.typens_ii",
+            [("a", "integer"), ("b", "integer")])
+        t = psycopg2.extras.register_composite(
+            "typens.typens_ii", self.conn)
+        curs.execute("select (4,8)::typens.typens_ii")
+        self.assertEqual(curs.fetchone()[0], (4,8))
+
     def _create_type(self, name, fields):
         curs = self.conn.cursor()
         try:
@@ -534,11 +552,16 @@ class AdaptTypeTestCase(unittest.TestCase):
 
         curs.execute("create type %s as (%s);" % (name,
             ", ".join(["%s %s" % p for p in fields])))
+        if '.' in name:
+            schema, name = name.split('.')
+        else:
+            schema = 'public'
+
         curs.execute("""\
             SELECT t.oid
             FROM pg_type t JOIN pg_namespace ns ON typnamespace = ns.oid
-            WHERE typname = %s and nspname = 'public';
-            """, (name,))
+            WHERE typname = %s and nspname = %s;
+            """, (name, schema))
         oid = curs.fetchone()[0]
         self.conn.commit()
         return oid
