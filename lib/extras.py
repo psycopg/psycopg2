@@ -841,7 +841,8 @@ SELECT t.oid, attname, atttypid
 FROM pg_type t
 JOIN pg_namespace ns ON typnamespace = ns.oid
 JOIN pg_attribute a ON attrelid = typrelid
-WHERE typname = %s and nspname = 'public';
+WHERE typname = %s and nspname = 'public'
+ORDER BY attnum;
 """, (name, ))
 
         recs = curs.fetchall()
