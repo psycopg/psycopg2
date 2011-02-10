@@ -189,8 +189,9 @@ deal with Python objects adaptation:
     .. method:: getquoted()
 
         Subclasses or other conforming objects should return a valid SQL
-        string representing the wrapped object. The `!ISQLQuote`
-        implementation does nothing.
+        string representing the wrapped object. In Python 3 the SQL must be
+        returned in a `!bytes` object. The `!ISQLQuote` implementation does
+        nothing.
 
     .. method:: prepare(conn)
 
