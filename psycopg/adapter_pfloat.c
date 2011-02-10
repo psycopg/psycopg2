@@ -42,8 +42,12 @@ pfloat_getquoted(pfloatObject *self, PyObject *args)
     double n = PyFloat_AsDouble(self->wrapped);
     if (isnan(n))
         rv = Bytes_FromString("'NaN'::float");
-    else if (isinf(n))
-        rv = Bytes_FromString("'Infinity'::float");
+    else if (isinf(n)) {
+        if (n > 0)
+            rv = Bytes_FromString("'Infinity'::float");
+        else
+            rv = Bytes_FromString("'-Infinity'::float");
+    }
     else {
         rv = PyObject_Repr(self->wrapped);
 
