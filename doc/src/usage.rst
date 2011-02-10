@@ -233,15 +233,37 @@ the SQL string that would be sent to the database.
 .. index::
     pair: Strings; Adaptation
     single: Unicode; Adaptation
+
+- String types: `!str`, `!unicode` are converted in SQL string syntax.
+  `!unicode` objects (`!str` in Python 3) are encoded in the connection
+  `~connection.encoding` to be sent to the backend: trying to send a character
+  not supported by the encoding will result in an error. Received data can be
+  converted either as `!str` or `!unicode`: see :ref:`unicode-handling` for
+  received, either `!str` or `!unicode`
+
+.. index::
     single: Buffer; Adaptation
     single: bytea; Adaptation
     single: Binary string
 
-- String types: `!str`, `!unicode` are converted in SQL string
-  syntax.  `!buffer` is converted in PostgreSQL binary string syntax,
-  suitable for :sql:`bytea` fields. When reading textual fields, either
-  `!str` or `!unicode` can be received: see
-  :ref:`unicode-handling`.
+- Binary types: Python types such as `!bytes`, `!bytearray`, `!buffer`,
+  `!memoryview` are converted in PostgreSQL binary string syntax, suitable for
+  :sql:`bytea` fields. Received data is returned as `!buffer` (in Python 2) or
+  `!memoryview` (in Python 3).
+
+  .. warning::
+
+     PostgreSQL 9 uses by default `a new "hex" format`__ to emit :sql:`bytea`
+     fields. Unfortunately this format can't be parsed by libpq versions
+     before 9.0. This means that using a library client with version lesser
+     than 9.0 to talk with a server 9.0 or later you may have problems
+     receiving :sql:`bytea` data. To work around this problem you can set the
+     `bytea_output`__ parameter to ``escape``, either in the server
+     configuration or in the client session using a query such as ``SET
+     bytea_output TO escape;`` before trying to receive binary data.
+
+     .. __: http://www.postgresql.org/docs/9.0/static/datatype-binary.html
+     .. __: http://www.postgresql.org/docs/9.0/static/runtime-config-client.html#GUC-BYTEA-OUTPUT
 
 .. index::
     single: Adaptation; Date/Time objects
@@ -338,8 +360,8 @@ defined on the database connection (the `PostgreSQL encoding`__, available in
 .. __: http://www.postgresql.org/docs/9.0/static/multibyte.html
 .. __: http://docs.python.org/library/codecs.html#standard-encodings
 
-When reading data from the database, the strings returned are usually 8 bit
-`!str` objects encoded in the database client encoding::
+When reading data from the database, in Python 2 the strings returned are
+usually 8 bit `!str` objects encoded in the database client encoding::
 
     >>> print conn.encoding
     UTF8
@@ -356,9 +378,10 @@ When reading data from the database, the strings returned are usually 8 bit
     >>> print type(x), repr(x)
     <type 'str'> '\xe0\xe8\xec\xf2\xf9\xa4'
 
-In order to obtain `!unicode` objects instead, it is possible to
-register a typecaster so that PostgreSQL textual types are automatically
-*decoded* using the current client encoding::
+In Python 3 instead the strings are automatically *decoded* in the connection
+`~connection.encoding`, as the `!str` object can represent Unicode characters.
+In Python 2 you must register a :ref:`typecaster
+<type-casting-from-sql-to-python>` in order to receive `!unicode` objects::
 
     >>> psycopg2.extensions.register_type(psycopg2.extensions.UNICODE, cur)
 
@@ -375,9 +398,9 @@ the connection or globally: see the function
 
 .. note::
 
-    If you want to receive uniformly all your database input in Unicode, you
-    can register the related typecasters globally as soon as Psycopg is
-    imported::
+    In Python 2, if you want to receive uniformly all your database input in
+    Unicode, you can register the related typecasters globally as soon as
+    Psycopg is imported::
 
         import psycopg2
         import psycopg2.extensions
