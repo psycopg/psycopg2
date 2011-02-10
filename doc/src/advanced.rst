@@ -89,14 +89,33 @@ by the `psycopg2.extensions.adapt()` function.
 The `~cursor.execute()` method adapts its arguments to the
 `~psycopg2.extensions.ISQLQuote` protocol.  Objects that conform to this
 protocol expose a `!getquoted()` method returning the SQL representation
-of the object as a string.
+of the object as a string (the method must return `!bytes` in Python 3).
+Optionally the conform object may expose a
+`~psycopg2.extensions.ISQLQuote.prepare()` method.
 
-The easiest way to adapt an object to an SQL string is to register an adapter
-function via the `~psycopg2.extensions.register_adapter()` function.  The
-adapter function must take the value to be adapted as argument and return a
-conform object.  A convenient object is the `~psycopg2.extensions.AsIs`
-wrapper, whose `!getquoted()` result is simply the `!str()`\ ing
-conversion of the wrapped object.
+There are two basic ways to have a Python object adapted to SQL:
+
+- the object itself is conform, or knows how to make itself conform. Such
+  object must expose a `__conform__()` method that will be called with the
+  protocol object as argument. The object can check that the protocol is
+  `!ISQLQuote`, in which case it can return `!self` (if the object also
+  implements `!getquoted()`) or a suitable wrapper object. This option is
+  viable if you are the author of the object and if the object is specifically
+  designed for the database (i.e. having Psycopg as a dependency and polluting
+  its interface with the required methods doesn't bother you). For a simple
+  example you can take a look to the source code for the
+  `psycopg2.extras.Inet` object.
+
+- If implementing the `!ISQLQuote` interface directly in the object is not an
+  option, you can use an adaptation function, taking the object to be adapted
+  as argument and returning a conforming object.  The adapter must be
+  registered via the `~psycopg2.extensions.register_adapter()` function.  A
+  simple example wrapper is the `!psycopg2.extras.UUID_adapter` used by the
+  `~psycopg2.extras.register_uuid()` function.
+
+A convenient object to write adapters is the `~psycopg2.extensions.AsIs`
+wrapper, whose `!getquoted()` result is simply the `!str()`\ ing conversion of
+the wrapped object.
 
 .. index::
     single: Example; Types adaptation
