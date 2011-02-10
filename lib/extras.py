@@ -26,6 +26,7 @@ and classes untill a better place in the distribution is found.
 # License for more details.
 
 import os
+import sys
 import time
 import codecs
 import warnings
@@ -41,13 +42,14 @@ from psycopg2 import extensions as _ext
 from psycopg2.extensions import cursor as _cursor
 from psycopg2.extensions import connection as _connection
 from psycopg2.extensions import adapt as _A
+from psycopg2.extensions import b
 
 
 class DictCursorBase(_cursor):
     """Base class for all dict-like cursors."""
 
     def __init__(self, *args, **kwargs):
-        if kwargs.has_key('row_factory'):
+        if 'row_factory' in kwargs:
             row_factory = kwargs['row_factory']
             del kwargs['row_factory']
         else:
@@ -140,20 +142,17 @@ class DictRow(list):
         self[:] = [None] * len(cursor.description)
 
     def __getitem__(self, x):
-        if type(x) != int:
+        if not isinstance(x, (int, slice)):
             x = self._index[x]
         return list.__getitem__(self, x)
 
     def __setitem__(self, x, v):
-        if type(x) != int:
+        if not isinstance(x, (int, slice)):
             x = self._index[x]
         list.__setitem__(self, x, v)
 
     def items(self):
-        res = []
-        for n, v in self._index.items():
-            res.append((n, list.__getitem__(self, v)))
-        return res
+        return list(self.iteritems())
 
     def keys(self):
         return self._index.keys()
@@ -162,7 +161,7 @@ class DictRow(list):
         return tuple(self[:])
 
     def has_key(self, x):
-        return self._index.has_key(x)
+        return x in self._index
 
     def get(self, x, default=None):
         try:
@@ -171,7 +170,7 @@ class DictRow(list):
             return default
 
     def iteritems(self):
-        for n, v in self._index.items():
+        for n, v in self._index.iteritems():
             yield n, list.__getitem__(self, v)
 
     def iterkeys(self):
@@ -181,10 +180,18 @@ class DictRow(list):
         return list.__iter__(self)
 
     def copy(self):
-        return dict(self.items())
+        return dict(self.iteritems())
 
     def __contains__(self, x):
-        return self._index.__contains__(x)
+        return x in self._index
+
+    # grop the crusty Py2 methods
+    if sys.version_info[0] > 2:
+        items = iteritems; del iteritems
+        keys = iterkeys; del iterkeys
+        values = itervalues; del itervalues
+        del has_key
+
 
 class RealDictConnection(_connection):
     """A connection that uses `RealDictCursor` automatically."""
@@ -501,7 +508,7 @@ class Inet(object):
         obj = _A(self.addr)
         if hasattr(obj, 'prepare'):
             obj.prepare(self._conn)
-        return obj.getquoted()+"::inet"
+        return obj.getquoted() + b("::inet")
 
     def __conform__(self, foo):
         if foo is _ext.ISQLQuote:
@@ -568,7 +575,7 @@ class HstoreAdapter(object):
     def _getquoted_8(self):
         """Use the operators available in PG pre-9.0."""
         if not self.wrapped:
-            return "''::hstore"
+            return b("''::hstore")
 
         adapt = _ext.adapt
         rv = []
@@ -582,22 +589,23 @@ class HstoreAdapter(object):
                 v.prepare(self.conn)
                 v = v.getquoted()
             else:
-                v = 'NULL'
+                v = b('NULL')
 
-            rv.append("(%s => %s)" % (k, v))
+            # XXX this b'ing is painfully inefficient!
+            rv.append(b("(") + k + b(" => ") + v + b(")"))
 
-        return "(" + '||'.join(rv) + ")"
+        return b("(") + b('||').join(rv) + b(")")
 
     def _getquoted_9(self):
         """Use the hstore(text[], text[]) function."""
         if not self.wrapped:
-            return "''::hstore"
+            return b("''::hstore")
 
         k = _ext.adapt(self.wrapped.keys())
         k.prepare(self.conn)
         v = _ext.adapt(self.wrapped.values())
         v.prepare(self.conn)
-        return "hstore(%s, %s)" % (k.getquoted(), v.getquoted())
+        return b("hstore(") + k.getquoted() + b(", ") + v.getquoted() + b(")")
 
     getquoted = _getquoted_9
 
@@ -614,10 +622,8 @@ class HstoreAdapter(object):
         (?:\s*,\s*|$) # pairs separated by comma or end of string.
     """, regex.VERBOSE)
 
-    # backslash decoder
-    _bsdec = codecs.getdecoder("string_escape")
-
-    def parse(self, s, cur, _decoder=_bsdec):
+    @classmethod
+    def parse(self, s, cur, _bsdec=regex.compile(r"\\(.)")):
         """Parse an hstore representation in a Python string.
 
         The hstore is represented as something like::
@@ -635,10 +641,10 @@ class HstoreAdapter(object):
             if m is None or m.start() != start:
                 raise psycopg2.InterfaceError(
                     "error parsing hstore pair at char %d" % start)
-            k = _decoder(m.group(1))[0]
+            k = _bsdec.sub(r'\1', m.group(1))
             v = m.group(2)
             if v is not None:
-                v = _decoder(v)[0]
+                v = _bsdec.sub(r'\1', v)
 
             rv[k] = v
             start = m.end()
@@ -649,16 +655,14 @@ class HstoreAdapter(object):
 
         return rv
 
-    parse = classmethod(parse)
-
+    @classmethod
     def parse_unicode(self, s, cur):
         """Parse an hstore returning unicode keys and values."""
-        codec = codecs.getdecoder(_ext.encodings[cur.connection.encoding])
-        bsdec = self._bsdec
-        decoder = lambda s: codec(bsdec(s)[0])
-        return self.parse(s, cur, _decoder=decoder)
+        if s is None:
+            return None
 
-    parse_unicode = classmethod(parse_unicode)
+        s = s.decode(_ext.encodings[cur.connection.encoding])
+        return self.parse(s, cur)
 
     @classmethod
     def get_oids(self, conn_or_curs):
@@ -704,11 +708,11 @@ def register_hstore(conn_or_curs, globally=False, unicode=False):
     uses a single database you can pass *globally*\=True to have the typecaster
     registered on all the connections.
 
-    By default the returned dicts will have `str` objects as keys and values:
+    On Python 2, by default the returned dicts will have `str` objects as keys and values:
     use *unicode*\=True to return `unicode` objects instead.  When adapting a
     dictionary both `str` and `unicode` keys and values are handled (the
     `unicode` values will be converted according to the current
-    `~connection.encoding`).
+    `~connection.encoding`). The option is not available on Python 3.
 
     The |hstore| contrib module must be already installed in the database
     (executing the ``hstore.sql`` script in your ``contrib`` directory).
@@ -721,7 +725,7 @@ def register_hstore(conn_or_curs, globally=False, unicode=False):
             "please install it from your 'contrib/hstore.sql' file")
 
     # create and register the typecaster
-    if unicode:
+    if sys.version_info[0] < 3 and unicode:
         cast = HstoreAdapter.parse_unicode
     else:
         cast = HstoreAdapter.parse

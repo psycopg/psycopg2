@@ -1,2 +1,0 @@
-#define PG_VERSION_MAJOR 7
-#define PG_VERSION_MINOR 4

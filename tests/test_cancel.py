@@ -25,18 +25,18 @@
 
 import time
 import threading
-from testutils import unittest, skip_if_no_pg_sleep
 
-import tests
 import psycopg2
 import psycopg2.extensions
 from psycopg2 import extras
 
+from testconfig import dsn
+from testutils import unittest, skip_if_no_pg_sleep
 
 class CancelTests(unittest.TestCase):
 
     def setUp(self):
-        self.conn = psycopg2.connect(tests.dsn)
+        self.conn = psycopg2.connect(dsn)
         cur = self.conn.cursor()
         cur.execute('''
             CREATE TEMPORARY TABLE table1 (
@@ -88,7 +88,7 @@ class CancelTests(unittest.TestCase):
 
     @skip_if_no_pg_sleep('conn')
     def test_async_cancel(self):
-        async_conn = psycopg2.connect(tests.dsn, async=True)
+        async_conn = psycopg2.connect(dsn, async=True)
         self.assertRaises(psycopg2.OperationalError, async_conn.cancel)
         extras.wait_select(async_conn)
         cur = async_conn.cursor()
@@ -102,7 +102,7 @@ class CancelTests(unittest.TestCase):
         self.assertEqual(cur.fetchall(), [(1, )])
 
     def test_async_connection_cancel(self):
-        async_conn = psycopg2.connect(tests.dsn, async=True)
+        async_conn = psycopg2.connect(dsn, async=True)
         async_conn.close()
         self.assertTrue(async_conn.closed)
 

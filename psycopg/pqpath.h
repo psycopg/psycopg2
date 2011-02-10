@@ -26,7 +26,6 @@
 #ifndef PSYCOPG_PQPATH_H
 #define PSYCOPG_PQPATH_H 1
 
-#include "psycopg/config.h"
 #include "psycopg/cursor.h"
 #include "psycopg/connection.h"
 

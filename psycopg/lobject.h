@@ -26,11 +26,8 @@
 #ifndef PSYCOPG_LOBJECT_H
 #define PSYCOPG_LOBJECT_H 1
 
-#include <Python.h>
-#include <libpq-fe.h>
 #include <libpq/libpq-fs.h>
 
-#include "psycopg/config.h"
 #include "psycopg/connection.h"
 
 #ifdef __cplusplus
@@ -45,7 +42,8 @@ typedef struct {
     connectionObject *conn;  /* connection owning the lobject */
     long int mark;           /* copied from conn->mark */
 
-    const char *smode;       /* string mode if lobject was opened */
+    char *smode;             /* string mode if lobject was opened */
+    int mode;                /* numeric version of smode */
 
     int fd;                  /* the file descriptor for file-like ops */
     Oid oid;                 /* the oid for this lobject */
@@ -54,7 +52,7 @@ typedef struct {
 /* functions exported from lobject_int.c */
 
 HIDDEN int lobject_open(lobjectObject *self, connectionObject *conn,
-                        Oid oid, int mode, Oid new_oid,
+                        Oid oid, const char *smode, Oid new_oid,
                         const char *new_file);
 HIDDEN int lobject_unlink(lobjectObject *self);
 HIDDEN int lobject_export(lobjectObject *self, const char *filename);
@@ -89,6 +87,12 @@ if (self->conn->mark != self->mark) {                  \
         "lobject isn't valid anymore", NULL, NULL);    \
     return NULL;                                       \
 }
+
+/* Values for the lobject mode */
+#define LOBJECT_READ  1
+#define LOBJECT_WRITE 2
+#define LOBJECT_BINARY 4
+#define LOBJECT_TEXT 8
 
 #ifdef __cplusplus
 }

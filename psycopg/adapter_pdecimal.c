@@ -23,24 +23,20 @@
  * License for more details.
  */
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include <structmember.h>
-#include <floatobject.h>
-#include <math.h>
-
 #define PSYCOPG_MODULE
-#include "psycopg/config.h"
-#include "psycopg/python.h"
 #include "psycopg/psycopg.h"
+
 #include "psycopg/adapter_pdecimal.h"
 #include "psycopg/microprotocols_proto.h"
+
+#include <floatobject.h>
+#include <math.h>
 
 
 /** the Decimal object **/
 
 static PyObject *
-pdecimal_str(pdecimalObject *self)
+pdecimal_getquoted(pdecimalObject *self, PyObject *args)
 {
     PyObject *check, *res = NULL;
     check = PyObject_CallMethod(self->wrapped, "is_finite", NULL);
@@ -49,7 +45,7 @@ pdecimal_str(pdecimalObject *self)
         goto end;
     }
     else if (check) {
-        res = PyString_FromString("'NaN'::numeric");
+        res = Bytes_FromString("'NaN'::numeric");
         goto end;
     }
 
@@ -61,7 +57,7 @@ pdecimal_str(pdecimalObject *self)
         goto end;
     }
     if (PyObject_IsTrue(check)) {
-        res = PyString_FromString("'NaN'::numeric");
+        res = Bytes_FromString("'NaN'::numeric");
         goto end;
     }
 
@@ -70,11 +66,19 @@ pdecimal_str(pdecimalObject *self)
         goto end;
     }
     if (PyObject_IsTrue(check)) {
-        res = PyString_FromString("'NaN'::numeric");
+        res = Bytes_FromString("'NaN'::numeric");
         goto end;
     }
 
     res = PyObject_Str(self->wrapped);
+#if PY_MAJOR_VERSION > 2
+    /* unicode to bytes in Py3 */
+    if (res) {
+        PyObject *tmp = PyUnicode_AsUTF8String(res);
+        Py_DECREF(res);
+        res = tmp;
+    }
+#endif
 
 end:
     Py_XDECREF(check);
@@ -82,9 +86,9 @@ end:
 }
 
 static PyObject *
-pdecimal_getquoted(pdecimalObject *self, PyObject *args)
+pdecimal_str(pdecimalObject *self)
 {
-    return pdecimal_str(self);
+    return psycopg_ensure_text(pdecimal_getquoted(self, NULL));
 }
 
 static PyObject *
@@ -108,7 +112,7 @@ pdecimal_conform(pdecimalObject *self, PyObject *args)
 /* object member list */
 
 static struct PyMemberDef pdecimalObject_members[] = {
-    {"adapted", T_OBJECT, offsetof(pdecimalObject, wrapped), RO},
+    {"adapted", T_OBJECT, offsetof(pdecimalObject, wrapped), READONLY},
     {NULL}
 };
 
@@ -128,7 +132,7 @@ pdecimal_setup(pdecimalObject *self, PyObject *obj)
 {
     Dprintf("pdecimal_setup: init pdecimal object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt
+        self, Py_REFCNT(self)
       );
 
     Py_INCREF(obj);
@@ -136,7 +140,7 @@ pdecimal_setup(pdecimalObject *self, PyObject *obj)
 
     Dprintf("pdecimal_setup: good pdecimal object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt
+        self, Py_REFCNT(self)
       );
     return 0;
 }
@@ -159,10 +163,10 @@ pdecimal_dealloc(PyObject* obj)
 
     Dprintf("pdecimal_dealloc: deleted pdecimal object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        obj, obj->ob_refcnt
+        obj, Py_REFCNT(obj)
       );
 
-    obj->ob_type->tp_free(obj);
+    Py_TYPE(obj)->tp_free(obj);
 }
 
 static int
@@ -202,8 +206,7 @@ pdecimal_repr(pdecimalObject *self)
 "Decimal(str) -> new Decimal adapter object"
 
 PyTypeObject pdecimalType = {
-    PyObject_HEAD_INIT(NULL)
-    0,
+    PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.Decimal",
     sizeof(pdecimalObject),
     0,

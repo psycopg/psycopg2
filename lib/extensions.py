@@ -32,38 +32,38 @@ This module holds all the extensions to the DBAPI-2.0 provided by psycopg.
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-from _psycopg import UNICODE, INTEGER, LONGINTEGER, BOOLEAN, FLOAT
-from _psycopg import TIME, DATE, INTERVAL, DECIMAL
-from _psycopg import BINARYARRAY, BOOLEANARRAY, DATEARRAY, DATETIMEARRAY
-from _psycopg import DECIMALARRAY, FLOATARRAY, INTEGERARRAY, INTERVALARRAY
-from _psycopg import LONGINTEGERARRAY, ROWIDARRAY, STRINGARRAY, TIMEARRAY
-from _psycopg import UNICODEARRAY
+from psycopg2._psycopg import UNICODE, INTEGER, LONGINTEGER, BOOLEAN, FLOAT
+from psycopg2._psycopg import TIME, DATE, INTERVAL, DECIMAL
+from psycopg2._psycopg import BINARYARRAY, BOOLEANARRAY, DATEARRAY, DATETIMEARRAY
+from psycopg2._psycopg import DECIMALARRAY, FLOATARRAY, INTEGERARRAY, INTERVALARRAY
+from psycopg2._psycopg import LONGINTEGERARRAY, ROWIDARRAY, STRINGARRAY, TIMEARRAY
+from psycopg2._psycopg import UNICODEARRAY
 
-from _psycopg import Binary, Boolean, Float, QuotedString, AsIs
+from psycopg2._psycopg import Binary, Boolean, Float, QuotedString, AsIs
 try:
-    from _psycopg import MXDATE, MXDATETIME, MXINTERVAL, MXTIME
-    from _psycopg import MXDATEARRAY, MXDATETIMEARRAY, MXINTERVALARRAY, MXTIMEARRAY
-    from _psycopg import DateFromMx, TimeFromMx, TimestampFromMx
-    from _psycopg import IntervalFromMx
-except:
+    from psycopg2._psycopg import MXDATE, MXDATETIME, MXINTERVAL, MXTIME
+    from psycopg2._psycopg import MXDATEARRAY, MXDATETIMEARRAY, MXINTERVALARRAY, MXTIMEARRAY
+    from psycopg2._psycopg import DateFromMx, TimeFromMx, TimestampFromMx
+    from psycopg2._psycopg import IntervalFromMx
+except ImportError:
     pass
 
 try:
-    from _psycopg import PYDATE, PYDATETIME, PYINTERVAL, PYTIME
-    from _psycopg import PYDATEARRAY, PYDATETIMEARRAY, PYINTERVALARRAY, PYTIMEARRAY
-    from _psycopg import DateFromPy, TimeFromPy, TimestampFromPy
-    from _psycopg import IntervalFromPy
-except:
+    from psycopg2._psycopg import PYDATE, PYDATETIME, PYINTERVAL, PYTIME
+    from psycopg2._psycopg import PYDATEARRAY, PYDATETIMEARRAY, PYINTERVALARRAY, PYTIMEARRAY
+    from psycopg2._psycopg import DateFromPy, TimeFromPy, TimestampFromPy
+    from psycopg2._psycopg import IntervalFromPy
+except ImportError:
     pass
 
-from _psycopg import adapt, adapters, encodings, connection, cursor, lobject, Xid
-from _psycopg import string_types, binary_types, new_type, register_type
-from _psycopg import ISQLQuote, Notify
+from psycopg2._psycopg import adapt, adapters, encodings, connection, cursor, lobject, Xid
+from psycopg2._psycopg import string_types, binary_types, new_type, register_type
+from psycopg2._psycopg import ISQLQuote, Notify
 
-from _psycopg import QueryCanceledError, TransactionRollbackError
+from psycopg2._psycopg import QueryCanceledError, TransactionRollbackError
 
 try:
-    from _psycopg import set_wait_callback, get_wait_callback
+    from psycopg2._psycopg import set_wait_callback, get_wait_callback
 except ImportError:
     pass
 
@@ -100,6 +100,16 @@ TRANSACTION_STATUS_INTRANS = 2
 TRANSACTION_STATUS_INERROR = 3
 TRANSACTION_STATUS_UNKNOWN = 4
 
+import sys as _sys
+
+# Return bytes from a string
+if _sys.version_info[0] < 3:
+    def b(s):
+        return s
+else:
+    def b(s):
+        return s.encode('utf8')
+
 def register_adapter(typ, callable):
     """Register 'callable' as an ISQLQuote adapter for type 'typ'."""
     adapters[(typ, ISQLQuote)] = callable
@@ -122,10 +132,11 @@ class SQL_IN(object):
         for obj in pobjs:
             if hasattr(obj, 'prepare'):
                 obj.prepare(self._conn)
-        qobjs = [str(o.getquoted()) for o in pobjs]
-        return '(' + ', '.join(qobjs) + ')'
+        qobjs = [o.getquoted() for o in pobjs]
+        return b('(') + b(', ').join(qobjs) + b(')')
 
-    __str__ = getquoted
+    def __str__(self):
+        return str(self.getquoted())
 
 
 class NoneAdapter(object):
@@ -137,8 +148,17 @@ class NoneAdapter(object):
     def __init__(self, obj):
         pass
 
-    def getquoted(self):
-        return "NULL"
+    def getquoted(self, _null=b("NULL")):
+        return _null
+
+
+# Add the "cleaned" version of the encodings to the key.
+# When the encoding is set its name is cleaned up from - and _ and turned
+# uppercase, so an encoding not respecting these rules wouldn't be found in the
+# encodings keys and would raise an exception with the unicode typecaster
+for k, v in encodings.items():
+    k = k.replace('_', '').replace('-', '').upper()
+    encodings[k] = v
 
 
 __all__ = filter(lambda k: not k.startswith('_'), locals().keys())

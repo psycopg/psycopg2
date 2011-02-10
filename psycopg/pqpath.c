@@ -29,21 +29,17 @@
    connection.
 */
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include <string.h>
-
 #define PSYCOPG_MODULE
-#include "psycopg/config.h"
-#include "psycopg/python.h"
 #include "psycopg/psycopg.h"
+
 #include "psycopg/pqpath.h"
 #include "psycopg/connection.h"
 #include "psycopg/cursor.h"
 #include "psycopg/green.h"
 #include "psycopg/typecast.h"
 #include "psycopg/pgtypes.h"
-#include "psycopg/pgversion.h"
+
+#include <string.h>
 
 
 /* Strip off the severity from a Postgres error message. */
@@ -976,14 +972,14 @@ _pq_fetch_tuples(cursorObject *curs)
         }
 
         Dprintf("_pq_fetch_tuples: using cast at %p (%s) for type %d",
-                cast, PyString_AS_STRING(((typecastObject*)cast)->name),
+                cast, Bytes_AS_STRING(((typecastObject*)cast)->name),
                 PQftype(curs->pgres,i));
         Py_INCREF(cast);
         PyTuple_SET_ITEM(curs->casts, i, cast);
 
         /* 1/ fill the other fields */
         PyTuple_SET_ITEM(dtitem, 0,
-                         PyString_FromString(PQfname(curs->pgres, i)));
+             conn_text_from_chars(curs->conn, PQfname(curs->pgres, i)));
         PyTuple_SET_ITEM(dtitem, 1, type);
 
         /* 2/ display size is the maximum size of this field result tuples. */
@@ -1061,19 +1057,50 @@ _pq_copy_in_v3(cursorObject *curs)
     }
 
     while (1) {
-        o = PyObject_CallFunctionObjArgs(func, size, NULL);
-        if (!(o && PyString_Check(o) && (length = PyString_GET_SIZE(o)) != -1)) {
+        if (!(o = PyObject_CallFunctionObjArgs(func, size, NULL))) {
+            Dprintf("_pq_copy_in_v3: read() failed");
             error = 1;
+            break;
         }
-        if (length == 0 || length > INT_MAX || error == 1) break;
+
+        /* a file may return unicode in Py3: encode in client encoding. */
+#if PY_MAJOR_VERSION > 2
+        if (PyUnicode_Check(o)) {
+            PyObject *tmp;
+            if (!(tmp = PyUnicode_AsEncodedString(o, curs->conn->codec, NULL))) {
+                Dprintf("_pq_copy_in_v3: encoding() failed");
+                error = 1;
+                break;
+            }
+            Py_DECREF(o);
+            o = tmp;
+        }
+#endif
+
+        if (!Bytes_Check(o)) {
+            Dprintf("_pq_copy_in_v3: got %s instead of bytes",
+                Py_TYPE(o)->tp_name);
+            error = 1;
+            break;
+        }
+
+        if (0 == (length = Bytes_GET_SIZE(o))) {
+            break;
+        }
+        if (length > INT_MAX) {
+            Dprintf("_pq_copy_in_v3: bad length: " FORMAT_CODE_PY_SSIZE_T,
+                length);
+            error = 1;
+            break;
+        }
 
         Py_BEGIN_ALLOW_THREADS;
-        res = PQputCopyData(curs->conn->pgconn, PyString_AS_STRING(o),
+        res = PQputCopyData(curs->conn->pgconn, Bytes_AS_STRING(o),
             /* Py_ssize_t->int cast was validated above */
             (int) length);
-        Dprintf("_pq_copy_in_v3: sent %d bytes of data; res = %d",
-            (int) length, res);
-            
+        Dprintf("_pq_copy_in_v3: sent " FORMAT_CODE_PY_SSIZE_T " bytes of data; res = %d",
+            length, res);
+
         if (res == 0) {
             /* FIXME: in theory this should not happen but adding a check
                here would be a nice idea */
@@ -1101,6 +1128,7 @@ _pq_copy_in_v3(cursorObject *curs)
     else if (error == 2)
         res = PQputCopyEnd(curs->conn->pgconn, "error in PQputCopyData() call");
     else
+        /* XXX would be nice to propagate the exeption */
         res = PQputCopyEnd(curs->conn->pgconn, "error in .read() call");
 
     IFCLEARPGRES(curs->pgres);
@@ -1135,7 +1163,9 @@ static int
 _pq_copy_out_v3(cursorObject *curs)
 {
     PyObject *tmp = NULL, *func;
+    PyObject *obj = NULL;
     int ret = -1;
+    int is_text;
 
     char *buffer;
     Py_ssize_t len;
@@ -1145,14 +1175,28 @@ _pq_copy_out_v3(cursorObject *curs)
         goto exit;
     }
 
+    /* if the file is text we must pass it unicode. */
+    if (-1 == (is_text = psycopg_is_text_file(curs->copyfile))) {
+        goto exit;
+    }
+
     while (1) {
         Py_BEGIN_ALLOW_THREADS;
         len = PQgetCopyData(curs->conn->pgconn, &buffer, 0);
         Py_END_ALLOW_THREADS;
 
         if (len > 0 && buffer) {
-            tmp = PyObject_CallFunction(func, "s#", buffer, len);
+            if (is_text) {
+                obj = PyUnicode_Decode(buffer, len, curs->conn->codec, NULL);
+            } else {
+                obj = Bytes_FromStringAndSize(buffer, len);
+            }
+
             PQfreemem(buffer);
+            if (!obj) { goto exit; }
+            tmp = PyObject_CallFunctionObjArgs(func, obj, NULL);
+            Py_DECREF(obj);
+
             if (tmp == NULL) {
                 goto exit;
             } else {
@@ -1215,7 +1259,7 @@ pq_fetch(cursorObject *curs)
 
     /* backend status message */
     Py_XDECREF(curs->pgstatus);
-    curs->pgstatus = PyString_FromString(PQcmdStatus(curs->pgres));
+    curs->pgstatus = conn_text_from_chars(curs->conn, PQcmdStatus(curs->pgres));
 
     switch(pgstatus) {
 

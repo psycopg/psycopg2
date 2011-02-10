@@ -23,21 +23,17 @@
  * License for more details.
  */
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include <structmember.h>
-#include <stringobject.h>
+#define PSYCOPG_MODULE
+#include "psycopg/psycopg.h"
+
+#include "psycopg/adapter_datetime.h"
+#include "psycopg/microprotocols_proto.h"
+
 #include <datetime.h>
 
 #include <time.h>
 #include <string.h>
 
-#define PSYCOPG_MODULE
-#include "psycopg/config.h"
-#include "psycopg/python.h"
-#include "psycopg/psycopg.h"
-#include "psycopg/adapter_datetime.h"
-#include "psycopg/microprotocols_proto.h"
 
 extern HIDDEN PyObject *pyPsycopgTzModule;
 extern HIDDEN PyObject *pyPsycopgTzLOCAL;
@@ -59,59 +55,78 @@ psyco_adapter_datetime_init(void)
 /* datetime_str, datetime_getquoted - return result of quoting */
 
 static PyObject *
-pydatetime_str(pydatetimeObject *self)
+_pydatetime_string_date_time(pydatetimeObject *self)
 {
-    PyObject *res = NULL;
-    PyObject *iso;
-    if (self->type <= PSYCO_DATETIME_TIMESTAMP) {
-        PyObject *tz;
+    PyObject *rv = NULL;
+    PyObject *iso = NULL;
+    PyObject *tz;
 
-        /* Select the right PG type to cast into. */
-        char *fmt = NULL;
-        switch (self->type) {
-        case PSYCO_DATETIME_TIME:
-            fmt = "'%s'::time";
-            break;
-        case PSYCO_DATETIME_DATE:
-            fmt = "'%s'::date";
-            break;
-        case PSYCO_DATETIME_TIMESTAMP:
-            tz = PyObject_GetAttrString(self->wrapped, "tzinfo");
-            if (!tz) { return NULL; }
-            fmt = (tz == Py_None) ? "'%s'::timestamp" : "'%s'::timestamptz";
-            Py_DECREF(tz);
-            break;
-        }
-
-        iso = PyObject_CallMethod(self->wrapped, "isoformat", NULL);
-        if (iso) {
-            res = PyString_FromFormat(fmt, PyString_AsString(iso));
-            Py_DECREF(iso);
-        }
-        return res;
+    /* Select the right PG type to cast into. */
+    char *fmt = NULL;
+    switch (self->type) {
+    case PSYCO_DATETIME_TIME:
+        fmt = "'%s'::time";
+        break;
+    case PSYCO_DATETIME_DATE:
+        fmt = "'%s'::date";
+        break;
+    case PSYCO_DATETIME_TIMESTAMP:
+        tz = PyObject_GetAttrString(self->wrapped, "tzinfo");
+        if (!tz) { goto error; }
+        fmt = (tz == Py_None) ? "'%s'::timestamp" : "'%s'::timestamptz";
+        Py_DECREF(tz);
+        break;
     }
-    else {
-        PyDateTime_Delta *obj = (PyDateTime_Delta*)self->wrapped;
 
-        char buffer[8]; 
-        int i;
-        int a = obj->microseconds;
-
-        for (i=0; i < 6 ; i++) {
-            buffer[5-i] = '0' + (a % 10);
-            a /= 10;
-        }
-        buffer[6] = '\0';
-
-        return PyString_FromFormat("'%d days %d.%s seconds'::interval",
-                                   obj->days, obj->seconds, buffer);
+    if (!(iso = psycopg_ensure_bytes(
+            PyObject_CallMethod(self->wrapped, "isoformat", NULL)))) {
+        goto error;
     }
+
+    rv = Bytes_FromFormat(fmt, Bytes_AsString(iso));
+
+    Py_DECREF(iso);
+    return rv;
+
+error:
+    Py_XDECREF(iso);
+    return rv;
+}
+
+static PyObject *
+_pydatetime_string_delta(pydatetimeObject *self)
+{
+    PyDateTime_Delta *obj = (PyDateTime_Delta*)self->wrapped;
+
+    char buffer[8];
+    int i;
+    int a = obj->microseconds;
+
+    for (i=0; i < 6 ; i++) {
+        buffer[5-i] = '0' + (a % 10);
+        a /= 10;
+    }
+    buffer[6] = '\0';
+
+    return Bytes_FromFormat("'%d days %d.%s seconds'::interval",
+                            obj->days, obj->seconds, buffer);
 }
 
 static PyObject *
 pydatetime_getquoted(pydatetimeObject *self, PyObject *args)
 {
-    return pydatetime_str(self);
+    if (self->type <= PSYCO_DATETIME_TIMESTAMP) {
+        return _pydatetime_string_date_time(self);
+    }
+    else {
+        return _pydatetime_string_delta(self);
+    }
+}
+
+static PyObject *
+pydatetime_str(pydatetimeObject *self)
+{
+    return psycopg_ensure_text(pydatetime_getquoted(self, NULL));
 }
 
 static PyObject *
@@ -135,8 +150,8 @@ pydatetime_conform(pydatetimeObject *self, PyObject *args)
 /* object member list */
 
 static struct PyMemberDef pydatetimeObject_members[] = {
-    {"adapted", T_OBJECT, offsetof(pydatetimeObject, wrapped), RO},
-    {"type", T_INT, offsetof(pydatetimeObject, type), RO},
+    {"adapted", T_OBJECT, offsetof(pydatetimeObject, wrapped), READONLY},
+    {"type", T_INT, offsetof(pydatetimeObject, type), READONLY},
     {NULL}
 };
 
@@ -156,7 +171,7 @@ pydatetime_setup(pydatetimeObject *self, PyObject *obj, int type)
 {
     Dprintf("pydatetime_setup: init datetime object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt);
+        self, Py_REFCNT(self));
 
     self->type = type;
     Py_INCREF(obj);
@@ -164,7 +179,7 @@ pydatetime_setup(pydatetimeObject *self, PyObject *obj, int type)
 
     Dprintf("pydatetime_setup: good pydatetime object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt);
+        self, Py_REFCNT(self));
     return 0;
 }
 
@@ -185,9 +200,9 @@ pydatetime_dealloc(PyObject* obj)
     Py_CLEAR(self->wrapped);
 
     Dprintf("mpydatetime_dealloc: deleted pydatetime object at %p, "
-            "refcnt = " FORMAT_CODE_PY_SSIZE_T, obj, obj->ob_refcnt);
+            "refcnt = " FORMAT_CODE_PY_SSIZE_T, obj, Py_REFCNT(obj));
 
-    obj->ob_type->tp_free(obj);
+    Py_TYPE(obj)->tp_free(obj);
 }
 
 static int
@@ -227,8 +242,7 @@ pydatetime_repr(pydatetimeObject *self)
 "datetime(datetime, type) -> new datetime wrapper object"
 
 PyTypeObject pydatetimeType = {
-    PyObject_HEAD_INIT(NULL)
-    0,
+    PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.datetime",
     sizeof(pydatetimeObject),
     0,

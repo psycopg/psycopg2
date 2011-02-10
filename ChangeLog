@@ -1,10 +1,26 @@
 2010-12-18  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 
+	* connection.h: added codec attribute to avoid repeated codec name
+	lookups during unicode query/params manipulations.
+
 	* setup.py: bumped to version 2.3.2.dev0
 
 	* psycopg/connection_int.c: applied patch from Marti Raudsepp to close
 	ticket #24. Fixed segfault in connection when DateStyle not available
 	(e.g.  pgbouncer appars not passing it to the client)
+
+2010-12-15  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* psycopg/utils.c: Added psycopg_strdup function.
+
+2010-12-14  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* psycopg/connection_type.c: No need to put connection fields to zero.
+
+	* lib/extensions.py: Improved mapping from PG to Py encodings.
+
+	* psycopg/psycopgmodule.c: Added a few missing encodings: EUC_CN,
+	EUC_JIS_2004, ISO885910, ISO885916, LATIN10, SHIFT_JIS_2004.
 
 2010-12-04  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 

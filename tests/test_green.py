@@ -26,7 +26,7 @@ import unittest
 import psycopg2
 import psycopg2.extensions
 import psycopg2.extras
-import tests
+from testconfig import dsn
 
 class ConnectionStub(object):
     """A `connection` wrapper allowing analysis of the `poll()` calls."""
@@ -46,7 +46,7 @@ class GreenTests(unittest.TestCase):
     def setUp(self):
         self._cb = psycopg2.extensions.get_wait_callback()
         psycopg2.extensions.set_wait_callback(psycopg2.extras.wait_select)
-        self.conn = psycopg2.connect(tests.dsn)
+        self.conn = psycopg2.connect(dsn)
 
     def tearDown(self):
         self.conn.close()
@@ -85,7 +85,7 @@ class GreenTests(unittest.TestCase):
         curs.fetchone()
 
         # now try to do something that will fail in the callback
-        psycopg2.extensions.set_wait_callback(lambda conn: 1/0)
+        psycopg2.extensions.set_wait_callback(lambda conn: 1//0)
         self.assertRaises(ZeroDivisionError, curs.execute, "select 2")
 
         # check that the connection is left in an usable state

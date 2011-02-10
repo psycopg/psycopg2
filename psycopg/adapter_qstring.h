@@ -26,11 +26,6 @@
 #ifndef PSYCOPG_QSTRING_H
 #define PSYCOPG_QSTRING_H 1
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-
-#include "psycopg/config.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -42,6 +37,10 @@ typedef struct {
 
     PyObject *wrapped;
     PyObject *buffer;
+    /* NOTE: this used to be a PostgreSQL encoding: changed in 2.3.2 to be a
+     * Python codec name. I don't expect there has been any user for this
+     * object other than adapting str/unicode, so I don't expect client code
+     * broken for this reason. */
     char     *encoding;
 
     PyObject *conn;

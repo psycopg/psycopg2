@@ -23,20 +23,16 @@
  * License for more details.
  */
 
-#include <Python.h>
-#include <structmember.h>
-#include <string.h>
-
 #define PSYCOPG_MODULE
-#include "psycopg/config.h"
-#include "psycopg/python.h"
 #include "psycopg/psycopg.h"
+
 #include "psycopg/lobject.h"
 #include "psycopg/connection.h"
 #include "psycopg/microprotocols.h"
 #include "psycopg/microprotocols_proto.h"
 #include "psycopg/pqpath.h"
-#include "pgversion.h"
+
+#include <string.h>
 
 
 #ifdef PSYCOPG_EXTENSIONS
@@ -75,18 +71,48 @@ psyco_lobj_close(lobjectObject *self, PyObject *args)
 static PyObject *
 psyco_lobj_write(lobjectObject *self, PyObject *args)
 {
-    int len, res=0;
-    const char *buffer;
+    char *buffer;
+    Py_ssize_t len;
+    Py_ssize_t res;
+    PyObject *obj;
+    PyObject *data = NULL;
+    PyObject *rv = NULL;
 
-    if (!PyArg_ParseTuple(args, "s#", &buffer, &len)) return NULL;
+    if (!PyArg_ParseTuple(args, "O", &obj)) return NULL;
 
     EXC_IF_LOBJ_CLOSED(self);
     EXC_IF_LOBJ_LEVEL0(self);
     EXC_IF_LOBJ_UNMARKED(self);
 
-    if ((res = lobject_write(self, buffer, len)) < 0) return NULL;
+    if (Bytes_Check(obj)) {
+        Py_INCREF(obj);
+        data = obj;
+    }
+    else if (PyUnicode_Check(obj)) {
+        if (!(data = PyUnicode_AsEncodedString(obj, self->conn->codec, NULL))) {
+            goto exit;
+        }
+    }
+    else {
+        PyErr_Format(PyExc_TypeError,
+            "lobject.write requires a string; got %s instead",
+            Py_TYPE(obj)->tp_name);
+        goto exit;
+    }
 
-    return PyInt_FromLong((long)res);
+    if (-1 == Bytes_AsStringAndSize(data, &buffer, &len)) {
+        goto exit;
+    }
+
+    if (0 > (res = lobject_write(self, buffer, (size_t)len))) {
+        goto exit;
+    }
+
+    rv = PyInt_FromLong((long)res);
+
+exit:
+    Py_XDECREF(data);
+    return rv;
 }
 
 /* read method - read data from the lobject */
@@ -123,9 +149,13 @@ psyco_lobj_read(lobjectObject *self, PyObject *args)
         return NULL;
     }
 
-    res = PyString_FromStringAndSize(buffer, size);
+    if (self->mode & LOBJECT_BINARY) {
+        res = Bytes_FromStringAndSize(buffer, size);
+    } else {
+        res = PyUnicode_Decode(buffer, size, self->conn->codec, NULL);
+    }
     PyMem_Free(buffer);
-    
+
     return res;
 }
 
@@ -277,10 +307,10 @@ static struct PyMethodDef lobjectObject_methods[] = {
 /* object member list */
 
 static struct PyMemberDef lobjectObject_members[] = {
-    {"oid", T_UINT, offsetof(lobjectObject, oid), RO,
+    {"oid", T_UINT, offsetof(lobjectObject, oid), READONLY,
         "The backend OID associated to this lobject."},
-    {"mode", T_STRING, offsetof(lobjectObject, smode), RO,
-        "Open mode ('r', 'w', 'rw' or 'n')."},
+    {"mode", T_STRING, offsetof(lobjectObject, smode), READONLY,
+        "Open mode."},
     {NULL}
 };
 
@@ -296,7 +326,7 @@ static struct PyGetSetDef lobjectObject_getsets[] = {
 
 static int
 lobject_setup(lobjectObject *self, connectionObject *conn,
-              Oid oid, int mode, Oid new_oid, const char *new_file)
+              Oid oid, const char *smode, Oid new_oid, const char *new_file)
 {
     Dprintf("lobject_setup: init lobject object at %p", self);
 
@@ -314,11 +344,11 @@ lobject_setup(lobjectObject *self, connectionObject *conn,
     self->fd = -1;
     self->oid = InvalidOid;
 
-    if (lobject_open(self, conn, oid, mode, new_oid, new_file) == -1)
+    if (lobject_open(self, conn, oid, smode, new_oid, new_file) == -1)
         return -1;
 
    Dprintf("lobject_setup: good lobject object at %p, refcnt = "
-           FORMAT_CODE_PY_SSIZE_T, self, ((PyObject *)self)->ob_refcnt);
+           FORMAT_CODE_PY_SSIZE_T, self, Py_REFCNT(self));
    Dprintf("lobject_setup:    oid = %d, fd = %d", self->oid, self->fd);
    return 0;
 }
@@ -331,27 +361,28 @@ lobject_dealloc(PyObject* obj)
     if (lobject_close(self) < 0)
         PyErr_Print();
     Py_XDECREF((PyObject*)self->conn);
+    PyMem_Free(self->smode);
 
     Dprintf("lobject_dealloc: deleted lobject object at %p, refcnt = "
-            FORMAT_CODE_PY_SSIZE_T, obj, obj->ob_refcnt);
+            FORMAT_CODE_PY_SSIZE_T, obj, Py_REFCNT(obj));
 
-    obj->ob_type->tp_free(obj);
+    Py_TYPE(obj)->tp_free(obj);
 }
 
 static int
 lobject_init(PyObject *obj, PyObject *args, PyObject *kwds)
 {
     Oid oid=InvalidOid, new_oid=InvalidOid;
-    int mode=0;
+    const char *smode = "";
     const char *new_file = NULL;
     PyObject *conn;
 
-    if (!PyArg_ParseTuple(args, "O|iiis",
-         &conn, &oid, &mode, &new_oid, &new_file))
+    if (!PyArg_ParseTuple(args, "O|iziz",
+         &conn, &oid, &smode, &new_oid, &new_file))
         return -1;
 
     return lobject_setup((lobjectObject *)obj,
-        (connectionObject *)conn, oid, mode, new_oid, new_file);
+        (connectionObject *)conn, oid, smode, new_oid, new_file);
 }
 
 static PyObject *
@@ -380,8 +411,7 @@ lobject_repr(lobjectObject *self)
 "A database large object."
 
 PyTypeObject lobjectType = {
-    PyObject_HEAD_INIT(NULL)
-    0,
+    PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.lobject",
     sizeof(lobjectObject),
     0,

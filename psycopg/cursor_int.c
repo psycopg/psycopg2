@@ -23,13 +23,9 @@
  * License for more details.
  */
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include <string.h>
-
 #define PSYCOPG_MODULE
-#include "psycopg/config.h"
 #include "psycopg/psycopg.h"
+
 #include "psycopg/cursor.h"
 #include "psycopg/pqpath.h"
 #include "psycopg/typecast.h"
@@ -67,6 +63,9 @@ curs_get_cast(cursorObject *self, PyObject *oid)
     /* fallback */
     return psyco_default_cast;
 }
+
+#include <string.h>
+
 
 /* curs_reset - reset the cursor to a clean state */
 

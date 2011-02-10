@@ -28,12 +28,12 @@ from testutils import skip_if_tpc_disabled
 from testutils import unittest, decorate_all_tests
 import psycopg2
 
-import tests
+from testconfig import dsn
 
 class Psycopg2Tests(dbapi20.DatabaseAPI20Test):
     driver = psycopg2
     connect_args = ()
-    connect_kw_args = {'dsn': tests.dsn}
+    connect_kw_args = {'dsn': dsn}
 
     lower_func = 'lower' # For stored procedure test
 
@@ -50,7 +50,7 @@ class Psycopg2TPCTests(dbapi20_tpc.TwoPhaseCommitTests, unittest.TestCase):
     driver = psycopg2
 
     def connect(self):
-        return psycopg2.connect(dsn=tests.dsn)
+        return psycopg2.connect(dsn=dsn)
 
 decorate_all_tests(Psycopg2TPCTests, skip_if_tpc_disabled)
 

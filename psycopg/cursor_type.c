@@ -23,15 +23,9 @@
  * License for more details.
  */
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include <structmember.h>
-#include <string.h>
-
 #define PSYCOPG_MODULE
-#include "psycopg/config.h"
-#include "psycopg/python.h"
 #include "psycopg/psycopg.h"
+
 #include "psycopg/cursor.h"
 #include "psycopg/connection.h"
 #include "psycopg/green.h"
@@ -39,8 +33,11 @@
 #include "psycopg/typecast.h"
 #include "psycopg/microprotocols.h"
 #include "psycopg/microprotocols_proto.h"
-#include "pgversion.h"
+
+#include <string.h>
+
 #include <stdlib.h>
+
 
 extern PyObject *pyPsycopgTzFixedOffsetTimezone;
 
@@ -90,7 +87,7 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
        just before returning. we also init *new to NULL to exit with an error
        if we can't complete the mogrification */
     n = *new = NULL;
-    c = PyString_AsString(fmt);
+    c = Bytes_AsString(fmt);
 
     while(*c) {
         /* handle plain percent symbol in format string */
@@ -119,7 +116,7 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
             for (d = c + 2; *d && *d != ')'; d++);
 
             if (*d == ')') {
-                key = PyString_FromStringAndSize(c+2, (Py_ssize_t) (d-c-2));
+                key = Text_FromUTF8AndSize(c+2, (Py_ssize_t) (d-c-2));
                 value = PyObject_GetItem(var, key);
                 /* key has refcnt 1, value the original value + 1 */
 
@@ -132,7 +129,7 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
                 }
 
                 Dprintf("_mogrify: value refcnt: "
-                  FORMAT_CODE_PY_SSIZE_T " (+1)", value->ob_refcnt);
+                  FORMAT_CODE_PY_SSIZE_T " (+1)", Py_REFCNT(value));
 
                 if (n == NULL) {
                     n = PyDict_New();
@@ -147,7 +144,7 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
                        optimization over the adapting code and can go away in
                        the future if somebody finds a None adapter usefull. */
                     if (value == Py_None) {
-                        t = PyString_FromString("NULL");
+                        t = Bytes_FromString("NULL");
                         PyDict_SetItem(n, key, t);
                         /* t is a new object, refcnt = 1, key is at 2 */
 
@@ -185,7 +182,7 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
                 Py_DECREF(key); /* key has the original refcnt now */
                 Dprintf("_mogrify: after value refcnt: "
                     FORMAT_CODE_PY_SSIZE_T,
-                    value->ob_refcnt
+                    Py_REFCNT(value)
                   );
             }
             c = d;
@@ -223,7 +220,7 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
             d = c+1;
 
             if (value == Py_None) {
-                PyTuple_SET_ITEM(n, index, PyString_FromString("NULL"));
+                PyTuple_SET_ITEM(n, index, Bytes_FromString("NULL"));
                 while (*d && !isalpha(*d)) d++;
                 if (*d) *d = 's';
                 Py_DECREF(value);
@@ -270,26 +267,16 @@ static PyObject *_psyco_curs_validate_sql_basic(
         goto fail;
     }
 
-    if (PyString_Check(sql)) {
+    if (Bytes_Check(sql)) {
         /* Necessary for ref-count symmetry with the unicode case: */
         Py_INCREF(sql);
     }
     else if (PyUnicode_Check(sql)) {
-        PyObject *enc = PyDict_GetItemString(psycoEncodings,
-                                             self->conn->encoding);
-        /* enc is a borrowed reference; we won't decref it */
-
-        if (enc) {
-            sql = PyUnicode_AsEncodedString(sql, PyString_AsString(enc), NULL);
-            /* if there was an error during the encoding from unicode to the
-               target encoding, we just let the exception propagate */
-            if (sql == NULL) { goto fail; }
-        } else {
-            PyErr_Format(InterfaceError,
-                         "can't encode unicode SQL statement to %s",
-                         self->conn->encoding);
-            goto fail;
-        }
+        char *enc = self->conn->codec;
+        sql = PyUnicode_AsEncodedString(sql, enc, NULL);
+        /* if there was an error during the encoding from unicode to the
+           target encoding, we just let the exception propagate */
+        if (sql == NULL) { goto fail; }
     }
     else {
         /* the  is not unicode or string, raise an error */
@@ -327,7 +314,7 @@ _psyco_curs_merge_query_args(cursorObject *self,
        the curren exception (we will later restore it if the type or the
        strings do not match.) */
 
-    if (!(fquery = PyString_Format(query, args))) {
+    if (!(fquery = Bytes_Format(query, args))) {
         PyObject *err, *arg, *trace;
         int pe = 0;
 
@@ -340,7 +327,7 @@ _psyco_curs_merge_query_args(cursorObject *self,
             if (PyObject_HasAttrString(arg, "args")) {
                 PyObject *args = PyObject_GetAttrString(arg, "args");
                 PyObject *str = PySequence_GetItem(args, 0);
-                const char *s = PyString_AS_STRING(str);
+                const char *s = Bytes_AS_STRING(str);
 
                 Dprintf("psyco_curs_execute:     -> %s", s);
 
@@ -410,9 +397,9 @@ _psyco_curs_execute(cursorObject *self,
         }
 
         if (self->name != NULL) {
-            self->query = PyString_FromFormat(
+            self->query = Bytes_FromFormat(
                 "DECLARE %s CURSOR WITHOUT HOLD FOR %s",
-                self->name, PyString_AS_STRING(fquery));
+                self->name, Bytes_AS_STRING(fquery));
             Py_DECREF(fquery);
         }
         else {
@@ -421,9 +408,9 @@ _psyco_curs_execute(cursorObject *self,
     }
     else {
         if (self->name != NULL) {
-            self->query = PyString_FromFormat(
+            self->query = Bytes_FromFormat(
                 "DECLARE %s CURSOR WITHOUT HOLD FOR %s",
-                self->name, PyString_AS_STRING(operation));
+                self->name, Bytes_AS_STRING(operation));
         }
         else {
             /* Transfer reference ownership of the str in operation to
@@ -436,7 +423,7 @@ _psyco_curs_execute(cursorObject *self,
 
     /* At this point, the SQL statement must be str, not unicode */
 
-    res = pq_execute(self, PyString_AS_STRING(self->query), async);
+    res = pq_execute(self, Bytes_AS_STRING(self->query), async);
     Dprintf("psyco_curs_execute: res = %d, pgres = %p", res, self->pgres);
     if (res == -1) { goto fail; }
 
@@ -596,7 +583,7 @@ _psyco_curs_mogrify(cursorObject *self,
 
         Dprintf("psyco_curs_mogrify: cvt->refcnt = " FORMAT_CODE_PY_SSIZE_T
             ", fquery->refcnt = " FORMAT_CODE_PY_SSIZE_T,
-            cvt->ob_refcnt, fquery->ob_refcnt);
+            Py_REFCNT(cvt), Py_REFCNT(fquery));
     }
     else {
         fquery = operation;
@@ -704,7 +691,7 @@ _psyco_curs_buildrow_fill(cursorObject *self, PyObject *res,
         if (val) {
             Dprintf("_psyco_curs_buildrow: val->refcnt = "
                 FORMAT_CODE_PY_SSIZE_T,
-                val->ob_refcnt
+                Py_REFCNT(val)
               );
             if (istuple) {
                 PyTuple_SET_ITEM(res, i, val);
@@ -780,6 +767,61 @@ psyco_curs_fetchone(cursorObject *self, PyObject *args)
         /* we exausted available data: return None */
         Py_INCREF(Py_None);
         return Py_None;
+    }
+
+    if (self->tuple_factory == Py_None)
+        res = _psyco_curs_buildrow(self, self->row);
+    else
+        res = _psyco_curs_buildrow_with_factory(self, self->row);
+
+    self->row++; /* move the counter to next line */
+
+    /* if the query was async aggresively free pgres, to allow
+       successive requests to reallocate it */
+    if (self->row >= self->rowcount
+        && self->conn->async_cursor
+        && PyWeakref_GetObject(self->conn->async_cursor) == (PyObject*)self)
+        IFCLEARPGRES(self->pgres);
+
+    return res;
+}
+
+/* Efficient cursor.next() implementation for named cursors.
+ *
+ * Fetch several records at time. Return NULL when the cursor is exhausted.
+ */
+static PyObject *
+psyco_curs_next_named(cursorObject *self)
+{
+    PyObject *res;
+
+    Dprintf("psyco_curs_next_named");
+    EXC_IF_CURS_CLOSED(self);
+    EXC_IF_ASYNC_IN_PROGRESS(self, next);
+    if (_psyco_curs_prefetch(self) < 0) return NULL;
+    EXC_IF_NO_TUPLES(self);
+
+    EXC_IF_NO_MARK(self);
+    EXC_IF_TPC_PREPARED(self->conn, next);
+
+    Dprintf("psyco_curs_next_named: row %ld", self->row);
+    Dprintf("psyco_curs_next_named: rowcount = %ld", self->rowcount);
+    if (self->row >= self->rowcount) {
+        char buffer[128];
+
+        /* fetch 'arraysize' records, but shun the default value of 1 */
+        long int size = self->arraysize;
+        if (size == 1) { size = 2000L; }
+
+        PyOS_snprintf(buffer, 127, "FETCH FORWARD %ld FROM %s",
+            size, self->name);
+        if (pq_execute(self, buffer, 0) == -1) return NULL;
+        if (_psyco_curs_prefetch(self) < 0) return NULL;
+    }
+
+    /* We exhausted the data: return NULL to stop iteration. */
+    if (self->row >= self->rowcount) {
+        return NULL;
     }
 
     if (self->tuple_factory == Py_None)
@@ -989,7 +1031,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
     sql[sl-2] = ')';
     sql[sl-1] = '\0';
 
-    operation = PyString_FromString(sql);
+    operation = Bytes_FromString(sql);
     PyMem_Free((void*)sql);
 
     if (_psyco_curs_execute(self, operation, parameters, self->conn->async)) {
@@ -1144,14 +1186,11 @@ static int _psyco_curs_copy_columns(PyObject *columns, char *columnlist)
     columnlist[0] = '(';
 
     while ((col = PyIter_Next(coliter)) != NULL) {
-        if (!PyString_Check(col)) {
-            Py_DECREF(col);
+        if (!(col = psycopg_ensure_bytes(col))) {
             Py_DECREF(coliter);
-            PyErr_SetString(PyExc_ValueError,
-                "elements in column list must be strings");
             return -1;
         }
-        PyString_AsStringAndSize(col, &colname, &collen);
+        Bytes_AsStringAndSize(col, &colname, &collen);
         if (offset + collen > DEFAULT_COPYBUFF - 2) {
             Py_DECREF(col);
             Py_DECREF(coliter);
@@ -1456,7 +1495,7 @@ psyco_curs_copy_expert(cursorObject *self, PyObject *args, PyObject *kwargs)
     self->copyfile = file;
 
     /* At this point, the SQL statement must be str, not unicode */
-    if (pq_execute(self, PyString_AS_STRING(sql), 0) != 1) { goto fail; }
+    if (pq_execute(self, Bytes_AS_STRING(sql), 0) != 1) { goto fail; }
 
     res = Py_None;
     Py_INCREF(res);
@@ -1510,14 +1549,20 @@ cursor_next(PyObject *self)
 {
     PyObject *res;
 
-    /* we don't parse arguments: psyco_curs_fetchone will do that for us */
-    res = psyco_curs_fetchone((cursorObject*)self, NULL);
+    if (NULL == ((cursorObject*)self)->name) {
+        /* we don't parse arguments: psyco_curs_fetchone will do that for us */
+        res = psyco_curs_fetchone((cursorObject*)self, NULL);
 
-    /* convert a None to NULL to signal the end of iteration */
-    if (res && res == Py_None) {
-        Py_DECREF(res);
-        res = NULL;
+        /* convert a None to NULL to signal the end of iteration */
+        if (res && res == Py_None) {
+            Py_DECREF(res);
+            res = NULL;
+        }
     }
+    else {
+        res = psyco_curs_next_named((cursorObject*)self);
+    }
+
     return res;
 }
 
@@ -1570,29 +1615,29 @@ static struct PyMethodDef cursorObject_methods[] = {
 
 static struct PyMemberDef cursorObject_members[] = {
     /* DBAPI-2.0 basics */
-    {"rowcount", T_LONG, OFFSETOF(rowcount), RO,
+    {"rowcount", T_LONG, OFFSETOF(rowcount), READONLY,
         "Number of rows read from the backend in the last command."},
     {"arraysize", T_LONG, OFFSETOF(arraysize), 0,
         "Number of records `fetchmany()` must fetch if not explicitly " \
         "specified."},
-    {"description", T_OBJECT, OFFSETOF(description), RO,
+    {"description", T_OBJECT, OFFSETOF(description), READONLY,
         "Cursor description as defined in DBAPI-2.0."},
-    {"lastrowid", T_LONG, OFFSETOF(lastoid), RO,
+    {"lastrowid", T_LONG, OFFSETOF(lastoid), READONLY,
         "The ``oid`` of the last row inserted by the cursor."},
     /* DBAPI-2.0 extensions */
-    {"rownumber", T_LONG, OFFSETOF(row), RO,
+    {"rownumber", T_LONG, OFFSETOF(row), READONLY,
         "The current row position."},
-    {"connection", T_OBJECT, OFFSETOF(conn), RO,
+    {"connection", T_OBJECT, OFFSETOF(conn), READONLY,
         "The connection where the cursor comes from."},
 #ifdef PSYCOPG_EXTENSIONS
-    {"name", T_STRING, OFFSETOF(name), RO},
-    {"statusmessage", T_OBJECT, OFFSETOF(pgstatus), RO,
+    {"name", T_STRING, OFFSETOF(name), READONLY},
+    {"statusmessage", T_OBJECT, OFFSETOF(pgstatus), READONLY,
         "The return message of the last command."},
-    {"query", T_OBJECT, OFFSETOF(query), RO,
+    {"query", T_OBJECT, OFFSETOF(query), READONLY,
         "The last query text sent to the backend."},
     {"row_factory", T_OBJECT, OFFSETOF(tuple_factory), 0},
     {"tzinfo_factory", T_OBJECT, OFFSETOF(tzinfo_factory), 0},
-    {"typecaster", T_OBJECT, OFFSETOF(caster), RO},
+    {"typecaster", T_OBJECT, OFFSETOF(caster), READONLY},
     {"string_types", T_OBJECT, OFFSETOF(string_types), 0},
     {"binary_types", T_OBJECT, OFFSETOF(binary_types), 0},
 #endif
@@ -1662,7 +1707,7 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
 
     Dprintf("cursor_setup: good cursor object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt
+        self, Py_REFCNT(self)
       );
     return 0;
 }
@@ -1694,9 +1739,9 @@ cursor_dealloc(PyObject* obj)
 
     Dprintf("cursor_dealloc: deleted cursor object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        obj, obj->ob_refcnt);
+        obj, Py_REFCNT(obj));
 
-    obj->ob_type->tp_free(obj);
+    Py_TYPE(obj)->tp_free(obj);
 }
 
 static int
@@ -1754,8 +1799,7 @@ cursor_traverse(cursorObject *self, visitproc visit, void *arg)
 "A database cursor."
 
 PyTypeObject cursorType = {
-    PyObject_HEAD_INIT(NULL)
-    0,
+    PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.cursor",
     sizeof(cursorObject),
     0,

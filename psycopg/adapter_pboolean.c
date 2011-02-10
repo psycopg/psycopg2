@@ -23,46 +23,41 @@
  * License for more details.
  */
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include <structmember.h>
-#include <stringobject.h>
-#include <string.h>
-
 #define PSYCOPG_MODULE
-#include "psycopg/config.h"
-#include "psycopg/python.h"
 #include "psycopg/psycopg.h"
+
 #include "psycopg/adapter_pboolean.h"
 #include "psycopg/microprotocols_proto.h"
+
+#include <string.h>
 
 
 /** the Boolean object **/
 
 static PyObject *
-pboolean_str(pbooleanObject *self)
+pboolean_getquoted(pbooleanObject *self, PyObject *args)
 {
 #ifdef PSYCOPG_NEW_BOOLEAN
     if (PyObject_IsTrue(self->wrapped)) {
-        return PyString_FromString("true");
+        return Bytes_FromString("true");
     }
     else {
-        return PyString_FromString("false");
+        return Bytes_FromString("false");
     }
 #else
     if (PyObject_IsTrue(self->wrapped)) {
-        return PyString_FromString("'t'");
+        return Bytes_FromString("'t'");
     }
     else {
-        return PyString_FromString("'f'");
+        return Bytes_FromString("'f'");
     }
 #endif
 }
 
 static PyObject *
-pboolean_getquoted(pbooleanObject *self, PyObject *args)
+pboolean_str(pbooleanObject *self)
 {
-    return pboolean_str(self);
+    return psycopg_ensure_text(pboolean_getquoted(self, NULL));
 }
 
 static PyObject *
@@ -86,7 +81,7 @@ pboolean_conform(pbooleanObject *self, PyObject *args)
 /* object member list */
 
 static struct PyMemberDef pbooleanObject_members[] = {
-    {"adapted", T_OBJECT, offsetof(pbooleanObject, wrapped), RO},
+    {"adapted", T_OBJECT, offsetof(pbooleanObject, wrapped), READONLY},
     {NULL}
 };
 
@@ -106,7 +101,7 @@ pboolean_setup(pbooleanObject *self, PyObject *obj)
 {
     Dprintf("pboolean_setup: init pboolean object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt
+        self, Py_REFCNT(self)
       );
 
     Py_INCREF(obj);
@@ -114,7 +109,7 @@ pboolean_setup(pbooleanObject *self, PyObject *obj)
 
     Dprintf("pboolean_setup: good pboolean object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        self, ((PyObject *)self)->ob_refcnt
+        self, Py_REFCNT(self)
       );
     return 0;
 }
@@ -137,10 +132,10 @@ pboolean_dealloc(PyObject* obj)
 
     Dprintf("pboolean_dealloc: deleted pboolean object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        obj, obj->ob_refcnt
+        obj, Py_REFCNT(obj)
       );
 
-    obj->ob_type->tp_free(obj);
+    Py_TYPE(obj)->tp_free(obj);
 }
 
 static int
@@ -180,8 +175,7 @@ pboolean_repr(pbooleanObject *self)
 "Boolean(str) -> new Boolean adapter object"
 
 PyTypeObject pbooleanType = {
-    PyObject_HEAD_INIT(NULL)
-    0,
+    PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.Boolean",
     sizeof(pbooleanObject),
     0,
