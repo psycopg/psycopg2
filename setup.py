@@ -158,14 +158,14 @@ class psycopg_build_ext(build_ext):
         sysVer = sys.version_info[:2]
         if self.get_compiler().lower().startswith('msvc') and \
                 sysVer in ((2,6), (2,7)):
-          sources = list(ext.sources)
+            sources = list(ext.sources)
 
-          ext_path = self.get_ext_fullpath(ext.name)
-          depends = sources + ext.depends
-          if not (self.force or newer_group(depends, ext_path, 'newer')):
-              return
+            ext_path = self.get_ext_fullpath(ext.name)
+            depends = sources + ext.depends
+            if not (self.force or newer_group(depends, ext_path, 'newer')):
+                return
 
-          self.compiler.spawn(['mt.exe', '-nologo', '-manifest',
+            self.compiler.spawn(['mt.exe', '-nologo', '-manifest',
                 os.path.join('psycopg', '_psycopg.vc9.manifest'),
                 '-outputresource:%s;2' % (os.path.join(self.build_lib, 'psycopg2', '_psycopg.pyd'))])
 
