@@ -151,14 +151,6 @@ class psycopg_build_ext(build_ext):
         return get_pg_config(kind, self.pg_config)
 
     def build_extension(self, ext):
-        force_mt = False
-        ext_path = self.get_ext_fullpath(ext.name)
-        depends = list(ext.sources) + ext.depends
-
-        # Needs to be checked before build_extension
-        if self.force or newer_group(depends, ext_path, 'newer'):
-            force_mt = True
-
         build_ext.build_extension(self, ext)
 
         # For MSVC compiler and Python 2.6/2.7 (aka VS 2008), re-insert the
@@ -166,12 +158,9 @@ class psycopg_build_ext(build_ext):
         sysVer = sys.version_info[:2]
         if self.get_compiler().lower().startswith('msvc') and \
                 sysVer in ((2,6), (2,7)):
-            sources = list(ext.sources)
-
-	    if force_mt:
-                self.compiler.spawn(['mt.exe', '-nologo', '-manifest',
-                    os.path.join('psycopg', '_psycopg.vc9.manifest'),
-                    '-outputresource:%s;2' % (os.path.join(self.build_lib, 'psycopg2', '_psycopg.pyd'))])
+            self.compiler.spawn(['mt.exe', '-nologo', '-manifest',
+                os.path.join('psycopg', '_psycopg.vc9.manifest'),
+                '-outputresource:%s;2' % (os.path.join(self.build_lib, 'psycopg2', '_psycopg.pyd'))])
 
     def finalize_win32(self):
         """Finalize build system configuration on win32 platform."""
