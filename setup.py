@@ -55,6 +55,7 @@ from distutils.command.build_ext import build_ext
 from distutils.sysconfig import get_python_inc
 from distutils.ccompiler import get_default_compiler
 from distutils.dep_util import newer_group
+from distutils.util import get_platform
 try:
     from distutils.command.build_py import build_py_2to3 as build_py
 except ImportError:
@@ -158,8 +159,13 @@ class psycopg_build_ext(build_ext):
         sysVer = sys.version_info[:2]
         if self.get_compiler().lower().startswith('msvc') and \
                 sysVer in ((2,6), (2,7)):
+            platform = get_platform()
+            # Default to the x86 manifest
+            manifest = '_psycopg.vc9.x86.manifest'
+            if platform == 'win-amd64':
+                manifest = '_psycopg.vc9.amd64.manifest'
             self.compiler.spawn(['mt.exe', '-nologo', '-manifest',
-                os.path.join('psycopg', '_psycopg.vc9.manifest'),
+                os.path.join('psycopg', manifest),
                 '-outputresource:%s;2' % (os.path.join(self.build_lib, 'psycopg2', '_psycopg.pyd'))])
 
     def finalize_win32(self):
