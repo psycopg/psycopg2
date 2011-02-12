@@ -28,6 +28,8 @@ What's new in psycopg 2.4
     available.
   - Added missing icon to ZPsycopgDA package, not available in Zope 2.12.9
     (ticket #30). Bug report and patch by Pumukel.
+  - Fixed conversion of negative infinity (ticket #40). Bug report and patch
+    by Marti Raudsepp.
 
 
 What's new in psycopg 2.3.2
