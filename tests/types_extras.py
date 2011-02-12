@@ -267,7 +267,7 @@ class HstoreTestCase(unittest.TestCase):
         oids = HstoreAdapter.get_oids(self.conn)
         try:
             register_hstore(self.conn, globally=True)
-            conn2 = psycopg2.connect(self.conn.dsn)
+            conn2 = psycopg2.connect(dsn)
             try:
                 cur2 = self.conn.cursor()
                 cur2.execute("select 'a => b'::hstore")
@@ -489,8 +489,8 @@ class AdaptTypeTestCase(unittest.TestCase):
     def test_register_on_connection(self):
         self._create_type("type_ii", [("a", "integer"), ("b", "integer")])
 
-        conn1 = psycopg2.connect(self.conn.dsn)
-        conn2 = psycopg2.connect(self.conn.dsn)
+        conn1 = psycopg2.connect(dsn)
+        conn2 = psycopg2.connect(dsn)
         try:
             psycopg2.extras.register_composite("type_ii", conn1)
             curs1 = conn1.cursor()
@@ -507,8 +507,8 @@ class AdaptTypeTestCase(unittest.TestCase):
     def test_register_globally(self):
         self._create_type("type_ii", [("a", "integer"), ("b", "integer")])
 
-        conn1 = psycopg2.connect(self.conn.dsn)
-        conn2 = psycopg2.connect(self.conn.dsn)
+        conn1 = psycopg2.connect(dsn)
+        conn2 = psycopg2.connect(dsn)
         try:
             t = psycopg2.extras.register_composite("type_ii", conn1, globally=True)
             try:
