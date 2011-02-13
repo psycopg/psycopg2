@@ -113,6 +113,9 @@ class TypesBasicTests(unittest.TestCase):
         self.failUnless(str(s) == "inf", "wrong float quoting: " + str(s))      
         self.failUnless(type(s) == float, "wrong float conversion: " + repr(s))
 
+        s = self.execute("SELECT %s AS foo", (float("-inf"),))
+        self.failUnless(str(s) == "-inf", "wrong float quoting: " + str(s))      
+
     def testBinary(self):
         if sys.version_info[0] < 3:
             s = ''.join([chr(x) for x in range(256)])

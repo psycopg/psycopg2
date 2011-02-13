@@ -1,4 +1,5 @@
 # testutils.py - utility module for psycopg2 testing.
+
 #
 # Copyright (C) 2010-2011 Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 #
@@ -190,21 +191,24 @@ def script_to_py3(script):
         return script
 
     import tempfile
-    f = tempfile.NamedTemporaryFile(suffix=".py")
+    f = tempfile.NamedTemporaryFile(suffix=".py", delete=False)
     f.write(script.encode())
     f.flush()
+    filename = f.name
+    f.close()
 
     # 2to3 is way too chatty
     import logging
     logging.basicConfig(filename=os.devnull)
 
     from lib2to3.main import main
-    if main("lib2to3.fixes", ['--no-diffs', '-w', '-n', f.name]):
+    if main("lib2to3.fixes", ['--no-diffs', '-w', '-n', filename]):
         raise Exception('py3 conversion failed')
 
-    f2 = open(f.name)
+    f2 = open(filename)
     try:
         return f2.read()
     finally:
         f2.close()
+        os.remove(filename)
 

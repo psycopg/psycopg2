@@ -54,6 +54,8 @@ from distutils.errors import DistutilsFileError
 from distutils.command.build_ext import build_ext
 from distutils.sysconfig import get_python_inc
 from distutils.ccompiler import get_default_compiler
+from distutils.dep_util import newer_group
+from distutils.util import get_platform
 try:
     from distutils.command.build_py import build_py_2to3 as build_py
 except ImportError:
@@ -73,7 +75,7 @@ except ImportError:
 # Take a look at http://www.python.org/dev/peps/pep-0386/
 # for a consistent versioning pattern.
 
-PSYCOPG_VERSION = '2.4-beta1'
+PSYCOPG_VERSION = '2.4-beta2'
 
 version_flags   = ['dt', 'dec']
 
@@ -148,6 +150,23 @@ class psycopg_build_ext(build_ext):
 
     def get_pg_config(self, kind):
         return get_pg_config(kind, self.pg_config)
+
+    def build_extension(self, ext):
+        build_ext.build_extension(self, ext)
+
+        # For MSVC compiler and Python 2.6/2.7 (aka VS 2008), re-insert the
+        #  Manifest into the resulting .pyd file.
+        sysVer = sys.version_info[:2]
+        if self.get_compiler().lower().startswith('msvc') and \
+                sysVer in ((2,6), (2,7)):
+            platform = get_platform()
+            # Default to the x86 manifest
+            manifest = '_psycopg.vc9.x86.manifest'
+            if platform == 'win-amd64':
+                manifest = '_psycopg.vc9.amd64.manifest'
+            self.compiler.spawn(['mt.exe', '-nologo', '-manifest',
+                os.path.join('psycopg', manifest),
+                '-outputresource:%s;2' % (os.path.join(self.build_lib, 'psycopg2', '_psycopg.pyd'))])
 
     def finalize_win32(self):
         """Finalize build system configuration on win32 platform."""

@@ -6,6 +6,7 @@ dbname = os.environ.get('PSYCOPG2_TESTDB', 'psycopg2_test')
 dbhost = os.environ.get('PSYCOPG2_TESTDB_HOST', None)
 dbport = os.environ.get('PSYCOPG2_TESTDB_PORT', None)
 dbuser = os.environ.get('PSYCOPG2_TESTDB_USER', None)
+dbpass = os.environ.get('PSYCOPG2_TESTDB_PASSWORD', None)
 
 # Check if we want to test psycopg's green path.
 green = os.environ.get('PSYCOPG2_TEST_GREEN', None)
@@ -29,5 +30,7 @@ if dbport is not None:
     dsn += ' port=%s' % dbport
 if dbuser is not None:
     dsn += ' user=%s' % dbuser
+if dbpass is not None:
+    dsn += ' password=%s' % dbpass
 
 

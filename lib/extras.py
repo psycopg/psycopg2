@@ -835,14 +835,22 @@ class CompositeCaster(object):
         # Store the transaction status of the connection to revert it after use
         conn_status = conn.status
 
+        # Use the correct schema
+        if '.' in name:
+            schema, tname = name.split('.', 1)
+        else:
+            tname = name
+            schema = 'public'
+
         # get the type oid and attributes
         curs.execute("""\
 SELECT t.oid, attname, atttypid
 FROM pg_type t
 JOIN pg_namespace ns ON typnamespace = ns.oid
 JOIN pg_attribute a ON attrelid = typrelid
-WHERE typname = %s and nspname = 'public';
-""", (name, ))
+WHERE typname = %s and nspname = %s
+ORDER BY attnum;
+""", (tname, schema))
 
         recs = curs.fetchall()
 
@@ -858,7 +866,7 @@ WHERE typname = %s and nspname = 'public';
         type_oid = recs[0][0]
         type_attrs = [ (r[1], r[2]) for r in recs ]
 
-        return CompositeCaster(name, type_oid, type_attrs)
+        return CompositeCaster(tname, type_oid, type_attrs)
 
 def register_composite(name, conn_or_curs, globally=False):
     """Register a typecaster to convert a composite type into a tuple.
