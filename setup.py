@@ -57,6 +57,10 @@ from distutils.ccompiler import get_default_compiler
 from distutils.dep_util import newer_group
 from distutils.util import get_platform
 try:
+    from distutils.msvc9compiler import MSVCCompiler
+except ImportError:
+    MSVCCompiler = None
+try:
     from distutils.command.build_py import build_py_2to3 as build_py
 except ImportError:
     from distutils.command.build_py import build_py
@@ -154,11 +158,9 @@ class psycopg_build_ext(build_ext):
     def build_extension(self, ext):
         build_ext.build_extension(self, ext)
 
-        # For MSVC compiler and Python 2.6/2.7 (aka VS 2008), re-insert the
-        #  Manifest into the resulting .pyd file.
-        sysVer = sys.version_info[:2]
-        if self.get_compiler().lower().startswith('msvc') and \
-                sysVer in ((2,6), (2,7)):
+        # For Python versions that use MSVC compiler 2008, re-insert the
+        #  manifest into the resulting .pyd file.
+        if MSVCCompiler and isinstance(self.compiler, MSVCCompiler):
             platform = get_platform()
             # Default to the x86 manifest
             manifest = '_psycopg.vc9.x86.manifest'
