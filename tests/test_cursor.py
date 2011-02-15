@@ -27,7 +27,7 @@ import psycopg2
 import psycopg2.extensions
 from psycopg2.extensions import b
 from testconfig import dsn
-from testutils import unittest, skip_if_no_pg_sleep
+from testutils import unittest, skip_before_postgres
 
 class CursorTests(unittest.TestCase):
 
@@ -130,7 +130,7 @@ class CursorTests(unittest.TestCase):
         del curs
         self.assert_(w() is None)
 
-    @skip_if_no_pg_sleep('conn')
+    @skip_before_postgres(8, 2)
     def test_iter_named_cursor_efficient(self):
         curs = self.conn.cursor('tmp')
         # if these records are fetched in the same roundtrip their
@@ -144,6 +144,7 @@ class CursorTests(unittest.TestCase):
             "named cursor records fetched in 2 roundtrips (delta: %s)"
             % (t2 - t1))
 
+    @skip_before_postgres(8, 0)
     def test_iter_named_cursor_default_arraysize(self):
         curs = self.conn.cursor('tmp')
         curs.execute('select generate_series(1,50)')
@@ -151,6 +152,7 @@ class CursorTests(unittest.TestCase):
         # everything swallowed in one gulp
         self.assertEqual(rv, [(i,i) for i in range(1,51)])
 
+    @skip_before_postgres(8, 0)
     def test_iter_named_cursor_arraysize(self):
         curs = self.conn.cursor('tmp')
         curs.arraysize = 30

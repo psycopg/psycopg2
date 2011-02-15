@@ -23,7 +23,7 @@
 # License for more details.
 
 import threading
-from testutils import unittest, skip_if_no_pg_sleep
+from testutils import unittest, skip_before_postgres
 
 import psycopg2
 from psycopg2.extensions import (
@@ -236,7 +236,7 @@ class QueryCancellationTests(unittest.TestCase):
     def tearDown(self):
         self.conn.close()
 
-    @skip_if_no_pg_sleep('conn')
+    @skip_before_postgres(8, 2)
     def test_statement_timeout(self):
         curs = self.conn.cursor()
         # Set a low statement timeout, then sleep for a longer period.

@@ -102,31 +102,6 @@ def skip_if_no_uuid(f):
     return skip_if_no_uuid_
 
 
-def skip_if_no_pg_sleep(name):
-    """Decorator to skip a test if pg_sleep is not supported by the server.
-
-    Pass it the name of an attribute containing a connection or of a method
-    returning a connection.
-    """
-    def skip_if_no_pg_sleep_(f):
-        def skip_if_no_pg_sleep__(self):
-            cnn = getattr(self, name)
-            if callable(cnn):
-                cnn = cnn()
-
-            if cnn.server_version < 80200:
-                return self.skipTest(
-                    "server version %s doesn't support pg_sleep"
-                    % cnn.server_version)
-
-            return f(self)
-
-        skip_if_no_pg_sleep__.__name__ = f.__name__
-        return skip_if_no_pg_sleep__
-
-    return skip_if_no_pg_sleep_
-
-
 def skip_if_tpc_disabled(f):
     """Skip a test if the server has tpc support disabled."""
     def skip_if_tpc_disabled_(self):
@@ -165,25 +140,60 @@ def skip_if_no_iobase(f):
     return skip_if_no_iobase_
 
 
-def skip_on_python2(f):
-    """Skip a test on Python 3 and following."""
-    def skip_on_python2_(self):
-        if sys.version_info[0] < 3:
-            return self.skipTest("skipped because Python 2")
-        else:
-            return f(self)
+def skip_before_postgres(*ver):
+    """Skip a test on PostgreSQL before a certain version."""
+    ver = ver + (0,) * (3 - len(ver))
+    def skip_before_postgres_(f):
+        def skip_before_postgres__(self):
+            if self.conn.server_version < int("%d%02d%02d" % ver):
+                return self.skipTest("skipped because PostgreSQL %s"
+                    % self.conn.server_version)
+            else:
+                return f(self)
 
-    return skip_on_python2_
+        return skip_before_postgres__
+    return skip_before_postgres_
 
-def skip_on_python3(f):
-    """Skip a test on Python 3 and following."""
-    def skip_on_python3_(self):
-        if sys.version_info[0] >= 3:
-            return self.skipTest("skipped because Python 3")
-        else:
-            return f(self)
+def skip_after_postgres(*ver):
+    """Skip a test on PostgreSQL after (including) a certain version."""
+    ver = ver + (0,) * (3 - len(ver))
+    def skip_after_postgres_(f):
+        def skip_after_postgres__(self):
+            if self.conn.server_version >= int("%d%02d%02d" % ver):
+                return self.skipTest("skipped because PostgreSQL %s"
+                    % self.conn.server_version)
+            else:
+                return f(self)
 
-    return skip_on_python3_
+        return skip_after_postgres__
+    return skip_after_postgres_
+
+def skip_before_python(*ver):
+    """Skip a test on Python before a certain version."""
+    def skip_before_python_(f):
+        def skip_before_python__(self):
+            if sys.version_info[:len(ver)] < ver:
+                return self.skipTest("skipped because Python %s"
+                    % ".".join(map(str, sys.version_info[:len(ver)])))
+            else:
+                return f(self)
+
+        return skip_before_python__
+    return skip_before_python_
+
+def skip_from_python(*ver):
+    """Skip a test on Python after (including) a certain version."""
+    def skip_from_python_(f):
+        def skip_from_python__(self):
+            if sys.version_info[:len(ver)] >= ver:
+                return self.skipTest("skipped because Python %s"
+                    % ".".join(map(str, sys.version_info[:len(ver)])))
+            else:
+                return f(self)
+
+        return skip_from_python__
+    return skip_from_python_
+
 
 def script_to_py3(script):
     """Convert a script to Python3 syntax if required."""

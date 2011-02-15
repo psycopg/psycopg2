@@ -171,7 +171,7 @@ class TypesBasicTests(unittest.TestCase):
         curs.execute("select col from array_test where id = 2")
         self.assertEqual(curs.fetchone()[0], [])
 
-    @testutils.skip_on_python3
+    @testutils.skip_from_python(3)
     def testTypeRoundtripBuffer(self):
         o1 = buffer("".join(map(chr, range(256))))
         o2 = self.execute("select %s;", (o1,))
@@ -182,14 +182,14 @@ class TypesBasicTests(unittest.TestCase):
         o2 = self.execute("select %s;", (o1,))
         self.assertEqual(type(o1), type(o2))
 
-    @testutils.skip_on_python3
+    @testutils.skip_from_python(3)
     def testTypeRoundtripBufferArray(self):
         o1 = buffer("".join(map(chr, range(256))))
         o1 = [o1]
         o2 = self.execute("select %s;", (o1,))
         self.assertEqual(type(o1[0]), type(o2[0]))
 
-    @testutils.skip_on_python2
+    @testutils.skip_before_python(3)
     def testTypeRoundtripBytes(self):
         o1 = bytes(range(256))
         o2 = self.execute("select %s;", (o1,))
@@ -200,14 +200,14 @@ class TypesBasicTests(unittest.TestCase):
         o2 = self.execute("select %s;", (o1,))
         self.assertEqual(memoryview, type(o2))
 
-    @testutils.skip_on_python2
+    @testutils.skip_before_python(3)
     def testTypeRoundtripBytesArray(self):
         o1 = bytes(range(256))
         o1 = [o1]
         o2 = self.execute("select %s;", (o1,))
         self.assertEqual(memoryview, type(o2[0]))
 
-    @testutils.skip_on_python2
+    @testutils.skip_before_python(3)
     def testAdaptBytearray(self):
         o1 = bytearray(range(256))
         o2 = self.execute("select %s;", (o1,))
@@ -218,7 +218,7 @@ class TypesBasicTests(unittest.TestCase):
         o2 = self.execute("select %s;", (o1,))
         self.assertEqual(memoryview, type(o2))
 
-    @testutils.skip_on_python2
+    @testutils.skip_before_python(3)
     def testAdaptMemoryview(self):
         o1 = memoryview(bytes(range(256)))
         o2 = self.execute("select %s;", (o1,))
@@ -253,7 +253,7 @@ class AdaptSubclassTest(unittest.TestCase):
            del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
            del psycopg2.extensions.adapters[B, psycopg2.extensions.ISQLQuote]
 
-    @testutils.skip_on_python3
+    @testutils.skip_from_python(3)
     def test_no_mro_no_joy(self):
         from psycopg2.extensions import adapt, register_adapter, AsIs
 
@@ -267,7 +267,7 @@ class AdaptSubclassTest(unittest.TestCase):
            del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
 
 
-    @testutils.skip_on_python2
+    @testutils.skip_before_python(3)
     def test_adapt_subtype_3(self):
         from psycopg2.extensions import adapt, register_adapter, AsIs
 
