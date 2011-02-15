@@ -23,11 +23,11 @@
 # License for more details.
 
 import time
-import unittest
 import psycopg2
 import psycopg2.extensions
 from psycopg2.extensions import b
 from testconfig import dsn
+from testutils import unittest, skip_if_no_pg_sleep
 
 class CursorTests(unittest.TestCase):
 
@@ -130,6 +130,7 @@ class CursorTests(unittest.TestCase):
         del curs
         self.assert_(w() is None)
 
+    @skip_if_no_pg_sleep('conn')
     def test_iter_named_cursor_efficient(self):
         curs = self.conn.cursor('tmp')
         # if these records are fetched in the same roundtrip their
