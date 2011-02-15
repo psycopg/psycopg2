@@ -88,9 +88,9 @@ binary_quote(binaryObject *self)
         PQfreemem(to);
     }
 
-    /* if the wrapped object is not a string or a buffer, this is an error */
+    /* if the wrapped object is not bytes or a buffer, this is an error */
     else {
-        PyErr_SetString(PyExc_TypeError, "can't escape non-string object");
+        PyErr_SetString(PyExc_TypeError, "can't escape non-bytes object");
         return NULL;
     }
 
