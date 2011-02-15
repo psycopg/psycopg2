@@ -152,12 +152,24 @@ class TypesBasicTests(unittest.TestCase):
             self.assertEqual(s, buf2)
 
     def testArray(self):
-        s = self.execute("SELECT %s AS foo", ([],))
-        self.failUnlessEqual(s, [])
         s = self.execute("SELECT %s AS foo", ([[1,2],[3,4]],))
         self.failUnlessEqual(s, [[1,2],[3,4]])
         s = self.execute("SELECT %s AS foo", (['one', 'two', 'three'],))
         self.failUnlessEqual(s, ['one', 'two', 'three'])
+
+    def testEmptyArrayRegression(self):
+        # ticket #42
+        import datetime
+        curs = self.conn.cursor()
+        curs.execute("create table array_test (id integer, col timestamp without time zone[])")
+
+        curs.execute("insert into array_test values (%s, %s)", (1, [datetime.date(2011,2,14)]))
+        curs.execute("select col from array_test where id = 1")
+        self.assertEqual(curs.fetchone()[0], [datetime.datetime(2011, 2, 14, 0, 0)])
+
+        curs.execute("insert into array_test values (%s, %s)", (2, []))
+        curs.execute("select col from array_test where id = 2")
+        self.assertEqual(curs.fetchone()[0], [])
 
     @testutils.skip_on_python3
     def testTypeRoundtripBuffer(self):
