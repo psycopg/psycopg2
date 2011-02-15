@@ -63,7 +63,7 @@ functionalities defined by the |DBAPI|_.
         `connection.encoding`) if the file was open in ``t`` mode, a bytes
         string for ``b`` mode.
 
-        .. versionchanged:: 2.3.3
+        .. versionchanged:: 2.4
             added Unicode support.
 
     .. method:: write(str)
@@ -72,7 +72,7 @@ functionalities defined by the |DBAPI|_.
         written. Unicode strings are encoded in the `connection.encoding`
         before writing.
 
-        .. versionchanged:: 2.3.3
+        .. versionchanged:: 2.4
             added Unicode support.
 
     .. method:: export(file_name)

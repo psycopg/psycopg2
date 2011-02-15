@@ -528,7 +528,7 @@ The ``connection`` class
 
         .. versionadded:: 2.0.8
 
-        .. versionchanged:: 2.3.3 added ``b`` and ``t`` mode and unicode
+        .. versionchanged:: 2.4 added ``b`` and ``t`` mode and unicode
             support.
 
 

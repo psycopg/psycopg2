@@ -174,7 +174,7 @@ The ``cursor`` class
         Use the most specific of the typecasters registered by
         `~psycopg2.extensions.register_type()`.
 
-        .. versionadded:: 2.3.3
+        .. versionadded:: 2.4
 
         .. extension::
 
@@ -208,7 +208,7 @@ The ``cursor`` class
             (2, None, 'dada')
             (3, 42, 'bar')
 
-        .. versionchanged:: 2.3.3
+        .. versionchanged:: 2.4
             iterating over a :ref:`named cursor <server-side-cursors>`
             fetches `~cursor.arraysize` records at time from the backend.
             Previously only one record was fetched per roundtrip, resulting
@@ -315,7 +315,7 @@ The ``cursor`` class
         you really want to retrieve one record at time from the backend use
         `fetchone()` in a loop.
 
-        .. versionchanged:: 2.3.3
+        .. versionchanged:: 2.4
             `!arraysize` used in named cursor iteration.
         
 

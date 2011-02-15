@@ -165,7 +165,7 @@ can be enabled using the `register_hstore()` function.
 Composite types casting
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. versionadded:: 2.3.3
+.. versionadded:: 2.4
 
 Using `register_composite()` it is possible to cast a PostgreSQL composite
 type (e.g. created with |CREATE TYPE|_ command) into a Python named tuple, or
