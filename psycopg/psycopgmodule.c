@@ -315,17 +315,26 @@ psyco_adapters_init(PyObject *mod)
     microprotocols_add(&PyLong_Type, NULL, (PyObject*)&asisType);
     microprotocols_add(&PyBool_Type, NULL, (PyObject*)&pbooleanType);
 
+    /* strings */
 #if PY_MAJOR_VERSION < 3
     microprotocols_add(&PyString_Type, NULL, (PyObject*)&qstringType);
 #endif
     microprotocols_add(&PyUnicode_Type, NULL, (PyObject*)&qstringType);
+
+    /* binary */
 #if PY_MAJOR_VERSION < 3
     microprotocols_add(&PyBuffer_Type, NULL, (PyObject*)&binaryType);
 #else
     microprotocols_add(&PyBytes_Type, NULL, (PyObject*)&binaryType);
+#endif
+
+#if PY_MAJOR_VERSION >= 3 || PY_MINOR_VERSION >= 6
     microprotocols_add(&PyByteArray_Type, NULL, (PyObject*)&binaryType);
+#endif
+#if PY_MAJOR_VERSION >= 3 || PY_MINOR_VERSION >= 7
     microprotocols_add(&PyMemoryView_Type, NULL, (PyObject*)&binaryType);
 #endif
+
     microprotocols_add(&PyList_Type, NULL, (PyObject*)&listType);
 
     if ((type = (PyTypeObject*)psyco_GetDecimalType()) != NULL)

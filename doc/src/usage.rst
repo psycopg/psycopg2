@@ -244,12 +244,27 @@ the SQL string that would be sent to the database.
 .. index::
     single: Buffer; Adaptation
     single: bytea; Adaptation
+    single: bytes; Adaptation
+    single: bytearray; Adaptation
+    single: memoryview; Adaptation
     single: Binary string
 
-- Binary types: Python types such as `!bytes`, `!bytearray`, `!buffer`,
-  `!memoryview` are converted in PostgreSQL binary string syntax, suitable for
-  :sql:`bytea` fields. Received data is returned as `!buffer` (in Python 2) or
-  `!memoryview` (in Python 3).
+- Binary types: Python types representing binary objects are converted in
+  PostgreSQL binary string syntax, suitable for :sql:`bytea` fields.   Such
+  types are `!buffer` (only available in Python 2), `!memoryview` (available
+  from Python 2.7), `!bytearray` (available from Python 2.6) and `!bytes`
+  (only form Python 3: the name is available from Python 2.6 but it's only an
+  alias for the type `!str`).  Received data is returned as `!buffer` (in
+  Python 2) or `!memoryview` (in Python 3).
+
+  .. note::
+
+    In Python 2, if you have binary data in a `!str` object, you can pass them
+    to a :sql:`bytea` field using the `psycopg2.Binary` wrapper::
+
+        mypic = open('picture.png', 'rb').read()
+        curs.execute("insert into blobs (file) values (%s)",
+            (psycopg2.Binary(mypic),))
 
   .. warning::
 

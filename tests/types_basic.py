@@ -207,27 +207,39 @@ class TypesBasicTests(unittest.TestCase):
         o2 = self.execute("select %s;", (o1,))
         self.assertEqual(memoryview, type(o2[0]))
 
-    @testutils.skip_before_python(3)
+    @testutils.skip_before_python(2, 6)
     def testAdaptBytearray(self):
         o1 = bytearray(range(256))
         o2 = self.execute("select %s;", (o1,))
-        self.assertEqual(memoryview, type(o2))
+        if sys.version_info[0] < 3:
+            self.assertEqual(buffer, type(o2))
+        else:
+            self.assertEqual(memoryview, type(o2))
 
         # Test with an empty buffer
         o1 = bytearray([])
         o2 = self.execute("select %s;", (o1,))
-        self.assertEqual(memoryview, type(o2))
+        if sys.version_info[0] < 3:
+            self.assertEqual(buffer, type(o2))
+        else:
+            self.assertEqual(memoryview, type(o2))
 
-    @testutils.skip_before_python(3)
+    @testutils.skip_before_python(2, 7)
     def testAdaptMemoryview(self):
-        o1 = memoryview(bytes(range(256)))
+        o1 = memoryview(bytearray(range(256)))
         o2 = self.execute("select %s;", (o1,))
-        self.assertEqual(memoryview, type(o2))
+        if sys.version_info[0] < 3:
+            self.assertEqual(buffer, type(o2))
+        else:
+            self.assertEqual(memoryview, type(o2))
 
         # Test with an empty buffer
-        o1 = memoryview(bytes([]))
+        o1 = memoryview(bytearray([]))
         o2 = self.execute("select %s;", (o1,))
-        self.assertEqual(memoryview, type(o2))
+        if sys.version_info[0] < 3:
+            self.assertEqual(buffer, type(o2))
+        else:
+            self.assertEqual(memoryview, type(o2))
 
 
 class AdaptSubclassTest(unittest.TestCase):

@@ -61,8 +61,11 @@ binary_quote(binaryObject *self)
     if (Bytes_Check(self->wrapped)
 #if PY_MAJOR_VERSION < 3
         || PyBuffer_Check(self->wrapped)
-#else
+#endif
+#if PY_MAJOR_VERSION >= 3 || PY_MINOR_VERSION >= 6
         || PyByteArray_Check(self->wrapped)
+#endif
+#if PY_MAJOR_VERSION >= 3 || PY_MINOR_VERSION >= 7
         || PyMemoryView_Check(self->wrapped)
 #endif
         ) {
