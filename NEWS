@@ -4,8 +4,9 @@ What's new in psycopg 2.4
 * New features and changes:
 
   - Added support for Python 3.1 and 3.2.
-  - Adapt types 'bytearray' (from Python 2.6) and 'memoryview' (from Python
-    2.7) to bytea data type.
+  - Adapt types 'bytearray' (from Python 2.6), 'memoryview' (from Python 2.7)
+    and other objects implementing the 'Revised Buffer Protocol' to bytea data
+    type.
   - Added `register_composite()` function to cast PostgreSQL composite types
     into Python tuples/namedtuples.
   - More efficient iteration on named cursors.
