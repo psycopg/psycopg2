@@ -142,9 +142,10 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
 
                     /* None is always converted to NULL; this is an
                        optimization over the adapting code and can go away in
-                       the future if somebody finds a None adapter usefull. */
+                       the future if somebody finds a None adapter useful. */
                     if (value == Py_None) {
-                        t = Bytes_FromString("NULL");
+                        Py_INCREF(psyco_null);
+                        t = psyco_null;
                         PyDict_SetItem(n, key, t);
                         /* t is a new object, refcnt = 1, key is at 2 */
 
@@ -220,7 +221,8 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
             d = c+1;
 
             if (value == Py_None) {
-                PyTuple_SET_ITEM(n, index, Bytes_FromString("NULL"));
+                Py_INCREF(psyco_null);
+                PyTuple_SET_ITEM(n, index, psyco_null);
                 while (*d && !isalpha(*d)) d++;
                 if (*d) *d = 's';
                 Py_DECREF(value);

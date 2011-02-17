@@ -52,12 +52,15 @@ list_quote(listObject *self)
     for (i=0; i<len; i++) {
         PyObject *quoted;
         PyObject *wrapped = PyList_GET_ITEM(self->wrapped, i);
-        if (wrapped == Py_None)
-            quoted = Bytes_FromString("NULL");
-        else
+        if (wrapped == Py_None) {
+            Py_INCREF(psyco_null);
+            quoted = psyco_null;
+        }
+        else {
             quoted = microprotocol_getquoted(wrapped,
                                        (connectionObject*)self->connection);
-        if (quoted == NULL) goto error;
+            if (quoted == NULL) goto error;
+        }
 
         /* here we don't loose a refcnt: SET_ITEM does not change the
            reference count and we are just transferring ownership of the tmp

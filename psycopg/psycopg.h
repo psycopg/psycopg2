@@ -105,6 +105,9 @@ import_psycopg(void)
 /* postgresql<->python encoding map */
 extern HIDDEN PyObject *psycoEncodings;
 
+/* SQL NULL */
+extern HIDDEN PyObject *psyco_null;
+
 typedef struct {
     char *pgenc;
     char *pyenc;

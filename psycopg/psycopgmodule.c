@@ -66,6 +66,9 @@ HIDDEN PyObject *psycoEncodings = NULL;
 HIDDEN int psycopg_debug_enabled = 0;
 #endif
 
+/* Python representation of SQL NULL */
+HIDDEN PyObject *psyco_null = NULL;
+
 /** connect module-level function **/
 #define psyco_connect_doc \
 "connect(dsn, ...) -- Create a new database connection.\n\n"               \
@@ -882,6 +885,7 @@ INIT_MODULE(_psycopg)(void)
     /* other mixed initializations of module-level variables */
     psycoEncodings = PyDict_New();
     psyco_encodings_fill(psycoEncodings);
+    psyco_null = Bytes_FromString("NULL");
 
     /* set some module's parameters */
     PyModule_AddStringConstant(module, "__version__", PSYCOPG_VERSION);
