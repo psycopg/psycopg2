@@ -210,9 +210,9 @@ The ``cursor`` class
 
         .. versionchanged:: 2.4
             iterating over a :ref:`named cursor <server-side-cursors>`
-            fetches `~cursor.arraysize` records at time from the backend.
+            fetches `~cursor.itersize` records at time from the backend.
             Previously only one record was fetched per roundtrip, resulting
-             in unefficient iteration.
+            in a large overhead.
 
     .. method:: fetchone()
 
@@ -306,18 +306,20 @@ The ``cursor`` class
         time with `~cursor.fetchmany()`. It defaults to 1 meaning to fetch
         a single row at a time.
 
-        The attribute is also used when iterating a :ref:`named cursor
-        <server-side-cursors>`: when syntax such as ``for i in cursor:`` is
-        used, in order to avoid an excessive number of network roundtrips, the
-        cursor will actually fetch `!arraysize` records at time from the
-        backend. For this task the default value of 1 is a poor value: if
-        `!arraysize` is 1, a default value of 2000 will be used instead. If
-        you really want to retrieve one record at time from the backend use
-        `fetchone()` in a loop.
 
-        .. versionchanged:: 2.4
-            `!arraysize` used in named cursor iteration.
+    .. attribute:: itersize
+
+        Read/write attribute specifying the number of rows to fetch from the
+        backend at each network roundtrip during :ref:`iteration
+        <cursor-iterable>` on a :ref:`named cursor <server-side-cursors>`. The
+        default is 2000.
+
+        .. versionadded:: 2.4
         
+        .. extension::
+
+            The `itersize` attribute is a Psycopg extension to the |DBAPI|.
+
 
     .. attribute:: rowcount 
           

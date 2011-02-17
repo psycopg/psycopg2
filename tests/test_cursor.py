@@ -145,7 +145,7 @@ class CursorTests(unittest.TestCase):
             % (t2 - t1))
 
     @skip_before_postgres(8, 0)
-    def test_iter_named_cursor_default_arraysize(self):
+    def test_iter_named_cursor_default_itersize(self):
         curs = self.conn.cursor('tmp')
         curs.execute('select generate_series(1,50)')
         rv = [ (r[0], curs.rownumber) for r in curs ]
@@ -153,9 +153,9 @@ class CursorTests(unittest.TestCase):
         self.assertEqual(rv, [(i,i) for i in range(1,51)])
 
     @skip_before_postgres(8, 0)
-    def test_iter_named_cursor_arraysize(self):
+    def test_iter_named_cursor_itersize(self):
         curs = self.conn.cursor('tmp')
-        curs.arraysize = 30
+        curs.itersize = 30
         curs.execute('select generate_series(1,50)')
         rv = [ (r[0], curs.rownumber) for r in curs ]
         # everything swallowed in two gulps

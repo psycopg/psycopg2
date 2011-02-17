@@ -45,6 +45,7 @@ typedef struct {
     long int rowcount;       /* number of rows affected by last execute */
     long int columns;        /* number of columns fetched from the db */
     long int arraysize;      /* how many rows should fetchmany() return */
+    long int itersize;       /* how many rows should iter(cur) fetch in named cursors */
     long int row;            /* the row counter for fetch*() operations */
     long int mark;           /* transaction marker, copied from conn */
 

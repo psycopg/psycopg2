@@ -809,12 +809,8 @@ psyco_curs_next_named(cursorObject *self)
     if (self->row >= self->rowcount) {
         char buffer[128];
 
-        /* fetch 'arraysize' records, but shun the default value of 1 */
-        long int size = self->arraysize;
-        if (size == 1) { size = 2000L; }
-
         PyOS_snprintf(buffer, 127, "FETCH FORWARD %ld FROM %s",
-            size, self->name);
+            self->itersize, self->name);
         if (pq_execute(self, buffer, 0) == -1) return NULL;
         if (_psyco_curs_prefetch(self) < 0) return NULL;
     }
@@ -1620,6 +1616,8 @@ static struct PyMemberDef cursorObject_members[] = {
     {"arraysize", T_LONG, OFFSETOF(arraysize), 0,
         "Number of records `fetchmany()` must fetch if not explicitly " \
         "specified."},
+    {"itersize", T_LONG, OFFSETOF(itersize), 0,
+        "Number of records ``iter(cur)`` must fetch per network roundtrip."},
     {"description", T_OBJECT, OFFSETOF(description), READONLY,
         "Cursor description as defined in DBAPI-2.0."},
     {"lastrowid", T_LONG, OFFSETOF(lastoid), READONLY,
@@ -1682,6 +1680,7 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
     self->pgres = NULL;
     self->notuples = 1;
     self->arraysize = 1;
+    self->itersize = 2000;
     self->rowcount = -1;
     self->lastoid = InvalidOid;
 

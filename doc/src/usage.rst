@@ -529,6 +529,14 @@ allowing the user to move in the dataset using the `~cursor.scroll()`
 method and to read the data using `~cursor.fetchone()` and
 `~cursor.fetchmany()` methods.
 
+Named cursors are also :ref:`iterable <cursor-iterable>` like regular cursors.
+Notice however that before Psycopg 2.4 iteration was performed fetching one
+record at time from the backend, resulting in a large overhead. The attribute
+`~cursor.itersize` now controls how many records are now fetched at time
+during the iteration: the default value of 2000 allows to fetch about 100KB
+per roundtrip assuming records of 10-20 columns of mixed number and strings;
+you may decrease this value if you are dealing with huge records.
+
 .. |DECLARE| replace:: :sql:`DECLARE`
 .. _DECLARE: http://www.postgresql.org/docs/9.0/static/sql-declare.html
 
