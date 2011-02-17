@@ -119,7 +119,7 @@ class ConnectionTests(unittest.TestCase):
         def slave():
             cnn = psycopg2.connect(dsn)
             cur = cnn.cursor()
-            cur.execute("select pg_sleep(2)")
+            cur.execute("select pg_sleep(3)")
             cur.close()
             cnn.close()
 
@@ -130,7 +130,7 @@ class ConnectionTests(unittest.TestCase):
         t2.start()
         t1.join()
         t2.join()
-        self.assert_(time.time() - t0 < 3,
+        self.assert_(time.time() - t0 < 5,
             "something broken in concurrency")
 
     def test_encoding_name(self):
