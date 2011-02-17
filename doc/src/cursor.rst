@@ -42,27 +42,35 @@ The ``cursor`` class
         Each of these sequences contains information describing one result
         column: 
 
-        - ``name``
-        - ``type_code``
-        - ``display_size``
-        - ``internal_size``
-        - ``precision``
-        - ``scale``
-        - ``null_ok``
-
-        The first two items (``name`` and ``type_code``) are always specified,
-        the other five are optional and are set to ``None`` if no meaningful
-        values can be provided.
+        0.  `!name`: the name of the column returned.
+        1.  `!type_code`: the PostgreSQL OID of the column. You can use the
+            |pg_type|_ system table to get more informations about the type.
+            This is the value used by Psycopg to decide what Python type use
+            to represent the value.  See also
+            :ref:`type-casting-from-sql-to-python`.
+        2.  `!display_size`: the actual length of the column in bytes.
+            Obtaining this value is computationally intensive, so it is
+            always `!None` unless the :envvar:`PSYCOPG_DISPLAY_SIZE` parameter
+            is set at compile time. See also PQgetlength_.
+        3.  `!internal_size`: the size in bytes of the column associated to
+            this column on the server. Set to a egative value for
+            variable-size types See also PQfsize_.
+        4.  `!precision`: total number of significant digits in columns of
+            type |NUMERIC|_. `!None` for other types.
+        5.  `!scale`: count of decimal digits in the freactional part in
+            columns of type |NUMERIC|. `!None` for other types.
+        6.  `!null_ok`: always `!None` as not easy to retrieve from the libpq.
 
         This attribute will be ``None`` for operations that do not return rows
         or if the cursor has not had an operation invoked via the
         |execute*|_ methods yet.
         
-        The ``type_code`` can be interpreted by comparing it to the Type
-        Objects specified in the section :ref:`type-objects-and-constructors`.
-        It is also used to register typecasters to convert PostgreSQL types to
-        Python objects: see :ref:`type-casting-from-sql-to-python`.
-
+        .. |pg_type| replace:: :sql:`pg_type`
+        .. _pg_type: http://www.postgresql.org/docs/9.0/static/catalog-pg-type.html
+        .. _PQgetlength: http://www.postgresql.org/docs/9.0/static/libpq-exec.html#LIBPQ-PQGETLENGTH
+        .. _PQfsize: http://www.postgresql.org/docs/9.0/static/libpq-exec.html#LIBPQ-PQFSIZE
+        .. _NUMERIC: http://www.postgresql.org/docs/9.0/static/datatype-numeric.html#DATATYPE-NUMERIC-DECIMAL
+        .. |NUMERIC| replace:: :sql:`NUMERIC`
 
     .. method:: close()
           
