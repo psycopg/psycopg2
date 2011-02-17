@@ -91,6 +91,17 @@ class CursorTests(unittest.TestCase):
         self.assertEqual(b('SELECT 10.3;'),
             cur.mogrify("SELECT %s;", (Decimal("10.3"),)))
 
+    def test_bad_placeholder(self):
+        cur = self.conn.cursor()
+        self.assertRaises(psycopg2.ProgrammingError,
+            cur.mogrify, "select %(foo", {})
+        self.assertRaises(psycopg2.ProgrammingError,
+            cur.mogrify, "select %(foo", {'foo': 1})
+        self.assertRaises(psycopg2.ProgrammingError,
+            cur.mogrify, "select %(foo, %(bar)", {'foo': 1})
+        self.assertRaises(psycopg2.ProgrammingError,
+            cur.mogrify, "select %(foo, %(bar)", {'foo': 1, 'bar': 2})
+
     def test_cast(self):
         curs = self.conn.cursor()
 
