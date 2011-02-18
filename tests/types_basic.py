@@ -128,6 +128,11 @@ class TypesBasicTests(unittest.TestCase):
             buf = self.execute("SELECT %s::bytea AS foo", (b,))
             self.assertEqual(s, buf)
 
+    def testBinaryNone(self):
+        b = psycopg2.Binary(None)
+        buf = self.execute("SELECT %s::bytea AS foo", (b,))
+        self.assertEqual(buf, None)
+
     def testBinaryEmptyString(self):
         # test to make sure an empty Binary is converted to an empty string
         if sys.version_info[0] < 3:

@@ -113,6 +113,12 @@ exit:
     if (got_view) { PyBuffer_Release(&view); }
 #endif
 
+    /* Allow Binary(None) to work */
+    if (self->wrapped == Py_None) {
+        Py_INCREF(psyco_null);
+        rv = psyco_null;
+    }
+
     /* if the wrapped object is not bytes or a buffer, this is an error */
     if (!rv && !PyErr_Occurred()) {
         PyErr_Format(PyExc_TypeError, "can't escape %s to binary",
