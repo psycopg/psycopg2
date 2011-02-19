@@ -124,6 +124,8 @@ HIDDEN PyObject *conn_text_from_chars(connectionObject *pgconn, const char *str)
 HIDDEN int  conn_get_standard_conforming_strings(PGconn *pgconn);
 HIDDEN int  conn_get_isolation_level(PGresult *pgres);
 HIDDEN int  conn_get_protocol_version(PGconn *pgconn);
+HIDDEN int  conn_get_server_version(PGconn *pgconn);
+HIDDEN PGcancel *conn_get_cancel(PGconn *pgconn);
 HIDDEN void conn_notice_process(connectionObject *self);
 HIDDEN void conn_notice_clean(connectionObject *self);
 HIDDEN void conn_notifies_process(connectionObject *self);

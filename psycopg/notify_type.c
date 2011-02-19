@@ -189,7 +189,7 @@ exit:
 }
 
 
-long
+static long
 notify_hash(NotifyObject *self)
 {
     long rv = -1L;
