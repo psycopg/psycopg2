@@ -357,10 +357,12 @@ The ``cursor`` class
         last operation is not a single record insert, the attribute is set to
         ``None``.
 
-        PostgreSQL currently advices to not create OIDs on the tables and the
-        default for |CREATE-TABLE|__ is to not support them. The
-        |INSERT-RETURNING|__ syntax available from PostgreSQL 8.3 allows more
-        flexibility.
+        .. note::
+
+            PostgreSQL currently advices to not create OIDs on the tables and
+            the default for |CREATE-TABLE|__ is to not support them. The
+            |INSERT-RETURNING|__ syntax available from PostgreSQL 8.3 allows
+            more flexibility.
 
         .. |CREATE-TABLE| replace:: :sql:`CREATE TABLE`
         .. __: http://www.postgresql.org/docs/9.0/static/sql-createtable.html
