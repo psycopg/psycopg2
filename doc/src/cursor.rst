@@ -39,8 +39,9 @@ The ``cursor`` class
 
         This read-only attribute is a sequence of 7-item sequences.  
 
-        Each of these sequences contains information describing one result
-        column: 
+        Each of these sequences is a named tuple (a regular tuple if
+        `!collections.namedtuple()` is not available) containing information
+        describing one result column:
 
         0.  `!name`: the name of the column returned.
         1.  `!type_code`: the PostgreSQL OID of the column. You can use the
@@ -53,11 +54,11 @@ The ``cursor`` class
             always `!None` unless the :envvar:`PSYCOPG_DISPLAY_SIZE` parameter
             is set at compile time. See also PQgetlength_.
         3.  `!internal_size`: the size in bytes of the column associated to
-            this column on the server. Set to a egative value for
+            this column on the server. Set to a negative value for
             variable-size types See also PQfsize_.
         4.  `!precision`: total number of significant digits in columns of
             type |NUMERIC|_. `!None` for other types.
-        5.  `!scale`: count of decimal digits in the freactional part in
+        5.  `!scale`: count of decimal digits in the fractional part in
             columns of type |NUMERIC|. `!None` for other types.
         6.  `!null_ok`: always `!None` as not easy to retrieve from the libpq.
 
@@ -71,6 +72,10 @@ The ``cursor`` class
         .. _PQfsize: http://www.postgresql.org/docs/9.0/static/libpq-exec.html#LIBPQ-PQFSIZE
         .. _NUMERIC: http://www.postgresql.org/docs/9.0/static/datatype-numeric.html#DATATYPE-NUMERIC-DECIMAL
         .. |NUMERIC| replace:: :sql:`NUMERIC`
+
+        .. versionchanged:: 2.4
+            if possible, columns descriptions are named tuple instead of
+            regular tuples.
 
     .. method:: close()
           

@@ -42,6 +42,9 @@
 #include <string.h>
 
 
+extern HIDDEN PyObject *psyco_DescriptionType;
+
+
 /* Strip off the severity from a Postgres error message. */
 static const char *
 strip_severity(const char *msg)
@@ -948,7 +951,6 @@ _pq_fetch_tuples(cursorObject *curs)
         Py_BLOCK_THREADS;
 
         dtitem = PyTuple_New(7);
-        PyTuple_SET_ITEM(curs->description, i, dtitem);
 
         /* fill the right cast function by accessing three different dictionaries:
            - the per-cursor dictionary, if available (can be NULL or None)
@@ -1021,8 +1023,24 @@ _pq_fetch_tuples(cursorObject *curs)
         /* 6/ FIXME: null_ok??? */
         Py_INCREF(Py_None);
         PyTuple_SET_ITEM(dtitem, 6, Py_None);
-    
-        Py_UNBLOCK_THREADS;    
+
+        /* Convert into a namedtuple if available */
+        if (Py_None != psyco_DescriptionType) {
+            PyObject *tmp = dtitem;
+            if ((dtitem = PyObject_CallObject(psyco_DescriptionType, tmp))) {
+                Py_DECREF(tmp);
+            }
+            else {
+                /* FIXME: this function is painfully missing any error check.
+                 * The caller doesn't expect them, so swallow it. */
+                PyErr_Clear();
+                dtitem = tmp;
+            }
+        }
+
+        PyTuple_SET_ITEM(curs->description, i, dtitem);
+
+        Py_UNBLOCK_THREADS;
     }
 
     if (dsize) {

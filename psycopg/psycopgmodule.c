@@ -69,6 +69,9 @@ HIDDEN int psycopg_debug_enabled = 0;
 /* Python representation of SQL NULL */
 HIDDEN PyObject *psyco_null = NULL;
 
+/* The type of the cursor.description items */
+HIDDEN PyObject *psyco_DescriptionType = NULL;
+
 /** connect module-level function **/
 #define psyco_connect_doc \
 "connect(dsn, ...) -- Create a new database connection.\n\n"               \
@@ -685,6 +688,44 @@ psyco_GetDecimalType(void)
 }
 
 
+/* Create a namedtuple for cursor.description items
+ *
+ * Return None in case of expected errors (e.g. namedtuples not available)
+ * NULL in case of errors to propagate.
+ */
+static PyObject *
+psyco_make_description_type(void)
+{
+    PyObject *nt = NULL;
+    PyObject *coll = NULL;
+    PyObject *rv = NULL;
+
+    /* Try to import collections.namedtuple */
+    if (!(coll = PyImport_ImportModule("collections"))) {
+        Dprintf("psyco_make_description_type: collections import failed");
+        PyErr_Clear();
+        rv = Py_None;
+        goto exit;
+    }
+    if (!(nt = PyObject_GetAttrString(coll, "namedtuple"))) {
+        Dprintf("psyco_make_description_type: no collections.namedtuple");
+        PyErr_Clear();
+        rv = Py_None;
+        goto exit;
+    }
+
+    /* Build the namedtuple */
+    rv = PyObject_CallFunction(nt, "ss", "Column",
+        "name type_code display_size internal_size precision scale null_ok");
+
+exit:
+    Py_XDECREF(coll);
+    Py_XDECREF(nt);
+
+    return rv;
+}
+
+
 /** method table and module initialization **/
 
 static PyMethodDef psycopgMethods[] = {
@@ -886,6 +927,7 @@ INIT_MODULE(_psycopg)(void)
     psycoEncodings = PyDict_New();
     psyco_encodings_fill(psycoEncodings);
     psyco_null = Bytes_FromString("NULL");
+    psyco_DescriptionType = psyco_make_description_type();
 
     /* set some module's parameters */
     PyModule_AddStringConstant(module, "__version__", PSYCOPG_VERSION);

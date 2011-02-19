@@ -27,7 +27,7 @@ import psycopg2
 import psycopg2.extensions
 from psycopg2.extensions import b
 from testconfig import dsn
-from testutils import unittest, skip_before_postgres
+from testutils import unittest, skip_before_postgres, skip_if_no_namedtuple
 
 class CursorTests(unittest.TestCase):
 
@@ -171,6 +171,42 @@ class CursorTests(unittest.TestCase):
         rv = [ (r[0], curs.rownumber) for r in curs ]
         # everything swallowed in two gulps
         self.assertEqual(rv, [(i,((i - 1) % 30) + 1) for i in range(1,51)])
+
+    @skip_if_no_namedtuple
+    def test_namedtuple_description(self):
+        curs = self.conn.cursor()
+        curs.execute("""select
+            3.14::decimal(10,2) as pi,
+            'hello'::text as hi,
+            '2010-02-18'::date as now;
+            """)
+        self.assertEqual(len(curs.description), 3)
+        for c in curs.description:
+            self.assertEqual(len(c), 7)  # DBAPI happy
+            for a in ('name', 'type_code', 'display_size', 'internal_size',
+                    'precision', 'scale', 'null_ok'):
+                self.assert_(hasattr(c, a), a)
+
+        c = curs.description[0]
+        self.assertEqual(c.name, 'pi')
+        self.assert_(c.type_code in psycopg2.extensions.DECIMAL.values)
+        self.assert_(c.internal_size > 0)
+        self.assertEqual(c.precision, 10)
+        self.assertEqual(c.scale, 2)
+
+        c = curs.description[1]
+        self.assertEqual(c.name, 'hi')
+        self.assert_(c.type_code in psycopg2.STRING.values)
+        self.assert_(c.internal_size < 0)
+        self.assertEqual(c.precision, None)
+        self.assertEqual(c.scale, None)
+
+        c = curs.description[2]
+        self.assertEqual(c.name, 'now')
+        self.assert_(c.type_code in psycopg2.extensions.DATE.values)
+        self.assert_(c.internal_size > 0)
+        self.assertEqual(c.precision, None)
+        self.assertEqual(c.scale, None)
 
 
 def test_suite():
