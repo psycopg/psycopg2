@@ -1081,10 +1081,10 @@ _pq_copy_in_v3(cursorObject *curs)
             break;
         }
 
-        /* a file may return unicode in Py3: encode in client encoding. */
-#if PY_MAJOR_VERSION > 2
+        /* a file may return unicode if implements io.TextIOBase */
         if (PyUnicode_Check(o)) {
             PyObject *tmp;
+            Dprintf("_pq_copy_in_v3: encoding in %s", curs->conn->codec);
             if (!(tmp = PyUnicode_AsEncodedString(o, curs->conn->codec, NULL))) {
                 Dprintf("_pq_copy_in_v3: encoding() failed");
                 error = 1;
@@ -1093,7 +1093,6 @@ _pq_copy_in_v3(cursorObject *curs)
             Py_DECREF(o);
             o = tmp;
         }
-#endif
 
         if (!Bytes_Check(o)) {
             Dprintf("_pq_copy_in_v3: got %s instead of bytes",
