@@ -593,14 +593,27 @@ psyco_set_error(PyObject *exc, PyObject *curs, const char *msg,
                 const char *pgerror, const char *pgcode)
 {
     PyObject *t;
+    PyObject *pymsg;
+    PyObject *err = NULL;
+    connectionObject *conn = NULL;
 
-    PyObject *err = PyObject_CallFunction(exc, "s", msg);
+    if (curs) {
+        conn = ((cursorObject *)curs)->conn;
+    }
+
+    if ((pymsg = conn_text_from_chars(conn, msg))) {
+        err = PyObject_CallFunctionObjArgs(exc, pymsg, NULL);
+        Py_DECREF(pymsg);
+    }
+    else {
+        /* what's better than an error in an error handler in the morning?
+         * Anyway, some error was set, refcount is ok... get outta here. */
+        return;
+    }
 
     if (err) {
-        connectionObject *conn = NULL;
         if (curs) {
             PyObject_SetAttrString(err, "cursor", curs);
-            conn = ((cursorObject *)curs)->conn;
         }
 
         if (pgerror) {
