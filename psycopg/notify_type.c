@@ -189,10 +189,10 @@ exit:
 }
 
 
-long
+Py_hash_t
 notify_hash(NotifyObject *self)
 {
-    long rv = -1L;
+    Py_hash_t rv = -1L;
     PyObject *tself = NULL;
 
     /* if self == a tuple, then their hashes are the same. */

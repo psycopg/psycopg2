@@ -54,6 +54,15 @@
   #define CONV_CODE_PY_SSIZE_T "n"
 #endif
 
+/* hash() return size changed around version 3.2a4 on 64bit platforms.  Before
+ *   this, the return size was always a long, regardless of arch.  ~3.2 
+ *   introduced the Py_hash_t & Py_uhash_t typedefs with the resulting sizes
+ *   based upon arch. */
+#if PY_VERSION_HEX < 0x030200A4
+typedef long Py_hash_t;
+typedef unsigned long Py_uhash_t;
+#endif
+
 /* Macros defined in Python 2.6 */
 #ifndef Py_REFCNT
 #define Py_REFCNT(ob)           (((PyObject*)(ob))->ob_refcnt)
