@@ -160,12 +160,6 @@ The ``cursor`` class
         be made available through the standard |fetch*|_ methods.
 
 
-    .. method:: setinputsizes(sizes)
-      
-        This method is exposed in compliance with the |DBAPI|. It currently
-        does nothing but it is safe to call it.
-
-
     .. method:: mogrify(operation [, parameters])
 
         Return a query string after arguments binding. The string returned is
@@ -179,19 +173,10 @@ The ``cursor`` class
 
             The `mogrify()` method is a Psycopg extension to the |DBAPI|.
 
-    .. method:: cast(oid, s)
-
-        Convert a value from the PostgreSQL string representation to a Python
-        object.
-
-        Use the most specific of the typecasters registered by
-        `~psycopg2.extensions.register_type()`.
-
-        .. versionadded:: 2.4
-
-        .. extension::
-
-            The `cast()` method is a Psycopg extension to the |DBAPI|.
+    .. method:: setinputsizes(sizes)
+      
+        This method is exposed in compliance with the |DBAPI|. It currently
+        does nothing but it is safe to call it.
 
 
 
@@ -384,18 +369,6 @@ The ``cursor`` class
         .. __: http://www.postgresql.org/docs/9.0/static/sql-insert.html
 
 
-    .. method:: nextset()
-    
-        This method is not supported (PostgreSQL does not have multiple data
-        sets) and will raise a `~psycopg2.NotSupportedError` exception.
-
-
-    .. method:: setoutputsize(size [, column])
-      
-        This method is exposed in compliance with the |DBAPI|. It currently
-        does nothing but it is safe to call it.
-
-
     .. attribute:: query
 
         Read-only attribute containing the body of the last query sent to the
@@ -426,6 +399,21 @@ The ``cursor`` class
             |DBAPI|.
 
 
+    .. method:: cast(oid, s)
+
+        Convert a value from the PostgreSQL string representation to a Python
+        object.
+
+        Use the most specific of the typecasters registered by
+        `~psycopg2.extensions.register_type()`.
+
+        .. versionadded:: 2.4
+
+        .. extension::
+
+            The `cast()` method is a Psycopg extension to the |DBAPI|.
+
+
     .. attribute:: tzinfo_factory
 
         The time zone factory used to handle data types such as
@@ -434,6 +422,19 @@ The ``cursor`` class
 
         .. |tzinfo| replace:: `!tzinfo`
         .. _tzinfo: http://docs.python.org/library/datetime.html#tzinfo-objects
+
+
+    .. method:: nextset()
+    
+        This method is not supported (PostgreSQL does not have multiple data
+        sets) and will raise a `~psycopg2.NotSupportedError` exception.
+
+
+    .. method:: setoutputsize(size [, column])
+      
+        This method is exposed in compliance with the |DBAPI|. It currently
+        does nothing but it is safe to call it.
+
 
 
     .. rubric:: COPY-related methods
