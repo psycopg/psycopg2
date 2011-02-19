@@ -73,7 +73,7 @@ I try to execute a query but it fails with the error *not all arguments converte
         >>> cur.execute("INSERT INTO foo VALUES (%s)", ("bar",)) # correct
         >>> cur.execute("INSERT INTO foo VALUES (%s)", ["bar"])  # correct
 
-My database is Unicode, but I receive all the strings as UTF-8 `str`. Can I receive `unicode` objects instead?
+My database is Unicode, but I receive all the strings as UTF-8 `!str`. Can I receive `!unicode` objects instead?
     The following magic formula will do the trick::
 
         psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
@@ -100,8 +100,8 @@ Transferring binary data from PostgreSQL 9.0 doesn't work.
     earlier. Three options to solve the problem are:
 
     - set the bytea_output__ parameter to ``escape`` in the server;
-    - use ``SET bytea_output TO escape`` in the client before reading binary
-      data;
+    - execute the database command ``SET bytea_output TO escape;`` in the
+      session before reading binary data;
     - upgrade the libpq library on the client to at least 9.0.
 
     .. __: http://www.postgresql.org/docs/9.0/static/datatype-binary.html

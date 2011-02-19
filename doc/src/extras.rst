@@ -83,7 +83,7 @@ Real dictionary cursor
 
 .. versionadded:: 2.3
 
-These objects require `!collection.namedtuple()` to be found, so it is
+These objects require :py:func:`collections.namedtuple` to be found, so it is
 available out-of-the-box only from Python 2.6. Anyway, the namedtuple
 implementation is compatible with previous Python versions, so all you
 have to do is to `download it`__ and make it available where we
@@ -143,8 +143,8 @@ been greatly improved in capacity and usefulness with the addiction of many
 functions.  It supports GiST or GIN indexes allowing search by keys or
 key/value pairs as well as regular BTree indexes for equality, uniqueness etc.
 
-Psycopg can convert Python `dict` objects to and from |hstore| structures.
-Only dictionaries with string/unicode keys and values are supported.  `None`
+Psycopg can convert Python `!dict` objects to and from |hstore| structures.
+Only dictionaries with string/unicode keys and values are supported.  `!None`
 is also allowed as value.  Psycopg uses a more efficient |hstore|
 representation when dealing with PostgreSQL 9.0 but previous server versions
 are supportes as well.  By default the adapter/typecaster are disabled: they
@@ -169,7 +169,7 @@ Composite types casting
 
 Using `register_composite()` it is possible to cast a PostgreSQL composite
 type (e.g. created with |CREATE TYPE|_ command) into a Python named tuple, or
-into a regular tuple if `!collections.namedtuple()` is not found.
+into a regular tuple if :py:func:`collections.namedtuple` is not found.
 
 .. |CREATE TYPE| replace:: :sql:`CREATE TYPE`
 .. _CREATE TYPE: http://www.postgresql.org/docs/9.0/static/sql-createtype.html

@@ -232,7 +232,7 @@ class RealDictCursor(DictCursorBase):
             self._query_executed = 0
 
 class RealDictRow(dict):
-    """A ``dict`` subclass representing a data record."""
+    """A `!dict` subclass representing a data record."""
 
     __slots__ = ('_column_mapping')
 
@@ -253,7 +253,7 @@ class NamedTupleConnection(_connection):
         return _connection.cursor(self, *args, **kwargs)
 
 class NamedTupleCursor(_cursor):
-    """A cursor that generates results as |namedtuple|__.
+    """A cursor that generates results as `~collections.namedtuple`.
 
     `!fetch*()` methods will return named tuples instead of regular tuples, so
     their elements can be accessed both as regular numeric items as well as
@@ -267,9 +267,6 @@ class NamedTupleCursor(_cursor):
         100
         >>> rec.data
         "abc'def"
-
-    .. |namedtuple| replace:: `!namedtuple`
-    .. __: http://docs.python.org/release/2.6/library/collections.html#collections.namedtuple
     """
     Record = None
 
@@ -327,9 +324,9 @@ class LoggingConnection(_connection):
     """
 
     def initialize(self, logobj):
-        """Initialize the connection to log to ``logobj``.
+        """Initialize the connection to log to `!logobj`.
 
-        The ``logobj`` parameter can be an open file object or a Logger
+        The `!logobj` parameter can be an open file object or a Logger
         instance from the standard logging module.
         """
         self._logobj = logobj
@@ -700,7 +697,7 @@ WHERE typname = 'hstore' and nspname = 'public';
         return oids
 
 def register_hstore(conn_or_curs, globally=False, unicode=False):
-    """Register adapter and typecaster for `dict`\-\ |hstore| conversions.
+    """Register adapter and typecaster for `!dict`\-\ |hstore| conversions.
 
     The function must receive a connection or cursor as the |hstore| oid is
     different in each database. The typecaster will normally be registered
@@ -708,9 +705,9 @@ def register_hstore(conn_or_curs, globally=False, unicode=False):
     uses a single database you can pass *globally*\=True to have the typecaster
     registered on all the connections.
 
-    On Python 2, by default the returned dicts will have `str` objects as keys and values:
-    use *unicode*\=True to return `unicode` objects instead.  When adapting a
-    dictionary both `str` and `unicode` keys and values are handled (the
+    On Python 2, by default the returned dicts will have `!str` objects as keys and values:
+    use *unicode*\=True to return `!unicode` objects instead.  When adapting a
+    dictionary both `!str` and `!unicode` keys and values are handled (the
     `unicode` values will be converted according to the current
     `~connection.encoding`). The option is not available on Python 3.
 
@@ -750,9 +747,9 @@ class CompositeCaster(object):
 
     .. attribute:: type
 
-        The type of the Python objects returned. If `!collections.namedtuple()`
+        The type of the Python objects returned. If :py:func:`collections.namedtuple()`
         is available, it is a named tuple with attributes equal to the type
-        components. Otherwise it is just the `tuple` object.
+        components. Otherwise it is just the `!tuple` object.
 
     .. attribute:: attnames
 
@@ -875,8 +872,8 @@ def register_composite(name, conn_or_curs, globally=False):
         the |CREATE TYPE|_ command
     :param conn_or_curs: a connection or cursor used to find the type oid and
         components; the typecaster is registered in a scope limited to this
-        object, unless *globally* is set to `True`
-    :param globally: if `False` (default) register the typecaster only on
+        object, unless *globally* is set to `!True`
+    :param globally: if `!False` (default) register the typecaster only on
         *conn_or_curs*, otherwise register it globally
     :return: the registered `CompositeCaster` instance responsible for the
         conversion

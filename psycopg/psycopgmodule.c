@@ -264,7 +264,7 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
 "  * `name`: Name for the new type\n" \
 "  * `adapter`: Callable to perform type conversion.\n" \
 "    It must have the signature ``fun(value, cur)`` where ``value`` is\n" \
-"    the string representation returned by PostgreSQL (`None` if ``NULL``)\n" \
+"    the string representation returned by PostgreSQL (`!None` if ``NULL``)\n" \
 "    and ``cur`` is the cursor from which data are read."
 
 static void

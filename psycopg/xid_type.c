@@ -43,7 +43,7 @@ static const char xid_doc[] =
 static const char format_id_doc[] =
     "Format ID in a XA transaction.\n\n"
     "A non-negative 32 bit integer.\n"
-    "`None` if the transaction doesn't follow the XA standard.";
+    "`!None` if the transaction doesn't follow the XA standard.";
 
 static const char gtrid_doc[] =
     "Global transaction ID in a XA transaction.\n\n"
@@ -54,7 +54,7 @@ static const char bqual_doc[] =
     "Branch qualifier of the transaction.\n\n"
     "In a XA transaction every resource participating to a transaction\n"
     "receives a distinct branch qualifier.\n"
-    "`None` if the transaction doesn't follow the XA standard.";
+    "`!None` if the transaction doesn't follow the XA standard.";
 
 static const char prepared_doc[] =
     "Timestamp (with timezone) in which a recovered transaction was prepared.";
@@ -269,7 +269,7 @@ static const char xid_from_string_doc[] =
     "the returned object will have `format_id`, `gtrid`, `bqual` set to\n"
     "the values of the preparing XA id.\n"
     "Otherwise only the `!gtrid` is populated with the unparsed string.\n"
-    "The operation is the inverse of the one performed by ``str(xid)``.";
+    "The operation is the inverse of the one performed by `!str(xid)`.";
 
 static PyObject *
 xid_from_string_method(PyObject *cls, PyObject *args)

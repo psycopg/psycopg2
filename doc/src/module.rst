@@ -30,13 +30,13 @@ The module interface respects the standard defined in the |DBAPI|_.
 
     The full list of available parameters is:
     
-    - `dbname` -- the database name (only in dsn string)
-    - `database` -- the database name (only as keyword argument)
-    - `user` -- user name used to authenticate
-    - `password` -- password used to authenticate
-    - `host` -- database host address (defaults to UNIX socket if not provided)
-    - `port` -- connection port number (defaults to 5432 if not provided)
-    - `sslmode` -- `SSL TCP/IP negotiation`__ mode
+    - `!dbname` -- the database name (only in dsn string)
+    - `!database` -- the database name (only as keyword argument)
+    - `!user` -- user name used to authenticate
+    - `!password` -- password used to authenticate
+    - `!host` -- database host address (defaults to UNIX socket if not provided)
+    - `!port` -- connection port number (defaults to 5432 if not provided)
+    - `!sslmode` -- `SSL TCP/IP negotiation`__ mode
 
     .. __: http://www.postgresql.org/docs/9.0/static/libpq-ssl.html#LIBPQ-SSL-SSLMODE-STATEMENTS
 
@@ -87,23 +87,23 @@ available through the following exceptions:
 .. exception:: Warning 
             
     Exception raised for important warnings like data truncations while
-    inserting, etc. It is a subclass of the Python |StandardError|_.
+    inserting, etc. It is a subclass of the Python `~exceptions.StandardError`.
             
 .. exception:: Error 
 
     Exception that is the base class of all other error exceptions. You can
-    use this to catch all errors with one single ``except`` statement. Warnings
+    use this to catch all errors with one single `!except` statement. Warnings
     are not considered errors and thus not use this class as base. It
-    is a subclass of the Python |StandardError|_.
+    is a subclass of the Python `!StandardError`.
 
     .. attribute:: pgerror
 
         String representing the error message returned by the backend,
-        ``None`` if not available.
+        `!None` if not available.
 
     .. attribute:: pgcode
 
-        String representing the error code returned by the backend, ``None``
+        String representing the error code returned by the backend, `!None`
         if not available.  The `~psycopg2.errorcodes` module contains
         symbolic constants representing PostgreSQL error codes.
 
@@ -197,7 +197,7 @@ This is the exception inheritance layout:
 
 .. parsed-literal::
 
-    |StandardError|
+    `!StandardError`
     \|__ `Warning`
     \|__ `Error`
         \|__ `InterfaceError`
@@ -211,9 +211,6 @@ This is the exception inheritance layout:
             \|__ `ProgrammingError`
             \|__ `NotSupportedError`
 
-
-.. |StandardError| replace:: `!StandardError`
-.. _StandardError: http://docs.python.org/library/exceptions.html#exceptions.StandardError
 
 
 .. _type-objects-and-constructors:

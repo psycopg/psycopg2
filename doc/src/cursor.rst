@@ -40,7 +40,7 @@ The ``cursor`` class
         This read-only attribute is a sequence of 7-item sequences.  
 
         Each of these sequences is a named tuple (a regular tuple if
-        `!collections.namedtuple()` is not available) containing information
+        :func:`collections.namedtuple` is not available) containing information
         describing one result column:
 
         0.  `!name`: the name of the column returned.
@@ -62,7 +62,7 @@ The ``cursor`` class
             columns of type |NUMERIC|. `!None` for other types.
         6.  `!null_ok`: always `!None` as not easy to retrieve from the libpq.
 
-        This attribute will be ``None`` for operations that do not return rows
+        This attribute will be `!None` for operations that do not return rows
         or if the cursor has not had an operation invoked via the
         |execute*|_ methods yet.
         
@@ -79,15 +79,15 @@ The ``cursor`` class
 
     .. method:: close()
           
-        Close the cursor now (rather than whenever `!__del__()` is
-        called).  The cursor will be unusable from this point forward; an
+        Close the cursor now (rather than whenever `del` is executed).
+        The cursor will be unusable from this point forward; an
         `~psycopg2.InterfaceError` will be raised if any operation is
         attempted with the cursor.
             
     .. attribute:: closed
 
         Read-only boolean attribute: specifies if the cursor is closed
-        (``True``) or not (``False``).
+        (`!True`) or not (`!False`).
 
         .. extension::
 
@@ -106,7 +106,7 @@ The ``cursor`` class
     .. attribute:: name
 
         Read-only attribute containing the name of the cursor if it was
-        creates as named cursor by `connection.cursor()`, or ``None`` if
+        creates as named cursor by `connection.cursor()`, or `!None` if
         it is a client side cursor.  See :ref:`server-side-cursors`.
 
         .. extension::
@@ -131,7 +131,7 @@ The ``cursor`` class
         positional (``%s``) or named (:samp:`%({name})s`) placeholders. See
         :ref:`query-parameters`.
         
-        The method returns `None`. If a query was executed, the returned
+        The method returns `!None`. If a query was executed, the returned
         values can be retrieved using |fetch*|_ methods.
 
 
@@ -215,7 +215,7 @@ The ``cursor`` class
     .. method:: fetchone()
 
         Fetch the next row of a query result set, returning a single tuple,
-        or ``None`` when no more data is available:
+        or `!None` when no more data is available:
 
             >>> cur.execute("SELECT * FROM test WHERE id = %s", (3,))
             >>> cur.fetchone()
@@ -333,14 +333,14 @@ The ``cursor`` class
 
         .. note::
             The |DBAPI|_ interface reserves to redefine the latter case to
-            have the object return ``None`` instead of -1 in future versions
+            have the object return `!None` instead of -1 in future versions
             of the specification.
         
 
     .. attribute:: rownumber
 
         This read-only attribute provides the current 0-based index of the
-        cursor in the result set or ``None`` if the index cannot be
+        cursor in the result set or `!None` if the index cannot be
         determined.
 
         The index can be seen as index of the cursor in a sequence (the result
@@ -355,7 +355,7 @@ The ``cursor`` class
         This read-only attribute provides the OID of the last row inserted
         by the cursor. If the table wasn't created with OID support or the
         last operation is not a single record insert, the attribute is set to
-        ``None``.
+        `!None`.
 
         .. note::
 
@@ -374,7 +374,7 @@ The ``cursor`` class
     .. attribute:: query
 
         Read-only attribute containing the body of the last query sent to the
-        backend (including bound arguments). ``None`` if no query has been
+        backend (including bound arguments). `!None` if no query has been
         executed yet:
 
             >>> cur.execute("INSERT INTO test (num, data) VALUES (%s, %s)", (42, 'bar'))
@@ -419,11 +419,9 @@ The ``cursor`` class
     .. attribute:: tzinfo_factory
 
         The time zone factory used to handle data types such as
-        :sql:`TIMESTAMP WITH TIME ZONE`.  It should be a |tzinfo|_ object.
-        See also the `psycopg2.tz` module.
-
-        .. |tzinfo| replace:: `!tzinfo`
-        .. _tzinfo: http://docs.python.org/library/datetime.html#tzinfo-objects
+        :sql:`TIMESTAMP WITH TIME ZONE`.  It should be a `~datetime.tzinfo`
+        object.  A few implementations are available in the `psycopg2.tz`
+        module.
 
 
     .. method:: nextset()
@@ -448,15 +446,15 @@ The ``cursor`` class
 
     .. method:: copy_from(file, table, sep='\\t', null='\\N', columns=None)
  
-        Read data *from* the file-like object `file` appending them to
-        the table named `table`.  `file` must have both
+        Read data *from* the file-like object *file* appending them to
+        the table named *table*.  *file* must have both
         `!read()` and `!readline()` method.  See :ref:`copy` for an
         overview.
 
-        The optional argument `sep` is the columns separator and
-        `null` represents :sql:`NULL` values in the file.
+        The optional argument *sep* is the columns separator and
+        *null* represents :sql:`NULL` values in the file.
 
-        The `columns` argument is a sequence containing the name of the
+        The *columns* argument is a sequence containing the name of the
         fields where the read data will be entered.  Its length and column
         type should match the content of the read file.  If not specifies, it
         is assumed that the entire table matches the file structure.
@@ -468,20 +466,24 @@ The ``cursor`` class
             [(6, 42, 'foo'), (7, 74, 'bar')]
 
         .. versionchanged:: 2.0.6
-            added the `columns` parameter.
+            added the *columns* parameter.
 
+        .. versionchanged:: 2.4
+            data read from files implementing the `io.TextIOBase` interface
+            are encoded in the connection `~connection.encoding` when sent to
+            the backend.
 
     .. method:: copy_to(file, table, sep='\\t', null='\\N', columns=None)
 
-        Write the content of the table named `table` *to* the file-like
-        object `file`.  `file` must have a `!write()` method.
+        Write the content of the table named *table* *to* the file-like
+        object *file*.  *file* must have a `!write()` method.
         See :ref:`copy` for an overview.
 
-        The optional argument `sep` is the columns separator and
-        `null` represents :sql:`NULL` values in the file.
+        The optional argument *sep* is the columns separator and
+        *null* represents :sql:`NULL` values in the file.
 
-        The `columns` argument is a sequence of field names: if not
-        ``None`` only the specified fields will be included in the dump.
+        The *columns* argument is a sequence of field names: if not
+        `!None` only the specified fields will be included in the dump.
 
             >>> cur.copy_to(sys.stdout, 'test', sep="|")
             1|100|abc'def
@@ -489,7 +491,12 @@ The ``cursor`` class
             ...
 
         .. versionchanged:: 2.0.6
-            added the `columns` parameter.
+            added the *columns* parameter.
+
+        .. versionchanged:: 2.4
+            data sent to files implementing the `io.TextIOBase` interface
+            are decoded in the connection `~connection.encoding` when read
+            from the backend.
 
 
     .. method:: copy_expert(sql, file [, size])
@@ -498,10 +505,10 @@ The ``cursor`` class
         handle all the parameters that PostgreSQL makes available (see
         |COPY|__ command documentation).
 
-        `file` must be an open, readable file for :sql:`COPY FROM` or an
-        open, writeable file for :sql:`COPY TO`. The optional `size`
+        *file* must be an open, readable file for :sql:`COPY FROM` or an
+        open, writeable file for :sql:`COPY TO`. The optional *size*
         argument, when specified for a :sql:`COPY FROM` statement, will be
-        passed to `file`\ 's read method to control the read buffer
+        passed to *file*\ 's read method to control the read buffer
         size.
 
             >>> cur.copy_expert("COPY test TO STDOUT WITH CSV HEADER", sys.stdout)
@@ -514,6 +521,10 @@ The ``cursor`` class
         .. __: http://www.postgresql.org/docs/9.0/static/sql-copy.html
 
         .. versionadded:: 2.0.6
+
+        .. versionchanged:: 2.4
+            files implementing the `io.TextIOBase` interface are dealt with
+            using Unicode data instead of bytes.
 
 
 .. testcode::

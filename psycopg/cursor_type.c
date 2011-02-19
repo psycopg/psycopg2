@@ -638,7 +638,7 @@ psyco_curs_cast(cursorObject *self, PyObject *args)
 "fetchone() -> tuple or None\n\n" \
 "Return the next row of a query result set in the form of a tuple (by\n" \
 "default) or using the sequence factory previously set in the\n" \
-"`row_factory` attribute. Return `None` when no more data is available.\n"
+"`row_factory` attribute. Return `!None` when no more data is available.\n"
 
 static int
 _psyco_curs_prefetch(cursorObject *self)
@@ -837,7 +837,7 @@ psyco_curs_next_named(cursorObject *self)
 "fetchmany(size=self.arraysize) -> list of tuple\n\n" \
 "Return the next `size` rows of a query result set in the form of a list\n" \
 "of tuples (by default) or using the sequence factory previously set in\n" \
-"the `row_factory` attribute. Return `None` when no more data is available.\n"
+"the `row_factory` attribute. Return `!None` when no more data is available.\n"
 
 static PyObject *
 psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
@@ -915,7 +915,7 @@ psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
 "Return all the remaining rows of a query result set.\n\n" \
 "Rows are returned in the form of a list of tuples (by default) or using\n" \
 "the sequence factory previously set in the `row_factory` attribute.\n" \
-"Return `None` when no more data is available.\n"
+"Return `!None` when no more data is available.\n"
 
 static PyObject *
 psyco_curs_fetchall(cursorObject *self, PyObject *args)
