@@ -589,7 +589,7 @@ psyco_errors_set(PyObject *type)
    Create a new error of the given type with extra attributes. */
 
 void
-psyco_set_error(PyObject *exc, PyObject *curs, const char *msg,
+psyco_set_error(PyObject *exc, cursorObject *curs, const char *msg,
                 const char *pgerror, const char *pgcode)
 {
     PyObject *t;
@@ -613,7 +613,7 @@ psyco_set_error(PyObject *exc, PyObject *curs, const char *msg,
 
     if (err) {
         if (curs) {
-            PyObject_SetAttrString(err, "cursor", curs);
+            PyObject_SetAttrString(err, "cursor", (PyObject *)curs);
         }
 
         if (pgerror) {

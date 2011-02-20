@@ -77,13 +77,13 @@ HIDDEN int lobject_close(lobjectObject *self);
 
 #define EXC_IF_LOBJ_LEVEL0(self) \
 if (self->conn->isolation_level == 0) {                             \
-    psyco_set_error(ProgrammingError, (PyObject*)self,              \
+    psyco_set_error(ProgrammingError, NULL,                         \
         "can't use a lobject outside of transactions", NULL, NULL); \
     return NULL;                                                    \
 }
 #define EXC_IF_LOBJ_UNMARKED(self) \
 if (self->conn->mark != self->mark) {                  \
-    psyco_set_error(ProgrammingError, (PyObject*)self, \
+    psyco_set_error(ProgrammingError, NULL,            \
         "lobject isn't valid anymore", NULL, NULL);    \
     return NULL;                                       \
 }

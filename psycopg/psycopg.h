@@ -116,8 +116,11 @@ typedef struct {
 /* the Decimal type, used by the DECIMAL typecaster */
 HIDDEN PyObject *psyco_GetDecimalType(void);
 
+/* forward declaration */
+typedef struct cursorObject cursorObject;
+
 /* some utility functions */
-HIDDEN void psyco_set_error(PyObject *exc, PyObject *curs,  const char *msg,
+HIDDEN void psyco_set_error(PyObject *exc, cursorObject *curs, const char *msg,
                             const char *pgerror, const char *pgcode);
 
 HIDDEN char *psycopg_escape_string(PyObject *conn,

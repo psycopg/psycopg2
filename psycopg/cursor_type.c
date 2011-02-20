@@ -76,7 +76,7 @@ psyco_curs_close(cursorObject *self, PyObject *args)
 /* mogrify a query string and build argument array or dict */
 
 static int
-_mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
+_mogrify(PyObject *var, PyObject *fmt, cursorObject *curs, PyObject **new)
 {
     PyObject *key, *value, *n;
     const char *d, *c;
@@ -113,7 +113,7 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
             /* check if some crazy guy mixed formats */
             if (kind == 2) {
                 Py_XDECREF(n);
-                psyco_set_error(ProgrammingError, (PyObject*)conn,
+                psyco_set_error(ProgrammingError, curs,
                    "argument formats can't be mixed", NULL, NULL);
                 return -1;
             }
@@ -155,7 +155,7 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
                         /* t is a new object, refcnt = 1, key is at 2 */
                     }
                     else {
-                        t = microprotocol_getquoted(value, conn);
+                        t = microprotocol_getquoted(value, curs->conn);
 
                         if (t != NULL) {
                             PyDict_SetItem(n, key, t);
@@ -181,7 +181,7 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
             else {
                 /* we found %( but not a ) */
                 Py_XDECREF(n);
-                psyco_set_error(ProgrammingError, (PyObject*)conn,
+                psyco_set_error(ProgrammingError, curs,
                    "incomplete placeholder: '%(' without ')'", NULL, NULL);
                 return -1;
             }
@@ -196,7 +196,7 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
             /* check if some crazy guy mixed formats */
             if (kind == 1) {
                 Py_XDECREF(n);
-                psyco_set_error(ProgrammingError, (PyObject*)conn,
+                psyco_set_error(ProgrammingError, curs,
                   "argument formats can't be mixed", NULL, NULL);
                 return -1;
             }
@@ -223,7 +223,7 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
                 Py_DECREF(value);
             }
             else {
-                PyObject *t = microprotocol_getquoted(value, conn);
+                PyObject *t = microprotocol_getquoted(value, curs->conn);
 
                 if (t != NULL) {
                     PyTuple_SET_ITEM(n, index, t);
@@ -255,7 +255,7 @@ static PyObject *_psyco_curs_validate_sql_basic(
        after having set an exception. */
 
     if (!sql || !PyObject_IsTrue(sql)) {
-        psyco_set_error(ProgrammingError, (PyObject*)self,
+        psyco_set_error(ProgrammingError, self,
                          "can't execute an empty query", NULL, NULL);
         goto fail;
     }
@@ -327,7 +327,7 @@ _psyco_curs_merge_query_args(cursorObject *self,
                 if (!strcmp(s, "not enough arguments for format string")
                   || !strcmp(s, "not all arguments converted")) {
                     Dprintf("psyco_curs_execute:     -> got a match");
-                    psyco_set_error(ProgrammingError, (PyObject*)self,
+                    psyco_set_error(ProgrammingError, self,
                                      s, NULL, NULL);
                     pe = 1;
                 }
@@ -381,7 +381,7 @@ _psyco_curs_execute(cursorObject *self,
 
     if (vars && vars != Py_None)
     {
-        if(_mogrify(vars, operation, self->conn, &cvt) == -1) { goto fail; }
+        if(_mogrify(vars, operation, self, &cvt) == -1) { goto fail; }
     }
 
     if (vars && cvt) {
@@ -451,18 +451,18 @@ psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
 
     if (self->name != NULL) {
         if (self->query != Py_None) {
-            psyco_set_error(ProgrammingError, (PyObject*)self,
+            psyco_set_error(ProgrammingError, self,
                 "can't call .execute() on named cursors more than once",
                 NULL, NULL);
             return NULL;
         }
         if (self->conn->isolation_level == ISOLATION_LEVEL_AUTOCOMMIT) {
-            psyco_set_error(ProgrammingError, (PyObject*)self,
+            psyco_set_error(ProgrammingError, self,
                 "can't use a named cursor outside of transactions", NULL, NULL);
             return NULL;
         }
         if (self->conn->mark != self->mark) {
-            psyco_set_error(ProgrammingError, (PyObject*)self,
+            psyco_set_error(ProgrammingError, self,
                 "named cursor isn't valid anymore", NULL, NULL);
             return NULL;
         }
@@ -506,7 +506,7 @@ psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
     EXC_IF_TPC_PREPARED(self->conn, executemany);
 
     if (self->name != NULL) {
-        psyco_set_error(ProgrammingError, (PyObject*)self,
+        psyco_set_error(ProgrammingError, self,
                 "can't call .executemany() on named cursors", NULL, NULL);
         return NULL;
     }
@@ -564,7 +564,7 @@ _psyco_curs_mogrify(cursorObject *self,
 
     if (vars && vars != Py_None)
     {
-        if (_mogrify(vars, operation, self->conn, &cvt) == -1) {
+        if (_mogrify(vars, operation, self, &cvt) == -1) {
             goto cleanup;
         }
     }
@@ -998,7 +998,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
     EXC_IF_TPC_PREPARED(self->conn, callproc);
 
     if (self->name != NULL) {
-        psyco_set_error(ProgrammingError, (PyObject*)self,
+        psyco_set_error(ProgrammingError, self,
                          "can't call .callproc() on named cursors", NULL, NULL);
         return NULL;
     }
@@ -1121,13 +1121,13 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
         } else if (strcmp( mode, "absolute") == 0) {
             newpos = value;
         } else {
-            psyco_set_error(ProgrammingError, (PyObject*)self,
+            psyco_set_error(ProgrammingError, self,
                 "scroll mode must be 'relative' or 'absolute'", NULL, NULL);
             return NULL;
         }
 
         if (newpos < 0 || newpos >= self->rowcount ) {
-            psyco_set_error(ProgrammingError, (PyObject*)self,
+            psyco_set_error(ProgrammingError, self,
                              "scroll destination out of bounds", NULL, NULL);
             return NULL;
         }

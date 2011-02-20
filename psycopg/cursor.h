@@ -34,7 +34,8 @@ extern "C" {
 
 extern HIDDEN PyTypeObject cursorType;
 
-typedef struct {
+/* the typedef is forward-declared in psycopg.h */
+struct cursorObject {
     PyObject_HEAD
 
     connectionObject *conn; /* connection owning the cursor */
@@ -79,7 +80,8 @@ typedef struct {
 
     PyObject *weakreflist;    /* list of weak references */
 
-} cursorObject;
+};
+
 
 /* C-callable functions in cursor_int.c and cursor_ext.c */
 HIDDEN PyObject *curs_get_cast(cursorObject *self, PyObject *oid);

@@ -331,7 +331,7 @@ lobject_setup(lobjectObject *self, connectionObject *conn,
     Dprintf("lobject_setup: init lobject object at %p", self);
 
     if (conn->isolation_level == ISOLATION_LEVEL_AUTOCOMMIT) {
-        psyco_set_error(ProgrammingError, (PyObject*)self,
+        psyco_set_error(ProgrammingError, NULL,
             "can't use a lobject outside of transactions", NULL, NULL);
         return -1;
     }

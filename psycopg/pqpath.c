@@ -151,7 +151,6 @@ exception_from_sqlstate(const char *sqlstate)
 static void
 pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres)
 {
-    PyObject *pgc = (PyObject*)curs;
     PyObject *exc = NULL;
     const char *err = NULL;
     const char *err2 = NULL;
@@ -196,7 +195,7 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres)
     /* try to remove the initial "ERROR: " part from the postgresql error */
     err2 = strip_severity(err);
 
-    psyco_set_error(exc, pgc, err2, err, code);
+    psyco_set_error(exc, curs, err2, err, code);
 }
 
 /* pq_set_critical, pq_resolve_critical - manage critical errors
