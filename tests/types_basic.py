@@ -185,6 +185,9 @@ class TypesBasicTests(unittest.TestCase):
         self.failUnlessEqual(s, [])
         s = self.execute("SELECT 1 != ALL(%s)", ([],))
         self.failUnlessEqual(s, True)
+        # but don't break the strings :)
+        s = self.execute("SELECT '{}'::text AS foo")
+        self.failUnlessEqual(s, "{}")
 
     @testutils.skip_from_python(3)
     def testTypeRoundtripBuffer(self):

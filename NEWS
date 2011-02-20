@@ -22,6 +22,7 @@ What's new in psycopg 2.4
     missing encodings: EUC_CN, EUC_JIS_2004, ISO885910, ISO885916,
     LATIN10, SHIFT_JIS_2004.
   - Dropped repeated dictionary lookups with unicode query/parameters.
+  - Empty lists correctly roundtrip Python -> PostgreSQL -> Python.
 
 * Bug fixes:
 
