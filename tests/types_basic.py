@@ -176,6 +176,16 @@ class TypesBasicTests(unittest.TestCase):
         curs.execute("select col from array_test where id = 2")
         self.assertEqual(curs.fetchone()[0], [])
 
+    def testEmptyArray(self):
+        s = self.execute("SELECT '{}' AS foo")
+        self.failUnlessEqual(s, [])
+        s = self.execute("SELECT '{}'::text[] AS foo")
+        self.failUnlessEqual(s, [])
+        s = self.execute("SELECT %s AS foo", ([],))
+        self.failUnlessEqual(s, [])
+        s = self.execute("SELECT 1 != ALL(%s)", ([],))
+        self.failUnlessEqual(s, True)
+
     @testutils.skip_from_python(3)
     def testTypeRoundtripBuffer(self):
         o1 = buffer("".join(map(chr, range(256))))

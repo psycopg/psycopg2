@@ -177,6 +177,28 @@ typecast_parse_time(const char* s, const char** t, Py_ssize_t* len,
 #endif
 
 #include "psycopg/typecast_array.c"
+
+static long int typecast_default_DEFAULT[] = {0};
+static typecastObject_initlist typecast_default = {
+    "DEFAULT", typecast_default_DEFAULT, typecast_STRING_cast};
+
+static PyObject *
+typecast_UNKNOWN_cast(const char *str, Py_ssize_t len, PyObject *curs)
+{
+    Dprintf("typecast_UNKNOWN_cast: str = '%s',"
+            " len = " FORMAT_CODE_PY_SSIZE_T, str, len);
+
+    // PostgreSQL returns {} for empty array without explicit type. We convert
+    // that to list in order to handle empty lists.
+    if (len == 2 && str[0] == '{' && str[1] == '}') {
+        return PyList_New(0);
+    }
+
+    Dprintf("typecast_UNKNOWN_cast: fallback to default cast");
+
+    return typecast_default.cast(str, len, curs);
+}
+
 #include "psycopg/typecast_builtins.c"
 
 #define typecast_PYDATETIMEARRAY_cast typecast_GENERIC_ARRAY_cast
@@ -224,10 +246,6 @@ PyObject *psyco_types;
 PyObject *psyco_default_cast;
 PyObject *psyco_binary_types;
 PyObject *psyco_default_binary_cast;
-
-static long int typecast_default_DEFAULT[] = {0};
-static typecastObject_initlist typecast_default = {
-    "DEFAULT", typecast_default_DEFAULT, typecast_STRING_cast};
 
 
 /* typecast_init - initialize the dictionary and create default types */
