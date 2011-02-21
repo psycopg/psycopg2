@@ -696,30 +696,44 @@ WHERE typname = 'hstore' and nspname = 'public';
 
         return oids
 
-def register_hstore(conn_or_curs, globally=False, unicode=False):
+def register_hstore(conn_or_curs, globally=False, unicode=False, oid=None):
     """Register adapter and typecaster for `!dict`\-\ |hstore| conversions.
 
-    The function must receive a connection or cursor as the |hstore| oid is
-    different in each database. The typecaster will normally be registered
-    only on the connection or cursor passed as argument. If your application
-    uses a single database you can pass *globally*\=True to have the typecaster
-    registered on all the connections.
+    :param conn_or_curs: a connection or cursor: the typecaster will be
+        registered only on this object unless *globally* is set to `!True`
+    :param globally: register the adapter globally not only on *conn_or_curs*
+    :param unicode: if `!True`, keys and values returned from the database
+        will be `!unicode` instead of `!str`. The option is not available on
+        Python 3
+    :param oid: the OID of the |hstore| type if known. If not, it will be
+        queried on *conn_or_curs*
 
-    On Python 2, by default the returned dicts will have `!str` objects as keys and values:
-    use *unicode*\=True to return `!unicode` objects instead.  When adapting a
-    dictionary both `!str` and `!unicode` keys and values are handled (the
-    `unicode` values will be converted according to the current
-    `~connection.encoding`). The option is not available on Python 3.
+    The connection or cursor passed to the function will be used to query the
+    database and look for the OID of the |hstore| type (which may be different
+    across databases). If querying is not desirable (e.g. with
+    :ref:`asynchronous connections <async-support>`) you may specify it in the
+    *oid* parameter (it can be found using a query such as :sql:`SELECT
+    'hstore'::regtype::oid;`).
+
+    Note that, when passing a dictionary from Python to the database, both
+    strings and unicode keys and values are supported. Dictionaries returned
+    from the database have keys/values according to the *unicode* parameter.
 
     The |hstore| contrib module must be already installed in the database
     (executing the ``hstore.sql`` script in your ``contrib`` directory).
     Raise `~psycopg2.ProgrammingError` if the type is not found.
+
+    .. versionchanged:: 2.4
+        added the *oid* parameter.
     """
-    oids = HstoreAdapter.get_oids(conn_or_curs)
-    if oids is None:
-        raise psycopg2.ProgrammingError(
-            "hstore type not found in the database. "
-            "please install it from your 'contrib/hstore.sql' file")
+    if oid is None:
+        oid = HstoreAdapter.get_oids(conn_or_curs)
+        if oid is None:
+            raise psycopg2.ProgrammingError(
+                "hstore type not found in the database. "
+                "please install it from your 'contrib/hstore.sql' file")
+        else:
+            oid = oid[0]  # for the moment we don't have a HSTOREARRAY
 
     # create and register the typecaster
     if sys.version_info[0] < 3 and unicode:
@@ -727,7 +741,7 @@ def register_hstore(conn_or_curs, globally=False, unicode=False):
     else:
         cast = HstoreAdapter.parse
 
-    HSTORE = _ext.new_type((oids[0],), "HSTORE", cast)
+    HSTORE = _ext.new_type((oid,), "HSTORE", cast)
     _ext.register_type(HSTORE, not globally and conn_or_curs or None)
     _ext.register_adapter(dict, HstoreAdapter)
 

@@ -337,6 +337,26 @@ class HstoreTestCase(unittest.TestCase):
         ok({u''.join(ab): u''.join(ab)})
         ok(dict(zip(ab, ab)))
 
+    @skip_if_no_hstore
+    def test_oid(self):
+        cur = self.conn.cursor()
+        cur.execute("select 'hstore'::regtype::oid")
+        oid = cur.fetchone()[0]
+
+        # Note: None as conn_or_cursor is just for testing: not public
+        # interface and it may break in future.
+        from psycopg2.extras import register_hstore
+        register_hstore(None, globally=True, oid=oid)
+        try:
+            cur.execute("select null::hstore, ''::hstore, 'a => b'::hstore")
+            t = cur.fetchone()
+            self.assert_(t[0] is None)
+            self.assertEqual(t[1], {})
+            self.assertEqual(t[2], {'a': 'b'})
+
+        finally:
+            psycopg2.extensions.string_types.pop(oid)
+
 
 def skip_if_no_composite(f):
     def skip_if_no_composite_(self):
