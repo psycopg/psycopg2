@@ -893,15 +893,19 @@ pq_get_last_result(connectionObject *conn)
       1 - result from backend (possibly data is ready)
 */
 
-static void
+static int
 _pq_fetch_tuples(cursorObject *curs)
 {
     int i, *dsize = NULL;
     int pgnfields;
     int pgbintuples;
+    int rv = -1;
+    PyObject *description = NULL;
+    PyObject *casts = NULL;
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(curs->conn->lock));
+    Py_END_ALLOW_THREADS;
 
     pgnfields = PQnfields(curs->pgres);
     pgbintuples = PQbinaryTuples(curs->pgres);
@@ -909,20 +913,20 @@ _pq_fetch_tuples(cursorObject *curs)
     curs->notuples = 0;
 
     /* create the tuple for description and typecasting */
-    Py_BLOCK_THREADS;
-    Py_XDECREF(curs->description);
-    Py_XDECREF(curs->casts);    
-    curs->description = PyTuple_New(pgnfields);
-    curs->casts = PyTuple_New(pgnfields);
+    Py_CLEAR(curs->description);
+    Py_CLEAR(curs->casts);
+    if (!(description = PyTuple_New(pgnfields))) { goto exit; }
+    if (!(casts = PyTuple_New(pgnfields))) { goto exit; }
     curs->columns = pgnfields;
-    Py_UNBLOCK_THREADS;
 
     /* calculate the display size for each column (cpu intensive, can be
        switched off at configuration time) */
 #ifdef PSYCOPG_DISPLAY_SIZE
-    Py_BLOCK_THREADS;
-    dsize = (int *)PyMem_Malloc(pgnfields * sizeof(int));
-    Py_UNBLOCK_THREADS;
+    if (!(dsize = PyMem_New(int, pgnfields))) {
+        PyErr_NoMemory();
+        goto exit;
+    }
+    Py_BEGIN_ALLOW_THREADS;
     if (dsize != NULL) {
         int j, len;
         for (i=0; i < pgnfields; i++) {
@@ -935,6 +939,7 @@ _pq_fetch_tuples(cursorObject *curs)
             }
         }
     }
+    Py_END_ALLOW_THREADS;
 #endif
 
     /* calculate various parameters and typecasters */
@@ -943,13 +948,11 @@ _pq_fetch_tuples(cursorObject *curs)
         int fsize = PQfsize(curs->pgres, i);
         int fmod =  PQfmod(curs->pgres, i);
 
-        PyObject *dtitem;
-        PyObject *type;
+        PyObject *dtitem = NULL;
+        PyObject *type = NULL;
         PyObject *cast = NULL;
 
-        Py_BLOCK_THREADS;
-
-        dtitem = PyTuple_New(7);
+        if (!(dtitem = PyTuple_New(7))) { goto exit; }
 
         /* fill the right cast function by accessing three different dictionaries:
            - the per-cursor dictionary, if available (can be NULL or None)
@@ -957,7 +960,9 @@ _pq_fetch_tuples(cursorObject *curs)
            - the global dictionary (at module level)
            if we get no defined cast use the default one */
 
-        type = PyInt_FromLong(ftype);
+        if (!(type = PyInt_FromLong(ftype))) {
+            goto err_for;
+        }
         Dprintf("_pq_fetch_tuples: looking for cast %d:", ftype);
         cast = curs_get_cast(curs, type);
 
@@ -976,16 +981,25 @@ _pq_fetch_tuples(cursorObject *curs)
                 cast, Bytes_AS_STRING(((typecastObject*)cast)->name),
                 PQftype(curs->pgres,i));
         Py_INCREF(cast);
-        PyTuple_SET_ITEM(curs->casts, i, cast);
+        PyTuple_SET_ITEM(casts, i, cast);
 
         /* 1/ fill the other fields */
-        PyTuple_SET_ITEM(dtitem, 0,
-             conn_text_from_chars(curs->conn, PQfname(curs->pgres, i)));
+        {
+            PyObject *tmp;
+            if (!(tmp = conn_text_from_chars(
+                    curs->conn, PQfname(curs->pgres, i)))) {
+                goto err_for;
+            }
+            PyTuple_SET_ITEM(dtitem, 0, tmp);
+        }
         PyTuple_SET_ITEM(dtitem, 1, type);
+        type = NULL;
 
         /* 2/ display size is the maximum size of this field result tuples. */
         if (dsize && dsize[i] >= 0) {
-            PyTuple_SET_ITEM(dtitem, 2, PyInt_FromLong(dsize[i]));
+            PyObject *tmp;
+            if (!(tmp = PyInt_FromLong(dsize[i]))) { goto err_for; }
+            PyTuple_SET_ITEM(dtitem, 2, tmp);
         }
         else {
             Py_INCREF(Py_None);
@@ -996,21 +1010,35 @@ _pq_fetch_tuples(cursorObject *curs)
         if (fmod > 0) fmod = fmod - sizeof(int);
         if (fsize == -1) {
             if (ftype == NUMERICOID) {
-                PyTuple_SET_ITEM(dtitem, 3,
-                                 PyInt_FromLong((fmod >> 16) & 0xFFFF));
+                PyObject *tmp;
+                if (!(tmp = PyInt_FromLong((fmod >> 16)))) { goto err_for; }
+                PyTuple_SET_ITEM(dtitem, 3, tmp);
             }
             else { /* If variable length record, return maximum size */
-                PyTuple_SET_ITEM(dtitem, 3, PyInt_FromLong(fmod));
+                PyObject *tmp;
+                if (!(tmp = PyInt_FromLong(fmod))) { goto err_for; }
+                PyTuple_SET_ITEM(dtitem, 3, tmp);
             }
         }
         else {
-            PyTuple_SET_ITEM(dtitem, 3, PyInt_FromLong(fsize));
+            PyObject *tmp;
+            if (!(tmp = PyInt_FromLong(fsize))) { goto err_for; }
+            PyTuple_SET_ITEM(dtitem, 3, tmp);
         }
 
         /* 4,5/ scale and precision */
         if (ftype == NUMERICOID) {
-            PyTuple_SET_ITEM(dtitem, 4, PyInt_FromLong((fmod >> 16) & 0xFFFF));
-            PyTuple_SET_ITEM(dtitem, 5, PyInt_FromLong(fmod & 0xFFFF));
+            PyObject *tmp;
+
+            if (!(tmp = PyInt_FromLong((fmod >> 16) & 0xFFFF))) {
+                goto err_for;
+            }
+            PyTuple_SET_ITEM(dtitem, 4, tmp);
+
+            if (!(tmp = PyInt_FromLong(fmod & 0xFFFF))) {
+                PyTuple_SET_ITEM(dtitem, 5, tmp);
+            }
+            PyTuple_SET_ITEM(dtitem, 5, tmp);
         }
         else {
             Py_INCREF(Py_None);
@@ -1026,30 +1054,36 @@ _pq_fetch_tuples(cursorObject *curs)
         /* Convert into a namedtuple if available */
         if (Py_None != psyco_DescriptionType) {
             PyObject *tmp = dtitem;
-            if ((dtitem = PyObject_CallObject(psyco_DescriptionType, tmp))) {
-                Py_DECREF(tmp);
-            }
-            else {
-                /* FIXME: this function is painfully missing any error check.
-                 * The caller doesn't expect them, so swallow it. */
-                PyErr_Clear();
-                dtitem = tmp;
-            }
+            dtitem = PyObject_CallObject(psyco_DescriptionType, tmp);
+            Py_DECREF(tmp);
+            if (NULL == dtitem) { goto err_for; }
         }
 
-        PyTuple_SET_ITEM(curs->description, i, dtitem);
+        PyTuple_SET_ITEM(description, i, dtitem);
+        dtitem = NULL;
 
-        Py_UNBLOCK_THREADS;
+        continue;
+
+err_for:
+        Py_XDECREF(type);
+        Py_XDECREF(dtitem);
+        goto exit;
     }
 
-    if (dsize) {
-        Py_BLOCK_THREADS;
-        PyMem_Free(dsize);
-        Py_UNBLOCK_THREADS;
-   }
-   
+    curs->description = description; description = NULL;
+    curs->casts = casts; casts = NULL;
+    rv = 0;
+
+exit:
+    PyMem_Free(dsize);
+    Py_XDECREF(description);
+    Py_XDECREF(casts);
+
+    Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_unlock(&(curs->conn->lock));
     Py_END_ALLOW_THREADS;
+
+    return rv;
 }
 
 static int
@@ -1312,7 +1346,7 @@ pq_fetch(cursorObject *curs)
     case PGRES_TUPLES_OK:
         Dprintf("pq_fetch: data from a SELECT (got tuples)");
         curs->rowcount = PQntuples(curs->pgres);
-        _pq_fetch_tuples(curs); ex = 0;
+        if (0 == _pq_fetch_tuples(curs)) { ex = 0; }
         /* don't clear curs->pgres, because it contains the results! */
         break;
 
