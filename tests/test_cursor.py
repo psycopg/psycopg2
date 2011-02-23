@@ -144,7 +144,8 @@ class CursorTests(unittest.TestCase):
     def test_invalid_name(self):
         curs = self.conn.cursor()
         curs.execute("create temp table invname (data int);")
-        curs.execute("insert into invname values (10), (20), (30)")
+        for i in (10,20,30):
+            curs.execute("insert into invname values (%s)", (i,))
         curs.close()
 
         curs = self.conn.cursor(r'1-2-3 \ "test"')
