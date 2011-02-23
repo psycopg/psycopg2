@@ -25,11 +25,24 @@ The ``connection`` class
           
         Return a new `cursor` object using the connection.
 
-        If `name` is specified, the returned cursor will be a *server
-        side* (or *named*) cursor. Otherwise the cursor will be *client side*.
-        See :ref:`server-side-cursors` for further details.
+        If *name* is specified, the returned cursor will be a :ref:`server
+        side cursor <server-side-cursors>` (also known as *named cursor*).
+        Otherwise it will be a regular *client side* cursor.
 
-        The `cursor_factory` argument can be used to create non-standard
+        The name can be a string not valid as a PostgreSQL identifier: for
+        example it may start with a digit and contain non-alphanumeric
+        characters and quotes.
+
+        .. versionchanged:: 2.4
+            previously only valid PostgreSQL identifiers were accepted as
+            cursor name.
+
+        .. warning::
+            It is unsafe to expose the *name* to an untrusted source, for
+            instance you shouldn't allow *name* to be read from a HTML form.
+            Consider it as part of the query, not as a query parameter.
+
+        The *cursor_factory* argument can be used to create non-standard
         cursors. The class returned should be a subclass of
         `psycopg2.extensions.cursor`. See :ref:`subclassing-cursor` for
         details.

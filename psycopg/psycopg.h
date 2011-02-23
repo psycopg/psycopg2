@@ -125,7 +125,7 @@ HIDDEN void psyco_set_error(PyObject *exc, cursorObject *curs, const char *msg,
 
 HIDDEN char *psycopg_escape_string(PyObject *conn,
               const char *from, Py_ssize_t len, char *to, Py_ssize_t *tolen);
-
+HIDDEN char *psycopg_escape_identifier_easy(const char *from, Py_ssize_t len);
 HIDDEN char *psycopg_strdup(const char *from, Py_ssize_t len);
 HIDDEN PyObject * psycopg_ensure_bytes(PyObject *obj);
 HIDDEN PyObject * psycopg_ensure_text(PyObject *obj);

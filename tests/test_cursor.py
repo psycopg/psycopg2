@@ -141,6 +141,16 @@ class CursorTests(unittest.TestCase):
         del curs
         self.assert_(w() is None)
 
+    def test_invalid_name(self):
+        curs = self.conn.cursor()
+        curs.execute("create temp table invname (data int);")
+        curs.execute("insert into invname values (10), (20), (30)")
+        curs.close()
+
+        curs = self.conn.cursor(r'1-2-3 \ "test"')
+        curs.execute("select data from invname order by data")
+        self.assertEqual(curs.fetchall(), [(10,), (20,), (30,)])
+
     @skip_before_postgres(8, 2)
     def test_iter_named_cursor_efficient(self):
         curs = self.conn.cursor('tmp')

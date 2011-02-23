@@ -59,7 +59,7 @@ psyco_curs_close(cursorObject *self, PyObject *args)
         char buffer[128];
 
         EXC_IF_NO_MARK(self);
-        PyOS_snprintf(buffer, 127, "CLOSE %s", self->name);
+        PyOS_snprintf(buffer, 127, "CLOSE \"%s\"", self->name);
         if (pq_execute(self, buffer, 0) == -1) return NULL;
     }
 
@@ -391,7 +391,7 @@ _psyco_curs_execute(cursorObject *self,
 
         if (self->name != NULL) {
             self->query = Bytes_FromFormat(
-                "DECLARE %s CURSOR WITHOUT HOLD FOR %s",
+                "DECLARE \"%s\" CURSOR WITHOUT HOLD FOR %s",
                 self->name, Bytes_AS_STRING(fquery));
             Py_DECREF(fquery);
         }
@@ -402,7 +402,7 @@ _psyco_curs_execute(cursorObject *self,
     else {
         if (self->name != NULL) {
             self->query = Bytes_FromFormat(
-                "DECLARE %s CURSOR WITHOUT HOLD FOR %s",
+                "DECLARE \"%s\" CURSOR WITHOUT HOLD FOR %s",
                 self->name, Bytes_AS_STRING(operation));
         }
         else {
@@ -748,7 +748,7 @@ psyco_curs_fetchone(cursorObject *self, PyObject *args)
 
         EXC_IF_NO_MARK(self);
         EXC_IF_TPC_PREPARED(self->conn, fetchone);
-        PyOS_snprintf(buffer, 127, "FETCH FORWARD 1 FROM %s", self->name);
+        PyOS_snprintf(buffer, 127, "FETCH FORWARD 1 FROM \"%s\"", self->name);
         if (pq_execute(self, buffer, 0) == -1) return NULL;
         if (_psyco_curs_prefetch(self) < 0) return NULL;
     }
@@ -802,7 +802,7 @@ psyco_curs_next_named(cursorObject *self)
     if (self->row >= self->rowcount) {
         char buffer[128];
 
-        PyOS_snprintf(buffer, 127, "FETCH FORWARD %ld FROM %s",
+        PyOS_snprintf(buffer, 127, "FETCH FORWARD %ld FROM \"%s\"",
             self->itersize, self->name);
         if (pq_execute(self, buffer, 0) == -1) return NULL;
         if (_psyco_curs_prefetch(self) < 0) return NULL;
@@ -862,7 +862,7 @@ psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
 
         EXC_IF_NO_MARK(self);
         EXC_IF_TPC_PREPARED(self->conn, fetchone);
-        PyOS_snprintf(buffer, 127, "FETCH FORWARD %d FROM %s",
+        PyOS_snprintf(buffer, 127, "FETCH FORWARD %d FROM \"%s\"",
             (int)size, self->name);
         if (pq_execute(self, buffer, 0) == -1) return NULL;
         if (_psyco_curs_prefetch(self) < 0) return NULL;
@@ -933,7 +933,7 @@ psyco_curs_fetchall(cursorObject *self, PyObject *args)
 
         EXC_IF_NO_MARK(self);
         EXC_IF_TPC_PREPARED(self->conn, fetchall);
-        PyOS_snprintf(buffer, 127, "FETCH FORWARD ALL FROM %s", self->name);
+        PyOS_snprintf(buffer, 127, "FETCH FORWARD ALL FROM \"%s\"", self->name);
         if (pq_execute(self, buffer, 0) == -1) return NULL;
         if (_psyco_curs_prefetch(self) < 0) return NULL;
     }
@@ -1144,11 +1144,11 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
         EXC_IF_TPC_PREPARED(self->conn, scroll);
 
         if (strcmp(mode, "absolute") == 0) {
-            PyOS_snprintf(buffer, 127, "MOVE ABSOLUTE %d FROM %s",
+            PyOS_snprintf(buffer, 127, "MOVE ABSOLUTE %d FROM \"%s\"",
                 value, self->name);
         }
         else {
-            PyOS_snprintf(buffer, 127, "MOVE %d FROM %s", value, self->name);
+            PyOS_snprintf(buffer, 127, "MOVE %d FROM \"%s\"", value, self->name);
         }
         if (pq_execute(self, buffer, 0) == -1) return NULL;
         if (_psyco_curs_prefetch(self) < 0) return NULL;
@@ -1666,11 +1666,9 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
     Dprintf("cursor_setup: parameters: name = %s, conn = %p", name, conn);
 
     if (name) {
-        if (!(self->name = PyMem_Malloc(strlen(name)+1))) {
-            PyErr_NoMemory();
+        if (!(self->name = psycopg_escape_identifier_easy(name, 0))) {
             return 1;
         }
-        strncpy(self->name, name, strlen(name)+1);
     }
 
     /* FIXME: why does this raise an excpetion on the _next_ line of code?
