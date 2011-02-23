@@ -502,7 +502,7 @@ psyco_conn_get_parameter_status(connectionObject *self, PyObject *args)
 /* lobject method - allocate a new lobject */
 
 #define psyco_conn_lobject_doc \
-"cursor(oid=0, mode=0, new_oid=0, new_file=None,\n"                         \
+"lobject(oid=0, mode=0, new_oid=0, new_file=None,\n"                        \
 "       lobject_factory=extensions.lobject) -- new lobject\n\n"             \
 "Return a new lobject.\n\nThe ``lobject_factory`` argument can be used\n"   \
 "to create non-standard lobjects by passing a class different from the\n"   \
