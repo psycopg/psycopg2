@@ -83,6 +83,10 @@ class QuotingTestCase(unittest.TestCase):
         else:
             res = curs.fetchone()[0].tobytes()
 
+        if res[0] in (b('x'), ord(b('x'))) and self.conn.server_version >= 90000:
+            return self.skipTest(
+                "bytea broken with server >= 9.0, libpq < 9")
+
         self.assertEqual(res, data)
         self.assert_(not self.conn.notices)
 

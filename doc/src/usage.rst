@@ -290,6 +290,9 @@ the SQL string that would be sent to the database.
      `bytea_output`__ parameter to ``escape``, either in the server
      configuration or in the client session using a query such as ``SET
      bytea_output TO escape;`` before trying to receive binary data.
+     
+     Starting from Psycopg 2.4 this condition is detected and signaled with a
+     `~psycopg2.InterfaceError`.
 
      .. __: http://www.postgresql.org/docs/9.0/static/datatype-binary.html
      .. __: http://www.postgresql.org/docs/9.0/static/runtime-config-client.html#GUC-BYTEA-OUTPUT
