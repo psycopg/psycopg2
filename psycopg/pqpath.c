@@ -610,6 +610,8 @@ pq_tpc_command_locked(connectionObject *conn, const char *cmd, const char *tid,
 
     conn->mark += 1;
 
+    PyEval_RestoreThread(*tstate);
+
     /* convert the xid into the postgres transaction_id and quote it. */
     if (!(etid = psycopg_escape_string((PyObject *)conn, tid, 0, NULL, NULL)))
     { goto exit; }
@@ -623,12 +625,15 @@ pq_tpc_command_locked(connectionObject *conn, const char *cmd, const char *tid,
     if (0 > PyOS_snprintf(buf, buflen, "%s %s;", cmd, etid)) { goto exit; }
 
     /* run the command and let it handle the error cases */
+    *tstate = PyEval_SaveThread();
     rv = pq_execute_command_locked(conn, buf, pgres, error, tstate);
+    PyEval_RestoreThread(*tstate);
 
 exit:
     PyMem_Free(buf);
     PyMem_Free(etid);
 
+    *tstate = PyEval_SaveThread();
     return rv;
 }
 
