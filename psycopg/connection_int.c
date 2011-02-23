@@ -984,14 +984,22 @@ conn_set_client_encoding(connectionObject *self, const char *enc)
     }
 
     /* no error, we can proceeed and store the new encoding */
-    PyMem_Free(self->encoding);
+    {
+        char *tmp = self->encoding;
+        self->encoding = NULL;
+        PyMem_Free(tmp);
+    }
     if (!(self->encoding = psycopg_strdup(enc, 0))) {
         res = 1;  /* don't call pq_complete_error below */
         goto endlock;
     }
 
     /* Store the python codec too. */
-    PyMem_Free(self->codec);
+    {
+        char *tmp = self->codec;
+        self->codec = NULL;
+        PyMem_Free(tmp);
+    }
     self->codec = codec;
 
     Dprintf("conn_set_client_encoding: set encoding to %s (codec: %s)",

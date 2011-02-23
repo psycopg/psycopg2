@@ -436,7 +436,6 @@ _xid_decode64(PyObject *s)
  * in order to allow some form of interoperation.
  *
  * The function must be called while holding the GIL.
- * Return a buffer allocated with PyMem_Malloc. Use PyMem_Free to free it.
  *
  * see also: the pgjdbc implementation
  *   http://cvs.pgfoundry.org/cgi-bin/cvsweb.cgi/jdbc/pgjdbc/org/postgresql/xa/RecoveredXid.java?rev=1.2

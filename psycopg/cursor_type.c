@@ -1011,7 +1011,9 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
     /* allocate some memory, build the SQL and create a PyString from it */
     sl = procname_len + 17 + nparameters*3 - (nparameters ? 1 : 0);
     sql = (char*)PyMem_Malloc(sl);
-    if (sql == NULL) return NULL;
+    if (sql == NULL) {
+        return PyErr_NoMemory();
+    }
 
     sprintf(sql, "SELECT * FROM %s(", procname);
     for(i=0; i<nparameters; i++) {
@@ -1233,15 +1235,16 @@ _psyco_curs_has_read_check(PyObject* o, void* var)
 static PyObject *
 psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
+    char *query = NULL;
     char query_buffer[DEFAULT_COPYBUFF];
     Py_ssize_t query_size;
-    char *query;
     const char *table_name;
     const char *sep = "\t", *null = NULL;
     Py_ssize_t bufsize = DEFAULT_COPYBUFF;
     PyObject *file, *columns = NULL, *res = NULL;
     char columnlist[DEFAULT_COPYBUFF];
-    char *quoted_delimiter;
+    char *quoted_delimiter = NULL;
+    char *quoted_null = NULL;
 
     static char *kwlist[] = {
             "file", "table", "sep", "null", "size", "columns", NULL};
@@ -1262,32 +1265,32 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
     EXC_IF_GREEN(copy_from);
     EXC_IF_TPC_PREPARED(self->conn, copy_from);
 
-
-    quoted_delimiter = psycopg_escape_string((PyObject*)self->conn, sep, 0, NULL, NULL);
-    if (quoted_delimiter == NULL) {
+    if (!(quoted_delimiter = psycopg_escape_string(
+            (PyObject*)self->conn, sep, 0, NULL, NULL))) {
         PyErr_NoMemory();
-        return NULL;
+        goto exit;
     }
-    
+
     query = query_buffer;
     if (null) {
-        char *quoted_null = psycopg_escape_string((PyObject*)self->conn, null, 0, NULL, NULL);
-        if (quoted_null == NULL) {
-            PyMem_Free(quoted_delimiter);
+        if (!(quoted_null = psycopg_escape_string(
+                (PyObject*)self->conn, null, 0, NULL, NULL))) {
             PyErr_NoMemory();
-            return NULL;
+            goto exit;
         }
         query_size = PyOS_snprintf(query, DEFAULT_COPYBUFF,
             "COPY %s%s FROM stdin WITH DELIMITER AS %s NULL AS %s",
             table_name, columnlist, quoted_delimiter, quoted_null);
         if (query_size >= DEFAULT_COPYBUFF) {
             /* Got truncated, allocate dynamically */
-            query = (char *)PyMem_Malloc((query_size + 1) * sizeof(char));
+            if (!(query = PyMem_New(char, query_size + 1))) {
+                PyErr_NoMemory();
+                goto exit;
+            }
             PyOS_snprintf(query, query_size + 1,
                 "COPY %s%s FROM stdin WITH DELIMITER AS %s NULL AS %s",
                 table_name, columnlist, quoted_delimiter, quoted_null);
         }
-        PyMem_Free(quoted_null);
     }
     else {
         query_size = PyOS_snprintf(query, DEFAULT_COPYBUFF,
@@ -1295,14 +1298,16 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
            table_name, columnlist, quoted_delimiter);
         if (query_size >= DEFAULT_COPYBUFF) {
             /* Got truncated, allocate dynamically */
-            query = (char *)PyMem_Malloc((query_size + 1) * sizeof(char));
+            if (!(query = PyMem_New(char, query_size + 1))) {
+                PyErr_NoMemory();
+                goto exit;
+            }
             PyOS_snprintf(query, query_size + 1,
                 "COPY %s%s FROM stdin WITH DELIMITER AS %s",
                 table_name, columnlist, quoted_delimiter);
         }
-    }    
-    PyMem_Free(quoted_delimiter);
-    
+    }
+
     Dprintf("psyco_curs_copy_from: query = %s", query);
 
     self->copysize = bufsize;
@@ -1313,10 +1318,12 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
         Py_INCREF(Py_None);
     }
 
-    if (query && (query != query_buffer)) {
-        PyMem_Free(query);
-    }
     self->copyfile = NULL;
+
+exit:
+    PyMem_Free(quoted_delimiter);
+    PyMem_Free(quoted_null);
+    if (query != query_buffer) { PyMem_Free(query); }
 
     return res;
 }
@@ -1352,7 +1359,8 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
     const char *table_name;
     const char *sep = "\t", *null = NULL;
     PyObject *file, *columns = NULL, *res = NULL;
-    char *quoted_delimiter;
+    char *quoted_delimiter = NULL;
+    char *quoted_null = NULL;
 
     static char *kwlist[] = {"file", "table", "sep", "null", "columns", NULL};
 
@@ -1370,31 +1378,32 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
     EXC_IF_GREEN(copy_to);
     EXC_IF_TPC_PREPARED(self->conn, copy_to);
 
-    quoted_delimiter = psycopg_escape_string((PyObject*)self->conn, sep, 0, NULL, NULL);
-    if (quoted_delimiter == NULL) {
+    if (!(quoted_delimiter = psycopg_escape_string(
+            (PyObject*)self->conn, sep, 0, NULL, NULL))) {
         PyErr_NoMemory();
-        return NULL;
+        goto exit;
     }
-    
+
     query = query_buffer;
     if (null) {
-        char *quoted_null = psycopg_escape_string((PyObject*)self->conn, null, 0, NULL, NULL);
-        if (NULL == quoted_null) {
-            PyMem_Free(quoted_delimiter);
+        if (!(quoted_null = psycopg_escape_string(
+                (PyObject*)self->conn, null, 0, NULL, NULL))) {
             PyErr_NoMemory();
-            return NULL;
+            goto exit;
         }
         query_size = PyOS_snprintf(query, DEFAULT_COPYBUFF,
             "COPY %s%s TO stdout WITH DELIMITER AS %s"
             " NULL AS %s", table_name, columnlist, quoted_delimiter, quoted_null);
         if (query_size >= DEFAULT_COPYBUFF) {
             /* Got truncated, allocate dynamically */
-            query = (char *)PyMem_Malloc((query_size + 1) * sizeof(char));
+            if (!(query = PyMem_New(char, query_size + 1))) {
+                PyErr_NoMemory();
+                goto exit;
+            }
             PyOS_snprintf(query, query_size + 1,
                 "COPY %s%s TO stdout WITH DELIMITER AS %s"
                 " NULL AS %s", table_name, columnlist, quoted_delimiter, quoted_null);
         }
-        PyMem_Free(quoted_null);
     }
     else {
         query_size = PyOS_snprintf(query, DEFAULT_COPYBUFF,
@@ -1402,14 +1411,16 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
             table_name, columnlist, quoted_delimiter);
         if (query_size >= DEFAULT_COPYBUFF) {
             /* Got truncated, allocate dynamically */
-            query = (char *)PyMem_Malloc((query_size + 1) * sizeof(char));
+            if (!(query = PyMem_New(char, query_size + 1))) {
+                PyErr_NoMemory();
+                goto exit;
+            }
             PyOS_snprintf(query, query_size + 1,
                 "COPY %s%s TO stdout WITH DELIMITER AS %s",
                 table_name, columnlist, quoted_delimiter);
         }
     }
-    PyMem_Free(quoted_delimiter);
-    
+
     Dprintf("psyco_curs_copy_to: query = %s", query);
 
     self->copysize = 0;
@@ -1419,10 +1430,12 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
         res = Py_None;
         Py_INCREF(Py_None);
     }
-    if (query && (query != query_buffer)) {
-        PyMem_Free(query);
-    }
     self->copyfile = NULL;
+
+exit:
+    PyMem_Free(quoted_delimiter);
+    PyMem_Free(quoted_null);
+    if (query != query_buffer) { PyMem_Free(query); }
 
     return res;
 }
@@ -1653,8 +1666,10 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
     Dprintf("cursor_setup: parameters: name = %s, conn = %p", name, conn);
 
     if (name) {
-        self->name = PyMem_Malloc(strlen(name)+1);
-        if (self->name == NULL) return 1;
+        if (!(self->name = PyMem_Malloc(strlen(name)+1))) {
+            PyErr_NoMemory();
+            return 1;
+        }
         strncpy(self->name, name, strlen(name)+1);
     }
 
@@ -1715,7 +1730,7 @@ cursor_dealloc(PyObject* obj)
 
     PyObject_GC_UnTrack(self);
 
-    if (self->name) PyMem_Free(self->name);
+    PyMem_Free(self->name);
 
     Py_CLEAR(self->conn);
     Py_CLEAR(self->casts);

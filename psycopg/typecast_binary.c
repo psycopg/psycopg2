@@ -201,10 +201,8 @@ typecast_BINARY_cast(const char *s, Py_ssize_t l, PyObject *curs)
           /* str's mem was allocated by PQunescapeBytea; must use PQfreemem: */
           PQfreemem(str);
       }
-      if (buffer != NULL) {
-          /* We allocated buffer with PyMem_Malloc; must use PyMem_Free: */
-          PyMem_Free(buffer);
-      }
+      /* We allocated buffer with PyMem_Malloc; must use PyMem_Free: */
+      PyMem_Free(buffer);
 
       return res;
 }

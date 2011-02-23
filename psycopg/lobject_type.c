@@ -344,7 +344,7 @@ lobject_setup(lobjectObject *self, connectionObject *conn,
     self->fd = -1;
     self->oid = InvalidOid;
 
-    if (lobject_open(self, conn, oid, smode, new_oid, new_file) == -1)
+    if (0 != lobject_open(self, conn, oid, smode, new_oid, new_file))
         return -1;
 
    Dprintf("lobject_setup: good lobject object at %p, refcnt = "
