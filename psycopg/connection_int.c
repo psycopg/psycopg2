@@ -69,7 +69,15 @@ conn_notice_callback(void *args, const char *message)
     */
     notice = (struct connectionObject_notice *)
         malloc(sizeof(struct connectionObject_notice));
+    if (NULL == notice) {
+        /* Discard the notice in case of failed allocation. */
+        return;
+    }
     notice->message = strdup(message);
+    if (NULL == notice->message) {
+        free(notice);
+        return;
+    }
     notice->next = self->notice_pending;
     self->notice_pending = notice;
 }
