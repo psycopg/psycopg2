@@ -42,7 +42,7 @@ The included Makefile allows to run all the tests included in the
 distribution. Just use:
 
     make
-    make runtests
+    make check
 
 The tests are run against a database called psycopg2_test on unix socket
 and standard port. You can configure a different database to run the test
