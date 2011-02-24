@@ -155,6 +155,13 @@ class psycopg_build_ext(build_ext):
     def get_pg_config(self, kind):
         return get_pg_config(kind, self.pg_config)
 
+    def get_export_symbols(self, ext):
+        # Fix MSVC seeing two of the same export symbols.
+        if self.get_compiler().lower().startswith('msvc'):
+            return []
+        else:
+            return build_ext.get_export_symbols(self, ext)
+
     def build_extension(self, ext):
         build_ext.build_extension(self, ext)
 
