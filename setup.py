@@ -155,6 +155,13 @@ class psycopg_build_ext(build_ext):
     def get_pg_config(self, kind):
         return get_pg_config(kind, self.pg_config)
 
+    def get_export_symbols(self, ext):
+        # Fix MSVC seeing two of the same export symbols.
+        if self.get_compiler().lower().startswith('msvc'):
+            return []
+        else:
+            return build_ext.get_export_symbols(self, ext)
+
     def build_extension(self, ext):
         build_ext.build_extension(self, ext)
 
@@ -181,13 +188,7 @@ class psycopg_build_ext(build_ext):
         compiler_name = self.get_compiler().lower()
         compiler_is_msvc = compiler_name.startswith('msvc')
         compiler_is_mingw = compiler_name.startswith('mingw')
-        if compiler_is_msvc:
-            # If we're using MSVC 7.1 or later on a 32-bit platform, add the
-            # /Wp64 option to generate warnings about Win64 portability
-            # problems.
-            if sysVer >= (2,4) and struct.calcsize('P') == 4:
-                extra_compiler_args.append('/Wp64')
-        elif compiler_is_mingw:
+        if compiler_is_mingw:
             # Default MinGW compilation of Python extensions on Windows uses
             # only -O:
             extra_compiler_args.append('-O3')

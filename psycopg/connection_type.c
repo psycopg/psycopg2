@@ -939,7 +939,7 @@ connection_repr(connectionObject *self)
 static int
 connection_traverse(connectionObject *self, visitproc visit, void *arg)
 {
-    Py_VISIT(self->tpc_xid);
+    Py_VISIT((PyObject *)(self->tpc_xid));
     Py_VISIT(self->async_cursor);
     Py_VISIT(self->notice_list);
     Py_VISIT(self->notice_filter);

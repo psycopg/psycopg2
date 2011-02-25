@@ -51,6 +51,10 @@ extern HIDDEN int psycopg_debug_enabled;
 #else /* !__GNUC__ or __APPLE__ */
 #ifdef PSYCOPG_DEBUG
 #include <stdarg.h>
+#ifdef _WIN32
+#include <process.h>
+#define getpid _getpid
+#endif
 static void Dprintf(const char *fmt, ...)
 {
     va_list ap;
