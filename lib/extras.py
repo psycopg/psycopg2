@@ -664,8 +664,6 @@ class HstoreAdapter(object):
     @classmethod
     def get_oids(self, conn_or_curs):
         """Return the lists of OID of the hstore and hstore[] types.
-
-        Return None if hstore is not available.
         """
         if hasattr(conn_or_curs, 'execute'):
             conn = conn_or_curs.connection
@@ -734,7 +732,7 @@ def register_hstore(conn_or_curs, globally=False, unicode=False, oid=None):
     """
     if oid is None:
         oid = HstoreAdapter.get_oids(conn_or_curs)
-        if oid is None:
+        if oid is None or not oid[0]:
             raise psycopg2.ProgrammingError(
                 "hstore type not found in the database. "
                 "please install it from your 'contrib/hstore.sql' file")

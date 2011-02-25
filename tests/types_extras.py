@@ -120,7 +120,7 @@ def skip_if_no_hstore(f):
     def skip_if_no_hstore_(self):
         from psycopg2.extras import HstoreAdapter
         oids = HstoreAdapter.get_oids(self.conn)
-        if oids is None:
+        if oids is None or not oids[0]:
             return self.skipTest("hstore not available in test database")
         return f(self)
 
