@@ -663,7 +663,7 @@ class HstoreAdapter(object):
 
     @classmethod
     def get_oids(self, conn_or_curs):
-        """Return the oid of the hstore and hstore[] types.
+        """Return the lists of OID of the hstore and hstore[] types.
 
         Return None if hstore is not available.
         """
@@ -680,28 +680,32 @@ class HstoreAdapter(object):
         # column typarray not available before PG 8.3
         typarray = conn.server_version >= 80300 and "typarray" or "NULL"
 
+        rv0, rv1 = [], []
+
         # get the oid for the hstore
         curs.execute("""\
 SELECT t.oid, %s
 FROM pg_type t JOIN pg_namespace ns
     ON typnamespace = ns.oid
-WHERE typname = 'hstore' and nspname = 'public';
+WHERE typname = 'hstore';
 """ % typarray)
-        oids = curs.fetchone()
+        for oids in curs:
+            rv0.append(oids[0])
+            rv1.append(oids[1])
 
         # revert the status of the connection as before the command
         if (conn_status != _ext.STATUS_IN_TRANSACTION
         and conn.isolation_level != _ext.ISOLATION_LEVEL_AUTOCOMMIT):
             conn.rollback()
 
-        return oids
+        return tuple(rv0), tuple(rv1)
 
 def register_hstore(conn_or_curs, globally=False, unicode=False, oid=None):
     """Register adapter and typecaster for `!dict`\-\ |hstore| conversions.
 
     :param conn_or_curs: a connection or cursor: the typecaster will be
         registered only on this object unless *globally* is set to `!True`
-    :param globally: register the adapter globally not only on *conn_or_curs*
+    :param globally: register the adapter globally, not only on *conn_or_curs*
     :param unicode: if `!True`, keys and values returned from the database
         will be `!unicode` instead of `!str`. The option is not available on
         Python 3
@@ -724,7 +728,9 @@ def register_hstore(conn_or_curs, globally=False, unicode=False, oid=None):
     Raise `~psycopg2.ProgrammingError` if the type is not found.
 
     .. versionchanged:: 2.4
-        added the *oid* parameter.
+        added the *oid* parameter. If not specified, the typecaster is
+        installed also if |hstore| is not installed in the :sql:`public`
+        schema.
     """
     if oid is None:
         oid = HstoreAdapter.get_oids(conn_or_curs)
@@ -735,13 +741,16 @@ def register_hstore(conn_or_curs, globally=False, unicode=False, oid=None):
         else:
             oid = oid[0]  # for the moment we don't have a HSTOREARRAY
 
+    if isinstance(oid, int):
+        oid = (oid,)
+
     # create and register the typecaster
     if sys.version_info[0] < 3 and unicode:
         cast = HstoreAdapter.parse_unicode
     else:
         cast = HstoreAdapter.parse
 
-    HSTORE = _ext.new_type((oid,), "HSTORE", cast)
+    HSTORE = _ext.new_type(oid, "HSTORE", cast)
     _ext.register_type(HSTORE, not globally and conn_or_curs or None)
     _ext.register_adapter(dict, HstoreAdapter)
 

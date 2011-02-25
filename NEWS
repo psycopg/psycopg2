@@ -28,6 +28,8 @@ What's new in psycopg 2.4
     - Adapt types 'bytearray' (from Python 2.6), 'memoryview' (from Python 2.7)
       and other objects implementing the "Revised Buffer Protocol" to 'bytea'
       data type.
+    - The 'hstore' adapter can work even when the data type is not installed
+      in the 'public' namespace.
     - Raise a clean exception instead of returning bad data when receiving bytea
       in 'hex' format and the client libpq can't parse them.
     - Empty lists correctly roundtrip Python -> PostgreSQL -> Python.

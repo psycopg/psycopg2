@@ -276,7 +276,7 @@ class HstoreTestCase(unittest.TestCase):
             finally:
                 conn2.close()
         finally:
-            psycopg2.extensions.string_types.pop(oids[0])
+            psycopg2.extensions.string_types.pop(oids[0][0])
 
         # verify the caster is not around anymore
         cur = self.conn.cursor()

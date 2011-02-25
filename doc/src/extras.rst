@@ -145,9 +145,9 @@ key/value pairs as well as regular BTree indexes for equality, uniqueness etc.
 
 Psycopg can convert Python `!dict` objects to and from |hstore| structures.
 Only dictionaries with string/unicode keys and values are supported.  `!None`
-is also allowed as value.  Psycopg uses a more efficient |hstore|
+is also allowed as value but not as a key. Psycopg uses a more efficient |hstore|
 representation when dealing with PostgreSQL 9.0 but previous server versions
-are supportes as well.  By default the adapter/typecaster are disabled: they
+are supported as well.  By default the adapter/typecaster are disabled: they
 can be enabled using the `register_hstore()` function.
 
 .. autofunction:: register_hstore
