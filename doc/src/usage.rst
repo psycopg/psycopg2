@@ -207,16 +207,20 @@ module.
 In the following examples the method `~cursor.mogrify()` is used to show
 the SQL string that would be sent to the database.
 
+.. _adapt-consts:
+
 .. index::
     pair: None; Adaptation
     single: NULL; Adaptation
     pair: Boolean; Adaptation
 
-- Python ``None`` and boolean values are converted into the proper SQL
-  literals::
+- Python `None` and boolean values `True` and `False` are converted into the
+  proper SQL literals::
 
     >>> cur.mogrify("SELECT %s, %s, %s;", (None, True, False))
     >>> 'SELECT NULL, true, false;'
+
+.. _adapt-numbers:
 
 .. index::
     single: Adaptation; numbers
@@ -224,32 +228,57 @@ the SQL string that would be sent to the database.
     single: Float; Adaptation
     single: Decimal; Adaptation
 
-- Numeric objects: `!int`, `!long`, `!float`,
-  `!Decimal` are converted in the PostgreSQL numerical representation::
+- Numeric objects: `int`, `long`, `float`, `~decimal.Decimal` are converted in
+  the PostgreSQL numerical representation::
 
     >>> cur.mogrify("SELECT %s, %s, %s, %s;", (10, 10L, 10.0, Decimal("10.00")))
     >>> 'SELECT 10, 10, 10.0, 10.00;'
+
+.. _adapt-string:
 
 .. index::
     pair: Strings; Adaptation
     single: Unicode; Adaptation
 
-- String types: `!str`, `!unicode` are converted in SQL string syntax.
+- String types: `str`, `unicode` are converted in SQL string syntax.
   `!unicode` objects (`!str` in Python 3) are encoded in the connection
   `~connection.encoding` to be sent to the backend: trying to send a character
   not supported by the encoding will result in an error. Received data can be
-  converted either as `!str` or `!unicode`: see :ref:`unicode-handling` for
-  received, either `!str` or `!unicode`
+  converted either as `!str` or `!unicode`: see :ref:`unicode-handling`.
+
+.. _adapt-binary:
 
 .. index::
     single: Buffer; Adaptation
     single: bytea; Adaptation
+    single: bytes; Adaptation
+    single: bytearray; Adaptation
+    single: memoryview; Adaptation
     single: Binary string
 
-- Binary types: Python types such as `!bytes`, `!bytearray`, `!buffer`,
-  `!memoryview` are converted in PostgreSQL binary string syntax, suitable for
-  :sql:`bytea` fields. Received data is returned as `!buffer` (in Python 2) or
-  `!memoryview` (in Python 3).
+- Binary types: Python types representing binary objects are converted in
+  PostgreSQL binary string syntax, suitable for :sql:`bytea` fields.   Such
+  types are `buffer` (only available in Python 2), `memoryview` (available
+  from Python 2.7), `bytearray` (available from Python 2.6) and `bytes`
+  (only form Python 3: the name is available from Python 2.6 but it's only an
+  alias for the type `!str`). Any object implementing the `Revised Buffer
+  Protocol`__ should be usable as binary type where the protocol is supported
+  (i.e. from Python 2.6). Received data is returned as `!buffer` (in Python 2)
+  or `!memoryview` (in Python 3).
+
+  .. __: http://www.python.org/dev/peps/pep-3118/
+
+  .. versionchanged:: 2.4
+     only strings were supported before.
+
+  .. note::
+
+    In Python 2, if you have binary data in a `!str` object, you can pass them
+    to a :sql:`bytea` field using the `psycopg2.Binary` wrapper::
+
+        mypic = open('picture.png', 'rb').read()
+        curs.execute("insert into blobs (file) values (%s)",
+            (psycopg2.Binary(mypic),))
 
   .. warning::
 
@@ -261,9 +290,14 @@ the SQL string that would be sent to the database.
      `bytea_output`__ parameter to ``escape``, either in the server
      configuration or in the client session using a query such as ``SET
      bytea_output TO escape;`` before trying to receive binary data.
+     
+     Starting from Psycopg 2.4 this condition is detected and signaled with a
+     `~psycopg2.InterfaceError`.
 
      .. __: http://www.postgresql.org/docs/9.0/static/datatype-binary.html
      .. __: http://www.postgresql.org/docs/9.0/static/runtime-config-client.html#GUC-BYTEA-OUTPUT
+
+.. _adapt-date:
 
 .. index::
     single: Adaptation; Date/Time objects
@@ -272,8 +306,8 @@ the SQL string that would be sent to the database.
     single: Interval objects; Adaptation
     single: mx.DateTime; Adaptation
 
-- Date and time objects: builtin `!datetime`, `!date`,
-  `!time`.  `!timedelta` are converted into PostgreSQL's
+- Date and time objects: builtin `~datetime.datetime`, `~datetime.date`,
+  `~datetime.time`,  `~datetime.timedelta` are converted into PostgreSQL's
   :sql:`timestamp`, :sql:`date`, :sql:`time`, :sql:`interval` data types.
   Time zones are supported too.  The Egenix `mx.DateTime`_ objects are adapted
   the same way::
@@ -288,6 +322,8 @@ the SQL string that would be sent to the database.
     >>> cur.mogrify("SELECT %s;", (dt - datetime.datetime(2010,1,1),))
     "SELECT '38 days 6027.425337 seconds';"
 
+.. _adapt-list:
+
 .. index::
     single: Array; Adaptation
     double: Lists; Adaptation
@@ -296,6 +332,8 @@ the SQL string that would be sent to the database.
 
     >>> cur.mogrify("SELECT %s;", ([10, 20, 30], ))
     'SELECT ARRAY[10, 20, 30];'
+
+.. _adapt-tuple:
 
 .. index::
     double: Tuple; Adaptation
@@ -325,11 +363,18 @@ the SQL string that would be sent to the database.
      registered.
 
   .. versionchanged:: 2.3
-     named tuples are adapted like regular tuples and can thus be used to
-     represent composite types.
+     `~collections.namedtuple` instances are adapted like regular tuples and
+     can thus be used to represent composite types.
 
-- Python dictionaries are converted into the |hstore|_ data type. See
-  `~psycopg2.extras.register_hstore()` for further details.
+.. _adapt-dict:
+
+.. index::
+    single: dict; Adaptation
+    single: hstore; Adaptation
+
+- Python dictionaries are converted into the |hstore|_ data type. By default
+  the adapter is not enabled: see `~psycopg2.extras.register_hstore()` for
+  further details.
 
   .. |hstore| replace:: :sql:`hstore`
   .. _hstore: http://www.postgresql.org/docs/9.0/static/hstore.html
@@ -419,8 +464,8 @@ Time zones handling
 ^^^^^^^^^^^^^^^^^^^
 
 The PostgreSQL type :sql:`timestamp with time zone` is converted into Python
-`!datetime` objects with a `!tzinfo` attribute set to a
-`~psycopg2.tz.FixedOffsetTimezone` instance.
+`~datetime.datetime` objects with a `~datetime.datetime.tzinfo` attribute set
+to a `~psycopg2.tz.FixedOffsetTimezone` instance.
 
     >>> cur.execute("SET TIME ZONE 'Europe/Rome';")  # UTC + 1 hour
     >>> cur.execute("SELECT '2010-01-01 10:30:45'::timestamptz;")
@@ -428,7 +473,7 @@ The PostgreSQL type :sql:`timestamp with time zone` is converted into Python
     psycopg2.tz.FixedOffsetTimezone(offset=60, name=None)
 
 Notice that only time zones with an integer number of minutes are supported:
-this is a limitation of the Python `!datetime` module.  A few historical time
+this is a limitation of the Python `datetime` module.  A few historical time
 zones had seconds in the UTC offset: these time zones will have the offset
 rounded to the nearest minute, with an error of up to 30 seconds.
 
@@ -440,7 +485,7 @@ rounded to the nearest minute, with an error of up to 30 seconds.
 .. versionchanged:: 2.2.2
     timezones with seconds are supported (with rounding). Previously such
     timezones raised an error.  In order to deal with them in previous
-    versions use `psycopg2.extras.register_tstz_w_secs`.
+    versions use `psycopg2.extras.register_tstz_w_secs()`.
 
 
 .. index:: Transaction, Begin, Commit, Rollback, Autocommit
@@ -463,7 +508,7 @@ The connection is responsible to terminate its transaction, calling either the
 `~connection.commit()` or `~connection.rollback()` method.  Committed
 changes are immediately made persistent into the database.  Closing the
 connection using the `~connection.close()` method or destroying the
-connection object (calling `!__del__()` or letting it fall out of scope)
+connection object (using `!del` or letting it fall out of scope)
 will result in an implicit `!rollback()` call.
 
 It is possible to set the connection in *autocommit* mode: this way all the
@@ -507,6 +552,14 @@ allowing the user to move in the dataset using the `~cursor.scroll()`
 method and to read the data using `~cursor.fetchone()` and
 `~cursor.fetchmany()` methods.
 
+Named cursors are also :ref:`iterable <cursor-iterable>` like regular cursors.
+Notice however that before Psycopg 2.4 iteration was performed fetching one
+record at time from the backend, resulting in a large overhead. The attribute
+`~cursor.itersize` now controls how many records are now fetched at time
+during the iteration: the default value of 2000 allows to fetch about 100KB
+per roundtrip assuming records of 10-20 columns of mixed number and strings;
+you may decrease this value if you are dealing with huge records.
+
 .. |DECLARE| replace:: :sql:`DECLARE`
 .. _DECLARE: http://www.postgresql.org/docs/9.0/static/sql-declare.html
 
@@ -534,13 +587,11 @@ the same connection, all the commands will be executed in the same session
 
 The above observations are only valid for regular threads: they don't apply to
 forked processes nor to green threads. `libpq` connections `shouldn't be used by a
-forked processes`__, so when using a module such as |multiprocessing|__ or a
+forked processes`__, so when using a module such as `multiprocessing` or a
 forking web deploy method such as FastCGI ensure to create the connections
 *after* the fork.
 
 .. __: http://www.postgresql.org/docs/9.0/static/libpq-connect.html#LIBPQ-CONNECT
-.. |multiprocessing| replace:: `!multiprocessing`
-.. __: http://docs.python.org/library/multiprocessing.html
 
 Connections shouldn't be shared either by different green threads: doing so
 may result in a deadlock. See :ref:`green-support` for further details.

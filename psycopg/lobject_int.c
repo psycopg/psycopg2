@@ -110,6 +110,8 @@ _lobject_parse_mode(const char *mode)
 /* Return a string representing the lobject mode.
  *
  * The return value is a new string allocated on the Python heap.
+ *
+ * The function must be called holding the GIL.
  */
 static char *
 _lobject_unparse_mode(int mode)
@@ -118,7 +120,10 @@ _lobject_unparse_mode(int mode)
     char *c;
 
     /* the longest is 'rwt' */
-    c = buf = PyMem_Malloc(4);
+    if (!(c = buf = PyMem_Malloc(4))) {
+        PyErr_NoMemory();
+        return NULL;
+    }
 
     if (mode & LOBJECT_READ) { *c++ = 'r'; }
     if (mode & LOBJECT_WRITE) { *c++ = 'w'; }
@@ -204,7 +209,14 @@ lobject_open(lobjectObject *self, connectionObject *conn,
 
     /* set the mode for future reference */
     self->mode = mode;
+    Py_BLOCK_THREADS;
     self->smode = _lobject_unparse_mode(mode);
+    Py_UNBLOCK_THREADS;
+    if (NULL == self->smode) {
+        retvalue = 1;  /* exception already set */
+        goto end;
+    }
+
     retvalue = 0;
 
  end:
@@ -213,6 +225,8 @@ lobject_open(lobjectObject *self, connectionObject *conn,
 
     if (retvalue < 0)
         pq_complete_error(self->conn, &pgres, &error);
+    /* if retvalue > 0, an exception is already set */
+
     return retvalue;
 }
 

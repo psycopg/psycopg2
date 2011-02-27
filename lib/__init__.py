@@ -62,7 +62,9 @@ if sys.version_info[0] >= 2 and sys.version_info[1] >= 4:
             RuntimeWarning)
 del sys, warnings
 
-from psycopg2 import tz
+# Note: the first internal import should be _psycopg, otherwise the real cause
+# of a failed loading of the C module may get hidden, see
+# http://archives.postgresql.org/psycopg/2011-02/msg00044.php
 
 # Import the DBAPI-2.0 stuff into top-level module.
 
@@ -77,6 +79,9 @@ from psycopg2._psycopg import NotSupportedError, OperationalError
 
 from psycopg2._psycopg import connect, apilevel, threadsafety, paramstyle
 from psycopg2._psycopg import __version__
+
+from psycopg2 import tz
+
 
 # Register default adapters.
 

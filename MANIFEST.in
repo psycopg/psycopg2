@@ -1,4 +1,4 @@
-recursive-include psycopg *.c *.h
+recursive-include psycopg *.c *.h *.manifest
 recursive-include lib *.py
 recursive-include tests *.py
 recursive-include ZPsycopgDA *.py *.gif *.dtml
@@ -12,5 +12,5 @@ recursive-include doc/html *
 prune doc/src/_build
 recursive-include scripts *.py *.sh
 include scripts/maketypes.sh scripts/buildtypes.py
-include AUTHORS README INSTALL LICENSE NEWS-2.0 NEWS-2.3 ChangeLog
+include AUTHORS README INSTALL LICENSE NEWS ChangeLog
 include PKG-INFO MANIFEST.in MANIFEST setup.py setup.cfg Makefile

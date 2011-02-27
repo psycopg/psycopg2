@@ -39,42 +39,55 @@ The ``cursor`` class
 
         This read-only attribute is a sequence of 7-item sequences.  
 
-        Each of these sequences contains information describing one result
-        column: 
+        Each of these sequences is a named tuple (a regular tuple if
+        :func:`collections.namedtuple` is not available) containing information
+        describing one result column:
 
-        - ``name``
-        - ``type_code``
-        - ``display_size``
-        - ``internal_size``
-        - ``precision``
-        - ``scale``
-        - ``null_ok``
+        0.  `!name`: the name of the column returned.
+        1.  `!type_code`: the PostgreSQL OID of the column. You can use the
+            |pg_type|_ system table to get more informations about the type.
+            This is the value used by Psycopg to decide what Python type use
+            to represent the value.  See also
+            :ref:`type-casting-from-sql-to-python`.
+        2.  `!display_size`: the actual length of the column in bytes.
+            Obtaining this value is computationally intensive, so it is
+            always `!None` unless the :envvar:`PSYCOPG_DISPLAY_SIZE` parameter
+            is set at compile time. See also PQgetlength_.
+        3.  `!internal_size`: the size in bytes of the column associated to
+            this column on the server. Set to a negative value for
+            variable-size types See also PQfsize_.
+        4.  `!precision`: total number of significant digits in columns of
+            type |NUMERIC|_. `!None` for other types.
+        5.  `!scale`: count of decimal digits in the fractional part in
+            columns of type |NUMERIC|. `!None` for other types.
+        6.  `!null_ok`: always `!None` as not easy to retrieve from the libpq.
 
-        The first two items (``name`` and ``type_code``) are always specified,
-        the other five are optional and are set to ``None`` if no meaningful
-        values can be provided.
-
-        This attribute will be ``None`` for operations that do not return rows
+        This attribute will be `!None` for operations that do not return rows
         or if the cursor has not had an operation invoked via the
         |execute*|_ methods yet.
         
-        The ``type_code`` can be interpreted by comparing it to the Type
-        Objects specified in the section :ref:`type-objects-and-constructors`.
-        It is also used to register typecasters to convert PostgreSQL types to
-        Python objects: see :ref:`type-casting-from-sql-to-python`.
+        .. |pg_type| replace:: :sql:`pg_type`
+        .. _pg_type: http://www.postgresql.org/docs/9.0/static/catalog-pg-type.html
+        .. _PQgetlength: http://www.postgresql.org/docs/9.0/static/libpq-exec.html#LIBPQ-PQGETLENGTH
+        .. _PQfsize: http://www.postgresql.org/docs/9.0/static/libpq-exec.html#LIBPQ-PQFSIZE
+        .. _NUMERIC: http://www.postgresql.org/docs/9.0/static/datatype-numeric.html#DATATYPE-NUMERIC-DECIMAL
+        .. |NUMERIC| replace:: :sql:`NUMERIC`
 
+        .. versionchanged:: 2.4
+            if possible, columns descriptions are named tuple instead of
+            regular tuples.
 
     .. method:: close()
           
-        Close the cursor now (rather than whenever `!__del__()` is
-        called).  The cursor will be unusable from this point forward; an
+        Close the cursor now (rather than whenever `del` is executed).
+        The cursor will be unusable from this point forward; an
         `~psycopg2.InterfaceError` will be raised if any operation is
         attempted with the cursor.
             
     .. attribute:: closed
 
         Read-only boolean attribute: specifies if the cursor is closed
-        (``True``) or not (``False``).
+        (`!True`) or not (`!False`).
 
         .. extension::
 
@@ -93,7 +106,7 @@ The ``cursor`` class
     .. attribute:: name
 
         Read-only attribute containing the name of the cursor if it was
-        creates as named cursor by `connection.cursor()`, or ``None`` if
+        creates as named cursor by `connection.cursor()`, or `!None` if
         it is a client side cursor.  See :ref:`server-side-cursors`.
 
         .. extension::
@@ -118,7 +131,7 @@ The ``cursor`` class
         positional (``%s``) or named (:samp:`%({name})s`) placeholders. See
         :ref:`query-parameters`.
         
-        The method returns `None`. If a query was executed, the returned
+        The method returns `!None`. If a query was executed, the returned
         values can be retrieved using |fetch*|_ methods.
 
 
@@ -147,12 +160,6 @@ The ``cursor`` class
         be made available through the standard |fetch*|_ methods.
 
 
-    .. method:: setinputsizes(sizes)
-      
-        This method is exposed in compliance with the |DBAPI|. It currently
-        does nothing but it is safe to call it.
-
-
     .. method:: mogrify(operation [, parameters])
 
         Return a query string after arguments binding. The string returned is
@@ -166,19 +173,10 @@ The ``cursor`` class
 
             The `mogrify()` method is a Psycopg extension to the |DBAPI|.
 
-    .. method:: cast(oid, s)
-
-        Convert a value from the PostgreSQL string representation to a Python
-        object.
-
-        Use the most specific of the typecasters registered by
-        `~psycopg2.extensions.register_type()`.
-
-        .. versionadded:: 2.3.3
-
-        .. extension::
-
-            The `cast()` method is a Psycopg extension to the |DBAPI|.
+    .. method:: setinputsizes(sizes)
+      
+        This method is exposed in compliance with the |DBAPI|. It currently
+        does nothing but it is safe to call it.
 
 
 
@@ -208,16 +206,16 @@ The ``cursor`` class
             (2, None, 'dada')
             (3, 42, 'bar')
 
-        .. versionchanged:: 2.3.3
+        .. versionchanged:: 2.4
             iterating over a :ref:`named cursor <server-side-cursors>`
-            fetches `~cursor.arraysize` records at time from the backend.
+            fetches `~cursor.itersize` records at time from the backend.
             Previously only one record was fetched per roundtrip, resulting
-             in unefficient iteration.
+            in a large overhead.
 
     .. method:: fetchone()
 
         Fetch the next row of a query result set, returning a single tuple,
-        or ``None`` when no more data is available:
+        or `!None` when no more data is available:
 
             >>> cur.execute("SELECT * FROM test WHERE id = %s", (3,))
             >>> cur.fetchone()
@@ -306,18 +304,20 @@ The ``cursor`` class
         time with `~cursor.fetchmany()`. It defaults to 1 meaning to fetch
         a single row at a time.
 
-        The attribute is also used when iterating a :ref:`named cursor
-        <server-side-cursors>`: when syntax such as ``for i in cursor:`` is
-        used, in order to avoid an excessive number of network roundtrips, the
-        cursor will actually fetch `!arraysize` records at time from the
-        backend. For this task the default value of 1 is a poor value: if
-        `!arraysize` is 1, a default value of 2000 will be used instead. If
-        you really want to retrieve one record at time from the backend use
-        `fetchone()` in a loop.
 
-        .. versionchanged:: 2.3.3
-            `!arraysize` used in named cursor iteration.
+    .. attribute:: itersize
+
+        Read/write attribute specifying the number of rows to fetch from the
+        backend at each network roundtrip during :ref:`iteration
+        <cursor-iterable>` on a :ref:`named cursor <server-side-cursors>`. The
+        default is 2000.
+
+        .. versionadded:: 2.4
         
+        .. extension::
+
+            The `itersize` attribute is a Psycopg extension to the |DBAPI|.
+
 
     .. attribute:: rowcount 
           
@@ -333,14 +333,14 @@ The ``cursor`` class
 
         .. note::
             The |DBAPI|_ interface reserves to redefine the latter case to
-            have the object return ``None`` instead of -1 in future versions
+            have the object return `!None` instead of -1 in future versions
             of the specification.
         
 
     .. attribute:: rownumber
 
         This read-only attribute provides the current 0-based index of the
-        cursor in the result set or ``None`` if the index cannot be
+        cursor in the result set or `!None` if the index cannot be
         determined.
 
         The index can be seen as index of the cursor in a sequence (the result
@@ -355,12 +355,14 @@ The ``cursor`` class
         This read-only attribute provides the OID of the last row inserted
         by the cursor. If the table wasn't created with OID support or the
         last operation is not a single record insert, the attribute is set to
-        ``None``.
+        `!None`.
 
-        PostgreSQL currently advices to not create OIDs on the tables and the
-        default for |CREATE-TABLE|__ is to not support them. The
-        |INSERT-RETURNING|__ syntax available from PostgreSQL 8.3 allows more
-        flexibility.
+        .. note::
+
+            PostgreSQL currently advices to not create OIDs on the tables and
+            the default for |CREATE-TABLE|__ is to not support them. The
+            |INSERT-RETURNING|__ syntax available from PostgreSQL 8.3 allows
+            more flexibility.
 
         .. |CREATE-TABLE| replace:: :sql:`CREATE TABLE`
         .. __: http://www.postgresql.org/docs/9.0/static/sql-createtable.html
@@ -369,22 +371,10 @@ The ``cursor`` class
         .. __: http://www.postgresql.org/docs/9.0/static/sql-insert.html
 
 
-    .. method:: nextset()
-    
-        This method is not supported (PostgreSQL does not have multiple data
-        sets) and will raise a `~psycopg2.NotSupportedError` exception.
-
-
-    .. method:: setoutputsize(size [, column])
-      
-        This method is exposed in compliance with the |DBAPI|. It currently
-        does nothing but it is safe to call it.
-
-
     .. attribute:: query
 
         Read-only attribute containing the body of the last query sent to the
-        backend (including bound arguments). ``None`` if no query has been
+        backend (including bound arguments). `!None` if no query has been
         executed yet:
 
             >>> cur.execute("INSERT INTO test (num, data) VALUES (%s, %s)", (42, 'bar'))
@@ -411,14 +401,40 @@ The ``cursor`` class
             |DBAPI|.
 
 
+    .. method:: cast(oid, s)
+
+        Convert a value from the PostgreSQL string representation to a Python
+        object.
+
+        Use the most specific of the typecasters registered by
+        `~psycopg2.extensions.register_type()`.
+
+        .. versionadded:: 2.4
+
+        .. extension::
+
+            The `cast()` method is a Psycopg extension to the |DBAPI|.
+
+
     .. attribute:: tzinfo_factory
 
         The time zone factory used to handle data types such as
-        :sql:`TIMESTAMP WITH TIME ZONE`.  It should be a |tzinfo|_ object.
-        See also the `psycopg2.tz` module.
+        :sql:`TIMESTAMP WITH TIME ZONE`.  It should be a `~datetime.tzinfo`
+        object.  A few implementations are available in the `psycopg2.tz`
+        module.
 
-        .. |tzinfo| replace:: `!tzinfo`
-        .. _tzinfo: http://docs.python.org/library/datetime.html#tzinfo-objects
+
+    .. method:: nextset()
+    
+        This method is not supported (PostgreSQL does not have multiple data
+        sets) and will raise a `~psycopg2.NotSupportedError` exception.
+
+
+    .. method:: setoutputsize(size [, column])
+      
+        This method is exposed in compliance with the |DBAPI|. It currently
+        does nothing but it is safe to call it.
+
 
 
     .. rubric:: COPY-related methods
@@ -430,15 +446,15 @@ The ``cursor`` class
 
     .. method:: copy_from(file, table, sep='\\t', null='\\N', columns=None)
  
-        Read data *from* the file-like object `file` appending them to
-        the table named `table`.  `file` must have both
+        Read data *from* the file-like object *file* appending them to
+        the table named *table*.  *file* must have both
         `!read()` and `!readline()` method.  See :ref:`copy` for an
         overview.
 
-        The optional argument `sep` is the columns separator and
-        `null` represents :sql:`NULL` values in the file.
+        The optional argument *sep* is the columns separator and
+        *null* represents :sql:`NULL` values in the file.
 
-        The `columns` argument is a sequence containing the name of the
+        The *columns* argument is a sequence containing the name of the
         fields where the read data will be entered.  Its length and column
         type should match the content of the read file.  If not specifies, it
         is assumed that the entire table matches the file structure.
@@ -450,20 +466,24 @@ The ``cursor`` class
             [(6, 42, 'foo'), (7, 74, 'bar')]
 
         .. versionchanged:: 2.0.6
-            added the `columns` parameter.
+            added the *columns* parameter.
 
+        .. versionchanged:: 2.4
+            data read from files implementing the `io.TextIOBase` interface
+            are encoded in the connection `~connection.encoding` when sent to
+            the backend.
 
     .. method:: copy_to(file, table, sep='\\t', null='\\N', columns=None)
 
-        Write the content of the table named `table` *to* the file-like
-        object `file`.  `file` must have a `!write()` method.
+        Write the content of the table named *table* *to* the file-like
+        object *file*.  *file* must have a `!write()` method.
         See :ref:`copy` for an overview.
 
-        The optional argument `sep` is the columns separator and
-        `null` represents :sql:`NULL` values in the file.
+        The optional argument *sep* is the columns separator and
+        *null* represents :sql:`NULL` values in the file.
 
-        The `columns` argument is a sequence of field names: if not
-        ``None`` only the specified fields will be included in the dump.
+        The *columns* argument is a sequence of field names: if not
+        `!None` only the specified fields will be included in the dump.
 
             >>> cur.copy_to(sys.stdout, 'test', sep="|")
             1|100|abc'def
@@ -471,7 +491,12 @@ The ``cursor`` class
             ...
 
         .. versionchanged:: 2.0.6
-            added the `columns` parameter.
+            added the *columns* parameter.
+
+        .. versionchanged:: 2.4
+            data sent to files implementing the `io.TextIOBase` interface
+            are decoded in the connection `~connection.encoding` when read
+            from the backend.
 
 
     .. method:: copy_expert(sql, file [, size])
@@ -480,10 +505,10 @@ The ``cursor`` class
         handle all the parameters that PostgreSQL makes available (see
         |COPY|__ command documentation).
 
-        `file` must be an open, readable file for :sql:`COPY FROM` or an
-        open, writeable file for :sql:`COPY TO`. The optional `size`
+        *file* must be an open, readable file for :sql:`COPY FROM` or an
+        open, writeable file for :sql:`COPY TO`. The optional *size*
         argument, when specified for a :sql:`COPY FROM` statement, will be
-        passed to `file`\ 's read method to control the read buffer
+        passed to *file*\ 's read method to control the read buffer
         size.
 
             >>> cur.copy_expert("COPY test TO STDOUT WITH CSV HEADER", sys.stdout)
@@ -496,6 +521,10 @@ The ``cursor`` class
         .. __: http://www.postgresql.org/docs/9.0/static/sql-copy.html
 
         .. versionadded:: 2.0.6
+
+        .. versionchanged:: 2.4
+            files implementing the `io.TextIOBase` interface are dealt with
+            using Unicode data instead of bytes.
 
 
 .. testcode::

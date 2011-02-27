@@ -28,7 +28,7 @@ except:
     pass
 import sys
 import testutils
-from testutils import unittest
+from testutils import unittest, skip_if_broken_hex_binary
 from testconfig import dsn
 
 import psycopg2
@@ -116,6 +116,7 @@ class TypesBasicTests(unittest.TestCase):
         s = self.execute("SELECT %s AS foo", (float("-inf"),))
         self.failUnless(str(s) == "-inf", "wrong float quoting: " + str(s))      
 
+    @skip_if_broken_hex_binary
     def testBinary(self):
         if sys.version_info[0] < 3:
             s = ''.join([chr(x) for x in range(256)])
@@ -128,6 +129,11 @@ class TypesBasicTests(unittest.TestCase):
             buf = self.execute("SELECT %s::bytea AS foo", (b,))
             self.assertEqual(s, buf)
 
+    def testBinaryNone(self):
+        b = psycopg2.Binary(None)
+        buf = self.execute("SELECT %s::bytea AS foo", (b,))
+        self.assertEqual(buf, None)
+
     def testBinaryEmptyString(self):
         # test to make sure an empty Binary is converted to an empty string
         if sys.version_info[0] < 3:
@@ -137,6 +143,7 @@ class TypesBasicTests(unittest.TestCase):
             b = psycopg2.Binary(bytes([]))
             self.assertEqual(str(b), "''::bytea")
 
+    @skip_if_broken_hex_binary
     def testBinaryRoundTrip(self):
         # test to make sure buffers returned by psycopg2 are
         # understood by execute:
@@ -152,14 +159,40 @@ class TypesBasicTests(unittest.TestCase):
             self.assertEqual(s, buf2)
 
     def testArray(self):
-        s = self.execute("SELECT %s AS foo", ([],))
-        self.failUnlessEqual(s, [])
         s = self.execute("SELECT %s AS foo", ([[1,2],[3,4]],))
         self.failUnlessEqual(s, [[1,2],[3,4]])
         s = self.execute("SELECT %s AS foo", (['one', 'two', 'three'],))
         self.failUnlessEqual(s, ['one', 'two', 'three'])
 
-    @testutils.skip_on_python3
+    def testEmptyArrayRegression(self):
+        # ticket #42
+        import datetime
+        curs = self.conn.cursor()
+        curs.execute("create table array_test (id integer, col timestamp without time zone[])")
+
+        curs.execute("insert into array_test values (%s, %s)", (1, [datetime.date(2011,2,14)]))
+        curs.execute("select col from array_test where id = 1")
+        self.assertEqual(curs.fetchone()[0], [datetime.datetime(2011, 2, 14, 0, 0)])
+
+        curs.execute("insert into array_test values (%s, %s)", (2, []))
+        curs.execute("select col from array_test where id = 2")
+        self.assertEqual(curs.fetchone()[0], [])
+
+    def testEmptyArray(self):
+        s = self.execute("SELECT '{}' AS foo")
+        self.failUnlessEqual(s, [])
+        s = self.execute("SELECT '{}'::text[] AS foo")
+        self.failUnlessEqual(s, [])
+        s = self.execute("SELECT %s AS foo", ([],))
+        self.failUnlessEqual(s, [])
+        s = self.execute("SELECT 1 != ALL(%s)", ([],))
+        self.failUnlessEqual(s, True)
+        # but don't break the strings :)
+        s = self.execute("SELECT '{}'::text AS foo")
+        self.failUnlessEqual(s, "{}")
+
+    @skip_if_broken_hex_binary
+    @testutils.skip_from_python(3)
     def testTypeRoundtripBuffer(self):
         o1 = buffer("".join(map(chr, range(256))))
         o2 = self.execute("select %s;", (o1,))
@@ -169,15 +202,19 @@ class TypesBasicTests(unittest.TestCase):
         o1 = buffer("")
         o2 = self.execute("select %s;", (o1,))
         self.assertEqual(type(o1), type(o2))
+        self.assertEqual(str(o1), str(o2))
 
-    @testutils.skip_on_python3
+    @skip_if_broken_hex_binary
+    @testutils.skip_from_python(3)
     def testTypeRoundtripBufferArray(self):
         o1 = buffer("".join(map(chr, range(256))))
         o1 = [o1]
         o2 = self.execute("select %s;", (o1,))
         self.assertEqual(type(o1[0]), type(o2[0]))
+        self.assertEqual(str(o1[0]), str(o2[0]))
 
-    @testutils.skip_on_python2
+    @skip_if_broken_hex_binary
+    @testutils.skip_before_python(3)
     def testTypeRoundtripBytes(self):
         o1 = bytes(range(256))
         o2 = self.execute("select %s;", (o1,))
@@ -188,34 +225,63 @@ class TypesBasicTests(unittest.TestCase):
         o2 = self.execute("select %s;", (o1,))
         self.assertEqual(memoryview, type(o2))
 
-    @testutils.skip_on_python2
+    @skip_if_broken_hex_binary
+    @testutils.skip_before_python(3)
     def testTypeRoundtripBytesArray(self):
         o1 = bytes(range(256))
         o1 = [o1]
         o2 = self.execute("select %s;", (o1,))
         self.assertEqual(memoryview, type(o2[0]))
 
-    @testutils.skip_on_python2
+    @skip_if_broken_hex_binary
+    @testutils.skip_before_python(2, 6)
     def testAdaptBytearray(self):
         o1 = bytearray(range(256))
         o2 = self.execute("select %s;", (o1,))
-        self.assertEqual(memoryview, type(o2))
+
+        if sys.version_info[0] < 3:
+            self.assertEqual(buffer, type(o2))
+        else:
+            self.assertEqual(memoryview, type(o2))
+
+        self.assertEqual(len(o1), len(o2))
+        for c1, c2 in zip(o1, o2):
+            self.assertEqual(c1, ord(c2))
 
         # Test with an empty buffer
         o1 = bytearray([])
         o2 = self.execute("select %s;", (o1,))
-        self.assertEqual(memoryview, type(o2))
 
-    @testutils.skip_on_python2
+        self.assertEqual(len(o2), 0)
+        if sys.version_info[0] < 3:
+            self.assertEqual(buffer, type(o2))
+        else:
+            self.assertEqual(memoryview, type(o2))
+
+    @skip_if_broken_hex_binary
+    @testutils.skip_before_python(2, 7)
     def testAdaptMemoryview(self):
-        o1 = memoryview(bytes(range(256)))
+        o1 = memoryview(bytearray(range(256)))
         o2 = self.execute("select %s;", (o1,))
-        self.assertEqual(memoryview, type(o2))
+        if sys.version_info[0] < 3:
+            self.assertEqual(buffer, type(o2))
+        else:
+            self.assertEqual(memoryview, type(o2))
 
         # Test with an empty buffer
-        o1 = memoryview(bytes([]))
+        o1 = memoryview(bytearray([]))
         o2 = self.execute("select %s;", (o1,))
-        self.assertEqual(memoryview, type(o2))
+        if sys.version_info[0] < 3:
+            self.assertEqual(buffer, type(o2))
+        else:
+            self.assertEqual(memoryview, type(o2))
+
+    def testByteaHexCheckFalsePositive(self):
+        # the check \x -> x to detect bad bytea decode
+        # may be fooled if the first char is really an 'x'
+        o1 = psycopg2.Binary(b('x'))
+        o2 = self.execute("SELECT %s::bytea AS foo", (o1,))
+        self.assertEqual(b('x'), o2[0])
 
 
 class AdaptSubclassTest(unittest.TestCase):
@@ -241,7 +307,7 @@ class AdaptSubclassTest(unittest.TestCase):
            del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
            del psycopg2.extensions.adapters[B, psycopg2.extensions.ISQLQuote]
 
-    @testutils.skip_on_python3
+    @testutils.skip_from_python(3)
     def test_no_mro_no_joy(self):
         from psycopg2.extensions import adapt, register_adapter, AsIs
 
@@ -255,7 +321,7 @@ class AdaptSubclassTest(unittest.TestCase):
            del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
 
 
-    @testutils.skip_on_python2
+    @testutils.skip_before_python(3)
     def test_adapt_subtype_3(self):
         from psycopg2.extensions import adapt, register_adapter, AsIs
 

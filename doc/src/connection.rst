@@ -25,11 +25,24 @@ The ``connection`` class
           
         Return a new `cursor` object using the connection.
 
-        If `name` is specified, the returned cursor will be a *server
-        side* (or *named*) cursor. Otherwise the cursor will be *client side*.
-        See :ref:`server-side-cursors` for further details.
+        If *name* is specified, the returned cursor will be a :ref:`server
+        side cursor <server-side-cursors>` (also known as *named cursor*).
+        Otherwise it will be a regular *client side* cursor.
 
-        The `cursor_factory` argument can be used to create non-standard
+        The name can be a string not valid as a PostgreSQL identifier: for
+        example it may start with a digit and contain non-alphanumeric
+        characters and quotes.
+
+        .. versionchanged:: 2.4
+            previously only valid PostgreSQL identifiers were accepted as
+            cursor name.
+
+        .. warning::
+            It is unsafe to expose the *name* to an untrusted source, for
+            instance you shouldn't allow *name* to be read from a HTML form.
+            Consider it as part of the query, not as a query parameter.
+
+        The *cursor_factory* argument can be used to create non-standard
         cursors. The class returned should be a subclass of
         `psycopg2.extensions.cursor`. See :ref:`subclassing-cursor` for
         details.
@@ -62,8 +75,8 @@ The ``connection`` class
 
     .. method:: close()
               
-        Close the connection now (rather than whenever `__del__()` is
-        called).  The connection will be unusable from this point forward; an
+        Close the connection now (rather than whenever `del` is executed).
+        The connection will be unusable from this point forward; an
         `~psycopg2.InterfaceError` will be raised if any operation is
         attempted with the connection.  The same applies to all cursor objects
         trying to use the connection.  Note that closing a connection without
@@ -124,9 +137,10 @@ The ``connection`` class
         constraints are explained in :ref:`tpc`.
 
         The values passed to the method will be available on the returned
-        object as the members `!format_id`, `!gtrid`, `!bqual`. The object
-        also allows accessing to these members and unpacking as a 3-items
-        tuple.
+        object as the members `~psycopg2.extensions.Xid.format_id`,
+        `~psycopg2.extensions.Xid.gtrid`, `~psycopg2.extensions.Xid.bqual`.
+        The object also allows accessing to these members and unpacking as a
+        3-items tuple.
 
 
     .. method:: tpc_begin(xid)
@@ -230,7 +244,7 @@ The ``connection`` class
 
         If a transaction was not initiated by Psycopg, the returned Xids will
         have attributes `~psycopg2.extensions.Xid.format_id` and
-        `~psycopg2.extensions.Xid.bqual` set to `None` and the
+        `~psycopg2.extensions.Xid.bqual` set to `!None` and the
         `~psycopg2.extensions.Xid.gtrid` set to the PostgreSQL transaction ID: such Xids are still
         usable for recovery.  Psycopg uses the same algorithm of the
         `PostgreSQL JDBC driver`__ to encode a XA triple in a string, so
@@ -418,7 +432,7 @@ The ``connection`` class
         ``session_authorization``, ``DateStyle``, ``TimeZone``,
         ``integer_datetimes``, and ``standard_conforming_strings``.
 
-        If server did not report requested parameter, return ``None``.
+        If server did not report requested parameter, return `!None`.
 
         .. seealso:: libpq docs for `PQparameterStatus()`__ for details.
 
@@ -499,8 +513,8 @@ The ``connection`` class
             a new large object and and have its OID assigned automatically.
         :param mode: Access mode to the object, see below.
         :param new_oid: Create a new object using the specified OID. The
-            function raises `OperationalError` if the OID is already in
-            use. Default is 0, meaning assign a new one automatically.
+            function raises `~psycopg2.OperationalError` if the OID is already
+            in use. Default is 0, meaning assign a new one automatically.
         :param new_file: The name of a file to be imported in the the database
             (using the |lo_import|_ function)
         :param lobject_factory: Subclass of
@@ -518,8 +532,8 @@ The ``connection`` class
         ``w``   Open for write only
         ``rw``  Open for read/write
         ``n``   Don't open the file
-        ``b``   Don't decode read data (return data as `str` in Python 2 or `bytes` in Python 3)
-        ``t``   Decode read data according to `connection.encoding` (return data as `unicode` in Python 2 or `str` in Python 3)
+        ``b``   Don't decode read data (return data as `!str` in Python 2 or `!bytes` in Python 3)
+        ``t``   Decode read data according to `connection.encoding` (return data as `!unicode` in Python 2 or `!str` in Python 3)
         ======= =========
 
         ``b`` and ``t`` can be specified together with a read/write mode. If
@@ -528,7 +542,7 @@ The ``connection`` class
 
         .. versionadded:: 2.0.8
 
-        .. versionchanged:: 2.3.3 added ``b`` and ``t`` mode and unicode
+        .. versionchanged:: 2.4 added ``b`` and ``t`` mode and unicode
             support.
 
 
@@ -571,7 +585,7 @@ The ``connection`` class
 
     .. method:: isexecuting()
 
-        Return `True` if the connection is executing an asynchronous operation.
+        Return `!True` if the connection is executing an asynchronous operation.
 
 
 .. testcode::

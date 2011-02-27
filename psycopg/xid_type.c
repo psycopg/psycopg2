@@ -43,7 +43,7 @@ static const char xid_doc[] =
 static const char format_id_doc[] =
     "Format ID in a XA transaction.\n\n"
     "A non-negative 32 bit integer.\n"
-    "`None` if the transaction doesn't follow the XA standard.";
+    "`!None` if the transaction doesn't follow the XA standard.";
 
 static const char gtrid_doc[] =
     "Global transaction ID in a XA transaction.\n\n"
@@ -54,7 +54,7 @@ static const char bqual_doc[] =
     "Branch qualifier of the transaction.\n\n"
     "In a XA transaction every resource participating to a transaction\n"
     "receives a distinct branch qualifier.\n"
-    "`None` if the transaction doesn't follow the XA standard.";
+    "`!None` if the transaction doesn't follow the XA standard.";
 
 static const char prepared_doc[] =
     "Timestamp (with timezone) in which a recovered transaction was prepared.";
@@ -100,7 +100,8 @@ static int
 xid_init(XidObject *self, PyObject *args, PyObject *kwargs)
 {
     static char *kwlist[] = {"format_id", "gtrid", "bqual", NULL};
-    int format_id, i, gtrid_len, bqual_len;
+    int format_id;
+    size_t i, gtrid_len, bqual_len;
     const char *gtrid, *bqual;
     PyObject *tmp;
 
@@ -269,7 +270,7 @@ static const char xid_from_string_doc[] =
     "the returned object will have `format_id`, `gtrid`, `bqual` set to\n"
     "the values of the preparing XA id.\n"
     "Otherwise only the `!gtrid` is populated with the unparsed string.\n"
-    "The operation is the inverse of the one performed by ``str(xid)``.";
+    "The operation is the inverse of the one performed by `!str(xid)`.";
 
 static PyObject *
 xid_from_string_method(PyObject *cls, PyObject *args)
@@ -436,7 +437,6 @@ _xid_decode64(PyObject *s)
  * in order to allow some form of interoperation.
  *
  * The function must be called while holding the GIL.
- * Return a buffer allocated with PyMem_Malloc. Use PyMem_Free to free it.
  *
  * see also: the pgjdbc implementation
  *   http://cvs.pgfoundry.org/cgi-bin/cvsweb.cgi/jdbc/pgjdbc/org/postgresql/xa/RecoveredXid.java?rev=1.2

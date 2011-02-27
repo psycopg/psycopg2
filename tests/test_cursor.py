@@ -23,11 +23,11 @@
 # License for more details.
 
 import time
-import unittest
 import psycopg2
 import psycopg2.extensions
 from psycopg2.extensions import b
 from testconfig import dsn
+from testutils import unittest, skip_before_postgres, skip_if_no_namedtuple
 
 class CursorTests(unittest.TestCase):
 
@@ -91,6 +91,17 @@ class CursorTests(unittest.TestCase):
         self.assertEqual(b('SELECT 10.3;'),
             cur.mogrify("SELECT %s;", (Decimal("10.3"),)))
 
+    def test_bad_placeholder(self):
+        cur = self.conn.cursor()
+        self.assertRaises(psycopg2.ProgrammingError,
+            cur.mogrify, "select %(foo", {})
+        self.assertRaises(psycopg2.ProgrammingError,
+            cur.mogrify, "select %(foo", {'foo': 1})
+        self.assertRaises(psycopg2.ProgrammingError,
+            cur.mogrify, "select %(foo, %(bar)", {'foo': 1})
+        self.assertRaises(psycopg2.ProgrammingError,
+            cur.mogrify, "select %(foo, %(bar)", {'foo': 1, 'bar': 2})
+
     def test_cast(self):
         curs = self.conn.cursor()
 
@@ -130,6 +141,18 @@ class CursorTests(unittest.TestCase):
         del curs
         self.assert_(w() is None)
 
+    def test_invalid_name(self):
+        curs = self.conn.cursor()
+        curs.execute("create temp table invname (data int);")
+        for i in (10,20,30):
+            curs.execute("insert into invname values (%s)", (i,))
+        curs.close()
+
+        curs = self.conn.cursor(r'1-2-3 \ "test"')
+        curs.execute("select data from invname order by data")
+        self.assertEqual(curs.fetchall(), [(10,), (20,), (30,)])
+
+    @skip_before_postgres(8, 2)
     def test_iter_named_cursor_efficient(self):
         curs = self.conn.cursor('tmp')
         # if these records are fetched in the same roundtrip their
@@ -143,20 +166,58 @@ class CursorTests(unittest.TestCase):
             "named cursor records fetched in 2 roundtrips (delta: %s)"
             % (t2 - t1))
 
-    def test_iter_named_cursor_default_arraysize(self):
+    @skip_before_postgres(8, 0)
+    def test_iter_named_cursor_default_itersize(self):
         curs = self.conn.cursor('tmp')
         curs.execute('select generate_series(1,50)')
         rv = [ (r[0], curs.rownumber) for r in curs ]
         # everything swallowed in one gulp
         self.assertEqual(rv, [(i,i) for i in range(1,51)])
 
-    def test_iter_named_cursor_arraysize(self):
+    @skip_before_postgres(8, 0)
+    def test_iter_named_cursor_itersize(self):
         curs = self.conn.cursor('tmp')
-        curs.arraysize = 30
+        curs.itersize = 30
         curs.execute('select generate_series(1,50)')
         rv = [ (r[0], curs.rownumber) for r in curs ]
         # everything swallowed in two gulps
         self.assertEqual(rv, [(i,((i - 1) % 30) + 1) for i in range(1,51)])
+
+    @skip_if_no_namedtuple
+    def test_namedtuple_description(self):
+        curs = self.conn.cursor()
+        curs.execute("""select
+            3.14::decimal(10,2) as pi,
+            'hello'::text as hi,
+            '2010-02-18'::date as now;
+            """)
+        self.assertEqual(len(curs.description), 3)
+        for c in curs.description:
+            self.assertEqual(len(c), 7)  # DBAPI happy
+            for a in ('name', 'type_code', 'display_size', 'internal_size',
+                    'precision', 'scale', 'null_ok'):
+                self.assert_(hasattr(c, a), a)
+
+        c = curs.description[0]
+        self.assertEqual(c.name, 'pi')
+        self.assert_(c.type_code in psycopg2.extensions.DECIMAL.values)
+        self.assert_(c.internal_size > 0)
+        self.assertEqual(c.precision, 10)
+        self.assertEqual(c.scale, 2)
+
+        c = curs.description[1]
+        self.assertEqual(c.name, 'hi')
+        self.assert_(c.type_code in psycopg2.STRING.values)
+        self.assert_(c.internal_size < 0)
+        self.assertEqual(c.precision, None)
+        self.assertEqual(c.scale, None)
+
+        c = curs.description[2]
+        self.assertEqual(c.name, 'now')
+        self.assert_(c.type_code in psycopg2.extensions.DATE.values)
+        self.assert_(c.internal_size > 0)
+        self.assertEqual(c.precision, None)
+        self.assertEqual(c.scale, None)
 
 
 def test_suite():

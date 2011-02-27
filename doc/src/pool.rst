@@ -24,7 +24,7 @@ directly into the client application.
 
     .. method:: getconn(key=None)
 
-        Get a free connection and assign it to *key* if not ``None``.
+        Get a free connection and assign it to *key* if not `!None`.
 
     .. method:: putconn(conn, key=None)
 

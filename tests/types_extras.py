@@ -120,7 +120,7 @@ def skip_if_no_hstore(f):
     def skip_if_no_hstore_(self):
         from psycopg2.extras import HstoreAdapter
         oids = HstoreAdapter.get_oids(self.conn)
-        if oids is None:
+        if oids is None or not oids[0]:
             return self.skipTest("hstore not available in test database")
         return f(self)
 
@@ -276,7 +276,7 @@ class HstoreTestCase(unittest.TestCase):
             finally:
                 conn2.close()
         finally:
-            psycopg2.extensions.string_types.pop(oids[0])
+            psycopg2.extensions.string_types.pop(oids[0][0])
 
         # verify the caster is not around anymore
         cur = self.conn.cursor()
@@ -336,6 +336,26 @@ class HstoreTestCase(unittest.TestCase):
         ab = map(unichr, range(1, 1024))
         ok({u''.join(ab): u''.join(ab)})
         ok(dict(zip(ab, ab)))
+
+    @skip_if_no_hstore
+    def test_oid(self):
+        cur = self.conn.cursor()
+        cur.execute("select 'hstore'::regtype::oid")
+        oid = cur.fetchone()[0]
+
+        # Note: None as conn_or_cursor is just for testing: not public
+        # interface and it may break in future.
+        from psycopg2.extras import register_hstore
+        register_hstore(None, globally=True, oid=oid)
+        try:
+            cur.execute("select null::hstore, ''::hstore, 'a => b'::hstore")
+            t = cur.fetchone()
+            self.assert_(t[0] is None)
+            self.assertEqual(t[1], {})
+            self.assertEqual(t[2], {'a': 'b'})
+
+        finally:
+            psycopg2.extensions.string_types.pop(oid)
 
 
 def skip_if_no_composite(f):

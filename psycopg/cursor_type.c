@@ -59,7 +59,7 @@ psyco_curs_close(cursorObject *self, PyObject *args)
         char buffer[128];
 
         EXC_IF_NO_MARK(self);
-        PyOS_snprintf(buffer, 127, "CLOSE %s", self->name);
+        PyOS_snprintf(buffer, 127, "CLOSE \"%s\"", self->name);
         if (pq_execute(self, buffer, 0) == -1) return NULL;
     }
 
@@ -76,10 +76,10 @@ psyco_curs_close(cursorObject *self, PyObject *args)
 /* mogrify a query string and build argument array or dict */
 
 static int
-_mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
+_mogrify(PyObject *var, PyObject *fmt, cursorObject *curs, PyObject **new)
 {
-    PyObject *key, *value, *n, *item;
-    char *d, *c;
+    PyObject *key, *value, *n;
+    const char *d, *c;
     Py_ssize_t index = 0;
     int force = 0, kind = 0;
 
@@ -90,10 +90,18 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
     c = Bytes_AsString(fmt);
 
     while(*c) {
-        /* handle plain percent symbol in format string */
-        if (c[0] == '%' && c[1] == '%') {
-            c+=2; force = 1;
+        if (*c++ != '%') {
+            /* a regular character */
+            continue;
         }
+
+        switch (*c) {
+
+        /* handle plain percent symbol in format string */
+        case '%':
+            ++c;
+            force = 1;
+            break;
 
         /* if we find '%(' then this is a dictionary, we:
            1/ find the matching ')' and extract the key name
@@ -101,22 +109,21 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
            3/ mogrify the value into something usefull (quoting)...
            4/ ...and add it to the new dictionary to be used as argument
         */
-        else if (c[0] == '%' && c[1] == '(') {
-
+        case '(':
             /* check if some crazy guy mixed formats */
             if (kind == 2) {
                 Py_XDECREF(n);
-                psyco_set_error(ProgrammingError, (PyObject*)conn,
+                psyco_set_error(ProgrammingError, curs,
                    "argument formats can't be mixed", NULL, NULL);
                 return -1;
             }
             kind = 1;
 
             /* let's have d point the end of the argument */
-            for (d = c + 2; *d && *d != ')'; d++);
+            for (d = c + 1; *d && *d != ')' && *d != '%'; d++);
 
             if (*d == ')') {
-                key = Text_FromUTF8AndSize(c+2, (Py_ssize_t) (d-c-2));
+                key = Text_FromUTF8AndSize(c+1, (Py_ssize_t) (d-c-1));
                 value = PyObject_GetItem(var, key);
                 /* key has refcnt 1, value the original value + 1 */
 
@@ -135,28 +142,20 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
                     n = PyDict_New();
                 }
 
-                if ((item = PyObject_GetItem(n, key)) == NULL) {
+                if (0 == PyDict_Contains(n, key)) {
                     PyObject *t = NULL;
-
-                    PyErr_Clear();
 
                     /* None is always converted to NULL; this is an
                        optimization over the adapting code and can go away in
-                       the future if somebody finds a None adapter usefull. */
+                       the future if somebody finds a None adapter useful. */
                     if (value == Py_None) {
-                        t = Bytes_FromString("NULL");
+                        Py_INCREF(psyco_null);
+                        t = psyco_null;
                         PyDict_SetItem(n, key, t);
                         /* t is a new object, refcnt = 1, key is at 2 */
-
-                        /* if the value is None we need to substitute the
-                           formatting char with 's' (FIXME: this should not be
-                           necessary if we drop support for formats other than
-                           %s!) */
-                        while (*d && !isalpha(*d)) d++;
-                        if (*d) *d = 's';
                     }
                     else {
-                        t = microprotocol_getquoted(value, conn);
+                        t = microprotocol_getquoted(value, curs->conn);
 
                         if (t != NULL) {
                             PyDict_SetItem(n, key, t);
@@ -175,20 +174,21 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
                        if it was added to the dictionary directly; good */
                     Py_XDECREF(value);
                 }
-                else {
-                    /* we have an item with one extra refcnt here, zap! */
-                    Py_DECREF(item);
-                }
                 Py_DECREF(key); /* key has the original refcnt now */
                 Dprintf("_mogrify: after value refcnt: "
-                    FORMAT_CODE_PY_SSIZE_T,
-                    Py_REFCNT(value)
-                  );
+                    FORMAT_CODE_PY_SSIZE_T, Py_REFCNT(value));
             }
-            c = d;
-        }
+            else {
+                /* we found %( but not a ) */
+                Py_XDECREF(n);
+                psyco_set_error(ProgrammingError, curs,
+                   "incomplete placeholder: '%(' without ')'", NULL, NULL);
+                return -1;
+            }
+            c = d + 1;  /* after the ) */
+            break;
 
-        else if (c[0] == '%' && c[1] != '(') {
+        default:
             /* this is a format that expects a tuple; it is much easier,
                because we don't need to check the old/new dictionary for
                keys */
@@ -196,7 +196,7 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
             /* check if some crazy guy mixed formats */
             if (kind == 1) {
                 Py_XDECREF(n);
-                psyco_set_error(ProgrammingError, (PyObject*)conn,
+                psyco_set_error(ProgrammingError, curs,
                   "argument formats can't be mixed", NULL, NULL);
                 return -1;
             }
@@ -217,16 +217,13 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
             }
 
             /* let's have d point just after the '%' */
-            d = c+1;
-
             if (value == Py_None) {
-                PyTuple_SET_ITEM(n, index, Bytes_FromString("NULL"));
-                while (*d && !isalpha(*d)) d++;
-                if (*d) *d = 's';
+                Py_INCREF(psyco_null);
+                PyTuple_SET_ITEM(n, index, psyco_null);
                 Py_DECREF(value);
             }
             else {
-                PyObject *t = microprotocol_getquoted(value, conn);
+                PyObject *t = microprotocol_getquoted(value, curs->conn);
 
                 if (t != NULL) {
                     PyTuple_SET_ITEM(n, index, t);
@@ -238,11 +235,7 @@ _mogrify(PyObject *var, PyObject *fmt, connectionObject *conn, PyObject **new)
                     return -1;
                 }
             }
-            c = d;
             index += 1;
-        }
-        else {
-            c++;
         }
     }
 
@@ -262,7 +255,7 @@ static PyObject *_psyco_curs_validate_sql_basic(
        after having set an exception. */
 
     if (!sql || !PyObject_IsTrue(sql)) {
-        psyco_set_error(ProgrammingError, (PyObject*)self,
+        psyco_set_error(ProgrammingError, self,
                          "can't execute an empty query", NULL, NULL);
         goto fail;
     }
@@ -334,7 +327,7 @@ _psyco_curs_merge_query_args(cursorObject *self,
                 if (!strcmp(s, "not enough arguments for format string")
                   || !strcmp(s, "not all arguments converted")) {
                     Dprintf("psyco_curs_execute:     -> got a match");
-                    psyco_set_error(ProgrammingError, (PyObject*)self,
+                    psyco_set_error(ProgrammingError, self,
                                      s, NULL, NULL);
                     pe = 1;
                 }
@@ -388,7 +381,7 @@ _psyco_curs_execute(cursorObject *self,
 
     if (vars && vars != Py_None)
     {
-        if(_mogrify(vars, operation, self->conn, &cvt) == -1) { goto fail; }
+        if(_mogrify(vars, operation, self, &cvt) == -1) { goto fail; }
     }
 
     if (vars && cvt) {
@@ -398,7 +391,7 @@ _psyco_curs_execute(cursorObject *self,
 
         if (self->name != NULL) {
             self->query = Bytes_FromFormat(
-                "DECLARE %s CURSOR WITHOUT HOLD FOR %s",
+                "DECLARE \"%s\" CURSOR WITHOUT HOLD FOR %s",
                 self->name, Bytes_AS_STRING(fquery));
             Py_DECREF(fquery);
         }
@@ -409,7 +402,7 @@ _psyco_curs_execute(cursorObject *self,
     else {
         if (self->name != NULL) {
             self->query = Bytes_FromFormat(
-                "DECLARE %s CURSOR WITHOUT HOLD FOR %s",
+                "DECLARE \"%s\" CURSOR WITHOUT HOLD FOR %s",
                 self->name, Bytes_AS_STRING(operation));
         }
         else {
@@ -458,18 +451,18 @@ psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
 
     if (self->name != NULL) {
         if (self->query != Py_None) {
-            psyco_set_error(ProgrammingError, (PyObject*)self,
+            psyco_set_error(ProgrammingError, self,
                 "can't call .execute() on named cursors more than once",
                 NULL, NULL);
             return NULL;
         }
         if (self->conn->isolation_level == ISOLATION_LEVEL_AUTOCOMMIT) {
-            psyco_set_error(ProgrammingError, (PyObject*)self,
+            psyco_set_error(ProgrammingError, self,
                 "can't use a named cursor outside of transactions", NULL, NULL);
             return NULL;
         }
         if (self->conn->mark != self->mark) {
-            psyco_set_error(ProgrammingError, (PyObject*)self,
+            psyco_set_error(ProgrammingError, self,
                 "named cursor isn't valid anymore", NULL, NULL);
             return NULL;
         }
@@ -513,7 +506,7 @@ psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
     EXC_IF_TPC_PREPARED(self->conn, executemany);
 
     if (self->name != NULL) {
-        psyco_set_error(ProgrammingError, (PyObject*)self,
+        psyco_set_error(ProgrammingError, self,
                 "can't call .executemany() on named cursors", NULL, NULL);
         return NULL;
     }
@@ -571,7 +564,7 @@ _psyco_curs_mogrify(cursorObject *self,
 
     if (vars && vars != Py_None)
     {
-        if (_mogrify(vars, operation, self->conn, &cvt) == -1) {
+        if (_mogrify(vars, operation, self, &cvt) == -1) {
             goto cleanup;
         }
     }
@@ -645,7 +638,7 @@ psyco_curs_cast(cursorObject *self, PyObject *args)
 "fetchone() -> tuple or None\n\n" \
 "Return the next row of a query result set in the form of a tuple (by\n" \
 "default) or using the sequence factory previously set in the\n" \
-"`row_factory` attribute. Return `None` when no more data is available.\n"
+"`row_factory` attribute. Return `!None` when no more data is available.\n"
 
 static int
 _psyco_curs_prefetch(cursorObject *self)
@@ -755,7 +748,7 @@ psyco_curs_fetchone(cursorObject *self, PyObject *args)
 
         EXC_IF_NO_MARK(self);
         EXC_IF_TPC_PREPARED(self->conn, fetchone);
-        PyOS_snprintf(buffer, 127, "FETCH FORWARD 1 FROM %s", self->name);
+        PyOS_snprintf(buffer, 127, "FETCH FORWARD 1 FROM \"%s\"", self->name);
         if (pq_execute(self, buffer, 0) == -1) return NULL;
         if (_psyco_curs_prefetch(self) < 0) return NULL;
     }
@@ -809,12 +802,8 @@ psyco_curs_next_named(cursorObject *self)
     if (self->row >= self->rowcount) {
         char buffer[128];
 
-        /* fetch 'arraysize' records, but shun the default value of 1 */
-        long int size = self->arraysize;
-        if (size == 1) { size = 2000L; }
-
-        PyOS_snprintf(buffer, 127, "FETCH FORWARD %ld FROM %s",
-            size, self->name);
+        PyOS_snprintf(buffer, 127, "FETCH FORWARD %ld FROM \"%s\"",
+            self->itersize, self->name);
         if (pq_execute(self, buffer, 0) == -1) return NULL;
         if (_psyco_curs_prefetch(self) < 0) return NULL;
     }
@@ -848,7 +837,7 @@ psyco_curs_next_named(cursorObject *self)
 "fetchmany(size=self.arraysize) -> list of tuple\n\n" \
 "Return the next `size` rows of a query result set in the form of a list\n" \
 "of tuples (by default) or using the sequence factory previously set in\n" \
-"the `row_factory` attribute. Return `None` when no more data is available.\n"
+"the `row_factory` attribute. Return `!None` when no more data is available.\n"
 
 static PyObject *
 psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
@@ -873,7 +862,7 @@ psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
 
         EXC_IF_NO_MARK(self);
         EXC_IF_TPC_PREPARED(self->conn, fetchone);
-        PyOS_snprintf(buffer, 127, "FETCH FORWARD %d FROM %s",
+        PyOS_snprintf(buffer, 127, "FETCH FORWARD %d FROM \"%s\"",
             (int)size, self->name);
         if (pq_execute(self, buffer, 0) == -1) return NULL;
         if (_psyco_curs_prefetch(self) < 0) return NULL;
@@ -926,7 +915,7 @@ psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
 "Return all the remaining rows of a query result set.\n\n" \
 "Rows are returned in the form of a list of tuples (by default) or using\n" \
 "the sequence factory previously set in the `row_factory` attribute.\n" \
-"Return `None` when no more data is available.\n"
+"Return `!None` when no more data is available.\n"
 
 static PyObject *
 psyco_curs_fetchall(cursorObject *self, PyObject *args)
@@ -944,7 +933,7 @@ psyco_curs_fetchall(cursorObject *self, PyObject *args)
 
         EXC_IF_NO_MARK(self);
         EXC_IF_TPC_PREPARED(self->conn, fetchall);
-        PyOS_snprintf(buffer, 127, "FETCH FORWARD ALL FROM %s", self->name);
+        PyOS_snprintf(buffer, 127, "FETCH FORWARD ALL FROM \"%s\"", self->name);
         if (pq_execute(self, buffer, 0) == -1) return NULL;
         if (_psyco_curs_prefetch(self) < 0) return NULL;
     }
@@ -1009,7 +998,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
     EXC_IF_TPC_PREPARED(self->conn, callproc);
 
     if (self->name != NULL) {
-        psyco_set_error(ProgrammingError, (PyObject*)self,
+        psyco_set_error(ProgrammingError, self,
                          "can't call .callproc() on named cursors", NULL, NULL);
         return NULL;
     }
@@ -1022,7 +1011,9 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
     /* allocate some memory, build the SQL and create a PyString from it */
     sl = procname_len + 17 + nparameters*3 - (nparameters ? 1 : 0);
     sql = (char*)PyMem_Malloc(sl);
-    if (sql == NULL) return NULL;
+    if (sql == NULL) {
+        return PyErr_NoMemory();
+    }
 
     sprintf(sql, "SELECT * FROM %s(", procname);
     for(i=0; i<nparameters; i++) {
@@ -1132,13 +1123,13 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
         } else if (strcmp( mode, "absolute") == 0) {
             newpos = value;
         } else {
-            psyco_set_error(ProgrammingError, (PyObject*)self,
+            psyco_set_error(ProgrammingError, self,
                 "scroll mode must be 'relative' or 'absolute'", NULL, NULL);
             return NULL;
         }
 
         if (newpos < 0 || newpos >= self->rowcount ) {
-            psyco_set_error(ProgrammingError, (PyObject*)self,
+            psyco_set_error(ProgrammingError, self,
                              "scroll destination out of bounds", NULL, NULL);
             return NULL;
         }
@@ -1153,11 +1144,11 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
         EXC_IF_TPC_PREPARED(self->conn, scroll);
 
         if (strcmp(mode, "absolute") == 0) {
-            PyOS_snprintf(buffer, 127, "MOVE ABSOLUTE %d FROM %s",
+            PyOS_snprintf(buffer, 127, "MOVE ABSOLUTE %d FROM \"%s\"",
                 value, self->name);
         }
         else {
-            PyOS_snprintf(buffer, 127, "MOVE %d FROM %s", value, self->name);
+            PyOS_snprintf(buffer, 127, "MOVE %d FROM \"%s\"", value, self->name);
         }
         if (pq_execute(self, buffer, 0) == -1) return NULL;
         if (_psyco_curs_prefetch(self) < 0) return NULL;
@@ -1244,15 +1235,16 @@ _psyco_curs_has_read_check(PyObject* o, void* var)
 static PyObject *
 psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
+    char *query = NULL;
     char query_buffer[DEFAULT_COPYBUFF];
     Py_ssize_t query_size;
-    char *query;
     const char *table_name;
     const char *sep = "\t", *null = NULL;
     Py_ssize_t bufsize = DEFAULT_COPYBUFF;
     PyObject *file, *columns = NULL, *res = NULL;
     char columnlist[DEFAULT_COPYBUFF];
-    char *quoted_delimiter;
+    char *quoted_delimiter = NULL;
+    char *quoted_null = NULL;
 
     static char *kwlist[] = {
             "file", "table", "sep", "null", "size", "columns", NULL};
@@ -1273,32 +1265,32 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
     EXC_IF_GREEN(copy_from);
     EXC_IF_TPC_PREPARED(self->conn, copy_from);
 
-
-    quoted_delimiter = psycopg_escape_string((PyObject*)self->conn, sep, 0, NULL, NULL);
-    if (quoted_delimiter == NULL) {
+    if (!(quoted_delimiter = psycopg_escape_string(
+            (PyObject*)self->conn, sep, 0, NULL, NULL))) {
         PyErr_NoMemory();
-        return NULL;
+        goto exit;
     }
-    
+
     query = query_buffer;
     if (null) {
-        char *quoted_null = psycopg_escape_string((PyObject*)self->conn, null, 0, NULL, NULL);
-        if (quoted_null == NULL) {
-            PyMem_Free(quoted_delimiter);
+        if (!(quoted_null = psycopg_escape_string(
+                (PyObject*)self->conn, null, 0, NULL, NULL))) {
             PyErr_NoMemory();
-            return NULL;
+            goto exit;
         }
         query_size = PyOS_snprintf(query, DEFAULT_COPYBUFF,
             "COPY %s%s FROM stdin WITH DELIMITER AS %s NULL AS %s",
             table_name, columnlist, quoted_delimiter, quoted_null);
         if (query_size >= DEFAULT_COPYBUFF) {
             /* Got truncated, allocate dynamically */
-            query = (char *)PyMem_Malloc((query_size + 1) * sizeof(char));
+            if (!(query = PyMem_New(char, query_size + 1))) {
+                PyErr_NoMemory();
+                goto exit;
+            }
             PyOS_snprintf(query, query_size + 1,
                 "COPY %s%s FROM stdin WITH DELIMITER AS %s NULL AS %s",
                 table_name, columnlist, quoted_delimiter, quoted_null);
         }
-        PyMem_Free(quoted_null);
     }
     else {
         query_size = PyOS_snprintf(query, DEFAULT_COPYBUFF,
@@ -1306,14 +1298,16 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
            table_name, columnlist, quoted_delimiter);
         if (query_size >= DEFAULT_COPYBUFF) {
             /* Got truncated, allocate dynamically */
-            query = (char *)PyMem_Malloc((query_size + 1) * sizeof(char));
+            if (!(query = PyMem_New(char, query_size + 1))) {
+                PyErr_NoMemory();
+                goto exit;
+            }
             PyOS_snprintf(query, query_size + 1,
                 "COPY %s%s FROM stdin WITH DELIMITER AS %s",
                 table_name, columnlist, quoted_delimiter);
         }
-    }    
-    PyMem_Free(quoted_delimiter);
-    
+    }
+
     Dprintf("psyco_curs_copy_from: query = %s", query);
 
     self->copysize = bufsize;
@@ -1324,10 +1318,12 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
         Py_INCREF(Py_None);
     }
 
-    if (query && (query != query_buffer)) {
-        PyMem_Free(query);
-    }
     self->copyfile = NULL;
+
+exit:
+    PyMem_Free(quoted_delimiter);
+    PyMem_Free(quoted_null);
+    if (query != query_buffer) { PyMem_Free(query); }
 
     return res;
 }
@@ -1363,7 +1359,8 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
     const char *table_name;
     const char *sep = "\t", *null = NULL;
     PyObject *file, *columns = NULL, *res = NULL;
-    char *quoted_delimiter;
+    char *quoted_delimiter = NULL;
+    char *quoted_null = NULL;
 
     static char *kwlist[] = {"file", "table", "sep", "null", "columns", NULL};
 
@@ -1381,31 +1378,32 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
     EXC_IF_GREEN(copy_to);
     EXC_IF_TPC_PREPARED(self->conn, copy_to);
 
-    quoted_delimiter = psycopg_escape_string((PyObject*)self->conn, sep, 0, NULL, NULL);
-    if (quoted_delimiter == NULL) {
+    if (!(quoted_delimiter = psycopg_escape_string(
+            (PyObject*)self->conn, sep, 0, NULL, NULL))) {
         PyErr_NoMemory();
-        return NULL;
+        goto exit;
     }
-    
+
     query = query_buffer;
     if (null) {
-        char *quoted_null = psycopg_escape_string((PyObject*)self->conn, null, 0, NULL, NULL);
-        if (NULL == quoted_null) {
-            PyMem_Free(quoted_delimiter);
+        if (!(quoted_null = psycopg_escape_string(
+                (PyObject*)self->conn, null, 0, NULL, NULL))) {
             PyErr_NoMemory();
-            return NULL;
+            goto exit;
         }
         query_size = PyOS_snprintf(query, DEFAULT_COPYBUFF,
             "COPY %s%s TO stdout WITH DELIMITER AS %s"
             " NULL AS %s", table_name, columnlist, quoted_delimiter, quoted_null);
         if (query_size >= DEFAULT_COPYBUFF) {
             /* Got truncated, allocate dynamically */
-            query = (char *)PyMem_Malloc((query_size + 1) * sizeof(char));
+            if (!(query = PyMem_New(char, query_size + 1))) {
+                PyErr_NoMemory();
+                goto exit;
+            }
             PyOS_snprintf(query, query_size + 1,
                 "COPY %s%s TO stdout WITH DELIMITER AS %s"
                 " NULL AS %s", table_name, columnlist, quoted_delimiter, quoted_null);
         }
-        PyMem_Free(quoted_null);
     }
     else {
         query_size = PyOS_snprintf(query, DEFAULT_COPYBUFF,
@@ -1413,14 +1411,16 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
             table_name, columnlist, quoted_delimiter);
         if (query_size >= DEFAULT_COPYBUFF) {
             /* Got truncated, allocate dynamically */
-            query = (char *)PyMem_Malloc((query_size + 1) * sizeof(char));
+            if (!(query = PyMem_New(char, query_size + 1))) {
+                PyErr_NoMemory();
+                goto exit;
+            }
             PyOS_snprintf(query, query_size + 1,
                 "COPY %s%s TO stdout WITH DELIMITER AS %s",
                 table_name, columnlist, quoted_delimiter);
         }
     }
-    PyMem_Free(quoted_delimiter);
-    
+
     Dprintf("psyco_curs_copy_to: query = %s", query);
 
     self->copysize = 0;
@@ -1430,10 +1430,12 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
         res = Py_None;
         Py_INCREF(Py_None);
     }
-    if (query && (query != query_buffer)) {
-        PyMem_Free(query);
-    }
     self->copyfile = NULL;
+
+exit:
+    PyMem_Free(quoted_delimiter);
+    PyMem_Free(quoted_null);
+    if (query != query_buffer) { PyMem_Free(query); }
 
     return res;
 }
@@ -1620,6 +1622,8 @@ static struct PyMemberDef cursorObject_members[] = {
     {"arraysize", T_LONG, OFFSETOF(arraysize), 0,
         "Number of records `fetchmany()` must fetch if not explicitly " \
         "specified."},
+    {"itersize", T_LONG, OFFSETOF(itersize), 0,
+        "Number of records ``iter(cur)`` must fetch per network roundtrip."},
     {"description", T_OBJECT, OFFSETOF(description), READONLY,
         "Cursor description as defined in DBAPI-2.0."},
     {"lastrowid", T_LONG, OFFSETOF(lastoid), READONLY,
@@ -1662,9 +1666,9 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
     Dprintf("cursor_setup: parameters: name = %s, conn = %p", name, conn);
 
     if (name) {
-        self->name = PyMem_Malloc(strlen(name)+1);
-        if (self->name == NULL) return 1;
-        strncpy(self->name, name, strlen(name)+1);
+        if (!(self->name = psycopg_escape_identifier_easy(name, 0))) {
+            return 1;
+        }
     }
 
     /* FIXME: why does this raise an excpetion on the _next_ line of code?
@@ -1682,6 +1686,7 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
     self->pgres = NULL;
     self->notuples = 1;
     self->arraysize = 1;
+    self->itersize = 2000;
     self->rowcount = -1;
     self->lastoid = InvalidOid;
 
@@ -1723,7 +1728,7 @@ cursor_dealloc(PyObject* obj)
 
     PyObject_GC_UnTrack(self);
 
-    if (self->name) PyMem_Free(self->name);
+    PyMem_Free(self->name);
 
     Py_CLEAR(self->conn);
     Py_CLEAR(self->casts);

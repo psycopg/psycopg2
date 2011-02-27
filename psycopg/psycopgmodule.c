@@ -66,6 +66,12 @@ HIDDEN PyObject *psycoEncodings = NULL;
 HIDDEN int psycopg_debug_enabled = 0;
 #endif
 
+/* Python representation of SQL NULL */
+HIDDEN PyObject *psyco_null = NULL;
+
+/* The type of the cursor.description items */
+HIDDEN PyObject *psyco_DescriptionType = NULL;
+
 /** connect module-level function **/
 #define psyco_connect_doc \
 "connect(dsn, ...) -- Create a new database connection.\n\n"               \
@@ -258,7 +264,7 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
 "  * `name`: Name for the new type\n" \
 "  * `adapter`: Callable to perform type conversion.\n" \
 "    It must have the signature ``fun(value, cur)`` where ``value`` is\n" \
-"    the string representation returned by PostgreSQL (`None` if ``NULL``)\n" \
+"    the string representation returned by PostgreSQL (`!None` if ``NULL``)\n" \
 "    and ``cur`` is the cursor from which data are read."
 
 static void
@@ -315,17 +321,26 @@ psyco_adapters_init(PyObject *mod)
     microprotocols_add(&PyLong_Type, NULL, (PyObject*)&asisType);
     microprotocols_add(&PyBool_Type, NULL, (PyObject*)&pbooleanType);
 
+    /* strings */
 #if PY_MAJOR_VERSION < 3
     microprotocols_add(&PyString_Type, NULL, (PyObject*)&qstringType);
 #endif
     microprotocols_add(&PyUnicode_Type, NULL, (PyObject*)&qstringType);
+
+    /* binary */
 #if PY_MAJOR_VERSION < 3
     microprotocols_add(&PyBuffer_Type, NULL, (PyObject*)&binaryType);
 #else
     microprotocols_add(&PyBytes_Type, NULL, (PyObject*)&binaryType);
+#endif
+
+#if PY_MAJOR_VERSION >= 3 || PY_MINOR_VERSION >= 6
     microprotocols_add(&PyByteArray_Type, NULL, (PyObject*)&binaryType);
+#endif
+#if PY_MAJOR_VERSION >= 3 || PY_MINOR_VERSION >= 7
     microprotocols_add(&PyMemoryView_Type, NULL, (PyObject*)&binaryType);
 #endif
+
     microprotocols_add(&PyList_Type, NULL, (PyObject*)&listType);
 
     if ((type = (PyTypeObject*)psyco_GetDecimalType()) != NULL)
@@ -574,18 +589,31 @@ psyco_errors_set(PyObject *type)
    Create a new error of the given type with extra attributes. */
 
 void
-psyco_set_error(PyObject *exc, PyObject *curs, const char *msg,
+psyco_set_error(PyObject *exc, cursorObject *curs, const char *msg,
                 const char *pgerror, const char *pgcode)
 {
     PyObject *t;
+    PyObject *pymsg;
+    PyObject *err = NULL;
+    connectionObject *conn = NULL;
 
-    PyObject *err = PyObject_CallFunction(exc, "s", msg);
+    if (curs) {
+        conn = ((cursorObject *)curs)->conn;
+    }
+
+    if ((pymsg = conn_text_from_chars(conn, msg))) {
+        err = PyObject_CallFunctionObjArgs(exc, pymsg, NULL);
+        Py_DECREF(pymsg);
+    }
+    else {
+        /* what's better than an error in an error handler in the morning?
+         * Anyway, some error was set, refcount is ok... get outta here. */
+        return;
+    }
 
     if (err) {
-        connectionObject *conn = NULL;
         if (curs) {
-            PyObject_SetAttrString(err, "cursor", curs);
-            conn = ((cursorObject *)curs)->conn;
+            PyObject_SetAttrString(err, "cursor", (PyObject *)curs);
         }
 
         if (pgerror) {
@@ -670,6 +698,44 @@ psyco_GetDecimalType(void)
     }
 
     return decimalType;
+}
+
+
+/* Create a namedtuple for cursor.description items
+ *
+ * Return None in case of expected errors (e.g. namedtuples not available)
+ * NULL in case of errors to propagate.
+ */
+static PyObject *
+psyco_make_description_type(void)
+{
+    PyObject *nt = NULL;
+    PyObject *coll = NULL;
+    PyObject *rv = NULL;
+
+    /* Try to import collections.namedtuple */
+    if (!(coll = PyImport_ImportModule("collections"))) {
+        Dprintf("psyco_make_description_type: collections import failed");
+        PyErr_Clear();
+        rv = Py_None;
+        goto exit;
+    }
+    if (!(nt = PyObject_GetAttrString(coll, "namedtuple"))) {
+        Dprintf("psyco_make_description_type: no collections.namedtuple");
+        PyErr_Clear();
+        rv = Py_None;
+        goto exit;
+    }
+
+    /* Build the namedtuple */
+    rv = PyObject_CallFunction(nt, "ss", "Column",
+        "name type_code display_size internal_size precision scale null_ok");
+
+exit:
+    Py_XDECREF(coll);
+    Py_XDECREF(nt);
+
+    return rv;
 }
 
 
@@ -873,6 +939,8 @@ INIT_MODULE(_psycopg)(void)
     /* other mixed initializations of module-level variables */
     psycoEncodings = PyDict_New();
     psyco_encodings_fill(psycoEncodings);
+    psyco_null = Bytes_FromString("NULL");
+    psyco_DescriptionType = psyco_make_description_type();
 
     /* set some module's parameters */
     PyModule_AddStringConstant(module, "__version__", PSYCOPG_VERSION);

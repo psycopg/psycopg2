@@ -73,7 +73,7 @@ I try to execute a query but it fails with the error *not all arguments converte
         >>> cur.execute("INSERT INTO foo VALUES (%s)", ("bar",)) # correct
         >>> cur.execute("INSERT INTO foo VALUES (%s)", ["bar"])  # correct
 
-My database is Unicode, but I receive all the strings as UTF-8 `str`. Can I receive `unicode` objects instead?
+My database is Unicode, but I receive all the strings as UTF-8 `!str`. Can I receive `!unicode` objects instead?
     The following magic formula will do the trick::
 
         psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
@@ -100,12 +100,13 @@ Transferring binary data from PostgreSQL 9.0 doesn't work.
     earlier. Three options to solve the problem are:
 
     - set the bytea_output__ parameter to ``escape`` in the server;
-    - use ``SET bytea_output TO escape`` in the client before reading binary
-      data;
+    - execute the database command ``SET bytea_output TO escape;`` in the
+      session before reading binary data;
     - upgrade the libpq library on the client to at least 9.0.
 
     .. __: http://www.postgresql.org/docs/9.0/static/datatype-binary.html
     .. __: http://www.postgresql.org/docs/9.0/static/runtime-config-client.html#GUC-BYTEA-OUTPUT
+
 
 Best practices
 --------------
@@ -138,8 +139,8 @@ What are the advantages or disadvantages of using named cursors?
     little memory on the client and to skip or discard parts of the result set.
 
 
-Problems compiling Psycopg from source
---------------------------------------
+Problems compiling and deploying psycopg2
+-----------------------------------------
 
 .. cssclass:: faq
 
@@ -150,4 +151,15 @@ I can't compile `!psycopg2`: the compiler says *error: Python.h: No such file or
 I can't compile `!psycopg2`: the compiler says *error: libpq-fe.h: No such file or directory*. What am I missing?
     You need to install the development version of the libpq: the package is
     usually called ``libpq-dev``.
+
+Psycopg raises *ImportError: cannot import name tz* on import in mod_wsgi / ASP, but it works fine otherwise.
+    If `!psycopg2` is installed in an egg_ (e.g. because installed by
+    :program:`easy_install`), the user running the program may be unable to
+    write in the `eggs cache`__. Set the env variable
+    :envvar:`PYTHON_EGG_CACHE` to a writable directory. With modwsgi you can
+    use the WSGIPythonEggs__ directive.
+
+    .. _egg: http://peak.telecommunity.com/DevCenter/PythonEggs
+    .. __: http://stackoverflow.com/questions/2192323/what-is-the-python-egg-cache-python-egg-cache
+    .. __: http://code.google.com/p/modwsgi/wiki/ConfigurationDirectives#WSGIPythonEggs
 

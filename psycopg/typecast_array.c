@@ -135,7 +135,10 @@ typecast_array_tokenize(const char *str, Py_ssize_t strlength,
     if (res == ASCAN_QUOTED) {
         Py_ssize_t j;
         char *buffer = PyMem_Malloc(l+1);
-        if (buffer == NULL) return ASCAN_ERROR;
+        if (buffer == NULL) {
+            PyErr_NoMemory();
+            return ASCAN_ERROR;
+        }
 
         *token = buffer;
 

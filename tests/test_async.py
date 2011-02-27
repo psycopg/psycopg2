@@ -23,7 +23,7 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-from testutils import unittest, skip_if_no_pg_sleep
+from testutils import unittest, skip_before_postgres
 
 import psycopg2
 from psycopg2 import extensions
@@ -113,7 +113,7 @@ class AsyncTests(unittest.TestCase):
         self.assertFalse(self.conn.isexecuting())
         self.assertEquals(cur.fetchone()[0], "a")
 
-    @skip_if_no_pg_sleep('conn')
+    @skip_before_postgres(8, 2)
     def test_async_callproc(self):
         cur = self.conn.cursor()
         cur.callproc("pg_sleep", (0.1, ))

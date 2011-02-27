@@ -24,7 +24,7 @@
 
 import time
 import threading
-from testutils import unittest, decorate_all_tests, skip_if_no_pg_sleep
+from testutils import unittest, decorate_all_tests, skip_before_postgres
 from operator import attrgetter
 
 import psycopg2
@@ -114,12 +114,12 @@ class ConnectionTests(unittest.TestCase):
         self.assertRaises(psycopg2.NotSupportedError,
             cnn.xid, 42, "foo", "bar")
 
-    @skip_if_no_pg_sleep('conn')
+    @skip_before_postgres(8, 2)
     def test_concurrent_execution(self):
         def slave():
             cnn = psycopg2.connect(dsn)
             cur = cnn.cursor()
-            cur.execute("select pg_sleep(2)")
+            cur.execute("select pg_sleep(4)")
             cur.close()
             cnn.close()
 
@@ -130,7 +130,7 @@ class ConnectionTests(unittest.TestCase):
         t2.start()
         t1.join()
         t2.join()
-        self.assert_(time.time() - t0 < 3,
+        self.assert_(time.time() - t0 < 7,
             "something broken in concurrency")
 
     def test_encoding_name(self):

@@ -63,7 +63,7 @@ functionalities defined by the |DBAPI|_.
         `connection.encoding`) if the file was open in ``t`` mode, a bytes
         string for ``b`` mode.
 
-        .. versionchanged:: 2.3.3
+        .. versionchanged:: 2.4
             added Unicode support.
 
     .. method:: write(str)
@@ -72,7 +72,7 @@ functionalities defined by the |DBAPI|_.
         written. Unicode strings are encoded in the `connection.encoding`
         before writing.
 
-        .. versionchanged:: 2.3.3
+        .. versionchanged:: 2.4
             added Unicode support.
 
     .. method:: export(file_name)
@@ -201,10 +201,10 @@ deal with Python objects adaptation:
 
         A conform object can implement this method if the SQL
         representation depends on any server parameter, such as the server
-        version or the ``standard_conforming_string`` setting.  Container
+        version or the :envvar:`standard_conforming_string` setting.  Container
         objects may store the connection and use it to recursively prepare
         contained objects: see the implementation for
-        ``psycopg2.extensions.SQL_IN`` for a simple example.
+        `psycopg2.extensions.SQL_IN` for a simple example.
 
 
 .. class:: AsIs(object)
@@ -303,7 +303,7 @@ details.
     *adapter* should have signature :samp:`fun({value}, {cur})` where
     *value* is the string representation returned by PostgreSQL and
     *cur* is the cursor from which data are read. In case of
-    :sql:`NULL`, *value* will be ``None``. The adapter should return the
+    :sql:`NULL`, *value* will be `!None`. The adapter should return the
     converted object.
 
     See :ref:`type-casting-from-sql-to-python` for an usage example.

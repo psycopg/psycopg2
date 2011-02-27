@@ -47,54 +47,85 @@ binary_escape(unsigned char *from, size_t from_length,
         return PQescapeBytea(from, from_length, to_length);
 }
 
+#define HAS_BUFFER (PY_MAJOR_VERSION < 3)
+#define HAS_MEMORYVIEW (PY_MAJOR_VERSION > 2 || PY_MINOR_VERSION >= 6)
+
 /* binary_quote - do the quote process on plain and unicode strings */
 
 static PyObject *
 binary_quote(binaryObject *self)
 {
-    char *to;
-    const char *buffer;
+    char *to = NULL;
+    const char *buffer = NULL;
     Py_ssize_t buffer_len;
     size_t len = 0;
+    PyObject *rv = NULL;
+#if HAS_MEMORYVIEW
+    Py_buffer view;
+    int got_view = 0;
+#endif
 
     /* if we got a plain string or a buffer we escape it and save the buffer */
-    if (Bytes_Check(self->wrapped)
-#if PY_MAJOR_VERSION < 3
-        || PyBuffer_Check(self->wrapped)
-#else
-        || PyByteArray_Check(self->wrapped)
-        || PyMemoryView_Check(self->wrapped)
-#endif
-        ) {
-        /* escape and build quoted buffer */
-        if (PyObject_AsReadBuffer(self->wrapped, (const void **)&buffer,
-                                  &buffer_len) < 0)
-            return NULL;
 
-        to = (char *)binary_escape((unsigned char*)buffer, (size_t) buffer_len,
-            &len, self->conn ? ((connectionObject*)self->conn)->pgconn : NULL);
-        if (to == NULL) {
-            PyErr_NoMemory();
-            return NULL;
+#if HAS_MEMORYVIEW
+    if (PyObject_CheckBuffer(self->wrapped)) {
+        if (0 > PyObject_GetBuffer(self->wrapped, &view, PyBUF_CONTIG_RO)) {
+            goto exit;
         }
+        got_view = 1;
+        buffer = (const char *)(view.buf);
+        buffer_len = view.len;
+    }
+#endif
 
-        if (len > 0)
-            self->buffer = Bytes_FromFormat(
-                (self->conn && ((connectionObject*)self->conn)->equote)
-                    ? "E'%s'::bytea" : "'%s'::bytea" , to);
-        else
-            self->buffer = Bytes_FromString("''::bytea");
+#if HAS_BUFFER
+    if (!buffer && (Bytes_Check(self->wrapped) || PyBuffer_Check(self->wrapped))) {
+        if (PyObject_AsReadBuffer(self->wrapped, (const void **)&buffer,
+                                  &buffer_len) < 0) {
+            goto exit;
+        }
+    }
+#endif
 
-        PQfreemem(to);
+    if (!buffer) {
+        goto exit;
     }
 
-    /* if the wrapped object is not a string or a buffer, this is an error */
-    else {
-        PyErr_SetString(PyExc_TypeError, "can't escape non-string object");
-        return NULL;
+    /* escape and build quoted buffer */
+
+    to = (char *)binary_escape((unsigned char*)buffer, (size_t) buffer_len,
+        &len, self->conn ? ((connectionObject*)self->conn)->pgconn : NULL);
+    if (to == NULL) {
+        PyErr_NoMemory();
+        goto exit;
     }
 
-    return self->buffer;
+    if (len > 0)
+        rv = Bytes_FromFormat(
+            (self->conn && ((connectionObject*)self->conn)->equote)
+                ? "E'%s'::bytea" : "'%s'::bytea" , to);
+    else
+        rv = Bytes_FromString("''::bytea");
+
+exit:
+    if (to) { PQfreemem(to); }
+#if HAS_MEMORYVIEW
+    if (got_view) { PyBuffer_Release(&view); }
+#endif
+
+    /* Allow Binary(None) to work */
+    if (self->wrapped == Py_None) {
+        Py_INCREF(psyco_null);
+        rv = psyco_null;
+    }
+
+    /* if the wrapped object is not bytes or a buffer, this is an error */
+    if (!rv && !PyErr_Occurred()) {
+        PyErr_Format(PyExc_TypeError, "can't escape %s to binary",
+            Py_TYPE(self->wrapped)->tp_name);
+    }
+
+    return rv;
 }
 
 /* binary_str, binary_getquoted - return result of quoting */
@@ -103,11 +134,9 @@ static PyObject *
 binary_getquoted(binaryObject *self, PyObject *args)
 {
     if (self->buffer == NULL) {
-        if (!(binary_quote(self))) {
-            return NULL;
-        }
+        self->buffer = binary_quote(self);
     }
-    Py_INCREF(self->buffer);
+    Py_XINCREF(self->buffer);
     return self->buffer;
 }
 

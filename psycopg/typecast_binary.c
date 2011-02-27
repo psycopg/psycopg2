@@ -166,6 +166,19 @@ typecast_BINARY_cast(const char *s, Py_ssize_t l, PyObject *curs)
       goto fail;
     }
 
+    /* Check the escaping was successful */
+    if (s[0] == '\\' && s[1] == 'x'     /* input encoded in hex format */
+        && str[0] == 'x'                /* output resulted in an 'x' */
+        && s[2] != '7' && s[3] != '8')  /* input wasn't really an x (0x78) */
+    {
+        PyErr_SetString(InterfaceError,
+            "can't receive bytea data from server >= 9.0 with the current "
+            "libpq client library: please update the libpq to at least 9.0 "
+            "or set bytea_output to 'escape' in the server config "
+            "or with a query");
+        goto fail;
+    }
+
     chunk = (chunkObject *) PyObject_New(chunkObject, &chunkType);
     if (chunk == NULL) goto fail;
 
@@ -201,10 +214,8 @@ typecast_BINARY_cast(const char *s, Py_ssize_t l, PyObject *curs)
           /* str's mem was allocated by PQunescapeBytea; must use PQfreemem: */
           PQfreemem(str);
       }
-      if (buffer != NULL) {
-          /* We allocated buffer with PyMem_Malloc; must use PyMem_Free: */
-          PyMem_Free(buffer);
-      }
+      /* We allocated buffer with PyMem_Malloc; must use PyMem_Free: */
+      PyMem_Free(buffer);
 
       return res;
 }

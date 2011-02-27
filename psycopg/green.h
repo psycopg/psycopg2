@@ -55,7 +55,7 @@ HIDDEN PyObject *psyco_set_wait_callback(PyObject *self, PyObject *obj);
 #define psyco_get_wait_callback_doc \
 "Return the currently registered wait callback.\n" \
 "\n" \
-"Return `None` if no callback is currently registered.\n"
+"Return `!None` if no callback is currently registered.\n"
 HIDDEN PyObject *psyco_get_wait_callback(PyObject *self, PyObject *obj);
 
 HIDDEN int psyco_green(void);

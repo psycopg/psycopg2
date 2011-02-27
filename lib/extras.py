@@ -232,7 +232,7 @@ class RealDictCursor(DictCursorBase):
             self._query_executed = 0
 
 class RealDictRow(dict):
-    """A ``dict`` subclass representing a data record."""
+    """A `!dict` subclass representing a data record."""
 
     __slots__ = ('_column_mapping')
 
@@ -253,7 +253,7 @@ class NamedTupleConnection(_connection):
         return _connection.cursor(self, *args, **kwargs)
 
 class NamedTupleCursor(_cursor):
-    """A cursor that generates results as |namedtuple|__.
+    """A cursor that generates results as `~collections.namedtuple`.
 
     `!fetch*()` methods will return named tuples instead of regular tuples, so
     their elements can be accessed both as regular numeric items as well as
@@ -267,9 +267,6 @@ class NamedTupleCursor(_cursor):
         100
         >>> rec.data
         "abc'def"
-
-    .. |namedtuple| replace:: `!namedtuple`
-    .. __: http://docs.python.org/release/2.6/library/collections.html#collections.namedtuple
     """
     Record = None
 
@@ -327,9 +324,9 @@ class LoggingConnection(_connection):
     """
 
     def initialize(self, logobj):
-        """Initialize the connection to log to ``logobj``.
+        """Initialize the connection to log to `!logobj`.
 
-        The ``logobj`` parameter can be an open file object or a Logger
+        The `!logobj` parameter can be an open file object or a Logger
         instance from the standard logging module.
         """
         self._logobj = logobj
@@ -666,9 +663,7 @@ class HstoreAdapter(object):
 
     @classmethod
     def get_oids(self, conn_or_curs):
-        """Return the oid of the hstore and hstore[] types.
-
-        Return None if hstore is not available.
+        """Return the lists of OID of the hstore and hstore[] types.
         """
         if hasattr(conn_or_curs, 'execute'):
             conn = conn_or_curs.connection
@@ -683,46 +678,69 @@ class HstoreAdapter(object):
         # column typarray not available before PG 8.3
         typarray = conn.server_version >= 80300 and "typarray" or "NULL"
 
+        rv0, rv1 = [], []
+
         # get the oid for the hstore
         curs.execute("""\
 SELECT t.oid, %s
 FROM pg_type t JOIN pg_namespace ns
     ON typnamespace = ns.oid
-WHERE typname = 'hstore' and nspname = 'public';
+WHERE typname = 'hstore';
 """ % typarray)
-        oids = curs.fetchone()
+        for oids in curs:
+            rv0.append(oids[0])
+            rv1.append(oids[1])
 
         # revert the status of the connection as before the command
         if (conn_status != _ext.STATUS_IN_TRANSACTION
         and conn.isolation_level != _ext.ISOLATION_LEVEL_AUTOCOMMIT):
             conn.rollback()
 
-        return oids
+        return tuple(rv0), tuple(rv1)
 
-def register_hstore(conn_or_curs, globally=False, unicode=False):
-    """Register adapter and typecaster for `dict`\-\ |hstore| conversions.
+def register_hstore(conn_or_curs, globally=False, unicode=False, oid=None):
+    """Register adapter and typecaster for `!dict`\-\ |hstore| conversions.
 
-    The function must receive a connection or cursor as the |hstore| oid is
-    different in each database. The typecaster will normally be registered
-    only on the connection or cursor passed as argument. If your application
-    uses a single database you can pass *globally*\=True to have the typecaster
-    registered on all the connections.
+    :param conn_or_curs: a connection or cursor: the typecaster will be
+        registered only on this object unless *globally* is set to `!True`
+    :param globally: register the adapter globally, not only on *conn_or_curs*
+    :param unicode: if `!True`, keys and values returned from the database
+        will be `!unicode` instead of `!str`. The option is not available on
+        Python 3
+    :param oid: the OID of the |hstore| type if known. If not, it will be
+        queried on *conn_or_curs*
 
-    On Python 2, by default the returned dicts will have `str` objects as keys and values:
-    use *unicode*\=True to return `unicode` objects instead.  When adapting a
-    dictionary both `str` and `unicode` keys and values are handled (the
-    `unicode` values will be converted according to the current
-    `~connection.encoding`). The option is not available on Python 3.
+    The connection or cursor passed to the function will be used to query the
+    database and look for the OID of the |hstore| type (which may be different
+    across databases). If querying is not desirable (e.g. with
+    :ref:`asynchronous connections <async-support>`) you may specify it in the
+    *oid* parameter (it can be found using a query such as :sql:`SELECT
+    'hstore'::regtype::oid;`).
+
+    Note that, when passing a dictionary from Python to the database, both
+    strings and unicode keys and values are supported. Dictionaries returned
+    from the database have keys/values according to the *unicode* parameter.
 
     The |hstore| contrib module must be already installed in the database
     (executing the ``hstore.sql`` script in your ``contrib`` directory).
     Raise `~psycopg2.ProgrammingError` if the type is not found.
+
+    .. versionchanged:: 2.4
+        added the *oid* parameter. If not specified, the typecaster is
+        installed also if |hstore| is not installed in the :sql:`public`
+        schema.
     """
-    oids = HstoreAdapter.get_oids(conn_or_curs)
-    if oids is None:
-        raise psycopg2.ProgrammingError(
-            "hstore type not found in the database. "
-            "please install it from your 'contrib/hstore.sql' file")
+    if oid is None:
+        oid = HstoreAdapter.get_oids(conn_or_curs)
+        if oid is None or not oid[0]:
+            raise psycopg2.ProgrammingError(
+                "hstore type not found in the database. "
+                "please install it from your 'contrib/hstore.sql' file")
+        else:
+            oid = oid[0]  # for the moment we don't have a HSTOREARRAY
+
+    if isinstance(oid, int):
+        oid = (oid,)
 
     # create and register the typecaster
     if sys.version_info[0] < 3 and unicode:
@@ -730,7 +748,7 @@ def register_hstore(conn_or_curs, globally=False, unicode=False):
     else:
         cast = HstoreAdapter.parse
 
-    HSTORE = _ext.new_type((oids[0],), "HSTORE", cast)
+    HSTORE = _ext.new_type(oid, "HSTORE", cast)
     _ext.register_type(HSTORE, not globally and conn_or_curs or None)
     _ext.register_adapter(dict, HstoreAdapter)
 
@@ -750,9 +768,9 @@ class CompositeCaster(object):
 
     .. attribute:: type
 
-        The type of the Python objects returned. If `!collections.namedtuple()`
+        The type of the Python objects returned. If :py:func:`collections.namedtuple()`
         is available, it is a named tuple with attributes equal to the type
-        components. Otherwise it is just the `tuple` object.
+        components. Otherwise it is just the `!tuple` object.
 
     .. attribute:: attnames
 
@@ -875,8 +893,8 @@ def register_composite(name, conn_or_curs, globally=False):
         the |CREATE TYPE|_ command
     :param conn_or_curs: a connection or cursor used to find the type oid and
         components; the typecaster is registered in a scope limited to this
-        object, unless *globally* is set to `True`
-    :param globally: if `False` (default) register the typecaster only on
+        object, unless *globally* is set to `!True`
+    :param globally: if `!False` (default) register the typecaster only on
         *conn_or_curs*, otherwise register it globally
     :return: the registered `CompositeCaster` instance responsible for the
         conversion

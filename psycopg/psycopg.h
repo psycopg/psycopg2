@@ -105,6 +105,9 @@ import_psycopg(void)
 /* postgresql<->python encoding map */
 extern HIDDEN PyObject *psycoEncodings;
 
+/* SQL NULL */
+extern HIDDEN PyObject *psyco_null;
+
 typedef struct {
     char *pgenc;
     char *pyenc;
@@ -113,13 +116,16 @@ typedef struct {
 /* the Decimal type, used by the DECIMAL typecaster */
 HIDDEN PyObject *psyco_GetDecimalType(void);
 
+/* forward declaration */
+typedef struct cursorObject cursorObject;
+
 /* some utility functions */
-HIDDEN void psyco_set_error(PyObject *exc, PyObject *curs,  const char *msg,
+HIDDEN void psyco_set_error(PyObject *exc, cursorObject *curs, const char *msg,
                             const char *pgerror, const char *pgcode);
 
 HIDDEN char *psycopg_escape_string(PyObject *conn,
               const char *from, Py_ssize_t len, char *to, Py_ssize_t *tolen);
-
+HIDDEN char *psycopg_escape_identifier_easy(const char *from, Py_ssize_t len);
 HIDDEN char *psycopg_strdup(const char *from, Py_ssize_t len);
 HIDDEN PyObject * psycopg_ensure_bytes(PyObject *obj);
 HIDDEN PyObject * psycopg_ensure_text(PyObject *obj);

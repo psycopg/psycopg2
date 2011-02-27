@@ -25,6 +25,7 @@ static long int typecast_DATEARRAY_types[] = {1182, 0};
 static long int typecast_INTERVALARRAY_types[] = {1187, 0};
 static long int typecast_BINARYARRAY_types[] = {1001, 0};
 static long int typecast_ROWIDARRAY_types[] = {1028, 1013, 0};
+static long int typecast_UNKNOWN_types[] = {705, 0};
 
 
 static typecastObject_initlist typecast_builtins[] = {
@@ -55,6 +56,7 @@ static typecastObject_initlist typecast_builtins[] = {
   {"INTERVALARRAY", typecast_INTERVALARRAY_types, typecast_INTERVALARRAY_cast, "INTERVAL"},
   {"BINARYARRAY", typecast_BINARYARRAY_types, typecast_BINARYARRAY_cast, "BINARY"},
   {"ROWIDARRAY", typecast_ROWIDARRAY_types, typecast_ROWIDARRAY_cast, "ROWID"},
+  {"UNKNOWN", typecast_UNKNOWN_types, typecast_UNKNOWN_cast, NULL},
     {NULL, NULL, NULL, NULL}
 };
 

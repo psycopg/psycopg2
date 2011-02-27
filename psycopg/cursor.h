@@ -34,7 +34,8 @@ extern "C" {
 
 extern HIDDEN PyTypeObject cursorType;
 
-typedef struct {
+/* the typedef is forward-declared in psycopg.h */
+struct cursorObject {
     PyObject_HEAD
 
     connectionObject *conn; /* connection owning the cursor */
@@ -45,6 +46,7 @@ typedef struct {
     long int rowcount;       /* number of rows affected by last execute */
     long int columns;        /* number of columns fetched from the db */
     long int arraysize;      /* how many rows should fetchmany() return */
+    long int itersize;       /* how many rows should iter(cur) fetch in named cursors */
     long int row;            /* the row counter for fetch*() operations */
     long int mark;           /* transaction marker, copied from conn */
 
@@ -78,7 +80,8 @@ typedef struct {
 
     PyObject *weakreflist;    /* list of weak references */
 
-} cursorObject;
+};
+
 
 /* C-callable functions in cursor_int.c and cursor_ext.c */
 HIDDEN PyObject *curs_get_cast(cursorObject *self, PyObject *oid);

@@ -39,7 +39,8 @@ asis_getquoted(asisObject *self, PyObject *args)
 {
     PyObject *rv;
     if (self->wrapped == Py_None) {
-        rv = Bytes_FromString("NULL");
+        Py_INCREF(psyco_null);
+        rv = psyco_null;
     }
     else {
         rv = PyObject_Str(self->wrapped);

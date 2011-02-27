@@ -57,6 +57,10 @@ from distutils.ccompiler import get_default_compiler
 from distutils.dep_util import newer_group
 from distutils.util import get_platform
 try:
+    from distutils.msvc9compiler import MSVCCompiler
+except ImportError:
+    MSVCCompiler = None
+try:
     from distutils.command.build_py import build_py_2to3 as build_py
 except ImportError:
     from distutils.command.build_py import build_py
@@ -75,7 +79,7 @@ except ImportError:
 # Take a look at http://www.python.org/dev/peps/pep-0386/
 # for a consistent versioning pattern.
 
-PSYCOPG_VERSION = '2.4-beta2'
+PSYCOPG_VERSION = '2.4'
 
 version_flags   = ['dt', 'dec']
 
@@ -151,14 +155,19 @@ class psycopg_build_ext(build_ext):
     def get_pg_config(self, kind):
         return get_pg_config(kind, self.pg_config)
 
+    def get_export_symbols(self, ext):
+        # Fix MSVC seeing two of the same export symbols.
+        if self.get_compiler().lower().startswith('msvc'):
+            return []
+        else:
+            return build_ext.get_export_symbols(self, ext)
+
     def build_extension(self, ext):
         build_ext.build_extension(self, ext)
 
-        # For MSVC compiler and Python 2.6/2.7 (aka VS 2008), re-insert the
-        #  Manifest into the resulting .pyd file.
-        sysVer = sys.version_info[:2]
-        if self.get_compiler().lower().startswith('msvc') and \
-                sysVer in ((2,6), (2,7)):
+        # For Python versions that use MSVC compiler 2008, re-insert the
+        #  manifest into the resulting .pyd file.
+        if MSVCCompiler and isinstance(self.compiler, MSVCCompiler):
             platform = get_platform()
             # Default to the x86 manifest
             manifest = '_psycopg.vc9.x86.manifest'
@@ -179,13 +188,7 @@ class psycopg_build_ext(build_ext):
         compiler_name = self.get_compiler().lower()
         compiler_is_msvc = compiler_name.startswith('msvc')
         compiler_is_mingw = compiler_name.startswith('mingw')
-        if compiler_is_msvc:
-            # If we're using MSVC 7.1 or later on a 32-bit platform, add the
-            # /Wp64 option to generate warnings about Win64 portability
-            # problems.
-            if sysVer >= (2,4) and struct.calcsize('P') == 4:
-                extra_compiler_args.append('/Wp64')
-        elif compiler_is_mingw:
+        if compiler_is_mingw:
             # Default MinGW compilation of Python extensions on Windows uses
             # only -O:
             extra_compiler_args.append('-O3')
@@ -504,6 +507,15 @@ ext.append(Extension("psycopg2._psycopg", sources,
                      include_dirs=include_dirs,
                      depends=depends,
                      undef_macros=[]))
+
+# Compute the direct download url.
+# Note that the current package installation programs are stupidly intelligent
+# and will try to install a beta if they find a link in the homepage instead of
+# using these pretty metadata. But that's their problem, not ours.
+download_url = (
+    "http://initd.org/psycopg/tarballs/PSYCOPG-%s/psycopg2-%s.tar.gz"
+    % ('-'.join(PSYCOPG_VERSION.split('.')[:2]), PSYCOPG_VERSION))
+
 setup(name="psycopg2",
       version=PSYCOPG_VERSION,
       maintainer="Federico Di Gregorio",
@@ -511,7 +523,7 @@ setup(name="psycopg2",
       author="Federico Di Gregorio",
       author_email="fog@initd.org",
       url="http://initd.org/psycopg/",
-      download_url = "http://initd.org/psycopg/download/",
+      download_url = download_url,
       license="GPL with exceptions or ZPL",
       platforms = ["any"],
       description=__doc__.split("\n")[0],

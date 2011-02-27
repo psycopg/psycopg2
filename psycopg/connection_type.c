@@ -502,7 +502,7 @@ psyco_conn_get_parameter_status(connectionObject *self, PyObject *args)
 /* lobject method - allocate a new lobject */
 
 #define psyco_conn_lobject_doc \
-"cursor(oid=0, mode=0, new_oid=0, new_file=None,\n"                         \
+"lobject(oid=0, mode=0, new_oid=0, new_file=None,\n"                        \
 "       lobject_factory=extensions.lobject) -- new lobject\n\n"             \
 "Return a new lobject.\n\nThe ``lobject_factory`` argument can be used\n"   \
 "to create non-standard lobjects by passing a class different from the\n"   \
@@ -820,28 +820,31 @@ static int
 connection_setup(connectionObject *self, const char *dsn, long int async)
 {
     char *pos;
-    int res;
+    int res = -1;
 
     Dprintf("connection_setup: init connection object at %p, "
 	    "async %ld, refcnt = " FORMAT_CODE_PY_SSIZE_T,
             self, async, Py_REFCNT(self)
       );
 
-    self->dsn = strdup(dsn);
-    self->notice_list = PyList_New(0);
-    self->notifies = PyList_New(0);
+    if (!(self->dsn = strdup(dsn))) {
+        PyErr_NoMemory();
+        goto exit;
+    }
+    if (!(self->notice_list = PyList_New(0))) { goto exit; }
+    if (!(self->notifies = PyList_New(0))) { goto exit; }
     self->async = async;
     self->status = CONN_STATUS_SETUP;
     self->async_status = ASYNC_DONE;
-    self->string_types = PyDict_New();
-    self->binary_types = PyDict_New();
+    if (!(self->string_types = PyDict_New())) { goto exit; }
+    if (!(self->binary_types = PyDict_New())) { goto exit; }
     /* other fields have been zeroed by tp_alloc */
 
     pthread_mutex_init(&(self->lock), NULL);
 
     if (conn_connect(self, async) != 0) {
         Dprintf("connection_init: FAILED");
-        res = -1;
+        goto exit;
     }
     else {
         Dprintf("connection_setup: good connection object at %p, refcnt = "
@@ -858,6 +861,7 @@ connection_setup(connectionObject *self, const char *dsn, long int async)
             *pos = 'x';
     }
 
+exit:
     return res;
 }
 
@@ -935,7 +939,7 @@ connection_repr(connectionObject *self)
 static int
 connection_traverse(connectionObject *self, visitproc visit, void *arg)
 {
-    Py_VISIT(self->tpc_xid);
+    Py_VISIT((PyObject *)(self->tpc_xid));
     Py_VISIT(self->async_cursor);
     Py_VISIT(self->notice_list);
     Py_VISIT(self->notice_filter);

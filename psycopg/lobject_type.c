@@ -124,10 +124,11 @@ static PyObject *
 psyco_lobj_read(lobjectObject *self, PyObject *args)
 {
     PyObject *res;
-    int where, end, size = -1;
+    int where, end;
+    Py_ssize_t size = -1;
     char *buffer;
 
-    if (!PyArg_ParseTuple(args, "|i", &size)) return NULL;
+    if (!PyArg_ParseTuple(args, "|" CONV_CODE_PY_SSIZE_T,  &size)) return NULL;
 
     EXC_IF_LOBJ_CLOSED(self);
     EXC_IF_LOBJ_LEVEL0(self);
@@ -331,7 +332,7 @@ lobject_setup(lobjectObject *self, connectionObject *conn,
     Dprintf("lobject_setup: init lobject object at %p", self);
 
     if (conn->isolation_level == ISOLATION_LEVEL_AUTOCOMMIT) {
-        psyco_set_error(ProgrammingError, (PyObject*)self,
+        psyco_set_error(ProgrammingError, NULL,
             "can't use a lobject outside of transactions", NULL, NULL);
         return -1;
     }
@@ -344,7 +345,7 @@ lobject_setup(lobjectObject *self, connectionObject *conn,
     self->fd = -1;
     self->oid = InvalidOid;
 
-    if (lobject_open(self, conn, oid, smode, new_oid, new_file) == -1)
+    if (0 != lobject_open(self, conn, oid, smode, new_oid, new_file))
         return -1;
 
    Dprintf("lobject_setup: good lobject object at %p, refcnt = "
