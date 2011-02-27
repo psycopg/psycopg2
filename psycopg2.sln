@@ -19,19 +19,22 @@ Global
 		Policies = $0
 		$0.TextStylePolicy = $1
 		$1.FileWidth = 120
-		$1.NoTabsAfterNonTabs = False
+		$1.TabWidth = 4
+		$1.inheritsSet = Mono
+		$1.inheritsScope = text/plain
 		$0.DotNetNamingPolicy = $2
 		$2.DirectoryNamespaceAssociation = None
 		$2.ResourceNamePolicy = FileName
-		$0.TextStylePolicy = $3
-		$3.NoTabsAfterNonTabs = False
-		$3.inheritsSet = Mono
-		$3.inheritsScope = text/x-python
-		$3.scope = text/plain
-		$0.StandardHeader = $4
-		$4.Text = 
-		$4.IncludeInNewFiles = False
-		$4.inheritsSet = MITX11License
+		$0.StandardHeader = $3
+		$3.Text = 
+		$3.IncludeInNewFiles = False
+		$0.TextStylePolicy = $4
+		$4.FileWidth = 72
+		$4.NoTabsAfterNonTabs = True
+		$4.RemoveTrailingWhitespace = True
+		$4.inheritsSet = VisualStudio
+		$4.inheritsScope = text/plain
+		$4.scope = text/x-readme
 		name = psycopg2
 	EndGlobalSection
 EndGlobal

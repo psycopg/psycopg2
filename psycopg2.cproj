@@ -89,7 +89,6 @@
     <None Include="psycopg\microprotocols.h" />
     <None Include="psycopg\microprotocols_proto.h" />
     <None Include="psycopg\pgtypes.h" />
-    <None Include="psycopg\pgversion.h" />
     <None Include="psycopg\pqpath.h" />
     <None Include="psycopg\psycopg.h" />
     <None Include="psycopg\python.h" />
@@ -198,12 +197,11 @@
     <None Include="psycopg\green.h" />
     <None Include="doc\src\pool.rst" />
     <None Include="sandbox\dec2float.py" />
-    <None Include="NEWS-2.0" />
     <None Include="psycopg\notify.h" />
     <None Include="psycopg\xid.h" />
     <None Include="tests\dbapi20_tpc.py" />
     <None Include="tests\test_cursor.py" />
-    <None Include="NEWS-2.3" />
+    <None Include="NEWS" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="psycopg\adapter_asis.c" />

@@ -3,12 +3,12 @@ What's new in psycopg 2.4
 
 * New features and changes:
 
-  - Added support for Python 3.1 and 3.2. The conversion has also brought
-    several improvements:
+  - Added support for Python 3.1 and 3.2. The conversion has also
+    brought several improvements:
 
-    - Added 'b' and 't' mode to large objects: write can deal with both bytes
-      strings and unicode; read can return either bytes strings or decoded
-      unicode.
+    - Added 'b' and 't' mode to large objects: write can deal with both
+      bytes strings and unicode; read can return either bytes strings
+      or decoded unicode.
     - COPY sends Unicode data to files implementing 'io.TextIOBase'.
     - Improved PostgreSQL-Python encodings mapping.
     - Added a few missing encodings: EUC_CN, EUC_JIS_2004, ISO885910,
@@ -17,40 +17,42 @@ What's new in psycopg 2.4
 
   - Improvements to the named cusors:
 
-    - More efficient iteration on named cursors, fetching 'itersize' records at
-      time from the backend.
+    - More efficient iteration on named cursors, fetching 'itersize'
+      records at time from the backend.
     - The named cursors name can be an invalid identifier.
 
   - Improvements in data handling:
 
-    - Added 'register_composite()' function to cast PostgreSQL composite types
-      into Python tuples/namedtuples.
-    - Adapt types 'bytearray' (from Python 2.6), 'memoryview' (from Python 2.7)
-      and other objects implementing the "Revised Buffer Protocol" to 'bytea'
-      data type.
-    - The 'hstore' adapter can work even when the data type is not installed
-      in the 'public' namespace.
-    - Raise a clean exception instead of returning bad data when receiving bytea
-      in 'hex' format and the client libpq can't parse them.
+    - Added 'register_composite()' function to cast PostgreSQL
+      composite types into Python tuples/namedtuples.
+    - Adapt types 'bytearray' (from Python 2.6), 'memoryview' (from
+      Python 2.7) and other objects implementing the "Revised Buffer
+      Protocol" to 'bytea' data type.
+    - The 'hstore' adapter can work even when the data type is not
+      installed in the 'public' namespace.
+    - Raise a clean exception instead of returning bad data when
+      receiving bytea in 'hex' format and the client libpq can't parse
+      them.
     - Empty lists correctly roundtrip Python -> PostgreSQL -> Python.
 
   - Other changes:
 
     - 'cursor.description' is provided as named tuples if available.
-    - The build script refuses to guess values if 'pg_config' is not found.
+    - The build script refuses to guess values if 'pg_config' is not
+      found.
     - Connections and cursors are weakly referenceable.
 
 * Bug fixes:
 
-  - Fixed adaptation of None in composite types (ticket #26). Bug report by
-    Karsten Hilbert.
+  - Fixed adaptation of None in composite types (ticket #26). Bug
+    report by Karsten Hilbert.
   - Fixed several reference leaks in less common code paths.
-  - Fixed segfault when a large object is closed and its connection no more
-    available.
-  - Added missing icon to ZPsycopgDA package, not available in Zope 2.12.9
-    (ticket #30). Bug report and patch by Pumukel.
-  - Fixed conversion of negative infinity (ticket #40). Bug report and patch
-    by Marti Raudsepp.
+  - Fixed segfault when a large object is closed and its connection no
+    more available.
+  - Added missing icon to ZPsycopgDA package, not available in Zope
+    2.12.9 (ticket #30). Bug report and patch by Pumukel.
+  - Fixed conversion of negative infinity (ticket #40). Bug report and
+    patch by Marti Raudsepp.
 
 
 What's new in psycopg 2.3.2
