@@ -172,16 +172,19 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres)
     if (pgres) {
         err = PQresultErrorMessage(pgres);
         if (err != NULL) {
+            Dprintf("pq_raise: PQresultErrorMessage: err=%s", err);
             code = PQresultErrorField(pgres, PG_DIAG_SQLSTATE);
         }
     }
-    if (err == NULL)
+    if (err == NULL) {
         err = PQerrorMessage(conn->pgconn);
+        Dprintf("pq_raise: PQerrorMessage: err=%s", err);
+    }
 
     /* if the is no error message we probably called pq_raise without reason:
        we need to set an exception anyway because the caller will probably
        raise and a meaningful message is better than an empty one */
-    if (err == NULL) {
+    if (err == NULL || err[0] == '\0') {
         PyErr_SetString(Error, "psycopg went psycotic without error set");
         return;
     }
@@ -194,6 +197,7 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres)
 
     /* try to remove the initial "ERROR: " part from the postgresql error */
     err2 = strip_severity(err);
+    Dprintf("pq_raise: err2=%s", err2);
 
     psyco_set_error(exc, curs, err2, err, code);
 }
