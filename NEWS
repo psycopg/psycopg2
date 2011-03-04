@@ -1,3 +1,9 @@
+What's new in psycopg 2.4.1
+---------------------------
+
+  - Correctly detect an empty query sent to the backend (ticket #46).
+
+
 What's new in psycopg 2.4
 -------------------------
 
