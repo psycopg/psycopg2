@@ -1359,6 +1359,13 @@ pq_fetch(cursorObject *curs)
         /* don't clear curs->pgres, because it contains the results! */
         break;
 
+    case PGRES_EMPTY_QUERY:
+        PyErr_SetString(ProgrammingError,
+            "can't execute an empty query");
+        IFCLEARPGRES(curs->pgres);
+        ex = -1;
+        break;
+
     default:
         Dprintf("pq_fetch: uh-oh, something FAILED: pgconn = %p", curs->conn);
         pq_raise(curs->conn, curs, NULL);
