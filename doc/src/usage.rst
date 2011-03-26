@@ -271,6 +271,10 @@ the SQL string that would be sent to the database.
   .. versionchanged:: 2.4
      only strings were supported before.
 
+  .. versionchanged:: 2.4.1
+     can parse the 'hex' format from 9.0 servers without relying on the
+     version of the client library.
+
   .. note::
 
     In Python 2, if you have binary data in a `!str` object, you can pass them
@@ -282,18 +286,15 @@ the SQL string that would be sent to the database.
 
   .. warning::
 
-     PostgreSQL 9 uses by default `a new "hex" format`__ to emit :sql:`bytea`
-     fields. Unfortunately this format can't be parsed by libpq versions
-     before 9.0. This means that using a library client with version lesser
-     than 9.0 to talk with a server 9.0 or later you may have problems
-     receiving :sql:`bytea` data. To work around this problem you can set the
-     `bytea_output`__ parameter to ``escape``, either in the server
-     configuration or in the client session using a query such as ``SET
-     bytea_output TO escape;`` before trying to receive binary data.
+     Since version 9.0 PostgreSQL uses by default `a new "hex" format`__ to
+     emit :sql:`bytea` fields. Starting from Psycopg 2.4.1 the format is
+     correctly supported.  If you use a previous version you will need some
+     extra care when receiving bytea from PostgreSQL: you must have at least
+     the libpq 9.0 installed on the client or alternatively you can set the
+     `bytea_output`__ configutation parameter to ``escape``, either in the
+     server configuration file or in the client session (using a query such as
+     ``SET bytea_output TO escape;``) before receiving binary data.
      
-     Starting from Psycopg 2.4 this condition is detected and signaled with a
-     `~psycopg2.InterfaceError`.
-
      .. __: http://www.postgresql.org/docs/9.0/static/datatype-binary.html
      .. __: http://www.postgresql.org/docs/9.0/static/runtime-config-client.html#GUC-BYTEA-OUTPUT
 

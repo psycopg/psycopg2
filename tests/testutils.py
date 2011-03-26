@@ -140,24 +140,6 @@ def skip_if_no_namedtuple(f):
     return skip_if_no_namedtuple_
 
 
-def skip_if_broken_hex_binary(f):
-    """Decorator to detect libpq < 9.0 unable to parse bytea in hex format"""
-    def cope_with_hex_binary_(self):
-        from psycopg2 import InterfaceError
-        try:
-            return f(self)
-        except InterfaceError, e:
-            if '9.0' in str(e) and self.conn.server_version >= 90000:
-                return self.skipTest(
-                    # FIXME: we are only assuming the libpq is older here,
-                    # but we don't have a reliable way to detect the libpq
-                    # version, not pre-9 at least.
-                    "bytea broken with server >= 9.0, libpq < 9")
-            else:
-                raise
-
-    return cope_with_hex_binary_
-
 def skip_if_no_iobase(f):
     """Skip a test if io.TextIOBase is not available."""
     def skip_if_no_iobase_(self):
