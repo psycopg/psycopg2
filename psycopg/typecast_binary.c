@@ -133,7 +133,8 @@ static char *psycopg_parse_hex(
 static char *psycopg_parse_escape(
         const char *bufin, Py_ssize_t sizein, Py_ssize_t *sizeout);
 
-static PyObject *
+/* The function is not static and not hidden as we use ctypes to test it. */
+PyObject *
 typecast_BINARY_cast(const char *s, Py_ssize_t l, PyObject *curs)
 {
     chunkObject *chunk = NULL;
