@@ -28,7 +28,7 @@ except:
     pass
 import sys
 import testutils
-from testutils import unittest
+from testutils import unittest, decorate_all_tests
 from testconfig import dsn
 
 import psycopg2
@@ -333,8 +333,8 @@ class ByteaParserTest(unittest.TestCase):
         try:
             self._cast = self._import_cast()
         except Exception, e:
-            return self.skipTest("can't test bytea parser: %s - %s"
-                % (e.__class__.__name__, e))
+            self._cast = None
+            self._exc = e
 
     def _import_cast(self):
         """Use ctypes to access the C function.
@@ -411,6 +411,18 @@ class ByteaParserTest(unittest.TestCase):
                 (string.ascii_letters * 2 + '\\').encode('ascii')
 
         self.assertEqual(rv, tgt)
+
+def skip_if_cant_cast(f):
+    def skip_if_cant_cast_(self, *args, **kwargs):
+        if self._cast is None:
+            return self.skipTest("can't test bytea parser: %s - %s"
+                % (self._exc.__class__.__name__, self._exc))
+
+        return f(self, *args, **kwargs)
+
+    return skip_if_cant_cast_
+
+decorate_all_tests(ByteaParserTest, skip_if_cant_cast)
 
 
 def test_suite():
