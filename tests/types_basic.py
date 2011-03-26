@@ -28,7 +28,7 @@ except:
     pass
 import sys
 import testutils
-from testutils import unittest, skip_if_broken_hex_binary
+from testutils import unittest
 from testconfig import dsn
 
 import psycopg2
@@ -116,7 +116,6 @@ class TypesBasicTests(unittest.TestCase):
         s = self.execute("SELECT %s AS foo", (float("-inf"),))
         self.failUnless(str(s) == "-inf", "wrong float quoting: " + str(s))      
 
-    @skip_if_broken_hex_binary
     def testBinary(self):
         if sys.version_info[0] < 3:
             s = ''.join([chr(x) for x in range(256)])
@@ -143,7 +142,6 @@ class TypesBasicTests(unittest.TestCase):
             b = psycopg2.Binary(bytes([]))
             self.assertEqual(str(b), "''::bytea")
 
-    @skip_if_broken_hex_binary
     def testBinaryRoundTrip(self):
         # test to make sure buffers returned by psycopg2 are
         # understood by execute:
@@ -191,7 +189,6 @@ class TypesBasicTests(unittest.TestCase):
         s = self.execute("SELECT '{}'::text AS foo")
         self.failUnlessEqual(s, "{}")
 
-    @skip_if_broken_hex_binary
     @testutils.skip_from_python(3)
     def testTypeRoundtripBuffer(self):
         o1 = buffer("".join(map(chr, range(256))))
@@ -204,7 +201,6 @@ class TypesBasicTests(unittest.TestCase):
         self.assertEqual(type(o1), type(o2))
         self.assertEqual(str(o1), str(o2))
 
-    @skip_if_broken_hex_binary
     @testutils.skip_from_python(3)
     def testTypeRoundtripBufferArray(self):
         o1 = buffer("".join(map(chr, range(256))))
@@ -213,7 +209,6 @@ class TypesBasicTests(unittest.TestCase):
         self.assertEqual(type(o1[0]), type(o2[0]))
         self.assertEqual(str(o1[0]), str(o2[0]))
 
-    @skip_if_broken_hex_binary
     @testutils.skip_before_python(3)
     def testTypeRoundtripBytes(self):
         o1 = bytes(range(256))
@@ -225,7 +220,6 @@ class TypesBasicTests(unittest.TestCase):
         o2 = self.execute("select %s;", (o1,))
         self.assertEqual(memoryview, type(o2))
 
-    @skip_if_broken_hex_binary
     @testutils.skip_before_python(3)
     def testTypeRoundtripBytesArray(self):
         o1 = bytes(range(256))
@@ -233,7 +227,6 @@ class TypesBasicTests(unittest.TestCase):
         o2 = self.execute("select %s;", (o1,))
         self.assertEqual(memoryview, type(o2[0]))
 
-    @skip_if_broken_hex_binary
     @testutils.skip_before_python(2, 6)
     def testAdaptBytearray(self):
         o1 = bytearray(range(256))
@@ -258,7 +251,6 @@ class TypesBasicTests(unittest.TestCase):
         else:
             self.assertEqual(memoryview, type(o2))
 
-    @skip_if_broken_hex_binary
     @testutils.skip_before_python(2, 7)
     def testAdaptMemoryview(self):
         o1 = memoryview(bytearray(range(256)))
