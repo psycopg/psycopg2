@@ -1,6 +1,8 @@
 What's new in psycopg 2.4.1
 ---------------------------
 
+  - Use own parser for bytea output, not requiring anymore the libpq 9.0
+    to parse the hex format.
   - Correctly detect an empty query sent to the backend (ticket #46).
 
 
