@@ -236,6 +236,39 @@ conn_get_standard_conforming_strings(PGconn *pgconn)
     return equote;
 }
 
+
+/* Remove irrelevant chars from encoding name and turn it uppercase.
+ *
+ * Return a buffer allocated on Python heap,
+ * NULL and set an exception on error.
+ */
+static char *
+clean_encoding_name(const char *enc)
+{
+    const char *i = enc;
+    char *rv, *j;
+
+    /* convert to upper case and remove '-' and '_' from string */
+    if (!(j = rv = PyMem_Malloc(strlen(enc) + 1))) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    while (*i) {
+        if (!isalnum(*i)) {
+            ++i;
+        }
+        else {
+            *j++ = toupper(*i++);
+        }
+    }
+    *j = '\0';
+
+    Dprintf("clean_encoding_name: %s -> %s", enc, rv);
+
+    return rv;
+}
+
 /* Convert a PostgreSQL encoding to a Python codec.
  *
  * Return a new copy of the codec name allocated on the Python heap,
@@ -246,11 +279,16 @@ conn_encoding_to_codec(const char *enc)
 {
     char *tmp;
     Py_ssize_t size;
+    char *norm_enc = NULL;
     PyObject *pyenc = NULL;
     char *rv = NULL;
 
+    if (!(norm_enc = clean_encoding_name(enc))) {
+        goto exit;
+    }
+
     /* Find the Py codec name from the PG encoding */
-    if (!(pyenc = PyDict_GetItemString(psycoEncodings, enc))) {
+    if (!(pyenc = PyDict_GetItemString(psycoEncodings, norm_enc))) {
         PyErr_Format(OperationalError,
             "no Python codec for client encoding '%s'", enc);
         goto exit;
@@ -270,6 +308,7 @@ conn_encoding_to_codec(const char *enc)
     rv = psycopg_strdup(tmp, size);
 
 exit:
+    PyMem_Free(norm_enc);
     Py_XDECREF(pyenc);
     return rv;
 }
@@ -285,7 +324,7 @@ exit:
 static int
 conn_read_encoding(connectionObject *self, PGconn *pgconn)
 {
-    char *enc = NULL, *codec = NULL, *j;
+    char *enc = NULL, *codec = NULL;
     const char *tmp;
     int rv = -1;
 
@@ -297,15 +336,9 @@ conn_read_encoding(connectionObject *self, PGconn *pgconn)
         goto exit;
     }
 
-    if (!(enc = PyMem_Malloc(strlen(tmp)+1))) {
-        PyErr_NoMemory();
+    if (!(enc = psycopg_strdup(tmp, 0))) {
         goto exit;
     }
-
-    /* turn encoding in uppercase */
-    j = enc;
-    while (*tmp) { *j++ = toupper(*tmp++); }
-    *j = '\0';
 
     /* Look for this encoding in Python codecs. */
     if (!(codec = conn_encoding_to_codec(enc))) {
