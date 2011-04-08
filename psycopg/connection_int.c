@@ -273,22 +273,19 @@ clean_encoding_name(const char *enc)
  *
  * Return a new copy of the codec name allocated on the Python heap,
  * NULL with exception in case of error.
+ *
+ * 'enc' should be already normalized (uppercase, no - or _).
  */
 static char *
 conn_encoding_to_codec(const char *enc)
 {
     char *tmp;
     Py_ssize_t size;
-    char *norm_enc = NULL;
     PyObject *pyenc = NULL;
     char *rv = NULL;
 
-    if (!(norm_enc = clean_encoding_name(enc))) {
-        goto exit;
-    }
-
     /* Find the Py codec name from the PG encoding */
-    if (!(pyenc = PyDict_GetItemString(psycoEncodings, norm_enc))) {
+    if (!(pyenc = PyDict_GetItemString(psycoEncodings, enc))) {
         PyErr_Format(OperationalError,
             "no Python codec for client encoding '%s'", enc);
         goto exit;
@@ -308,7 +305,6 @@ conn_encoding_to_codec(const char *enc)
     rv = psycopg_strdup(tmp, size);
 
 exit:
-    PyMem_Free(norm_enc);
     Py_XDECREF(pyenc);
     return rv;
 }
@@ -336,7 +332,7 @@ conn_read_encoding(connectionObject *self, PGconn *pgconn)
         goto exit;
     }
 
-    if (!(enc = psycopg_strdup(tmp, 0))) {
+    if (!(enc = clean_encoding_name(tmp))) {
         goto exit;
     }
 
@@ -998,21 +994,23 @@ conn_set_client_encoding(connectionObject *self, const char *enc)
     PGresult *pgres = NULL;
     char *error = NULL;
     char query[48];
-    int res = 0;
-    char *codec;
+    int res = 1;
+    char *codec = NULL;
+    char *clean_enc = NULL;
 
     /* If the current encoding is equal to the requested one we don't
        issue any query to the backend */
     if (strcmp(self->encoding, enc) == 0) return 0;
 
     /* We must know what python codec this encoding is. */
-    if (!(codec = conn_encoding_to_codec(enc))) { return -1; }
+    if (!(clean_enc = clean_encoding_name(enc))) { goto exit; }
+    if (!(codec = conn_encoding_to_codec(clean_enc))) { goto exit; }
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
 
     /* set encoding, no encoding string is longer than 24 bytes */
-    PyOS_snprintf(query, 47, "SET client_encoding = '%s'", enc);
+    PyOS_snprintf(query, 47, "SET client_encoding = '%s'", clean_enc);
 
     /* abort the current transaction, to set the encoding ouside of
        transactions */
@@ -1027,21 +1025,18 @@ conn_set_client_encoding(connectionObject *self, const char *enc)
     /* no error, we can proceeed and store the new encoding */
     {
         char *tmp = self->encoding;
-        self->encoding = NULL;
+        self->encoding = clean_enc;
         PyMem_Free(tmp);
-    }
-    if (!(self->encoding = psycopg_strdup(enc, 0))) {
-        res = 1;  /* don't call pq_complete_error below */
-        goto endlock;
+        clean_enc = NULL;
     }
 
     /* Store the python codec too. */
     {
         char *tmp = self->codec;
-        self->codec = NULL;
+        self->codec = codec;
         PyMem_Free(tmp);
+        codec = NULL;
     }
-    self->codec = codec;
 
     Dprintf("conn_set_client_encoding: set encoding to %s (codec: %s)",
             self->encoding, self->codec);
@@ -1053,6 +1048,10 @@ endlock:
 
     if (res < 0)
         pq_complete_error(self, &pgres, &error);
+
+exit:
+    PyMem_Free(clean_enc);
+    PyMem_Free(codec);
 
     return res;
 }
