@@ -423,36 +423,18 @@ static PyObject *
 psyco_conn_set_client_encoding(connectionObject *self, PyObject *args)
 {
     const char *enc;
-    char *buffer, *dest;
     PyObject *rv = NULL;
-    Py_ssize_t len;
 
     EXC_IF_CONN_CLOSED(self);
     EXC_IF_CONN_ASYNC(self, set_client_encoding);
     EXC_IF_TPC_PREPARED(self, set_client_encoding);
 
-    if (!PyArg_ParseTuple(args, "s#", &enc, &len)) return NULL;
+    if (!PyArg_ParseTuple(args, "s", &enc)) return NULL;
 
-    /* convert to upper case and remove '-' and '_' from string */
-    if (!(dest = buffer = PyMem_Malloc(len+1))) {
-        return PyErr_NoMemory();
-    }
-
-    while (*enc) {
-        if (*enc == '_' || *enc == '-') {
-            ++enc;
-        }
-        else {
-            *dest++ = toupper(*enc++);
-        }
-    }
-    *dest = '\0';
-
-    if (conn_set_client_encoding(self, buffer) == 0) {
+    if (conn_set_client_encoding(self, enc) == 0) {
         Py_INCREF(Py_None);
         rv = Py_None;
     }
-    PyMem_Free(buffer);
     return rv;
 }
 

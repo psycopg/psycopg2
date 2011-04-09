@@ -22,6 +22,7 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
+import os
 import time
 import threading
 from testutils import unittest, decorate_all_tests, skip_before_postgres
@@ -140,6 +141,19 @@ class ConnectionTests(unittest.TestCase):
         psycopg2.extensions.register_type(psycopg2.extensions.UNICODE, cur)
         cur.execute("select 'foo'::text;")
         self.assertEqual(cur.fetchone()[0], u'foo')
+
+    def test_connect_nonnormal_envvar(self):
+        # We must perform encoding normalization at connection time
+        self.conn.close()
+        oldenc = os.environ.get('PGCLIENTENCODING')
+        os.environ['PGCLIENTENCODING'] = 'utf-8'    # malformed spelling
+        try:
+            self.conn = psycopg2.connect(dsn)
+        finally:
+            if oldenc is not None:
+                os.environ['PGCLIENTENCODING'] = oldenc
+            else:
+                del os.environ['PGCLIENTENCODING']
 
     def test_weakref(self):
         from weakref import ref
