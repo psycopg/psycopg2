@@ -175,6 +175,8 @@ doc/html/advanced.html.
   - Fixed TimestampFromTicks() and TimeFromTicks() for seconds >= 59.5.
   - Fixed spurious exception raised when calling C typecasters from Python
     ones.
+
+
 What's new in psycopg 2.0.14
 ----------------------------
 
