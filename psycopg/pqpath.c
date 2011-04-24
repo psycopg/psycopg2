@@ -194,6 +194,11 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres)
     if (code != NULL) {
         exc = exception_from_sqlstate(code);
     }
+    else {
+        /* Fallback if there is no exception code (reported happening e.g.
+         * when the connection is closed). */
+        exc = DatabaseError;
+    }
 
     /* try to remove the initial "ERROR: " part from the postgresql error */
     err2 = strip_severity(err);
