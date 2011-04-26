@@ -8,6 +8,7 @@ What's new in psycopg 2.4.1
   - Correctly detect an empty query sent to the backend (ticket #46).
   - Fixed a SystemError clobbering libpq errors raised without SQLSTATE.
     Bug vivisectioned by Eric Snow.
+  - Fixed interaction between NamedTuple and server-side cursors.
   - Allow to specify --static-libpq on setup.py command line instead of
     just in 'setup.cfg'. Patch provided by Matthew Ryan (ticket #48).
 
