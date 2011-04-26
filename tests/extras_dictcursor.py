@@ -261,6 +261,38 @@ class NamedTupleCursorTest(unittest.TestCase):
         finally:
             NamedTupleCursor._make_nt = f_orig
 
+    @skip_if_no_namedtuple
+    @skip_before_postgres(8, 0)
+    def test_named(self):
+        curs = self.conn.cursor('tmp')
+        curs.execute("""select i from generate_series(0,9) i""")
+        recs = []
+        recs.extend(curs.fetchmany(5))
+        recs.append(curs.fetchone())
+        recs.extend(curs.fetchall())
+        self.assertEqual(range(10), [t.i for t in recs])
+
+    @skip_if_no_namedtuple
+    def test_named_fetchone(self):
+        curs = self.conn.cursor('tmp')
+        curs.execute("""select 42 as i""")
+        t = curs.fetchone()
+        self.assertEqual(t.i, 42)
+
+    @skip_if_no_namedtuple
+    def test_named_fetchmany(self):
+        curs = self.conn.cursor('tmp')
+        curs.execute("""select 42 as i""")
+        recs = curs.fetchmany(10)
+        self.assertEqual(recs[0].i, 42)
+
+    @skip_if_no_namedtuple
+    def test_named_fetchall(self):
+        curs = self.conn.cursor('tmp')
+        curs.execute("""select 42 as i""")
+        recs = curs.fetchall()
+        self.assertEqual(recs[0].i, 42)
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

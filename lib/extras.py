@@ -290,17 +290,17 @@ class NamedTupleCursor(_cursor):
             return nt(*t)
 
     def fetchmany(self, size=None):
+        ts = _cursor.fetchmany(self, size)
         nt = self.Record
         if nt is None:
             nt = self.Record = self._make_nt()
-        ts = _cursor.fetchmany(self, size)
         return [nt(*t) for t in ts]
 
     def fetchall(self):
+        ts = _cursor.fetchall(self)
         nt = self.Record
         if nt is None:
             nt = self.Record = self._make_nt()
-        ts = _cursor.fetchall(self)
         return [nt(*t) for t in ts]
 
     def __iter__(self):
