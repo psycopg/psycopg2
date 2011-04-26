@@ -28,7 +28,6 @@ and classes untill a better place in the distribution is found.
 import os
 import sys
 import time
-import codecs
 import warnings
 import re as regex
 
