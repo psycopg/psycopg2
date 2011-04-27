@@ -296,7 +296,7 @@ class NamedTupleCursorTest(unittest.TestCase):
         self.assertEqual(recs[0].i, 42)
 
     @skip_if_no_namedtuple
-    @skip_before_postgres(8, 0)
+    @skip_before_postgres(8, 2)
     def test_not_greedy(self):
         curs = self.conn.cursor('tmp')
         curs.itersize = 2
