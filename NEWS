@@ -1,3 +1,10 @@
+What's new in psycopg 2.4.2
+---------------------------
+
+  - Don't build mx.DateTime support if the module can't be imported
+    (ticket #53).
+
+
 What's new in psycopg 2.4.1
 ---------------------------
 
