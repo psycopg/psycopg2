@@ -408,7 +408,9 @@ pq_begin_locked(connectionObject *conn, PGresult **pgres, char **error,
 {
     const char *query[] = {
         NULL,
+        "BEGIN; SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED",
         "BEGIN; SET TRANSACTION ISOLATION LEVEL READ COMMITTED",
+        "BEGIN; SET TRANSACTION ISOLATION LEVEL REPEATABLE READ",
         "BEGIN; SET TRANSACTION ISOLATION LEVEL SERIALIZABLE"};
     int result;
 

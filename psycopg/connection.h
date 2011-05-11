@@ -63,9 +63,11 @@ extern "C" {
 
 /* possible values for isolation_level */
 typedef enum {
-    ISOLATION_LEVEL_AUTOCOMMIT      = 0,
-    ISOLATION_LEVEL_READ_COMMITTED  = 1,
-    ISOLATION_LEVEL_SERIALIZABLE    = 2,
+    ISOLATION_LEVEL_AUTOCOMMIT          = 0,
+    ISOLATION_LEVEL_READ_UNCOMMITTED    = 1,
+    ISOLATION_LEVEL_READ_COMMITTED      = 2,
+    ISOLATION_LEVEL_REPEATABLE_READ     = 3,
+    ISOLATION_LEVEL_SERIALIZABLE        = 4,
 } conn_isolation_level_t;
 
 extern HIDDEN PyTypeObject connectionType;

@@ -201,24 +201,30 @@ class IsolationLevelsTestCase(unittest.TestCase):
 
     def test_set_isolation_level(self):
         conn = self.connect()
+        curs = conn.cursor()
 
-        conn.set_isolation_level(
-            psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-        self.assertEqual(conn.isolation_level,
-            psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+        for name, level in (
+            (None, psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT),
+            ('read uncommitted', psycopg2.extensions.ISOLATION_LEVEL_READ_UNCOMMITTED),
+            ('read committed', psycopg2.extensions.ISOLATION_LEVEL_READ_COMMITTED),
+            ('repeatable read', psycopg2.extensions.ISOLATION_LEVEL_REPEATABLE_READ),
+            ('serializable', psycopg2.extensions.ISOLATION_LEVEL_SERIALIZABLE),
+        ):
+            conn.set_isolation_level(level)
+            self.assertEqual(conn.isolation_level, level)
 
-        conn.set_isolation_level(
-            psycopg2.extensions.ISOLATION_LEVEL_READ_COMMITTED)
-        self.assertEqual(conn.isolation_level,
-            psycopg2.extensions.ISOLATION_LEVEL_READ_COMMITTED)
+            curs.execute('show transaction_isolation;')
+            got_name = curs.fetchone()[0]
 
-        conn.set_isolation_level(
-            psycopg2.extensions.ISOLATION_LEVEL_SERIALIZABLE)
-        self.assertEqual(conn.isolation_level,
-            psycopg2.extensions.ISOLATION_LEVEL_SERIALIZABLE)
+            if name is None:
+                curs.execute('show default_transaction_isolation;')
+                name = curs.fetchone()[0]
+
+            self.assertEqual(name, got_name)
+            conn.commit()
 
         self.assertRaises(ValueError, conn.set_isolation_level, -1)
-        self.assertRaises(ValueError, conn.set_isolation_level, 3)
+        self.assertRaises(ValueError, conn.set_isolation_level, 5)
 
     def test_set_isolation_level_abort(self):
         conn = self.connect()
