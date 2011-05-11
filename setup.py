@@ -79,7 +79,7 @@ except ImportError:
 # Take a look at http://www.python.org/dev/peps/pep-0386/
 # for a consistent versioning pattern.
 
-PSYCOPG_VERSION = '2.4'
+PSYCOPG_VERSION = '2.4.1'
 
 version_flags   = ['dt', 'dec']
 
@@ -133,6 +133,7 @@ class psycopg_build_ext(build_ext):
         self.mx_include_dir = None
         self.use_pydatetime = 1
         self.have_ssl = have_ssl
+        self.static_libpq = static_libpq
         self.pg_config = None
 
     def get_compiler(self):
@@ -263,7 +264,7 @@ or with the pg_config option in 'setup.cfg'.
             sys.exit(1)
 
         self.include_dirs.append(".")
-        if static_libpq:
+        if self.static_libpq:
             if not self.link_objects: self.link_objects = []
             self.link_objects.append(
                     os.path.join(self.get_pg_config("libdir"), "libpq.a"))

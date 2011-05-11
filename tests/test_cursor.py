@@ -37,6 +37,12 @@ class CursorTests(unittest.TestCase):
     def tearDown(self):
         self.conn.close()
 
+    def test_empty_query(self):
+        cur = self.conn.cursor()
+        self.assertRaises(psycopg2.ProgrammingError, cur.execute, "")
+        self.assertRaises(psycopg2.ProgrammingError, cur.execute, " ")
+        self.assertRaises(psycopg2.ProgrammingError, cur.execute, ";")
+
     def test_executemany_propagate_exceptions(self):
         conn = self.conn
         cur = conn.cursor()

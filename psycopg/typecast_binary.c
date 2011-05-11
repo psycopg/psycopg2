@@ -40,7 +40,7 @@ chunk_dealloc(chunkObject *self)
         FORMAT_CODE_PY_SSIZE_T,
         self->base, self->len
       );
-    PQfreemem(self->base);
+    PyMem_Free(self->base);
     Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
@@ -127,95 +127,185 @@ PyTypeObject chunkType = {
     chunk_doc                   /* tp_doc */
 };
 
-static PyObject *
+
+static char *psycopg_parse_hex(
+        const char *bufin, Py_ssize_t sizein, Py_ssize_t *sizeout);
+static char *psycopg_parse_escape(
+        const char *bufin, Py_ssize_t sizein, Py_ssize_t *sizeout);
+
+/* The function is not static and not hidden as we use ctypes to test it. */
+PyObject *
 typecast_BINARY_cast(const char *s, Py_ssize_t l, PyObject *curs)
 {
     chunkObject *chunk = NULL;
     PyObject *res = NULL;
-    char *str = NULL, *buffer = NULL;
-    size_t len;
+    char *buffer = NULL;
+    Py_ssize_t len;
 
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
 
-    /* PQunescapeBytea absolutely wants a 0-terminated string and we don't
-       want to copy the whole buffer, right? Wrong, but there isn't any other
-       way <g> */
-    if (s[l] != '\0') {
-        if ((buffer = PyMem_Malloc(l+1)) == NULL) {
-            PyErr_NoMemory();
-            goto fail;
+    if (s[0] == '\\' && s[1] == 'x') {
+        /* This is a buffer escaped in hex format: libpq before 9.0 can't
+         * parse it and we can't detect reliably the libpq version at runtime.
+         * So the only robust option is to parse it ourselves - luckily it's
+         * an easy format.
+         */
+        if (NULL == (buffer = psycopg_parse_hex(s, l, &len))) {
+            goto exit;
         }
-        /* Py_ssize_t->size_t cast is safe, as long as the Py_ssize_t is
-         * >= 0: */
-        assert (l >= 0);
-        strncpy(buffer, s, (size_t) l);
-
-        buffer[l] = '\0';
-        s = buffer;
     }
-    str = (char*)PQunescapeBytea((unsigned char*)s, &len);
-    Dprintf("typecast_BINARY_cast: unescaped " FORMAT_CODE_SIZE_T " bytes",
-      len);
-
-    /* The type of the second parameter to PQunescapeBytea is size_t *, so it's
-     * possible (especially with Python < 2.5) to get a return value too large
-     * to fit into a Python container. */
-    if (len > (size_t) PY_SSIZE_T_MAX) {
-      PyErr_SetString(PyExc_IndexError, "PG buffer too large to fit in Python"
-                                        " buffer.");
-      goto fail;
-    }
-
-    /* Check the escaping was successful */
-    if (s[0] == '\\' && s[1] == 'x'     /* input encoded in hex format */
-        && str[0] == 'x'                /* output resulted in an 'x' */
-        && s[2] != '7' && s[3] != '8')  /* input wasn't really an x (0x78) */
-    {
-        PyErr_SetString(InterfaceError,
-            "can't receive bytea data from server >= 9.0 with the current "
-            "libpq client library: please update the libpq to at least 9.0 "
-            "or set bytea_output to 'escape' in the server config "
-            "or with a query");
-        goto fail;
+    else {
+        /* This is a buffer in the classic bytea format. So we can handle it
+         * to the PQunescapeBytea to have it parsed, rignt? ...Wrong. We
+         * could, but then we'd have to record whether buffer was allocated by
+         * Python or by the libpq to dispose it properly. Furthermore the
+         * PQunescapeBytea interface is not the most brilliant as it wants a
+         * null-terminated string even if we have known its length thus
+         * requiring a useless memcpy and strlen.
+         * So we'll just have our better integrated parser, let's finish this
+         * story.
+         */
+        if (NULL == (buffer = psycopg_parse_escape(s, l, &len))) {
+            goto exit;
+        }
     }
 
     chunk = (chunkObject *) PyObject_New(chunkObject, &chunkType);
-    if (chunk == NULL) goto fail;
+    if (chunk == NULL) goto exit;
 
-    /* **Transfer** ownership of str's memory to the chunkObject: */
-    chunk->base = str;
-    str = NULL;
+    /* **Transfer** ownership of buffer's memory to the chunkObject: */
+    chunk->base = buffer;
+    buffer = NULL;
+    chunk->len = (Py_ssize_t)len;
 
-    /* size_t->Py_ssize_t cast was validated above: */
-    chunk->len = (Py_ssize_t) len;
 #if PY_MAJOR_VERSION < 3
     if ((res = PyBuffer_FromObject((PyObject *)chunk, 0, chunk->len)) == NULL)
-        goto fail;
+        goto exit;
 #else
     if ((res = PyMemoryView_FromObject((PyObject*)chunk)) == NULL)
-        goto fail;
+        goto exit;
 #endif
-    /* PyBuffer_FromObject() created a new reference.  We'll release our
-     * reference held in 'chunk' in the 'cleanup' clause. */
 
-    goto cleanup;
-    fail:
-      assert (PyErr_Occurred());
-      if (res != NULL) {
-          Py_DECREF(res);
-          res = NULL;
-      }
-      /* Fall through to cleanup: */
-    cleanup:
-      if (chunk != NULL) {
-          Py_DECREF((PyObject *) chunk);
-      }
-      if (str != NULL) {
-          /* str's mem was allocated by PQunescapeBytea; must use PQfreemem: */
-          PQfreemem(str);
-      }
-      /* We allocated buffer with PyMem_Malloc; must use PyMem_Free: */
-      PyMem_Free(buffer);
+exit:
+    Py_XDECREF((PyObject *)chunk);
+    PyMem_Free(buffer);
 
-      return res;
+    return res;
 }
+
+
+static const char hex_lut[128] = {
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+     0,  1,  2,  3,  4,  5,  6,  7,  8,  9, -1, -1, -1, -1, -1, -1,
+    -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+};
+
+/* Parse a bytea output buffer encoded in 'hex' format.
+ *
+ * the format is described in
+ * http://www.postgresql.org/docs/9.0/static/datatype-binary.html
+ *
+ * Parse the buffer in 'bufin', whose length is 'sizein'.
+ * Return a new buffer allocated by PyMem_Malloc and set 'sizeout' to its size.
+ * In case of error set an exception and return NULL.
+ */
+static char *
+psycopg_parse_hex(const char *bufin, Py_ssize_t sizein, Py_ssize_t *sizeout)
+{
+    char *ret = NULL;
+    const char *bufend = bufin + sizein;
+    const char *pi = bufin + 2;     /* past the \x */
+    char *bufout;
+    char *po;
+
+    po = bufout = PyMem_Malloc((sizein - 2) >> 1);   /* output size upper bound */
+    if (NULL == bufout) {
+        PyErr_NoMemory();
+        goto exit;
+    }
+
+    /* Implementation note: we call this function upon database response, not
+     * user input (because we are parsing the output format of a buffer) so we
+     * don't expect errors. On bad input we reserve the right to return a bad
+     * output, not an error.
+     */
+    while (pi < bufend) {
+        char c;
+        while (-1 == (c = hex_lut[*pi++ & '\x7f'])) {
+            if (pi >= bufend) { goto endloop; }
+        }
+        *po = c << 4;
+
+        while (-1 == (c = hex_lut[*pi++ & '\x7f'])) {
+            if (pi >= bufend) { goto endloop; }
+        }
+        *po++ |= c;
+    }
+endloop:
+
+    ret = bufout;
+    *sizeout = po - bufout;
+
+exit:
+    return ret;
+}
+
+/* Parse a bytea output buffer encoded in 'escape' format.
+ *
+ * the format is described in
+ * http://www.postgresql.org/docs/9.0/static/datatype-binary.html
+ *
+ * Parse the buffer in 'bufin', whose length is 'sizein'.
+ * Return a new buffer allocated by PyMem_Malloc and set 'sizeout' to its size.
+ * In case of error set an exception and return NULL.
+ */
+static char *
+psycopg_parse_escape(const char *bufin, Py_ssize_t sizein, Py_ssize_t *sizeout)
+{
+    char *ret = NULL;
+    const char *bufend = bufin + sizein;
+    const char *pi = bufin;
+    char *bufout;
+    char *po;
+
+    po = bufout = PyMem_Malloc(sizein);   /* output size upper bound */
+    if (NULL == bufout) {
+        PyErr_NoMemory();
+        goto exit;
+    }
+
+    while (pi < bufend) {
+        if (*pi != '\\') {
+            /* Unescaped char */
+            *po++ = *pi++;
+            continue;
+        }
+        if ((pi[1] >= '0' && pi[1] <= '3') &&
+            (pi[2] >= '0' && pi[2] <= '7') &&
+            (pi[3] >= '0' && pi[3] <= '7'))
+        {
+            /* Escaped octal value */
+            *po++ = ((pi[1] - '0') << 6) |
+                    ((pi[2] - '0') << 3) |
+                    ((pi[3] - '0'));
+            pi += 4;
+        }
+        else {
+            /* Escaped char */
+            *po++ = pi[1];
+            pi += 2;
+        }
+    }
+
+    ret = bufout;
+    *sizeout = po - bufout;
+
+exit:
+    return ret;
+}
+

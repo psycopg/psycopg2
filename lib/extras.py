@@ -28,7 +28,6 @@ and classes untill a better place in the distribution is found.
 import os
 import sys
 import time
-import codecs
 import warnings
 import re as regex
 
@@ -291,21 +290,28 @@ class NamedTupleCursor(_cursor):
             return nt(*t)
 
     def fetchmany(self, size=None):
+        ts = _cursor.fetchmany(self, size)
         nt = self.Record
         if nt is None:
             nt = self.Record = self._make_nt()
-        ts = _cursor.fetchmany(self, size)
         return [nt(*t) for t in ts]
 
     def fetchall(self):
+        ts = _cursor.fetchall(self)
         nt = self.Record
         if nt is None:
             nt = self.Record = self._make_nt()
-        ts = _cursor.fetchall(self)
         return [nt(*t) for t in ts]
 
     def __iter__(self):
-        return iter(self.fetchall())
+        # Invoking _cursor.__iter__(self) goes to infinite recursion,
+        # so we do pagination by hand
+        while 1:
+            recs = self.fetchmany(self.itersize)
+            if not recs:
+                return
+            for rec in recs:
+                yield rec
 
     try:
         from collections import namedtuple

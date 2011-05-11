@@ -172,16 +172,19 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres)
     if (pgres) {
         err = PQresultErrorMessage(pgres);
         if (err != NULL) {
+            Dprintf("pq_raise: PQresultErrorMessage: err=%s", err);
             code = PQresultErrorField(pgres, PG_DIAG_SQLSTATE);
         }
     }
-    if (err == NULL)
+    if (err == NULL) {
         err = PQerrorMessage(conn->pgconn);
+        Dprintf("pq_raise: PQerrorMessage: err=%s", err);
+    }
 
     /* if the is no error message we probably called pq_raise without reason:
        we need to set an exception anyway because the caller will probably
        raise and a meaningful message is better than an empty one */
-    if (err == NULL) {
+    if (err == NULL || err[0] == '\0') {
         PyErr_SetString(Error, "psycopg went psycotic without error set");
         return;
     }
@@ -191,9 +194,15 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres)
     if (code != NULL) {
         exc = exception_from_sqlstate(code);
     }
+    else {
+        /* Fallback if there is no exception code (reported happening e.g.
+         * when the connection is closed). */
+        exc = DatabaseError;
+    }
 
     /* try to remove the initial "ERROR: " part from the postgresql error */
     err2 = strip_severity(err);
+    Dprintf("pq_raise: err2=%s", err2);
 
     psyco_set_error(exc, curs, err2, err, code);
 }
@@ -1353,6 +1362,13 @@ pq_fetch(cursorObject *curs)
         curs->rowcount = PQntuples(curs->pgres);
         if (0 == _pq_fetch_tuples(curs)) { ex = 0; }
         /* don't clear curs->pgres, because it contains the results! */
+        break;
+
+    case PGRES_EMPTY_QUERY:
+        PyErr_SetString(ProgrammingError,
+            "can't execute an empty query");
+        IFCLEARPGRES(curs->pgres);
+        ex = -1;
         break;
 
     default:

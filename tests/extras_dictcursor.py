@@ -14,9 +14,11 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
+import time
+from datetime import timedelta
 import psycopg2
 import psycopg2.extras
-from testutils import unittest, skip_if_no_namedtuple
+from testutils import unittest, skip_before_postgres, skip_if_no_namedtuple
 from testconfig import dsn
 
 
@@ -260,6 +262,53 @@ class NamedTupleCursorTest(unittest.TestCase):
 
         finally:
             NamedTupleCursor._make_nt = f_orig
+
+    @skip_if_no_namedtuple
+    @skip_before_postgres(8, 0)
+    def test_named(self):
+        curs = self.conn.cursor('tmp')
+        curs.execute("""select i from generate_series(0,9) i""")
+        recs = []
+        recs.extend(curs.fetchmany(5))
+        recs.append(curs.fetchone())
+        recs.extend(curs.fetchall())
+        self.assertEqual(range(10), [t.i for t in recs])
+
+    @skip_if_no_namedtuple
+    def test_named_fetchone(self):
+        curs = self.conn.cursor('tmp')
+        curs.execute("""select 42 as i""")
+        t = curs.fetchone()
+        self.assertEqual(t.i, 42)
+
+    @skip_if_no_namedtuple
+    def test_named_fetchmany(self):
+        curs = self.conn.cursor('tmp')
+        curs.execute("""select 42 as i""")
+        recs = curs.fetchmany(10)
+        self.assertEqual(recs[0].i, 42)
+
+    @skip_if_no_namedtuple
+    def test_named_fetchall(self):
+        curs = self.conn.cursor('tmp')
+        curs.execute("""select 42 as i""")
+        recs = curs.fetchall()
+        self.assertEqual(recs[0].i, 42)
+
+    @skip_if_no_namedtuple
+    @skip_before_postgres(8, 2)
+    def test_not_greedy(self):
+        curs = self.conn.cursor('tmp')
+        curs.itersize = 2
+        curs.execute("""select clock_timestamp() as ts from generate_series(1,3)""")
+        recs = []
+        for t in curs:
+            time.sleep(0.01)
+            recs.append(t)
+
+        # check that the dataset was not fetched in a single gulp
+        self.assert_(recs[1].ts - recs[0].ts < timedelta(seconds=0.005))
+        self.assert_(recs[2].ts - recs[1].ts > timedelta(seconds=0.0099))
 
 
 def test_suite():

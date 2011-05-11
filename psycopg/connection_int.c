@@ -236,10 +236,45 @@ conn_get_standard_conforming_strings(PGconn *pgconn)
     return equote;
 }
 
+
+/* Remove irrelevant chars from encoding name and turn it uppercase.
+ *
+ * Return a buffer allocated on Python heap,
+ * NULL and set an exception on error.
+ */
+static char *
+clean_encoding_name(const char *enc)
+{
+    const char *i = enc;
+    char *rv, *j;
+
+    /* convert to upper case and remove '-' and '_' from string */
+    if (!(j = rv = PyMem_Malloc(strlen(enc) + 1))) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    while (*i) {
+        if (!isalnum(*i)) {
+            ++i;
+        }
+        else {
+            *j++ = toupper(*i++);
+        }
+    }
+    *j = '\0';
+
+    Dprintf("clean_encoding_name: %s -> %s", enc, rv);
+
+    return rv;
+}
+
 /* Convert a PostgreSQL encoding to a Python codec.
  *
  * Return a new copy of the codec name allocated on the Python heap,
  * NULL with exception in case of error.
+ *
+ * 'enc' should be already normalized (uppercase, no - or _).
  */
 static char *
 conn_encoding_to_codec(const char *enc)
@@ -285,7 +320,7 @@ exit:
 static int
 conn_read_encoding(connectionObject *self, PGconn *pgconn)
 {
-    char *enc = NULL, *codec = NULL, *j;
+    char *enc = NULL, *codec = NULL;
     const char *tmp;
     int rv = -1;
 
@@ -297,15 +332,9 @@ conn_read_encoding(connectionObject *self, PGconn *pgconn)
         goto exit;
     }
 
-    if (!(enc = PyMem_Malloc(strlen(tmp)+1))) {
-        PyErr_NoMemory();
+    if (!(enc = clean_encoding_name(tmp))) {
         goto exit;
     }
-
-    /* turn encoding in uppercase */
-    j = enc;
-    while (*tmp) { *j++ = toupper(*tmp++); }
-    *j = '\0';
 
     /* Look for this encoding in Python codecs. */
     if (!(codec = conn_encoding_to_codec(enc))) {
@@ -965,21 +994,23 @@ conn_set_client_encoding(connectionObject *self, const char *enc)
     PGresult *pgres = NULL;
     char *error = NULL;
     char query[48];
-    int res = 0;
-    char *codec;
+    int res = 1;
+    char *codec = NULL;
+    char *clean_enc = NULL;
 
     /* If the current encoding is equal to the requested one we don't
        issue any query to the backend */
     if (strcmp(self->encoding, enc) == 0) return 0;
 
     /* We must know what python codec this encoding is. */
-    if (!(codec = conn_encoding_to_codec(enc))) { return -1; }
+    if (!(clean_enc = clean_encoding_name(enc))) { goto exit; }
+    if (!(codec = conn_encoding_to_codec(clean_enc))) { goto exit; }
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
 
     /* set encoding, no encoding string is longer than 24 bytes */
-    PyOS_snprintf(query, 47, "SET client_encoding = '%s'", enc);
+    PyOS_snprintf(query, 47, "SET client_encoding = '%s'", clean_enc);
 
     /* abort the current transaction, to set the encoding ouside of
        transactions */
@@ -994,21 +1025,18 @@ conn_set_client_encoding(connectionObject *self, const char *enc)
     /* no error, we can proceeed and store the new encoding */
     {
         char *tmp = self->encoding;
-        self->encoding = NULL;
+        self->encoding = clean_enc;
         PyMem_Free(tmp);
-    }
-    if (!(self->encoding = psycopg_strdup(enc, 0))) {
-        res = 1;  /* don't call pq_complete_error below */
-        goto endlock;
+        clean_enc = NULL;
     }
 
     /* Store the python codec too. */
     {
         char *tmp = self->codec;
-        self->codec = NULL;
+        self->codec = codec;
         PyMem_Free(tmp);
+        codec = NULL;
     }
-    self->codec = codec;
 
     Dprintf("conn_set_client_encoding: set encoding to %s (codec: %s)",
             self->encoding, self->codec);
@@ -1020,6 +1048,10 @@ endlock:
 
     if (res < 0)
         pq_complete_error(self, &pgres, &error);
+
+exit:
+    PyMem_Free(clean_enc);
+    PyMem_Free(codec);
 
     return res;
 }

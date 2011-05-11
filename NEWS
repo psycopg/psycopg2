@@ -1,3 +1,18 @@
+What's new in psycopg 2.4.1
+---------------------------
+
+  - Use own parser for bytea output, not requiring anymore the libpq 9.0
+    to parse the hex format.
+  - Don't fail connection if the client encoding is a non-normalized
+    variant. Issue reported by Peter Eisentraut.
+  - Correctly detect an empty query sent to the backend (ticket #46).
+  - Fixed a SystemError clobbering libpq errors raised without SQLSTATE.
+    Bug vivisectioned by Eric Snow.
+  - Fixed interaction between NamedTuple and server-side cursors.
+  - Allow to specify --static-libpq on setup.py command line instead of
+    just in 'setup.cfg'. Patch provided by Matthew Ryan (ticket #48).
+
+
 What's new in psycopg 2.4
 -------------------------
 
@@ -163,6 +178,8 @@ doc/html/advanced.html.
   - Fixed TimestampFromTicks() and TimeFromTicks() for seconds >= 59.5.
   - Fixed spurious exception raised when calling C typecasters from Python
     ones.
+
+
 What's new in psycopg 2.0.14
 ----------------------------
 

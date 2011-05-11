@@ -28,7 +28,7 @@ except:
     pass
 import sys
 import testutils
-from testutils import unittest, skip_if_broken_hex_binary
+from testutils import unittest, decorate_all_tests
 from testconfig import dsn
 
 import psycopg2
@@ -116,7 +116,6 @@ class TypesBasicTests(unittest.TestCase):
         s = self.execute("SELECT %s AS foo", (float("-inf"),))
         self.failUnless(str(s) == "-inf", "wrong float quoting: " + str(s))      
 
-    @skip_if_broken_hex_binary
     def testBinary(self):
         if sys.version_info[0] < 3:
             s = ''.join([chr(x) for x in range(256)])
@@ -143,7 +142,6 @@ class TypesBasicTests(unittest.TestCase):
             b = psycopg2.Binary(bytes([]))
             self.assertEqual(str(b), "''::bytea")
 
-    @skip_if_broken_hex_binary
     def testBinaryRoundTrip(self):
         # test to make sure buffers returned by psycopg2 are
         # understood by execute:
@@ -191,7 +189,6 @@ class TypesBasicTests(unittest.TestCase):
         s = self.execute("SELECT '{}'::text AS foo")
         self.failUnlessEqual(s, "{}")
 
-    @skip_if_broken_hex_binary
     @testutils.skip_from_python(3)
     def testTypeRoundtripBuffer(self):
         o1 = buffer("".join(map(chr, range(256))))
@@ -204,7 +201,6 @@ class TypesBasicTests(unittest.TestCase):
         self.assertEqual(type(o1), type(o2))
         self.assertEqual(str(o1), str(o2))
 
-    @skip_if_broken_hex_binary
     @testutils.skip_from_python(3)
     def testTypeRoundtripBufferArray(self):
         o1 = buffer("".join(map(chr, range(256))))
@@ -213,7 +209,6 @@ class TypesBasicTests(unittest.TestCase):
         self.assertEqual(type(o1[0]), type(o2[0]))
         self.assertEqual(str(o1[0]), str(o2[0]))
 
-    @skip_if_broken_hex_binary
     @testutils.skip_before_python(3)
     def testTypeRoundtripBytes(self):
         o1 = bytes(range(256))
@@ -225,7 +220,6 @@ class TypesBasicTests(unittest.TestCase):
         o2 = self.execute("select %s;", (o1,))
         self.assertEqual(memoryview, type(o2))
 
-    @skip_if_broken_hex_binary
     @testutils.skip_before_python(3)
     def testTypeRoundtripBytesArray(self):
         o1 = bytes(range(256))
@@ -233,7 +227,6 @@ class TypesBasicTests(unittest.TestCase):
         o2 = self.execute("select %s;", (o1,))
         self.assertEqual(memoryview, type(o2[0]))
 
-    @skip_if_broken_hex_binary
     @testutils.skip_before_python(2, 6)
     def testAdaptBytearray(self):
         o1 = bytearray(range(256))
@@ -258,7 +251,6 @@ class TypesBasicTests(unittest.TestCase):
         else:
             self.assertEqual(memoryview, type(o2))
 
-    @skip_if_broken_hex_binary
     @testutils.skip_before_python(2, 7)
     def testAdaptMemoryview(self):
         o1 = memoryview(bytearray(range(256)))
@@ -333,6 +325,104 @@ class AdaptSubclassTest(unittest.TestCase):
             self.assertEqual(b("a"), adapt(B()).getquoted())
         finally:
            del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
+
+
+class ByteaParserTest(unittest.TestCase):
+    """Unit test for our bytea format parser."""
+    def setUp(self):
+        try:
+            self._cast = self._import_cast()
+        except Exception, e:
+            self._cast = None
+            self._exc = e
+
+    def _import_cast(self):
+        """Use ctypes to access the C function.
+
+        Raise any sort of error: we just support this where ctypes works as
+        expected.
+        """
+        import ctypes
+        lib = ctypes.cdll.LoadLibrary(psycopg2._psycopg.__file__)
+        cast = lib.typecast_BINARY_cast
+        cast.argtypes = [ctypes.c_char_p, ctypes.c_size_t, ctypes.py_object]
+        cast.restype = ctypes.py_object
+        return cast
+
+    def cast(self, buffer):
+        """Cast a buffer from the output format"""
+        l = buffer and len(buffer) or 0
+        rv = self._cast(buffer, l, None)
+
+        if rv is None:
+            return None
+
+        if sys.version_info[0] < 3:
+            return str(rv)
+        else:
+            return rv.tobytes()
+
+    def test_null(self):
+        rv = self.cast(None)
+        self.assertEqual(rv, None)
+
+    def test_blank(self):
+        rv = self.cast(b(''))
+        self.assertEqual(rv, b(''))
+
+    def test_blank_hex(self):
+        # Reported as problematic in ticket #48
+        rv = self.cast(b('\\x'))
+        self.assertEqual(rv, b(''))
+
+    def test_full_hex(self, upper=False):
+        buf = ''.join(("%02x" % i) for i in range(256))
+        if upper: buf = buf.upper()
+        buf = '\\x' + buf
+        rv = self.cast(b(buf))
+        if sys.version_info[0] < 3:
+            self.assertEqual(rv, ''.join(map(chr, range(256))))
+        else:
+            self.assertEqual(rv, bytes(range(256)))
+
+    def test_full_hex_upper(self):
+        return self.test_full_hex(upper=True)
+
+    def test_full_escaped_octal(self):
+        buf = ''.join(("\\%03o" % i) for i in range(256))
+        rv = self.cast(b(buf))
+        if sys.version_info[0] < 3:
+            self.assertEqual(rv, ''.join(map(chr, range(256))))
+        else:
+            self.assertEqual(rv, bytes(range(256)))
+
+    def test_escaped_mixed(self):
+        import string
+        buf = ''.join(("\\%03o" % i) for i in range(32))
+        buf += string.ascii_letters
+        buf += ''.join('\\' + c for c in string.ascii_letters)
+        buf += '\\\\'
+        rv = self.cast(b(buf))
+        if sys.version_info[0] < 3:
+            tgt = ''.join(map(chr, range(32))) \
+                + string.ascii_letters * 2 + '\\'
+        else:
+            tgt = bytes(range(32)) + \
+                (string.ascii_letters * 2 + '\\').encode('ascii')
+
+        self.assertEqual(rv, tgt)
+
+def skip_if_cant_cast(f):
+    def skip_if_cant_cast_(self, *args, **kwargs):
+        if self._cast is None:
+            return self.skipTest("can't test bytea parser: %s - %s"
+                % (self._exc.__class__.__name__, self._exc))
+
+        return f(self, *args, **kwargs)
+
+    return skip_if_cant_cast_
+
+decorate_all_tests(ByteaParserTest, skip_if_cant_cast)
 
 
 def test_suite():

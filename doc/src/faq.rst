@@ -97,7 +97,9 @@ Psycopg converts :sql:`decimal`\/\ :sql:`numeric` database types into Python `!D
 Transferring binary data from PostgreSQL 9.0 doesn't work.
     PostgreSQL 9.0 uses by default `the "hex" format`__ to transfer
     :sql:`bytea` data: the format can't be parsed by the libpq 8.4 and
-    earlier. Three options to solve the problem are:
+    earlier. The problem is solved in Psycopg 2.4.1, that uses its own parser
+    for the :sql:`bytea` format. For previous Psycopg releases, three options
+    to solve the problem are:
 
     - set the bytea_output__ parameter to ``escape`` in the server;
     - execute the database command ``SET bytea_output TO escape;`` in the

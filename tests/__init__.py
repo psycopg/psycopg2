@@ -27,17 +27,6 @@ import sys
 from testconfig import dsn
 from testutils import unittest
 
-# If connection to test db fails, bail out early.
-import psycopg2
-try:
-    cnn = psycopg2.connect(dsn)
-except Exception, e:
-    print "Failed connection to test db:", e.__class__.__name__, e
-    print "Please set env vars 'PSYCOPG2_TESTDB*' to valid values."
-    sys.exit(1)
-else:
-    cnn.close()
-
 import bug_gc
 import bugX000
 import extras_dictcursor
@@ -57,6 +46,17 @@ import test_green
 import test_cancel
 
 def test_suite():
+    # If connection to test db fails, bail out early.
+    import psycopg2
+    try:
+        cnn = psycopg2.connect(dsn)
+    except Exception, e:
+        print "Failed connection to test db:", e.__class__.__name__, e
+        print "Please set env vars 'PSYCOPG2_TESTDB*' to valid values."
+        sys.exit(1)
+    else:
+        cnn.close()
+
     suite = unittest.TestSuite()
     suite.addTest(bug_gc.test_suite())
     suite.addTest(bugX000.test_suite())
