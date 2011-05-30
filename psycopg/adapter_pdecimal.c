@@ -41,8 +41,10 @@ pdecimal_getquoted(pdecimalObject *self, PyObject *args)
     PyObject *check, *res = NULL;
     check = PyObject_CallMethod(self->wrapped, "is_finite", NULL);
     if (check == Py_True) {
-        res = PyObject_Str(self->wrapped);
-        goto end;
+        if (!(res = PyObject_Str(self->wrapped))) {
+            goto end;
+        }
+        goto output;
     }
     else if (check) {
         res = Bytes_FromString("'NaN'::numeric");
@@ -70,15 +72,38 @@ pdecimal_getquoted(pdecimalObject *self, PyObject *args)
         goto end;
     }
 
-    res = PyObject_Str(self->wrapped);
+    /* wrapped is finite */
+    if (!(res = PyObject_Str(self->wrapped))) {
+        goto end;
+    }
+
+    /* res may be unicode and may suffer for issue #57 */
+output:
+
 #if PY_MAJOR_VERSION > 2
     /* unicode to bytes in Py3 */
-    if (res) {
+    {
         PyObject *tmp = PyUnicode_AsUTF8String(res);
         Py_DECREF(res);
-        res = tmp;
+        if (!(res = tmp)) {
+            goto end;
+        }
     }
 #endif
+
+    if ('-' == Bytes_AS_STRING(res)[0]) {
+        /* Prepend a space in front of negative numbers (ticket #57) */
+        PyObject *tmp;
+        if (!(tmp = Bytes_FromString(" "))) {
+            Py_DECREF(res);
+            res = NULL;
+            goto end;
+        }
+        Bytes_ConcatAndDel(&tmp, res);
+        if (!(res = tmp)) {
+            goto end;
+        }
+    }
 
 end:
     Py_XDECREF(check);

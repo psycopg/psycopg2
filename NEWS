@@ -1,3 +1,10 @@
+What's new in psycopg 2.4.2
+---------------------------
+
+  - Fixed escape for negative numbers prefixed by minus operator
+    (ticket #57).
+
+
 What's new in psycopg 2.4.1
 ---------------------------
 

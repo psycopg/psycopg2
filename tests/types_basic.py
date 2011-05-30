@@ -275,6 +275,16 @@ class TypesBasicTests(unittest.TestCase):
         o2 = self.execute("SELECT %s::bytea AS foo", (o1,))
         self.assertEqual(b('x'), o2[0])
 
+    def testNegNumber(self):
+        d1 = self.execute("select -%s;", (decimal.Decimal('-1.0'),))
+        self.assertEqual(1, d1)
+        f1 = self.execute("select -%s;", (-1.0,))
+        self.assertEqual(1, f1)
+        i1 = self.execute("select -%s;", (-1,))
+        self.assertEqual(1, i1)
+        l1 = self.execute("select -%s;", (-1L,))
+        self.assertEqual(1, l1)
+
 
 class AdaptSubclassTest(unittest.TestCase):
     def test_adapt_subtype(self):
