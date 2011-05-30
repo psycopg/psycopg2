@@ -111,10 +111,10 @@ rst_epilog = """
 .. _DBAPI: http://www.python.org/dev/peps/pep-0249/
 
 .. _transaction isolation level:
-    http://www.postgresql.org/docs/9.0/static/transaction-iso.html
+    http://www.postgresql.org/docs/9.1/static/transaction-iso.html
 
 .. _serializable isolation level:
-    http://www.postgresql.org/docs/9.0/static/transaction-iso.html#XACT-SERIALIZABLE
+    http://www.postgresql.org/docs/9.1/static/transaction-iso.html#XACT-SERIALIZABLE
 
 .. _mx.DateTime: http://www.egenix.com/products/python/mxBase/mxDateTime/
 

@@ -22,8 +22,8 @@ Why does `!psycopg2` leave database sessions "idle in transaction"?
     call one of the transaction closing methods before leaving the connection
     unused for a long time (which may also be a few seconds, depending on the
     concurrency level in your database).  Alternatively you can use a
-    connection in :ref:`autocommit <autocommit>` mode to avoid a new
-    transaction to be started at the first command.
+    connection in `~connection.autocommit` mode to avoid a new transaction to
+    be started at the first command.
 
 I receive the error *current transaction is aborted, commands ignored until end of transaction block* and can't do anything else!
     There was a problem *in the previous* command to the database, which
