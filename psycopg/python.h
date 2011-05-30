@@ -129,6 +129,7 @@ typedef unsigned long Py_uhash_t;
 #define Bytes_FromString PyString_FromString
 #define Bytes_FromStringAndSize PyString_FromStringAndSize
 #define Bytes_FromFormat PyString_FromFormat
+#define Bytes_ConcatAndDel PyString_ConcatAndDel
 #define _Bytes_Resize _PyString_Resize
 
 #else
@@ -144,6 +145,7 @@ typedef unsigned long Py_uhash_t;
 #define Bytes_FromString PyBytes_FromString
 #define Bytes_FromStringAndSize PyBytes_FromStringAndSize
 #define Bytes_FromFormat PyBytes_FromFormat
+#define Bytes_ConcatAndDel PyBytes_ConcatAndDel
 #define _Bytes_Resize _PyBytes_Resize
 
 #endif

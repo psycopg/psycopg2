@@ -414,7 +414,7 @@ sources = [
 
     'adapter_asis.c', 'adapter_binary.c', 'adapter_datetime.c',
     'adapter_list.c', 'adapter_pboolean.c', 'adapter_pdecimal.c',
-    'adapter_pfloat.c', 'adapter_qstring.c',
+    'adapter_pint.c', 'adapter_pfloat.c', 'adapter_qstring.c',
     'microprotocols.c', 'microprotocols_proto.c',
     'typecast.c',
 ]
@@ -427,7 +427,7 @@ depends = [
 
     'adapter_asis.h', 'adapter_binary.h', 'adapter_datetime.h',
     'adapter_list.h', 'adapter_pboolean.h', 'adapter_pdecimal.h',
-    'adapter_pfloat.h', 'adapter_qstring.h',
+    'adapter_pint.h', 'adapter_pfloat.h', 'adapter_qstring.h',
     'microprotocols.h', 'microprotocols_proto.h',
     'typecast.h', 'typecast_binary.h',
 

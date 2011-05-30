@@ -39,6 +39,7 @@
 #include "psycopg/adapter_qstring.h"
 #include "psycopg/adapter_binary.h"
 #include "psycopg/adapter_pboolean.h"
+#include "psycopg/adapter_pint.h"
 #include "psycopg/adapter_pfloat.h"
 #include "psycopg/adapter_pdecimal.h"
 #include "psycopg/adapter_asis.h"
@@ -316,9 +317,9 @@ psyco_adapters_init(PyObject *mod)
 
     microprotocols_add(&PyFloat_Type, NULL, (PyObject*)&pfloatType);
 #if PY_MAJOR_VERSION < 3
-    microprotocols_add(&PyInt_Type, NULL, (PyObject*)&asisType);
+    microprotocols_add(&PyInt_Type, NULL, (PyObject*)&pintType);
 #endif
-    microprotocols_add(&PyLong_Type, NULL, (PyObject*)&asisType);
+    microprotocols_add(&PyLong_Type, NULL, (PyObject*)&pintType);
     microprotocols_add(&PyBool_Type, NULL, (PyObject*)&pbooleanType);
 
     /* strings */
@@ -758,6 +759,8 @@ static PyMethodDef psycopgMethods[] = {
      METH_VARARGS, psyco_QuotedString_doc},
     {"Boolean",  (PyCFunction)psyco_Boolean,
      METH_VARARGS, psyco_Boolean_doc},
+    {"Int",  (PyCFunction)psyco_Int,
+     METH_VARARGS, psyco_Int_doc},
     {"Float",  (PyCFunction)psyco_Float,
      METH_VARARGS, psyco_Float_doc},
     {"Decimal",  (PyCFunction)psyco_Decimal,
@@ -848,6 +851,7 @@ INIT_MODULE(_psycopg)(void)
     Py_TYPE(&binaryType)     = &PyType_Type;
     Py_TYPE(&isqlquoteType)  = &PyType_Type;
     Py_TYPE(&pbooleanType)   = &PyType_Type;
+    Py_TYPE(&pintType)       = &PyType_Type;
     Py_TYPE(&pfloatType)     = &PyType_Type;
     Py_TYPE(&pdecimalType)   = &PyType_Type;
     Py_TYPE(&asisType)       = &PyType_Type;
@@ -863,6 +867,7 @@ INIT_MODULE(_psycopg)(void)
     if (PyType_Ready(&binaryType) == -1) goto exit;
     if (PyType_Ready(&isqlquoteType) == -1) goto exit;
     if (PyType_Ready(&pbooleanType) == -1) goto exit;
+    if (PyType_Ready(&pintType) == -1) goto exit;
     if (PyType_Ready(&pfloatType) == -1) goto exit;
     if (PyType_Ready(&pdecimalType) == -1) goto exit;
     if (PyType_Ready(&asisType) == -1) goto exit;
@@ -978,6 +983,7 @@ INIT_MODULE(_psycopg)(void)
     binaryType.tp_alloc = PyType_GenericAlloc;
     isqlquoteType.tp_alloc = PyType_GenericAlloc;
     pbooleanType.tp_alloc = PyType_GenericAlloc;
+    pintType.tp_alloc = PyType_GenericAlloc;
     pfloatType.tp_alloc = PyType_GenericAlloc;
     pdecimalType.tp_alloc = PyType_GenericAlloc;
     connectionType.tp_alloc = PyType_GenericAlloc;

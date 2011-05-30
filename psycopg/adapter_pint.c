@@ -1,6 +1,6 @@
-/* adapter_float.c - psycopg pfloat type wrapper implementation
+/* adapter_int.c - psycopg pint type wrapper implementation
  *
- * Copyright (C) 2003-2010 Federico Di Gregorio <fog@debian.org>
+ * Copyright (C) 2011 Daniele Varrazzo <daniele.varrazzo@gmail.com>
  *
  * This file is part of psycopg.
  *
@@ -26,71 +26,57 @@
 #define PSYCOPG_MODULE
 #include "psycopg/psycopg.h"
 
-#include "psycopg/adapter_pfloat.h"
+#include "psycopg/adapter_pint.h"
 #include "psycopg/microprotocols_proto.h"
 
-#include <floatobject.h>
-#include <math.h>
 
-
-/** the Float object **/
+/** the Int object **/
 
 static PyObject *
-pfloat_getquoted(pfloatObject *self, PyObject *args)
+pint_getquoted(pintObject *self, PyObject *args)
 {
-    PyObject *rv;
-    double n = PyFloat_AsDouble(self->wrapped);
-    if (isnan(n))
-        rv = Bytes_FromString("'NaN'::float");
-    else if (isinf(n)) {
-        if (n > 0)
-            rv = Bytes_FromString("'Infinity'::float");
-        else
-            rv = Bytes_FromString("'-Infinity'::float");
+    PyObject *res;
+    if (!(res = PyObject_Str(self->wrapped))) {
+        goto exit;
     }
-    else {
-        if (!(rv = PyObject_Repr(self->wrapped))) {
-            goto exit;
-        }
 
 #if PY_MAJOR_VERSION > 2
-        /* unicode to bytes in Py3 */
-        {
-            PyObject *tmp = PyUnicode_AsUTF8String(rv);
-            Py_DECREF(rv);
-            if (!(rv = tmp)) {
-                goto exit;
-            }
+    /* unicode to bytes in Py3 */
+    {
+        PyObject *tmp = PyUnicode_AsUTF8String(res);
+        Py_DECREF(res);
+        if (!(res = tmp)) {
+            goto exit;
         }
+    }
 #endif
 
-        if ('-' == Bytes_AS_STRING(rv)[0]) {
-            /* Prepend a space in front of negative numbers (ticket #57) */
-            PyObject *tmp;
-            if (!(tmp = Bytes_FromString(" "))) {
-                Py_DECREF(rv);
-                rv = NULL;
-                goto exit;
-            }
-            Bytes_ConcatAndDel(&tmp, rv);
-            if (!(rv = tmp)) {
-                goto exit;
-            }
+    if ('-' == Bytes_AS_STRING(res)[0]) {
+        /* Prepend a space in front of negative numbers (ticket #57) */
+        PyObject *tmp;
+        if (!(tmp = Bytes_FromString(" "))) {
+            Py_DECREF(res);
+            res = NULL;
+            goto exit;
+        }
+        Bytes_ConcatAndDel(&tmp, res);
+        if (!(res = tmp)) {
+            goto exit;
         }
     }
 
 exit:
-    return rv;
+    return res;
 }
 
 static PyObject *
-pfloat_str(pfloatObject *self)
+pint_str(pintObject *self)
 {
-    return psycopg_ensure_text(pfloat_getquoted(self, NULL));
+    return psycopg_ensure_text(pint_getquoted(self, NULL));
 }
 
 static PyObject *
-pfloat_conform(pfloatObject *self, PyObject *args)
+pint_conform(pintObject *self, PyObject *args)
 {
     PyObject *res, *proto;
 
@@ -105,30 +91,30 @@ pfloat_conform(pfloatObject *self, PyObject *args)
     return res;
 }
 
-/** the Float object */
+/** the int object */
 
 /* object member list */
 
-static struct PyMemberDef pfloatObject_members[] = {
-    {"adapted", T_OBJECT, offsetof(pfloatObject, wrapped), READONLY},
+static struct PyMemberDef pintObject_members[] = {
+    {"adapted", T_OBJECT, offsetof(pintObject, wrapped), READONLY},
     {NULL}
 };
 
 /* object method table */
 
-static PyMethodDef pfloatObject_methods[] = {
-    {"getquoted", (PyCFunction)pfloat_getquoted, METH_NOARGS,
+static PyMethodDef pintObject_methods[] = {
+    {"getquoted", (PyCFunction)pint_getquoted, METH_NOARGS,
      "getquoted() -> wrapped object value as SQL-quoted string"},
-    {"__conform__", (PyCFunction)pfloat_conform, METH_VARARGS, NULL},
+    {"__conform__", (PyCFunction)pint_conform, METH_VARARGS, NULL},
     {NULL}  /* Sentinel */
 };
 
 /* initialization and finalization methods */
 
 static int
-pfloat_setup(pfloatObject *self, PyObject *obj)
+pint_setup(pintObject *self, PyObject *obj)
 {
-    Dprintf("pfloat_setup: init pfloat object at %p, refcnt = "
+    Dprintf("pint_setup: init pint object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
         self, Py_REFCNT(self)
       );
@@ -136,7 +122,7 @@ pfloat_setup(pfloatObject *self, PyObject *obj)
     Py_INCREF(obj);
     self->wrapped = obj;
 
-    Dprintf("pfloat_setup: good pfloat object at %p, refcnt = "
+    Dprintf("pint_setup: good pint object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
         self, Py_REFCNT(self)
       );
@@ -144,22 +130,22 @@ pfloat_setup(pfloatObject *self, PyObject *obj)
 }
 
 static int
-pfloat_traverse(PyObject *obj, visitproc visit, void *arg)
+pint_traverse(PyObject *obj, visitproc visit, void *arg)
 {
-    pfloatObject *self = (pfloatObject *)obj;
+    pintObject *self = (pintObject *)obj;
 
     Py_VISIT(self->wrapped);
     return 0;
 }
 
 static void
-pfloat_dealloc(PyObject* obj)
+pint_dealloc(PyObject* obj)
 {
-    pfloatObject *self = (pfloatObject *)obj;
+    pintObject *self = (pintObject *)obj;
 
     Py_CLEAR(self->wrapped);
 
-    Dprintf("pfloat_dealloc: deleted pfloat object at %p, refcnt = "
+    Dprintf("pint_dealloc: deleted pint object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
         obj, Py_REFCNT(obj)
       );
@@ -168,47 +154,47 @@ pfloat_dealloc(PyObject* obj)
 }
 
 static int
-pfloat_init(PyObject *obj, PyObject *args, PyObject *kwds)
+pint_init(PyObject *obj, PyObject *args, PyObject *kwds)
 {
     PyObject *o;
 
     if (!PyArg_ParseTuple(args, "O", &o))
         return -1;
 
-    return pfloat_setup((pfloatObject *)obj, o);
+    return pint_setup((pintObject *)obj, o);
 }
 
 static PyObject *
-pfloat_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+pint_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
     return type->tp_alloc(type, 0);
 }
 
 static void
-pfloat_del(PyObject* self)
+pint_del(PyObject* self)
 {
     PyObject_GC_Del(self);
 }
 
 static PyObject *
-pfloat_repr(pfloatObject *self)
+pint_repr(pintObject *self)
 {
-    return PyString_FromFormat("<psycopg2._psycopg.Float object at %p>",
+    return PyString_FromFormat("<psycopg2._psycopg.Int object at %p>",
                                 self);
 }
 
 
 /* object type */
 
-#define pfloatType_doc \
-"Float(str) -> new Float adapter object"
+#define pintType_doc \
+"Int(str) -> new Int adapter object"
 
-PyTypeObject pfloatType = {
+PyTypeObject pintType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "psycopg2._psycopg.Float",
-    sizeof(pfloatObject),
+    "psycopg2._psycopg.Int",
+    sizeof(pintObject),
     0,
-    pfloat_dealloc, /*tp_dealloc*/
+    pint_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/
 
     0,          /*tp_getattr*/
@@ -216,23 +202,23 @@ PyTypeObject pfloatType = {
 
     0,          /*tp_compare*/
 
-    (reprfunc)pfloat_repr, /*tp_repr*/
+    (reprfunc)pint_repr, /*tp_repr*/
     0,          /*tp_as_number*/
     0,          /*tp_as_sequence*/
     0,          /*tp_as_mapping*/
     0,          /*tp_hash */
 
     0,          /*tp_call*/
-    (reprfunc)pfloat_str, /*tp_str*/
+    (reprfunc)pint_str, /*tp_str*/
 
     0,          /*tp_getattro*/
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
 
     Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
-    pfloatType_doc, /*tp_doc*/
+    pintType_doc, /*tp_doc*/
 
-    pfloat_traverse, /*tp_traverse*/
+    pint_traverse, /*tp_traverse*/
     0,          /*tp_clear*/
 
     0,          /*tp_richcompare*/
@@ -243,8 +229,8 @@ PyTypeObject pfloatType = {
 
     /* Attribute descriptor and subclassing stuff */
 
-    pfloatObject_methods, /*tp_methods*/
-    pfloatObject_members, /*tp_members*/
+    pintObject_methods, /*tp_methods*/
+    pintObject_members, /*tp_members*/
     0,          /*tp_getset*/
     0,          /*tp_base*/
     0,          /*tp_dict*/
@@ -253,10 +239,10 @@ PyTypeObject pfloatType = {
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
 
-    pfloat_init, /*tp_init*/
+    pint_init, /*tp_init*/
     0, /*tp_alloc  will be set to PyType_GenericAlloc in module init*/
-    pfloat_new, /*tp_new*/
-    (freefunc)pfloat_del, /*tp_free  Low-level free-memory routine */
+    pint_new, /*tp_new*/
+    (freefunc)pint_del, /*tp_free  Low-level free-memory routine */
     0,          /*tp_is_gc For PyObject_IS_GC */
     0,          /*tp_bases*/
     0,          /*tp_mro method resolution order */
@@ -269,12 +255,12 @@ PyTypeObject pfloatType = {
 /** module-level functions **/
 
 PyObject *
-psyco_Float(PyObject *module, PyObject *args)
+psyco_Int(PyObject *module, PyObject *args)
 {
     PyObject *obj;
 
     if (!PyArg_ParseTuple(args, "O", &obj))
         return NULL;
 
-    return PyObject_CallFunctionObjArgs((PyObject *)&pfloatType, obj, NULL);
+    return PyObject_CallFunctionObjArgs((PyObject *)&pintType, obj, NULL);
 }

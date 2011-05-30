@@ -39,7 +39,7 @@ from psycopg2._psycopg import DECIMALARRAY, FLOATARRAY, INTEGERARRAY, INTERVALAR
 from psycopg2._psycopg import LONGINTEGERARRAY, ROWIDARRAY, STRINGARRAY, TIMEARRAY
 from psycopg2._psycopg import UNICODEARRAY
 
-from psycopg2._psycopg import Binary, Boolean, Float, QuotedString, AsIs
+from psycopg2._psycopg import Binary, Boolean, Int, Float, QuotedString, AsIs
 try:
     from psycopg2._psycopg import MXDATE, MXDATETIME, MXINTERVAL, MXTIME
     from psycopg2._psycopg import MXDATEARRAY, MXDATETIMEARRAY, MXINTERVALARRAY, MXTIMEARRAY

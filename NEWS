@@ -5,6 +5,8 @@ What's new in psycopg 2.4.2
     from "serializable" in PostgreSQL 9.1.
   - Don't build mx.DateTime support if the module can't be imported
     (ticket #53).
+  - Fixed escape for negative numbers prefixed by minus operator
+    (ticket #57).
 
 
 What's new in psycopg 2.4.1
