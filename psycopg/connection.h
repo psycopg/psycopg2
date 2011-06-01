@@ -136,6 +136,8 @@ HIDDEN int  conn_connect(connectionObject *self, long int async);
 HIDDEN void conn_close(connectionObject *self);
 HIDDEN int  conn_commit(connectionObject *self);
 HIDDEN int  conn_rollback(connectionObject *self);
+HIDDEN int  conn_set(connectionObject *self, const char *param, const char *value);
+HIDDEN int  conn_set_autocommit(connectionObject *self, int value);
 HIDDEN int  conn_switch_isolation_level(connectionObject *self, int level);
 HIDDEN int  conn_set_client_encoding(connectionObject *self, const char *enc);
 HIDDEN int  conn_poll(connectionObject *self);
@@ -153,6 +155,13 @@ HIDDEN PyObject *conn_tpc_recover(connectionObject *self);
     PyErr_SetString(ProgrammingError, #cmd " cannot be used "  \
     "in asynchronous mode");                                   \
     return NULL; }
+
+#define EXC_IF_IN_TRANSACTION(self, cmd)                        \
+    if (self->status != CONN_STATUS_READY) {                    \
+        PyErr_Format(ProgrammingError,                          \
+            "%s cannot be used inside a transaction", #cmd);    \
+        return NULL;                                            \
+    }
 
 #define EXC_IF_TPC_NOT_SUPPORTED(self)              \
     if ((self)->server_version < 80100) {           \

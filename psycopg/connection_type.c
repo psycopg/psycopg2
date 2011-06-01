@@ -187,19 +187,13 @@ psyco_conn_tpc_begin(connectionObject *self, PyObject *args)
     EXC_IF_CONN_CLOSED(self);
     EXC_IF_CONN_ASYNC(self, tpc_begin);
     EXC_IF_TPC_NOT_SUPPORTED(self);
+    EXC_IF_IN_TRANSACTION(self, tpc_begin);
 
     if (!PyArg_ParseTuple(args, "O", &oxid)) {
         goto exit;
     }
 
     if (NULL == (xid = xid_ensure(oxid))) {
-        goto exit;
-    }
-
-    /* check we are not in a transaction */
-    if (self->status != CONN_STATUS_READY) {
-        PyErr_SetString(ProgrammingError,
-            "tpc_begin must be called outside a transaction");
         goto exit;
     }
 
@@ -383,6 +377,145 @@ psyco_conn_tpc_recover(connectionObject *self, PyObject *args)
 
 
 #ifdef PSYCOPG_EXTENSIONS
+
+
+/* parse a python object into one of the possible isolation level values */
+
+static const char *
+_psyco_conn_parse_isolevel(PyObject *pyval)
+{
+    const char **value = NULL;
+
+    static const char *isolevels[] = {
+        "", /* autocommit */
+        "read uncommitted",
+        "read committed",
+        "repeatable read",
+        "serializable",
+        "default",
+        NULL };
+
+    /* parse from one of the level constants */
+    if (PyInt_Check(pyval)) {
+        long level = PyInt_AsLong(pyval);
+        if (level == -1 && PyErr_Occurred()) { return NULL; }
+        if (level < 1 || level > 4) {
+            PyErr_SetString(PyExc_ValueError,
+                "isolation_level must be between 1 and 4");
+            return NULL;
+        }
+        value = isolevels + level;
+    }
+
+    /* parse from the string -- this includes "default" */
+    else {
+        value = isolevels;
+        while (*(++value)) {
+            int cmp;
+            PyObject *pylevel;
+            if (!(pylevel = Text_FromUTF8(*value))) { return NULL; }
+            cmp = PyObject_RichCompareBool(pylevel, pyval, Py_EQ);
+            Py_DECREF(pylevel);
+            if (-1 == cmp) { return NULL; }
+            if (cmp) { break; }
+        }
+        if (!*value) {
+            PyErr_SetString(PyExc_ValueError,
+                "bad value for isolation_level"); /* TODO: emit value */
+        }
+    }
+    return *value;
+}
+
+/* convert True/False/"default" into a C string */
+
+static const char *
+_psyco_conn_parse_onoff(PyObject *pyval)
+{
+    int istrue = PyObject_IsTrue(pyval);
+    if (-1 == istrue) { return NULL; }
+    if (istrue) {
+        int cmp;
+        PyObject *pydef;
+        if (!(pydef = Text_FromUTF8("default"))) { return NULL; }
+        cmp = PyObject_RichCompareBool(pyval, pydef, Py_EQ);
+        Py_DECREF(pydef);
+        if (-1 == cmp) { return NULL; }
+        return cmp ? "default" : "on";
+    }
+    else {
+        return "off";
+    }
+}
+
+/* set_transaction - default transaction characteristics */
+
+#define psyco_conn_set_transaction_doc \
+"set_transaction(...) -- Set one or more parameters for the next transactions.\n\n" \
+"Accepted arguments are 'isolation_level', 'readonly', 'deferrable', 'autocommit'."
+
+static PyObject *
+psyco_conn_set_transaction(connectionObject *self, PyObject *args, PyObject *kwargs)
+{
+    PyObject *isolation_level = Py_None;
+    PyObject *readonly = Py_None;
+    PyObject *deferrable = Py_None;
+    PyObject *autocommit = Py_None;
+
+    static char *kwlist[] =
+        {"isolation_level", "readonly", "deferrable", "autocommit", NULL};
+
+    EXC_IF_CONN_CLOSED(self);
+    EXC_IF_CONN_ASYNC(self, set_transaction);
+    EXC_IF_IN_TRANSACTION(self, set_transaction);
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|OOOO", kwlist,
+            &isolation_level, &readonly, &deferrable, &autocommit)) {
+        return NULL;
+    }
+
+    if (Py_None != isolation_level) {
+        const char *value = NULL;
+        if (!(value = _psyco_conn_parse_isolevel(isolation_level))) {
+            return NULL;
+        }
+        if (0 != conn_set(self, "default_transaction_isolation", value)) {
+            return NULL;
+        }
+    }
+
+    if (Py_None != readonly) {
+        const char *value = NULL;
+        if (!(value = _psyco_conn_parse_onoff(readonly))) {
+            return NULL;
+        }
+        if (0 != conn_set(self, "default_transaction_read_only", value)) {
+            return NULL;
+        }
+    }
+
+    if (Py_None != deferrable) {
+        const char *value = NULL;
+        if (!(value = _psyco_conn_parse_onoff(deferrable))) {
+            return NULL;
+        }
+        if (0 != conn_set(self, "default_transaction_deferrable", value)) {
+            return NULL;
+        }
+    }
+
+    if (Py_None != autocommit) {
+        int value = PyObject_IsTrue(autocommit);
+        if (-1 == value) { return NULL; }
+        if (0 != conn_set_autocommit(self, value)) {
+            return NULL;
+        }
+    }
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 
 /* set_isolation_level method - switch connection isolation level */
 
@@ -717,6 +850,8 @@ static struct PyMethodDef connectionObject_methods[] = {
     {"tpc_recover", (PyCFunction)psyco_conn_tpc_recover,
      METH_NOARGS, psyco_conn_tpc_recover_doc},
 #ifdef PSYCOPG_EXTENSIONS
+    {"set_transaction", (PyCFunction)psyco_conn_set_transaction,
+     METH_VARARGS|METH_KEYWORDS, psyco_conn_set_transaction_doc},
     {"set_isolation_level", (PyCFunction)psyco_conn_set_isolation_level,
      METH_VARARGS, psyco_conn_set_isolation_level_doc},
     {"set_client_encoding", (PyCFunction)psyco_conn_set_client_encoding,

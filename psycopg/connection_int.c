@@ -952,6 +952,46 @@ conn_rollback(connectionObject *self)
     return res;
 }
 
+/* conn_set - set a guc parameter */
+
+int
+conn_set(connectionObject *self, const char *param, const char *value)
+{
+    char query[256];
+    PGresult *pgres = NULL;
+    char *error = NULL;
+    int res = 1;
+
+    Dprintf("conn_set: setting %s to %s", param, value);
+
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&self->lock);
+
+    if (0 == strcmp(value, "default")) {
+        sprintf(query, "SET %s TO DEFAULT;", param);
+    }
+    else {
+        sprintf(query, "SET %s TO '%s';", param, value);
+    }
+
+    res = pq_execute_command_locked(self, query, &pgres, &error, &_save);
+
+    pthread_mutex_unlock(&self->lock);
+    Py_END_ALLOW_THREADS;
+
+    if (res < 0) {
+        pq_complete_error(self, &pgres, &error);
+    }
+
+    return res;
+}
+
+int
+conn_set_autocommit(connectionObject *self, int value)
+{
+    return -1;
+}
+
 /* conn_switch_isolation_level - switch isolation level on the connection */
 
 int
