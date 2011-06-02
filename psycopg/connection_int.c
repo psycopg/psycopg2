@@ -989,7 +989,8 @@ conn_set(connectionObject *self, const char *param, const char *value)
 int
 conn_set_autocommit(connectionObject *self, int value)
 {
-    return -1;
+    self->autocommit = value;
+    return 0;
 }
 
 /* conn_switch_isolation_level - switch isolation level on the connection */

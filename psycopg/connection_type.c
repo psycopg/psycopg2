@@ -517,6 +517,42 @@ psyco_conn_set_transaction(connectionObject *self, PyObject *args, PyObject *kwa
 }
 
 
+#define psyco_conn_autocommit_doc \
+"set or return the autocommit status."
+
+static PyObject *
+psyco_conn_autocommit_get(connectionObject *self)
+{
+    PyObject *ret;
+    ret = self->autocommit ? Py_True : Py_False;
+    Py_INCREF(ret);
+    return ret;
+}
+
+static PyObject *
+_psyco_conn_autocommit_set_checks(connectionObject *self)
+{
+    /* wrapper to use the EXC_IF macros.
+     * return NULL in case of error, else whatever */
+    EXC_IF_CONN_CLOSED(self);
+    EXC_IF_CONN_ASYNC(self, autocommit);
+    EXC_IF_IN_TRANSACTION(self, autocommit);
+    return Py_None;     /* borrowed */
+}
+
+static int
+psyco_conn_autocommit_set(connectionObject *self, PyObject *pyvalue)
+{
+    int value;
+
+    if (!_psyco_conn_autocommit_set_checks(self)) { return -1; }
+    if (-1 == (value = PyObject_IsTrue(pyvalue))) { return -1; }
+    if (0 != conn_set_autocommit(self, value)) { return -1; }
+
+    return 0;
+}
+
+
 /* set_isolation_level method - switch connection isolation level */
 
 #define psyco_conn_set_isolation_level_doc \
@@ -927,6 +963,12 @@ static struct PyGetSetDef connectionObject_getsets[] = {
     EXCEPTION_GETTER(IntegrityError),
     EXCEPTION_GETTER(DataError),
     EXCEPTION_GETTER(NotSupportedError),
+#ifdef PSYCOPG_EXTENSIONS
+    { "autocommit",
+        (getter)psyco_conn_autocommit_get,
+        (setter)psyco_conn_autocommit_set,
+        psyco_conn_autocommit_doc },
+#endif
     {NULL}
 };
 #undef EXCEPTION_GETTER

@@ -417,6 +417,11 @@ pq_begin_locked(connectionObject *conn, PGresult **pgres, char **error,
     Dprintf("pq_begin_locked: pgconn = %p, isolevel = %ld, status = %d",
             conn->pgconn, conn->isolation_level, conn->status);
 
+    if (conn->autocommit) {
+        Dprintf("pq_begin_locked: autocommit");
+        return 0;
+    }
+
     if (conn->isolation_level == ISOLATION_LEVEL_AUTOCOMMIT
             || conn->status != CONN_STATUS_READY) {
         Dprintf("pq_begin_locked: transaction in progress");

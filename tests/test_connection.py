@@ -851,6 +851,98 @@ class TransactionControlTests(unittest.TestCase):
             self.conn.set_transaction, readonly=True, deferrable=True)
 
 
+class AutocommitTests(unittest.TestCase):
+    def setUp(self):
+        self.conn = psycopg2.connect(dsn)
+
+    def tearDown(self):
+        if not self.conn.closed:
+            self.conn.close()
+
+    def test_default_no_autocommit(self):
+        self.assert_(not self.conn.autocommit)
+        self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
+        self.assertEqual(self.conn.get_transaction_status(),
+            psycopg2.extensions.TRANSACTION_STATUS_IDLE)
+
+        cur = self.conn.cursor()
+        cur.execute('select 1;')
+        self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_BEGIN)
+        self.assertEqual(self.conn.get_transaction_status(),
+            psycopg2.extensions.TRANSACTION_STATUS_INTRANS)
+
+        self.conn.rollback()
+        self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
+        self.assertEqual(self.conn.get_transaction_status(),
+            psycopg2.extensions.TRANSACTION_STATUS_IDLE)
+
+    def test_set_autocommit(self):
+        self.conn.autocommit = True
+        self.assert_(self.conn.autocommit)
+        self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
+        self.assertEqual(self.conn.get_transaction_status(),
+            psycopg2.extensions.TRANSACTION_STATUS_IDLE)
+
+        cur = self.conn.cursor()
+        cur.execute('select 1;')
+        self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
+        self.assertEqual(self.conn.get_transaction_status(),
+            psycopg2.extensions.TRANSACTION_STATUS_IDLE)
+
+        self.conn.autocommit = False
+        self.assert_(not self.conn.autocommit)
+        self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
+        self.assertEqual(self.conn.get_transaction_status(),
+            psycopg2.extensions.TRANSACTION_STATUS_IDLE)
+
+        cur.execute('select 1;')
+        self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_BEGIN)
+        self.assertEqual(self.conn.get_transaction_status(),
+            psycopg2.extensions.TRANSACTION_STATUS_INTRANS)
+
+    def test_set_intrans_error(self):
+        cur = self.conn.cursor()
+        cur.execute('select 1;')
+        self.assertRaises(psycopg2.ProgrammingError,
+            setattr, self.conn, 'autocommit', True)
+
+    def test_set_transaction_autocommit(self):
+        self.conn.set_transaction(autocommit=True)
+        self.assert_(self.conn.autocommit)
+        self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
+        self.assertEqual(self.conn.get_transaction_status(),
+            psycopg2.extensions.TRANSACTION_STATUS_IDLE)
+
+        cur = self.conn.cursor()
+        cur.execute('select 1;')
+        self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
+        self.assertEqual(self.conn.get_transaction_status(),
+            psycopg2.extensions.TRANSACTION_STATUS_IDLE)
+
+        self.conn.set_transaction(autocommit=False)
+        self.assert_(not self.conn.autocommit)
+        self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
+        self.assertEqual(self.conn.get_transaction_status(),
+            psycopg2.extensions.TRANSACTION_STATUS_IDLE)
+
+        cur.execute('select 1;')
+        self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_BEGIN)
+        self.assertEqual(self.conn.get_transaction_status(),
+            psycopg2.extensions.TRANSACTION_STATUS_INTRANS)
+        self.conn.rollback()
+
+        self.conn.set_transaction('serializable', readonly=True, autocommit=True)
+        self.assert_(self.conn.autocommit)
+        cur.execute('select 1;')
+        self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
+        self.assertEqual(self.conn.get_transaction_status(),
+            psycopg2.extensions.TRANSACTION_STATUS_IDLE)
+        cur.execute("SHOW default_transaction_isolation;")
+        self.assertEqual(cur.fetchone()[0], 'serializable')
+        cur.execute("SHOW default_transaction_read_only;")
+        self.assertEqual(cur.fetchone()[0], 'on')
+
+
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

@@ -119,6 +119,8 @@ typedef struct {
     int equote;               /* use E''-style quotes for escaped strings */
     PyObject *weakreflist;    /* list of weak references */
 
+    int autocommit;
+
 } connectionObject;
 
 /* C-callable functions in connection_int.c and connection_ext.c */
