@@ -384,10 +384,9 @@ psyco_conn_tpc_recover(connectionObject *self, PyObject *args)
 extern const IsolationLevel conn_isolevels[];
 
 static const char *
-_psyco_conn_parse_isolevel(PyObject *pyval)
+_psyco_conn_parse_isolevel(connectionObject *self, PyObject *pyval)
 {
-    const char *rv = NULL;
-    const IsolationLevel *value = NULL;
+    const IsolationLevel *isolevel = NULL;
 
     Py_INCREF(pyval);   /* for ensure_bytes */
 
@@ -400,22 +399,22 @@ _psyco_conn_parse_isolevel(PyObject *pyval)
                 "isolation_level must be between 1 and 4");
             goto exit;
         }
-        rv = conn_isolevels[level].name;
+
+        isolevel = conn_isolevels + level;
     }
 
     /* parse from the string -- this includes "default" */
     else {
-        value = conn_isolevels;
-        while ((++value)->name) {
+        isolevel = conn_isolevels;
+        while ((++isolevel)->name) {
             if (!(pyval = psycopg_ensure_bytes(pyval))) {
                 goto exit;
             }
-            if (0 == strcasecmp(value->name, Bytes_AS_STRING(pyval))) {
-                rv = value->name;
+            if (0 == strcasecmp(isolevel->name, Bytes_AS_STRING(pyval))) {
                 break;
             }
         }
-        if (!rv) {
+        if (!isolevel->name) {
             char msg[256];
             snprintf(msg, sizeof(msg),
                 "bad value for isolation_level: '%s'", Bytes_AS_STRING(pyval));
@@ -423,9 +422,17 @@ _psyco_conn_parse_isolevel(PyObject *pyval)
         }
     }
 
+    /* use only supported levels on older PG versions */
+    if (isolevel && self->server_version < 80000) {
+        if (isolevel->value == 1 || isolevel->value == 3) {
+            ++isolevel;
+        }
+    }
+
 exit:
     Py_XDECREF(pyval);
-    return rv;
+
+    return isolevel ? isolevel->name : NULL;
 }
 
 /* convert True/False/"default" into a C string */
@@ -477,7 +484,7 @@ psyco_conn_set_transaction(connectionObject *self, PyObject *args, PyObject *kwa
 
     if (Py_None != isolation_level) {
         const char *value = NULL;
-        if (!(value = _psyco_conn_parse_isolevel(isolation_level))) {
+        if (!(value = _psyco_conn_parse_isolevel(self, isolation_level))) {
             return NULL;
         }
         if (0 != conn_set(self, "default_transaction_isolation", value)) {

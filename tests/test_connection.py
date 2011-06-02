@@ -204,14 +204,23 @@ class IsolationLevelsTestCase(unittest.TestCase):
         conn = self.connect()
         curs = conn.cursor()
 
-        for name, level in (
+        levels = (
             (None, psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT),
             ('read uncommitted', psycopg2.extensions.ISOLATION_LEVEL_READ_UNCOMMITTED),
             ('read committed', psycopg2.extensions.ISOLATION_LEVEL_READ_COMMITTED),
             ('repeatable read', psycopg2.extensions.ISOLATION_LEVEL_REPEATABLE_READ),
             ('serializable', psycopg2.extensions.ISOLATION_LEVEL_SERIALIZABLE),
-        ):
+        )
+        for name, level in levels:
             conn.set_isolation_level(level)
+
+            # the only values available on prehistoric PG versions
+            if conn.server_version < 80000:
+                if level in (
+                        psycopg2.extensions.ISOLATION_LEVEL_READ_UNCOMMITTED,
+                        psycopg2.extensions.ISOLATION_LEVEL_REPEATABLE_READ):
+                    name, level = levels[levels.index((name, level)) + 1]
+
             self.assertEqual(conn.isolation_level, level)
 
             curs.execute('show transaction_isolation;')

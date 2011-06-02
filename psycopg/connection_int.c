@@ -1042,6 +1042,13 @@ conn_switch_isolation_level(connectionObject *self, int level)
 {
     int curr_level;
 
+    /* use only supported levels on older PG versions */
+    if (self->server_version < 80000) {
+        if (level == 1 || level == 3) {
+            ++level;
+        }
+    }
+
     if (-1 == (curr_level = conn_get_isolation_level(self))) {
         return -1;
     }
