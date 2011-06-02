@@ -198,7 +198,7 @@ psyco_conn_tpc_begin(connectionObject *self, PyObject *args)
     }
 
     /* two phase commit and autocommit make no point */
-    if (self->isolation_level == ISOLATION_LEVEL_AUTOCOMMIT) {
+    if (self->autocommit) {
         PyErr_SetString(ProgrammingError,
             "tpc_begin can't be called in autocommit mode");
         goto exit;
@@ -381,50 +381,51 @@ psyco_conn_tpc_recover(connectionObject *self, PyObject *args)
 
 /* parse a python object into one of the possible isolation level values */
 
+extern const IsolationLevel conn_isolevels[];
+
 static const char *
 _psyco_conn_parse_isolevel(PyObject *pyval)
 {
-    const char **value = NULL;
+    const char *rv = NULL;
+    const IsolationLevel *value = NULL;
 
-    static const char *isolevels[] = {
-        "", /* autocommit */
-        "read uncommitted",
-        "read committed",
-        "repeatable read",
-        "serializable",
-        "default",
-        NULL };
+    Py_INCREF(pyval);   /* for ensure_bytes */
 
     /* parse from one of the level constants */
     if (PyInt_Check(pyval)) {
         long level = PyInt_AsLong(pyval);
-        if (level == -1 && PyErr_Occurred()) { return NULL; }
+        if (level == -1 && PyErr_Occurred()) { goto exit; }
         if (level < 1 || level > 4) {
             PyErr_SetString(PyExc_ValueError,
                 "isolation_level must be between 1 and 4");
-            return NULL;
+            goto exit;
         }
-        value = isolevels + level;
+        rv = conn_isolevels[level].name;
     }
 
     /* parse from the string -- this includes "default" */
     else {
-        value = isolevels;
-        while (*(++value)) {
-            int cmp;
-            PyObject *pylevel;
-            if (!(pylevel = Text_FromUTF8(*value))) { return NULL; }
-            cmp = PyObject_RichCompareBool(pylevel, pyval, Py_EQ);
-            Py_DECREF(pylevel);
-            if (-1 == cmp) { return NULL; }
-            if (cmp) { break; }
+        value = conn_isolevels;
+        while ((++value)->name) {
+            if (!(pyval = psycopg_ensure_bytes(pyval))) {
+                goto exit;
+            }
+            if (0 == strcasecmp(value->name, Bytes_AS_STRING(pyval))) {
+                rv = value->name;
+                break;
+            }
         }
-        if (!*value) {
-            PyErr_SetString(PyExc_ValueError,
-                "bad value for isolation_level"); /* TODO: emit value */
+        if (!rv) {
+            char msg[256];
+            snprintf(msg, sizeof(msg),
+                "bad value for isolation_level: '%s'", Bytes_AS_STRING(pyval));
+            PyErr_SetString(PyExc_ValueError, msg);
         }
     }
-    return *value;
+
+exit:
+    Py_XDECREF(pyval);
+    return rv;
 }
 
 /* convert True/False/"default" into a C string */
@@ -550,6 +551,17 @@ psyco_conn_autocommit_set(connectionObject *self, PyObject *pyvalue)
     if (0 != conn_set_autocommit(self, value)) { return -1; }
 
     return 0;
+}
+
+
+/* isolation_level - return the current isolation level */
+
+static PyObject *
+psyco_conn_isolation_level_get(connectionObject *self)
+{
+    int rv = conn_get_isolation_level(self);
+    if (-1 == rv) { return NULL; }
+    return PyInt_FromLong((long)rv);
 }
 
 
@@ -920,9 +932,6 @@ static struct PyMemberDef connectionObject_members[] = {
 #ifdef PSYCOPG_EXTENSIONS
     {"closed", T_LONG, offsetof(connectionObject, closed), READONLY,
         "True if the connection is closed."},
-    {"isolation_level", T_LONG,
-        offsetof(connectionObject, isolation_level), READONLY,
-        "The current isolation level."},
     {"encoding", T_STRING, offsetof(connectionObject, encoding), READONLY,
         "The current client encoding."},
     {"notices", T_OBJECT, offsetof(connectionObject, notice_list), READONLY},
@@ -968,6 +977,10 @@ static struct PyGetSetDef connectionObject_getsets[] = {
         (getter)psyco_conn_autocommit_get,
         (setter)psyco_conn_autocommit_set,
         psyco_conn_autocommit_doc },
+    { "isolation_level",
+        (getter)psyco_conn_isolation_level_get,
+        (setter)NULL,
+        "The current isolation level." },
 #endif
     {NULL}
 };

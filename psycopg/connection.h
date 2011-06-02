@@ -61,15 +61,6 @@ extern "C" {
 #define psyco_datestyle "SET DATESTYLE TO 'ISO'"
 #define psyco_transaction_isolation "SHOW default_transaction_isolation"
 
-/* possible values for isolation_level */
-typedef enum {
-    ISOLATION_LEVEL_AUTOCOMMIT          = 0,
-    ISOLATION_LEVEL_READ_UNCOMMITTED    = 1,
-    ISOLATION_LEVEL_READ_COMMITTED      = 2,
-    ISOLATION_LEVEL_REPEATABLE_READ     = 3,
-    ISOLATION_LEVEL_SERIALIZABLE        = 4,
-} conn_isolation_level_t;
-
 extern HIDDEN PyTypeObject connectionType;
 
 struct connectionObject_notice {
@@ -89,7 +80,6 @@ typedef struct {
 
     long int closed;          /* 1 means connection has been closed;
                                  2 that something horrible happened */
-    long int isolation_level; /* isolation level for this connection */
     long int mark;            /* number of commits/rollbacks done so far */
     int status;               /* status of the connection */
     XidObject *tpc_xid;       /* Transaction ID in two-phase commit */
@@ -123,10 +113,16 @@ typedef struct {
 
 } connectionObject;
 
+/* map isolation level values into a numeric const */
+typedef struct {
+    char *name;
+    int value;
+} IsolationLevel;
+
 /* C-callable functions in connection_int.c and connection_ext.c */
 HIDDEN PyObject *conn_text_from_chars(connectionObject *pgconn, const char *str);
 HIDDEN int  conn_get_standard_conforming_strings(PGconn *pgconn);
-HIDDEN int  conn_get_isolation_level(PGresult *pgres);
+HIDDEN int  conn_get_isolation_level(connectionObject *self);
 HIDDEN int  conn_get_protocol_version(PGconn *pgconn);
 HIDDEN int  conn_get_server_version(PGconn *pgconn);
 HIDDEN PGcancel *conn_get_cancel(PGconn *pgconn);

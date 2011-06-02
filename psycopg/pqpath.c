@@ -406,30 +406,17 @@ int
 pq_begin_locked(connectionObject *conn, PGresult **pgres, char **error,
                 PyThreadState **tstate)
 {
-    const char *query[] = {
-        NULL,
-        "BEGIN; SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED",
-        "BEGIN; SET TRANSACTION ISOLATION LEVEL READ COMMITTED",
-        "BEGIN; SET TRANSACTION ISOLATION LEVEL REPEATABLE READ",
-        "BEGIN; SET TRANSACTION ISOLATION LEVEL SERIALIZABLE"};
     int result;
 
-    Dprintf("pq_begin_locked: pgconn = %p, isolevel = %ld, status = %d",
-            conn->pgconn, conn->isolation_level, conn->status);
+    Dprintf("pq_begin_locked: pgconn = %p, autocommit = %d, status = %d",
+            conn->pgconn, conn->autocommit, conn->status);
 
-    if (conn->autocommit) {
-        Dprintf("pq_begin_locked: autocommit");
-        return 0;
-    }
-
-    if (conn->isolation_level == ISOLATION_LEVEL_AUTOCOMMIT
-            || conn->status != CONN_STATUS_READY) {
+    if (conn->autocommit || conn->status != CONN_STATUS_READY) {
         Dprintf("pq_begin_locked: transaction in progress");
         return 0;
     }
 
-    result = pq_execute_command_locked(conn, query[conn->isolation_level],
-                                       pgres, error, tstate);
+    result = pq_execute_command_locked(conn, "BEGIN;", pgres, error, tstate);
     if (result == 0)
         conn->status = CONN_STATUS_BEGIN;
 
@@ -449,11 +436,10 @@ pq_commit(connectionObject *conn)
     PGresult *pgres = NULL;
     char *error = NULL;
 
-    Dprintf("pq_commit: pgconn = %p, isolevel = %ld, status = %d",
-            conn->pgconn, conn->isolation_level, conn->status);
+    Dprintf("pq_commit: pgconn = %p, autocommit = %d, status = %d",
+            conn->pgconn, conn->autocommit, conn->status);
 
-    if (conn->isolation_level == ISOLATION_LEVEL_AUTOCOMMIT
-           || conn->status != CONN_STATUS_BEGIN) {
+    if (conn->autocommit || conn->status != CONN_STATUS_BEGIN) {
         Dprintf("pq_commit: no transaction to commit");
         return 0;
     }
@@ -485,11 +471,10 @@ pq_abort_locked(connectionObject *conn, PGresult **pgres, char **error,
 {
     int retvalue = -1;
 
-    Dprintf("pq_abort_locked: pgconn = %p, isolevel = %ld, status = %d",
-            conn->pgconn, conn->isolation_level, conn->status);
+    Dprintf("pq_abort_locked: pgconn = %p, autocommit = %d, status = %d",
+            conn->pgconn, conn->autocommit, conn->status);
 
-    if (conn->isolation_level == ISOLATION_LEVEL_AUTOCOMMIT
-            || conn->status != CONN_STATUS_BEGIN) {
+    if (conn->autocommit || conn->status != CONN_STATUS_BEGIN) {
         Dprintf("pq_abort_locked: no transaction to abort");
         return 0;
     }
@@ -514,11 +499,10 @@ pq_abort(connectionObject *conn)
     PGresult *pgres = NULL;
     char *error = NULL;
 
-    Dprintf("pq_abort: pgconn = %p, isolevel = %ld, status = %d",
-            conn->pgconn, conn->isolation_level, conn->status);
+    Dprintf("pq_abort: pgconn = %p, autocommit = %d, status = %d",
+            conn->pgconn, conn->autocommit, conn->status);
 
-    if (conn->isolation_level == ISOLATION_LEVEL_AUTOCOMMIT
-           || conn->status != CONN_STATUS_BEGIN) {
+    if (conn->autocommit || conn->status != CONN_STATUS_BEGIN) {
         Dprintf("pq_abort: no transaction to abort");
         return 0;
     }
@@ -554,13 +538,12 @@ pq_reset_locked(connectionObject *conn, PGresult **pgres, char **error,
 {
     int retvalue = -1;
 
-    Dprintf("pq_reset_locked: pgconn = %p, isolevel = %ld, status = %d",
-            conn->pgconn, conn->isolation_level, conn->status);
+    Dprintf("pq_reset_locked: pgconn = %p, autocommit = %d, status = %d",
+            conn->pgconn, conn->autocommit, conn->status);
 
     conn->mark += 1;
 
-    if (conn->isolation_level != ISOLATION_LEVEL_AUTOCOMMIT
-           && conn->status == CONN_STATUS_BEGIN) {
+    if (!conn->autocommit && conn->status == CONN_STATUS_BEGIN) {
         retvalue = pq_execute_command_locked(conn, "ABORT", pgres, error, tstate);
         if (retvalue != 0) return retvalue;
     }
@@ -585,8 +568,8 @@ pq_reset(connectionObject *conn)
     PGresult *pgres = NULL;
     char *error = NULL;
 
-    Dprintf("pq_reset: pgconn = %p, isolevel = %ld, status = %d",
-            conn->pgconn, conn->isolation_level, conn->status);
+    Dprintf("pq_reset: pgconn = %p, autocommit = %d, status = %d",
+            conn->pgconn, conn->autocommit, conn->status);
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&conn->lock);

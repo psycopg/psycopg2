@@ -456,7 +456,7 @@ psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
                 NULL, NULL);
             return NULL;
         }
-        if (self->conn->isolation_level == ISOLATION_LEVEL_AUTOCOMMIT) {
+        if (self->conn->autocommit) {
             psyco_set_error(ProgrammingError, self,
                 "can't use a named cursor outside of transactions", NULL, NULL);
             return NULL;
