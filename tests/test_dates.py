@@ -417,7 +417,11 @@ class mxDateTimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
         from mx.DateTime import DateTime
         value = self.execute('select (%s)::timestamp::text',
                              [DateTime(-41, 1, 1, 13, 30, 29.123456)])
-        self.assertEqual(value, '0042-01-01 13:30:29.123456 BC')
+        # microsecs for BC timestamps look not available in PG < 8.4
+        # but more likely it's determined at compile time.
+        self.assert_(value in (
+            '0042-01-01 13:30:29.123456 BC',
+            '0042-01-01 13:30:29 BC'), value)
 
     def test_adapt_timedelta(self):
         from mx.DateTime import DateTimeDeltaFrom
