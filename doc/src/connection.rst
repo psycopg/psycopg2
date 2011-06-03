@@ -327,7 +327,7 @@ The ``connection`` class
         pair: Transaction; Autocommit
         pair: Transaction; Isolation level
 
-    .. method:: set_transaction(isolation_level=None, readonly=None, deferrable=None, autocommit=None)
+    .. method:: set_transaction([isolation_level,] [readonly,] [deferrable,] [autocommit])
 
         Set one or more parameters for the next transactions or statements in
         the current session. See |SET TRANSACTION|_ for further details.
@@ -336,9 +336,11 @@ The ``connection`` class
         .. _SET TRANSACTION: http://www.postgresql.org/docs/9.1/static/sql-set-transaction.html
 
         :param isolation_level: set the `isolation level`_ for the next
-            transactions/statements.  The value should be one of the
+            transactions/statements.  The value can be one of the
             :ref:`constants <isolation-level-constants>` defined in the
-            `~psycopg2.extensions` module.
+            `~psycopg2.extensions` module or one of the literal values
+            ``read uncommitted``, ``read committed``, ``repeatable read``,
+            ``serializable``.
         :param readonly: if `!True`, set the connection to read only;
             read/write if `!False`.
         :param deferrable: if `!True`, set the connection to deferrable;
@@ -347,12 +349,15 @@ The ``connection`` class
             PostgreSQL session setting but an alias for setting the
             `autocommit` attribute.
 
+        The parameters *isolation_level*, *readonly* and *deferrable* also
+        accept the string ``default`` as a value: the effect is to reset the
+        parameter to the server default.
+
         .. _isolation level:
             http://www.postgresql.org/docs/9.1/static/transaction-iso.html
 
         The function must be invoked with no transaction in progress. At every
-        function invocation, only the parameters whose value is not `!None` are
-        changed.
+        function invocation, only the specified parameters are changed.
 
         The default for the values are defined by the server configuration:
         see values for |default_transaction_isolation|__,
@@ -382,6 +387,10 @@ The ``connection`` class
         execution: the methods `commit()` or `rollback()` must be manually
         invoked to terminate the transaction.
 
+        The autocommit mode is useful to execute commands requiring to be run
+        outside a transaction, such as :sql:`CREATE DATABASE` or
+        :sql:`VACUUM`.
+
         The default is `!False` (manual commit) as per DBAPI specification.
 
         .. warning::
@@ -402,9 +411,8 @@ The ``connection`` class
 
         .. note::
 
-            From version 2.4.2, replaced by `set_transaction()` and
-            `autocommit`, offering finer control on the transaction
-            characteristics.
+            From version 2.4.2, `set_transaction()` and `autocommit`, offer
+            finer control on the transaction characteristics.
 
         Read or set the `transaction isolation level`_ for the current session.
         The level defines the different phenomena that can happen in the

@@ -519,6 +519,10 @@ outside any transaction: in order to be able to run these commands from
 Psycopg, the session must be in autocommit mode.  Read the documentation for
 `connection.set_isolation_level()` to know how to change the commit mode.
 
+.. note::
+
+    From version 2.4.2 you can use the `~connection.autocommit` property to
+    switch a connection in autocommit mode.
 
 
 .. index::
