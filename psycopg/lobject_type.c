@@ -51,7 +51,7 @@ psyco_lobj_close(lobjectObject *self, PyObject *args)
        closing the current transaction is equivalent to close all the
        opened large objects */
     if (!lobject_is_closed(self)
-        && self->conn->isolation_level != ISOLATION_LEVEL_AUTOCOMMIT
+        && !self->conn->autocommit
 	&& self->conn->mark == self->mark)
     {
         Dprintf("psyco_lobj_close: closing lobject at %p", self);
@@ -331,7 +331,7 @@ lobject_setup(lobjectObject *self, connectionObject *conn,
 {
     Dprintf("lobject_setup: init lobject object at %p", self);
 
-    if (conn->isolation_level == ISOLATION_LEVEL_AUTOCOMMIT) {
+    if (conn->autocommit) {
         psyco_set_error(ProgrammingError, NULL,
             "can't use a lobject outside of transactions", NULL, NULL);
         return -1;

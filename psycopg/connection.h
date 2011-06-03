@@ -61,15 +61,6 @@ extern "C" {
 #define psyco_datestyle "SET DATESTYLE TO 'ISO'"
 #define psyco_transaction_isolation "SHOW default_transaction_isolation"
 
-/* possible values for isolation_level */
-typedef enum {
-    ISOLATION_LEVEL_AUTOCOMMIT          = 0,
-    ISOLATION_LEVEL_READ_UNCOMMITTED    = 1,
-    ISOLATION_LEVEL_READ_COMMITTED      = 2,
-    ISOLATION_LEVEL_REPEATABLE_READ     = 3,
-    ISOLATION_LEVEL_SERIALIZABLE        = 4,
-} conn_isolation_level_t;
-
 extern HIDDEN PyTypeObject connectionType;
 
 struct connectionObject_notice {
@@ -89,7 +80,6 @@ typedef struct {
 
     long int closed;          /* 1 means connection has been closed;
                                  2 that something horrible happened */
-    long int isolation_level; /* isolation level for this connection */
     long int mark;            /* number of commits/rollbacks done so far */
     int status;               /* status of the connection */
     XidObject *tpc_xid;       /* Transaction ID in two-phase commit */
@@ -119,12 +109,20 @@ typedef struct {
     int equote;               /* use E''-style quotes for escaped strings */
     PyObject *weakreflist;    /* list of weak references */
 
+    int autocommit;
+
 } connectionObject;
+
+/* map isolation level values into a numeric const */
+typedef struct {
+    char *name;
+    int value;
+} IsolationLevel;
 
 /* C-callable functions in connection_int.c and connection_ext.c */
 HIDDEN PyObject *conn_text_from_chars(connectionObject *pgconn, const char *str);
 HIDDEN int  conn_get_standard_conforming_strings(PGconn *pgconn);
-HIDDEN int  conn_get_isolation_level(PGresult *pgres);
+HIDDEN int  conn_get_isolation_level(connectionObject *self);
 HIDDEN int  conn_get_protocol_version(PGconn *pgconn);
 HIDDEN int  conn_get_server_version(PGconn *pgconn);
 HIDDEN PGcancel *conn_get_cancel(PGconn *pgconn);
@@ -136,6 +134,8 @@ HIDDEN int  conn_connect(connectionObject *self, long int async);
 HIDDEN void conn_close(connectionObject *self);
 HIDDEN int  conn_commit(connectionObject *self);
 HIDDEN int  conn_rollback(connectionObject *self);
+HIDDEN int  conn_set(connectionObject *self, const char *param, const char *value);
+HIDDEN int  conn_set_autocommit(connectionObject *self, int value);
 HIDDEN int  conn_switch_isolation_level(connectionObject *self, int level);
 HIDDEN int  conn_set_client_encoding(connectionObject *self, const char *enc);
 HIDDEN int  conn_poll(connectionObject *self);
@@ -153,6 +153,13 @@ HIDDEN PyObject *conn_tpc_recover(connectionObject *self);
     PyErr_SetString(ProgrammingError, #cmd " cannot be used "  \
     "in asynchronous mode");                                   \
     return NULL; }
+
+#define EXC_IF_IN_TRANSACTION(self, cmd)                        \
+    if (self->status != CONN_STATUS_READY) {                    \
+        PyErr_Format(ProgrammingError,                          \
+            "%s cannot be used inside a transaction", #cmd);    \
+        return NULL;                                            \
+    }
 
 #define EXC_IF_TPC_NOT_SUPPORTED(self)              \
     if ((self)->server_version < 80100) {           \

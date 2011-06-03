@@ -34,6 +34,19 @@
 
 #include <string.h>
 
+/* Mapping from isolation level name to value exposed by Python.
+ * Only used for backward compatibility by the isolation_level property */
+
+const IsolationLevel conn_isolevels[] = {
+    {"",                    0}, /* autocommit */
+    {"read uncommitted",    1},
+    {"read committed",      2},
+    {"repeatable read",     3},
+    {"serializable",        4},
+    {"default",            -1},
+    { NULL }
+};
+
 
 /* Return a new "string" from a char* from the database.
  *
@@ -358,22 +371,60 @@ exit:
     return rv;
 }
 
+
 int
-conn_get_isolation_level(PGresult *pgres)
+conn_get_isolation_level(connectionObject *self)
 {
-    static const char lvl1a[] = "read uncommitted";
-    static const char lvl1b[] = "read committed";
-    int rv;
+    PGresult *pgres;
+    int rv = -1;
+    char *lname;
+    const IsolationLevel *level;
 
-    char *isolation_level = PQgetvalue(pgres, 0, 0);
+    /* this may get called by async connections too: here's your result */
+    if (self->autocommit) {
+        return 0;
+    }
 
-    if ((strcmp(lvl1b, isolation_level) == 0)     /* most likely */
-        || (strcmp(lvl1a, isolation_level) == 0))
-        rv = ISOLATION_LEVEL_READ_COMMITTED;
-    else /* if it's not one of the lower ones, it's SERIALIZABLE */
-        rv = ISOLATION_LEVEL_SERIALIZABLE;
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&self->lock);
+    Py_BLOCK_THREADS;
 
-    CLEARPGRES(pgres);
+    if (!psyco_green()) {
+        Py_UNBLOCK_THREADS;
+        pgres = PQexec(self->pgconn, psyco_transaction_isolation);
+        Py_BLOCK_THREADS;
+    } else {
+        pgres = psyco_exec_green(self, psyco_transaction_isolation);
+    }
+
+    if (pgres == NULL || PQresultStatus(pgres) != PGRES_TUPLES_OK) {
+        PyErr_SetString(OperationalError,
+                         "can't fetch default_transaction_isolation");
+        goto endlock;
+    }
+
+    /* find the value for the requested isolation level */
+    lname = PQgetvalue(pgres, 0, 0);
+    level = conn_isolevels;
+    while ((++level)->name) {
+        if (0 == strcasecmp(level->name, lname)) {
+            rv = level->value;
+            break;
+        }
+    }
+
+    if (-1 == rv) {
+        char msg[256];
+        snprintf(msg, sizeof(msg), "unexpected isolation level: '%s'", lname);
+        PyErr_SetString(OperationalError, msg);
+    }
+
+endlock:
+    IFCLEARPGRES(pgres);
+
+    Py_UNBLOCK_THREADS;
+    pthread_mutex_unlock(&self->lock);
+    Py_END_ALLOW_THREADS;
 
     return rv;
 }
@@ -477,24 +528,8 @@ conn_setup(connectionObject *self, PGconn *pgconn)
         CLEARPGRES(pgres);
     }
 
-    if (!green) {
-        Py_UNBLOCK_THREADS;
-        pgres = PQexec(pgconn, psyco_transaction_isolation);
-        Py_BLOCK_THREADS;
-    } else {
-        pgres = psyco_exec_green(self, psyco_transaction_isolation);
-    }
-
-    if (pgres == NULL || PQresultStatus(pgres) != PGRES_TUPLES_OK) {
-        PyErr_SetString(OperationalError,
-                         "can't fetch default_isolation_level");
-        IFCLEARPGRES(pgres);
-        Py_UNBLOCK_THREADS;
-        pthread_mutex_unlock(&self->lock);
-        Py_BLOCK_THREADS;
-        return -1;
-    }
-    self->isolation_level = conn_get_isolation_level(pgres);
+    /* for reset */
+    self->autocommit = 0;
 
     Py_UNBLOCK_THREADS;
     pthread_mutex_unlock(&self->lock);
@@ -779,7 +814,7 @@ _conn_poll_setup_async(connectionObject *self)
          * expected to manage the transactions himself, by sending
          * (asynchronously) BEGIN and COMMIT statements.
          */
-        self->isolation_level = ISOLATION_LEVEL_AUTOCOMMIT;
+        self->autocommit = 1;
 
         /* If the datestyle is ISO or anything else good,
          * we can skip the CONN_STATUS_DATESTYLE step. */
@@ -952,38 +987,114 @@ conn_rollback(connectionObject *self)
     return res;
 }
 
+/* conn_set - set a guc parameter */
+
+int
+conn_set(connectionObject *self, const char *param, const char *value)
+{
+    char query[256];
+    PGresult *pgres = NULL;
+    char *error = NULL;
+    int res = 1;
+
+    Dprintf("conn_set: setting %s to %s", param, value);
+
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&self->lock);
+
+    if (0 == strcmp(value, "default")) {
+        sprintf(query, "SET %s TO DEFAULT;", param);
+    }
+    else {
+        sprintf(query, "SET %s TO '%s';", param, value);
+    }
+
+    res = pq_execute_command_locked(self, query, &pgres, &error, &_save);
+
+    pthread_mutex_unlock(&self->lock);
+    Py_END_ALLOW_THREADS;
+
+    if (res < 0) {
+        pq_complete_error(self, &pgres, &error);
+    }
+
+    return res;
+}
+
+int
+conn_set_autocommit(connectionObject *self, int value)
+{
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&self->lock);
+
+    self->autocommit = value;
+
+    pthread_mutex_unlock(&self->lock);
+    Py_END_ALLOW_THREADS;
+
+    return 0;
+}
+
 /* conn_switch_isolation_level - switch isolation level on the connection */
 
 int
 conn_switch_isolation_level(connectionObject *self, int level)
 {
-    PGresult *pgres = NULL;
-    char *error = NULL;
-    int res = 0;
+    int curr_level;
 
-    Py_BEGIN_ALLOW_THREADS;
-    pthread_mutex_lock(&self->lock);
-
-    /* if the current isolation level is equal to the requested one don't switch */
-    if (self->isolation_level != level) {
-
-        /* if the current isolation level is > 0 we need to abort the current
-           transaction before changing; that all folks! */
-        if (self->isolation_level != ISOLATION_LEVEL_AUTOCOMMIT) {
-            res = pq_abort_locked(self, &pgres, &error, &_save);
+    /* use only supported levels on older PG versions */
+    if (self->server_version < 80000) {
+        if (level == 1 || level == 3) {
+            ++level;
         }
-        self->isolation_level = level;
-
-        Dprintf("conn_switch_isolation_level: switched to level %d", level);
     }
 
-    pthread_mutex_unlock(&self->lock);
-    Py_END_ALLOW_THREADS;
+    if (-1 == (curr_level = conn_get_isolation_level(self))) {
+        return -1;
+    }
 
-    if (res < 0)
-        pq_complete_error(self, &pgres, &error);
+    if (curr_level == level) {
+        /* no need to change level */
+        return 0;
+    }
 
-    return res;
+    /* Emulate the previous semantic of set_isolation_level() using the
+     * functions currently available. */
+
+    /* terminate the current transaction if any */
+    pq_abort(self);
+
+    if (level == 0) {
+        if (0 != conn_set(self, "default_transaction_isolation", "default")) {
+            return -1;
+        }
+        if (0 != conn_set_autocommit(self, 1)) {
+            return -1;
+        }
+    }
+    else {
+        /* find the name of the requested level */
+        const IsolationLevel *isolevel = conn_isolevels;
+        while ((++isolevel)->name) {
+            if (level == isolevel->value) {
+                break;
+            }
+        }
+        if (!isolevel->name) {
+            PyErr_SetString(OperationalError, "bad isolation level value");
+            return -1;
+        }
+
+        if (0 != conn_set(self, "default_transaction_isolation", isolevel->name)) {
+            return -1;
+        }
+        if (0 != conn_set_autocommit(self, 0)) {
+            return -1;
+        }
+    }
+
+    Dprintf("conn_switch_isolation_level: switched to level %d", level);
+    return 0;
 }
 
 /* conn_set_client_encoding - switch client encoding on connection */

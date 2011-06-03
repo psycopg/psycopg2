@@ -105,6 +105,7 @@ typedef unsigned long Py_uhash_t;
 
 #if PY_MAJOR_VERSION > 2
 #define PyInt_Type             PyLong_Type
+#define PyInt_Check            PyLong_Check
 #define PyInt_AsLong           PyLong_AsLong
 #define PyInt_FromLong         PyLong_FromLong
 #define PyInt_FromSsize_t      PyLong_FromSsize_t

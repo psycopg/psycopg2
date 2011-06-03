@@ -1,8 +1,12 @@
 What's new in psycopg 2.4.2
 ---------------------------
 
-  - Allow using the isolation level "repeatable read" which is distinct
-    from "serializable" in PostgreSQL 9.1.
+  - Added 'set_transaction()' method and 'autocommit' property to the
+    connection. Added support for read-only sessions and, for PostgreSQL
+    9.1, for the "repeatable read" isolation level and the "deferrable"
+    transaction property.
+  - Psycopg doesn't execute queries at connection time to find the
+    default isolation level.
   - Don't build mx.DateTime support if the module can't be imported
     (ticket #53).
   - Fixed escape for negative numbers prefixed by minus operator
