@@ -665,11 +665,14 @@ pq_is_busy(connectionObject *conn)
 
     res = PQisBusy(conn->pgconn);
 
+    Py_BLOCK_THREADS;
+    conn_notifies_process(conn);
+    Py_UNBLOCK_THREADS;
+
     pthread_mutex_unlock(&(conn->lock));
     Py_END_ALLOW_THREADS;
 
     conn_notice_process(conn);
-    conn_notifies_process(conn);
 
     return res;
 }
@@ -781,6 +784,14 @@ pq_execute(cursorObject *curs, const char *query, int async)
             }
             return -1;
         }
+
+        /* Process notifies here instead of when fetching the tuple as we are
+         * into the same critical section that received the data. Without this
+         * care, reading notifies may disrupt other thread communications.
+         * (as in ticket #55). */
+        Py_BLOCK_THREADS;
+        conn_notifies_process(curs->conn);
+        Py_UNBLOCK_THREADS;
     }
 
     else if (async == 1) {
@@ -1370,7 +1381,6 @@ pq_fetch(cursorObject *curs)
     }
 
     conn_notice_process(curs->conn);
-    conn_notifies_process(curs->conn);
 
     /* error checking, close the connection if necessary (some critical errors
        are not really critical, like a COPY FROM error: if that's the case we

@@ -174,8 +174,6 @@ conn_notifies_process(connectionObject *self)
     PyObject *notify = NULL;
     PyObject *pid = NULL, *channel = NULL, *payload = NULL;
 
-    /* TODO: we are called without the lock! */
-
     while ((pgn = PQnotifies(self->pgconn)) != NULL) {
 
         Dprintf("conn_notifies_process: got NOTIFY from pid %d, msg = %s",

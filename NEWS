@@ -7,6 +7,8 @@ What's new in psycopg 2.4.2
     transaction property.
   - Psycopg doesn't execute queries at connection time to find the
     default isolation level.
+  - Fixed bug with multithread code potentially causing loss of sync
+    with the server communication or lock of the client (ticket #55).
   - Don't build mx.DateTime support if the module can't be imported
     (ticket #53).
   - Fixed escape for negative numbers prefixed by minus operator
