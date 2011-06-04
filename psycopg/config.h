@@ -27,7 +27,7 @@
 #define PSYCOPG_CONFIG_H 1
 
 /* GCC 4.0 and later have support for specifying symbol visibility */
-#if __GNUC__ >= 4
+#if __GNUC__ >= 4 && !defined(__MINGW32__)
 #  define HIDDEN __attribute__((visibility("hidden")))
 #else
 #  define HIDDEN
