@@ -450,10 +450,12 @@ pq_commit(connectionObject *conn)
 
     retvalue = pq_execute_command_locked(conn, "COMMIT", &pgres, &error, &_save);
 
+    Py_BLOCK_THREADS;
+    conn_notice_process(conn);
+    Py_UNBLOCK_THREADS;
+
     pthread_mutex_unlock(&conn->lock);
     Py_END_ALLOW_THREADS;
-
-    conn_notice_process(conn);
 
     if (retvalue < 0)
         pq_complete_error(conn, &pgres, &error);
@@ -512,10 +514,12 @@ pq_abort(connectionObject *conn)
 
     retvalue = pq_abort_locked(conn, &pgres, &error, &_save);
 
+    Py_BLOCK_THREADS;
+    conn_notice_process(conn);
+    Py_UNBLOCK_THREADS;
+
     pthread_mutex_unlock(&conn->lock);
     Py_END_ALLOW_THREADS;
-
-    conn_notice_process(conn);
 
     if (retvalue < 0)
         pq_complete_error(conn, &pgres, &error);
@@ -576,10 +580,12 @@ pq_reset(connectionObject *conn)
 
     retvalue = pq_reset_locked(conn, &pgres, &error, &_save);
 
+    Py_BLOCK_THREADS;
+    conn_notice_process(conn);
+    Py_UNBLOCK_THREADS;
+
     pthread_mutex_unlock(&conn->lock);
     Py_END_ALLOW_THREADS;
-
-    conn_notice_process(conn);
 
     if (retvalue < 0) {
         pq_complete_error(conn, &pgres, &error);
@@ -667,12 +673,11 @@ pq_is_busy(connectionObject *conn)
 
     Py_BLOCK_THREADS;
     conn_notifies_process(conn);
+    conn_notice_process(conn);
     Py_UNBLOCK_THREADS;
 
     pthread_mutex_unlock(&(conn->lock));
     Py_END_ALLOW_THREADS;
-
-    conn_notice_process(conn);
 
     return res;
 }
@@ -693,9 +698,9 @@ pq_is_busy_locked(connectionObject *conn)
         return -1;
     }
 
-    /* We can't call conn_notice_process/conn_notifies_process because
-      they try to get the lock. We don't need anyway them because at the end of
-      the loop we are in (async reading) pq_fetch will be called. */
+    /* notices and notifies will be processed at the end of the loop we are in
+     * (async reading) by pq_fetch. */
+
     return PQisBusy(conn->pgconn);
 }
 
@@ -791,6 +796,7 @@ pq_execute(cursorObject *curs, const char *query, int async)
          * (as in ticket #55). */
         Py_BLOCK_THREADS;
         conn_notifies_process(curs->conn);
+        conn_notice_process(curs->conn);
         Py_UNBLOCK_THREADS;
     }
 
@@ -1379,8 +1385,6 @@ pq_fetch(cursorObject *curs)
         ex = -1;
         break;
     }
-
-    conn_notice_process(curs->conn);
 
     /* error checking, close the connection if necessary (some critical errors
        are not really critical, like a COPY FROM error: if that's the case we

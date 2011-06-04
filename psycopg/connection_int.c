@@ -95,6 +95,10 @@ conn_notice_callback(void *args, const char *message)
     self->notice_pending = notice;
 }
 
+/* Expose the notices received as Python objects.
+ *
+ * The function should be called with the connection lock and the GIL.
+ */
 void
 conn_notice_process(connectionObject *self)
 {
@@ -104,10 +108,6 @@ conn_notice_process(connectionObject *self)
     if (NULL == self->notice_pending) {
         return;
     }
-
-    Py_BEGIN_ALLOW_THREADS;
-    pthread_mutex_lock(&self->lock);
-    Py_BLOCK_THREADS;
 
     notice =  self->notice_pending;
     nnotices = PyList_GET_SIZE(self->notice_list);
@@ -132,10 +132,6 @@ conn_notice_process(connectionObject *self)
             0, nnotices - CONN_NOTICES_LIMIT);
     }
 
-    Py_UNBLOCK_THREADS;
-    pthread_mutex_unlock(&self->lock);
-    Py_END_ALLOW_THREADS;
-
     conn_notice_clean(self);
 }
 
@@ -143,8 +139,6 @@ void
 conn_notice_clean(connectionObject *self)
 {
     struct connectionObject_notice *tmp, *notice;
-    Py_BEGIN_ALLOW_THREADS;
-    pthread_mutex_lock(&self->lock);
 
     notice = self->notice_pending;
 
@@ -154,11 +148,8 @@ conn_notice_clean(connectionObject *self)
         free((void*)tmp->message);
         free(tmp);
     }
-    
+
     self->notice_pending = NULL;
-    
-    pthread_mutex_unlock(&self->lock);
-    Py_END_ALLOW_THREADS;    
 }
 
 
