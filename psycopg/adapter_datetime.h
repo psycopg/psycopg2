@@ -45,10 +45,10 @@ typedef struct {
 } pydatetimeObject;
 
 
+HIDDEN int psyco_adapter_datetime_init(void);
+
 /* functions exported to psycopgmodule.c */
 #ifdef PSYCOPG_DEFAULT_PYDATETIME
-
-HIDDEN int psyco_adapter_datetime_init(void);
 
 HIDDEN PyObject *psyco_Date(PyObject *module, PyObject *args);
 #define psyco_Date_doc \

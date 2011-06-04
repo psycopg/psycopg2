@@ -292,13 +292,14 @@ typecast_init(PyObject *dict)
 
     /* register the date/time typecasters with their original names */
 #ifdef HAVE_MXDATETIME
-    if (psyco_typecast_mxdatetime_init()) { return -1; }
-    for (i = 0; typecast_mxdatetime[i].name != NULL; i++) {
-        typecastObject *t;
-        Dprintf("typecast_init: initializing %s", typecast_mxdatetime[i].name);
-        t = (typecastObject *)typecast_from_c(&(typecast_mxdatetime[i]), dict);
-        if (t == NULL) return -1;
-        PyDict_SetItem(dict, t->name, (PyObject *)t);
+    if (0 == psyco_typecast_mxdatetime_init()) {
+        for (i = 0; typecast_mxdatetime[i].name != NULL; i++) {
+            typecastObject *t;
+            Dprintf("typecast_init: initializing %s", typecast_mxdatetime[i].name);
+            t = (typecastObject *)typecast_from_c(&(typecast_mxdatetime[i]), dict);
+            if (t == NULL) return -1;
+            PyDict_SetItem(dict, t->name, (PyObject *)t);
+        }
     }
 #endif
 

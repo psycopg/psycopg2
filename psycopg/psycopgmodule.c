@@ -360,10 +360,16 @@ psyco_adapters_init(PyObject *mod)
 
 #ifdef HAVE_MXDATETIME
     /* as above, we use the callable objects from the psycopg module */
-    call = PyMapping_GetItemString(mod, "TimestampFromMx");
-    microprotocols_add(mxDateTime.DateTime_Type, NULL, call);
-    call = PyMapping_GetItemString(mod, "TimeFromMx");
-    microprotocols_add(mxDateTime.DateTimeDelta_Type, NULL, call);
+    if (NULL != (call = PyMapping_GetItemString(mod, "TimestampFromMx"))) {
+        microprotocols_add(mxDateTime.DateTime_Type, NULL, call);
+
+        /* if we found the above, we have this too. */
+        call = PyMapping_GetItemString(mod, "TimeFromMx");
+        microprotocols_add(mxDateTime.DateTimeDelta_Type, NULL, call);
+    }
+    else {
+        PyErr_Clear();
+    }
 #endif
 }
 
@@ -792,6 +798,7 @@ static PyMethodDef psycopgMethods[] = {
      METH_VARARGS, psyco_IntervalFromPy_doc},
 
 #ifdef HAVE_MXDATETIME
+    /* to be deleted if not found at import time */
     {"DateFromMx",  (PyCFunction)psyco_DateFromMx,
      METH_VARARGS, psyco_DateFromMx_doc},
     {"TimeFromMx",  (PyCFunction)psyco_TimeFromMx,
@@ -885,12 +892,16 @@ INIT_MODULE(_psycopg)(void)
 #ifdef HAVE_MXDATETIME
     Py_TYPE(&mxdatetimeType) = &PyType_Type;
     if (PyType_Ready(&mxdatetimeType) == -1) goto exit;
-    if (mxDateTime_ImportModuleAndAPI() != 0) {
-        Dprintf("initpsycopg: why marc hide mx.DateTime again?!");
-        PyErr_SetString(PyExc_ImportError, "can't import mx.DateTime module");
+    if (0 != mxDateTime_ImportModuleAndAPI()) {
+        PyErr_Clear();
+
+        /* only fail if the mx typacaster should have been the default */
+#ifdef PSYCOPG_DEFAULT_MXDATETIME
+        PyErr_SetString(PyExc_ImportError,
+            "can't import mx.DateTime module (requested as default adapter)");
         goto exit;
+#endif
     }
-    if (psyco_adapter_mxdatetime_init()) { goto exit; }
 #endif
 
     /* import python builtin datetime module, if available */
@@ -967,6 +978,16 @@ INIT_MODULE(_psycopg)(void)
     /* encodings dictionary in module dictionary */
     PyModule_AddObject(module, "encodings", psycoEncodings);
 
+#ifdef HAVE_MXDATETIME
+    /* If we can't find mx.DateTime objects at runtime,
+     * remove them from the module (and, as consequence, from the adapters). */
+    if (0 != psyco_adapter_mxdatetime_init()) {
+        PyDict_DelItemString(dict, "DateFromMx");
+        PyDict_DelItemString(dict, "TimeFromMx");
+        PyDict_DelItemString(dict, "TimestampFromMx");
+        PyDict_DelItemString(dict, "IntervalFromMx");
+    }
+#endif
     /* initialize default set of typecasters */
     typecast_init(dict);
 
@@ -998,7 +1019,6 @@ INIT_MODULE(_psycopg)(void)
 #ifdef PSYCOPG_EXTENSIONS
     lobjectType.tp_alloc = PyType_GenericAlloc;
 #endif
-
 
 #ifdef HAVE_MXDATETIME
     mxdatetimeType.tp_alloc = PyType_GenericAlloc;

@@ -25,13 +25,17 @@
 
 #include "mxDateTime.h"
 
+
+/* Return 0 on success, -1 on failure, but don't set an exception */
+
 static int
 psyco_typecast_mxdatetime_init(void)
 {
     Dprintf("psyco_typecast_mxdatetime_init: mx.DateTime init");
 
-    if(mxDateTime_ImportModuleAndAPI()) {
-        PyErr_SetString(PyExc_ImportError, "mx.DateTime initialization failed");
+    if (mxDateTime_ImportModuleAndAPI()) {
+        Dprintf("psyco_typecast_mxdatetime_init: mx.DateTime initialization failed");
+        PyErr_Clear();
         return -1;
     }
     return 0;

@@ -450,18 +450,13 @@ if parser.has_option('build_ext', 'mx_include_dir'):
 else:
     mxincludedir = os.path.join(get_python_inc(plat_specific=1), "mx")
 if os.path.exists(mxincludedir):
-    # Check if mx.datetime is importable at all: see ticket #53
-    try:
-        import mx.DateTime
-    except ImportError:
-        pass
-    else:
-        include_dirs.append(mxincludedir)
-        define_macros.append(('HAVE_MXDATETIME','1'))
-        sources.append('adapter_mxdatetime.c')
-        depends.extend(['adapter_mxdatetime.h', 'typecast_mxdatetime.c'])
-        have_mxdatetime = True
-        version_flags.append('mx')
+    # Build the support for mx: we will check at runtime if it can be imported
+    include_dirs.append(mxincludedir)
+    define_macros.append(('HAVE_MXDATETIME','1'))
+    sources.append('adapter_mxdatetime.c')
+    depends.extend(['adapter_mxdatetime.h', 'typecast_mxdatetime.c'])
+    have_mxdatetime = True
+    version_flags.append('mx')
 
 # now decide which package will be the default for date/time typecasts
 if have_pydatetime and (use_pydatetime or not have_mxdatetime):

@@ -26,7 +26,6 @@
 #define PSYCOPG_MODULE
 #include "psycopg/psycopg.h"
 
-/* TODO: check if still compiles ok: I have no mx on this box */
 #include "psycopg/adapter_mxdatetime.h"
 #include "psycopg/microprotocols_proto.h"
 
@@ -34,13 +33,16 @@
 #include <string.h>
 
 
+/* Return 0 on success, -1 on failure, but don't set an exception */
+
 int
 psyco_adapter_mxdatetime_init(void)
 {
     Dprintf("psyco_adapter_mxdatetime_init: mx.DateTime init");
 
-    if(mxDateTime_ImportModuleAndAPI()) {
-        PyErr_SetString(PyExc_ImportError, "mx.DateTime initialization failed");
+    if (mxDateTime_ImportModuleAndAPI()) {
+        Dprintf("psyco_adapter_mxdatetime_init: mx.DateTime initialization failed");
+        PyErr_Clear();
         return -1;
     }
     return 0;
