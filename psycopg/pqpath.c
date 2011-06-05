@@ -343,12 +343,12 @@ pq_execute_command_locked(connectionObject *conn, const char *query,
         *tstate = PyEval_SaveThread();
     }
     if (*pgres == NULL) {
-        const char *msg;
-
         Dprintf("pq_execute_command_locked: PQexec returned NULL");
-        msg = PQerrorMessage(conn->pgconn);
-        if (msg)
-            *error = strdup(msg);
+        if (!PyErr_Occurred()) {
+            const char *msg;
+            msg = PQerrorMessage(conn->pgconn);
+            if (msg && *msg) { *error = strdup(msg); }
+        }
         goto cleanup;
     }
 
@@ -361,8 +361,8 @@ pq_execute_command_locked(connectionObject *conn, const char *query,
 
     retvalue = 0;
     IFCLEARPGRES(*pgres);
-    
- cleanup:
+
+cleanup:
     return retvalue;
 }
 
