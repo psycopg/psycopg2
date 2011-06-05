@@ -136,6 +136,8 @@ static int pthread_mutex_init(pthread_mutex_t *mutex, void* fake)
  * in libxml2 code */
 #define isinf(x) ((_fpclass(x) == _FPCLASS_PINF) ? 1 \
 	: ((_fpclass(x) == _FPCLASS_NINF) ? -1 : 0))
+
+#define strcasecmp(x, y) lstrcmpi(x, y)
 #endif
 #endif
 
