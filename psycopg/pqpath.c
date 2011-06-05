@@ -597,6 +597,98 @@ pq_reset(connectionObject *conn)
 }
 
 
+/* Get a session parameter.
+ *
+ * The function should be called on a locked connection without
+ * holding the GIL.
+ *
+ * The result is a new string allocated with malloc.
+ */
+
+char *
+pq_get_guc_locked(
+    connectionObject *conn, const char *param,
+    PGresult **pgres, char **error, PyThreadState **tstate)
+{
+    char query[256];
+    int size;
+    char *rv = NULL;
+
+    Dprintf("pq_get_guc_locked: reading %s", param);
+
+    size = PyOS_snprintf(query, sizeof(query), "SHOW %s;", param);
+    if (size >= sizeof(query)) {
+        *error = strdup("SHOW: query too large");
+        goto cleanup;
+    }
+
+    Dprintf("pq_get_guc_locked: pgconn = %p, query = %s", conn->pgconn, query);
+
+    *error = NULL;
+    if (!psyco_green()) {
+        *pgres = PQexec(conn->pgconn, query);
+    } else {
+        PyEval_RestoreThread(*tstate);
+        *pgres = psyco_exec_green(conn, query);
+        *tstate = PyEval_SaveThread();
+    }
+
+    if (*pgres == NULL) {
+        Dprintf("pq_get_guc_locked: PQexec returned NULL");
+        if (!PyErr_Occurred()) {
+            const char *msg;
+            msg = PQerrorMessage(conn->pgconn);
+            if (msg && *msg) { *error = strdup(msg); }
+        }
+        goto cleanup;
+    }
+    if (PQresultStatus(*pgres) != PGRES_TUPLES_OK) {
+        Dprintf("pq_get_guc_locked: result was not TUPLES_OK (%d)",
+                PQresultStatus(*pgres));
+        goto cleanup;
+    }
+
+    rv = strdup(PQgetvalue(*pgres, 0, 0));
+    CLEARPGRES(*pgres);
+
+cleanup:
+    return rv;
+}
+
+/* Set a session parameter.
+ *
+ * The function should be called on a locked connection without
+ * holding the GIL
+ */
+
+int
+pq_set_guc_locked(
+    connectionObject *conn, const char *param, const char *value,
+    PGresult **pgres, char **error, PyThreadState **tstate)
+{
+    char query[256];
+    int size;
+    int rv = -1;
+
+    Dprintf("pq_set_guc_locked: setting %s to %s", param, value);
+
+    if (0 == strcmp(value, "default")) {
+        size = PyOS_snprintf(query, sizeof(query),
+            "SET %s TO DEFAULT;", param);
+    }
+    else {
+        size = PyOS_snprintf(query, sizeof(query),
+            "SET %s TO '%s';", param, value);
+    }
+    if (size >= sizeof(query)) {
+        *error = strdup("SET: query too large");
+    }
+
+    rv = pq_execute_command_locked(conn, query, pgres, error, tstate);
+
+    return rv;
+}
+
 /* Call one of the PostgreSQL tpc-related commands.
  *
  * This function should only be called on a locked connection without
