@@ -364,7 +364,8 @@ exit:
 int
 conn_get_isolation_level(connectionObject *self)
 {
-    PGresult *pgres;
+    PGresult *pgres = NULL;
+    char *error = NULL;
     int rv = -1;
     char *lname;
     const IsolationLevel *level;
@@ -376,24 +377,13 @@ conn_get_isolation_level(connectionObject *self)
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
-    Py_BLOCK_THREADS;
 
-    if (!psyco_green()) {
-        Py_UNBLOCK_THREADS;
-        pgres = PQexec(self->pgconn, psyco_transaction_isolation);
-        Py_BLOCK_THREADS;
-    } else {
-        pgres = psyco_exec_green(self, psyco_transaction_isolation);
-    }
-
-    if (pgres == NULL || PQresultStatus(pgres) != PGRES_TUPLES_OK) {
-        PyErr_SetString(OperationalError,
-                         "can't fetch default_transaction_isolation");
+    if (!(lname = pq_get_guc_locked(self, "default_transaction_isolation",
+            &pgres, &error, &_save))) {
         goto endlock;
     }
 
     /* find the value for the requested isolation level */
-    lname = PQgetvalue(pgres, 0, 0);
     level = conn_isolevels;
     while ((++level)->name) {
         if (0 == strcasecmp(level->name, lname)) {
@@ -401,22 +391,25 @@ conn_get_isolation_level(connectionObject *self)
             break;
         }
     }
-
     if (-1 == rv) {
-        char msg[256];
-        snprintf(msg, sizeof(msg), "unexpected isolation level: '%s'", lname);
-        PyErr_SetString(OperationalError, msg);
+        error = malloc(256);
+        PyOS_snprintf(error, 256,
+            "unexpected isolation level: '%s'", lname);
     }
 
-endlock:
-    IFCLEARPGRES(pgres);
+    free(lname);
 
-    Py_UNBLOCK_THREADS;
+endlock:
     pthread_mutex_unlock(&self->lock);
     Py_END_ALLOW_THREADS;
 
+    if (rv < 0) {
+        pq_complete_error(self, &pgres, &error);
+    }
+
     return rv;
 }
+
 
 int
 conn_get_protocol_version(PGconn *pgconn)
@@ -465,8 +458,8 @@ conn_is_datestyle_ok(PGconn *pgconn)
 int
 conn_setup(connectionObject *self, PGconn *pgconn)
 {
-    PGresult *pgres;
-    int green;
+    PGresult *pgres = NULL;
+    char *error = NULL;
 
     self->equote = conn_get_standard_conforming_strings(pgconn);
     self->server_version = conn_get_server_version(pgconn);
@@ -490,31 +483,20 @@ conn_setup(connectionObject *self, PGconn *pgconn)
     pthread_mutex_lock(&self->lock);
     Py_BLOCK_THREADS;
 
-    green = psyco_green();
-
-    if (green && (pq_set_non_blocking(self, 1, 1) != 0)) {
+    if (psyco_green() && (pq_set_non_blocking(self, 1, 1) != 0)) {
         return -1;
     }
 
     if (!conn_is_datestyle_ok(self->pgconn)) {
-        if (!green) {
-            Py_UNBLOCK_THREADS;
-            Dprintf("conn_connect: exec query \"%s\";", psyco_datestyle);
-            pgres = PQexec(pgconn, psyco_datestyle);
-            Py_BLOCK_THREADS;
-        } else {
-            pgres = psyco_exec_green(self, psyco_datestyle);
-        }
-
-        if (pgres == NULL || PQresultStatus(pgres) != PGRES_COMMAND_OK ) {
-            PyErr_SetString(OperationalError, "can't set datestyle to ISO");
-            IFCLEARPGRES(pgres);
-            Py_UNBLOCK_THREADS;
-            pthread_mutex_unlock(&self->lock);
-            Py_BLOCK_THREADS;
+        int res;
+        Py_UNBLOCK_THREADS;
+        res = pq_set_guc_locked(self, "datestyle", "ISO",
+            &pgres, &error, &_save);
+        Py_BLOCK_THREADS;
+        if (res < 0) {
+            pq_complete_error(self, &pgres, &error);
             return -1;
         }
-        CLEARPGRES(pgres);
     }
 
     /* for reset */
@@ -976,30 +958,53 @@ conn_rollback(connectionObject *self)
     return res;
 }
 
-/* conn_set - set a guc parameter */
-
 int
-conn_set(connectionObject *self, const char *param, const char *value)
+conn_set_transaction(connectionObject *self,
+        const char *isolevel, const char *readonly, const char *deferrable,
+        int autocommit)
 {
-    char query[256];
     PGresult *pgres = NULL;
     char *error = NULL;
-    int res = 1;
-
-    Dprintf("conn_set: setting %s to %s", param, value);
+    int res = -1;
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
 
-    if (0 == strcmp(value, "default")) {
-        sprintf(query, "SET %s TO DEFAULT;", param);
-    }
-    else {
-        sprintf(query, "SET %s TO '%s';", param, value);
+    if (isolevel) {
+        Dprintf("conn_set_transaction: setting isolation to %s", isolevel);
+        if ((res = pq_set_guc_locked(self,
+                "default_transaction_isolation", isolevel,
+                &pgres, &error, &_save))) {
+            goto endlock;
+        }
     }
 
-    res = pq_execute_command_locked(self, query, &pgres, &error, &_save);
+    if (readonly) {
+        Dprintf("conn_set_transaction: setting read only to %s", readonly);
+        if ((res = pq_set_guc_locked(self,
+                "default_transaction_read_only", readonly,
+                &pgres, &error, &_save))) {
+            goto endlock;
+        }
+    }
 
+    if (deferrable) {
+        Dprintf("conn_set_transaction: setting deferrable to %s", deferrable);
+        if ((res = pq_set_guc_locked(self,
+                "default_transaction_deferrable", deferrable,
+                &pgres, &error, &_save))) {
+            goto endlock;
+        }
+    }
+
+    if (self->autocommit != autocommit) {
+        Dprintf("conn_set_transaction: setting autocommit to %d", autocommit);
+        self->autocommit = autocommit;
+    }
+
+    res = 0;
+
+endlock:
     pthread_mutex_unlock(&self->lock);
     Py_END_ALLOW_THREADS;
 
@@ -1029,7 +1034,10 @@ conn_set_autocommit(connectionObject *self, int value)
 int
 conn_switch_isolation_level(connectionObject *self, int level)
 {
+    PGresult *pgres = NULL;
+    char *error = NULL;
     int curr_level;
+    int ret = -1;
 
     /* use only supported levels on older PG versions */
     if (self->server_version < 80000) {
@@ -1050,16 +1058,21 @@ conn_switch_isolation_level(connectionObject *self, int level)
     /* Emulate the previous semantic of set_isolation_level() using the
      * functions currently available. */
 
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&self->lock);
+
     /* terminate the current transaction if any */
-    pq_abort(self);
+    if ((ret = pq_abort_locked(self, &pgres, &error, &_save))) {
+        goto endlock;
+    }
 
     if (level == 0) {
-        if (0 != conn_set(self, "default_transaction_isolation", "default")) {
-            return -1;
+        if ((ret = pq_set_guc_locked(self,
+                "default_transaction_isolation", "default",
+                &pgres, &error, &_save))) {
+            goto endlock;
         }
-        if (0 != conn_set_autocommit(self, 1)) {
-            return -1;
-        }
+        self->autocommit = 1;
     }
     else {
         /* find the name of the requested level */
@@ -1070,21 +1083,32 @@ conn_switch_isolation_level(connectionObject *self, int level)
             }
         }
         if (!isolevel->name) {
-            PyErr_SetString(OperationalError, "bad isolation level value");
-            return -1;
+            ret = -1;
+            error = strdup("bad isolation level value");
+            goto endlock;
         }
 
-        if (0 != conn_set(self, "default_transaction_isolation", isolevel->name)) {
-            return -1;
+        if ((ret = pq_set_guc_locked(self,
+                "default_transaction_isolation", isolevel->name,
+                &pgres, &error, &_save))) {
+            goto endlock;
         }
-        if (0 != conn_set_autocommit(self, 0)) {
-            return -1;
-        }
+        self->autocommit = 0;
     }
 
     Dprintf("conn_switch_isolation_level: switched to level %d", level);
-    return 0;
+
+endlock:
+    pthread_mutex_unlock(&self->lock);
+    Py_END_ALLOW_THREADS;
+
+    if (ret < 0) {
+        pq_complete_error(self, &pgres, &error);
+    }
+
+    return ret;
 }
+
 
 /* conn_set_client_encoding - switch client encoding on connection */
 
@@ -1093,7 +1117,6 @@ conn_set_client_encoding(connectionObject *self, const char *enc)
 {
     PGresult *pgres = NULL;
     char *error = NULL;
-    char query[48];
     int res = 1;
     char *codec = NULL;
     char *clean_enc = NULL;
@@ -1109,16 +1132,14 @@ conn_set_client_encoding(connectionObject *self, const char *enc)
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
 
-    /* set encoding, no encoding string is longer than 24 bytes */
-    PyOS_snprintf(query, 47, "SET client_encoding = '%s'", clean_enc);
-
     /* abort the current transaction, to set the encoding ouside of
        transactions */
     if ((res = pq_abort_locked(self, &pgres, &error, &_save))) {
         goto endlock;
     }
 
-    if ((res = pq_execute_command_locked(self, query, &pgres, &error, &_save))) {
+    if ((res = pq_set_guc_locked(self, "client_encoding", clean_enc,
+            &pgres, &error, &_save))) {
         goto endlock;
     }
 
@@ -1142,7 +1163,6 @@ conn_set_client_encoding(connectionObject *self, const char *enc)
             self->encoding, self->codec);
 
 endlock:
-
     pthread_mutex_unlock(&self->lock);
     Py_END_ALLOW_THREADS;
 

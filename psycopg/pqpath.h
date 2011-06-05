@@ -47,6 +47,12 @@ HIDDEN int pq_abort(connectionObject *conn);
 HIDDEN int pq_reset_locked(connectionObject *conn, PGresult **pgres,
                             char **error, PyThreadState **tstate);
 HIDDEN int pq_reset(connectionObject *conn);
+HIDDEN char *pq_get_guc_locked(connectionObject *conn, const char *param,
+                               PGresult **pgres,
+                               char **error, PyThreadState **tstate);
+HIDDEN int pq_set_guc_locked(connectionObject *conn, const char *param,
+                             const char *value, PGresult **pgres,
+                             char **error, PyThreadState **tstate);
 HIDDEN int pq_tpc_command_locked(connectionObject *conn,
                                  const char *cmd, const char *tid,
                                  PGresult **pgres, char **error,
