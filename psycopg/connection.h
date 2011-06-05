@@ -59,7 +59,6 @@ extern "C" {
    later change it, she must know what she's doing... these are the queries we
    need to issue */
 #define psyco_datestyle "SET DATESTYLE TO 'ISO'"
-#define psyco_transaction_isolation "SHOW default_transaction_isolation"
 
 extern HIDDEN PyTypeObject connectionType;
 
@@ -134,7 +133,9 @@ HIDDEN int  conn_connect(connectionObject *self, long int async);
 HIDDEN void conn_close(connectionObject *self);
 HIDDEN int  conn_commit(connectionObject *self);
 HIDDEN int  conn_rollback(connectionObject *self);
-HIDDEN int  conn_set(connectionObject *self, const char *param, const char *value);
+HIDDEN int  conn_set_transaction(connectionObject *self, const char *isolevel,
+                                 const char *readonly, const char *deferrable,
+                                 int autocommit);
 HIDDEN int  conn_set_autocommit(connectionObject *self, int value);
 HIDDEN int  conn_switch_isolation_level(connectionObject *self, int level);
 HIDDEN int  conn_set_client_encoding(connectionObject *self, const char *enc);

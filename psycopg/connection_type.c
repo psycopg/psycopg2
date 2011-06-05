@@ -465,10 +465,15 @@ _psyco_conn_parse_onoff(PyObject *pyval)
 static PyObject *
 psyco_conn_set_transaction(connectionObject *self, PyObject *args, PyObject *kwargs)
 {
-    PyObject *isolation_level = Py_None;
+    PyObject *isolevel = Py_None;
     PyObject *readonly = Py_None;
     PyObject *deferrable = Py_None;
     PyObject *autocommit = Py_None;
+
+    const char *c_isolevel = NULL;
+    const char *c_readonly = NULL;
+    const char *c_deferrable = NULL;
+    int c_autocommit = self->autocommit;
 
     static char *kwlist[] =
         {"isolation_level", "readonly", "deferrable", "autocommit", NULL};
@@ -478,46 +483,34 @@ psyco_conn_set_transaction(connectionObject *self, PyObject *args, PyObject *kwa
     EXC_IF_IN_TRANSACTION(self, set_transaction);
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|OOOO", kwlist,
-            &isolation_level, &readonly, &deferrable, &autocommit)) {
+            &isolevel, &readonly, &deferrable, &autocommit)) {
         return NULL;
     }
 
-    if (Py_None != isolation_level) {
-        const char *value = NULL;
-        if (!(value = _psyco_conn_parse_isolevel(self, isolation_level))) {
-            return NULL;
-        }
-        if (0 != conn_set(self, "default_transaction_isolation", value)) {
+    if (Py_None != isolevel) {
+        if (!(c_isolevel = _psyco_conn_parse_isolevel(self, isolevel))) {
             return NULL;
         }
     }
 
     if (Py_None != readonly) {
-        const char *value = NULL;
-        if (!(value = _psyco_conn_parse_onoff(readonly))) {
-            return NULL;
-        }
-        if (0 != conn_set(self, "default_transaction_read_only", value)) {
+        if (!(c_readonly = _psyco_conn_parse_onoff(readonly))) {
             return NULL;
         }
     }
-
     if (Py_None != deferrable) {
-        const char *value = NULL;
-        if (!(value = _psyco_conn_parse_onoff(deferrable))) {
-            return NULL;
-        }
-        if (0 != conn_set(self, "default_transaction_deferrable", value)) {
+        if (!(c_deferrable = _psyco_conn_parse_onoff(deferrable))) {
             return NULL;
         }
     }
-
     if (Py_None != autocommit) {
-        int value = PyObject_IsTrue(autocommit);
-        if (-1 == value) { return NULL; }
-        if (0 != conn_set_autocommit(self, value)) {
-            return NULL;
-        }
+        c_autocommit = PyObject_IsTrue(autocommit);
+        if (-1 == c_autocommit) { return NULL; }
+    }
+
+    if (0 != conn_set_transaction(self,
+            c_isolevel, c_readonly, c_deferrable, c_autocommit)) {
+        return NULL;
     }
 
     Py_INCREF(Py_None);
