@@ -739,7 +739,6 @@ psyco_curs_fetchone(cursorObject *self, PyObject *args)
     PyObject *res;
 
     EXC_IF_CURS_CLOSED(self);
-    EXC_IF_ASYNC_IN_PROGRESS(self, fetchone);
     if (_psyco_curs_prefetch(self) < 0) return NULL;
     EXC_IF_NO_TUPLES(self);
 
@@ -747,6 +746,7 @@ psyco_curs_fetchone(cursorObject *self, PyObject *args)
         char buffer[128];
 
         EXC_IF_NO_MARK(self);
+        EXC_IF_ASYNC_IN_PROGRESS(self, fetchone);
         EXC_IF_TPC_PREPARED(self->conn, fetchone);
         PyOS_snprintf(buffer, 127, "FETCH FORWARD 1 FROM \"%s\"", self->name);
         if (pq_execute(self, buffer, 0) == -1) return NULL;
@@ -853,7 +853,6 @@ psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
     }
 
     EXC_IF_CURS_CLOSED(self);
-    EXC_IF_ASYNC_IN_PROGRESS(self, fetchmany);
     if (_psyco_curs_prefetch(self) < 0) return NULL;
     EXC_IF_NO_TUPLES(self);
 
@@ -861,6 +860,7 @@ psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
         char buffer[128];
 
         EXC_IF_NO_MARK(self);
+        EXC_IF_ASYNC_IN_PROGRESS(self, fetchmany);
         EXC_IF_TPC_PREPARED(self->conn, fetchone);
         PyOS_snprintf(buffer, 127, "FETCH FORWARD %d FROM \"%s\"",
             (int)size, self->name);
@@ -924,7 +924,6 @@ psyco_curs_fetchall(cursorObject *self, PyObject *args)
     PyObject *list, *res;
 
     EXC_IF_CURS_CLOSED(self);
-    EXC_IF_ASYNC_IN_PROGRESS(self, fetchall);
     if (_psyco_curs_prefetch(self) < 0) return NULL;
     EXC_IF_NO_TUPLES(self);
 
@@ -932,6 +931,7 @@ psyco_curs_fetchall(cursorObject *self, PyObject *args)
         char buffer[128];
 
         EXC_IF_NO_MARK(self);
+        EXC_IF_ASYNC_IN_PROGRESS(self, fetchall);
         EXC_IF_TPC_PREPARED(self->conn, fetchall);
         PyOS_snprintf(buffer, 127, "FETCH FORWARD ALL FROM \"%s\"", self->name);
         if (pq_execute(self, buffer, 0) == -1) return NULL;
@@ -1112,7 +1112,6 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
         return NULL;
 
     EXC_IF_CURS_CLOSED(self);
-    EXC_IF_ASYNC_IN_PROGRESS(self, scroll)
 
     /* if the cursor is not named we have the full result set and we can do
        our own calculations to scroll; else we just delegate the scrolling
@@ -1141,6 +1140,7 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
         char buffer[128];
 
         EXC_IF_NO_MARK(self);
+        EXC_IF_ASYNC_IN_PROGRESS(self, scroll)
         EXC_IF_TPC_PREPARED(self->conn, scroll);
 
         if (strcmp(mode, "absolute") == 0) {

@@ -152,6 +152,20 @@ psyco_exec_green(connectionObject *conn, const char *command)
 {
     PGresult *result = NULL;
 
+    /* Check that there is a single concurrently executing query */
+    if (conn->async_cursor) {
+        PyErr_SetString(ProgrammingError,
+            "a single async query can be executed on the same connection");
+        goto end;
+    }
+    /* we don't care about which cursor is executing the query, and
+     * it may also be that no cursor is involved at all and this is
+     * an internal query. So just store anything in the async_cursor,
+     * respecting the code expecting it to be a weakref */
+    if (!(conn->async_cursor = PyWeakref_NewRef((PyObject*)conn, NULL))) {
+        goto end;
+    }
+
     /* Send the query asynchronously */
     if (0 == pq_send_query(conn, command)) {
         goto end;
@@ -173,6 +187,7 @@ psyco_exec_green(connectionObject *conn, const char *command)
 
 end:
     conn->async_status = ASYNC_DONE;
+    Py_CLEAR(conn->async_cursor);
     return result;
 }
 

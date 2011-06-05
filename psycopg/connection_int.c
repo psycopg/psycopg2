@@ -881,7 +881,7 @@ conn_poll(connectionObject *self)
     case CONN_STATUS_PREPARED:
         res = _conn_poll_query(self);
 
-        if (res == PSYCO_POLL_OK && self->async_cursor) {
+        if (res == PSYCO_POLL_OK && self->async && self->async_cursor) {
             /* An async query has just finished: parse the tuple in the
              * target cursor. */
             cursorObject *curs;

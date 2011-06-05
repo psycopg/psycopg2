@@ -91,7 +91,10 @@ typedef struct {
     PGconn *pgconn;           /* the postgresql connection */
     PGcancel *cancel;         /* the cancellation structure */
 
-    PyObject *async_cursor;   /* weakref to a cursor executing an asynchronous query */
+    /* Weakref to the object executing an asynchronous query. The object
+     * is a cursor for async connections, but it may be something else
+     * for a green connection. If NULL, the connection is idle. */
+    PyObject *async_cursor;
     int async_status;         /* asynchronous execution status */
 
     /* notice processing */

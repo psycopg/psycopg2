@@ -598,8 +598,8 @@ forking web deploy method such as FastCGI ensure to create the connections
 
 .. __: http://www.postgresql.org/docs/9.0/static/libpq-connect.html#LIBPQ-CONNECT
 
-Connections shouldn't be shared either by different green threads: doing so
-may result in a deadlock. See :ref:`green-support` for further details.
+Connections shouldn't be shared either by different green threads: see
+:ref:`green-support` for further details.
 
 
 

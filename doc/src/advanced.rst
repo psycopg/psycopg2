@@ -432,11 +432,9 @@ SQLAlchemy_) to be used in coroutine-based programs.
 
 .. warning::
     Psycopg connections are not *green thread safe* and can't be used
-    concurrently by different green threads. Each connection has a lock
-    used to serialize requests from different cursors to the backend process.
-    The lock is held for the duration of the command: if the control switched
-    to a different thread and the latter tried to access the same connection,
-    the result would be a deadlock.
+    concurrently by different green threads. Trying to execute more than one
+    command at time using one cursor per thread will result in an error (or a
+    deadlock on versions before 2.4.2).
 
     Therefore, programmers are advised to either avoid sharing connections
     between coroutines or to use a library-friendly lock to synchronize shared
