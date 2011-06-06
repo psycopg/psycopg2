@@ -42,13 +42,29 @@ cur = conn.cursor()
 gc_thread.start()
 
 # Now do lots of "cursor.copy_from" calls:
+print "copy_from"
 for i in range(1000):
     f = StringIO("42\tfoo\n74\tbar\n")
     cur.copy_from(f, 'test', columns=('num', 'data'))
     # Assuming the other thread gets a chance to run during this call, expect a
     # build of python (with assertions enabled) to bail out here with:
     #    python: Modules/gcmodule.c:277: visit_decref: Assertion `gc->gc.gc_refs != 0' failed.
-    
+
+# Also exercise the copy_to code path
+print "copy_to"
+cur.execute("truncate test")
+f = StringIO("42\tfoo\n74\tbar\n")
+cur.copy_from(f, 'test', columns=('num', 'data'))
+for i in range(1000):
+    f = StringIO()
+    cur.copy_to(f, 'test', columns=('num', 'data'))
+
+# And copy_expert too
+print "copy_expert"
+cur.execute("truncate test")
+for i in range(1000):
+    f = StringIO("42\tfoo\n74\tbar\n")
+    cur.copy_expert("copy test to stdout", f)
 
 # Terminate the GC thread's loop:
 done = 1
