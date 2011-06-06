@@ -1220,8 +1220,12 @@ _psyco_curs_has_read_check(PyObject* o, void* var)
 {
     if (PyObject_HasAttrString(o, "readline")
         && PyObject_HasAttrString(o, "read")) {
-        /* It's OK to store a borrowed reference, because it is only held for
-         * the duration of psyco_curs_copy_from. */
+        /* This routine stores a borrowed reference.  Although it is only held
+         * for the duration of psyco_curs_copy_from, nested invocations of
+         * Py_BEGIN_ALLOW_THREADS could surrender control to another thread,
+         * which could invoke the garbage collector.  We thus need an
+         * INCREF/DECREF pair if we store this pointer in a GC object, such as
+         * a cursorObject */
         *((PyObject**)var) = o;
         return 1;
     }
@@ -1311,6 +1315,7 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
     Dprintf("psyco_curs_copy_from: query = %s", query);
 
     self->copysize = bufsize;
+    Py_INCREF(file);
     self->copyfile = file;
 
     if (pq_execute(self, query, 0) == 1) {
@@ -1319,6 +1324,7 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
     }
 
     self->copyfile = NULL;
+    Py_DECREF(file);
 
 exit:
     PyMem_Free(quoted_delimiter);
