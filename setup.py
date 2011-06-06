@@ -45,7 +45,6 @@ Operating System :: Unix
 # Note: The setup.py must be compatible with both Python 2 and 3
 
 import os
-import os.path
 import sys
 import re
 import subprocess
@@ -54,7 +53,6 @@ from distutils.errors import DistutilsFileError
 from distutils.command.build_ext import build_ext
 from distutils.sysconfig import get_python_inc
 from distutils.ccompiler import get_default_compiler
-from distutils.dep_util import newer_group
 from distutils.util import get_platform
 try:
     from distutils.msvc9compiler import MSVCCompiler
@@ -85,21 +83,137 @@ version_flags   = ['dt', 'dec']
 
 PLATFORM_IS_WINDOWS = sys.platform.lower().startswith('win')
 
-def get_pg_config(kind, pg_config):
-    try:
-      p = subprocess.Popen([pg_config, "--" + kind],
-                           stdin=subprocess.PIPE,
-                           stdout=subprocess.PIPE,
-                           stderr=subprocess.PIPE)
-    except OSError:
-        raise Warning("Unable to find 'pg_config' file in '%s'" % pg_config)
-    p.stdin.close()
-    r = p.stdout.readline().strip()
-    if not r:
-        raise Warning(p.stderr.readline())
-    if not isinstance(r, str):
-        r = r.decode('ascii')
-    return r
+
+class PostgresConfig():
+    def __init__(self):
+        self.pg_config_exe = self.autodetect_pg_config_path()
+        if self.pg_config_exe is None:
+            sys.stderr.write("""\
+Error: pg_config executable not found.
+
+Please add the directory containing pg_config to the PATH
+or specify the full executable path with the option:
+
+    python setup.py build_ext --pg-config /path/to/pg_config build ...
+
+or with the pg_config option in 'setup.cfg'.
+""")
+            sys.exit(1)
+
+    def query(self, attr_name):
+        """Spawn the pg_config executable, querying for the given config
+        name, and return the printed value, sanitized. """
+        try:
+            pg_config_process = subprocess.Popen(
+                [self.pg_config_exe, "--" + attr_name],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
+        except OSError:
+            raise Warning("Unable to find 'pg_config' file in '%s'" %
+                          self.pg_config_exe)
+        pg_config_process.stdin.close()
+        result = pg_config_process.stdout.readline().strip()
+        if not result:
+            raise Warning(pg_config_process.stderr.readline())
+        if not isinstance(result, str):
+            result = result.decode('ascii')
+        return result
+
+    def autodetect_pg_config_path(self):
+        """Find and return the path to the pg_config executable."""
+        if PLATFORM_IS_WINDOWS:
+            return self.autodetect_pg_config_path_windows()
+        else:
+            return self.autodetect_pg_config_path_posix()
+
+    def autodetect_pg_config_path_posix(self):
+        """Return pg_config from the current PATH"""
+        exename = 'pg_config'
+        for dir in os.environ['PATH'].split(os.pathsep):
+            fn = os.path.join(dir, exename)
+            if os.path.isfile(fn):
+                return fn
+        return None
+
+    def autodetect_pg_config_path_windows(self):
+        """Attempt several different ways of finding the pg_config
+        executable on Windows, and return its full path, if found."""
+        # Find the first PostgreSQL installation listed in the registry and
+        # return the full path to its pg_config utility.
+        #
+        # This autodetection is performed *only* if the following conditions
+        # hold:
+        #
+        # 1) The pg_config utility is not already available on the PATH:
+        if os.popen('pg_config').close() is None:  # .close()->None == success
+            return None
+        # 2) The user has not specified any of the following settings in
+        #    setup.cfg:
+        #     - pg_config
+        #     - include_dirs
+        #     - library_dirs
+        for setting_name in ('pg_config', 'include_dirs', 'library_dirs'):
+            try:
+                val = parser.get('build_ext', setting_name)
+            except configparser.NoOptionError:
+                pass
+            else:
+                if val.strip() != '':
+                    return None
+        # end of guard conditions
+
+        try:
+            import winreg
+        except ImportError:
+            import _winreg as winreg
+
+        pg_inst_base_dir = None
+        pg_config_path = None
+
+        reg = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
+        try:
+            pg_inst_list_key = winreg.OpenKey(reg,
+                'SOFTWARE\\PostgreSQL\\Installations'
+              )
+        except EnvironmentError:
+            pg_inst_list_key = None
+
+        if pg_inst_list_key is not None:
+            try:
+                # Determine the name of the first subkey, if any:
+                try:
+                    first_sub_key_name = winreg.EnumKey(pg_inst_list_key, 0)
+                except EnvironmentError:
+                    first_sub_key_name = None
+
+                if first_sub_key_name is not None:
+                    pg_first_inst_key = winreg.OpenKey(reg,
+                        'SOFTWARE\\PostgreSQL\\Installations\\'
+                        + first_sub_key_name
+                      )
+                    try:
+                        pg_inst_base_dir = winreg.QueryValueEx(
+                            pg_first_inst_key, 'Base Directory'
+                          )[0]
+                    finally:
+                        winreg.CloseKey(pg_first_inst_key)
+            finally:
+                winreg.CloseKey(pg_inst_list_key)
+
+        if pg_inst_base_dir and os.path.exists(pg_inst_base_dir):
+            pg_config_path = os.path.join(pg_inst_base_dir, 'bin',
+                'pg_config.exe'
+              )
+            # Support unicode paths, if this version of Python provides the
+            # necessary infrastructure:
+            if sys.version_info[0] < 3 \
+            and hasattr(sys, 'getfilesystemencoding'):
+                pg_config_path = pg_config_path.encode(
+                    sys.getfilesystemencoding())
+
+        return pg_config_path
+
 
 class psycopg_build_ext(build_ext):
     """Conditionally complement the setup.cfg options file.
@@ -126,6 +240,10 @@ class psycopg_build_ext(build_ext):
     boolean_options = build_ext.boolean_options[:]
     boolean_options.extend(('use-pydatetime', 'have-ssl', 'static-libpq'))
 
+    def __init__(self, *args, **kwargs):
+        build_ext.__init__(self, *args, **kwargs)
+        self.pg_config = PostgresConfig()
+
     def initialize_options(self):
         build_ext.initialize_options(self)
         self.use_pg_dll = 1
@@ -134,7 +252,6 @@ class psycopg_build_ext(build_ext):
         self.use_pydatetime = 1
         self.have_ssl = have_ssl
         self.static_libpq = static_libpq
-        self.pg_config = None
 
     def get_compiler(self):
         """Return the name of the C compiler used to compile extensions.
@@ -152,9 +269,6 @@ class psycopg_build_ext(build_ext):
         else:
             name = get_default_compiler()
         return name
-
-    def get_pg_config(self, kind):
-        return get_pg_config(kind, self.pg_config)
 
     def get_export_symbols(self, ext):
         # Fix MSVC seeing two of the same export symbols.
@@ -248,38 +362,24 @@ class psycopg_build_ext(build_ext):
     def finalize_options(self):
         """Complete the build system configuation."""
         build_ext.finalize_options(self)
-        if self.pg_config is None:
-            self.pg_config = self.autodetect_pg_config_path()
-        if self.pg_config is None:
-            sys.stderr.write("""\
-Error: pg_config executable not found.
-
-Please add the directory containing pg_config to the PATH
-or specify the full executable path with the option:
-
-    python setup.py build_ext --pg-config /path/to/pg_config build ...
-
-or with the pg_config option in 'setup.cfg'.
-""")
-            sys.exit(1)
 
         self.include_dirs.append(".")
         if self.static_libpq:
             if not self.link_objects: self.link_objects = []
             self.link_objects.append(
-                    os.path.join(self.get_pg_config("libdir"), "libpq.a"))
+                    os.path.join(self.pg_config.query("libdir"), "libpq.a"))
         else:
             self.libraries.append("pq")
 
         try:
-            self.library_dirs.append(self.get_pg_config("libdir"))
-            self.include_dirs.append(self.get_pg_config("includedir"))
-            self.include_dirs.append(self.get_pg_config("includedir-server"))
+            self.library_dirs.append(self.pg_config.query("libdir"))
+            self.include_dirs.append(self.pg_config.query("includedir"))
+            self.include_dirs.append(self.pg_config.query("includedir-server"))
             try:
                 # Here we take a conservative approach: we suppose that
                 # *at least* PostgreSQL 7.4 is available (this is the only
                 # 7.x series supported by psycopg 2)
-                pgversion = self.get_pg_config("version").split()[1]
+                pgversion = self.pg_config.query("version").split()[1]
             except:
                 pgversion = "7.4.0"
 
@@ -305,94 +405,6 @@ or with the pg_config option in 'setup.cfg'.
         if hasattr(self, "finalize_" + sys.platform):
             getattr(self, "finalize_" + sys.platform)()
 
-    def autodetect_pg_config_path(self):
-        if PLATFORM_IS_WINDOWS:
-            return self.autodetect_pg_config_path_windows()
-        else:
-            return self.autodetect_pg_config_path_posix()
-
-    def autodetect_pg_config_path_posix(self):
-        exename = 'pg_config'
-        for dir in os.environ['PATH'].split(os.pathsep):
-            fn = os.path.join(dir, exename)
-            if os.path.isfile(fn):
-                return fn
-
-    def autodetect_pg_config_path_windows(self):
-        # Find the first PostgreSQL installation listed in the registry and
-        # return the full path to its pg_config utility.
-        #
-        # This autodetection is performed *only* if the following conditions
-        # hold:
-        #
-        # 1) The pg_config utility is not already available on the PATH:
-        if os.popen('pg_config').close() is None: # .close()->None == success
-            return None
-        # 2) The user has not specified any of the following settings in
-        #    setup.cfg:
-        #     - pg_config
-        #     - include_dirs
-        #     - library_dirs
-        for settingName in ('pg_config', 'include_dirs', 'library_dirs'):
-            try:
-                val = parser.get('build_ext', settingName)
-            except configparser.NoOptionError:
-                pass
-            else:
-                if val.strip() != '':
-                    return None
-        # end of guard conditions
-
-        try:
-            import winreg
-        except ImportError:
-            import _winreg as winreg
-
-        pg_inst_base_dir = None
-        pg_config_path = None
-
-        reg = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
-        try:
-            pg_inst_list_key = winreg.OpenKey(reg,
-                'SOFTWARE\\PostgreSQL\\Installations'
-              )
-        except EnvironmentError:
-            pg_inst_list_key = None
-
-        if pg_inst_list_key is not None:
-            try:
-                # Determine the name of the first subkey, if any:
-                try:
-                    first_sub_key_name = winreg.EnumKey(pg_inst_list_key, 0)
-                except EnvironmentError:
-                    first_sub_key_name = None
-
-                if first_sub_key_name is not None:
-                    pg_first_inst_key = winreg.OpenKey(reg,
-                        'SOFTWARE\\PostgreSQL\\Installations\\'
-                        + first_sub_key_name
-                      )
-                    try:
-                        pg_inst_base_dir = winreg.QueryValueEx(
-                            pg_first_inst_key, 'Base Directory'
-                          )[0]
-                    finally:
-                        winreg.CloseKey(pg_first_inst_key)
-            finally:
-                winreg.CloseKey(pg_inst_list_key)
-
-        if pg_inst_base_dir and os.path.exists(pg_inst_base_dir):
-            pg_config_path = os.path.join(pg_inst_base_dir, 'bin',
-                'pg_config.exe'
-              )
-            # Support unicode paths, if this version of Python provides the
-            # necessary infrastructure:
-            if sys.version_info[0] < 3 \
-            and hasattr(sys, 'getfilesystemencoding'):
-                pg_config_path = pg_config_path.encode(
-                    sys.getfilesystemencoding())
-
-        return pg_config_path
 
 # let's start with macro definitions (the ones not already in setup.cfg)
 define_macros = []
