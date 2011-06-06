@@ -13,6 +13,8 @@ What's new in psycopg 2.4.2
     support was built (ticket #53).
   - Fixed escape for negative numbers prefixed by minus operator
     (ticket #57).
+  - Fixed refcount issue during copy.  Reported and fixed by Dave
+    Malcolm (ticket #58, Red Hat Bug 711095).
   - Trying to execute concurrent operations on the same connection
     through concurrent green thread results in an error instead of a
     deadlock.

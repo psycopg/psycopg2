@@ -1220,8 +1220,12 @@ _psyco_curs_has_read_check(PyObject* o, void* var)
 {
     if (PyObject_HasAttrString(o, "readline")
         && PyObject_HasAttrString(o, "read")) {
-        /* It's OK to store a borrowed reference, because it is only held for
-         * the duration of psyco_curs_copy_from. */
+        /* This routine stores a borrowed reference.  Although it is only held
+         * for the duration of psyco_curs_copy_from, nested invocations of
+         * Py_BEGIN_ALLOW_THREADS could surrender control to another thread,
+         * which could invoke the garbage collector.  We thus need an
+         * INCREF/DECREF pair if we store this pointer in a GC object, such as
+         * a cursorObject */
         *((PyObject**)var) = o;
         return 1;
     }
@@ -1311,6 +1315,7 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
     Dprintf("psyco_curs_copy_from: query = %s", query);
 
     self->copysize = bufsize;
+    Py_INCREF(file);
     self->copyfile = file;
 
     if (pq_execute(self, query, 0) == 1) {
@@ -1319,6 +1324,7 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
     }
 
     self->copyfile = NULL;
+    Py_DECREF(file);
 
 exit:
     PyMem_Free(quoted_delimiter);
@@ -1337,8 +1343,6 @@ static int
 _psyco_curs_has_write_check(PyObject* o, void* var)
 {
     if (PyObject_HasAttrString(o, "write")) {
-        /* It's OK to store a borrowed reference, because it is only held for
-         * the duration of psyco_curs_copy_to. */
         *((PyObject**)var) = o;
         return 1;
     }
@@ -1424,12 +1428,15 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
     Dprintf("psyco_curs_copy_to: query = %s", query);
 
     self->copysize = 0;
+    Py_INCREF(file);
     self->copyfile = file;
 
     if (pq_execute(self, query, 0) == 1) {
         res = Py_None;
         Py_INCREF(Py_None);
     }
+
+    Py_DECREF(file);
     self->copyfile = NULL;
 
 exit:
@@ -1471,18 +1478,18 @@ psyco_curs_copy_expert(cursorObject *self, PyObject *args, PyObject *kwargs)
     EXC_IF_TPC_PREPARED(self->conn, copy_expert);
 
     sql = _psyco_curs_validate_sql_basic(self, sql);
-    
-    /* Any failure from here forward should 'goto fail' rather than
+
+    /* Any failure from here forward should 'goto exit' rather than
        'return NULL' directly. */
-    
-    if (sql == NULL) { goto fail; }
+
+    if (sql == NULL) { goto exit; }
 
     /* This validation of file is rather weak, in that it doesn't enforce the
        assocation between "COPY FROM" -> "read" and "COPY TO" -> "write".
        However, the error handling in _pq_copy_[in|out] must be able to handle
        the case where the attempt to call file.read|write fails, so no harm
        done. */
-    
+
     if (   !PyObject_HasAttrString(file, "read")
         && !PyObject_HasAttrString(file, "write")
       )
@@ -1490,26 +1497,22 @@ psyco_curs_copy_expert(cursorObject *self, PyObject *args, PyObject *kwargs)
         PyErr_SetString(PyExc_TypeError, "file must be a readable file-like"
             " object for COPY FROM; a writeable file-like object for COPY TO."
           );
-        goto fail;
+        goto exit;
     }
 
     self->copysize = bufsize;
+    Py_INCREF(file);
     self->copyfile = file;
 
     /* At this point, the SQL statement must be str, not unicode */
-    if (pq_execute(self, Bytes_AS_STRING(sql), 0) != 1) { goto fail; }
+    if (pq_execute(self, Bytes_AS_STRING(sql), 0) != 1) { goto exit; }
 
     res = Py_None;
     Py_INCREF(res);
-    goto cleanup;
- fail:
-    if (res != NULL) {
-        Py_DECREF(res);
-        res = NULL;
-    }
-    /* Fall through to cleanup */
- cleanup:
+
+exit:
     self->copyfile = NULL;
+    Py_XDECREF(file);
     Py_XDECREF(sql);
 
     return res;
