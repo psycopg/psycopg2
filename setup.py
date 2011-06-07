@@ -80,7 +80,7 @@ version_flags   = ['dt', 'dec']
 PLATFORM_IS_WINDOWS = sys.platform.lower().startswith('win')
 
 
-class PostgresConfig():
+class PostgresConfig:
     def __init__(self):
         self.pg_config_exe = self.autodetect_pg_config_path()
         if self.pg_config_exe is None:
