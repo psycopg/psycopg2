@@ -1505,14 +1505,15 @@ psyco_curs_copy_expert(cursorObject *self, PyObject *args, PyObject *kwargs)
     self->copyfile = file;
 
     /* At this point, the SQL statement must be str, not unicode */
-    if (pq_execute(self, Bytes_AS_STRING(sql), 0) != 1) { goto exit; }
+    if (pq_execute(self, Bytes_AS_STRING(sql), 0) == 1) {
+        res = Py_None;
+        Py_INCREF(res);
+    }
 
-    res = Py_None;
-    Py_INCREF(res);
+    self->copyfile = NULL;
+    Py_DECREF(file);
 
 exit:
-    self->copyfile = NULL;
-    Py_XDECREF(file);
     Py_XDECREF(sql);
 
     return res;
