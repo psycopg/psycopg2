@@ -116,6 +116,15 @@ or with the pg_config option in 'setup.cfg'.
             result = result.decode('ascii')
         return result
 
+    def find_on_path(self, exename, path_directories=None):
+        if not path_directories:
+            path_directories = os.environ['PATH'].split(os.pathsep)
+        for dir_name in path_directories:
+            fullpath = os.path.join(dir_name, exename)
+            if os.path.isfile(fullpath):
+                return fullpath
+        return None
+
     def autodetect_pg_config_path(self):
         """Find and return the path to the pg_config executable."""
         if PLATFORM_IS_WINDOWS:
@@ -125,12 +134,7 @@ or with the pg_config option in 'setup.cfg'.
 
     def autodetect_pg_config_path_posix(self):
         """Return pg_config from the current PATH"""
-        exename = 'pg_config'
-        for dir_name in os.environ['PATH'].split(os.pathsep):
-            fullpath = os.path.join(dir_name, exename)
-            if os.path.isfile(fullpath):
-                return fullpath
-        return None
+        return self.find_on_path('pg_config')
 
     def autodetect_pg_config_path_windows(self):
         """Attempt several different ways of finding the pg_config
