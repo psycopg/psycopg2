@@ -230,9 +230,6 @@ class psycopg_build_ext(build_ext):
 
     def __init__(self, *args, **kwargs):
         build_ext.__init__(self, *args, **kwargs)
-        compiler_name = self.get_compiler_name().lower()
-        self.compiler_is_msvc = compiler_name.startswith('msvc')
-        self.compiler_is_mingw = compiler_name.startswith('mingw')
 
     def initialize_options(self):
         build_ext.initialize_options(self)
@@ -243,6 +240,12 @@ class psycopg_build_ext(build_ext):
         self.have_ssl = have_ssl
         self.static_libpq = static_libpq
         self.pg_config = None
+
+    def compiler_is_msvc(self):
+        return self.get_compiler_name().lower().startswith('msvc')
+
+    def compiler_is_mingw(self):
+        return self.get_compiler_name().lower().startswith('mingw')
 
     def get_compiler_name(self):
         """Return the name of the C compiler used to compile extensions.
@@ -263,7 +266,7 @@ class psycopg_build_ext(build_ext):
 
     def get_export_symbols(self, extension):
         # Fix MSVC seeing two of the same export symbols.
-        if self.compiler_is_msvc:
+        if self.compiler_is_msvc():
             return []
         else:
             return build_ext.get_export_symbols(self, extension)
@@ -273,7 +276,7 @@ class psycopg_build_ext(build_ext):
 
         # For Python versions that use MSVC compiler 2008, re-insert the
         # manifest into the resulting .pyd file.
-        if self.compiler_is_msvc:
+        if self.compiler_is_msvc():
             platform = get_platform()
             # Default to the x86 manifest
             manifest = '_psycopg.vc9.x86.manifest'
@@ -293,7 +296,7 @@ class psycopg_build_ext(build_ext):
         # Add compiler-specific arguments:
         extra_compiler_args = []
 
-        if self.compiler_is_mingw:
+        if self.compiler_is_mingw():
             # Default MinGW compilation of Python extensions on Windows uses
             # only -O:
             extra_compiler_args.append('-O3')
@@ -321,7 +324,7 @@ class psycopg_build_ext(build_ext):
 
         self.libraries.append("ws2_32")
         self.libraries.append("advapi32")
-        if self.compiler_is_msvc:
+        if self.compiler_is_msvc():
             # MSVC requires an explicit "libpq"
             self.libraries.remove("pq")
             self.libraries.append("secur32")
