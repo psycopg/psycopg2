@@ -133,37 +133,22 @@ or with the pg_config option in 'setup.cfg'.
         if PLATFORM_IS_WINDOWS:
             return self.autodetect_pg_config_path_windows()
         else:
-            return self.autodetect_pg_config_path_posix()
-
-    def autodetect_pg_config_path_posix(self):
-        """Return pg_config from the current PATH"""
-        return self.find_on_path('pg_config')
+            return self.find_on_path('pg_config')
 
     def autodetect_pg_config_path_windows(self):
         """Attempt several different ways of finding the pg_config
         executable on Windows, and return its full path, if found."""
-        # Find the first PostgreSQL installation listed in the registry and
-        # return the full path to its pg_config utility.
-        #
-        # This autodetection is performed *only* if the following conditions
-        # hold:
-        #
-        # 1) The pg_config utility is not already available on the PATH:
-        if os.popen('pg_config').close() is None:  # .close()->None == success
-            return None
 
-        # 2) The user has not specified any of the following settings in
-        #    setup.cfg:
-        #     - pg_config
-        #     - include_dirs
-        #     - library_dirs
+        # This code only runs if they have not specified a pg_config option
+        # in the config file or via the commandline.
 
-        if (self.build_ext.pg_config
-            or self.build_ext.include_dirs
-            or self.build_ext.library_dirs):
-            return None
-        # end of guard conditions
+        # First, check for pg_config.exe on the PATH, and use that if found.
+        pg_config_exe = self.find_on_path('pg_config.exe')
+        if pg_config_exe:
+            return pg_config_exe
 
+        # Now, try looking in the Windows Registry to find a PostgreSQL
+        # installation, and infer the path from that.
         try:
             import winreg
         except ImportError:
@@ -180,32 +165,35 @@ or with the pg_config option in 'setup.cfg'.
         except EnvironmentError:
             pg_inst_list_key = None
 
-        if pg_inst_list_key is not None:
-            try:
-                # Determine the name of the first subkey, if any:
-                try:
-                    first_sub_key_name = winreg.EnumKey(pg_inst_list_key, 0)
-                except EnvironmentError:
-                    first_sub_key_name = None
+        if not pg_inst_list_key:
+            # No PostgreSQL installation, as best as we can tell.
+            return None
 
-                if first_sub_key_name is not None:
-                    pg_first_inst_key = winreg.OpenKey(reg,
-                        'SOFTWARE\\PostgreSQL\\Installations\\'
-                        + first_sub_key_name
-                      )
-                    try:
-                        pg_inst_base_dir = winreg.QueryValueEx(
-                            pg_first_inst_key, 'Base Directory'
-                          )[0]
-                    finally:
-                        winreg.CloseKey(pg_first_inst_key)
-            finally:
-                winreg.CloseKey(pg_inst_list_key)
+
+        try:
+            # Determine the name of the first subkey, if any:
+            try:
+                first_sub_key_name = winreg.EnumKey(pg_inst_list_key, 0)
+            except EnvironmentError:
+                first_sub_key_name = None
+
+            if first_sub_key_name is not None:
+                pg_first_inst_key = winreg.OpenKey(reg,
+                    'SOFTWARE\\PostgreSQL\\Installations\\'
+                    + first_sub_key_name
+                  )
+                try:
+                    pg_inst_base_dir = winreg.QueryValueEx(
+                        pg_first_inst_key, 'Base Directory'
+                      )[0]
+                finally:
+                    winreg.CloseKey(pg_first_inst_key)
+        finally:
+            winreg.CloseKey(pg_inst_list_key)
 
         if pg_inst_base_dir and os.path.exists(pg_inst_base_dir):
-            pg_config_path = os.path.join(pg_inst_base_dir, 'bin',
-                'pg_config.exe'
-              )
+            pg_config_path = os.path.join(
+                pg_inst_base_dir, 'bin', 'pg_config.exe')
             # Support unicode paths, if this version of Python provides the
             # necessary infrastructure:
             if sys.version_info[0] < 3 \
@@ -285,7 +273,7 @@ class psycopg_build_ext(build_ext):
         build_ext.build_extension(self, extension)
 
         # For Python versions that use MSVC compiler 2008, re-insert the
-        #  manifest into the resulting .pyd file.
+        # manifest into the resulting .pyd file.
         if self.compiler_is_msvc:
             platform = get_platform()
             # Default to the x86 manifest
