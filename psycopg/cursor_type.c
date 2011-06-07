@@ -1213,7 +1213,7 @@ static int _psyco_curs_copy_columns(PyObject *columns, char *columnlist)
 /* extension: copy_from - implements COPY FROM */
 
 #define psyco_curs_copy_from_doc \
-"copy_from(file, table, sep='\\t', null='\\N', columns=None) -- Copy table from file."
+"copy_from(file, table, sep='\\t', null='\\N', size=8192, columns=None) -- Copy table from file."
 
 static int
 _psyco_curs_has_read_check(PyObject* o, void* var)
@@ -1454,7 +1454,7 @@ exit:
 */
 
 #define psyco_curs_copy_expert_doc \
-"copy_expert(sql, file, size=None) -- Submit a user-composed COPY statement.\n" \
+"copy_expert(sql, file, size=8192) -- Submit a user-composed COPY statement.\n" \
 "`file` must be an open, readable file for COPY FROM or an open, writeable\n"   \
 "file for COPY TO. The optional `size` argument, when specified for a COPY\n"   \
 "FROM statement, will be passed to file's read method to control the read\n"    \
