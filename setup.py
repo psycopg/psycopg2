@@ -81,8 +81,11 @@ PLATFORM_IS_WINDOWS = sys.platform.lower().startswith('win')
 
 
 class PostgresConfig:
-    def __init__(self):
-        self.pg_config_exe = self.autodetect_pg_config_path()
+    def __init__(self, build_ext):
+        self.build_ext = build_ext
+        self.pg_config_exe = self.build_ext.pg_config
+        if not self.pg_config_exe:
+            self.pg_config_exe = self.autodetect_pg_config_path()
         if self.pg_config_exe is None:
             sys.stderr.write("""\
 Error: pg_config executable not found.
@@ -148,19 +151,17 @@ or with the pg_config option in 'setup.cfg'.
         # 1) The pg_config utility is not already available on the PATH:
         if os.popen('pg_config').close() is None:  # .close()->None == success
             return None
+
         # 2) The user has not specified any of the following settings in
         #    setup.cfg:
         #     - pg_config
         #     - include_dirs
         #     - library_dirs
-        for setting_name in ('pg_config', 'include_dirs', 'library_dirs'):
-            try:
-                val = parser.get('build_ext', setting_name)
-            except configparser.NoOptionError:
-                pass
-            else:
-                if val.strip() != '':
-                    return None
+
+        if (self.build_ext.pg_config
+            or self.build_ext.include_dirs
+            or self.build_ext.library_dirs):
+            return None
         # end of guard conditions
 
         try:
@@ -242,7 +243,6 @@ class psycopg_build_ext(build_ext):
 
     def __init__(self, *args, **kwargs):
         build_ext.__init__(self, *args, **kwargs)
-        self.pg_config = PostgresConfig()
         compiler_name = self.get_compiler_name().lower()
         self.compiler_is_msvc = compiler_name.startswith('msvc')
         self.compiler_is_mingw = compiler_name.startswith('mingw')
@@ -255,6 +255,7 @@ class psycopg_build_ext(build_ext):
         self.use_pydatetime = 1
         self.have_ssl = have_ssl
         self.static_libpq = static_libpq
+        self.pg_config = None
 
     def get_compiler_name(self):
         """Return the name of the C compiler used to compile extensions.
@@ -366,24 +367,26 @@ class psycopg_build_ext(build_ext):
         """Complete the build system configuation."""
         build_ext.finalize_options(self)
 
+        pg_config_helper = PostgresConfig(self)
+
         self.include_dirs.append(".")
         if self.static_libpq:
-            if not self.link_objects:
+            if not hasattr(self, 'link_objects'):
                 self.link_objects = []
             self.link_objects.append(
-                    os.path.join(self.pg_config.query("libdir"), "libpq.a"))
+                    os.path.join(pg_config_helper.query("libdir"), "libpq.a"))
         else:
             self.libraries.append("pq")
 
         try:
-            self.library_dirs.append(self.pg_config.query("libdir"))
-            self.include_dirs.append(self.pg_config.query("includedir"))
-            self.include_dirs.append(self.pg_config.query("includedir-server"))
+            self.library_dirs.append(pg_config_helper.query("libdir"))
+            self.include_dirs.append(pg_config_helper.query("includedir"))
+            self.include_dirs.append(pg_config_helper.query("includedir-server"))
             try:
                 # Here we take a conservative approach: we suppose that
                 # *at least* PostgreSQL 7.4 is available (this is the only
                 # 7.x series supported by psycopg 2)
-                pgversion = self.pg_config.query("version").split()[1]
+                pgversion = pg_config_helper.query("version").split()[1]
             except:
                 pgversion = "7.4.0"
 
