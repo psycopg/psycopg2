@@ -149,57 +149,56 @@ or with the pg_config option in 'setup.cfg'.
 
         # Now, try looking in the Windows Registry to find a PostgreSQL
         # installation, and infer the path from that.
+        pg_config_exe = self._get_pg_config_from_registry()
+        if pg_config_exe:
+            return pg_config_exe
+
+        return None
+
+    def _get_pg_config_from_registry(self):
         try:
             import winreg
         except ImportError:
             import _winreg as winreg
 
-        pg_inst_base_dir = None
-        pg_config_path = None
-
         reg = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
         try:
             pg_inst_list_key = winreg.OpenKey(reg,
-                'SOFTWARE\\PostgreSQL\\Installations'
-              )
+                'SOFTWARE\\PostgreSQL\\Installations')
         except EnvironmentError:
-            pg_inst_list_key = None
-
-        if not pg_inst_list_key:
             # No PostgreSQL installation, as best as we can tell.
             return None
-
 
         try:
             # Determine the name of the first subkey, if any:
             try:
                 first_sub_key_name = winreg.EnumKey(pg_inst_list_key, 0)
             except EnvironmentError:
-                first_sub_key_name = None
+                return None
 
-            if first_sub_key_name is not None:
-                pg_first_inst_key = winreg.OpenKey(reg,
-                    'SOFTWARE\\PostgreSQL\\Installations\\'
-                    + first_sub_key_name
-                  )
-                try:
-                    pg_inst_base_dir = winreg.QueryValueEx(
-                        pg_first_inst_key, 'Base Directory'
-                      )[0]
-                finally:
-                    winreg.CloseKey(pg_first_inst_key)
+            pg_first_inst_key = winreg.OpenKey(reg,
+                'SOFTWARE\\PostgreSQL\\Installations\\'
+                + first_sub_key_name)
+            try:
+                pg_inst_base_dir = winreg.QueryValueEx(
+                    pg_first_inst_key, 'Base Directory')[0]
+            finally:
+                winreg.CloseKey(pg_first_inst_key)
+
         finally:
             winreg.CloseKey(pg_inst_list_key)
 
-        if pg_inst_base_dir and os.path.exists(pg_inst_base_dir):
-            pg_config_path = os.path.join(
-                pg_inst_base_dir, 'bin', 'pg_config.exe')
-            # Support unicode paths, if this version of Python provides the
-            # necessary infrastructure:
-            if sys.version_info[0] < 3 \
-            and hasattr(sys, 'getfilesystemencoding'):
-                pg_config_path = pg_config_path.encode(
-                    sys.getfilesystemencoding())
+        pg_config_path = os.path.join(
+            pg_inst_base_dir, 'bin', 'pg_config.exe')
+        if not os.path.exists(pg_config_path):
+            return None
+
+        # Support unicode paths, if this version of Python provides the
+        # necessary infrastructure:
+        if sys.version_info[0] < 3 \
+        and hasattr(sys, 'getfilesystemencoding'):
+            pg_config_path = pg_config_path.encode(
+                sys.getfilesystemencoding())
 
         return pg_config_path
 
