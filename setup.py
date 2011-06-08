@@ -273,10 +273,11 @@ class psycopg_build_ext(build_ext):
 
     def build_extension(self, extension):
         build_ext.build_extension(self, extension)
+        sysVer = sys.version_info[:2]
 
         # For Python versions that use MSVC compiler 2008, re-insert the
         # manifest into the resulting .pyd file.
-        if self.compiler_is_msvc():
+        if self.compiler_is_msvc() and sysVer not in ((2, 4), (2, 5)):
             platform = get_platform()
             # Default to the x86 manifest
             manifest = '_psycopg.vc9.x86.manifest'
