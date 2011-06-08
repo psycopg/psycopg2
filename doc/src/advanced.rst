@@ -378,7 +378,7 @@ transaction is not implicitly started at the first query and is not possible
 to use methods `~connection.commit()` and `~connection.rollback()`: you can
 manually control transactions using `~cursor.execute()` to send database
 commands such as :sql:`BEGIN`, :sql:`COMMIT` and :sql:`ROLLBACK`. Similarly
-`set_transaction()` can't be used but it is still possible to invoke the
+`~connection.set_session()` can't be used but it is still possible to invoke the
 :sql:`SET` command with the proper :sql:`default_transaction_...` parameter.
 
 With asynchronous connections it is also not possible to use

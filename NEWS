@@ -1,7 +1,7 @@
 What's new in psycopg 2.4.2
 ---------------------------
 
-  - Added 'set_transaction()' method and 'autocommit' property to the
+  - Added 'set_session()' method and 'autocommit' property to the
     connection. Added support for read-only sessions and, for PostgreSQL
     9.1, for the "repeatable read" isolation level and the "deferrable"
     transaction property.

@@ -959,7 +959,7 @@ conn_rollback(connectionObject *self)
 }
 
 int
-conn_set_transaction(connectionObject *self,
+conn_set_session(connectionObject *self,
         const char *isolevel, const char *readonly, const char *deferrable,
         int autocommit)
 {
@@ -971,7 +971,7 @@ conn_set_transaction(connectionObject *self,
     pthread_mutex_lock(&self->lock);
 
     if (isolevel) {
-        Dprintf("conn_set_transaction: setting isolation to %s", isolevel);
+        Dprintf("conn_set_session: setting isolation to %s", isolevel);
         if ((res = pq_set_guc_locked(self,
                 "default_transaction_isolation", isolevel,
                 &pgres, &error, &_save))) {
@@ -980,7 +980,7 @@ conn_set_transaction(connectionObject *self,
     }
 
     if (readonly) {
-        Dprintf("conn_set_transaction: setting read only to %s", readonly);
+        Dprintf("conn_set_session: setting read only to %s", readonly);
         if ((res = pq_set_guc_locked(self,
                 "default_transaction_read_only", readonly,
                 &pgres, &error, &_save))) {
@@ -989,7 +989,7 @@ conn_set_transaction(connectionObject *self,
     }
 
     if (deferrable) {
-        Dprintf("conn_set_transaction: setting deferrable to %s", deferrable);
+        Dprintf("conn_set_session: setting deferrable to %s", deferrable);
         if ((res = pq_set_guc_locked(self,
                 "default_transaction_deferrable", deferrable,
                 &pgres, &error, &_save))) {
@@ -998,7 +998,7 @@ conn_set_transaction(connectionObject *self,
     }
 
     if (self->autocommit != autocommit) {
-        Dprintf("conn_set_transaction: setting autocommit to %d", autocommit);
+        Dprintf("conn_set_session: setting autocommit to %d", autocommit);
         self->autocommit = autocommit;
     }
 

@@ -456,14 +456,14 @@ _psyco_conn_parse_onoff(PyObject *pyval)
     }
 }
 
-/* set_transaction - default transaction characteristics */
+/* set_session - set default transaction characteristics */
 
-#define psyco_conn_set_transaction_doc \
-"set_transaction(...) -- Set one or more parameters for the next transactions.\n\n" \
+#define psyco_conn_set_session_doc \
+"set_session(...) -- Set one or more parameters for the next transactions.\n\n" \
 "Accepted arguments are 'isolation_level', 'readonly', 'deferrable', 'autocommit'."
 
 static PyObject *
-psyco_conn_set_transaction(connectionObject *self, PyObject *args, PyObject *kwargs)
+psyco_conn_set_session(connectionObject *self, PyObject *args, PyObject *kwargs)
 {
     PyObject *isolevel = Py_None;
     PyObject *readonly = Py_None;
@@ -479,8 +479,8 @@ psyco_conn_set_transaction(connectionObject *self, PyObject *args, PyObject *kwa
         {"isolation_level", "readonly", "deferrable", "autocommit", NULL};
 
     EXC_IF_CONN_CLOSED(self);
-    EXC_IF_CONN_ASYNC(self, set_transaction);
-    EXC_IF_IN_TRANSACTION(self, set_transaction);
+    EXC_IF_CONN_ASYNC(self, set_session);
+    EXC_IF_IN_TRANSACTION(self, set_session);
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|OOOO", kwlist,
             &isolevel, &readonly, &deferrable, &autocommit)) {
@@ -514,7 +514,7 @@ psyco_conn_set_transaction(connectionObject *self, PyObject *args, PyObject *kwa
         if (-1 == c_autocommit) { return NULL; }
     }
 
-    if (0 != conn_set_transaction(self,
+    if (0 != conn_set_session(self,
             c_isolevel, c_readonly, c_deferrable, c_autocommit)) {
         return NULL;
     }
@@ -904,8 +904,8 @@ static struct PyMethodDef connectionObject_methods[] = {
     {"tpc_recover", (PyCFunction)psyco_conn_tpc_recover,
      METH_NOARGS, psyco_conn_tpc_recover_doc},
 #ifdef PSYCOPG_EXTENSIONS
-    {"set_transaction", (PyCFunction)psyco_conn_set_transaction,
-     METH_VARARGS|METH_KEYWORDS, psyco_conn_set_transaction_doc},
+    {"set_session", (PyCFunction)psyco_conn_set_session,
+     METH_VARARGS|METH_KEYWORDS, psyco_conn_set_session_doc},
     {"set_isolation_level", (PyCFunction)psyco_conn_set_isolation_level,
      METH_VARARGS, psyco_conn_set_isolation_level_doc},
     {"set_client_encoding", (PyCFunction)psyco_conn_set_client_encoding,

@@ -136,7 +136,7 @@ HIDDEN int  conn_connect(connectionObject *self, long int async);
 HIDDEN void conn_close(connectionObject *self);
 HIDDEN int  conn_commit(connectionObject *self);
 HIDDEN int  conn_rollback(connectionObject *self);
-HIDDEN int  conn_set_transaction(connectionObject *self, const char *isolevel,
+HIDDEN int  conn_set_session(connectionObject *self, const char *isolevel,
                                  const char *readonly, const char *deferrable,
                                  int autocommit);
 HIDDEN int  conn_set_autocommit(connectionObject *self, int value);
