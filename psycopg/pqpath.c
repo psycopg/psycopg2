@@ -416,7 +416,7 @@ pq_begin_locked(connectionObject *conn, PGresult **pgres, char **error,
         return 0;
     }
 
-    result = pq_execute_command_locked(conn, "BEGIN;", pgres, error, tstate);
+    result = pq_execute_command_locked(conn, "BEGIN", pgres, error, tstate);
     if (result == 0)
         conn->status = CONN_STATUS_BEGIN;
 
@@ -616,7 +616,7 @@ pq_get_guc_locked(
 
     Dprintf("pq_get_guc_locked: reading %s", param);
 
-    size = PyOS_snprintf(query, sizeof(query), "SHOW %s;", param);
+    size = PyOS_snprintf(query, sizeof(query), "SHOW %s", param);
     if (size >= sizeof(query)) {
         *error = strdup("SHOW: query too large");
         goto cleanup;
@@ -674,11 +674,11 @@ pq_set_guc_locked(
 
     if (0 == strcmp(value, "default")) {
         size = PyOS_snprintf(query, sizeof(query),
-            "SET %s TO DEFAULT;", param);
+            "SET %s TO DEFAULT", param);
     }
     else {
         size = PyOS_snprintf(query, sizeof(query),
-            "SET %s TO '%s';", param, value);
+            "SET %s TO '%s'", param, value);
     }
     if (size >= sizeof(query)) {
         *error = strdup("SET: query too large");
@@ -714,12 +714,12 @@ pq_tpc_command_locked(connectionObject *conn, const char *cmd, const char *tid,
     { goto exit; }
 
     /* prepare the command to the server */
-    buflen = 3 + strlen(cmd) + strlen(etid); /* add space, semicolon, zero */
+    buflen = 2 + strlen(cmd) + strlen(etid); /* add space, zero */
     if (!(buf = PyMem_Malloc(buflen))) {
         PyErr_NoMemory();
         goto exit;
     }
-    if (0 > PyOS_snprintf(buf, buflen, "%s %s;", cmd, etid)) { goto exit; }
+    if (0 > PyOS_snprintf(buf, buflen, "%s %s", cmd, etid)) { goto exit; }
 
     /* run the command and let it handle the error cases */
     *tstate = PyEval_SaveThread();
