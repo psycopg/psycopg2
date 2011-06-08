@@ -396,7 +396,7 @@ The ``connection`` class
         .. warning::
 
             By default, any query execution, including a simple :sql:`SELECT`
-            will start a transaction: for long-running program, if no further
+            will start a transaction: for long-running programs, if no further
             action is taken, the session will remain "idle in transaction", a
             condition non desiderable for several reasons (locks are held by
             the session, tables bloat...). For long lived scripts, either
