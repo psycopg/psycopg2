@@ -339,8 +339,8 @@ The ``connection`` class
             transactions/statements.  The value can be one of the
             :ref:`constants <isolation-level-constants>` defined in the
             `~psycopg2.extensions` module or one of the literal values
-            ``read uncommitted``, ``read committed``, ``repeatable read``,
-            ``serializable``.
+            ``READ UNCOMMITTED``, ``READ COMMITTED``, ``REPEATABLE READ``,
+            ``SERIALIZABLE``.
         :param readonly: if `!True`, set the connection to read only;
             read/write if `!False`.
         :param deferrable: if `!True`, set the connection to deferrable;
@@ -350,7 +350,7 @@ The ``connection`` class
             `autocommit` attribute.
 
         The parameters *isolation_level*, *readonly* and *deferrable* also
-        accept the string ``default`` as a value: the effect is to reset the
+        accept the string ``DEFAULT`` as a value: the effect is to reset the
         parameter to the server default.
 
         .. _isolation level:
