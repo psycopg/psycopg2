@@ -244,6 +244,15 @@ class CopyTests(unittest.TestCase):
 
         self.assertEqual(ntests, len(string.ascii_letters))
 
+    def test_copy_expert_file_refcount(self):
+        class Whatever(object):
+            pass
+
+        f = Whatever()
+        curs = self.conn.cursor()
+        self.assertRaises(TypeError,
+            curs.copy_expert, 'COPY tcopy (data) FROM STDIN', f)
+
 decorate_all_tests(CopyTests, skip_if_green)
 
 

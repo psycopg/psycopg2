@@ -40,20 +40,16 @@ Homepage: http://initd.org/projects/psycopg2
 
 # Import modules needed by _psycopg to allow tools like py2exe to do
 # their work without bothering about the module dependencies.
-# 
-# TODO: we should probably use the Warnings framework to signal a missing
-# module instead of raising an exception (in case we're running a thin
-# embedded Python or something even more devious.)
 
 import sys, warnings
-if sys.version_info[0] >= 2 and sys.version_info[1] >= 3:
+if sys.version_info >= (2, 3):
     try:
         import datetime as _psycopg_needs_datetime
     except:
         warnings.warn(
             "can't import datetime module probably needed by _psycopg",
             RuntimeWarning)
-if sys.version_info[0] >= 2 and sys.version_info[1] >= 4:
+if sys.version_info >= (2, 4):
     try:
         import decimal as _psycopg_needs_decimal
     except:

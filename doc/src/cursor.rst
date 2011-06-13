@@ -444,20 +444,23 @@ The ``cursor`` class
         The :sql:`COPY` command is a PostgreSQL extension to the SQL standard.
         As such, its support is a Psycopg extension to the |DBAPI|.
 
-    .. method:: copy_from(file, table, sep='\\t', null='\\N', columns=None)
- 
+    .. method:: copy_from(file, table, sep='\\t', null='\\N', size=8192, columns=None)
+
         Read data *from* the file-like object *file* appending them to
-        the table named *table*.  *file* must have both
-        `!read()` and `!readline()` method.  See :ref:`copy` for an
-        overview.
+        the table named *table*.  See :ref:`copy` for an overview.
 
-        The optional argument *sep* is the columns separator and
-        *null* represents :sql:`NULL` values in the file.
+        :param file: file-like object to read data from.  It must have both
+            `!read()` and `!readline()` methods.
+        :param table: name of the table to copy data into.
+        :param sep: columns separator expected in the file. Defaults to a tab.
+        :param null: textual representation of :sql:`NULL` in the file.
+        :param size: size of the buffer used to read from the file.
+        :param columns: iterable with name of the columns to import.
+            The length and types should match the content of the file to read.
+            If not specified, it is assumed that the entire table matches the
+            file structure.
 
-        The *columns* argument is a sequence containing the name of the
-        fields where the read data will be entered.  Its length and column
-        type should match the content of the read file.  If not specifies, it
-        is assumed that the entire table matches the file structure.
+        Example::
 
             >>> f = StringIO("42\tfoo\n74\tbar\n")
             >>> cur.copy_from(f, 'test', columns=('num', 'data'))
@@ -476,14 +479,17 @@ The ``cursor`` class
     .. method:: copy_to(file, table, sep='\\t', null='\\N', columns=None)
 
         Write the content of the table named *table* *to* the file-like
-        object *file*.  *file* must have a `!write()` method.
-        See :ref:`copy` for an overview.
+        object *file*.  See :ref:`copy` for an overview.
 
-        The optional argument *sep* is the columns separator and
-        *null* represents :sql:`NULL` values in the file.
+        :param file: file-like object to write data into.  It must have a
+            `!write()` method.
+        :param table: name of the table to copy data from.
+        :param sep: columns separator expected in the file. Defaults to a tab.
+        :param null: textual representation of :sql:`NULL` in the file.
+        :param columns: iterable with name of the columns to export.
+            If not specified, export all the columns.
 
-        The *columns* argument is a sequence of field names: if not
-        `!None` only the specified fields will be included in the dump.
+        Example::
 
             >>> cur.copy_to(sys.stdout, 'test', sep="|")
             1|100|abc'def
@@ -499,17 +505,18 @@ The ``cursor`` class
             from the backend.
 
 
-    .. method:: copy_expert(sql, file [, size])
+    .. method:: copy_expert(sql, file, size=8192)
 
         Submit a user-composed :sql:`COPY` statement. The method is useful to
         handle all the parameters that PostgreSQL makes available (see
         |COPY|__ command documentation).
 
-        *file* must be an open, readable file for :sql:`COPY FROM` or an
-        open, writeable file for :sql:`COPY TO`. The optional *size*
-        argument, when specified for a :sql:`COPY FROM` statement, will be
-        passed to *file*\ 's read method to control the read buffer
-        size.
+        :param sql: the :sql:`COPY` statement to execute.
+        :param file: a file-like object; must be a readable file for
+            :sql:`COPY FROM` or an writeable file for :sql:`COPY TO`.
+        :param size: size of the read buffer to be used in :sql:`COPY FROM`.
+
+        Example:
 
             >>> cur.copy_expert("COPY test TO STDOUT WITH CSV HEADER", sys.stdout)
             id,num,data

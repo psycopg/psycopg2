@@ -105,6 +105,7 @@ typedef unsigned long Py_uhash_t;
 
 #if PY_MAJOR_VERSION > 2
 #define PyInt_Type             PyLong_Type
+#define PyInt_Check            PyLong_Check
 #define PyInt_AsLong           PyLong_AsLong
 #define PyInt_FromLong         PyLong_FromLong
 #define PyInt_FromSsize_t      PyLong_FromSsize_t
@@ -129,6 +130,7 @@ typedef unsigned long Py_uhash_t;
 #define Bytes_FromString PyString_FromString
 #define Bytes_FromStringAndSize PyString_FromStringAndSize
 #define Bytes_FromFormat PyString_FromFormat
+#define Bytes_ConcatAndDel PyString_ConcatAndDel
 #define _Bytes_Resize _PyString_Resize
 
 #else
@@ -144,6 +146,7 @@ typedef unsigned long Py_uhash_t;
 #define Bytes_FromString PyBytes_FromString
 #define Bytes_FromStringAndSize PyBytes_FromStringAndSize
 #define Bytes_FromFormat PyBytes_FromFormat
+#define Bytes_ConcatAndDel PyBytes_ConcatAndDel
 #define _Bytes_Resize _PyBytes_Resize
 
 #endif

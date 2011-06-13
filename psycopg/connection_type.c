@@ -187,6 +187,7 @@ psyco_conn_tpc_begin(connectionObject *self, PyObject *args)
     EXC_IF_CONN_CLOSED(self);
     EXC_IF_CONN_ASYNC(self, tpc_begin);
     EXC_IF_TPC_NOT_SUPPORTED(self);
+    EXC_IF_IN_TRANSACTION(self, tpc_begin);
 
     if (!PyArg_ParseTuple(args, "O", &oxid)) {
         goto exit;
@@ -196,15 +197,8 @@ psyco_conn_tpc_begin(connectionObject *self, PyObject *args)
         goto exit;
     }
 
-    /* check we are not in a transaction */
-    if (self->status != CONN_STATUS_READY) {
-        PyErr_SetString(ProgrammingError,
-            "tpc_begin must be called outside a transaction");
-        goto exit;
-    }
-
     /* two phase commit and autocommit make no point */
-    if (self->isolation_level == ISOLATION_LEVEL_AUTOCOMMIT) {
+    if (self->autocommit) {
         PyErr_SetString(ProgrammingError,
             "tpc_begin can't be called in autocommit mode");
         goto exit;
@@ -384,6 +378,199 @@ psyco_conn_tpc_recover(connectionObject *self, PyObject *args)
 
 #ifdef PSYCOPG_EXTENSIONS
 
+
+/* parse a python object into one of the possible isolation level values */
+
+extern const IsolationLevel conn_isolevels[];
+
+static const char *
+_psyco_conn_parse_isolevel(connectionObject *self, PyObject *pyval)
+{
+    const IsolationLevel *isolevel = NULL;
+
+    Py_INCREF(pyval);   /* for ensure_bytes */
+
+    /* parse from one of the level constants */
+    if (PyInt_Check(pyval)) {
+        long level = PyInt_AsLong(pyval);
+        if (level == -1 && PyErr_Occurred()) { goto exit; }
+        if (level < 1 || level > 4) {
+            PyErr_SetString(PyExc_ValueError,
+                "isolation_level must be between 1 and 4");
+            goto exit;
+        }
+
+        isolevel = conn_isolevels + level;
+    }
+
+    /* parse from the string -- this includes "default" */
+    else {
+        isolevel = conn_isolevels;
+        while ((++isolevel)->name) {
+            if (!(pyval = psycopg_ensure_bytes(pyval))) {
+                goto exit;
+            }
+            if (0 == strcasecmp(isolevel->name, Bytes_AS_STRING(pyval))) {
+                break;
+            }
+        }
+        if (!isolevel->name) {
+            char msg[256];
+            snprintf(msg, sizeof(msg),
+                "bad value for isolation_level: '%s'", Bytes_AS_STRING(pyval));
+            PyErr_SetString(PyExc_ValueError, msg);
+        }
+    }
+
+    /* use only supported levels on older PG versions */
+    if (isolevel && self->server_version < 80000) {
+        if (isolevel->value == 1 || isolevel->value == 3) {
+            ++isolevel;
+        }
+    }
+
+exit:
+    Py_XDECREF(pyval);
+
+    return isolevel ? isolevel->name : NULL;
+}
+
+/* convert True/False/"default" into a C string */
+
+static const char *
+_psyco_conn_parse_onoff(PyObject *pyval)
+{
+    int istrue = PyObject_IsTrue(pyval);
+    if (-1 == istrue) { return NULL; }
+    if (istrue) {
+        int cmp;
+        PyObject *pydef;
+        if (!(pydef = Text_FromUTF8("default"))) { return NULL; }
+        cmp = PyObject_RichCompareBool(pyval, pydef, Py_EQ);
+        Py_DECREF(pydef);
+        if (-1 == cmp) { return NULL; }
+        return cmp ? "default" : "on";
+    }
+    else {
+        return "off";
+    }
+}
+
+/* set_session - set default transaction characteristics */
+
+#define psyco_conn_set_session_doc \
+"set_session(...) -- Set one or more parameters for the next transactions.\n\n" \
+"Accepted arguments are 'isolation_level', 'readonly', 'deferrable', 'autocommit'."
+
+static PyObject *
+psyco_conn_set_session(connectionObject *self, PyObject *args, PyObject *kwargs)
+{
+    PyObject *isolevel = Py_None;
+    PyObject *readonly = Py_None;
+    PyObject *deferrable = Py_None;
+    PyObject *autocommit = Py_None;
+
+    const char *c_isolevel = NULL;
+    const char *c_readonly = NULL;
+    const char *c_deferrable = NULL;
+    int c_autocommit = self->autocommit;
+
+    static char *kwlist[] =
+        {"isolation_level", "readonly", "deferrable", "autocommit", NULL};
+
+    EXC_IF_CONN_CLOSED(self);
+    EXC_IF_CONN_ASYNC(self, set_session);
+    EXC_IF_IN_TRANSACTION(self, set_session);
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|OOOO", kwlist,
+            &isolevel, &readonly, &deferrable, &autocommit)) {
+        return NULL;
+    }
+
+    if (Py_None != isolevel) {
+        if (!(c_isolevel = _psyco_conn_parse_isolevel(self, isolevel))) {
+            return NULL;
+        }
+    }
+
+    if (Py_None != readonly) {
+        if (!(c_readonly = _psyco_conn_parse_onoff(readonly))) {
+            return NULL;
+        }
+    }
+    if (Py_None != deferrable) {
+        if (self->server_version < 90100) {
+            PyErr_SetString(ProgrammingError,
+                "the 'deferrable' setting is only available"
+                " from PostgreSQL 9.1");
+            return NULL;
+        }
+        if (!(c_deferrable = _psyco_conn_parse_onoff(deferrable))) {
+            return NULL;
+        }
+    }
+    if (Py_None != autocommit) {
+        c_autocommit = PyObject_IsTrue(autocommit);
+        if (-1 == c_autocommit) { return NULL; }
+    }
+
+    if (0 != conn_set_session(self,
+            c_isolevel, c_readonly, c_deferrable, c_autocommit)) {
+        return NULL;
+    }
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+
+#define psyco_conn_autocommit_doc \
+"set or return the autocommit status."
+
+static PyObject *
+psyco_conn_autocommit_get(connectionObject *self)
+{
+    PyObject *ret;
+    ret = self->autocommit ? Py_True : Py_False;
+    Py_INCREF(ret);
+    return ret;
+}
+
+static PyObject *
+_psyco_conn_autocommit_set_checks(connectionObject *self)
+{
+    /* wrapper to use the EXC_IF macros.
+     * return NULL in case of error, else whatever */
+    EXC_IF_CONN_CLOSED(self);
+    EXC_IF_CONN_ASYNC(self, autocommit);
+    EXC_IF_IN_TRANSACTION(self, autocommit);
+    return Py_None;     /* borrowed */
+}
+
+static int
+psyco_conn_autocommit_set(connectionObject *self, PyObject *pyvalue)
+{
+    int value;
+
+    if (!_psyco_conn_autocommit_set_checks(self)) { return -1; }
+    if (-1 == (value = PyObject_IsTrue(pyvalue))) { return -1; }
+    if (0 != conn_set_autocommit(self, value)) { return -1; }
+
+    return 0;
+}
+
+
+/* isolation_level - return the current isolation level */
+
+static PyObject *
+psyco_conn_isolation_level_get(connectionObject *self)
+{
+    int rv = conn_get_isolation_level(self);
+    if (-1 == rv) { return NULL; }
+    return PyInt_FromLong((long)rv);
+}
+
+
 /* set_isolation_level method - switch connection isolation level */
 
 #define psyco_conn_set_isolation_level_doc \
@@ -400,9 +587,9 @@ psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
 
     if (!PyArg_ParseTuple(args, "i", &level)) return NULL;
 
-    if (level < 0 || level > 2) {
+    if (level < 0 || level > 4) {
         PyErr_SetString(PyExc_ValueError,
-            "isolation level must be between 0 and 2");
+            "isolation level must be between 0 and 4");
         return NULL;
     }
 
@@ -717,6 +904,8 @@ static struct PyMethodDef connectionObject_methods[] = {
     {"tpc_recover", (PyCFunction)psyco_conn_tpc_recover,
      METH_NOARGS, psyco_conn_tpc_recover_doc},
 #ifdef PSYCOPG_EXTENSIONS
+    {"set_session", (PyCFunction)psyco_conn_set_session,
+     METH_VARARGS|METH_KEYWORDS, psyco_conn_set_session_doc},
     {"set_isolation_level", (PyCFunction)psyco_conn_set_isolation_level,
      METH_VARARGS, psyco_conn_set_isolation_level_doc},
     {"set_client_encoding", (PyCFunction)psyco_conn_set_client_encoding,
@@ -749,9 +938,6 @@ static struct PyMemberDef connectionObject_members[] = {
 #ifdef PSYCOPG_EXTENSIONS
     {"closed", T_LONG, offsetof(connectionObject, closed), READONLY,
         "True if the connection is closed."},
-    {"isolation_level", T_LONG,
-        offsetof(connectionObject, isolation_level), READONLY,
-        "The current isolation level."},
     {"encoding", T_STRING, offsetof(connectionObject, encoding), READONLY,
         "The current client encoding."},
     {"notices", T_OBJECT, offsetof(connectionObject, notice_list), READONLY},
@@ -792,6 +978,16 @@ static struct PyGetSetDef connectionObject_getsets[] = {
     EXCEPTION_GETTER(IntegrityError),
     EXCEPTION_GETTER(DataError),
     EXCEPTION_GETTER(NotSupportedError),
+#ifdef PSYCOPG_EXTENSIONS
+    { "autocommit",
+        (getter)psyco_conn_autocommit_get,
+        (setter)psyco_conn_autocommit_set,
+        psyco_conn_autocommit_doc },
+    { "isolation_level",
+        (getter)psyco_conn_isolation_level_get,
+        (setter)NULL,
+        "The current isolation level." },
+#endif
     {NULL}
 };
 #undef EXCEPTION_GETTER

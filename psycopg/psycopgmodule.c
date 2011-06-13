@@ -39,6 +39,7 @@
 #include "psycopg/adapter_qstring.h"
 #include "psycopg/adapter_binary.h"
 #include "psycopg/adapter_pboolean.h"
+#include "psycopg/adapter_pint.h"
 #include "psycopg/adapter_pfloat.h"
 #include "psycopg/adapter_pdecimal.h"
 #include "psycopg/adapter_asis.h"
@@ -316,9 +317,9 @@ psyco_adapters_init(PyObject *mod)
 
     microprotocols_add(&PyFloat_Type, NULL, (PyObject*)&pfloatType);
 #if PY_MAJOR_VERSION < 3
-    microprotocols_add(&PyInt_Type, NULL, (PyObject*)&asisType);
+    microprotocols_add(&PyInt_Type, NULL, (PyObject*)&pintType);
 #endif
-    microprotocols_add(&PyLong_Type, NULL, (PyObject*)&asisType);
+    microprotocols_add(&PyLong_Type, NULL, (PyObject*)&pintType);
     microprotocols_add(&PyBool_Type, NULL, (PyObject*)&pbooleanType);
 
     /* strings */
@@ -359,10 +360,16 @@ psyco_adapters_init(PyObject *mod)
 
 #ifdef HAVE_MXDATETIME
     /* as above, we use the callable objects from the psycopg module */
-    call = PyMapping_GetItemString(mod, "TimestampFromMx");
-    microprotocols_add(mxDateTime.DateTime_Type, NULL, call);
-    call = PyMapping_GetItemString(mod, "TimeFromMx");
-    microprotocols_add(mxDateTime.DateTimeDelta_Type, NULL, call);
+    if (NULL != (call = PyMapping_GetItemString(mod, "TimestampFromMx"))) {
+        microprotocols_add(mxDateTime.DateTime_Type, NULL, call);
+
+        /* if we found the above, we have this too. */
+        call = PyMapping_GetItemString(mod, "TimeFromMx");
+        microprotocols_add(mxDateTime.DateTimeDelta_Type, NULL, call);
+    }
+    else {
+        PyErr_Clear();
+    }
 #endif
 }
 
@@ -757,11 +764,13 @@ static PyMethodDef psycopgMethods[] = {
     {"QuotedString",  (PyCFunction)psyco_QuotedString,
      METH_VARARGS, psyco_QuotedString_doc},
     {"Boolean",  (PyCFunction)psyco_Boolean,
-     METH_VARARGS, psyco_Float_doc},
-    {"Float",  (PyCFunction)psyco_Float,
-     METH_VARARGS, psyco_Decimal_doc},
-    {"Decimal",  (PyCFunction)psyco_Decimal,
      METH_VARARGS, psyco_Boolean_doc},
+    {"Int",  (PyCFunction)psyco_Int,
+     METH_VARARGS, psyco_Int_doc},
+    {"Float",  (PyCFunction)psyco_Float,
+     METH_VARARGS, psyco_Float_doc},
+    {"Decimal",  (PyCFunction)psyco_Decimal,
+     METH_VARARGS, psyco_Decimal_doc},
     {"Binary",  (PyCFunction)psyco_Binary,
      METH_VARARGS, psyco_Binary_doc},
     {"Date",  (PyCFunction)psyco_Date,
@@ -789,6 +798,7 @@ static PyMethodDef psycopgMethods[] = {
      METH_VARARGS, psyco_IntervalFromPy_doc},
 
 #ifdef HAVE_MXDATETIME
+    /* to be deleted if not found at import time */
     {"DateFromMx",  (PyCFunction)psyco_DateFromMx,
      METH_VARARGS, psyco_DateFromMx_doc},
     {"TimeFromMx",  (PyCFunction)psyco_TimeFromMx,
@@ -848,6 +858,7 @@ INIT_MODULE(_psycopg)(void)
     Py_TYPE(&binaryType)     = &PyType_Type;
     Py_TYPE(&isqlquoteType)  = &PyType_Type;
     Py_TYPE(&pbooleanType)   = &PyType_Type;
+    Py_TYPE(&pintType)       = &PyType_Type;
     Py_TYPE(&pfloatType)     = &PyType_Type;
     Py_TYPE(&pdecimalType)   = &PyType_Type;
     Py_TYPE(&asisType)       = &PyType_Type;
@@ -863,6 +874,7 @@ INIT_MODULE(_psycopg)(void)
     if (PyType_Ready(&binaryType) == -1) goto exit;
     if (PyType_Ready(&isqlquoteType) == -1) goto exit;
     if (PyType_Ready(&pbooleanType) == -1) goto exit;
+    if (PyType_Ready(&pintType) == -1) goto exit;
     if (PyType_Ready(&pfloatType) == -1) goto exit;
     if (PyType_Ready(&pdecimalType) == -1) goto exit;
     if (PyType_Ready(&asisType) == -1) goto exit;
@@ -880,12 +892,16 @@ INIT_MODULE(_psycopg)(void)
 #ifdef HAVE_MXDATETIME
     Py_TYPE(&mxdatetimeType) = &PyType_Type;
     if (PyType_Ready(&mxdatetimeType) == -1) goto exit;
-    if (mxDateTime_ImportModuleAndAPI() != 0) {
-        Dprintf("initpsycopg: why marc hide mx.DateTime again?!");
-        PyErr_SetString(PyExc_ImportError, "can't import mx.DateTime module");
+    if (0 != mxDateTime_ImportModuleAndAPI()) {
+        PyErr_Clear();
+
+        /* only fail if the mx typacaster should have been the default */
+#ifdef PSYCOPG_DEFAULT_MXDATETIME
+        PyErr_SetString(PyExc_ImportError,
+            "can't import mx.DateTime module (requested as default adapter)");
         goto exit;
+#endif
     }
-    if (psyco_adapter_mxdatetime_init()) { goto exit; }
 #endif
 
     /* import python builtin datetime module, if available */
@@ -962,6 +978,16 @@ INIT_MODULE(_psycopg)(void)
     /* encodings dictionary in module dictionary */
     PyModule_AddObject(module, "encodings", psycoEncodings);
 
+#ifdef HAVE_MXDATETIME
+    /* If we can't find mx.DateTime objects at runtime,
+     * remove them from the module (and, as consequence, from the adapters). */
+    if (0 != psyco_adapter_mxdatetime_init()) {
+        PyDict_DelItemString(dict, "DateFromMx");
+        PyDict_DelItemString(dict, "TimeFromMx");
+        PyDict_DelItemString(dict, "TimestampFromMx");
+        PyDict_DelItemString(dict, "IntervalFromMx");
+    }
+#endif
     /* initialize default set of typecasters */
     typecast_init(dict);
 
@@ -978,6 +1004,7 @@ INIT_MODULE(_psycopg)(void)
     binaryType.tp_alloc = PyType_GenericAlloc;
     isqlquoteType.tp_alloc = PyType_GenericAlloc;
     pbooleanType.tp_alloc = PyType_GenericAlloc;
+    pintType.tp_alloc = PyType_GenericAlloc;
     pfloatType.tp_alloc = PyType_GenericAlloc;
     pdecimalType.tp_alloc = PyType_GenericAlloc;
     connectionType.tp_alloc = PyType_GenericAlloc;
@@ -992,7 +1019,6 @@ INIT_MODULE(_psycopg)(void)
 #ifdef PSYCOPG_EXTENSIONS
     lobjectType.tp_alloc = PyType_GenericAlloc;
 #endif
-
 
 #ifdef HAVE_MXDATETIME
     mxdatetimeType.tp_alloc = PyType_GenericAlloc;

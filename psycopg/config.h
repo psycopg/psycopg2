@@ -27,7 +27,7 @@
 #define PSYCOPG_CONFIG_H 1
 
 /* GCC 4.0 and later have support for specifying symbol visibility */
-#if __GNUC__ >= 4
+#if __GNUC__ >= 4 && !defined(__MINGW32__)
 #  define HIDDEN __attribute__((visibility("hidden")))
 #else
 #  define HIDDEN
@@ -136,6 +136,8 @@ static int pthread_mutex_init(pthread_mutex_t *mutex, void* fake)
  * in libxml2 code */
 #define isinf(x) ((_fpclass(x) == _FPCLASS_PINF) ? 1 \
 	: ((_fpclass(x) == _FPCLASS_NINF) ? -1 : 0))
+
+#define strcasecmp(x, y) lstrcmpi(x, y)
 #endif
 #endif
 

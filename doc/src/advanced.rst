@@ -239,9 +239,8 @@ be sent from Python code simply executing a :sql:`NOTIFY` command in an
 `~cursor.execute()` call.
 
 Because of the way sessions interact with notifications (see |NOTIFY|_
-documentation), you should keep the connection in :ref:`autocommit
-<autocommit>` mode if you wish to receive or send notifications in a timely
-manner.
+documentation), you should keep the connection in `~connection.autocommit`
+mode if you wish to receive or send notifications in a timely manner.
 
 .. |LISTEN| replace:: :sql:`LISTEN`
 .. _LISTEN: http://www.postgresql.org/docs/9.0/static/sql-listen.html
@@ -373,12 +372,14 @@ When an asynchronous query is being executed, `connection.isexecuting()` returns
 connection.
 
 There are several limitations in using asynchronous connections: the
-connection is always in :ref:`autocommit <autocommit>` mode and it is not
-possible to change it using `~connection.set_isolation_level()`. So a
+connection is always in `~connection.autocommit` mode and it is not
+possible to change it. So a
 transaction is not implicitly started at the first query and is not possible
 to use methods `~connection.commit()` and `~connection.rollback()`: you can
 manually control transactions using `~cursor.execute()` to send database
-commands such as :sql:`BEGIN`, :sql:`COMMIT` and :sql:`ROLLBACK`.
+commands such as :sql:`BEGIN`, :sql:`COMMIT` and :sql:`ROLLBACK`. Similarly
+`~connection.set_session()` can't be used but it is still possible to invoke the
+:sql:`SET` command with the proper :sql:`default_transaction_...` parameter.
 
 With asynchronous connections it is also not possible to use
 `~connection.set_client_encoding()`, `~cursor.executemany()`, :ref:`large
@@ -431,11 +432,9 @@ SQLAlchemy_) to be used in coroutine-based programs.
 
 .. warning::
     Psycopg connections are not *green thread safe* and can't be used
-    concurrently by different green threads. Each connection has a lock
-    used to serialize requests from different cursors to the backend process.
-    The lock is held for the duration of the command: if the control switched
-    to a different thread and the latter tried to access the same connection,
-    the result would be a deadlock.
+    concurrently by different green threads. Trying to execute more than one
+    command at time using one cursor per thread will result in an error (or a
+    deadlock on versions before 2.4.2).
 
     Therefore, programmers are advised to either avoid sharing connections
     between coroutines or to use a library-friendly lock to synchronize shared

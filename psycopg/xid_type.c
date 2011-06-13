@@ -663,7 +663,7 @@ xid_recover(PyObject *conn)
 
     /* curs.execute(...) */
     if (!(tmp = PyObject_CallMethod(curs, "execute", "s",
-        "SELECT gid, prepared, owner, database FROM pg_prepared_xacts;")))
+        "SELECT gid, prepared, owner, database FROM pg_prepared_xacts")))
     {
         goto exit;
     }

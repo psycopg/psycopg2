@@ -252,7 +252,7 @@ lobject_close_locked(lobjectObject *self, char **error)
         break;
     }
 
-    if (self->conn->isolation_level == ISOLATION_LEVEL_AUTOCOMMIT ||
+    if (self->conn->autocommit ||
         self->conn->mark != self->mark ||
         self->fd == -1)
         return 0;

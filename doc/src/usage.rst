@@ -489,7 +489,7 @@ rounded to the nearest minute, with an error of up to 30 seconds.
     versions use `psycopg2.extras.register_tstz_w_secs()`.
 
 
-.. index:: Transaction, Begin, Commit, Rollback, Autocommit
+.. index:: Transaction, Begin, Commit, Rollback, Autocommit, Read only
 
 .. _transactions-control:
 
@@ -503,7 +503,7 @@ The following database commands will be executed in the context of the same
 transaction -- not only the commands issued by the first cursor, but the ones
 issued by all the cursors created by the same connection.  Should any command
 fail, the transaction will be aborted and no further command will be executed
-until a call to the `connection.rollback()` method.
+until a call to the `~connection.rollback()` method.
 
 The connection is responsible to terminate its transaction, calling either the
 `~connection.commit()` or `~connection.rollback()` method.  Committed
@@ -516,9 +516,23 @@ It is possible to set the connection in *autocommit* mode: this way all the
 commands executed will be immediately committed and no rollback is possible. A
 few commands (e.g. :sql:`CREATE DATABASE`, :sql:`VACUUM`...) require to be run
 outside any transaction: in order to be able to run these commands from
-Psycopg, the session must be in autocommit mode.  Read the documentation for
-`connection.set_isolation_level()` to know how to change the commit mode.
+Psycopg, the session must be in autocommit mode: you can use the
+`~connection.autocommit` property (`~connection.set_isolation_level()` in
+older versions).
 
+.. warning::
+
+    By default even a simple :sql:`SELECT` will start a transaction: in
+    long-running programs, if no further action is taken, the session will
+    remain "idle in transaction", a condition non desiderable for several
+    reasons (locks are held by the session, tables bloat...). For long lived
+    scripts, either ensure to terminate a transaction as soon as possible or
+    use an autocommit connection.
+
+A few other transaction properties can be set session-wide by the
+`!connection`: for instance it is possible to have read-only transactions or
+change the isolation level. See the `~connection.set_session()` method for all
+the details.
 
 
 .. index::
@@ -594,8 +608,8 @@ forking web deploy method such as FastCGI ensure to create the connections
 
 .. __: http://www.postgresql.org/docs/9.0/static/libpq-connect.html#LIBPQ-CONNECT
 
-Connections shouldn't be shared either by different green threads: doing so
-may result in a deadlock. See :ref:`green-support` for further details.
+Connections shouldn't be shared either by different green threads: see
+:ref:`green-support` for further details.
 
 
 

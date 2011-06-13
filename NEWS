@@ -1,3 +1,27 @@
+What's new in psycopg 2.4.2
+---------------------------
+
+  - Added 'set_session()' method and 'autocommit' property to the
+    connection. Added support for read-only sessions and, for PostgreSQL
+    9.1, for the "repeatable read" isolation level and the "deferrable"
+    transaction property.
+  - Psycopg doesn't execute queries at connection time to find the
+    default isolation level.
+  - Fixed bug with multithread code potentially causing loss of sync
+    with the server communication or lock of the client (ticket #55).
+  - Don't fail import if mx.DateTime module can't be found, even if its
+    support was built (ticket #53).
+  - Fixed escape for negative numbers prefixed by minus operator
+    (ticket #57).
+  - Fixed refcount issue during copy.  Reported and fixed by Dave
+    Malcolm (ticket #58, Red Hat Bug 711095).
+  - Trying to execute concurrent operations on the same connection
+    through concurrent green thread results in an error instead of a
+    deadlock.
+  - Fixed detection of pg_config on Window. Report and fix, plus some
+    long needed setup.py cleanup by Steve Lacy: thanks!
+
+
 What's new in psycopg 2.4.1
 ---------------------------
 

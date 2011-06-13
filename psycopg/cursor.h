@@ -64,7 +64,7 @@ struct cursorObject {
     PyObject  *copyfile;   /* file-like used during COPY TO/FROM ops */
     Py_ssize_t copysize;   /* size of the copy buffer during COPY TO/FROM ops */
 #define DEFAULT_COPYSIZE 16384
-#define DEFAULT_COPYBUFF  8132
+#define DEFAULT_COPYBUFF  8192
 
     PyObject *tuple_factory;    /* factory for result tuples */
     PyObject *tzinfo_factory;   /* factory for tzinfo objects */

@@ -327,10 +327,92 @@ The ``connection`` class
         pair: Transaction; Autocommit
         pair: Transaction; Isolation level
 
-    .. _autocommit:
+    .. method:: set_session([isolation_level,] [readonly,] [deferrable,] [autocommit])
+
+        Set one or more parameters for the next transactions or statements in
+        the current session. See |SET TRANSACTION|_ for further details.
+
+        .. |SET TRANSACTION| replace:: :sql:`SET TRANSACTION`
+        .. _SET TRANSACTION: http://www.postgresql.org/docs/9.1/static/sql-set-transaction.html
+
+        :param isolation_level: set the `isolation level`_ for the next
+            transactions/statements.  The value can be one of the
+            :ref:`constants <isolation-level-constants>` defined in the
+            `~psycopg2.extensions` module or one of the literal values
+            ``READ UNCOMMITTED``, ``READ COMMITTED``, ``REPEATABLE READ``,
+            ``SERIALIZABLE``.
+        :param readonly: if `!True`, set the connection to read only;
+            read/write if `!False`.
+        :param deferrable: if `!True`, set the connection to deferrable;
+            non deferrable if `!False`. Only available from PostgreSQL 9.1.
+        :param autocommit: switch the connection to autocommit mode: not a
+            PostgreSQL session setting but an alias for setting the
+            `autocommit` attribute.
+
+        The parameters *isolation_level*, *readonly* and *deferrable* also
+        accept the string ``DEFAULT`` as a value: the effect is to reset the
+        parameter to the server default.
+
+        .. _isolation level:
+            http://www.postgresql.org/docs/9.1/static/transaction-iso.html
+
+        The function must be invoked with no transaction in progress. At every
+        function invocation, only the specified parameters are changed.
+
+        The default for the values are defined by the server configuration:
+        see values for |default_transaction_isolation|__,
+        |default_transaction_read_only|__, |default_transaction_deferrable|__.
+
+        .. |default_transaction_isolation| replace:: :sql:`default_transaction_isolation`
+        .. __: http://www.postgresql.org/docs/9.1/static/runtime-config-client.html#GUC-DEFAULT-TRANSACTION-ISOLATION
+        .. |default_transaction_read_only| replace:: :sql:`default_transaction_read_only`
+        .. __: http://www.postgresql.org/docs/9.1/static/runtime-config-client.html#GUC-DEFAULT-TRANSACTION-READ-ONLY
+        .. |default_transaction_deferrable| replace:: :sql:`default_transaction_deferrable`
+        .. __: http://www.postgresql.org/docs/9.1/static/runtime-config-client.html#GUC-DEFAULT-TRANSACTION-DEFERRABLE
+
+        .. note::
+
+            There is currently no builtin method to read the current value for
+            the parameters: use :sql:`SHOW default_transaction_...` to read
+            the values from the backend.
+
+        .. versionadded:: 2.4.2
+
+
+    .. attribute:: autocommit
+
+        Read/write attribute: if `!True`, no transaction is handled by the
+        driver and every statement sent to the backend has immediate effect;
+        if `!False` a new transaction is started at the first command
+        execution: the methods `commit()` or `rollback()` must be manually
+        invoked to terminate the transaction.
+
+        The autocommit mode is useful to execute commands requiring to be run
+        outside a transaction, such as :sql:`CREATE DATABASE` or
+        :sql:`VACUUM`.
+
+        The default is `!False` (manual commit) as per DBAPI specification.
+
+        .. warning::
+
+            By default, any query execution, including a simple :sql:`SELECT`
+            will start a transaction: for long-running programs, if no further
+            action is taken, the session will remain "idle in transaction", a
+            condition non desiderable for several reasons (locks are held by
+            the session, tables bloat...). For long lived scripts, either
+            ensure to terminate a transaction as soon as possible or use an
+            autocommit connection.
+
+        .. versionadded:: 2.4.2
+
 
     .. attribute:: isolation_level
     .. method:: set_isolation_level(level)
+
+        .. note::
+
+            From version 2.4.2, `set_session()` and `autocommit`, offer
+            finer control on the transaction characteristics.
 
         Read or set the `transaction isolation level`_ for the current session.
         The level defines the different phenomena that can happen in the

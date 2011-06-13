@@ -39,7 +39,7 @@ from psycopg2._psycopg import DECIMALARRAY, FLOATARRAY, INTEGERARRAY, INTERVALAR
 from psycopg2._psycopg import LONGINTEGERARRAY, ROWIDARRAY, STRINGARRAY, TIMEARRAY
 from psycopg2._psycopg import UNICODEARRAY
 
-from psycopg2._psycopg import Binary, Boolean, Float, QuotedString, AsIs
+from psycopg2._psycopg import Binary, Boolean, Int, Float, QuotedString, AsIs
 try:
     from psycopg2._psycopg import MXDATE, MXDATETIME, MXINTERVAL, MXTIME
     from psycopg2._psycopg import MXDATEARRAY, MXDATETIMEARRAY, MXINTERVALARRAY, MXTIMEARRAY
@@ -68,13 +68,11 @@ except ImportError:
     pass
 
 """Isolation level values."""
-ISOLATION_LEVEL_AUTOCOMMIT     = 0
-ISOLATION_LEVEL_READ_COMMITTED = 1 
-ISOLATION_LEVEL_SERIALIZABLE   = 2
-
-# PostgreSQL maps the the other standard values to already defined levels
-ISOLATION_LEVEL_REPEATABLE_READ  = ISOLATION_LEVEL_SERIALIZABLE
-ISOLATION_LEVEL_READ_UNCOMMITTED = ISOLATION_LEVEL_READ_COMMITTED
+ISOLATION_LEVEL_AUTOCOMMIT          = 0
+ISOLATION_LEVEL_READ_UNCOMMITTED    = 1
+ISOLATION_LEVEL_READ_COMMITTED      = 2
+ISOLATION_LEVEL_REPEATABLE_READ     = 3
+ISOLATION_LEVEL_SERIALIZABLE        = 4
 
 """psycopg connection status values."""
 STATUS_SETUP    = 0
