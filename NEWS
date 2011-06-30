@@ -1,3 +1,9 @@
+What's new in psycopg 2.4.3
+---------------------------
+
+  - Lazy import of the slow uuid module, thanks to Marko Kreen.
+
+
 What's new in psycopg 2.4.2
 ---------------------------
 
