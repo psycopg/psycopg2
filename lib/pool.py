@@ -115,7 +115,7 @@ class AbstractConnectionPool(object):
     def _putconn(self, conn, key=None, close=False):
         """Put away a connection."""
         if self.closed: raise PoolError("connection pool is closed")
-        if key is None: key = self._rused[id(conn)]
+        if key is None: key = self._rused.get(id(conn))
 
         if not key:
             raise PoolError("trying to put unkeyed connection")
