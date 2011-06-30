@@ -1,6 +1,8 @@
 What's new in psycopg 2.4.3
 ---------------------------
 
+  - Fixed segfault in case of transaction started with connection lost
+    (and possibly other events).
   - Lazy import of the slow uuid module, thanks to Marko Kreen.
 
 

@@ -344,11 +344,13 @@ pq_execute_command_locked(connectionObject *conn, const char *query,
     }
     if (*pgres == NULL) {
         Dprintf("pq_execute_command_locked: PQexec returned NULL");
+        PyEval_RestoreThread(*tstate);
         if (!PyErr_Occurred()) {
             const char *msg;
             msg = PQerrorMessage(conn->pgconn);
             if (msg && *msg) { *error = strdup(msg); }
         }
+        *tstate = PyEval_SaveThread();
         goto cleanup;
     }
 
@@ -635,11 +637,13 @@ pq_get_guc_locked(
 
     if (*pgres == NULL) {
         Dprintf("pq_get_guc_locked: PQexec returned NULL");
+        PyEval_RestoreThread(*tstate);
         if (!PyErr_Occurred()) {
             const char *msg;
             msg = PQerrorMessage(conn->pgconn);
             if (msg && *msg) { *error = strdup(msg); }
         }
+        *tstate = PyEval_SaveThread();
         goto cleanup;
     }
     if (PQresultStatus(*pgres) != PGRES_TUPLES_OK) {
