@@ -25,6 +25,7 @@ This module implements thread-safe (and not) connection pools.
 # License for more details.
 
 import psycopg2
+import psycopg2.extensions as _ext
 
 try:
     import logging
@@ -121,7 +122,21 @@ class AbstractConnectionPool(object):
             raise PoolError("trying to put unkeyed connection")
 
         if len(self._pool) < self.minconn and not close:
-            self._pool.append(conn)
+            # Return the connection into a consistent state before putting
+            # it back into the pool
+            if not conn.closed:
+                status = conn.get_transaction_status()
+                if status == _ext.TRANSACTION_STATUS_UNKNOWN:
+                    # server connection lost
+                    conn.close()
+                elif status != _ext.TRANSACTION_STATUS_IDLE:
+                    # connection in error or in transaction
+                    conn.rollback()
+                    self._pool.append(conn)
+                else:
+                    # regular idle connection
+                    self._pool.append(conn)
+            # If the connection is closed, we just discard it.
         else:
             conn.close()
 
