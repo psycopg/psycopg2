@@ -202,6 +202,9 @@
     <None Include="tests\dbapi20_tpc.py" />
     <None Include="tests\test_cursor.py" />
     <None Include="NEWS" />
+    <None Include="tests\test_cancel.py" />
+    <None Include="tests\testconfig.py" />
+    <None Include="tests\testutils.py" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="psycopg\adapter_asis.c" />

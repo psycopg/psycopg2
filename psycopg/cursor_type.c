@@ -391,8 +391,10 @@ _psyco_curs_execute(cursorObject *self,
 
         if (self->name != NULL) {
             self->query = Bytes_FromFormat(
-                "DECLARE \"%s\" CURSOR WITHOUT HOLD FOR %s",
-                self->name, Bytes_AS_STRING(fquery));
+                "DECLARE \"%s\" CURSOR %s HOLD FOR %s",
+                self->name,
+                self->withhold ? "WITH" : "WITHOUT",
+                Bytes_AS_STRING(fquery));
             Py_DECREF(fquery);
         }
         else {
@@ -402,8 +404,10 @@ _psyco_curs_execute(cursorObject *self,
     else {
         if (self->name != NULL) {
             self->query = Bytes_FromFormat(
-                "DECLARE \"%s\" CURSOR WITHOUT HOLD FOR %s",
-                self->name, Bytes_AS_STRING(operation));
+                "DECLARE \"%s\" CURSOR %s HOLD FOR %s",
+                self->name,
+                self->withhold ? "WITH" : "WITHOUT",
+                Bytes_AS_STRING(operation));
         }
         else {
             /* Transfer reference ownership of the str in operation to
@@ -461,11 +465,7 @@ psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
                 "can't use a named cursor outside of transactions", NULL, NULL);
             return NULL;
         }
-        if (self->conn->mark != self->mark) {
-            psyco_set_error(ProgrammingError, self,
-                "named cursor isn't valid anymore", NULL, NULL);
-            return NULL;
-        }
+        EXC_IF_NO_MARK(self);
     }
 
     EXC_IF_CURS_CLOSED(self);
@@ -1519,7 +1519,7 @@ exit:
     return res;
 }
 
-/* extension: closed - return true if cursor is closed*/
+/* extension: closed - return true if cursor is closed */
 
 #define psyco_curs_closed_doc \
 "True if cursor is closed, False if cursor is open"
@@ -1533,6 +1533,39 @@ psyco_curs_get_closed(cursorObject *self, void *closure)
         Py_True : Py_False;
     Py_INCREF(closed);
     return closed;
+}
+
+/* extension: withhold - get or set "WITH HOLD" for named cursors */
+
+#define psyco_curs_withhold_doc \
+"Set or return cursor use of WITH HOLD"
+
+static PyObject *
+psyco_curs_withhold_get(cursorObject *self)
+{
+    PyObject *ret;
+    ret = self->withhold ? Py_True : Py_False;
+    Py_INCREF(ret);
+    return ret;
+}
+
+static int
+psyco_curs_withhold_set(cursorObject *self, PyObject *pyvalue)
+{
+    int value;
+
+    if (self->name == NULL) {
+        PyErr_SetString(ProgrammingError,
+            "trying to set .withhold on unnamed cursor");
+        return -1;
+    }
+    
+    if ((value = PyObject_IsTrue(pyvalue)) == -1) 
+        return -1;
+
+    self->withhold = value;
+    
+    return 0;
 }
 
 #endif
@@ -1657,6 +1690,10 @@ static struct PyGetSetDef cursorObject_getsets[] = {
 #ifdef PSYCOPG_EXTENSIONS
     { "closed", (getter)psyco_curs_get_closed, NULL,
       psyco_curs_closed_doc, NULL },
+    { "withhold",
+      (getter)psyco_curs_withhold_get,
+      (setter)psyco_curs_withhold_set,
+      psyco_curs_withhold_doc, NULL },
 #endif
     {NULL}
 };
@@ -1686,6 +1723,7 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
     self->conn = conn;
 
     self->closed = 0;
+    self->withhold = 0;
     self->mark = conn->mark;
     self->pgres = NULL;
     self->notuples = 1;
