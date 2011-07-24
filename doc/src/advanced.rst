@@ -147,7 +147,7 @@ geometric type:
 
 The above function call results in the SQL command::
 
-    INSERT INTO atable (apoint) VALUES ((1.23, 4.56));
+    INSERT INTO atable (apoint) VALUES ('(1.23, 4.56)');
 
 
 
