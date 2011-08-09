@@ -362,7 +362,7 @@ class psycopg_build_ext(build_ext):
 
         self.include_dirs.append(".")
         if self.static_libpq:
-            if not hasattr(self, 'link_objects'):
+            if not getattr(self, 'link_objects', None):
                 self.link_objects = []
             self.link_objects.append(
                     os.path.join(pg_config_helper.query("libdir"), "libpq.a"))
