@@ -237,6 +237,7 @@
     <Compile Include="psycopg\green.c" />
     <Compile Include="psycopg\notify_type.c" />
     <Compile Include="psycopg\xid_type.c" />
+    <Compile Include="psycopg\bytes_format.c" />
   </ItemGroup>
   <ProjectExtensions>
     <MonoDevelop>

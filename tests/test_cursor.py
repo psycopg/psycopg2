@@ -159,6 +159,11 @@ class CursorTests(unittest.TestCase):
         self.assertEqual(curs.fetchall(), [(10,), (20,), (30,)])
         
     def test_withhold(self):
+        self.assertRaises(psycopg2.ProgrammingError, self.conn.cursor, 
+                          withhold=True)    
+        self.assertRaises(psycopg2.ProgrammingError, self.conn.cursor, 
+                          "NAME", withhold="")    
+                          
         curs = self.conn.cursor()
         curs.execute("drop table if exists withhold")
         curs.execute("create table withhold (data int)")
@@ -173,7 +178,14 @@ class CursorTests(unittest.TestCase):
         curs.execute("select data from withhold order by data")
         self.conn.commit()
         self.assertEqual(curs.fetchall(), [(10,), (20,), (30,)])
-        
+        curs.close()
+
+        curs = self.conn.cursor("W", withhold=True)
+        self.assertEqual(curs.withhold, True);
+        curs.execute("select data from withhold order by data")
+        self.conn.commit()
+        self.assertEqual(curs.fetchall(), [(10,), (20,), (30,)])
+                
         curs = self.conn.cursor()
         curs.execute("drop table withhold")
         self.conn.commit()

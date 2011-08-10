@@ -53,15 +53,28 @@ static PyObject *
 psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *keywds)
 {
     const char *name = NULL;
-    PyObject *obj, *factory = NULL;
+    PyObject *obj, *factory = NULL, *withhold = NULL;
 
-    static char *kwlist[] = {"name", "cursor_factory", NULL};
+    static char *kwlist[] = {"name", "cursor_factory", "withhold", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sO", kwlist,
-                                     &name, &factory)) {
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sOO", kwlist,
+                                     &name, &factory, &withhold)) {
         return NULL;
     }
 
+    if (withhold != NULL) {
+        if (withhold == Py_True && name == NULL) {
+            PyErr_SetString(ProgrammingError,
+                "'withhold=True can be specified only for named cursors");
+            return NULL;
+        }
+        if (withhold != NULL && withhold != Py_True && withhold != Py_False) {
+            PyErr_SetString(ProgrammingError,
+                "'withhold should be True or False");
+            return NULL;
+        }
+    }
+    
     EXC_IF_CONN_CLOSED(self);
 
     if (self->status != CONN_STATUS_READY &&
@@ -95,6 +108,9 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *keywds)
         Py_DECREF(obj);
         return NULL;
     }
+    
+    if (withhold == Py_True)
+        ((cursorObject*)obj)->withhold = 1;
 
     Dprintf("psyco_conn_cursor: new cursor at %p: refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
@@ -525,7 +541,7 @@ psyco_conn_set_session(connectionObject *self, PyObject *args, PyObject *kwargs)
 
 
 #define psyco_conn_autocommit_doc \
-"set or return the autocommit status."
+"Set or return the autocommit status."
 
 static PyObject *
 psyco_conn_autocommit_get(connectionObject *self)

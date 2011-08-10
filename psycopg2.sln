@@ -35,6 +35,10 @@ Global
 		$4.inheritsSet = VisualStudio
 		$4.inheritsScope = text/plain
 		$4.scope = text/x-readme
+		$0.TextStylePolicy = $5
+		$5.inheritsSet = VisualStudio
+		$5.inheritsScope = text/plain
+		$5.scope = text/plain
 		name = psycopg2
 	EndGlobalSection
 EndGlobal
