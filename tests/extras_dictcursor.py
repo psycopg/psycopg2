@@ -172,6 +172,17 @@ class NamedTupleCursorTest(unittest.TestCase):
         self.assertEqual(res[2].s, 'baz')
 
     @skip_if_no_namedtuple
+    def test_executemany(self):
+        curs = self.conn.cursor()
+        curs.executemany("delete from nttest where i = %s",
+            [(1,), (2,)])
+        curs.execute("select * from nttest order by 1")
+        res = curs.fetchall()
+        self.assertEqual(1, len(res))
+        self.assertEqual(res[0].i, 3)
+        self.assertEqual(res[0].s, 'baz')
+
+    @skip_if_no_namedtuple
     def test_iter(self):
         curs = self.conn.cursor()
         curs.execute("select * from nttest order by 1")

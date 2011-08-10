@@ -26,9 +26,11 @@ directly into the client application.
 
         Get a free connection and assign it to *key* if not `!None`.
 
-    .. method:: putconn(conn, key=None)
+    .. method:: putconn(conn, key=None, close=False)
 
         Put away a connection.
+
+        If *close* is `!True`, discard the connection from the pool.
 
     .. method:: closeall
 

@@ -275,7 +275,7 @@ class NamedTupleCursor(_cursor):
 
     def executemany(self, query, vars):
         self.Record = None
-        return _cursor.executemany(self, vars)
+        return _cursor.executemany(self, query, vars)
 
     def callproc(self, procname, vars=None):
         self.Record = None

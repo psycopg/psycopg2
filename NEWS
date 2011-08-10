@@ -1,3 +1,15 @@
+What's new in psycopg 2.4.3
+---------------------------
+
+  - Fixed segfault in case of transaction started with connection lost
+    (and possibly other events).
+  - Rollback connections in transaction or in error before putting them
+    back into a pool. Also discard broken connections (ticket #62).
+  - Lazy import of the slow uuid module, thanks to Marko Kreen.
+  - Fixed NamedTupleCursor.executemany() (ticket #65).
+  - Fixed --static-libpq setup option (ticket #64).
+
+
 What's new in psycopg 2.4.2
 ---------------------------
 
