@@ -114,6 +114,19 @@ The ``cursor`` class
             The `name` attribute is a Psycopg extension to the |DBAPI|.
 
 
+    .. attribute:: withhold
+    
+        Read/write attribute: specifies if a named cursor lifetime should
+        extend outside of the current transaction, i.e., it is possible to
+        fetch from the cursor even after a `commection.commit()` (but not after
+        a `connection.rollback()`).  See :ref:`server-side-cursors`
+
+        .. versionadded:: 2.4.3
+        
+        .. extension::
+
+            The `name` attribute is a Psycopg extension to the |DBAPI|.
+    
     
     .. |execute*| replace:: `execute*()`
 

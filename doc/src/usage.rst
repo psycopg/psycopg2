@@ -575,6 +575,19 @@ during the iteration: the default value of 2000 allows to fetch about 100KB
 per roundtrip assuming records of 10-20 columns of mixed number and strings;
 you may decrease this value if you are dealing with huge records.
 
+Named cursors are usually created :sql:`WITHOUT HOLD`, meaning they live only
+as long as the current transaction. Trying to fetch from a named cursor after
+a `~connection.commit()` or to create a named cursor when the `connection`
+transaction isolation level is set to `AUTOCOMMIT` will result in an exception.
+It is possible to create a :sql:`WITH HOLD` cursor by specifying a `!True`
+value for the `withhold` parameter to `~connection.cursor()` or by setting the
+`~cursor.withhold` attribute to `!True` before calling `~cursor.execute()` on
+the cursor. It is extremely important to always `~cursor.close()` such cursors,
+otherwise they will continue to hold server-side resources until the connection
+will be eventually be closed. Also note that while :sql:`WITH HOLD` cursors
+lifetime extends well after `~connection.commit()`, calling
+`~connection.rollback()` will automatically close the cursor.
+
 .. |DECLARE| replace:: :sql:`DECLARE`
 .. _DECLARE: http://www.postgresql.org/docs/9.0/static/sql-declare.html
 

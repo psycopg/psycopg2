@@ -42,7 +42,7 @@
 /* cursor method - allocate a new cursor */
 
 #define psyco_conn_cursor_doc \
-"cursor(cursor_factory=extensions.cursor) -- new cursor\n\n"                \
+"cursor(name=None, cursor_factory=extensions.cursor, withhold=None) -- new cursor\n\n"     \
 "Return a new cursor.\n\nThe ``cursor_factory`` argument can be used to\n"  \
 "create non-standard cursors by passing a class different from the\n"       \
 "default. Note that the new class *should* be a sub-class of\n"             \
@@ -63,14 +63,9 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *keywds)
     }
 
     if (withhold != NULL) {
-        if (withhold == Py_True && name == NULL) {
+        if (PyObject_IsTrue(withhold) && name == NULL) {
             PyErr_SetString(ProgrammingError,
                 "'withhold=True can be specified only for named cursors");
-            return NULL;
-        }
-        if (withhold != NULL && withhold != Py_True && withhold != Py_False) {
-            PyErr_SetString(ProgrammingError,
-                "'withhold should be True or False");
             return NULL;
         }
     }
@@ -109,7 +104,7 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *keywds)
         return NULL;
     }
     
-    if (withhold == Py_True)
+    if (withhold != NULL && PyObject_IsTrue(withhold))
         ((cursorObject*)obj)->withhold = 1;
 
     Dprintf("psyco_conn_cursor: new cursor at %p: refcnt = "

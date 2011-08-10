@@ -161,8 +161,6 @@ class CursorTests(unittest.TestCase):
     def test_withhold(self):
         self.assertRaises(psycopg2.ProgrammingError, self.conn.cursor, 
                           withhold=True)    
-        self.assertRaises(psycopg2.ProgrammingError, self.conn.cursor, 
-                          "NAME", withhold="")    
                           
         curs = self.conn.cursor()
         curs.execute("drop table if exists withhold")
