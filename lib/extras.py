@@ -237,6 +237,10 @@ class RealDictRow(dict):
 
     def __init__(self, cursor):
         dict.__init__(self)
+        # Required for named cursors
+        if cursor.description and not cursor.column_mapping:
+            cursor._build_index()
+
         self._column_mapping = cursor.column_mapping
 
     def __setitem__(self, name, value):

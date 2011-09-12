@@ -80,6 +80,21 @@ class ExtrasDictCursorTests(unittest.TestCase):
                 return row
         self._testWithNamedCursor(getter)
 
+    def testDictCursorRealWithNamedCursorFetchOne(self):
+        self._testWithNamedCursorReal(lambda curs: curs.fetchone())
+
+    def testDictCursorRealWithNamedCursorFetchMany(self):
+        self._testWithNamedCursorReal(lambda curs: curs.fetchmany(100)[0])
+
+    def testDictCursorRealWithNamedCursorFetchAll(self):
+        self._testWithNamedCursorReal(lambda curs: curs.fetchall()[0])
+
+    def testDictCursorRealWithNamedCursorIter(self):
+        def getter(curs):
+            for row in curs:
+                return row
+        self._testWithNamedCursorReal(getter)
+
     def _testWithPlainCursor(self, getter):
         curs = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         curs.execute("SELECT * FROM ExtrasDictCursorTests")
