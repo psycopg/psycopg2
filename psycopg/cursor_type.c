@@ -1161,32 +1161,53 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
 
 #ifdef PSYCOPG_EXTENSIONS
 
-static int _psyco_curs_copy_columns(PyObject *columns, char *columnlist)
+/* Return a newly allocated buffer containing the list of columns to be
+ * copied. On error return NULL and set an exception.
+ */
+static char *_psyco_curs_copy_columns(PyObject *columns)
 {
     PyObject *col, *coliter;
     Py_ssize_t collen;
-    char* colname;
+    char *colname;
+    char *columnlist = NULL;
+    Py_ssize_t bufsize = 512;
     Py_ssize_t offset = 1;
 
-    columnlist[0] = '\0';
-    if (columns == NULL || columns == Py_None) return 0;
+    if (columns == NULL || columns == Py_None) {
+        if (NULL == (columnlist = PyMem_Malloc(2))) {
+            PyErr_NoMemory();
+            goto error;
+        }
+        columnlist[0] = '\0';
+        goto exit;
+    }
 
-    coliter = PyObject_GetIter(columns);
-    if (coliter == NULL) return 0;
+    if (NULL == (coliter = PyObject_GetIter(columns))) {
+        goto error;
+    }
 
+    if (NULL == (columnlist = PyMem_Malloc(bufsize))) {
+        PyErr_NoMemory();
+        goto error;
+    }
     columnlist[0] = '(';
 
     while ((col = PyIter_Next(coliter)) != NULL) {
         if (!(col = psycopg_ensure_bytes(col))) {
             Py_DECREF(coliter);
-            return -1;
+            goto error;
         }
         Bytes_AsStringAndSize(col, &colname, &collen);
-        if (offset + collen > DEFAULT_COPYBUFF - 2) {
-            Py_DECREF(col);
-            Py_DECREF(coliter);
-            PyErr_SetString(PyExc_ValueError, "column list too long");
-            return -1;
+        while (offset + collen > bufsize - 2) {
+            char *tmp;
+            bufsize *= 2;
+            if (NULL == (tmp = PyMem_Realloc(columnlist, bufsize))) {
+                Py_DECREF(col);
+                Py_DECREF(coliter);
+                PyErr_NoMemory();
+                goto error;
+            }
+            columnlist = tmp;
         }
         strncpy(&columnlist[offset], colname, collen);
         offset += collen;
@@ -1197,17 +1218,24 @@ static int _psyco_curs_copy_columns(PyObject *columns, char *columnlist)
 
     /* Error raised by the coliter generator */
     if (PyErr_Occurred()) {
-        return -1;
+        goto error;
     }
 
     if (offset == 2) {
-        return 0;
+        goto exit;
     }
     else {
         columnlist[offset - 1] = ')';
         columnlist[offset] = '\0';
-        return 1;
+        goto exit;
     }
+
+error:
+    PyMem_Free(columnlist);
+    columnlist = NULL;
+
+exit:
+    return columnlist;
 }
 
 /* extension: copy_from - implements COPY FROM */
@@ -1246,7 +1274,7 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
     const char *sep = "\t", *null = NULL;
     Py_ssize_t bufsize = DEFAULT_COPYBUFF;
     PyObject *file, *columns = NULL, *res = NULL;
-    char columnlist[DEFAULT_COPYBUFF];
+    char *columnlist = NULL;
     char *quoted_delimiter = NULL;
     char *quoted_null = NULL;
 
@@ -1261,13 +1289,13 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
         return NULL;
     }
 
-    if (_psyco_curs_copy_columns(columns, columnlist) == -1)
-        return NULL;
-
     EXC_IF_CURS_CLOSED(self);
     EXC_IF_CURS_ASYNC(self, copy_from);
     EXC_IF_GREEN(copy_from);
     EXC_IF_TPC_PREPARED(self->conn, copy_from);
+
+    if (NULL == (columnlist = _psyco_curs_copy_columns(columns)))
+        goto exit;
 
     if (!(quoted_delimiter = psycopg_escape_string(
             (PyObject*)self->conn, sep, 0, NULL, NULL))) {
@@ -1327,6 +1355,7 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
     Py_DECREF(file);
 
 exit:
+    PyMem_Free(columnlist);
     PyMem_Free(quoted_delimiter);
     PyMem_Free(quoted_null);
     if (query != query_buffer) { PyMem_Free(query); }
@@ -1359,7 +1388,7 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
     char *query = NULL;
     char query_buffer[DEFAULT_COPYBUFF];
     size_t query_size;
-    char columnlist[DEFAULT_COPYBUFF];
+    char *columnlist = NULL;
     const char *table_name;
     const char *sep = "\t", *null = NULL;
     PyObject *file, *columns = NULL, *res = NULL;
@@ -1374,13 +1403,13 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
         return NULL;
     }
 
-    if (_psyco_curs_copy_columns(columns, columnlist) == -1)
-        return NULL;
-
     EXC_IF_CURS_CLOSED(self);
     EXC_IF_CURS_ASYNC(self, copy_to);
     EXC_IF_GREEN(copy_to);
     EXC_IF_TPC_PREPARED(self->conn, copy_to);
+
+    if (NULL == (columnlist = _psyco_curs_copy_columns(columns)))
+        goto exit;
 
     if (!(quoted_delimiter = psycopg_escape_string(
             (PyObject*)self->conn, sep, 0, NULL, NULL))) {
@@ -1440,6 +1469,7 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
     self->copyfile = NULL;
 
 exit:
+    PyMem_Free(columnlist);
     PyMem_Free(quoted_delimiter);
     PyMem_Free(quoted_null);
     if (query != query_buffer) { PyMem_Free(query); }
