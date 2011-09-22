@@ -189,6 +189,17 @@ class TypesBasicTests(unittest.TestCase):
         s = self.execute("SELECT '{}'::text AS foo")
         self.failUnlessEqual(s, "{}")
 
+    def testArrayEscape(self):
+        ss = ['', '\\', '"', '\\\\', '\\"']
+        for s in ss:
+            r = self.execute("SELECT %s AS foo", (s,))
+            self.failUnlessEqual(s, r)
+            r = self.execute("SELECT %s AS foo", ([s],))
+            self.failUnlessEqual([s], r)
+
+        r = self.execute("SELECT %s AS foo", (ss,))
+        self.failUnlessEqual(ss, r)
+
     @testutils.skip_from_python(3)
     def testTypeRoundtripBuffer(self):
         o1 = buffer("".join(map(chr, range(256))))

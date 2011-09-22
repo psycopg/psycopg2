@@ -13,6 +13,7 @@ What's new in psycopg 2.4.3
   - Fixed interaction between RealDictCursor and named cursors
     (ticket #67).
   - Dropped limit on the columns length in COPY operations (ticket #68).
+  - Fixed typecasting of arrays containing consecutive backslashes.
   - 'errorcodes' map updated to PostgreSQL 9.1.
 
 

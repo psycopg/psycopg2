@@ -133,7 +133,7 @@ typecast_array_tokenize(const char *str, Py_ssize_t strlength,
     }
 
     if (res == ASCAN_QUOTED) {
-        Py_ssize_t j;
+        const char *j, *jj;
         char *buffer = PyMem_Malloc(l+1);
         if (buffer == NULL) {
             PyErr_NoMemory();
@@ -142,10 +142,9 @@ typecast_array_tokenize(const char *str, Py_ssize_t strlength,
 
         *token = buffer;
 
-        for (j = *pos; j < *pos+l; j++) {
-            if (str[j] != '\\'
-                || (j > *pos && str[j-1] == '\\'))
-                *(buffer++) = str[j];
+        for (j = str + *pos, jj = j + l; j < jj; ++j) {
+            if (*j == '\\') { ++j; }
+            *(buffer++) = *j;
         }
 
         *buffer = '\0';
