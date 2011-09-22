@@ -158,5 +158,6 @@ for k, v in encodings.items():
     k = k.replace('_', '').replace('-', '').upper()
     encodings[k] = v
 
+del k, v
 
 __all__ = filter(lambda k: not k.startswith('_'), locals().keys())
