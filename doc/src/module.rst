@@ -218,7 +218,9 @@ This is the exception inheritance layout:
 Type Objects and Constructors
 -----------------------------
 
-.. note:: This section is mostly copied verbatim from the |DBAPI|_
+.. note::
+
+    This section is mostly copied verbatim from the |DBAPI|_
     specification.  While these objects are exposed in compliance to the
     DB API, Psycopg offers very accurate tools to convert data between Python
     and PostgreSQL formats.  See :ref:`adapting-new-types` and

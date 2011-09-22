@@ -472,6 +472,7 @@ resources about the topic.
 .. __: http://www.postgresql.org/docs/9.0/static/libpq-async.html
 
 .. warning::
+
     :ref:`COPY commands <copy>` are currently not supported when a wait callback
     is registered, but they will be probably implemented in a future release.
 
