@@ -22,7 +22,7 @@ import re
 import sys
 from datetime import date
 
-from testutils import unittest, skip_if_no_uuid
+from testutils import unittest, skip_if_no_uuid, skip_before_postgres
 
 import psycopg2
 import psycopg2.extras
@@ -357,6 +357,63 @@ class HstoreTestCase(unittest.TestCase):
         finally:
             psycopg2.extensions.string_types.pop(oid)
 
+    @skip_if_no_hstore
+    @skip_before_postgres(8, 3)
+    def test_roundtrip_array(self):
+        from psycopg2.extras import register_hstore
+        register_hstore(self.conn)
+
+        ds = []
+        ds.append({})
+        ds.append({'a': 'b', 'c': None})
+
+        ab = map(chr, range(32, 128))
+        ds.append(dict(zip(ab, ab)))
+        ds.append({''.join(ab): ''.join(ab)})
+
+        self.conn.set_client_encoding('latin1')
+        if sys.version_info[0] < 3:
+            ab = map(chr, range(32, 127) + range(160, 255))
+        else:
+            ab = bytes(range(32, 127) + range(160, 255)).decode('latin1')
+
+        ds.append({''.join(ab): ''.join(ab)})
+        ds.append(dict(zip(ab, ab)))
+
+        cur = self.conn.cursor()
+        cur.execute("select %s", (ds,))
+        ds1 = cur.fetchone()[0]
+        self.assertEqual(ds, ds1)
+
+    @skip_if_no_hstore
+    @skip_before_postgres(8, 3)
+    def test_array_cast(self):
+        from psycopg2.extras import register_hstore
+        register_hstore(self.conn)
+        cur = self.conn.cursor()
+        cur.execute("select array['a=>1'::hstore, 'b=>2'::hstore];")
+        a = cur.fetchone()[0]
+        self.assertEqual(a, [{'a': '1'}, {'b': '2'}])
+
+    @skip_if_no_hstore
+    def test_array_cast_oid(self):
+        cur = self.conn.cursor()
+        cur.execute("select 'hstore'::regtype::oid, 'hstore[]'::regtype::oid")
+        oid, aoid = cur.fetchone()
+
+        from psycopg2.extras import register_hstore
+        register_hstore(None, globally=True, oid=oid, array_oid=aoid)
+        try:
+            cur.execute("select null::hstore, ''::hstore, 'a => b'::hstore, '{a=>b}'::hstore[]")
+            t = cur.fetchone()
+            self.assert_(t[0] is None)
+            self.assertEqual(t[1], {})
+            self.assertEqual(t[2], {'a': 'b'})
+            self.assertEqual(t[3], [{'a': 'b'}])
+
+        finally:
+            psycopg2.extensions.string_types.pop(oid)
+            psycopg2.extensions.string_types.pop(aoid)
 
 def skip_if_no_composite(f):
     def skip_if_no_composite_(self):

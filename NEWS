@@ -3,6 +3,7 @@ What's new in psycopg 2.4.3
 
   - Added 'new_array_type()' function for easy creation of array
     typecasters.
+  - Added support for arrays of hstores (ticket #66).
   - Fixed segfault in case of transaction started with connection lost
     (and possibly other events).
   - Rollback connections in transaction or in error before putting them

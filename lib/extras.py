@@ -699,7 +699,8 @@ WHERE typname = 'hstore';
 
         return tuple(rv0), tuple(rv1)
 
-def register_hstore(conn_or_curs, globally=False, unicode=False, oid=None):
+def register_hstore(conn_or_curs, globally=False, unicode=False,
+        oid=None, array_oid=None):
     """Register adapter and typecaster for `!dict`\-\ |hstore| conversions.
 
     :param conn_or_curs: a connection or cursor: the typecaster will be
@@ -709,14 +710,18 @@ def register_hstore(conn_or_curs, globally=False, unicode=False, oid=None):
         will be `!unicode` instead of `!str`. The option is not available on
         Python 3
     :param oid: the OID of the |hstore| type if known. If not, it will be
-        queried on *conn_or_curs*
+        queried on *conn_or_curs*.
+    :param array_oid: the OID of the |hstore| array type if known. If not, it
+        will be queried on *conn_or_curs*.
 
     The connection or cursor passed to the function will be used to query the
     database and look for the OID of the |hstore| type (which may be different
     across databases). If querying is not desirable (e.g. with
     :ref:`asynchronous connections <async-support>`) you may specify it in the
-    *oid* parameter (it can be found using a query such as :sql:`SELECT
-    'hstore'::regtype::oid;`).
+    *oid* parameter, which can be found using a query such as :sql:`SELECT
+    'hstore'::regtype::oid`. Analogously you can obtain a value for *array_oid*
+    using a query such as :sql:`SELECT 'hstore[]'::regtype::oid`.
+
 
     Note that, when passing a dictionary from Python to the database, both
     strings and unicode keys and values are supported. Dictionaries returned
@@ -730,6 +735,10 @@ def register_hstore(conn_or_curs, globally=False, unicode=False, oid=None):
         added the *oid* parameter. If not specified, the typecaster is
         installed also if |hstore| is not installed in the :sql:`public`
         schema.
+
+    .. versionchanged:: 2.4.3
+        added support for |hstore| array.
+
     """
     if oid is None:
         oid = HstoreAdapter.get_oids(conn_or_curs)
@@ -738,10 +747,17 @@ def register_hstore(conn_or_curs, globally=False, unicode=False, oid=None):
                 "hstore type not found in the database. "
                 "please install it from your 'contrib/hstore.sql' file")
         else:
-            oid = oid[0]  # for the moment we don't have a HSTOREARRAY
+            array_oid = oid[1]
+            oid = oid[0]
 
     if isinstance(oid, int):
         oid = (oid,)
+
+    if array_oid is not None:
+        if isinstance(array_oid, int):
+            array_oid = (array_oid,)
+        else:
+            array_oid = tuple([x for x in array_oid if x])
 
     # create and register the typecaster
     if sys.version_info[0] < 3 and unicode:
@@ -752,6 +768,10 @@ def register_hstore(conn_or_curs, globally=False, unicode=False, oid=None):
     HSTORE = _ext.new_type(oid, "HSTORE", cast)
     _ext.register_type(HSTORE, not globally and conn_or_curs or None)
     _ext.register_adapter(dict, HstoreAdapter)
+
+    if array_oid:
+        HSTOREARRAY = _ext.new_array_type(array_oid, "HSTOREARRAY", HSTORE)
+        _ext.register_type(HSTOREARRAY, not globally and conn_or_curs or None)
 
 
 class CompositeCaster(object):
