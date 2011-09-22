@@ -290,7 +290,7 @@ details.
 .. function:: new_type(oids, name, adapter)
 
     Create a new type caster to convert from a PostgreSQL type to a Python
-    object.  The created object must be registered using
+    object.  The object created must be registered using
     `register_type()` to be used.
 
     :param oids: tuple of OIDs of the PostgreSQL type to convert.
@@ -307,6 +307,23 @@ details.
     converted object.
 
     See :ref:`type-casting-from-sql-to-python` for an usage example.
+
+
+.. function:: new_array_type(oids, name, base_caster)
+
+    Create a new type caster to convert from a PostgreSQL array type to a list
+    of Python object.  The object created must be registered using
+    `register_type()` to be used.
+
+    :param oids: tuple of OIDs of the PostgreSQL type to convert. It should
+        probably be the oid of the array type (e.g. the ``typarray`` field in
+        the ``pg_type`` table.
+    :param name: the name of the new type adapter.
+    :param base_caster: a Psycopg typecaster, e.g. created using the
+        `new_type()` function. The caster should be able to parse a single
+        item of the desired type.
+
+    .. versionadded:: 2.4.3
 
 
 .. function:: register_type(obj [, scope])

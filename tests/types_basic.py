@@ -285,6 +285,19 @@ class TypesBasicTests(unittest.TestCase):
         l1 = self.execute("select -%s;", (-1L,))
         self.assertEqual(1, l1)
 
+    def testGenericArray(self):
+        def caster(s, cur):
+            if s is None: return "nada"
+            return int(s) * 2
+        base = psycopg2.extensions.new_type((23,), "INT4", caster)
+        array = psycopg2.extensions.new_array_type((1007,), "INT4ARRAY", base)
+
+        psycopg2.extensions.register_type(array, self.conn)
+        a = self.execute("select '{1,2,3}'::int4[]")
+        self.assertEqual(a, [2,4,6])
+        a = self.execute("select '{1,2,NULL}'::int4[]")
+        self.assertEqual(a, [2,4,'nada'])
+
 
 class AdaptSubclassTest(unittest.TestCase):
     def test_adapt_subtype(self):

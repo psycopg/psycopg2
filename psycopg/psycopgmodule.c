@@ -257,7 +257,7 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
 "  * `conn_or_curs`: A connection, cursor or None"
 
 #define typecast_from_python_doc \
-"new_type(oids, name, adapter) -> new type object\n\n" \
+"new_type(oids, name, castobj) -> new type object\n\n" \
 "Create a new binding object. The object can be used with the\n" \
 "`register_type()` function to bind PostgreSQL objects to python objects.\n\n" \
 ":Parameters:\n" \
@@ -267,6 +267,15 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
 "    It must have the signature ``fun(value, cur)`` where ``value`` is\n" \
 "    the string representation returned by PostgreSQL (`!None` if ``NULL``)\n" \
 "    and ``cur`` is the cursor from which data are read."
+
+#define typecast_array_from_python_doc \
+"new_array_type(oids, name, baseobj) -> new type object\n\n" \
+"Create a new binding object to parse an array.\n\n" \
+"The object can be used with `register_type()`.\n\n" \
+":Parameters:\n" \
+"  * `oids`: Tuple of ``oid`` of the PostgreSQL types to convert.\n" \
+"  * `name`: Name for the new type\n" \
+"  * `baseobj`: Adapter to perform type conversion of a single array item."
 
 static void
 _psyco_register_type_set(PyObject **dict, PyObject *type)
@@ -758,6 +767,8 @@ static PyMethodDef psycopgMethods[] = {
      METH_VARARGS, psyco_register_type_doc},
     {"new_type", (PyCFunction)typecast_from_python,
      METH_VARARGS|METH_KEYWORDS, typecast_from_python_doc},
+    {"new_array_type", (PyCFunction)typecast_array_from_python,
+     METH_VARARGS|METH_KEYWORDS, typecast_array_from_python_doc},
 
     {"AsIs",  (PyCFunction)psyco_AsIs,
      METH_VARARGS, psyco_AsIs_doc},

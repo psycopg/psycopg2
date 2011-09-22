@@ -216,6 +216,9 @@ read:
     >>> print type(point), point.x, point.y
     <class 'Point'> 10.2 20.3
 
+A typecaster created by `!new_type()` can be also used with
+`~psycopg2.extensions.new_array_type()` to create a typecaster converting a
+PostgreSQL array into a Python list.
 
 
 .. index::

@@ -604,6 +604,29 @@ typecast_from_python(PyObject *self, PyObject *args, PyObject *keywds)
 }
 
 PyObject *
+typecast_array_from_python(PyObject *self, PyObject *args, PyObject *keywds)
+{
+    PyObject *values, *name = NULL, *base = NULL;
+    typecastObject *obj = NULL;
+
+    static char *kwlist[] = {"values", "name", "baseobj", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "O!O!O!", kwlist,
+                                     &PyTuple_Type, &values,
+                                     &Text_Type, &name,
+                                     &typecastType, &base)) {
+        return NULL;
+    }
+
+    if ((obj = (typecastObject *)typecast_new(name, values, NULL, base))) {
+        obj->ccast = typecast_GENERIC_ARRAY_cast;
+        obj->pcast = NULL;
+    }
+
+    return (PyObject *)obj;
+}
+
+PyObject *
 typecast_from_c(typecastObject_initlist *type, PyObject *dict)
 {
     PyObject *name = NULL, *values = NULL, *base = NULL;

@@ -77,8 +77,10 @@ HIDDEN int typecast_add(PyObject *obj, PyObject *dict, int binary);
 /* the C callable typecastObject creator function */
 HIDDEN PyObject *typecast_from_c(typecastObject_initlist *type, PyObject *d);
 
-/* the python callable typecast creator function */
+/* the python callable typecast creator functions */
 HIDDEN PyObject *typecast_from_python(
+    PyObject *self, PyObject *args, PyObject *keywds);
+HIDDEN PyObject *typecast_array_from_python(
     PyObject *self, PyObject *args, PyObject *keywds);
 
 /* the function used to dispatch typecasting calls */
