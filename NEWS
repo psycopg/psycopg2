@@ -1,6 +1,9 @@
 What's new in psycopg 2.4.3
 ---------------------------
 
+  - Added 'new_array_type()' function for easy creation of array
+    typecasters.
+  - Added support for arrays of hstores and composite types (ticket #66).
   - Fixed segfault in case of transaction started with connection lost
     (and possibly other events).
   - Rollback connections in transaction or in error before putting them
@@ -11,6 +14,7 @@ What's new in psycopg 2.4.3
   - Fixed interaction between RealDictCursor and named cursors
     (ticket #67).
   - Dropped limit on the columns length in COPY operations (ticket #68).
+  - Fixed typecasting of arrays containing consecutive backslashes.
   - 'errorcodes' map updated to PostgreSQL 9.1.
 
 
