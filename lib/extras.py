@@ -778,6 +778,9 @@ class CompositeCaster(object):
     """Helps conversion of a PostgreSQL composite type into a Python object.
 
     The class is usually created by the `register_composite()` function.
+    You may want to create and register manually instances of the class if
+    querying the database at registration time is not desirable (such as when
+    using an :ref:`asynchronous connections <async-support>`).
 
     .. attribute:: name
 
@@ -786,6 +789,10 @@ class CompositeCaster(object):
     .. attribute:: oid
 
         The oid of the PostgreSQL type.
+
+    .. attribute:: array_oid
+
+        The oid of the PostgreSQL array type, if available.
 
     .. attribute:: type
 
@@ -802,14 +809,20 @@ class CompositeCaster(object):
         List of component type oids of the type to be casted.
 
     """
-    def __init__(self, name, oid, attrs):
+    def __init__(self, name, oid, attrs, array_oid=None):
         self.name = name
         self.oid = oid
+        self.array_oid = array_oid
 
         self.attnames = [ a[0] for a in attrs ]
         self.atttypes = [ a[1] for a in attrs ]
         self._create_type(name, self.attnames)
         self.typecaster = _ext.new_type((oid,), name, self.parse)
+        if array_oid:
+            self.array_typecaster = _ext.new_array_type(
+                (array_oid,), "%sARRAY" % name, self.typecaster)
+        else:
+            self.array_typecaster = None
 
     def parse(self, s, curs):
         if s is None:
@@ -881,15 +894,18 @@ class CompositeCaster(object):
             tname = name
             schema = 'public'
 
+        # column typarray not available before PG 8.3
+        typarray = conn.server_version >= 80300 and "typarray" or "NULL"
+
         # get the type oid and attributes
         curs.execute("""\
-SELECT t.oid, attname, atttypid
+SELECT t.oid, %s, attname, atttypid
 FROM pg_type t
 JOIN pg_namespace ns ON typnamespace = ns.oid
 JOIN pg_attribute a ON attrelid = typrelid
-WHERE typname = %s and nspname = %s
+WHERE typname = %%s and nspname = %%s
 ORDER BY attnum;
-""", (tname, schema))
+""" % typarray, (tname, schema))
 
         recs = curs.fetchall()
 
@@ -903,9 +919,11 @@ ORDER BY attnum;
                 "PostgreSQL type '%s' not found" % name)
 
         type_oid = recs[0][0]
-        type_attrs = [ (r[1], r[2]) for r in recs ]
+        array_oid = recs[0][1]
+        type_attrs = [ (r[2], r[3]) for r in recs ]
 
-        return CompositeCaster(tname, type_oid, type_attrs)
+        return CompositeCaster(tname, type_oid, type_attrs,
+            array_oid=array_oid)
 
 def register_composite(name, conn_or_curs, globally=False):
     """Register a typecaster to convert a composite type into a tuple.
@@ -919,9 +937,16 @@ def register_composite(name, conn_or_curs, globally=False):
         *conn_or_curs*, otherwise register it globally
     :return: the registered `CompositeCaster` instance responsible for the
         conversion
+
+    .. versionchanged:: 2.4.3
+        added support for array of composite types
+
     """
     caster = CompositeCaster._from_db(name, conn_or_curs)
     _ext.register_type(caster.typecaster, not globally and conn_or_curs or None)
+
+    if caster.array_typecaster is not None:
+        _ext.register_type(caster.array_typecaster, not globally and conn_or_curs or None)
 
     return caster
 

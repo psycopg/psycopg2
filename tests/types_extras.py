@@ -620,6 +620,29 @@ class AdaptTypeTestCase(unittest.TestCase):
         curs.execute("select (4,8)::typens.typens_ii")
         self.assertEqual(curs.fetchone()[0], (4,8))
 
+    @skip_if_no_composite
+    @skip_before_postgres(8, 3)
+    def test_composite_array(self):
+        oid = self._create_type("type_isd",
+            [('anint', 'integer'), ('astring', 'text'), ('adate', 'date')])
+
+        t = psycopg2.extras.register_composite("type_isd", self.conn)
+
+        curs = self.conn.cursor()
+        r1 = (10, 'hello', date(2011,1,2))
+        r2 = (20, 'world', date(2011,1,3))
+        curs.execute("select %s::type_isd[];", ([r1, r2],))
+        v = curs.fetchone()[0]
+        self.assertEqual(len(v), 2)
+        self.assert_(isinstance(v[0], t.type))
+        self.assertEqual(v[0][0], 10)
+        self.assertEqual(v[0][1], "hello")
+        self.assertEqual(v[0][2], date(2011,1,2))
+        self.assert_(isinstance(v[1], t.type))
+        self.assertEqual(v[1][0], 20)
+        self.assertEqual(v[1][1], "world")
+        self.assertEqual(v[1][2], date(2011,1,3))
+
     def _create_type(self, name, fields):
         curs = self.conn.cursor()
         try:
