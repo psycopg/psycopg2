@@ -621,7 +621,7 @@ class AdaptTypeTestCase(unittest.TestCase):
         self.assertEqual(curs.fetchone()[0], (4,8))
 
     @skip_if_no_composite
-    @skip_before_postgres(8, 3)
+    @skip_before_postgres(8, 4)
     def test_composite_array(self):
         oid = self._create_type("type_isd",
             [('anint', 'integer'), ('astring', 'text'), ('adate', 'date')])
