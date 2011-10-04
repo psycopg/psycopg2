@@ -297,6 +297,13 @@ class TypesBasicTests(unittest.TestCase):
         self.assertEqual(1, l1)
 
     def testGenericArray(self):
+        a = self.execute("select '{1,2,3}'::int4[]")
+        self.assertEqual(a, [1,2,3])
+        a = self.execute("select array['a','b','''']::text[]")
+        self.assertEqual(a, ['a','b',"'"])
+
+    @testutils.skip_before_postgres(8, 2)
+    def testGenericArrayNull(self):
         def caster(s, cur):
             if s is None: return "nada"
             return int(s) * 2

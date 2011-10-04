@@ -157,13 +157,16 @@ class CursorTests(unittest.TestCase):
         curs = self.conn.cursor(r'1-2-3 \ "test"')
         curs.execute("select data from invname order by data")
         self.assertEqual(curs.fetchall(), [(10,), (20,), (30,)])
-        
+
     def test_withhold(self):
-        self.assertRaises(psycopg2.ProgrammingError, self.conn.cursor, 
-                          withhold=True)    
-                          
+        self.assertRaises(psycopg2.ProgrammingError, self.conn.cursor,
+                          withhold=True)
+
         curs = self.conn.cursor()
-        curs.execute("drop table if exists withhold")
+        try:
+            curs.execute("drop table withhold")
+        except psycopg2.ProgrammingError:
+            self.conn.rollback()
         curs.execute("create table withhold (data int)")
         for i in (10, 20, 30):
             curs.execute("insert into withhold values (%s)", (i,))
@@ -183,11 +186,10 @@ class CursorTests(unittest.TestCase):
         curs.execute("select data from withhold order by data")
         self.conn.commit()
         self.assertEqual(curs.fetchall(), [(10,), (20,), (30,)])
-                
+
         curs = self.conn.cursor()
         curs.execute("drop table withhold")
         self.conn.commit()
-        
 
     @skip_before_postgres(8, 2)
     def test_iter_named_cursor_efficient(self):
