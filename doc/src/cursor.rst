@@ -125,7 +125,7 @@ The ``cursor`` class
         
         .. extension::
 
-            The `name` attribute is a Psycopg extension to the |DBAPI|.
+            The `withhold` attribute is a Psycopg extension to the |DBAPI|.
     
     
     .. |execute*| replace:: `execute*()`
