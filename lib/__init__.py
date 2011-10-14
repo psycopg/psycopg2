@@ -85,5 +85,17 @@ import psycopg2.extensions as _ext
 _ext.register_adapter(tuple, _ext.SQL_IN)
 _ext.register_adapter(type(None), _ext.NoneAdapter)
 
+# Register the Decimal adapter here instead of in the C layer.
+# This way a new class is registered for each sub-interpreter.
+# See ticket #52
+try:
+    from decimal import Decimal
+except ImportError:
+    pass
+else:
+    from psycopg2._psycopg import Decimal as Adapter
+    _ext.register_adapter(Decimal, Adapter)
+    del Decimal, Adapter
+
 __all__ = filter(lambda k: not k.startswith('_'), locals().keys())
 

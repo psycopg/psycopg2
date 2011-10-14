@@ -322,7 +322,6 @@ static void
 psyco_adapters_init(PyObject *mod)
 {
     PyObject *call;
-    PyTypeObject *type;
 
     microprotocols_add(&PyFloat_Type, NULL, (PyObject*)&pfloatType);
 #if PY_MAJOR_VERSION < 3
@@ -352,9 +351,6 @@ psyco_adapters_init(PyObject *mod)
 #endif
 
     microprotocols_add(&PyList_Type, NULL, (PyObject*)&listType);
-
-    if ((type = (PyTypeObject*)psyco_GetDecimalType()) != NULL)
-        microprotocols_add(type, NULL, (PyObject*)&pdecimalType);
 
     /* the module has already been initialized, so we can obtain the callable
        objects directly from its dictionary :) */
