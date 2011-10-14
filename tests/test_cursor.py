@@ -258,6 +258,20 @@ class CursorTests(unittest.TestCase):
         self.assertEqual(c.precision, None)
         self.assertEqual(c.scale, None)
 
+    @skip_before_postgres(8, 0)
+    def test_named_cursor_stealing(self):
+        # you can use a named cursor to iterate on a refcursor created
+        # somewhere else
+        cur1 = self.conn.cursor()
+        cur1.execute("DECLARE test CURSOR WITHOUT HOLD "
+            " FOR SELECT generate_series(1,7)")
+
+        cur2 = self.conn.cursor('test')
+        # can call fetch without execute
+        self.assertEqual((1,), cur2.fetchone())
+        self.assertEqual([(2,), (3,), (4,)], cur2.fetchmany(3))
+        self.assertEqual([(5,), (6,), (7,)], cur2.fetchall())
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

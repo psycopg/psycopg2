@@ -562,7 +562,7 @@ subsequently handled using :sql:`MOVE`, :sql:`FETCH` and :sql:`CLOSE` commands.
 
 Psycopg wraps the database server side cursor in *named cursors*. A named
 cursor is created using the `~connection.cursor()` method specifying the
-`name` parameter. Such cursor will behave mostly like a regular cursor,
+*name* parameter. Such cursor will behave mostly like a regular cursor,
 allowing the user to move in the dataset using the `~cursor.scroll()`
 method and to read the data using `~cursor.fetchone()` and
 `~cursor.fetchmany()` methods.
@@ -587,6 +587,38 @@ otherwise they will continue to hold server-side resources until the connection
 will be eventually be closed. Also note that while :sql:`WITH HOLD` cursors
 lifetime extends well after `~connection.commit()`, calling
 `~connection.rollback()` will automatically close the cursor.
+
+.. note::
+
+    It is also possible to use a named cursor to consume a cursor created
+    in some other way than using the |DECLARE| executed by
+    `~cursor.execute()`. For example, you may have a PL/pgSQL function
+    returning a cursor::
+
+        CREATE FUNCTION reffunc(refcursor) RETURNS refcursor AS $$
+        BEGIN
+            OPEN $1 FOR SELECT col FROM test;
+            RETURN $1;
+        END;
+        $$ LANGUAGE plpgsql;
+
+    You can read the cursor content by calling the function with a regular,
+    non-named, Psycopg cursor:
+
+    .. code-block:: python
+
+        cur1 = conn.cursor()
+        cur1.callproc('reffunc', ['curname'])
+
+    and then use a named cursor in the same transaction to "steal the cursor":
+
+    .. code-block:: python
+
+        cur2 = conn.cursor('curname')
+        for record in cur2:     # or cur2.fetchone, fetchmany...
+            # do something with record
+            pass
+
 
 .. |DECLARE| replace:: :sql:`DECLARE`
 .. _DECLARE: http://www.postgresql.org/docs/9.0/static/sql-declare.html
