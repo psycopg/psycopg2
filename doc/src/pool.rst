@@ -36,7 +36,7 @@ directly into the client application.
 
         Close all the connections handled by the pool.
 
-        Notice that all the connections are closed, including ones
+        Note that all the connections are closed, including ones
         eventually in use by the application.
 
 

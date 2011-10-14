@@ -351,7 +351,7 @@ returned, the connection can be safely used:
     >>> wait(aconn)
     >>> acurs = aconn.cursor()
 
-Notice that there are a few other requirements to be met in order to have a
+Note that there are a few other requirements to be met in order to have a
 completely non-blocking connection attempt: see the libpq documentation for
 |PQconnectStart|_.
 

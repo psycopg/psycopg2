@@ -180,9 +180,9 @@ reliable. It is really the case to stress this point:
 The correct way to pass variables in a SQL command is using the second
 argument of the `~cursor.execute()` method::
 
-    >>> SQL = "INSERT INTO authors (name) VALUES (%s);" # Notice: no quotes
+    >>> SQL = "INSERT INTO authors (name) VALUES (%s);" # Note: no quotes
     >>> data = ("O'Reilly", )
-    >>> cur.execute(SQL, data) # Notice: no % operator
+    >>> cur.execute(SQL, data) # Note: no % operator
 
 
 
@@ -473,7 +473,7 @@ to a `~psycopg2.tz.FixedOffsetTimezone` instance.
     >>> cur.fetchone()[0].tzinfo
     psycopg2.tz.FixedOffsetTimezone(offset=60, name=None)
 
-Notice that only time zones with an integer number of minutes are supported:
+Note that only time zones with an integer number of minutes are supported:
 this is a limitation of the Python `datetime` module.  A few historical time
 zones had seconds in the UTC offset: these time zones will have the offset
 rounded to the nearest minute, with an error of up to 30 seconds.
@@ -568,9 +568,9 @@ method and to read the data using `~cursor.fetchone()` and
 `~cursor.fetchmany()` methods.
 
 Named cursors are also :ref:`iterable <cursor-iterable>` like regular cursors.
-Notice however that before Psycopg 2.4 iteration was performed fetching one
+Note however that before Psycopg 2.4 iteration was performed fetching one
 record at time from the backend, resulting in a large overhead. The attribute
-`~cursor.itersize` now controls how many records are now fetched at time
+`~cursor.itersize` now controls how many records are fetched at time
 during the iteration: the default value of 2000 allows to fetch about 100KB
 per roundtrip assuming records of 10-20 columns of mixed number and strings;
 you may decrease this value if you are dealing with huge records.
@@ -584,7 +584,7 @@ value for the `withhold` parameter to `~connection.cursor()` or by setting the
 `~cursor.withhold` attribute to `!True` before calling `~cursor.execute()` on
 the cursor. It is extremely important to always `~cursor.close()` such cursors,
 otherwise they will continue to hold server-side resources until the connection
-will be eventually be closed. Also note that while :sql:`WITH HOLD` cursors
+will be eventually closed. Also note that while :sql:`WITH HOLD` cursors
 lifetime extends well after `~connection.commit()`, calling
 `~connection.rollback()` will automatically close the cursor.
 

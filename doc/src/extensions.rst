@@ -579,7 +579,7 @@ from the database.  See :ref:`unicode-handling` for details.
           TIME
           UNICODE
 
-    Typecasters for basic types. Notice that a few other ones (`~psycopg2.BINARY`,
+    Typecasters for basic types. Note that a few other ones (`~psycopg2.BINARY`,
     `~psycopg2.DATETIME`, `~psycopg2.NUMBER`, `~psycopg2.ROWID`,
     `~psycopg2.STRING`) are exposed by the `psycopg2` module for |DBAPI|_
     compliance.
