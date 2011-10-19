@@ -27,17 +27,17 @@ import sys
 from testconfig import dsn
 from testutils import unittest
 
-import bug_gc
-import bugX000
-import extras_dictcursor
+import test_bug_gc
+import test_bugX000
+import test_extras_dictcursor
 import test_dates
 import test_psycopg2_dbapi20
 import test_quote
 import test_connection
 import test_cursor
 import test_transaction
-import types_basic
-import types_extras
+import test_types_basic
+import test_types_extras
 import test_lobject
 import test_copy
 import test_notify
@@ -58,17 +58,17 @@ def test_suite():
         cnn.close()
 
     suite = unittest.TestSuite()
-    suite.addTest(bug_gc.test_suite())
-    suite.addTest(bugX000.test_suite())
-    suite.addTest(extras_dictcursor.test_suite())
+    suite.addTest(test_bug_gc.test_suite())
+    suite.addTest(test_bugX000.test_suite())
+    suite.addTest(test_extras_dictcursor.test_suite())
     suite.addTest(test_dates.test_suite())
     suite.addTest(test_psycopg2_dbapi20.test_suite())
     suite.addTest(test_quote.test_suite())
     suite.addTest(test_connection.test_suite())
     suite.addTest(test_cursor.test_suite())
     suite.addTest(test_transaction.test_suite())
-    suite.addTest(types_basic.test_suite())
-    suite.addTest(types_extras.test_suite())
+    suite.addTest(test_types_basic.test_suite())
+    suite.addTest(test_types_extras.test_suite())
     suite.addTest(test_lobject.test_suite())
     suite.addTest(test_copy.test_suite())
     suite.addTest(test_notify.test_suite())
