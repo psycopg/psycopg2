@@ -99,10 +99,10 @@ class DatetimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
     def setUp(self):
         self.conn = psycopg2.connect(dsn)
         self.curs = self.conn.cursor()
-        self.DATE = psycopg2._psycopg.PYDATE
-        self.TIME = psycopg2._psycopg.PYTIME
-        self.DATETIME = psycopg2._psycopg.PYDATETIME
-        self.INTERVAL = psycopg2._psycopg.PYINTERVAL
+        self.DATE = psycopg2.extensions.PYDATE
+        self.TIME = psycopg2.extensions.PYTIME
+        self.DATETIME = psycopg2.extensions.PYDATETIME
+        self.INTERVAL = psycopg2.extensions.PYINTERVAL
 
     def tearDown(self):
         self.conn.close()
@@ -307,7 +307,7 @@ class DatetimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
 
 
 # Only run the datetime tests if psycopg was compiled with support.
-if not hasattr(psycopg2._psycopg, 'PYDATETIME'):
+if not hasattr(psycopg2.extensions, 'PYDATETIME'):
     del DatetimeTests
 
 
@@ -484,7 +484,10 @@ class mxDateTimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
 
 
 # Only run the mx.DateTime tests if psycopg was compiled with support.
-if not hasattr(psycopg2._psycopg, 'MXDATETIME'):
+try:
+    if not hasattr(psycopg2._psycopg, 'MXDATETIME'):
+        del mxDateTimeTests
+except AttributeError:
     del mxDateTimeTests
 
 
