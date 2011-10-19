@@ -596,7 +596,12 @@ class AdaptTypeTestCase(unittest.TestCase):
                 curs2.execute("select (1,2)::type_ii")
                 self.assertEqual(curs2.fetchone()[0], (1,2))
             finally:
-                del psycopg2.extensions.string_types[t.oid]
+                # drop the registered typecasters to help the refcounting
+                # script to return precise values.
+                del psycopg2.extensions.string_types[t.typecaster.values[0]]
+                if t.array_typecaster:
+                    del psycopg2.extensions.string_types[
+                        t.array_typecaster.values[0]]
 
         finally:
             conn1.close()
