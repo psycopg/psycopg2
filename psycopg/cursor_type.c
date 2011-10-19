@@ -1241,7 +1241,7 @@ exit:
 /* extension: copy_from - implements COPY FROM */
 
 #define psyco_curs_copy_from_doc \
-"copy_from(file, table, sep='\\t', null='\\N', size=8192, columns=None) -- Copy table from file."
+"copy_from(file, table, sep='\\t', null='\\\\N', size=8192, columns=None) -- Copy table from file."
 
 static int
 _psyco_curs_has_read_check(PyObject* o, void* var)
@@ -1271,7 +1271,8 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
     char query_buffer[DEFAULT_COPYBUFF];
     Py_ssize_t query_size;
     const char *table_name;
-    const char *sep = "\t", *null = NULL;
+    const char *sep = "\t";
+    const char *null = "\\N";
     Py_ssize_t bufsize = DEFAULT_COPYBUFF;
     PyObject *file, *columns = NULL, *res = NULL;
     char *columnlist = NULL;
@@ -1303,41 +1304,25 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
         goto exit;
     }
 
+    if (!(quoted_null = psycopg_escape_string(
+            (PyObject*)self->conn, null, 0, NULL, NULL))) {
+        PyErr_NoMemory();
+        goto exit;
+    }
+
     query = query_buffer;
-    if (null) {
-        if (!(quoted_null = psycopg_escape_string(
-                (PyObject*)self->conn, null, 0, NULL, NULL))) {
+    query_size = PyOS_snprintf(query, DEFAULT_COPYBUFF,
+        "COPY %s%s FROM stdin WITH DELIMITER AS %s NULL AS %s",
+        table_name, columnlist, quoted_delimiter, quoted_null);
+    if (query_size >= DEFAULT_COPYBUFF) {
+        /* Got truncated, allocate dynamically */
+        if (!(query = PyMem_New(char, query_size + 1))) {
             PyErr_NoMemory();
             goto exit;
         }
-        query_size = PyOS_snprintf(query, DEFAULT_COPYBUFF,
+        PyOS_snprintf(query, query_size + 1,
             "COPY %s%s FROM stdin WITH DELIMITER AS %s NULL AS %s",
             table_name, columnlist, quoted_delimiter, quoted_null);
-        if (query_size >= DEFAULT_COPYBUFF) {
-            /* Got truncated, allocate dynamically */
-            if (!(query = PyMem_New(char, query_size + 1))) {
-                PyErr_NoMemory();
-                goto exit;
-            }
-            PyOS_snprintf(query, query_size + 1,
-                "COPY %s%s FROM stdin WITH DELIMITER AS %s NULL AS %s",
-                table_name, columnlist, quoted_delimiter, quoted_null);
-        }
-    }
-    else {
-        query_size = PyOS_snprintf(query, DEFAULT_COPYBUFF,
-           "COPY %s%s FROM stdin WITH DELIMITER AS %s",
-           table_name, columnlist, quoted_delimiter);
-        if (query_size >= DEFAULT_COPYBUFF) {
-            /* Got truncated, allocate dynamically */
-            if (!(query = PyMem_New(char, query_size + 1))) {
-                PyErr_NoMemory();
-                goto exit;
-            }
-            PyOS_snprintf(query, query_size + 1,
-                "COPY %s%s FROM stdin WITH DELIMITER AS %s",
-                table_name, columnlist, quoted_delimiter);
-        }
     }
 
     Dprintf("psyco_curs_copy_from: query = %s", query);
@@ -1366,7 +1351,7 @@ exit:
 /* extension: copy_to - implements COPY TO */
 
 #define psyco_curs_copy_to_doc \
-"copy_to(file, table, sep='\\t', null='\\N', columns=None) -- Copy table to file."
+"copy_to(file, table, sep='\\t', null='\\\\N', columns=None) -- Copy table to file."
 
 static int
 _psyco_curs_has_write_check(PyObject* o, void* var)
@@ -1390,7 +1375,8 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
     size_t query_size;
     char *columnlist = NULL;
     const char *table_name;
-    const char *sep = "\t", *null = NULL;
+    const char *sep = "\t";
+    const char *null = "\\N";
     PyObject *file, *columns = NULL, *res = NULL;
     char *quoted_delimiter = NULL;
     char *quoted_null = NULL;
@@ -1417,41 +1403,25 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
         goto exit;
     }
 
+    if (!(quoted_null = psycopg_escape_string(
+            (PyObject*)self->conn, null, 0, NULL, NULL))) {
+        PyErr_NoMemory();
+        goto exit;
+    }
+
     query = query_buffer;
-    if (null) {
-        if (!(quoted_null = psycopg_escape_string(
-                (PyObject*)self->conn, null, 0, NULL, NULL))) {
+    query_size = PyOS_snprintf(query, DEFAULT_COPYBUFF,
+        "COPY %s%s TO stdout WITH DELIMITER AS %s NULL AS %s",
+        table_name, columnlist, quoted_delimiter, quoted_null);
+    if (query_size >= DEFAULT_COPYBUFF) {
+        /* Got truncated, allocate dynamically */
+        if (!(query = PyMem_New(char, query_size + 1))) {
             PyErr_NoMemory();
             goto exit;
         }
-        query_size = PyOS_snprintf(query, DEFAULT_COPYBUFF,
-            "COPY %s%s TO stdout WITH DELIMITER AS %s"
-            " NULL AS %s", table_name, columnlist, quoted_delimiter, quoted_null);
-        if (query_size >= DEFAULT_COPYBUFF) {
-            /* Got truncated, allocate dynamically */
-            if (!(query = PyMem_New(char, query_size + 1))) {
-                PyErr_NoMemory();
-                goto exit;
-            }
-            PyOS_snprintf(query, query_size + 1,
-                "COPY %s%s TO stdout WITH DELIMITER AS %s"
-                " NULL AS %s", table_name, columnlist, quoted_delimiter, quoted_null);
-        }
-    }
-    else {
-        query_size = PyOS_snprintf(query, DEFAULT_COPYBUFF,
-            "COPY %s%s TO stdout WITH DELIMITER AS %s",
-            table_name, columnlist, quoted_delimiter);
-        if (query_size >= DEFAULT_COPYBUFF) {
-            /* Got truncated, allocate dynamically */
-            if (!(query = PyMem_New(char, query_size + 1))) {
-                PyErr_NoMemory();
-                goto exit;
-            }
-            PyOS_snprintf(query, query_size + 1,
-                "COPY %s%s TO stdout WITH DELIMITER AS %s",
-                table_name, columnlist, quoted_delimiter);
-        }
+        PyOS_snprintf(query, query_size + 1,
+            "COPY %s%s TO stdout WITH DELIMITER AS %s NULL AS %s",
+            table_name, columnlist, quoted_delimiter, quoted_null);
     }
 
     Dprintf("psyco_curs_copy_to: query = %s", query);
