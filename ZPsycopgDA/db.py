@@ -39,7 +39,10 @@ class DB(TM, dbi_db.DB):
         self.dsn = dsn
         self.tilevel = tilevel
         self.typecasts = typecasts
-        self.encoding = enc
+        if enc is None or enc == "":
+            self.encoding = "utf-8"
+        else:
+            self.encoding = enc
         self.failures = 0
         self.calls = 0
         self.make_mappings()
