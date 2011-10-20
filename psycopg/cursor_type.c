@@ -1315,7 +1315,7 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
 
     query_size = strlen(command) + strlen(table_name) + strlen(columnlist)
         + strlen(quoted_delimiter) + strlen(quoted_null) + 1;
-    if (!(query = PyMem_New(char, query_size + 1))) {
+    if (!(query = PyMem_New(char, query_size))) {
         PyErr_NoMemory();
         goto exit;
     }
