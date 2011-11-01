@@ -36,7 +36,7 @@ class CommonDatetimeTestsMixin:
 
     def test_parse_date(self):
         value = self.DATE('2007-01-01', self.curs)
-        self.assertNotEqual(value, None)
+        self.assert_(value is not None)
         self.assertEqual(value.year, 2007)
         self.assertEqual(value.month, 1)
         self.assertEqual(value.day, 1)
@@ -51,7 +51,7 @@ class CommonDatetimeTestsMixin:
 
     def test_parse_time(self):
         value = self.TIME('13:30:29', self.curs)
-        self.assertNotEqual(value, None)
+        self.assert_(value is not None)
         self.assertEqual(value.hour, 13)
         self.assertEqual(value.minute, 30)
         self.assertEqual(value.second, 29)
@@ -66,7 +66,7 @@ class CommonDatetimeTestsMixin:
 
     def test_parse_datetime(self):
         value = self.DATETIME('2007-01-01 13:30:29', self.curs)
-        self.assertNotEqual(value, None)
+        self.assert_(value is not None)
         self.assertEqual(value.year, 2007)
         self.assertEqual(value.month, 1)
         self.assertEqual(value.day, 1)
@@ -336,7 +336,7 @@ class mxDateTimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
 
     def test_parse_bc_date(self):
         value = self.DATE('00042-01-01 BC', self.curs)
-        self.assertNotEqual(value, None)
+        self.assert_(value is not None)
         # mx.DateTime numbers BC dates from 0 rather than 1.
         self.assertEqual(value.year, -41)
         self.assertEqual(value.month, 1)
@@ -344,7 +344,7 @@ class mxDateTimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
 
     def test_parse_bc_datetime(self):
         value = self.DATETIME('00042-01-01 13:30:29 BC', self.curs)
-        self.assertNotEqual(value, None)
+        self.assert_(value is not None)
         # mx.DateTime numbers BC dates from 0 rather than 1.
         self.assertEqual(value.year, -41)
         self.assertEqual(value.month, 1)
@@ -395,7 +395,7 @@ class mxDateTimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
 
     def test_parse_interval(self):
         value = self.INTERVAL('42 days 05:50:05', self.curs)
-        self.assertNotEqual(value, None)
+        self.assert_(value is not None)
         self.assertEqual(value.day, 42)
         self.assertEqual(value.hour, 5)
         self.assertEqual(value.minute, 50)
