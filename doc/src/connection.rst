@@ -18,7 +18,7 @@ The ``connection`` class
     Connections are created using the factory function
     `~psycopg2.connect()`.
 
-    Connections are thread safe and can be shared among many thread. See
+    Connections are thread safe and can be shared among many threads. See
     :ref:`thread-safety` for details.
 
     .. method:: cursor([name] [, cursor_factory] [, withhold])

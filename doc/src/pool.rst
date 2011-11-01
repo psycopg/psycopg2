@@ -10,7 +10,7 @@
 
 Creating new PostgreSQL connections can be an expensive operation.  This
 module offers a few pure Python classes implementing simple connection pooling
-directly into the client application.
+directly in the client application.
 
 .. class:: AbstractConnectionPool(minconn, maxconn, \*args, \*\*kwargs)
 

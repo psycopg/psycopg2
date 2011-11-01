@@ -39,7 +39,7 @@ basic commands::
     >>> conn.close()
 
 
-The main entry point of Psycopg are:
+The main entry points of Psycopg are:
 
 - The function `~psycopg2.connect()` creates a new database session and
   returns a new `connection` instance.
@@ -90,7 +90,7 @@ is converted into the SQL command::
 
 Named arguments are supported too using :samp:`%({name})s` placeholders.
 Using named arguments the values can be passed to the query in any order and
-many placeholder can use the same values::
+many placeholders can use the same values::
 
     >>> cur.execute(
     ...     """INSERT INTO some_table (an_int, a_date, another_date, a_string)
@@ -165,9 +165,9 @@ hang it onto your desk.
 .. _SQL injection: http://en.wikipedia.org/wiki/SQL_injection
 .. __: http://xkcd.com/327/
 
-Psycopg can `convert automatically Python objects into and from SQL
-literals`__: using this feature your code will result more robust and
-reliable. It is really the case to stress this point:
+Psycopg can `automatically convert Python objects to and from SQL
+literals`__: using this feature your code will be more robust and
+reliable. We must stress this point:
 
 .. __: python-types-adaptation_
 
@@ -290,8 +290,8 @@ the SQL string that would be sent to the database.
      emit :sql:`bytea` fields. Starting from Psycopg 2.4.1 the format is
      correctly supported.  If you use a previous version you will need some
      extra care when receiving bytea from PostgreSQL: you must have at least
-     the libpq 9.0 installed on the client or alternatively you can set the
-     `bytea_output`__ configutation parameter to ``escape``, either in the
+     libpq 9.0 installed on the client or alternatively you can set the
+     `bytea_output`__ configuration parameter to ``escape``, either in the
      server configuration file or in the client session (using a query such as
      ``SET bytea_output TO escape;``) before receiving binary data.
      
@@ -444,7 +444,7 @@ the connection or globally: see the function
 
 .. note::
 
-    In Python 2, if you want to receive uniformly all your database input in
+    In Python 2, if you want to uniformly receive all your database input in
     Unicode, you can register the related typecasters globally as soon as
     Psycopg is imported::
 
@@ -526,7 +526,7 @@ older versions).
     long-running programs, if no further action is taken, the session will
     remain "idle in transaction", a condition non desiderable for several
     reasons (locks are held by the session, tables bloat...). For long lived
-    scripts, either ensure to terminate a transaction as soon as possible or
+    scripts, either make sure to terminate a transaction as soon as possible or
     use an autocommit connection.
 
 A few other transaction properties can be set session-wide by the
@@ -634,7 +634,7 @@ Thread and process safety
 
 The Psycopg module and the `connection` objects are *thread-safe*: many
 threads can access the same database either using separate sessions and
-creating a `!connection` per thread or using the same using the same
+creating a `!connection` per thread or using the same
 connection and creating separate `cursor`\ s. In |DBAPI|_ parlance, Psycopg is
 *level 2 thread safe*.
 
@@ -648,7 +648,7 @@ the same connection, all the commands will be executed in the same session
 The above observations are only valid for regular threads: they don't apply to
 forked processes nor to green threads. `libpq` connections `shouldn't be used by a
 forked processes`__, so when using a module such as `multiprocessing` or a
-forking web deploy method such as FastCGI ensure to create the connections
+forking web deploy method such as FastCGI make sure to create the connections
 *after* the fork.
 
 .. __: http://www.postgresql.org/docs/9.0/static/libpq-connect.html#LIBPQ-CONNECT
@@ -699,7 +699,7 @@ examples.
 Access to PostgreSQL large objects
 ----------------------------------
 
-PostgreSQL offers support to `large objects`__, which provide stream-style
+PostgreSQL offers support for `large objects`__, which provide stream-style
 access to user data that is stored in a special large-object structure. They
 are useful with data values too large to be manipulated conveniently as a
 whole.
@@ -734,7 +734,7 @@ Two-Phase Commit protocol support
 Psycopg exposes the two-phase commit features available since PostgreSQL 8.1
 implementing the *two-phase commit extensions* proposed by the |DBAPI|.
 
-The |DBAPI| model of two-phase commit is inspired to the `XA specification`__,
+The |DBAPI| model of two-phase commit is inspired by the `XA specification`__,
 according to which transaction IDs are formed from three components:
 
 - a format ID (non-negative 32 bit integer)

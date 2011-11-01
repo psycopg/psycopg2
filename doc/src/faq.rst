@@ -18,7 +18,7 @@ Why does `!psycopg2` leave database sessions "idle in transaction"?
     :sql:`SELECT`.  The transaction is not closed until an explicit
     `~connection.commit()` or `~connection.rollback()`.
 
-    If you are writing a long-living program, you should probably ensure to
+    If you are writing a long-living program, you should probably make sure to
     call one of the transaction closing methods before leaving the connection
     unused for a long time (which may also be a few seconds, depending on the
     concurrency level in your database).  Alternatively you can use a
@@ -37,7 +37,7 @@ I receive the error *current transaction is aborted, commands ignored until end 
 
 Why do I get the error *current transaction is aborted, commands ignored until end of transaction block* when I use `!multiprocessing` (or any other forking system) and not when use `!threading`?
     Psycopg's connections can't be shared across processes (but are thread
-    safe).  If you are forking the Python process ensure to create a new
+    safe).  If you are forking the Python process make sure to create a new
     connection in each forked child. See :ref:`thread-safety` for further
     informations.
 
