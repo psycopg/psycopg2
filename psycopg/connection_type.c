@@ -576,7 +576,12 @@ psyco_conn_autocommit_set(connectionObject *self, PyObject *pyvalue)
 static PyObject *
 psyco_conn_isolation_level_get(connectionObject *self)
 {
-    int rv = conn_get_isolation_level(self);
+    int rv;
+
+    EXC_IF_CONN_CLOSED(self);
+    EXC_IF_TPC_PREPARED(self, set_isolation_level);
+
+    rv = conn_get_isolation_level(self);
     if (-1 == rv) { return NULL; }
     return PyInt_FromLong((long)rv);
 }
