@@ -1,6 +1,8 @@
 What's new in psycopg 2.4.3
 ---------------------------
 
+  - connect() supports all the keyword arguments supported by the
+    database
   - Added 'new_array_type()' function for easy creation of array
     typecasters.
   - Added support for arrays of hstores and composite types (ticket #66).
