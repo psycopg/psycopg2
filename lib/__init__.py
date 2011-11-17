@@ -149,8 +149,10 @@ def connect(dsn=None,
     library: the list of supported parameter depends on the library version.
 
     """
-
     if dsn is None:
+        # Note: reproducing the behaviour of the previous C implementation:
+        # keyword are silently swallowed if a DSN is specified. I would have
+        # raised an exception. File under "histerical raisins".
         items = []
         if database is not None:
             items.append(('dbname', database))
@@ -160,7 +162,9 @@ def connect(dsn=None,
             items.append(('password', password))
         if host is not None:
             items.append(('host', host))
-        if port is not None:
+        # Reproducing the previous C implementation behaviour: swallow a
+        # negative port. The libpq would raise an exception for it.
+        if port is not None and int(port) > 0:
             items.append(('port', port))
 
         items.extend(
