@@ -97,6 +97,24 @@ else:
     _ext.register_adapter(Decimal, Adapter)
     del Decimal, Adapter
 
+import re
+
+def _param_escape(s,
+        re_escape=re.compile(r"([\\'])"),
+        re_space=re.compile(r'\s')):
+    """
+    Apply the escaping rule required by PQconnectdb
+    """
+    if not s: return "''"
+
+    s = re_escape.sub(r'\\\1', s)
+    if re_space.search(s):
+        s = "'" + s + "'"
+
+    return s
+
+del re
+
 
 def connect(dsn=None,
         database=None, user=None, password=None, host=None, port=None,
@@ -147,7 +165,8 @@ def connect(dsn=None,
 
         items.extend(
             [(k, v) for (k, v) in kwargs.iteritems() if v is not None])
-        dsn = " ".join(["%s=%s" % item for item in items])
+        dsn = " ".join(["%s=%s" % (k, _param_escape(str(v)))
+            for (k, v) in items])
 
         if not dsn:
             raise InterfaceError('missing dsn and no parameters')

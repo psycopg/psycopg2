@@ -99,6 +99,26 @@ class ConnectTestCase(unittest.TestCase):
         self.assertEqual(self.args[1], None)
         self.assert_(self.args[2])
 
+    def test_empty_param(self):
+        psycopg2.connect(database='sony', password='')
+        self.assertEqual(self.args[0], "dbname=sony password=''")
+
+    def test_escape(self):
+        psycopg2.connect(database='hello world')
+        self.assertEqual(self.args[0], "dbname='hello world'")
+
+        psycopg2.connect(database=r'back\slash')
+        self.assertEqual(self.args[0], r"dbname=back\\slash")
+
+        psycopg2.connect(database="quo'te")
+        self.assertEqual(self.args[0], r"dbname=quo\'te")
+
+        psycopg2.connect(database="with\ttab")
+        self.assertEqual(self.args[0], "dbname='with\ttab'")
+
+        psycopg2.connect(database=r"\every thing'")
+        self.assertEqual(self.args[0], r"dbname='\\every thing\''")
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
