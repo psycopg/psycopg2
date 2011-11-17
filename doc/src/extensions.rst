@@ -418,26 +418,64 @@ set to one of the following constants:
 
 .. data:: ISOLATION_LEVEL_READ_COMMITTED
 
-    This is the default value.  A new transaction is started at the first
-    `~cursor.execute()` command on a cursor and at each new
-    `!execute()` after a `~connection.commit()` or a
+    This is usually the the default PostgreSQL value, but a different default
+    may be set in the database configuration.
+
+    A new transaction is started at the first `~cursor.execute()` command on a
+    cursor and at each new `!execute()` after a `~connection.commit()` or a
     `~connection.rollback()`.  The transaction runs in the PostgreSQL
-    :sql:`READ COMMITTED` isolation level.
+    :sql:`READ COMMITTED` isolation level: a :sql:`SELECT` query sees only
+    data committed before the query began; it never sees either uncommitted
+    data or changes committed during query execution by concurrent
+    transactions.
+
+    .. seealso:: `Read Committed Isolation Level`__ in PostgreSQL
+        documentation.
+
+        .. __: http://www.postgresql.org/docs/9.1/static/transaction-iso.html#XACT-READ-COMMITTED
 
 .. data:: ISOLATION_LEVEL_REPEATABLE_READ
 
-    The :sql:`REPEATABLE READ` isolation level is defined in the SQL standard
-    but not available in the |MVCC| model of PostgreSQL: it is replaced by the
-    stricter :sql:`SERIALIZABLE`.
+    As in `!ISOLATION_LEVEL_READ_COMMITTED`, a new transaction is started at
+    the first `~cursor.execute()` command.  Transactions run at a
+    :sql:`REPEATABLE READ` isolation level: all the queries in a transaction
+    see a snapshot as of the start of the transaction, not as of the start of
+    the current query within the transaction.  However applications using this
+    level must be prepared to retry transactions due to serialization
+    failures.
+
+    While this level provides a guarantee that each transaction sees a
+    completely stable view of the database, this view will not necessarily
+    always be consistent with some serial (one at a time) execution of
+    concurrent transactions of the same level.
+
+    .. versionchanged:: 2.4.2
+        The value was an alias for `!ISOLATION_LEVEL_SERIALIZABLE` before. The
+        two levels are distinct since PostgreSQL 9.1
+
+    .. seealso:: `Repeatable Read Isolation Level`__ in PostgreSQL
+        documentation.
+
+        .. __: http://www.postgresql.org/docs/9.1/static/transaction-iso.html#XACT-REPEATABLE-READ
 
 .. data:: ISOLATION_LEVEL_SERIALIZABLE
 
-    Transactions are run at a :sql:`SERIALIZABLE` isolation level. This is the
-    strictest transactions isolation level, equivalent to having the
-    transactions executed serially rather than concurrently. However
-    applications using this level must be prepared to retry reansactions due
-    to serialization failures. See `serializable isolation level`_ in
-    PostgreSQL documentation.
+    As in `!ISOLATION_LEVEL_READ_COMMITTED`, a new transaction is started at
+    the first `~cursor.execute()` command.  Transactions run at a
+    :sql:`SERIALIZABLE` isolation level. This is the strictest transactions
+    isolation level, equivalent to having the transactions executed serially
+    rather than concurrently. However applications using this level must be
+    prepared to retry reansactions due to serialization failures.
+
+    Starting from PostgreSQL 9.1, this mode monitors for conditions which
+    could make execution of a concurrent set of serializable transactions
+    behave in a manner inconsistent with all possible serial (one at a time)
+    executions of those transaction. In previous version the behaviour was the
+    same of the :sql:`REPEATABLE READ` isolation level.
+
+    .. seealso:: `Serializable Isolation Level`__ in PostgreSQL documentation.
+
+        .. __: http://www.postgresql.org/docs/9.1/static/transaction-iso.html#XACT-SERIALIZABLE
 
 
 
