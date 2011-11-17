@@ -33,6 +33,7 @@ import test_extras_dictcursor
 import test_dates
 import test_psycopg2_dbapi20
 import test_quote
+import test_module
 import test_connection
 import test_cursor
 import test_transaction
@@ -71,6 +72,7 @@ def test_suite():
     suite.addTest(test_types_extras.test_suite())
     suite.addTest(test_lobject.test_suite())
     suite.addTest(test_copy.test_suite())
+    suite.addTest(test_module.test_suite())
     suite.addTest(test_notify.test_suite())
     suite.addTest(test_async.test_suite())
     suite.addTest(test_green.test_suite())
