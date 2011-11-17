@@ -38,6 +38,13 @@ class ConnectTestCase(unittest.TestCase):
     def tearDown(self):
         psycopg2._connect = self._connect_orig
 
+    def test_there_has_to_be_something(self):
+        self.assertRaises(psycopg2.InterfaceError, psycopg2.connect)
+        self.assertRaises(psycopg2.InterfaceError, psycopg2.connect,
+            connection_factory=lambda dsn, async=False: None)
+        self.assertRaises(psycopg2.InterfaceError, psycopg2.connect,
+            async=True)
+
     def test_no_keywords(self):
         psycopg2.connect('')
         self.assertEqual(self.args[0], '')
