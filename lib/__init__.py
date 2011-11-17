@@ -73,7 +73,7 @@ from psycopg2._psycopg import Error, Warning, DataError, DatabaseError, Programm
 from psycopg2._psycopg import IntegrityError, InterfaceError, InternalError
 from psycopg2._psycopg import NotSupportedError, OperationalError
 
-from psycopg2._psycopg import connect, apilevel, threadsafety, paramstyle
+from psycopg2._psycopg import _connect, apilevel, threadsafety, paramstyle
 from psycopg2._psycopg import __version__
 
 from psycopg2 import tz
@@ -96,6 +96,65 @@ else:
     from psycopg2._psycopg import Decimal as Adapter
     _ext.register_adapter(Decimal, Adapter)
     del Decimal, Adapter
+
+
+def connect(dsn=None,
+        database=None, user=None, password=None, host=None, port=None,
+        connection_factory=None, async=False, **kwargs):
+    """
+    Create a new database connection.
+
+    The connection parameters can be specified either as a string:
+
+        conn = psycopg2.connect("dbname=test user=postgres password=secret")
+
+    or using a set of keyword arguments:
+
+        conn = psycopg2.connect(database="test", user="postgres", password="secret")
+
+    The basic connection parameters are:
+
+    - *dbname*: the database name (only in dsn string)
+    - *database*: the database name (only as keyword argument)
+    - *user*: user name used to authenticate
+    - *password*: password used to authenticate
+    - *host*: database host address (defaults to UNIX socket if not provided)
+    - *port*: connection port number (defaults to 5432 if not provided)
+
+    Using the *connection_factory* parameter a different class or connections
+    factory can be specified. It should be a callable object taking a dsn
+    argument.
+
+    Using *async*=True an asynchronous connection will be created.
+
+    Any other keyword parameter will be passed to the underlying client
+    library: the list of supported parameter depends on the library version.
+
+    """
+
+    if dsn is None:
+        items = []
+        if database is not None:
+            items.append(('dbname', database))
+        if user is not None:
+            items.append(('user', user))
+        if password is not None:
+            items.append(('password', password))
+        if host is not None:
+            items.append(('host', host))
+        if port is not None:
+            items.append(('port', port))
+
+        items.extend(
+            [(k, v) for (k, v) in kwargs.iteritems() if v is not None])
+        dsn = " ".join(["%s=%s" % item for item in items])
+
+        if not dsn:
+            raise InterfaceError('missing dsn and no parameters')
+
+    return _connect(dsn,
+        connection_factory=connection_factory, async=async)
+
 
 __all__ = filter(lambda k: not k.startswith('_'), locals().keys())
 
