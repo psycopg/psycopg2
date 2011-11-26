@@ -354,6 +354,8 @@ class psycopg_build_ext(build_ext):
             extension.extra_compile_args.append(
                 '-Wdeclaration-after-statement')
 
+    finalize_linux3 = finalize_linux2
+
     def finalize_options(self):
         """Complete the build system configuation."""
         build_ext.finalize_options(self)
