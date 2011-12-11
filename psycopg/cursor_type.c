@@ -123,23 +123,29 @@ _mogrify(PyObject *var, PyObject *fmt, cursorObject *curs, PyObject **new)
             for (d = c + 1; *d && *d != ')' && *d != '%'; d++);
 
             if (*d == ')') {
-                key = Text_FromUTF8AndSize(c+1, (Py_ssize_t) (d-c-1));
-                value = PyObject_GetItem(var, key);
-                /* key has refcnt 1, value the original value + 1 */
+                if (!(key = Text_FromUTF8AndSize(c+1, (Py_ssize_t)(d-c-1)))) {
+                    Py_XDECREF(n);
+                    return -1;
+                }
 
                 /*  if value is NULL we did not find the key (or this is not a
                     dictionary): let python raise a KeyError */
-                if (value == NULL) {
+                if (!(value = PyObject_GetItem(var, key))) {
                     Py_DECREF(key); /* destroy key */
                     Py_XDECREF(n);  /* destroy n */
                     return -1;
                 }
+                /* key has refcnt 1, value the original value + 1 */
 
                 Dprintf("_mogrify: value refcnt: "
                   FORMAT_CODE_PY_SSIZE_T " (+1)", Py_REFCNT(value));
 
                 if (n == NULL) {
-                    n = PyDict_New();
+                    if (!(n = PyDict_New())) {
+                        Py_DECREF(key);
+                        Py_DECREF(value);
+                        return -1;
+                    }
                 }
 
                 if (0 == PyDict_Contains(n, key)) {
@@ -156,24 +162,22 @@ _mogrify(PyObject *var, PyObject *fmt, cursorObject *curs, PyObject **new)
                     }
                     else {
                         t = microprotocol_getquoted(value, curs->conn);
-
                         if (t != NULL) {
                             PyDict_SetItem(n, key, t);
                             /* both key and t refcnt +1, key is at 2 now */
                         }
                         else {
                             /* no adapter found, raise a BIG exception */
-                            Py_XDECREF(value);
+                            Py_DECREF(key);
+                            Py_DECREF(value);
                             Py_DECREF(n);
                             return -1;
                         }
                     }
 
                     Py_XDECREF(t); /* t dies here */
-                    /* after the DECREF value has the original refcnt plus 1
-                       if it was added to the dictionary directly; good */
-                    Py_XDECREF(value);
                 }
+                Py_DECREF(value);
                 Py_DECREF(key); /* key has the original refcnt now */
                 Dprintf("_mogrify: after value refcnt: "
                     FORMAT_CODE_PY_SSIZE_T, Py_REFCNT(value));

@@ -97,6 +97,18 @@ class CursorTests(unittest.TestCase):
         self.assertEqual(b('SELECT 10.3;'),
             cur.mogrify("SELECT %s;", (Decimal("10.3"),)))
 
+    def test_mogrify_leak_on_multiple_reference(self):
+        # issue #81: reference leak when a parameter value is referenced
+        # more than once from a dict.
+        cur = self.conn.cursor()
+        i = lambda x: x
+        foo = i('foo') * 10
+        import sys
+        nref1 = sys.getrefcount(foo)
+        cur.mogrify("select %(foo)s, %(foo)s, %(foo)s", {'foo': foo})
+        nref2 = sys.getrefcount(foo)
+        self.assertEqual(nref1, nref2)
+
     def test_bad_placeholder(self):
         cur = self.conn.cursor()
         self.assertRaises(psycopg2.ProgrammingError,
