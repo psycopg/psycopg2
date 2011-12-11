@@ -528,7 +528,7 @@ The ``cursor`` class
 
         :param sql: the :sql:`COPY` statement to execute.
         :param file: a file-like object; must be a readable file for
-            :sql:`COPY FROM` or an writeable file for :sql:`COPY TO`.
+            :sql:`COPY FROM` or an writable file for :sql:`COPY TO`.
         :param size: size of the read buffer to be used in :sql:`COPY FROM`.
 
         Example:

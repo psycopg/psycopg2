@@ -1453,7 +1453,7 @@ exit:
 
 #define psyco_curs_copy_expert_doc \
 "copy_expert(sql, file, size=8192) -- Submit a user-composed COPY statement.\n" \
-"`file` must be an open, readable file for COPY FROM or an open, writeable\n"   \
+"`file` must be an open, readable file for COPY FROM or an open, writable\n"   \
 "file for COPY TO. The optional `size` argument, when specified for a COPY\n"   \
 "FROM statement, will be passed to file's read method to control the read\n"    \
 "buffer size."
@@ -1493,7 +1493,7 @@ psyco_curs_copy_expert(cursorObject *self, PyObject *args, PyObject *kwargs)
       )
     {
         PyErr_SetString(PyExc_TypeError, "file must be a readable file-like"
-            " object for COPY FROM; a writeable file-like object for COPY TO."
+            " object for COPY FROM; a writable file-like object for COPY TO."
           );
         goto exit;
     }
