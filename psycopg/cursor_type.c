@@ -123,23 +123,29 @@ _mogrify(PyObject *var, PyObject *fmt, cursorObject *curs, PyObject **new)
             for (d = c + 1; *d && *d != ')' && *d != '%'; d++);
 
             if (*d == ')') {
-                key = Text_FromUTF8AndSize(c+1, (Py_ssize_t) (d-c-1));
-                value = PyObject_GetItem(var, key);
-                /* key has refcnt 1, value the original value + 1 */
+                if (!(key = Text_FromUTF8AndSize(c+1, (Py_ssize_t)(d-c-1)))) {
+                    Py_XDECREF(n);
+                    return -1;
+                }
 
                 /*  if value is NULL we did not find the key (or this is not a
                     dictionary): let python raise a KeyError */
-                if (value == NULL) {
+                if (!(value = PyObject_GetItem(var, key))) {
                     Py_DECREF(key); /* destroy key */
                     Py_XDECREF(n);  /* destroy n */
                     return -1;
                 }
+                /* key has refcnt 1, value the original value + 1 */
 
                 Dprintf("_mogrify: value refcnt: "
                   FORMAT_CODE_PY_SSIZE_T " (+1)", Py_REFCNT(value));
 
                 if (n == NULL) {
-                    n = PyDict_New();
+                    if (!(n = PyDict_New())) {
+                        Py_DECREF(key);
+                        Py_DECREF(value);
+                        return -1;
+                    }
                 }
 
                 if (0 == PyDict_Contains(n, key)) {
@@ -156,24 +162,22 @@ _mogrify(PyObject *var, PyObject *fmt, cursorObject *curs, PyObject **new)
                     }
                     else {
                         t = microprotocol_getquoted(value, curs->conn);
-
                         if (t != NULL) {
                             PyDict_SetItem(n, key, t);
                             /* both key and t refcnt +1, key is at 2 now */
                         }
                         else {
                             /* no adapter found, raise a BIG exception */
-                            Py_XDECREF(value);
+                            Py_DECREF(key);
+                            Py_DECREF(value);
                             Py_DECREF(n);
                             return -1;
                         }
                     }
 
                     Py_XDECREF(t); /* t dies here */
-                    /* after the DECREF value has the original refcnt plus 1
-                       if it was added to the dictionary directly; good */
-                    Py_XDECREF(value);
                 }
+                Py_DECREF(value);
                 Py_DECREF(key); /* key has the original refcnt now */
                 Dprintf("_mogrify: after value refcnt: "
                     FORMAT_CODE_PY_SSIZE_T, Py_REFCNT(value));
@@ -391,8 +395,10 @@ _psyco_curs_execute(cursorObject *self,
 
         if (self->name != NULL) {
             self->query = Bytes_FromFormat(
-                "DECLARE \"%s\" CURSOR WITHOUT HOLD FOR %s",
-                self->name, Bytes_AS_STRING(fquery));
+                "DECLARE \"%s\" CURSOR %s HOLD FOR %s",
+                self->name,
+                self->withhold ? "WITH" : "WITHOUT",
+                Bytes_AS_STRING(fquery));
             Py_DECREF(fquery);
         }
         else {
@@ -402,8 +408,10 @@ _psyco_curs_execute(cursorObject *self,
     else {
         if (self->name != NULL) {
             self->query = Bytes_FromFormat(
-                "DECLARE \"%s\" CURSOR WITHOUT HOLD FOR %s",
-                self->name, Bytes_AS_STRING(operation));
+                "DECLARE \"%s\" CURSOR %s HOLD FOR %s",
+                self->name,
+                self->withhold ? "WITH" : "WITHOUT",
+                Bytes_AS_STRING(operation));
         }
         else {
             /* Transfer reference ownership of the str in operation to
@@ -461,11 +469,7 @@ psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
                 "can't use a named cursor outside of transactions", NULL, NULL);
             return NULL;
         }
-        if (self->conn->mark != self->mark) {
-            psyco_set_error(ProgrammingError, self,
-                "named cursor isn't valid anymore", NULL, NULL);
-            return NULL;
-        }
+        EXC_IF_NO_MARK(self);
     }
 
     EXC_IF_CURS_CLOSED(self);
@@ -1161,32 +1165,53 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
 
 #ifdef PSYCOPG_EXTENSIONS
 
-static int _psyco_curs_copy_columns(PyObject *columns, char *columnlist)
+/* Return a newly allocated buffer containing the list of columns to be
+ * copied. On error return NULL and set an exception.
+ */
+static char *_psyco_curs_copy_columns(PyObject *columns)
 {
     PyObject *col, *coliter;
     Py_ssize_t collen;
-    char* colname;
+    char *colname;
+    char *columnlist = NULL;
+    Py_ssize_t bufsize = 512;
     Py_ssize_t offset = 1;
 
-    columnlist[0] = '\0';
-    if (columns == NULL || columns == Py_None) return 0;
+    if (columns == NULL || columns == Py_None) {
+        if (NULL == (columnlist = PyMem_Malloc(2))) {
+            PyErr_NoMemory();
+            goto error;
+        }
+        columnlist[0] = '\0';
+        goto exit;
+    }
 
-    coliter = PyObject_GetIter(columns);
-    if (coliter == NULL) return 0;
+    if (NULL == (coliter = PyObject_GetIter(columns))) {
+        goto error;
+    }
 
+    if (NULL == (columnlist = PyMem_Malloc(bufsize))) {
+        PyErr_NoMemory();
+        goto error;
+    }
     columnlist[0] = '(';
 
     while ((col = PyIter_Next(coliter)) != NULL) {
         if (!(col = psycopg_ensure_bytes(col))) {
             Py_DECREF(coliter);
-            return -1;
+            goto error;
         }
         Bytes_AsStringAndSize(col, &colname, &collen);
-        if (offset + collen > DEFAULT_COPYBUFF - 2) {
-            Py_DECREF(col);
-            Py_DECREF(coliter);
-            PyErr_SetString(PyExc_ValueError, "column list too long");
-            return -1;
+        while (offset + collen > bufsize - 2) {
+            char *tmp;
+            bufsize *= 2;
+            if (NULL == (tmp = PyMem_Realloc(columnlist, bufsize))) {
+                Py_DECREF(col);
+                Py_DECREF(coliter);
+                PyErr_NoMemory();
+                goto error;
+            }
+            columnlist = tmp;
         }
         strncpy(&columnlist[offset], colname, collen);
         offset += collen;
@@ -1197,23 +1222,30 @@ static int _psyco_curs_copy_columns(PyObject *columns, char *columnlist)
 
     /* Error raised by the coliter generator */
     if (PyErr_Occurred()) {
-        return -1;
+        goto error;
     }
 
     if (offset == 2) {
-        return 0;
+        goto exit;
     }
     else {
         columnlist[offset - 1] = ')';
         columnlist[offset] = '\0';
-        return 1;
+        goto exit;
     }
+
+error:
+    PyMem_Free(columnlist);
+    columnlist = NULL;
+
+exit:
+    return columnlist;
 }
 
 /* extension: copy_from - implements COPY FROM */
 
 #define psyco_curs_copy_from_doc \
-"copy_from(file, table, sep='\\t', null='\\N', size=8192, columns=None) -- Copy table from file."
+"copy_from(file, table, sep='\\t', null='\\\\N', size=8192, columns=None) -- Copy table from file."
 
 static int
 _psyco_curs_has_read_check(PyObject* o, void* var)
@@ -1239,19 +1271,23 @@ _psyco_curs_has_read_check(PyObject* o, void* var)
 static PyObject *
 psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
-    char *query = NULL;
-    char query_buffer[DEFAULT_COPYBUFF];
+    static char *kwlist[] = {
+            "file", "table", "sep", "null", "size", "columns", NULL};
+
+    const char *sep = "\t";
+    const char *null = "\\N";
+    const char *command =
+        "COPY %s%s FROM stdin WITH DELIMITER AS %s NULL AS %s";
+
     Py_ssize_t query_size;
-    const char *table_name;
-    const char *sep = "\t", *null = NULL;
-    Py_ssize_t bufsize = DEFAULT_COPYBUFF;
-    PyObject *file, *columns = NULL, *res = NULL;
-    char columnlist[DEFAULT_COPYBUFF];
+    char *query = NULL;
+    char *columnlist = NULL;
     char *quoted_delimiter = NULL;
     char *quoted_null = NULL;
 
-    static char *kwlist[] = {
-            "file", "table", "sep", "null", "size", "columns", NULL};
+    const char *table_name;
+    Py_ssize_t bufsize = DEFAULT_COPYBUFF;
+    PyObject *file, *columns = NULL, *res = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
         "O&s|ss" CONV_CODE_PY_SSIZE_T "O", kwlist,
@@ -1261,13 +1297,13 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
         return NULL;
     }
 
-    if (_psyco_curs_copy_columns(columns, columnlist) == -1)
-        return NULL;
-
     EXC_IF_CURS_CLOSED(self);
     EXC_IF_CURS_ASYNC(self, copy_from);
     EXC_IF_GREEN(copy_from);
     EXC_IF_TPC_PREPARED(self->conn, copy_from);
+
+    if (NULL == (columnlist = _psyco_curs_copy_columns(columns)))
+        goto exit;
 
     if (!(quoted_delimiter = psycopg_escape_string(
             (PyObject*)self->conn, sep, 0, NULL, NULL))) {
@@ -1275,42 +1311,21 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
         goto exit;
     }
 
-    query = query_buffer;
-    if (null) {
-        if (!(quoted_null = psycopg_escape_string(
-                (PyObject*)self->conn, null, 0, NULL, NULL))) {
-            PyErr_NoMemory();
-            goto exit;
-        }
-        query_size = PyOS_snprintf(query, DEFAULT_COPYBUFF,
-            "COPY %s%s FROM stdin WITH DELIMITER AS %s NULL AS %s",
-            table_name, columnlist, quoted_delimiter, quoted_null);
-        if (query_size >= DEFAULT_COPYBUFF) {
-            /* Got truncated, allocate dynamically */
-            if (!(query = PyMem_New(char, query_size + 1))) {
-                PyErr_NoMemory();
-                goto exit;
-            }
-            PyOS_snprintf(query, query_size + 1,
-                "COPY %s%s FROM stdin WITH DELIMITER AS %s NULL AS %s",
-                table_name, columnlist, quoted_delimiter, quoted_null);
-        }
+    if (!(quoted_null = psycopg_escape_string(
+            (PyObject*)self->conn, null, 0, NULL, NULL))) {
+        PyErr_NoMemory();
+        goto exit;
     }
-    else {
-        query_size = PyOS_snprintf(query, DEFAULT_COPYBUFF,
-           "COPY %s%s FROM stdin WITH DELIMITER AS %s",
-           table_name, columnlist, quoted_delimiter);
-        if (query_size >= DEFAULT_COPYBUFF) {
-            /* Got truncated, allocate dynamically */
-            if (!(query = PyMem_New(char, query_size + 1))) {
-                PyErr_NoMemory();
-                goto exit;
-            }
-            PyOS_snprintf(query, query_size + 1,
-                "COPY %s%s FROM stdin WITH DELIMITER AS %s",
-                table_name, columnlist, quoted_delimiter);
-        }
+
+    query_size = strlen(command) + strlen(table_name) + strlen(columnlist)
+        + strlen(quoted_delimiter) + strlen(quoted_null) + 1;
+    if (!(query = PyMem_New(char, query_size))) {
+        PyErr_NoMemory();
+        goto exit;
     }
+
+    PyOS_snprintf(query, query_size, command,
+        table_name, columnlist, quoted_delimiter, quoted_null);
 
     Dprintf("psyco_curs_copy_from: query = %s", query);
 
@@ -1323,13 +1338,13 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
         Py_INCREF(Py_None);
     }
 
-    self->copyfile = NULL;
-    Py_DECREF(file);
+    Py_CLEAR(self->copyfile);
 
 exit:
+    PyMem_Free(columnlist);
     PyMem_Free(quoted_delimiter);
     PyMem_Free(quoted_null);
-    if (query != query_buffer) { PyMem_Free(query); }
+    PyMem_Free(query);
 
     return res;
 }
@@ -1337,7 +1352,7 @@ exit:
 /* extension: copy_to - implements COPY TO */
 
 #define psyco_curs_copy_to_doc \
-"copy_to(file, table, sep='\\t', null='\\N', columns=None) -- Copy table to file."
+"copy_to(file, table, sep='\\t', null='\\\\N', columns=None) -- Copy table to file."
 
 static int
 _psyco_curs_has_write_check(PyObject* o, void* var)
@@ -1356,17 +1371,21 @@ _psyco_curs_has_write_check(PyObject* o, void* var)
 static PyObject *
 psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
+    static char *kwlist[] = {"file", "table", "sep", "null", "columns", NULL};
+
+    const char *sep = "\t";
+    const char *null = "\\N";
+    const char *command =
+        "COPY %s%s TO stdout WITH DELIMITER AS %s NULL AS %s";
+
+    Py_ssize_t query_size;
     char *query = NULL;
-    char query_buffer[DEFAULT_COPYBUFF];
-    size_t query_size;
-    char columnlist[DEFAULT_COPYBUFF];
-    const char *table_name;
-    const char *sep = "\t", *null = NULL;
-    PyObject *file, *columns = NULL, *res = NULL;
+    char *columnlist = NULL;
     char *quoted_delimiter = NULL;
     char *quoted_null = NULL;
 
-    static char *kwlist[] = {"file", "table", "sep", "null", "columns", NULL};
+    const char *table_name;
+    PyObject *file, *columns = NULL, *res = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&s|ssO", kwlist,
                                      _psyco_curs_has_write_check, &file,
@@ -1374,13 +1393,13 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
         return NULL;
     }
 
-    if (_psyco_curs_copy_columns(columns, columnlist) == -1)
-        return NULL;
-
     EXC_IF_CURS_CLOSED(self);
     EXC_IF_CURS_ASYNC(self, copy_to);
     EXC_IF_GREEN(copy_to);
     EXC_IF_TPC_PREPARED(self->conn, copy_to);
+
+    if (NULL == (columnlist = _psyco_curs_copy_columns(columns)))
+        goto exit;
 
     if (!(quoted_delimiter = psycopg_escape_string(
             (PyObject*)self->conn, sep, 0, NULL, NULL))) {
@@ -1388,42 +1407,21 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
         goto exit;
     }
 
-    query = query_buffer;
-    if (null) {
-        if (!(quoted_null = psycopg_escape_string(
-                (PyObject*)self->conn, null, 0, NULL, NULL))) {
-            PyErr_NoMemory();
-            goto exit;
-        }
-        query_size = PyOS_snprintf(query, DEFAULT_COPYBUFF,
-            "COPY %s%s TO stdout WITH DELIMITER AS %s"
-            " NULL AS %s", table_name, columnlist, quoted_delimiter, quoted_null);
-        if (query_size >= DEFAULT_COPYBUFF) {
-            /* Got truncated, allocate dynamically */
-            if (!(query = PyMem_New(char, query_size + 1))) {
-                PyErr_NoMemory();
-                goto exit;
-            }
-            PyOS_snprintf(query, query_size + 1,
-                "COPY %s%s TO stdout WITH DELIMITER AS %s"
-                " NULL AS %s", table_name, columnlist, quoted_delimiter, quoted_null);
-        }
+    if (!(quoted_null = psycopg_escape_string(
+            (PyObject*)self->conn, null, 0, NULL, NULL))) {
+        PyErr_NoMemory();
+        goto exit;
     }
-    else {
-        query_size = PyOS_snprintf(query, DEFAULT_COPYBUFF,
-            "COPY %s%s TO stdout WITH DELIMITER AS %s",
-            table_name, columnlist, quoted_delimiter);
-        if (query_size >= DEFAULT_COPYBUFF) {
-            /* Got truncated, allocate dynamically */
-            if (!(query = PyMem_New(char, query_size + 1))) {
-                PyErr_NoMemory();
-                goto exit;
-            }
-            PyOS_snprintf(query, query_size + 1,
-                "COPY %s%s TO stdout WITH DELIMITER AS %s",
-                table_name, columnlist, quoted_delimiter);
-        }
+
+    query_size = strlen(command) + strlen(table_name) + strlen(columnlist)
+        + strlen(quoted_delimiter) + strlen(quoted_null) + 1;
+    if (!(query = PyMem_New(char, query_size))) {
+        PyErr_NoMemory();
+        goto exit;
     }
+
+    PyOS_snprintf(query, query_size, command,
+        table_name, columnlist, quoted_delimiter, quoted_null);
 
     Dprintf("psyco_curs_copy_to: query = %s", query);
 
@@ -1436,13 +1434,13 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
         Py_INCREF(Py_None);
     }
 
-    Py_DECREF(file);
-    self->copyfile = NULL;
+    Py_CLEAR(self->copyfile);
 
 exit:
+    PyMem_Free(columnlist);
     PyMem_Free(quoted_delimiter);
     PyMem_Free(quoted_null);
-    if (query != query_buffer) { PyMem_Free(query); }
+    PyMem_Free(query);
 
     return res;
 }
@@ -1455,7 +1453,7 @@ exit:
 
 #define psyco_curs_copy_expert_doc \
 "copy_expert(sql, file, size=8192) -- Submit a user-composed COPY statement.\n" \
-"`file` must be an open, readable file for COPY FROM or an open, writeable\n"   \
+"`file` must be an open, readable file for COPY FROM or an open, writable\n"   \
 "file for COPY TO. The optional `size` argument, when specified for a COPY\n"   \
 "FROM statement, will be passed to file's read method to control the read\n"    \
 "buffer size."
@@ -1495,7 +1493,7 @@ psyco_curs_copy_expert(cursorObject *self, PyObject *args, PyObject *kwargs)
       )
     {
         PyErr_SetString(PyExc_TypeError, "file must be a readable file-like"
-            " object for COPY FROM; a writeable file-like object for COPY TO."
+            " object for COPY FROM; a writable file-like object for COPY TO."
           );
         goto exit;
     }
@@ -1510,8 +1508,7 @@ psyco_curs_copy_expert(cursorObject *self, PyObject *args, PyObject *kwargs)
         Py_INCREF(res);
     }
 
-    self->copyfile = NULL;
-    Py_DECREF(file);
+    Py_CLEAR(self->copyfile);
 
 exit:
     Py_XDECREF(sql);
@@ -1519,7 +1516,7 @@ exit:
     return res;
 }
 
-/* extension: closed - return true if cursor is closed*/
+/* extension: closed - return true if cursor is closed */
 
 #define psyco_curs_closed_doc \
 "True if cursor is closed, False if cursor is open"
@@ -1533,6 +1530,39 @@ psyco_curs_get_closed(cursorObject *self, void *closure)
         Py_True : Py_False;
     Py_INCREF(closed);
     return closed;
+}
+
+/* extension: withhold - get or set "WITH HOLD" for named cursors */
+
+#define psyco_curs_withhold_doc \
+"Set or return cursor use of WITH HOLD"
+
+static PyObject *
+psyco_curs_withhold_get(cursorObject *self)
+{
+    PyObject *ret;
+    ret = self->withhold ? Py_True : Py_False;
+    Py_INCREF(ret);
+    return ret;
+}
+
+static int
+psyco_curs_withhold_set(cursorObject *self, PyObject *pyvalue)
+{
+    int value;
+
+    if (self->name == NULL) {
+        PyErr_SetString(ProgrammingError,
+            "trying to set .withhold on unnamed cursor");
+        return -1;
+    }
+    
+    if ((value = PyObject_IsTrue(pyvalue)) == -1) 
+        return -1;
+
+    self->withhold = value;
+    
+    return 0;
 }
 
 #endif
@@ -1657,6 +1687,10 @@ static struct PyGetSetDef cursorObject_getsets[] = {
 #ifdef PSYCOPG_EXTENSIONS
     { "closed", (getter)psyco_curs_get_closed, NULL,
       psyco_curs_closed_doc, NULL },
+    { "withhold",
+      (getter)psyco_curs_withhold_get,
+      (setter)psyco_curs_withhold_set,
+      psyco_curs_withhold_doc, NULL },
 #endif
     {NULL}
 };
@@ -1686,6 +1720,7 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
     self->conn = conn;
 
     self->closed = 0;
+    self->withhold = 0;
     self->mark = conn->mark;
     self->pgres = NULL;
     self->notuples = 1;

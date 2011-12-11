@@ -30,7 +30,7 @@ def main():
     filename = sys.argv[1]
 
     file_start = read_base_file(filename)
-    classes, errors = fetch_errors(['8.1', '8.2', '8.3', '8.4', '9.0'])
+    classes, errors = fetch_errors(['8.1', '8.2', '8.3', '8.4', '9.0', '9.1'])
 
     f = open(filename, "w")
     for line in file_start:
@@ -70,11 +70,21 @@ def parse_errors(url):
         else: # it's an error
             errcode = tr.tt.string.encode("ascii")
             assert len(errcode) == 5
-            errlabel = tr('td')[1].string.replace(" ", "_").encode("ascii")
 
-            # double check the columns are equal
-            cond_name = tr('td')[2].string.upper().encode("ascii")
-            assert errlabel == cond_name, tr
+            tds = tr('td')
+            if len(tds) == 3:
+                errlabel = tds[1].string.replace(" ", "_").encode("ascii")
+
+                # double check the columns are equal
+                cond_name = tds[2].string.upper().encode("ascii")
+                assert errlabel == cond_name, tr
+
+            elif len(tds) == 2:
+                # found in PG 9.1 beta3 docs
+                errlabel = tds[1].tt.string.upper().encode("ascii")
+
+            else:
+                assert False, tr
 
             errors[class_][errcode] = errlabel
 

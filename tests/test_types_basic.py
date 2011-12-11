@@ -189,6 +189,17 @@ class TypesBasicTests(unittest.TestCase):
         s = self.execute("SELECT '{}'::text AS foo")
         self.failUnlessEqual(s, "{}")
 
+    def testArrayEscape(self):
+        ss = ['', '\\', '"', '\\\\', '\\"']
+        for s in ss:
+            r = self.execute("SELECT %s AS foo", (s,))
+            self.failUnlessEqual(s, r)
+            r = self.execute("SELECT %s AS foo", ([s],))
+            self.failUnlessEqual([s], r)
+
+        r = self.execute("SELECT %s AS foo", (ss,))
+        self.failUnlessEqual(ss, r)
+
     @testutils.skip_from_python(3)
     def testTypeRoundtripBuffer(self):
         o1 = buffer("".join(map(chr, range(256))))
@@ -284,6 +295,26 @@ class TypesBasicTests(unittest.TestCase):
         self.assertEqual(1, i1)
         l1 = self.execute("select -%s;", (-1L,))
         self.assertEqual(1, l1)
+
+    def testGenericArray(self):
+        a = self.execute("select '{1,2,3}'::int4[]")
+        self.assertEqual(a, [1,2,3])
+        a = self.execute("select array['a','b','''']::text[]")
+        self.assertEqual(a, ['a','b',"'"])
+
+    @testutils.skip_before_postgres(8, 2)
+    def testGenericArrayNull(self):
+        def caster(s, cur):
+            if s is None: return "nada"
+            return int(s) * 2
+        base = psycopg2.extensions.new_type((23,), "INT4", caster)
+        array = psycopg2.extensions.new_array_type((1007,), "INT4ARRAY", base)
+
+        psycopg2.extensions.register_type(array, self.conn)
+        a = self.execute("select '{1,2,3}'::int4[]")
+        self.assertEqual(a, [2,4,6])
+        a = self.execute("select '{1,2,NULL}'::int4[]")
+        self.assertEqual(a, [2,4,'nada'])
 
 
 class AdaptSubclassTest(unittest.TestCase):

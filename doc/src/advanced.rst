@@ -147,7 +147,7 @@ geometric type:
 
 The above function call results in the SQL command::
 
-    INSERT INTO atable (apoint) VALUES ((1.23, 4.56));
+    INSERT INTO atable (apoint) VALUES ('(1.23, 4.56)');
 
 
 
@@ -216,6 +216,9 @@ read:
     >>> print type(point), point.x, point.y
     <class 'Point'> 10.2 20.3
 
+A typecaster created by `!new_type()` can be also used with
+`~psycopg2.extensions.new_array_type()` to create a typecaster converting a
+PostgreSQL array into a Python list.
 
 
 .. index::
@@ -348,7 +351,7 @@ returned, the connection can be safely used:
     >>> wait(aconn)
     >>> acurs = aconn.cursor()
 
-Notice that there are a few other requirements to be met in order to have a
+Note that there are a few other requirements to be met in order to have a
 completely non-blocking connection attempt: see the libpq documentation for
 |PQconnectStart|_.
 
@@ -472,6 +475,7 @@ resources about the topic.
 .. __: http://www.postgresql.org/docs/9.0/static/libpq-async.html
 
 .. warning::
+
     :ref:`COPY commands <copy>` are currently not supported when a wait callback
     is registered, but they will be probably implemented in a future release.
 

@@ -20,7 +20,7 @@ The module interface respects the standard defined in the |DBAPI|_.
 
     Create a new database session and return a new `connection` object.
 
-    You can specify the connection parameters either as a string::
+    The connection parameters can be specified either as a string::
 
         conn = psycopg2.connect("dbname=test user=postgres password=secret")
 
@@ -28,17 +28,23 @@ The module interface respects the standard defined in the |DBAPI|_.
 
         conn = psycopg2.connect(database="test", user="postgres", password="secret")
 
-    The full list of available parameters is:
-    
+    The basic connection parameters are:
+
     - `!dbname` -- the database name (only in dsn string)
     - `!database` -- the database name (only as keyword argument)
     - `!user` -- user name used to authenticate
     - `!password` -- password used to authenticate
     - `!host` -- database host address (defaults to UNIX socket if not provided)
     - `!port` -- connection port number (defaults to 5432 if not provided)
-    - `!sslmode` -- `SSL TCP/IP negotiation`__ mode
 
-    .. __: http://www.postgresql.org/docs/9.0/static/libpq-ssl.html#LIBPQ-SSL-SSLMODE-STATEMENTS
+    Any other connection parameter supported by the client library/server can
+    be passed either in the connection string or as keyword. See the
+    PostgreSQL documentation for a complete `list of supported parameters`__.
+    Also note that the same parameters can be passed to the client library
+    using `environment variables`__.
+
+    .. __: http://www.postgresql.org/docs/9.1/static/libpq-connect.html#LIBPQ-PQCONNECTDBPARAMS
+    .. __: http://www.postgresql.org/docs/9.1/static/libpq-envars.html
 
     Using the *connection_factory* parameter a different class or
     connections factory can be specified. It should be a callable object
@@ -47,6 +53,10 @@ The module interface respects the standard defined in the |DBAPI|_.
 
     Using *async*\=1 an asynchronous connection will be created: see
     :ref:`async-support` to know about advantages and limitations.
+
+    .. versionchanged:: 2.4.3
+        any keyword argument is passed to the connection. Previously only the
+        basic parameters (plus `!sslmode`) were supported as keywords.
 
     .. extension::
 
@@ -218,7 +228,9 @@ This is the exception inheritance layout:
 Type Objects and Constructors
 -----------------------------
 
-.. note:: This section is mostly copied verbatim from the |DBAPI|_
+.. note::
+
+    This section is mostly copied verbatim from the |DBAPI|_
     specification.  While these objects are exposed in compliance to the
     DB API, Psycopg offers very accurate tools to convert data between Python
     and PostgreSQL formats.  See :ref:`adapting-new-types` and

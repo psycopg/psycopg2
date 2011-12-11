@@ -18,16 +18,19 @@ The ``connection`` class
     Connections are created using the factory function
     `~psycopg2.connect()`.
 
-    Connections are thread safe and can be shared among many thread. See
+    Connections are thread safe and can be shared among many threads. See
     :ref:`thread-safety` for details.
 
-    .. method:: cursor([name] [, cursor_factory])
+    .. method:: cursor([name] [, cursor_factory] [, withhold])
           
         Return a new `cursor` object using the connection.
 
         If *name* is specified, the returned cursor will be a :ref:`server
         side cursor <server-side-cursors>` (also known as *named cursor*).
-        Otherwise it will be a regular *client side* cursor.
+        Otherwise it will be a regular *client side* cursor. By default a
+        :sql:`WITHOUT HOLD` cursor is created; to create a :sql:`WITH HOLD`
+        cursor, pass a `!True` value as the *withhold* parameter.  See
+        :ref:`server-side-cursors`.
 
         The name can be a string not valid as a PostgreSQL identifier: for
         example it may start with a digit and contain non-alphanumeric

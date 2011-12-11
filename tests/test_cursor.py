@@ -97,6 +97,18 @@ class CursorTests(unittest.TestCase):
         self.assertEqual(b('SELECT 10.3;'),
             cur.mogrify("SELECT %s;", (Decimal("10.3"),)))
 
+    def test_mogrify_leak_on_multiple_reference(self):
+        # issue #81: reference leak when a parameter value is referenced
+        # more than once from a dict.
+        cur = self.conn.cursor()
+        i = lambda x: x
+        foo = i('foo') * 10
+        import sys
+        nref1 = sys.getrefcount(foo)
+        cur.mogrify("select %(foo)s, %(foo)s, %(foo)s", {'foo': foo})
+        nref2 = sys.getrefcount(foo)
+        self.assertEqual(nref1, nref2)
+
     def test_bad_placeholder(self):
         cur = self.conn.cursor()
         self.assertRaises(psycopg2.ProgrammingError,
@@ -157,6 +169,39 @@ class CursorTests(unittest.TestCase):
         curs = self.conn.cursor(r'1-2-3 \ "test"')
         curs.execute("select data from invname order by data")
         self.assertEqual(curs.fetchall(), [(10,), (20,), (30,)])
+
+    def test_withhold(self):
+        self.assertRaises(psycopg2.ProgrammingError, self.conn.cursor,
+                          withhold=True)
+
+        curs = self.conn.cursor()
+        try:
+            curs.execute("drop table withhold")
+        except psycopg2.ProgrammingError:
+            self.conn.rollback()
+        curs.execute("create table withhold (data int)")
+        for i in (10, 20, 30):
+            curs.execute("insert into withhold values (%s)", (i,))
+        curs.close()
+
+        curs = self.conn.cursor("W")
+        self.assertEqual(curs.withhold, False);
+        curs.withhold = True
+        self.assertEqual(curs.withhold, True);
+        curs.execute("select data from withhold order by data")
+        self.conn.commit()
+        self.assertEqual(curs.fetchall(), [(10,), (20,), (30,)])
+        curs.close()
+
+        curs = self.conn.cursor("W", withhold=True)
+        self.assertEqual(curs.withhold, True);
+        curs.execute("select data from withhold order by data")
+        self.conn.commit()
+        self.assertEqual(curs.fetchall(), [(10,), (20,), (30,)])
+
+        curs = self.conn.cursor()
+        curs.execute("drop table withhold")
+        self.conn.commit()
 
     @skip_before_postgres(8, 2)
     def test_iter_named_cursor_efficient(self):
@@ -224,6 +269,20 @@ class CursorTests(unittest.TestCase):
         self.assert_(c.internal_size > 0)
         self.assertEqual(c.precision, None)
         self.assertEqual(c.scale, None)
+
+    @skip_before_postgres(8, 0)
+    def test_named_cursor_stealing(self):
+        # you can use a named cursor to iterate on a refcursor created
+        # somewhere else
+        cur1 = self.conn.cursor()
+        cur1.execute("DECLARE test CURSOR WITHOUT HOLD "
+            " FOR SELECT generate_series(1,7)")
+
+        cur2 = self.conn.cursor('test')
+        # can call fetch without execute
+        self.assertEqual((1,), cur2.fetchone())
+        self.assertEqual([(2,), (3,), (4,)], cur2.fetchmany(3))
+        self.assertEqual([(5,), (6,), (7,)], cur2.fetchall())
 
 
 def test_suite():

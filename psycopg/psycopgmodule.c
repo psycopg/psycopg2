@@ -75,176 +75,42 @@ HIDDEN PyObject *psyco_DescriptionType = NULL;
 
 /** connect module-level function **/
 #define psyco_connect_doc \
-"connect(dsn, ...) -- Create a new database connection.\n\n"               \
-"This function supports two different but equivalent sets of arguments.\n" \
-"A single data source name or ``dsn`` string can be used to specify the\n" \
-"connection parameters, as follows::\n\n"                                  \
-"    psycopg2.connect(\"dbname=xxx user=xxx ...\")\n\n"   \
-"If ``dsn`` is not provided it is possible to pass the parameters as\n"    \
-"keyword arguments; e.g.::\n\n"                                            \
-"    psycopg2.connect(database='xxx', user='xxx', ...)\n\n"                \
-"The full list of available parameters is:\n\n"                            \
-"- ``dbname`` -- database name (only in 'dsn')\n"                          \
-"- ``database`` -- database name (only as keyword argument)\n"             \
-"- ``host`` -- host address (defaults to UNIX socket if not provided)\n"   \
-"- ``port`` -- port number (defaults to 5432 if not provided)\n"           \
-"- ``user`` -- user name used to authenticate\n"                           \
-"- ``password`` -- password used to authenticate\n"                        \
-"- ``sslmode`` -- SSL mode (see PostgreSQL documentation)\n\n"             \
-"- ``async`` -- if the connection should provide asynchronous API\n\n"     \
-"If the ``connection_factory`` keyword argument is not provided this\n"    \
-"function always return an instance of the `connection` class.\n"          \
-"Else the given sub-class of `extensions.connection` will be used to\n"    \
-"instantiate the connection object.\n\n"                                   \
-":return: New database connection\n"                                         \
-":rtype: `extensions.connection`"
-
-static size_t
-_psyco_connect_fill_dsn(char *dsn, const char *kw, const char *v, size_t i)
-{
-    strcpy(&dsn[i], kw); i += strlen(kw);
-    strcpy(&dsn[i], v); i += strlen(v);
-    return i;
-}
+"_connect(dsn, [connection_factory], [async]) -- New database connection.\n\n"
 
 static PyObject *
 psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
 {
-    PyObject *conn = NULL, *factory = NULL;
-    PyObject *pyport = NULL;
-
-    size_t idsn=-1;
-    int iport=-1;
-    const char *dsn_static = NULL;
-    char *dsn_dynamic=NULL;
-    const char *database=NULL, *user=NULL, *password=NULL;
-    const char *host=NULL, *sslmode=NULL;
-    char port[16];
+    PyObject *conn = NULL;
+    PyObject *factory = NULL;
+    const char *dsn = NULL;
     int async = 0;
 
-    static char *kwlist[] = {"dsn", "database", "host", "port",
-                             "user", "password", "sslmode",
-                             "connection_factory", "async", NULL};
+    static char *kwlist[] = {"dsn", "connection_factory", "async", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sssOsssOi", kwlist,
-                                     &dsn_static, &database, &host, &pyport,
-                                     &user, &password, &sslmode,
-                                     &factory, &async)) {
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|Oi", kwlist,
+                                     &dsn, &factory, &async)) {
         return NULL;
     }
 
-#if PY_MAJOR_VERSION < 3
-    if (pyport && PyString_Check(pyport)) {
-        PyObject *pyint = PyInt_FromString(PyString_AsString(pyport), NULL, 10);
-        if (!pyint) goto fail;
-        /* Must use PyInt_AsLong rather than PyInt_AS_LONG, because
-         * PyInt_FromString can return a PyLongObject: */
-        iport = PyInt_AsLong(pyint);
-        Py_DECREF(pyint);
-        if (iport == -1 && PyErr_Occurred())
-            goto fail;
-    }
-    else if (pyport && PyInt_Check(pyport)) {
-        iport = PyInt_AsLong(pyport);
-        if (iport == -1 && PyErr_Occurred())
-            goto fail;
-    }
-#else
-    if (pyport && PyUnicode_Check(pyport)) {
-        PyObject *pyint = PyObject_CallFunction((PyObject*)&PyLong_Type,
-                                                "Oi", pyport, 10);
-        if (!pyint) goto fail;
-        iport = PyLong_AsLong(pyint);
-        Py_DECREF(pyint);
-        if (iport == -1 && PyErr_Occurred())
-            goto fail;
-    }
-    else if (pyport && PyLong_Check(pyport)) {
-        iport = PyLong_AsLong(pyport);
-        if (iport == -1 && PyErr_Occurred())
-            goto fail;
-    }
-#endif
-    else if (pyport != NULL) {
-      PyErr_SetString(PyExc_TypeError, "port must be a string or int");
-      goto fail;
+    Dprintf("psyco_connect: dsn = '%s', async = %d", dsn, async);
+
+    /* allocate connection, fill with errors and return it */
+    if (factory == NULL || factory == Py_None) {
+        factory = (PyObject *)&connectionType;
     }
 
-    if (iport > 0)
-      PyOS_snprintf(port, 16, "%d", iport);
-
-    if (dsn_static == NULL) {
-        size_t l = 46; /* len(" dbname= user= password= host= port= sslmode=\0") */
-
-        if (database) l += strlen(database);
-        if (host) l += strlen(host);
-        if (iport > 0) l += strlen(port);
-        if (user) l += strlen(user);
-        if (password) l += strlen(password);
-        if (sslmode) l += strlen(sslmode);
-
-        dsn_dynamic = malloc(l*sizeof(char));
-        if (dsn_dynamic == NULL) {
-            PyErr_SetString(InterfaceError, "dynamic dsn allocation failed");
-            goto fail;
-        }
-
-        idsn = 0;
-        if (database)
-            idsn = _psyco_connect_fill_dsn(dsn_dynamic, " dbname=", database, idsn);
-        if (host)
-            idsn = _psyco_connect_fill_dsn(dsn_dynamic, " host=", host, idsn);
-        if (iport > 0)
-            idsn = _psyco_connect_fill_dsn(dsn_dynamic, " port=", port, idsn);
-        if (user)
-            idsn = _psyco_connect_fill_dsn(dsn_dynamic, " user=", user, idsn);
-        if (password)
-            idsn = _psyco_connect_fill_dsn(dsn_dynamic, " password=", password, idsn);
-        if (sslmode)
-            idsn = _psyco_connect_fill_dsn(dsn_dynamic, " sslmode=", sslmode, idsn);
-
-        if (idsn > 0) {
-            dsn_dynamic[idsn] = '\0';
-            memmove(dsn_dynamic, &dsn_dynamic[1], idsn);
-        }
-        else {
-            PyErr_SetString(InterfaceError, "missing dsn and no parameters");
-            goto fail;
-        }
-    }
-
-    {
-      const char *dsn = (dsn_static != NULL ? dsn_static : dsn_dynamic);
-      Dprintf("psyco_connect: dsn = '%s', async = %d", dsn, async);
-
-      /* allocate connection, fill with errors and return it */
-      if (factory == NULL) factory = (PyObject *)&connectionType;
-      /* Here we are breaking the connection.__init__ interface defined
-       * by psycopg2. So, if not requiring an async conn, avoid passing
-       * the async parameter. */
-      /* TODO: would it be possible to avoid an additional parameter
-       * to the conn constructor? A subclass? (but it would require mixins
-       * to further subclass) Another dsn parameter (but is not really
-       * a connection parameter that can be configured) */
-      if (!async) {
+    /* Here we are breaking the connection.__init__ interface defined
+     * by psycopg2. So, if not requiring an async conn, avoid passing
+     * the async parameter. */
+    /* TODO: would it be possible to avoid an additional parameter
+     * to the conn constructor? A subclass? (but it would require mixins
+     * to further subclass) Another dsn parameter (but is not really
+     * a connection parameter that can be configured) */
+    if (!async) {
         conn = PyObject_CallFunction(factory, "s", dsn);
-      } else {
+    } else {
         conn = PyObject_CallFunction(factory, "si", dsn, async);
-      }
     }
-
-    goto cleanup;
-    fail:
-      assert (PyErr_Occurred());
-      if (conn != NULL) {
-        Py_DECREF(conn);
-        conn = NULL;
-      }
-      /* Fall through to cleanup: */
-    cleanup:
-      if (dsn_dynamic != NULL) {
-        free(dsn_dynamic);
-      }
 
     return conn;
 }
@@ -257,7 +123,7 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
 "  * `conn_or_curs`: A connection, cursor or None"
 
 #define typecast_from_python_doc \
-"new_type(oids, name, adapter) -> new type object\n\n" \
+"new_type(oids, name, castobj) -> new type object\n\n" \
 "Create a new binding object. The object can be used with the\n" \
 "`register_type()` function to bind PostgreSQL objects to python objects.\n\n" \
 ":Parameters:\n" \
@@ -267,6 +133,15 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
 "    It must have the signature ``fun(value, cur)`` where ``value`` is\n" \
 "    the string representation returned by PostgreSQL (`!None` if ``NULL``)\n" \
 "    and ``cur`` is the cursor from which data are read."
+
+#define typecast_array_from_python_doc \
+"new_array_type(oids, name, baseobj) -> new type object\n\n" \
+"Create a new binding object to parse an array.\n\n" \
+"The object can be used with `register_type()`.\n\n" \
+":Parameters:\n" \
+"  * `oids`: Tuple of ``oid`` of the PostgreSQL types to convert.\n" \
+"  * `name`: Name for the new type\n" \
+"  * `baseobj`: Adapter to perform type conversion of a single array item."
 
 static void
 _psyco_register_type_set(PyObject **dict, PyObject *type)
@@ -313,7 +188,6 @@ static void
 psyco_adapters_init(PyObject *mod)
 {
     PyObject *call;
-    PyTypeObject *type;
 
     microprotocols_add(&PyFloat_Type, NULL, (PyObject*)&pfloatType);
 #if PY_MAJOR_VERSION < 3
@@ -343,9 +217,6 @@ psyco_adapters_init(PyObject *mod)
 #endif
 
     microprotocols_add(&PyList_Type, NULL, (PyObject*)&listType);
-
-    if ((type = (PyTypeObject*)psyco_GetDecimalType()) != NULL)
-        microprotocols_add(type, NULL, (PyObject*)&pdecimalType);
 
     /* the module has already been initialized, so we can obtain the callable
        objects directly from its dictionary :) */
@@ -749,7 +620,7 @@ exit:
 /** method table and module initialization **/
 
 static PyMethodDef psycopgMethods[] = {
-    {"connect",  (PyCFunction)psyco_connect,
+    {"_connect",  (PyCFunction)psyco_connect,
      METH_VARARGS|METH_KEYWORDS, psyco_connect_doc},
     {"adapt",  (PyCFunction)psyco_microprotocols_adapt,
      METH_VARARGS, psyco_microprotocols_adapt_doc},
@@ -758,6 +629,8 @@ static PyMethodDef psycopgMethods[] = {
      METH_VARARGS, psyco_register_type_doc},
     {"new_type", (PyCFunction)typecast_from_python,
      METH_VARARGS|METH_KEYWORDS, typecast_from_python_doc},
+    {"new_array_type", (PyCFunction)typecast_array_from_python,
+     METH_VARARGS|METH_KEYWORDS, typecast_array_from_python_doc},
 
     {"AsIs",  (PyCFunction)psyco_AsIs,
      METH_VARARGS, psyco_AsIs_doc},

@@ -80,6 +80,21 @@ class ExtrasDictCursorTests(unittest.TestCase):
                 return row
         self._testWithNamedCursor(getter)
 
+    def testDictCursorRealWithNamedCursorFetchOne(self):
+        self._testWithNamedCursorReal(lambda curs: curs.fetchone())
+
+    def testDictCursorRealWithNamedCursorFetchMany(self):
+        self._testWithNamedCursorReal(lambda curs: curs.fetchmany(100)[0])
+
+    def testDictCursorRealWithNamedCursorFetchAll(self):
+        self._testWithNamedCursorReal(lambda curs: curs.fetchall()[0])
+
+    def testDictCursorRealWithNamedCursorIter(self):
+        def getter(curs):
+            for row in curs:
+                return row
+        self._testWithNamedCursorReal(getter)
+
     def _testWithPlainCursor(self, getter):
         curs = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         curs.execute("SELECT * FROM ExtrasDictCursorTests")
@@ -170,6 +185,17 @@ class NamedTupleCursorTest(unittest.TestCase):
         self.assertEqual(res[1].s, 'bar')
         self.assertEqual(res[2].i, 3)
         self.assertEqual(res[2].s, 'baz')
+
+    @skip_if_no_namedtuple
+    def test_executemany(self):
+        curs = self.conn.cursor()
+        curs.executemany("delete from nttest where i = %s",
+            [(1,), (2,)])
+        curs.execute("select * from nttest order by 1")
+        res = curs.fetchall()
+        self.assertEqual(1, len(res))
+        self.assertEqual(res[0].i, 3)
+        self.assertEqual(res[0].s, 'baz')
 
     @skip_if_no_namedtuple
     def test_iter(self):

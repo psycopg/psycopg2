@@ -344,6 +344,16 @@ class IsolationLevelsTestCase(unittest.TestCase):
         cur2.execute("select count(*) from isolevel;")
         self.assertEqual(2, cur2.fetchone()[0])
 
+    def test_isolation_level_closed(self):
+        cnn = self.connect()
+        cnn.close()
+        self.assertRaises(psycopg2.InterfaceError, getattr,
+            cnn, 'isolation_level')
+        self.assertRaises(psycopg2.InterfaceError,
+            cnn.set_isolation_level, 0)
+        self.assertRaises(psycopg2.InterfaceError,
+            cnn.set_isolation_level, 1)
+
 
 class ConnectionTwoPhaseTests(unittest.TestCase):
     def setUp(self):
@@ -725,6 +735,12 @@ class TransactionControlTests(unittest.TestCase):
         if not self.conn.closed:
             self.conn.close()
 
+    def test_closed(self):
+        self.conn.close()
+        self.assertRaises(psycopg2.InterfaceError,
+            self.conn.set_session,
+            psycopg2.extensions.ISOLATION_LEVEL_SERIALIZABLE)
+
     def test_not_in_transaction(self):
         cur = self.conn.cursor()
         cur.execute("select 1")
@@ -867,6 +883,19 @@ class AutocommitTests(unittest.TestCase):
     def tearDown(self):
         if not self.conn.closed:
             self.conn.close()
+
+    def test_closed(self):
+        self.conn.close()
+        self.assertRaises(psycopg2.InterfaceError,
+            setattr, self.conn, 'autocommit', True)
+
+        # The getter doesn't have a guard. We may change this in future
+        # to make it consistent with other methods; meanwhile let's just check
+        # it doesn't explode.
+        try:
+            self.assert_(self.conn.autocommit in (True, False))
+        except psycopg2.InterfaceError:
+            pass
 
     def test_default_no_autocommit(self):
         self.assert_(not self.conn.autocommit)

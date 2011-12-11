@@ -117,13 +117,13 @@
     <None Include="ZPsycopgDA\__init__.py" />
     <None Include="ZPsycopgDA\pool.py" />
     <None Include="tests\dbapi20.py" />
-    <None Include="tests\extras_dictcursor.py" />
+    <None Include="tests\test_extras_dictcursor.py" />
     <None Include="tests\__init__.py" />
     <None Include="tests\test_psycopg2_dbapi20.py" />
     <None Include="tests\test_transaction.py" />
-    <None Include="tests\types_basic.py" />
-    <None Include="tests\bugX000.py" />
-    <None Include="tests\types_extras.py" />
+    <None Include="tests\test_types_basic.py" />
+    <None Include="tests\test_bugX000.py" />
+    <None Include="tests\test_types_extras.py" />
     <None Include="tests\test_connection.py" />
     <None Include="tests\test_dates.py" />
     <None Include="tests\test_lobject.py" />
@@ -166,7 +166,7 @@
     <None Include="doc\src\faq.rst" />
     <None Include="tests\test_async.py" />
     <None Include="tests\test_copy.py" />
-    <None Include="tests\bug_gc.py" />
+    <None Include="tests\test_bug_gc.py" />
     <None Include="tests\test_green.py" />
     <None Include="tests\test_notify.py" />
     <None Include="scripts\make_errorcodes.py" />
@@ -202,6 +202,9 @@
     <None Include="tests\dbapi20_tpc.py" />
     <None Include="tests\test_cursor.py" />
     <None Include="NEWS" />
+    <None Include="tests\test_cancel.py" />
+    <None Include="tests\testconfig.py" />
+    <None Include="tests\testutils.py" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="psycopg\adapter_asis.c" />
@@ -234,6 +237,7 @@
     <Compile Include="psycopg\green.c" />
     <Compile Include="psycopg\notify_type.c" />
     <Compile Include="psycopg\xid_type.c" />
+    <Compile Include="psycopg\bytes_format.c" />
   </ItemGroup>
   <ProjectExtensions>
     <MonoDevelop>

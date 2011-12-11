@@ -237,6 +237,10 @@ class RealDictRow(dict):
 
     def __init__(self, cursor):
         dict.__init__(self)
+        # Required for named cursors
+        if cursor.description and not cursor.column_mapping:
+            cursor._build_index()
+
         self._column_mapping = cursor.column_mapping
 
     def __setitem__(self, name, value):
@@ -275,7 +279,7 @@ class NamedTupleCursor(_cursor):
 
     def executemany(self, query, vars):
         self.Record = None
-        return _cursor.executemany(self, vars)
+        return _cursor.executemany(self, query, vars)
 
     def callproc(self, procname, vars=None):
         self.Record = None
@@ -427,65 +431,56 @@ class MinTimeLoggingCursor(LoggingCursor):
 
 # a dbtype and adapter for Python UUID type
 
-try:
+class UUID_adapter(object):
+    """Adapt Python's uuid.UUID__ type to PostgreSQL's uuid__.
+
+    .. __: http://docs.python.org/library/uuid.html
+    .. __: http://www.postgresql.org/docs/8.4/static/datatype-uuid.html
+    """
+
+    def __init__(self, uuid):
+        self._uuid = uuid
+
+    def prepare(self, conn):
+        pass
+
+    def getquoted(self):
+        return "'"+str(self._uuid)+"'::uuid"
+
+    __str__ = getquoted
+
+def register_uuid(oids=None, conn_or_curs=None):
+    """Create the UUID type and an uuid.UUID adapter."""
+
     import uuid
 
-    class UUID_adapter(object):
-        """Adapt Python's uuid.UUID__ type to PostgreSQL's uuid__.
+    if not oids:
+        oid1 = 2950
+        oid2 = 2951
+    elif type(oids) == list:
+        oid1, oid2 = oids
+    else:
+        oid1 = oids
+        oid2 = 2951
 
-        .. __: http://docs.python.org/library/uuid.html
-        .. __: http://www.postgresql.org/docs/8.4/static/datatype-uuid.html
-        """
-        
-        def __init__(self, uuid):
-            self._uuid = uuid
-    
-        def prepare(self, conn):
-            pass
-        
-        def getquoted(self):
-            return "'"+str(self._uuid)+"'::uuid"
-            
-        __str__ = getquoted
-
-    def register_uuid(oids=None, conn_or_curs=None):
-        """Create the UUID type and an uuid.UUID adapter."""
-        if not oids:
-            oid1 = 2950
-            oid2 = 2951
-        elif type(oids) == list:
-            oid1, oid2 = oids
+    def parseUUIDARRAY(data, cursor):
+        if data is None:
+            return None
+        elif data == '{}':
+            return []
         else:
-            oid1 = oids
-            oid2 = 2951
+            return [((len(x) > 0 and x != 'NULL') and uuid.UUID(x) or None)
+                    for x in data[1:-1].split(',')]
 
-        def parseUUIDARRAY(data, cursor):
-            if data is None:
-                return None
-            elif data == '{}':
-                return []
-            else:
-                return [((len(x) > 0 and x != 'NULL') and uuid.UUID(x) or None)
-                        for x in data[1:-1].split(',')]
+    _ext.UUID = _ext.new_type((oid1, ), "UUID",
+            lambda data, cursor: data and uuid.UUID(data) or None)
+    _ext.UUIDARRAY = _ext.new_type((oid2,), "UUID[]", parseUUIDARRAY)
 
-        _ext.UUID = _ext.new_type((oid1, ), "UUID",
-                lambda data, cursor: data and uuid.UUID(data) or None)
-        _ext.UUIDARRAY = _ext.new_type((oid2,), "UUID[]", parseUUIDARRAY)
+    _ext.register_type(_ext.UUID, conn_or_curs)
+    _ext.register_type(_ext.UUIDARRAY, conn_or_curs)
+    _ext.register_adapter(uuid.UUID, UUID_adapter)
 
-        _ext.register_type(_ext.UUID, conn_or_curs)
-        _ext.register_type(_ext.UUIDARRAY, conn_or_curs)
-        _ext.register_adapter(uuid.UUID, UUID_adapter)
-
-        return _ext.UUID
-
-except ImportError, e:
-    def register_uuid(oid=None):
-        """Create the UUID type and an uuid.UUID adapter.
-
-        This is a fake function that will always raise an error because the
-        import of the uuid module failed.
-        """
-        raise e
+    return _ext.UUID
 
 
 # a type, dbtype and adapter for PostgreSQL inet type
@@ -704,7 +699,8 @@ WHERE typname = 'hstore';
 
         return tuple(rv0), tuple(rv1)
 
-def register_hstore(conn_or_curs, globally=False, unicode=False, oid=None):
+def register_hstore(conn_or_curs, globally=False, unicode=False,
+        oid=None, array_oid=None):
     """Register adapter and typecaster for `!dict`\-\ |hstore| conversions.
 
     :param conn_or_curs: a connection or cursor: the typecaster will be
@@ -714,14 +710,18 @@ def register_hstore(conn_or_curs, globally=False, unicode=False, oid=None):
         will be `!unicode` instead of `!str`. The option is not available on
         Python 3
     :param oid: the OID of the |hstore| type if known. If not, it will be
-        queried on *conn_or_curs*
+        queried on *conn_or_curs*.
+    :param array_oid: the OID of the |hstore| array type if known. If not, it
+        will be queried on *conn_or_curs*.
 
     The connection or cursor passed to the function will be used to query the
     database and look for the OID of the |hstore| type (which may be different
     across databases). If querying is not desirable (e.g. with
     :ref:`asynchronous connections <async-support>`) you may specify it in the
-    *oid* parameter (it can be found using a query such as :sql:`SELECT
-    'hstore'::regtype::oid;`).
+    *oid* parameter, which can be found using a query such as :sql:`SELECT
+    'hstore'::regtype::oid`. Analogously you can obtain a value for *array_oid*
+    using a query such as :sql:`SELECT 'hstore[]'::regtype::oid`.
+
 
     Note that, when passing a dictionary from Python to the database, both
     strings and unicode keys and values are supported. Dictionaries returned
@@ -735,6 +735,10 @@ def register_hstore(conn_or_curs, globally=False, unicode=False, oid=None):
         added the *oid* parameter. If not specified, the typecaster is
         installed also if |hstore| is not installed in the :sql:`public`
         schema.
+
+    .. versionchanged:: 2.4.3
+        added support for |hstore| array.
+
     """
     if oid is None:
         oid = HstoreAdapter.get_oids(conn_or_curs)
@@ -743,10 +747,17 @@ def register_hstore(conn_or_curs, globally=False, unicode=False, oid=None):
                 "hstore type not found in the database. "
                 "please install it from your 'contrib/hstore.sql' file")
         else:
-            oid = oid[0]  # for the moment we don't have a HSTOREARRAY
+            array_oid = oid[1]
+            oid = oid[0]
 
     if isinstance(oid, int):
         oid = (oid,)
+
+    if array_oid is not None:
+        if isinstance(array_oid, int):
+            array_oid = (array_oid,)
+        else:
+            array_oid = tuple([x for x in array_oid if x])
 
     # create and register the typecaster
     if sys.version_info[0] < 3 and unicode:
@@ -758,11 +769,18 @@ def register_hstore(conn_or_curs, globally=False, unicode=False, oid=None):
     _ext.register_type(HSTORE, not globally and conn_or_curs or None)
     _ext.register_adapter(dict, HstoreAdapter)
 
+    if array_oid:
+        HSTOREARRAY = _ext.new_array_type(array_oid, "HSTOREARRAY", HSTORE)
+        _ext.register_type(HSTOREARRAY, not globally and conn_or_curs or None)
+
 
 class CompositeCaster(object):
     """Helps conversion of a PostgreSQL composite type into a Python object.
 
     The class is usually created by the `register_composite()` function.
+    You may want to create and register manually instances of the class if
+    querying the database at registration time is not desirable (such as when
+    using an :ref:`asynchronous connections <async-support>`).
 
     .. attribute:: name
 
@@ -771,6 +789,10 @@ class CompositeCaster(object):
     .. attribute:: oid
 
         The oid of the PostgreSQL type.
+
+    .. attribute:: array_oid
+
+        The oid of the PostgreSQL array type, if available.
 
     .. attribute:: type
 
@@ -787,14 +809,20 @@ class CompositeCaster(object):
         List of component type oids of the type to be casted.
 
     """
-    def __init__(self, name, oid, attrs):
+    def __init__(self, name, oid, attrs, array_oid=None):
         self.name = name
         self.oid = oid
+        self.array_oid = array_oid
 
         self.attnames = [ a[0] for a in attrs ]
         self.atttypes = [ a[1] for a in attrs ]
         self._create_type(name, self.attnames)
         self.typecaster = _ext.new_type((oid,), name, self.parse)
+        if array_oid:
+            self.array_typecaster = _ext.new_array_type(
+                (array_oid,), "%sARRAY" % name, self.typecaster)
+        else:
+            self.array_typecaster = None
 
     def parse(self, s, curs):
         if s is None:
@@ -866,15 +894,18 @@ class CompositeCaster(object):
             tname = name
             schema = 'public'
 
+        # column typarray not available before PG 8.3
+        typarray = conn.server_version >= 80300 and "typarray" or "NULL"
+
         # get the type oid and attributes
         curs.execute("""\
-SELECT t.oid, attname, atttypid
+SELECT t.oid, %s, attname, atttypid
 FROM pg_type t
 JOIN pg_namespace ns ON typnamespace = ns.oid
 JOIN pg_attribute a ON attrelid = typrelid
-WHERE typname = %s and nspname = %s
+WHERE typname = %%s and nspname = %%s
 ORDER BY attnum;
-""", (tname, schema))
+""" % typarray, (tname, schema))
 
         recs = curs.fetchall()
 
@@ -888,9 +919,11 @@ ORDER BY attnum;
                 "PostgreSQL type '%s' not found" % name)
 
         type_oid = recs[0][0]
-        type_attrs = [ (r[1], r[2]) for r in recs ]
+        array_oid = recs[0][1]
+        type_attrs = [ (r[2], r[3]) for r in recs ]
 
-        return CompositeCaster(tname, type_oid, type_attrs)
+        return CompositeCaster(tname, type_oid, type_attrs,
+            array_oid=array_oid)
 
 def register_composite(name, conn_or_curs, globally=False):
     """Register a typecaster to convert a composite type into a tuple.
@@ -904,9 +937,16 @@ def register_composite(name, conn_or_curs, globally=False):
         *conn_or_curs*, otherwise register it globally
     :return: the registered `CompositeCaster` instance responsible for the
         conversion
+
+    .. versionchanged:: 2.4.3
+        added support for array of composite types
+
     """
     caster = CompositeCaster._from_db(name, conn_or_curs)
     _ext.register_type(caster.typecaster, not globally and conn_or_curs or None)
+
+    if caster.array_typecaster is not None:
+        _ext.register_type(caster.array_typecaster, not globally and conn_or_curs or None)
 
     return caster
 

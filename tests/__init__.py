@@ -22,28 +22,28 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-import os
 import sys
 from testconfig import dsn
 from testutils import unittest
 
-import bug_gc
-import bugX000
-import extras_dictcursor
+import test_async
+import test_bugX000
+import test_bug_gc
+import test_cancel
+import test_connection
+import test_copy
+import test_cursor
 import test_dates
+import test_extras_dictcursor
+import test_green
+import test_lobject
+import test_module
+import test_notify
 import test_psycopg2_dbapi20
 import test_quote
-import test_connection
-import test_cursor
 import test_transaction
-import types_basic
-import types_extras
-import test_lobject
-import test_copy
-import test_notify
-import test_async
-import test_green
-import test_cancel
+import test_types_basic
+import test_types_extras
 
 def test_suite():
     # If connection to test db fails, bail out early.
@@ -58,23 +58,24 @@ def test_suite():
         cnn.close()
 
     suite = unittest.TestSuite()
-    suite.addTest(bug_gc.test_suite())
-    suite.addTest(bugX000.test_suite())
-    suite.addTest(extras_dictcursor.test_suite())
+    suite.addTest(test_async.test_suite())
+    suite.addTest(test_bugX000.test_suite())
+    suite.addTest(test_bug_gc.test_suite())
+    suite.addTest(test_cancel.test_suite())
+    suite.addTest(test_connection.test_suite())
+    suite.addTest(test_copy.test_suite())
+    suite.addTest(test_cursor.test_suite())
     suite.addTest(test_dates.test_suite())
+    suite.addTest(test_extras_dictcursor.test_suite())
+    suite.addTest(test_green.test_suite())
+    suite.addTest(test_lobject.test_suite())
+    suite.addTest(test_module.test_suite())
+    suite.addTest(test_notify.test_suite())
     suite.addTest(test_psycopg2_dbapi20.test_suite())
     suite.addTest(test_quote.test_suite())
-    suite.addTest(test_connection.test_suite())
-    suite.addTest(test_cursor.test_suite())
     suite.addTest(test_transaction.test_suite())
-    suite.addTest(types_basic.test_suite())
-    suite.addTest(types_extras.test_suite())
-    suite.addTest(test_lobject.test_suite())
-    suite.addTest(test_copy.test_suite())
-    suite.addTest(test_notify.test_suite())
-    suite.addTest(test_async.test_suite())
-    suite.addTest(test_green.test_suite())
-    suite.addTest(test_cancel.test_suite())
+    suite.addTest(test_types_basic.test_suite())
+    suite.addTest(test_types_extras.test_suite())
     return suite
 
 if __name__ == '__main__':

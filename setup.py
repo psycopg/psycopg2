@@ -73,7 +73,7 @@ except ImportError:
 # Take a look at http://www.python.org/dev/peps/pep-0386/
 # for a consistent versioning pattern.
 
-PSYCOPG_VERSION = '2.4.2'
+PSYCOPG_VERSION = '2.4.3'
 
 version_flags   = ['dt', 'dec']
 
@@ -354,6 +354,8 @@ class psycopg_build_ext(build_ext):
             extension.extra_compile_args.append(
                 '-Wdeclaration-after-statement')
 
+    finalize_linux3 = finalize_linux2
+
     def finalize_options(self):
         """Complete the build system configuation."""
         build_ext.finalize_options(self)
@@ -362,7 +364,7 @@ class psycopg_build_ext(build_ext):
 
         self.include_dirs.append(".")
         if self.static_libpq:
-            if not hasattr(self, 'link_objects'):
+            if not getattr(self, 'link_objects', None):
                 self.link_objects = []
             self.link_objects.append(
                     os.path.join(pg_config_helper.query("libdir"), "libpq.a"))

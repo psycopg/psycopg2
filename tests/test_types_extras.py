@@ -22,7 +22,7 @@ import re
 import sys
 from datetime import date
 
-from testutils import unittest, skip_if_no_uuid
+from testutils import unittest, skip_if_no_uuid, skip_before_postgres
 
 import psycopg2
 import psycopg2.extras
@@ -357,6 +357,63 @@ class HstoreTestCase(unittest.TestCase):
         finally:
             psycopg2.extensions.string_types.pop(oid)
 
+    @skip_if_no_hstore
+    @skip_before_postgres(8, 3)
+    def test_roundtrip_array(self):
+        from psycopg2.extras import register_hstore
+        register_hstore(self.conn)
+
+        ds = []
+        ds.append({})
+        ds.append({'a': 'b', 'c': None})
+
+        ab = map(chr, range(32, 128))
+        ds.append(dict(zip(ab, ab)))
+        ds.append({''.join(ab): ''.join(ab)})
+
+        self.conn.set_client_encoding('latin1')
+        if sys.version_info[0] < 3:
+            ab = map(chr, range(32, 127) + range(160, 255))
+        else:
+            ab = bytes(range(32, 127) + range(160, 255)).decode('latin1')
+
+        ds.append({''.join(ab): ''.join(ab)})
+        ds.append(dict(zip(ab, ab)))
+
+        cur = self.conn.cursor()
+        cur.execute("select %s", (ds,))
+        ds1 = cur.fetchone()[0]
+        self.assertEqual(ds, ds1)
+
+    @skip_if_no_hstore
+    @skip_before_postgres(8, 3)
+    def test_array_cast(self):
+        from psycopg2.extras import register_hstore
+        register_hstore(self.conn)
+        cur = self.conn.cursor()
+        cur.execute("select array['a=>1'::hstore, 'b=>2'::hstore];")
+        a = cur.fetchone()[0]
+        self.assertEqual(a, [{'a': '1'}, {'b': '2'}])
+
+    @skip_if_no_hstore
+    def test_array_cast_oid(self):
+        cur = self.conn.cursor()
+        cur.execute("select 'hstore'::regtype::oid, 'hstore[]'::regtype::oid")
+        oid, aoid = cur.fetchone()
+
+        from psycopg2.extras import register_hstore
+        register_hstore(None, globally=True, oid=oid, array_oid=aoid)
+        try:
+            cur.execute("select null::hstore, ''::hstore, 'a => b'::hstore, '{a=>b}'::hstore[]")
+            t = cur.fetchone()
+            self.assert_(t[0] is None)
+            self.assertEqual(t[1], {})
+            self.assertEqual(t[2], {'a': 'b'})
+            self.assertEqual(t[3], [{'a': 'b'}])
+
+        finally:
+            psycopg2.extensions.string_types.pop(oid)
+            psycopg2.extensions.string_types.pop(aoid)
 
 def skip_if_no_composite(f):
     def skip_if_no_composite_(self):
@@ -539,7 +596,12 @@ class AdaptTypeTestCase(unittest.TestCase):
                 curs2.execute("select (1,2)::type_ii")
                 self.assertEqual(curs2.fetchone()[0], (1,2))
             finally:
-                del psycopg2.extensions.string_types[t.oid]
+                # drop the registered typecasters to help the refcounting
+                # script to return precise values.
+                del psycopg2.extensions.string_types[t.typecaster.values[0]]
+                if t.array_typecaster:
+                    del psycopg2.extensions.string_types[
+                        t.array_typecaster.values[0]]
 
         finally:
             conn1.close()
@@ -562,6 +624,29 @@ class AdaptTypeTestCase(unittest.TestCase):
             "typens.typens_ii", self.conn)
         curs.execute("select (4,8)::typens.typens_ii")
         self.assertEqual(curs.fetchone()[0], (4,8))
+
+    @skip_if_no_composite
+    @skip_before_postgres(8, 4)
+    def test_composite_array(self):
+        oid = self._create_type("type_isd",
+            [('anint', 'integer'), ('astring', 'text'), ('adate', 'date')])
+
+        t = psycopg2.extras.register_composite("type_isd", self.conn)
+
+        curs = self.conn.cursor()
+        r1 = (10, 'hello', date(2011,1,2))
+        r2 = (20, 'world', date(2011,1,3))
+        curs.execute("select %s::type_isd[];", ([r1, r2],))
+        v = curs.fetchone()[0]
+        self.assertEqual(len(v), 2)
+        self.assert_(isinstance(v[0], t.type))
+        self.assertEqual(v[0][0], 10)
+        self.assertEqual(v[0][1], "hello")
+        self.assertEqual(v[0][2], date(2011,1,2))
+        self.assert_(isinstance(v[1], t.type))
+        self.assertEqual(v[1][0], 20)
+        self.assertEqual(v[1][1], "world")
+        self.assertEqual(v[1][2], date(2011,1,3))
 
     def _create_type(self, name, fields):
         curs = self.conn.cursor()

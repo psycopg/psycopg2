@@ -36,7 +36,7 @@ class CommonDatetimeTestsMixin:
 
     def test_parse_date(self):
         value = self.DATE('2007-01-01', self.curs)
-        self.assertNotEqual(value, None)
+        self.assert_(value is not None)
         self.assertEqual(value.year, 2007)
         self.assertEqual(value.month, 1)
         self.assertEqual(value.day, 1)
@@ -51,7 +51,7 @@ class CommonDatetimeTestsMixin:
 
     def test_parse_time(self):
         value = self.TIME('13:30:29', self.curs)
-        self.assertNotEqual(value, None)
+        self.assert_(value is not None)
         self.assertEqual(value.hour, 13)
         self.assertEqual(value.minute, 30)
         self.assertEqual(value.second, 29)
@@ -66,7 +66,7 @@ class CommonDatetimeTestsMixin:
 
     def test_parse_datetime(self):
         value = self.DATETIME('2007-01-01 13:30:29', self.curs)
-        self.assertNotEqual(value, None)
+        self.assert_(value is not None)
         self.assertEqual(value.year, 2007)
         self.assertEqual(value.month, 1)
         self.assertEqual(value.day, 1)
@@ -99,10 +99,10 @@ class DatetimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
     def setUp(self):
         self.conn = psycopg2.connect(dsn)
         self.curs = self.conn.cursor()
-        self.DATE = psycopg2._psycopg.PYDATE
-        self.TIME = psycopg2._psycopg.PYTIME
-        self.DATETIME = psycopg2._psycopg.PYDATETIME
-        self.INTERVAL = psycopg2._psycopg.PYINTERVAL
+        self.DATE = psycopg2.extensions.PYDATE
+        self.TIME = psycopg2.extensions.PYTIME
+        self.DATETIME = psycopg2.extensions.PYDATETIME
+        self.INTERVAL = psycopg2.extensions.PYINTERVAL
 
     def tearDown(self):
         self.conn.close()
@@ -307,7 +307,7 @@ class DatetimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
 
 
 # Only run the datetime tests if psycopg was compiled with support.
-if not hasattr(psycopg2._psycopg, 'PYDATETIME'):
+if not hasattr(psycopg2.extensions, 'PYDATETIME'):
     del DatetimeTests
 
 
@@ -336,7 +336,7 @@ class mxDateTimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
 
     def test_parse_bc_date(self):
         value = self.DATE('00042-01-01 BC', self.curs)
-        self.assertNotEqual(value, None)
+        self.assert_(value is not None)
         # mx.DateTime numbers BC dates from 0 rather than 1.
         self.assertEqual(value.year, -41)
         self.assertEqual(value.month, 1)
@@ -344,7 +344,7 @@ class mxDateTimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
 
     def test_parse_bc_datetime(self):
         value = self.DATETIME('00042-01-01 13:30:29 BC', self.curs)
-        self.assertNotEqual(value, None)
+        self.assert_(value is not None)
         # mx.DateTime numbers BC dates from 0 rather than 1.
         self.assertEqual(value.year, -41)
         self.assertEqual(value.month, 1)
@@ -395,7 +395,7 @@ class mxDateTimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
 
     def test_parse_interval(self):
         value = self.INTERVAL('42 days 05:50:05', self.curs)
-        self.assertNotEqual(value, None)
+        self.assert_(value is not None)
         self.assertEqual(value.day, 42)
         self.assertEqual(value.hour, 5)
         self.assertEqual(value.minute, 50)
@@ -484,7 +484,10 @@ class mxDateTimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
 
 
 # Only run the mx.DateTime tests if psycopg was compiled with support.
-if not hasattr(psycopg2._psycopg, 'MXDATETIME'):
+try:
+    if not hasattr(psycopg2._psycopg, 'MXDATETIME'):
+        del mxDateTimeTests
+except AttributeError:
     del mxDateTimeTests
 
 

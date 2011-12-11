@@ -114,6 +114,19 @@ The ``cursor`` class
             The `name` attribute is a Psycopg extension to the |DBAPI|.
 
 
+    .. attribute:: withhold
+    
+        Read/write attribute: specifies if a named cursor lifetime should
+        extend outside of the current transaction, i.e., it is possible to
+        fetch from the cursor even after a `commection.commit()` (but not after
+        a `connection.rollback()`).  See :ref:`server-side-cursors`
+
+        .. versionadded:: 2.4.3
+        
+        .. extension::
+
+            The `withhold` attribute is a Psycopg extension to the |DBAPI|.
+    
     
     .. |execute*| replace:: `execute*()`
 
@@ -444,7 +457,7 @@ The ``cursor`` class
         The :sql:`COPY` command is a PostgreSQL extension to the SQL standard.
         As such, its support is a Psycopg extension to the |DBAPI|.
 
-    .. method:: copy_from(file, table, sep='\\t', null='\\N', size=8192, columns=None)
+    .. method:: copy_from(file, table, sep='\\t', null='\\\\N', size=8192, columns=None)
 
         Read data *from* the file-like object *file* appending them to
         the table named *table*.  See :ref:`copy` for an overview.
@@ -454,6 +467,7 @@ The ``cursor`` class
         :param table: name of the table to copy data into.
         :param sep: columns separator expected in the file. Defaults to a tab.
         :param null: textual representation of :sql:`NULL` in the file.
+            The default is the two character string ``\N``.
         :param size: size of the buffer used to read from the file.
         :param columns: iterable with name of the columns to import.
             The length and types should match the content of the file to read.
@@ -476,7 +490,7 @@ The ``cursor`` class
             are encoded in the connection `~connection.encoding` when sent to
             the backend.
 
-    .. method:: copy_to(file, table, sep='\\t', null='\\N', columns=None)
+    .. method:: copy_to(file, table, sep='\\t', null='\\\\N', columns=None)
 
         Write the content of the table named *table* *to* the file-like
         object *file*.  See :ref:`copy` for an overview.
@@ -486,6 +500,7 @@ The ``cursor`` class
         :param table: name of the table to copy data from.
         :param sep: columns separator expected in the file. Defaults to a tab.
         :param null: textual representation of :sql:`NULL` in the file.
+            The default is the two character string ``\N``.
         :param columns: iterable with name of the columns to export.
             If not specified, export all the columns.
 
@@ -513,7 +528,7 @@ The ``cursor`` class
 
         :param sql: the :sql:`COPY` statement to execute.
         :param file: a file-like object; must be a readable file for
-            :sql:`COPY FROM` or an writeable file for :sql:`COPY TO`.
+            :sql:`COPY FROM` or an writable file for :sql:`COPY TO`.
         :param size: size of the read buffer to be used in :sql:`COPY FROM`.
 
         Example:

@@ -42,7 +42,7 @@
 /* cursor method - allocate a new cursor */
 
 #define psyco_conn_cursor_doc \
-"cursor(cursor_factory=extensions.cursor) -- new cursor\n\n"                \
+"cursor(name=None, cursor_factory=extensions.cursor, withhold=None) -- new cursor\n\n"     \
 "Return a new cursor.\n\nThe ``cursor_factory`` argument can be used to\n"  \
 "create non-standard cursors by passing a class different from the\n"       \
 "default. Note that the new class *should* be a sub-class of\n"             \
@@ -53,15 +53,23 @@ static PyObject *
 psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *keywds)
 {
     const char *name = NULL;
-    PyObject *obj, *factory = NULL;
+    PyObject *obj, *factory = NULL, *withhold = NULL;
 
-    static char *kwlist[] = {"name", "cursor_factory", NULL};
+    static char *kwlist[] = {"name", "cursor_factory", "withhold", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sO", kwlist,
-                                     &name, &factory)) {
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sOO", kwlist,
+                                     &name, &factory, &withhold)) {
         return NULL;
     }
 
+    if (withhold != NULL) {
+        if (PyObject_IsTrue(withhold) && name == NULL) {
+            PyErr_SetString(ProgrammingError,
+                "'withhold=True can be specified only for named cursors");
+            return NULL;
+        }
+    }
+    
     EXC_IF_CONN_CLOSED(self);
 
     if (self->status != CONN_STATUS_READY &&
@@ -95,6 +103,9 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *keywds)
         Py_DECREF(obj);
         return NULL;
     }
+    
+    if (withhold != NULL && PyObject_IsTrue(withhold))
+        ((cursorObject*)obj)->withhold = 1;
 
     Dprintf("psyco_conn_cursor: new cursor at %p: refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
@@ -525,7 +536,7 @@ psyco_conn_set_session(connectionObject *self, PyObject *args, PyObject *kwargs)
 
 
 #define psyco_conn_autocommit_doc \
-"set or return the autocommit status."
+"Set or return the autocommit status."
 
 static PyObject *
 psyco_conn_autocommit_get(connectionObject *self)
@@ -565,7 +576,12 @@ psyco_conn_autocommit_set(connectionObject *self, PyObject *pyvalue)
 static PyObject *
 psyco_conn_isolation_level_get(connectionObject *self)
 {
-    int rv = conn_get_isolation_level(self);
+    int rv;
+
+    EXC_IF_CONN_CLOSED(self);
+    EXC_IF_TPC_PREPARED(self, set_isolation_level);
+
+    rv = conn_get_isolation_level(self);
     if (-1 == rv) { return NULL; }
     return PyInt_FromLong((long)rv);
 }

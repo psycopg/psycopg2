@@ -57,7 +57,7 @@ except ImportError:
     pass
 
 from psycopg2._psycopg import adapt, adapters, encodings, connection, cursor, lobject, Xid
-from psycopg2._psycopg import string_types, binary_types, new_type, register_type
+from psycopg2._psycopg import string_types, binary_types, new_type, new_array_type, register_type
 from psycopg2._psycopg import ISQLQuote, Notify
 
 from psycopg2._psycopg import QueryCanceledError, TransactionRollbackError
@@ -158,5 +158,6 @@ for k, v in encodings.items():
     k = k.replace('_', '').replace('-', '').upper()
     encodings[k] = v
 
+del k, v
 
 __all__ = filter(lambda k: not k.startswith('_'), locals().keys())

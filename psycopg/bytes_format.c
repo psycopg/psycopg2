@@ -111,13 +111,12 @@ Bytes_Format(PyObject *format, PyObject *args)
     Py_ssize_t arglen, argidx;
     Py_ssize_t reslen, rescnt, fmtcnt;
     int args_owned = 0;
-    PyObject *result, *orig_args;
+    PyObject *result;
     PyObject *dict = NULL;
     if (format == NULL || !Bytes_Check(format) || args == NULL) {
         PyErr_BadInternalCall();
         return NULL;
     }
-    orig_args = args;
     fmt = Bytes_AS_STRING(format);
     fmtcnt = Bytes_GET_SIZE(format);
     reslen = rescnt = fmtcnt + 100;

@@ -253,6 +253,25 @@ class CopyTests(unittest.TestCase):
         self.assertRaises(TypeError,
             curs.copy_expert, 'COPY tcopy (data) FROM STDIN', f)
 
+    def test_copy_no_column_limit(self):
+        cols = [ "c%050d" % i for i in range(200) ]
+
+        curs = self.conn.cursor()
+        curs.execute('CREATE TEMPORARY TABLE manycols (%s)' % ',\n'.join(
+            [ "%s int" % c for c in cols]))
+        curs.execute("INSERT INTO manycols DEFAULT VALUES")
+
+        f = StringIO()
+        curs.copy_to(f, "manycols", columns = cols)
+        f.seek(0)
+        self.assertEqual(f.read().split(), ['\\N'] * len(cols))
+
+        f.seek(0)
+        curs.copy_from(f, "manycols", columns = cols)
+        curs.execute("select count(*) from manycols;")
+        self.assertEqual(curs.fetchone()[0], 2)
+
+
 decorate_all_tests(CopyTests, skip_if_green)
 
 

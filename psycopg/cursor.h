@@ -42,6 +42,7 @@ struct cursorObject {
 
     int closed:1;            /* 1 if the cursor is closed */
     int notuples:1;          /* 1 if the command was not a SELECT query */
+    int withhold:1;          /* 1 if the cursor is named and uses WITH HOLD */
 
     long int rowcount;       /* number of rows affected by last execute */
     long int columns;        /* number of columns fetched from the db */
@@ -99,7 +100,7 @@ if ((self)->notuples && (self)->name == NULL) {               \
     return NULL; }
 
 #define EXC_IF_NO_MARK(self) \
-if ((self)->mark != (self)->conn->mark) {                                  \
+if ((self)->mark != (self)->conn->mark && (self)->withhold == 0) {                                  \
     PyErr_SetString(ProgrammingError, "named cursor isn't valid anymore"); \
     return NULL; }
 
