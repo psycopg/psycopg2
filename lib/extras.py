@@ -86,18 +86,28 @@ class DictCursorBase(_cursor):
             res = _cursor.fetchall(self)
         return res
 
-    def next(self):
+    def __iter__(self):
         if self._prefetch:
-            res = _cursor.fetchone(self)
-            if res is None:
-                raise StopIteration()
+            res = _cursor.fetchmany(self, self.itersize)
+            if not res:
+                return
         if self._query_executed:
             self._build_index()
         if not self._prefetch:
-            res = _cursor.fetchone(self)
-            if res is None:
-                raise StopIteration()
-        return res
+            res = _cursor.fetchmany(self, self.itersize)
+
+        for r in res:
+            yield r
+
+        # the above was the first itersize record. the following are
+        # in a repeated loop.
+        while 1:
+            res = _cursor.fetchmany(self, self.itersize)
+            if not res:
+                return
+            for r in res:
+                yield r
+
 
 class DictConnection(_connection):
     """A connection that uses `DictCursor` automatically."""

@@ -1,3 +1,9 @@
+What's new in psycopg 2.4.4
+---------------------------
+
+  - Named DictCursor/RealDictCursor honour itersize (ticket #80).
+
+
 What's new in psycopg 2.4.3
 ---------------------------
 
