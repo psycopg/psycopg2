@@ -1,7 +1,15 @@
 What's new in psycopg 2.4.4
 ---------------------------
 
+  - 'register_composite()' also works with the types implicitly defined
+    after a table row, not only with the ones created by 'CREATE TYPE'.
+  - Values for the isolation level symbolic constants restored to what
+    they were before release 2.4.2 to avoid breaking apps using the
+    values instead of the constants.
   - Named DictCursor/RealDictCursor honour itersize (ticket #80).
+  - Raise 'DatabaseError' instead of 'Error' with empty libpq errors,
+    consistently with other disconnection-related errors: regression
+    introduced in release 2.4.1 (ticket #82).
 
 
 What's new in psycopg 2.4.3
