@@ -648,6 +648,16 @@ class AdaptTypeTestCase(unittest.TestCase):
         self.assertEqual(v[1][1], "world")
         self.assertEqual(v[1][2], date(2011,1,3))
 
+    @skip_if_no_composite
+    def test_wrong_schema(self):
+        oid = self._create_type("type_ii", [("a", "integer"), ("b", "integer")])
+        from psycopg2.extras import CompositeCaster
+        c = CompositeCaster('type_ii', oid, [('a', 23), ('b', 23), ('c', 23)])
+        curs = self.conn.cursor()
+        psycopg2.extensions.register_type(c.typecaster, curs)
+        curs.execute("select (1,2)::type_ii")
+        self.assertRaises(psycopg2.DataError, curs.fetchone)
+
     def _create_type(self, name, fields):
         curs = self.conn.cursor()
         try:

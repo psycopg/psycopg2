@@ -841,8 +841,8 @@ class CompositeCaster(object):
         tokens = self.tokenize(s)
         if len(tokens) != len(self.atttypes):
             raise psycopg2.DataError(
-                "expecting %d components for the type %s, %d found instead",
-                (len(self.atttypes), self.name, len(self.tokens)))
+                "expecting %d components for the type %s, %d found instead" %
+                (len(self.atttypes), self.name, len(tokens)))
 
         attrs = [ curs.cast(oid, token)
             for oid, token in zip(self.atttypes, tokens) ]
