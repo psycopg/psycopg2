@@ -206,7 +206,6 @@ class IsolationLevelsTestCase(unittest.TestCase):
 
         levels = [
             (None, psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT),
-            ('read uncommitted', psycopg2.extensions.ISOLATION_LEVEL_READ_UNCOMMITTED),
             ('read committed', psycopg2.extensions.ISOLATION_LEVEL_READ_COMMITTED),
             ('repeatable read', psycopg2.extensions.ISOLATION_LEVEL_REPEATABLE_READ),
             ('serializable', psycopg2.extensions.ISOLATION_LEVEL_SERIALIZABLE),
@@ -216,10 +215,8 @@ class IsolationLevelsTestCase(unittest.TestCase):
 
             # the only values available on prehistoric PG versions
             if conn.server_version < 80000:
-                if level in (
-                        psycopg2.extensions.ISOLATION_LEVEL_READ_UNCOMMITTED,
-                        psycopg2.extensions.ISOLATION_LEVEL_REPEATABLE_READ):
-                    name, level = levels[levels.index((name, level)) + 1]
+                if level == psycopg2.extensions.ISOLATION_LEVEL_REPEATABLE_READ:
+                    name, level = ('serializable', psycopg2.extensions.ISOLATION_LEVEL_SERIALIZABLE)
 
             self.assertEqual(conn.isolation_level, level)
 
@@ -771,13 +768,11 @@ class TransactionControlTests(unittest.TestCase):
         self.assertEqual(cur.fetchone()[0], 'read committed')
         self.conn.rollback()
 
+        # 'read uncommitted' is internally translated to 'read committed'
         self.conn.set_session(
             isolation_level=psycopg2.extensions.ISOLATION_LEVEL_READ_UNCOMMITTED)
         cur.execute("SHOW default_transaction_isolation;")
-        if self.conn.server_version > 80000:
-            self.assertEqual(cur.fetchone()[0], 'read uncommitted')
-        else:
-            self.assertEqual(cur.fetchone()[0], 'read committed')
+        self.assertEqual(cur.fetchone()[0], 'read committed')
         self.conn.rollback()
 
     def test_set_isolation_level_str(self):

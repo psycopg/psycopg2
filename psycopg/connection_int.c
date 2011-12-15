@@ -39,10 +39,10 @@
 
 const IsolationLevel conn_isolevels[] = {
     {"",                    0}, /* autocommit */
-    {"read uncommitted",    1},
-    {"read committed",      2},
-    {"repeatable read",     3},
-    {"serializable",        4},
+    {"read committed",      1},
+    {"read uncommitted",    1}, /* comes after to report real level */
+    {"repeatable read",     2},
+    {"serializable",        3},
     {"default",            -1},
     { NULL }
 };
@@ -1041,9 +1041,8 @@ conn_switch_isolation_level(connectionObject *self, int level)
 
     /* use only supported levels on older PG versions */
     if (self->server_version < 80000) {
-        if (level == 1 || level == 3) {
-            ++level;
-        }
+        if (level == 2)
+            level = 3;
     }
 
     if (-1 == (curr_level = conn_get_isolation_level(self))) {

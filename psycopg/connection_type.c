@@ -405,13 +405,15 @@ _psyco_conn_parse_isolevel(connectionObject *self, PyObject *pyval)
     if (PyInt_Check(pyval)) {
         long level = PyInt_AsLong(pyval);
         if (level == -1 && PyErr_Occurred()) { goto exit; }
-        if (level < 1 || level > 4) {
+        if (level < 1 || level > 3) {
             PyErr_SetString(PyExc_ValueError,
-                "isolation_level must be between 1 and 4");
+                "isolation_level must be between 1 and 3");
             goto exit;
         }
 
-        isolevel = conn_isolevels + level;
+        isolevel = conn_isolevels;
+        while ((++isolevel)->value != level)
+            ; /* continue */
     }
 
     /* parse from the string -- this includes "default" */
