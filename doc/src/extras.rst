@@ -128,6 +128,8 @@ Additional data types
 ---------------------
 
 
+.. _adapt-hstore:
+
 .. index::
     pair: hstore; Data types
     pair: dict; Adaptation
@@ -156,6 +158,8 @@ can be enabled using the `register_hstore()` function.
 .. _hstore: http://www.postgresql.org/docs/9.0/static/hstore.html
 
 
+
+.. _adapt-composite:
 
 .. index::
     pair: Composite types; Data types

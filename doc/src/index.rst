@@ -4,20 +4,30 @@ Psycopg -- PostgreSQL database adapter for Python
 
 .. sectionauthor:: Daniele Varrazzo <daniele.varrazzo@gmail.com>
 
-Psycopg is a PostgreSQL_ database adapter for the Python_ programming
+Psycopg_ is a PostgreSQL_ database adapter for the Python_ programming
 language.  Its main advantages are that it supports the full Python |DBAPI|_
 and it is thread safe (threads can share the connections). It was designed for
 heavily multi-threaded applications that create and destroy lots of cursors and
 make a conspicuous number of concurrent :sql:`INSERT`\ s or :sql:`UPDATE`\ s.
-The psycopg distribution includes ZPsycopgDA, a Zope_ Database Adapter.
+The Psycopg distribution includes ZPsycopgDA, a Zope_ Database Adapter.
 
-Psycopg 2 is an almost complete rewrite of the Psycopg 1.1.x branch. Psycopg 2
-features complete libpq_ v3 protocol, |COPY-TO-FROM|__ and full :ref:`object
-adaptation <python-types-adaptation>` for all basic Python types: strings (including unicode), ints,
-longs, floats, buffers (binary objects), booleans, `mx.DateTime`_ and builtin
-datetime types. It also supports unicode queries and Python lists mapped to
-PostgreSQL arrays.
+Psycopg 2 features complete libpq_ v3 protocol, client-side and
+:ref:`server-side <server-side-cursors>` cursors, :ref:`asynchronous
+communication <async-support>` and :ref:`notifications <async-notify>`,
+|COPY-TO-FROM|__ and a flexible :ref:`objects adaptation system
+<python-types-adaptation>`. Many basic Python types are supported
+out-of-the-box and mapped to matching PostgreSQL data types, such as strings
+(both bytes and Unicode), numbers (ints, longs, floats, decimals), booleans,
+datetime objects (both built-in and `mx.DateTime`_), several types of
+:ref:`binary objects <adapt-binary>`. Also available are mappings between lists
+and PostgreSQL arrays of any supported type, :ref:`dictionaries and PostgreSQL
+hstore <adapt-hstore>`, :ref:`tuples/namedtuples and PostgreSQL composite types
+<adapt-composite>`.
 
+Psycopg 2 is Unicode and Python 3 friendly.
+
+
+.. _Psycopg: http://initd.org/psycopg/
 .. _PostgreSQL: http://www.postgresql.org/
 .. _Python: http://www.python.org/
 .. _Zope: http://www.zope.org/
