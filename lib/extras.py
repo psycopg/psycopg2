@@ -913,7 +913,8 @@ SELECT t.oid, %s, attname, atttypid
 FROM pg_type t
 JOIN pg_namespace ns ON typnamespace = ns.oid
 JOIN pg_attribute a ON attrelid = typrelid
-WHERE typname = %%s and nspname = %%s
+WHERE typname = %%s AND nspname = %%s
+    AND attnum > 0 AND NOT attisdropped
 ORDER BY attnum;
 """ % typarray, (tname, schema))
 
