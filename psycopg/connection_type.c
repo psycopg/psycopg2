@@ -405,9 +405,9 @@ _psyco_conn_parse_isolevel(connectionObject *self, PyObject *pyval)
     if (PyInt_Check(pyval)) {
         long level = PyInt_AsLong(pyval);
         if (level == -1 && PyErr_Occurred()) { goto exit; }
-        if (level < 1 || level > 3) {
+        if (level < 1 || level > 4) {
             PyErr_SetString(PyExc_ValueError,
-                "isolation_level must be between 1 and 3");
+                "isolation_level must be between 1 and 4");
             goto exit;
         }
 
@@ -437,7 +437,8 @@ _psyco_conn_parse_isolevel(connectionObject *self, PyObject *pyval)
 
     /* use only supported levels on older PG versions */
     if (isolevel && self->server_version < 80000) {
-        if (isolevel->value == 1 || isolevel->value == 3) {
+        if (isolevel->value == ISOLATION_LEVEL_READ_UNCOMMITTED
+            || isolevel->value == ISOLATION_LEVEL_REPEATABLE_READ) {
             ++isolevel;
         }
     }

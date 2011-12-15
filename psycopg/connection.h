@@ -32,6 +32,13 @@
 extern "C" {
 #endif
 
+/* isolation levels */
+#define ISOLATION_LEVEL_AUTOCOMMIT          0
+#define ISOLATION_LEVEL_READ_UNCOMMITTED    4
+#define ISOLATION_LEVEL_READ_COMMITTED      1
+#define ISOLATION_LEVEL_REPEATABLE_READ     2
+#define ISOLATION_LEVEL_SERIALIZABLE        3
+
 /* connection status */
 #define CONN_STATUS_SETUP       0
 #define CONN_STATUS_READY       1

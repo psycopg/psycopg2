@@ -35,15 +35,16 @@
 #include <string.h>
 
 /* Mapping from isolation level name to value exposed by Python.
- * Only used for backward compatibility by the isolation_level property */
-
+ *
+ * Note: ordering matters: to get a valid pre-PG 8 level from one not valid,
+ * we increase a pointer in this list by one position. */
 const IsolationLevel conn_isolevels[] = {
-    {"",                    0}, /* autocommit */
-    {"read committed",      1},
-    {"read uncommitted",    1}, /* comes after to report real level */
-    {"repeatable read",     2},
-    {"serializable",        3},
-    {"default",            -1},
+    {"",                    ISOLATION_LEVEL_AUTOCOMMIT},
+    {"read uncommitted",    ISOLATION_LEVEL_READ_UNCOMMITTED},
+    {"read committed",      ISOLATION_LEVEL_READ_COMMITTED},
+    {"repeatable read",     ISOLATION_LEVEL_REPEATABLE_READ},
+    {"serializable",        ISOLATION_LEVEL_SERIALIZABLE},
+    {"default",            -1},     /* never to be found on the server */
     { NULL }
 };
 
@@ -1041,8 +1042,10 @@ conn_switch_isolation_level(connectionObject *self, int level)
 
     /* use only supported levels on older PG versions */
     if (self->server_version < 80000) {
-        if (level == 2)
-            level = 3;
+        if (level == ISOLATION_LEVEL_READ_UNCOMMITTED)
+            level = ISOLATION_LEVEL_READ_COMMITTED;
+        else if (level == ISOLATION_LEVEL_REPEATABLE_READ)
+            level = ISOLATION_LEVEL_SERIALIZABLE;
     }
 
     if (-1 == (curr_level = conn_get_isolation_level(self))) {
