@@ -17,7 +17,7 @@
 
 DSN = 'dbname=test'
 
-## don't modify anything below tis line (except for experimenting)
+## don't modify anything below this line (except for experimenting)
 
 import sys
 import psycopg2

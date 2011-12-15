@@ -17,7 +17,7 @@
 
 DSN = 'dbname=test'
 
-## don't modify anything below tis line (except for experimenting)
+## don't modify anything below this line (except for experimenting)
 
 import sys
 import os
@@ -165,7 +165,7 @@ try:
     curs.copy_from(data, 'test_copy')
 except StandardError, err:
     conn.rollback()
-    print "   Catched error (as expected):\n", err
+    print "   Caught error (as expected):\n", err
 
 conn.rollback()
 

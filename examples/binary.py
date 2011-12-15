@@ -16,7 +16,7 @@
 
 DSN = 'dbname=test'
 
-## don't modify anything below tis line (except for experimenting)
+## don't modify anything below this line (except for experimenting)
 
 import sys
 import psycopg2
@@ -79,7 +79,7 @@ for row in curs.fetchall():
     print "done"
     print "  python type of image data is", type(row[0])
     
-# this rollback is requires because we can't drop a table with a binary cusor
+# this rollback is required because we can't drop a table with a binary cusor
 # declared and still open
 conn.rollback()
 

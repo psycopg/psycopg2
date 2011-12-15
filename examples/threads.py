@@ -29,12 +29,12 @@ SELECT_STEP = 500
 SELECT_DIV  = 250
 
 # the available modes are:
-# 0 - one connection for all insert and one for all select threads
+# 0 - one connection for all inserts and one for all select threads
 # 1 - connections generated using the connection pool
 
 MODE = 1
 
-## don't modify anything below tis line (except for experimenting)
+## don't modify anything below this line (except for experimenting)
 
 import sys, psycopg2, threading
 from psycopg2.pool import ThreadedConnectionPool
@@ -90,7 +90,7 @@ def insert_func(conn_or_pool, rows):
     conn.commit()
 
 ## a nice select function that prints the current number of rows in the
-## database (and transefer them, putting some pressure on the network)
+## database (and transfer them, putting some pressure on the network)
     
 def select_func(conn_or_pool, z):
     name = threading.currentThread().getName()
