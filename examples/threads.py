@@ -38,6 +38,7 @@ MODE = 1
 
 import sys, psycopg2, threading
 from psycopg2.pool import ThreadedConnectionPool
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 if len(sys.argv) > 1:
     DSN = sys.argv[1]
@@ -96,14 +97,14 @@ def select_func(conn_or_pool, z):
 
     if MODE == 0:
         conn = conn_or_pool
-        conn.set_isolation_level(0)
+        conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
     
     for i in range(SELECT_SIZE):
         if divmod(i, SELECT_STEP)[1] == 0:
             try:
                 if MODE == 1:
                     conn = conn_or_pool.getconn()
-                    conn.set_isolation_level(0)
+                    conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
                 c = conn.cursor()
                 c.execute("SELECT * FROM test_threads WHERE value2 < %s",
                           (int(i/z),))
