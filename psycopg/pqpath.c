@@ -157,7 +157,8 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres)
     const char *code = NULL;
 
     if (conn == NULL) {
-        PyErr_SetString(Error, "psycopg went psycotic and raised a null error");
+        PyErr_SetString(DatabaseError,
+            "psycopg went psycotic and raised a null error");
         return;
     }
     
@@ -183,9 +184,11 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres)
 
     /* if the is no error message we probably called pq_raise without reason:
        we need to set an exception anyway because the caller will probably
-       raise and a meaningful message is better than an empty one */
+       raise and a meaningful message is better than an empty one.
+       Note: it can happen without it being our error: see ticket #82 */
     if (err == NULL || err[0] == '\0') {
-        PyErr_SetString(Error, "psycopg went psycotic without error set");
+        PyErr_SetString(DatabaseError,
+            "error with no message from the libpq");
         return;
     }
 
