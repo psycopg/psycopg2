@@ -704,7 +704,7 @@ WHERE typname = 'hstore';
 
         # revert the status of the connection as before the command
         if (conn_status != _ext.STATUS_IN_TRANSACTION
-        and conn.isolation_level != _ext.ISOLATION_LEVEL_AUTOCOMMIT):
+        and not conn.autocommit):
             conn.rollback()
 
         return tuple(rv0), tuple(rv1)
@@ -921,7 +921,7 @@ ORDER BY attnum;
 
         # revert the status of the connection as before the command
         if (conn_status != _ext.STATUS_IN_TRANSACTION
-        and conn.isolation_level != _ext.ISOLATION_LEVEL_AUTOCOMMIT):
+        and not conn.autocommit):
             conn.rollback()
 
         if not recs:
