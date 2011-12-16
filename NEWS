@@ -2,6 +2,7 @@ What's new in psycopg 2.4.4
 ---------------------------
 
   - Named DictCursor/RealDictCursor honour itersize (ticket #80).
+  - Fixed rollback on error on Zope (ticket #73).
 
 
 What's new in psycopg 2.4.3
