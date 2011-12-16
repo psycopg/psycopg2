@@ -76,6 +76,7 @@ exception_from_sqlstate(const char *sqlstate)
         break;
     case '2':
         switch (sqlstate[1]) {
+        case '0': /* Class 20 - Case Not Found */
         case '1': /* Class 21 - Cardinality Violation */
             return ProgrammingError;
         case '2': /* Class 22 - Data Exception */
@@ -135,6 +136,8 @@ exception_from_sqlstate(const char *sqlstate)
             return OperationalError;
     case 'F': /* Class F0 - Configuration File Error */
         return InternalError;
+    case 'H': /* Class HV - Foreign Data Wrapper Error (SQL/MED) */
+        return OperationalError;
     case 'P': /* Class P0 - PL/pgSQL Error */
         return InternalError;
     case 'X': /* Class XX - Internal Error */
