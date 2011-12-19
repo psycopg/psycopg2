@@ -47,12 +47,15 @@ class DB(TM, dbi_db.DB):
         self.calls = 0
         self.make_mappings()
                         
-    def getconn(self, create=True):
+    def getconn(self, init=True):
+        # if init is False we are trying to get hold on an already existing
+        # connection, so we avoid to (re)initialize it risking errors.
         conn = pool.getconn(self.dsn)
-        conn.set_isolation_level(int(self.tilevel))
-        conn.set_client_encoding(self.encoding)
-        for tc in self.typecasts:
-            register_type(tc, conn)
+        if init:
+            conn.set_isolation_level(int(self.tilevel))
+            conn.set_client_encoding(self.encoding)
+            for tc in self.typecasts:
+                register_type(tc, conn)
         return conn
 
     def putconn(self, close=False):

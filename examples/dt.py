@@ -16,7 +16,7 @@
 
 DSN = 'dbname=test'
 
-## don't modify anything below tis line (except for experimenting)
+## don't modify anything below this line (except for experimenting)
 
 import sys
 import psycopg2
@@ -73,7 +73,7 @@ print "Extracting values inserted with mx.DateTime wrappers:"
 curs.execute("SELECT d, t, dt, z FROM test_dt WHERE k = 1")
 for n, x in zip(mx1[1:], curs.fetchone()):
     try:
-        # this will work only is psycopg has been compiled with datetime
+        # this will work only if psycopg has been compiled with datetime
         # as the default typecaster for date/time values
         s = repr(n) + "\n -> " + str(adapt(n)) + \
             "\n -> " + repr(x) + "\n -> " + x.isoformat()
@@ -87,7 +87,7 @@ print "Extracting values inserted with Python datetime wrappers:"
 curs.execute("SELECT d, t, dt, z FROM test_dt WHERE k = 2")
 for n, x in zip(dt1[1:], curs.fetchone()):
     try:
-        # this will work only is psycopg has been compiled with datetime
+        # this will work only if psycopg has been compiled with datetime
         # as the default typecaster for date/time values
         s = repr(n) + "\n -> " +  repr(x) + "\n -> " + x.isoformat()
     except:

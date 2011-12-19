@@ -33,14 +33,14 @@ from psycopg2.extensions import cursor as _2cursor
 from psycopg2.extensions import connection as _2connection
 
 from psycopg2 import *
-del connect
-
+import psycopg2.extensions as _ext
+_2connect = connect
 
 def connect(*args, **kwargs):
     """connect(dsn, ...) -> new psycopg 1.1.x compatible connection object"""
     kwargs['connection_factory'] = connection
-    conn = _2psycopg.connect(*args, **kwargs)
-    conn.set_isolation_level(2)
+    conn = _2connect(*args, **kwargs)
+    conn.set_isolation_level(_ext.ISOLATION_LEVEL_READ_COMMITTED)
     return conn
     
 class connection(_2connection):
@@ -53,9 +53,9 @@ class connection(_2connection):
     def autocommit(self, on_off=1):
         """autocommit(on_off=1) -> switch autocommit on (1) or off (0)"""
         if on_off > 0:
-            self.set_isolation_level(0)
+            self.set_isolation_level(_ext.ISOLATION_LEVEL_AUTOCOMMIT)
         else:
-            self.set_isolation_level(2)
+            self.set_isolation_level(_ext.ISOLATION_LEVEL_READ_COMMITTED)
             
 
 class cursor(_2cursor):

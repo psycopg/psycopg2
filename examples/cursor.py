@@ -58,6 +58,6 @@ print "Result of fetchone():", curs.fetchone()
 try:
     curs.fetchone()
 except NoDataError, err:
-    print "Exception caugth:", err  
+    print "Exception caught:", err  
 
 conn.rollback()

@@ -65,6 +65,7 @@ class ExtrasDictCursorTests(unittest.TestCase):
                 return row
         self._testWithPlainCursorReal(getter)
 
+
     def testDictCursorWithNamedCursorFetchOne(self):
         self._testWithNamedCursor(lambda curs: curs.fetchone())
 
@@ -80,6 +81,12 @@ class ExtrasDictCursorTests(unittest.TestCase):
                 return row
         self._testWithNamedCursor(getter)
 
+    @skip_before_postgres(8, 2)
+    def testDictCursorWithNamedCursorNotGreedy(self):
+        curs = self.conn.cursor('tmp', cursor_factory=psycopg2.extras.DictCursor)
+        self._testNamedCursorNotGreedy(curs)
+
+
     def testDictCursorRealWithNamedCursorFetchOne(self):
         self._testWithNamedCursorReal(lambda curs: curs.fetchone())
 
@@ -94,6 +101,12 @@ class ExtrasDictCursorTests(unittest.TestCase):
             for row in curs:
                 return row
         self._testWithNamedCursorReal(getter)
+
+    @skip_before_postgres(8, 2)
+    def testDictCursorRealWithNamedCursorNotGreedy(self):
+        curs = self.conn.cursor('tmp', cursor_factory=psycopg2.extras.RealDictCursor)
+        self._testNamedCursorNotGreedy(curs)
+
 
     def _testWithPlainCursor(self, getter):
         curs = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
@@ -127,6 +140,18 @@ class ExtrasDictCursorTests(unittest.TestCase):
         row['foo'] = 'qux'
         self.failUnless(row['foo'] == 'qux')
         self.failUnless(row[0] == 'qux')
+
+    def _testNamedCursorNotGreedy(self, curs):
+        curs.itersize = 2
+        curs.execute("""select clock_timestamp() as ts from generate_series(1,3)""")
+        recs = []
+        for t in curs:
+            time.sleep(0.01)
+            recs.append(t)
+
+        # check that the dataset was not fetched in a single gulp
+        self.assert_(recs[1]['ts'] - recs[0]['ts'] < timedelta(seconds=0.005))
+        self.assert_(recs[2]['ts'] - recs[1]['ts'] > timedelta(seconds=0.0099))
 
 
 class NamedTupleCursorTest(unittest.TestCase):

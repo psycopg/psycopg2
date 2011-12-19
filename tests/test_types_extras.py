@@ -648,6 +648,61 @@ class AdaptTypeTestCase(unittest.TestCase):
         self.assertEqual(v[1][1], "world")
         self.assertEqual(v[1][2], date(2011,1,3))
 
+    @skip_if_no_composite
+    def test_wrong_schema(self):
+        oid = self._create_type("type_ii", [("a", "integer"), ("b", "integer")])
+        from psycopg2.extras import CompositeCaster
+        c = CompositeCaster('type_ii', oid, [('a', 23), ('b', 23), ('c', 23)])
+        curs = self.conn.cursor()
+        psycopg2.extensions.register_type(c.typecaster, curs)
+        curs.execute("select (1,2)::type_ii")
+        self.assertRaises(psycopg2.DataError, curs.fetchone)
+
+    @skip_if_no_composite
+    @skip_before_postgres(8, 4)
+    def test_from_tables(self):
+        curs = self.conn.cursor()
+        curs.execute("""create table ctest1 (
+            id integer primary key,
+            temp int,
+            label varchar
+        );""")
+
+        curs.execute("""alter table ctest1 drop temp;""")
+
+        curs.execute("""create table ctest2 (
+            id serial primary key,
+            label varchar,
+            test_id integer references ctest1(id)
+        );""")
+
+        curs.execute("""insert into ctest1 (id, label) values
+                (1, 'test1'),
+                (2, 'test2');""")
+        curs.execute("""insert into ctest2 (label, test_id) values
+                ('testa', 1),
+                ('testb', 1),
+                ('testc', 2),
+                ('testd', 2);""")
+
+        psycopg2.extras.register_composite("ctest1", curs)
+        psycopg2.extras.register_composite("ctest2", curs)
+
+        curs.execute("""
+            select ctest1, array_agg(ctest2) as test2s
+            from (
+                select ctest1, ctest2
+                from ctest1 inner join ctest2 on ctest1.id = ctest2.test_id
+                order by ctest1.id, ctest2.label
+            ) x group by ctest1;""")
+
+        r = curs.fetchone()
+        self.assertEqual(r[0], (1, 'test1'))
+        self.assertEqual(r[1], [(1, 'testa', 1), (2, 'testb', 1)])
+        r = curs.fetchone()
+        self.assertEqual(r[0], (2, 'test2'))
+        self.assertEqual(r[1], [(3, 'testc', 2), (4, 'testd', 2)])
+
     def _create_type(self, name, fields):
         curs = self.conn.cursor()
         try:

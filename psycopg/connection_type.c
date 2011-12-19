@@ -411,7 +411,9 @@ _psyco_conn_parse_isolevel(connectionObject *self, PyObject *pyval)
             goto exit;
         }
 
-        isolevel = conn_isolevels + level;
+        isolevel = conn_isolevels;
+        while ((++isolevel)->value != level)
+            ; /* continue */
     }
 
     /* parse from the string -- this includes "default" */
@@ -435,7 +437,8 @@ _psyco_conn_parse_isolevel(connectionObject *self, PyObject *pyval)
 
     /* use only supported levels on older PG versions */
     if (isolevel && self->server_version < 80000) {
-        if (isolevel->value == 1 || isolevel->value == 3) {
+        if (isolevel->value == ISOLATION_LEVEL_READ_UNCOMMITTED
+            || isolevel->value == ISOLATION_LEVEL_REPEATABLE_READ) {
             ++isolevel;
         }
     }

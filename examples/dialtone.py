@@ -104,10 +104,10 @@ print adapt(Order()).generateInsert()
 - Discussion
 
 Psycopg 2 has a great new feature: adaptation. The big thing about 
-adaptation is that it enable the programmer to glue most of the 
+adaptation is that it enables the programmer to glue most of the 
 code out there without many difficulties.
 
-This recipe tries to focus the attention on a way to generate SQL queries to 
+This recipe tries to focus attention on a way to generate SQL queries to 
 insert  completely new objects inside a database. As you can see objects do 
 not know anything about the code that is handling them. We specify all the 
 fields that we need for each object through the persistent_fields dict.
@@ -116,7 +116,7 @@ The most important lines of this recipe are:
     register_adapter(Album, ObjectMapper)
     register_adapter(Order, ObjectMapper)
 
-In these line we notify the system that when we call adapt with an Album instance 
+In these lines we notify the system that when we call adapt with an Album instance 
 as an argument we want it to istantiate ObjectMapper passing the Album instance  
 as argument (self.orig in the ObjectMapper class).
 
