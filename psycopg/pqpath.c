@@ -76,6 +76,7 @@ exception_from_sqlstate(const char *sqlstate)
         break;
     case '2':
         switch (sqlstate[1]) {
+        case '0': /* Class 20 - Case Not Found */
         case '1': /* Class 21 - Cardinality Violation */
             return ProgrammingError;
         case '2': /* Class 22 - Data Exception */
@@ -135,6 +136,8 @@ exception_from_sqlstate(const char *sqlstate)
             return OperationalError;
     case 'F': /* Class F0 - Configuration File Error */
         return InternalError;
+    case 'H': /* Class HV - Foreign Data Wrapper Error (SQL/MED) */
+        return OperationalError;
     case 'P': /* Class P0 - PL/pgSQL Error */
         return InternalError;
     case 'X': /* Class XX - Internal Error */
@@ -157,7 +160,8 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres)
     const char *code = NULL;
 
     if (conn == NULL) {
-        PyErr_SetString(Error, "psycopg went psycotic and raised a null error");
+        PyErr_SetString(DatabaseError,
+            "psycopg went psycotic and raised a null error");
         return;
     }
     
@@ -183,9 +187,11 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres)
 
     /* if the is no error message we probably called pq_raise without reason:
        we need to set an exception anyway because the caller will probably
-       raise and a meaningful message is better than an empty one */
+       raise and a meaningful message is better than an empty one.
+       Note: it can happen without it being our error: see ticket #82 */
     if (err == NULL || err[0] == '\0') {
-        PyErr_SetString(Error, "psycopg went psycotic without error set");
+        PyErr_SetString(DatabaseError,
+            "error with no message from the libpq");
         return;
     }
 

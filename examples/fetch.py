@@ -16,7 +16,7 @@
 
 DSN = 'dbname=test'
 
-## don't modify anything below tis line (except for experimenting)
+## don't modify anything below this line (except for experimenting)
 
 import sys
 import psycopg2
@@ -52,7 +52,7 @@ conn.commit()
 # does some nice tricks with the transaction and postgres cursors
 # (remember to always commit or rollback before a DECLARE)
 #
-# we don't need to DECLARE ourselves, psycopg now support named
+# we don't need to DECLARE ourselves, psycopg now supports named
 # cursors (but we leave the code here, comments, as an example of
 # what psycopg is doing under the hood)
 #

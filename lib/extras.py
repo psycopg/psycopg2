@@ -704,7 +704,7 @@ WHERE typname = 'hstore';
 
         # revert the status of the connection as before the command
         if (conn_status != _ext.STATUS_IN_TRANSACTION
-        and conn.isolation_level != _ext.ISOLATION_LEVEL_AUTOCOMMIT):
+        and not conn.autocommit):
             conn.rollback()
 
         return tuple(rv0), tuple(rv1)
@@ -841,8 +841,8 @@ class CompositeCaster(object):
         tokens = self.tokenize(s)
         if len(tokens) != len(self.atttypes):
             raise psycopg2.DataError(
-                "expecting %d components for the type %s, %d found instead",
-                (len(self.atttypes), self.name, len(self.tokens)))
+                "expecting %d components for the type %s, %d found instead" %
+                (len(self.atttypes), self.name, len(tokens)))
 
         attrs = [ curs.cast(oid, token)
             for oid, token in zip(self.atttypes, tokens) ]
@@ -913,7 +913,8 @@ SELECT t.oid, %s, attname, atttypid
 FROM pg_type t
 JOIN pg_namespace ns ON typnamespace = ns.oid
 JOIN pg_attribute a ON attrelid = typrelid
-WHERE typname = %%s and nspname = %%s
+WHERE typname = %%s AND nspname = %%s
+    AND attnum > 0 AND NOT attisdropped
 ORDER BY attnum;
 """ % typarray, (tname, schema))
 
@@ -921,7 +922,7 @@ ORDER BY attnum;
 
         # revert the status of the connection as before the command
         if (conn_status != _ext.STATUS_IN_TRANSACTION
-        and conn.isolation_level != _ext.ISOLATION_LEVEL_AUTOCOMMIT):
+        and not conn.autocommit):
             conn.rollback()
 
         if not recs:

@@ -128,6 +128,8 @@ Additional data types
 ---------------------
 
 
+.. _adapt-hstore:
+
 .. index::
     pair: hstore; Data types
     pair: dict; Adaptation
@@ -157,6 +159,8 @@ can be enabled using the `register_hstore()` function.
 
 
 
+.. _adapt-composite:
+
 .. index::
     pair: Composite types; Data types
     pair: tuple; Adaptation
@@ -168,8 +172,9 @@ Composite types casting
 .. versionadded:: 2.4
 
 Using `register_composite()` it is possible to cast a PostgreSQL composite
-type (e.g. created with |CREATE TYPE|_ command) into a Python named tuple, or
-into a regular tuple if :py:func:`collections.namedtuple` is not found.
+type (either created with the |CREATE TYPE|_ command or implicitly defined
+after a table row type) into a Python named tuple, or into a regular tuple if
+:py:func:`collections.namedtuple` is not found.
 
 .. |CREATE TYPE| replace:: :sql:`CREATE TYPE`
 .. _CREATE TYPE: http://www.postgresql.org/docs/9.0/static/sql-createtype.html

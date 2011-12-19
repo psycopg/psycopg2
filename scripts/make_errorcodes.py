@@ -48,11 +48,7 @@ def read_base_file(filename):
     raise ValueError("can't find the separator. Is this the right file?")
 
 def parse_errors(url):
-    page = urllib2.urlopen(url).read()
-    page = page.replace( # make things easier
-        '<SPAN CLASS="PRODUCTNAME">PostgreSQL</SPAN>',
-        'PostgreSQL')
-    page = BS(page)
+    page = BS(urllib2.urlopen(url))
     table = page('table')[1]('tbody')[0]
 
     classes = {}
@@ -60,9 +56,9 @@ def parse_errors(url):
 
     for tr in table('tr'):
         if tr.td.get('colspan'): # it's a class
-            label = tr.b.string.encode("ascii")
+            label = ' '.join(' '.join(tr(text=True)).split()) \
+                .replace(u'\u2014', '-').encode('ascii')
             assert label.startswith('Class')
-            label = label.replace("&mdash;", "-")
             class_ = label.split()[1]
             assert len(class_) == 2
             classes[class_] = label
@@ -73,14 +69,14 @@ def parse_errors(url):
 
             tds = tr('td')
             if len(tds) == 3:
-                errlabel = tds[1].string.replace(" ", "_").encode("ascii")
+                errlabel = '_'.join(tds[1].string.split()).encode('ascii')
 
                 # double check the columns are equal
-                cond_name = tds[2].string.upper().encode("ascii")
+                cond_name = tds[2].string.strip().upper().encode("ascii")
                 assert errlabel == cond_name, tr
 
             elif len(tds) == 2:
-                # found in PG 9.1 beta3 docs
+                # found in PG 9.1 docs
                 errlabel = tds[1].tt.string.upper().encode("ascii")
 
             else:

@@ -16,11 +16,12 @@
 
 DSN = 'dbname=test'
 
-## don't modify anything below tis line (except for experimenting)
+## don't modify anything below this line (except for experimenting)
 
 import sys
-import psycopg2
 import select
+import psycopg2
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 if len(sys.argv) > 1:
     DSN = sys.argv[1]
@@ -29,7 +30,7 @@ print "Opening connection using dns:", DSN
 conn = psycopg2.connect(DSN)
 print "Encoding for this connection is", conn.encoding
 
-conn.set_isolation_level(0)
+conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
 curs = conn.cursor()
 
 curs.execute("listen test")
