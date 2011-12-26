@@ -284,6 +284,55 @@ class CursorTests(unittest.TestCase):
         self.assertEqual([(2,), (3,), (4,)], cur2.fetchmany(3))
         self.assertEqual([(5,), (6,), (7,)], cur2.fetchall())
 
+    @skip_before_postgres(8, 0)
+    def test_scroll(self):
+        cur = self.conn.cursor()
+        cur.execute("select generate_series(0,9)")
+        cur.scroll(2)
+        self.assertEqual(cur.fetchone(), (2,))
+        cur.scroll(2)
+        self.assertEqual(cur.fetchone(), (5,))
+        cur.scroll(2, mode='relative')
+        self.assertEqual(cur.fetchone(), (8,))
+        cur.scroll(-1)
+        self.assertEqual(cur.fetchone(), (8,))
+        cur.scroll(-2)
+        self.assertEqual(cur.fetchone(), (7,))
+        cur.scroll(2, mode='absolute')
+        self.assertEqual(cur.fetchone(), (2,))
+
+        # on the boundary
+        cur.scroll(0, mode='absolute')
+        self.assertEqual(cur.fetchone(), (0,))
+        self.assertRaises((IndexError, psycopg2.ProgrammingError),
+            cur.scroll, -1, mode='absolute')
+        cur.scroll(0, mode='absolute')
+        self.assertRaises((IndexError, psycopg2.ProgrammingError),
+            cur.scroll, -1)
+
+        cur.scroll(9, mode='absolute')
+        self.assertEqual(cur.fetchone(), (9,))
+        self.assertRaises((IndexError, psycopg2.ProgrammingError),
+            cur.scroll, 10, mode='absolute')
+        cur.scroll(9, mode='absolute')
+        self.assertRaises((IndexError, psycopg2.ProgrammingError),
+            cur.scroll, 1)
+
+    @skip_before_postgres(8, 0)
+    def test_scroll_named(self):
+        cur = self.conn.cursor()
+        cur.execute("select generate_series(0,9)")
+        cur.scroll(2)
+        self.assertEqual(cur.fetchone(), (2,))
+        cur.scroll(2)
+        self.assertEqual(cur.fetchone(), (5,))
+        cur.scroll(2, mode='relative')
+        self.assertEqual(cur.fetchone(), (8,))
+        cur.scroll(9, mode='absolute')
+        self.assertEqual(cur.fetchone(), (9,))
+        self.assertRaises((IndexError, psycopg2.ProgrammingError),
+            cur.scroll, 10, mode='absolute')
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
