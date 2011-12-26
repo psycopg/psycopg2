@@ -158,10 +158,12 @@ class ConnectionTests(unittest.TestCase):
 
     def test_weakref(self):
         from weakref import ref
+        import gc
         conn = psycopg2.connect(dsn)
         w = ref(conn)
         conn.close()
         del conn
+        gc.collect()
         self.assert_(w() is None)
 
 
