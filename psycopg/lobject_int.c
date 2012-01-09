@@ -175,7 +175,10 @@ lobject_open(lobjectObject *self, connectionObject *conn,
         if (new_file)
             self->oid = lo_import(self->conn->pgconn, new_file);
         else
-            self->oid = lo_create(self->conn->pgconn, new_oid);
+	    if (new_oid != InvalidOid)
+                self->oid = lo_create(self->conn->pgconn, new_oid);
+	    else
+	        self->oid = lo_creat(self->conn->pgconn, INV_READ | INV_WRITE);
 
         Dprintf("lobject_open: large object created with oid = %d",
                 self->oid);
