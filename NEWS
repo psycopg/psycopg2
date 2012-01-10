@@ -1,3 +1,10 @@
+What's new in psycopg 2.4.5
+---------------------------
+
+  - Fixed fetchmany() with no argument in cursor subclasses
+    (ticket #84).
+
+
 What's new in psycopg 2.4.4
 ---------------------------
 

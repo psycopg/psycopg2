@@ -850,11 +850,21 @@ psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
     int i;
     PyObject *list, *res;
 
+    PyObject *pysize = NULL;
     long int size = self->arraysize;
     static char *kwlist[] = {"size", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwords, "|l", kwlist, &size)) {
+    /* allow passing None instead of omitting the *size* argument,
+     * or using the method from subclasses would be a problem */
+    if (!PyArg_ParseTupleAndKeywords(args, kwords, "|O", kwlist, &pysize)) {
         return NULL;
+    }
+
+    if (pysize && pysize != Py_None) {
+        size = PyInt_AsLong(pysize);
+        if (size == -1 && PyErr_Occurred()) {
+            return NULL;
+        }
     }
 
     EXC_IF_CURS_CLOSED(self);
