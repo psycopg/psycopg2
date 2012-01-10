@@ -41,6 +41,9 @@ class ExtrasDictCursorTests(unittest.TestCase):
     def testDictCursorWithPlainCursorFetchMany(self):
         self._testWithPlainCursor(lambda curs: curs.fetchmany(100)[0])
 
+    def testDictCursorWithPlainCursorFetchManyNoarg(self):
+        self._testWithPlainCursor(lambda curs: curs.fetchmany()[0])
+
     def testDictCursorWithPlainCursorFetchAll(self):
         self._testWithPlainCursor(lambda curs: curs.fetchall()[0])
 
@@ -55,6 +58,9 @@ class ExtrasDictCursorTests(unittest.TestCase):
 
     def testDictCursorWithPlainCursorRealFetchMany(self):
         self._testWithPlainCursorReal(lambda curs: curs.fetchmany(100)[0])
+
+    def testDictCursorWithPlainCursorRealFetchManyNoarg(self):
+        self._testWithPlainCursorReal(lambda curs: curs.fetchmany()[0])
 
     def testDictCursorWithPlainCursorRealFetchAll(self):
         self._testWithPlainCursorReal(lambda curs: curs.fetchall()[0])
@@ -71,6 +77,9 @@ class ExtrasDictCursorTests(unittest.TestCase):
 
     def testDictCursorWithNamedCursorFetchMany(self):
         self._testWithNamedCursor(lambda curs: curs.fetchmany(100)[0])
+
+    def testDictCursorWithNamedCursorFetchManyNoarg(self):
+        self._testWithNamedCursor(lambda curs: curs.fetchmany()[0])
 
     def testDictCursorWithNamedCursorFetchAll(self):
         self._testWithNamedCursor(lambda curs: curs.fetchall()[0])
@@ -92,6 +101,9 @@ class ExtrasDictCursorTests(unittest.TestCase):
 
     def testDictCursorRealWithNamedCursorFetchMany(self):
         self._testWithNamedCursorReal(lambda curs: curs.fetchmany(100)[0])
+
+    def testDictCursorRealWithNamedCursorFetchManyNoarg(self):
+        self._testWithNamedCursorReal(lambda curs: curs.fetchmany()[0])
 
     def testDictCursorRealWithNamedCursorFetchAll(self):
         self._testWithNamedCursorReal(lambda curs: curs.fetchall()[0])
@@ -186,6 +198,18 @@ class NamedTupleCursorTest(unittest.TestCase):
         self.assertEqual(t.i, 1)
         self.assertEqual(t[1], 'foo')
         self.assertEqual(t.s, 'foo')
+
+    @skip_if_no_namedtuple
+    def test_fetchmany_noarg(self):
+        curs = self.conn.cursor()
+        curs.arraysize = 2
+        curs.execute("select * from nttest order by 1")
+        res = curs.fetchmany()
+        self.assertEqual(2, len(res))
+        self.assertEqual(res[0].i, 1)
+        self.assertEqual(res[0].s, 'foo')
+        self.assertEqual(res[1].i, 2)
+        self.assertEqual(res[1].s, 'bar')
 
     @skip_if_no_namedtuple
     def test_fetchmany(self):
