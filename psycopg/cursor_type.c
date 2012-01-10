@@ -841,7 +841,8 @@ psyco_curs_next_named(cursorObject *self)
 "fetchmany(size=self.arraysize) -> list of tuple\n\n" \
 "Return the next `size` rows of a query result set in the form of a list\n" \
 "of tuples (by default) or using the sequence factory previously set in\n" \
-"the `row_factory` attribute. Return `!None` when no more data is available.\n"
+"the `row_factory` attribute.\n\n" \
+"Return an empty list when no more data is available.\n"
 
 static PyObject *
 psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
