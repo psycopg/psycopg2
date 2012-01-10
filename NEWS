@@ -3,6 +3,8 @@ What's new in psycopg 2.4.5
 
   - Fixed fetchmany() with no argument in cursor subclasses
     (ticket #84).
+  - Use lo_creat() instead of lo_create() when possible for better
+    interaction with pgpool-II (ticket #88).
 
 
 What's new in psycopg 2.4.4
