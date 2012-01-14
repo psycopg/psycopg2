@@ -478,7 +478,12 @@ psyco_errors_init(void)
     PyObject_SetAttrString(Error, "pgcode", Py_None);
     PyObject_SetAttrString(Error, "cursor", Py_None);
 
-    /* install __reduce_ex__ on Error to make all the subclasses picklable */
+    /* install __reduce_ex__ on Error to make all the subclasses picklable.
+     *
+     * Don't install it on Py 2.4: it is not used by the pickle
+     * protocol, and if called manually fails in an unsettling way,
+     * probably because the exceptions were old-style classes. */
+#if PY_VERSION_HEX >= 0x02050000
     if (!(descr = PyDescr_NewMethod((PyTypeObject *)Error,
             &psyco_error_reduce_ex_def))) {
         goto exit;
@@ -488,6 +493,7 @@ psyco_errors_init(void)
         goto exit;
     }
     Py_DECREF(descr);
+#endif
 
     rv = 0;
 
