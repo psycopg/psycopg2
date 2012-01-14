@@ -5,6 +5,8 @@ What's new in psycopg 2.4.5
     (ticket #84).
   - Use lo_creat() instead of lo_create() when possible for better
     interaction with pgpool-II (ticket #88).
+  - Error and its subclasses are picklable, useful for multiprocessing
+    interaction (ticket #90).
 
 
 What's new in psycopg 2.4.4

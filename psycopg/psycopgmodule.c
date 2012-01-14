@@ -380,7 +380,59 @@ static struct {
     {NULL}  /* Sentinel */
 };
 
-static void
+
+/* Error.__reduce_ex__
+ *
+ * The method is required to make exceptions picklable: set the cursor
+ * attribute to None. Only working from Py 2.5: previous versions
+ * would require implementing __getstate__, and as of 2012 it's a little
+ * bit too late to care. */
+static PyObject *
+psyco_error_reduce_ex(PyObject *self, PyObject *args)
+{
+    PyObject *proto = NULL;
+    PyObject *super = NULL;
+    PyObject *tuple = NULL;
+    PyObject *dict = NULL;
+    PyObject *rv = NULL;
+
+    /* tuple = Exception.__reduce_ex__(self, proto) */
+    if (!PyArg_ParseTuple(args, "O", &proto)) {
+        goto error;
+    }
+    if (!(super = PyObject_GetAttrString(PyExc_Exception, "__reduce_ex__"))) {
+        goto error;
+    }
+    if (!(tuple = PyObject_CallFunctionObjArgs(super, self, proto, NULL))) {
+        goto error;
+    }
+
+    /* tuple[2]['cursor'] = None
+     *
+     * If these checks fail, we can still return a valid object. Pickle
+     * will likely fail downstream, but there's nothing else we can do here */
+    if (!PyTuple_Check(tuple)) { goto exit; }
+    if (3 > PyTuple_GET_SIZE(tuple)) { goto exit; }
+    dict = PyTuple_GET_ITEM(tuple, 2);      /* borrowed */
+    if (!PyDict_Check(dict)) { goto exit; }
+
+    /* Modify the tuple inplace and return it */
+    if (0 != PyDict_SetItemString(dict, "cursor", Py_None)) {
+        goto error;
+    }
+
+exit:
+    rv = tuple;
+    tuple = NULL;
+
+error:
+    Py_XDECREF(tuple);
+    Py_XDECREF(super);
+
+    return rv;
+}
+
+static int
 psyco_errors_init(void)
 {
     /* the names of the exceptions here reflect the oranization of the
@@ -391,6 +443,11 @@ psyco_errors_init(void)
     PyObject *dict;
     PyObject *base;
     PyObject *str;
+    PyObject *descr;
+    int rv = -1;
+
+    static PyMethodDef psyco_error_reduce_ex_def =
+        {"__reduce_ex__", psyco_error_reduce_ex, METH_VARARGS, "pickle helper"};
 
     for (i=0; exctable[i].name; i++) {
         dict = PyDict_New();
@@ -420,6 +477,22 @@ psyco_errors_init(void)
     PyObject_SetAttrString(Error, "pgerror", Py_None);
     PyObject_SetAttrString(Error, "pgcode", Py_None);
     PyObject_SetAttrString(Error, "cursor", Py_None);
+
+    /* install __reduce_ex__ on Error to make all the subclasses picklable */
+    if (!(descr = PyDescr_NewMethod((PyTypeObject *)Error,
+            &psyco_error_reduce_ex_def))) {
+        goto exit;
+    }
+    if (0 != PyObject_SetAttrString(Error,
+            psyco_error_reduce_ex_def.ml_name, descr)) {
+        goto exit;
+    }
+    Py_DECREF(descr);
+
+    rv = 0;
+
+exit:
+    return rv;
 }
 
 void
@@ -869,7 +942,7 @@ INIT_MODULE(_psycopg)(void)
     psyco_adapters_init(dict);
 
     /* create a standard set of exceptions and add them to the module's dict */
-    psyco_errors_init();
+    if (0 != psyco_errors_init()) { goto exit; }
     psyco_errors_fill(dict);
 
     /* Solve win32 build issue about non-constant initializer element */
