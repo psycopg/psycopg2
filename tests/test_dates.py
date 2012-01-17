@@ -25,7 +25,7 @@
 import math
 import unittest
 import psycopg2
-from psycopg2.tz import FixedOffsetTimezone
+from psycopg2.tz import FixedOffsetTimezone, ZERO
 from testconfig import dsn
 
 class CommonDatetimeTestsMixin:
@@ -512,6 +512,25 @@ class FromTicksTestCase(unittest.TestCase):
         self.assertEqual(s.adapted.replace(hour=0),
             time(0, 11, 59, 999920))
 
+
+class FixedOffsetTimezoneTests(unittest.TestCase):
+
+    def test_init_with_no_args(self):
+        tzinfo = FixedOffsetTimezone()
+        self.assert_(tzinfo._offset is ZERO)
+        self.assert_(tzinfo._name is None)
+
+    def test_repr_with_positive_offset(self):
+        tzinfo = FixedOffsetTimezone(5 * 60)
+        self.assertEqual(repr(tzinfo), "psycopg2.tz.FixedOffsetTimezone(offset=300, name=None)")
+
+    def test_repr_with_negative_offset(self):
+        tzinfo = FixedOffsetTimezone(-5 * 60)
+        self.assertEqual(repr(tzinfo), "psycopg2.tz.FixedOffsetTimezone(offset=-300, name=None)")
+
+    def test_repr_with_name(self):
+        tzinfo = FixedOffsetTimezone(name="FOO")
+        self.assertEqual(repr(tzinfo), "psycopg2.tz.FixedOffsetTimezone(offset=0, name='FOO')")
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

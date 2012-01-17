@@ -50,8 +50,9 @@ class FixedOffsetTimezone(datetime.tzinfo):
             self._name = name
 
     def __repr__(self):
+        offset_mins = self._offset.seconds // 60 + self._offset.days * 24 * 60
         return "psycopg2.tz.FixedOffsetTimezone(offset=%r, name=%r)" \
-            % (self._offset.seconds // 60, self._name)
+            % (offset_mins, self._name)
 
     def utcoffset(self, dt):
         return self._offset
