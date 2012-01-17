@@ -78,7 +78,7 @@ class CommonDatetimeTestsMixin:
         value = self.DATETIME(None, self.curs)
         self.assertEqual(value, None)
 
-    def test_parse_incomplete_time(self):
+    def test_parse_incomplete_datetime(self):
         self.assertRaises(psycopg2.DataError,
                           self.DATETIME, '2007', self.curs)
         self.assertRaises(psycopg2.DataError,
