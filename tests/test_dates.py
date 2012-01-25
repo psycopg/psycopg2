@@ -532,6 +532,13 @@ class FixedOffsetTimezoneTests(unittest.TestCase):
         tzinfo = FixedOffsetTimezone(name="FOO")
         self.assertEqual(repr(tzinfo), "psycopg2.tz.FixedOffsetTimezone(offset=0, name='FOO')")
 
+    def test_instance_caching(self):
+        self.assert_(FixedOffsetTimezone(name="FOO") is FixedOffsetTimezone(name="FOO"))
+        self.assert_(FixedOffsetTimezone(7 * 60) is FixedOffsetTimezone(7 * 60))
+        self.assert_(FixedOffsetTimezone(-9 * 60, 'FOO') is FixedOffsetTimezone(-9 * 60, 'FOO'))
+        self.assert_(FixedOffsetTimezone(9 * 60) is not FixedOffsetTimezone(9 * 60, 'FOO'))
+        self.assert_(FixedOffsetTimezone(name='FOO') is not FixedOffsetTimezone(9 * 60, 'FOO'))
+
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
