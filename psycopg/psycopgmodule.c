@@ -635,15 +635,17 @@ psyco_set_error(PyObject *exc, cursorObject *curs, const char *msg,
         }
 
         if (pgerror) {
-            t = conn_text_from_chars(conn, pgerror);
-            PyObject_SetAttrString(err, "pgerror", t);
-            Py_DECREF(t);
+            if ((t = conn_text_from_chars(conn, pgerror))) {
+                PyObject_SetAttrString(err, "pgerror", t);
+                Py_DECREF(t);
+            }
         }
 
         if (pgcode) {
-            t = conn_text_from_chars(conn, pgcode);
-            PyObject_SetAttrString(err, "pgcode", t);
-            Py_DECREF(t);
+            if ((t = conn_text_from_chars(conn, pgcode))) {
+                PyObject_SetAttrString(err, "pgcode", t);
+                Py_DECREF(t);
+            }
         }
 
         PyErr_SetObject(exc, err);
