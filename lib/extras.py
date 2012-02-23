@@ -310,14 +310,17 @@ class NamedTupleCursor(_cursor):
         return [nt(*t) for t in ts]
 
     def __iter__(self):
-        # Invoking _cursor.__iter__(self) goes to infinite recursion,
-        # so we do pagination by hand
+        it = _cursor.__iter__(self)
+        t = it.next()
+
+        nt = self.Record
+        if nt is None:
+            nt = self.Record = self._make_nt()
+
+        yield nt(*t)
+
         while 1:
-            recs = self.fetchmany(self.itersize)
-            if not recs:
-                return
-            for rec in recs:
-                yield rec
+            yield nt(*it.next())
 
     try:
         from collections import namedtuple
