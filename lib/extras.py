@@ -849,9 +849,9 @@ class CompositeCaster(object):
         return self._ctor(*attrs)
 
     _re_tokenize = regex.compile(r"""
-  \(? ([,\)])                       # an empty token, representing NULL
+  \(? ([,)])                        # an empty token, representing NULL
 | \(? " ((?: [^"] | "")*) " [,)]    # or a quoted string
-| \(? ([^",\)]+) [,\)]              # or an unquoted string
+| \(? ([^",)]+) [,)]                # or an unquoted string
     """, regex.VERBOSE)
 
     _re_undouble = regex.compile(r'(["\\])\1')
