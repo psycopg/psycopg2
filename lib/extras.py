@@ -473,18 +473,9 @@ def register_uuid(oids=None, conn_or_curs=None):
         oid1 = oids
         oid2 = 2951
 
-    def parseUUIDARRAY(data, cursor):
-        if data is None:
-            return None
-        elif data == '{}':
-            return []
-        else:
-            return [((len(x) > 0 and x != 'NULL') and uuid.UUID(x) or None)
-                    for x in data[1:-1].split(',')]
-
     _ext.UUID = _ext.new_type((oid1, ), "UUID",
             lambda data, cursor: data and uuid.UUID(data) or None)
-    _ext.UUIDARRAY = _ext.new_type((oid2,), "UUID[]", parseUUIDARRAY)
+    _ext.UUIDARRAY = _ext.new_array_type((oid2,), "UUID[]", _ext.UUID)
 
     _ext.register_type(_ext.UUID, conn_or_curs)
     _ext.register_type(_ext.UUIDARRAY, conn_or_curs)
