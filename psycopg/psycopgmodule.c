@@ -565,41 +565,35 @@ exit:
 void
 psyco_errors_fill(PyObject *dict)
 {
-    PyDict_SetItemString(dict, "Error", Error);
-    PyDict_SetItemString(dict, "Warning", Warning);
-    PyDict_SetItemString(dict, "InterfaceError", InterfaceError);
-    PyDict_SetItemString(dict, "DatabaseError", DatabaseError);
-    PyDict_SetItemString(dict, "InternalError", InternalError);
-    PyDict_SetItemString(dict, "OperationalError", OperationalError);
-    PyDict_SetItemString(dict, "ProgrammingError", ProgrammingError);
-    PyDict_SetItemString(dict, "IntegrityError", IntegrityError);
-    PyDict_SetItemString(dict, "DataError", DataError);
-    PyDict_SetItemString(dict, "NotSupportedError", NotSupportedError);
-#ifdef PSYCOPG_EXTENSIONS
-    PyDict_SetItemString(dict, "QueryCanceledError", QueryCanceledError);
-    PyDict_SetItemString(dict, "TransactionRollbackError",
-                         TransactionRollbackError);
-#endif
+    int i;
+    char *name;
+
+    for (i = 0; exctable[i].name; i++) {
+        if (NULL == exctable[i].exc) { continue; }
+
+        /* the name is the part after the last dot */
+        name = strrchr(exctable[i].name, '.');
+        name = name ? name + 1 : exctable[i].name;
+
+        PyDict_SetItemString(dict, name, *exctable[i].exc);
+    }
 }
 
 void
 psyco_errors_set(PyObject *type)
 {
-    PyObject_SetAttrString(type, "Error", Error);
-    PyObject_SetAttrString(type, "Warning", Warning);
-    PyObject_SetAttrString(type, "InterfaceError", InterfaceError);
-    PyObject_SetAttrString(type, "DatabaseError", DatabaseError);
-    PyObject_SetAttrString(type, "InternalError", InternalError);
-    PyObject_SetAttrString(type, "OperationalError", OperationalError);
-    PyObject_SetAttrString(type, "ProgrammingError", ProgrammingError);
-    PyObject_SetAttrString(type, "IntegrityError", IntegrityError);
-    PyObject_SetAttrString(type, "DataError", DataError);
-    PyObject_SetAttrString(type, "NotSupportedError", NotSupportedError);
-#ifdef PSYCOPG_EXTENSIONS
-    PyObject_SetAttrString(type, "QueryCanceledError", QueryCanceledError);
-    PyObject_SetAttrString(type, "TransactionRollbackError",
-                           TransactionRollbackError);
-#endif
+    int i;
+    char *name;
+
+    for (i = 0; exctable[i].name; i++) {
+        if (NULL == exctable[i].exc) { continue; }
+
+        /* the name is the part after the last dot */
+        name = strrchr(exctable[i].name, '.');
+        name = name ? name + 1 : exctable[i].name;
+
+        PyObject_SetAttrString(type, name, *exctable[i].exc);
+    }
 }
 
 /* psyco_error_new
