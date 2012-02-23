@@ -494,21 +494,22 @@ psyco_errors_init(void)
        live in _psycopg */
 
     int i;
-    PyObject *dict;
+    PyObject *dict = NULL;
     PyObject *base;
-    PyObject *str;
-    PyObject *descr;
+    PyObject *str = NULL;
+    PyObject *descr = NULL;
     int rv = -1;
 
     static PyMethodDef psyco_error_reduce_ex_def =
         {"__reduce_ex__", psyco_error_reduce_ex, METH_VARARGS, "pickle helper"};
 
     for (i=0; exctable[i].name; i++) {
-        dict = PyDict_New();
+        if (!(dict = PyDict_New())) { goto exit; }
 
         if (exctable[i].docstr) {
-            str = Text_FromUTF8(exctable[i].docstr);
-            PyDict_SetItemString(dict, "__doc__", str);
+            if (!(str = Text_FromUTF8(exctable[i].docstr))) { goto exit; }
+            if (0 != PyDict_SetItemString(dict, "__doc__", str)) { goto exit; }
+            Py_CLEAR(str);
         }
 
         if (exctable[i].base == 0) {
@@ -522,7 +523,11 @@ psyco_errors_init(void)
         else
             base = *exctable[i].base;
 
-        *exctable[i].exc = PyErr_NewException(exctable[i].name, base, dict);
+        if (!(*exctable[i].exc = PyErr_NewException(
+                exctable[i].name, base, dict))) {
+            goto exit;
+        }
+        Py_CLEAR(dict);
     }
 
     /* Make pgerror, pgcode and cursor default to None on psycopg
@@ -546,12 +551,14 @@ psyco_errors_init(void)
             psyco_error_reduce_ex_def.ml_name, descr)) {
         goto exit;
     }
-    Py_DECREF(descr);
 #endif
 
     rv = 0;
 
 exit:
+    Py_XDECREF(descr);
+    Py_XDECREF(str);
+    Py_XDECREF(dict);
     return rv;
 }
 
