@@ -710,7 +710,7 @@ psyco_GetDecimalType(void)
     }
 
     /* Store the object from future uses. */
-    if (can_cache && !cachedType) {
+    if (can_cache && !cachedType && decimalType) {
         Py_INCREF(decimalType);
         cachedType = decimalType;
     }
