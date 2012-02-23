@@ -234,6 +234,17 @@ class CursorTests(unittest.TestCase):
         # everything swallowed in two gulps
         self.assertEqual(rv, [(i,((i - 1) % 30) + 1) for i in range(1,51)])
 
+    @skip_before_postgres(8, 0)
+    def test_iter_named_cursor_rownumber(self):
+        curs = self.conn.cursor('tmp')
+        # note: this fails if itersize < dataset: internally we check
+        # rownumber == rowcount to detect when to read anoter page, so we
+        # would need an extra attribute to have a monotonic rownumber.
+        curs.itersize = 20
+        curs.execute('select generate_series(1,10)')
+        for i, rec in enumerate(curs):
+            self.assertEqual(i + 1, curs.rownumber)
+
     @skip_if_no_namedtuple
     def test_namedtuple_description(self):
         curs = self.conn.cursor()

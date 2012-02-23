@@ -9,6 +9,8 @@ What's new in psycopg 2.4.5
     interaction (ticket #90).
   - Better efficiency and formatting of timezone offset objects thanks
     to Menno Smits (tickets #94, #95).
+  - Fixed 'rownumber' during iteration on cursor subclasses.
+    Regression introduced in 2.4.4 (ticket #100).
 
 
 What's new in psycopg 2.4.4
