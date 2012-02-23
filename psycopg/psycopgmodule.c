@@ -685,15 +685,11 @@ psyco_make_description_type(void)
     /* Try to import collections.namedtuple */
     if (!(coll = PyImport_ImportModule("collections"))) {
         Dprintf("psyco_make_description_type: collections import failed");
-        PyErr_Clear();
-        rv = Py_None;
-        goto exit;
+        goto error;
     }
     if (!(nt = PyObject_GetAttrString(coll, "namedtuple"))) {
         Dprintf("psyco_make_description_type: no collections.namedtuple");
-        PyErr_Clear();
-        rv = Py_None;
-        goto exit;
+        goto error;
     }
 
     /* Build the namedtuple */
@@ -705,6 +701,13 @@ exit:
     Py_XDECREF(nt);
 
     return rv;
+
+error:
+    /* controlled error: we will fall back to regular tuples. Return None. */
+    PyErr_Clear();
+    rv = Py_None;
+    Py_INCREF(rv);
+    goto exit;
 }
 
 
@@ -920,7 +923,7 @@ INIT_MODULE(_psycopg)(void)
     if (!(psycoEncodings = PyDict_New())) { goto exit; }
     if (0 != psyco_encodings_fill(psycoEncodings)) { goto exit; }
     psyco_null = Bytes_FromString("NULL");
-    psyco_DescriptionType = psyco_make_description_type();
+    if (!(psyco_DescriptionType = psyco_make_description_type())) { goto exit; }
 
     /* set some module's parameters */
     PyModule_AddStringConstant(module, "__version__", PSYCOPG_VERSION);
