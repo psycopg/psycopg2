@@ -60,6 +60,11 @@ class ExtrasDictCursorTests(unittest.TestCase):
         self.failUnless(row['foo'] == 'qux')
         self.failUnless(row[0] == 'qux')
 
+    @skip_before_postgres(8, 0)
+    def testDictCursorWithPlainCursorIterRowNumber(self):
+        curs = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        self._testIterRowNumber(curs)
+
     def _testWithPlainCursor(self, getter):
         curs = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         curs.execute("SELECT * FROM ExtrasDictCursorTests")
@@ -86,6 +91,11 @@ class ExtrasDictCursorTests(unittest.TestCase):
             for row in curs:
                 return row
         self._testWithPlainCursorReal(getter)
+
+    @skip_before_postgres(8, 0)
+    def testDictCursorWithPlainCursorRealIterRowNumber(self):
+        curs = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        self._testIterRowNumber(curs)
 
     def _testWithPlainCursorReal(self, getter):
         curs = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -116,6 +126,11 @@ class ExtrasDictCursorTests(unittest.TestCase):
     def testDictCursorWithNamedCursorNotGreedy(self):
         curs = self.conn.cursor('tmp', cursor_factory=psycopg2.extras.DictCursor)
         self._testNamedCursorNotGreedy(curs)
+
+    @skip_before_postgres(8, 0)
+    def testDictCursorWithNamedCursorIterRowNumber(self):
+        curs = self.conn.cursor('tmp', cursor_factory=psycopg2.extras.DictCursor)
+        self._testIterRowNumber(curs)
 
     def _testWithNamedCursor(self, getter):
         curs = self.conn.cursor('aname', cursor_factory=psycopg2.extras.DictCursor)
@@ -148,6 +163,11 @@ class ExtrasDictCursorTests(unittest.TestCase):
         curs = self.conn.cursor('tmp', cursor_factory=psycopg2.extras.RealDictCursor)
         self._testNamedCursorNotGreedy(curs)
 
+    @skip_before_postgres(8, 0)
+    def testDictCursorRealWithNamedCursorIterRowNumber(self):
+        curs = self.conn.cursor('tmp', cursor_factory=psycopg2.extras.RealDictCursor)
+        self._testIterRowNumber(curs)
+
     def _testWithNamedCursorReal(self, getter):
         curs = self.conn.cursor('aname', cursor_factory=psycopg2.extras.RealDictCursor)
         curs.execute("SELECT * FROM ExtrasDictCursorTests")
@@ -166,6 +186,14 @@ class ExtrasDictCursorTests(unittest.TestCase):
         # check that the dataset was not fetched in a single gulp
         self.assert_(recs[1]['ts'] - recs[0]['ts'] < timedelta(seconds=0.005))
         self.assert_(recs[2]['ts'] - recs[1]['ts'] > timedelta(seconds=0.0099))
+
+    def _testIterRowNumber(self, curs):
+        # Only checking for dataset < itersize:
+        # see CursorTests.test_iter_named_cursor_rownumber
+        curs.itersize = 20
+        curs.execute("""select * from generate_series(1,10)""")
+        for i, r in enumerate(curs):
+            self.assertEqual(i + 1, curs.rownumber)
 
 
 class NamedTupleCursorTest(unittest.TestCase):
