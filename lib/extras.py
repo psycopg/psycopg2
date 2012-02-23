@@ -455,14 +455,21 @@ class UUID_adapter(object):
     __str__ = getquoted
 
 def register_uuid(oids=None, conn_or_curs=None):
-    """Create the UUID type and an uuid.UUID adapter."""
+    """Create the UUID type and an uuid.UUID adapter.
+
+    :param oids: oid for the PostgreSQL :sql:`uuid` type, or 2-items sequence
+        with oids of the type and the array. If not specified, use PostgreSQL
+        standard oids.
+    :param conn_or_curs: where to register the typecaster. If not specified,
+        register it globally.
+    """
 
     import uuid
 
     if not oids:
         oid1 = 2950
         oid2 = 2951
-    elif type(oids) == list:
+    elif isinstance(oids, (list, tuple)):
         oid1, oid2 = oids
     else:
         oid1 = oids
