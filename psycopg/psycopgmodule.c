@@ -182,66 +182,108 @@ psyco_register_type(PyObject *self, PyObject *args)
 }
 
 
-/* default adapters */
-
-static void
+/* Initialize the default adapters map
+ *
+ * Return 0 on success, else -1 and set an exception.
+ */
+static int
 psyco_adapters_init(PyObject *mod)
 {
-    PyObject *call;
+    PyObject *call = NULL;
+    int rv = -1;
 
-    microprotocols_add(&PyFloat_Type, NULL, (PyObject*)&pfloatType);
+    if (0 != microprotocols_add(&PyFloat_Type, NULL, (PyObject*)&pfloatType)) {
+        goto exit;
+    }
 #if PY_MAJOR_VERSION < 3
-    microprotocols_add(&PyInt_Type, NULL, (PyObject*)&pintType);
+    if (0 != microprotocols_add(&PyInt_Type, NULL, (PyObject*)&pintType)) {
+        goto exit;
+    }
 #endif
-    microprotocols_add(&PyLong_Type, NULL, (PyObject*)&pintType);
-    microprotocols_add(&PyBool_Type, NULL, (PyObject*)&pbooleanType);
+    if (0 != microprotocols_add(&PyLong_Type, NULL, (PyObject*)&pintType)) {
+        goto exit;
+    }
+    if (0 != microprotocols_add(&PyBool_Type, NULL, (PyObject*)&pbooleanType)) {
+        goto exit;
+    }
 
     /* strings */
 #if PY_MAJOR_VERSION < 3
-    microprotocols_add(&PyString_Type, NULL, (PyObject*)&qstringType);
+    if (0 != microprotocols_add(&PyString_Type, NULL, (PyObject*)&qstringType)) {
+        goto exit;
+    }
 #endif
-    microprotocols_add(&PyUnicode_Type, NULL, (PyObject*)&qstringType);
+    if (0 != microprotocols_add(&PyUnicode_Type, NULL, (PyObject*)&qstringType)) {
+        goto exit;
+    }
 
     /* binary */
 #if PY_MAJOR_VERSION < 3
-    microprotocols_add(&PyBuffer_Type, NULL, (PyObject*)&binaryType);
+    if (0 != microprotocols_add(&PyBuffer_Type, NULL, (PyObject*)&binaryType)) {
+        goto exit;
+    }
 #else
-    microprotocols_add(&PyBytes_Type, NULL, (PyObject*)&binaryType);
+    if (0 != microprotocols_add(&PyBytes_Type, NULL, (PyObject*)&binaryType)) {
+        goto exit;
+    }
 #endif
 
 #if PY_MAJOR_VERSION >= 3 || PY_MINOR_VERSION >= 6
-    microprotocols_add(&PyByteArray_Type, NULL, (PyObject*)&binaryType);
+    if (0 != microprotocols_add(&PyByteArray_Type, NULL, (PyObject*)&binaryType)) {
+        goto exit;
+    }
 #endif
 #if PY_MAJOR_VERSION >= 3 || PY_MINOR_VERSION >= 7
-    microprotocols_add(&PyMemoryView_Type, NULL, (PyObject*)&binaryType);
+    if (0 != microprotocols_add(&PyMemoryView_Type, NULL, (PyObject*)&binaryType)) {
+        goto exit;
+    }
 #endif
 
-    microprotocols_add(&PyList_Type, NULL, (PyObject*)&listType);
+    if (0 != microprotocols_add(&PyList_Type, NULL, (PyObject*)&listType)) {
+        goto exit;
+    }
 
     /* the module has already been initialized, so we can obtain the callable
        objects directly from its dictionary :) */
-    call = PyMapping_GetItemString(mod, "DateFromPy");
-    microprotocols_add(PyDateTimeAPI->DateType, NULL, call);
-    call = PyMapping_GetItemString(mod, "TimeFromPy");
-    microprotocols_add(PyDateTimeAPI->TimeType, NULL, call);
-    call = PyMapping_GetItemString(mod, "TimestampFromPy");
-    microprotocols_add(PyDateTimeAPI->DateTimeType, NULL, call);
-    call = PyMapping_GetItemString(mod, "IntervalFromPy");
-    microprotocols_add(PyDateTimeAPI->DeltaType, NULL, call);
+    if (!(call = PyMapping_GetItemString(mod, "DateFromPy"))) { goto exit; }
+    if (0 != microprotocols_add(PyDateTimeAPI->DateType, NULL, call)) { goto exit; }
+    Py_CLEAR(call);
+
+    if (!(call = PyMapping_GetItemString(mod, "TimeFromPy"))) { goto exit; }
+    if (0 != microprotocols_add(PyDateTimeAPI->TimeType, NULL, call)) { goto exit; }
+    Py_CLEAR(call);
+
+    if (!(call = PyMapping_GetItemString(mod, "TimestampFromPy"))) { goto exit; }
+    if (0 != microprotocols_add(PyDateTimeAPI->DateTimeType, NULL, call)) { goto exit; }
+    Py_CLEAR(call);
+
+    if (!(call = PyMapping_GetItemString(mod, "IntervalFromPy"))) { goto exit; }
+    if (0 != microprotocols_add(PyDateTimeAPI->DeltaType, NULL, call)) { goto exit; }
+    Py_CLEAR(call);
 
 #ifdef HAVE_MXDATETIME
     /* as above, we use the callable objects from the psycopg module */
     if (NULL != (call = PyMapping_GetItemString(mod, "TimestampFromMx"))) {
-        microprotocols_add(mxDateTime.DateTime_Type, NULL, call);
+        if (0 != microprotocols_add(mxDateTime.DateTime_Type, NULL, call)) { goto exit; }
+        Py_CLEAR(call);
 
         /* if we found the above, we have this too. */
-        call = PyMapping_GetItemString(mod, "TimeFromMx");
-        microprotocols_add(mxDateTime.DateTimeDelta_Type, NULL, call);
+        if (!(call = PyMapping_GetItemString(mod, "TimeFromMx"))) { goto exit; }
+        if (0 != microprotocols_add(mxDateTime.DateTimeDelta_Type, NULL, call)) { goto exit; }
+        Py_CLEAR(call);
     }
     else {
         PyErr_Clear();
     }
 #endif
+
+    /* Success! */
+    rv = 0;
+
+exit:
+    Py_XDECREF(call);
+
+    return rv;
 }
 
 /* psyco_encodings_fill
@@ -960,7 +1002,7 @@ INIT_MODULE(_psycopg)(void)
 
     /* initialize microprotocols layer */
     microprotocols_init(dict);
-    psyco_adapters_init(dict);
+    if (0 != psyco_adapters_init(dict)) { goto exit; }
 
     /* create a standard set of exceptions and add them to the module's dict */
     if (0 != psyco_errors_init()) { goto exit; }

@@ -52,22 +52,28 @@ microprotocols_init(PyObject *dict)
 }
 
 
-/* microprotocols_add - add a reverse type-caster to the dictionary */
-
+/* microprotocols_add - add a reverse type-caster to the dictionary
+ *
+ * Return 0 on success, else -1 and set an exception.
+ */
 int
 microprotocols_add(PyTypeObject *type, PyObject *proto, PyObject *cast)
 {
-    PyObject *key;
+    PyObject *key = NULL;
+    int rv = -1;
 
     if (proto == NULL) proto = (PyObject*)&isqlquoteType;
 
     Dprintf("microprotocols_add: cast %p for (%s, ?)", cast, type->tp_name);
 
-    key = PyTuple_Pack(2, (PyObject*)type, proto);
-    PyDict_SetItem(psyco_adapters, key, cast);
-    Py_DECREF(key);
+    if (!(key = PyTuple_Pack(2, (PyObject*)type, proto))) { goto exit; }
+    if (0 != PyDict_SetItem(psyco_adapters, key, cast)) { goto exit; }
 
-    return 0;
+    rv = 0;
+
+exit:
+    Py_XDECREF(key);
+    return rv;
 }
 
 /* Check if one of `obj` superclasses has an adapter for `proto`.
