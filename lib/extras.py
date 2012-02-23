@@ -498,13 +498,13 @@ class Inet(object):
     """
     def __init__(self, addr):
         self.addr = addr
-    
+
     def __repr__(self):
         return "%s(%r)" % (self.__class__.__name__, self.addr)
 
     def prepare(self, conn):
         self._conn = conn
-    
+
     def getquoted(self):
         obj = _A(self.addr)
         if hasattr(obj, 'prepare'):
@@ -517,13 +517,32 @@ class Inet(object):
 
     def __str__(self):
         return str(self.addr)
-        
+
 def register_inet(oid=None, conn_or_curs=None):
-    """Create the INET type and an Inet adapter."""
-    if not oid: oid = 869
-    _ext.INET = _ext.new_type((oid, ), "INET",
+    """Create the INET type and an Inet adapter.
+
+    :param oid: oid for the PostgreSQL :sql:`inet` type, or 2-items sequence
+        with oids of the type and the array. If not specified, use PostgreSQL
+        standard oids.
+    :param conn_or_curs: where to register the typecaster. If not specified,
+        register it globally.
+    """
+    if not oid:
+        oid1 = 869
+        oid2 = 1041
+    elif isinstance(oid, (list, tuple)):
+        oid1, oid2 = oid
+    else:
+        oid1 = oid
+        oid2 = 1041
+
+    _ext.INET = _ext.new_type((oid1, ), "INET",
             lambda data, cursor: data and Inet(data) or None)
+    _ext.INETARRAY = _ext.new_array_type((oid2, ), "INETARRAY", _ext.INET)
+
     _ext.register_type(_ext.INET, conn_or_curs)
+    _ext.register_type(_ext.INETARRAY, conn_or_curs)
+
     return _ext.INET
 
 

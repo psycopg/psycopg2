@@ -250,6 +250,7 @@ UUID data type
 ^^^^^^^^^^^^^^^^^^^^^^
 
 .. versionadded:: 2.0.9
+.. versionchanged:: 2.4.5 added inet array support.
 
 .. doctest::
 
@@ -264,7 +265,7 @@ UUID data type
     '192.168.0.1/24'
 
 
-.. autofunction:: register_inet()
+.. autofunction:: register_inet
 
 .. autoclass:: Inet
 
