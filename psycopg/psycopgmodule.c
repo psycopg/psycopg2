@@ -326,15 +326,27 @@ static encodingPair encodings[] = {
     {NULL, NULL}
 };
 
-static void psyco_encodings_fill(PyObject *dict)
+/* Initialize the encodings table.
+ *
+ * Return 0 on success, else -1 and set an exception.
+ */
+static int psyco_encodings_fill(PyObject *dict)
 {
+    PyObject *value = NULL;
     encodingPair *enc;
+    int rv = -1;
 
     for (enc = encodings; enc->pgenc != NULL; enc++) {
-        PyObject *value = Text_FromUTF8(enc->pyenc);
-        PyDict_SetItemString(dict, enc->pgenc, value);
-        Py_DECREF(value);
+        if (!(value = Text_FromUTF8(enc->pyenc))) { goto exit; }
+        if (0 != PyDict_SetItemString(dict, enc->pgenc, value)) { goto exit; }
+        Py_CLEAR(value);
     }
+    rv = 0;
+
+exit:
+    Py_XDECREF(value);
+
+    return rv;
 }
 
 /* psyco_errors_init, psyco_errors_fill (callable from C)
@@ -905,8 +917,8 @@ INIT_MODULE(_psycopg)(void)
 #endif
 
     /* other mixed initializations of module-level variables */
-    psycoEncodings = PyDict_New();
-    psyco_encodings_fill(psycoEncodings);
+    if (!(psycoEncodings = PyDict_New())) { goto exit; }
+    if (0 != psyco_encodings_fill(psycoEncodings)) { goto exit; }
     psyco_null = Bytes_FromString("NULL");
     psyco_DescriptionType = psyco_make_description_type();
 
