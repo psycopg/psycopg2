@@ -467,7 +467,7 @@ The ``cursor`` class
         :param table: name of the table to copy data into.
         :param sep: columns separator expected in the file. Defaults to a tab.
         :param null: textual representation of :sql:`NULL` in the file.
-            The default is the two character string ``\N``.
+            The default is the two characters string ``\N``.
         :param size: size of the buffer used to read from the file.
         :param columns: iterable with name of the columns to import.
             The length and types should match the content of the file to read.
@@ -500,7 +500,7 @@ The ``cursor`` class
         :param table: name of the table to copy data from.
         :param sep: columns separator expected in the file. Defaults to a tab.
         :param null: textual representation of :sql:`NULL` in the file.
-            The default is the two character string ``\N``.
+            The default is the two characters string ``\N``.
         :param columns: iterable with name of the columns to export.
             If not specified, export all the columns.
 
