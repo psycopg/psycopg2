@@ -137,8 +137,10 @@ class ExceptionsTestCase(unittest.TestCase):
 
     def test_attributes(self):
         cur = self.conn.cursor()
-        try: cur.execute("select * from nonexist")
-        except psycopg2.Error, e: pass
+        try:
+            cur.execute("select * from nonexist")
+        except psycopg2.Error, exc:
+            e = exc
 
         self.assertEqual(e.pgcode, '42P01')
         self.assert_(e.pgerror)
@@ -150,8 +152,8 @@ class ExceptionsTestCase(unittest.TestCase):
         cur = self.conn.cursor()
         try:
             cur.execute("select * from nonexist")
-        except psycopg2.Error, e:
-            pass
+        except psycopg2.Error, exc:
+            e = exc
 
         e1 = pickle.loads(pickle.dumps(e))
 
