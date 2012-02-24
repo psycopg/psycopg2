@@ -513,11 +513,6 @@ pq_abort(connectionObject *conn)
     Dprintf("pq_abort: pgconn = %p, autocommit = %d, status = %d",
             conn->pgconn, conn->autocommit, conn->status);
 
-    if (conn->autocommit || conn->status != CONN_STATUS_BEGIN) {
-        Dprintf("pq_abort: no transaction to abort");
-        return 0;
-    }
-
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&conn->lock);
 
