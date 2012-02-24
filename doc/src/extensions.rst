@@ -325,6 +325,20 @@ details.
 
     .. versionadded:: 2.4.3
 
+    .. _cast-array-unknown:
+
+    .. note::
+
+        The function can be used to create a generic array typecaster,
+        returning a list of strings: just use the `~psycopg2.STRING` as base
+        typecaster. For instance, if you want to receive from the database an
+        array of :sql:`macaddr`, each address represented by string, you can
+        use::
+
+            psycopg2.extensions.register_type(
+                psycopg2.extensions.new_array_type(
+                    (1040,), 'MACADDR[]', psycopg2.STRING))
+
 
 .. function:: register_type(obj [, scope])
 

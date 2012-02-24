@@ -109,6 +109,13 @@ Transferring binary data from PostgreSQL 9.0 doesn't work.
     .. __: http://www.postgresql.org/docs/9.0/static/datatype-binary.html
     .. __: http://www.postgresql.org/docs/9.0/static/runtime-config-client.html#GUC-BYTEA-OUTPUT
 
+Arrays of *TYPE* are not casted to list.
+    Arrays are only casted to list when their oid is known, and an array
+    typecaster is registered for them. If there is no typecaster, the array is
+    returned unparsed from PostgreSQL (e.g. ``{a,b,c}``). It is easy to create
+    a generic arrays typecaster, returning a list of array: an example is
+    provided in the `~psycopg2.extensions.new_array_type()` documentation.
+
 
 Best practices
 --------------

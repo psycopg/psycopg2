@@ -294,7 +294,7 @@ the SQL string that would be sent to the database.
      `bytea_output`__ configuration parameter to ``escape``, either in the
      server configuration file or in the client session (using a query such as
      ``SET bytea_output TO escape;``) before receiving binary data.
-     
+
      .. __: http://www.postgresql.org/docs/9.0/static/datatype-binary.html
      .. __: http://www.postgresql.org/docs/9.0/static/runtime-config-client.html#GUC-BYTEA-OUTPUT
 
@@ -333,6 +333,14 @@ the SQL string that would be sent to the database.
 
     >>> cur.mogrify("SELECT %s;", ([10, 20, 30], ))
     'SELECT ARRAY[10, 20, 30];'
+
+  .. note::
+
+    Reading back from PostgreSQL, arrays are converted to list of Python
+    objects as expected, but only if the types are known one. Arrays of
+    unknown types are returned as represented by the database (e.g.
+    ``{a,b,c}``). You can easily create a typecaster for :ref:`array of
+    unknown types <cast-array-unknown>`.
 
 .. _adapt-tuple:
 
