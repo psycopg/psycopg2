@@ -664,13 +664,14 @@ _psyco_curs_prefetch(cursorObject *self)
     return i;
 }
 
-static PyObject *
+static int
 _psyco_curs_buildrow_fill(cursorObject *self, PyObject *res,
                           int row, int n, int istuple)
 {
     int i, len, err;
     const char *str;
     PyObject *val;
+    int rv = -1;
 
     for (i=0; i < n; i++) {
         if (PQgetisnull(self->pgres, row, i)) {
@@ -685,59 +686,59 @@ _psyco_curs_buildrow_fill(cursorObject *self, PyObject *res,
         Dprintf("_psyco_curs_buildrow: row %ld, element %d, len %d",
                 self->row, i, len);
 
-        val = typecast_cast(PyTuple_GET_ITEM(self->casts, i), str, len,
-                            (PyObject*)self);
+        if (!(val = typecast_cast(PyTuple_GET_ITEM(self->casts, i), str, len,
+                            (PyObject*)self))) {
+            goto exit;
+        }
 
-        if (val) {
-            Dprintf("_psyco_curs_buildrow: val->refcnt = "
-                FORMAT_CODE_PY_SSIZE_T,
-                Py_REFCNT(val)
-              );
-            if (istuple) {
-                PyTuple_SET_ITEM(res, i, val);
-            }
-            else {
-                err = PySequence_SetItem(res, i, val);
-                Py_DECREF(val);
-                if (err == -1) {
-                    Py_DECREF(res);
-                    res = NULL;
-                    break;
-                }
-            }
+        Dprintf("_psyco_curs_buildrow: val->refcnt = "
+            FORMAT_CODE_PY_SSIZE_T,
+            Py_REFCNT(val)
+          );
+        if (istuple) {
+            PyTuple_SET_ITEM(res, i, val);
         }
         else {
-            /* an error occurred in the type system, we return NULL to raise
-               an exception. the typecast code should already have set the
-               exception type and text */
-            Py_DECREF(res);
-            res = NULL;
-            break;
+            err = PySequence_SetItem(res, i, val);
+            Py_DECREF(val);
+            if (err == -1) { goto exit; }
         }
     }
-    return res;
+
+    rv = 0;
+
+exit:
+    return rv;
 }
 
 static PyObject *
 _psyco_curs_buildrow(cursorObject *self, int row)
 {
     int n;
+    int istuple;
+    PyObject *t = NULL;
+    PyObject *rv = NULL;
 
     n = PQnfields(self->pgres);
-    return _psyco_curs_buildrow_fill(self, PyTuple_New(n), row, n, 1);
-}
+    istuple = (self->tuple_factory == Py_None);
 
-static PyObject *
-_psyco_curs_buildrow_with_factory(cursorObject *self, int row)
-{
-    int n;
-    PyObject *res;
+    if (istuple) {
+        t = PyTuple_New(n);
+    }
+    else {
+        t = PyObject_CallFunctionObjArgs(self->tuple_factory, self, NULL);
+    }
+    if (!t) { goto exit; }
 
-    n = PQnfields(self->pgres);
-    if (!(res = PyObject_CallFunctionObjArgs(self->tuple_factory, self, NULL)))
-        return NULL;
+    if (0 == _psyco_curs_buildrow_fill(self, t, row, n, istuple)) {
+        rv = t;
+        t = NULL;
+    }
 
-    return _psyco_curs_buildrow_fill(self, res, row, n, 0);
+exit:
+    Py_XDECREF(t);
+    return rv;
+
 }
 
 static PyObject *
@@ -769,11 +770,7 @@ psyco_curs_fetchone(cursorObject *self, PyObject *args)
         return Py_None;
     }
 
-    if (self->tuple_factory == Py_None)
-        res = _psyco_curs_buildrow(self, self->row);
-    else
-        res = _psyco_curs_buildrow_with_factory(self, self->row);
-
+    res = _psyco_curs_buildrow(self, self->row);
     self->row++; /* move the counter to next line */
 
     /* if the query was async aggresively free pgres, to allow
@@ -820,11 +817,7 @@ psyco_curs_next_named(cursorObject *self)
         return NULL;
     }
 
-    if (self->tuple_factory == Py_None)
-        res = _psyco_curs_buildrow(self, self->row);
-    else
-        res = _psyco_curs_buildrow_with_factory(self, self->row);
-
+    res = _psyco_curs_buildrow(self, self->row);
     self->row++; /* move the counter to next line */
 
     /* if the query was async aggresively free pgres, to allow
@@ -900,10 +893,7 @@ psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
     list = PyList_New(size);
 
     for (i = 0; i < size; i++) {
-        if (self->tuple_factory == Py_None)
-            res = _psyco_curs_buildrow(self, self->row);
-        else
-            res = _psyco_curs_buildrow_with_factory(self, self->row);
+        res = _psyco_curs_buildrow(self, self->row);
 
         self->row++;
 
@@ -965,10 +955,7 @@ psyco_curs_fetchall(cursorObject *self, PyObject *args)
     list = PyList_New(size);
 
     for (i = 0; i < size; i++) {
-        if (self->tuple_factory == Py_None)
-            res = _psyco_curs_buildrow(self, self->row);
-        else
-            res = _psyco_curs_buildrow_with_factory(self, self->row);
+        res = _psyco_curs_buildrow(self, self->row);
 
         self->row++;
 
