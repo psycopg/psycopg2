@@ -120,8 +120,16 @@ conn_notice_process(connectionObject *self)
 
         /* Respect the order in which notices were produced,
            because in notice_list they are reversed (see ticket #9) */
-        PyList_Insert(self->notice_list, nnotices, msg);
-        Py_DECREF(msg);
+        if (msg) {
+            PyList_Insert(self->notice_list, nnotices, msg);
+            Py_DECREF(msg);
+        }
+        else {
+            /* We don't really have a way to report errors, so gulp it.
+             * The function should only fail for out of memory, so we are
+             * likely going to die anyway. */
+            PyErr_Clear();
+        }
 
         notice = notice->next;
     }
