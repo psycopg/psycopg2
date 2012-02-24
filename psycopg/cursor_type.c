@@ -844,7 +844,9 @@ static PyObject *
 psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
 {
     int i;
-    PyObject *list, *res;
+    PyObject *list = NULL;
+    PyObject *row = NULL;
+    PyObject *rv = NULL;
 
     PyObject *pysize = NULL;
     long int size = self->arraysize;
@@ -875,8 +877,8 @@ psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
         EXC_IF_TPC_PREPARED(self->conn, fetchone);
         PyOS_snprintf(buffer, 127, "FETCH FORWARD %d FROM \"%s\"",
             (int)size, self->name);
-        if (pq_execute(self, buffer, 0) == -1) return NULL;
-        if (_psyco_curs_prefetch(self) < 0) return NULL;
+        if (pq_execute(self, buffer, 0) == -1) { goto exit; }
+        if (_psyco_curs_prefetch(self) < 0) { goto exit; }
     }
 
     /* make sure size is not > than the available number of rows */
@@ -887,23 +889,21 @@ psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
     Dprintf("psyco_curs_fetchmany: size = %ld", size);
 
     if (size <= 0) {
-        return PyList_New(0);
+        rv = PyList_New(0);
+        goto exit;
     }
 
-    list = PyList_New(size);
+    if (!(list = PyList_New(size))) { goto exit; }
 
     for (i = 0; i < size; i++) {
-        res = _psyco_curs_buildrow(self, self->row);
-
+        row = _psyco_curs_buildrow(self, self->row);
         self->row++;
 
-        if (res == NULL) {
-            Py_DECREF(list);
-            return NULL;
-        }
+        if (row == NULL) { goto exit; }
 
-        PyList_SET_ITEM(list, i, res);
+        PyList_SET_ITEM(list, i, row);
     }
+    row = NULL;
 
     /* if the query was async aggresively free pgres, to allow
        successive requests to reallocate it */
@@ -912,7 +912,15 @@ psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
         && PyWeakref_GetObject(self->conn->async_cursor) == (PyObject*)self)
         IFCLEARPGRES(self->pgres);
 
-    return list;
+    /* success */
+    rv = list;
+    list = NULL;
+
+exit:
+    Py_XDECREF(list);
+    Py_XDECREF(row);
+
+    return rv;
 }
 
 
@@ -929,7 +937,9 @@ static PyObject *
 psyco_curs_fetchall(cursorObject *self, PyObject *args)
 {
     int i, size;
-    PyObject *list, *res;
+    PyObject *list = NULL;
+    PyObject *row = NULL;
+    PyObject *rv = NULL;
 
     EXC_IF_CURS_CLOSED(self);
     if (_psyco_curs_prefetch(self) < 0) return NULL;
@@ -942,30 +952,27 @@ psyco_curs_fetchall(cursorObject *self, PyObject *args)
         EXC_IF_ASYNC_IN_PROGRESS(self, fetchall);
         EXC_IF_TPC_PREPARED(self->conn, fetchall);
         PyOS_snprintf(buffer, 127, "FETCH FORWARD ALL FROM \"%s\"", self->name);
-        if (pq_execute(self, buffer, 0) == -1) return NULL;
-        if (_psyco_curs_prefetch(self) < 0) return NULL;
+        if (pq_execute(self, buffer, 0) == -1) { goto exit; }
+        if (_psyco_curs_prefetch(self) < 0) { goto exit; }
     }
 
     size = self->rowcount - self->row;
 
     if (size <= 0) {
-        return PyList_New(0);
+        rv = PyList_New(0);
+        goto exit;
     }
 
-    list = PyList_New(size);
+    if (!(list = PyList_New(size))) { goto exit; }
 
     for (i = 0; i < size; i++) {
-        res = _psyco_curs_buildrow(self, self->row);
-
+        row = _psyco_curs_buildrow(self, self->row);
         self->row++;
+        if (row == NULL) { goto exit; }
 
-        if (res == NULL) {
-            Py_DECREF(list);
-            return NULL;
-        }
-
-        PyList_SET_ITEM(list, i, res);
+        PyList_SET_ITEM(list, i, row);
     }
+    row = NULL;
 
     /* if the query was async aggresively free pgres, to allow
        successive requests to reallocate it */
@@ -974,7 +981,15 @@ psyco_curs_fetchall(cursorObject *self, PyObject *args)
         && PyWeakref_GetObject(self->conn->async_cursor) == (PyObject*)self)
         IFCLEARPGRES(self->pgres);
 
-    return list;
+    /* success */
+    rv = list;
+    list = NULL;
+
+exit:
+    Py_XDECREF(list);
+    Py_XDECREF(row);
+
+    return rv;
 }
 
 
