@@ -38,6 +38,7 @@
  * Return a borrowed reference.
  */
 
+CPYCHECKER_RETURNS_BORROWED_REF
 PyObject *
 curs_get_cast(cursorObject *self, PyObject *oid)
 {

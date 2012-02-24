@@ -550,6 +550,7 @@ psyco_conn_autocommit_get(connectionObject *self)
     return ret;
 }
 
+CPYCHECKER_RETURNS_BORROWED_REF
 static PyObject *
 _psyco_conn_autocommit_set_checks(connectionObject *self)
 {
