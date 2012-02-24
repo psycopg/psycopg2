@@ -444,33 +444,34 @@ pq_commit(connectionObject *conn)
     PGresult *pgres = NULL;
     char *error = NULL;
 
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&conn->lock);
+
     Dprintf("pq_commit: pgconn = %p, autocommit = %d, status = %d",
             conn->pgconn, conn->autocommit, conn->status);
 
     if (conn->autocommit || conn->status != CONN_STATUS_BEGIN) {
         Dprintf("pq_commit: no transaction to commit");
-        return 0;
+        retvalue = 0;
     }
-
-    Py_BEGIN_ALLOW_THREADS;
-    pthread_mutex_lock(&conn->lock);
-    conn->mark += 1;
-
-    retvalue = pq_execute_command_locked(conn, "COMMIT", &pgres, &error, &_save);
+    else {
+        conn->mark += 1;
+        retvalue = pq_execute_command_locked(conn, "COMMIT", &pgres, &error, &_save);
+    }
 
     Py_BLOCK_THREADS;
     conn_notice_process(conn);
     Py_UNBLOCK_THREADS;
+
+    /* Even if an error occurred, the connection will be rolled back,
+       so we unconditionally set the connection status here. */
+    conn->status = CONN_STATUS_READY;
 
     pthread_mutex_unlock(&conn->lock);
     Py_END_ALLOW_THREADS;
 
     if (retvalue < 0)
         pq_complete_error(conn, &pgres, &error);
-
-    /* Even if an error occurred, the connection will be rolled back,
-       so we unconditionally set the connection status here. */
-    conn->status = CONN_STATUS_READY;
 
     return retvalue;
 }
