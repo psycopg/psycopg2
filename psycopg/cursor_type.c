@@ -217,7 +217,10 @@ _mogrify(PyObject *var, PyObject *fmt, cursorObject *curs, PyObject **new)
             }
 
             if (n == NULL) {
-                n = PyTuple_New(PyObject_Length(var));
+                if (!(n = PyTuple_New(PyObject_Length(var)))) {
+                    Py_DECREF(value);
+                    return -1;
+                }
             }
 
             /* let's have d point just after the '%' */
