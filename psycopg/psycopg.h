@@ -127,9 +127,13 @@ HIDDEN char *psycopg_escape_string(PyObject *conn,
               const char *from, Py_ssize_t len, char *to, Py_ssize_t *tolen);
 HIDDEN char *psycopg_escape_identifier_easy(const char *from, Py_ssize_t len);
 HIDDEN char *psycopg_strdup(const char *from, Py_ssize_t len);
-HIDDEN PyObject * psycopg_ensure_bytes(PyObject *obj);
-HIDDEN PyObject * psycopg_ensure_text(PyObject *obj);
 HIDDEN int psycopg_is_text_file(PyObject *f);
+
+CPYCHECKER_STEALS_REFERENCE_TO_ARG(1)
+HIDDEN PyObject * psycopg_ensure_bytes(PyObject *obj);
+
+CPYCHECKER_STEALS_REFERENCE_TO_ARG(1)
+HIDDEN PyObject * psycopg_ensure_text(PyObject *obj);
 
 /* Exceptions docstrings */
 #define Error_doc \

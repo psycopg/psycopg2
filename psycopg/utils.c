@@ -139,6 +139,7 @@ psycopg_strdup(const char *from, Py_ssize_t len)
  *
  * It is safe to call the function on NULL.
  */
+CPYCHECKER_STEALS_REFERENCE_TO_ARG(1)
 PyObject *
 psycopg_ensure_bytes(PyObject *obj)
 {
@@ -169,6 +170,7 @@ psycopg_ensure_bytes(PyObject *obj)
  * The function is ref neutral: steals a ref from obj and adds one to the
  * return value.  It is safe to call it on NULL.
  */
+CPYCHECKER_STEALS_REFERENCE_TO_ARG(1)
 PyObject *
 psycopg_ensure_text(PyObject *obj)
 {
