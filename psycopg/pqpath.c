@@ -249,7 +249,7 @@ pq_clear_critical(connectionObject *conn)
     }
 }
 
-static PyObject *
+static void
 pq_resolve_critical(connectionObject *conn, int close)
 {
     Dprintf("pq_resolve_critical: resolving %s", conn->critical);
@@ -264,11 +264,10 @@ pq_resolve_critical(connectionObject *conn, int close)
 
         /* we don't want to destroy this connection but just close it */
         if (close == 1) conn_close(conn);
-    
+
         /* remember to clear the critical! */
-        pq_clear_critical(conn);    
+        pq_clear_critical(conn);
     }
-    return NULL;
 }
 
 /* pq_clear_async - clear the effects of a previous async query
