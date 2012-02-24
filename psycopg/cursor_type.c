@@ -996,7 +996,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
     if (!PyArg_ParseTuple(args, "s#|O",
           &procname, &procname_len, &parameters
        ))
-    { return NULL; }
+    { goto exit; }
 
     EXC_IF_CURS_CLOSED(self);
     EXC_IF_ASYNC_IN_PROGRESS(self, callproc);
@@ -1005,10 +1005,10 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
     if (self->name != NULL) {
         psyco_set_error(ProgrammingError, self,
                          "can't call .callproc() on named cursors", NULL, NULL);
-        return NULL;
+        goto exit;
     }
 
-    if(parameters != Py_None) {
+    if (parameters != Py_None) {
         nparameters = PyObject_Length(parameters);
         if (nparameters < 0) nparameters = 0;
     }
@@ -1017,7 +1017,8 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
     sl = procname_len + 17 + nparameters*3 - (nparameters ? 1 : 0);
     sql = (char*)PyMem_Malloc(sl);
     if (sql == NULL) {
-        return PyErr_NoMemory();
+        PyErr_NoMemory();
+        goto exit;
     }
 
     sprintf(sql, "SELECT * FROM %s(", procname);
@@ -1027,15 +1028,16 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
     sql[sl-2] = ')';
     sql[sl-1] = '\0';
 
-    operation = Bytes_FromString(sql);
-    PyMem_Free((void*)sql);
+    if (!(operation = Bytes_FromString(sql))) { goto exit; }
 
     if (_psyco_curs_execute(self, operation, parameters, self->conn->async)) {
         Py_INCREF(parameters);
         res = parameters;
     }
 
-    Py_DECREF(operation);
+exit:
+    Py_XDECREF(operation);
+    PyMem_Free((void*)sql);
     return res;
 }
 
