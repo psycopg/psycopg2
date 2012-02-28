@@ -440,7 +440,7 @@ class UUID_adapter(object):
     """Adapt Python's uuid.UUID__ type to PostgreSQL's uuid__.
 
     .. __: http://docs.python.org/library/uuid.html
-    .. __: http://www.postgresql.org/docs/8.4/static/datatype-uuid.html
+    .. __: http://www.postgresql.org/docs/current/static/datatype-uuid.html
     """
 
     def __init__(self, uuid):

@@ -43,8 +43,8 @@ The module interface respects the standard defined in the |DBAPI|_.
     Also note that the same parameters can be passed to the client library
     using `environment variables`__.
 
-    .. __: http://www.postgresql.org/docs/9.1/static/libpq-connect.html#LIBPQ-PQCONNECTDBPARAMS
-    .. __: http://www.postgresql.org/docs/9.1/static/libpq-envars.html
+    .. __: http://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-PQCONNECTDBPARAMS
+    .. __: http://www.postgresql.org/docs/current/static/libpq-envars.html
 
     Using the *connection_factory* parameter a different class or
     connections factory can be specified. It should be a callable object
