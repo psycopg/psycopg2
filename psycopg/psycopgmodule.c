@@ -596,10 +596,11 @@ psyco_errors_set(PyObject *type)
     }
 }
 
-/* psyco_error_new
+/* psyco_set_error
 
    Create a new error of the given type with extra attributes. */
 
+CPYCHECKER_SETS_EXCEPTION
 void
 psyco_set_error(PyObject *exc, cursorObject *curs, const char *msg,
                 const char *pgerror, const char *pgcode)

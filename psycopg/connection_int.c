@@ -370,6 +370,7 @@ exit:
 }
 
 
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 int
 conn_get_isolation_level(connectionObject *self)
 {
@@ -947,6 +948,7 @@ conn_close(connectionObject *self)
 
 /* conn_commit - commit on a connection */
 
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 int
 conn_commit(connectionObject *self)
 {
@@ -958,6 +960,7 @@ conn_commit(connectionObject *self)
 
 /* conn_rollback - rollback a connection */
 
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 int
 conn_rollback(connectionObject *self)
 {
@@ -1040,6 +1043,7 @@ conn_set_autocommit(connectionObject *self, int value)
 
 /* conn_switch_isolation_level - switch isolation level on the connection */
 
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 int
 conn_switch_isolation_level(connectionObject *self, int level)
 {
@@ -1122,12 +1126,13 @@ endlock:
 
 /* conn_set_client_encoding - switch client encoding on connection */
 
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 int
 conn_set_client_encoding(connectionObject *self, const char *enc)
 {
     PGresult *pgres = NULL;
     char *error = NULL;
-    int res = 1;
+    int res = -1;
     char *codec = NULL;
     char *clean_enc = NULL;
 
@@ -1195,6 +1200,7 @@ exit:
  * in regular transactions, as PostgreSQL won't even know we are in a TPC
  * until PREPARE. */
 
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 int
 conn_tpc_begin(connectionObject *self, XidObject *xid)
 {
@@ -1229,6 +1235,7 @@ conn_tpc_begin(connectionObject *self, XidObject *xid)
  * The function doesn't change the connection state as it can be used
  * for many commands and for recovered transactions. */
 
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 int
 conn_tpc_command(connectionObject *self, const char *cmd, XidObject *xid)
 {

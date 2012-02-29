@@ -638,7 +638,7 @@ psyco_conn_set_client_encoding(connectionObject *self, PyObject *args)
 
     if (!PyArg_ParseTuple(args, "s", &enc)) return NULL;
 
-    if (conn_set_client_encoding(self, enc) == 0) {
+    if (conn_set_client_encoding(self, enc) >= 0) {
         Py_INCREF(Py_None);
         rv = Py_None;
     }

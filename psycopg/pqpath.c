@@ -64,6 +64,7 @@ strip_severity(const char *msg)
    code.  A list of error codes can be found at:
 
    http://www.postgresql.org/docs/current/static/errcodes-appendix.html */
+CPYCHECKER_RETURNS_BORROWED_REF
 static PyObject *
 exception_from_sqlstate(const char *sqlstate)
 {
@@ -151,6 +152,7 @@ exception_from_sqlstate(const char *sqlstate)
 
    This function should be called while holding the GIL. */
 
+CPYCHECKER_SETS_EXCEPTION
 static void
 pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres)
 {
@@ -164,7 +166,7 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres)
             "psycopg went psycotic and raised a null error");
         return;
     }
-    
+
     /* if the connection has somehow beed broken, we mark the connection
        object as closed but requiring cleanup */
     if (conn->pgconn != NULL && PQstatus(conn->pgconn) == CONNECTION_BAD)
@@ -249,7 +251,10 @@ pq_clear_critical(connectionObject *conn)
     }
 }
 
-static void
+/* return -1 if the exception is set (i.e. if conn->critical is set),
+ * else 0 */
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
+static int
 pq_resolve_critical(connectionObject *conn, int close)
 {
     Dprintf("pq_resolve_critical: resolving %s", conn->critical);
@@ -267,7 +272,10 @@ pq_resolve_critical(connectionObject *conn, int close)
 
         /* remember to clear the critical! */
         pq_clear_critical(conn);
+
+        return -1;
     }
+    return 0;
 }
 
 /* pq_clear_async - clear the effects of a previous async query
@@ -381,6 +389,7 @@ cleanup:
    This function should be called while holding the global interpreter
    lock.
  */
+CPYCHECKER_SETS_EXCEPTION
 void
 pq_complete_error(connectionObject *conn, PGresult **pgres, char **error)
 {
@@ -474,6 +483,7 @@ pq_commit(connectionObject *conn)
     return retvalue;
 }
 
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 int
 pq_abort_locked(connectionObject *conn, PGresult **pgres, char **error,
                 PyThreadState **tstate)
@@ -501,6 +511,7 @@ pq_abort_locked(connectionObject *conn, PGresult **pgres, char **error,
    This function should be called while holding the global interpreter
    lock. */
 
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 int
 pq_abort(connectionObject *conn)
 {
@@ -543,6 +554,7 @@ pq_abort(connectionObject *conn)
    connection without holding the global interpreter lock.
 */
 
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 int
 pq_reset_locked(connectionObject *conn, PGresult **pgres, char **error,
                 PyThreadState **tstate)
@@ -835,6 +847,7 @@ pq_flush(connectionObject *conn)
    this fucntion locks the connection object
    this function call Py_*_ALLOW_THREADS macros */
 
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 int
 pq_execute(cursorObject *curs, const char *query, int async)
 {
@@ -845,8 +858,7 @@ pq_execute(cursorObject *curs, const char *query, int async)
     /* if the status of the connection is critical raise an exception and
        definitely close the connection */
     if (curs->conn->critical) {
-        pq_resolve_critical(curs->conn, 1);
-        return -1;
+        return pq_resolve_critical(curs->conn, 1);
     }
 
     /* check status of connection, raise error if not OK */
@@ -941,7 +953,7 @@ pq_execute(cursorObject *curs, const char *query, int async)
        to respect the old DBAPI-2.0 compatible behaviour */
     if (async == 0) {
         Dprintf("pq_execute: entering syncronous DBAPI compatibility mode");
-        if (pq_fetch(curs) == -1) return -1;
+        if (pq_fetch(curs) < 0) return -1;
     }
     else {
         curs->conn->async_status = async_status;
@@ -1015,6 +1027,7 @@ pq_get_last_result(connectionObject *conn)
       1 - result from backend (possibly data is ready)
 */
 
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 static int
 _pq_fetch_tuples(cursorObject *curs)
 {
@@ -1415,8 +1428,7 @@ pq_fetch(cursorObject *curs)
         Dprintf("pq_fetch: got a NULL pgres, checking for critical");
         pq_set_critical(curs->conn);
         if (curs->conn->critical) {
-            pq_resolve_critical(curs->conn);
-            return -1;
+            return pq_resolve_critical(curs->conn);
         }
         else {
             return 0;
@@ -1492,13 +1504,7 @@ pq_fetch(cursorObject *curs)
        raise the exception but we avoid to close the connection) */
     Dprintf("pq_fetch: fetching done; check for critical errors");
     if (curs->conn->critical) {
-        if (ex == -1) {
-            pq_resolve_critical(curs->conn, 1);
-        }
-        else {
-            pq_resolve_critical(curs->conn, 0);
-        }
-        return -1;
+        return pq_resolve_critical(curs->conn, ex == -1 ? 1 : 0);
     }
 
     return ex;

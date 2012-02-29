@@ -131,6 +131,7 @@ typedef struct {
 /* C-callable functions in connection_int.c and connection_ext.c */
 HIDDEN PyObject *conn_text_from_chars(connectionObject *pgconn, const char *str);
 HIDDEN int  conn_get_standard_conforming_strings(PGconn *pgconn);
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 HIDDEN int  conn_get_isolation_level(connectionObject *self);
 HIDDEN int  conn_get_protocol_version(PGconn *pgconn);
 HIDDEN int  conn_get_server_version(PGconn *pgconn);
@@ -141,16 +142,22 @@ HIDDEN void conn_notifies_process(connectionObject *self);
 HIDDEN int  conn_setup(connectionObject *self, PGconn *pgconn);
 HIDDEN int  conn_connect(connectionObject *self, long int async);
 HIDDEN void conn_close(connectionObject *self);
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 HIDDEN int  conn_commit(connectionObject *self);
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 HIDDEN int  conn_rollback(connectionObject *self);
 HIDDEN int  conn_set_session(connectionObject *self, const char *isolevel,
                                  const char *readonly, const char *deferrable,
                                  int autocommit);
 HIDDEN int  conn_set_autocommit(connectionObject *self, int value);
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 HIDDEN int  conn_switch_isolation_level(connectionObject *self, int level);
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 HIDDEN int  conn_set_client_encoding(connectionObject *self, const char *enc);
 HIDDEN int  conn_poll(connectionObject *self);
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 HIDDEN int  conn_tpc_begin(connectionObject *self, XidObject *xid);
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 HIDDEN int  conn_tpc_command(connectionObject *self,
                              const char *cmd, XidObject *xid);
 HIDDEN PyObject *conn_tpc_recover(connectionObject *self);

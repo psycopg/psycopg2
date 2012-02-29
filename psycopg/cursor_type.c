@@ -75,6 +75,7 @@ psyco_curs_close(cursorObject *self, PyObject *args)
 
 /* mogrify a query string and build argument array or dict */
 
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 static int
 _mogrify(PyObject *var, PyObject *fmt, cursorObject *curs, PyObject **new)
 {
@@ -359,11 +360,13 @@ _psyco_curs_merge_query_args(cursorObject *self,
 #define psyco_curs_execute_doc \
 "execute(query, vars=None) -- Execute query with bound vars."
 
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 static int
 _psyco_curs_execute(cursorObject *self,
                     PyObject *operation, PyObject *vars, long int async)
 {
-    int res = 0;
+    int res = -1;
+    int tmp;
     PyObject *fquery, *cvt = NULL;
 
     operation = _psyco_curs_validate_sql_basic(self, operation);
@@ -371,7 +374,7 @@ _psyco_curs_execute(cursorObject *self,
     /* Any failure from here forward should 'goto fail' rather than 'return 0'
        directly. */
 
-    if (operation == NULL) { goto fail; }
+    if (operation == NULL) { goto exit; }
 
     IFCLEARPGRES(self->pgres);
 
@@ -388,12 +391,12 @@ _psyco_curs_execute(cursorObject *self,
 
     if (vars && vars != Py_None)
     {
-        if(_mogrify(vars, operation, self, &cvt) == -1) { goto fail; }
+        if (0 > _mogrify(vars, operation, self, &cvt)) { goto exit; }
     }
 
     if (vars && cvt) {
         if (!(fquery = _psyco_curs_merge_query_args(self, operation, cvt))) {
-            goto fail;
+            goto exit;
         }
 
         if (self->name != NULL) {
@@ -427,25 +430,20 @@ _psyco_curs_execute(cursorObject *self,
 
     /* At this point, the SQL statement must be str, not unicode */
 
-    res = pq_execute(self, Bytes_AS_STRING(self->query), async);
-    Dprintf("psyco_curs_execute: res = %d, pgres = %p", res, self->pgres);
-    if (res == -1) { goto fail; }
+    tmp = pq_execute(self, Bytes_AS_STRING(self->query), async);
+    Dprintf("psyco_curs_execute: res = %d, pgres = %p", tmp, self->pgres);
+    if (tmp < 0) { goto exit; }
 
-    res = 1; /* Success */
-    goto cleanup;
+    res = 0; /* Success */
 
-    fail:
-        res = 0;
-        /* Fall through to cleanup */
-    cleanup:
-        /* Py_XDECREF(operation) is safe because the original reference passed
-           by the caller was overwritten with either NULL or a new
-           reference */
-        Py_XDECREF(operation);
+exit:
+    /* Py_XDECREF(operation) is safe because the original reference passed
+       by the caller was overwritten with either NULL or a new
+       reference */
+    Py_XDECREF(operation);
+    Py_XDECREF(cvt);
 
-        Py_XDECREF(cvt);
-
-        return res;
+    return res;
 }
 
 static PyObject *
@@ -479,13 +477,13 @@ psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
     EXC_IF_ASYNC_IN_PROGRESS(self, execute);
     EXC_IF_TPC_PREPARED(self->conn, execute);
 
-    if (_psyco_curs_execute(self, operation, vars, self->conn->async)) {
-        Py_INCREF(Py_None);
-        return Py_None;
-    }
-    else {
+    if (0 > _psyco_curs_execute(self, operation, vars, self->conn->async)) {
         return NULL;
     }
+
+    /* success */
+    Py_INCREF(Py_None);
+    return Py_None;
 }
 
 #define psyco_curs_executemany_doc \
@@ -524,7 +522,7 @@ psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
     }
 
     while ((v = PyIter_Next(vars)) != NULL) {
-        if (_psyco_curs_execute(self, operation, v, 0) == 0) {
+        if (0 > _psyco_curs_execute(self, operation, v, 0)) {
             Py_DECREF(v);
             Py_XDECREF(iter);
             return NULL;
@@ -571,7 +569,7 @@ _psyco_curs_mogrify(cursorObject *self,
 
     if (vars && vars != Py_None)
     {
-        if (_mogrify(vars, operation, self, &cvt) == -1) {
+        if (0 > _mogrify(vars, operation, self, &cvt)) {
             goto cleanup;
         }
     }
@@ -647,6 +645,7 @@ psyco_curs_cast(cursorObject *self, PyObject *args)
 "default) or using the sequence factory previously set in the\n" \
 "`row_factory` attribute. Return `!None` when no more data is available.\n"
 
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 static int
 _psyco_curs_prefetch(cursorObject *self)
 {
@@ -664,6 +663,7 @@ _psyco_curs_prefetch(cursorObject *self)
     return i;
 }
 
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 static int
 _psyco_curs_buildrow_fill(cursorObject *self, PyObject *res,
                           int row, int n, int istuple)
@@ -1045,7 +1045,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
 
     if (!(operation = Bytes_FromString(sql))) { goto exit; }
 
-    if (_psyco_curs_execute(self, operation, parameters, self->conn->async)) {
+    if (0 <= _psyco_curs_execute(self, operation, parameters, self->conn->async)) {
         Py_INCREF(parameters);
         res = parameters;
     }

@@ -35,17 +35,22 @@
 
 /* exported functions */
 HIDDEN PGresult *pq_get_last_result(connectionObject *conn);
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 HIDDEN int pq_fetch(cursorObject *curs);
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 HIDDEN int pq_execute(cursorObject *curs, const char *query, int async);
 HIDDEN int pq_send_query(connectionObject *conn, const char *query);
 HIDDEN int pq_begin_locked(connectionObject *conn, PGresult **pgres,
                            char **error, PyThreadState **tstate);
 HIDDEN int pq_commit(connectionObject *conn);
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 HIDDEN int pq_abort_locked(connectionObject *conn, PGresult **pgres,
                            char **error, PyThreadState **tstate);
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 HIDDEN int pq_abort(connectionObject *conn);
 HIDDEN int pq_reset_locked(connectionObject *conn, PGresult **pgres,
                             char **error, PyThreadState **tstate);
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 HIDDEN int pq_reset(connectionObject *conn);
 HIDDEN char *pq_get_guc_locked(connectionObject *conn, const char *param,
                                PGresult **pgres,
@@ -69,6 +74,7 @@ HIDDEN int pq_execute_command_locked(connectionObject *conn,
                                      const char *query,
                                      PGresult **pgres, char **error,
                                      PyThreadState **tstate);
+CPYCHECKER_SETS_EXCEPTION
 HIDDEN void pq_complete_error(connectionObject *conn, PGresult **pgres,
                               char **error);
 

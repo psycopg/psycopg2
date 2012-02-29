@@ -120,6 +120,7 @@ HIDDEN PyObject *psyco_GetDecimalType(void);
 typedef struct cursorObject cursorObject;
 
 /* some utility functions */
+CPYCHECKER_SETS_EXCEPTION
 HIDDEN void psyco_set_error(PyObject *exc, cursorObject *curs, const char *msg,
                             const char *pgerror, const char *pgcode);
 
