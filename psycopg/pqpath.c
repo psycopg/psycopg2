@@ -956,9 +956,10 @@ pq_execute(cursorObject *curs, const char *query, int async)
         if (pq_fetch(curs) < 0) return -1;
     }
     else {
+        PyObject *tmp;
         curs->conn->async_status = async_status;
-        curs->conn->async_cursor = PyWeakref_NewRef((PyObject *)curs, NULL);
-        if (!curs->conn->async_cursor) {
+        curs->conn->async_cursor = tmp = PyWeakref_NewRef((PyObject *)curs, NULL);
+        if (!tmp) {
             /* weakref creation failed */
             return -1;
         }
