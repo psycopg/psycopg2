@@ -162,31 +162,31 @@ static double round(double num)
 
 /* decorators for the gcc cpychecker plugin */
 #if defined(WITH_CPYCHECKER_RETURNS_BORROWED_REF_ATTRIBUTE)
-#define CPYCHECKER_RETURNS_BORROWED_REF \
+#define BORROWED \
     __attribute__((cpychecker_returns_borrowed_ref))
 #else
-#define CPYCHECKER_RETURNS_BORROWED_REF
+#define BORROWED
 #endif
 
 #if defined(WITH_CPYCHECKER_STEALS_REFERENCE_TO_ARG_ATTRIBUTE)
-#define CPYCHECKER_STEALS_REFERENCE_TO_ARG(n) \
+#define STEALS(n) \
     __attribute__((cpychecker_steals_reference_to_arg(n)))
 #else
-#define CPYCHECKER_STEALS_REFERENCE_TO_ARG(n)
+#define STEALS(n)
 #endif
 
 #if defined(WITH_CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION_ATTRIBUTE)
-#define CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION \
+#define RAISES_NEG \
     __attribute__((cpychecker_negative_result_sets_exception))
 #else
-#define CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
+#define RAISES_NEG
 #endif
 
 #if defined(WITH_CPYCHECKER_SETS_EXCEPTION_ATTRIBUTE)
-#define CPYCHECKER_SETS_EXCEPTION \
+#define RAISES \
     __attribute__((cpychecker_sets_exception))
 #else
-#define CPYCHECKER_SETS_EXCEPTION
+#define RAISES
 #endif
 
 #endif /* !defined(PSYCOPG_CONFIG_H) */

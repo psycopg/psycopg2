@@ -116,8 +116,7 @@ psycopg_escape_identifier_easy(const char *from, Py_ssize_t len)
  * Store the return in 'to' and return 0 in case of success, else return -1
  * and raise an exception.
  */
-CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
-int
+RAISES_NEG int
 psycopg_strdup(char **to, const char *from, Py_ssize_t len)
 {
     if (!len) { len = strlen(from); }
@@ -139,8 +138,7 @@ psycopg_strdup(char **to, const char *from, Py_ssize_t len)
  *
  * It is safe to call the function on NULL.
  */
-CPYCHECKER_STEALS_REFERENCE_TO_ARG(1)
-PyObject *
+STEALS(1) PyObject *
 psycopg_ensure_bytes(PyObject *obj)
 {
     PyObject *rv = NULL;
@@ -170,8 +168,7 @@ psycopg_ensure_bytes(PyObject *obj)
  * The function is ref neutral: steals a ref from obj and adds one to the
  * return value.  It is safe to call it on NULL.
  */
-CPYCHECKER_STEALS_REFERENCE_TO_ARG(1)
-PyObject *
+STEALS(1) PyObject *
 psycopg_ensure_text(PyObject *obj)
 {
 #if PY_MAJOR_VERSION < 3

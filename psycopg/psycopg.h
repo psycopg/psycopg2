@@ -120,8 +120,7 @@ HIDDEN PyObject *psyco_GetDecimalType(void);
 typedef struct cursorObject cursorObject;
 
 /* some utility functions */
-CPYCHECKER_SETS_EXCEPTION
-HIDDEN void psyco_set_error(PyObject *exc, cursorObject *curs, const char *msg,
+RAISES HIDDEN void psyco_set_error(PyObject *exc, cursorObject *curs, const char *msg,
                             const char *pgerror, const char *pgcode);
 
 HIDDEN char *psycopg_escape_string(PyObject *conn,
@@ -130,11 +129,9 @@ HIDDEN char *psycopg_escape_identifier_easy(const char *from, Py_ssize_t len);
 HIDDEN int psycopg_strdup(char **to, const char *from, Py_ssize_t len);
 HIDDEN int psycopg_is_text_file(PyObject *f);
 
-CPYCHECKER_STEALS_REFERENCE_TO_ARG(1)
-HIDDEN PyObject * psycopg_ensure_bytes(PyObject *obj);
+STEALS(1) HIDDEN PyObject * psycopg_ensure_bytes(PyObject *obj);
 
-CPYCHECKER_STEALS_REFERENCE_TO_ARG(1)
-HIDDEN PyObject * psycopg_ensure_text(PyObject *obj);
+STEALS(1) HIDDEN PyObject * psycopg_ensure_text(PyObject *obj);
 
 /* Exceptions docstrings */
 #define Error_doc \

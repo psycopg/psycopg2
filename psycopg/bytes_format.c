@@ -86,8 +86,7 @@
 
 /* Helpers for formatstring */
 
-CPYCHECKER_RETURNS_BORROWED_REF
-Py_LOCAL_INLINE(PyObject *)
+BORROWED Py_LOCAL_INLINE(PyObject *)
 getnextarg(PyObject *args, Py_ssize_t arglen, Py_ssize_t *p_argidx)
 {
     Py_ssize_t argidx = *p_argidx;

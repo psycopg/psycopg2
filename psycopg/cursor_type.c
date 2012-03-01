@@ -75,8 +75,7 @@ psyco_curs_close(cursorObject *self, PyObject *args)
 
 /* mogrify a query string and build argument array or dict */
 
-CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
-static int
+RAISES_NEG static int
 _mogrify(PyObject *var, PyObject *fmt, cursorObject *curs, PyObject **new)
 {
     PyObject *key, *value, *n;
@@ -360,8 +359,7 @@ _psyco_curs_merge_query_args(cursorObject *self,
 #define psyco_curs_execute_doc \
 "execute(query, vars=None) -- Execute query with bound vars."
 
-CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
-static int
+RAISES_NEG static int
 _psyco_curs_execute(cursorObject *self,
                     PyObject *operation, PyObject *vars, long int async)
 {
@@ -645,8 +643,7 @@ psyco_curs_cast(cursorObject *self, PyObject *args)
 "default) or using the sequence factory previously set in the\n" \
 "`row_factory` attribute. Return `!None` when no more data is available.\n"
 
-CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
-static int
+RAISES_NEG static int
 _psyco_curs_prefetch(cursorObject *self)
 {
     int i = 0;
@@ -663,8 +660,7 @@ _psyco_curs_prefetch(cursorObject *self)
     return i;
 }
 
-CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
-static int
+RAISES_NEG static int
 _psyco_curs_buildrow_fill(cursorObject *self, PyObject *res,
                           int row, int n, int istuple)
 {

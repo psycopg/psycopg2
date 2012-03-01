@@ -64,8 +64,7 @@ strip_severity(const char *msg)
    code.  A list of error codes can be found at:
 
    http://www.postgresql.org/docs/current/static/errcodes-appendix.html */
-CPYCHECKER_RETURNS_BORROWED_REF
-static PyObject *
+BORROWED static PyObject *
 exception_from_sqlstate(const char *sqlstate)
 {
     switch (sqlstate[0]) {
@@ -152,8 +151,7 @@ exception_from_sqlstate(const char *sqlstate)
 
    This function should be called while holding the GIL. */
 
-CPYCHECKER_SETS_EXCEPTION
-static void
+RAISES static void
 pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres)
 {
     PyObject *exc = NULL;
@@ -253,8 +251,7 @@ pq_clear_critical(connectionObject *conn)
 
 /* return -1 if the exception is set (i.e. if conn->critical is set),
  * else 0 */
-CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
-static int
+RAISES_NEG static int
 pq_resolve_critical(connectionObject *conn, int close)
 {
     Dprintf("pq_resolve_critical: resolving %s", conn->critical);
@@ -389,8 +386,7 @@ cleanup:
    This function should be called while holding the global interpreter
    lock.
  */
-CPYCHECKER_SETS_EXCEPTION
-void
+RAISES void
 pq_complete_error(connectionObject *conn, PGresult **pgres, char **error)
 {
     Dprintf("pq_complete_error: pgconn = %p, pgres = %p, error = %s",
@@ -483,8 +479,7 @@ pq_commit(connectionObject *conn)
     return retvalue;
 }
 
-CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
-int
+RAISES_NEG int
 pq_abort_locked(connectionObject *conn, PGresult **pgres, char **error,
                 PyThreadState **tstate)
 {
@@ -511,8 +506,7 @@ pq_abort_locked(connectionObject *conn, PGresult **pgres, char **error,
    This function should be called while holding the global interpreter
    lock. */
 
-CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
-int
+RAISES_NEG int
 pq_abort(connectionObject *conn)
 {
     int retvalue = -1;
@@ -554,8 +548,7 @@ pq_abort(connectionObject *conn)
    connection without holding the global interpreter lock.
 */
 
-CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
-int
+RAISES_NEG int
 pq_reset_locked(connectionObject *conn, PGresult **pgres, char **error,
                 PyThreadState **tstate)
 {
@@ -847,8 +840,7 @@ pq_flush(connectionObject *conn)
    this fucntion locks the connection object
    this function call Py_*_ALLOW_THREADS macros */
 
-CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
-int
+RAISES_NEG int
 pq_execute(cursorObject *curs, const char *query, int async)
 {
     PGresult *pgres = NULL;
@@ -1028,8 +1020,7 @@ pq_get_last_result(connectionObject *conn)
       1 - result from backend (possibly data is ready)
 */
 
-CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
-static int
+RAISES_NEG static int
 _pq_fetch_tuples(cursorObject *curs)
 {
     int i, *dsize = NULL;

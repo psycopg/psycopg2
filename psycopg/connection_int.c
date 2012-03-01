@@ -253,8 +253,7 @@ conn_get_standard_conforming_strings(PGconn *pgconn)
  * Return a buffer allocated on Python heap into 'clean' and return 0 on
  * success, otherwise return -1 and set an exception.
  */
-CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
-static int
+RAISES_NEG static int
 clear_encoding_name(const char *enc, char **clean)
 {
     const char *i = enc;
@@ -292,8 +291,7 @@ exit:
  *
  * 'enc' should be already normalized (uppercase, no - or _).
  */
-CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
-static int
+RAISES_NEG static int
 conn_encoding_to_codec(const char *enc, char **codec)
 {
     char *tmp;
@@ -376,8 +374,7 @@ exit:
 }
 
 
-CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
-int
+RAISES_NEG int
 conn_get_isolation_level(connectionObject *self)
 {
     PGresult *pgres = NULL;
@@ -954,8 +951,7 @@ conn_close(connectionObject *self)
 
 /* conn_commit - commit on a connection */
 
-CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
-int
+RAISES_NEG int
 conn_commit(connectionObject *self)
 {
     int res;
@@ -966,8 +962,7 @@ conn_commit(connectionObject *self)
 
 /* conn_rollback - rollback a connection */
 
-CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
-int
+RAISES_NEG int
 conn_rollback(connectionObject *self)
 {
     int res;
@@ -1049,8 +1044,7 @@ conn_set_autocommit(connectionObject *self, int value)
 
 /* conn_switch_isolation_level - switch isolation level on the connection */
 
-CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
-int
+RAISES_NEG int
 conn_switch_isolation_level(connectionObject *self, int level)
 {
     PGresult *pgres = NULL;
@@ -1132,8 +1126,7 @@ endlock:
 
 /* conn_set_client_encoding - switch client encoding on connection */
 
-CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
-int
+RAISES_NEG int
 conn_set_client_encoding(connectionObject *self, const char *enc)
 {
     PGresult *pgres = NULL;
@@ -1206,8 +1199,7 @@ exit:
  * in regular transactions, as PostgreSQL won't even know we are in a TPC
  * until PREPARE. */
 
-CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
-int
+RAISES_NEG int
 conn_tpc_begin(connectionObject *self, XidObject *xid)
 {
     PGresult *pgres = NULL;
@@ -1241,8 +1233,7 @@ conn_tpc_begin(connectionObject *self, XidObject *xid)
  * The function doesn't change the connection state as it can be used
  * for many commands and for recovered transactions. */
 
-CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
-int
+RAISES_NEG int
 conn_tpc_command(connectionObject *self, const char *cmd, XidObject *xid)
 {
     PGresult *pgres = NULL;
