@@ -1261,8 +1261,8 @@ exit:
 #define psyco_curs_copy_from_doc \
 "copy_from(file, table, sep='\\t', null='\\\\N', size=8192, columns=None) -- Copy table from file."
 
-static int
-_psyco_curs_has_read_check(PyObject* o, void* var)
+STEALS(1) static int
+_psyco_curs_has_read_check(PyObject *o, PyObject **var)
 {
     if (PyObject_HasAttrString(o, "readline")
         && PyObject_HasAttrString(o, "read")) {
@@ -1272,7 +1272,7 @@ _psyco_curs_has_read_check(PyObject* o, void* var)
          * which could invoke the garbage collector.  We thus need an
          * INCREF/DECREF pair if we store this pointer in a GC object, such as
          * a cursorObject */
-        *((PyObject**)var) = o;
+        *var = o;
         return 1;
     }
     else {
@@ -1368,11 +1368,11 @@ exit:
 #define psyco_curs_copy_to_doc \
 "copy_to(file, table, sep='\\t', null='\\\\N', columns=None) -- Copy table to file."
 
-static int
-_psyco_curs_has_write_check(PyObject* o, void* var)
+STEALS(1) static int
+_psyco_curs_has_write_check(PyObject *o, PyObject **var)
 {
     if (PyObject_HasAttrString(o, "write")) {
-        *((PyObject**)var) = o;
+        *var = o;
         return 1;
     }
     else {
