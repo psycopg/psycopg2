@@ -250,19 +250,21 @@ conn_get_standard_conforming_strings(PGconn *pgconn)
 
 /* Remove irrelevant chars from encoding name and turn it uppercase.
  *
- * Return a buffer allocated on Python heap,
- * NULL and set an exception on error.
+ * Return a buffer allocated on Python heap into 'clean' and return 0 on
+ * success, otherwise return -1 and set an exception.
  */
-static char *
-clean_encoding_name(const char *enc)
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
+static int
+clear_encoding_name(const char *enc, char **clean)
 {
     const char *i = enc;
-    char *rv, *j;
+    char *j, *buf;
+    int rv = -1;
 
     /* convert to upper case and remove '-' and '_' from string */
-    if (!(j = rv = PyMem_Malloc(strlen(enc) + 1))) {
+    if (!(j = buf = PyMem_Malloc(strlen(enc) + 1))) {
         PyErr_NoMemory();
-        return NULL;
+        goto exit;
     }
 
     while (*i) {
@@ -275,25 +277,29 @@ clean_encoding_name(const char *enc)
     }
     *j = '\0';
 
-    Dprintf("clean_encoding_name: %s -> %s", enc, rv);
+    Dprintf("clear_encoding_name: %s -> %s", enc, buf);
+    *clean = buf;
+    rv = 0;
 
+exit:
     return rv;
 }
 
 /* Convert a PostgreSQL encoding to a Python codec.
  *
- * Return a new copy of the codec name allocated on the Python heap,
- * NULL with exception in case of error.
+ * Set 'codec' to a new copy of the codec name allocated on the Python heap.
+ * Return 0 in case of success, else -1 and set an exception.
  *
  * 'enc' should be already normalized (uppercase, no - or _).
  */
-static char *
-conn_encoding_to_codec(const char *enc)
+CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
+static int
+conn_encoding_to_codec(const char *enc, char **codec)
 {
     char *tmp;
     Py_ssize_t size;
     PyObject *pyenc = NULL;
-    char *rv = NULL;
+    int rv = -1;
 
     /* Find the Py codec name from the PG encoding */
     if (!(pyenc = PyDict_GetItemString(psycoEncodings, enc))) {
@@ -313,7 +319,7 @@ conn_encoding_to_codec(const char *enc)
     }
 
     /* have our own copy of the python codec name */
-    rv = psycopg_strdup(tmp, size);
+    rv = psycopg_strdup(codec, tmp, size);
 
 exit:
     Py_XDECREF(pyenc);
@@ -343,12 +349,12 @@ conn_read_encoding(connectionObject *self, PGconn *pgconn)
         goto exit;
     }
 
-    if (!(enc = clean_encoding_name(tmp))) {
+    if (0 > clear_encoding_name(tmp, &enc)) {
         goto exit;
     }
 
     /* Look for this encoding in Python codecs. */
-    if (!(codec = conn_encoding_to_codec(enc))) {
+    if (0 > conn_encoding_to_codec(enc, &codec)) {
         goto exit;
     }
 
@@ -1141,8 +1147,8 @@ conn_set_client_encoding(connectionObject *self, const char *enc)
     if (strcmp(self->encoding, enc) == 0) return 0;
 
     /* We must know what python codec this encoding is. */
-    if (!(clean_enc = clean_encoding_name(enc))) { goto exit; }
-    if (!(codec = conn_encoding_to_codec(clean_enc))) { goto exit; }
+    if (0 > clear_encoding_name(enc, &clean_enc)) { goto exit; }
+    if (0 > conn_encoding_to_codec(clean_enc, &codec)) { goto exit; }
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
