@@ -332,7 +332,7 @@ exit:
  *
  * Return 0 on success, else nonzero.
  */
-static int
+RAISES_NEG static int
 conn_read_encoding(connectionObject *self, PGconn *pgconn)
 {
     char *enc = NULL, *codec = NULL;
@@ -468,7 +468,7 @@ conn_is_datestyle_ok(PGconn *pgconn)
 
 /* conn_setup - setup and read basic information about the connection */
 
-int
+RAISES_NEG int
 conn_setup(connectionObject *self, PGconn *pgconn)
 {
     PGresult *pgres = NULL;
@@ -482,7 +482,7 @@ conn_setup(connectionObject *self, PGconn *pgconn)
         return -1;
     }
 
-    if (conn_read_encoding(self, pgconn)) {
+    if (0 > conn_read_encoding(self, pgconn)) {
         return -1;
     }
 
@@ -496,7 +496,7 @@ conn_setup(connectionObject *self, PGconn *pgconn)
     pthread_mutex_lock(&self->lock);
     Py_BLOCK_THREADS;
 
-    if (psyco_green() && (pq_set_non_blocking(self, 1, 1) != 0)) {
+    if (psyco_green() && (0 > pq_set_non_blocking(self, 1))) {
         return -1;
     }
 
@@ -774,7 +774,7 @@ _conn_poll_setup_async(connectionObject *self)
     switch (self->status) {
     case CONN_STATUS_CONNECTING:
         /* Set the connection to nonblocking now. */
-        if (pq_set_non_blocking(self, 1, 1) != 0) {
+        if (pq_set_non_blocking(self, 1) != 0) {
             break;
         }
 
@@ -785,7 +785,7 @@ _conn_poll_setup_async(connectionObject *self)
             PyErr_SetString(InterfaceError, "only protocol 3 supported");
             break;
         }
-        if (conn_read_encoding(self, self->pgconn)) {
+        if (0 > conn_read_encoding(self, self->pgconn)) {
             break;
         }
         self->cancel = conn_get_cancel(self->pgconn);
@@ -971,7 +971,7 @@ conn_rollback(connectionObject *self)
     return res;
 }
 
-int
+RAISES_NEG int
 conn_set_session(connectionObject *self,
         const char *isolevel, const char *readonly, const char *deferrable,
         int autocommit)

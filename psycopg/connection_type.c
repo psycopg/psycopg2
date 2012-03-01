@@ -528,7 +528,7 @@ psyco_conn_set_session(connectionObject *self, PyObject *args, PyObject *kwargs)
         if (-1 == c_autocommit) { return NULL; }
     }
 
-    if (0 != conn_set_session(self,
+    if (0 > conn_set_session(self,
             c_isolevel, c_readonly, c_deferrable, c_autocommit)) {
         return NULL;
     }

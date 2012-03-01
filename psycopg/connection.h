@@ -138,12 +138,12 @@ HIDDEN PGcancel *conn_get_cancel(PGconn *pgconn);
 HIDDEN void conn_notice_process(connectionObject *self);
 HIDDEN void conn_notice_clean(connectionObject *self);
 HIDDEN void conn_notifies_process(connectionObject *self);
-HIDDEN int  conn_setup(connectionObject *self, PGconn *pgconn);
+RAISES_NEG HIDDEN int  conn_setup(connectionObject *self, PGconn *pgconn);
 HIDDEN int  conn_connect(connectionObject *self, long int async);
 HIDDEN void conn_close(connectionObject *self);
 RAISES_NEG HIDDEN int  conn_commit(connectionObject *self);
 RAISES_NEG HIDDEN int  conn_rollback(connectionObject *self);
-HIDDEN int  conn_set_session(connectionObject *self, const char *isolevel,
+RAISES_NEG HIDDEN int  conn_set_session(connectionObject *self, const char *isolevel,
                                  const char *readonly, const char *deferrable,
                                  int autocommit);
 HIDDEN int  conn_set_autocommit(connectionObject *self, int value);

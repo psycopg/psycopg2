@@ -726,7 +726,7 @@ _psyco_curs_buildrow(cursorObject *self, int row)
     }
     if (!t) { goto exit; }
 
-    if (0 == _psyco_curs_buildrow_fill(self, t, row, n, istuple)) {
+    if (0 <= _psyco_curs_buildrow_fill(self, t, row, n, istuple)) {
         rv = t;
         t = NULL;
     }
@@ -1347,7 +1347,7 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
     Py_INCREF(file);
     self->copyfile = file;
 
-    if (pq_execute(self, query, 0) == 1) {
+    if (pq_execute(self, query, 0) >= 0) {
         res = Py_None;
         Py_INCREF(Py_None);
     }
@@ -1443,7 +1443,7 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
     Py_INCREF(file);
     self->copyfile = file;
 
-    if (pq_execute(self, query, 0) == 1) {
+    if (pq_execute(self, query, 0) >= 0) {
         res = Py_None;
         Py_INCREF(Py_None);
     }
@@ -1517,7 +1517,7 @@ psyco_curs_copy_expert(cursorObject *self, PyObject *args, PyObject *kwargs)
     self->copyfile = file;
 
     /* At this point, the SQL statement must be str, not unicode */
-    if (pq_execute(self, Bytes_AS_STRING(sql), 0) == 1) {
+    if (pq_execute(self, Bytes_AS_STRING(sql), 0) >= 0) {
         res = Py_None;
         Py_INCREF(res);
     }

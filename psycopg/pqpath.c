@@ -304,19 +304,16 @@ pq_clear_async(connectionObject *conn)
 
    Accepted arg values are 1 (nonblocking) and 0 (blocking).
 
-   Return 0 if everything ok, else nonzero.
-
-   In case of error, if pyerr is nonzero, set a Python exception.
+   Return 0 if everything ok, else < 0 and set an exception.
  */
-int
-pq_set_non_blocking(connectionObject *conn, int arg, int pyerr)
+RAISES_NEG int
+pq_set_non_blocking(connectionObject *conn, int arg)
 {
     int ret = PQsetnonblocking(conn->pgconn, arg);
     if (0 != ret) {
         Dprintf("PQsetnonblocking(%d) FAILED", arg);
-        if (pyerr) {
-            PyErr_SetString(OperationalError, "PQsetnonblocking() failed");
-        }
+        PyErr_SetString(OperationalError, "PQsetnonblocking() failed");
+        ret = -1;
     }
     return ret;
 }
