@@ -35,7 +35,7 @@
 
 /* qstring_quote - do the quote process on plain and unicode strings */
 
-static PyObject *
+BORROWED static PyObject *
 qstring_quote(qstringObject *self)
 {
     PyObject *str;

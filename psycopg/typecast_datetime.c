@@ -26,7 +26,7 @@
 #include <math.h>
 #include "datetime.h"
 
-static int
+RAISES_NEG static int
 psyco_typecast_datetime_init(void)
 {
     Dprintf("psyco_typecast_datetime_init: datetime init");

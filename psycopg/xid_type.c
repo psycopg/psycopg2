@@ -486,7 +486,7 @@ exit:
  *
  * Return a borrowed reference. */
 
-static PyObject *
+BORROWED static PyObject *
 _xid_get_parse_regex(void) {
     static PyObject *rv;
 

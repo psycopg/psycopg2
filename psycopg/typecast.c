@@ -250,7 +250,7 @@ PyObject *psyco_default_binary_cast;
 
 /* typecast_init - initialize the dictionary and create default types */
 
-int
+RAISES_NEG int
 typecast_init(PyObject *dict)
 {
     int i;
@@ -316,7 +316,7 @@ typecast_init(PyObject *dict)
 }
 
 /* typecast_add - add a type object to the dictionary */
-int
+RAISES_NEG int
 typecast_add(PyObject *obj, PyObject *dict, int binary)
 {
     PyObject *val;

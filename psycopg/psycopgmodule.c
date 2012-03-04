@@ -143,14 +143,6 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
 "  * `name`: Name for the new type\n" \
 "  * `baseobj`: Adapter to perform type conversion of a single array item."
 
-static void
-_psyco_register_type_set(PyObject **dict, PyObject *type)
-{
-    if (*dict == NULL)
-        *dict = PyDict_New();
-    typecast_add(type, *dict, 0);
-}
-
 static PyObject *
 psyco_register_type(PyObject *self, PyObject *args)
 {
@@ -162,10 +154,16 @@ psyco_register_type(PyObject *self, PyObject *args)
 
     if (obj != NULL && obj != Py_None) {
         if (PyObject_TypeCheck(obj, &cursorType)) {
-            _psyco_register_type_set(&(((cursorObject*)obj)->string_types), type);
+            PyObject **dict = &(((cursorObject*)obj)->string_types);
+            if (*dict == NULL) {
+                if (!(*dict = PyDict_New())) { return NULL; }
+            }
+            if (0 > typecast_add(type, *dict, 0)) { return NULL; }
         }
         else if (PyObject_TypeCheck(obj, &connectionType)) {
-            typecast_add(type, ((connectionObject*)obj)->string_types, 0);
+            if (0 > typecast_add(type, ((connectionObject*)obj)->string_types, 0)) {
+                return NULL;
+            }
         }
         else {
             PyErr_SetString(PyExc_TypeError,
@@ -174,7 +172,7 @@ psyco_register_type(PyObject *self, PyObject *args)
         }
     }
     else {
-        typecast_add(type, NULL, 0);
+        if (0 > typecast_add(type, NULL, 0)) { return NULL; }
     }
 
     Py_INCREF(Py_None);
@@ -1001,7 +999,7 @@ INIT_MODULE(_psycopg)(void)
     }
 #endif
     /* initialize default set of typecasters */
-    typecast_init(dict);
+    if (0 != typecast_init(dict)) { goto exit; }
 
     /* initialize microprotocols layer */
     microprotocols_init(dict);

@@ -71,8 +71,8 @@ extern HIDDEN PyObject *psyco_default_binary_cast;
 /** exported functions **/
 
 /* used by module.c to init the type system and register types */
-HIDDEN int typecast_init(PyObject *dict);
-HIDDEN int typecast_add(PyObject *obj, PyObject *dict, int binary);
+RAISES_NEG HIDDEN int typecast_init(PyObject *dict);
+RAISES_NEG HIDDEN int typecast_add(PyObject *obj, PyObject *dict, int binary);
 
 /* the C callable typecastObject creator function */
 HIDDEN PyObject *typecast_from_c(typecastObject_initlist *type, PyObject *d);
