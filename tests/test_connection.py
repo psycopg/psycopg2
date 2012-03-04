@@ -48,6 +48,12 @@ class ConnectionTests(unittest.TestCase):
         conn.close()
         self.assertEqual(conn.closed, True)
 
+    def test_close_idempotent(self):
+        conn = self.conn
+        conn.close()
+        conn.close()
+        self.assert_(conn.closed)
+
     def test_cursor_closed_attribute(self):
         conn = self.conn
         curs = conn.cursor()

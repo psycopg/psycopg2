@@ -122,8 +122,6 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *keywds)
 static PyObject *
 psyco_conn_close(connectionObject *self, PyObject *args)
 {
-    EXC_IF_CONN_CLOSED(self);
-
     Dprintf("psyco_conn_close: closing connection at %p", self);
     conn_close(self);
     Dprintf("psyco_conn_close: connection at %p closed", self);
