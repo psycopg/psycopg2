@@ -701,8 +701,8 @@ psyco_conn_get_parameter_status(connectionObject *self, PyObject *args)
 static PyObject *
 psyco_conn_lobject(connectionObject *self, PyObject *args, PyObject *keywds)
 {
-    Oid oid=InvalidOid, new_oid=InvalidOid;
-    char *new_file = NULL;
+    int oid = (int)InvalidOid, new_oid = (int)InvalidOid;
+    const char *new_file = NULL;
     const char *smode = "";
     PyObject *factory = (PyObject *)&lobjectType;
     PyObject *obj;

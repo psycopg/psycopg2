@@ -468,7 +468,7 @@ typecast_repr(PyObject *self)
 static PyObject *
 typecast_call(PyObject *obj, PyObject *args, PyObject *kwargs)
 {
-    char *string;
+    const char *string;
     Py_ssize_t length;
     PyObject *cursor;
 
