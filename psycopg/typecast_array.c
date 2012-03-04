@@ -260,7 +260,7 @@ typecast_GENERIC_ARRAY_cast(const char *str, Py_ssize_t len, PyObject *curs)
     Dprintf("typecast_GENERIC_ARRAY_cast: str = '%s',"
             " len = " FORMAT_CODE_PY_SSIZE_T, str, len);
 
-    obj = PyList_New(0);
+    if (!(obj = PyList_New(0))) { return NULL; }
 
     /* scan the array skipping the first level of {} */
     if (typecast_array_scan(&str[1], len-2, curs, base, obj) < 0) {
