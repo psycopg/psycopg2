@@ -98,9 +98,9 @@ list_getquoted(listObject *self, PyObject *args)
 static PyObject *
 list_prepare(listObject *self, PyObject *args)
 {
-    connectionObject *conn;
+    PyObject *conn;
 
-    if (!PyArg_ParseTuple(args, "O", &conn))
+    if (!PyArg_ParseTuple(args, "O!", &connectionType, &conn))
         return NULL;
 
     /* note that we don't copy the encoding from the connection, but take a
@@ -109,7 +109,7 @@ list_prepare(listObject *self, PyObject *args)
        work even without a connection to the backend. */
     Py_CLEAR(self->connection);
     Py_INCREF(conn);
-    self->connection = (PyObject*)conn;
+    self->connection = conn;
 
     Py_INCREF(Py_None);
     return Py_None;

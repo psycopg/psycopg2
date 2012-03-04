@@ -149,16 +149,14 @@ binary_str(binaryObject *self)
 static PyObject *
 binary_prepare(binaryObject *self, PyObject *args)
 {
-    connectionObject *conn;
+    PyObject *conn;
 
-    if (!PyArg_ParseTuple(args, "O", &conn))
+    if (!PyArg_ParseTuple(args, "O!", &connectionType, &conn))
         return NULL;
 
     Py_XDECREF(self->conn);
-    if (conn) {
-        self->conn = (PyObject*)conn;
-        Py_INCREF(self->conn);
-    }
+    self->conn = conn;
+    Py_INCREF(self->conn);
 
     Py_INCREF(Py_None);
     return Py_None;
