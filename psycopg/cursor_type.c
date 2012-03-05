@@ -995,7 +995,7 @@ exit:
 "callproc(procname, parameters=None) -- Execute stored procedure."
 
 static PyObject *
-psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
+psyco_curs_callproc(cursorObject *self, PyObject *args)
 {
     const char *procname = NULL;
     char *sql = NULL;

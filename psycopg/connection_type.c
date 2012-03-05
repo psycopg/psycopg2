@@ -754,7 +754,7 @@ psyco_conn_lobject(connectionObject *self, PyObject *args, PyObject *keywds)
 "get_backend_pid() -- Get backend process id."
 
 static PyObject *
-psyco_conn_get_backend_pid(connectionObject *self)
+psyco_conn_get_backend_pid(connectionObject *self, PyObject *args)
 {
     EXC_IF_CONN_CLOSED(self);
 
@@ -767,7 +767,7 @@ psyco_conn_get_backend_pid(connectionObject *self)
 "reset() -- Reset current connection to defaults."
 
 static PyObject *
-psyco_conn_reset(connectionObject *self)
+psyco_conn_reset(connectionObject *self, PyObject *args)
 {
     int res;
 
@@ -795,7 +795,7 @@ psyco_conn_get_exception(PyObject *self, void *closure)
 }
 
 static PyObject *
-psyco_conn_poll(connectionObject *self)
+psyco_conn_poll(connectionObject *self, PyObject *args)
 {
     int res;
 
@@ -817,7 +817,7 @@ psyco_conn_poll(connectionObject *self)
 "fileno() -> int -- Return file descriptor associated to database connection."
 
 static PyObject *
-psyco_conn_fileno(connectionObject *self)
+psyco_conn_fileno(connectionObject *self, PyObject *args)
 {
     long int socket;
 
@@ -836,7 +836,7 @@ psyco_conn_fileno(connectionObject *self)
  "executing an asynchronous operation."
 
 static PyObject *
-psyco_conn_isexecuting(connectionObject *self)
+psyco_conn_isexecuting(connectionObject *self, PyObject *args)
 {
     /* synchronous connections will always return False */
     if (self->async == 0) {
@@ -868,7 +868,7 @@ psyco_conn_isexecuting(connectionObject *self)
 "cancel() -- cancel the current operation"
 
 static PyObject *
-psyco_conn_cancel(connectionObject *self)
+psyco_conn_cancel(connectionObject *self, PyObject *args)
 {
     char errbuf[256];
 
