@@ -1205,6 +1205,7 @@ static char *_psyco_curs_copy_columns(PyObject *columns)
     }
 
     if (NULL == (columnlist = PyMem_Malloc(bufsize))) {
+        Py_DECREF(coliter);
         PyErr_NoMemory();
         goto error;
     }
