@@ -9,6 +9,10 @@ What's new in psycopg 2.4.5
     interaction (ticket #90).
   - Better efficiency and formatting of timezone offset objects thanks
     to Menno Smits (tickets #94, #95).
+  - Codebase cleaned up using the GCC Python plugin's static analysis
+    tool, which has revealed several unchecked return values, possible
+    NULL dereferences, reference counting problems. Many thanks to David
+    Malcolm for the useful tool and the assistance provided using it.
 
 
 What's new in psycopg 2.4.4
