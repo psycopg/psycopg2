@@ -35,7 +35,7 @@
 
 /* qstring_quote - do the quote process on plain and unicode strings */
 
-static PyObject *
+BORROWED static PyObject *
 qstring_quote(qstringObject *self)
 {
     PyObject *str;
@@ -124,24 +124,22 @@ qstring_str(qstringObject *self)
 static PyObject *
 qstring_prepare(qstringObject *self, PyObject *args)
 {
-    connectionObject *conn;
+    PyObject *conn;
 
-    if (!PyArg_ParseTuple(args, "O", &conn))
+    if (!PyArg_ParseTuple(args, "O!", &connectionType, &conn))
         return NULL;
 
     /* we bother copying the encoding only if the wrapped string is unicode,
        we don't need the encoding if that's not the case */
     if (PyUnicode_Check(self->wrapped)) {
         if (self->encoding) free(self->encoding);
-        self->encoding = strdup(conn->codec);
-        Dprintf("qstring_prepare: set encoding to %s", conn->codec);
+        self->encoding = strdup(((connectionObject *)conn)->codec);
+        Dprintf("qstring_prepare: set encoding to %s", self->encoding);
     }
 
     Py_CLEAR(self->conn);
-    if (conn) {
-        Py_INCREF(conn);
-        self->conn = (PyObject*)conn;
-    }
+    Py_INCREF(conn);
+    self->conn = conn;
 
     Py_INCREF(Py_None);
     return Py_None;

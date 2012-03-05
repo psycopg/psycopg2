@@ -15,6 +15,10 @@ What's new in psycopg 2.4.5
     Regression introduced in 2.4.4 (ticket #100).
   - Added support for 'inet' arrays.
   - Fixed 'commit()' concurrency problem (ticket #103).
+  - Codebase cleaned up using the GCC Python plugin's static analysis
+    tool, which has revealed several unchecked return values, possible
+    NULL dereferences, reference counting problems. Many thanks to David
+    Malcolm for the useful tool and the assistance provided using it.
 
 
 What's new in psycopg 2.4.4

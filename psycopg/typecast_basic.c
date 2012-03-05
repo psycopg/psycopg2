@@ -65,7 +65,7 @@ typecast_FLOAT_cast(const char *s, Py_ssize_t len, PyObject *curs)
     PyObject *str = NULL, *flo = NULL;
 
     if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
-    str = Text_FromUTF8AndSize(s, len);
+    if (!(str = Text_FromUTF8AndSize(s, len))) { return NULL; }
 #if PY_MAJOR_VERSION < 3
     flo = PyFloat_FromString(str, NULL);
 #else

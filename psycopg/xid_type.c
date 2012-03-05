@@ -78,7 +78,9 @@ static PyMemberDef xid_members[] = {
 static PyObject *
 xid_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
-    XidObject *self = (XidObject *)type->tp_alloc(type, 0);
+    XidObject *self;
+
+    if (!(self = (XidObject *)type->tp_alloc(type, 0))) { return NULL; }
 
     Py_INCREF(Py_None);
     self->format_id = Py_None;
@@ -486,7 +488,7 @@ exit:
  *
  * Return a borrowed reference. */
 
-static PyObject *
+BORROWED static PyObject *
 _xid_get_parse_regex(void) {
     static PyObject *rv;
 

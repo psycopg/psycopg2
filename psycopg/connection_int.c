@@ -120,8 +120,16 @@ conn_notice_process(connectionObject *self)
 
         /* Respect the order in which notices were produced,
            because in notice_list they are reversed (see ticket #9) */
-        PyList_Insert(self->notice_list, nnotices, msg);
-        Py_DECREF(msg);
+        if (msg) {
+            PyList_Insert(self->notice_list, nnotices, msg);
+            Py_DECREF(msg);
+        }
+        else {
+            /* We don't really have a way to report errors, so gulp it.
+             * The function should only fail for out of memory, so we are
+             * likely going to die anyway. */
+            PyErr_Clear();
+        }
 
         notice = notice->next;
     }
@@ -242,19 +250,20 @@ conn_get_standard_conforming_strings(PGconn *pgconn)
 
 /* Remove irrelevant chars from encoding name and turn it uppercase.
  *
- * Return a buffer allocated on Python heap,
- * NULL and set an exception on error.
+ * Return a buffer allocated on Python heap into 'clean' and return 0 on
+ * success, otherwise return -1 and set an exception.
  */
-static char *
-clean_encoding_name(const char *enc)
+RAISES_NEG static int
+clear_encoding_name(const char *enc, char **clean)
 {
     const char *i = enc;
-    char *rv, *j;
+    char *j, *buf;
+    int rv = -1;
 
     /* convert to upper case and remove '-' and '_' from string */
-    if (!(j = rv = PyMem_Malloc(strlen(enc) + 1))) {
+    if (!(j = buf = PyMem_Malloc(strlen(enc) + 1))) {
         PyErr_NoMemory();
-        return NULL;
+        goto exit;
     }
 
     while (*i) {
@@ -267,25 +276,28 @@ clean_encoding_name(const char *enc)
     }
     *j = '\0';
 
-    Dprintf("clean_encoding_name: %s -> %s", enc, rv);
+    Dprintf("clear_encoding_name: %s -> %s", enc, buf);
+    *clean = buf;
+    rv = 0;
 
+exit:
     return rv;
 }
 
 /* Convert a PostgreSQL encoding to a Python codec.
  *
- * Return a new copy of the codec name allocated on the Python heap,
- * NULL with exception in case of error.
+ * Set 'codec' to a new copy of the codec name allocated on the Python heap.
+ * Return 0 in case of success, else -1 and set an exception.
  *
  * 'enc' should be already normalized (uppercase, no - or _).
  */
-static char *
-conn_encoding_to_codec(const char *enc)
+RAISES_NEG static int
+conn_encoding_to_codec(const char *enc, char **codec)
 {
     char *tmp;
     Py_ssize_t size;
     PyObject *pyenc = NULL;
-    char *rv = NULL;
+    int rv = -1;
 
     /* Find the Py codec name from the PG encoding */
     if (!(pyenc = PyDict_GetItemString(psycoEncodings, enc))) {
@@ -305,7 +317,7 @@ conn_encoding_to_codec(const char *enc)
     }
 
     /* have our own copy of the python codec name */
-    rv = psycopg_strdup(tmp, size);
+    rv = psycopg_strdup(codec, tmp, size);
 
 exit:
     Py_XDECREF(pyenc);
@@ -320,7 +332,7 @@ exit:
  *
  * Return 0 on success, else nonzero.
  */
-static int
+RAISES_NEG static int
 conn_read_encoding(connectionObject *self, PGconn *pgconn)
 {
     char *enc = NULL, *codec = NULL;
@@ -335,12 +347,12 @@ conn_read_encoding(connectionObject *self, PGconn *pgconn)
         goto exit;
     }
 
-    if (!(enc = clean_encoding_name(tmp))) {
+    if (0 > clear_encoding_name(tmp, &enc)) {
         goto exit;
     }
 
     /* Look for this encoding in Python codecs. */
-    if (!(codec = conn_encoding_to_codec(enc))) {
+    if (0 > conn_encoding_to_codec(enc, &codec)) {
         goto exit;
     }
 
@@ -362,7 +374,7 @@ exit:
 }
 
 
-int
+RAISES_NEG int
 conn_get_isolation_level(connectionObject *self)
 {
     PGresult *pgres = NULL;
@@ -456,7 +468,7 @@ conn_is_datestyle_ok(PGconn *pgconn)
 
 /* conn_setup - setup and read basic information about the connection */
 
-int
+RAISES_NEG int
 conn_setup(connectionObject *self, PGconn *pgconn)
 {
     PGresult *pgres = NULL;
@@ -470,7 +482,7 @@ conn_setup(connectionObject *self, PGconn *pgconn)
         return -1;
     }
 
-    if (conn_read_encoding(self, pgconn)) {
+    if (0 > conn_read_encoding(self, pgconn)) {
         return -1;
     }
 
@@ -484,7 +496,7 @@ conn_setup(connectionObject *self, PGconn *pgconn)
     pthread_mutex_lock(&self->lock);
     Py_BLOCK_THREADS;
 
-    if (psyco_green() && (pq_set_non_blocking(self, 1, 1) != 0)) {
+    if (psyco_green() && (0 > pq_set_non_blocking(self, 1))) {
         return -1;
     }
 
@@ -762,7 +774,7 @@ _conn_poll_setup_async(connectionObject *self)
     switch (self->status) {
     case CONN_STATUS_CONNECTING:
         /* Set the connection to nonblocking now. */
-        if (pq_set_non_blocking(self, 1, 1) != 0) {
+        if (pq_set_non_blocking(self, 1) != 0) {
             break;
         }
 
@@ -773,7 +785,7 @@ _conn_poll_setup_async(connectionObject *self)
             PyErr_SetString(InterfaceError, "only protocol 3 supported");
             break;
         }
-        if (conn_read_encoding(self, self->pgconn)) {
+        if (0 > conn_read_encoding(self, self->pgconn)) {
             break;
         }
         self->cancel = conn_get_cancel(self->pgconn);
@@ -942,7 +954,7 @@ conn_close(connectionObject *self)
 
 /* conn_commit - commit on a connection */
 
-int
+RAISES_NEG int
 conn_commit(connectionObject *self)
 {
     int res;
@@ -953,7 +965,7 @@ conn_commit(connectionObject *self)
 
 /* conn_rollback - rollback a connection */
 
-int
+RAISES_NEG int
 conn_rollback(connectionObject *self)
 {
     int res;
@@ -962,7 +974,7 @@ conn_rollback(connectionObject *self)
     return res;
 }
 
-int
+RAISES_NEG int
 conn_set_session(connectionObject *self,
         const char *isolevel, const char *readonly, const char *deferrable,
         int autocommit)
@@ -1035,7 +1047,7 @@ conn_set_autocommit(connectionObject *self, int value)
 
 /* conn_switch_isolation_level - switch isolation level on the connection */
 
-int
+RAISES_NEG int
 conn_switch_isolation_level(connectionObject *self, int level)
 {
     PGresult *pgres = NULL;
@@ -1117,12 +1129,12 @@ endlock:
 
 /* conn_set_client_encoding - switch client encoding on connection */
 
-int
+RAISES_NEG int
 conn_set_client_encoding(connectionObject *self, const char *enc)
 {
     PGresult *pgres = NULL;
     char *error = NULL;
-    int res = 1;
+    int res = -1;
     char *codec = NULL;
     char *clean_enc = NULL;
 
@@ -1131,8 +1143,8 @@ conn_set_client_encoding(connectionObject *self, const char *enc)
     if (strcmp(self->encoding, enc) == 0) return 0;
 
     /* We must know what python codec this encoding is. */
-    if (!(clean_enc = clean_encoding_name(enc))) { goto exit; }
-    if (!(codec = conn_encoding_to_codec(clean_enc))) { goto exit; }
+    if (0 > clear_encoding_name(enc, &clean_enc)) { goto exit; }
+    if (0 > conn_encoding_to_codec(clean_enc, &codec)) { goto exit; }
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
@@ -1190,7 +1202,7 @@ exit:
  * in regular transactions, as PostgreSQL won't even know we are in a TPC
  * until PREPARE. */
 
-int
+RAISES_NEG int
 conn_tpc_begin(connectionObject *self, XidObject *xid)
 {
     PGresult *pgres = NULL;
@@ -1224,7 +1236,7 @@ conn_tpc_begin(connectionObject *self, XidObject *xid)
  * The function doesn't change the connection state as it can be used
  * for many commands and for recovered transactions. */
 
-int
+RAISES_NEG int
 conn_tpc_command(connectionObject *self, const char *cmd, XidObject *xid)
 {
     PGresult *pgres = NULL;

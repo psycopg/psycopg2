@@ -26,7 +26,7 @@
 #include <math.h>
 #include "datetime.h"
 
-static int
+RAISES_NEG static int
 psyco_typecast_datetime_init(void)
 {
     Dprintf("psyco_typecast_datetime_init: datetime init");
@@ -239,7 +239,7 @@ typecast_PYINTERVAL_cast(const char *str, Py_ssize_t len, PyObject *curs)
 
         case '0': case '1': case '2': case '3': case '4':
         case '5': case '6': case '7': case '8': case '9':
-            v = v*10 + (double)*str - (double)'0';
+            v = v * 10.0 + (double)(*str - '0');
             if (part == 6){
                 denominator *= 10;
             }
