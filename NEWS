@@ -1,6 +1,8 @@
 What's new in psycopg 2.4.5
 ---------------------------
 
+  - The close() methods on connections and cursors don't raise exceptions
+    if called on already closed objects.
   - Fixed fetchmany() with no argument in cursor subclasses
     (ticket #84).
   - Use lo_creat() instead of lo_create() when possible for better

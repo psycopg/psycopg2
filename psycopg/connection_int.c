@@ -906,6 +906,10 @@ conn_poll(connectionObject *self)
 void
 conn_close(connectionObject *self)
 {
+    if (self->closed) {
+        return;
+    }
+
     /* sets this connection as closed even for other threads; also note that
        we need to check the value of pgconn, because we get called even when
        the connection fails! */
@@ -922,14 +926,13 @@ conn_close(connectionObject *self)
      * closed only in status CONN_STATUS_READY.
      */
 
-    if (self->closed == 0)
-        self->closed = 1;
+    self->closed = 1;
 
     if (self->pgconn) {
         PQfinish(self->pgconn);
-        PQfreeCancel(self->cancel);
-        Dprintf("conn_close: PQfinish called");
         self->pgconn = NULL;
+        Dprintf("conn_close: PQfinish called");
+        PQfreeCancel(self->cancel);
         self->cancel = NULL;
     }
 

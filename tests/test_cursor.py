@@ -37,6 +37,12 @@ class CursorTests(unittest.TestCase):
     def tearDown(self):
         self.conn.close()
 
+    def test_close_idempotent(self):
+        cur = self.conn.cursor()
+        cur.close()
+        cur.close()
+        self.assert_(cur.closed)
+
     def test_empty_query(self):
         cur = self.conn.cursor()
         self.assertRaises(psycopg2.ProgrammingError, cur.execute, "")

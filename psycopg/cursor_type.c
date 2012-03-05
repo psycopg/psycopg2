@@ -52,8 +52,11 @@ extern PyObject *pyPsycopgTzFixedOffsetTimezone;
 static PyObject *
 psyco_curs_close(cursorObject *self, PyObject *args)
 {
-    EXC_IF_CURS_CLOSED(self);
     EXC_IF_ASYNC_IN_PROGRESS(self, close);
+
+    if (self->closed) {
+        goto exit;
+    }
 
     if (self->name != NULL) {
         char buffer[128];
@@ -66,6 +69,7 @@ psyco_curs_close(cursorObject *self, PyObject *args)
     self->closed = 1;
     Dprintf("psyco_curs_close: cursor at %p closed", self);
 
+exit:
     Py_INCREF(Py_None);
     return Py_None;
 }
