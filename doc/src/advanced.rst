@@ -143,7 +143,7 @@ geometric type:
 
 
 .. |point| replace:: :sql:`point`
-.. _point: http://www.postgresql.org/docs/9.0/static/datatype-geometric.html#DATATYPE-GEOMETRIC
+.. _point: http://www.postgresql.org/docs/current/static/datatype-geometric.html#DATATYPE-GEOMETRIC
 
 The above function call results in the SQL command::
 
@@ -246,9 +246,9 @@ documentation), you should keep the connection in `~connection.autocommit`
 mode if you wish to receive or send notifications in a timely manner.
 
 .. |LISTEN| replace:: :sql:`LISTEN`
-.. _LISTEN: http://www.postgresql.org/docs/9.0/static/sql-listen.html
+.. _LISTEN: http://www.postgresql.org/docs/current/static/sql-listen.html
 .. |NOTIFY| replace:: :sql:`NOTIFY`
-.. _NOTIFY: http://www.postgresql.org/docs/9.0/static/sql-notify.html
+.. _NOTIFY: http://www.postgresql.org/docs/current/static/sql-notify.html
 
 Notifications are received after every query execution. If the user is
 interested in receiving notifications but not in performing any query, the
@@ -356,7 +356,7 @@ completely non-blocking connection attempt: see the libpq documentation for
 |PQconnectStart|_.
 
 .. |PQconnectStart| replace:: `!PQconnectStart()`
-.. _PQconnectStart: http://www.postgresql.org/docs/9.0/static/libpq-connect.html#LIBPQ-PQCONNECTSTART
+.. _PQconnectStart: http://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-PQCONNECTSTARTPARAMS
 
 The same loop should be also used to perform nonblocking queries: after
 sending a query via `~cursor.execute()` or `~cursor.callproc()`, call
@@ -472,7 +472,7 @@ resources about the topic.
 .. _gevent: http://www.gevent.org/
 .. _SQLAlchemy: http://www.sqlalchemy.org/
 .. _psycogreen: http://bitbucket.org/dvarrazzo/psycogreen/
-.. __: http://www.postgresql.org/docs/9.0/static/libpq-async.html
+.. __: http://www.postgresql.org/docs/current/static/libpq-async.html
 
 .. warning::
 

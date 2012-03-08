@@ -250,34 +250,28 @@ PyObject *psyco_default_binary_cast;
 
 /* typecast_init - initialize the dictionary and create default types */
 
-int
+RAISES_NEG int
 typecast_init(PyObject *dict)
 {
     int i;
+    int rv = -1;
+    typecastObject *t = NULL;
 
     /* create type dictionary and put it in module namespace */
-    psyco_types = PyDict_New();
-    psyco_binary_types = PyDict_New();
-
-    if (!psyco_types || !psyco_binary_types) {
-        Py_XDECREF(psyco_types);
-        Py_XDECREF(psyco_binary_types);
-        return -1;
-    }
-
+    if (!(psyco_types = PyDict_New())) { goto exit; }
     PyDict_SetItemString(dict, "string_types", psyco_types);
+
+    if (!(psyco_binary_types = PyDict_New())) { goto exit; }
     PyDict_SetItemString(dict, "binary_types", psyco_binary_types);
 
     /* insert the cast types into the 'types' dictionary and register them in
        the module dictionary */
     for (i = 0; typecast_builtins[i].name != NULL; i++) {
-        typecastObject *t;
-
         Dprintf("typecast_init: initializing %s", typecast_builtins[i].name);
 
         t = (typecastObject *)typecast_from_c(&(typecast_builtins[i]), dict);
-        if (t == NULL) return -1;
-        if (typecast_add((PyObject *)t, NULL, 0) != 0) return -1;
+        if (t == NULL) { goto exit; }
+        if (typecast_add((PyObject *)t, NULL, 0) < 0) { goto exit; }
 
         PyDict_SetItem(dict, t->name, (PyObject *)t);
 
@@ -285,6 +279,8 @@ typecast_init(PyObject *dict)
         if (typecast_builtins[i].values == typecast_BINARY_types) {
             psyco_default_binary_cast = (PyObject *)t;
         }
+        Py_DECREF((PyObject *)t);
+        t = NULL;
     }
 
     /* create and save a default cast object (but does not register it) */
@@ -294,29 +290,35 @@ typecast_init(PyObject *dict)
 #ifdef HAVE_MXDATETIME
     if (0 == psyco_typecast_mxdatetime_init()) {
         for (i = 0; typecast_mxdatetime[i].name != NULL; i++) {
-            typecastObject *t;
             Dprintf("typecast_init: initializing %s", typecast_mxdatetime[i].name);
             t = (typecastObject *)typecast_from_c(&(typecast_mxdatetime[i]), dict);
-            if (t == NULL) return -1;
+            if (t == NULL) { goto exit; }
             PyDict_SetItem(dict, t->name, (PyObject *)t);
+            Py_DECREF((PyObject *)t);
+            t = NULL;
         }
     }
 #endif
 
-    if (psyco_typecast_datetime_init()) { return -1; }
+    if (0 > psyco_typecast_datetime_init()) { goto exit; }
     for (i = 0; typecast_pydatetime[i].name != NULL; i++) {
-        typecastObject *t;
         Dprintf("typecast_init: initializing %s", typecast_pydatetime[i].name);
         t = (typecastObject *)typecast_from_c(&(typecast_pydatetime[i]), dict);
-        if (t == NULL) return -1;
+        if (t == NULL) { goto exit; }
         PyDict_SetItem(dict, t->name, (PyObject *)t);
+        Py_DECREF((PyObject *)t);
+        t = NULL;
     }
 
-    return 0;
+    rv = 0;
+
+exit:
+    Py_XDECREF((PyObject *)t);
+    return rv;
 }
 
 /* typecast_add - add a type object to the dictionary */
-int
+RAISES_NEG int
 typecast_add(PyObject *obj, PyObject *dict, int binary)
 {
     PyObject *val;
@@ -466,7 +468,7 @@ typecast_repr(PyObject *self)
 static PyObject *
 typecast_call(PyObject *obj, PyObject *args, PyObject *kwargs)
 {
-    char *string;
+    const char *string;
     Py_ssize_t length;
     PyObject *cursor;
 

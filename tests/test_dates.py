@@ -25,7 +25,7 @@
 import math
 import unittest
 import psycopg2
-from psycopg2.tz import FixedOffsetTimezone
+from psycopg2.tz import FixedOffsetTimezone, ZERO
 from testconfig import dsn
 
 class CommonDatetimeTestsMixin:
@@ -78,7 +78,7 @@ class CommonDatetimeTestsMixin:
         value = self.DATETIME(None, self.curs)
         self.assertEqual(value, None)
 
-    def test_parse_incomplete_time(self):
+    def test_parse_incomplete_datetime(self):
         self.assertRaises(psycopg2.DataError,
                           self.DATETIME, '2007', self.curs)
         self.assertRaises(psycopg2.DataError,
@@ -512,6 +512,32 @@ class FromTicksTestCase(unittest.TestCase):
         self.assertEqual(s.adapted.replace(hour=0),
             time(0, 11, 59, 999920))
 
+
+class FixedOffsetTimezoneTests(unittest.TestCase):
+
+    def test_init_with_no_args(self):
+        tzinfo = FixedOffsetTimezone()
+        self.assert_(tzinfo._offset is ZERO)
+        self.assert_(tzinfo._name is None)
+
+    def test_repr_with_positive_offset(self):
+        tzinfo = FixedOffsetTimezone(5 * 60)
+        self.assertEqual(repr(tzinfo), "psycopg2.tz.FixedOffsetTimezone(offset=300, name=None)")
+
+    def test_repr_with_negative_offset(self):
+        tzinfo = FixedOffsetTimezone(-5 * 60)
+        self.assertEqual(repr(tzinfo), "psycopg2.tz.FixedOffsetTimezone(offset=-300, name=None)")
+
+    def test_repr_with_name(self):
+        tzinfo = FixedOffsetTimezone(name="FOO")
+        self.assertEqual(repr(tzinfo), "psycopg2.tz.FixedOffsetTimezone(offset=0, name='FOO')")
+
+    def test_instance_caching(self):
+        self.assert_(FixedOffsetTimezone(name="FOO") is FixedOffsetTimezone(name="FOO"))
+        self.assert_(FixedOffsetTimezone(7 * 60) is FixedOffsetTimezone(7 * 60))
+        self.assert_(FixedOffsetTimezone(-9 * 60, 'FOO') is FixedOffsetTimezone(-9 * 60, 'FOO'))
+        self.assert_(FixedOffsetTimezone(9 * 60) is not FixedOffsetTimezone(9 * 60, 'FOO'))
+        self.assert_(FixedOffsetTimezone(name='FOO') is not FixedOffsetTimezone(9 * 60, 'FOO'))
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

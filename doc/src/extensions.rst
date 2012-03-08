@@ -82,7 +82,7 @@ functionalities defined by the |DBAPI|_.
         The method uses the efficient |lo_export|_ libpq function.
         
         .. |lo_export| replace:: `!lo_export()`
-        .. _lo_export: http://www.postgresql.org/docs/9.0/static/lo-interfaces.html#LO-EXPORT
+        .. _lo_export: http://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-EXPORT
 
     .. method:: seek(offset, whence=0)
 
@@ -103,7 +103,7 @@ functionalities defined by the |DBAPI|_.
         running these versions. It uses the |lo_truncate|_ libpq function.
 
         .. |lo_truncate| replace:: `!lo_truncate()`
-        .. _lo_truncate: http://www.postgresql.org/docs/9.0/static/lo-interfaces.html#LO-TRUNCATE
+        .. _lo_truncate: http://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-TRUNCATE
 
     .. method:: close()
 
@@ -325,6 +325,20 @@ details.
 
     .. versionadded:: 2.4.3
 
+    .. _cast-array-unknown:
+
+    .. note::
+
+        The function can be used to create a generic array typecaster,
+        returning a list of strings: just use the `~psycopg2.STRING` as base
+        typecaster. For instance, if you want to receive from the database an
+        array of :sql:`macaddr`, each address represented by string, you can
+        use::
+
+            psycopg2.extensions.register_type(
+                psycopg2.extensions.new_array_type(
+                    (1040,), 'MACADDR[]', psycopg2.STRING))
+
 
 .. function:: register_type(obj [, scope])
 
@@ -349,7 +363,7 @@ details.
     Used by Psycopg when adapting or casting unicode strings. See
     :ref:`unicode-handling`.
 
-    .. __: http://www.postgresql.org/docs/9.0/static/multibyte.html
+    .. __: http://www.postgresql.org/docs/current/static/multibyte.html
     .. __: http://docs.python.org/library/codecs.html#standard-encodings
 
 
@@ -432,7 +446,7 @@ set to one of the following constants:
     .. seealso:: `Read Committed Isolation Level`__ in PostgreSQL
         documentation.
 
-        .. __: http://www.postgresql.org/docs/9.1/static/transaction-iso.html#XACT-READ-COMMITTED
+        .. __: http://www.postgresql.org/docs/current/static/transaction-iso.html#XACT-READ-COMMITTED
 
 .. data:: ISOLATION_LEVEL_REPEATABLE_READ
 
@@ -456,7 +470,7 @@ set to one of the following constants:
     .. seealso:: `Repeatable Read Isolation Level`__ in PostgreSQL
         documentation.
 
-        .. __: http://www.postgresql.org/docs/9.1/static/transaction-iso.html#XACT-REPEATABLE-READ
+        .. __: http://www.postgresql.org/docs/current/static/transaction-iso.html#XACT-REPEATABLE-READ
 
 .. data:: ISOLATION_LEVEL_SERIALIZABLE
 
@@ -475,7 +489,7 @@ set to one of the following constants:
 
     .. seealso:: `Serializable Isolation Level`__ in PostgreSQL documentation.
 
-        .. __: http://www.postgresql.org/docs/9.1/static/transaction-iso.html#XACT-SERIALIZABLE
+        .. __: http://www.postgresql.org/docs/current/static/transaction-iso.html#XACT-SERIALIZABLE
 
 
 

@@ -43,8 +43,8 @@ The module interface respects the standard defined in the |DBAPI|_.
     Also note that the same parameters can be passed to the client library
     using `environment variables`__.
 
-    .. __: http://www.postgresql.org/docs/9.1/static/libpq-connect.html#LIBPQ-PQCONNECTDBPARAMS
-    .. __: http://www.postgresql.org/docs/9.1/static/libpq-envars.html
+    .. __: http://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-PQCONNECTDBPARAMS
+    .. __: http://www.postgresql.org/docs/current/static/libpq-envars.html
 
     Using the *connection_factory* parameter a different class or
     connections factory can be specified. It should be a callable object
@@ -117,31 +117,30 @@ available through the following exceptions:
         if not available.  The `~psycopg2.errorcodes` module contains
         symbolic constants representing PostgreSQL error codes.
 
+    .. doctest::
+        :options: +NORMALIZE_WHITESPACE
+
+        >>> try:
+        ...     cur.execute("SELECT * FROM barf")
+        ... except Exception, e:
+        ...     pass
+
+        >>> e.pgcode
+        '42P01'
+        >>> print e.pgerror
+        ERROR:  relation "barf" does not exist
+        LINE 1: SELECT * FROM barf
+                              ^
+    .. attribute:: cursor
+
+        The cursor the exception was raised from; `None` if not applicable.
+
     .. extension::
 
-        The `~Error.pgerror` and `~Error.pgcode` attributes are
-        Psycopg extensions.
-
-        .. doctest::
-            :options: +NORMALIZE_WHITESPACE
-
-            >>> try:
-            ...     cur.execute("SELECT * FROM barf")
-            ... except Exception, e:
-            ...     pass
-
-            >>> e.pgcode
-            '42P01'
-            >>> print e.pgerror
-            ERROR:  relation "barf" does not exist
-            LINE 1: SELECT * FROM barf
-                                  ^
-
-    .. versionchanged:: 2.0.7 added `Error.pgerror` and
-        `Error.pgcode` attributes.
+        The `~Error.pgerror`, `~Error.pgcode`, and `~Error.cursor` attributes
+        are Psycopg extensions.
 
 
-    
 .. exception:: InterfaceError
 
     Exception raised for errors that are related to the database interface

@@ -380,7 +380,9 @@ class DatabaseAPI20Test(unittest.TestCase):
         self.assertRaises(self.driver.Error,con.commit)
 
         # connection.close should raise an Error if called more than once
-        self.assertRaises(self.driver.Error,con.close)
+        # Issue discussed on DB-SIG: consensus seem that close() should not
+        # raised if called on closed objects. Issue reported back to Stuart.
+        # self.assertRaises(self.driver.Error,con.close)
 
     def test_execute(self):
         con = self._connect()

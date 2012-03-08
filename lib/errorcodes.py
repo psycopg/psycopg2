@@ -26,7 +26,7 @@ This module contains symbolic names for all PostgreSQL error codes.
 #
 # Based on:
 #
-#   http://www.postgresql.org/docs/8.4/static/errcodes-appendix.html
+#   http://www.postgresql.org/docs/current/static/errcodes-appendix.html
 #
 
 def lookup(code, _cache={}):

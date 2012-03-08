@@ -22,7 +22,8 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-from testutils import unittest
+from testutils import unittest, skip_before_python
+from testconfig import dsn
 
 import psycopg2
 
@@ -125,6 +126,40 @@ class ConnectTestCase(unittest.TestCase):
 
         psycopg2.connect(database=r"\every thing'")
         self.assertEqual(self.args[0], r"dbname='\\every thing\''")
+
+
+class ExceptionsTestCase(unittest.TestCase):
+    def setUp(self):
+        self.conn = psycopg2.connect(dsn)
+
+    def tearDown(self):
+        self.conn.close()
+
+    def test_attributes(self):
+        cur = self.conn.cursor()
+        try:
+            cur.execute("select * from nonexist")
+        except psycopg2.Error, exc:
+            e = exc
+
+        self.assertEqual(e.pgcode, '42P01')
+        self.assert_(e.pgerror)
+        self.assert_(e.cursor is cur)
+
+    @skip_before_python(2, 5)
+    def test_pickle(self):
+        import pickle
+        cur = self.conn.cursor()
+        try:
+            cur.execute("select * from nonexist")
+        except psycopg2.Error, exc:
+            e = exc
+
+        e1 = pickle.loads(pickle.dumps(e))
+
+        self.assertEqual(e.pgerror, e1.pgerror)
+        self.assertEqual(e.pgcode, e1.pgcode)
+        self.assert_(e1.cursor is None)
 
 
 def test_suite():

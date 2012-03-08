@@ -25,13 +25,12 @@
 import os
 import shutil
 import tempfile
-from testutils import unittest, decorate_all_tests, skip_if_tpc_disabled
 
 import psycopg2
 import psycopg2.extensions
 from psycopg2.extensions import b
 from testconfig import dsn, green
-from testutils import unittest, decorate_all_tests
+from testutils import unittest, decorate_all_tests, skip_if_tpc_disabled
 
 def skip_if_no_lo(f):
     def skip_if_no_lo_(self):

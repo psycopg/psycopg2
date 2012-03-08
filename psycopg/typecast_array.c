@@ -166,7 +166,7 @@ typecast_array_tokenize(const char *str, Py_ssize_t strlength,
     return res;
 }
 
-static int
+RAISES_NEG static int
 typecast_array_scan(const char *str, Py_ssize_t strlength,
                     PyObject *curs, PyObject *base, PyObject *array)
 {
@@ -199,7 +199,7 @@ typecast_array_scan(const char *str, Py_ssize_t strlength,
 
             /* before anything else we free the memory */
             if (state == ASCAN_QUOTED) PyMem_Free(token);
-            if (obj == NULL) return 0;
+            if (obj == NULL) return -1;
 
             PyList_Append(array, obj);
             Py_DECREF(obj);
@@ -207,25 +207,25 @@ typecast_array_scan(const char *str, Py_ssize_t strlength,
 
         else if (state == ASCAN_BEGIN) {
             PyObject *sub = PyList_New(0);
-            if (sub == NULL) return 0;
+            if (sub == NULL) return -1;
 
             PyList_Append(array, sub);
             Py_DECREF(sub);
 
             if (stack_index == MAX_DIMENSIONS)
-                return 0;
+                return -1;
 
             stack[stack_index++] = array;
             array = sub;
         }
 
         else if (state == ASCAN_ERROR) {
-            return 0;
+            return -1;
         }
 
         else if (state == ASCAN_END) {
             if (--stack_index < 0)
-                return 0;
+                return -1;
             array = stack[stack_index];
         }
 
@@ -233,7 +233,7 @@ typecast_array_scan(const char *str, Py_ssize_t strlength,
             break;
     }
 
-    return 1;
+    return 0;
 }
 
 
@@ -260,12 +260,11 @@ typecast_GENERIC_ARRAY_cast(const char *str, Py_ssize_t len, PyObject *curs)
     Dprintf("typecast_GENERIC_ARRAY_cast: str = '%s',"
             " len = " FORMAT_CODE_PY_SSIZE_T, str, len);
 
-    obj = PyList_New(0);
+    if (!(obj = PyList_New(0))) { return NULL; }
 
     /* scan the array skipping the first level of {} */
-    if (typecast_array_scan(&str[1], len-2, curs, base, obj) == 0) {
-        Py_DECREF(obj);
-        obj = NULL;
+    if (typecast_array_scan(&str[1], len-2, curs, base, obj) < 0) {
+        Py_CLEAR(obj);
     }
 
     return obj;

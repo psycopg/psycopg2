@@ -65,6 +65,13 @@ binary_quote(binaryObject *self)
     int got_view = 0;
 #endif
 
+    /* Allow Binary(None) to work */
+    if (self->wrapped == Py_None) {
+        Py_INCREF(psyco_null);
+        rv = psyco_null;
+        goto exit;
+    }
+
     /* if we got a plain string or a buffer we escape it and save the buffer */
 
 #if HAS_MEMORYVIEW
@@ -93,7 +100,7 @@ binary_quote(binaryObject *self)
 
     /* escape and build quoted buffer */
 
-    to = (char *)binary_escape((unsigned char*)buffer, (size_t) buffer_len,
+    to = (char *)binary_escape((unsigned char*)buffer, (size_t)buffer_len,
         &len, self->conn ? ((connectionObject*)self->conn)->pgconn : NULL);
     if (to == NULL) {
         PyErr_NoMemory();
@@ -112,12 +119,6 @@ exit:
 #if HAS_MEMORYVIEW
     if (got_view) { PyBuffer_Release(&view); }
 #endif
-
-    /* Allow Binary(None) to work */
-    if (self->wrapped == Py_None) {
-        Py_INCREF(psyco_null);
-        rv = psyco_null;
-    }
 
     /* if the wrapped object is not bytes or a buffer, this is an error */
     if (!rv && !PyErr_Occurred()) {
@@ -149,16 +150,14 @@ binary_str(binaryObject *self)
 static PyObject *
 binary_prepare(binaryObject *self, PyObject *args)
 {
-    connectionObject *conn;
+    PyObject *conn;
 
-    if (!PyArg_ParseTuple(args, "O", &conn))
+    if (!PyArg_ParseTuple(args, "O!", &connectionType, &conn))
         return NULL;
 
     Py_XDECREF(self->conn);
-    if (conn) {
-        self->conn = (PyObject*)conn;
-        Py_INCREF(self->conn);
-    }
+    self->conn = conn;
+    Py_INCREF(self->conn);
 
     Py_INCREF(Py_None);
     return Py_None;

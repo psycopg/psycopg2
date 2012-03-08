@@ -143,14 +143,6 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
 "  * `name`: Name for the new type\n" \
 "  * `baseobj`: Adapter to perform type conversion of a single array item."
 
-static void
-_psyco_register_type_set(PyObject **dict, PyObject *type)
-{
-    if (*dict == NULL)
-        *dict = PyDict_New();
-    typecast_add(type, *dict, 0);
-}
-
 static PyObject *
 psyco_register_type(PyObject *self, PyObject *args)
 {
@@ -162,10 +154,16 @@ psyco_register_type(PyObject *self, PyObject *args)
 
     if (obj != NULL && obj != Py_None) {
         if (PyObject_TypeCheck(obj, &cursorType)) {
-            _psyco_register_type_set(&(((cursorObject*)obj)->string_types), type);
+            PyObject **dict = &(((cursorObject*)obj)->string_types);
+            if (*dict == NULL) {
+                if (!(*dict = PyDict_New())) { return NULL; }
+            }
+            if (0 > typecast_add(type, *dict, 0)) { return NULL; }
         }
         else if (PyObject_TypeCheck(obj, &connectionType)) {
-            typecast_add(type, ((connectionObject*)obj)->string_types, 0);
+            if (0 > typecast_add(type, ((connectionObject*)obj)->string_types, 0)) {
+                return NULL;
+            }
         }
         else {
             PyErr_SetString(PyExc_TypeError,
@@ -174,7 +172,7 @@ psyco_register_type(PyObject *self, PyObject *args)
         }
     }
     else {
-        typecast_add(type, NULL, 0);
+        if (0 > typecast_add(type, NULL, 0)) { return NULL; }
     }
 
     Py_INCREF(Py_None);
@@ -182,66 +180,108 @@ psyco_register_type(PyObject *self, PyObject *args)
 }
 
 
-/* default adapters */
-
-static void
+/* Initialize the default adapters map
+ *
+ * Return 0 on success, else -1 and set an exception.
+ */
+static int
 psyco_adapters_init(PyObject *mod)
 {
-    PyObject *call;
+    PyObject *call = NULL;
+    int rv = -1;
 
-    microprotocols_add(&PyFloat_Type, NULL, (PyObject*)&pfloatType);
+    if (0 != microprotocols_add(&PyFloat_Type, NULL, (PyObject*)&pfloatType)) {
+        goto exit;
+    }
 #if PY_MAJOR_VERSION < 3
-    microprotocols_add(&PyInt_Type, NULL, (PyObject*)&pintType);
+    if (0 != microprotocols_add(&PyInt_Type, NULL, (PyObject*)&pintType)) {
+        goto exit;
+    }
 #endif
-    microprotocols_add(&PyLong_Type, NULL, (PyObject*)&pintType);
-    microprotocols_add(&PyBool_Type, NULL, (PyObject*)&pbooleanType);
+    if (0 != microprotocols_add(&PyLong_Type, NULL, (PyObject*)&pintType)) {
+        goto exit;
+    }
+    if (0 != microprotocols_add(&PyBool_Type, NULL, (PyObject*)&pbooleanType)) {
+        goto exit;
+    }
 
     /* strings */
 #if PY_MAJOR_VERSION < 3
-    microprotocols_add(&PyString_Type, NULL, (PyObject*)&qstringType);
+    if (0 != microprotocols_add(&PyString_Type, NULL, (PyObject*)&qstringType)) {
+        goto exit;
+    }
 #endif
-    microprotocols_add(&PyUnicode_Type, NULL, (PyObject*)&qstringType);
+    if (0 != microprotocols_add(&PyUnicode_Type, NULL, (PyObject*)&qstringType)) {
+        goto exit;
+    }
 
     /* binary */
 #if PY_MAJOR_VERSION < 3
-    microprotocols_add(&PyBuffer_Type, NULL, (PyObject*)&binaryType);
+    if (0 != microprotocols_add(&PyBuffer_Type, NULL, (PyObject*)&binaryType)) {
+        goto exit;
+    }
 #else
-    microprotocols_add(&PyBytes_Type, NULL, (PyObject*)&binaryType);
+    if (0 != microprotocols_add(&PyBytes_Type, NULL, (PyObject*)&binaryType)) {
+        goto exit;
+    }
 #endif
 
 #if PY_MAJOR_VERSION >= 3 || PY_MINOR_VERSION >= 6
-    microprotocols_add(&PyByteArray_Type, NULL, (PyObject*)&binaryType);
+    if (0 != microprotocols_add(&PyByteArray_Type, NULL, (PyObject*)&binaryType)) {
+        goto exit;
+    }
 #endif
 #if PY_MAJOR_VERSION >= 3 || PY_MINOR_VERSION >= 7
-    microprotocols_add(&PyMemoryView_Type, NULL, (PyObject*)&binaryType);
+    if (0 != microprotocols_add(&PyMemoryView_Type, NULL, (PyObject*)&binaryType)) {
+        goto exit;
+    }
 #endif
 
-    microprotocols_add(&PyList_Type, NULL, (PyObject*)&listType);
+    if (0 != microprotocols_add(&PyList_Type, NULL, (PyObject*)&listType)) {
+        goto exit;
+    }
 
     /* the module has already been initialized, so we can obtain the callable
        objects directly from its dictionary :) */
-    call = PyMapping_GetItemString(mod, "DateFromPy");
-    microprotocols_add(PyDateTimeAPI->DateType, NULL, call);
-    call = PyMapping_GetItemString(mod, "TimeFromPy");
-    microprotocols_add(PyDateTimeAPI->TimeType, NULL, call);
-    call = PyMapping_GetItemString(mod, "TimestampFromPy");
-    microprotocols_add(PyDateTimeAPI->DateTimeType, NULL, call);
-    call = PyMapping_GetItemString(mod, "IntervalFromPy");
-    microprotocols_add(PyDateTimeAPI->DeltaType, NULL, call);
+    if (!(call = PyMapping_GetItemString(mod, "DateFromPy"))) { goto exit; }
+    if (0 != microprotocols_add(PyDateTimeAPI->DateType, NULL, call)) { goto exit; }
+    Py_CLEAR(call);
+
+    if (!(call = PyMapping_GetItemString(mod, "TimeFromPy"))) { goto exit; }
+    if (0 != microprotocols_add(PyDateTimeAPI->TimeType, NULL, call)) { goto exit; }
+    Py_CLEAR(call);
+
+    if (!(call = PyMapping_GetItemString(mod, "TimestampFromPy"))) { goto exit; }
+    if (0 != microprotocols_add(PyDateTimeAPI->DateTimeType, NULL, call)) { goto exit; }
+    Py_CLEAR(call);
+
+    if (!(call = PyMapping_GetItemString(mod, "IntervalFromPy"))) { goto exit; }
+    if (0 != microprotocols_add(PyDateTimeAPI->DeltaType, NULL, call)) { goto exit; }
+    Py_CLEAR(call);
 
 #ifdef HAVE_MXDATETIME
     /* as above, we use the callable objects from the psycopg module */
     if (NULL != (call = PyMapping_GetItemString(mod, "TimestampFromMx"))) {
-        microprotocols_add(mxDateTime.DateTime_Type, NULL, call);
+        if (0 != microprotocols_add(mxDateTime.DateTime_Type, NULL, call)) { goto exit; }
+        Py_CLEAR(call);
 
         /* if we found the above, we have this too. */
-        call = PyMapping_GetItemString(mod, "TimeFromMx");
-        microprotocols_add(mxDateTime.DateTimeDelta_Type, NULL, call);
+        if (!(call = PyMapping_GetItemString(mod, "TimeFromMx"))) { goto exit; }
+        if (0 != microprotocols_add(mxDateTime.DateTimeDelta_Type, NULL, call)) { goto exit; }
+        Py_CLEAR(call);
     }
     else {
         PyErr_Clear();
     }
 #endif
+
+    /* Success! */
+    rv = 0;
+
+exit:
+    Py_XDECREF(call);
+
+    return rv;
 }
 
 /* psyco_encodings_fill
@@ -326,15 +366,27 @@ static encodingPair encodings[] = {
     {NULL, NULL}
 };
 
-static void psyco_encodings_fill(PyObject *dict)
+/* Initialize the encodings table.
+ *
+ * Return 0 on success, else -1 and set an exception.
+ */
+static int psyco_encodings_fill(PyObject *dict)
 {
+    PyObject *value = NULL;
     encodingPair *enc;
+    int rv = -1;
 
     for (enc = encodings; enc->pgenc != NULL; enc++) {
-        PyObject *value = Text_FromUTF8(enc->pyenc);
-        PyDict_SetItemString(dict, enc->pgenc, value);
-        Py_DECREF(value);
+        if (!(value = Text_FromUTF8(enc->pyenc))) { goto exit; }
+        if (0 != PyDict_SetItemString(dict, enc->pgenc, value)) { goto exit; }
+        Py_CLEAR(value);
     }
+    rv = 0;
+
+exit:
+    Py_XDECREF(value);
+
+    return rv;
 }
 
 /* psyco_errors_init, psyco_errors_fill (callable from C)
@@ -380,7 +432,59 @@ static struct {
     {NULL}  /* Sentinel */
 };
 
-static void
+
+/* Error.__reduce_ex__
+ *
+ * The method is required to make exceptions picklable: set the cursor
+ * attribute to None. Only working from Py 2.5: previous versions
+ * would require implementing __getstate__, and as of 2012 it's a little
+ * bit too late to care. */
+static PyObject *
+psyco_error_reduce_ex(PyObject *self, PyObject *args)
+{
+    PyObject *proto = NULL;
+    PyObject *super = NULL;
+    PyObject *tuple = NULL;
+    PyObject *dict = NULL;
+    PyObject *rv = NULL;
+
+    /* tuple = Exception.__reduce_ex__(self, proto) */
+    if (!PyArg_ParseTuple(args, "O", &proto)) {
+        goto error;
+    }
+    if (!(super = PyObject_GetAttrString(PyExc_Exception, "__reduce_ex__"))) {
+        goto error;
+    }
+    if (!(tuple = PyObject_CallFunctionObjArgs(super, self, proto, NULL))) {
+        goto error;
+    }
+
+    /* tuple[2]['cursor'] = None
+     *
+     * If these checks fail, we can still return a valid object. Pickle
+     * will likely fail downstream, but there's nothing else we can do here */
+    if (!PyTuple_Check(tuple)) { goto exit; }
+    if (3 > PyTuple_GET_SIZE(tuple)) { goto exit; }
+    dict = PyTuple_GET_ITEM(tuple, 2);      /* borrowed */
+    if (!PyDict_Check(dict)) { goto exit; }
+
+    /* Modify the tuple inplace and return it */
+    if (0 != PyDict_SetItemString(dict, "cursor", Py_None)) {
+        goto error;
+    }
+
+exit:
+    rv = tuple;
+    tuple = NULL;
+
+error:
+    Py_XDECREF(tuple);
+    Py_XDECREF(super);
+
+    return rv;
+}
+
+static int
 psyco_errors_init(void)
 {
     /* the names of the exceptions here reflect the oranization of the
@@ -388,16 +492,22 @@ psyco_errors_init(void)
        live in _psycopg */
 
     int i;
-    PyObject *dict;
+    PyObject *dict = NULL;
     PyObject *base;
-    PyObject *str;
+    PyObject *str = NULL;
+    PyObject *descr = NULL;
+    int rv = -1;
+
+    static PyMethodDef psyco_error_reduce_ex_def =
+        {"__reduce_ex__", psyco_error_reduce_ex, METH_VARARGS, "pickle helper"};
 
     for (i=0; exctable[i].name; i++) {
-        dict = PyDict_New();
+        if (!(dict = PyDict_New())) { goto exit; }
 
         if (exctable[i].docstr) {
-            str = Text_FromUTF8(exctable[i].docstr);
-            PyDict_SetItemString(dict, "__doc__", str);
+            if (!(str = Text_FromUTF8(exctable[i].docstr))) { goto exit; }
+            if (0 != PyDict_SetItemString(dict, "__doc__", str)) { goto exit; }
+            Py_CLEAR(str);
         }
 
         if (exctable[i].base == 0) {
@@ -411,7 +521,11 @@ psyco_errors_init(void)
         else
             base = *exctable[i].base;
 
-        *exctable[i].exc = PyErr_NewException(exctable[i].name, base, dict);
+        if (!(*exctable[i].exc = PyErr_NewException(
+                exctable[i].name, base, dict))) {
+            goto exit;
+        }
+        Py_CLEAR(dict);
     }
 
     /* Make pgerror, pgcode and cursor default to None on psycopg
@@ -420,53 +534,71 @@ psyco_errors_init(void)
     PyObject_SetAttrString(Error, "pgerror", Py_None);
     PyObject_SetAttrString(Error, "pgcode", Py_None);
     PyObject_SetAttrString(Error, "cursor", Py_None);
+
+    /* install __reduce_ex__ on Error to make all the subclasses picklable.
+     *
+     * Don't install it on Py 2.4: it is not used by the pickle
+     * protocol, and if called manually fails in an unsettling way,
+     * probably because the exceptions were old-style classes. */
+#if PY_VERSION_HEX >= 0x02050000
+    if (!(descr = PyDescr_NewMethod((PyTypeObject *)Error,
+            &psyco_error_reduce_ex_def))) {
+        goto exit;
+    }
+    if (0 != PyObject_SetAttrString(Error,
+            psyco_error_reduce_ex_def.ml_name, descr)) {
+        goto exit;
+    }
+#endif
+
+    rv = 0;
+
+exit:
+    Py_XDECREF(descr);
+    Py_XDECREF(str);
+    Py_XDECREF(dict);
+    return rv;
 }
 
 void
 psyco_errors_fill(PyObject *dict)
 {
-    PyDict_SetItemString(dict, "Error", Error);
-    PyDict_SetItemString(dict, "Warning", Warning);
-    PyDict_SetItemString(dict, "InterfaceError", InterfaceError);
-    PyDict_SetItemString(dict, "DatabaseError", DatabaseError);
-    PyDict_SetItemString(dict, "InternalError", InternalError);
-    PyDict_SetItemString(dict, "OperationalError", OperationalError);
-    PyDict_SetItemString(dict, "ProgrammingError", ProgrammingError);
-    PyDict_SetItemString(dict, "IntegrityError", IntegrityError);
-    PyDict_SetItemString(dict, "DataError", DataError);
-    PyDict_SetItemString(dict, "NotSupportedError", NotSupportedError);
-#ifdef PSYCOPG_EXTENSIONS
-    PyDict_SetItemString(dict, "QueryCanceledError", QueryCanceledError);
-    PyDict_SetItemString(dict, "TransactionRollbackError",
-                         TransactionRollbackError);
-#endif
+    int i;
+    char *name;
+
+    for (i = 0; exctable[i].name; i++) {
+        if (NULL == exctable[i].exc) { continue; }
+
+        /* the name is the part after the last dot */
+        name = strrchr(exctable[i].name, '.');
+        name = name ? name + 1 : exctable[i].name;
+
+        PyDict_SetItemString(dict, name, *exctable[i].exc);
+    }
 }
 
 void
 psyco_errors_set(PyObject *type)
 {
-    PyObject_SetAttrString(type, "Error", Error);
-    PyObject_SetAttrString(type, "Warning", Warning);
-    PyObject_SetAttrString(type, "InterfaceError", InterfaceError);
-    PyObject_SetAttrString(type, "DatabaseError", DatabaseError);
-    PyObject_SetAttrString(type, "InternalError", InternalError);
-    PyObject_SetAttrString(type, "OperationalError", OperationalError);
-    PyObject_SetAttrString(type, "ProgrammingError", ProgrammingError);
-    PyObject_SetAttrString(type, "IntegrityError", IntegrityError);
-    PyObject_SetAttrString(type, "DataError", DataError);
-    PyObject_SetAttrString(type, "NotSupportedError", NotSupportedError);
-#ifdef PSYCOPG_EXTENSIONS
-    PyObject_SetAttrString(type, "QueryCanceledError", QueryCanceledError);
-    PyObject_SetAttrString(type, "TransactionRollbackError",
-                           TransactionRollbackError);
-#endif
+    int i;
+    char *name;
+
+    for (i = 0; exctable[i].name; i++) {
+        if (NULL == exctable[i].exc) { continue; }
+
+        /* the name is the part after the last dot */
+        name = strrchr(exctable[i].name, '.');
+        name = name ? name + 1 : exctable[i].name;
+
+        PyObject_SetAttrString(type, name, *exctable[i].exc);
+    }
 }
 
-/* psyco_error_new
+/* psyco_set_error
 
    Create a new error of the given type with extra attributes. */
 
-void
+RAISES void
 psyco_set_error(PyObject *exc, cursorObject *curs, const char *msg,
                 const char *pgerror, const char *pgcode)
 {
@@ -495,15 +627,17 @@ psyco_set_error(PyObject *exc, cursorObject *curs, const char *msg,
         }
 
         if (pgerror) {
-            t = conn_text_from_chars(conn, pgerror);
-            PyObject_SetAttrString(err, "pgerror", t);
-            Py_DECREF(t);
+            if ((t = conn_text_from_chars(conn, pgerror))) {
+                PyObject_SetAttrString(err, "pgerror", t);
+                Py_DECREF(t);
+            }
         }
 
         if (pgcode) {
-            t = conn_text_from_chars(conn, pgcode);
-            PyObject_SetAttrString(err, "pgcode", t);
-            Py_DECREF(t);
+            if ((t = conn_text_from_chars(conn, pgcode))) {
+                PyObject_SetAttrString(err, "pgcode", t);
+                Py_DECREF(t);
+            }
         }
 
         PyErr_SetObject(exc, err);
@@ -570,7 +704,7 @@ psyco_GetDecimalType(void)
     }
 
     /* Store the object from future uses. */
-    if (can_cache && !cachedType) {
+    if (can_cache && !cachedType && decimalType) {
         Py_INCREF(decimalType);
         cachedType = decimalType;
     }
@@ -594,15 +728,11 @@ psyco_make_description_type(void)
     /* Try to import collections.namedtuple */
     if (!(coll = PyImport_ImportModule("collections"))) {
         Dprintf("psyco_make_description_type: collections import failed");
-        PyErr_Clear();
-        rv = Py_None;
-        goto exit;
+        goto error;
     }
     if (!(nt = PyObject_GetAttrString(coll, "namedtuple"))) {
         Dprintf("psyco_make_description_type: no collections.namedtuple");
-        PyErr_Clear();
-        rv = Py_None;
-        goto exit;
+        goto error;
     }
 
     /* Build the namedtuple */
@@ -614,6 +744,13 @@ exit:
     Py_XDECREF(nt);
 
     return rv;
+
+error:
+    /* controlled error: we will fall back to regular tuples. Return None. */
+    PyErr_Clear();
+    rv = Py_None;
+    Py_INCREF(rv);
+    goto exit;
 }
 
 
@@ -826,10 +963,10 @@ INIT_MODULE(_psycopg)(void)
 #endif
 
     /* other mixed initializations of module-level variables */
-    psycoEncodings = PyDict_New();
-    psyco_encodings_fill(psycoEncodings);
+    if (!(psycoEncodings = PyDict_New())) { goto exit; }
+    if (0 != psyco_encodings_fill(psycoEncodings)) { goto exit; }
     psyco_null = Bytes_FromString("NULL");
-    psyco_DescriptionType = psyco_make_description_type();
+    if (!(psyco_DescriptionType = psyco_make_description_type())) { goto exit; }
 
     /* set some module's parameters */
     PyModule_AddStringConstant(module, "__version__", PSYCOPG_VERSION);
@@ -862,14 +999,14 @@ INIT_MODULE(_psycopg)(void)
     }
 #endif
     /* initialize default set of typecasters */
-    typecast_init(dict);
+    if (0 != typecast_init(dict)) { goto exit; }
 
     /* initialize microprotocols layer */
     microprotocols_init(dict);
-    psyco_adapters_init(dict);
+    if (0 != psyco_adapters_init(dict)) { goto exit; }
 
     /* create a standard set of exceptions and add them to the module's dict */
-    psyco_errors_init();
+    if (0 != psyco_errors_init()) { goto exit; }
     psyco_errors_fill(dict);
 
     /* Solve win32 build issue about non-constant initializer element */

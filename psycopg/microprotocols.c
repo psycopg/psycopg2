@@ -52,29 +52,35 @@ microprotocols_init(PyObject *dict)
 }
 
 
-/* microprotocols_add - add a reverse type-caster to the dictionary */
-
+/* microprotocols_add - add a reverse type-caster to the dictionary
+ *
+ * Return 0 on success, else -1 and set an exception.
+ */
 int
 microprotocols_add(PyTypeObject *type, PyObject *proto, PyObject *cast)
 {
-    PyObject *key;
+    PyObject *key = NULL;
+    int rv = -1;
 
     if (proto == NULL) proto = (PyObject*)&isqlquoteType;
 
     Dprintf("microprotocols_add: cast %p for (%s, ?)", cast, type->tp_name);
 
-    key = PyTuple_Pack(2, (PyObject*)type, proto);
-    PyDict_SetItem(psyco_adapters, key, cast);
-    Py_DECREF(key);
+    if (!(key = PyTuple_Pack(2, (PyObject*)type, proto))) { goto exit; }
+    if (0 != PyDict_SetItem(psyco_adapters, key, cast)) { goto exit; }
 
-    return 0;
+    rv = 0;
+
+exit:
+    Py_XDECREF(key);
+    return rv;
 }
 
 /* Check if one of `obj` superclasses has an adapter for `proto`.
  *
- * If it does, return a *borrowed reference* to the adapter, else NULL.
+ * If it does, return a *borrowed reference* to the adapter, else to None.
  */
-static PyObject *
+BORROWED static PyObject *
 _get_superclass_adapter(PyObject *obj, PyObject *proto)
 {
     PyTypeObject *type;
@@ -89,14 +95,14 @@ _get_superclass_adapter(PyObject *obj, PyObject *proto)
 #endif
         type->tp_mro)) {
         /* has no mro */
-        return NULL;
+        return Py_None;
     }
 
     /* Walk the mro from the most specific subclass. */
     mro = type->tp_mro;
     for (i = 1, ii = PyTuple_GET_SIZE(mro); i < ii; ++i) {
         st = PyTuple_GET_ITEM(mro, i);
-        key = PyTuple_Pack(2, st, proto);
+        if (!(key = PyTuple_Pack(2, st, proto))) { return NULL; }
         adapter = PyDict_GetItem(psyco_adapters, key);
         Py_DECREF(key);
 
@@ -119,7 +125,7 @@ _get_superclass_adapter(PyObject *obj, PyObject *proto)
             return adapter;
         }
     }
-    return NULL;
+    return Py_None;
 }
 
 
@@ -139,7 +145,7 @@ microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
         Py_TYPE(obj)->tp_name);
 
     /* look for an adapter in the registry */
-    key = PyTuple_Pack(2, Py_TYPE(obj), proto);
+    if (!(key = PyTuple_Pack(2, Py_TYPE(obj), proto))) { return NULL; }
     adapter = PyDict_GetItem(psyco_adapters, key);
     Py_DECREF(key);
     if (adapter) {
@@ -148,7 +154,10 @@ microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
     }
 
     /* Check if a superclass can be adapted and use the same adapter. */
-    if (NULL != (adapter = _get_superclass_adapter(obj, proto))) {
+    if (!(adapter = _get_superclass_adapter(obj, proto))) {
+        return NULL;
+    }
+    if (Py_None != adapter) {
         adapted = PyObject_CallFunctionObjArgs(adapter, obj, NULL);
         return adapted;
     }

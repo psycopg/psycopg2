@@ -88,25 +88,17 @@ class DictCursorBase(_cursor):
 
     def __iter__(self):
         if self._prefetch:
-            res = _cursor.fetchmany(self, self.itersize)
-            if not res:
-                return
+            res = _cursor.__iter__(self)
+            first = res.next()
         if self._query_executed:
             self._build_index()
         if not self._prefetch:
-            res = _cursor.fetchmany(self, self.itersize)
+            res = _cursor.__iter__(self)
+            first = res.next()
 
-        for r in res:
-            yield r
-
-        # the above was the first itersize record. the following are
-        # in a repeated loop.
+        yield first
         while 1:
-            res = _cursor.fetchmany(self, self.itersize)
-            if not res:
-                return
-            for r in res:
-                yield r
+            yield res.next()
 
 
 class DictConnection(_connection):
@@ -318,14 +310,17 @@ class NamedTupleCursor(_cursor):
         return [nt(*t) for t in ts]
 
     def __iter__(self):
-        # Invoking _cursor.__iter__(self) goes to infinite recursion,
-        # so we do pagination by hand
+        it = _cursor.__iter__(self)
+        t = it.next()
+
+        nt = self.Record
+        if nt is None:
+            nt = self.Record = self._make_nt()
+
+        yield nt(*t)
+
         while 1:
-            recs = self.fetchmany(self.itersize)
-            if not recs:
-                return
-            for rec in recs:
-                yield rec
+            yield nt(*it.next())
 
     try:
         from collections import namedtuple
@@ -445,7 +440,7 @@ class UUID_adapter(object):
     """Adapt Python's uuid.UUID__ type to PostgreSQL's uuid__.
 
     .. __: http://docs.python.org/library/uuid.html
-    .. __: http://www.postgresql.org/docs/8.4/static/datatype-uuid.html
+    .. __: http://www.postgresql.org/docs/current/static/datatype-uuid.html
     """
 
     def __init__(self, uuid):
@@ -460,31 +455,29 @@ class UUID_adapter(object):
     __str__ = getquoted
 
 def register_uuid(oids=None, conn_or_curs=None):
-    """Create the UUID type and an uuid.UUID adapter."""
+    """Create the UUID type and an uuid.UUID adapter.
+
+    :param oids: oid for the PostgreSQL :sql:`uuid` type, or 2-items sequence
+        with oids of the type and the array. If not specified, use PostgreSQL
+        standard oids.
+    :param conn_or_curs: where to register the typecaster. If not specified,
+        register it globally.
+    """
 
     import uuid
 
     if not oids:
         oid1 = 2950
         oid2 = 2951
-    elif type(oids) == list:
+    elif isinstance(oids, (list, tuple)):
         oid1, oid2 = oids
     else:
         oid1 = oids
         oid2 = 2951
 
-    def parseUUIDARRAY(data, cursor):
-        if data is None:
-            return None
-        elif data == '{}':
-            return []
-        else:
-            return [((len(x) > 0 and x != 'NULL') and uuid.UUID(x) or None)
-                    for x in data[1:-1].split(',')]
-
     _ext.UUID = _ext.new_type((oid1, ), "UUID",
             lambda data, cursor: data and uuid.UUID(data) or None)
-    _ext.UUIDARRAY = _ext.new_type((oid2,), "UUID[]", parseUUIDARRAY)
+    _ext.UUIDARRAY = _ext.new_array_type((oid2,), "UUID[]", _ext.UUID)
 
     _ext.register_type(_ext.UUID, conn_or_curs)
     _ext.register_type(_ext.UUIDARRAY, conn_or_curs)
@@ -505,13 +498,13 @@ class Inet(object):
     """
     def __init__(self, addr):
         self.addr = addr
-    
+
     def __repr__(self):
         return "%s(%r)" % (self.__class__.__name__, self.addr)
 
     def prepare(self, conn):
         self._conn = conn
-    
+
     def getquoted(self):
         obj = _A(self.addr)
         if hasattr(obj, 'prepare'):
@@ -524,13 +517,32 @@ class Inet(object):
 
     def __str__(self):
         return str(self.addr)
-        
+
 def register_inet(oid=None, conn_or_curs=None):
-    """Create the INET type and an Inet adapter."""
-    if not oid: oid = 869
-    _ext.INET = _ext.new_type((oid, ), "INET",
+    """Create the INET type and an Inet adapter.
+
+    :param oid: oid for the PostgreSQL :sql:`inet` type, or 2-items sequence
+        with oids of the type and the array. If not specified, use PostgreSQL
+        standard oids.
+    :param conn_or_curs: where to register the typecaster. If not specified,
+        register it globally.
+    """
+    if not oid:
+        oid1 = 869
+        oid2 = 1041
+    elif isinstance(oid, (list, tuple)):
+        oid1, oid2 = oid
+    else:
+        oid1 = oid
+        oid2 = 1041
+
+    _ext.INET = _ext.new_type((oid1, ), "INET",
             lambda data, cursor: data and Inet(data) or None)
+    _ext.INETARRAY = _ext.new_array_type((oid2, ), "INETARRAY", _ext.INET)
+
     _ext.register_type(_ext.INET, conn_or_curs)
+    _ext.register_type(_ext.INETARRAY, conn_or_curs)
+
     return _ext.INET
 
 
@@ -849,9 +861,9 @@ class CompositeCaster(object):
         return self._ctor(*attrs)
 
     _re_tokenize = regex.compile(r"""
-  \(? ([,\)])                       # an empty token, representing NULL
+  \(? ([,)])                        # an empty token, representing NULL
 | \(? " ((?: [^"] | "")*) " [,)]    # or a quoted string
-| \(? ([^",\)]+) [,\)]              # or an unquoted string
+| \(? ([^",)]+) [,)]                # or an unquoted string
     """, regex.VERBOSE)
 
     _re_undouble = regex.compile(r'(["\\])\1')
@@ -861,7 +873,7 @@ class CompositeCaster(object):
         rv = []
         for m in self._re_tokenize.finditer(s):
             if m is None:
-                raise psycopg2.InterfaceError("can't parse type: %r", s)
+                raise psycopg2.InterfaceError("can't parse type: %r" % s)
             if m.group(1):
                 rv.append(None)
             elif m.group(2):
