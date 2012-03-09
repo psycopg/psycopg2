@@ -105,6 +105,13 @@ functionalities defined by the |DBAPI|_.
         .. |lo_truncate| replace:: `!lo_truncate()`
         .. _lo_truncate: http://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-TRUNCATE
 
+        .. warning::
+
+            If Psycopg is built with |lo_truncate| support (i.e. if the
+            :program:`pg_config` used during setup is version >= 8.3), but at
+            runtime an older libpq is found, Psycopg will fail to import.  See
+            :ref:`the lo_truncate FAQ <faq-lo_truncate>` about the problem.
+
     .. method:: close()
 
         Close the object.

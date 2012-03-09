@@ -161,6 +161,24 @@ I can't compile `!psycopg2`: the compiler says *error: libpq-fe.h: No such file 
     You need to install the development version of the libpq: the package is
     usually called ``libpq-dev``.
 
+.. _faq-lo_truncate:
+.. cssclass:: faq
+
+`!psycopg2` raises `!ImportError` with message *_psycopg.so: undefined symbol: lo_truncate* when imported.
+    This means that Psycopg has been compiled with |lo_truncate|_ support,
+    which means that the libpq used at compile time was version >= 8.3, but at
+    runtime an older libpq library is found. You can use::
+
+        $ ldd /path/to/packages/psycopg2/_psycopg.so | grep libpq
+
+    to find what is the version used at runtime.
+
+    You can avoid the problem by using the same version of the
+    :program:`pg_config` at install time and the libpq at runtime.
+
+    .. |lo_truncate| replace:: `!lo_truncate()`
+    .. _lo_truncate: http://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-TRUNCATE
+
 Psycopg raises *ImportError: cannot import name tz* on import in mod_wsgi / ASP, but it works fine otherwise.
     If `!psycopg2` is installed in an egg_ (e.g. because installed by
     :program:`easy_install`), the user running the program may be unable to
