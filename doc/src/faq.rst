@@ -10,6 +10,7 @@ suggest new entries!
 Problems with transactions handling
 -----------------------------------
 
+.. _faq-idle-in-transaction:
 .. cssclass:: faq
 
 Why does `!psycopg2` leave database sessions "idle in transaction"?
@@ -25,6 +26,10 @@ Why does `!psycopg2` leave database sessions "idle in transaction"?
     connection in `~connection.autocommit` mode to avoid a new transaction to
     be started at the first command.
 
+
+.. _faq-transaction-aborted:
+.. cssclass:: faq
+
 I receive the error *current transaction is aborted, commands ignored until end of transaction block* and can't do anything else!
     There was a problem *in the previous* command to the database, which
     resulted in an error.  The database will not recover automatically from
@@ -34,6 +39,10 @@ I receive the error *current transaction is aborted, commands ignored until end 
 
     .. |SAVEPOINT| replace:: :sql:`SAVEPOINT`
     .. _SAVEPOINT: http://www.postgresql.org/docs/current/static/sql-savepoint.html
+
+
+.. _faq-transaction-aborted-multiprocess:
+.. cssclass:: faq
 
 Why do I get the error *current transaction is aborted, commands ignored until end of transaction block* when I use `!multiprocessing` (or any other forking system) and not when use `!threading`?
     Psycopg's connections can't be shared across processes (but are thread
@@ -45,6 +54,7 @@ Why do I get the error *current transaction is aborted, commands ignored until e
 Problems with type conversions
 ------------------------------
 
+.. _faq-cant-adapt:
 .. cssclass:: faq
 
 Why does `!cursor.execute()` raise the exception *can't adapt*?
@@ -52,6 +62,10 @@ Why does `!cursor.execute()` raise the exception *can't adapt*?
     at the object class.  The exception is raised when you are trying to pass
     as query parameter an object for which there is no adapter registered for
     its class.  See :ref:`adapting-new-types` for informations.
+
+
+.. _faq-number-required:
+.. cssclass:: faq
 
 I can't pass an integer or a float parameter to my query: it says *a number is required*, but *it is* a number!
     In your query string, you always have to use ``%s``  placeholders,
@@ -61,6 +75,10 @@ I can't pass an integer or a float parameter to my query: it says *a number is r
 
         >>> cur.execute("INSERT INTO numbers VALUES (%d)", (42,)) # WRONG
         >>> cur.execute("INSERT INTO numbers VALUES (%s)", (42,)) # correct
+
+
+.. _faq-not-all-arguments-converted:
+.. cssclass:: faq
 
 I try to execute a query but it fails with the error *not all arguments converted during string formatting* (or *object does not support indexing*). Why?
     Psycopg always require positional arguments to be passed as a sequence, even
@@ -73,6 +91,10 @@ I try to execute a query but it fails with the error *not all arguments converte
         >>> cur.execute("INSERT INTO foo VALUES (%s)", ("bar",)) # correct
         >>> cur.execute("INSERT INTO foo VALUES (%s)", ["bar"])  # correct
 
+
+.. _faq-unicode:
+.. cssclass:: faq
+
 My database is Unicode, but I receive all the strings as UTF-8 `!str`. Can I receive `!unicode` objects instead?
     The following magic formula will do the trick::
 
@@ -80,6 +102,10 @@ My database is Unicode, but I receive all the strings as UTF-8 `!str`. Can I rec
         psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 
     See :ref:`unicode-handling` for the gory details.
+
+
+.. _faq-float:
+.. cssclass:: faq
 
 Psycopg converts :sql:`decimal`\/\ :sql:`numeric` database types into Python `!Decimal` objects. Can I have `!float` instead?
     You can register a customized adapter for PostgreSQL decimal type::
@@ -93,6 +119,10 @@ Psycopg converts :sql:`decimal`\/\ :sql:`numeric` database types into Python `!D
     See :ref:`type-casting-from-sql-to-python` to read the relevant
     documentation. If you find `!psycopg2.extensions.DECIMAL` not avalable, use
     `!psycopg2._psycopg.DECIMAL` instead.
+
+
+.. _faq-bytea-9.0:
+.. cssclass:: faq
 
 Transferring binary data from PostgreSQL 9.0 doesn't work.
     PostgreSQL 9.0 uses by default `the "hex" format`__ to transfer
@@ -109,6 +139,10 @@ Transferring binary data from PostgreSQL 9.0 doesn't work.
     .. __: http://www.postgresql.org/docs/current/static/datatype-binary.html
     .. __: http://www.postgresql.org/docs/current/static/runtime-config-client.html#GUC-BYTEA-OUTPUT
 
+
+.. _faq-array:
+.. cssclass:: faq
+
 Arrays of *TYPE* are not casted to list.
     Arrays are only casted to list when their oid is known, and an array
     typecaster is registered for them. If there is no typecaster, the array is
@@ -120,6 +154,7 @@ Arrays of *TYPE* are not casted to list.
 Best practices
 --------------
 
+.. _faq-reuse-cursors:
 .. cssclass:: faq
 
 When should I save and re-use a cursor as opposed to creating a new one as needed?
@@ -131,6 +166,10 @@ When should I save and re-use a cursor as opposed to creating a new one as neede
     them.) The only exception are tight loops where one usually use the same
     cursor for a whole bunch of :sql:`INSERT`\s or :sql:`UPDATE`\s.
 
+
+.. _faq-reuse-connections:
+.. cssclass:: faq
+
 When should I save and re-use a connection as opposed to creating a new one as needed?
     Creating a connection can be slow (think of SSL over TCP) so the best
     practice is to create a single connection and keep it open as long as
@@ -138,6 +177,10 @@ When should I save and re-use a connection as opposed to creating a new one as n
     after a single :sql:`SELECT` statement) to make sure the backend is never
     left "idle in transaction".  See also `psycopg2.pool` for lightweight
     connection pooling.
+
+
+.. _faq-named-cursors:
+.. cssclass:: faq
 
 What are the advantages or disadvantages of using named cursors?
     The only disadvantages is that they use up resources on the server and
@@ -151,15 +194,21 @@ What are the advantages or disadvantages of using named cursors?
 Problems compiling and deploying psycopg2
 -----------------------------------------
 
+.. _faq-python-h:
 .. cssclass:: faq
 
 I can't compile `!psycopg2`: the compiler says *error: Python.h: No such file or directory*. What am I missing?
     You need to install a Python development package: it is usually called
     ``python-dev``.
 
+
+.. _faq-libpq-fe-h:
+.. cssclass:: faq
+
 I can't compile `!psycopg2`: the compiler says *error: libpq-fe.h: No such file or directory*. What am I missing?
     You need to install the development version of the libpq: the package is
     usually called ``libpq-dev``.
+
 
 .. _faq-lo_truncate:
 .. cssclass:: faq
@@ -178,6 +227,10 @@ I can't compile `!psycopg2`: the compiler says *error: libpq-fe.h: No such file 
 
     .. |lo_truncate| replace:: `!lo_truncate()`
     .. _lo_truncate: http://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-TRUNCATE
+
+
+.. _faq-import-mod_wsgi:
+.. cssclass:: faq
 
 Psycopg raises *ImportError: cannot import name tz* on import in mod_wsgi / ASP, but it works fine otherwise.
     If `!psycopg2` is installed in an egg_ (e.g. because installed by
