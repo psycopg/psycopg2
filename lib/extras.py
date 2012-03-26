@@ -103,11 +103,10 @@ class DictCursorBase(_cursor):
 
 class DictConnection(_connection):
     """A connection that uses `DictCursor` automatically."""
-    def cursor(self, name=None):
-        if name is None:
-            return _connection.cursor(self, cursor_factory=DictCursor)
-        else:
-            return _connection.cursor(self, name, cursor_factory=DictCursor)
+    def cursor(self, *args, **kwargs):
+        if 'cursor_factory' not in kwargs:
+            kwargs['cursor_factory'] = DictCursor
+        return _connection.cursor(self, *args, **kwargs)
 
 class DictCursor(DictCursorBase):
     """A cursor that keeps a list of column name -> index mappings."""
@@ -196,11 +195,10 @@ class DictRow(list):
 
 class RealDictConnection(_connection):
     """A connection that uses `RealDictCursor` automatically."""
-    def cursor(self, name=None):
-        if name is None:
-            return _connection.cursor(self, cursor_factory=RealDictCursor)
-        else:
-            return _connection.cursor(self, name, cursor_factory=RealDictCursor)
+    def cursor(self, *args, **kwargs):
+        if 'cursor_factory' not in kwargs:
+            kwargs['cursor_factory'] = RealDictCursor
+        return _connection.cursor(self, *args, **kwargs)
 
 class RealDictCursor(DictCursorBase):
     """A cursor that uses a real dict as the base type for rows.
@@ -254,7 +252,8 @@ class RealDictRow(dict):
 class NamedTupleConnection(_connection):
     """A connection that uses `NamedTupleCursor` automatically."""
     def cursor(self, *args, **kwargs):
-        kwargs['cursor_factory'] = NamedTupleCursor
+        if 'cursor_factory' not in kwargs:
+            kwargs['cursor_factory'] = NamedTupleCursor
         return _connection.cursor(self, *args, **kwargs)
 
 class NamedTupleCursor(_cursor):
