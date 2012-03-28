@@ -1,3 +1,26 @@
+What's new in psycopg 2.4.5
+---------------------------
+
+  - The close() methods on connections and cursors don't raise exceptions
+    if called on already closed objects.
+  - Fixed fetchmany() with no argument in cursor subclasses
+    (ticket #84).
+  - Use lo_creat() instead of lo_create() when possible for better
+    interaction with pgpool-II (ticket #88).
+  - Error and its subclasses are picklable, useful for multiprocessing
+    interaction (ticket #90).
+  - Better efficiency and formatting of timezone offset objects thanks
+    to Menno Smits (tickets #94, #95).
+  - Fixed 'rownumber' during iteration on cursor subclasses.
+    Regression introduced in 2.4.4 (ticket #100).
+  - Added support for 'inet' arrays.
+  - Fixed 'commit()' concurrency problem (ticket #103).
+  - Codebase cleaned up using the GCC Python plugin's static analysis
+    tool, which has revealed several unchecked return values, possible
+    NULL dereferences, reference counting problems. Many thanks to David
+    Malcolm for the useful tool and the assistance provided using it.
+
+
 What's new in psycopg 2.4.4
 ---------------------------
 

@@ -82,11 +82,20 @@ class TypesExtrasTests(unittest.TestCase):
 
     def testINET(self):
         psycopg2.extras.register_inet()
-        i = "192.168.1.0/24";
+        i = psycopg2.extras.Inet("192.168.1.0/24")
         s = self.execute("SELECT %s AS foo", (i,))
-        self.failUnless(i == s)
+        self.failUnless(i.addr == s.addr)
         # must survive NULL cast to inet
         s = self.execute("SELECT NULL::inet AS foo")
+        self.failUnless(s is None)
+
+    def testINETARRAY(self):
+        psycopg2.extras.register_inet()
+        i = psycopg2.extras.Inet("192.168.1.0/24")
+        s = self.execute("SELECT %s AS foo", ([i],))
+        self.failUnless(i.addr == s[0].addr)
+        # must survive NULL cast to inet
+        s = self.execute("SELECT NULL::inet[] AS foo")
         self.failUnless(s is None)
 
     def test_inet_conform(self):

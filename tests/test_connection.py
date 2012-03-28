@@ -48,6 +48,12 @@ class ConnectionTests(unittest.TestCase):
         conn.close()
         self.assertEqual(conn.closed, True)
 
+    def test_close_idempotent(self):
+        conn = self.conn
+        conn.close()
+        conn.close()
+        self.assert_(conn.closed)
+
     def test_cursor_closed_attribute(self):
         conn = self.conn
         curs = conn.cursor()
@@ -158,11 +164,42 @@ class ConnectionTests(unittest.TestCase):
 
     def test_weakref(self):
         from weakref import ref
+        import gc
         conn = psycopg2.connect(dsn)
         w = ref(conn)
         conn.close()
         del conn
+        gc.collect()
         self.assert_(w() is None)
+
+    def test_commit_concurrency(self):
+        # The problem is the one reported in ticket #103. Because of bad
+        # status check, we commit even when a commit is already on its way.
+        # We can detect this condition by the warnings.
+        conn = self.conn
+        notices = []
+        stop = []
+
+        def committer():
+            while not stop:
+                conn.commit()
+                while conn.notices:
+                    notices.append((2, conn.notices.pop()))
+
+        cur = conn.cursor()
+        t1 = threading.Thread(target=committer)
+        t1.start()
+        i = 1
+        for i in range(1000):
+            cur.execute("select %s;",(i,))
+            conn.commit()
+            while conn.notices:
+                notices.append((1, conn.notices.pop()))
+
+        # Stop the committer thread
+        stop.append(True)
+
+        self.assert_(not notices, "%d notices raised" % len(notices))
 
 
 class IsolationLevelsTestCase(unittest.TestCase):

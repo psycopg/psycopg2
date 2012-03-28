@@ -1,7 +1,7 @@
 Compiling and installing psycopg
 ********************************
 
-** Important note: if you plan to use psyopg2 in a multithreaed application
+** Important note: if you plan to use psycopg2 in a multithreaded application,
    make sure that your libpq has been compiled with the --with-thread-safety
    option. psycopg2 will work correctly even with a non-thread-safe libpq but
    libpq will leak memory.
@@ -16,7 +16,7 @@ then:
 to build in the local directory; and:
 
     python setup.py install
-    
+
 to install system-wide.
 
 
@@ -96,7 +96,7 @@ Dev-C++ (http://www.bloodshed.net/devcpp.html) and Code::Blocks
 You need a PostgreSQL with include and libary files installed. At least v8.0
 is required.
 
-First you need to create a libpython2X.a as described in 
+First you need to create a libpython2X.a as described in
 http://starship.python.net/crew/kernr/mingw32/Notes.html. Then run:
 
     python setup.py build_ext --compiler=mingw32 install

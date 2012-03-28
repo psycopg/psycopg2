@@ -435,9 +435,11 @@ class AsyncTests(unittest.TestCase):
         self.assert_(self.conn.notices)
 
     def test_async_cursor_gone(self):
+        import gc
         cur = self.conn.cursor()
         cur.execute("select 42;");
         del cur
+        gc.collect()
         self.assertRaises(psycopg2.InterfaceError, self.wait, self.conn)
 
         # The connection is still usable

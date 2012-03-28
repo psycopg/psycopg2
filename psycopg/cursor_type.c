@@ -52,8 +52,11 @@ extern PyObject *pyPsycopgTzFixedOffsetTimezone;
 static PyObject *
 psyco_curs_close(cursorObject *self, PyObject *args)
 {
-    EXC_IF_CURS_CLOSED(self);
     EXC_IF_ASYNC_IN_PROGRESS(self, close);
+
+    if (self->closed) {
+        goto exit;
+    }
 
     if (self->name != NULL) {
         char buffer[128];
@@ -66,6 +69,7 @@ psyco_curs_close(cursorObject *self, PyObject *args)
     self->closed = 1;
     Dprintf("psyco_curs_close: cursor at %p closed", self);
 
+exit:
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -75,7 +79,7 @@ psyco_curs_close(cursorObject *self, PyObject *args)
 
 /* mogrify a query string and build argument array or dict */
 
-static int
+RAISES_NEG static int
 _mogrify(PyObject *var, PyObject *fmt, cursorObject *curs, PyObject **new)
 {
     PyObject *key, *value, *n;
@@ -217,7 +221,10 @@ _mogrify(PyObject *var, PyObject *fmt, cursorObject *curs, PyObject **new)
             }
 
             if (n == NULL) {
-                n = PyTuple_New(PyObject_Length(var));
+                if (!(n = PyTuple_New(PyObject_Length(var)))) {
+                    Py_DECREF(value);
+                    return -1;
+                }
             }
 
             /* let's have d point just after the '%' */
@@ -356,11 +363,12 @@ _psyco_curs_merge_query_args(cursorObject *self,
 #define psyco_curs_execute_doc \
 "execute(query, vars=None) -- Execute query with bound vars."
 
-static int
+RAISES_NEG static int
 _psyco_curs_execute(cursorObject *self,
                     PyObject *operation, PyObject *vars, long int async)
 {
-    int res = 0;
+    int res = -1;
+    int tmp;
     PyObject *fquery, *cvt = NULL;
 
     operation = _psyco_curs_validate_sql_basic(self, operation);
@@ -368,7 +376,7 @@ _psyco_curs_execute(cursorObject *self,
     /* Any failure from here forward should 'goto fail' rather than 'return 0'
        directly. */
 
-    if (operation == NULL) { goto fail; }
+    if (operation == NULL) { goto exit; }
 
     IFCLEARPGRES(self->pgres);
 
@@ -385,12 +393,12 @@ _psyco_curs_execute(cursorObject *self,
 
     if (vars && vars != Py_None)
     {
-        if(_mogrify(vars, operation, self, &cvt) == -1) { goto fail; }
+        if (0 > _mogrify(vars, operation, self, &cvt)) { goto exit; }
     }
 
     if (vars && cvt) {
         if (!(fquery = _psyco_curs_merge_query_args(self, operation, cvt))) {
-            goto fail;
+            goto exit;
         }
 
         if (self->name != NULL) {
@@ -424,25 +432,20 @@ _psyco_curs_execute(cursorObject *self,
 
     /* At this point, the SQL statement must be str, not unicode */
 
-    res = pq_execute(self, Bytes_AS_STRING(self->query), async);
-    Dprintf("psyco_curs_execute: res = %d, pgres = %p", res, self->pgres);
-    if (res == -1) { goto fail; }
+    tmp = pq_execute(self, Bytes_AS_STRING(self->query), async);
+    Dprintf("psyco_curs_execute: res = %d, pgres = %p", tmp, self->pgres);
+    if (tmp < 0) { goto exit; }
 
-    res = 1; /* Success */
-    goto cleanup;
+    res = 0; /* Success */
 
-    fail:
-        res = 0;
-        /* Fall through to cleanup */
-    cleanup:
-        /* Py_XDECREF(operation) is safe because the original reference passed
-           by the caller was overwritten with either NULL or a new
-           reference */
-        Py_XDECREF(operation);
+exit:
+    /* Py_XDECREF(operation) is safe because the original reference passed
+       by the caller was overwritten with either NULL or a new
+       reference */
+    Py_XDECREF(operation);
+    Py_XDECREF(cvt);
 
-        Py_XDECREF(cvt);
-
-        return res;
+    return res;
 }
 
 static PyObject *
@@ -476,13 +479,13 @@ psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
     EXC_IF_ASYNC_IN_PROGRESS(self, execute);
     EXC_IF_TPC_PREPARED(self->conn, execute);
 
-    if (_psyco_curs_execute(self, operation, vars, self->conn->async)) {
-        Py_INCREF(Py_None);
-        return Py_None;
-    }
-    else {
+    if (0 > _psyco_curs_execute(self, operation, vars, self->conn->async)) {
         return NULL;
     }
+
+    /* success */
+    Py_INCREF(Py_None);
+    return Py_None;
 }
 
 #define psyco_curs_executemany_doc \
@@ -521,7 +524,7 @@ psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
     }
 
     while ((v = PyIter_Next(vars)) != NULL) {
-        if (_psyco_curs_execute(self, operation, v, 0) == 0) {
+        if (0 > _psyco_curs_execute(self, operation, v, 0)) {
             Py_DECREF(v);
             Py_XDECREF(iter);
             return NULL;
@@ -568,7 +571,7 @@ _psyco_curs_mogrify(cursorObject *self,
 
     if (vars && vars != Py_None)
     {
-        if (_mogrify(vars, operation, self, &cvt) == -1) {
+        if (0 > _mogrify(vars, operation, self, &cvt)) {
             goto cleanup;
         }
     }
@@ -644,7 +647,7 @@ psyco_curs_cast(cursorObject *self, PyObject *args)
 "default) or using the sequence factory previously set in the\n" \
 "`row_factory` attribute. Return `!None` when no more data is available.\n"
 
-static int
+RAISES_NEG static int
 _psyco_curs_prefetch(cursorObject *self)
 {
     int i = 0;
@@ -661,13 +664,14 @@ _psyco_curs_prefetch(cursorObject *self)
     return i;
 }
 
-static PyObject *
+RAISES_NEG static int
 _psyco_curs_buildrow_fill(cursorObject *self, PyObject *res,
                           int row, int n, int istuple)
 {
     int i, len, err;
     const char *str;
     PyObject *val;
+    int rv = -1;
 
     for (i=0; i < n; i++) {
         if (PQgetisnull(self->pgres, row, i)) {
@@ -682,59 +686,59 @@ _psyco_curs_buildrow_fill(cursorObject *self, PyObject *res,
         Dprintf("_psyco_curs_buildrow: row %ld, element %d, len %d",
                 self->row, i, len);
 
-        val = typecast_cast(PyTuple_GET_ITEM(self->casts, i), str, len,
-                            (PyObject*)self);
+        if (!(val = typecast_cast(PyTuple_GET_ITEM(self->casts, i), str, len,
+                            (PyObject*)self))) {
+            goto exit;
+        }
 
-        if (val) {
-            Dprintf("_psyco_curs_buildrow: val->refcnt = "
-                FORMAT_CODE_PY_SSIZE_T,
-                Py_REFCNT(val)
-              );
-            if (istuple) {
-                PyTuple_SET_ITEM(res, i, val);
-            }
-            else {
-                err = PySequence_SetItem(res, i, val);
-                Py_DECREF(val);
-                if (err == -1) {
-                    Py_DECREF(res);
-                    res = NULL;
-                    break;
-                }
-            }
+        Dprintf("_psyco_curs_buildrow: val->refcnt = "
+            FORMAT_CODE_PY_SSIZE_T,
+            Py_REFCNT(val)
+          );
+        if (istuple) {
+            PyTuple_SET_ITEM(res, i, val);
         }
         else {
-            /* an error occurred in the type system, we return NULL to raise
-               an exception. the typecast code should already have set the
-               exception type and text */
-            Py_DECREF(res);
-            res = NULL;
-            break;
+            err = PySequence_SetItem(res, i, val);
+            Py_DECREF(val);
+            if (err == -1) { goto exit; }
         }
     }
-    return res;
+
+    rv = 0;
+
+exit:
+    return rv;
 }
 
 static PyObject *
 _psyco_curs_buildrow(cursorObject *self, int row)
 {
     int n;
+    int istuple;
+    PyObject *t = NULL;
+    PyObject *rv = NULL;
 
     n = PQnfields(self->pgres);
-    return _psyco_curs_buildrow_fill(self, PyTuple_New(n), row, n, 1);
-}
+    istuple = (self->tuple_factory == Py_None);
 
-static PyObject *
-_psyco_curs_buildrow_with_factory(cursorObject *self, int row)
-{
-    int n;
-    PyObject *res;
+    if (istuple) {
+        t = PyTuple_New(n);
+    }
+    else {
+        t = PyObject_CallFunctionObjArgs(self->tuple_factory, self, NULL);
+    }
+    if (!t) { goto exit; }
 
-    n = PQnfields(self->pgres);
-    if (!(res = PyObject_CallFunctionObjArgs(self->tuple_factory, self, NULL)))
-        return NULL;
+    if (0 <= _psyco_curs_buildrow_fill(self, t, row, n, istuple)) {
+        rv = t;
+        t = NULL;
+    }
 
-    return _psyco_curs_buildrow_fill(self, res, row, n, 0);
+exit:
+    Py_XDECREF(t);
+    return rv;
+
 }
 
 static PyObject *
@@ -766,11 +770,7 @@ psyco_curs_fetchone(cursorObject *self, PyObject *args)
         return Py_None;
     }
 
-    if (self->tuple_factory == Py_None)
-        res = _psyco_curs_buildrow(self, self->row);
-    else
-        res = _psyco_curs_buildrow_with_factory(self, self->row);
-
+    res = _psyco_curs_buildrow(self, self->row);
     self->row++; /* move the counter to next line */
 
     /* if the query was async aggresively free pgres, to allow
@@ -817,11 +817,7 @@ psyco_curs_next_named(cursorObject *self)
         return NULL;
     }
 
-    if (self->tuple_factory == Py_None)
-        res = _psyco_curs_buildrow(self, self->row);
-    else
-        res = _psyco_curs_buildrow_with_factory(self, self->row);
-
+    res = _psyco_curs_buildrow(self, self->row);
     self->row++; /* move the counter to next line */
 
     /* if the query was async aggresively free pgres, to allow
@@ -841,19 +837,32 @@ psyco_curs_next_named(cursorObject *self)
 "fetchmany(size=self.arraysize) -> list of tuple\n\n" \
 "Return the next `size` rows of a query result set in the form of a list\n" \
 "of tuples (by default) or using the sequence factory previously set in\n" \
-"the `row_factory` attribute. Return `!None` when no more data is available.\n"
+"the `row_factory` attribute.\n\n" \
+"Return an empty list when no more data is available.\n"
 
 static PyObject *
 psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
 {
     int i;
-    PyObject *list, *res;
+    PyObject *list = NULL;
+    PyObject *row = NULL;
+    PyObject *rv = NULL;
 
+    PyObject *pysize = NULL;
     long int size = self->arraysize;
     static char *kwlist[] = {"size", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwords, "|l", kwlist, &size)) {
+    /* allow passing None instead of omitting the *size* argument,
+     * or using the method from subclasses would be a problem */
+    if (!PyArg_ParseTupleAndKeywords(args, kwords, "|O", kwlist, &pysize)) {
         return NULL;
+    }
+
+    if (pysize && pysize != Py_None) {
+        size = PyInt_AsLong(pysize);
+        if (size == -1 && PyErr_Occurred()) {
+            return NULL;
+        }
     }
 
     EXC_IF_CURS_CLOSED(self);
@@ -868,8 +877,8 @@ psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
         EXC_IF_TPC_PREPARED(self->conn, fetchone);
         PyOS_snprintf(buffer, 127, "FETCH FORWARD %d FROM \"%s\"",
             (int)size, self->name);
-        if (pq_execute(self, buffer, 0) == -1) return NULL;
-        if (_psyco_curs_prefetch(self) < 0) return NULL;
+        if (pq_execute(self, buffer, 0) == -1) { goto exit; }
+        if (_psyco_curs_prefetch(self) < 0) { goto exit; }
     }
 
     /* make sure size is not > than the available number of rows */
@@ -880,26 +889,21 @@ psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
     Dprintf("psyco_curs_fetchmany: size = %ld", size);
 
     if (size <= 0) {
-        return PyList_New(0);
+        rv = PyList_New(0);
+        goto exit;
     }
 
-    list = PyList_New(size);
+    if (!(list = PyList_New(size))) { goto exit; }
 
     for (i = 0; i < size; i++) {
-        if (self->tuple_factory == Py_None)
-            res = _psyco_curs_buildrow(self, self->row);
-        else
-            res = _psyco_curs_buildrow_with_factory(self, self->row);
-
+        row = _psyco_curs_buildrow(self, self->row);
         self->row++;
 
-        if (res == NULL) {
-            Py_DECREF(list);
-            return NULL;
-        }
+        if (row == NULL) { goto exit; }
 
-        PyList_SET_ITEM(list, i, res);
+        PyList_SET_ITEM(list, i, row);
     }
+    row = NULL;
 
     /* if the query was async aggresively free pgres, to allow
        successive requests to reallocate it */
@@ -908,7 +912,15 @@ psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
         && PyWeakref_GetObject(self->conn->async_cursor) == (PyObject*)self)
         IFCLEARPGRES(self->pgres);
 
-    return list;
+    /* success */
+    rv = list;
+    list = NULL;
+
+exit:
+    Py_XDECREF(list);
+    Py_XDECREF(row);
+
+    return rv;
 }
 
 
@@ -925,7 +937,9 @@ static PyObject *
 psyco_curs_fetchall(cursorObject *self, PyObject *args)
 {
     int i, size;
-    PyObject *list, *res;
+    PyObject *list = NULL;
+    PyObject *row = NULL;
+    PyObject *rv = NULL;
 
     EXC_IF_CURS_CLOSED(self);
     if (_psyco_curs_prefetch(self) < 0) return NULL;
@@ -938,33 +952,27 @@ psyco_curs_fetchall(cursorObject *self, PyObject *args)
         EXC_IF_ASYNC_IN_PROGRESS(self, fetchall);
         EXC_IF_TPC_PREPARED(self->conn, fetchall);
         PyOS_snprintf(buffer, 127, "FETCH FORWARD ALL FROM \"%s\"", self->name);
-        if (pq_execute(self, buffer, 0) == -1) return NULL;
-        if (_psyco_curs_prefetch(self) < 0) return NULL;
+        if (pq_execute(self, buffer, 0) == -1) { goto exit; }
+        if (_psyco_curs_prefetch(self) < 0) { goto exit; }
     }
 
     size = self->rowcount - self->row;
 
     if (size <= 0) {
-        return PyList_New(0);
+        rv = PyList_New(0);
+        goto exit;
     }
 
-    list = PyList_New(size);
+    if (!(list = PyList_New(size))) { goto exit; }
 
     for (i = 0; i < size; i++) {
-        if (self->tuple_factory == Py_None)
-            res = _psyco_curs_buildrow(self, self->row);
-        else
-            res = _psyco_curs_buildrow_with_factory(self, self->row);
-
+        row = _psyco_curs_buildrow(self, self->row);
         self->row++;
+        if (row == NULL) { goto exit; }
 
-        if (res == NULL) {
-            Py_DECREF(list);
-            return NULL;
-        }
-
-        PyList_SET_ITEM(list, i, res);
+        PyList_SET_ITEM(list, i, row);
     }
+    row = NULL;
 
     /* if the query was async aggresively free pgres, to allow
        successive requests to reallocate it */
@@ -973,7 +981,15 @@ psyco_curs_fetchall(cursorObject *self, PyObject *args)
         && PyWeakref_GetObject(self->conn->async_cursor) == (PyObject*)self)
         IFCLEARPGRES(self->pgres);
 
-    return list;
+    /* success */
+    rv = list;
+    list = NULL;
+
+exit:
+    Py_XDECREF(list);
+    Py_XDECREF(row);
+
+    return rv;
 }
 
 
@@ -983,7 +999,7 @@ psyco_curs_fetchall(cursorObject *self, PyObject *args)
 "callproc(procname, parameters=None) -- Execute stored procedure."
 
 static PyObject *
-psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
+psyco_curs_callproc(cursorObject *self, PyObject *args)
 {
     const char *procname = NULL;
     char *sql = NULL;
@@ -995,7 +1011,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
     if (!PyArg_ParseTuple(args, "s#|O",
           &procname, &procname_len, &parameters
        ))
-    { return NULL; }
+    { goto exit; }
 
     EXC_IF_CURS_CLOSED(self);
     EXC_IF_ASYNC_IN_PROGRESS(self, callproc);
@@ -1004,10 +1020,10 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
     if (self->name != NULL) {
         psyco_set_error(ProgrammingError, self,
                          "can't call .callproc() on named cursors", NULL, NULL);
-        return NULL;
+        goto exit;
     }
 
-    if(parameters != Py_None) {
+    if (parameters != Py_None) {
         nparameters = PyObject_Length(parameters);
         if (nparameters < 0) nparameters = 0;
     }
@@ -1016,7 +1032,8 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
     sl = procname_len + 17 + nparameters*3 - (nparameters ? 1 : 0);
     sql = (char*)PyMem_Malloc(sl);
     if (sql == NULL) {
-        return PyErr_NoMemory();
+        PyErr_NoMemory();
+        goto exit;
     }
 
     sprintf(sql, "SELECT * FROM %s(", procname);
@@ -1026,15 +1043,16 @@ psyco_curs_callproc(cursorObject *self, PyObject *args, PyObject *kwargs)
     sql[sl-2] = ')';
     sql[sl-1] = '\0';
 
-    operation = Bytes_FromString(sql);
-    PyMem_Free((void*)sql);
+    if (!(operation = Bytes_FromString(sql))) { goto exit; }
 
-    if (_psyco_curs_execute(self, operation, parameters, self->conn->async)) {
+    if (0 <= _psyco_curs_execute(self, operation, parameters, self->conn->async)) {
         Py_INCREF(parameters);
         res = parameters;
     }
 
-    Py_DECREF(operation);
+exit:
+    Py_XDECREF(operation);
+    PyMem_Free((void*)sql);
     return res;
 }
 
@@ -1191,6 +1209,7 @@ static char *_psyco_curs_copy_columns(PyObject *columns)
     }
 
     if (NULL == (columnlist = PyMem_Malloc(bufsize))) {
+        Py_DECREF(coliter);
         PyErr_NoMemory();
         goto error;
     }
@@ -1247,8 +1266,8 @@ exit:
 #define psyco_curs_copy_from_doc \
 "copy_from(file, table, sep='\\t', null='\\\\N', size=8192, columns=None) -- Copy table from file."
 
-static int
-_psyco_curs_has_read_check(PyObject* o, void* var)
+STEALS(1) static int
+_psyco_curs_has_read_check(PyObject *o, PyObject **var)
 {
     if (PyObject_HasAttrString(o, "readline")
         && PyObject_HasAttrString(o, "read")) {
@@ -1258,7 +1277,7 @@ _psyco_curs_has_read_check(PyObject* o, void* var)
          * which could invoke the garbage collector.  We thus need an
          * INCREF/DECREF pair if we store this pointer in a GC object, such as
          * a cursorObject */
-        *((PyObject**)var) = o;
+        *var = o;
         return 1;
     }
     else {
@@ -1333,7 +1352,7 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
     Py_INCREF(file);
     self->copyfile = file;
 
-    if (pq_execute(self, query, 0) == 1) {
+    if (pq_execute(self, query, 0) >= 0) {
         res = Py_None;
         Py_INCREF(Py_None);
     }
@@ -1354,11 +1373,11 @@ exit:
 #define psyco_curs_copy_to_doc \
 "copy_to(file, table, sep='\\t', null='\\\\N', columns=None) -- Copy table to file."
 
-static int
-_psyco_curs_has_write_check(PyObject* o, void* var)
+STEALS(1) static int
+_psyco_curs_has_write_check(PyObject *o, PyObject **var)
 {
     if (PyObject_HasAttrString(o, "write")) {
-        *((PyObject**)var) = o;
+        *var = o;
         return 1;
     }
     else {
@@ -1429,7 +1448,7 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
     Py_INCREF(file);
     self->copyfile = file;
 
-    if (pq_execute(self, query, 0) == 1) {
+    if (pq_execute(self, query, 0) >= 0) {
         res = Py_None;
         Py_INCREF(Py_None);
     }
@@ -1503,7 +1522,7 @@ psyco_curs_copy_expert(cursorObject *self, PyObject *args, PyObject *kwargs)
     self->copyfile = file;
 
     /* At this point, the SQL statement must be str, not unicode */
-    if (pq_execute(self, Bytes_AS_STRING(sql), 0) == 1) {
+    if (pq_execute(self, Bytes_AS_STRING(sql), 0) >= 0) {
         res = Py_None;
         Py_INCREF(res);
     }

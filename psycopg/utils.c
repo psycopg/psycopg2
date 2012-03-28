@@ -113,20 +113,19 @@ psycopg_escape_identifier_easy(const char *from, Py_ssize_t len)
  * Allocate a new buffer on the Python heap containing the new string.
  * 'len' is optional: if 0 the length is calculated.
  *
- * Return NULL and set an exception in case of error.
+ * Store the return in 'to' and return 0 in case of success, else return -1
+ * and raise an exception.
  */
-char *
-psycopg_strdup(const char *from, Py_ssize_t len)
+RAISES_NEG int
+psycopg_strdup(char **to, const char *from, Py_ssize_t len)
 {
-    char *rv;
-
     if (!len) { len = strlen(from); }
-    if (!(rv = PyMem_Malloc(len + 1))) {
+    if (!(*to = PyMem_Malloc(len + 1))) {
         PyErr_NoMemory();
-        return NULL;
+        return -1;
     }
-    strcpy(rv, from);
-    return rv;
+    strcpy(*to, from);
+    return 0;
 }
 
 /* Ensure a Python object is a bytes string.
@@ -139,7 +138,7 @@ psycopg_strdup(const char *from, Py_ssize_t len)
  *
  * It is safe to call the function on NULL.
  */
-PyObject *
+STEALS(1) PyObject *
 psycopg_ensure_bytes(PyObject *obj)
 {
     PyObject *rv = NULL;
@@ -169,7 +168,7 @@ psycopg_ensure_bytes(PyObject *obj)
  * The function is ref neutral: steals a ref from obj and adds one to the
  * return value.  It is safe to call it on NULL.
  */
-PyObject *
+STEALS(1) PyObject *
 psycopg_ensure_text(PyObject *obj)
 {
 #if PY_MAJOR_VERSION < 3

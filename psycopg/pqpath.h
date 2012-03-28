@@ -35,18 +35,18 @@
 
 /* exported functions */
 HIDDEN PGresult *pq_get_last_result(connectionObject *conn);
-HIDDEN int pq_fetch(cursorObject *curs);
-HIDDEN int pq_execute(cursorObject *curs, const char *query, int async);
+RAISES_NEG HIDDEN int pq_fetch(cursorObject *curs);
+RAISES_NEG HIDDEN int pq_execute(cursorObject *curs, const char *query, int async);
 HIDDEN int pq_send_query(connectionObject *conn, const char *query);
 HIDDEN int pq_begin_locked(connectionObject *conn, PGresult **pgres,
                            char **error, PyThreadState **tstate);
 HIDDEN int pq_commit(connectionObject *conn);
-HIDDEN int pq_abort_locked(connectionObject *conn, PGresult **pgres,
+RAISES_NEG HIDDEN int pq_abort_locked(connectionObject *conn, PGresult **pgres,
                            char **error, PyThreadState **tstate);
-HIDDEN int pq_abort(connectionObject *conn);
+RAISES_NEG HIDDEN int pq_abort(connectionObject *conn);
 HIDDEN int pq_reset_locked(connectionObject *conn, PGresult **pgres,
                             char **error, PyThreadState **tstate);
-HIDDEN int pq_reset(connectionObject *conn);
+RAISES_NEG HIDDEN int pq_reset(connectionObject *conn);
 HIDDEN char *pq_get_guc_locked(connectionObject *conn, const char *param,
                                PGresult **pgres,
                                char **error, PyThreadState **tstate);
@@ -61,7 +61,7 @@ HIDDEN int pq_is_busy(connectionObject *conn);
 HIDDEN int pq_is_busy_locked(connectionObject *conn);
 HIDDEN int pq_flush(connectionObject *conn);
 HIDDEN void pq_clear_async(connectionObject *conn);
-HIDDEN int pq_set_non_blocking(connectionObject *conn, int arg, int pyerr);
+RAISES_NEG HIDDEN int pq_set_non_blocking(connectionObject *conn, int arg);
 
 HIDDEN void pq_set_critical(connectionObject *conn, const char *msg);
 
@@ -69,7 +69,7 @@ HIDDEN int pq_execute_command_locked(connectionObject *conn,
                                      const char *query,
                                      PGresult **pgres, char **error,
                                      PyThreadState **tstate);
-HIDDEN void pq_complete_error(connectionObject *conn, PGresult **pgres,
+RAISES HIDDEN void pq_complete_error(connectionObject *conn, PGresult **pgres,
                               char **error);
 
 #endif /* !defined(PSYCOPG_PQPATH_H) */

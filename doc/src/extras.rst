@@ -155,7 +155,7 @@ can be enabled using the `register_hstore()` function.
 .. autofunction:: register_hstore
 
 .. |hstore| replace:: :sql:`hstore`
-.. _hstore: http://www.postgresql.org/docs/9.0/static/hstore.html
+.. _hstore: http://www.postgresql.org/docs/current/static/hstore.html
 
 
 
@@ -177,7 +177,7 @@ after a table row type) into a Python named tuple, or into a regular tuple if
 :py:func:`collections.namedtuple` is not found.
 
 .. |CREATE TYPE| replace:: :sql:`CREATE TYPE`
-.. _CREATE TYPE: http://www.postgresql.org/docs/9.0/static/sql-createtype.html
+.. _CREATE TYPE: http://www.postgresql.org/docs/current/static/sql-createtype.html
 
 .. doctest::
 
@@ -250,6 +250,7 @@ UUID data type
 ^^^^^^^^^^^^^^^^^^^^^^
 
 .. versionadded:: 2.0.9
+.. versionchanged:: 2.4.5 added inet array support.
 
 .. doctest::
 
@@ -264,7 +265,7 @@ UUID data type
     '192.168.0.1/24'
 
 
-.. autofunction:: register_inet()
+.. autofunction:: register_inet
 
 .. autoclass:: Inet
 

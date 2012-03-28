@@ -294,9 +294,9 @@ the SQL string that would be sent to the database.
      `bytea_output`__ configuration parameter to ``escape``, either in the
      server configuration file or in the client session (using a query such as
      ``SET bytea_output TO escape;``) before receiving binary data.
-     
-     .. __: http://www.postgresql.org/docs/9.0/static/datatype-binary.html
-     .. __: http://www.postgresql.org/docs/9.0/static/runtime-config-client.html#GUC-BYTEA-OUTPUT
+
+     .. __: http://www.postgresql.org/docs/current/static/datatype-binary.html
+     .. __: http://www.postgresql.org/docs/current/static/runtime-config-client.html#GUC-BYTEA-OUTPUT
 
 .. _adapt-date:
 
@@ -333,6 +333,14 @@ the SQL string that would be sent to the database.
 
     >>> cur.mogrify("SELECT %s;", ([10, 20, 30], ))
     'SELECT ARRAY[10, 20, 30];'
+
+  .. note::
+
+    Reading back from PostgreSQL, arrays are converted to list of Python
+    objects as expected, but only if the types are known one. Arrays of
+    unknown types are returned as represented by the database (e.g.
+    ``{a,b,c}``). You can easily create a typecaster for :ref:`array of
+    unknown types <cast-array-unknown>`.
 
 .. _adapt-tuple:
 
@@ -378,7 +386,7 @@ the SQL string that would be sent to the database.
   further details.
 
   .. |hstore| replace:: :sql:`hstore`
-  .. _hstore: http://www.postgresql.org/docs/9.0/static/hstore.html
+  .. _hstore: http://www.postgresql.org/docs/current/static/hstore.html
 
   .. versionadded:: 2.3
      the :sql:`hstore` adaptation.
@@ -403,7 +411,7 @@ defined on the database connection (the `PostgreSQL encoding`__, available in
 
     >>> cur.execute("INSERT INTO test (num, data) VALUES (%s,%s);", (74, u))
 
-.. __: http://www.postgresql.org/docs/9.0/static/multibyte.html
+.. __: http://www.postgresql.org/docs/current/static/multibyte.html
 .. __: http://docs.python.org/library/codecs.html#standard-encodings
 
 When reading data from the database, in Python 2 the strings returned are
@@ -621,7 +629,7 @@ lifetime extends well after `~connection.commit()`, calling
 
 
 .. |DECLARE| replace:: :sql:`DECLARE`
-.. _DECLARE: http://www.postgresql.org/docs/9.0/static/sql-declare.html
+.. _DECLARE: http://www.postgresql.org/docs/current/static/sql-declare.html
 
 
 
@@ -651,7 +659,7 @@ forked processes`__, so when using a module such as `multiprocessing` or a
 forking web deploy method such as FastCGI make sure to create the connections
 *after* the fork.
 
-.. __: http://www.postgresql.org/docs/9.0/static/libpq-connect.html#LIBPQ-CONNECT
+.. __: http://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-CONNECT
 
 Connections shouldn't be shared either by different green threads: see
 :ref:`green-support` for further details.
@@ -687,7 +695,7 @@ Please refer to the documentation of the single methods for details and
 examples.
 
 .. |COPY| replace:: :sql:`COPY`
-.. __: http://www.postgresql.org/docs/9.0/static/sql-copy.html
+.. __: http://www.postgresql.org/docs/current/static/sql-copy.html
 
 
 
@@ -704,7 +712,7 @@ access to user data that is stored in a special large-object structure. They
 are useful with data values too large to be manipulated conveniently as a
 whole.
 
-.. __: http://www.postgresql.org/docs/9.0/static/largeobjects.html
+.. __: http://www.postgresql.org/docs/current/static/largeobjects.html
 
 Psycopg allows access to the large object using the
 `~psycopg2.extensions.lobject` class. Objects are generated using the
@@ -715,9 +723,9 @@ Psycopg large object support efficient import/export with file system files
 using the |lo_import|_ and |lo_export|_ libpq functions.
 
 .. |lo_import| replace:: `!lo_import()`
-.. _lo_import: http://www.postgresql.org/docs/9.0/static/lo-interfaces.html#LO-IMPORT
+.. _lo_import: http://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-IMPORT
 .. |lo_export| replace:: `!lo_export()`
-.. _lo_export: http://www.postgresql.org/docs/9.0/static/lo-interfaces.html#LO-EXPORT
+.. _lo_export: http://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-EXPORT
 
 
 

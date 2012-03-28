@@ -45,8 +45,8 @@ class QuotingTestCase(unittest.TestCase):
     The tests also check that no warning is raised ('escape_string_warning'
     should be on).
 
-    http://www.postgresql.org/docs/8.1/static/sql-syntax.html#SQL-SYNTAX-STRINGS
-    http://www.postgresql.org/docs/8.1/static/runtime-config-compatible.html
+    http://www.postgresql.org/docs/current/static/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS
+    http://www.postgresql.org/docs/current/static/runtime-config-compatible.html
     """
     def setUp(self):
         self.conn = psycopg2.connect(dsn)

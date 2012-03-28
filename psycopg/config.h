@@ -160,4 +160,33 @@ static double round(double num)
 #define isinf(x) (!finite((x)) && (x)==(x))
 #endif
 
+/* decorators for the gcc cpychecker plugin */
+#if defined(WITH_CPYCHECKER_RETURNS_BORROWED_REF_ATTRIBUTE)
+#define BORROWED \
+    __attribute__((cpychecker_returns_borrowed_ref))
+#else
+#define BORROWED
+#endif
+
+#if defined(WITH_CPYCHECKER_STEALS_REFERENCE_TO_ARG_ATTRIBUTE)
+#define STEALS(n) \
+    __attribute__((cpychecker_steals_reference_to_arg(n)))
+#else
+#define STEALS(n)
+#endif
+
+#if defined(WITH_CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION_ATTRIBUTE)
+#define RAISES_NEG \
+    __attribute__((cpychecker_negative_result_sets_exception))
+#else
+#define RAISES_NEG
+#endif
+
+#if defined(WITH_CPYCHECKER_SETS_EXCEPTION_ATTRIBUTE)
+#define RAISES \
+    __attribute__((cpychecker_sets_exception))
+#else
+#define RAISES
+#endif
+
 #endif /* !defined(PSYCOPG_CONFIG_H) */

@@ -185,7 +185,7 @@ The ``connection`` class
         .. seealso:: the |PREPARE TRANSACTION|_ PostgreSQL command.
 
         .. |PREPARE TRANSACTION| replace:: :sql:`PREPARE TRANSACTION`
-        .. _PREPARE TRANSACTION: http://www.postgresql.org/docs/9.0/static/sql-prepare-transaction.html
+        .. _PREPARE TRANSACTION: http://www.postgresql.org/docs/current/static/sql-prepare-transaction.html
 
 
     .. index::
@@ -211,7 +211,7 @@ The ``connection`` class
         .. seealso:: the |COMMIT PREPARED|_ PostgreSQL command.
 
         .. |COMMIT PREPARED| replace:: :sql:`COMMIT PREPARED`
-        .. _COMMIT PREPARED: http://www.postgresql.org/docs/9.0/static/sql-commit-prepared.html
+        .. _COMMIT PREPARED: http://www.postgresql.org/docs/current/static/sql-commit-prepared.html
 
 
     .. index::
@@ -233,7 +233,7 @@ The ``connection`` class
         .. seealso:: the |ROLLBACK PREPARED|_ PostgreSQL command.
 
         .. |ROLLBACK PREPARED| replace:: :sql:`ROLLBACK PREPARED`
-        .. _ROLLBACK PREPARED: http://www.postgresql.org/docs/9.0/static/sql-rollback-prepared.html
+        .. _ROLLBACK PREPARED: http://www.postgresql.org/docs/current/static/sql-rollback-prepared.html
 
 
     .. index::
@@ -264,7 +264,7 @@ The ``connection`` class
         .. seealso:: the |pg_prepared_xacts|_ system view.
 
         .. |pg_prepared_xacts| replace:: `pg_prepared_xacts`
-        .. _pg_prepared_xacts: http://www.postgresql.org/docs/9.0/static/view-pg-prepared-xacts.html
+        .. _pg_prepared_xacts: http://www.postgresql.org/docs/current/static/view-pg-prepared-xacts.html
 
 
 
@@ -296,7 +296,7 @@ The ``connection`` class
         |PQcancel|_.
 
         .. |PQcancel| replace:: `!PQcancel()`
-        .. _PQcancel: http://www.postgresql.org/docs/8.4/static/libpq-cancel.html#AEN34765
+        .. _PQcancel: http://www.postgresql.org/docs/current/static/libpq-cancel.html#LIBPQ-PQCANCEL
 
         .. versionadded:: 2.3
 
@@ -312,10 +312,10 @@ The ``connection`` class
         available for recover.
 
         .. |RESET| replace:: :sql:`RESET`
-        .. _RESET: http://www.postgresql.org/docs/9.0/static/sql-reset.html
+        .. _RESET: http://www.postgresql.org/docs/current/static/sql-reset.html
 
         .. |SET SESSION AUTHORIZATION| replace:: :sql:`SET SESSION AUTHORIZATION`
-        .. __: http://www.postgresql.org/docs/9.0/static/sql-set-session-authorization.html
+        .. __: http://www.postgresql.org/docs/current/static/sql-set-session-authorization.html
 
         .. versionadded:: 2.0.12
 
@@ -336,7 +336,7 @@ The ``connection`` class
         the current session. See |SET TRANSACTION|_ for further details.
 
         .. |SET TRANSACTION| replace:: :sql:`SET TRANSACTION`
-        .. _SET TRANSACTION: http://www.postgresql.org/docs/9.1/static/sql-set-transaction.html
+        .. _SET TRANSACTION: http://www.postgresql.org/docs/current/static/sql-set-transaction.html
 
         :param isolation_level: set the `isolation level`_ for the next
             transactions/statements.  The value can be one of the
@@ -357,7 +357,7 @@ The ``connection`` class
         parameter to the server default.
 
         .. _isolation level:
-            http://www.postgresql.org/docs/9.1/static/transaction-iso.html
+            http://www.postgresql.org/docs/current/static/transaction-iso.html
 
         The function must be invoked with no transaction in progress. At every
         function invocation, only the specified parameters are changed.
@@ -367,11 +367,11 @@ The ``connection`` class
         |default_transaction_read_only|__, |default_transaction_deferrable|__.
 
         .. |default_transaction_isolation| replace:: :sql:`default_transaction_isolation`
-        .. __: http://www.postgresql.org/docs/9.1/static/runtime-config-client.html#GUC-DEFAULT-TRANSACTION-ISOLATION
+        .. __: http://www.postgresql.org/docs/current/static/runtime-config-client.html#GUC-DEFAULT-TRANSACTION-ISOLATION
         .. |default_transaction_read_only| replace:: :sql:`default_transaction_read_only`
-        .. __: http://www.postgresql.org/docs/9.1/static/runtime-config-client.html#GUC-DEFAULT-TRANSACTION-READ-ONLY
+        .. __: http://www.postgresql.org/docs/current/static/runtime-config-client.html#GUC-DEFAULT-TRANSACTION-READ-ONLY
         .. |default_transaction_deferrable| replace:: :sql:`default_transaction_deferrable`
-        .. __: http://www.postgresql.org/docs/9.1/static/runtime-config-client.html#GUC-DEFAULT-TRANSACTION-DEFERRABLE
+        .. __: http://www.postgresql.org/docs/current/static/runtime-config-client.html#GUC-DEFAULT-TRANSACTION-DEFERRABLE
 
         .. note::
 
@@ -445,7 +445,7 @@ The ``connection`` class
         is the encoding defined by the database. It should be one of the
         `characters set supported by PostgreSQL`__
 
-        .. __: http://www.postgresql.org/docs/9.0/static/multibyte.html
+        .. __: http://www.postgresql.org/docs/current/static/multibyte.html
 
 
     .. index::
@@ -471,7 +471,7 @@ The ``connection`` class
         configuration parameters`__ such as ``log_statement``,
         ``client_min_messages``, ``log_min_duration_statement`` etc.
         
-        .. __: http://www.postgresql.org/docs/9.0/static/runtime-config-logging.html
+        .. __: http://www.postgresql.org/docs/current/static/runtime-config-logging.html
 
 
     .. attribute:: notifies
@@ -500,7 +500,7 @@ The ``connection`` class
 
         .. seealso:: libpq docs for `PQbackendPID()`__ for details.
 
-            .. __: http://www.postgresql.org/docs/9.0/static/libpq-status.html#LIBPQ-PQBACKENDPID
+            .. __: http://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQBACKENDPID
 
         .. versionadded:: 2.0.8
 
@@ -521,7 +521,7 @@ The ``connection`` class
 
         .. seealso:: libpq docs for `PQparameterStatus()`__ for details.
 
-            .. __: http://www.postgresql.org/docs/9.0/static/libpq-status.html#LIBPQ-PQPARAMETERSTATUS
+            .. __: http://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQPARAMETERSTATUS
 
         .. versionadded:: 2.0.12
 
@@ -538,7 +538,7 @@ The ``connection`` class
 
         .. seealso:: libpq docs for `PQtransactionStatus()`__ for details.
 
-            .. __: http://www.postgresql.org/docs/9.0/static/libpq-status.html#LIBPQ-PQTRANSACTIONSTATUS
+            .. __: http://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQTRANSACTIONSTATUS
 
 
     .. index::
@@ -553,7 +553,7 @@ The ``connection`` class
 
         .. seealso:: libpq docs for `PQprotocolVersion()`__ for details.
 
-            .. __: http://www.postgresql.org/docs/9.0/static/libpq-status.html#LIBPQ-PQPROTOCOLVERSION
+            .. __: http://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQPROTOCOLVERSION
 
         .. versionadded:: 2.0.12
 
@@ -571,7 +571,7 @@ The ``connection`` class
         
         .. seealso:: libpq docs for `PQserverVersion()`__ for details.
 
-            .. __: http://www.postgresql.org/docs/9.0/static/libpq-status.html#LIBPQ-PQSERVERVERSION
+            .. __: http://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQSERVERVERSION
 
         .. versionadded:: 2.0.12
 
@@ -606,7 +606,7 @@ The ``connection`` class
             `~psycopg2.extensions.lobject` to be instantiated.
 
         .. |lo_import| replace:: `!lo_import()`
-        .. _lo_import: http://www.postgresql.org/docs/9.0/static/lo-interfaces.html#LO-IMPORT
+        .. _lo_import: http://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-IMPORT
 
         Available values for *mode* are:
 

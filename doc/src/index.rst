@@ -32,9 +32,9 @@ Psycopg 2 is both Unicode and Python 3 friendly.
 .. _PostgreSQL: http://www.postgresql.org/
 .. _Python: http://www.python.org/
 .. _Zope: http://www.zope.org/
-.. _libpq: http://www.postgresql.org/docs/9.0/static/libpq.html
+.. _libpq: http://www.postgresql.org/docs/current/static/libpq.html
 .. |COPY-TO-FROM| replace:: :sql:`COPY TO/COPY FROM`
-.. __: http://www.postgresql.org/docs/9.0/static/sql-copy.html
+.. __: http://www.postgresql.org/docs/current/static/sql-copy.html
 
 
 .. rubric:: Contents

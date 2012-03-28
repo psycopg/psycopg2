@@ -38,20 +38,40 @@ class FixedOffsetTimezone(datetime.tzinfo):
     with a small change to the `!__init__()` method to allow for pickling
     and a default name in the form ``sHH:MM`` (``s`` is the sign.).
 
+    The implementation also caches instances. During creation, if a
+    FixedOffsetTimezone instance has previously been created with the same
+    offset and name that instance will be returned. This saves memory and
+    improves comparability.
+
     .. __: http://docs.python.org/library/datetime.html#datetime-tzinfo
     """
     _name = None
     _offset = ZERO
-    
+
+    _cache = {}
+
     def __init__(self, offset=None, name=None):
         if offset is not None:
             self._offset = datetime.timedelta(minutes = offset)
         if name is not None:
             self._name = name
 
+    def __new__(cls, offset=None, name=None):
+        """Return a suitable instance created earlier if it exists
+        """
+        key = (offset, name)
+        try:
+            return cls._cache[key]
+        except KeyError:
+            tz = datetime.tzinfo.__new__(cls, offset, name)
+            tz.__init__(offset, name)
+            cls._cache[key] = tz
+            return tz
+
     def __repr__(self):
+        offset_mins = self._offset.seconds // 60 + self._offset.days * 24 * 60
         return "psycopg2.tz.FixedOffsetTimezone(offset=%r, name=%r)" \
-            % (self._offset.seconds // 60, self._name)
+            % (offset_mins, self._name)
 
     def utcoffset(self, dt):
         return self._offset

@@ -50,7 +50,7 @@ collect_error(connectionObject *conn, char **error)
  *
  * Valid mode are [r|w|rw|n][t|b]
  */
-static int
+RAISES_NEG static int
 _lobject_parse_mode(const char *mode)
 {
     int rv = 0;
@@ -147,7 +147,7 @@ _lobject_unparse_mode(int mode)
 
 /* lobject_open - create a new/open an existing lo */
 
-int
+RAISES_NEG int
 lobject_open(lobjectObject *self, connectionObject *conn,
               Oid oid, const char *smode, Oid new_oid, const char *new_file)
 {
@@ -170,12 +170,18 @@ lobject_open(lobjectObject *self, connectionObject *conn,
 
     /* if the oid is InvalidOid we create a new lob before opening it
        or we import a file from the FS, depending on the value of
-       new_name */
+       new_file */
     if (oid == InvalidOid) {
         if (new_file)
             self->oid = lo_import(self->conn->pgconn, new_file);
-        else
-            self->oid = lo_create(self->conn->pgconn, new_oid);
+        else {
+            /* Use lo_creat when possible to be more middleware-friendly.
+               See ticket #88. */
+            if (new_oid != InvalidOid)
+                self->oid = lo_create(self->conn->pgconn, new_oid);
+            else
+                self->oid = lo_creat(self->conn->pgconn, INV_READ | INV_WRITE);
+        }
 
         Dprintf("lobject_open: large object created with oid = %d",
                 self->oid);
@@ -232,7 +238,7 @@ lobject_open(lobjectObject *self, connectionObject *conn,
 
 /* lobject_close - close an existing lo */
 
-static int
+RAISES_NEG static int
 lobject_close_locked(lobjectObject *self, char **error)
 {
     int retvalue;
@@ -265,7 +271,7 @@ lobject_close_locked(lobjectObject *self, char **error)
     return retvalue;
 }
 
-int
+RAISES_NEG int
 lobject_close(lobjectObject *self)
 {
     PGresult *pgres = NULL;
@@ -287,7 +293,7 @@ lobject_close(lobjectObject *self)
 
 /* lobject_unlink - remove an lo from database */
 
-int
+RAISES_NEG int
 lobject_unlink(lobjectObject *self)
 {
     PGresult *pgres = NULL;
@@ -321,7 +327,7 @@ lobject_unlink(lobjectObject *self)
 
 /* lobject_write - write bytes to a lo */
 
-Py_ssize_t
+RAISES_NEG Py_ssize_t
 lobject_write(lobjectObject *self, const char *buf, size_t len)
 {
     Py_ssize_t written;
@@ -348,7 +354,7 @@ lobject_write(lobjectObject *self, const char *buf, size_t len)
 
 /* lobject_read - read bytes from a lo */
 
-Py_ssize_t
+RAISES_NEG Py_ssize_t
 lobject_read(lobjectObject *self, char *buf, size_t len)
 {
     Py_ssize_t n_read;
@@ -372,7 +378,7 @@ lobject_read(lobjectObject *self, char *buf, size_t len)
 
 /* lobject_seek - move the current position in the lo */
 
-int
+RAISES_NEG int
 lobject_seek(lobjectObject *self, int pos, int whence)
 {
     PGresult *pgres = NULL;
@@ -400,7 +406,7 @@ lobject_seek(lobjectObject *self, int pos, int whence)
 
 /* lobject_tell - tell the current position in the lo */
 
-int
+RAISES_NEG int
 lobject_tell(lobjectObject *self)
 {
     PGresult *pgres = NULL;
@@ -427,7 +433,7 @@ lobject_tell(lobjectObject *self)
 
 /* lobject_export - export to a local file */
 
-int
+RAISES_NEG int
 lobject_export(lobjectObject *self, const char *filename)
 {
     PGresult *pgres = NULL;
@@ -456,7 +462,7 @@ lobject_export(lobjectObject *self, const char *filename)
 
 #if PG_VERSION_HEX >= 0x080300
 
-int
+RAISES_NEG int
 lobject_truncate(lobjectObject *self, size_t len)
 {
     int retvalue;

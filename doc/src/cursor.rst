@@ -67,10 +67,10 @@ The ``cursor`` class
         |execute*|_ methods yet.
         
         .. |pg_type| replace:: :sql:`pg_type`
-        .. _pg_type: http://www.postgresql.org/docs/9.0/static/catalog-pg-type.html
-        .. _PQgetlength: http://www.postgresql.org/docs/9.0/static/libpq-exec.html#LIBPQ-PQGETLENGTH
-        .. _PQfsize: http://www.postgresql.org/docs/9.0/static/libpq-exec.html#LIBPQ-PQFSIZE
-        .. _NUMERIC: http://www.postgresql.org/docs/9.0/static/datatype-numeric.html#DATATYPE-NUMERIC-DECIMAL
+        .. _pg_type: http://www.postgresql.org/docs/current/static/catalog-pg-type.html
+        .. _PQgetlength: http://www.postgresql.org/docs/current/static/libpq-exec.html#LIBPQ-PQGETLENGTH
+        .. _PQfsize: http://www.postgresql.org/docs/current/static/libpq-exec.html#LIBPQ-PQFSIZE
+        .. _NUMERIC: http://www.postgresql.org/docs/current/static/datatype-numeric.html#DATATYPE-NUMERIC-DECIMAL
         .. |NUMERIC| replace:: :sql:`NUMERIC`
 
         .. versionchanged:: 2.4
@@ -378,10 +378,10 @@ The ``cursor`` class
             more flexibility.
 
         .. |CREATE-TABLE| replace:: :sql:`CREATE TABLE`
-        .. __: http://www.postgresql.org/docs/9.0/static/sql-createtable.html
+        .. __: http://www.postgresql.org/docs/current/static/sql-createtable.html
 
         .. |INSERT-RETURNING| replace:: :sql:`INSERT ... RETURNING`
-        .. __: http://www.postgresql.org/docs/9.0/static/sql-insert.html
+        .. __: http://www.postgresql.org/docs/current/static/sql-insert.html
 
 
     .. attribute:: query
@@ -467,7 +467,7 @@ The ``cursor`` class
         :param table: name of the table to copy data into.
         :param sep: columns separator expected in the file. Defaults to a tab.
         :param null: textual representation of :sql:`NULL` in the file.
-            The default is the two character string ``\N``.
+            The default is the two characters string ``\N``.
         :param size: size of the buffer used to read from the file.
         :param columns: iterable with name of the columns to import.
             The length and types should match the content of the file to read.
@@ -500,7 +500,7 @@ The ``cursor`` class
         :param table: name of the table to copy data from.
         :param sep: columns separator expected in the file. Defaults to a tab.
         :param null: textual representation of :sql:`NULL` in the file.
-            The default is the two character string ``\N``.
+            The default is the two characters string ``\N``.
         :param columns: iterable with name of the columns to export.
             If not specified, export all the columns.
 
@@ -540,7 +540,7 @@ The ``cursor`` class
             ...
 
         .. |COPY| replace:: :sql:`COPY`
-        .. __: http://www.postgresql.org/docs/9.0/static/sql-copy.html
+        .. __: http://www.postgresql.org/docs/current/static/sql-copy.html
 
         .. versionadded:: 2.0.6
 

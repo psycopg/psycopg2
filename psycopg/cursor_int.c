@@ -38,7 +38,7 @@
  * Return a borrowed reference.
  */
 
-PyObject *
+BORROWED PyObject *
 curs_get_cast(cursorObject *self, PyObject *oid)
 {
     PyObject *cast;
