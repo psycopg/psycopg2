@@ -7,7 +7,7 @@ import sys
 
 def main():
     if len(sys.argv) != 3:
-        print >>sys.stderr, "usage: %s index.rst text-dir"
+        sys.stderr.write("usage: %s index.rst text-dir\n")
         return 2
 
     _, index, txt_dir = sys.argv
@@ -18,7 +18,11 @@ def main():
     return 0
 
 def iter_file_base(fn):
-    have_line = iter(open(fn)).next
+    f = open(fn)
+    if sys.version_info[0] >= 3:
+        have_line = iter(f).__next__
+    else:
+        have_line = iter(f).next
 
     while not have_line().startswith('.. toctree'):
         pass
@@ -28,7 +32,7 @@ def iter_file_base(fn):
     yield os.path.splitext(os.path.basename(fn))[0]
 
     n = 0
-    while 1:
+    while True:
         line = have_line()
         if line.isspace():
             continue
@@ -37,18 +41,21 @@ def iter_file_base(fn):
         n += 1
         yield line.strip()
 
+    f.close()
+
     if n < 5:
         # maybe format changed?
         raise Exception("Not enough files found. Format change in index.rst?")
 
 def emit(basename, txt_dir):
-    for line in open(os.path.join(txt_dir, basename + ".txt")):
+    f = open(os.path.join(txt_dir, basename + ".txt"))
+    for line in f:
         line = line.replace("``", "'")
         sys.stdout.write(line)
+    f.close()
 
     # some space between sections
-    print
-    print
+    sys.stdout.write("\n\n")
 
     
 if __name__ == '__main__':
