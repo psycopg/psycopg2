@@ -165,6 +165,10 @@ class CursorTests(unittest.TestCase):
         del curs
         self.assert_(w() is None)
 
+    def test_null_name(self):
+        curs = self.conn.cursor(None)
+        self.assertEqual(curs.name, None)
+
     def test_invalid_name(self):
         curs = self.conn.cursor()
         curs.execute("create temp table invname (data int);")

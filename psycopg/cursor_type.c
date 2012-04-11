@@ -1724,7 +1724,7 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
 
     if (name) {
         if (!(self->name = psycopg_escape_identifier_easy(name, 0))) {
-            return 1;
+            return -1;
         }
     }
 
@@ -1733,7 +1733,7 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
                              (PyObject *)&connectionType) == 0) {
         PyErr_SetString(PyExc_TypeError,
             "argument 1 must be subclass of psycopg2._psycopg.connection");
-        return 1;
+        return -1;
     } */
     Py_INCREF(conn);
     self->conn = conn;
@@ -1808,15 +1808,28 @@ cursor_dealloc(PyObject* obj)
 }
 
 static int
-cursor_init(PyObject *obj, PyObject *args, PyObject *kwds)
+cursor_init(PyObject *obj, PyObject *args, PyObject *kwargs)
 {
-    const char *name = NULL;
     PyObject *conn;
+    PyObject *name = Py_None;
+    const char *cname;
 
-    if (!PyArg_ParseTuple(args, "O|s", &conn, &name))
+    static char *kwlist[] = {"conn", "name", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O!|O", kwlist,
+            &connectionType, &conn, &name)) {
         return -1;
+    }
 
-    return cursor_setup((cursorObject *)obj, (connectionObject *)conn, name);
+    if (name == Py_None) {
+        cname = NULL;
+    } else {
+        if (!(cname = Bytes_AsString(name))) {
+            return -1;
+        }
+    }
+
+    return cursor_setup((cursorObject *)obj, (connectionObject *)conn, cname);
 }
 
 static PyObject *
