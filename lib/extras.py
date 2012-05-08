@@ -118,12 +118,12 @@ class DictCursor(DictCursorBase):
     def execute(self, query, vars=None):
         self.index = {}
         self._query_executed = 1
-        return _cursor.execute(self, query, vars)
+        return DictCursorBase.execute(self, query, vars)
 
     def callproc(self, procname, vars=None):
         self.index = {}
         self._query_executed = 1
-        return _cursor.callproc(self, procname, vars)
+        return DictCursorBase.callproc(self, procname, vars)
 
     def _build_index(self):
         if self._query_executed == 1 and self.description:
@@ -215,12 +215,12 @@ class RealDictCursor(DictCursorBase):
     def execute(self, query, vars=None):
         self.column_mapping = []
         self._query_executed = 1
-        return _cursor.execute(self, query, vars)
+        return DictCursorBase.execute(self, query, vars)
 
     def callproc(self, procname, vars=None):
         self.column_mapping = []
         self._query_executed = 1
-        return _cursor.callproc(self, procname, vars)
+        return DictCursorBase.callproc(self, procname, vars)
 
     def _build_index(self):
         if self._query_executed == 1 and self.description:
