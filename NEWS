@@ -4,6 +4,9 @@ What's new in psycopg 2.4.6
   - Fixed 'cursor()' arguments propagation in connection subclasses
     and overriding of the 'cursor_factory' argument.  Thanks to
     Corry Haines for the report and the initial patch (ticket #105).
+  - Dropped GIL release during string adaptation around a function call
+    invoking a Python API function, which could cause interpreter crash.
+    Thanks to Manu Cupcic for the report (ticket #110).
 
 
 What's new in psycopg 2.4.5

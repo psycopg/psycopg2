@@ -73,16 +73,7 @@ qstring_quote(qstringObject *self)
 
     /* encode the string into buffer */
     Bytes_AsStringAndSize(str, &s, &len);
-
-    /* Call qstring_escape with the GIL released, then reacquire the GIL
-       before verifying that the results can fit into a Python string; raise
-       an exception if not. */        
-
-    Py_BEGIN_ALLOW_THREADS
-    buffer = psycopg_escape_string(self->conn, s, len, NULL, &qlen);
-    Py_END_ALLOW_THREADS
-    
-    if (buffer == NULL) {
+    if (!(buffer = psycopg_escape_string(self->conn, s, len, NULL, &qlen))) {
         Py_DECREF(str);
         PyErr_NoMemory();
         return NULL;
