@@ -1824,6 +1824,13 @@ cursor_init(PyObject *obj, PyObject *args, PyObject *kwargs)
     if (name == Py_None) {
         cname = NULL;
     } else {
+        Py_INCREF(name);   /* for ensure_bytes */
+        if (!(name = psycopg_ensure_bytes(name))) {
+            /* name has had a ref stolen */
+            return -1;
+        }
+        Py_DECREF(name);
+
         if (!(cname = Bytes_AsString(name))) {
             return -1;
         }
