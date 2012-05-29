@@ -97,6 +97,9 @@ many placeholders can use the same values::
     ...         VALUES (%(int)s, %(date)s, %(date)s, %(str)s);""",
     ...     {'int': 10, 'str': "O'Reilly", 'date': datetime.date(2005, 11, 18)})
 
+When parameters are used, in order to include a literal ``%`` in the query you
+can use the ``%%`` string.
+
 While the mechanism resembles regular Python strings manipulation, there are a
 few subtle differences you should care about when passing parameters to a
 query:
