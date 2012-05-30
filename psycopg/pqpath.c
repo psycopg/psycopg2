@@ -557,12 +557,18 @@ pq_reset_locked(connectionObject *conn, PGresult **pgres, char **error,
         if (retvalue != 0) return retvalue;
     }
 
-    retvalue = pq_execute_command_locked(conn, "RESET ALL", pgres, error, tstate);
-    if (retvalue != 0) return retvalue;
+    if (conn->server_version >= 80300) {
+        retvalue = pq_execute_command_locked(conn, "DISCARD ALL", pgres, error, tstate);
+        if (retvalue != 0) return retvalue;
+    }
+    else {
+        retvalue = pq_execute_command_locked(conn, "RESET ALL", pgres, error, tstate);
+        if (retvalue != 0) return retvalue;
 
-    retvalue = pq_execute_command_locked(conn,
-        "SET SESSION AUTHORIZATION DEFAULT", pgres, error, tstate);
-    if (retvalue != 0) return retvalue;
+        retvalue = pq_execute_command_locked(conn,
+            "SET SESSION AUTHORIZATION DEFAULT", pgres, error, tstate);
+        if (retvalue != 0) return retvalue;
+    }
 
     /* should set the tpc xid to null: postponed until we get the GIL again */
     conn->status = CONN_STATUS_READY;

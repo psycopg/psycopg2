@@ -7,6 +7,8 @@ What's new in psycopg 2.4.6
   - Dropped GIL release during string adaptation around a function call
     invoking a Python API function, which could cause interpreter crash.
     Thanks to Manu Cupcic for the report (ticket #110).
+  - connection.reset() implemented using DISCARD ALL on server versions
+    supporting it.
 
 
 What's new in psycopg 2.4.5
