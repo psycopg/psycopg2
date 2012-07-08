@@ -199,7 +199,7 @@ argument of the `~cursor.execute()` method::
 Adaptation of Python values to SQL types
 ----------------------------------------
 
-Many standards Python types are adapted into SQL and returned as Python
+Many standard Python types are adapted into SQL and returned as Python
 objects when a query is executed.
 
 If you need to convert other Python types to and from PostgreSQL data types,
