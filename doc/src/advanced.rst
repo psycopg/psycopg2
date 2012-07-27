@@ -403,13 +403,13 @@ this will be probably implemented in a future release.
 
 .. _green-support:
 
-Support to coroutine libraries
-------------------------------
+Support for coroutine libraries
+-------------------------------
 
 .. versionadded:: 2.2.0
 
-Psycopg can be used together with coroutine_\-based libraries, and participate
-to cooperative multithreading.
+Psycopg can be used together with coroutine_\-based libraries and participate
+in cooperative multithreading.
 
 Coroutine-based libraries (such as Eventlet_ or gevent_) can usually patch the
 Python standard library in order to enable a coroutine switch in the presence of
