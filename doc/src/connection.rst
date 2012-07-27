@@ -60,11 +60,17 @@ The ``connection`` class
         pair: Transaction; Commit
 
     .. method:: commit()
-          
-        Commit any pending transaction to the database. Psycopg can be set to
-        perform automatic commits at each operation, see
-        `~connection.set_isolation_level()`.
-        
+
+        Commit any pending transaction to the database.
+
+        By default, Psycopg opens a transaction before executing the first
+        command: if `!commit()` is not called, the effect of any data
+        manipulation will be lost.
+
+        The connection can be also set in "autocommit" mode: no transaction is
+        automatically open, commands have immediate effect. See
+        :ref:`transactions-control` for details.
+
 
     .. index::
         pair: Transaction; Rollback
@@ -77,7 +83,7 @@ The ``connection`` class
 
 
     .. method:: close()
-              
+
         Close the connection now (rather than whenever `del` is executed).
         The connection will be unusable from this point forward; an
         `~psycopg2.InterfaceError` will be raised if any operation is
