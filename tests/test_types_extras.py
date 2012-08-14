@@ -424,6 +424,30 @@ class HstoreTestCase(unittest.TestCase):
             psycopg2.extensions.string_types.pop(oid)
             psycopg2.extensions.string_types.pop(aoid)
 
+    @skip_if_no_hstore
+    def test_non_dbapi_connection(self):
+        from psycopg2.extras import RealDictConnection
+        from psycopg2.extras import register_hstore
+
+        conn = psycopg2.connect(dsn, connection_factory=RealDictConnection)
+        try:
+            register_hstore(conn)
+            curs = conn.cursor()
+            curs.execute("select ''::hstore x")
+            self.assertEqual(curs.fetchone()['x'], {})
+        finally:
+            conn.close()
+
+        conn = psycopg2.connect(dsn, connection_factory=RealDictConnection)
+        try:
+            curs = conn.cursor()
+            register_hstore(curs)
+            curs.execute("select ''::hstore x")
+            self.assertEqual(curs.fetchone()['x'], {})
+        finally:
+            conn.close()
+
+
 def skip_if_no_composite(f):
     def skip_if_no_composite_(self):
         if self.conn.server_version < 80000:
@@ -711,6 +735,30 @@ class AdaptTypeTestCase(unittest.TestCase):
         r = curs.fetchone()
         self.assertEqual(r[0], (2, 'test2'))
         self.assertEqual(r[1], [(3, 'testc', 2), (4, 'testd', 2)])
+
+    @skip_if_no_hstore
+    def test_non_dbapi_connection(self):
+        from psycopg2.extras import RealDictConnection
+        from psycopg2.extras import register_composite
+        self._create_type("type_ii", [("a", "integer"), ("b", "integer")])
+
+        conn = psycopg2.connect(dsn, connection_factory=RealDictConnection)
+        try:
+            register_composite('type_ii', conn)
+            curs = conn.cursor()
+            curs.execute("select '(1,2)'::type_ii x")
+            self.assertEqual(curs.fetchone()['x'], (1,2))
+        finally:
+            conn.close()
+
+        conn = psycopg2.connect(dsn, connection_factory=RealDictConnection)
+        try:
+            curs = conn.cursor()
+            register_composite('type_ii', conn)
+            curs.execute("select '(1,2)'::type_ii x")
+            self.assertEqual(curs.fetchone()['x'], (1,2))
+        finally:
+            conn.close()
 
     def _create_type(self, name, fields):
         curs = self.conn.cursor()
