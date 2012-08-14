@@ -28,6 +28,7 @@
 #include "psycopg/psycopg.h"
 
 #include "psycopg/xid.h"
+#include "psycopg/cursor.h"
 
 
 static const char xid_doc[] =
@@ -660,8 +661,11 @@ xid_recover(PyObject *conn)
     PyObject *tmp;
     Py_ssize_t len, i;
 
-    /* curs = conn.cursor() */
-    if (!(curs = PyObject_CallMethod(conn, "cursor", NULL))) { goto exit; }
+    /* curs = conn.cursor()
+     * (sort of. Use the real cursor in case the connection returns
+     * somenthing non-dbapi -- see ticket #114) */
+    if (!(curs = PyObject_CallFunctionObjArgs(
+        (PyObject *)&cursorType, conn, NULL))) { goto exit; }
 
     /* curs.execute(...) */
     if (!(tmp = PyObject_CallMethod(curs, "execute", "s",
