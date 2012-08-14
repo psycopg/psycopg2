@@ -7,8 +7,8 @@ What's new in psycopg 2.4.6
   - Dropped GIL release during string adaptation around a function call
     invoking a Python API function, which could cause interpreter crash.
     Thanks to Manu Cupcic for the report (ticket #110).
-  - 'register_hstore()', 'register_composite()' work with RealDictConnection
-    and Cursor. Thanks to Adrian Klaver for the report (ticket #114).
+  - 'register_hstore()', 'register_composite()', 'tpc_recover()' work with
+    RealDictConnection and Cursor (ticket #114).
 
 
 What's new in psycopg 2.4.5
