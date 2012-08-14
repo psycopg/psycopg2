@@ -571,6 +571,18 @@ def wait_select(conn):
             raise OperationalError("bad state from poll: %s" % state)
 
 
+def _solve_conn_curs(conn_or_curs):
+    """Return the connection and a DBAPI cursor from a connection or cursor."""
+    if hasattr(conn_or_curs, 'execute'):
+        conn = conn_or_curs.connection
+        curs = conn.cursor(cursor_factory=_cursor)
+    else:
+        conn = conn_or_curs
+        curs = conn.cursor(cursor_factory=_cursor)
+
+    return conn, curs
+
+
 class HstoreAdapter(object):
     """Adapt a Python dict to the hstore syntax."""
     def __init__(self, wrapped):
@@ -679,12 +691,7 @@ class HstoreAdapter(object):
     def get_oids(self, conn_or_curs):
         """Return the lists of OID of the hstore and hstore[] types.
         """
-        if hasattr(conn_or_curs, 'execute'):
-            conn = conn_or_curs.connection
-            curs = conn_or_curs
-        else:
-            conn = conn_or_curs
-            curs = conn_or_curs.cursor()
+        conn, curs = _solve_conn_curs(conn_or_curs)
 
         # Store the transaction status of the connection to revert it after use
         conn_status = conn.status
@@ -890,12 +897,7 @@ class CompositeCaster(object):
 
         Raise `ProgrammingError` if the type is not found.
         """
-        if hasattr(conn_or_curs, 'execute'):
-            conn = conn_or_curs.connection
-            curs = conn_or_curs
-        else:
-            conn = conn_or_curs
-            curs = conn_or_curs.cursor()
+        conn, curs = _solve_conn_curs(conn_or_curs)
 
         # Store the transaction status of the connection to revert it after use
         conn_status = conn.status
