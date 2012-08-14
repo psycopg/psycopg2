@@ -43,6 +43,7 @@ struct cursorObject {
     int closed:1;            /* 1 if the cursor is closed */
     int notuples:1;          /* 1 if the command was not a SELECT query */
     int withhold:1;          /* 1 if the cursor is named and uses WITH HOLD */
+    int scrollable:1;        /* 1 if the cursor is named as SCROLLABLE */
 
     long int rowcount;       /* number of rows affected by last execute */
     long int columns;        /* number of columns fetched from the db */

@@ -56,17 +56,26 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *kwargs)
     PyObject *name = Py_None;
     PyObject *factory = (PyObject *)&cursorType;
     PyObject *withhold = Py_False;
+    PyObject *scrollable = Py_False;
 
-    static char *kwlist[] = {"name", "cursor_factory", "withhold", NULL};
+    static char *kwlist[] = {
+        "name", "cursor_factory", "withhold", "scrollable", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|OOO", kwlist,
-                                     &name, &factory, &withhold)) {
+    if (!PyArg_ParseTupleAndKeywords(
+            args, kwargs, "|OOOO", kwlist,
+            &name, &factory, &withhold, &scrollable)) {
         return NULL;
     }
 
     if (PyObject_IsTrue(withhold) && (name == Py_None)) {
         PyErr_SetString(ProgrammingError,
             "'withhold=True can be specified only for named cursors");
+        return NULL;
+    }
+
+    if (PyObject_IsTrue(scrollable) && (name == Py_None)) {
+        PyErr_SetString(ProgrammingError,
+            "'scrollable=True can be specified only for named cursors");
         return NULL;
     }
 
@@ -103,6 +112,9 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *kwargs)
 
     if (PyObject_IsTrue(withhold))
         ((cursorObject*)obj)->withhold = 1;
+
+    if (PyObject_IsTrue(scrollable))
+        ((cursorObject*)obj)->scrollable = 1;
 
     Dprintf("psyco_conn_cursor: new cursor at %p: refcnt = "
         FORMAT_CODE_PY_SSIZE_T,

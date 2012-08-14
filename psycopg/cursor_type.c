@@ -403,8 +403,9 @@ _psyco_curs_execute(cursorObject *self,
 
         if (self->name != NULL) {
             self->query = Bytes_FromFormat(
-                "DECLARE \"%s\" CURSOR %s HOLD FOR %s",
+                "DECLARE \"%s\" %sSCROLL CURSOR %s HOLD FOR %s",
                 self->name,
+                self->scrollable ? "":"NO ",
                 self->withhold ? "WITH" : "WITHOUT",
                 Bytes_AS_STRING(fquery));
             Py_DECREF(fquery);
@@ -416,8 +417,9 @@ _psyco_curs_execute(cursorObject *self,
     else {
         if (self->name != NULL) {
             self->query = Bytes_FromFormat(
-                "DECLARE \"%s\" CURSOR %s HOLD FOR %s",
+                "DECLARE \"%s\" %sSCROLL CURSOR %s HOLD FOR %s",
                 self->name,
+                self->scrollable ? "":"NO ",
                 self->withhold ? "WITH" : "WITHOUT",
                 Bytes_AS_STRING(operation));
         }
@@ -1575,12 +1577,43 @@ psyco_curs_withhold_set(cursorObject *self, PyObject *pyvalue)
             "trying to set .withhold on unnamed cursor");
         return -1;
     }
-    
-    if ((value = PyObject_IsTrue(pyvalue)) == -1) 
+
+    if ((value = PyObject_IsTrue(pyvalue)) == -1)
         return -1;
 
     self->withhold = value;
-    
+
+    return 0;
+}
+
+#define psyco_curs_scrollable_doc \
+"Set or return cursor use of SCROLL"
+
+static PyObject *
+psyco_curs_scrollable_get(cursorObject *self)
+{
+    PyObject *ret;
+    ret = self->scrollable ? Py_True : Py_False;
+    Py_INCREF(ret);
+    return ret;
+}
+
+static int
+psyco_curs_scrollable_set(cursorObject *self, PyObject *pyvalue)
+{
+    int value;
+
+    if (self->name == NULL) {
+        PyErr_SetString(ProgrammingError,
+            "trying to set .scrollable on unnamed cursor");
+        return -1;
+    }
+
+    if ((value = PyObject_IsTrue(pyvalue)) == -1)
+        return -1;
+
+    self->scrollable = value;
+
     return 0;
 }
 
@@ -1710,6 +1743,10 @@ static struct PyGetSetDef cursorObject_getsets[] = {
       (getter)psyco_curs_withhold_get,
       (setter)psyco_curs_withhold_set,
       psyco_curs_withhold_doc, NULL },
+    { "scrollable",
+      (getter)psyco_curs_scrollable_get,
+      (setter)psyco_curs_scrollable_set,
+      psyco_curs_scrollable_doc, NULL },
 #endif
     {NULL}
 };
@@ -1740,6 +1777,7 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
 
     self->closed = 0;
     self->withhold = 0;
+    self->scrollable = 0;
     self->mark = conn->mark;
     self->pgres = NULL;
     self->notuples = 1;
