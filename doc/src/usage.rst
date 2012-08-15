@@ -516,8 +516,8 @@ issued by all the cursors created by the same connection.  Should any command
 fail, the transaction will be aborted and no further command will be executed
 until a call to the `~connection.rollback()` method.
 
-The connection is responsible to terminate its transaction, calling either the
-`~connection.commit()` or `~connection.rollback()` method.  Committed
+The connection is responsible for terminating its transaction, calling either
+the `~connection.commit()` or `~connection.rollback()` method.  Committed
 changes are immediately made persistent into the database.  Closing the
 connection using the `~connection.close()` method or destroying the
 connection object (using `!del` or letting it fall out of scope)
