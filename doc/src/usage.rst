@@ -521,7 +521,7 @@ the `~connection.commit()` or `~connection.rollback()` method.  Committed
 changes are immediately made persistent into the database.  Closing the
 connection using the `~connection.close()` method or destroying the
 connection object (using `!del` or letting it fall out of scope)
-will result in an implicit `!rollback()` call.
+will result in an implicit rollback.
 
 It is possible to set the connection in *autocommit* mode: this way all the
 commands executed will be immediately committed and no rollback is possible. A
