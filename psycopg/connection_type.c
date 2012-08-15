@@ -52,75 +52,70 @@
 static PyObject *
 psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *kwargs)
 {
-    PyObject *obj;
+    PyObject *obj = NULL;
+    PyObject *rv = NULL;
     PyObject *name = Py_None;
     PyObject *factory = (PyObject *)&cursorType;
     PyObject *withhold = Py_False;
-    PyObject *scrollable = Py_False;
+    PyObject *scrollable = Py_None;
 
     static char *kwlist[] = {
         "name", "cursor_factory", "withhold", "scrollable", NULL};
 
+    EXC_IF_CONN_CLOSED(self);
+
     if (!PyArg_ParseTupleAndKeywords(
             args, kwargs, "|OOOO", kwlist,
             &name, &factory, &withhold, &scrollable)) {
-        return NULL;
+        goto exit;
     }
-
-    if (PyObject_IsTrue(withhold) && (name == Py_None)) {
-        PyErr_SetString(ProgrammingError,
-            "'withhold=True can be specified only for named cursors");
-        return NULL;
-    }
-
-    if (PyObject_IsTrue(scrollable) && (name == Py_None)) {
-        PyErr_SetString(ProgrammingError,
-            "'scrollable=True can be specified only for named cursors");
-        return NULL;
-    }
-
-    EXC_IF_CONN_CLOSED(self);
 
     if (self->status != CONN_STATUS_READY &&
         self->status != CONN_STATUS_BEGIN &&
         self->status != CONN_STATUS_PREPARED) {
         PyErr_SetString(OperationalError,
                         "asynchronous connection attempt underway");
-        return NULL;
+        goto exit;
     }
 
     if (name != Py_None && self->async == 1) {
         PyErr_SetString(ProgrammingError,
                         "asynchronous connections "
                         "cannot produce named cursors");
-        return NULL;
+        goto exit;
     }
 
     Dprintf("psyco_conn_cursor: new %s cursor for connection at %p",
         (name == Py_None ? "unnamed" : "named"), self);
 
     if (!(obj = PyObject_CallFunctionObjArgs(factory, self, name, NULL))) {
-        return NULL;
+        goto exit;
     }
 
     if (PyObject_IsInstance(obj, (PyObject *)&cursorType) == 0) {
         PyErr_SetString(PyExc_TypeError,
             "cursor factory must be subclass of psycopg2._psycopg.cursor");
-        Py_DECREF(obj);
-        return NULL;
+        goto exit;
     }
 
-    if (PyObject_IsTrue(withhold))
-        ((cursorObject*)obj)->withhold = 1;
-
-    if (PyObject_IsTrue(scrollable))
-        ((cursorObject*)obj)->scrollable = 1;
+    if (0 != psyco_curs_withhold_set((cursorObject *)obj, withhold)) {
+        goto exit;
+    }
+    if (0 != psyco_curs_scrollable_set((cursorObject *)obj, scrollable)) {
+        goto exit;
+    }
 
     Dprintf("psyco_conn_cursor: new cursor at %p: refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
         obj, Py_REFCNT(obj)
-      );
-    return obj;
+    );
+
+    rv = obj;
+    obj = NULL;
+
+exit:
+    Py_XDECREF(obj);
+    return rv;
 }
 
 

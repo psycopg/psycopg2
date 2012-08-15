@@ -43,7 +43,11 @@ struct cursorObject {
     int closed:1;            /* 1 if the cursor is closed */
     int notuples:1;          /* 1 if the command was not a SELECT query */
     int withhold:1;          /* 1 if the cursor is named and uses WITH HOLD */
-    int scrollable:1;        /* 1 if the cursor is named as SCROLLABLE */
+
+    int scrollable;          /* 1 if the cursor is named and SCROLLABLE,
+                                0 if not scrollable
+                               -1 if undefined (PG may decide scrollable or not)
+                              */
 
     long int rowcount;       /* number of rows affected by last execute */
     long int columns;        /* number of columns fetched from the db */
@@ -85,9 +89,11 @@ struct cursorObject {
 };
 
 
-/* C-callable functions in cursor_int.c and cursor_ext.c */
+/* C-callable functions in cursor_int.c and cursor_type.c */
 BORROWED HIDDEN PyObject *curs_get_cast(cursorObject *self, PyObject *oid);
 HIDDEN void curs_reset(cursorObject *self);
+HIDDEN int psyco_curs_withhold_set(cursorObject *self, PyObject *pyvalue);
+HIDDEN int psyco_curs_scrollable_set(cursorObject *self, PyObject *pyvalue);
 
 /* exception-raising macros */
 #define EXC_IF_CURS_CLOSED(self) \

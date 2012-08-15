@@ -226,7 +226,7 @@ class CursorTests(unittest.TestCase):
         for t in range(2):
             if not t:
                 curs = self.conn.cursor("S")
-                self.assertEqual(curs.scrollable, False);
+                self.assertEqual(curs.scrollable, None);
                 curs.scrollable = True
             else:
                 curs = self.conn.cursor("S", scrollable=True)
@@ -251,6 +251,32 @@ class CursorTests(unittest.TestCase):
                 curs.scroll(-1)
 
             curs.close()
+
+    def test_not_scrollable(self):
+        self.assertRaises(psycopg2.ProgrammingError, self.conn.cursor,
+                          scrollable=False)
+
+        curs = self.conn.cursor()
+        curs.execute("create table scrollable (data int)")
+        curs.executemany("insert into scrollable values (%s)",
+            [ (i,) for i in range(100) ])
+        curs.close()
+
+        curs = self.conn.cursor("S")    # default scrollability
+        curs.execute("select * from scrollable")
+        self.assertEqual(curs.scrollable, None)
+        curs.scroll(2)
+        try:
+            curs.scroll(-1)
+        except psycopg2.OperationalError:
+            return self.skipTest("can't evaluate non-scrollable cursor")
+        curs.close()
+
+        curs = self.conn.cursor("S", scrollable=False)
+        self.assertEqual(curs.scrollable, False)
+        curs.execute("select * from scrollable")
+        curs.scroll(2)
+        self.assertRaises(psycopg2.OperationalError, curs.scroll, -1)
 
     @skip_before_postgres(8, 2)
     def test_iter_named_cursor_efficient(self):
