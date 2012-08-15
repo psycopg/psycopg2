@@ -114,20 +114,51 @@ The ``cursor`` class
             The `name` attribute is a Psycopg extension to the |DBAPI|.
 
 
+    .. attribute:: scrollable
+
+        Read/write attribute: specifies if a named cursor is declared
+        :sql:`SCROLL`, hence is capable to scroll backwards (using
+        `~cursor.scroll()`). If `!True`, the cursor can be scrolled backwards,
+        if `!False` it is never scrollable. If `!None` (default) the cursor
+        scroll option is not specified, usually but not always meaning no
+        backward scroll (see the |declare-notes|__).
+
+        .. |declare-notes| replace:: :sql:`DECLARE` notes
+        .. __: http://www.postgresql.org/docs/current/static/sql-declare.html#SQL-DECLARE-NOTES
+
+        .. note::
+
+            set the value before calling `~cursor.execute()` or use the
+            `connection.cursor()` *scrollable* parameter, otherwise the value
+            will have no effect.
+
+        .. versionadded:: 2.4.6
+
+        .. extension::
+
+            The `scrollable` attribute is a Psycopg extension to the |DBAPI|.
+
+
     .. attribute:: withhold
-    
+
         Read/write attribute: specifies if a named cursor lifetime should
         extend outside of the current transaction, i.e., it is possible to
-        fetch from the cursor even after a `commection.commit()` (but not after
+        fetch from the cursor even after a `connection.commit()` (but not after
         a `connection.rollback()`).  See :ref:`server-side-cursors`
 
+        .. note::
+
+            set the value before calling `~cursor.execute()` or use the
+            `connection.cursor()` *withhold* parameter, otherwise the value
+            will have no effect.
+
         .. versionadded:: 2.4.3
-        
+
         .. extension::
 
             The `withhold` attribute is a Psycopg extension to the |DBAPI|.
-    
-    
+
+
     .. |execute*| replace:: `execute*()`
 
     .. _execute*:
@@ -297,7 +328,8 @@ The ``cursor`` class
         not changed.
 
         The method can be used both for client-side cursors and
-        :ref:`server-side cursors <server-side-cursors>`.
+        :ref:`server-side cursors <server-side-cursors>`. Server-side cursors
+        can usually scroll backwards only if declared `~cursor.scrollable`.
 
         .. note:: 
 

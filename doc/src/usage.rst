@@ -576,7 +576,9 @@ cursor is created using the `~connection.cursor()` method specifying the
 *name* parameter. Such cursor will behave mostly like a regular cursor,
 allowing the user to move in the dataset using the `~cursor.scroll()`
 method and to read the data using `~cursor.fetchone()` and
-`~cursor.fetchmany()` methods.
+`~cursor.fetchmany()` methods. Normally you can only scroll forward in a
+cursor: if you need to scroll backwards you should declare your cursor
+`~cursor.scrollable`.
 
 Named cursors are also :ref:`iterable <cursor-iterable>` like regular cursors.
 Note however that before Psycopg 2.4 iteration was performed fetching one

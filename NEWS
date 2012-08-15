@@ -1,6 +1,10 @@
 What's new in psycopg 2.4.6
 ---------------------------
 
+  - Added support for backward scrollable cursors. Thanks to Jon Nelson
+    for the initial patch (ticket #108).
+  - connection.reset() implemented using DISCARD ALL on server versions
+    supporting it.
   - Fixed 'cursor()' arguments propagation in connection subclasses
     and overriding of the 'cursor_factory' argument.  Thanks to
     Corry Haines for the report and the initial patch (ticket #105).
@@ -9,8 +13,6 @@ What's new in psycopg 2.4.6
     Thanks to Manu Cupcic for the report (ticket #110).
   - 'register_hstore()', 'register_composite()', 'tpc_recover()' work with
     RealDictConnection and Cursor (ticket #114).
-  - connection.reset() implemented using DISCARD ALL on server versions
-    supporting it.
 
 
 What's new in psycopg 2.4.5
