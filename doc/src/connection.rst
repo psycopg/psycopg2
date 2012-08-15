@@ -21,16 +21,17 @@ The ``connection`` class
     Connections are thread safe and can be shared among many threads. See
     :ref:`thread-safety` for details.
 
-    .. method:: cursor([name] [, cursor_factory] [, withhold])
+    .. method:: cursor(name=None, cursor_factory=None, scrollable=None, withhold=False)
           
         Return a new `cursor` object using the connection.
 
         If *name* is specified, the returned cursor will be a :ref:`server
         side cursor <server-side-cursors>` (also known as *named cursor*).
-        Otherwise it will be a regular *client side* cursor. By default a
-        :sql:`WITHOUT HOLD` cursor is created; to create a :sql:`WITH HOLD`
-        cursor, pass a `!True` value as the *withhold* parameter.  See
-        :ref:`server-side-cursors`.
+        Otherwise it will be a regular *client side* cursor.  By default a
+        named cursor is declared without :sql:`SCROLL` option and
+        :sql:`WITHOUT HOLD`: set the argument or property `~cursor.scrollable`
+        to `!True`/`!False` and or `~cursor.withhold` to `!True` to change the
+        declaration.
 
         The name can be a string not valid as a PostgreSQL identifier: for
         example it may start with a digit and contain non-alphanumeric
@@ -46,14 +47,16 @@ The ``connection`` class
             Consider it as part of the query, not as a query parameter.
 
         The *cursor_factory* argument can be used to create non-standard
-        cursors. The class returned should be a subclass of
+        cursors. The class returned must be a subclass of
         `psycopg2.extensions.cursor`. See :ref:`subclassing-cursor` for
         details.
 
+        .. versionchanged:: 2.4.3 added the *withhold* argument.
+        .. versionchanged:: 2.4.6 added the *scrollable* argument.
+
         .. extension::
 
-            The `name` and `cursor_factory` parameters are Psycopg
-            extensions to the |DBAPI|.
+            All the function arguments are Psycopg extensions to the |DBAPI|.
 
 
     .. index::

@@ -370,6 +370,7 @@ _psyco_curs_execute(cursorObject *self,
     int res = -1;
     int tmp;
     PyObject *fquery, *cvt = NULL;
+    const char *scroll;
 
     operation = _psyco_curs_validate_sql_basic(self, operation);
 
@@ -396,6 +397,21 @@ _psyco_curs_execute(cursorObject *self,
         if (0 > _mogrify(vars, operation, self, &cvt)) { goto exit; }
     }
 
+    switch (self->scrollable) {
+        case -1:
+            scroll = "";
+            break;
+        case 0:
+            scroll = "NO SCROLL ";
+            break;
+        case 1:
+            scroll = "SCROLL ";
+            break;
+        default:
+            PyErr_SetString(InternalError, "unexpected scrollable value");
+            goto exit;
+    }
+
     if (vars && cvt) {
         if (!(fquery = _psyco_curs_merge_query_args(self, operation, cvt))) {
             goto exit;
@@ -403,8 +419,9 @@ _psyco_curs_execute(cursorObject *self,
 
         if (self->name != NULL) {
             self->query = Bytes_FromFormat(
-                "DECLARE \"%s\" CURSOR %s HOLD FOR %s",
+                "DECLARE \"%s\" %sCURSOR %s HOLD FOR %s",
                 self->name,
+                scroll,
                 self->withhold ? "WITH" : "WITHOUT",
                 Bytes_AS_STRING(fquery));
             Py_DECREF(fquery);
@@ -416,8 +433,9 @@ _psyco_curs_execute(cursorObject *self,
     else {
         if (self->name != NULL) {
             self->query = Bytes_FromFormat(
-                "DECLARE \"%s\" CURSOR %s HOLD FOR %s",
+                "DECLARE \"%s\" %sCURSOR %s HOLD FOR %s",
                 self->name,
+                scroll,
                 self->withhold ? "WITH" : "WITHOUT",
                 Bytes_AS_STRING(operation));
         }
@@ -1565,22 +1583,70 @@ psyco_curs_withhold_get(cursorObject *self)
     return ret;
 }
 
-static int
+int
 psyco_curs_withhold_set(cursorObject *self, PyObject *pyvalue)
 {
     int value;
 
-    if (self->name == NULL) {
+    if (pyvalue != Py_False && self->name == NULL) {
         PyErr_SetString(ProgrammingError,
             "trying to set .withhold on unnamed cursor");
         return -1;
     }
-    
-    if ((value = PyObject_IsTrue(pyvalue)) == -1) 
+
+    if ((value = PyObject_IsTrue(pyvalue)) == -1)
         return -1;
 
     self->withhold = value;
-    
+
+    return 0;
+}
+
+#define psyco_curs_scrollable_doc \
+"Set or return cursor use of SCROLL"
+
+static PyObject *
+psyco_curs_scrollable_get(cursorObject *self)
+{
+    PyObject *ret = NULL;
+
+    switch (self->scrollable) {
+        case -1:
+            ret = Py_None;
+            break;
+        case 0:
+            ret = Py_False;
+            break;
+        case 1:
+            ret = Py_True;
+            break;
+        default:
+            PyErr_SetString(InternalError, "unexpected scrollable value");
+    }
+
+    Py_XINCREF(ret);
+    return ret;
+}
+
+int
+psyco_curs_scrollable_set(cursorObject *self, PyObject *pyvalue)
+{
+    int value;
+
+    if (pyvalue != Py_None && self->name == NULL) {
+        PyErr_SetString(ProgrammingError,
+            "trying to set .scrollable on unnamed cursor");
+        return -1;
+    }
+
+    if (pyvalue == Py_None) {
+        value = -1;
+    } else if ((value = PyObject_IsTrue(pyvalue)) == -1) {
+        return -1;
+    }
+
+    self->scrollable = value;
+
     return 0;
 }
 
@@ -1710,6 +1776,10 @@ static struct PyGetSetDef cursorObject_getsets[] = {
       (getter)psyco_curs_withhold_get,
       (setter)psyco_curs_withhold_set,
       psyco_curs_withhold_doc, NULL },
+    { "scrollable",
+      (getter)psyco_curs_scrollable_get,
+      (setter)psyco_curs_scrollable_set,
+      psyco_curs_scrollable_doc, NULL },
 #endif
     {NULL}
 };
@@ -1740,6 +1810,7 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
 
     self->closed = 0;
     self->withhold = 0;
+    self->scrollable = 0;
     self->mark = conn->mark;
     self->pgres = NULL;
     self->notuples = 1;
