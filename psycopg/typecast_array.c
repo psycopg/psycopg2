@@ -224,9 +224,9 @@ typecast_array_scan(const char *str, Py_ssize_t strlength,
         }
 
         else if (state == ASCAN_END) {
-            if (--stack_index < 0)
+            if (stack_index == 0)
                 return -1;
-            array = stack[stack_index];
+            array = stack[--stack_index];
         }
 
         else if (state ==  ASCAN_EOF)
