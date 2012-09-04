@@ -433,7 +433,7 @@ class HstoreTestCase(unittest.TestCase):
         try:
             register_hstore(conn)
             curs = conn.cursor()
-            curs.execute("select ''::hstore x")
+            curs.execute("select ''::hstore as x")
             self.assertEqual(curs.fetchone()['x'], {})
         finally:
             conn.close()
@@ -442,7 +442,7 @@ class HstoreTestCase(unittest.TestCase):
         try:
             curs = conn.cursor()
             register_hstore(curs)
-            curs.execute("select ''::hstore x")
+            curs.execute("select ''::hstore as x")
             self.assertEqual(curs.fetchone()['x'], {})
         finally:
             conn.close()
@@ -746,7 +746,7 @@ class AdaptTypeTestCase(unittest.TestCase):
         try:
             register_composite('type_ii', conn)
             curs = conn.cursor()
-            curs.execute("select '(1,2)'::type_ii x")
+            curs.execute("select '(1,2)'::type_ii as x")
             self.assertEqual(curs.fetchone()['x'], (1,2))
         finally:
             conn.close()
@@ -755,7 +755,7 @@ class AdaptTypeTestCase(unittest.TestCase):
         try:
             curs = conn.cursor()
             register_composite('type_ii', conn)
-            curs.execute("select '(1,2)'::type_ii x")
+            curs.execute("select '(1,2)'::type_ii as x")
             self.assertEqual(curs.fetchone()['x'], (1,2))
         finally:
             conn.close()
