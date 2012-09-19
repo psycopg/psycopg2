@@ -573,6 +573,9 @@ def wait_select(conn):
 
 def _solve_conn_curs(conn_or_curs):
     """Return the connection and a DBAPI cursor from a connection or cursor."""
+    if conn_or_curs is None:
+        raise psycopg2.ProgrammingError("no connection or cursor provided")
+
     if hasattr(conn_or_curs, 'execute'):
         conn = conn_or_curs.connection
         curs = conn.cursor(cursor_factory=_cursor)
@@ -741,7 +744,6 @@ def register_hstore(conn_or_curs, globally=False, unicode=False,
     *oid* parameter, which can be found using a query such as :sql:`SELECT
     'hstore'::regtype::oid`. Analogously you can obtain a value for *array_oid*
     using a query such as :sql:`SELECT 'hstore[]'::regtype::oid`.
-
 
     Note that, when passing a dictionary from Python to the database, both
     strings and unicode keys and values are supported. Dictionaries returned
@@ -967,59 +969,8 @@ def register_composite(name, conn_or_curs, globally=False):
     return caster
 
 
-# import the best json implementation available
-if sys.version_info[:2] >= (2,6):
-    import json
-else:
-    try:
-        import simplejson as json
-    except ImportError:
-        json = None
-
-
-class Json(object):
-    """A wrapper to adapt a Python object to :sql:`json` data type.
-
-    `!Json` can be used to wrap any object supported by the underlying
-    `!json` module. Any keyword argument will be passed to the
-    underlying :py:func:`json.dumps()` function, allowing extension and
-    customization. ::
-
-        curs.execute("insert into mytable (jsondata) values (%s)",
-            (Json({'a': 100}),))
-
-    .. note::
-
-        You can use `~psycopg2.extensions.register_adapter()` to adapt Python
-        dictionaries to JSON::
-
-            psycopg2.extensions.register_adapter(dict,
-                psycopg2.extras.Json)
-
-        This setting is global though, so it is not compatible with the use of
-        `register_hstore()`. Any other object supported by the `!json` library
-        used by Psycopg can be registered the same way, but this will clobber
-        the default adaptation rule, so be careful to unwanted side effects.
-
-    """
-    def __init__(self, adapted, **kwargs):
-        self.adapted = adapted
-        self.kwargs = kwargs
-
-    def __conform__(self, proto):
-        if proto is _ext.ISQLQuote:
-            return self
-
-    def getquoted(self):
-        s = json.dumps(self.adapted, **self.kwargs)
-        return _ext.QuotedString(s).getquoted()
-
-
-# clobber the above class if json is not available
-if json is None:
-    class Json(Json):
-        def __init__(self, adapted):
-            raise ImportError("no json module available")
-
+# expose the json adaptation stuff into the module
+from psycopg2._json import json, Json, register_json
 
 __all__ = filter(lambda k: not k.startswith('_'), locals().keys())
+
