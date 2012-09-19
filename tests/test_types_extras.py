@@ -1005,6 +1005,16 @@ class JsonTestCase(unittest.TestCase):
         self.assert_(isinstance(data[0]['a'], Decimal))
         self.assertEqual(data[0]['a'], Decimal('100.0'))
 
+    @skip_if_no_json_module
+    @skip_if_no_json_type
+    def test_null(self):
+        psycopg2.extras.register_json(self.conn)
+        curs = self.conn.cursor()
+        curs.execute("""select NULL::json""")
+        self.assertEqual(curs.fetchone()[0], None)
+        curs.execute("""select NULL::json[]""")
+        self.assertEqual(curs.fetchone()[0], None)
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

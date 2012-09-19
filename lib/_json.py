@@ -197,6 +197,8 @@ def _create_json_typecasters(oid, array_oid, loads=None):
             loads = json.loads
 
     def typecast_json(s, cur):
+        if s is None:
+            return None
         return loads(s)
 
     JSON = new_type((oid, ), 'JSON', typecast_json)
