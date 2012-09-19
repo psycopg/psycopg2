@@ -152,6 +152,7 @@ versions the `simplejson`_ module is be used if available. Note that the last
 .. _simplejson: http://pypi.python.org/pypi/simplejson/
 
 .. autoclass:: Json
+    :members: dumps
 
 .. autofunction:: register_json
 

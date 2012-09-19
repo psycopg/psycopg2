@@ -781,6 +781,16 @@ class AdaptTypeTestCase(unittest.TestCase):
         return oid
 
 
+def skip_if_json_module(f):
+    """Skip a test if no Python json module is available"""
+    def skip_if_json_module_(self):
+        if psycopg2.extras.json is not None:
+            return self.skipTest("json module is available")
+
+        return f(self)
+
+    return skip_if_json_module_
+
 def skip_if_no_json_module(f):
     """Skip a test if no Python json module is available"""
     def skip_if_no_json_module_(self):
@@ -810,12 +820,20 @@ class JsonTestCase(unittest.TestCase):
     def tearDown(self):
         self.conn.close()
 
+    @skip_if_json_module
     def test_module_not_available(self):
-        from psycopg2.extras import json, Json
-        if json is not None:
-            return self.skipTest("json module is available")
+        from psycopg2.extras import Json
+        self.assertRaises(ImportError, Json(None).getquoted)
 
-        self.assertRaises(ImportError, Json, None)
+    @skip_if_json_module
+    def test_customizable_with_module_not_available(self):
+        from psycopg2.extras import Json
+        class MyJson(Json):
+            def dumps(self, obj):
+                assert obj is None
+                return "hi"
+
+        self.assertEqual(MyJson(None).getquoted(), "'hi'")
 
     @skip_if_no_json_module
     def test_adapt(self):
@@ -830,8 +848,7 @@ class JsonTestCase(unittest.TestCase):
                 psycopg2.extensions.QuotedString(json.dumps(obj)).getquoted())
 
     @skip_if_no_json_module
-    def test_adapt_extended(self):
-        """Json passes through kw arguments to dumps"""
+    def test_adapt_dumps(self):
         from psycopg2.extras import json, Json
 
         class DecimalEncoder(json.JSONEncoder):
@@ -842,7 +859,27 @@ class JsonTestCase(unittest.TestCase):
 
         curs = self.conn.cursor()
         obj = Decimal('123.45')
-        self.assertEqual(curs.mogrify("%s", (Json(obj, cls=DecimalEncoder),)),
+        dumps = lambda obj: json.dumps(obj, cls=DecimalEncoder)
+        self.assertEqual(curs.mogrify("%s", (Json(obj, dumps=dumps),)),
+            b("'123.45'"))
+
+    @skip_if_no_json_module
+    def test_adapt_subclass(self):
+        from psycopg2.extras import json, Json
+
+        class DecimalEncoder(json.JSONEncoder):
+            def default(self, obj):
+                if isinstance(obj, Decimal):
+                    return float(obj)
+                return json.JSONEncoder.default(self, obj)
+
+        class MyJson(Json):
+            def dumps(self, obj):
+                return json.dumps(obj, cls=DecimalEncoder)
+
+        curs = self.conn.cursor()
+        obj = Decimal('123.45')
+        self.assertEqual(curs.mogrify("%s", (MyJson(obj),)),
             b("'123.45'"))
 
     @skip_if_no_json_module

@@ -48,49 +48,81 @@ JSON_OID = 114
 JSONARRAY_OID = 199
 
 class Json(object):
-    """A wrapper to adapt a Python object to :sql:`json` data type.
+    """
+    An `~psycopg2.extensions.ISQLQuote` wrapper to adapt a Python object to
+    :sql:`json` data type.
 
     `!Json` can be used to wrap any object supported by the underlying
-    `!json` module. Raise `!ImportError` if no module is available.
+    `!json` module. `~psycopg2.extensions.ISQLQuote.getquoted()` will raise
+    `!ImportError` if no module is available.
 
-    Any keyword argument will be passed to the underlying
-    :py:func:`json.dumps()` function, allowing extension and customization. ::
+    The basic usage is to wrap `!Json` around the object to be adapted::
 
         curs.execute("insert into mytable (jsondata) values (%s)",
-            (Json({'a': 100}),))
+            [Json({'a': 100})])
+
+    If you want to customize the adaptation from Python to PostgreSQL you can
+    either provide a custom *dumps* function::
+
+        curs.execute("insert into mytable (jsondata) values (%s)",
+            [Json({'a': 100}, dumps=simplejson.dumps)])
+
+    or you can subclass `!Json` overriding the `dumps()` method::
+
+        class MyJson(Json):
+            def dumps(self, obj):
+                return simplejson.dumps(obj)
+
+        curs.execute("insert into mytable (jsondata) values (%s)",
+            [MyJson({'a': 100})])
 
     .. note::
 
-        You can use `~psycopg2.extensions.register_adapter()` to adapt Python
-        dictionaries to JSON::
+        You can use `~psycopg2.extensions.register_adapter()` to adapt any
+        Python dictionary to JSON, either using `!Json` or any subclass or
+        factory creating a compatible adapter::
 
-            psycopg2.extensions.register_adapter(dict,
-                psycopg2.extras.Json)
+            psycopg2.extensions.register_adapter(dict, psycopg2.extras.Json)
 
-        This setting is global though, so it is not compatible with the use of
-        `register_hstore()`. Any other object supported by the `!json` library
-        used by Psycopg can be registered the same way, but this will clobber
-        the default adaptation rule, so be careful to unwanted side effects.
+        This setting is global though, so it is not compatible with similar
+        adapters such as the one registered by `register_hstore()`. Any other
+        object supported by JSON can be registered the same way, but this will
+        clobber the default adaptation rule, so be careful to unwanted side
+        effects.
 
     """
-    def __init__(self, adapted, **kwargs):
+    def __init__(self, adapted, dumps=None):
         self.adapted = adapted
-        self.kwargs = kwargs
+
+        if dumps is not None:
+            self._dumps = dumps
+        elif json is not None:
+            self._dumps = json.dumps
+        else:
+            self._dumps = None
 
     def __conform__(self, proto):
         if proto is ISQLQuote:
             return self
 
+    def dumps(self, obj):
+        """Serialize *obj* in JSON format.
+
+        The default is to call `!json.dumps()` or the *dumps* function
+        provided in the constructor. You can override this method to create a
+        customized JSON wrapper.
+        """
+        dumps = self._dumps
+        if dumps is not None:
+            return dumps(obj)
+        else:
+            raise ImportError(
+                "json module not available: "
+                "you should provide a dumps function")
+
     def getquoted(self):
-        s = json.dumps(self.adapted, **self.kwargs)
+        s = self.dumps(self.adapted)
         return QuotedString(s).getquoted()
-
-
-# clobber the above class if json is not available
-if json is None:
-    class Json(Json):
-        def __init__(self, adapted):
-            raise ImportError("no json module available")
 
 
 def register_json(conn_or_curs=None, globally=False, loads=None,
