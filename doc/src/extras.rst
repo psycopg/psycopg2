@@ -128,6 +128,33 @@ Additional data types
 ---------------------
 
 
+.. _adapt-json:
+
+.. index::
+    pair: JSON; Data types
+    pair: JSON; Adaptation
+
+JSON adaptation
+^^^^^^^^^^^^^^^
+
+.. versionadded:: 2.4.6
+
+Psycopg can use an underlying JSON_ module implementation to adapt Python
+objects to and from the PostgreSQL |pgjson|_ data type. The library used
+depends on the Python version: with Python 2.6 and following the
+:py:mod:`json` module from the standard library is used; with previous
+versions the `simplejson`_ module is be used if available. Note that the last
+`!simplejson` version supporting Python 2.4 is the 2.0.9.
+
+.. _JSON: http://www.json.org/
+.. |pgjson| replace:: :sql:`json`
+.. _pgjson: http://www.postgresql.org/docs/current/static/datatype-json.html
+.. _simplejson: http://pypi.python.org/pypi/simplejson/
+
+.. autoclass:: Json
+
+
+
 .. _adapt-hstore:
 
 .. index::

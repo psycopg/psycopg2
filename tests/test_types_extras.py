@@ -14,12 +14,9 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-try:
-    import decimal
-except:
-    pass
 import re
 import sys
+from decimal import Decimal
 from datetime import date
 
 from testutils import unittest, skip_if_no_uuid, skip_before_postgres
@@ -782,6 +779,84 @@ class AdaptTypeTestCase(unittest.TestCase):
         oid = curs.fetchone()[0]
         self.conn.commit()
         return oid
+
+
+def skip_if_no_json_module(f):
+    """Skip a test if no Python json module is available"""
+    def skip_if_no_json_module_(self):
+        if psycopg2.extras.json is None:
+            return self.skipTest("json module not available")
+
+        return f(self)
+
+    return skip_if_no_json_module_
+
+def skip_if_no_json_type(f):
+    """Skip a test if PostgreSQL json type is not available"""
+    def skip_if_no_json_type_(self):
+        curs = self.conn.cursor()
+        curs.execute("select oid from pg_type where typname = 'json'")
+        if not curs.fetchone():
+            return self.skipTest("json not available in test database")
+
+        return f(self)
+
+    return skip_if_no_json_type_
+
+class JsonTestCase(unittest.TestCase):
+    def setUp(self):
+        self.conn = psycopg2.connect(dsn)
+
+    def tearDown(self):
+        self.conn.close()
+
+    def test_module_not_available(self):
+        from psycopg2.extras import json, Json
+        if json is not None:
+            return self.skipTest("json module is available")
+
+        self.assertRaises(ImportError, Json, None)
+
+    @skip_if_no_json_module
+    def test_adapt(self):
+        from psycopg2.extras import json, Json
+
+        objs = [None, "te'xt", 123, 123.45,
+            u'\xe0\u20ac', ['a', 100], {'a': 100} ]
+
+        curs = self.conn.cursor()
+        for obj in enumerate(objs):
+            self.assertEqual(curs.mogrify("%s", (Json(obj),)),
+                psycopg2.extensions.QuotedString(json.dumps(obj)).getquoted())
+
+    @skip_if_no_json_module
+    def test_adapt_extended(self):
+        """Json passes through kw arguments to dumps"""
+        from psycopg2.extras import json, Json
+
+        class DecimalEncoder(json.JSONEncoder):
+            def default(self, obj):
+                if isinstance(obj, Decimal):
+                    return float(obj)
+                return json.JSONEncoder.default(self, obj)
+
+        curs = self.conn.cursor()
+        obj = Decimal('123.45')
+        self.assertEqual(curs.mogrify("%s", (Json(obj, cls=DecimalEncoder),)),
+            b("'123.45'"))
+
+    @skip_if_no_json_module
+    def test_register_on_dict(self):
+        from psycopg2.extras import Json
+        psycopg2.extensions.register_adapter(dict, Json)
+
+        try:
+            curs = self.conn.cursor()
+            obj = {'a': 123}
+            self.assertEqual(curs.mogrify("%s", (obj,)),
+                b("""'{"a": 123}'"""))
+        finally:
+           del psycopg2.extensions.adapters[dict, psycopg2.extensions.ISQLQuote]
 
 
 def test_suite():
