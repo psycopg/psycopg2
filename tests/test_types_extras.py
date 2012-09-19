@@ -950,6 +950,24 @@ class JsonTestCase(unittest.TestCase):
             if olda:
                 psycopg2.extensions.register_type(olda)
 
+    @skip_if_no_json_module
+    @skip_before_postgres(9, 2)
+    def test_register_default(self):
+        curs = self.conn.cursor()
+
+        loads = lambda x: psycopg2.extras.json.loads(x, parse_float=Decimal)
+        psycopg2.extras.register_default_json(curs, loads=loads)
+
+        curs.execute("""select '{"a": 100.0, "b": null}'::json""")
+        data = curs.fetchone()[0]
+        self.assert_(isinstance(data['a'], Decimal))
+        self.assertEqual(data['a'], Decimal('100.0'))
+
+        curs.execute("""select array['{"a": 100.0, "b": null}']::json[]""")
+        data = curs.fetchone()[0]
+        self.assert_(isinstance(data[0]['a'], Decimal))
+        self.assertEqual(data[0]['a'], Decimal('100.0'))
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

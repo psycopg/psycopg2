@@ -155,6 +155,8 @@ versions the `simplejson`_ module is be used if available. Note that the last
 
 .. autofunction:: register_json
 
+.. autofunction:: register_default_json
+
 
 
 .. _adapt-hstore:

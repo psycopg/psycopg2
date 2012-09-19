@@ -151,17 +151,14 @@ class NoneAdapter(object):
 
 
 # Create default json typecasters for PostgreSQL 9.2 oids
-from psycopg2._json import create_json_typecasters
+from psycopg2._json import register_default_json
 
 try:
-    JSON, JSONARRAY = create_json_typecasters(114, 199)
+    JSON, JSONARRAY = register_default_json()
 except ImportError:
     pass
-else:
-    register_type(JSON)
-    register_type(JSONARRAY)
 
-del create_json_typecasters
+del register_default_json
 
 
 # Add the "cleaned" version of the encodings to the key.

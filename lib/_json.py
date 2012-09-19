@@ -43,6 +43,10 @@ else:
         json = None
 
 
+# oids from PostgreSQL 9.2
+JSON_OID = 114
+JSONARRAY_OID = 199
+
 class Json(object):
     """A wrapper to adapt a Python object to :sql:`json` data type.
 
@@ -130,7 +134,7 @@ def register_json(conn_or_curs=None, globally=False, loads=None,
     if oid is None:
         oid, array_oid = _get_json_oids(conn_or_curs)
 
-    JSON, JSONARRAY = create_json_typecasters(oid, array_oid, loads)
+    JSON, JSONARRAY = _create_json_typecasters(oid, array_oid, loads)
 
     register_type(JSON, not globally and conn_or_curs or None)
 
@@ -139,7 +143,20 @@ def register_json(conn_or_curs=None, globally=False, loads=None,
 
     return JSON, JSONARRAY
 
-def create_json_typecasters(oid, array_oid, loads=None):
+def register_default_json(conn_or_curs=None, globally=False, loads=None):
+    """
+    Create and register :sql:`json` typecasters for PostgreSQL 9.2 and following.
+
+    Since PostgreSQL 9.2 :sql:`json` is a builtin type, hence its oid is known
+    and fixed. This function allows specifying a customized *loads* function
+    for the default :sql:`json` type without querying the database.
+    All the parameters have the same meaning of `register_json()`.
+    """
+    return register_json(conn_or_curs=conn_or_curs, globally=globally,
+        loads=loads, oid=JSON_OID, array_oid=JSONARRAY_OID)
+
+
+def _create_json_typecasters(oid, array_oid, loads=None):
     """Create typecasters for json data type."""
     if loads is None:
         if json is None:

@@ -970,7 +970,7 @@ def register_composite(name, conn_or_curs, globally=False):
 
 
 # expose the json adaptation stuff into the module
-from psycopg2._json import json, Json, register_json
+from psycopg2._json import json, Json, register_json, register_default_json
 
 __all__ = filter(lambda k: not k.startswith('_'), locals().keys())
 
