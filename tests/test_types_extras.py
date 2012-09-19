@@ -935,7 +935,7 @@ class JsonTestCase(unittest.TestCase):
         olda = psycopg2.extensions.string_types.get(199)
         loads = lambda x: psycopg2.extras.json.loads(x, parse_float=Decimal)
         try:
-            new, newa = psycopg2.extras.register_json(None,
+            new, newa = psycopg2.extras.register_json(
                 loads=loads, oid=oid, array_oid=array_oid)
             curs = self.conn.cursor()
             curs.execute("""select '{"a": 100.0, "b": null}'::json""")

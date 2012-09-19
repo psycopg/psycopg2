@@ -89,7 +89,7 @@ if json is None:
             raise ImportError("no json module available")
 
 
-def register_json(conn_or_curs, globally=False, loads=None,
+def register_json(conn_or_curs=None, globally=False, loads=None,
         oid=None, array_oid=None):
     """Create and register typecasters converting :sql:`json` type to Python objects.
 
