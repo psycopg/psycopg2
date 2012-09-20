@@ -126,7 +126,7 @@ class TypesBasicTests(unittest.TestCase):
             s = bytes(range(256))
             b = psycopg2.Binary(s)
             buf = self.execute("SELECT %s::bytea AS foo", (b,))
-            self.assertEqual(s, buf)
+            self.assertEqual(s, buf.tobytes())
 
     def testBinaryNone(self):
         b = psycopg2.Binary(None)
@@ -154,7 +154,7 @@ class TypesBasicTests(unittest.TestCase):
             s = bytes(range(256))
             buf = self.execute("SELECT %s::bytea AS foo", (psycopg2.Binary(s),))
             buf2 = self.execute("SELECT %s::bytea AS foo", (buf,))
-            self.assertEqual(s, buf2)
+            self.assertEqual(s, buf2.tobytes())
 
     def testArray(self):
         s = self.execute("SELECT %s AS foo", ([[1,2],[3,4]],))

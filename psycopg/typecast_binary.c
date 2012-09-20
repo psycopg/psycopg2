@@ -55,7 +55,6 @@ chunk_repr(chunkObject *self)
 
 #if PY_MAJOR_VERSION < 3
 
-/* XXX support 3.0 buffer protocol */
 static Py_ssize_t
 chunk_getreadbuffer(chunkObject *self, Py_ssize_t segment, void **ptr)
 {
@@ -90,9 +89,16 @@ static PyBufferProcs chunk_as_buffer =
 /* 3.0 buffer interface */
 int chunk_getbuffer(PyObject *_self, Py_buffer *view, int flags)
 {
+    int rv;
     chunkObject *self = (chunkObject*)_self;
-    return PyBuffer_FillInfo(view, _self, self->base, self->len, 1, flags);
+    rv = PyBuffer_FillInfo(view, _self, self->base, self->len, 1, flags);
+    if (rv == 0) {
+        /* TODO: is this really the way to do it? */
+        view->format = "c";
+    }
+    return rv;
 }
+
 static PyBufferProcs chunk_as_buffer =
 {
     chunk_getbuffer,
