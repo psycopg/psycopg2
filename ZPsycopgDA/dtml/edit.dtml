@@ -44,11 +44,17 @@
     </td>
     <td align="left" valign="top">
       <select name="tilevel:int">
+        <option value="4"
+                <dtml-if expr="tilevel==4">selected="YES"</dtml-if>>
+        Read uncommitted</option>
         <option value="1"
                 <dtml-if expr="tilevel==1">selected="YES"</dtml-if>>
         Read committed</option>
         <option value="2"
                 <dtml-if expr="tilevel==2">selected="YES"</dtml-if>>
+        Repeatable read</option>
+        <option value="3"
+                <dtml-if expr="tilevel==3">selected="YES"</dtml-if>>
         Serializable</option>
       </select>
     </td>
