@@ -260,6 +260,10 @@ typecast_GENERIC_ARRAY_cast(const char *str, Py_ssize_t len, PyObject *curs)
         PyErr_SetString(DataError, "array does not start with '{'");
         return NULL;
     }
+    if (str[1] == '\0') {
+        PyErr_SetString(DataError, "malformed array: '{'");
+        return NULL;
+    }
 
     Dprintf("typecast_GENERIC_ARRAY_cast: str = '%s',"
             " len = " FORMAT_CODE_PY_SSIZE_T, str, len);
