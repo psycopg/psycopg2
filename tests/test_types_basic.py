@@ -202,7 +202,7 @@ class TypesBasicTests(unittest.TestCase):
 
     def testArrayMalformed(self):
         curs = self.conn.cursor()
-        ss = ['', '{}}', '{' * 20 + '}' * 20]
+        ss = ['', '{', '{}}', '{' * 20 + '}' * 20]
         for s in ss:
             self.assertRaises(psycopg2.DataError,
                 psycopg2.extensions.STRINGARRAY, b(s), curs)
