@@ -5,7 +5,7 @@ on psycopg2.extension, so I can't create the default JSON typecasters in
 extensions importing register_json from extras.
 """
 
-# psycopg/extras.py - miscellaneous extra goodies for psycopg
+# psycopg/_json.py - Implementation of the JSON adaptation objects
 #
 # Copyright (C) 2012 Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 #
