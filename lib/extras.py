@@ -289,21 +289,21 @@ class NamedTupleCursor(_cursor):
             nt = self.Record
             if nt is None:
                 nt = self.Record = self._make_nt()
-            return nt(*t)
+            return nt._make(t)
 
     def fetchmany(self, size=None):
         ts = _cursor.fetchmany(self, size)
         nt = self.Record
         if nt is None:
             nt = self.Record = self._make_nt()
-        return [nt(*t) for t in ts]
+        return map(nt._make, ts)
 
     def fetchall(self):
         ts = _cursor.fetchall(self)
         nt = self.Record
         if nt is None:
             nt = self.Record = self._make_nt()
-        return [nt(*t) for t in ts]
+        return map(nt._make, ts)
 
     def __iter__(self):
         it = _cursor.__iter__(self)
@@ -313,10 +313,10 @@ class NamedTupleCursor(_cursor):
         if nt is None:
             nt = self.Record = self._make_nt()
 
-        yield nt(*t)
+        yield nt._make(t)
 
         while 1:
-            yield nt(*it.next())
+            yield nt._make(it.next())
 
     try:
         from collections import namedtuple
@@ -854,9 +854,8 @@ class CompositeCaster(object):
                 "expecting %d components for the type %s, %d found instead" %
                 (len(self.atttypes), self.name, len(tokens)))
 
-        attrs = [ curs.cast(oid, token)
-            for oid, token in zip(self.atttypes, tokens) ]
-        return self._ctor(*attrs)
+        return self._ctor(curs.cast(oid, token)
+            for oid, token in zip(self.atttypes, tokens))
 
     _re_tokenize = regex.compile(r"""
   \(? ([,)])                        # an empty token, representing NULL
@@ -886,10 +885,10 @@ class CompositeCaster(object):
             from collections import namedtuple
         except ImportError:
             self.type = tuple
-            self._ctor = lambda *args: tuple(args)
+            self._ctor = self.type
         else:
             self.type = namedtuple(name, attnames)
-            self._ctor = self.type
+            self._ctor = self.type._make
 
     @classmethod
     def _from_db(self, name, conn_or_curs):
