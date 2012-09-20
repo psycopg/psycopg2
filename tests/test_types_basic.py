@@ -200,6 +200,13 @@ class TypesBasicTests(unittest.TestCase):
         r = self.execute("SELECT %s AS foo", (ss,))
         self.failUnlessEqual(ss, r)
 
+    def testArrayMalformed(self):
+        curs = self.conn.cursor()
+        ss = ['', '{', '{}}', '{' * 20 + '}' * 20]
+        for s in ss:
+            self.assertRaises(psycopg2.DataError,
+                psycopg2.extensions.STRINGARRAY, b(s), curs)
+
     @testutils.skip_from_python(3)
     def testTypeRoundtripBuffer(self):
         o1 = buffer("".join(map(chr, range(256))))

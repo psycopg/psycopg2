@@ -212,8 +212,10 @@ typecast_array_scan(const char *str, Py_ssize_t strlength,
             PyList_Append(array, sub);
             Py_DECREF(sub);
 
-            if (stack_index == MAX_DIMENSIONS)
+            if (stack_index == MAX_DIMENSIONS) {
+                PyErr_SetString(DataError, "excessive array dimensions");
                 return -1;
+            }
 
             stack[stack_index++] = array;
             array = sub;
@@ -224,9 +226,11 @@ typecast_array_scan(const char *str, Py_ssize_t strlength,
         }
 
         else if (state == ASCAN_END) {
-            if (--stack_index < 0)
+            if (stack_index == 0) {
+                PyErr_SetString(DataError, "unbalanced braces in array");
                 return -1;
-            array = stack[stack_index];
+            }
+            array = stack[--stack_index];
         }
 
         else if (state ==  ASCAN_EOF)
@@ -253,7 +257,11 @@ typecast_GENERIC_ARRAY_cast(const char *str, Py_ssize_t len, PyObject *curs)
     if (str[0] == '[')
         typecast_array_cleanup(&str, &len);
     if (str[0] != '{') {
-        PyErr_SetString(Error, "array does not start with '{'");
+        PyErr_SetString(DataError, "array does not start with '{'");
+        return NULL;
+    }
+    if (str[1] == '\0') {
+        PyErr_SetString(DataError, "malformed array: '{'");
         return NULL;
     }
 
