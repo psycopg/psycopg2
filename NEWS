@@ -13,6 +13,7 @@ What's new in psycopg 2.4.6
     Thanks to Manu Cupcic for the report (ticket #110).
   - 'register_hstore()', 'register_composite()', 'tpc_recover()' work with
     RealDictConnection and Cursor (ticket #114).
+  - 'errorcodes' map updated to PostgreSQL 9.2.
 
 
 What's new in psycopg 2.4.5
