@@ -532,6 +532,7 @@ class AdaptTypeTestCase(unittest.TestCase):
 
         t = psycopg2.extras.register_composite("type_isd", self.conn)
         self.assertEqual(t.name, 'type_isd')
+        self.assertEqual(t.schema, 'public')
         self.assertEqual(t.oid, oid)
         self.assert_(issubclass(t.type, tuple))
         self.assertEqual(t.attnames, ['anint', 'astring', 'adate'])
@@ -655,6 +656,7 @@ class AdaptTypeTestCase(unittest.TestCase):
             [("a", "integer"), ("b", "integer")])
         t = psycopg2.extras.register_composite(
             "typens.typens_ii", self.conn)
+        self.assertEqual(t.schema, 'typens')
         curs.execute("select (4,8)::typens.typens_ii")
         self.assertEqual(curs.fetchone()[0], (4,8))
 

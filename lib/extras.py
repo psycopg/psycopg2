@@ -803,8 +803,9 @@ class CompositeCaster(object):
     using an :ref:`asynchronous connections <async-support>`).
 
     """
-    def __init__(self, name, oid, attrs, array_oid=None):
+    def __init__(self, name, oid, attrs, array_oid=None, schema=None):
         self.name = name
+        self.schema = schema
         self.oid = oid
         self.array_oid = array_oid
 
@@ -926,7 +927,7 @@ ORDER BY attnum;
         type_attrs = [ (r[2], r[3]) for r in recs ]
 
         return self(tname, type_oid, type_attrs,
-            array_oid=array_oid)
+            array_oid=array_oid, schema=schema)
 
 def register_composite(name, conn_or_curs, globally=False, factory=None):
     """Register a typecaster to convert a composite type into a tuple.

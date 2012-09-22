@@ -247,6 +247,12 @@ requires no adapter registration.
 
         The name of the PostgreSQL type.
 
+    .. attribute:: schema
+
+        The schema where the type is defined.
+
+        .. versionadded:: 2.4.6
+
     .. attribute:: oid
 
         The oid of the PostgreSQL type.
