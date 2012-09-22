@@ -942,12 +942,6 @@ def register_composite(name, conn_or_curs, globally=False, factory=None):
         it to :ref:`customize how to cast composite types <custom-composite>`
     :return: the registered `CompositeCaster` or *factory* instance
         responsible for the conversion
-
-    .. versionchanged:: 2.4.3
-        added support for array of composite types
-    .. versionchanged:: 2.4.6
-        added the *factory* parameter
-
     """
     if factory is None:
         factory = CompositeCaster

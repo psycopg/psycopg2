@@ -229,6 +229,12 @@ requires no adapter registration.
 
 .. autofunction:: register_composite
 
+    .. versionchanged:: 2.4.3
+        added support for array of composite types
+    .. versionchanged:: 2.4.6
+        added the *factory* parameter
+
+
 .. autoclass:: CompositeCaster
 
     .. automethod:: make
