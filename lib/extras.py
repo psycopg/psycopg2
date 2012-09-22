@@ -854,8 +854,13 @@ class CompositeCaster(object):
                 "expecting %d components for the type %s, %d found instead" %
                 (len(self.atttypes), self.name, len(tokens)))
 
-        return self._ctor(curs.cast(oid, token)
-            for oid, token in zip(self.atttypes, tokens))
+        values = [ curs.cast(oid, token)
+            for oid, token in zip(self.atttypes, tokens) ]
+
+        return self.make(values)
+
+    def make(self, values):
+        return self._ctor(values)
 
     _re_tokenize = regex.compile(r"""
   \(? ([,)])                        # an empty token, representing NULL
@@ -937,10 +942,10 @@ ORDER BY attnum;
         array_oid = recs[0][1]
         type_attrs = [ (r[2], r[3]) for r in recs ]
 
-        return CompositeCaster(tname, type_oid, type_attrs,
+        return self(tname, type_oid, type_attrs,
             array_oid=array_oid)
 
-def register_composite(name, conn_or_curs, globally=False):
+def register_composite(name, conn_or_curs, globally=False, factory=None):
     """Register a typecaster to convert a composite type into a tuple.
 
     :param name: the name of a PostgreSQL composite type, e.g. created using
@@ -950,14 +955,21 @@ def register_composite(name, conn_or_curs, globally=False):
         object, unless *globally* is set to `!True`
     :param globally: if `!False` (default) register the typecaster only on
         *conn_or_curs*, otherwise register it globally
-    :return: the registered `CompositeCaster` instance responsible for the
-        conversion
+    :param factory: if specified it should be a `CompositeCaster` subclass: use
+        it to :ref:`customize how to cast composite types <custom-composite>`
+    :return: the registered `CompositeCaster` or *factory* instance
+        responsible for the conversion
 
     .. versionchanged:: 2.4.3
         added support for array of composite types
+    .. versionchanged:: 2.4.6
+        added the *factory* parameter
 
     """
-    caster = CompositeCaster._from_db(name, conn_or_curs)
+    if factory is None:
+        factory = CompositeCaster
+
+    caster = factory._from_db(name, conn_or_curs)
     _ext.register_type(caster.typecaster, not globally and conn_or_curs or None)
 
     if caster.array_typecaster is not None:
