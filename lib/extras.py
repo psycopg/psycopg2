@@ -802,32 +802,6 @@ class CompositeCaster(object):
     querying the database at registration time is not desirable (such as when
     using an :ref:`asynchronous connections <async-support>`).
 
-    .. attribute:: name
-
-        The name of the PostgreSQL type.
-
-    .. attribute:: oid
-
-        The oid of the PostgreSQL type.
-
-    .. attribute:: array_oid
-
-        The oid of the PostgreSQL array type, if available.
-
-    .. attribute:: type
-
-        The type of the Python objects returned. If :py:func:`collections.namedtuple()`
-        is available, it is a named tuple with attributes equal to the type
-        components. Otherwise it is just the `!tuple` object.
-
-    .. attribute:: attnames
-
-        List of component names of the type to be casted.
-
-    .. attribute:: atttypes
-
-        List of component type oids of the type to be casted.
-
     """
     def __init__(self, name, oid, attrs, array_oid=None):
         self.name = name
@@ -860,6 +834,15 @@ class CompositeCaster(object):
         return self.make(values)
 
     def make(self, values):
+        """Return a new Python object representing the data being casted.
+
+        *values* is the list of attributes, already casted into their Python
+        representation.
+
+        You can subclass this method to :ref:`customize the composite cast
+        <custom-composite>`.
+        """
+
         return self._ctor(values)
 
     _re_tokenize = regex.compile(r"""
