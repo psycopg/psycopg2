@@ -154,6 +154,15 @@ can be enabled using the `register_hstore()` function.
 
 .. autofunction:: register_hstore
 
+    .. versionchanged:: 2.4
+        added the *oid* parameter. If not specified, the typecaster is
+        installed also if |hstore| is not installed in the :sql:`public`
+        schema.
+
+    .. versionchanged:: 2.4.3
+        added support for |hstore| array.
+
+
 .. |hstore| replace:: :sql:`hstore`
 .. _hstore: http://www.postgresql.org/docs/current/static/hstore.html
 
