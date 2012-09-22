@@ -742,7 +742,6 @@ def register_hstore(conn_or_curs, globally=False, unicode=False,
     'hstore'::regtype::oid`. Analogously you can obtain a value for *array_oid*
     using a query such as :sql:`SELECT 'hstore[]'::regtype::oid`.
 
-
     Note that, when passing a dictionary from Python to the database, both
     strings and unicode keys and values are supported. Dictionaries returned
     from the database have keys/values according to the *unicode* parameter.
@@ -750,15 +749,6 @@ def register_hstore(conn_or_curs, globally=False, unicode=False,
     The |hstore| contrib module must be already installed in the database
     (executing the ``hstore.sql`` script in your ``contrib`` directory).
     Raise `~psycopg2.ProgrammingError` if the type is not found.
-
-    .. versionchanged:: 2.4
-        added the *oid* parameter. If not specified, the typecaster is
-        installed also if |hstore| is not installed in the :sql:`public`
-        schema.
-
-    .. versionchanged:: 2.4.3
-        added support for |hstore| array.
-
     """
     if oid is None:
         oid = HstoreAdapter.get_oids(conn_or_curs)
