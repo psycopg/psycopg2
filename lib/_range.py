@@ -53,22 +53,22 @@ class Range(object):
     a custom one using `register_range()`.
 
     """
-    __slots__ = ('_lower', '_upper', '_bounds', '_empty')
+    __slots__ = ('_lower', '_upper', '_bounds')
 
     def __init__(self, lower=None, upper=None, bounds='[)', empty=False):
-        self._empty = bool(empty)
-        self._bounds = bounds
         if not empty:
+            if bounds not in ('[)', '(]', '()', '[]'):
+                raise ValueError("bound flags not valid: %r" % bounds)
+
             self._lower = lower
             self._upper = upper
+            self._bounds = bounds
         else:
-            self._lower = self._upper = None
+            self._lower = self._upper = self._bounds = None
 
-        if bounds not in ('[)', '(]', '()', '[]'):
-            raise ValueError("bound flags not valid: %r" % bounds)
 
     def __repr__(self):
-        if self._empty:
+        if self._bounds is None:
             return "%s(empty=True)" % self.__class__.__name__
         else:
             return "%s(%r, %r, %r)" % (self.__class__.__name__,
@@ -87,36 +87,36 @@ class Range(object):
     @property
     def isempty(self):
         """True if the range is empty."""
-        return self._empty
+        return self._bounds is None
 
     @property
     def lower_inf(self):
         """True if the range doesn't have a lower bound."""
-        if self._empty: return False
+        if self._bounds is None: return False
         return self._lower is None
 
     @property
     def upper_inf(self):
         """True if the range doesn't have an upper bound."""
-        if self._empty: return False
+        if self._bounds is None: return False
         return self._upper is None
 
     @property
     def lower_inc(self):
         """True if the lower bound is included in the range."""
-        if self._empty: return False
+        if self._bounds is None: return False
         if self._lower is None: return False
         return self._bounds[0] == '['
 
     @property
     def upper_inc(self):
         """True if the upper bound is included in the range."""
-        if self._empty: return False
+        if self._bounds is None: return False
         if self._upper is None: return False
         return self._bounds[1] == ']'
 
     def __contains__(self, x):
-        if self._empty: return False
+        if self._bounds is None: return False
         if self._lower is not None:
             if self._bounds[0] == '[':
                 if x < self._lower: return False
