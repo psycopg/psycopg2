@@ -115,6 +115,22 @@ class Range(object):
         if self._upper is None: return False
         return self._bounds[1] == ']'
 
+    def __contains__(self, x):
+        if self._empty: return False
+        if self._lower is not None:
+            if self._bounds[0] == '[':
+                if x < self._lower: return False
+            else:
+                if x <= self._lower: return False
+
+        if self._upper is not None:
+            if self._bounds[1] == ']':
+                if x > self._upper: return False
+            else:
+                if x >= self._upper: return False
+
+        return True
+
 
 def register_range(pgrange, pyrange, conn_or_curs, globally=False):
     """Register a typecaster and an adapter for range a range type.

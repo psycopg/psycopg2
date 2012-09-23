@@ -859,6 +859,35 @@ class RangeTestCase(unittest.TestCase):
         self.assertRaises(ValueError, Range, bounds='(')
         self.assertRaises(ValueError, Range, bounds='[}')
 
+    def test_in(self):
+        from psycopg2.extras import Range
+        r = Range(empty=True)
+        self.assert_(10 not in r)
+
+        r = Range(10, 20)
+        self.assert_(9 not in r)
+        self.assert_(10 in r)
+        self.assert_(11 in r)
+        self.assert_(19 in r)
+        self.assert_(20 not in r)
+        self.assert_(21 not in r)
+
+        r = Range(10, 20, '(]')
+        self.assert_(9 not in r)
+        self.assert_(10 not in r)
+        self.assert_(11 in r)
+        self.assert_(19 in r)
+        self.assert_(20 in r)
+        self.assert_(21 not in r)
+
+        r = Range(20, 10)
+        self.assert_(9 not in r)
+        self.assert_(10 not in r)
+        self.assert_(11 not in r)
+        self.assert_(19 not in r)
+        self.assert_(20 not in r)
+        self.assert_(21 not in r)
+
 
 def skip_if_no_range(f):
     def skip_if_no_range_(self):
