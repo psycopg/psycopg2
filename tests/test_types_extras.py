@@ -911,12 +911,12 @@ class RangeCasterTestCase(unittest.TestCase):
             self.assert_(r.upper_inf)
 
     def test_cast_numbers(self):
-        from psycopg2.extras import NumberRange
+        from psycopg2.extras import NumericRange
         cur = self.conn.cursor()
         for type in ('int4range', 'int8range'):
             cur.execute("select '(10,20)'::%s" % type)
             r = cur.fetchone()[0]
-            self.assert_(isinstance(r, NumberRange))
+            self.assert_(isinstance(r, NumericRange))
             self.assert_(not r.isempty)
             self.assertEqual(r.lower, 11)
             self.assertEqual(r.upper, 20)
@@ -927,7 +927,7 @@ class RangeCasterTestCase(unittest.TestCase):
 
         cur.execute("select '(10.2,20.6)'::numrange")
         r = cur.fetchone()[0]
-        self.assert_(isinstance(r, NumberRange))
+        self.assert_(isinstance(r, NumericRange))
         self.assert_(not r.isempty)
         self.assertEqual(r.lower, Decimal('10.2'))
         self.assertEqual(r.upper, Decimal('20.6'))
@@ -984,56 +984,56 @@ class RangeCasterTestCase(unittest.TestCase):
         self.assert_(r.upper_inc)
 
     def test_adapt_number_range(self):
-        from psycopg2.extras import NumberRange
+        from psycopg2.extras import NumericRange
         cur = self.conn.cursor()
 
-        r = NumberRange(empty=True)
+        r = NumericRange(empty=True)
         cur.execute("select %s::int4range", (r,))
         r1 = cur.fetchone()[0]
-        self.assert_(isinstance(r1, NumberRange))
+        self.assert_(isinstance(r1, NumericRange))
         self.assert_(r1.isempty)
 
-        r = NumberRange(10, 20)
+        r = NumericRange(10, 20)
         cur.execute("select %s::int8range", (r,))
         r1 = cur.fetchone()[0]
-        self.assert_(isinstance(r1, NumberRange))
+        self.assert_(isinstance(r1, NumericRange))
         self.assertEqual(r1.lower, 10)
         self.assertEqual(r1.upper, 20)
         self.assert_(r1.lower_inc)
         self.assert_(not r1.upper_inc)
 
-        r = NumberRange(10.2, 20.5, '(]')
+        r = NumericRange(10.2, 20.5, '(]')
         cur.execute("select %s::numrange", (r,))
         r1 = cur.fetchone()[0]
-        self.assert_(isinstance(r1, NumberRange))
+        self.assert_(isinstance(r1, NumericRange))
         self.assertEqual(r1.lower, Decimal('10.2'))
         self.assertEqual(r1.upper, Decimal('20.5'))
         self.assert_(not r1.lower_inc)
         self.assert_(r1.upper_inc)
 
     def test_adapt_numeric_range(self):
-        from psycopg2.extras import NumberRange
+        from psycopg2.extras import NumericRange
         cur = self.conn.cursor()
 
-        r = NumberRange(empty=True)
+        r = NumericRange(empty=True)
         cur.execute("select %s::int4range", (r,))
         r1 = cur.fetchone()[0]
-        self.assert_(isinstance(r1, NumberRange), r1)
+        self.assert_(isinstance(r1, NumericRange), r1)
         self.assert_(r1.isempty)
 
-        r = NumberRange(10, 20)
+        r = NumericRange(10, 20)
         cur.execute("select %s::int8range", (r,))
         r1 = cur.fetchone()[0]
-        self.assert_(isinstance(r1, NumberRange))
+        self.assert_(isinstance(r1, NumericRange))
         self.assertEqual(r1.lower, 10)
         self.assertEqual(r1.upper, 20)
         self.assert_(r1.lower_inc)
         self.assert_(not r1.upper_inc)
 
-        r = NumberRange(10.2, 20.5, '(]')
+        r = NumericRange(10.2, 20.5, '(]')
         cur.execute("select %s::numrange", (r,))
         r1 = cur.fetchone()[0]
-        self.assert_(isinstance(r1, NumberRange))
+        self.assert_(isinstance(r1, NumericRange))
         self.assertEqual(r1.lower, Decimal('10.2'))
         self.assertEqual(r1.upper, Decimal('20.5'))
         self.assert_(not r1.lower_inc)

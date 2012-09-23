@@ -343,7 +343,7 @@ where typname = %s and (%s is null or ns.nspname = %s);
         register_adapter(self.range, self.adapter)
 
 
-class NumberRange(Range):
+class NumericRange(Range):
     """A `Range` suitable to pass Python numeric types to a PostgreSQL range."""
     pass
 
@@ -360,10 +360,10 @@ class DateTimeTZRange(Range):
     pass
 
 
-# Special adaptation for NumberRange. Allows to pass number range regardless
+# Special adaptation for NumericRange. Allows to pass number range regardless
 # of whether they are ints, floats and what size of ints are, which are
 # pointless in Python world. On the way back, no numeric range is casted to
-# NumberRange, but only to their subclasses
+# NumericRange, but only to their subclasses
 
 class NumberRangeAdapter(RangeAdapter):
     """Adapt a range if the subtype doesn't need quotes."""
@@ -390,21 +390,21 @@ class NumberRangeAdapter(RangeAdapter):
             r._bounds[0], lower, upper, r._bounds[1])
 
 # TODO: probably won't work with infs, nans and other tricky cases.
-register_adapter(NumberRange, NumberRangeAdapter)
+register_adapter(NumericRange, NumberRangeAdapter)
 
 
 # Register globally typecasters and adapters for builtin range types.
 
 # note: the adapter is registered more than once, but this is harmless.
-int4range_caster = RangeCaster(NumberRangeAdapter, NumberRange,
+int4range_caster = RangeCaster(NumberRangeAdapter, NumericRange,
     oid=3904, subtype_oid=23, array_oid=3905)
 int4range_caster._register()
 
-int8range_caster = RangeCaster(NumberRangeAdapter, NumberRange,
+int8range_caster = RangeCaster(NumberRangeAdapter, NumericRange,
     oid=3926, subtype_oid=20, array_oid=3927)
 int8range_caster._register()
 
-numrange_caster = RangeCaster(NumberRangeAdapter, NumberRange,
+numrange_caster = RangeCaster(NumberRangeAdapter, NumericRange,
     oid=3906, subtype_oid=1700, array_oid=3907)
 numrange_caster._register()
 

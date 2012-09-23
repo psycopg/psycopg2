@@ -968,7 +968,7 @@ def register_composite(name, conn_or_curs, globally=False):
 
 
 # Expose range-related objects
-from psycopg2._range import Range, NumberRange
+from psycopg2._range import Range, NumericRange
 from psycopg2._range import DateRange, DateTimeRange, DateTimeTZRange
 from psycopg2._range import register_range, RangeAdapter, RangeCaster
 
