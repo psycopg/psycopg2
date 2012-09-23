@@ -31,26 +31,13 @@ from psycopg2.extensions import ISQLQuote, adapt, register_adapter
 from psycopg2.extensions import new_type, new_array_type, register_type
 
 class Range(object):
-    """Python representation for a PostgreSQL range type.
+    """Python representation for a PostgreSQL |range|_ type.
 
-    :param lower: lower bound for the range. None means unbound
-    :param upper: upper bound for the range. None means unbound
+    :param lower: lower bound for the range. `!None` means unbound
+    :param upper: upper bound for the range. `!None` means unbound
     :param bounds: one of the literal strings ``()``, ``[)``, ``(]``, ``[]``,
         representing whether the lower or upper bounds are included
-    :param empty: if true, the range is empty
-
-    TODO: move this to the docs
-
-    This Python type is only used to pass and retrieve range values to and
-    from PostgreSQL and doesn't attempt to replicate the PostgreSQL range
-    features: it doesn't perform normalization and doesn't implement all the
-    operators supported.
-
-    Although it is possible to instantiate `!Range` objects, the class doesn't
-    have an adapter so you cannot normally pass these instances as query
-    arguments. To use range objects as query arguments you can either use one
-    of the provided subclasses, such as [TODO: the other] `IntRange` or create
-    a custom one using `register_range()`.
+    :param empty: if `!True`, the range is empty
 
     """
     __slots__ = ('_lower', '_upper', '_bounds')
@@ -75,41 +62,41 @@ class Range(object):
 
     @property
     def lower(self):
-        """The lower bound of the range. None if empty or unbound."""
+        """The lower bound of the range. `!None` if empty or unbound."""
         return self._lower
 
     @property
     def upper(self):
-        """The upper bound of the range. None if empty or unbound."""
+        """The upper bound of the range. `!None` if empty or unbound."""
         return self._upper
 
     @property
     def isempty(self):
-        """True if the range is empty."""
+        """`!True` if the range is empty."""
         return self._bounds is None
 
     @property
     def lower_inf(self):
-        """True if the range doesn't have a lower bound."""
+        """`!True` if the range doesn't have a lower bound."""
         if self._bounds is None: return False
         return self._lower is None
 
     @property
     def upper_inf(self):
-        """True if the range doesn't have an upper bound."""
+        """`!True` if the range doesn't have an upper bound."""
         if self._bounds is None: return False
         return self._upper is None
 
     @property
     def lower_inc(self):
-        """True if the lower bound is included in the range."""
+        """`!True` if the lower bound is included in the range."""
         if self._bounds is None: return False
         if self._lower is None: return False
         return self._bounds[0] == '['
 
     @property
     def upper_inc(self):
-        """True if the upper bound is included in the range."""
+        """`!True` if the upper bound is included in the range."""
         if self._bounds is None: return False
         if self._upper is None: return False
         return self._bounds[1] == ']'
@@ -151,19 +138,30 @@ class Range(object):
 
 
 def register_range(pgrange, pyrange, conn_or_curs, globally=False):
-    """Register a typecaster and an adapter for range a range type.
-    
-    :param pgrange: the name of the PostgreSQL range type
-    :param pyrange: a Range (strict) subclass, or just the name to give it
-        (the class will be available as the `!range` attribute of the returned
-        `RangeCaster`.
+    """Create and register an adapter and the typecasters to convert between
+    a PostgreSQL |range|_ type and a PostgreSQL `Range` subclass.
+
+    :param pgrange: the name of the PostgreSQL |range| type. Can be
+        schema-qualified
+    :param pyrange: a `Range` strict subclass, or just a name to give to a new
+        class
     :param conn_or_curs: a connection or cursor used to find the oid of the
         range and its subtype; the typecaster is registered in a scope limited
         to this object, unless *globally* is set to `!True`
     :param globally: if `!False` (default) register the typecaster only on
         *conn_or_curs*, otherwise register it globally
-    :return: the registered `RangeCaster` instance responsible for the
-        conversion
+    :return: `RangeCaster` instance responsible for the conversion
+
+    If a string is passed to *pyrange*, a new `Range` subclass is created
+    with such name and will be available as the `~RangeCaster.range` attribute
+    of the returned `RangeCaster` object.
+
+    The function queries the database on *conn_or_curs* to inspect the
+    *pgrange* type. Raise `~psycopg2.ProgrammingError` if the type is not
+    found.  If querying the database is not advisable, use directly the
+    `RangeCaster` class and register the adapter and typecasters using the
+    provided functions.
+
     """
     caster = RangeCaster._from_db(pgrange, pyrange, conn_or_curs)
     caster._register(not globally and conn_or_curs or None)
@@ -219,7 +217,12 @@ class RangeAdapter(object):
 
 
 class RangeCaster(object):
-    """Helper class to convert between `Range` and PostgreSQL range types."""
+    """Helper class to convert between `Range` and PostgreSQL range types.
+
+    Objects of this class are usually created by `register_range()`. Manual
+    creation could be useful if querying the database is not advisable: in
+    this case the oids must be provided.
+    """
     def __init__(self, pgrange, pyrange, oid, subtype_oid, array_oid=None):
         self.subtype_oid = subtype_oid
         self._create_ranges(pgrange, pyrange)
@@ -237,7 +240,9 @@ class RangeCaster(object):
     def _create_ranges(self, pgrange, pyrange):
         """Create Range and RangeAdapter classes if needed."""
         # if got a string create a new RangeAdapter concrete type (with a name)
-        # else take it as an adapter.
+        # else take it as an adapter. Passing an adapter should be considered
+        # an implementation detail and is not documented. It is currently used
+        # for the numeric ranges.
         self.adapter = None
         if isinstance(pgrange, basestring):
             self.adapter = type(pgrange, (RangeAdapter,), {})
@@ -378,7 +383,11 @@ where typname = %s and ns.nspname = %s;
 
 
 class NumericRange(Range):
-    """A `Range` suitable to pass Python numeric types to a PostgreSQL range."""
+    """A `Range` suitable to pass Python numeric types to a PostgreSQL range.
+
+    PostgreSQL types :sql:`int4range`, :sql:`int8range`, :sql:`numrange` are
+    casted into `!NumericRange` instances.
+    """
     pass
 
 class DateRange(Range):

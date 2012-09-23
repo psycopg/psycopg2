@@ -212,6 +212,89 @@ requires no adapter registration.
 
 
 .. index::
+    pair: range; Data types
+
+Range data types
+^^^^^^^^^^^^^^^^
+
+.. versionadded:: 2.4.6
+
+Psycopg offers a `Range` Python type and supports adaptation between them and
+PostgreSQL |range|_ types. Builtin |range| types are supported out-of-the-box;
+user-defined |range| types can be adapted using `register_range()`.
+
+.. |range| replace:: :sql:`range`
+.. _range: http://www.postgresql.org/docs/current/static/rangetypes.html
+
+.. autoclass:: Range
+
+    This Python type is only used to pass and retrieve range values to and
+    from PostgreSQL and doesn't attempt to replicate the PostgreSQL range
+    features: it doesn't perform normalization and doesn't implement all the
+    operators__ supported by the database.
+
+    .. __: http://www.postgresql.org/docs/current/static/functions-range.html#RANGE-OPERATORS-TABLE
+
+    `!Range` objects are immutable, hashable, and support the ``in`` operator
+    (checking if an element is within the range). They can be tested for
+    equivalence but not for ordering. Empty ranges evaluate to `!False` in
+    boolean context, nonempty evaluate to `!True`.
+
+    Although it is possible to instantiate `!Range` objects, the class doesn't
+    have an adapter registered, so you cannot normally pass these instances as
+    query arguments. To use range objects as query arguments you can either
+    use one of the provided subclasses, such as `NumericRange` or create a
+    custom subclass using `register_range()`.
+
+    Object attributes:
+
+    .. autoattribute:: isempty
+    .. autoattribute:: lower
+    .. autoattribute:: upper
+    .. autoattribute:: lower_inc
+    .. autoattribute:: upper_inc
+    .. autoattribute:: lower_inf
+    .. autoattribute:: upper_inf
+
+
+The following `Range` subclasses map builtin PostgreSQL |range| types to
+Python objects: they have an adapter registered so their instances can be
+passed as query arguments. |range| values read from database queries are
+automatically casted into instances of these classes.
+
+.. autoclass:: NumericRange
+.. autoclass:: DateRange
+.. autoclass:: DateTimeRange
+.. autoclass:: DateTimeTZRange
+
+Custom |range| types (created with |CREATE TYPE|_ :sql:`... AS RANGE`) can be
+adapted to a custom `Range` subclass:
+
+.. autofunction:: register_range
+
+.. autoclass:: RangeCaster
+
+    Object attributes:
+
+    .. attribute:: range
+
+        The `!Range` subclass adapted.
+
+    .. attribute:: adapter
+
+        The `~psycopg2.extensions.ISQLQuote` responsible to adapt `!range`.
+
+    .. attribute:: typecaster
+
+        The object responsible for casting.
+
+    .. attribute:: array_typecaster
+
+        The object responsible for casting arrays, if available, else `!None`.
+
+
+
+.. index::
     pair: UUID; Data types
 
 UUID data type
