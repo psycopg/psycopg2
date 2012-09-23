@@ -1242,6 +1242,33 @@ class RangeCasterTestCase(unittest.TestCase):
         self.assertRaises(psycopg2.ProgrammingError,
             register_range, 'nosuchrange', 'FailRange', cur)
 
+    def test_schema_range(self):
+        cur = self.conn.cursor()
+        cur.execute("create schema rs")
+        cur.execute("create type r1 as range (subtype=text)")
+        cur.execute("create type r2 as range (subtype=text)")
+        cur.execute("create type rs.r2 as range (subtype=text)")
+        cur.execute("create type rs.r3 as range (subtype=text)")
+        cur.execute("savepoint x")
+
+        from psycopg2.extras import register_range
+        ra1 = register_range('r1', 'r1', cur)
+        ra2 = register_range('r2', 'r2', cur)
+        rars2 = register_range('rs.r2', 'r2', cur)
+        rars3 = register_range('rs.r3', 'r3', cur)
+
+        self.assertNotEqual(
+            ra2.typecaster.values[0],
+            rars2.typecaster.values[0])
+
+        self.assertRaises(psycopg2.ProgrammingError,
+            register_range, 'r3', 'FailRange', cur)
+        cur.execute("rollback to savepoint x;")
+
+        self.assertRaises(psycopg2.ProgrammingError,
+            register_range, 'rs.r1', 'FailRange', cur)
+        cur.execute("rollback to savepoint x;")
+
 decorate_all_tests(RangeCasterTestCase, skip_if_no_range)
 
 

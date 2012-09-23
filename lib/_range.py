@@ -291,7 +291,7 @@ class RangeCaster(object):
             schema, tname = name.split('.', 1)
         else:
             tname = name
-            schema = None
+            schema = 'public'
 
         # get the type oid and attributes
         try:
@@ -301,8 +301,8 @@ select rngtypid, rngsubtype,
 from pg_range r
 join pg_type t on t.oid = rngtypid
 join pg_namespace ns on ns.oid = typnamespace
-where typname = %s and (%s is null or ns.nspname = %s);
-""", (tname, schema, schema))
+where typname = %s and ns.nspname = %s;
+""", (tname, schema))
 
         except ProgrammingError:
             if not conn.autocommit:
