@@ -888,6 +888,12 @@ class RangeTestCase(unittest.TestCase):
         self.assert_(20 not in r)
         self.assert_(21 not in r)
 
+    def test_nonzero(self):
+        from psycopg2.extras import Range
+        self.assert_(Range())
+        self.assert_(Range(10, 20))
+        self.assert_(not Range(empty=True))
+
     def test_eq_hash(self):
         from psycopg2.extras import Range
         def assert_equal(r1, r2):

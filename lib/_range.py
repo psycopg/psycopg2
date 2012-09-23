@@ -133,6 +133,9 @@ class Range(object):
 
         return True
 
+    def __nonzero__(self):
+        return self._bounds is not None
+
     def __eq__(self, other):
         return (self._lower == other._lower
             and self._upper == other._upper
