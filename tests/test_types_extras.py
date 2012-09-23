@@ -864,6 +864,29 @@ class RangeTestCase(unittest.TestCase):
         r = Range(empty=True)
         self.assert_(10 not in r)
 
+        r = Range()
+        self.assert_(10 in r)
+
+        r = Range(lower=10, bounds='[)')
+        self.assert_(9 not in r)
+        self.assert_(10 in r)
+        self.assert_(11 in r)
+
+        r = Range(lower=10, bounds='()')
+        self.assert_(9 not in r)
+        self.assert_(10 not in r)
+        self.assert_(11 in r)
+
+        r = Range(upper=20, bounds='()')
+        self.assert_(19 in r)
+        self.assert_(20 not in r)
+        self.assert_(21 not in r)
+
+        r = Range(upper=20, bounds='(]')
+        self.assert_(19 in r)
+        self.assert_(20 in r)
+        self.assert_(21 not in r)
+
         r = Range(10, 20)
         self.assert_(9 not in r)
         self.assert_(10 in r)
