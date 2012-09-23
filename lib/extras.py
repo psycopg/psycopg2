@@ -967,4 +967,11 @@ def register_composite(name, conn_or_curs, globally=False):
     return caster
 
 
+# Expose range-related objects
+from psycopg2._range import Range, NumberRange
+from psycopg2._range import Int4Range, Int8Range, DecimalRange
+from psycopg2._range import DateRange, DateTimeRange, DateTimeTZRange
+from psycopg2._range import register_range, RangeAdapter, RangeCaster
+
+
 __all__ = filter(lambda k: not k.startswith('_'), locals().keys())
