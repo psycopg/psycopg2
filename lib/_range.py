@@ -55,8 +55,7 @@ class Range(object):
     """
     __slots__ = ('_lower', '_upper', '_bounds')
 
-    def __new__(cls, lower=None, upper=None, bounds='[)', empty=False):
-        self = super(Range, cls).__new__(cls)
+    def __init__(self, lower=None, upper=None, bounds='[)', empty=False):
         if not empty:
             if bounds not in ('[)', '(]', '()', '[]'):
                 raise ValueError("bound flags not valid: %r" % bounds)
@@ -66,8 +65,6 @@ class Range(object):
             self._bounds = bounds
         else:
             self._lower = self._upper = self._bounds = None
-
-        return self
 
     def __repr__(self):
         if self._bounds is None:
