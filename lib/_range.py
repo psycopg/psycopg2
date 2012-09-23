@@ -347,18 +347,6 @@ class NumberRange(Range):
     """A `Range` suitable to pass Python numeric types to a PostgreSQL range."""
     pass
 
-class Int4Range(NumberRange):
-    """Represents :sql:`int4range` values."""
-    pass
-
-class Int8Range(NumberRange):
-    """Represents :sql:`int8range` values."""
-    pass
-
-class DecimalRange(NumberRange):
-    """Represents :sql:`numrange` values."""
-    pass
-
 class DateRange(Range):
     """Represents :sql:`daterange` values."""
     pass
@@ -408,15 +396,15 @@ register_adapter(NumberRange, NumberRangeAdapter)
 # Register globally typecasters and adapters for builtin range types.
 
 # note: the adapter is registered more than once, but this is harmless.
-int4range_caster = RangeCaster(NumberRangeAdapter, Int4Range,
+int4range_caster = RangeCaster(NumberRangeAdapter, NumberRange,
     oid=3904, subtype_oid=23, array_oid=3905)
 int4range_caster._register()
 
-int8range_caster = RangeCaster(NumberRangeAdapter, Int8Range,
+int8range_caster = RangeCaster(NumberRangeAdapter, NumberRange,
     oid=3926, subtype_oid=20, array_oid=3927)
 int8range_caster._register()
 
-numrange_caster = RangeCaster(NumberRangeAdapter, DecimalRange,
+numrange_caster = RangeCaster(NumberRangeAdapter, NumberRange,
     oid=3906, subtype_oid=1700, array_oid=3907)
 numrange_caster._register()
 

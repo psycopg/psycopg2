@@ -1012,28 +1012,28 @@ class RangeCasterTestCase(unittest.TestCase):
         self.assert_(r1.upper_inc)
 
     def test_adapt_numeric_range(self):
-        from psycopg2.extras import Int4Range, Int8Range, DecimalRange
+        from psycopg2.extras import NumberRange
         cur = self.conn.cursor()
 
-        r = Int4Range(empty=True)
+        r = NumberRange(empty=True)
         cur.execute("select %s::int4range", (r,))
         r1 = cur.fetchone()[0]
-        self.assert_(isinstance(r1, Int4Range), r1)
+        self.assert_(isinstance(r1, NumberRange), r1)
         self.assert_(r1.isempty)
 
-        r = Int8Range(10, 20)
+        r = NumberRange(10, 20)
         cur.execute("select %s::int8range", (r,))
         r1 = cur.fetchone()[0]
-        self.assert_(isinstance(r1, Int8Range))
+        self.assert_(isinstance(r1, NumberRange))
         self.assertEqual(r1.lower, 10)
         self.assertEqual(r1.upper, 20)
         self.assert_(r1.lower_inc)
         self.assert_(not r1.upper_inc)
 
-        r = DecimalRange(10.2, 20.5, '(]')
+        r = NumberRange(10.2, 20.5, '(]')
         cur.execute("select %s::numrange", (r,))
         r1 = cur.fetchone()[0]
-        self.assert_(isinstance(r1, DecimalRange))
+        self.assert_(isinstance(r1, NumberRange))
         self.assertEqual(r1.lower, Decimal('10.2'))
         self.assertEqual(r1.upper, Decimal('20.5'))
         self.assert_(not r1.lower_inc)
