@@ -1236,6 +1236,12 @@ class RangeCasterTestCase(unittest.TestCase):
             self.assertEqual(ranges[i].lower_inf, r.lower_inf)
             self.assertEqual(ranges[i].upper_inf, r.upper_inf)
 
+    def test_range_not_found(self):
+        from psycopg2.extras import register_range
+        cur = self.conn.cursor()
+        self.assertRaises(psycopg2.ProgrammingError,
+            register_range, 'nosuchrange', 'FailRange', cur)
+
 decorate_all_tests(RangeCasterTestCase, skip_if_no_range)
 
 
