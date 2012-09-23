@@ -55,7 +55,8 @@ class Range(object):
     """
     __slots__ = ('_lower', '_upper', '_bounds')
 
-    def __init__(self, lower=None, upper=None, bounds='[)', empty=False):
+    def __new__(cls, lower=None, upper=None, bounds='[)', empty=False):
+        self = super(Range, cls).__new__(cls)
         if not empty:
             if bounds not in ('[)', '(]', '()', '[]'):
                 raise ValueError("bound flags not valid: %r" % bounds)
@@ -66,6 +67,7 @@ class Range(object):
         else:
             self._lower = self._upper = self._bounds = None
 
+        return self
 
     def __repr__(self):
         if self._bounds is None:
@@ -130,6 +132,17 @@ class Range(object):
                 if x >= self._upper: return False
 
         return True
+
+    def __eq__(self, other):
+        return (self._lower == other._lower
+            and self._upper == other._upper
+            and self._bounds == other._bounds)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return hash((self._lower, self._upper, self._bounds))
 
 
 def register_range(pgrange, pyrange, conn_or_curs, globally=False):

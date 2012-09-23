@@ -888,6 +888,27 @@ class RangeTestCase(unittest.TestCase):
         self.assert_(20 not in r)
         self.assert_(21 not in r)
 
+    def test_eq_hash(self):
+        from psycopg2.extras import Range
+        def assert_equal(r1, r2):
+            self.assert_(r1 == r2)
+            self.assert_(hash(r1) == hash(r2))
+
+        assert_equal(Range(empty=True), Range(empty=True))
+        assert_equal(Range(), Range())
+        assert_equal(Range(10, None), Range(10, None))
+        assert_equal(Range(10, 20), Range(10, 20))
+        assert_equal(Range(10, 20), Range(10, 20, '[)'))
+        assert_equal(Range(10, 20, '[]'), Range(10, 20, '[]'))
+
+        def assert_not_equal(r1, r2):
+            self.assert_(r1 != r2)
+            self.assert_(hash(r1) != hash(r2))
+
+        assert_not_equal(Range(10, 20), Range(10, 21))
+        assert_not_equal(Range(10, 20), Range(11, 20))
+        assert_not_equal(Range(10, 20, '[)'), Range(10, 20, '[]'))
+
 
 def skip_if_no_range(f):
     def skip_if_no_range_(self):
