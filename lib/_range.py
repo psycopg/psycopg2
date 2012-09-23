@@ -147,6 +147,11 @@ class Range(object):
     def __hash__(self):
         return hash((self._lower, self._upper, self._bounds))
 
+    def __lt__(self, other):
+        raise TypeError('Range objects are not ordered')
+
+    __le__ = __gt__ = __ge__ = __lt__
+
 
 def register_range(pgrange, pyrange, conn_or_curs, globally=False):
     """Register a typecaster and an adapter for range a range type.

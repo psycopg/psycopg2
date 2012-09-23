@@ -915,6 +915,13 @@ class RangeTestCase(unittest.TestCase):
         assert_not_equal(Range(10, 20), Range(11, 20))
         assert_not_equal(Range(10, 20, '[)'), Range(10, 20, '[]'))
 
+    def test_not_ordered(self):
+        from psycopg2.extras import Range
+        self.assertRaises(TypeError, lambda: Range(empty=True) < Range(0,4))
+        self.assertRaises(TypeError, lambda: Range(1,2) > Range(0,4))
+        self.assertRaises(TypeError, lambda: Range(1,2) <= Range())
+        self.assertRaises(TypeError, lambda: Range(1,2) >= Range())
+
 
 def skip_if_no_range(f):
     def skip_if_no_range_(self):
