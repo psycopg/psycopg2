@@ -132,7 +132,9 @@ class Range(object):
         return hash((self._lower, self._upper, self._bounds))
 
     def __lt__(self, other):
-        raise TypeError('Range objects are not ordered')
+        raise TypeError(
+            'Range objects cannot be ordered; please refer to the PostgreSQL'
+            ' documentation to perform this operation in the database')
 
     __le__ = __gt__ = __ge__ = __lt__
 
