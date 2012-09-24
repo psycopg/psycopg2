@@ -290,7 +290,7 @@ adapted to a custom `Range` subclass:
 
     .. attribute:: array_typecaster
 
-        The object responsible for casting arrays, if available, else `!None`.
+        The object responsible to cast arrays, if available, else `!None`.
 
 
 
