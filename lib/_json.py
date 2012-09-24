@@ -52,43 +52,11 @@ class Json(object):
     An `~psycopg2.extensions.ISQLQuote` wrapper to adapt a Python object to
     :sql:`json` data type.
 
-    `!Json` can be used to wrap any object supported by the underlying
-    `!json` module. `~psycopg2.extensions.ISQLQuote.getquoted()` will raise
-    `!ImportError` if no module is available.
-
-    The basic usage is to wrap `!Json` around the object to be adapted::
-
-        curs.execute("insert into mytable (jsondata) values (%s)",
-            [Json({'a': 100})])
-
-    If you want to customize the adaptation from Python to PostgreSQL you can
-    either provide a custom *dumps* function::
-
-        curs.execute("insert into mytable (jsondata) values (%s)",
-            [Json({'a': 100}, dumps=simplejson.dumps)])
-
-    or you can subclass `!Json` overriding the `dumps()` method::
-
-        class MyJson(Json):
-            def dumps(self, obj):
-                return simplejson.dumps(obj)
-
-        curs.execute("insert into mytable (jsondata) values (%s)",
-            [MyJson({'a': 100})])
-
-    .. note::
-
-        You can use `~psycopg2.extensions.register_adapter()` to adapt any
-        Python dictionary to JSON, either using `!Json` or any subclass or
-        factory creating a compatible adapter::
-
-            psycopg2.extensions.register_adapter(dict, psycopg2.extras.Json)
-
-        This setting is global though, so it is not compatible with similar
-        adapters such as the one registered by `register_hstore()`. Any other
-        object supported by JSON can be registered the same way, but this will
-        clobber the default adaptation rule, so be careful to unwanted side
-        effects.
+    `!Json` can be used to wrap any object supported by the provided *dumps*
+    function.  If none is provided, the standard :py:func:`json.dumps()` is
+    used (`!simplejson` for Python < 2.6;
+    `~psycopg2.extensions.ISQLQuote.getquoted()` will raise `!ImportError` if
+    the module is available).
 
     """
     def __init__(self, adapted, dumps=None):
@@ -143,20 +111,6 @@ def register_json(conn_or_curs=None, globally=False, loads=None,
     :param array_oid: the OID of the :sql:`json[]` array type if known;
         if not, it will be queried on *conn_or_curs*
 
-    Using the function is required to convert :sql:`json` data in PostgreSQL
-    versions before 9.2. Since 9.2 the oids are hardcoded so a default
-    typecaster is already registered. The :sql:`json` type is available as
-    `extension for PostgreSQL 9.1`__.
-
-    .. __: http://people.planetpostgresql.org/andrew/index.php?/archives/255-JSON-for-PG-9.2-...-and-now-for-9.1!.html
-
-    Another use of the function is to adapt :sql:`json` using a customized
-    load function. For example, if you want to convert the float values in the
-    :sql:`json` into :py:class:`~decimal.Decimal` you can use::
-
-        loads = lambda x: json.loads(x, parse_float=Decimal)
-        psycopg2.extras.register_json(conn, loads=loads)
-
     The connection or cursor passed to the function will be used to query the
     database and look for the OID of the :sql:`json` type. No query is
     performed if *oid* and *array_oid* are provided.  Raise
@@ -186,7 +140,6 @@ def register_default_json(conn_or_curs=None, globally=False, loads=None):
     """
     return register_json(conn_or_curs=conn_or_curs, globally=globally,
         loads=loads, oid=JSON_OID, array_oid=JSONARRAY_OID)
-
 
 def _create_json_typecasters(oid, array_oid, loads=None):
     """Create typecasters for json data type."""
