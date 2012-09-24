@@ -56,7 +56,7 @@ class Json(object):
     function.  If none is provided, the standard :py:func:`json.dumps()` is
     used (`!simplejson` for Python < 2.6;
     `~psycopg2.extensions.ISQLQuote.getquoted()` will raise `!ImportError` if
-    the module is available).
+    the module is not available).
 
     """
     def __init__(self, adapted, dumps=None):
