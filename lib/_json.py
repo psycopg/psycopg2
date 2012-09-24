@@ -202,7 +202,10 @@ def _create_json_typecasters(oid, array_oid, loads=None):
         return loads(s)
 
     JSON = new_type((oid, ), 'JSON', typecast_json)
-    JSONARRAY = new_array_type((array_oid, ), "JSONARRAY", JSON)
+    if array_oid is not None:
+        JSONARRAY = new_array_type((array_oid, ), "JSONARRAY", JSON)
+    else:
+        JSONARRAY = None
 
     return JSON, JSONARRAY
 

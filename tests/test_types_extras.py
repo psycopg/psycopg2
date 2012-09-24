@@ -1015,6 +1015,18 @@ class JsonTestCase(unittest.TestCase):
         curs.execute("""select NULL::json[]""")
         self.assertEqual(curs.fetchone()[0], None)
 
+    @skip_if_no_json_module
+    def test_no_array_oid(self):
+        curs = self.conn.cursor()
+        t1, t2 = psycopg2.extras.register_json(curs, oid=25)
+        self.assertEqual(t1.values[0], 25)
+        self.assertEqual(t2, None)
+
+        curs.execute("""select '{"a": 100.0, "b": null}'::text""")
+        data = curs.fetchone()[0]
+        self.assertEqual(data['a'], 100)
+        self.assertEqual(data['b'], None)
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
