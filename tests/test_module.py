@@ -127,6 +127,14 @@ class ConnectTestCase(unittest.TestCase):
         psycopg2.connect(database=r"\every thing'")
         self.assertEqual(self.args[0], r"dbname='\\every thing\''")
 
+    def test_no_kwargs_swallow(self):
+        self.assertRaises(psycopg2.InterfaceError,
+            psycopg2.connect, 'dbname=foo', database='foo')
+        self.assertRaises(psycopg2.InterfaceError,
+            psycopg2.connect, 'dbname=foo', user='postgres')
+        self.assertRaises(psycopg2.InterfaceError,
+            psycopg2.connect, 'dbname=foo', no_such_param='meh')
+
 
 class ExceptionsTestCase(unittest.TestCase):
     def setUp(self):
