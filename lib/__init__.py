@@ -146,37 +146,36 @@ def connect(dsn=None,
     Using *async*=True an asynchronous connection will be created.
 
     Any other keyword parameter will be passed to the underlying client
-    library: the list of supported parameter depends on the library version.
+    library: the list of supported parameters depends on the library version.
 
     """
+    items = []
+    if database is not None:
+        items.append(('dbname', database))
+    if user is not None:
+        items.append(('user', user))
+    if password is not None:
+        items.append(('password', password))
+    if host is not None:
+        items.append(('host', host))
+    if port is not None:
+        items.append(('port', port))
+
+    items.extend([(k, v) for (k, v) in kwargs.iteritems() if v is not None])
+
+    if dsn is not None and items:
+        raise TypeError(
+            "'%s' is an invalid keyword argument when the dsn is specified"
+                % items[0][0])
+
     if dsn is None:
-        # Note: reproducing the behaviour of the previous C implementation:
-        # keyword are silently swallowed if a DSN is specified. I would have
-        # raised an exception. File under "histerical raisins".
-        items = []
-        if database is not None:
-            items.append(('dbname', database))
-        if user is not None:
-            items.append(('user', user))
-        if password is not None:
-            items.append(('password', password))
-        if host is not None:
-            items.append(('host', host))
-        # Reproducing the previous C implementation behaviour: swallow a
-        # negative port. The libpq would raise an exception for it.
-        if port is not None and int(port) > 0:
-            items.append(('port', port))
+        if not items:
+            raise TypeError('missing dsn and no parameters')
+        else:
+            dsn = " ".join(["%s=%s" % (k, _param_escape(str(v)))
+                for (k, v) in items])
 
-        items.extend(
-            [(k, v) for (k, v) in kwargs.iteritems() if v is not None])
-        dsn = " ".join(["%s=%s" % (k, _param_escape(str(v)))
-            for (k, v) in items])
-
-        if not dsn:
-            raise InterfaceError('missing dsn and no parameters')
-
-    return _connect(dsn,
-        connection_factory=connection_factory, async=async)
+    return _connect(dsn, connection_factory=connection_factory, async=async)
 
 
 __all__ = filter(lambda k: not k.startswith('_'), locals().keys())
