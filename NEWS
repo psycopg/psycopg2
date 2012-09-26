@@ -3,6 +3,9 @@ What's new in psycopg 2.4.6
 
   - Added support for backward scrollable cursors. Thanks to Jon Nelson
     for the initial patch (ticket #108).
+  - Added a simple way to customize casting of composite types into Python
+    objects other than namedtuples. Many thanks to Ronan Dunklau and
+    Tobias Oberstein for the feature development.
   - connection.reset() implemented using DISCARD ALL on server versions
     supporting it.
   - Fixed 'cursor()' arguments propagation in connection subclasses

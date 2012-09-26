@@ -198,8 +198,8 @@ after a table row type) into a Python named tuple, or into a regular tuple if
     >>> cur.fetchone()[0]
     card(value=8, suit='hearts')
 
-Nested composite types are handled as expected, but the type of the composite
-components must be registered as well.
+Nested composite types are handled as expected, provided that the type of the
+composite components are registered as well.
 
 .. doctest::
 
@@ -214,10 +214,75 @@ components must be registered as well.
 Adaptation from Python tuples to composite types is automatic instead and
 requires no adapter registration.
 
+
+.. _custom-composite:
+
+.. Note::
+
+    If you want to convert PostgreSQL composite types into something different
+    than a `!namedtuple` you can subclass the `CompositeCaster` overriding
+    `~CompositeCaster.make()`. For example, if you want to convert your type
+    into a Python dictionary you can use::
+
+        >>> class DictComposite(psycopg2.extras.CompositeCaster):
+        ...     def make(self, values):
+        ...         return dict(zip(self.attnames, values))
+
+        >>> psycopg2.extras.register_composite('card', cur,
+        ...     factory=DictComposite)
+
+        >>> cur.execute("select (8, 'hearts')::card")
+        >>> cur.fetchone()[0]
+        {'suit': 'hearts', 'value': 8}
+
+
 .. autofunction:: register_composite
+
+    .. versionchanged:: 2.4.3
+        added support for array of composite types
+    .. versionchanged:: 2.4.6
+        added the *factory* parameter
+
 
 .. autoclass:: CompositeCaster
 
+    .. automethod:: make
+
+        .. versionadded:: 2.4.6
+
+    Object attributes:
+
+    .. attribute:: name
+
+        The name of the PostgreSQL type.
+
+    .. attribute:: schema
+
+        The schema where the type is defined.
+
+        .. versionadded:: 2.4.6
+
+    .. attribute:: oid
+
+        The oid of the PostgreSQL type.
+
+    .. attribute:: array_oid
+
+        The oid of the PostgreSQL array type, if available.
+
+    .. attribute:: type
+
+        The type of the Python objects returned. If :py:func:`collections.namedtuple()`
+        is available, it is a named tuple with attributes equal to the type
+        components. Otherwise it is just the `!tuple` object.
+
+    .. attribute:: attnames
+
+        List of component names of the type to be casted.
+
+    .. attribute:: atttypes
+
+        List of component type oids of the type to be casted.
 
 
 .. index::

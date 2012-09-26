@@ -792,35 +792,10 @@ class CompositeCaster(object):
     querying the database at registration time is not desirable (such as when
     using an :ref:`asynchronous connections <async-support>`).
 
-    .. attribute:: name
-
-        The name of the PostgreSQL type.
-
-    .. attribute:: oid
-
-        The oid of the PostgreSQL type.
-
-    .. attribute:: array_oid
-
-        The oid of the PostgreSQL array type, if available.
-
-    .. attribute:: type
-
-        The type of the Python objects returned. If :py:func:`collections.namedtuple()`
-        is available, it is a named tuple with attributes equal to the type
-        components. Otherwise it is just the `!tuple` object.
-
-    .. attribute:: attnames
-
-        List of component names of the type to be casted.
-
-    .. attribute:: atttypes
-
-        List of component type oids of the type to be casted.
-
     """
-    def __init__(self, name, oid, attrs, array_oid=None):
+    def __init__(self, name, oid, attrs, array_oid=None, schema=None):
         self.name = name
+        self.schema = schema
         self.oid = oid
         self.array_oid = array_oid
 
@@ -844,8 +819,22 @@ class CompositeCaster(object):
                 "expecting %d components for the type %s, %d found instead" %
                 (len(self.atttypes), self.name, len(tokens)))
 
-        return self._ctor(curs.cast(oid, token)
-            for oid, token in zip(self.atttypes, tokens))
+        values = [ curs.cast(oid, token)
+            for oid, token in zip(self.atttypes, tokens) ]
+
+        return self.make(values)
+
+    def make(self, values):
+        """Return a new Python object representing the data being casted.
+
+        *values* is the list of attributes, already casted into their Python
+        representation.
+
+        You can subclass this method to :ref:`customize the composite cast
+        <custom-composite>`.
+        """
+
+        return self._ctor(values)
 
     _re_tokenize = regex.compile(r"""
   \(? ([,)])                        # an empty token, representing NULL
@@ -927,10 +916,10 @@ ORDER BY attnum;
         array_oid = recs[0][1]
         type_attrs = [ (r[2], r[3]) for r in recs ]
 
-        return CompositeCaster(tname, type_oid, type_attrs,
-            array_oid=array_oid)
+        return self(tname, type_oid, type_attrs,
+            array_oid=array_oid, schema=schema)
 
-def register_composite(name, conn_or_curs, globally=False):
+def register_composite(name, conn_or_curs, globally=False, factory=None):
     """Register a typecaster to convert a composite type into a tuple.
 
     :param name: the name of a PostgreSQL composite type, e.g. created using
@@ -940,14 +929,15 @@ def register_composite(name, conn_or_curs, globally=False):
         object, unless *globally* is set to `!True`
     :param globally: if `!False` (default) register the typecaster only on
         *conn_or_curs*, otherwise register it globally
-    :return: the registered `CompositeCaster` instance responsible for the
-        conversion
-
-    .. versionchanged:: 2.4.3
-        added support for array of composite types
-
+    :param factory: if specified it should be a `CompositeCaster` subclass: use
+        it to :ref:`customize how to cast composite types <custom-composite>`
+    :return: the registered `CompositeCaster` or *factory* instance
+        responsible for the conversion
     """
-    caster = CompositeCaster._from_db(name, conn_or_curs)
+    if factory is None:
+        factory = CompositeCaster
+
+    caster = factory._from_db(name, conn_or_curs)
     _ext.register_type(caster.typecaster, not globally and conn_or_curs or None)
 
     if caster.array_typecaster is not None:

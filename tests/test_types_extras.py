@@ -532,6 +532,7 @@ class AdaptTypeTestCase(unittest.TestCase):
 
         t = psycopg2.extras.register_composite("type_isd", self.conn)
         self.assertEqual(t.name, 'type_isd')
+        self.assertEqual(t.schema, 'public')
         self.assertEqual(t.oid, oid)
         self.assert_(issubclass(t.type, tuple))
         self.assertEqual(t.attnames, ['anint', 'astring', 'adate'])
@@ -655,6 +656,7 @@ class AdaptTypeTestCase(unittest.TestCase):
             [("a", "integer"), ("b", "integer")])
         t = psycopg2.extras.register_composite(
             "typens.typens_ii", self.conn)
+        self.assertEqual(t.schema, 'typens')
         curs.execute("select (4,8)::typens.typens_ii")
         self.assertEqual(curs.fetchone()[0], (4,8))
 
@@ -736,7 +738,7 @@ class AdaptTypeTestCase(unittest.TestCase):
         self.assertEqual(r[0], (2, 'test2'))
         self.assertEqual(r[1], [(3, 'testc', 2), (4, 'testd', 2)])
 
-    @skip_if_no_hstore
+    @skip_if_no_composite
     def test_non_dbapi_connection(self):
         from psycopg2.extras import RealDictConnection
         from psycopg2.extras import register_composite
@@ -759,6 +761,31 @@ class AdaptTypeTestCase(unittest.TestCase):
             self.assertEqual(curs.fetchone()['x'], (1,2))
         finally:
             conn.close()
+
+    @skip_if_no_composite
+    def test_subclass(self):
+        oid = self._create_type("type_isd",
+            [('anint', 'integer'), ('astring', 'text'), ('adate', 'date')])
+
+        from psycopg2.extras import register_composite, CompositeCaster
+
+        class DictComposite(CompositeCaster):
+            def make(self, values):
+                return dict(zip(self.attnames, values))
+
+        t = register_composite('type_isd', self.conn, factory=DictComposite)
+
+        self.assertEqual(t.name, 'type_isd')
+        self.assertEqual(t.oid, oid)
+
+        curs = self.conn.cursor()
+        r = (10, 'hello', date(2011,1,2))
+        curs.execute("select %s::type_isd;", (r,))
+        v = curs.fetchone()[0]
+        self.assert_(isinstance(v, dict))
+        self.assertEqual(v['anint'], 10)
+        self.assertEqual(v['astring'], "hello")
+        self.assertEqual(v['adate'], date(2011,1,2))
 
     def _create_type(self, name, fields):
         curs = self.conn.cursor()
