@@ -952,5 +952,12 @@ def register_composite(name, conn_or_curs, globally=False, factory=None):
 # expose the json adaptation stuff into the module
 from psycopg2._json import json, Json, register_json, register_default_json
 
+
+# Expose range-related objects
+from psycopg2._range import Range, NumericRange
+from psycopg2._range import DateRange, DateTimeRange, DateTimeTZRange
+from psycopg2._range import register_range, RangeAdapter, RangeCaster
+
+
 __all__ = filter(lambda k: not k.startswith('_'), locals().keys())
 

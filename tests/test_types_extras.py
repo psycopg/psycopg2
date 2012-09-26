@@ -17,9 +17,10 @@
 import re
 import sys
 from decimal import Decimal
-from datetime import date
+from datetime import date, datetime
 
 from testutils import unittest, skip_if_no_uuid, skip_before_postgres
+from testutils import decorate_all_tests
 
 import psycopg2
 import psycopg2.extras
@@ -1053,6 +1054,496 @@ class JsonTestCase(unittest.TestCase):
         data = curs.fetchone()[0]
         self.assertEqual(data['a'], 100)
         self.assertEqual(data['b'], None)
+
+
+class RangeTestCase(unittest.TestCase):
+    def test_noparam(self):
+        from psycopg2.extras import Range
+        r = Range()
+
+        self.assert_(not r.isempty)
+        self.assertEqual(r.lower, None)
+        self.assertEqual(r.upper, None)
+        self.assert_(r.lower_inf)
+        self.assert_(r.upper_inf)
+        self.assert_(not r.lower_inc)
+        self.assert_(not r.upper_inc)
+
+    def test_empty(self):
+        from psycopg2.extras import Range
+        r = Range(empty=True)
+
+        self.assert_(r.isempty)
+        self.assertEqual(r.lower, None)
+        self.assertEqual(r.upper, None)
+        self.assert_(not r.lower_inf)
+        self.assert_(not r.upper_inf)
+        self.assert_(not r.lower_inc)
+        self.assert_(not r.upper_inc)
+
+    def test_nobounds(self):
+        from psycopg2.extras import Range
+        r = Range(10, 20)
+        self.assertEqual(r.lower, 10)
+        self.assertEqual(r.upper, 20)
+        self.assert_(not r.isempty)
+        self.assert_(not r.lower_inf)
+        self.assert_(not r.upper_inf)
+        self.assert_(r.lower_inc)
+        self.assert_(not r.upper_inc)
+
+    def test_bounds(self):
+        from psycopg2.extras import Range
+        for bounds, lower_inc, upper_inc in [
+                ('[)', True, False),
+                ('(]', False, True),
+                ('()', False, False),
+                ('[]', True, True),]:
+            r = Range(10, 20, bounds)
+            self.assertEqual(r.lower, 10)
+            self.assertEqual(r.upper, 20)
+            self.assert_(not r.isempty)
+            self.assert_(not r.lower_inf)
+            self.assert_(not r.upper_inf)
+            self.assertEqual(r.lower_inc, lower_inc)
+            self.assertEqual(r.upper_inc, upper_inc)
+
+    def test_keywords(self):
+        from psycopg2.extras import Range
+        r = Range(upper=20)
+        self.assertEqual(r.lower, None)
+        self.assertEqual(r.upper, 20)
+        self.assert_(not r.isempty)
+        self.assert_(r.lower_inf)
+        self.assert_(not r.upper_inf)
+        self.assert_(not r.lower_inc)
+        self.assert_(not r.upper_inc)
+
+        r = Range(lower=10, bounds='(]')
+        self.assertEqual(r.lower, 10)
+        self.assertEqual(r.upper, None)
+        self.assert_(not r.isempty)
+        self.assert_(not r.lower_inf)
+        self.assert_(r.upper_inf)
+        self.assert_(not r.lower_inc)
+        self.assert_(not r.upper_inc)
+
+    def test_bad_bounds(self):
+        from psycopg2.extras import Range
+        self.assertRaises(ValueError, Range, bounds='(')
+        self.assertRaises(ValueError, Range, bounds='[}')
+
+    def test_in(self):
+        from psycopg2.extras import Range
+        r = Range(empty=True)
+        self.assert_(10 not in r)
+
+        r = Range()
+        self.assert_(10 in r)
+
+        r = Range(lower=10, bounds='[)')
+        self.assert_(9 not in r)
+        self.assert_(10 in r)
+        self.assert_(11 in r)
+
+        r = Range(lower=10, bounds='()')
+        self.assert_(9 not in r)
+        self.assert_(10 not in r)
+        self.assert_(11 in r)
+
+        r = Range(upper=20, bounds='()')
+        self.assert_(19 in r)
+        self.assert_(20 not in r)
+        self.assert_(21 not in r)
+
+        r = Range(upper=20, bounds='(]')
+        self.assert_(19 in r)
+        self.assert_(20 in r)
+        self.assert_(21 not in r)
+
+        r = Range(10, 20)
+        self.assert_(9 not in r)
+        self.assert_(10 in r)
+        self.assert_(11 in r)
+        self.assert_(19 in r)
+        self.assert_(20 not in r)
+        self.assert_(21 not in r)
+
+        r = Range(10, 20, '(]')
+        self.assert_(9 not in r)
+        self.assert_(10 not in r)
+        self.assert_(11 in r)
+        self.assert_(19 in r)
+        self.assert_(20 in r)
+        self.assert_(21 not in r)
+
+        r = Range(20, 10)
+        self.assert_(9 not in r)
+        self.assert_(10 not in r)
+        self.assert_(11 not in r)
+        self.assert_(19 not in r)
+        self.assert_(20 not in r)
+        self.assert_(21 not in r)
+
+    def test_nonzero(self):
+        from psycopg2.extras import Range
+        self.assert_(Range())
+        self.assert_(Range(10, 20))
+        self.assert_(not Range(empty=True))
+
+    def test_eq_hash(self):
+        from psycopg2.extras import Range
+        def assert_equal(r1, r2):
+            self.assert_(r1 == r2)
+            self.assert_(hash(r1) == hash(r2))
+
+        assert_equal(Range(empty=True), Range(empty=True))
+        assert_equal(Range(), Range())
+        assert_equal(Range(10, None), Range(10, None))
+        assert_equal(Range(10, 20), Range(10, 20))
+        assert_equal(Range(10, 20), Range(10, 20, '[)'))
+        assert_equal(Range(10, 20, '[]'), Range(10, 20, '[]'))
+
+        def assert_not_equal(r1, r2):
+            self.assert_(r1 != r2)
+            self.assert_(hash(r1) != hash(r2))
+
+        assert_not_equal(Range(10, 20), Range(10, 21))
+        assert_not_equal(Range(10, 20), Range(11, 20))
+        assert_not_equal(Range(10, 20, '[)'), Range(10, 20, '[]'))
+
+    def test_not_ordered(self):
+        from psycopg2.extras import Range
+        self.assertRaises(TypeError, lambda: Range(empty=True) < Range(0,4))
+        self.assertRaises(TypeError, lambda: Range(1,2) > Range(0,4))
+        self.assertRaises(TypeError, lambda: Range(1,2) <= Range())
+        self.assertRaises(TypeError, lambda: Range(1,2) >= Range())
+
+
+def skip_if_no_range(f):
+    def skip_if_no_range_(self):
+        if self.conn.server_version < 90200:
+            return self.skipTest(
+                "server version %s doesn't support range types"
+                % self.conn.server_version)
+
+        return f(self)
+
+    skip_if_no_range_.__name__ = f.__name__
+    return skip_if_no_range_
+
+
+class RangeCasterTestCase(unittest.TestCase):
+    def setUp(self):
+        self.conn = psycopg2.connect(dsn)
+
+    def tearDown(self):
+        self.conn.close()
+
+    builtin_ranges = ('int4range', 'int8range', 'numrange',
+        'daterange', 'tsrange', 'tstzrange')
+
+    def test_cast_null(self):
+        cur = self.conn.cursor()
+        for type in self.builtin_ranges:
+            cur.execute("select NULL::%s" % type)
+            r = cur.fetchone()[0]
+            self.assertEqual(r, None)
+
+    def test_cast_empty(self):
+        from psycopg2.extras import Range
+        cur = self.conn.cursor()
+        for type in self.builtin_ranges:
+            cur.execute("select 'empty'::%s" % type)
+            r = cur.fetchone()[0]
+            self.assert_(isinstance(r, Range), type)
+            self.assert_(r.isempty)
+
+    def test_cast_inf(self):
+        from psycopg2.extras import Range
+        cur = self.conn.cursor()
+        for type in self.builtin_ranges:
+            cur.execute("select '(,)'::%s" % type)
+            r = cur.fetchone()[0]
+            self.assert_(isinstance(r, Range), type)
+            self.assert_(not r.isempty)
+            self.assert_(r.lower_inf)
+            self.assert_(r.upper_inf)
+
+    def test_cast_numbers(self):
+        from psycopg2.extras import NumericRange
+        cur = self.conn.cursor()
+        for type in ('int4range', 'int8range'):
+            cur.execute("select '(10,20)'::%s" % type)
+            r = cur.fetchone()[0]
+            self.assert_(isinstance(r, NumericRange))
+            self.assert_(not r.isempty)
+            self.assertEqual(r.lower, 11)
+            self.assertEqual(r.upper, 20)
+            self.assert_(not r.lower_inf)
+            self.assert_(not r.upper_inf)
+            self.assert_(r.lower_inc)
+            self.assert_(not r.upper_inc)
+
+        cur.execute("select '(10.2,20.6)'::numrange")
+        r = cur.fetchone()[0]
+        self.assert_(isinstance(r, NumericRange))
+        self.assert_(not r.isempty)
+        self.assertEqual(r.lower, Decimal('10.2'))
+        self.assertEqual(r.upper, Decimal('20.6'))
+        self.assert_(not r.lower_inf)
+        self.assert_(not r.upper_inf)
+        self.assert_(not r.lower_inc)
+        self.assert_(not r.upper_inc)
+
+    def test_cast_date(self):
+        from psycopg2.extras import DateRange
+        cur = self.conn.cursor()
+        cur.execute("select '(2000-01-01,2012-12-31)'::daterange")
+        r = cur.fetchone()[0]
+        self.assert_(isinstance(r, DateRange))
+        self.assert_(not r.isempty)
+        self.assertEqual(r.lower, date(2000,1,2))
+        self.assertEqual(r.upper, date(2012,12,31))
+        self.assert_(not r.lower_inf)
+        self.assert_(not r.upper_inf)
+        self.assert_(r.lower_inc)
+        self.assert_(not r.upper_inc)
+
+    def test_cast_timestamp(self):
+        from psycopg2.extras import DateTimeRange
+        cur = self.conn.cursor()
+        ts1 = datetime(2000,1,1)
+        ts2 = datetime(2000,12,31,23,59,59,999)
+        cur.execute("select tsrange(%s, %s, '()')", (ts1, ts2))
+        r = cur.fetchone()[0]
+        self.assert_(isinstance(r, DateTimeRange))
+        self.assert_(not r.isempty)
+        self.assertEqual(r.lower, ts1)
+        self.assertEqual(r.upper, ts2)
+        self.assert_(not r.lower_inf)
+        self.assert_(not r.upper_inf)
+        self.assert_(not r.lower_inc)
+        self.assert_(not r.upper_inc)
+
+    def test_cast_timestamptz(self):
+        from psycopg2.extras import DateTimeTZRange
+        from psycopg2.tz import FixedOffsetTimezone
+        cur = self.conn.cursor()
+        ts1 = datetime(2000,1,1, tzinfo=FixedOffsetTimezone(600))
+        ts2 = datetime(2000,12,31,23,59,59,999, tzinfo=FixedOffsetTimezone(600))
+        cur.execute("select tstzrange(%s, %s, '[]')", (ts1, ts2))
+        r = cur.fetchone()[0]
+        self.assert_(isinstance(r, DateTimeTZRange))
+        self.assert_(not r.isempty)
+        self.assertEqual(r.lower, ts1)
+        self.assertEqual(r.upper, ts2)
+        self.assert_(not r.lower_inf)
+        self.assert_(not r.upper_inf)
+        self.assert_(r.lower_inc)
+        self.assert_(r.upper_inc)
+
+    def test_adapt_number_range(self):
+        from psycopg2.extras import NumericRange
+        cur = self.conn.cursor()
+
+        r = NumericRange(empty=True)
+        cur.execute("select %s::int4range", (r,))
+        r1 = cur.fetchone()[0]
+        self.assert_(isinstance(r1, NumericRange))
+        self.assert_(r1.isempty)
+
+        r = NumericRange(10, 20)
+        cur.execute("select %s::int8range", (r,))
+        r1 = cur.fetchone()[0]
+        self.assert_(isinstance(r1, NumericRange))
+        self.assertEqual(r1.lower, 10)
+        self.assertEqual(r1.upper, 20)
+        self.assert_(r1.lower_inc)
+        self.assert_(not r1.upper_inc)
+
+        r = NumericRange(10.2, 20.5, '(]')
+        cur.execute("select %s::numrange", (r,))
+        r1 = cur.fetchone()[0]
+        self.assert_(isinstance(r1, NumericRange))
+        self.assertEqual(r1.lower, Decimal('10.2'))
+        self.assertEqual(r1.upper, Decimal('20.5'))
+        self.assert_(not r1.lower_inc)
+        self.assert_(r1.upper_inc)
+
+    def test_adapt_numeric_range(self):
+        from psycopg2.extras import NumericRange
+        cur = self.conn.cursor()
+
+        r = NumericRange(empty=True)
+        cur.execute("select %s::int4range", (r,))
+        r1 = cur.fetchone()[0]
+        self.assert_(isinstance(r1, NumericRange), r1)
+        self.assert_(r1.isempty)
+
+        r = NumericRange(10, 20)
+        cur.execute("select %s::int8range", (r,))
+        r1 = cur.fetchone()[0]
+        self.assert_(isinstance(r1, NumericRange))
+        self.assertEqual(r1.lower, 10)
+        self.assertEqual(r1.upper, 20)
+        self.assert_(r1.lower_inc)
+        self.assert_(not r1.upper_inc)
+
+        r = NumericRange(10.2, 20.5, '(]')
+        cur.execute("select %s::numrange", (r,))
+        r1 = cur.fetchone()[0]
+        self.assert_(isinstance(r1, NumericRange))
+        self.assertEqual(r1.lower, Decimal('10.2'))
+        self.assertEqual(r1.upper, Decimal('20.5'))
+        self.assert_(not r1.lower_inc)
+        self.assert_(r1.upper_inc)
+
+    def test_adapt_date_range(self):
+        from psycopg2.extras import DateRange, DateTimeRange, DateTimeTZRange
+        from psycopg2.tz import FixedOffsetTimezone
+        cur = self.conn.cursor()
+
+        d1 = date(2012, 01, 01)
+        d2 = date(2012, 12, 31)
+        r = DateRange(d1, d2)
+        cur.execute("select %s", (r,))
+        r1 = cur.fetchone()[0]
+        self.assert_(isinstance(r1, DateRange))
+        self.assertEqual(r1.lower, d1)
+        self.assertEqual(r1.upper, d2)
+        self.assert_(r1.lower_inc)
+        self.assert_(not r1.upper_inc)
+
+        r = DateTimeRange(empty=True)
+        cur.execute("select %s", (r,))
+        r1 = cur.fetchone()[0]
+        self.assert_(isinstance(r1, DateTimeRange))
+        self.assert_(r1.isempty)
+
+        ts1 = datetime(2000,1,1, tzinfo=FixedOffsetTimezone(600))
+        ts2 = datetime(2000,12,31,23,59,59,999, tzinfo=FixedOffsetTimezone(600))
+        r = DateTimeTZRange(ts1, ts2, '(]')
+        cur.execute("select %s", (r,))
+        r1 = cur.fetchone()[0]
+        self.assert_(isinstance(r1, DateTimeTZRange))
+        self.assertEqual(r1.lower, ts1)
+        self.assertEqual(r1.upper, ts2)
+        self.assert_(not r1.lower_inc)
+        self.assert_(r1.upper_inc)
+
+    def test_register_range_adapter(self):
+        from psycopg2.extras import Range, register_range
+        cur = self.conn.cursor()
+        cur.execute("create type textrange as range (subtype=text)")
+        rc = register_range('textrange', 'TextRange', cur)
+
+        TextRange = rc.range
+        self.assert_(issubclass(TextRange, Range))
+        self.assertEqual(TextRange.__name__, 'TextRange')
+
+        r = TextRange('a', 'b', '(]')
+        cur.execute("select %s", (r,))
+        r1 = cur.fetchone()[0]
+        self.assertEqual(r1.lower, 'a')
+        self.assertEqual(r1.upper, 'b')
+        self.assert_(not r1.lower_inc)
+        self.assert_(r1.upper_inc)
+
+        cur.execute("select %s", ([r,r,r],))
+        rs = cur.fetchone()[0]
+        self.assertEqual(len(rs), 3)
+        for r1 in rs:
+            self.assertEqual(r1.lower, 'a')
+            self.assertEqual(r1.upper, 'b')
+            self.assert_(not r1.lower_inc)
+            self.assert_(r1.upper_inc)
+
+    def test_range_escaping(self):
+        from psycopg2.extras import register_range
+        cur = self.conn.cursor()
+        cur.execute("create type textrange as range (subtype=text)")
+        rc = register_range('textrange', 'TextRange', cur)
+
+        TextRange = rc.range
+        cur.execute("""
+            create table rangetest (
+                id integer primary key,
+                range textrange)""")
+
+        bounds = [ '[)', '(]', '()', '[]' ]
+        ranges = [ TextRange(low, up, bounds[i % 4])
+            for i, (low, up) in enumerate(zip(
+                [None] + map(chr, range(1, 128)),
+                map(chr, range(1,128)) + [None],
+                ))]
+        ranges.append(TextRange())
+        ranges.append(TextRange(empty=True))
+
+        errs = 0
+        for i, r in enumerate(ranges):
+            # not all the ranges make sense:
+            # fun fact: select ascii('#') < ascii('$'), '#' < '$'
+            # yelds... t, f! At least in en_GB.UTF-8 collation.
+            # which seems suggesting a supremacy of the pound on the dollar.
+            # So some of these ranges will fail to insert. Be prepared but...
+            try:
+                cur.execute("""
+                    savepoint x;
+                    insert into rangetest (id, range) values (%s, %s);
+                    """, (i, r))
+            except psycopg2.DataError:
+                errs += 1
+                cur.execute("rollback to savepoint x;")
+
+        # ...not too many errors! in the above collate there are 17 errors:
+        # assume in other collates we won't find more than 30
+        self.assert_(errs < 30,
+            "too many collate errors. Is the test working?")
+
+        cur.execute("select id, range from rangetest order by id")
+        for i, r in cur:
+            self.assertEqual(ranges[i].lower, r.lower)
+            self.assertEqual(ranges[i].upper, r.upper)
+            self.assertEqual(ranges[i].lower_inc, r.lower_inc)
+            self.assertEqual(ranges[i].upper_inc, r.upper_inc)
+            self.assertEqual(ranges[i].lower_inf, r.lower_inf)
+            self.assertEqual(ranges[i].upper_inf, r.upper_inf)
+
+    def test_range_not_found(self):
+        from psycopg2.extras import register_range
+        cur = self.conn.cursor()
+        self.assertRaises(psycopg2.ProgrammingError,
+            register_range, 'nosuchrange', 'FailRange', cur)
+
+    def test_schema_range(self):
+        cur = self.conn.cursor()
+        cur.execute("create schema rs")
+        cur.execute("create type r1 as range (subtype=text)")
+        cur.execute("create type r2 as range (subtype=text)")
+        cur.execute("create type rs.r2 as range (subtype=text)")
+        cur.execute("create type rs.r3 as range (subtype=text)")
+        cur.execute("savepoint x")
+
+        from psycopg2.extras import register_range
+        ra1 = register_range('r1', 'r1', cur)
+        ra2 = register_range('r2', 'r2', cur)
+        rars2 = register_range('rs.r2', 'r2', cur)
+        rars3 = register_range('rs.r3', 'r3', cur)
+
+        self.assertNotEqual(
+            ra2.typecaster.values[0],
+            rars2.typecaster.values[0])
+
+        self.assertRaises(psycopg2.ProgrammingError,
+            register_range, 'r3', 'FailRange', cur)
+        cur.execute("rollback to savepoint x;")
+
+        self.assertRaises(psycopg2.ProgrammingError,
+            register_range, 'rs.r1', 'FailRange', cur)
+        cur.execute("rollback to savepoint x;")
+
+decorate_all_tests(RangeCasterTestCase, skip_if_no_range)
 
 
 def test_suite():
