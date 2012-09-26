@@ -14,12 +14,9 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-try:
-    import decimal
-except:
-    pass
 import re
 import sys
+from decimal import Decimal
 from datetime import date
 
 from testutils import unittest, skip_if_no_uuid, skip_before_postgres
@@ -809,6 +806,253 @@ class AdaptTypeTestCase(unittest.TestCase):
         oid = curs.fetchone()[0]
         self.conn.commit()
         return oid
+
+
+def skip_if_json_module(f):
+    """Skip a test if no Python json module is available"""
+    def skip_if_json_module_(self):
+        if psycopg2.extras.json is not None:
+            return self.skipTest("json module is available")
+
+        return f(self)
+
+    return skip_if_json_module_
+
+def skip_if_no_json_module(f):
+    """Skip a test if no Python json module is available"""
+    def skip_if_no_json_module_(self):
+        if psycopg2.extras.json is None:
+            return self.skipTest("json module not available")
+
+        return f(self)
+
+    return skip_if_no_json_module_
+
+def skip_if_no_json_type(f):
+    """Skip a test if PostgreSQL json type is not available"""
+    def skip_if_no_json_type_(self):
+        curs = self.conn.cursor()
+        curs.execute("select oid from pg_type where typname = 'json'")
+        if not curs.fetchone():
+            return self.skipTest("json not available in test database")
+
+        return f(self)
+
+    return skip_if_no_json_type_
+
+class JsonTestCase(unittest.TestCase):
+    def setUp(self):
+        self.conn = psycopg2.connect(dsn)
+
+    def tearDown(self):
+        self.conn.close()
+
+    @skip_if_json_module
+    def test_module_not_available(self):
+        from psycopg2.extras import Json
+        self.assertRaises(ImportError, Json(None).getquoted)
+
+    @skip_if_json_module
+    def test_customizable_with_module_not_available(self):
+        from psycopg2.extras import Json
+        class MyJson(Json):
+            def dumps(self, obj):
+                assert obj is None
+                return "hi"
+
+        self.assertEqual(MyJson(None).getquoted(), "'hi'")
+
+    @skip_if_no_json_module
+    def test_adapt(self):
+        from psycopg2.extras import json, Json
+
+        objs = [None, "te'xt", 123, 123.45,
+            u'\xe0\u20ac', ['a', 100], {'a': 100} ]
+
+        curs = self.conn.cursor()
+        for obj in enumerate(objs):
+            self.assertEqual(curs.mogrify("%s", (Json(obj),)),
+                psycopg2.extensions.QuotedString(json.dumps(obj)).getquoted())
+
+    @skip_if_no_json_module
+    def test_adapt_dumps(self):
+        from psycopg2.extras import json, Json
+
+        class DecimalEncoder(json.JSONEncoder):
+            def default(self, obj):
+                if isinstance(obj, Decimal):
+                    return float(obj)
+                return json.JSONEncoder.default(self, obj)
+
+        curs = self.conn.cursor()
+        obj = Decimal('123.45')
+        dumps = lambda obj: json.dumps(obj, cls=DecimalEncoder)
+        self.assertEqual(curs.mogrify("%s", (Json(obj, dumps=dumps),)),
+            b("'123.45'"))
+
+    @skip_if_no_json_module
+    def test_adapt_subclass(self):
+        from psycopg2.extras import json, Json
+
+        class DecimalEncoder(json.JSONEncoder):
+            def default(self, obj):
+                if isinstance(obj, Decimal):
+                    return float(obj)
+                return json.JSONEncoder.default(self, obj)
+
+        class MyJson(Json):
+            def dumps(self, obj):
+                return json.dumps(obj, cls=DecimalEncoder)
+
+        curs = self.conn.cursor()
+        obj = Decimal('123.45')
+        self.assertEqual(curs.mogrify("%s", (MyJson(obj),)),
+            b("'123.45'"))
+
+    @skip_if_no_json_module
+    def test_register_on_dict(self):
+        from psycopg2.extras import Json
+        psycopg2.extensions.register_adapter(dict, Json)
+
+        try:
+            curs = self.conn.cursor()
+            obj = {'a': 123}
+            self.assertEqual(curs.mogrify("%s", (obj,)),
+                b("""'{"a": 123}'"""))
+        finally:
+           del psycopg2.extensions.adapters[dict, psycopg2.extensions.ISQLQuote]
+
+
+    def test_type_not_available(self):
+        curs = self.conn.cursor()
+        curs.execute("select oid from pg_type where typname = 'json'")
+        if curs.fetchone():
+            return self.skipTest("json available in test database")
+
+        self.assertRaises(psycopg2.ProgrammingError,
+            psycopg2.extras.register_json, self.conn)
+
+    @skip_if_no_json_module
+    @skip_before_postgres(9, 2)
+    def test_default_cast(self):
+        curs = self.conn.cursor()
+
+        curs.execute("""select '{"a": 100.0, "b": null}'::json""")
+        self.assertEqual(curs.fetchone()[0], {'a': 100.0, 'b': None})
+
+        curs.execute("""select array['{"a": 100.0, "b": null}']::json[]""")
+        self.assertEqual(curs.fetchone()[0], [{'a': 100.0, 'b': None}])
+
+    @skip_if_no_json_module
+    @skip_if_no_json_type
+    def test_register_on_connection(self):
+        psycopg2.extras.register_json(self.conn)
+        curs = self.conn.cursor()
+        curs.execute("""select '{"a": 100.0, "b": null}'::json""")
+        self.assertEqual(curs.fetchone()[0], {'a': 100.0, 'b': None})
+
+    @skip_if_no_json_module
+    @skip_if_no_json_type
+    def test_register_on_cursor(self):
+        curs = self.conn.cursor()
+        psycopg2.extras.register_json(curs)
+        curs.execute("""select '{"a": 100.0, "b": null}'::json""")
+        self.assertEqual(curs.fetchone()[0], {'a': 100.0, 'b': None})
+
+    @skip_if_no_json_module
+    @skip_if_no_json_type
+    def test_register_globally(self):
+        old = psycopg2.extensions.string_types.get(114)
+        olda = psycopg2.extensions.string_types.get(199)
+        try:
+            new, newa = psycopg2.extras.register_json(self.conn, globally=True)
+            curs = self.conn.cursor()
+            curs.execute("""select '{"a": 100.0, "b": null}'::json""")
+            self.assertEqual(curs.fetchone()[0], {'a': 100.0, 'b': None})
+        finally:
+            psycopg2.extensions.string_types.pop(new.values[0])
+            psycopg2.extensions.string_types.pop(newa.values[0])
+            if old:
+                psycopg2.extensions.register_type(old)
+            if olda:
+                psycopg2.extensions.register_type(olda)
+
+    @skip_if_no_json_module
+    @skip_if_no_json_type
+    def test_loads(self):
+        json = psycopg2.extras.json
+        loads = lambda x: json.loads(x, parse_float=Decimal)
+        psycopg2.extras.register_json(self.conn, loads=loads)
+        curs = self.conn.cursor()
+        curs.execute("""select '{"a": 100.0, "b": null}'::json""")
+        data = curs.fetchone()[0]
+        self.assert_(isinstance(data['a'], Decimal))
+        self.assertEqual(data['a'], Decimal('100.0'))
+
+    @skip_if_no_json_module
+    @skip_if_no_json_type
+    def test_no_conn_curs(self):
+        from psycopg2._json import _get_json_oids
+        oid, array_oid = _get_json_oids(self.conn)
+
+        old = psycopg2.extensions.string_types.get(114)
+        olda = psycopg2.extensions.string_types.get(199)
+        loads = lambda x: psycopg2.extras.json.loads(x, parse_float=Decimal)
+        try:
+            new, newa = psycopg2.extras.register_json(
+                loads=loads, oid=oid, array_oid=array_oid)
+            curs = self.conn.cursor()
+            curs.execute("""select '{"a": 100.0, "b": null}'::json""")
+            data = curs.fetchone()[0]
+            self.assert_(isinstance(data['a'], Decimal))
+            self.assertEqual(data['a'], Decimal('100.0'))
+        finally:
+            psycopg2.extensions.string_types.pop(new.values[0])
+            psycopg2.extensions.string_types.pop(newa.values[0])
+            if old:
+                psycopg2.extensions.register_type(old)
+            if olda:
+                psycopg2.extensions.register_type(olda)
+
+    @skip_if_no_json_module
+    @skip_before_postgres(9, 2)
+    def test_register_default(self):
+        curs = self.conn.cursor()
+
+        loads = lambda x: psycopg2.extras.json.loads(x, parse_float=Decimal)
+        psycopg2.extras.register_default_json(curs, loads=loads)
+
+        curs.execute("""select '{"a": 100.0, "b": null}'::json""")
+        data = curs.fetchone()[0]
+        self.assert_(isinstance(data['a'], Decimal))
+        self.assertEqual(data['a'], Decimal('100.0'))
+
+        curs.execute("""select array['{"a": 100.0, "b": null}']::json[]""")
+        data = curs.fetchone()[0]
+        self.assert_(isinstance(data[0]['a'], Decimal))
+        self.assertEqual(data[0]['a'], Decimal('100.0'))
+
+    @skip_if_no_json_module
+    @skip_if_no_json_type
+    def test_null(self):
+        psycopg2.extras.register_json(self.conn)
+        curs = self.conn.cursor()
+        curs.execute("""select NULL::json""")
+        self.assertEqual(curs.fetchone()[0], None)
+        curs.execute("""select NULL::json[]""")
+        self.assertEqual(curs.fetchone()[0], None)
+
+    @skip_if_no_json_module
+    def test_no_array_oid(self):
+        curs = self.conn.cursor()
+        t1, t2 = psycopg2.extras.register_json(curs, oid=25)
+        self.assertEqual(t1.values[0], 25)
+        self.assertEqual(t2, None)
+
+        curs.execute("""select '{"a": 100.0, "b": null}'::text""")
+        data = curs.fetchone()[0]
+        self.assertEqual(data['a'], 100)
+        self.assertEqual(data['b'], None)
 
 
 def test_suite():

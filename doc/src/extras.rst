@@ -128,6 +128,94 @@ Additional data types
 ---------------------
 
 
+.. _adapt-json:
+
+.. index::
+    pair: JSON; Data types
+    pair: JSON; Adaptation
+
+JSON_ adaptation
+^^^^^^^^^^^^^^^^
+
+.. versionadded:: 2.4.6
+
+Psycopg can adapt Python objects to and from the PostgreSQL |pgjson|_ type.
+With PostgreSQL 9.2 adaptation is available out-of-the-box. To use JSON data
+with previous database versions (either with the `9.1 json extension`__, but
+even if you want to convert text fields to JSON) you can use
+`register_json()`.
+
+.. __: http://people.planetpostgresql.org/andrew/index.php?/archives/255-JSON-for-PG-9.2-...-and-now-for-9.1!.html
+
+The Python library used to convert Python objects to JSON depends on the
+language version: with Python 2.6 and following the :py:mod:`json` module from
+the standard library is used; with previous versions the `simplejson`_ module
+is used if available. Note that the last `!simplejson` version supporting
+Python 2.4 is the 2.0.9.
+
+.. _JSON: http://www.json.org/
+.. |pgjson| replace:: :sql:`json`
+.. _pgjson: http://www.postgresql.org/docs/current/static/datatype-json.html
+.. _simplejson: http://pypi.python.org/pypi/simplejson/
+
+In order to pass a Python object to the database as query argument you can use
+the `Json` adapter::
+
+    curs.execute("insert into mytable (jsondata) values (%s)",
+        [Json({'a': 100})])
+
+Reading from the database, |pgjson| values will be automatically converted to
+Python objects.
+
+.. note::
+
+    You can use `~psycopg2.extensions.register_adapter()` to adapt any Python
+    dictionary to JSON, either registering `Json` or any subclass or factory
+    creating a compatible adapter::
+
+        psycopg2.extensions.register_adapter(dict, psycopg2.extras.Json)
+
+    This setting is global though, so it is not compatible with similar
+    adapters such as the one registered by `register_hstore()`. Any other
+    object supported by JSON can be registered the same way, but this will
+    clobber the default adaptation rule, so be careful to unwanted side
+    effects.
+
+If you want to customize the adaptation from Python to PostgreSQL you can
+either provide a custom `!dumps()` function to `!Json`::
+
+    curs.execute("insert into mytable (jsondata) values (%s)",
+        [Json({'a': 100}, dumps=simplejson.dumps)])
+
+or you can subclass it overriding the `~Json.dumps()` method::
+
+    class MyJson(Json):
+        def dumps(self, obj):
+            return simplejson.dumps(obj)
+
+    curs.execute("insert into mytable (jsondata) values (%s)",
+        [MyJson({'a': 100})])
+
+Customizing the conversion from PostgreSQL to Python can be done passing a
+custom `!loads()` function to `register_json()` (or `register_default_json()`
+for PostgreSQL 9.2).  For example, if you want to convert the float values
+from :sql:`json` into :py:class:`~decimal.Decimal` you can use::
+
+    loads = lambda x: json.loads(x, parse_float=Decimal)
+    psycopg2.extras.register_json(conn, loads=loads)
+
+
+
+.. autoclass:: Json
+
+    .. automethod:: dumps
+
+.. autofunction:: register_json
+
+.. autofunction:: register_default_json
+
+
+
 .. _adapt-hstore:
 
 .. index::

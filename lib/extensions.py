@@ -151,6 +151,17 @@ class NoneAdapter(object):
         return _null
 
 
+# Create default json typecasters for PostgreSQL 9.2 oids
+from psycopg2._json import register_default_json
+
+try:
+    JSON, JSONARRAY = register_default_json()
+except ImportError:
+    pass
+
+del register_default_json
+
+
 # Add the "cleaned" version of the encodings to the key.
 # When the encoding is set its name is cleaned up from - and _ and turned
 # uppercase, so an encoding not respecting these rules wouldn't be found in the
