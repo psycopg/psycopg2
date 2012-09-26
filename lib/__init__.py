@@ -164,13 +164,13 @@ def connect(dsn=None,
     items.extend([(k, v) for (k, v) in kwargs.iteritems() if v is not None])
 
     if dsn is not None and items:
-        raise InterfaceError(
+        raise TypeError(
             "'%s' is an invalid keyword argument when the dsn is specified"
                 % items[0][0])
 
     if dsn is None:
         if not items:
-            raise InterfaceError('missing dsn and no parameters')
+            raise TypeError('missing dsn and no parameters')
         else:
             dsn = " ".join(["%s=%s" % (k, _param_escape(str(v)))
                 for (k, v) in items])
