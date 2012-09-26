@@ -165,9 +165,8 @@ def connect(dsn=None,
 
     if dsn is not None and items:
         raise InterfaceError(
-            "you cannot specify keyword arguments (%s)"
-            " together with a connection string"
-            % ", ".join([k for k, v in items]))
+            "'%s' is an invalid keyword argument when the dsn is specified"
+                % items[0][0])
 
     if dsn is None:
         if not items:
