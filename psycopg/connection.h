@@ -141,6 +141,7 @@ HIDDEN void conn_notifies_process(connectionObject *self);
 RAISES_NEG HIDDEN int  conn_setup(connectionObject *self, PGconn *pgconn);
 HIDDEN int  conn_connect(connectionObject *self, long int async);
 HIDDEN void conn_close(connectionObject *self);
+HIDDEN void conn_close_locked(connectionObject *self);
 RAISES_NEG HIDDEN int  conn_commit(connectionObject *self);
 RAISES_NEG HIDDEN int  conn_rollback(connectionObject *self);
 RAISES_NEG HIDDEN int  conn_set_session(connectionObject *self, const char *isolevel,
