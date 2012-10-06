@@ -34,7 +34,7 @@
 HIDDEN PyObject *wait_callback = NULL;
 
 static PyObject *have_wait_callback(void);
-static void psyco_panic_cancel(connectionObject *conn);
+static void green_panic(connectionObject *conn);
 
 /* Register a callback function to block waiting for data.
  *
@@ -178,7 +178,7 @@ psyco_exec_green(connectionObject *conn, const char *command)
     conn->async_status = ASYNC_WRITE;
 
     if (0 != psyco_wait(conn)) {
-        psyco_panic_cancel(conn);
+        green_panic(conn);
         goto end;
     }
 
@@ -194,52 +194,19 @@ end:
 
 /* There has been a communication error during query execution. It may have
  * happened e.g. for a network error or an error in the callback, and we
- * cannot tell the two apart. The strategy here to avoid blocking (issue #113)
- * is to try and cancel the query, waiting for the result in non-blocking way.
- * If again we receive an error, we raise an error and close the connection.
- * Discard the result of the currenly executed query, blocking.
+ * cannot tell the two apart.
+ * Trying to PQcancel or PQgetResult to put the connection back into a working
+ * state doesn't work nice (issue #113): the program blocks and the
+ * interpreter won't even respond to SIGINT. PQreset could work async, but the
+ * python program would have then a connection made but not configured where
+ * it is probably not designed to handled. So for the moment we do the kindest
+ * thing we can: we close the connection. A long-running program should
+ * already have a way to discard broken connections; a short-lived one would
+ * benefit of working ctrl-c.
  */
 static void
-psyco_panic_cancel(connectionObject *conn)
+green_panic(connectionObject *conn)
 {
-    PGresult *res;
-    PyObject *etype, *evalue, *etb;
-    char errbuf[256];
-
-    /* we should have an exception set. */
-    PyErr_Fetch(&etype, &evalue, &etb);
-    if (NULL == etype) {
-        Dprintf("panic_cancel: called without exception set");
-    }
-
-    /* Try sending the cancel signal */
-    Dprintf("panic_cancel: sending cancel request");
-    if (PQcancel(conn->cancel, errbuf, sizeof(errbuf)) == 0) {
-        Dprintf("panic_cancel: canceling failed: %s", errbuf);
-        /* raise a warning: we'll keep the previous error */
-        PyErr_WarnEx(NULL, errbuf, 1);
-        goto exit;
-    }
-
-    /* go back in the loop for another attempt at async processing */
-    /* TODO: should we start on ASYNC_WRITE instead? */
-    if (0 != psyco_wait(conn)) {
-        Dprintf("panic_cancel: error after cancel: closing the connection");
-        PyErr_WarnEx(NULL, "async cancel failed: closing the connection", 1);
-        conn_close_locked(conn);
-        goto exit;
-    }
-
-    /* we must clear the result or we get "another command is already in
-     * progress" */
-    if (NULL != (res = pq_get_last_result(conn))) {
-        PQclear(res);
-    }
-
-exit:
-    /* restore the exception. If no exception was set at function begin, don't
-     * clobber one that may have been set here. */
-    if (etype) {
-        PyErr_Restore(etype, evalue, etb);
-    }
+    Dprintf("green_panic: closing the connection");
+    conn_close_locked(conn);
 }

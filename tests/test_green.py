@@ -79,6 +79,9 @@ class GreenTests(unittest.TestCase):
         warnings.warn("sending a large query didn't trigger block on write.")
 
     def test_error_in_callback(self):
+        # behaviour changed after issue #113: if there is an error in the
+        # callback for the moment we don't have a way to reset the connection
+        # without blocking (ticket #113) so just close it.
         conn = self.conn
         curs = conn.cursor()
         curs.execute("select 1")  # have a BEGIN
@@ -88,11 +91,21 @@ class GreenTests(unittest.TestCase):
         psycopg2.extensions.set_wait_callback(lambda conn: 1//0)
         self.assertRaises(ZeroDivisionError, curs.execute, "select 2")
 
+        self.assert_(conn.closed)
+
+    def test_dont_freak_out(self):
+        # if there is an error in a green query, don't freak out and close
+        # the connection
+        conn = self.conn
+        curs = conn.cursor()
+        self.assertRaises(psycopg2.ProgrammingError,
+            curs.execute, "select the unselectable")
+
         # check that the connection is left in an usable state
-        psycopg2.extensions.set_wait_callback(psycopg2.extras.wait_select)
+        self.assert_(not conn.closed)
         conn.rollback()
-        curs.execute("select 2")
-        self.assertEqual(2, curs.fetchone()[0])
+        curs.execute("select 1")
+        self.assertEqual(curs.fetchone()[0], 1)
 
 
 def test_suite():
