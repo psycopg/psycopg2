@@ -202,6 +202,7 @@ end:
 static void
 psyco_panic_cancel(connectionObject *conn)
 {
+    PGresult *res;
     PyObject *etype, *evalue, *etb;
     char errbuf[256];
 
@@ -227,6 +228,12 @@ psyco_panic_cancel(connectionObject *conn)
         PyErr_WarnEx(NULL, "async cancel failed: closing the connection", 1);
         conn_close_locked(conn);
         goto exit;
+    }
+
+    /* we must clear the result or we get "another command is already in
+     * progress" */
+    if (NULL != (res = pq_get_last_result(conn))) {
+        PQclear(res);
     }
 
 exit:

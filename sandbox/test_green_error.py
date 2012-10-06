@@ -42,7 +42,15 @@ signal.signal(signal.SIGHUP, handler)
 conn = psycopg2.connect(DSN)
 curs = conn.cursor()
 print "PID", os.getpid()
-curs.execute("select pg_sleep(1000)")
+try:
+    curs.execute("select pg_sleep(1000)")
+except BaseException, e:
+    print "got exception:", e.__class__.__name__, e
+
+conn.rollback()
+curs.execute("select 1")
+print curs.fetchone()
+
 
 # You can unplug the network cable etc. here.
 # Kill -HUP will raise an exception in the callback.
