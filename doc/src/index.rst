@@ -42,6 +42,7 @@ Psycopg 2 is both Unicode and Python 3 friendly.
 .. toctree::
    :maxdepth: 2
 
+   install
    usage
    module
    connection

@@ -7,6 +7,8 @@ Here are a few gotchas you may encounter using `psycopg2`.  Feel free to
 suggest new entries!
 
 
+.. _faq-transactions:
+
 Problems with transactions handling
 -----------------------------------
 
@@ -50,6 +52,8 @@ Why do I get the error *current transaction is aborted, commands ignored until e
     connection in each forked child. See :ref:`thread-safety` for further
     informations.
 
+
+.. _faq-types:
 
 Problems with type conversions
 ------------------------------
@@ -151,6 +155,8 @@ Arrays of *TYPE* are not casted to list.
     provided in the `~psycopg2.extensions.new_array_type()` documentation.
 
 
+.. _faq-best-practices:
+
 Best practices
 --------------
 
@@ -190,6 +196,8 @@ What are the advantages or disadvantages of using named cursors?
     using small `~cursor.fetchmany()` values it is possible to use very
     little memory on the client and to skip or discard parts of the result set.
 
+
+.. _faq-compile:
 
 Problems compiling and deploying psycopg2
 -----------------------------------------
