@@ -35,6 +35,11 @@
 #  error "psycopg requires Python >= 2.4"
 #endif
 
+#if PY_VERSION_HEX < 0x02050000
+/* Function missing in Py 2.4 */
+#define PyErr_WarnEx(cat,msg,lvl) PyErr_Warn(cat,msg)
+#endif
+
 #if PY_VERSION_HEX < 0x02050000 && !defined(PY_SSIZE_T_MIN)
   typedef int Py_ssize_t;
   #define PY_SSIZE_T_MIN INT_MIN
