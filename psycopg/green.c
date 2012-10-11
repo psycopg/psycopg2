@@ -34,7 +34,7 @@
 HIDDEN PyObject *wait_callback = NULL;
 
 static PyObject *have_wait_callback(void);
-static void psyco_clear_result_blocking(connectionObject *conn);
+static void green_panic(connectionObject *conn);
 
 /* Register a callback function to block waiting for data.
  *
@@ -178,7 +178,7 @@ psyco_exec_green(connectionObject *conn, const char *command)
     conn->async_status = ASYNC_WRITE;
 
     if (0 != psyco_wait(conn)) {
-        psyco_clear_result_blocking(conn);
+        green_panic(conn);
         goto end;
     }
 
@@ -192,22 +192,21 @@ end:
 }
 
 
-/* Discard the result of the currenly executed query, blocking.
- *
- * This function doesn't honour the wait callback: it can be used in case of
- * emergency if the callback fails in order to put the connection back into a
- * consistent state.
- *
- * If any command was issued before clearing the result, libpq would fail with
- * the error "another command is already in progress".
+/* There has been a communication error during query execution. It may have
+ * happened e.g. for a network error or an error in the callback, and we
+ * cannot tell the two apart.
+ * Trying to PQcancel or PQgetResult to put the connection back into a working
+ * state doesn't work nice (issue #113): the program blocks and the
+ * interpreter won't even respond to SIGINT. PQreset could work async, but the
+ * python program would have then a connection made but not configured where
+ * it is probably not designed to handled. So for the moment we do the kindest
+ * thing we can: we close the connection. A long-running program should
+ * already have a way to discard broken connections; a short-lived one would
+ * benefit of working ctrl-c.
  */
 static void
-psyco_clear_result_blocking(connectionObject *conn)
+green_panic(connectionObject *conn)
 {
-    PGresult *res;
-
-    Dprintf("psyco_clear_result_blocking");
-    while (NULL != (res = PQgetResult(conn->pgconn))) {
-        PQclear(res);
-    }
+    Dprintf("green_panic: closing the connection");
+    conn_close_locked(conn);
 }
