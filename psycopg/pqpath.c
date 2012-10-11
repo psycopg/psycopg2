@@ -835,12 +835,16 @@ pq_flush(connectionObject *conn)
 }
 
 /* pq_execute - execute a query, possibly asynchronously
-
-   this fucntion locks the connection object
-   this function call Py_*_ALLOW_THREADS macros */
+ *
+ * With no_result an eventual query result is discarded.
+ * Currently only used to implement cursor.executemany().
+ *
+ * This function locks the connection object
+ * This function call Py_*_ALLOW_THREADS macros
+*/
 
 RAISES_NEG int
-pq_execute(cursorObject *curs, const char *query, int async)
+pq_execute(cursorObject *curs, const char *query, int async, int no_result)
 {
     PGresult *pgres = NULL;
     char *error = NULL;
@@ -944,7 +948,7 @@ pq_execute(cursorObject *curs, const char *query, int async)
        to respect the old DBAPI-2.0 compatible behaviour */
     if (async == 0) {
         Dprintf("pq_execute: entering syncronous DBAPI compatibility mode");
-        if (pq_fetch(curs) < 0) return -1;
+        if (pq_fetch(curs, no_result) < 0) return -1;
     }
     else {
         PyObject *tmp;
@@ -1405,7 +1409,7 @@ exit:
 }
 
 int
-pq_fetch(cursorObject *curs)
+pq_fetch(cursorObject *curs, int no_result)
 {
     int pgstatus, ex = -1;
     const char *rowcount;
@@ -1469,10 +1473,18 @@ pq_fetch(cursorObject *curs)
         break;
 
     case PGRES_TUPLES_OK:
-        Dprintf("pq_fetch: data from a SELECT (got tuples)");
-        curs->rowcount = PQntuples(curs->pgres);
-        if (0 == _pq_fetch_tuples(curs)) { ex = 0; }
-        /* don't clear curs->pgres, because it contains the results! */
+        if (!no_result) {
+            Dprintf("pq_fetch: got tuples");
+            curs->rowcount = PQntuples(curs->pgres);
+            if (0 == _pq_fetch_tuples(curs)) { ex = 0; }
+            /* don't clear curs->pgres, because it contains the results! */
+        }
+        else {
+            Dprintf("pq_fetch: got tuples, discarding them");
+            IFCLEARPGRES(curs->pgres);
+            curs->rowcount = -1;
+            ex = 0;
+        }
         break;
 
     case PGRES_EMPTY_QUERY:
