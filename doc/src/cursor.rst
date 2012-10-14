@@ -559,9 +559,18 @@ The ``cursor`` class
         |COPY|__ command documentation).
 
         :param sql: the :sql:`COPY` statement to execute.
-        :param file: a file-like object; must be a readable file for
-            :sql:`COPY FROM` or an writable file for :sql:`COPY TO`.
+        :param file: a file-like object to read or write (according to *sql*).
         :param size: size of the read buffer to be used in :sql:`COPY FROM`.
+
+        The *sql* statement should be in the form :samp:`COPY {table} TO
+        STDOUT` to export :samp:`{table}` to the *file* object passed as
+        argument or :samp:`COPY {table} FROM STDIN` to import the content of
+        the *file* object into :samp:`{table}`.
+
+        *file* must be a readable file-like object (as required by
+        `~cursor.copy_from()`) for *sql* statement :sql:`COPY ... FROM STDIN`
+        or a writable one (as required by `~cursor.copy_to()`) for :sql:`COPY
+        ... TO STDOUT`.
 
         Example:
 
