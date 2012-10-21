@@ -64,7 +64,6 @@ class FixedOffsetTimezone(datetime.tzinfo):
             return cls._cache[key]
         except KeyError:
             tz = datetime.tzinfo.__new__(cls, offset, name)
-            tz.__init__(offset, name)
             cls._cache[key] = tz
             return tz
 
