@@ -539,6 +539,24 @@ class FixedOffsetTimezoneTests(unittest.TestCase):
         self.assert_(FixedOffsetTimezone(9 * 60) is not FixedOffsetTimezone(9 * 60, 'FOO'))
         self.assert_(FixedOffsetTimezone(name='FOO') is not FixedOffsetTimezone(9 * 60, 'FOO'))
 
+    def test_pickle(self):
+        # ticket #135
+        import pickle
+
+        tz11 = FixedOffsetTimezone(60)
+        tz12 = FixedOffsetTimezone(120)
+        for proto in [-1, 0, 1, 2]:
+            tz21, tz22 = pickle.loads(pickle.dumps([tz11, tz12], proto))
+            self.assertEqual(tz11, tz21)
+            self.assertEqual(tz12, tz22)
+
+        tz11 = FixedOffsetTimezone(60, name='foo')
+        tz12 = FixedOffsetTimezone(120, name='bar')
+        for proto in [-1, 0, 1, 2]:
+            tz21, tz22 = pickle.loads(pickle.dumps([tz11, tz12], proto))
+            self.assertEqual(tz11, tz21)
+            self.assertEqual(tz12, tz22)
+
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
