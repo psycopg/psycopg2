@@ -63,8 +63,7 @@ class FixedOffsetTimezone(datetime.tzinfo):
         try:
             return cls._cache[key]
         except KeyError:
-            tz = datetime.tzinfo.__new__(cls, offset, name)
-            tz.__init__(offset, name)
+            tz = super(FixedOffsetTimezone, cls).__new__(cls, offset, name)
             cls._cache[key] = tz
             return tz
 
@@ -72,6 +71,10 @@ class FixedOffsetTimezone(datetime.tzinfo):
         offset_mins = self._offset.seconds // 60 + self._offset.days * 24 * 60
         return "psycopg2.tz.FixedOffsetTimezone(offset=%r, name=%r)" \
             % (offset_mins, self._name)
+
+    def __getinitargs__(self):
+        offset_mins = self._offset.seconds // 60 + self._offset.days * 24 * 60
+        return (offset_mins, self._name)
 
     def utcoffset(self, dt):
         return self._offset
@@ -87,7 +90,7 @@ class FixedOffsetTimezone(datetime.tzinfo):
                 return "%+03d:%d" % (hours, minutes)
             else:
                 return "%+03d" % hours
-            
+
     def dst(self, dt):
         return ZERO
 
@@ -104,7 +107,6 @@ class LocalTimezone(datetime.tzinfo):
 
     This is the exact implementation from the Python 2.3 documentation.
     """
-    
     def utcoffset(self, dt):
         if self._isdst(dt):
             return DSTOFFSET

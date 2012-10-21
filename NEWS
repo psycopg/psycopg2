@@ -15,6 +15,7 @@ What's new in psycopg 2.4.6
   - connect() raises an exception instead of swallowing keyword arguments
     when a connection string is specified as well (ticket #131).
   - Discard any result produced by 'executemany()' (ticket #133).
+  - Fixed pickling of FixedOffsetTimezone objects (ticket #135).
 
 
 What's new in psycopg 2.4.5
