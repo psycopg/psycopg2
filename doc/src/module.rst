@@ -258,15 +258,15 @@ the type codes for date, time and timestamp columns; see the
 Implementation Hints below for details).
 
 The module exports the following constructors and singletons:
-    
+
 .. function:: Date(year,month,day)
 
     This function constructs an object holding a date value.
-        
+
 .. function:: Time(hour,minute,second)
 
     This function constructs an object holding a time value.
-            
+
 .. function:: Timestamp(year,month,day,hour,minute,second)
 
     This function constructs an object holding a time stamp value.
@@ -278,11 +278,11 @@ The module exports the following constructors and singletons:
     the standard Python time module for details).
 
 .. function:: TimeFromTicks(ticks)
-  
+
     This function constructs an object holding a time value from the given
     ticks value (number of seconds since the epoch; see the documentation of
     the standard Python time module for details).
-    
+
 .. function:: TimestampFromTicks(ticks)
 
     This function constructs an object holding a time stamp value from the
@@ -290,10 +290,16 @@ The module exports the following constructors and singletons:
     documentation of the standard Python time module for details).
 
 .. function:: Binary(string)
-  
+
     This function constructs an object capable of holding a binary (long)
     string value.
-    
+
+.. note::
+
+    All the adapters returned by the module level factories (`!Binary`,
+    `!Date`, `!Time`, `!Timestamp` and the `!*FromTicks` variants) expose the
+    wrapped object (a regular Python object such as `!datetime`) in an
+    `!adapted` attribute.
 
 .. data:: STRING
 
@@ -304,17 +310,17 @@ The module exports the following constructors and singletons:
 
     This type object is used to describe (long) binary columns in a database
     (e.g. LONG, RAW, BLOBs).
-    
+
 .. data:: NUMBER
 
     This type object is used to describe numeric columns in a database.
 
 .. data:: DATETIME
-  
+
     This type object is used to describe date/time columns in a database.
-    
+
 .. data:: ROWID
-  
+
     This type object is used to describe the "Row ID" column in a database.
 
 
