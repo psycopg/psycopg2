@@ -51,7 +51,7 @@ The main entry points of Psycopg are:
   - create new `cursor`\s using the `~connection.cursor()` method to
     execute database commands and queries,
 
-  - terminate the session using the methods `~connection.commit()` or
+  - terminate transactions using the methods `~connection.commit()` or
     `~connection.rollback()`.
 
 - The class `cursor` allows interaction with the database:
@@ -529,7 +529,7 @@ It is possible to set the connection in *autocommit* mode: this way all the
 commands executed will be immediately committed and no rollback is possible. A
 few commands (e.g. :sql:`CREATE DATABASE`, :sql:`VACUUM`...) require to be run
 outside any transaction: in order to be able to run these commands from
-Psycopg, the session must be in autocommit mode: you can use the
+Psycopg, the connection must be in autocommit mode: you can use the
 `~connection.autocommit` property (`~connection.set_isolation_level()` in
 older versions).
 
