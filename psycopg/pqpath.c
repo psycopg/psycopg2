@@ -980,7 +980,7 @@ pq_send_query(connectionObject *conn, const char *query)
 
 /* Return the last result available on the connection.
  *
- * The function will block will block only if a command is active and the
+ * The function will block only if a command is active and the
  * necessary response data has not yet been read by PQconsumeInput.
  *
  * The result should be disposed using PQclear()
@@ -1306,9 +1306,9 @@ _pq_copy_in_v3(cursorObject *curs)
         res = PQputCopyEnd(curs->conn->pgconn, "error in .read() call");
 
     IFCLEARPGRES(curs->pgres);
-    
+
     Dprintf("_pq_copy_in_v3: copy ended; res = %d", res);
-    
+
     /* if the result is -1 we should not even try to get a result from the
        bacause that will lock the current thread forever */
     if (res == -1) {
@@ -1320,7 +1320,13 @@ _pq_copy_in_v3(cursorObject *curs)
     }
     else {
         /* and finally we grab the operation result from the backend */
-        while ((curs->pgres = PQgetResult(curs->conn->pgconn)) != NULL) {
+        for (;;) {
+            Py_BEGIN_ALLOW_THREADS;
+            curs->pgres = PQgetResult(curs->conn->pgconn);
+            Py_END_ALLOW_THREADS;
+
+            if (NULL == curs->pgres)
+                break;
             if (PQresultStatus(curs->pgres) == PGRES_FATAL_ERROR)
                 pq_raise(curs->conn, curs, NULL);
             IFCLEARPGRES(curs->pgres);
@@ -1390,7 +1396,13 @@ _pq_copy_out_v3(cursorObject *curs)
 
     /* and finally we grab the operation result from the backend */
     IFCLEARPGRES(curs->pgres);
-    while ((curs->pgres = PQgetResult(curs->conn->pgconn)) != NULL) {
+    for (;;) {
+        Py_BEGIN_ALLOW_THREADS;
+        curs->pgres = PQgetResult(curs->conn->pgconn);
+        Py_END_ALLOW_THREADS;
+
+        if (NULL == curs->pgres)
+            break;
         if (PQresultStatus(curs->pgres) == PGRES_FATAL_ERROR)
             pq_raise(curs->conn, curs, NULL);
         IFCLEARPGRES(curs->pgres);
