@@ -137,7 +137,7 @@ Additional data types
 JSON_ adaptation
 ^^^^^^^^^^^^^^^^
 
-.. versionadded:: 2.4.6
+.. versionadded:: 2.5
 
 Psycopg can adapt Python objects to and from the PostgreSQL |pgjson|_ type.
 With PostgreSQL 9.2 adaptation is available out-of-the-box. To use JSON data
@@ -328,7 +328,7 @@ requires no adapter registration.
 
     .. versionchanged:: 2.4.3
         added support for array of composite types
-    .. versionchanged:: 2.4.6
+    .. versionchanged:: 2.5
         added the *factory* parameter
 
 
@@ -336,7 +336,7 @@ requires no adapter registration.
 
     .. automethod:: make
 
-        .. versionadded:: 2.4.6
+        .. versionadded:: 2.5
 
     Object attributes:
 
@@ -348,7 +348,7 @@ requires no adapter registration.
 
         The schema where the type is defined.
 
-        .. versionadded:: 2.4.6
+        .. versionadded:: 2.5
 
     .. attribute:: oid
 
@@ -379,7 +379,7 @@ requires no adapter registration.
 Range data types
 ^^^^^^^^^^^^^^^^
 
-.. versionadded:: 2.4.6
+.. versionadded:: 2.5
 
 Psycopg offers a `Range` Python type and supports adaptation between them and
 PostgreSQL |range|_ types. Builtin |range| types are supported out-of-the-box;

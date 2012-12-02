@@ -132,7 +132,7 @@ The ``cursor`` class
             `connection.cursor()` *scrollable* parameter, otherwise the value
             will have no effect.
 
-        .. versionadded:: 2.4.6
+        .. versionadded:: 2.5
 
         .. extension::
 

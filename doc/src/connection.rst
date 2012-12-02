@@ -52,7 +52,7 @@ The ``connection`` class
         details.
 
         .. versionchanged:: 2.4.3 added the *withhold* argument.
-        .. versionchanged:: 2.4.6 added the *scrollable* argument.
+        .. versionchanged:: 2.5 added the *scrollable* argument.
 
         .. extension::
 
