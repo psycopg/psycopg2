@@ -12,6 +12,7 @@ What's new in psycopg 2.4.6
     (ticket #113).
   - 'register_hstore()', 'register_composite()', 'tpc_recover()' work with
     RealDictConnection and Cursor (ticket #114).
+  - Fixed broken pool for Zope (tickets #123, #125).
   - connect() raises an exception instead of swallowing keyword arguments
     when a connection string is specified as well (ticket #131).
   - Discard any result produced by 'executemany()' (ticket #133).
