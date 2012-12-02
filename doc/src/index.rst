@@ -9,8 +9,7 @@ programming language.  Its main features are the complete implementation of
 the Python |DBAPI|_ specification and the thread safety (several threads can
 share the same connection). It was designed for heavily multi-threaded
 applications that create and destroy lots of cursors and make a large number
-of concurrent :sql:`INSERT`\s or :sql:`UPDATE`\s.  The Psycopg distribution
-includes ZPsycopgDA, a Zope_ Database Adapter.
+of concurrent :sql:`INSERT`\s or :sql:`UPDATE`\s.
 
 Psycopg 2 is mostly implemented in C as a libpq_ wrapper, resulting in being
 both efficient and secure. It features client-side and :ref:`server-side
@@ -33,7 +32,6 @@ Psycopg 2 is both Unicode and Python 3 friendly.
 .. _Psycopg: http://initd.org/psycopg/
 .. _PostgreSQL: http://www.postgresql.org/
 .. _Python: http://www.python.org/
-.. _Zope: http://www.zope.org/
 .. _libpq: http://www.postgresql.org/docs/current/static/libpq.html
 .. |COPY-TO-FROM| replace:: :sql:`COPY TO/COPY FROM`
 .. __: http://www.postgresql.org/docs/current/static/sql-copy.html
