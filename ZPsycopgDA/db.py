@@ -32,7 +32,7 @@ from psycopg2 import NUMBER, STRING, ROWID, DATETIME
 # the DB object, managing all the real query work
 
 class DB(TM, dbi_db.DB):
-    
+
     _p_oid = _p_changed = _registered = None
 
     def __init__(self, dsn, tilevel, typecasts, enc='utf-8'):
@@ -46,13 +46,18 @@ class DB(TM, dbi_db.DB):
         self.failures = 0
         self.calls = 0
         self.make_mappings()
-                        
+
     def getconn(self, init=True):
         # if init is False we are trying to get hold on an already existing
         # connection, so we avoid to (re)initialize it risking errors.
         conn = pool.getconn(self.dsn)
         if init:
-            conn.set_isolation_level(int(self.tilevel))
+            # use set_session where available as in these versions
+            # set_isolation_level generates an extra query.
+            if psycopg2.__version__ >= '2.4.2':
+                conn.set_session(isolation_level=int(self.tilevel))
+            else:
+                conn.set_isolation_level(int(self.tilevel))
             conn.set_client_encoding(self.encoding)
             for tc in self.typecasts:
                 register_type(tc, conn)
@@ -64,7 +69,7 @@ class DB(TM, dbi_db.DB):
         except AttributeError:
             pass
         pool.putconn(self.dsn, conn, close)
-        
+
     def getcursor(self):
         conn = self.getconn()
         return conn.cursor()
