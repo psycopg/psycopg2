@@ -71,7 +71,7 @@ class DB(TM, dbi_db.DB):
         pool.putconn(self.dsn, conn, close)
 
     def getcursor(self):
-        conn = self.getconn()
+        conn = self.getconn(False)
         return conn.cursor()
 
     def _finish(self, *ignored):
@@ -81,7 +81,7 @@ class DB(TM, dbi_db.DB):
             self.putconn()
         except AttributeError:
             pass
-            
+
     def _abort(self, *ignored):
         try:
             conn = self.getconn(False)
@@ -95,7 +95,7 @@ class DB(TM, dbi_db.DB):
         # then get and immediately release a connection
         self.getconn()
         self.putconn()
-        
+
     def close(self):
         # FIXME: if this connection is closed we flush all the pool associated
         # with the current DSN; does this makes sense?
