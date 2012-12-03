@@ -1222,7 +1222,9 @@ psyco_curs_exit(cursorObject *self, PyObject *args)
 
     /* don't care about the arguments here: don't need to parse them */
 
-    if (!(tmp = psyco_curs_close(self))) { goto exit; }
+    if (!(tmp = PyObject_CallMethod((PyObject *)self, "close", ""))) {
+        goto exit;
+    }
 
     /* success (of curs.close()).
      * Return None to avoid swallowing the exception */

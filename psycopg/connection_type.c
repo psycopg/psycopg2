@@ -417,9 +417,13 @@ psyco_conn_exit(connectionObject *self, PyObject *args)
     }
 
     if (type == Py_None) {
-        if (!(tmp = psyco_conn_commit(self))) { goto exit; }
+        if (!(tmp = PyObject_CallMethod((PyObject *)self, "commit", ""))) {
+            goto exit;
+        }
     } else {
-        if (!(tmp = psyco_conn_rollback(self))) { goto exit; }
+        if (!(tmp = PyObject_CallMethod((PyObject *)self, "rollback", ""))) {
+            goto exit;
+        }
     }
 
     /* success (of the commit or rollback, there may have been an exception in

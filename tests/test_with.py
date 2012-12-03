@@ -115,6 +115,48 @@ class WithConnectionTestCase(TestMixin, unittest.TestCase):
         self.conn.close()
         self.assertRaises(psycopg2.InterfaceError, f)
 
+    def test_subclass_commit(self):
+        commits = []
+        class MyConn(ext.connection):
+            def commit(self):
+                commits.append(None)
+                super(MyConn, self).commit()
+
+        with psycopg2.connect(dsn, connection_factory=MyConn) as conn:
+            curs = conn.cursor()
+            curs.execute("insert into test_with values (10)")
+
+        self.assertEqual(conn.status, ext.STATUS_READY)
+        self.assert_(commits)
+
+        curs = self.conn.cursor()
+        curs.execute("select * from test_with")
+        self.assertEqual(curs.fetchall(), [(10,)])
+
+    def test_subclass_rollback(self):
+        rollbacks = []
+        class MyConn(ext.connection):
+            def rollback(self):
+                rollbacks.append(None)
+                super(MyConn, self).rollback()
+
+        try:
+            with psycopg2.connect(dsn, connection_factory=MyConn) as conn:
+                curs = conn.cursor()
+                curs.execute("insert into test_with values (11)")
+                1/0
+        except ZeroDivisionError:
+            pass
+        else:
+            self.assert_("exception not raised")
+
+        self.assertEqual(conn.status, ext.STATUS_READY)
+        self.assert_(rollbacks)
+
+        curs = conn.cursor()
+        curs.execute("select * from test_with")
+        self.assertEqual(curs.fetchall(), [])
+
 
 class WithCursorTestCase(TestMixin, unittest.TestCase):
     def test_with_ok(self):
@@ -148,6 +190,19 @@ class WithCursorTestCase(TestMixin, unittest.TestCase):
         curs = self.conn.cursor()
         curs.execute("select * from test_with")
         self.assertEqual(curs.fetchall(), [])
+
+    def test_subclass(self):
+        closes = []
+        class MyCurs(ext.cursor):
+            def close(self):
+                closes.append(None)
+                super(MyCurs, self).close()
+
+        with self.conn.cursor(cursor_factory=MyCurs) as curs:
+            self.assert_(isinstance(curs, MyCurs))
+
+        self.assert_(curs.closed)
+        self.assert_(closes)
 
 
 def test_suite():
