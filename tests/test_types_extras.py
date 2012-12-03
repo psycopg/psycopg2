@@ -503,6 +503,7 @@ class AdaptTypeTestCase(unittest.TestCase):
             self.assertEqual(CompositeCaster.tokenize(s), v)
 
         ok("(,)", [None, None])
+        ok('(,"")', [None, ''])
         ok('(hello,,10.234,2010-11-11)', ['hello', None, '10.234', '2010-11-11'])
         ok('(10,"""")', ['10', '"'])
         ok('(10,",")', ['10', ','])
@@ -555,6 +556,26 @@ class AdaptTypeTestCase(unittest.TestCase):
             self.assertEqual(v.anint, 10)
             self.assertEqual(v.astring, "hello")
             self.assertEqual(v.adate, date(2011,1,2))
+
+    @skip_if_no_composite
+    def test_empty_string(self):
+        # issue #141
+        self._create_type("type_ss", [('s1', 'text'), ('s2', 'text')])
+        curs = self.conn.cursor()
+        psycopg2.extras.register_composite("type_ss", curs)
+
+        def ok(t):
+            curs.execute("select %s::type_ss", (t,))
+            rv = curs.fetchone()[0]
+            self.assertEqual(t, rv)
+
+        ok(('a', 'b'))
+        ok(('a', ''))
+        ok(('', 'b'))
+        ok(('a', None))
+        ok((None, 'b'))
+        ok(('', ''))
+        ok((None, None))
 
     @skip_if_no_composite
     def test_cast_nested(self):
