@@ -74,6 +74,10 @@ The ``connection`` class
         automatically open, commands have immediate effect. See
         :ref:`transactions-control` for details.
 
+        .. versionchanged:: 2.5 if the connection is used in a ``with``
+            statement, the method is automatically called if no exception is
+            raised in the ``with`` block.
+
 
     .. index::
         pair: Transaction; Rollback
@@ -83,6 +87,10 @@ The ``connection`` class
         Roll back to the start of any pending transaction.  Closing a
         connection without committing the changes first will cause an implicit
         rollback to be performed.
+
+        .. versionchanged:: 2.5 if the connection is used in a ``with``
+            statement, the method is automatically called if an exception is
+            raised in the ``with`` block.
 
 
     .. method:: close()

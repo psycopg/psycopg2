@@ -83,6 +83,11 @@ The ``cursor`` class
         The cursor will be unusable from this point forward; an
         `~psycopg2.InterfaceError` will be raised if any operation is
         attempted with the cursor.
+
+        .. versionchanged:: 2.5 if the cursor is used in a ``with`` statement,
+            the method is automatically called at the end of the ``with``
+            block.
+
             
     .. attribute:: closed
 

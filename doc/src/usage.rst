@@ -549,6 +549,30 @@ the details.
 
 
 .. index::
+    single: with statement
+
+``with`` statement
+^^^^^^^^^^^^^^^^^^
+
+Starting from version 2.5, psycopg2's connections and cursors are *context
+managers* and can be used with the ``with`` statement::
+
+    with psycopg2.connect(DSN) as conn:
+        with conn.cursor() as curs:
+            curs.execute(SQL)
+
+When a connection exits the ``with`` block, if no exception has been raised by
+the block, the transaction is committed. In case of exception the transaction
+is rolled back. In no case the connection is closed: a connection can be used
+in more than a ``with`` statement and each ``with`` block is effectively
+wrapped in a transaction.
+
+When a cursor exits the ``with`` block it is closed, releasing any resource
+eventually associated with it. The state of the transaction is not affected.
+
+
+
+.. index::
     pair: Server side; Cursor
     pair: Named; Cursor
     pair: DECLARE; SQL command
