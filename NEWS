@@ -33,6 +33,7 @@ What's new in psycopg 2.4.5
   - Discard any result produced by 'executemany()' (ticket #133).
   - Fixed pickling of FixedOffsetTimezone objects (ticket #135).
   - Release the GIL around PQgetResult calls after COPY (ticket #140).
+  - Fixed empty strings handling in composite caster (ticket #141).
 
 
 What's new in psycopg 2.4.5

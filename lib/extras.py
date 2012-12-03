@@ -852,9 +852,9 @@ class CompositeCaster(object):
         for m in self._re_tokenize.finditer(s):
             if m is None:
                 raise psycopg2.InterfaceError("can't parse type: %r" % s)
-            if m.group(1):
+            if m.group(1) is not None:
                 rv.append(None)
-            elif m.group(2):
+            elif m.group(2) is not None:
                 rv.append(self._re_undouble.sub(r"\1", m.group(2)))
             else:
                 rv.append(m.group(3))
