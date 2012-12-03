@@ -45,6 +45,11 @@ import test_transaction
 import test_types_basic
 import test_types_extras
 
+if sys.version_info[:2] >= (2, 5):
+    import test_with
+else:
+    test_with = None
+
 def test_suite():
     # If connection to test db fails, bail out early.
     import psycopg2
@@ -76,6 +81,8 @@ def test_suite():
     suite.addTest(test_transaction.test_suite())
     suite.addTest(test_types_basic.test_suite())
     suite.addTest(test_types_extras.test_suite())
+    if test_with:
+        suite.addTest(test_with.test_suite())
     return suite
 
 if __name__ == '__main__':

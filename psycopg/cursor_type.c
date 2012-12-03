@@ -1201,6 +1201,40 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
 }
 
 
+#define psyco_curs_enter_doc \
+"__enter__ -> self"
+
+static PyObject *
+psyco_curs_enter(cursorObject *self)
+{
+    Py_INCREF(self);
+    return (PyObject *)self;
+}
+
+#define psyco_curs_exit_doc \
+"__exit__ -- close the cursor"
+
+static PyObject *
+psyco_curs_exit(cursorObject *self, PyObject *args)
+{
+    PyObject *tmp = NULL;
+    PyObject *rv = NULL;
+
+    /* don't care about the arguments here: don't need to parse them */
+
+    if (!(tmp = psyco_curs_close(self))) { goto exit; }
+
+    /* success (of curs.close()).
+     * Return None to avoid swallowing the exception */
+    rv = Py_None;
+    Py_INCREF(rv);
+
+exit:
+    Py_XDECREF(tmp);
+    return rv;
+}
+
+
 #ifdef PSYCOPG_EXTENSIONS
 
 /* Return a newly allocated buffer containing the list of columns to be
@@ -1716,6 +1750,10 @@ static struct PyMethodDef cursorObject_methods[] = {
     /* DBAPI-2.0 extensions */
     {"scroll", (PyCFunction)psyco_curs_scroll,
      METH_VARARGS|METH_KEYWORDS, psyco_curs_scroll_doc},
+    {"__enter__", (PyCFunction)psyco_curs_enter,
+     METH_NOARGS, psyco_curs_enter_doc},
+    {"__exit__", (PyCFunction)psyco_curs_exit,
+     METH_VARARGS, psyco_curs_exit_doc},
     /* psycopg extensions */
 #ifdef PSYCOPG_EXTENSIONS
     {"cast", (PyCFunction)psyco_curs_cast,

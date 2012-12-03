@@ -389,6 +389,50 @@ psyco_conn_tpc_recover(connectionObject *self)
 }
 
 
+#define psyco_conn_enter_doc \
+"__enter__ -> self"
+
+static PyObject *
+psyco_conn_enter(connectionObject *self)
+{
+    EXC_IF_CONN_CLOSED(self);
+
+    Py_INCREF(self);
+    return (PyObject *)self;
+}
+
+
+#define psyco_conn_exit_doc \
+"__exit__ -- commit if no exception, else roll back"
+
+static PyObject *
+psyco_conn_exit(connectionObject *self, PyObject *args)
+{
+    PyObject *type, *name, *tb;
+    PyObject *tmp = NULL;
+    PyObject *rv = NULL;
+
+    if (!PyArg_ParseTuple(args, "OOO", &type, &name, &tb)) {
+        goto exit;
+    }
+
+    if (type == Py_None) {
+        if (!(tmp = psyco_conn_commit(self))) { goto exit; }
+    } else {
+        if (!(tmp = psyco_conn_rollback(self))) { goto exit; }
+    }
+
+    /* success (of the commit or rollback, there may have been an exception in
+     * the block). Return None to avoid swallowing the exception */
+    rv = Py_None;
+    Py_INCREF(rv);
+
+exit:
+    Py_XDECREF(tmp);
+    return rv;
+}
+
+
 #ifdef PSYCOPG_EXTENSIONS
 
 
@@ -924,6 +968,10 @@ static struct PyMethodDef connectionObject_methods[] = {
      METH_VARARGS, psyco_conn_tpc_rollback_doc},
     {"tpc_recover", (PyCFunction)psyco_conn_tpc_recover,
      METH_NOARGS, psyco_conn_tpc_recover_doc},
+    {"__enter__", (PyCFunction)psyco_conn_enter,
+     METH_NOARGS, psyco_conn_enter_doc},
+    {"__exit__", (PyCFunction)psyco_conn_exit,
+     METH_VARARGS, psyco_conn_exit_doc},
 #ifdef PSYCOPG_EXTENSIONS
     {"set_session", (PyCFunction)psyco_conn_set_session,
      METH_VARARGS|METH_KEYWORDS, psyco_conn_set_session_doc},
