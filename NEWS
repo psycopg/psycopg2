@@ -13,7 +13,7 @@ What's new in psycopg 2.5
   - 'errorcodes' map updated to PostgreSQL 9.2.
 
 
-What's new in psycopg 2.4.5
+What's new in psycopg 2.4.6
 ---------------------------
 
   - Fixed 'cursor()' arguments propagation in connection subclasses
