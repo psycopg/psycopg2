@@ -50,7 +50,7 @@ extern PyObject *pyPsycopgTzFixedOffsetTimezone;
 "close() -- Close the cursor."
 
 static PyObject *
-psyco_curs_close(cursorObject *self, PyObject *args)
+psyco_curs_close(cursorObject *self)
 {
     EXC_IF_ASYNC_IN_PROGRESS(self, close);
 
@@ -761,7 +761,7 @@ exit:
 }
 
 static PyObject *
-psyco_curs_fetchone(cursorObject *self, PyObject *args)
+psyco_curs_fetchone(cursorObject *self)
 {
     PyObject *res;
 
@@ -953,7 +953,7 @@ exit:
 "Return `!None` when no more data is available.\n"
 
 static PyObject *
-psyco_curs_fetchall(cursorObject *self, PyObject *args)
+psyco_curs_fetchall(cursorObject *self)
 {
     int i, size;
     PyObject *list = NULL;
@@ -1085,7 +1085,7 @@ exit:
 "sets) and will raise a NotSupportedError exception."
 
 static PyObject *
-psyco_curs_nextset(cursorObject *self, PyObject *args)
+psyco_curs_nextset(cursorObject *self)
 {
     EXC_IF_CURS_CLOSED(self);
 
@@ -1198,6 +1198,42 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
 
     Py_INCREF(Py_None);
     return Py_None;
+}
+
+
+#define psyco_curs_enter_doc \
+"__enter__ -> self"
+
+static PyObject *
+psyco_curs_enter(cursorObject *self)
+{
+    Py_INCREF(self);
+    return (PyObject *)self;
+}
+
+#define psyco_curs_exit_doc \
+"__exit__ -- close the cursor"
+
+static PyObject *
+psyco_curs_exit(cursorObject *self, PyObject *args)
+{
+    PyObject *tmp = NULL;
+    PyObject *rv = NULL;
+
+    /* don't care about the arguments here: don't need to parse them */
+
+    if (!(tmp = PyObject_CallMethod((PyObject *)self, "close", ""))) {
+        goto exit;
+    }
+
+    /* success (of curs.close()).
+     * Return None to avoid swallowing the exception */
+    rv = Py_None;
+    Py_INCREF(rv);
+
+exit:
+    Py_XDECREF(tmp);
+    return rv;
 }
 
 
@@ -1674,7 +1710,7 @@ cursor_next(PyObject *self)
 
     if (NULL == ((cursorObject*)self)->name) {
         /* we don't parse arguments: psyco_curs_fetchone will do that for us */
-        res = psyco_curs_fetchone((cursorObject*)self, NULL);
+        res = psyco_curs_fetchone((cursorObject*)self);
 
         /* convert a None to NULL to signal the end of iteration */
         if (res && res == Py_None) {
@@ -1716,6 +1752,10 @@ static struct PyMethodDef cursorObject_methods[] = {
     /* DBAPI-2.0 extensions */
     {"scroll", (PyCFunction)psyco_curs_scroll,
      METH_VARARGS|METH_KEYWORDS, psyco_curs_scroll_doc},
+    {"__enter__", (PyCFunction)psyco_curs_enter,
+     METH_NOARGS, psyco_curs_enter_doc},
+    {"__exit__", (PyCFunction)psyco_curs_exit,
+     METH_VARARGS, psyco_curs_exit_doc},
     /* psycopg extensions */
 #ifdef PSYCOPG_EXTENSIONS
     {"cast", (PyCFunction)psyco_curs_cast,
