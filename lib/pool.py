@@ -217,6 +217,10 @@ class PersistentConnectionPool(AbstractConnectionPool):
 
     def __init__(self, minconn, maxconn, *args, **kwargs):
         """Initialize the threading lock."""
+        import warnings
+        warnings.warn("deprecated: use ZPsycopgDA.pool implementation",
+            DeprecationWarning)
+
         import threading
         AbstractConnectionPool.__init__(
             self, minconn, maxconn, *args, **kwargs)
