@@ -245,6 +245,13 @@ class RealDictRow(dict):
             name = self._column_mapping[name]
         return dict.__setitem__(self, name, value)
 
+    def __getstate__(self):
+        return (self.copy(), self._column_mapping[:])
+
+    def __setstate__(self, data):
+        self.update(data[0])
+        self._column_mapping = data[1]
+
 
 class NamedTupleConnection(_connection):
     """A connection that uses `NamedTupleCursor` automatically."""
