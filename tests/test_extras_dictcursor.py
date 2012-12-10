@@ -205,6 +205,18 @@ class ExtrasDictCursorTests(unittest.TestCase):
         for i, r in enumerate(curs):
             self.assertEqual(i + 1, curs.rownumber)
 
+    def testPickleRealDictRow(self):
+        import pickle
+        curs = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        curs.execute("select 10 as a, 20 as b")
+        r = curs.fetchone()
+        d = pickle.dumps(r)
+        r1 = pickle.loads(d)
+        self.assertEqual(r, r1)
+        self.assertEqual(r['a'], r1['a'])
+        self.assertEqual(r['b'], r1['b'])
+        self.assertEqual(r._column_mapping, r1._column_mapping)
+
 
 class NamedTupleCursorTest(unittest.TestCase):
     def setUp(self):
