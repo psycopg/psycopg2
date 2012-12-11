@@ -184,7 +184,14 @@ class DictRow(list):
     def __contains__(self, x):
         return x in self._index
 
-    # grop the crusty Py2 methods
+    def __getstate__(self):
+        return self[:], self._index.copy()
+
+    def __setstate__(self, data):
+        self[:] = data[0]
+        self._index = data[1]
+
+    # drop the crusty Py2 methods
     if sys.version_info[0] > 2:
         items = iteritems; del iteritems
         keys = iterkeys; del iterkeys
