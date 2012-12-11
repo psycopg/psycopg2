@@ -20,7 +20,7 @@ What's new in psycopg 2.4.6
   - Fixed pickling of FixedOffsetTimezone objects (ticket #135).
   - Release the GIL around PQgetResult calls after COPY (ticket #140).
   - Fixed empty strings handling in composite caster (ticket #141).
-  - Fixed pickling of RealDictRow objects.
+  - Fixed pickling of DictRow and RealDictRow objects.
 
 
 What's new in psycopg 2.4.5
