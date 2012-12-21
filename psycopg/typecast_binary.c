@@ -93,7 +93,6 @@ int chunk_getbuffer(PyObject *_self, Py_buffer *view, int flags)
     chunkObject *self = (chunkObject*)_self;
     rv = PyBuffer_FillInfo(view, _self, self->base, self->len, 1, flags);
     if (rv == 0) {
-        /* TODO: is this really the way to do it? */
         view->format = "c";
     }
     return rv;
