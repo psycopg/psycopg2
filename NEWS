@@ -3,6 +3,7 @@ What's new in psycopg 2.5
 
   - Added JSON adaptation.
   - Added support for PostgreSQL 9.2 range types.
+  - Added support for Python 3.3.
   - 'connection' and 'cursor' objects can be used in 'with' statements
     as context managers as specified by recent DBAPI extension.
   - Added support for backward scrollable cursors. Thanks to Jon Nelson
