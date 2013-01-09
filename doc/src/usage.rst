@@ -223,7 +223,7 @@ the SQL string that would be sent to the database.
   proper SQL literals::
 
     >>> cur.mogrify("SELECT %s, %s, %s;", (None, True, False))
-    >>> 'SELECT NULL, true, false;'
+    'SELECT NULL, true, false;'
 
 .. _adapt-numbers:
 
@@ -237,7 +237,7 @@ the SQL string that would be sent to the database.
   the PostgreSQL numerical representation::
 
     >>> cur.mogrify("SELECT %s, %s, %s, %s;", (10, 10L, 10.0, Decimal("10.00")))
-    >>> 'SELECT 10, 10, 10.0, 10.00;'
+    'SELECT 10, 10, 10.0, 10.00;'
 
 .. _adapt-string:
 
