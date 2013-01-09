@@ -7,7 +7,7 @@ The `psycopg2` module content
 
 The module interface respects the standard defined in the |DBAPI|_.
 
-.. index:: 
+.. index::
     single: Connection string
     double: Connection; Parameters
     single: Username; Connection
@@ -16,11 +16,14 @@ The module interface respects the standard defined in the |DBAPI|_.
     single: Port; Connection
     single: DSN (Database Source Name)
 
-.. function:: connect(dsn or params [, connection_factory] [, async=0])
+.. function::
+    connect(dsn, connection_factory=None, async=False)
+    connect(\*\*kwargs, connection_factory=None, async=False)
 
     Create a new database session and return a new `connection` object.
 
-    The connection parameters can be specified either as a string::
+    The connection parameters can be specified either as a `libpq connection
+    string`__ using the *dsn* parameter::
 
         conn = psycopg2.connect("dbname=test user=postgres password=secret")
 
@@ -28,9 +31,14 @@ The module interface respects the standard defined in the |DBAPI|_.
 
         conn = psycopg2.connect(database="test", user="postgres", password="secret")
 
+    The two call styles are mutually exclusive: you cannot specify connection
+    parameters as keyword arguments together with a connection string; only
+    *connection_factory* and *async* are supported together with the *dsn*
+    argument.
+
     The basic connection parameters are:
 
-    - `!dbname` -- the database name (only in dsn string)
+    - `!dbname` -- the database name (only in the *dsn* string)
     - `!database` -- the database name (only as keyword argument)
     - `!user` -- user name used to authenticate
     - `!password` -- password used to authenticate
@@ -38,25 +46,39 @@ The module interface respects the standard defined in the |DBAPI|_.
     - `!port` -- connection port number (defaults to 5432 if not provided)
 
     Any other connection parameter supported by the client library/server can
-    be passed either in the connection string or as keyword. See the
-    PostgreSQL documentation for a complete `list of supported parameters`__.
+    be passed either in the connection string or as keywords. The PostgreSQL
+    documentation contains the complete list of the `supported parameters`__.
     Also note that the same parameters can be passed to the client library
     using `environment variables`__.
 
-    .. __: http://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-PQCONNECTDBPARAMS
-    .. __: http://www.postgresql.org/docs/current/static/libpq-envars.html
+    .. __:
+    .. _connstring: http://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-CONNSTRING
+    .. __:
+    .. _connparams: http://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-PARAMKEYWORDS
+    .. __:
+    .. _connenvvars: http://www.postgresql.org/docs/current/static/libpq-envars.html
 
     Using the *connection_factory* parameter a different class or
     connections factory can be specified. It should be a callable object
-    taking a *dsn* argument. See :ref:`subclassing-connection` for
+    taking a *dsn* string argument. See :ref:`subclassing-connection` for
     details.
 
-    Using *async*\=1 an asynchronous connection will be created: see
+    Using *async*\=\ `!True` an asynchronous connection will be created: see
     :ref:`async-support` to know about advantages and limitations.
 
     .. versionchanged:: 2.4.3
         any keyword argument is passed to the connection. Previously only the
         basic parameters (plus `!sslmode`) were supported as keywords.
+
+    .. seealso::
+
+        - libpq `connection string syntax`__
+        - libpq supported `connection parameters`__
+        - libpq supported `environment variables`__
+
+        .. __: connstring_
+        .. __: connparams_
+        .. __: connenvvars_
 
     .. extension::
 
