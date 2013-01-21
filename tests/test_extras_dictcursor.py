@@ -35,6 +35,16 @@ class ExtrasDictCursorTests(unittest.TestCase):
     def tearDown(self):
         self.conn.close()
 
+    def testDictConnCursorArgs(self):
+        self.conn.close()
+        self.conn = psycopg2.connect(dsn, connection_factory=psycopg2.extras.DictConnection)
+        cur = self.conn.cursor()
+        self.assert_(isinstance(cur, psycopg2.extras.DictCursor))
+        self.assertEqual(cur.name, None)
+        # overridable
+        cur = self.conn.cursor('foo', cursor_factory=psycopg2.extras.NamedTupleCursor)
+        self.assertEqual(cur.name, 'foo')
+        self.assert_(isinstance(cur, psycopg2.extras.NamedTupleCursor))
 
     def testDictCursorWithPlainCursorFetchOne(self):
         self._testWithPlainCursor(lambda curs: curs.fetchone())
@@ -195,6 +205,32 @@ class ExtrasDictCursorTests(unittest.TestCase):
         for i, r in enumerate(curs):
             self.assertEqual(i + 1, curs.rownumber)
 
+    def testPickleDictRow(self):
+        import pickle
+        curs = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        curs.execute("select 10 as a, 20 as b")
+        r = curs.fetchone()
+        d = pickle.dumps(r)
+        r1 = pickle.loads(d)
+        self.assertEqual(r, r1)
+        self.assertEqual(r[0], r1[0])
+        self.assertEqual(r[1], r1[1])
+        self.assertEqual(r['a'], r1['a'])
+        self.assertEqual(r['b'], r1['b'])
+        self.assertEqual(r._index, r1._index)
+
+    def testPickleRealDictRow(self):
+        import pickle
+        curs = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        curs.execute("select 10 as a, 20 as b")
+        r = curs.fetchone()
+        d = pickle.dumps(r)
+        r1 = pickle.loads(d)
+        self.assertEqual(r, r1)
+        self.assertEqual(r['a'], r1['a'])
+        self.assertEqual(r['b'], r1['b'])
+        self.assertEqual(r._column_mapping, r1._column_mapping)
+
 
 class NamedTupleCursorTest(unittest.TestCase):
     def setUp(self):
@@ -218,6 +254,12 @@ class NamedTupleCursorTest(unittest.TestCase):
     def tearDown(self):
         if self.conn is not None:
             self.conn.close()
+
+    @skip_if_no_namedtuple
+    def test_cursor_args(self):
+        cur = self.conn.cursor('foo', cursor_factory=psycopg2.extras.DictCursor)
+        self.assertEqual(cur.name, 'foo')
+        self.assert_(isinstance(cur, psycopg2.extras.DictCursor))
 
     @skip_if_no_namedtuple
     def test_fetchone(self):

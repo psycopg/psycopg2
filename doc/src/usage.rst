@@ -97,6 +97,9 @@ many placeholders can use the same values::
     ...         VALUES (%(int)s, %(date)s, %(date)s, %(str)s);""",
     ...     {'int': 10, 'str': "O'Reilly", 'date': datetime.date(2005, 11, 18)})
 
+When parameters are used, in order to include a literal ``%`` in the query you
+can use the ``%%`` string.
+
 While the mechanism resembles regular Python strings manipulation, there are a
 few subtle differences you should care about when passing parameters to a
 query:
@@ -196,7 +199,7 @@ argument of the `~cursor.execute()` method::
 Adaptation of Python values to SQL types
 ----------------------------------------
 
-Many standards Python types are adapted into SQL and returned as Python
+Many standard Python types are adapted into SQL and returned as Python
 objects when a query is executed.
 
 If you need to convert other Python types to and from PostgreSQL data types,
@@ -513,12 +516,12 @@ issued by all the cursors created by the same connection.  Should any command
 fail, the transaction will be aborted and no further command will be executed
 until a call to the `~connection.rollback()` method.
 
-The connection is responsible to terminate its transaction, calling either the
-`~connection.commit()` or `~connection.rollback()` method.  Committed
+The connection is responsible for terminating its transaction, calling either
+the `~connection.commit()` or `~connection.rollback()` method.  Committed
 changes are immediately made persistent into the database.  Closing the
 connection using the `~connection.close()` method or destroying the
 connection object (using `!del` or letting it fall out of scope)
-will result in an implicit `!rollback()` call.
+will result in an implicit rollback.
 
 It is possible to set the connection in *autocommit* mode: this way all the
 commands executed will be immediately committed and no rollback is possible. A

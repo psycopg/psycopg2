@@ -896,7 +896,7 @@ conn_poll(connectionObject *self)
             /* fetch the tuples (if there are any) and build the result. We
              * don't care if pq_fetch return 0 or 1, but if there was an error,
              * we want to signal it to the caller. */
-            if (pq_fetch(curs) == -1) {
+            if (pq_fetch(curs, 0) == -1) {
                res = PSYCO_POLL_ERROR;
             }
 
@@ -922,11 +922,23 @@ conn_close(connectionObject *self)
         return;
     }
 
-    /* sets this connection as closed even for other threads; also note that
-       we need to check the value of pgconn, because we get called even when
-       the connection fails! */
+    /* sets this connection as closed even for other threads; */
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
+
+    conn_close_locked(self);
+
+    pthread_mutex_unlock(&self->lock);
+    Py_END_ALLOW_THREADS;
+}
+
+/* conn_close_locked - shut down the connection with the lock already taken */
+
+void conn_close_locked(connectionObject *self)
+{
+    if (self->closed) {
+        return;
+    }
 
     /* We used to call pq_abort_locked here, but the idea of issuing a
      * rollback on close/GC has been considered inappropriate.
@@ -937,9 +949,10 @@ conn_close(connectionObject *self)
      * transaction though: to avoid these problems the transaction should be
      * closed only in status CONN_STATUS_READY.
      */
-
     self->closed = 1;
 
+    /* we need to check the value of pgconn, because we get called even when
+     * the connection fails! */
     if (self->pgconn) {
         PQfinish(self->pgconn);
         self->pgconn = NULL;
@@ -947,9 +960,6 @@ conn_close(connectionObject *self)
         PQfreeCancel(self->cancel);
         self->cancel = NULL;
     }
-
-    pthread_mutex_unlock(&self->lock);
-    Py_END_ALLOW_THREADS;
 }
 
 /* conn_commit - commit on a connection */

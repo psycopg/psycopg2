@@ -433,6 +433,8 @@ static struct {
 };
 
 
+#if PY_VERSION_HEX >= 0x02050000
+
 /* Error.__reduce_ex__
  *
  * The method is required to make exceptions picklable: set the cursor
@@ -484,6 +486,8 @@ error:
     return rv;
 }
 
+#endif  /* PY_VERSION_HEX >= 0x02050000 */
+
 static int
 psyco_errors_init(void)
 {
@@ -498,8 +502,10 @@ psyco_errors_init(void)
     PyObject *descr = NULL;
     int rv = -1;
 
+#if PY_VERSION_HEX >= 0x02050000
     static PyMethodDef psyco_error_reduce_ex_def =
         {"__reduce_ex__", psyco_error_reduce_ex, METH_VARARGS, "pickle helper"};
+#endif
 
     for (i=0; exctable[i].name; i++) {
         if (!(dict = PyDict_New())) { goto exit; }

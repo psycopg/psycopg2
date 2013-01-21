@@ -458,8 +458,8 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
         cnn.close()
         return rv
 
-    def connect(self):
-        conn = psycopg2.connect(dsn)
+    def connect(self, **kwargs):
+        conn = psycopg2.connect(dsn, **kwargs)
         self._conns.append(conn)
         return conn
 
@@ -759,6 +759,20 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
         cnn.tpc_begin('cancel')
         cnn.tpc_prepare()
         self.assertRaises(psycopg2.ProgrammingError, cnn.cancel)
+
+    def test_tpc_recover_non_dbapi_connection(self):
+        from psycopg2.extras import RealDictConnection
+        cnn = self.connect(connection_factory=RealDictConnection)
+        cnn.tpc_begin('dict-connection')
+        cnn.tpc_prepare()
+        cnn.reset()
+
+        xids = cnn.tpc_recover()
+        xid = [ xid for xid in xids if xid.database == dbname ][0]
+        self.assertEqual(None, xid.format_id)
+        self.assertEqual('dict-connection', xid.gtrid)
+        self.assertEqual(None, xid.bqual)
+
 
 from testutils import skip_if_tpc_disabled
 decorate_all_tests(ConnectionTwoPhaseTests, skip_if_tpc_disabled)

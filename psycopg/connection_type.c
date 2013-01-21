@@ -42,7 +42,7 @@
 /* cursor method - allocate a new cursor */
 
 #define psyco_conn_cursor_doc \
-"cursor(name=None, cursor_factory=extensions.cursor, withhold=None) -- new cursor\n\n"     \
+"cursor(name=None, cursor_factory=extensions.cursor, withhold=False) -- new cursor\n\n"     \
 "Return a new cursor.\n\nThe ``cursor_factory`` argument can be used to\n"  \
 "create non-standard cursors by passing a class different from the\n"       \
 "default. Note that the new class *should* be a sub-class of\n"             \
@@ -50,26 +50,26 @@
 ":rtype: `extensions.cursor`"
 
 static PyObject *
-psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *keywds)
+psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *kwargs)
 {
-    const char *name = NULL;
-    PyObject *obj, *factory = NULL, *withhold = NULL;
+    PyObject *obj;
+    PyObject *name = Py_None;
+    PyObject *factory = (PyObject *)&cursorType;
+    PyObject *withhold = Py_False;
 
     static char *kwlist[] = {"name", "cursor_factory", "withhold", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sOO", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|OOO", kwlist,
                                      &name, &factory, &withhold)) {
         return NULL;
     }
 
-    if (withhold != NULL) {
-        if (PyObject_IsTrue(withhold) && name == NULL) {
-            PyErr_SetString(ProgrammingError,
-                "'withhold=True can be specified only for named cursors");
-            return NULL;
-        }
+    if (PyObject_IsTrue(withhold) && (name == Py_None)) {
+        PyErr_SetString(ProgrammingError,
+            "'withhold=True can be specified only for named cursors");
+        return NULL;
     }
-    
+
     EXC_IF_CONN_CLOSED(self);
 
     if (self->status != CONN_STATUS_READY &&
@@ -80,31 +80,28 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *keywds)
         return NULL;
     }
 
-    if (name != NULL && self->async == 1) {
+    if (name != Py_None && self->async == 1) {
         PyErr_SetString(ProgrammingError,
                         "asynchronous connections "
                         "cannot produce named cursors");
         return NULL;
     }
 
-    Dprintf("psyco_conn_cursor: new cursor for connection at %p", self);
-    Dprintf("psyco_conn_cursor:     parameters: name = %s", name);
+    Dprintf("psyco_conn_cursor: new %s cursor for connection at %p",
+        (name == Py_None ? "unnamed" : "named"), self);
 
-    if (factory == NULL) factory = (PyObject *)&cursorType;
-    if (name)
-        obj = PyObject_CallFunction(factory, "Os", self, name);
-    else
-        obj = PyObject_CallFunctionObjArgs(factory, self, NULL);
+    if (!(obj = PyObject_CallFunctionObjArgs(factory, self, name, NULL))) {
+        return NULL;
+    }
 
-    if (obj == NULL) return NULL;
     if (PyObject_IsInstance(obj, (PyObject *)&cursorType) == 0) {
         PyErr_SetString(PyExc_TypeError,
             "cursor factory must be subclass of psycopg2._psycopg.cursor");
         Py_DECREF(obj);
         return NULL;
     }
-    
-    if (withhold != NULL && PyObject_IsTrue(withhold))
+
+    if (PyObject_IsTrue(withhold))
         ((cursorObject*)obj)->withhold = 1;
 
     Dprintf("psyco_conn_cursor: new cursor at %p: refcnt = "

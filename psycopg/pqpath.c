@@ -829,12 +829,16 @@ pq_flush(connectionObject *conn)
 }
 
 /* pq_execute - execute a query, possibly asynchronously
-
-   this fucntion locks the connection object
-   this function call Py_*_ALLOW_THREADS macros */
+ *
+ * With no_result an eventual query result is discarded.
+ * Currently only used to implement cursor.executemany().
+ *
+ * This function locks the connection object
+ * This function call Py_*_ALLOW_THREADS macros
+*/
 
 RAISES_NEG int
-pq_execute(cursorObject *curs, const char *query, int async)
+pq_execute(cursorObject *curs, const char *query, int async, int no_result)
 {
     PGresult *pgres = NULL;
     char *error = NULL;
@@ -938,7 +942,7 @@ pq_execute(cursorObject *curs, const char *query, int async)
        to respect the old DBAPI-2.0 compatible behaviour */
     if (async == 0) {
         Dprintf("pq_execute: entering syncronous DBAPI compatibility mode");
-        if (pq_fetch(curs) < 0) return -1;
+        if (pq_fetch(curs, no_result) < 0) return -1;
     }
     else {
         PyObject *tmp;
@@ -976,7 +980,7 @@ pq_send_query(connectionObject *conn, const char *query)
 
 /* Return the last result available on the connection.
  *
- * The function will block will block only if a command is active and the
+ * The function will block only if a command is active and the
  * necessary response data has not yet been read by PQconsumeInput.
  *
  * The result should be disposed using PQclear()
@@ -1302,9 +1306,9 @@ _pq_copy_in_v3(cursorObject *curs)
         res = PQputCopyEnd(curs->conn->pgconn, "error in .read() call");
 
     IFCLEARPGRES(curs->pgres);
-    
+
     Dprintf("_pq_copy_in_v3: copy ended; res = %d", res);
-    
+
     /* if the result is -1 we should not even try to get a result from the
        bacause that will lock the current thread forever */
     if (res == -1) {
@@ -1316,7 +1320,13 @@ _pq_copy_in_v3(cursorObject *curs)
     }
     else {
         /* and finally we grab the operation result from the backend */
-        while ((curs->pgres = PQgetResult(curs->conn->pgconn)) != NULL) {
+        for (;;) {
+            Py_BEGIN_ALLOW_THREADS;
+            curs->pgres = PQgetResult(curs->conn->pgconn);
+            Py_END_ALLOW_THREADS;
+
+            if (NULL == curs->pgres)
+                break;
             if (PQresultStatus(curs->pgres) == PGRES_FATAL_ERROR)
                 pq_raise(curs->conn, curs, NULL);
             IFCLEARPGRES(curs->pgres);
@@ -1386,7 +1396,13 @@ _pq_copy_out_v3(cursorObject *curs)
 
     /* and finally we grab the operation result from the backend */
     IFCLEARPGRES(curs->pgres);
-    while ((curs->pgres = PQgetResult(curs->conn->pgconn)) != NULL) {
+    for (;;) {
+        Py_BEGIN_ALLOW_THREADS;
+        curs->pgres = PQgetResult(curs->conn->pgconn);
+        Py_END_ALLOW_THREADS;
+
+        if (NULL == curs->pgres)
+            break;
         if (PQresultStatus(curs->pgres) == PGRES_FATAL_ERROR)
             pq_raise(curs->conn, curs, NULL);
         IFCLEARPGRES(curs->pgres);
@@ -1399,7 +1415,7 @@ exit:
 }
 
 int
-pq_fetch(cursorObject *curs)
+pq_fetch(cursorObject *curs, int no_result)
 {
     int pgstatus, ex = -1;
     const char *rowcount;
@@ -1463,10 +1479,18 @@ pq_fetch(cursorObject *curs)
         break;
 
     case PGRES_TUPLES_OK:
-        Dprintf("pq_fetch: data from a SELECT (got tuples)");
-        curs->rowcount = PQntuples(curs->pgres);
-        if (0 == _pq_fetch_tuples(curs)) { ex = 0; }
-        /* don't clear curs->pgres, because it contains the results! */
+        if (!no_result) {
+            Dprintf("pq_fetch: got tuples");
+            curs->rowcount = PQntuples(curs->pgres);
+            if (0 == _pq_fetch_tuples(curs)) { ex = 0; }
+            /* don't clear curs->pgres, because it contains the results! */
+        }
+        else {
+            Dprintf("pq_fetch: got tuples, discarding them");
+            IFCLEARPGRES(curs->pgres);
+            curs->rowcount = -1;
+            ex = 0;
+        }
         break;
 
     case PGRES_EMPTY_QUERY:

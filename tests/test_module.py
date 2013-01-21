@@ -40,10 +40,10 @@ class ConnectTestCase(unittest.TestCase):
         psycopg2._connect = self._connect_orig
 
     def test_there_has_to_be_something(self):
-        self.assertRaises(psycopg2.InterfaceError, psycopg2.connect)
-        self.assertRaises(psycopg2.InterfaceError, psycopg2.connect,
+        self.assertRaises(TypeError, psycopg2.connect)
+        self.assertRaises(TypeError, psycopg2.connect,
             connection_factory=lambda dsn, async=False: None)
-        self.assertRaises(psycopg2.InterfaceError, psycopg2.connect,
+        self.assertRaises(TypeError, psycopg2.connect,
             async=True)
 
     def test_no_keywords(self):
@@ -126,6 +126,14 @@ class ConnectTestCase(unittest.TestCase):
 
         psycopg2.connect(database=r"\every thing'")
         self.assertEqual(self.args[0], r"dbname='\\every thing\''")
+
+    def test_no_kwargs_swallow(self):
+        self.assertRaises(TypeError,
+            psycopg2.connect, 'dbname=foo', database='foo')
+        self.assertRaises(TypeError,
+            psycopg2.connect, 'dbname=foo', user='postgres')
+        self.assertRaises(TypeError,
+            psycopg2.connect, 'dbname=foo', no_such_param='meh')
 
 
 class ExceptionsTestCase(unittest.TestCase):

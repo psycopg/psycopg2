@@ -1,3 +1,28 @@
+What's new in psycopg 2.4.6
+---------------------------
+
+  - Fixed 'cursor()' arguments propagation in connection subclasses
+    and overriding of the 'cursor_factory' argument.  Thanks to
+    Corry Haines for the report and the initial patch (ticket #105).
+  - Dropped GIL release during string adaptation around a function call
+    invoking a Python API function, which could cause interpreter crash.
+    Thanks to Manu Cupcic for the report (ticket #110).
+  - Close a green connection if there is an error in the callback.
+    Maybe a harsh solution but it leaves the program responsive
+    (ticket #113).
+  - 'register_hstore()', 'register_composite()', 'tpc_recover()' work with
+    RealDictConnection and Cursor (ticket #114).
+  - Fixed broken pool for Zope and connections re-init across ZSQL methods
+    in the same request (tickets #123, #125, #142).
+  - connect() raises an exception instead of swallowing keyword arguments
+    when a connection string is specified as well (ticket #131).
+  - Discard any result produced by 'executemany()' (ticket #133).
+  - Fixed pickling of FixedOffsetTimezone objects (ticket #135).
+  - Release the GIL around PQgetResult calls after COPY (ticket #140).
+  - Fixed empty strings handling in composite caster (ticket #141).
+  - Fixed pickling of DictRow and RealDictRow objects.
+
+
 What's new in psycopg 2.4.5
 ---------------------------
 

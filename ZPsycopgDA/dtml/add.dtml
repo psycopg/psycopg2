@@ -78,8 +78,10 @@ or DSN for short) is a string... (TODO: finish docs)
     </td>
     <td align="left" valign="top">
       <select name="tilevel:int">
+        <option value="4">Read uncommitted</option>
         <option value="1">Read committed</option>
-        <option value="2" selected="YES">Serializable</option>
+        <option value="2" selected="YES">Repeatable read</option>
+        <option value="3">Serializable</option>
       </select>
     </td>
   </tr>

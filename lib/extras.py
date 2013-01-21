@@ -54,46 +54,46 @@ class DictCursorBase(_cursor):
         else:
             raise NotImplementedError(
                 "DictCursorBase can't be instantiated without a row factory.")
-        _cursor.__init__(self, *args, **kwargs)
+        super(DictCursorBase, self).__init__(*args, **kwargs)
         self._query_executed = 0
         self._prefetch = 0
         self.row_factory = row_factory
 
     def fetchone(self):
         if self._prefetch:
-            res = _cursor.fetchone(self)
+            res = super(DictCursorBase, self).fetchone()
         if self._query_executed:
             self._build_index()
         if not self._prefetch:
-            res = _cursor.fetchone(self)
+            res = super(DictCursorBase, self).fetchone()
         return res
 
     def fetchmany(self, size=None):
         if self._prefetch:
-            res = _cursor.fetchmany(self, size)
+            res = super(DictCursorBase, self).fetchmany(size)
         if self._query_executed:
             self._build_index()
         if not self._prefetch:
-            res = _cursor.fetchmany(self, size)
+            res = super(DictCursorBase, self).fetchmany(size)
         return res
 
     def fetchall(self):
         if self._prefetch:
-            res = _cursor.fetchall(self)
+            res = super(DictCursorBase, self).fetchall()
         if self._query_executed:
             self._build_index()
         if not self._prefetch:
-            res = _cursor.fetchall(self)
+            res = super(DictCursorBase, self).fetchall()
         return res
 
     def __iter__(self):
         if self._prefetch:
-            res = _cursor.__iter__(self)
+            res = super(DictCursorBase, self).__iter__()
             first = res.next()
         if self._query_executed:
             self._build_index()
         if not self._prefetch:
-            res = _cursor.__iter__(self)
+            res = super(DictCursorBase, self).__iter__()
             first = res.next()
 
         yield first
@@ -103,29 +103,27 @@ class DictCursorBase(_cursor):
 
 class DictConnection(_connection):
     """A connection that uses `DictCursor` automatically."""
-    def cursor(self, name=None):
-        if name is None:
-            return _connection.cursor(self, cursor_factory=DictCursor)
-        else:
-            return _connection.cursor(self, name, cursor_factory=DictCursor)
+    def cursor(self, *args, **kwargs):
+        kwargs.setdefault('cursor_factory', DictCursor)
+        return super(DictConnection, self).cursor(*args, **kwargs)
 
 class DictCursor(DictCursorBase):
     """A cursor that keeps a list of column name -> index mappings."""
 
     def __init__(self, *args, **kwargs):
         kwargs['row_factory'] = DictRow
-        DictCursorBase.__init__(self, *args, **kwargs)
+        super(DictCursor, self).__init__(*args, **kwargs)
         self._prefetch = 1
 
     def execute(self, query, vars=None):
         self.index = {}
         self._query_executed = 1
-        return _cursor.execute(self, query, vars)
+        return super(DictCursor, self).execute(query, vars)
 
     def callproc(self, procname, vars=None):
         self.index = {}
         self._query_executed = 1
-        return _cursor.callproc(self, procname, vars)
+        return super(DictCursor, self).callproc(procname, vars)
 
     def _build_index(self):
         if self._query_executed == 1 and self.description:
@@ -186,7 +184,14 @@ class DictRow(list):
     def __contains__(self, x):
         return x in self._index
 
-    # grop the crusty Py2 methods
+    def __getstate__(self):
+        return self[:], self._index.copy()
+
+    def __setstate__(self, data):
+        self[:] = data[0]
+        self._index = data[1]
+
+    # drop the crusty Py2 methods
     if sys.version_info[0] > 2:
         items = iteritems; del iteritems
         keys = iterkeys; del iterkeys
@@ -196,11 +201,9 @@ class DictRow(list):
 
 class RealDictConnection(_connection):
     """A connection that uses `RealDictCursor` automatically."""
-    def cursor(self, name=None):
-        if name is None:
-            return _connection.cursor(self, cursor_factory=RealDictCursor)
-        else:
-            return _connection.cursor(self, name, cursor_factory=RealDictCursor)
+    def cursor(self, *args, **kwargs):
+        kwargs.setdefault('cursor_factory', RealDictCursor)
+        return super(RealDictConnection, self).cursor(*args, **kwargs)
 
 class RealDictCursor(DictCursorBase):
     """A cursor that uses a real dict as the base type for rows.
@@ -210,21 +213,20 @@ class RealDictCursor(DictCursorBase):
     to access database rows both as a dictionary and a list, then use
     the generic `DictCursor` instead of `!RealDictCursor`.
     """
-
     def __init__(self, *args, **kwargs):
         kwargs['row_factory'] = RealDictRow
-        DictCursorBase.__init__(self, *args, **kwargs)
+        super(RealDictCursor, self).__init__(*args, **kwargs)
         self._prefetch = 0
 
     def execute(self, query, vars=None):
         self.column_mapping = []
         self._query_executed = 1
-        return _cursor.execute(self, query, vars)
+        return super(RealDictCursor, self).execute(query, vars)
 
     def callproc(self, procname, vars=None):
         self.column_mapping = []
         self._query_executed = 1
-        return _cursor.callproc(self, procname, vars)
+        return super(RealDictCursor, self).callproc(procname, vars)
 
     def _build_index(self):
         if self._query_executed == 1 and self.description:
@@ -250,12 +252,19 @@ class RealDictRow(dict):
             name = self._column_mapping[name]
         return dict.__setitem__(self, name, value)
 
+    def __getstate__(self):
+        return (self.copy(), self._column_mapping[:])
+
+    def __setstate__(self, data):
+        self.update(data[0])
+        self._column_mapping = data[1]
+
 
 class NamedTupleConnection(_connection):
     """A connection that uses `NamedTupleCursor` automatically."""
     def cursor(self, *args, **kwargs):
-        kwargs['cursor_factory'] = NamedTupleCursor
-        return _connection.cursor(self, *args, **kwargs)
+        kwargs.setdefault('cursor_factory', NamedTupleCursor)
+        return super(NamedTupleConnection, self).cursor(*args, **kwargs)
 
 class NamedTupleCursor(_cursor):
     """A cursor that generates results as `~collections.namedtuple`.
@@ -277,18 +286,18 @@ class NamedTupleCursor(_cursor):
 
     def execute(self, query, vars=None):
         self.Record = None
-        return _cursor.execute(self, query, vars)
+        return super(NamedTupleCursor, self).execute(query, vars)
 
     def executemany(self, query, vars):
         self.Record = None
-        return _cursor.executemany(self, query, vars)
+        return super(NamedTupleCursor, self).executemany(query, vars)
 
     def callproc(self, procname, vars=None):
         self.Record = None
-        return _cursor.callproc(self, procname, vars)
+        return super(NamedTupleCursor, self).callproc(procname, vars)
 
     def fetchone(self):
-        t = _cursor.fetchone(self)
+        t = super(NamedTupleCursor, self).fetchone()
         if t is not None:
             nt = self.Record
             if nt is None:
@@ -296,21 +305,21 @@ class NamedTupleCursor(_cursor):
             return nt(*t)
 
     def fetchmany(self, size=None):
-        ts = _cursor.fetchmany(self, size)
+        ts = super(NamedTupleCursor, self).fetchmany(size)
         nt = self.Record
         if nt is None:
             nt = self.Record = self._make_nt()
         return [nt(*t) for t in ts]
 
     def fetchall(self):
-        ts = _cursor.fetchall(self)
+        ts = super(NamedTupleCursor, self).fetchall()
         nt = self.Record
         if nt is None:
             nt = self.Record = self._make_nt()
         return [nt(*t) for t in ts]
 
     def __iter__(self):
-        it = _cursor.__iter__(self)
+        it = super(NamedTupleCursor, self).__iter__()
         t = it.next()
 
         nt = self.Record
@@ -349,7 +358,7 @@ class LoggingConnection(_connection):
             self.log = self._logtologger
         else:
             self.log = self._logtofile
-    
+
     def filter(self, msg, curs):
         """Filter the query before logging it.
 
@@ -358,51 +367,49 @@ class LoggingConnection(_connection):
         just does nothing.
         """
         return msg
-    
+
     def _logtofile(self, msg, curs):
         msg = self.filter(msg, curs)
         if msg: self._logobj.write(msg + os.linesep)
-        
+
     def _logtologger(self, msg, curs):
         msg = self.filter(msg, curs)
         if msg: self._logobj.debug(msg)
-    
+
     def _check(self):
         if not hasattr(self, '_logobj'):
             raise self.ProgrammingError(
                 "LoggingConnection object has not been initialize()d")
-            
-    def cursor(self, name=None):
+
+    def cursor(self, *args, **kwargs):
         self._check()
-        if name is None:
-            return _connection.cursor(self, cursor_factory=LoggingCursor)
-        else:
-            return _connection.cursor(self, name, cursor_factory=LoggingCursor)
+        kwargs.setdefault('cursor_factory', LoggingCursor)
+        return super(LoggingConnection, self).cursor(*args, **kwargs)
 
 class LoggingCursor(_cursor):
     """A cursor that logs queries using its connection logging facilities."""
 
     def execute(self, query, vars=None):
         try:
-            return _cursor.execute(self, query, vars)
+            return super(LoggingCursor, self).execute(query, vars)
         finally:
             self.connection.log(self.query, self)
 
     def callproc(self, procname, vars=None):
         try:
-            return _cursor.callproc(self, procname, vars)  
+            return super(LoggingCursor, self).callproc(procname, vars)
         finally:
             self.connection.log(self.query, self)
 
 
 class MinTimeLoggingConnection(LoggingConnection):
     """A connection that logs queries based on execution time.
-    
+
     This is just an example of how to sub-class `LoggingConnection` to
     provide some extra filtering for the logged queries. Both the
     `inizialize()` and `filter()` methods are overwritten to make sure
     that only queries executing for more than ``mintime`` ms are logged.
-    
+
     Note that this connection uses the specialized cursor
     `MinTimeLoggingCursor`.
     """
@@ -415,20 +422,17 @@ class MinTimeLoggingConnection(LoggingConnection):
         if t > self._mintime:
             return msg + os.linesep + "  (execution time: %d ms)" % t
 
-    def cursor(self, name=None):
-        self._check()
-        if name is None:
-            return _connection.cursor(self, cursor_factory=MinTimeLoggingCursor)
-        else:
-            return _connection.cursor(self, name, cursor_factory=MinTimeLoggingCursor)
-    
+    def cursor(self, *args, **kwargs):
+        kwargs.setdefault('cursor_factory', MinTimeLoggingCursor)
+        return LoggingConnection.cursor(self, *args, **kwargs)
+
 class MinTimeLoggingCursor(LoggingCursor):
     """The cursor sub-class companion to `MinTimeLoggingConnection`."""
 
     def execute(self, query, vars=None):
         self.timestamp = time.time()
         return LoggingCursor.execute(self, query, vars)
-    
+
     def callproc(self, procname, vars=None):
         self.timestamp = time.time()
         return LoggingCursor.execute(self, procname, vars)
@@ -580,6 +584,18 @@ def wait_select(conn):
             raise OperationalError("bad state from poll: %s" % state)
 
 
+def _solve_conn_curs(conn_or_curs):
+    """Return the connection and a DBAPI cursor from a connection or cursor."""
+    if hasattr(conn_or_curs, 'execute'):
+        conn = conn_or_curs.connection
+        curs = conn.cursor(cursor_factory=_cursor)
+    else:
+        conn = conn_or_curs
+        curs = conn.cursor(cursor_factory=_cursor)
+
+    return conn, curs
+
+
 class HstoreAdapter(object):
     """Adapt a Python dict to the hstore syntax."""
     def __init__(self, wrapped):
@@ -688,12 +704,7 @@ class HstoreAdapter(object):
     def get_oids(self, conn_or_curs):
         """Return the lists of OID of the hstore and hstore[] types.
         """
-        if hasattr(conn_or_curs, 'execute'):
-            conn = conn_or_curs.connection
-            curs = conn_or_curs
-        else:
-            conn = conn_or_curs
-            curs = conn_or_curs.cursor()
+        conn, curs = _solve_conn_curs(conn_or_curs)
 
         # Store the transaction status of the connection to revert it after use
         conn_status = conn.status
@@ -744,7 +755,6 @@ def register_hstore(conn_or_curs, globally=False, unicode=False,
     'hstore'::regtype::oid`. Analogously you can obtain a value for *array_oid*
     using a query such as :sql:`SELECT 'hstore[]'::regtype::oid`.
 
-
     Note that, when passing a dictionary from Python to the database, both
     strings and unicode keys and values are supported. Dictionaries returned
     from the database have keys/values according to the *unicode* parameter.
@@ -752,15 +762,6 @@ def register_hstore(conn_or_curs, globally=False, unicode=False,
     The |hstore| contrib module must be already installed in the database
     (executing the ``hstore.sql`` script in your ``contrib`` directory).
     Raise `~psycopg2.ProgrammingError` if the type is not found.
-
-    .. versionchanged:: 2.4
-        added the *oid* parameter. If not specified, the typecaster is
-        installed also if |hstore| is not installed in the :sql:`public`
-        schema.
-
-    .. versionchanged:: 2.4.3
-        added support for |hstore| array.
-
     """
     if oid is None:
         oid = HstoreAdapter.get_oids(conn_or_curs)
@@ -874,9 +875,9 @@ class CompositeCaster(object):
         for m in self._re_tokenize.finditer(s):
             if m is None:
                 raise psycopg2.InterfaceError("can't parse type: %r" % s)
-            if m.group(1):
+            if m.group(1) is not None:
                 rv.append(None)
-            elif m.group(2):
+            elif m.group(2) is not None:
                 rv.append(self._re_undouble.sub(r"\1", m.group(2)))
             else:
                 rv.append(m.group(3))
@@ -899,12 +900,7 @@ class CompositeCaster(object):
 
         Raise `ProgrammingError` if the type is not found.
         """
-        if hasattr(conn_or_curs, 'execute'):
-            conn = conn_or_curs.connection
-            curs = conn_or_curs
-        else:
-            conn = conn_or_curs
-            curs = conn_or_curs.cursor()
+        conn, curs = _solve_conn_curs(conn_or_curs)
 
         # Store the transaction status of the connection to revert it after use
         conn_status = conn.status
