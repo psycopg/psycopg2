@@ -229,7 +229,7 @@ Hstore data type
 
 The |hstore|_ data type is a key-value store embedded in PostgreSQL.  It has
 been available for several server versions but with the release 9.0 it has
-been greatly improved in capacity and usefulness with the addiction of many
+been greatly improved in capacity and usefulness with the addition of many
 functions.  It supports GiST or GIN indexes allowing search by keys or
 key/value pairs as well as regular BTree indexes for equality, uniqueness etc.
 
