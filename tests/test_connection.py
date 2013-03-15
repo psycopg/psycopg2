@@ -79,6 +79,8 @@ class ConnectionTests(unittest.TestCase):
     def test_notices(self):
         conn = self.conn
         cur = conn.cursor()
+        if self.conn.server_version >= 90300:
+            cur.execute("set client_min_messages=debug1")
         cur.execute("create temp table chatty (id serial primary key);")
         self.assertEqual("CREATE TABLE", cur.statusmessage)
         self.assert_(conn.notices)
@@ -86,6 +88,8 @@ class ConnectionTests(unittest.TestCase):
     def test_notices_consistent_order(self):
         conn = self.conn
         cur = conn.cursor()
+        if self.conn.server_version >= 90300:
+            cur.execute("set client_min_messages=debug1")
         cur.execute("create temp table table1 (id serial); create temp table table2 (id serial);")
         cur.execute("create temp table table3 (id serial); create temp table table4 (id serial);")
         self.assertEqual(4, len(conn.notices))
@@ -97,6 +101,8 @@ class ConnectionTests(unittest.TestCase):
     def test_notices_limited(self):
         conn = self.conn
         cur = conn.cursor()
+        if self.conn.server_version >= 90300:
+            cur.execute("set client_min_messages=debug1")
         for i in range(0, 100, 10):
             sql = " ".join(["create temp table table%d (id serial);" % j for j in range(i, i+10)])
             cur.execute(sql)

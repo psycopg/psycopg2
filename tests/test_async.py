@@ -429,6 +429,9 @@ class AsyncTests(unittest.TestCase):
     def test_notices(self):
         del self.conn.notices[:]
         cur = self.conn.cursor()
+        if self.conn.server_version >= 90300:
+            cur.execute("set client_min_messages=debug1")
+            self.wait(cur)
         cur.execute("create temp table chatty (id serial primary key);")
         self.wait(cur)
         self.assertEqual("CREATE TABLE", cur.statusmessage)
