@@ -1383,7 +1383,7 @@ class RangeCasterTestCase(unittest.TestCase):
         self.assert_(r1.lower_inc)
         self.assert_(not r1.upper_inc)
 
-        r = NumericRange(10.2, 20.5, '(]')
+        r = NumericRange(Decimal('10.2'), Decimal('20.5'), '(]')
         cur.execute("select %s::numrange", (r,))
         r1 = cur.fetchone()[0]
         self.assert_(isinstance(r1, NumericRange))
@@ -1411,7 +1411,7 @@ class RangeCasterTestCase(unittest.TestCase):
         self.assert_(r1.lower_inc)
         self.assert_(not r1.upper_inc)
 
-        r = NumericRange(10.2, 20.5, '(]')
+        r = NumericRange(Decimal('10.2'), Decimal('20.5'), '(]')
         cur.execute("select %s::numrange", (r,))
         r1 = cur.fetchone()[0]
         self.assert_(isinstance(r1, NumericRange))
