@@ -26,10 +26,11 @@ import os
 import time
 import threading
 from testutils import unittest, decorate_all_tests
-from testutils import skip_before_postgres, skip_after_postgres
+from testutils import skip_before_postgres, skip_after_postgres, skip_if_no_superuser
 from operator import attrgetter
 
 import psycopg2
+import psycopg2.errorcodes
 import psycopg2.extensions
 from testconfig import dsn, dbname
 
@@ -65,6 +66,22 @@ class ConnectionTests(unittest.TestCase):
         curs = conn.cursor()
         conn.close()
         self.assertEqual(curs.closed, True)
+
+    @skip_before_postgres(8, 4)
+    @skip_if_no_superuser
+    def test_cleanup_on_badconn_close(self):
+        # ticket #148
+        conn = self.conn
+        cur = conn.cursor()
+        try:
+            cur.execute("select pg_terminate_backend(pg_backend_pid())")
+        except psycopg2.OperationalError, e:
+            if e.pgcode != psycopg2.errorcodes.ADMIN_SHUTDOWN:
+                raise
+
+        self.assertEqual(conn.closed, 2)
+        conn.close()
+        self.assertEqual(conn.closed, 1)
 
     def test_reset(self):
         conn = self.conn

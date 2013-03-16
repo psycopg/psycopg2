@@ -918,7 +918,8 @@ conn_poll(connectionObject *self)
 void
 conn_close(connectionObject *self)
 {
-    if (self->closed) {
+    /* a connection with closed == 2 still requires cleanup */
+    if (self->closed == 1) {
         return;
     }
 
@@ -936,7 +937,7 @@ conn_close(connectionObject *self)
 
 void conn_close_locked(connectionObject *self)
 {
-    if (self->closed) {
+    if (self->closed == 1) {
         return;
     }
 
@@ -957,6 +958,8 @@ void conn_close_locked(connectionObject *self)
         PQfinish(self->pgconn);
         self->pgconn = NULL;
         Dprintf("conn_close: PQfinish called");
+    }
+    if (self->cancel) {
         PQfreeCancel(self->cancel);
         self->cancel = NULL;
     }

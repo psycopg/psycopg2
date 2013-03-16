@@ -1,3 +1,9 @@
+What's new in psycopg 2.4.7
+---------------------------
+
+  - Properly cleanup memory of broken connections (ticket #142).
+
+
 What's new in psycopg 2.4.6
 ---------------------------
 
