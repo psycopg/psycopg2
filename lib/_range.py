@@ -27,7 +27,7 @@
 import re
 
 from psycopg2._psycopg import ProgrammingError, InterfaceError
-from psycopg2.extensions import ISQLQuote, adapt, register_adapter
+from psycopg2.extensions import ISQLQuote, adapt, register_adapter, b
 from psycopg2.extensions import new_type, new_array_type, register_type
 
 class Range(object):
@@ -196,7 +196,7 @@ class RangeAdapter(object):
 
         r = self.adapted
         if r.isempty:
-            return "'empty'::%s" % self.name
+            return b("'empty'::" + self.name)
 
         if r.lower is not None:
             a = adapt(r.lower)
@@ -204,7 +204,7 @@ class RangeAdapter(object):
                 a.prepare(self._conn)
             lower = a.getquoted()
         else:
-            lower = 'NULL'
+            lower = b('NULL')
 
         if r.upper is not None:
             a = adapt(r.upper)
@@ -212,10 +212,10 @@ class RangeAdapter(object):
                 a.prepare(self._conn)
             upper = a.getquoted()
         else:
-            upper = 'NULL'
+            upper = b('NULL')
 
-        return "%s(%s, %s, '%s')" % (
-            self.name, lower, upper, r._bounds)
+        return b(self.name + '(') + lower + b(', ') + upper \
+                + b(", '%s')" % r._bounds)
 
 
 class RangeCaster(object):
@@ -422,17 +422,17 @@ class NumberRangeAdapter(RangeAdapter):
             # quoted (they are numbers). Also, I'm lazy and not preparing the
             # adapter because I assume encoding doesn't matter for these
             # objects.
-            lower = adapt(r.lower).getquoted()
+            lower = adapt(r.lower).getquoted().decode('ascii')
         else:
             lower = ''
 
         if not r.upper_inf:
-            upper = adapt(r.upper).getquoted()
+            upper = adapt(r.upper).getquoted().decode('ascii')
         else:
             upper = ''
 
-        return "'%s%s,%s%s'" % (
-            r._bounds[0], lower, upper, r._bounds[1])
+        return b("'%s%s,%s%s'" % (
+            r._bounds[0], lower, upper, r._bounds[1]))
 
 # TODO: probably won't work with infs, nans and other tricky cases.
 register_adapter(NumericRange, NumberRangeAdapter)
