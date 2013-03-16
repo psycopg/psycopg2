@@ -13,6 +13,7 @@ What's new in psycopg 2.5
     Tobias Oberstein for the feature development.
   - connection.reset() implemented using DISCARD ALL on server versions
     supporting it.
+  - Properly cleanup memory of broken connections (ticket #142).
   - 'errorcodes' map updated to PostgreSQL 9.2.
 
 

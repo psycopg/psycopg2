@@ -1127,7 +1127,7 @@ connection_dealloc(PyObject* obj)
 
     PyObject_GC_UnTrack(self);
 
-    if (self->closed == 0) conn_close(self);
+    conn_close(self);
 
     conn_notice_clean(self);
 

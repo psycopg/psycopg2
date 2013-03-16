@@ -207,6 +207,21 @@ def skip_from_python(*ver):
         return skip_from_python__
     return skip_from_python_
 
+def skip_if_no_superuser(f):
+    """Skip a test if the database user running the test is not a superuser"""
+    def skip_if_no_superuser_(self):
+        from psycopg2 import ProgrammingError
+        try:
+            return f(self)
+        except ProgrammingError, e:
+            import psycopg2.errorcodes
+            if e.pgcode == psycopg2.errorcodes.INSUFFICIENT_PRIVILEGE:
+                self.skipTest("skipped because not superuser")
+            else:
+                raise
+
+    return skip_if_no_superuser_
+
 
 def script_to_py3(script):
     """Convert a script to Python3 syntax if required."""
