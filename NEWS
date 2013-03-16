@@ -11,7 +11,8 @@ What's new in psycopg 2.5
   - connection.reset() implemented using DISCARD ALL on server versions
     supporting it.
   - 'errorcodes' map updated to PostgreSQL 9.2.
-  - Dropped support for Zope. There is now an external ZPsycopgDA project.
+  - Dropped Zope adapter from source repository. ZPsycopgDA can now be
+    found at <http://github.com/psycopg/ZPsycopgDA>.
 
 
 What's new in psycopg 2.4.5
