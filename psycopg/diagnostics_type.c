@@ -82,6 +82,24 @@ exit:
 
 /* object calculated member list */
 static struct PyGetSetDef diagnosticsObject_getsets[] = {
+    { "severity", (getter)psyco_diagnostics_get_field, NULL,
+      NULL, (void*) PG_DIAG_SEVERITY },
+    { "sqlstate", (getter)psyco_diagnostics_get_field, NULL,
+      NULL, (void*) PG_DIAG_SQLSTATE },
+    { "message_primary", (getter)psyco_diagnostics_get_field, NULL,
+      NULL, (void*) PG_DIAG_MESSAGE_PRIMARY },
+    { "message_detail", (getter)psyco_diagnostics_get_field, NULL,
+      NULL, (void*) PG_DIAG_MESSAGE_DETAIL },
+    { "message_hint", (getter)psyco_diagnostics_get_field, NULL,
+      NULL, (void*) PG_DIAG_MESSAGE_HINT },
+    { "statement_position", (getter)psyco_diagnostics_get_field, NULL,
+      NULL, (void*) PG_DIAG_STATEMENT_POSITION },
+    { "internal_position", (getter)psyco_diagnostics_get_field, NULL,
+      NULL, (void*) PG_DIAG_INTERNAL_POSITION },
+    { "internal_query", (getter)psyco_diagnostics_get_field, NULL,
+      NULL, (void*) PG_DIAG_INTERNAL_QUERY },
+    { "context", (getter)psyco_diagnostics_get_field, NULL,
+      NULL, (void*) PG_DIAG_CONTEXT },
     { "schema_name", (getter)psyco_diagnostics_get_field, NULL,
       NULL, (void*) PG_DIAG_SCHEMA_NAME },
     { "table_name", (getter)psyco_diagnostics_get_field, NULL,
@@ -92,6 +110,12 @@ static struct PyGetSetDef diagnosticsObject_getsets[] = {
       NULL, (void*) PG_DIAG_DATATYPE_NAME },
     { "constraint_name", (getter)psyco_diagnostics_get_field, NULL,
       NULL, (void*) PG_DIAG_CONSTRAINT_NAME },
+    { "source_file", (getter)psyco_diagnostics_get_field, NULL,
+      NULL, (void*) PG_DIAG_SOURCE_FILE },
+    { "source_line", (getter)psyco_diagnostics_get_field, NULL,
+      NULL, (void*) PG_DIAG_SOURCE_LINE },
+    { "source_function", (getter)psyco_diagnostics_get_field, NULL,
+      NULL, (void*) PG_DIAG_SOURCE_FUNCTION },
     {NULL}
 };
 

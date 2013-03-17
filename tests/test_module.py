@@ -155,8 +155,38 @@ class ExceptionsTestCase(unittest.TestCase):
         self.assert_(e.pgerror)
         self.assert_(e.cursor is cur)
 
+    def test_diagnostics_attributes(self):
+        cur = self.conn.cursor()
+        try:
+            cur.execute("select * from nonexist")
+        except psycopg2.Error, exc:
+            e = exc
+
+        diag = e.diag
+        self.assert_(isinstance(diag, psycopg2.extensions.Diagnostics))
+        for attr in [
+                'column_name', 'constraint_name', 'context', 'datatype_name',
+                'internal_position', 'internal_query', 'message_detail',
+                'message_hint', 'message_primary', 'schema_name', 'severity',
+                'source_file', 'source_function', 'source_line', 'sqlstate',
+                'statement_position', 'table_name', ]:
+            v = getattr(diag, attr)
+            if v is not None:
+                self.assert_(isinstance(v, str))
+
+    def test_diagnostics_values(self):
+        cur = self.conn.cursor()
+        try:
+            cur.execute("select * from nonexist")
+        except psycopg2.Error, exc:
+            e = exc
+
+        self.assertEqual(e.diag.sqlstate, '42P01')
+        self.assertEqual(e.diag.severity, 'ERROR')
+        self.assertEqual(e.diag.statement_position, '15')
+
     @skip_before_postgres(9, 3)
-    def test_diagnostics(self):
+    def test_9_3_diagnostics(self):
         cur = self.conn.cursor()
         cur.execute("""
             create temp table test_exc (
