@@ -1509,7 +1509,8 @@ pq_fetch(cursorObject *curs, int no_result)
     default:
         Dprintf("pq_fetch: uh-oh, something FAILED: pgconn = %p", curs->conn);
         pq_raise(curs->conn, curs, NULL);
-        IFCLEARPGRES(curs->pgres);
+        /* don't clear curs->pgres, because it contains detailed error
+           information */
         ex = -1;
         break;
     }

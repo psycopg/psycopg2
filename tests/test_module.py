@@ -22,7 +22,8 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-from testutils import unittest, skip_before_python
+from testutils import unittest, skip_before_python, skip_before_postgres
+
 from testconfig import dsn
 
 import psycopg2
@@ -153,6 +154,24 @@ class ExceptionsTestCase(unittest.TestCase):
         self.assertEqual(e.pgcode, '42P01')
         self.assert_(e.pgerror)
         self.assert_(e.cursor is cur)
+
+    @skip_before_postgres(9, 3)
+    def test_diagnostics(self):
+        cur = self.conn.cursor()
+        cur.execute("""
+            create temp table test_exc (
+                data int constraint chk_eq1 check (data = 1)
+            )""")
+        try:
+            cur.execute("insert into test_exc values(2)")
+        except psycopg2.Error, exc:
+            e = exc
+        self.assertEqual(e.pgcode, '23514')
+        self.assertEqual(e.diag.schema_name[:7], "pg_temp")
+        self.assertEqual(e.diag.table_name, "test_exc")
+        self.assertEqual(e.diag.column_name, None)
+        self.assertEqual(e.diag.constraint_name, "chk_eq1")
+        self.assertEqual(e.diag.datatype_name, None)
 
     @skip_before_python(2, 5)
     def test_pickle(self):
