@@ -128,11 +128,11 @@ Additional data types
 ---------------------
 
 
-.. _adapt-json:
-
 .. index::
     pair: JSON; Data types
     pair: JSON; Adaptation
+
+.. _adapt-json:
 
 JSON_ adaptation
 ^^^^^^^^^^^^^^^^
@@ -216,11 +216,11 @@ from :sql:`json` into :py:class:`~decimal.Decimal` you can use::
 
 
 
-.. _adapt-hstore:
-
 .. index::
     pair: hstore; Data types
     pair: dict; Adaptation
+
+.. _adapt-hstore:
 
 Hstore data type
 ^^^^^^^^^^^^^^^^
@@ -256,12 +256,12 @@ can be enabled using the `register_hstore()` function.
 
 
 
-.. _adapt-composite:
-
 .. index::
     pair: Composite types; Data types
     pair: tuple; Adaptation
     pair: namedtuple; Adaptation
+
+.. _adapt-composite:
 
 Composite types casting
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -373,10 +373,10 @@ requires no adapter registration.
         List of component type oids of the type to be casted.
 
 
-.. _adapt-range:
-
 .. index::
     pair: range; Data types
+
+.. _adapt-range:
 
 Range data types
 ^^^^^^^^^^^^^^^^
@@ -460,6 +460,8 @@ adapted to a custom `Range` subclass:
 
 .. index::
     pair: UUID; Data types
+
+.. _adapt-uuid:
 
 UUID data type
 ^^^^^^^^^^^^^^
