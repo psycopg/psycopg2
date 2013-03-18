@@ -6,6 +6,8 @@ What's new in psycopg 2.5
   - Added support for Python 3.3.
   - 'connection' and 'cursor' objects can be used in 'with' statements
     as context managers as specified by recent DBAPI extension.
+  - Added Diagnostics object to get extended info from a database error.
+    Many thanks to Matthew Woodcraft for the implementation (ticket #149).
   - Added support for backward scrollable cursors. Thanks to Jon Nelson
     for the initial patch (ticket #108).
   - Added a simple way to customize casting of composite types into Python
