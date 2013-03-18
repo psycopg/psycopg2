@@ -120,46 +120,43 @@ static struct PyGetSetDef diagnosticsObject_getsets[] = {
 
 /* initialization and finalization methods */
 
-static int
-diagnostics_setup(diagnosticsObject *self, PyObject *err)
-{
-    self->err = err;
-    Py_INCREF(err);
-
-    return 0;
-}
-
-static void
-diagnostics_dealloc(PyObject* obj)
-{
-    diagnosticsObject *self = (diagnosticsObject *)obj;
-
-    Py_XDECREF(self->err);
-
-    Py_TYPE(obj)->tp_free(obj);
-}
-
-static int
-diagnostics_init(PyObject *obj, PyObject *args, PyObject *kwds)
-{
-    PyObject *err = NULL;
-
-    if (!PyArg_ParseTuple(args, "O", &err))
-        return -1;
-
-    return diagnostics_setup((diagnosticsObject *)obj, err);
-}
-
 static PyObject *
 diagnostics_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
     return type->tp_alloc(type, 0);
 }
 
+static int
+diagnostics_init(diagnosticsObject *self, PyObject *args, PyObject *kwds)
+{
+    PyObject *err = NULL;
+
+    if (!PyArg_ParseTuple(args, "O", &err))
+        return -1;
+
+    Py_INCREF(err);
+    self->err = err;
+    return 0;
+}
+
+static int
+diagnostics_traverse(diagnosticsObject *self, visitproc visit, void *arg)
+{
+    Py_VISIT(self->err);
+    return 0;
+}
+
+static void
+diagnostics_dealloc(diagnosticsObject* self)
+{
+    Py_CLEAR(self->err);
+    Py_TYPE(self)->tp_free((PyObject *)self);
+}
+
 static void
 diagnostics_del(PyObject* self)
 {
-    PyObject_Del(self);
+    PyObject_GC_Del(self);
 }
 
 
@@ -184,7 +181,7 @@ PyTypeObject diagnosticsType = {
     "psycopg2._psycopg.Diagnostics",
     sizeof(diagnosticsObject),
     0,
-    diagnostics_dealloc, /*tp_dealloc*/
+    (destructor)diagnostics_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/
     0,          /*tp_getattr*/
     0,          /*tp_setattr*/
@@ -201,10 +198,10 @@ PyTypeObject diagnosticsType = {
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
 
-    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /*tp_flags*/
+    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
     diagnosticsType_doc, /*tp_doc*/
 
-    0,          /*tp_traverse*/
+    (traverseproc)diagnostics_traverse, /*tp_traverse*/
     0,          /*tp_clear*/
 
     0,          /*tp_richcompare*/
@@ -225,7 +222,7 @@ PyTypeObject diagnosticsType = {
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
 
-    diagnostics_init, /*tp_init*/
+    (initproc)diagnostics_init, /*tp_init*/
     0, /*tp_alloc  will be set to PyType_GenericAlloc in module init*/
     diagnostics_new, /*tp_new*/
     (freefunc)diagnostics_del, /*tp_free  Low-level free-memory routine */
