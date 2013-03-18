@@ -185,6 +185,31 @@ class ExceptionsTestCase(unittest.TestCase):
         self.assertEqual(e.diag.severity, 'ERROR')
         self.assertEqual(e.diag.statement_position, '15')
 
+    def test_diagnostics_life(self):
+        import gc
+        from weakref import ref
+
+        def tmp():
+            cur = self.conn.cursor()
+            try:
+                cur.execute("select * from nonexist")
+            except psycopg2.Error, exc:
+                return cur, exc
+
+        cur, e = tmp()
+        diag = e.diag
+        w = ref(cur)
+
+        del e, cur
+        gc.collect()
+        assert(w() is not None)
+
+        self.assertEqual(diag.sqlstate, '42P01')
+
+        del diag
+        gc.collect()
+        assert(w() is None)
+
     @skip_before_postgres(9, 3)
     def test_9_3_diagnostics(self):
         cur = self.conn.cursor()
