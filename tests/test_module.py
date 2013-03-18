@@ -210,6 +210,17 @@ class ExceptionsTestCase(unittest.TestCase):
         gc.collect()
         assert(w() is None)
 
+    def test_diagnostics_copy(self):
+        from StringIO import StringIO
+        f = StringIO()
+        cur = self.conn.cursor()
+        try:
+            cur.copy_to(f, 'nonexist')
+        except psycopg2.Error, exc:
+            diag = exc.diag
+
+        self.assertEqual(diag.sqlstate, '42P01')
+
     @skip_before_postgres(9, 3)
     def test_9_3_diagnostics(self):
         cur = self.conn.cursor()
