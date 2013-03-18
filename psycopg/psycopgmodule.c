@@ -35,6 +35,7 @@
 #include "psycopg/typecast.h"
 #include "psycopg/microprotocols.h"
 #include "psycopg/microprotocols_proto.h"
+#include "psycopg/diagnostics.h"
 
 #include "psycopg/adapter_qstring.h"
 #include "psycopg/adapter_binary.h"
@@ -500,6 +501,7 @@ psyco_errors_init(void)
     PyObject *base;
     PyObject *str = NULL;
     PyObject *descr = NULL;
+    PyObject *diag_property = NULL;
     int rv = -1;
 
 #if PY_VERSION_HEX >= 0x02050000
@@ -541,6 +543,12 @@ psyco_errors_init(void)
     PyObject_SetAttrString(Error, "pgcode", Py_None);
     PyObject_SetAttrString(Error, "cursor", Py_None);
 
+    if (!(diag_property = PyObject_CallFunctionObjArgs(
+            (PyObject *) &PyProperty_Type, &diagnosticsType, NULL))) {
+        goto exit;
+    }
+    PyObject_SetAttrString(Error, "diag", diag_property);
+
     /* install __reduce_ex__ on Error to make all the subclasses picklable.
      *
      * Don't install it on Py 2.4: it is not used by the pickle
@@ -560,6 +568,7 @@ psyco_errors_init(void)
     rv = 0;
 
 exit:
+    Py_XDECREF(diag_property);
     Py_XDECREF(descr);
     Py_XDECREF(str);
     Py_XDECREF(dict);
@@ -882,6 +891,7 @@ INIT_MODULE(_psycopg)(void)
     Py_TYPE(&chunkType)      = &PyType_Type;
     Py_TYPE(&NotifyType)     = &PyType_Type;
     Py_TYPE(&XidType)        = &PyType_Type;
+    Py_TYPE(&diagnosticsType) = &PyType_Type;
 
     if (PyType_Ready(&connectionType) == -1) goto exit;
     if (PyType_Ready(&cursorType) == -1) goto exit;
@@ -898,6 +908,7 @@ INIT_MODULE(_psycopg)(void)
     if (PyType_Ready(&chunkType) == -1) goto exit;
     if (PyType_Ready(&NotifyType) == -1) goto exit;
     if (PyType_Ready(&XidType) == -1) goto exit;
+    if (PyType_Ready(&diagnosticsType) == -1) goto exit;
 
 #ifdef PSYCOPG_EXTENSIONS
     Py_TYPE(&lobjectType)    = &PyType_Type;
@@ -987,6 +998,7 @@ INIT_MODULE(_psycopg)(void)
     PyModule_AddObject(module, "ISQLQuote", (PyObject*)&isqlquoteType);
     PyModule_AddObject(module, "Notify", (PyObject*)&NotifyType);
     PyModule_AddObject(module, "Xid", (PyObject*)&XidType);
+    PyModule_AddObject(module, "Diagnostics", (PyObject*)&diagnosticsType);
 #ifdef PSYCOPG_EXTENSIONS
     PyModule_AddObject(module, "lobject", (PyObject*)&lobjectType);
 #endif
@@ -1031,6 +1043,7 @@ INIT_MODULE(_psycopg)(void)
     pydatetimeType.tp_alloc = PyType_GenericAlloc;
     NotifyType.tp_alloc = PyType_GenericAlloc;
     XidType.tp_alloc = PyType_GenericAlloc;
+    diagnosticsType.tp_alloc = PyType_GenericAlloc;
 
 #ifdef PSYCOPG_EXTENSIONS
     lobjectType.tp_alloc = PyType_GenericAlloc;
