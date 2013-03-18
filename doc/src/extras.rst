@@ -373,6 +373,8 @@ requires no adapter registration.
         List of component type oids of the type to be casted.
 
 
+.. _adapt-range:
+
 .. index::
     pair: range; Data types
 
