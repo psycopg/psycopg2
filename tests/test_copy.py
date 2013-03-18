@@ -22,7 +22,6 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-import os
 import sys
 import string
 from testutils import unittest, decorate_all_tests, skip_if_no_iobase
@@ -31,17 +30,8 @@ from itertools import cycle, izip
 
 import psycopg2
 import psycopg2.extensions
-from testconfig import dsn, green
-
-def skip_if_green(f):
-    def skip_if_green_(self):
-        if green:
-            return self.skipTest("copy in async mode currently not supported")
-        else:
-            return f(self)
-
-    return skip_if_green_
-
+from testconfig import dsn
+from testutils import skip_copy_if_green
 
 if sys.version_info[0] < 3:
     _base = object
@@ -272,7 +262,7 @@ class CopyTests(unittest.TestCase):
         self.assertEqual(curs.fetchone()[0], 2)
 
 
-decorate_all_tests(CopyTests, skip_if_green)
+decorate_all_tests(CopyTests, skip_copy_if_green)
 
 
 def test_suite():

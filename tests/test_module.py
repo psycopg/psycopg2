@@ -23,6 +23,7 @@
 # License for more details.
 
 from testutils import unittest, skip_before_python, skip_before_postgres
+from testutils import skip_copy_if_green
 
 from testconfig import dsn
 
@@ -183,7 +184,6 @@ class ExceptionsTestCase(unittest.TestCase):
 
         self.assertEqual(e.diag.sqlstate, '42P01')
         self.assertEqual(e.diag.severity, 'ERROR')
-        self.assertEqual(e.diag.statement_position, '15')
 
     def test_diagnostics_life(self):
         import gc
@@ -210,6 +210,7 @@ class ExceptionsTestCase(unittest.TestCase):
         gc.collect()
         assert(w() is None)
 
+    @skip_copy_if_green
     def test_diagnostics_copy(self):
         from StringIO import StringIO
         f = StringIO()

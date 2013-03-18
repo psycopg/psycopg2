@@ -222,6 +222,16 @@ def skip_if_no_superuser(f):
 
     return skip_if_no_superuser_
 
+def skip_copy_if_green(f):
+    def skip_copy_if_green_(self):
+        from testconfig import green
+        if green:
+            return self.skipTest("copy in async mode currently not supported")
+        else:
+            return f(self)
+
+    return skip_copy_if_green_
+
 
 def script_to_py3(script):
     """Convert a script to Python3 syntax if required."""
