@@ -14,6 +14,8 @@ What's new in psycopg 2.5
   - connection.reset() implemented using DISCARD ALL on server versions
     supporting it.
   - Properly cleanup memory of broken connections (ticket #142).
+  - Fixed bad interaction of setup.py with other dependencies in
+    Distribute project on Python 3 (ticket #153).
   - 'errorcodes' map updated to PostgreSQL 9.2.
   - Dropped Zope adapter from source repository. ZPsycopgDA can now be
     found at <http://github.com/psycopg/ZPsycopgDA>.
