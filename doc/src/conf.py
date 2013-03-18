@@ -42,7 +42,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Psycopg'
-copyright = u'2001-2012, Federico Di Gregorio. Documentation by Daniele Varrazzo'
+copyright = u'2001-2013, Federico Di Gregorio. Documentation by Daniele Varrazzo'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
