@@ -157,10 +157,27 @@ available through the following exceptions:
 
         The cursor the exception was raised from; `None` if not applicable.
 
+    .. attribute:: diag
+
+        A `~psycopg2.extensions.Diagnostics` object containing further
+        information about the error. ::
+
+            >>> try:
+            ...     cur.execute("SELECT * FROM barf")
+            ... except Exception, e:
+            ...     pass
+
+            >>> e.diag.severity
+            'ERROR'
+            >>> e.diag.message_primary
+            'relation "barf" does not exist'
+
+        .. versionadded:: 2.5
+
     .. extension::
 
-        The `~Error.pgerror`, `~Error.pgcode`, and `~Error.cursor` attributes
-        are Psycopg extensions.
+        The `~Error.pgerror`, `~Error.pgcode`, `~Error.cursor`, and
+        `~Error.diag` attributes are Psycopg extensions.
 
 
 .. exception:: InterfaceError

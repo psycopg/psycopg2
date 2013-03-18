@@ -139,6 +139,37 @@ functionalities defined by the |DBAPI|_.
     .. automethod:: from_string(s)
 
 
+.. autoclass:: Diagnostics(exception)
+
+    .. versionadded:: 2.5
+
+    The attributes currently available are:
+
+    .. attribute::
+        column_name
+        constraint_name
+        context
+        datatype_name
+        internal_position
+        internal_query
+        message_detail
+        message_hint
+        message_primary
+        schema_name
+        severity
+        source_file
+        source_function
+        source_line
+        sqlstate
+        statement_position
+        table_name
+
+        A string with the error field if available; `!None` if not available.
+        The attribute value is available only if the error sent by the server
+        includes the specified field and should remain available until the
+        cursor that generated the exception executes another query.
+
+
 .. autofunction:: set_wait_callback(f)
 
     .. versionadded:: 2.2.0

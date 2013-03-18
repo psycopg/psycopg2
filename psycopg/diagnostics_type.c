@@ -165,8 +165,19 @@ diagnostics_del(PyObject* self)
 
 /* object type */
 
-#define diagnosticsType_doc \
-"Details from a database error report."
+static const char diagnosticsType_doc[] =
+    "Details from a database error report.\n\n"
+    "The object is returned by the `~psycopg2.Error.diag` attribute of the\n"
+    "`!Error` object.\n"
+    "All the information available from the |PQresultErrorField|_ function\n"
+    "are exposed as attributes by the object, e.g. the `!severity` attribute\n"
+    "returns the `!PG_DIAG_SEVERITY` code. "
+    "Please refer to the `PostgreSQL documentation`__ for the meaning of all"
+        " the attributes.\n\n"
+    ".. |PQresultErrorField| replace:: `!PQresultErrorField()`\n"
+    ".. _PQresultErrorField: http://www.postgresql.org/docs/current/static/"
+        "libpq-exec.html#LIBPQ-PQRESULTERRORFIELD\n"
+    ".. __: PQresultErrorField_\n";
 
 PyTypeObject diagnosticsType = {
     PyVarObject_HEAD_INIT(NULL, 0)
