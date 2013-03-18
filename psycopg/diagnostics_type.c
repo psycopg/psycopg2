@@ -67,8 +67,7 @@ psyco_diagnostics_get_field(diagnosticsObject *self, void *closure)
     errortext = PQresultErrorField(
         ((cursorObject *)curs)->pgres, (Py_intptr_t) closure);
     if (errortext) {
-        // FIXME: does this need to use conn_text_from_chars()?
-        rv = PyString_FromString(errortext);
+        rv = conn_text_from_chars(((cursorObject *)curs)->conn, errortext);
     }
 exit:
     if (!rv) {
