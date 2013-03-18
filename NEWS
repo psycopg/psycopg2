@@ -2,6 +2,8 @@ What's new in psycopg 2.4.7
 ---------------------------
 
   - Properly cleanup memory of broken connections (ticket #142).
+  - Fixed bad interaction of setup.py with other dependencies in
+    Distribute project on Python 3 (ticket #153).
 
 
 What's new in psycopg 2.4.6

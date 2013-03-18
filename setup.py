@@ -55,14 +55,18 @@ from distutils.ccompiler import get_default_compiler
 from distutils.util import get_platform
 
 try:
-    from distutils.command.build_py import build_py_2to3 as build_py
+    from distutils.command.build_py import build_py_2to3
 except ImportError:
     from distutils.command.build_py import build_py
 else:
+    class build_py(build_py_2to3):
+        # workaround subclass for ticket #153
+        pass
+
     # Configure distutils to run our custom 2to3 fixers as well
     from lib2to3.refactor import get_fixers_from_package
-    build_py.fixer_names = get_fixers_from_package('lib2to3.fixes')
-    build_py.fixer_names.append('fix_b')
+    build_py.fixer_names = get_fixers_from_package('lib2to3.fixes') \
+        + [ 'fix_b' ]
     sys.path.insert(0, 'scripts')
 
 try:
