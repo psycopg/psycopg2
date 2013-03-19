@@ -33,7 +33,7 @@ extern HIDDEN PyTypeObject diagnosticsType;
 typedef struct {
     PyObject_HEAD
 
-    PsycoErrorObject *err;  /* exception to retrieve the diagnostics from */
+    errorObject *err;  /* exception to retrieve the diagnostics from */
 
 } diagnosticsObject;
 

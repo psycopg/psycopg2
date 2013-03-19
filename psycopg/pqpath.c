@@ -218,8 +218,8 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult **pgres)
 
     pyerr = psyco_set_error(exc, curs, err2);
 
-    if (pyerr && PyObject_TypeCheck(pyerr, &ErrorType)) {
-        PsycoErrorObject *perr = (PsycoErrorObject *)pyerr;
+    if (pyerr && PyObject_TypeCheck(pyerr, &errorType)) {
+        errorObject *perr = (errorObject *)pyerr;
 
         PyMem_Free(perr->codec);
         psycopg_strdup(&perr->codec, conn->codec, 0);

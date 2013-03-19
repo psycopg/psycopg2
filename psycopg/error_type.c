@@ -32,7 +32,7 @@
 
 
 PyObject *
-error_text_from_chars(PsycoErrorObject *self, const char *str)
+error_text_from_chars(errorObject *self, const char *str)
 {
     if (str == NULL) {
         Py_INCREF(Py_None);
@@ -61,11 +61,11 @@ static const char diag_doc[] =
     "A Diagnostics object to get further information about the error";
 
 static PyMemberDef error_members[] = {
-    { "pgerror", T_OBJECT, offsetof(PsycoErrorObject, pgerror),
+    { "pgerror", T_OBJECT, offsetof(errorObject, pgerror),
         READONLY, (char *)pgerror_doc },
-    { "pgcode", T_OBJECT, offsetof(PsycoErrorObject, pgcode),
+    { "pgcode", T_OBJECT, offsetof(errorObject, pgcode),
         READONLY, (char *)pgcode_doc },
-    { "cursor", T_OBJECT, offsetof(PsycoErrorObject, cursor),
+    { "cursor", T_OBJECT, offsetof(errorObject, cursor),
         READONLY, (char *)cursor_doc },
     { NULL }
 };
@@ -78,7 +78,7 @@ error_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 }
 
 static int
-error_init(PsycoErrorObject *self, PyObject *args, PyObject *kwargs)
+error_init(errorObject *self, PyObject *args, PyObject *kwargs)
 {
     if (((PyTypeObject *)PyExc_StandardError)->tp_init(
             (PyObject *)self, args, kwargs) < 0) {
@@ -88,7 +88,7 @@ error_init(PsycoErrorObject *self, PyObject *args, PyObject *kwargs)
 }
 
 static int
-error_traverse(PsycoErrorObject *self, visitproc visit, void *arg)
+error_traverse(errorObject *self, visitproc visit, void *arg)
 {
     Py_VISIT(self->cursor);
     return ((PyTypeObject *)PyExc_StandardError)->tp_traverse(
@@ -96,7 +96,7 @@ error_traverse(PsycoErrorObject *self, visitproc visit, void *arg)
 }
 
 static int
-error_clear(PsycoErrorObject *self)
+error_clear(errorObject *self)
 {
     Py_CLEAR(self->pgerror);
     Py_CLEAR(self->pgcode);
@@ -107,7 +107,7 @@ error_clear(PsycoErrorObject *self)
 }
 
 static void
-error_dealloc(PsycoErrorObject *self)
+error_dealloc(errorObject *self)
 {
     error_clear(self);
     return Py_TYPE(self)->tp_free((PyObject *)self);
@@ -115,7 +115,7 @@ error_dealloc(PsycoErrorObject *self)
 
 
 static PyObject *
-error_get_diag(PsycoErrorObject *self, void *closure)
+error_get_diag(errorObject *self, void *closure)
 {
     return PyObject_CallFunctionObjArgs(
         (PyObject *)&diagnosticsType, (PyObject *)self, NULL);
@@ -136,7 +136,7 @@ static struct PyGetSetDef error_getsets[] = {
  * would require implementing __getstate__, and as of 2012 it's a little
  * bit too late to care. */
 static PyObject *
-psyco_error_reduce(PsycoErrorObject *self)
+psyco_error_reduce(errorObject *self)
 {
     PyObject *meth = NULL;
     PyObject *tuple = NULL;
@@ -187,7 +187,7 @@ error:
 }
 
 PyObject *
-psyco_error_setstate(PsycoErrorObject *self, PyObject *state)
+psyco_error_setstate(errorObject *self, PyObject *state)
 {
     PyObject *rv = NULL;
 
@@ -242,10 +242,10 @@ static PyMethodDef error_methods[] = {
 };
 
 
-PyTypeObject ErrorType = {
+PyTypeObject errorType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2.Error",
-    sizeof(PsycoErrorObject),
+    sizeof(errorObject),
     0,
     (destructor)error_dealloc, /* tp_dealloc */
     0,          /*tp_print*/

@@ -122,14 +122,14 @@ diagnostics_init(diagnosticsObject *self, PyObject *args, PyObject *kwds)
     if (!PyArg_ParseTuple(args, "O", &err))
         return -1;
 
-    if (!PyObject_TypeCheck(err, &ErrorType)) {
+    if (!PyObject_TypeCheck(err, &errorType)) {
         PyErr_SetString(PyExc_TypeError,
             "The argument must be a psycopg2.Error");
         return -1;
     }
 
     Py_INCREF(err);
-    self->err = (PsycoErrorObject *)err;
+    self->err = (errorObject *)err;
     return 0;
 }
 

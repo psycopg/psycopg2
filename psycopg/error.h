@@ -26,7 +26,7 @@
 #ifndef PSYCOPG_ERROR_H
 #define PSYCOPG_ERROR_H 1
 
-extern HIDDEN PyTypeObject ErrorType;
+extern HIDDEN PyTypeObject errorType;
 
 typedef struct {
     PyBaseExceptionObject exc;
@@ -36,8 +36,8 @@ typedef struct {
     cursorObject *cursor;
     char *codec;
     PGresult *pgres;
-} PsycoErrorObject;
+} errorObject;
 
-HIDDEN PyObject *error_text_from_chars(PsycoErrorObject *self, const char *str);
+HIDDEN PyObject *error_text_from_chars(errorObject *self, const char *str);
 
 #endif /* PSYCOPG_ERROR_H */

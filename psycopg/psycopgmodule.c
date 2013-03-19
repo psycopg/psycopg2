@@ -448,7 +448,7 @@ psyco_errors_init(void)
     int rv = -1;
 
     /* 'Error' has been defined elsewhere: only init the other classes */
-    Error = (PyObject *)&ErrorType;
+    Error = (PyObject *)&errorType;
 
     for (i = 1; exctable[i].name; i++) {
         if (!(dict = PyDict_New())) { goto exit; }
@@ -534,8 +534,8 @@ psyco_set_error(PyObject *exc, cursorObject *curs, const char *msg)
         return NULL;
     }
 
-    if (err && PyObject_TypeCheck(err, &ErrorType)) {
-        PsycoErrorObject *perr = (PsycoErrorObject *)err;
+    if (err && PyObject_TypeCheck(err, &errorType)) {
+        errorObject *perr = (errorObject *)err;
         if (curs) {
             Py_CLEAR(perr->cursor);
             Py_INCREF(curs);
@@ -782,7 +782,7 @@ INIT_MODULE(_psycopg)(void)
     Py_TYPE(&chunkType)      = &PyType_Type;
     Py_TYPE(&NotifyType)     = &PyType_Type;
     Py_TYPE(&XidType)        = &PyType_Type;
-    Py_TYPE(&ErrorType)      = &PyType_Type;
+    Py_TYPE(&errorType)      = &PyType_Type;
     Py_TYPE(&diagnosticsType) = &PyType_Type;
 
     if (PyType_Ready(&connectionType) == -1) goto exit;
@@ -800,8 +800,8 @@ INIT_MODULE(_psycopg)(void)
     if (PyType_Ready(&chunkType) == -1) goto exit;
     if (PyType_Ready(&NotifyType) == -1) goto exit;
     if (PyType_Ready(&XidType) == -1) goto exit;
-    ErrorType.tp_base = (PyTypeObject *)PyExc_StandardError;
-    if (PyType_Ready(&ErrorType) == -1) goto exit;
+    errorType.tp_base = (PyTypeObject *)PyExc_StandardError;
+    if (PyType_Ready(&errorType) == -1) goto exit;
     if (PyType_Ready(&diagnosticsType) == -1) goto exit;
 
 #ifdef PSYCOPG_EXTENSIONS
@@ -937,7 +937,7 @@ INIT_MODULE(_psycopg)(void)
     pydatetimeType.tp_alloc = PyType_GenericAlloc;
     NotifyType.tp_alloc = PyType_GenericAlloc;
     XidType.tp_alloc = PyType_GenericAlloc;
-    ErrorType.tp_alloc = PyType_GenericAlloc;
+    errorType.tp_alloc = PyType_GenericAlloc;
     diagnosticsType.tp_alloc = PyType_GenericAlloc;
 
 #ifdef PSYCOPG_EXTENSIONS
