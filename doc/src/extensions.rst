@@ -165,9 +165,9 @@ functionalities defined by the |DBAPI|_.
         table_name
 
         A string with the error field if available; `!None` if not available.
-        The attribute value is available only if the error sent by the server
-        includes the specified field and should remain available until the
-        cursor that generated the exception executes another query.
+        The attribute value is available only if the error sent by the server:
+        not all the fields are available for all the errors and for all the
+        server versions.
 
 
 .. autofunction:: set_wait_callback(f)

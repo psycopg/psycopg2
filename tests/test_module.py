@@ -221,6 +221,38 @@ class ExceptionsTestCase(unittest.TestCase):
 
         self.assertEqual(diag.sqlstate, '42P01')
 
+    def test_diagnostics_independent(self):
+        cur = self.conn.cursor()
+        try:
+            cur.execute("l'acqua e' poca e 'a papera nun galleggia")
+        except Exception, exc:
+            diag1 = exc.diag
+
+        self.conn.rollback()
+
+        try:
+            cur.execute("select level from water where ducks > 1")
+        except psycopg2.Error, exc:
+            diag2 = exc.diag
+
+        self.assertEqual(diag1.sqlstate, '42601')
+        self.assertEqual(diag2.sqlstate, '42P01')
+
+    def test_diagnostics_from_commit(self):
+        cur = self.conn.cursor()
+        cur.execute("""
+            create temp table test_deferred (
+               data int primary key,
+               ref int references test_deferred (data)
+                   deferrable initially deferred)
+        """)
+        cur.execute("insert into test_deferred values (1,2)")
+        try:
+            self.conn.commit()
+        except psycopg2.Error, exc:
+            e = exc
+        self.assertEqual(e.diag.sqlstate, '23503')
+
     @skip_before_postgres(9, 3)
     def test_9_3_diagnostics(self):
         cur = self.conn.cursor()
