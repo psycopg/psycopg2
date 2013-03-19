@@ -26,7 +26,7 @@ import pool
 import psycopg2
 from psycopg2.extensions import INTEGER, LONGINTEGER, FLOAT, BOOLEAN, DATE, TIME
 from psycopg2.extensions import TransactionRollbackError, register_type
-from psycopg2 import NUMBER, STRING, ROWID, DATETIME 
+from psycopg2 import NUMBER, STRING, ROWID, DATETIME
 
 
 # the DB object, managing all the real query work
@@ -107,17 +107,17 @@ class DB(TM, dbi_db.DB):
     def make_mappings(self):
         """Generate the mappings used later by self.convert_description()."""
         self.type_mappings = {}
-	for t, s in [(INTEGER,'i'), (LONGINTEGER, 'i'), (NUMBER, 'n'),  
-	             (BOOLEAN,'n'), (ROWID, 'i'),
-	             (DATETIME, 'd'), (DATE, 'd'), (TIME, 'd')]:
+        for t, s in [(INTEGER,'i'), (LONGINTEGER, 'i'), (NUMBER, 'n'),
+                     (BOOLEAN,'n'), (ROWID, 'i'),
+                     (DATETIME, 'd'), (DATE, 'd'), (TIME, 'd')]:
             for v in t.values:
-	        self.type_mappings[v] = (t, s)
+                self.type_mappings[v] = (t, s)
 
     def convert_description(self, desc, use_psycopg_types=False):
         """Convert DBAPI-2.0 description field to Zope format."""
         items = []
         for name, typ, width, ds, p, scale, null_ok in desc:
-	    m = self.type_mappings.get(typ, (STRING, 's'))
+            m = self.type_mappings.get(typ, (STRING, 's'))
             items.append({
                 'name': name,
                 'type': use_psycopg_types and m[0] or m[1],
@@ -158,7 +158,7 @@ class DB(TM, dbi_db.DB):
             return ()
         self.putconn()
         return self.convert_description(c.description, True)
-    
+
     ## query execution ##
 
     def query(self, query_string, max_rows=None, query_data=None):
@@ -205,5 +205,5 @@ class DB(TM, dbi_db.DB):
         except StandardError, err:
             self._abort()
             raise err
-        
+
         return self.convert_description(desc), res
