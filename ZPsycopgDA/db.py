@@ -47,36 +47,34 @@ class DB(TM, dbi_db.DB):
         self.calls = 0
         self.make_mappings()
 
-    def getconn(self, init=True):
+    def getconn(self):
         # if init is False we are trying to get hold on an already existing
         # connection, so we avoid to (re)initialize it risking errors.
-        conn = pool.getconn(self.dsn)
-        if init:
-            # use set_session where available as in these versions
-            # set_isolation_level generates an extra query.
-            if psycopg2.__version__ >= '2.4.2':
-                conn.set_session(isolation_level=int(self.tilevel))
-            else:
-                conn.set_isolation_level(int(self.tilevel))
-            conn.set_client_encoding(self.encoding)
-            for tc in self.typecasts:
-                register_type(tc, conn)
+        conn = pool.getconn(self.dsn, init=self.init_conn)
         return conn
 
+    def init_conn(self, conn):
+        # use set_session where available as in these versions
+        # set_isolation_level generates an extra query.
+        if psycopg2.__version__ >= '2.4.2':
+            conn.set_session(isolation_level=int(self.tilevel))
+        else:
+            conn.set_isolation_level(int(self.tilevel))
+        conn.set_client_encoding(self.encoding)
+        for tc in self.typecasts:
+            register_type(tc, conn)
+
     def putconn(self, close=False):
-        try:
-            conn = pool.getconn(self.dsn, False)
-        except AttributeError:
-            pass
+        conn = pool.getconn(self.dsn, create_pool=False, init=self.init_conn)
         pool.putconn(self.dsn, conn, close)
 
     def getcursor(self):
-        conn = self.getconn(False)
+        conn = self.getconn()
         return conn.cursor()
 
     def _finish(self, *ignored):
         try:
-            conn = self.getconn(False)
+            conn = self.getconn()
             conn.commit()
             self.putconn()
         except AttributeError:
@@ -84,7 +82,7 @@ class DB(TM, dbi_db.DB):
 
     def _abort(self, *ignored):
         try:
-            conn = self.getconn(False)
+            conn = self.getconn()
             conn.rollback()
             self.putconn()
         except AttributeError:

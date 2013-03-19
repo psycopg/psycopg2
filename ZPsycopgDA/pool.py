@@ -26,7 +26,7 @@ from psycopg2.pool import PoolError
 class AbstractConnectionPool(object):
     """Generic key-based pooling code."""
 
-    def __init__(self, minconn, maxconn, *args, **kwargs):
+    def __init__(self, minconn, maxconn, init, *args, **kwargs):
         """Initialize the connection pool.
 
         New 'minconn' connections are created immediately calling 'connfunc'
@@ -35,6 +35,7 @@ class AbstractConnectionPool(object):
         """
         self.minconn = minconn
         self.maxconn = maxconn
+        self.init = init
         self.closed = False
 
         self._args = args
@@ -56,6 +57,8 @@ class AbstractConnectionPool(object):
             self._rused[id(conn)] = key
         else:
             self._pool.append(conn)
+        if self.init:
+            self.init(conn)
         return conn
 
     def _getkey(self):
@@ -125,11 +128,11 @@ class PersistentConnectionPool(AbstractConnectionPool):
     single connection from the pool.
     """
 
-    def __init__(self, minconn, maxconn, *args, **kwargs):
+    def __init__(self, minconn, maxconn, init, *args, **kwargs):
         """Initialize the threading lock."""
         import threading
         AbstractConnectionPool.__init__(
-            self, minconn, maxconn, *args, **kwargs)
+            self, minconn, maxconn, init, *args, **kwargs)
         self._lock = threading.Lock()
 
         # we we'll need the thread module, to determine thread ids, so we
@@ -168,12 +171,12 @@ class PersistentConnectionPool(AbstractConnectionPool):
 _connections_pool = {}
 _connections_lock = threading.Lock()
 
-def getpool(dsn, create=True):
+def getpool(dsn, create=True, init=None):
     _connections_lock.acquire()
     try:
         if not _connections_pool.has_key(dsn) and create:
             _connections_pool[dsn] = \
-                PersistentConnectionPool(4, 200, dsn)
+                PersistentConnectionPool(4, 200, init, dsn)
     finally:
         _connections_lock.release()
     return _connections_pool[dsn]
@@ -186,8 +189,8 @@ def flushpool(dsn):
     finally:
         _connections_lock.release()
 
-def getconn(dsn, create=True):
-    return getpool(dsn, create=create).getconn()
+def getconn(dsn, create_pool=True, init=None):
+    return getpool(dsn, create=create_pool, init=init).getconn()
 
 def putconn(dsn, conn, close=False):
     getpool(dsn).putconn(conn, close=close)
