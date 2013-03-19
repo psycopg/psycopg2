@@ -26,7 +26,7 @@ import pool
 import psycopg2
 from psycopg2.extensions import INTEGER, LONGINTEGER, FLOAT, BOOLEAN, DATE, TIME
 from psycopg2.extensions import TransactionRollbackError, register_type
-from psycopg2 import NUMBER, STRING, ROWID, DATETIME 
+from psycopg2 import NUMBER, STRING, ROWID, DATETIME
 
 
 # the DB object, managing all the real query work
@@ -47,36 +47,34 @@ class DB(TM, dbi_db.DB):
         self.calls = 0
         self.make_mappings()
 
-    def getconn(self, init=True):
+    def getconn(self):
         # if init is False we are trying to get hold on an already existing
         # connection, so we avoid to (re)initialize it risking errors.
-        conn = pool.getconn(self.dsn)
-        if init:
-            # use set_session where available as in these versions
-            # set_isolation_level generates an extra query.
-            if psycopg2.__version__ >= '2.4.2':
-                conn.set_session(isolation_level=int(self.tilevel))
-            else:
-                conn.set_isolation_level(int(self.tilevel))
-            conn.set_client_encoding(self.encoding)
-            for tc in self.typecasts:
-                register_type(tc, conn)
+        conn = pool.getconn(self.dsn, init=self.init_conn)
         return conn
 
+    def init_conn(self, conn):
+        # use set_session where available as in these versions
+        # set_isolation_level generates an extra query.
+        if psycopg2.__version__ >= '2.4.2':
+            conn.set_session(isolation_level=int(self.tilevel))
+        else:
+            conn.set_isolation_level(int(self.tilevel))
+        conn.set_client_encoding(self.encoding)
+        for tc in self.typecasts:
+            register_type(tc, conn)
+
     def putconn(self, close=False):
-        try:
-            conn = pool.getconn(self.dsn, False)
-        except AttributeError:
-            pass
+        conn = pool.getconn(self.dsn, create_pool=False, init=self.init_conn)
         pool.putconn(self.dsn, conn, close)
 
     def getcursor(self):
-        conn = self.getconn(False)
+        conn = self.getconn()
         return conn.cursor()
 
     def _finish(self, *ignored):
         try:
-            conn = self.getconn(False)
+            conn = self.getconn()
             conn.commit()
             self.putconn()
         except AttributeError:
@@ -84,7 +82,7 @@ class DB(TM, dbi_db.DB):
 
     def _abort(self, *ignored):
         try:
-            conn = self.getconn(False)
+            conn = self.getconn()
             conn.rollback()
             self.putconn()
         except AttributeError:
@@ -107,17 +105,17 @@ class DB(TM, dbi_db.DB):
     def make_mappings(self):
         """Generate the mappings used later by self.convert_description()."""
         self.type_mappings = {}
-	for t, s in [(INTEGER,'i'), (LONGINTEGER, 'i'), (NUMBER, 'n'),  
-	             (BOOLEAN,'n'), (ROWID, 'i'),
-	             (DATETIME, 'd'), (DATE, 'd'), (TIME, 'd')]:
+        for t, s in [(INTEGER,'i'), (LONGINTEGER, 'i'), (NUMBER, 'n'),
+                     (BOOLEAN,'n'), (ROWID, 'i'),
+                     (DATETIME, 'd'), (DATE, 'd'), (TIME, 'd')]:
             for v in t.values:
-	        self.type_mappings[v] = (t, s)
+                self.type_mappings[v] = (t, s)
 
     def convert_description(self, desc, use_psycopg_types=False):
         """Convert DBAPI-2.0 description field to Zope format."""
         items = []
         for name, typ, width, ds, p, scale, null_ok in desc:
-	    m = self.type_mappings.get(typ, (STRING, 's'))
+            m = self.type_mappings.get(typ, (STRING, 's'))
             items.append({
                 'name': name,
                 'type': use_psycopg_types and m[0] or m[1],
@@ -158,7 +156,7 @@ class DB(TM, dbi_db.DB):
             return ()
         self.putconn()
         return self.convert_description(c.description, True)
-    
+
     ## query execution ##
 
     def query(self, query_string, max_rows=None, query_data=None):
@@ -205,5 +203,5 @@ class DB(TM, dbi_db.DB):
         except StandardError, err:
             self._abort()
             raise err
-        
+
         return self.convert_description(desc), res
