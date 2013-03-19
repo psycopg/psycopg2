@@ -34,7 +34,10 @@ typedef struct {
     PyObject *pgerror;
     PyObject *pgcode;
     cursorObject *cursor;
-    PGresult *result;
+    char *codec;
+    PGresult *pgres;
 } PsycoErrorObject;
+
+HIDDEN PyObject *error_text_from_chars(PsycoErrorObject *self, const char *str);
 
 #endif /* PSYCOPG_ERROR_H */

@@ -38,6 +38,7 @@
 #include "psycopg/green.h"
 #include "psycopg/typecast.h"
 #include "psycopg/pgtypes.h"
+#include "psycopg/error.h"
 
 #include <string.h>
 
@@ -149,15 +150,20 @@ exception_from_sqlstate(const char *sqlstate)
 
 /* pq_raise - raise a python exception of the right kind
 
-   This function should be called while holding the GIL. */
+   This function should be called while holding the GIL.
+
+   The function passes the ownership of the pgres to the returned exception,
+   wherer the pgres was the explicit argument or taken from the cursor.
+   So, after calling it curs->pgres will be set to null */
 
 RAISES static void
-pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres)
+pq_raise(connectionObject *conn, cursorObject *curs, PGresult **pgres)
 {
     PyObject *exc = NULL;
     const char *err = NULL;
     const char *err2 = NULL;
     const char *code = NULL;
+    PyObject *pyerr = NULL;
 
     if (conn == NULL) {
         PyErr_SetString(DatabaseError,
@@ -171,13 +177,13 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres)
         conn->closed = 2;
 
     if (pgres == NULL && curs != NULL)
-        pgres = curs->pgres;
+        pgres = &curs->pgres;
 
-    if (pgres) {
-        err = PQresultErrorMessage(pgres);
+    if (pgres && *pgres) {
+        err = PQresultErrorMessage(*pgres);
         if (err != NULL) {
             Dprintf("pq_raise: PQresultErrorMessage: err=%s", err);
-            code = PQresultErrorField(pgres, PG_DIAG_SQLSTATE);
+            code = PQresultErrorField(*pgres, PG_DIAG_SQLSTATE);
         }
     }
     if (err == NULL) {
@@ -210,7 +216,26 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres)
     err2 = strip_severity(err);
     Dprintf("pq_raise: err2=%s", err2);
 
-    psyco_set_error(exc, curs, err2, err, code);
+    pyerr = psyco_set_error(exc, curs, err2);
+
+    if (pyerr && PyObject_TypeCheck(pyerr, &ErrorType)) {
+        PsycoErrorObject *perr = (PsycoErrorObject *)pyerr;
+
+        PyMem_Free(perr->codec);
+        psycopg_strdup(&perr->codec, conn->codec, 0);
+
+        Py_CLEAR(perr->pgerror);
+        perr->pgerror = error_text_from_chars(perr, err);
+
+        Py_CLEAR(perr->pgcode);
+        perr->pgcode = error_text_from_chars(perr, code);
+
+        IFCLEARPGRES(perr->pgres);
+        if (pgres && *pgres) {
+            perr->pgres = *pgres;
+            *pgres = NULL;
+        }
+    }
 }
 
 /* pq_set_critical, pq_resolve_critical - manage critical errors
@@ -388,14 +413,16 @@ pq_complete_error(connectionObject *conn, PGresult **pgres, char **error)
 {
     Dprintf("pq_complete_error: pgconn = %p, pgres = %p, error = %s",
             conn->pgconn, *pgres, *error ? *error : "(null)");
-    if (*pgres != NULL)
-        pq_raise(conn, NULL, *pgres);
+    if (*pgres != NULL) {
+        pq_raise(conn, NULL, pgres);
+        /* now *pgres is null */
+    }
     else if (*error != NULL) {
         PyErr_SetString(OperationalError, *error);
     } else {
         PyErr_SetString(OperationalError, "unknown error");
     }
-    IFCLEARPGRES(*pgres);
+
     if (*error) {
         free(*error);
         *error = NULL;
@@ -1509,8 +1536,6 @@ pq_fetch(cursorObject *curs, int no_result)
     default:
         Dprintf("pq_fetch: uh-oh, something FAILED: pgconn = %p", curs->conn);
         pq_raise(curs->conn, curs, NULL);
-        /* don't clear curs->pgres, because it contains detailed error
-           information */
         ex = -1;
         break;
     }

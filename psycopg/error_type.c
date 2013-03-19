@@ -31,6 +31,23 @@
 #include "psycopg/pqpath.h"
 
 
+PyObject *
+error_text_from_chars(PsycoErrorObject *self, const char *str)
+{
+    if (str == NULL) {
+        Py_INCREF(Py_None);
+        return (Py_None);
+    }
+
+#if PY_MAJOR_VERSION < 3
+        return PyString_FromString(str);
+#else
+        return PyUnicode_Decode(str, strlen(str),
+            self->codec ? self->codec : "ascii", "replace");
+#endif
+}
+
+
 static const char pgerror_doc[] =
     "The error message returned by the backend, if available, else None";
 
@@ -39,6 +56,9 @@ static const char pgcode_doc[] =
 
 static const char cursor_doc[] =
     "The cursor that raised the exception, if available, else None";
+
+static const char diag_doc[] =
+    "A Diagnostics object to get further information about the error";
 
 static PyMemberDef error_members[] = {
     { "pgerror", T_OBJECT, offsetof(PsycoErrorObject, pgerror),
@@ -64,18 +84,12 @@ error_init(PsycoErrorObject *self, PyObject *args, PyObject *kwargs)
             (PyObject *)self, args, kwargs) < 0) {
         return -1;
     }
-    Py_CLEAR(self->pgerror);
-    Py_CLEAR(self->pgcode);
-    Py_CLEAR(self->cursor);
-    IFCLEARPGRES(self->result);
     return 0;
 }
 
 static int
 error_traverse(PsycoErrorObject *self, visitproc visit, void *arg)
 {
-    Py_VISIT(self->pgerror);
-    Py_VISIT(self->pgcode);
     Py_VISIT(self->cursor);
     return ((PyTypeObject *)PyExc_StandardError)->tp_traverse(
         (PyObject *)self, visit, arg);
@@ -87,7 +101,8 @@ error_clear(PsycoErrorObject *self)
     Py_CLEAR(self->pgerror);
     Py_CLEAR(self->pgcode);
     Py_CLEAR(self->cursor);
-    IFCLEARPGRES(self->result);
+    PyMem_Free(self->codec);
+    IFCLEARPGRES(self->pgres);
     return ((PyTypeObject *)PyExc_StandardError)->tp_clear((PyObject *)self);
 }
 
@@ -107,9 +122,8 @@ error_get_diag(PsycoErrorObject *self, void *closure)
 }
 
 static struct PyGetSetDef error_getsets[] = {
-    { "diag", (getter)error_get_diag, NULL,
-        "Database error diagnostics" },
-    {NULL}
+    { "diag", (getter)error_get_diag, NULL, (char *)diag_doc },
+    { NULL }
 };
 
 

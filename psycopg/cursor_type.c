@@ -118,7 +118,7 @@ _mogrify(PyObject *var, PyObject *fmt, cursorObject *curs, PyObject **new)
             if (kind == 2) {
                 Py_XDECREF(n);
                 psyco_set_error(ProgrammingError, curs,
-                   "argument formats can't be mixed", NULL, NULL);
+                   "argument formats can't be mixed");
                 return -1;
             }
             kind = 1;
@@ -190,7 +190,7 @@ _mogrify(PyObject *var, PyObject *fmt, cursorObject *curs, PyObject **new)
                 /* we found %( but not a ) */
                 Py_XDECREF(n);
                 psyco_set_error(ProgrammingError, curs,
-                   "incomplete placeholder: '%(' without ')'", NULL, NULL);
+                   "incomplete placeholder: '%(' without ')'");
                 return -1;
             }
             c = d + 1;  /* after the ) */
@@ -205,7 +205,7 @@ _mogrify(PyObject *var, PyObject *fmt, cursorObject *curs, PyObject **new)
             if (kind == 1) {
                 Py_XDECREF(n);
                 psyco_set_error(ProgrammingError, curs,
-                  "argument formats can't be mixed", NULL, NULL);
+                  "argument formats can't be mixed");
                 return -1;
             }
             kind = 2;
@@ -267,7 +267,7 @@ static PyObject *_psyco_curs_validate_sql_basic(
 
     if (!sql || !PyObject_IsTrue(sql)) {
         psyco_set_error(ProgrammingError, self,
-                         "can't execute an empty query", NULL, NULL);
+                         "can't execute an empty query");
         goto fail;
     }
 
@@ -338,8 +338,7 @@ _psyco_curs_merge_query_args(cursorObject *self,
                 if (!strcmp(s, "not enough arguments for format string")
                   || !strcmp(s, "not all arguments converted")) {
                     Dprintf("psyco_curs_execute:     -> got a match");
-                    psyco_set_error(ProgrammingError, self,
-                                     s, NULL, NULL);
+                    psyco_set_error(ProgrammingError, self, s);
                     pe = 1;
                 }
 
@@ -482,13 +481,12 @@ psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
     if (self->name != NULL) {
         if (self->query != Py_None) {
             psyco_set_error(ProgrammingError, self,
-                "can't call .execute() on named cursors more than once",
-                NULL, NULL);
+                "can't call .execute() on named cursors more than once");
             return NULL;
         }
         if (self->conn->autocommit) {
             psyco_set_error(ProgrammingError, self,
-                "can't use a named cursor outside of transactions", NULL, NULL);
+                "can't use a named cursor outside of transactions");
             return NULL;
         }
         EXC_IF_NO_MARK(self);
@@ -533,7 +531,7 @@ psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
 
     if (self->name != NULL) {
         psyco_set_error(ProgrammingError, self,
-                "can't call .executemany() on named cursors", NULL, NULL);
+                "can't call .executemany() on named cursors");
         return NULL;
     }
 
@@ -1038,7 +1036,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
 
     if (self->name != NULL) {
         psyco_set_error(ProgrammingError, self,
-                         "can't call .callproc() on named cursors", NULL, NULL);
+                         "can't call .callproc() on named cursors");
         goto exit;
     }
 
@@ -1165,13 +1163,13 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
             newpos = value;
         } else {
             psyco_set_error(ProgrammingError, self,
-                "scroll mode must be 'relative' or 'absolute'", NULL, NULL);
+                "scroll mode must be 'relative' or 'absolute'");
             return NULL;
         }
 
         if (newpos < 0 || newpos >= self->rowcount ) {
             psyco_set_error(ProgrammingError, self,
-                             "scroll destination out of bounds", NULL, NULL);
+                             "scroll destination out of bounds");
             return NULL;
         }
 

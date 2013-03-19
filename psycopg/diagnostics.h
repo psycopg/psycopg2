@@ -26,12 +26,14 @@
 #ifndef PSYCOPG_DIAGNOSTICS_H
 #define PSYCOPG_DIAGNOSTICS_H 1
 
+#include "psycopg/error.h"
+
 extern HIDDEN PyTypeObject diagnosticsType;
 
 typedef struct {
     PyObject_HEAD
 
-    PyObject *err;           /* exception to retrieve the diagnostics from */
+    PsycoErrorObject *err;  /* exception to retrieve the diagnostics from */
 
 } diagnosticsObject;
 

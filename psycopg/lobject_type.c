@@ -333,7 +333,7 @@ lobject_setup(lobjectObject *self, connectionObject *conn,
 
     if (conn->autocommit) {
         psyco_set_error(ProgrammingError, NULL,
-            "can't use a lobject outside of transactions", NULL, NULL);
+            "can't use a lobject outside of transactions");
         return -1;
     }
 

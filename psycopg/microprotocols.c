@@ -203,7 +203,7 @@ microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
     /* else set the right exception and return NULL */
     PyOS_snprintf(buffer, 255, "can't adapt type '%s'",
         Py_TYPE(obj)->tp_name);
-    psyco_set_error(ProgrammingError, NULL, buffer, NULL, NULL);
+    psyco_set_error(ProgrammingError, NULL, buffer);
     return NULL;
 }
 

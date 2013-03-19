@@ -512,11 +512,10 @@ psyco_errors_set(PyObject *type)
 
    Create a new error of the given type with extra attributes. */
 
-RAISES void
-psyco_set_error(PyObject *exc, cursorObject *curs, const char *msg,
-                const char *pgerror, const char *pgcode)
+/* TODO: may have been changed to BORROWED */
+RAISES PyObject *
+psyco_set_error(PyObject *exc, cursorObject *curs, const char *msg)
 {
-    PyObject *t;
     PyObject *pymsg;
     PyObject *err = NULL;
     connectionObject *conn = NULL;
@@ -532,31 +531,24 @@ psyco_set_error(PyObject *exc, cursorObject *curs, const char *msg,
     else {
         /* what's better than an error in an error handler in the morning?
          * Anyway, some error was set, refcount is ok... get outta here. */
-        return;
+        return NULL;
     }
 
     if (err && PyObject_TypeCheck(err, &ErrorType)) {
         PsycoErrorObject *perr = (PsycoErrorObject *)err;
         if (curs) {
+            Py_CLEAR(perr->cursor);
             Py_INCREF(curs);
             perr->cursor = curs;
         }
+    }
 
-        if (pgerror) {
-            if ((t = conn_text_from_chars(conn, pgerror))) {
-                perr->pgerror = t;
-            }
-        }
-
-        if (pgcode) {
-            if ((t = conn_text_from_chars(conn, pgcode))) {
-                perr->pgcode = t;
-            }
-        }
-
+    if (err) {
         PyErr_SetObject(exc, err);
         Py_DECREF(err);
     }
+
+    return err;
 }
 
 
