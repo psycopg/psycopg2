@@ -424,7 +424,7 @@ sources = [
 
     'connection_int.c', 'connection_type.c',
     'cursor_int.c', 'cursor_type.c',
-    'diagnostics_type.c',
+    'diagnostics_type.c', 'error_type.c',
     'lobject_int.c', 'lobject_type.c',
     'notify_type.c', 'xid_type.c',
 
@@ -437,8 +437,8 @@ sources = [
 
 depends = [
     # headers
-    'config.h', 'pgtypes.h', 'psycopg.h', 'python.h',
-    'connection.h', 'cursor.h', 'diagnostics.h', 'green.h', 'lobject.h',
+    'config.h', 'pgtypes.h', 'psycopg.h', 'python.h', 'connection.h',
+    'cursor.h', 'diagnostics.h', 'error.h', 'green.h', 'lobject.h',
     'notify.h', 'pqpath.h', 'xid.h',
 
     'adapter_asis.h', 'adapter_binary.h', 'adapter_datetime.h',

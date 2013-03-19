@@ -114,6 +114,7 @@ typedef unsigned long Py_uhash_t;
 #define PyInt_AsLong           PyLong_AsLong
 #define PyInt_FromLong         PyLong_FromLong
 #define PyInt_FromSsize_t      PyLong_FromSsize_t
+#define PyExc_StandardError    PyExc_Exception
 #define PyString_FromFormat    PyUnicode_FromFormat
 #define Py_TPFLAGS_HAVE_ITER   0L
 #define Py_TPFLAGS_HAVE_RICHCOMPARE 0L
