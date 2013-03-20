@@ -183,7 +183,7 @@ psyco_conn_xid(connectionObject *self, PyObject *args, PyObject *kwargs)
     EXC_IF_CONN_CLOSED(self);
     EXC_IF_TPC_NOT_SUPPORTED(self);
 
-    return PyObject_Call((PyObject *)&XidType, args, kwargs);
+    return PyObject_Call((PyObject *)&xidType, args, kwargs);
 }
 
 
@@ -194,7 +194,7 @@ static PyObject *
 psyco_conn_tpc_begin(connectionObject *self, PyObject *args)
 {
     PyObject *rv = NULL;
-    XidObject *xid = NULL;
+    xidObject *xid = NULL;
     PyObject *oxid;
 
     EXC_IF_CONN_CLOSED(self);
@@ -286,7 +286,7 @@ _psyco_conn_tpc_finish(connectionObject *self, PyObject *args,
     _finish_f opc_f, char *tpc_cmd)
 {
     PyObject *oxid = NULL;
-    XidObject *xid = NULL;
+    xidObject *xid = NULL;
     PyObject *rv = NULL;
 
     if (!PyArg_ParseTuple(args, "|O", &oxid)) { goto exit; }

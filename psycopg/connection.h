@@ -88,7 +88,7 @@ typedef struct {
                                  2 that something horrible happened */
     long int mark;            /* number of commits/rollbacks done so far */
     int status;               /* status of the connection */
-    XidObject *tpc_xid;       /* Transaction ID in two-phase commit */
+    xidObject *tpc_xid;       /* Transaction ID in two-phase commit */
 
     long int async;           /* 1 means the connection is async */
     int protocol;             /* protocol version */
@@ -151,9 +151,9 @@ HIDDEN int  conn_set_autocommit(connectionObject *self, int value);
 RAISES_NEG HIDDEN int  conn_switch_isolation_level(connectionObject *self, int level);
 RAISES_NEG HIDDEN int  conn_set_client_encoding(connectionObject *self, const char *enc);
 HIDDEN int  conn_poll(connectionObject *self);
-RAISES_NEG HIDDEN int  conn_tpc_begin(connectionObject *self, XidObject *xid);
+RAISES_NEG HIDDEN int  conn_tpc_begin(connectionObject *self, xidObject *xid);
 RAISES_NEG HIDDEN int  conn_tpc_command(connectionObject *self,
-                             const char *cmd, XidObject *xid);
+                             const char *cmd, xidObject *xid);
 HIDDEN PyObject *conn_tpc_recover(connectionObject *self);
 
 /* exception-raising macros */

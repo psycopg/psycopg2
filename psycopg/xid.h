@@ -27,7 +27,7 @@
 #ifndef PSYCOPG_XID_H
 #define PSYCOPG_XID_H 1
 
-extern HIDDEN PyTypeObject XidType;
+extern HIDDEN PyTypeObject xidType;
 
 typedef struct {
   PyObject_HEAD
@@ -41,11 +41,11 @@ typedef struct {
   PyObject *prepared;
   PyObject *owner;
   PyObject *database;
-} XidObject;
+} xidObject;
 
-HIDDEN XidObject *xid_ensure(PyObject *oxid);
-HIDDEN XidObject *xid_from_string(PyObject *s);
-HIDDEN PyObject *xid_get_tid(XidObject *self);
+HIDDEN xidObject *xid_ensure(PyObject *oxid);
+HIDDEN xidObject *xid_from_string(PyObject *s);
+HIDDEN PyObject *xid_get_tid(xidObject *self);
 HIDDEN PyObject *xid_recover(PyObject *conn);
 
 #endif /* PSYCOPG_XID_H */

@@ -52,22 +52,22 @@ static const char payload_doc[] =
     "of the server this member is always the empty string.";
 
 static PyMemberDef notify_members[] = {
-    { "pid", T_OBJECT, offsetof(NotifyObject, pid), READONLY, (char *)pid_doc },
-    { "channel", T_OBJECT, offsetof(NotifyObject, channel), READONLY, (char *)channel_doc },
-    { "payload", T_OBJECT, offsetof(NotifyObject, payload), READONLY, (char *)payload_doc },
+    { "pid", T_OBJECT, offsetof(notifyObject, pid), READONLY, (char *)pid_doc },
+    { "channel", T_OBJECT, offsetof(notifyObject, channel), READONLY, (char *)channel_doc },
+    { "payload", T_OBJECT, offsetof(notifyObject, payload), READONLY, (char *)payload_doc },
     { NULL }
 };
 
 static PyObject *
 notify_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
-    NotifyObject *self = (NotifyObject *)type->tp_alloc(type, 0);
+    notifyObject *self = (notifyObject *)type->tp_alloc(type, 0);
 
     return (PyObject *)self;
 }
 
 static int
-notify_init(NotifyObject *self, PyObject *args, PyObject *kwargs)
+notify_init(notifyObject *self, PyObject *args, PyObject *kwargs)
 {
     static char *kwlist[] = {"pid", "channel", "payload", NULL};
     PyObject *pid = NULL, *channel = NULL, *payload = NULL;
@@ -97,7 +97,7 @@ notify_init(NotifyObject *self, PyObject *args, PyObject *kwargs)
 }
 
 static int
-notify_traverse(NotifyObject *self, visitproc visit, void *arg)
+notify_traverse(notifyObject *self, visitproc visit, void *arg)
 {
     Py_VISIT(self->pid);
     Py_VISIT(self->channel);
@@ -106,7 +106,7 @@ notify_traverse(NotifyObject *self, visitproc visit, void *arg)
 }
 
 static void
-notify_dealloc(NotifyObject *self)
+notify_dealloc(notifyObject *self)
 {
     Py_CLEAR(self->pid);
     Py_CLEAR(self->channel);
@@ -124,7 +124,7 @@ notify_del(PyObject *self)
 
 /* Convert a notify into a 2 or 3 items tuple. */
 static PyObject *
-notify_astuple(NotifyObject *self, int with_payload)
+notify_astuple(notifyObject *self, int with_payload)
 {
     PyObject *tself;
     if (!(tself = PyTuple_New(with_payload ? 3 : 2))) { return NULL; }
@@ -162,15 +162,15 @@ notify_astuple(NotifyObject *self, int with_payload)
  * the (pid, channel) pair is no more equivalent as dict key to the Notify.
  */
 static PyObject *
-notify_richcompare(NotifyObject *self, PyObject *other, int op)
+notify_richcompare(notifyObject *self, PyObject *other, int op)
 {
     PyObject *rv = NULL;
     PyObject *tself = NULL;
     PyObject *tother = NULL;
 
-    if (Py_TYPE(other) == &NotifyType) {
+    if (Py_TYPE(other) == &notifyType) {
         if (!(tself = notify_astuple(self, 1))) { goto exit; }
-        if (!(tother = notify_astuple((NotifyObject *)other, 1))) { goto exit; }
+        if (!(tother = notify_astuple((notifyObject *)other, 1))) { goto exit; }
         rv = PyObject_RichCompare(tself, tother, op);
     }
     else if (PyTuple_Check(other)) {
@@ -190,7 +190,7 @@ exit:
 
 
 static Py_hash_t
-notify_hash(NotifyObject *self)
+notify_hash(notifyObject *self)
 {
     Py_hash_t rv = -1L;
     PyObject *tself = NULL;
@@ -207,7 +207,7 @@ exit:
 
 
 static PyObject*
-notify_repr(NotifyObject *self)
+notify_repr(notifyObject *self)
 {
     PyObject *rv = NULL;
     PyObject *format = NULL;
@@ -237,13 +237,13 @@ exit:
 /* Notify can be accessed as a 2 items tuple for backward compatibility */
 
 static Py_ssize_t
-notify_len(NotifyObject *self)
+notify_len(notifyObject *self)
 {
     return 2;
 }
 
 static PyObject *
-notify_getitem(NotifyObject *self, Py_ssize_t item)
+notify_getitem(notifyObject *self, Py_ssize_t item)
 {
     if (item < 0)
         item += 2;
@@ -275,10 +275,10 @@ static PySequenceMethods notify_sequence = {
 };
 
 
-PyTypeObject NotifyType = {
+PyTypeObject notifyType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2.extensions.Notify",
-    sizeof(NotifyObject),
+    sizeof(notifyObject),
     0,
     (destructor)notify_dealloc, /* tp_dealloc */
     0,          /*tp_print*/

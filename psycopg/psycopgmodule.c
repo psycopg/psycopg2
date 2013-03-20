@@ -780,8 +780,8 @@ INIT_MODULE(_psycopg)(void)
     Py_TYPE(&asisType)       = &PyType_Type;
     Py_TYPE(&listType)       = &PyType_Type;
     Py_TYPE(&chunkType)      = &PyType_Type;
-    Py_TYPE(&NotifyType)     = &PyType_Type;
-    Py_TYPE(&XidType)        = &PyType_Type;
+    Py_TYPE(&notifyType)     = &PyType_Type;
+    Py_TYPE(&xidType)        = &PyType_Type;
     Py_TYPE(&errorType)      = &PyType_Type;
     Py_TYPE(&diagnosticsType) = &PyType_Type;
 
@@ -798,8 +798,8 @@ INIT_MODULE(_psycopg)(void)
     if (PyType_Ready(&asisType) == -1) goto exit;
     if (PyType_Ready(&listType) == -1) goto exit;
     if (PyType_Ready(&chunkType) == -1) goto exit;
-    if (PyType_Ready(&NotifyType) == -1) goto exit;
-    if (PyType_Ready(&XidType) == -1) goto exit;
+    if (PyType_Ready(&notifyType) == -1) goto exit;
+    if (PyType_Ready(&xidType) == -1) goto exit;
     errorType.tp_base = (PyTypeObject *)PyExc_StandardError;
     if (PyType_Ready(&errorType) == -1) goto exit;
     if (PyType_Ready(&diagnosticsType) == -1) goto exit;
@@ -890,8 +890,8 @@ INIT_MODULE(_psycopg)(void)
     PyModule_AddObject(module, "connection", (PyObject*)&connectionType);
     PyModule_AddObject(module, "cursor", (PyObject*)&cursorType);
     PyModule_AddObject(module, "ISQLQuote", (PyObject*)&isqlquoteType);
-    PyModule_AddObject(module, "Notify", (PyObject*)&NotifyType);
-    PyModule_AddObject(module, "Xid", (PyObject*)&XidType);
+    PyModule_AddObject(module, "Notify", (PyObject*)&notifyType);
+    PyModule_AddObject(module, "Xid", (PyObject*)&xidType);
     PyModule_AddObject(module, "Diagnostics", (PyObject*)&diagnosticsType);
 #ifdef PSYCOPG_EXTENSIONS
     PyModule_AddObject(module, "lobject", (PyObject*)&lobjectType);
@@ -935,8 +935,8 @@ INIT_MODULE(_psycopg)(void)
     listType.tp_alloc = PyType_GenericAlloc;
     chunkType.tp_alloc = PyType_GenericAlloc;
     pydatetimeType.tp_alloc = PyType_GenericAlloc;
-    NotifyType.tp_alloc = PyType_GenericAlloc;
-    XidType.tp_alloc = PyType_GenericAlloc;
+    notifyType.tp_alloc = PyType_GenericAlloc;
+    xidType.tp_alloc = PyType_GenericAlloc;
     errorType.tp_alloc = PyType_GenericAlloc;
     diagnosticsType.tp_alloc = PyType_GenericAlloc;
 

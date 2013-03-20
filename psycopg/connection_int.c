@@ -183,7 +183,7 @@ conn_notifies_process(connectionObject *self)
         if (!(channel = conn_text_from_chars(self, pgn->relname))) { goto error; }
         if (!(payload = conn_text_from_chars(self, pgn->extra))) { goto error; }
 
-        if (!(notify = PyObject_CallFunctionObjArgs((PyObject *)&NotifyType,
+        if (!(notify = PyObject_CallFunctionObjArgs((PyObject *)&notifyType,
                 pid, channel, payload, NULL))) {
             goto error;
         }
@@ -1216,7 +1216,7 @@ exit:
  * until PREPARE. */
 
 RAISES_NEG int
-conn_tpc_begin(connectionObject *self, XidObject *xid)
+conn_tpc_begin(connectionObject *self, xidObject *xid)
 {
     PGresult *pgres = NULL;
     char *error = NULL;
@@ -1250,7 +1250,7 @@ conn_tpc_begin(connectionObject *self, XidObject *xid)
  * for many commands and for recovered transactions. */
 
 RAISES_NEG int
-conn_tpc_command(connectionObject *self, const char *cmd, XidObject *xid)
+conn_tpc_command(connectionObject *self, const char *cmd, xidObject *xid)
 {
     PGresult *pgres = NULL;
     char *error = NULL;
