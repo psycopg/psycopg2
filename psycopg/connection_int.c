@@ -439,10 +439,22 @@ conn_get_server_version(PGconn *pgconn)
     return (int)PQserverVersion(pgconn);
 }
 
-PGcancel *
-conn_get_cancel(PGconn *pgconn)
+/* set up the cancel key of the connection.
+ * On success return 0, else set an exception and return -1
+ */
+RAISES_NEG static int
+conn_setup_cancel(connectionObject *self, PGconn *pgconn)
 {
-    return PQgetCancel(pgconn);
+    if (self->cancel) {
+        PQfreeCancel(self->cancel);
+    }
+
+    if (!(self->cancel = PQgetCancel(self->pgconn))) {
+        PyErr_SetString(OperationalError, "can't get cancellation key");
+        return -1;
+    }
+
+    return 0;
 }
 
 
@@ -486,9 +498,7 @@ conn_setup(connectionObject *self, PGconn *pgconn)
         return -1;
     }
 
-    self->cancel = conn_get_cancel(self->pgconn);
-    if (self->cancel == NULL) {
-        PyErr_SetString(OperationalError, "can't get cancellation key");
+    if (0 > conn_setup_cancel(self, pgconn)) {
         return -1;
     }
 
@@ -788,10 +798,8 @@ _conn_poll_setup_async(connectionObject *self)
         if (0 > conn_read_encoding(self, self->pgconn)) {
             break;
         }
-        self->cancel = conn_get_cancel(self->pgconn);
-        if (self->cancel == NULL) {
-            PyErr_SetString(OperationalError, "can't get cancellation key");
-            break;
+        if (0 > conn_setup_cancel(self, self->pgconn)) {
+            return -1;
         }
 
         /* asynchronous connections always use isolation level 0, the user is
@@ -958,10 +966,6 @@ void conn_close_locked(connectionObject *self)
         PQfinish(self->pgconn);
         self->pgconn = NULL;
         Dprintf("conn_close: PQfinish called");
-    }
-    if (self->cancel) {
-        PQfreeCancel(self->cancel);
-        self->cancel = NULL;
     }
 }
 
