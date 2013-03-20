@@ -15,7 +15,7 @@ mature as the C implementation yet.
 The current `!psycopg2` implementation supports:
 
 - Python 2 versions from 2.4 to 2.7
-- Python 3 versions from 3.1 to 3.2
+- Python 3 versions from 3.1 to 3.3
 - PostgreSQL versions from 7.4 to 9.2
 
 .. _PostgreSQL: http://www.postgresql.org/
