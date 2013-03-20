@@ -395,6 +395,8 @@ def skip_if_no_truncate(f):
 
         return f(self)
 
+    return skip_if_no_truncate_
+
 class LargeObjectTruncateTests(LargeObjectMixin, unittest.TestCase):
     def test_truncate(self):
         lo = self.conn.lobject()
