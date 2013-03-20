@@ -312,7 +312,7 @@ PyTypeObject xidType = {
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
     (initproc)xid_init, /*tp_init*/
-    0, /*tp_alloc  will be set to PyType_GenericAlloc in module init*/
+    0,          /*tp_alloc*/
     xid_new, /*tp_new*/
 };
 

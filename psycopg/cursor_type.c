@@ -2002,6 +2002,6 @@ PyTypeObject cursorType = {
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
     cursor_init, /*tp_init*/
-    0, /*tp_alloc  Will be set to PyType_GenericAlloc in module init*/
+    0,          /*tp_alloc*/
     cursor_new, /*tp_new*/
 };

@@ -282,6 +282,6 @@ PyTypeObject errorType = {
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
     (initproc)error_init, /*tp_init*/
-    0, /*tp_alloc  will be set to PyType_GenericAlloc in module init*/
+    0,          /*tp_alloc*/
     error_new, /*tp_new*/
 };
