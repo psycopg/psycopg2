@@ -25,14 +25,17 @@
 import os
 import shutil
 import tempfile
+from functools import wraps
 
 import psycopg2
 import psycopg2.extensions
 from psycopg2.extensions import b
-from testconfig import dsn, green
+from testconfig import dsn
 from testutils import unittest, decorate_all_tests, skip_if_tpc_disabled
+from testutils import skip_if_green
 
 def skip_if_no_lo(f):
+    @wraps(f)
     def skip_if_no_lo_(self):
         if self.conn.server_version < 80100:
             return self.skipTest("large objects only supported from PG 8.1")
@@ -41,14 +44,7 @@ def skip_if_no_lo(f):
 
     return skip_if_no_lo_
 
-def skip_if_green(f):
-    def skip_if_green_(self):
-        if green:
-            return self.skipTest("libpq doesn't support LO in async mode")
-        else:
-            return f(self)
-
-    return skip_if_green_
+skip_lo_if_green = skip_if_green("libpq doesn't support LO in async mode")
 
 
 class LargeObjectMixin(object):
@@ -379,10 +375,11 @@ class LargeObjectTests(LargeObjectMixin, unittest.TestCase):
 
 
 decorate_all_tests(LargeObjectTests, skip_if_no_lo)
-decorate_all_tests(LargeObjectTests, skip_if_green)
+decorate_all_tests(LargeObjectTests, skip_lo_if_green)
 
 
 def skip_if_no_truncate(f):
+    @wraps(f)
     def skip_if_no_truncate_(self):
         if self.conn.server_version < 80300:
             return self.skipTest(
@@ -434,7 +431,7 @@ class LargeObjectTruncateTests(LargeObjectMixin, unittest.TestCase):
         self.assertRaises(psycopg2.ProgrammingError, lo.truncate)
 
 decorate_all_tests(LargeObjectTruncateTests, skip_if_no_lo)
-decorate_all_tests(LargeObjectTruncateTests, skip_if_green)
+decorate_all_tests(LargeObjectTruncateTests, skip_lo_if_green)
 decorate_all_tests(LargeObjectTruncateTests, skip_if_no_truncate)
 
 

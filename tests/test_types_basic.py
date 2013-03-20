@@ -26,7 +26,9 @@ try:
     import decimal
 except:
     pass
+
 import sys
+from functools import wraps
 import testutils
 from testutils import unittest, decorate_all_tests
 from testconfig import dsn
@@ -461,6 +463,7 @@ class ByteaParserTest(unittest.TestCase):
         self.assertEqual(rv, tgt)
 
 def skip_if_cant_cast(f):
+    @wraps(f)
     def skip_if_cant_cast_(self, *args, **kwargs):
         if self._cast is None:
             return self.skipTest("can't test bytea parser: %s - %s"
