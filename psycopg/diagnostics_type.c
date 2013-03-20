@@ -27,7 +27,7 @@
 #include "psycopg/psycopg.h"
 
 #include "psycopg/diagnostics.h"
-#include "psycopg/cursor.h"
+#include "psycopg/error.h"
 
 /* These are new in PostgreSQL 9.3. Defining them here so that psycopg2 can
  * use them with a 9.3+ server even if compiled against pre-9.3 headers. */
@@ -55,27 +55,15 @@
 static PyObject *
 psyco_diagnostics_get_field(diagnosticsObject *self, void *closure)
 {
-    // closure contains the field code.
-    PyObject *rv = NULL;
-    PyObject *curs = NULL;
-    const char* errortext;
-    if (!(curs = PyObject_GetAttrString(self->err, "cursor")) ||
-        !PyObject_TypeCheck(curs, &cursorType) ||
-        ((cursorObject *)curs)->pgres == NULL) {
-        goto exit;
+    const char *errortext;
+
+    if (!self->err->pgres) {
+        Py_INCREF(Py_None);
+        return Py_None;
     }
-    errortext = PQresultErrorField(
-        ((cursorObject *)curs)->pgres, (Py_intptr_t) closure);
-    if (errortext) {
-        rv = conn_text_from_chars(((cursorObject *)curs)->conn, errortext);
-    }
-exit:
-    if (!rv) {
-        rv = Py_None;
-        Py_INCREF(rv);
-    }
-    Py_XDECREF(curs);
-    return rv;
+
+    errortext = PQresultErrorField(self->err->pgres, (Py_intptr_t) closure);
+    return error_text_from_chars(self->err, errortext);
 }
 
 
@@ -134,8 +122,14 @@ diagnostics_init(diagnosticsObject *self, PyObject *args, PyObject *kwds)
     if (!PyArg_ParseTuple(args, "O", &err))
         return -1;
 
+    if (!PyObject_TypeCheck(err, &errorType)) {
+        PyErr_SetString(PyExc_TypeError,
+            "The argument must be a psycopg2.Error");
+        return -1;
+    }
+
     Py_INCREF(err);
-    self->err = err;
+    self->err = (errorObject *)err;
     return 0;
 }
 

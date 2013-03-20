@@ -115,10 +115,16 @@ psycopg_escape_identifier_easy(const char *from, Py_ssize_t len)
  *
  * Store the return in 'to' and return 0 in case of success, else return -1
  * and raise an exception.
+ *
+ * If from is null, store null into to.
  */
 RAISES_NEG int
 psycopg_strdup(char **to, const char *from, Py_ssize_t len)
 {
+    if (!from) {
+        *to = NULL;
+        return 0;
+    }
     if (!len) { len = strlen(from); }
     if (!(*to = PyMem_Malloc(len + 1))) {
         PyErr_NoMemory();

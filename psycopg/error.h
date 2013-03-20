@@ -1,6 +1,6 @@
-/* diagnostics.c - definition for the psycopg Diagnostics type
+/* error.h - definition for the psycopg base Error type
  *
- * Copyright (C) 2013 Matthew Woodcraft <matthew@woodcraft.me.uk>
+ * Copyright (C) 2013  Daniele Varrazzo <daniele.varrazzo@gmail.com>
  *
  * This file is part of psycopg.
  *
@@ -23,18 +23,21 @@
  * License for more details.
  */
 
-#ifndef PSYCOPG_DIAGNOSTICS_H
-#define PSYCOPG_DIAGNOSTICS_H 1
+#ifndef PSYCOPG_ERROR_H
+#define PSYCOPG_ERROR_H 1
 
-#include "psycopg/error.h"
-
-extern HIDDEN PyTypeObject diagnosticsType;
+extern HIDDEN PyTypeObject errorType;
 
 typedef struct {
-    PyObject_HEAD
+    PyBaseExceptionObject exc;
 
-    errorObject *err;  /* exception to retrieve the diagnostics from */
+    PyObject *pgerror;
+    PyObject *pgcode;
+    cursorObject *cursor;
+    char *codec;
+    PGresult *pgres;
+} errorObject;
 
-} diagnosticsObject;
+HIDDEN PyObject *error_text_from_chars(errorObject *self, const char *str);
 
-#endif /* PSYCOPG_DIAGNOSTICS_H */
+#endif /* PSYCOPG_ERROR_H */

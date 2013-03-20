@@ -35,6 +35,7 @@
 #include "psycopg/typecast.h"
 #include "psycopg/microprotocols.h"
 #include "psycopg/microprotocols_proto.h"
+#include "psycopg/error.h"
 #include "psycopg/diagnostics.h"
 
 #include "psycopg/adapter_qstring.h"
@@ -409,8 +410,8 @@ static struct {
     PyObject **base;
     const char *docstr;
 } exctable[] = {
-    { "psycopg2.Error", &Error, 0, Error_doc },
-    { "psycopg2.Warning", &Warning, 0, Warning_doc },
+    { "psycopg2.Error", &Error, &PyExc_StandardError, Error_doc },
+    { "psycopg2.Warning", &Warning, &PyExc_StandardError, Warning_doc },
     { "psycopg2.InterfaceError", &InterfaceError, &Error, InterfaceError_doc },
     { "psycopg2.DatabaseError", &DatabaseError, &Error, DatabaseError_doc },
     { "psycopg2.InternalError", &InternalError, &DatabaseError, InternalError_doc },
@@ -434,61 +435,6 @@ static struct {
 };
 
 
-#if PY_VERSION_HEX >= 0x02050000
-
-/* Error.__reduce_ex__
- *
- * The method is required to make exceptions picklable: set the cursor
- * attribute to None. Only working from Py 2.5: previous versions
- * would require implementing __getstate__, and as of 2012 it's a little
- * bit too late to care. */
-static PyObject *
-psyco_error_reduce_ex(PyObject *self, PyObject *args)
-{
-    PyObject *proto = NULL;
-    PyObject *super = NULL;
-    PyObject *tuple = NULL;
-    PyObject *dict = NULL;
-    PyObject *rv = NULL;
-
-    /* tuple = Exception.__reduce_ex__(self, proto) */
-    if (!PyArg_ParseTuple(args, "O", &proto)) {
-        goto error;
-    }
-    if (!(super = PyObject_GetAttrString(PyExc_Exception, "__reduce_ex__"))) {
-        goto error;
-    }
-    if (!(tuple = PyObject_CallFunctionObjArgs(super, self, proto, NULL))) {
-        goto error;
-    }
-
-    /* tuple[2]['cursor'] = None
-     *
-     * If these checks fail, we can still return a valid object. Pickle
-     * will likely fail downstream, but there's nothing else we can do here */
-    if (!PyTuple_Check(tuple)) { goto exit; }
-    if (3 > PyTuple_GET_SIZE(tuple)) { goto exit; }
-    dict = PyTuple_GET_ITEM(tuple, 2);      /* borrowed */
-    if (!PyDict_Check(dict)) { goto exit; }
-
-    /* Modify the tuple inplace and return it */
-    if (0 != PyDict_SetItemString(dict, "cursor", Py_None)) {
-        goto error;
-    }
-
-exit:
-    rv = tuple;
-    tuple = NULL;
-
-error:
-    Py_XDECREF(tuple);
-    Py_XDECREF(super);
-
-    return rv;
-}
-
-#endif  /* PY_VERSION_HEX >= 0x02050000 */
-
 static int
 psyco_errors_init(void)
 {
@@ -498,18 +444,13 @@ psyco_errors_init(void)
 
     int i;
     PyObject *dict = NULL;
-    PyObject *base;
     PyObject *str = NULL;
-    PyObject *descr = NULL;
-    PyObject *diag_property = NULL;
     int rv = -1;
 
-#if PY_VERSION_HEX >= 0x02050000
-    static PyMethodDef psyco_error_reduce_ex_def =
-        {"__reduce_ex__", psyco_error_reduce_ex, METH_VARARGS, "pickle helper"};
-#endif
+    /* 'Error' has been defined elsewhere: only init the other classes */
+    Error = (PyObject *)&errorType;
 
-    for (i=0; exctable[i].name; i++) {
+    for (i = 1; exctable[i].name; i++) {
         if (!(dict = PyDict_New())) { goto exit; }
 
         if (exctable[i].docstr) {
@@ -518,58 +459,16 @@ psyco_errors_init(void)
             Py_CLEAR(str);
         }
 
-        if (exctable[i].base == 0) {
-            #if PY_MAJOR_VERSION < 3
-            base = PyExc_StandardError;
-            #else
-            /* StandardError is gone in 3.0 */
-            base = NULL;
-            #endif
-        }
-        else
-            base = *exctable[i].base;
-
         if (!(*exctable[i].exc = PyErr_NewException(
-                exctable[i].name, base, dict))) {
+                exctable[i].name, *exctable[i].base, dict))) {
             goto exit;
         }
         Py_CLEAR(dict);
     }
 
-    /* Make pgerror, pgcode and cursor default to None on psycopg
-       error objects.  This simplifies error handling code that checks
-       these attributes. */
-    PyObject_SetAttrString(Error, "pgerror", Py_None);
-    PyObject_SetAttrString(Error, "pgcode", Py_None);
-    PyObject_SetAttrString(Error, "cursor", Py_None);
-
-    if (!(diag_property = PyObject_CallFunctionObjArgs(
-            (PyObject *) &PyProperty_Type, &diagnosticsType, NULL))) {
-        goto exit;
-    }
-    PyObject_SetAttrString(Error, "diag", diag_property);
-
-    /* install __reduce_ex__ on Error to make all the subclasses picklable.
-     *
-     * Don't install it on Py 2.4: it is not used by the pickle
-     * protocol, and if called manually fails in an unsettling way,
-     * probably because the exceptions were old-style classes. */
-#if PY_VERSION_HEX >= 0x02050000
-    if (!(descr = PyDescr_NewMethod((PyTypeObject *)Error,
-            &psyco_error_reduce_ex_def))) {
-        goto exit;
-    }
-    if (0 != PyObject_SetAttrString(Error,
-            psyco_error_reduce_ex_def.ml_name, descr)) {
-        goto exit;
-    }
-#endif
-
     rv = 0;
 
 exit:
-    Py_XDECREF(diag_property);
-    Py_XDECREF(descr);
     Py_XDECREF(str);
     Py_XDECREF(dict);
     return rv;
@@ -613,11 +512,10 @@ psyco_errors_set(PyObject *type)
 
    Create a new error of the given type with extra attributes. */
 
-RAISES void
-psyco_set_error(PyObject *exc, cursorObject *curs, const char *msg,
-                const char *pgerror, const char *pgcode)
+/* TODO: may have been changed to BORROWED */
+RAISES PyObject *
+psyco_set_error(PyObject *exc, cursorObject *curs, const char *msg)
 {
-    PyObject *t;
     PyObject *pymsg;
     PyObject *err = NULL;
     connectionObject *conn = NULL;
@@ -633,31 +531,24 @@ psyco_set_error(PyObject *exc, cursorObject *curs, const char *msg,
     else {
         /* what's better than an error in an error handler in the morning?
          * Anyway, some error was set, refcount is ok... get outta here. */
-        return;
+        return NULL;
+    }
+
+    if (err && PyObject_TypeCheck(err, &errorType)) {
+        errorObject *perr = (errorObject *)err;
+        if (curs) {
+            Py_CLEAR(perr->cursor);
+            Py_INCREF(curs);
+            perr->cursor = curs;
+        }
     }
 
     if (err) {
-        if (curs) {
-            PyObject_SetAttrString(err, "cursor", (PyObject *)curs);
-        }
-
-        if (pgerror) {
-            if ((t = conn_text_from_chars(conn, pgerror))) {
-                PyObject_SetAttrString(err, "pgerror", t);
-                Py_DECREF(t);
-            }
-        }
-
-        if (pgcode) {
-            if ((t = conn_text_from_chars(conn, pgcode))) {
-                PyObject_SetAttrString(err, "pgcode", t);
-                Py_DECREF(t);
-            }
-        }
-
         PyErr_SetObject(exc, err);
         Py_DECREF(err);
     }
+
+    return err;
 }
 
 
@@ -891,6 +782,7 @@ INIT_MODULE(_psycopg)(void)
     Py_TYPE(&chunkType)      = &PyType_Type;
     Py_TYPE(&NotifyType)     = &PyType_Type;
     Py_TYPE(&XidType)        = &PyType_Type;
+    Py_TYPE(&errorType)      = &PyType_Type;
     Py_TYPE(&diagnosticsType) = &PyType_Type;
 
     if (PyType_Ready(&connectionType) == -1) goto exit;
@@ -908,6 +800,8 @@ INIT_MODULE(_psycopg)(void)
     if (PyType_Ready(&chunkType) == -1) goto exit;
     if (PyType_Ready(&NotifyType) == -1) goto exit;
     if (PyType_Ready(&XidType) == -1) goto exit;
+    errorType.tp_base = (PyTypeObject *)PyExc_StandardError;
+    if (PyType_Ready(&errorType) == -1) goto exit;
     if (PyType_Ready(&diagnosticsType) == -1) goto exit;
 
 #ifdef PSYCOPG_EXTENSIONS
@@ -1043,6 +937,7 @@ INIT_MODULE(_psycopg)(void)
     pydatetimeType.tp_alloc = PyType_GenericAlloc;
     NotifyType.tp_alloc = PyType_GenericAlloc;
     XidType.tp_alloc = PyType_GenericAlloc;
+    errorType.tp_alloc = PyType_GenericAlloc;
     diagnosticsType.tp_alloc = PyType_GenericAlloc;
 
 #ifdef PSYCOPG_EXTENSIONS
