@@ -1173,12 +1173,6 @@ connection_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return type->tp_alloc(type, 0);
 }
 
-static void
-connection_del(PyObject* self)
-{
-    PyObject_GC_Del(self);
-}
-
 static PyObject *
 connection_repr(connectionObject *self)
 {
@@ -1213,8 +1207,7 @@ connection_traverse(connectionObject *self, visitproc visit, void *arg)
 PyTypeObject connectionType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.connection",
-    sizeof(connectionObject),
-    0,
+    sizeof(connectionObject), 0,
     connection_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/
     0,          /*tp_getattr*/
@@ -1225,47 +1218,30 @@ PyTypeObject connectionType = {
     0,          /*tp_as_sequence*/
     0,          /*tp_as_mapping*/
     0,          /*tp_hash */
-
     0,          /*tp_call*/
     (reprfunc)connection_repr, /*tp_str*/
     0,          /*tp_getattro*/
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
-
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC |
         Py_TPFLAGS_HAVE_WEAKREFS,
                 /*tp_flags*/
     connectionType_doc, /*tp_doc*/
-
     (traverseproc)connection_traverse, /*tp_traverse*/
     0,          /*tp_clear*/
-
     0,          /*tp_richcompare*/
     offsetof(connectionObject, weakreflist), /* tp_weaklistoffset */
-
     0,          /*tp_iter*/
     0,          /*tp_iternext*/
-
-    /* Attribute descriptor and subclassing stuff */
-
     connectionObject_methods, /*tp_methods*/
     connectionObject_members, /*tp_members*/
     connectionObject_getsets, /*tp_getset*/
     0,          /*tp_base*/
     0,          /*tp_dict*/
-
     0,          /*tp_descr_get*/
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
-
     connection_init, /*tp_init*/
     0, /*tp_alloc  will be set to PyType_GenericAlloc in module init*/
     connection_new, /*tp_new*/
-    (freefunc)connection_del, /*tp_free  Low-level free-memory routine */
-    0,          /*tp_is_gc For PyObject_IS_GC */
-    0,          /*tp_bases*/
-    0,          /*tp_mro method resolution order */
-    0,          /*tp_cache*/
-    0,          /*tp_subclasses*/
-    0           /*tp_weaklist*/
 };

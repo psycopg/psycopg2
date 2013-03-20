@@ -1951,12 +1951,6 @@ cursor_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return type->tp_alloc(type, 0);
 }
 
-static void
-cursor_del(PyObject* self)
-{
-    PyObject_GC_Del(self);
-}
-
 static PyObject *
 cursor_repr(cursorObject *self)
 {
@@ -1990,8 +1984,7 @@ cursor_traverse(cursorObject *self, visitproc visit, void *arg)
 PyTypeObject cursorType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.cursor",
-    sizeof(cursorObject),
-    0,
+    sizeof(cursorObject), 0,
     cursor_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/
     0,          /*tp_getattr*/
@@ -2002,47 +1995,30 @@ PyTypeObject cursorType = {
     0,          /*tp_as_sequence*/
     0,          /*tp_as_mapping*/
     0,          /*tp_hash */
-
     0,          /*tp_call*/
     (reprfunc)cursor_repr, /*tp_str*/
     0,          /*tp_getattro*/
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
-
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_ITER |
       Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_HAVE_WEAKREFS ,
                 /*tp_flags*/
     cursorType_doc, /*tp_doc*/
-
     (traverseproc)cursor_traverse, /*tp_traverse*/
     0,          /*tp_clear*/
-
     0,          /*tp_richcompare*/
     offsetof(cursorObject, weakreflist), /*tp_weaklistoffset*/
-
     cursor_iter, /*tp_iter*/
     cursor_next, /*tp_iternext*/
-
-    /* Attribute descriptor and subclassing stuff */
-
     cursorObject_methods, /*tp_methods*/
     cursorObject_members, /*tp_members*/
     cursorObject_getsets, /*tp_getset*/
     0,          /*tp_base*/
     0,          /*tp_dict*/
-
     0,          /*tp_descr_get*/
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
-
     cursor_init, /*tp_init*/
     0, /*tp_alloc  Will be set to PyType_GenericAlloc in module init*/
     cursor_new, /*tp_new*/
-    (freefunc)cursor_del, /*tp_free  Low-level free-memory routine */
-    0,          /*tp_is_gc For PyObject_IS_GC */
-    0,          /*tp_bases*/
-    0,          /*tp_mro method resolution order */
-    0,          /*tp_cache*/
-    0,          /*tp_subclasses*/
-    0           /*tp_weaklist*/
 };

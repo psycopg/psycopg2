@@ -441,12 +441,6 @@ typecast_traverse(PyObject *obj, visitproc visit, void *arg)
     return 0;
 }
 
-static void
-typecast_del(void *self)
-{
-    PyObject_GC_Del(self);
-}
-
 static PyObject *
 typecast_repr(PyObject *self)
 {
@@ -489,9 +483,7 @@ typecast_call(PyObject *obj, PyObject *args, PyObject *kwargs)
 PyTypeObject typecastType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.type",
-    sizeof(typecastObject),
-    0,
-
+    sizeof(typecastObject), 0,
     typecast_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/
     0,          /*tp_getattr*/
@@ -502,48 +494,31 @@ PyTypeObject typecastType = {
     0,          /*tp_as_sequence*/
     0,          /*tp_as_mapping*/
     0,          /*tp_hash */
-
     typecast_call, /*tp_call*/
     0,          /*tp_str*/
     0,          /*tp_getattro*/
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
-
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_RICHCOMPARE |
       Py_TPFLAGS_HAVE_GC, /*tp_flags*/
     "psycopg type-casting object", /*tp_doc*/
-
     typecast_traverse, /*tp_traverse*/
     0,          /*tp_clear*/
-
     typecast_richcompare, /*tp_richcompare*/
     0,          /*tp_weaklistoffset*/
-
     0,          /*tp_iter*/
     0,          /*tp_iternext*/
-
-    /* Attribute descriptor and subclassing stuff */
-
     0, /*tp_methods*/
     typecastObject_members, /*tp_members*/
     0,          /*tp_getset*/
     0,          /*tp_base*/
     0,          /*tp_dict*/
-
     0,          /*tp_descr_get*/
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
-
     0, /*tp_init*/
     0, /*tp_alloc  will be set to PyType_GenericAlloc in module init*/
     0, /*tp_new*/
-    typecast_del, /*tp_free  Low-level free-memory routine */
-    0,          /*tp_is_gc For PyObject_IS_GC */
-    0,          /*tp_bases*/
-    0,          /*tp_mro method resolution order */
-    0,          /*tp_cache*/
-    0,          /*tp_subclasses*/
-    0           /*tp_weaklist*/
 };
 
 static PyObject *

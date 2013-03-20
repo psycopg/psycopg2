@@ -115,12 +115,6 @@ notify_dealloc(notifyObject *self)
     Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
-static void
-notify_del(PyObject *self)
-{
-    PyObject_GC_Del(self);
-}
-
 
 /* Convert a notify into a 2 or 3 items tuple. */
 static PyObject *
@@ -278,63 +272,41 @@ static PySequenceMethods notify_sequence = {
 PyTypeObject notifyType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2.extensions.Notify",
-    sizeof(notifyObject),
-    0,
+    sizeof(notifyObject), 0,
     (destructor)notify_dealloc, /* tp_dealloc */
     0,          /*tp_print*/
-
     0,          /*tp_getattr*/
     0,          /*tp_setattr*/
-
     0,          /*tp_compare*/
-
     (reprfunc)notify_repr, /*tp_repr*/
     0,          /*tp_as_number*/
     &notify_sequence, /*tp_as_sequence*/
     0,          /*tp_as_mapping*/
     (hashfunc)notify_hash, /*tp_hash */
-
     0,          /*tp_call*/
     0,          /*tp_str*/
-
     0,          /*tp_getattro*/
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
-
     Py_TPFLAGS_DEFAULT|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
     notify_doc, /*tp_doc*/
-
     (traverseproc)notify_traverse, /*tp_traverse*/
     0,          /*tp_clear*/
-
     (richcmpfunc)notify_richcompare, /*tp_richcompare*/
     0,          /*tp_weaklistoffset*/
-
     0,          /*tp_iter*/
     0,          /*tp_iternext*/
-
-    /* Attribute descriptor and subclassing stuff */
-
     0,          /*tp_methods*/
     notify_members, /*tp_members*/
     0,          /*tp_getset*/
     0,          /*tp_base*/
     0,          /*tp_dict*/
-
     0,          /*tp_descr_get*/
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
-
     (initproc)notify_init, /*tp_init*/
     0, /*tp_alloc  will be set to PyType_GenericAlloc in module init*/
     notify_new, /*tp_new*/
-    (freefunc)notify_del, /*tp_free  Low-level free-memory routine */
-    0,          /*tp_is_gc For PyObject_IS_GC */
-    0,          /*tp_bases*/
-    0,          /*tp_mro method resolution order */
-    0,          /*tp_cache*/
-    0,          /*tp_subclasses*/
-    0           /*tp_weaklist*/
 };
 
 

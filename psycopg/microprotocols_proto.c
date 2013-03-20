@@ -135,12 +135,6 @@ isqlquote_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return type->tp_alloc(type, 0);
 }
 
-static void
-isqlquote_del(PyObject* self)
-{
-    PyObject_Del(self);
-}
-
 
 /* object type */
 
@@ -152,8 +146,7 @@ isqlquote_del(PyObject* self)
 PyTypeObject isqlquoteType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.ISQLQuote",
-    sizeof(isqlquoteObject),
-    0,
+    sizeof(isqlquoteObject), 0,
     isqlquote_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/
     0,          /*tp_getattr*/
@@ -164,45 +157,28 @@ PyTypeObject isqlquoteType = {
     0,          /*tp_as_sequence*/
     0,          /*tp_as_mapping*/
     0,          /*tp_hash */
-
     0,          /*tp_call*/
     0,          /*tp_str*/
     0,          /*tp_getattro*/
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
-
     Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /*tp_flags*/
     isqlquoteType_doc, /*tp_doc*/
-
     0,          /*tp_traverse*/
     0,          /*tp_clear*/
-
     0,          /*tp_richcompare*/
     0,          /*tp_weaklistoffset*/
-
     0,          /*tp_iter*/
     0,          /*tp_iternext*/
-
-    /* Attribute descriptor and subclassing stuff */
-
     isqlquoteObject_methods, /*tp_methods*/
     isqlquoteObject_members, /*tp_members*/
     0,          /*tp_getset*/
     0,          /*tp_base*/
     0,          /*tp_dict*/
-
     0,          /*tp_descr_get*/
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
-
     isqlquote_init, /*tp_init*/
     0, /*tp_alloc  will be set to PyType_GenericAlloc in module init*/
     isqlquote_new, /*tp_new*/
-    (freefunc)isqlquote_del, /*tp_free  Low-level free-memory routine */
-    0,          /*tp_is_gc For PyObject_IS_GC */
-    0,          /*tp_bases*/
-    0,          /*tp_mro method resolution order */
-    0,          /*tp_cache*/
-    0,          /*tp_subclasses*/
-    0           /*tp_weaklist*/
 };

@@ -392,12 +392,6 @@ lobject_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return type->tp_alloc(type, 0);
 }
 
-static void
-lobject_del(PyObject* self)
-{
-    PyObject_Del(self);
-}
-
 static PyObject *
 lobject_repr(lobjectObject *self)
 {
@@ -414,8 +408,7 @@ lobject_repr(lobjectObject *self)
 PyTypeObject lobjectType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.lobject",
-    sizeof(lobjectObject),
-    0,
+    sizeof(lobjectObject), 0,
     lobject_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/
     0,          /*tp_getattr*/
@@ -426,47 +419,30 @@ PyTypeObject lobjectType = {
     0,          /*tp_as_sequence*/
     0,          /*tp_as_mapping*/
     0,          /*tp_hash */
-
     0,          /*tp_call*/
     (reprfunc)lobject_repr, /*tp_str*/
     0,          /*tp_getattro*/
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
-
     Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_ITER, /*tp_flags*/
     lobjectType_doc, /*tp_doc*/
-
     0,          /*tp_traverse*/
     0,          /*tp_clear*/
-
     0,          /*tp_richcompare*/
     0,          /*tp_weaklistoffset*/
-
     0,          /*tp_iter*/
     0,          /*tp_iternext*/
-
-    /* Attribute descriptor and subclassing stuff */
-
     lobjectObject_methods, /*tp_methods*/
     lobjectObject_members, /*tp_members*/
     lobjectObject_getsets, /*tp_getset*/
     0,          /*tp_base*/
     0,          /*tp_dict*/
-
     0,          /*tp_descr_get*/
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
-
     lobject_init, /*tp_init*/
     0, /*tp_alloc  Will be set to PyType_GenericAlloc in module init*/
     lobject_new, /*tp_new*/
-    (freefunc)lobject_del, /*tp_free  Low-level free-memory routine */
-    0,          /*tp_is_gc For PyObject_IS_GC */
-    0,          /*tp_bases*/
-    0,          /*tp_mro method resolution order */
-    0,          /*tp_cache*/
-    0,          /*tp_subclasses*/
-    0           /*tp_weaklist*/
 };
 
 #endif

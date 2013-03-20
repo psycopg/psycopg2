@@ -245,8 +245,7 @@ static PyMethodDef error_methods[] = {
 PyTypeObject errorType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2.Error",
-    sizeof(errorObject),
-    0,
+    sizeof(errorObject), 0,
     (destructor)error_dealloc, /* tp_dealloc */
     0,          /*tp_print*/
     0,          /*tp_getattr*/
@@ -281,11 +280,4 @@ PyTypeObject errorType = {
     (initproc)error_init, /*tp_init*/
     0, /*tp_alloc  will be set to PyType_GenericAlloc in module init*/
     error_new, /*tp_new*/
-    0,          /*tp_free  Low-level free-memory routine */
-    0,          /*tp_is_gc For PyObject_IS_GC */
-    0,          /*tp_bases*/
-    0,          /*tp_mro method resolution order */
-    0,          /*tp_cache*/
-    0,          /*tp_subclasses*/
-    0           /*tp_weaklist*/
 };

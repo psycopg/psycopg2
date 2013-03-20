@@ -189,12 +189,6 @@ xid_dealloc(xidObject *self)
     Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
-static void
-xid_del(PyObject *self)
-{
-    PyObject_GC_Del(self);
-}
-
 static Py_ssize_t
 xid_len(xidObject *self)
 {
@@ -308,63 +302,41 @@ static struct PyMethodDef xid_methods[] = {
 PyTypeObject xidType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2.extensions.Xid",
-    sizeof(xidObject),
-    0,
+    sizeof(xidObject), 0,
     (destructor)xid_dealloc, /* tp_dealloc */
     0,          /*tp_print*/
-
     0,          /*tp_getattr*/
     0,          /*tp_setattr*/
-
     0,          /*tp_compare*/
-
     (reprfunc)xid_repr, /*tp_repr*/
     0,          /*tp_as_number*/
     &xid_sequence, /*tp_as_sequence*/
     0,          /*tp_as_mapping*/
     0,          /*tp_hash */
-
     0,          /*tp_call*/
     (reprfunc)xid_str, /*tp_str*/
-
     0,          /*tp_getattro*/
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
-
     Py_TPFLAGS_DEFAULT|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
     xid_doc, /*tp_doc*/
-
     (traverseproc)xid_traverse, /*tp_traverse*/
     0,          /*tp_clear*/
-
     0,          /*tp_richcompare*/
     0,          /*tp_weaklistoffset*/
-
     0,          /*tp_iter*/
     0,          /*tp_iternext*/
-
-    /* Attribute descriptor and subclassing stuff */
-
     xid_methods, /*tp_methods*/
     xid_members, /*tp_members*/
     0,          /*tp_getset*/
     0,          /*tp_base*/
     0,          /*tp_dict*/
-
     0,          /*tp_descr_get*/
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
-
     (initproc)xid_init, /*tp_init*/
     0, /*tp_alloc  will be set to PyType_GenericAlloc in module init*/
     xid_new, /*tp_new*/
-    (freefunc)xid_del, /*tp_free  Low-level free-memory routine */
-    0,          /*tp_is_gc For PyObject_IS_GC */
-    0,          /*tp_bases*/
-    0,          /*tp_mro method resolution order */
-    0,          /*tp_cache*/
-    0,          /*tp_subclasses*/
-    0           /*tp_weaklist*/
 };
 
 

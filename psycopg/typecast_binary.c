@@ -110,9 +110,8 @@ static PyBufferProcs chunk_as_buffer =
 
 PyTypeObject chunkType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "psycopg2._psycopg.chunk",   /* tp_name */
-    sizeof(chunkObject),        /* tp_basicsize */
-    0,                          /* tp_itemsize */
+    "psycopg2._psycopg.chunk",
+    sizeof(chunkObject), 0,
     (destructor) chunk_dealloc, /* tp_dealloc*/
     0,                          /* tp_print */
     0,                          /* tp_getattr */
