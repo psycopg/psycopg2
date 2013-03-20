@@ -508,7 +508,7 @@ PyTypeObject typecastType = {
     0,          /*tp_weaklistoffset*/
     0,          /*tp_iter*/
     0,          /*tp_iternext*/
-    0, /*tp_methods*/
+    0,          /*tp_methods*/
     typecastObject_members, /*tp_members*/
     0,          /*tp_getset*/
     0,          /*tp_base*/
@@ -516,9 +516,9 @@ PyTypeObject typecastType = {
     0,          /*tp_descr_get*/
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
-    0, /*tp_init*/
-    0, /*tp_alloc  will be set to PyType_GenericAlloc in module init*/
-    0, /*tp_new*/
+    0,          /*tp_init*/
+    0,          /*tp_alloc*/
+    0,          /*tp_new*/
 };
 
 static PyObject *

@@ -260,7 +260,7 @@ PyTypeObject pdecimalType = {
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
     pdecimal_init, /*tp_init*/
-    0, /*tp_alloc  will be set to PyType_GenericAlloc in module init*/
+    0,          /*tp_alloc*/
     pdecimal_new, /*tp_new*/
 };
 

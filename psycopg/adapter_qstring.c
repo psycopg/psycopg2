@@ -296,7 +296,7 @@ PyTypeObject qstringType = {
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
     qstring_init, /*tp_init*/
-    0, /*tp_alloc  will be set to PyType_GenericAlloc in module init*/
+    0,          /*tp_alloc*/
     qstring_new, /*tp_new*/
 };
 

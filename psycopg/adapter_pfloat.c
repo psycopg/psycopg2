@@ -233,7 +233,7 @@ PyTypeObject pfloatType = {
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
     pfloat_init, /*tp_init*/
-    0, /*tp_alloc  will be set to PyType_GenericAlloc in module init*/
+    0,          /*tp_alloc*/
     pfloat_new, /*tp_new*/
 };
 
