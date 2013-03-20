@@ -72,19 +72,11 @@ curs_get_cast(cursorObject *self, PyObject *oid)
 void
 curs_reset(cursorObject *self)
 {
-    PyObject *tmp;
-
     /* initialize some variables to default values */
     self->notuples = 1;
     self->rowcount = -1;
     self->row = 0;
 
-    tmp = self->description;
-    Py_INCREF(Py_None);
-    self->description = Py_None;
-    Py_XDECREF(tmp);
-
-    tmp = self->casts;
-    self->casts = NULL;
-    Py_XDECREF(tmp);
+    Py_CLEAR(self->description);
+    Py_CLEAR(self->casts);
 }

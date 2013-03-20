@@ -79,24 +79,7 @@ static PyMemberDef xid_members[] = {
 static PyObject *
 xid_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
-    xidObject *self;
-
-    if (!(self = (xidObject *)type->tp_alloc(type, 0))) { return NULL; }
-
-    Py_INCREF(Py_None);
-    self->format_id = Py_None;
-    Py_INCREF(Py_None);
-    self->gtrid = Py_None;
-    Py_INCREF(Py_None);
-    self->bqual = Py_None;
-    Py_INCREF(Py_None);
-    self->prepared = Py_None;
-    Py_INCREF(Py_None);
-    self->owner = Py_None;
-    Py_INCREF(Py_None);
-    self->database = Py_None;
-
-    return (PyObject *)self;
+    return type->tp_alloc(type, 0);
 }
 
 static int
@@ -106,7 +89,6 @@ xid_init(xidObject *self, PyObject *args, PyObject *kwargs)
     int format_id;
     size_t i, gtrid_len, bqual_len;
     const char *gtrid, *bqual;
-    PyObject *tmp;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "iss", kwlist,
                                      &format_id, &gtrid, &bqual))
@@ -149,17 +131,12 @@ xid_init(xidObject *self, PyObject *args, PyObject *kwargs)
         }
     }
 
-    tmp = self->format_id;
     self->format_id = PyInt_FromLong(format_id);
-    Py_XDECREF(tmp);
-
-    tmp = self->gtrid;
     self->gtrid = Text_FromUTF8(gtrid);
-    Py_XDECREF(tmp);
-
-    tmp = self->bqual;
     self->bqual = Text_FromUTF8(bqual);
-    Py_XDECREF(tmp);
+    Py_INCREF(Py_None); self->prepared = Py_None;
+    Py_INCREF(Py_None); self->owner = Py_None;
+    Py_INCREF(Py_None); self->database = Py_None;
 
     return 0;
 }
@@ -555,7 +532,6 @@ static xidObject *
 _xid_unparsed_from_string(PyObject *str) {
     xidObject *xid = NULL;
     xidObject *rv = NULL;
-    PyObject *tmp;
 
     /* fake args to work around the checks performed by the xid init */
     if (!(xid = (xidObject *)PyObject_CallFunction((PyObject *)&xidType,
@@ -564,22 +540,19 @@ _xid_unparsed_from_string(PyObject *str) {
     }
 
     /* set xid.gtrid = str */
-    tmp = xid->gtrid;
+    Py_CLEAR(xid->gtrid);
     Py_INCREF(str);
     xid->gtrid = str;
-    Py_DECREF(tmp);
 
     /* set xid.format_id = None */
-    tmp = xid->format_id;
+    Py_CLEAR(xid->format_id);
     Py_INCREF(Py_None);
     xid->format_id = Py_None;
-    Py_DECREF(tmp);
 
     /* set xid.bqual = None */
-    tmp = xid->bqual;
+    Py_CLEAR(xid->bqual);
     Py_INCREF(Py_None);
     xid->bqual = Py_None;
-    Py_DECREF(tmp);
 
     /* return the finished object */
     rv = xid;
@@ -665,34 +638,25 @@ xid_recover(PyObject *conn)
         /* Get the xid with the XA triple set */
         if (!(item = PySequence_GetItem(rec, 0))) { goto exit; }
         if (!(xid = xid_from_string(item))) { goto exit; }
-        Py_DECREF(item); item = NULL;
+        Py_CLEAR(item);
 
         /* set xid.prepared */
-        if (!(item = PySequence_GetItem(rec, 1))) { goto exit; }
-        tmp = xid->prepared;
-        xid->prepared = item;
-        Py_DECREF(tmp);
-        item = NULL;
+        Py_CLEAR(xid->prepared);
+        if (!(xid->prepared = PySequence_GetItem(rec, 1))) { goto exit; }
 
         /* set xid.owner */
-        if (!(item = PySequence_GetItem(rec, 2))) { goto exit; }
-        tmp = xid->owner;
-        xid->owner = item;
-        Py_DECREF(tmp);
-        item = NULL;
+        Py_CLEAR(xid->owner);
+        if (!(xid->owner = PySequence_GetItem(rec, 2))) { goto exit; }
 
         /* set xid.database */
-        if (!(item = PySequence_GetItem(rec, 3))) { goto exit; }
-        tmp = xid->database;
-        xid->database = item;
-        Py_DECREF(tmp);
-        item = NULL;
+        Py_CLEAR(xid->database);
+        if (!(xid->database = PySequence_GetItem(rec, 3))) { goto exit; }
 
         /* xid finished: add it to the returned list */
         PyList_SET_ITEM(xids, i, (PyObject *)xid);
         xid = NULL;  /* ref stolen */
 
-        Py_DECREF(rec); rec = NULL;
+        Py_CLEAR(rec);
     }
 
     /* set the return value. */

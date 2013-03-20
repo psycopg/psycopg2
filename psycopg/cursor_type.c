@@ -474,7 +474,7 @@ psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
     }
 
     if (self->name != NULL) {
-        if (self->query != Py_None) {
+        if (self->query) {
             psyco_set_error(ProgrammingError, self,
                 "can't call .execute() on named cursors more than once");
             return NULL;
@@ -1843,32 +1843,15 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
     Py_INCREF(conn);
     self->conn = conn;
 
-    self->closed = 0;
-    self->withhold = 0;
-    self->scrollable = 0;
     self->mark = conn->mark;
-    self->pgres = NULL;
     self->notuples = 1;
     self->arraysize = 1;
     self->itersize = 2000;
     self->rowcount = -1;
     self->lastoid = InvalidOid;
 
-    self->casts = NULL;
-    self->notice = NULL;
-
-    self->string_types = NULL;
-    self->binary_types = NULL;
-    self->weakreflist = NULL;
-
-    Py_INCREF(Py_None);
-    self->description = Py_None;
-    Py_INCREF(Py_None);
-    self->pgstatus = Py_None;
     Py_INCREF(Py_None);
     self->tuple_factory = Py_None;
-    Py_INCREF(Py_None);
-    self->query = Py_None;
 
     /* default tzinfo factory */
     Py_INCREF(pyPsycopgTzFixedOffsetTimezone);
