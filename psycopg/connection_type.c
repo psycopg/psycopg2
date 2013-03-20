@@ -1076,6 +1076,7 @@ connection_dealloc(PyObject* obj)
     PyMem_Free(self->encoding);
     PyMem_Free(self->codec);
     if (self->critical) free(self->critical);
+    if (self->cancel) PQfreeCancel(self->cancel);
 
     Py_CLEAR(self->tpc_xid);
     Py_CLEAR(self->async_cursor);
