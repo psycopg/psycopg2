@@ -29,9 +29,8 @@
 #include "psycopg/cursor.h"
 #include "psycopg/connection.h"
 
-/* macros to clean the pg result */
-#define IFCLEARPGRES(pgres)  if (pgres) {PQclear(pgres); pgres = NULL;}
-#define CLEARPGRES(pgres)    PQclear(pgres); pgres = NULL
+/* macro to clean the pg result */
+#define CLEARPGRES(pgres)   do { PQclear(pgres); pgres = NULL; } while (0)
 
 /* exported functions */
 HIDDEN PGresult *pq_get_last_result(connectionObject *conn);

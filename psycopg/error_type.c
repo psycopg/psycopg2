@@ -102,7 +102,7 @@ error_clear(errorObject *self)
     Py_CLEAR(self->pgcode);
     Py_CLEAR(self->cursor);
     PyMem_Free(self->codec);
-    IFCLEARPGRES(self->pgres);
+    CLEARPGRES(self->pgres);
     return ((PyTypeObject *)PyExc_StandardError)->tp_clear((PyObject *)self);
 }
 

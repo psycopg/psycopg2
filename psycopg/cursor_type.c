@@ -379,7 +379,7 @@ _psyco_curs_execute(cursorObject *self,
 
     if (operation == NULL) { goto exit; }
 
-    IFCLEARPGRES(self->pgres);
+    CLEARPGRES(self->pgres);
     Py_CLEAR(self->query);
     Dprintf("psyco_curs_execute: starting execution of new query");
 
@@ -790,7 +790,7 @@ psyco_curs_fetchone(cursorObject *self)
     if (self->row >= self->rowcount
         && self->conn->async_cursor
         && PyWeakref_GetObject(self->conn->async_cursor) == (PyObject*)self)
-        IFCLEARPGRES(self->pgres);
+        CLEARPGRES(self->pgres);
 
     return res;
 }
@@ -837,7 +837,7 @@ psyco_curs_next_named(cursorObject *self)
     if (self->row >= self->rowcount
         && self->conn->async_cursor
         && PyWeakref_GetObject(self->conn->async_cursor) == (PyObject*)self)
-        IFCLEARPGRES(self->pgres);
+        CLEARPGRES(self->pgres);
 
     return res;
 }
@@ -922,7 +922,7 @@ psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
     if (self->row >= self->rowcount
         && self->conn->async_cursor
         && PyWeakref_GetObject(self->conn->async_cursor) == (PyObject*)self)
-        IFCLEARPGRES(self->pgres);
+        CLEARPGRES(self->pgres);
 
     /* success */
     rv = list;
@@ -991,7 +991,7 @@ psyco_curs_fetchall(cursorObject *self)
     if (self->row >= self->rowcount
         && self->conn->async_cursor
         && PyWeakref_GetObject(self->conn->async_cursor) == (PyObject*)self)
-        IFCLEARPGRES(self->pgres);
+        CLEARPGRES(self->pgres);
 
     /* success */
     rv = list;
@@ -1904,7 +1904,7 @@ cursor_dealloc(PyObject* obj)
     Py_CLEAR(self->string_types);
     Py_CLEAR(self->binary_types);
 
-    IFCLEARPGRES(self->pgres);
+    CLEARPGRES(self->pgres);
 
     Dprintf("cursor_dealloc: deleted cursor object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,

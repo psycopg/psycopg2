@@ -890,7 +890,7 @@ conn_poll(connectionObject *self)
             }
 
             curs = (cursorObject *)py_curs;
-            IFCLEARPGRES(curs->pgres);
+            CLEARPGRES(curs->pgres);
             curs->pgres = pq_get_last_result(self);
 
             /* fetch the tuples (if there are any) and build the result. We

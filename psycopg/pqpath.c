@@ -230,7 +230,7 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult **pgres)
         Py_CLEAR(perr->pgcode);
         perr->pgcode = error_text_from_chars(perr, code);
 
-        IFCLEARPGRES(perr->pgres);
+        CLEARPGRES(perr->pgres);
         if (pgres && *pgres) {
             perr->pgres = *pgres;
             *pgres = NULL;
@@ -394,7 +394,7 @@ pq_execute_command_locked(connectionObject *conn, const char *query,
     }
 
     retvalue = 0;
-    IFCLEARPGRES(*pgres);
+    CLEARPGRES(*pgres);
 
 cleanup:
     return retvalue;
@@ -902,7 +902,7 @@ pq_execute(cursorObject *curs, const char *query, int async, int no_result)
     }
 
     if (async == 0) {
-        IFCLEARPGRES(curs->pgres);
+        CLEARPGRES(curs->pgres);
         Dprintf("pq_execute: executing SYNC query: pgconn = %p", curs->conn->pgconn);
         Dprintf("    %-.200s", query);
         if (!psyco_green()) {
@@ -941,7 +941,7 @@ pq_execute(cursorObject *curs, const char *query, int async, int no_result)
         Dprintf("pq_execute: executing ASYNC query: pgconn = %p", curs->conn->pgconn);
         Dprintf("    %-.200s", query);
 
-        IFCLEARPGRES(curs->pgres);
+        CLEARPGRES(curs->pgres);
         if (PQsendQuery(curs->conn->pgconn, query) == 0) {
             pthread_mutex_unlock(&(curs->conn->lock));
             Py_BLOCK_THREADS;
@@ -1338,7 +1338,7 @@ _pq_copy_in_v3(cursorObject *curs)
         /* XXX would be nice to propagate the exeption */
         res = PQputCopyEnd(curs->conn->pgconn, "error in .read() call");
 
-    IFCLEARPGRES(curs->pgres);
+    CLEARPGRES(curs->pgres);
 
     Dprintf("_pq_copy_in_v3: copy ended; res = %d", res);
 
@@ -1362,7 +1362,7 @@ _pq_copy_in_v3(cursorObject *curs)
                 break;
             if (PQresultStatus(curs->pgres) == PGRES_FATAL_ERROR)
                 pq_raise(curs->conn, curs, NULL);
-            IFCLEARPGRES(curs->pgres);
+            CLEARPGRES(curs->pgres);
         }
     }
 
@@ -1428,7 +1428,7 @@ _pq_copy_out_v3(cursorObject *curs)
     }
 
     /* and finally we grab the operation result from the backend */
-    IFCLEARPGRES(curs->pgres);
+    CLEARPGRES(curs->pgres);
     for (;;) {
         Py_BEGIN_ALLOW_THREADS;
         curs->pgres = PQgetResult(curs->conn->pgconn);
@@ -1438,7 +1438,7 @@ _pq_copy_out_v3(cursorObject *curs)
             break;
         if (PQresultStatus(curs->pgres) == PGRES_FATAL_ERROR)
             pq_raise(curs->conn, curs, NULL);
-        IFCLEARPGRES(curs->pgres);
+        CLEARPGRES(curs->pgres);
     }
     ret = 1;
 
@@ -1499,7 +1499,7 @@ pq_fetch(cursorObject *curs, int no_result)
         curs->rowcount = -1;
         /* error caught by out glorious notice handler */
         if (PyErr_Occurred()) ex = -1;
-        IFCLEARPGRES(curs->pgres);
+        CLEARPGRES(curs->pgres);
         break;
 
     case PGRES_COPY_IN:
@@ -1508,7 +1508,7 @@ pq_fetch(cursorObject *curs, int no_result)
         curs->rowcount = -1;
         /* error caught by out glorious notice handler */
         if (PyErr_Occurred()) ex = -1;
-        IFCLEARPGRES(curs->pgres);
+        CLEARPGRES(curs->pgres);
         break;
 
     case PGRES_TUPLES_OK:
@@ -1520,7 +1520,7 @@ pq_fetch(cursorObject *curs, int no_result)
         }
         else {
             Dprintf("pq_fetch: got tuples, discarding them");
-            IFCLEARPGRES(curs->pgres);
+            CLEARPGRES(curs->pgres);
             curs->rowcount = -1;
             ex = 0;
         }
@@ -1529,7 +1529,7 @@ pq_fetch(cursorObject *curs, int no_result)
     case PGRES_EMPTY_QUERY:
         PyErr_SetString(ProgrammingError,
             "can't execute an empty query");
-        IFCLEARPGRES(curs->pgres);
+        CLEARPGRES(curs->pgres);
         ex = -1;
         break;
 
