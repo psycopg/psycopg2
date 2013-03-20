@@ -41,23 +41,6 @@ Homepage: http://initd.org/projects/psycopg2
 # Import modules needed by _psycopg to allow tools like py2exe to do
 # their work without bothering about the module dependencies.
 
-import sys, warnings
-if sys.version_info >= (2, 3):
-    try:
-        import datetime as _psycopg_needs_datetime
-    except:
-        warnings.warn(
-            "can't import datetime module probably needed by _psycopg",
-            RuntimeWarning)
-if sys.version_info >= (2, 4):
-    try:
-        import decimal as _psycopg_needs_decimal
-    except:
-        warnings.warn(
-            "can't import decimal module probably needed by _psycopg",
-            RuntimeWarning)
-del sys, warnings
-
 # Note: the first internal import should be _psycopg, otherwise the real cause
 # of a failed loading of the C module may get hidden, see
 # http://archives.postgresql.org/psycopg/2011-02/msg00044.php

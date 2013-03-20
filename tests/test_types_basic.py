@@ -22,10 +22,7 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-try:
-    import decimal
-except:
-    pass
+import decimal
 
 import sys
 from functools import wraps
@@ -66,10 +63,6 @@ class TypesBasicTests(unittest.TestCase):
         self.failUnless(s == 1971, "wrong integer quoting: " + str(s))
         s = self.execute("SELECT %s AS foo", (1971L,))
         self.failUnless(s == 1971L, "wrong integer quoting: " + str(s))
-        if sys.version_info[0:2] < (2, 4):
-            s = self.execute("SELECT %s AS foo", (19.10,))
-            self.failUnless(abs(s - 19.10) < 0.001,
-                        "wrong float quoting: " + str(s))
 
     def testBoolean(self):
         x = self.execute("SELECT %s as foo", (False,))
@@ -78,21 +71,18 @@ class TypesBasicTests(unittest.TestCase):
         self.assert_(x is True)
 
     def testDecimal(self):
-        if sys.version_info[0:2] >= (2, 4):
-            s = self.execute("SELECT %s AS foo", (decimal.Decimal("19.10"),))
-            self.failUnless(s - decimal.Decimal("19.10") == 0,
-                            "wrong decimal quoting: " + str(s))
-            s = self.execute("SELECT %s AS foo", (decimal.Decimal("NaN"),))
-            self.failUnless(str(s) == "NaN", "wrong decimal quoting: " + str(s))
-            self.failUnless(type(s) == decimal.Decimal, "wrong decimal conversion: " + repr(s))
-            s = self.execute("SELECT %s AS foo", (decimal.Decimal("infinity"),))
-            self.failUnless(str(s) == "NaN", "wrong decimal quoting: " + str(s))
-            self.failUnless(type(s) == decimal.Decimal, "wrong decimal conversion: " + repr(s))
-            s = self.execute("SELECT %s AS foo", (decimal.Decimal("-infinity"),))
-            self.failUnless(str(s) == "NaN", "wrong decimal quoting: " + str(s))
-            self.failUnless(type(s) == decimal.Decimal, "wrong decimal conversion: " + repr(s))
-        else:
-            return self.skipTest("decimal not available")
+        s = self.execute("SELECT %s AS foo", (decimal.Decimal("19.10"),))
+        self.failUnless(s - decimal.Decimal("19.10") == 0,
+                        "wrong decimal quoting: " + str(s))
+        s = self.execute("SELECT %s AS foo", (decimal.Decimal("NaN"),))
+        self.failUnless(str(s) == "NaN", "wrong decimal quoting: " + str(s))
+        self.failUnless(type(s) == decimal.Decimal, "wrong decimal conversion: " + repr(s))
+        s = self.execute("SELECT %s AS foo", (decimal.Decimal("infinity"),))
+        self.failUnless(str(s) == "NaN", "wrong decimal quoting: " + str(s))
+        self.failUnless(type(s) == decimal.Decimal, "wrong decimal conversion: " + repr(s))
+        s = self.execute("SELECT %s AS foo", (decimal.Decimal("-infinity"),))
+        self.failUnless(str(s) == "NaN", "wrong decimal quoting: " + str(s))
+        self.failUnless(type(s) == decimal.Decimal, "wrong decimal conversion: " + repr(s))
 
     def testFloatNan(self):
         try:

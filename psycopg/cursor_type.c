@@ -1358,7 +1358,7 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
     PyObject *file, *columns = NULL, *res = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
-        "O&s|ss" CONV_CODE_PY_SSIZE_T "O", kwlist,
+        "O&s|ssnO", kwlist,
         _psyco_curs_has_read_check, &file, &table_name, &sep, &null, &bufsize,
         &columns))
     {
@@ -1535,7 +1535,7 @@ psyco_curs_copy_expert(cursorObject *self, PyObject *args, PyObject *kwargs)
     static char *kwlist[] = {"sql", "file", "size", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
-        "OO|" CONV_CODE_PY_SSIZE_T, kwlist, &sql, &file, &bufsize))
+        "OO|n", kwlist, &sql, &file, &bufsize))
     { return NULL; }
 
     EXC_IF_CURS_CLOSED(self);
