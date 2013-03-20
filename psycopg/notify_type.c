@@ -61,9 +61,7 @@ static PyMemberDef notify_members[] = {
 static PyObject *
 notify_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
-    notifyObject *self = (notifyObject *)type->tp_alloc(type, 0);
-
-    return (PyObject *)self;
+    return type->tp_alloc(type, 0);
 }
 
 static int
