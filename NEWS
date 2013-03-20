@@ -21,7 +21,7 @@ New features:
 
 Bug fixes:
 
-- Properly cleanup memory of broken connections (:ticket:`#142`).
+- Properly cleanup memory of broken connections (:ticket:`#148`).
 - Fixed bad interaction of ``setup.py`` with other dependencies in
   Distribute projects on Python 3 (:ticket:`#153`).
 
