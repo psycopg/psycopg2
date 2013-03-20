@@ -395,10 +395,12 @@ def skip_if_no_truncate(f):
 
         return f(self)
 
+    return skip_if_no_truncate_
+
 class LargeObjectTruncateTests(LargeObjectMixin, unittest.TestCase):
     def test_truncate(self):
         lo = self.conn.lobject()
-        lo.write(b("some data"))
+        lo.write("some data")
         lo.close()
 
         lo = self.conn.lobject(lo.oid, "w")
@@ -407,17 +409,17 @@ class LargeObjectTruncateTests(LargeObjectMixin, unittest.TestCase):
         # seek position unchanged
         self.assertEqual(lo.tell(), 0)
         # data truncated
-        self.assertEqual(lo.read(), b("some"))
+        self.assertEqual(lo.read(), "some")
 
         lo.truncate(6)
         lo.seek(0)
         # large object extended with zeroes
-        self.assertEqual(lo.read(), b("some\x00\x00"))
+        self.assertEqual(lo.read(), "some\x00\x00")
 
         lo.truncate()
         lo.seek(0)
         # large object empty
-        self.assertEqual(lo.read(), b(""))
+        self.assertEqual(lo.read(), "")
 
     def test_truncate_after_close(self):
         lo = self.conn.lobject()
