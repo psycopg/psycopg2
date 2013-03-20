@@ -380,12 +380,7 @@ _psyco_curs_execute(cursorObject *self,
     if (operation == NULL) { goto exit; }
 
     IFCLEARPGRES(self->pgres);
-
-    if (self->query) {
-        Py_DECREF(self->query);
-        self->query = NULL;
-    }
-
+    Py_CLEAR(self->query);
     Dprintf("psyco_curs_execute: starting execution of new query");
 
     /* here we are, and we have a sequence or a dictionary filled with
