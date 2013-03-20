@@ -26,6 +26,7 @@
 
 import os
 import sys
+from functools import wraps
 
 try:
     import unittest2
@@ -43,6 +44,7 @@ else:
 
     def skipIf(cond, msg):
         def skipIf_(f):
+            @wraps(f)
             def skipIf__(self):
                 if cond:
                     warnings.warn(msg)
@@ -81,6 +83,7 @@ def decorate_all_tests(cls, decorator):
 
 def skip_if_no_uuid(f):
     """Decorator to skip a test if uuid is not supported by Py/PG."""
+    @wraps(f)
     def skip_if_no_uuid_(self):
         try:
             import uuid
@@ -104,6 +107,7 @@ def skip_if_no_uuid(f):
 
 def skip_if_tpc_disabled(f):
     """Skip a test if the server has tpc support disabled."""
+    @wraps(f)
     def skip_if_tpc_disabled_(self):
         from psycopg2 import ProgrammingError
         cnn = self.connect()
@@ -123,11 +127,11 @@ def skip_if_tpc_disabled(f):
                 "set max_prepared_transactions to > 0 to run the test")
         return f(self)
 
-    skip_if_tpc_disabled_.__name__ = f.__name__
     return skip_if_tpc_disabled_
 
 
 def skip_if_no_namedtuple(f):
+    @wraps(f)
     def skip_if_no_namedtuple_(self):
         try:
             from collections import namedtuple
@@ -136,12 +140,12 @@ def skip_if_no_namedtuple(f):
         else:
             return f(self)
 
-    skip_if_no_namedtuple_.__name__ = f.__name__
     return skip_if_no_namedtuple_
 
 
 def skip_if_no_iobase(f):
     """Skip a test if io.TextIOBase is not available."""
+    @wraps(f)
     def skip_if_no_iobase_(self):
         try:
             from io import TextIOBase
@@ -157,6 +161,7 @@ def skip_before_postgres(*ver):
     """Skip a test on PostgreSQL before a certain version."""
     ver = ver + (0,) * (3 - len(ver))
     def skip_before_postgres_(f):
+        @wraps(f)
         def skip_before_postgres__(self):
             if self.conn.server_version < int("%d%02d%02d" % ver):
                 return self.skipTest("skipped because PostgreSQL %s"
@@ -171,6 +176,7 @@ def skip_after_postgres(*ver):
     """Skip a test on PostgreSQL after (including) a certain version."""
     ver = ver + (0,) * (3 - len(ver))
     def skip_after_postgres_(f):
+        @wraps(f)
         def skip_after_postgres__(self):
             if self.conn.server_version >= int("%d%02d%02d" % ver):
                 return self.skipTest("skipped because PostgreSQL %s"
@@ -184,6 +190,7 @@ def skip_after_postgres(*ver):
 def skip_before_python(*ver):
     """Skip a test on Python before a certain version."""
     def skip_before_python_(f):
+        @wraps(f)
         def skip_before_python__(self):
             if sys.version_info[:len(ver)] < ver:
                 return self.skipTest("skipped because Python %s"
@@ -197,6 +204,7 @@ def skip_before_python(*ver):
 def skip_from_python(*ver):
     """Skip a test on Python after (including) a certain version."""
     def skip_from_python_(f):
+        @wraps(f)
         def skip_from_python__(self):
             if sys.version_info[:len(ver)] >= ver:
                 return self.skipTest("skipped because Python %s"
@@ -209,6 +217,7 @@ def skip_from_python(*ver):
 
 def skip_if_no_superuser(f):
     """Skip a test if the database user running the test is not a superuser"""
+    @wraps(f)
     def skip_if_no_superuser_(self):
         from psycopg2 import ProgrammingError
         try:
@@ -222,16 +231,20 @@ def skip_if_no_superuser(f):
 
     return skip_if_no_superuser_
 
-def skip_copy_if_green(f):
-    def skip_copy_if_green_(self):
-        from testconfig import green
-        if green:
-            return self.skipTest("copy in async mode currently not supported")
-        else:
-            return f(self)
+def skip_if_green(reason):
+    def skip_if_green_(f):
+        @wraps(f)
+        def skip_if_green__(self):
+            from testconfig import green
+            if green:
+                return self.skipTest(reason)
+            else:
+                return f(self)
 
-    return skip_copy_if_green_
+        return skip_if_green__
+    return skip_if_green_
 
+skip_copy_if_green = skip_if_green("copy in async mode currently not supported")
 
 def script_to_py3(script):
     """Convert a script to Python3 syntax if required."""

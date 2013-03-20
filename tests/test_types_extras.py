@@ -18,6 +18,7 @@ import re
 import sys
 from decimal import Decimal
 from datetime import date, datetime
+from functools import wraps
 
 from testutils import unittest, skip_if_no_uuid, skip_before_postgres
 from testutils import decorate_all_tests
@@ -124,6 +125,7 @@ class TypesExtrasTests(unittest.TestCase):
 
 
 def skip_if_no_hstore(f):
+    @wraps(f)
     def skip_if_no_hstore_(self):
         from psycopg2.extras import HstoreAdapter
         oids = HstoreAdapter.get_oids(self.conn)
@@ -447,6 +449,7 @@ class HstoreTestCase(unittest.TestCase):
 
 
 def skip_if_no_composite(f):
+    @wraps(f)
     def skip_if_no_composite_(self):
         if self.conn.server_version < 80000:
             return self.skipTest(
@@ -455,7 +458,6 @@ def skip_if_no_composite(f):
 
         return f(self)
 
-    skip_if_no_composite_.__name__ = f.__name__
     return skip_if_no_composite_
 
 class AdaptTypeTestCase(unittest.TestCase):
@@ -831,7 +833,8 @@ class AdaptTypeTestCase(unittest.TestCase):
 
 
 def skip_if_json_module(f):
-    """Skip a test if no Python json module is available"""
+    """Skip a test if a Python json module *is* available"""
+    @wraps(f)
     def skip_if_json_module_(self):
         if psycopg2.extras.json is not None:
             return self.skipTest("json module is available")
@@ -842,6 +845,7 @@ def skip_if_json_module(f):
 
 def skip_if_no_json_module(f):
     """Skip a test if no Python json module is available"""
+    @wraps(f)
     def skip_if_no_json_module_(self):
         if psycopg2.extras.json is None:
             return self.skipTest("json module not available")
@@ -852,6 +856,7 @@ def skip_if_no_json_module(f):
 
 def skip_if_no_json_type(f):
     """Skip a test if PostgreSQL json type is not available"""
+    @wraps(f)
     def skip_if_no_json_type_(self):
         curs = self.conn.cursor()
         curs.execute("select oid from pg_type where typname = 'json'")
@@ -1242,6 +1247,7 @@ class RangeTestCase(unittest.TestCase):
 
 
 def skip_if_no_range(f):
+    @wraps(f)
     def skip_if_no_range_(self):
         if self.conn.server_version < 90200:
             return self.skipTest(
@@ -1250,7 +1256,6 @@ def skip_if_no_range(f):
 
         return f(self)
 
-    skip_if_no_range_.__name__ = f.__name__
     return skip_if_no_range_
 
 
