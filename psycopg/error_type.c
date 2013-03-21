@@ -93,6 +93,7 @@ error_traverse(errorObject *self, visitproc visit, void *arg)
     Py_VISIT(self->pgerror);
     Py_VISIT(self->pgcode);
     Py_VISIT(self->cursor);
+
     return ((PyTypeObject *)PyExc_StandardError)->tp_traverse(
         (PyObject *)self, visit, arg);
 }
@@ -104,16 +105,17 @@ error_clear(errorObject *self)
     Py_CLEAR(self->pgcode);
     Py_CLEAR(self->cursor);
 
-    PyMem_Free(self->codec);
-    CLEARPGRES(self->pgres);
-
     return ((PyTypeObject *)PyExc_StandardError)->tp_clear((PyObject *)self);
 }
 
 static void
 error_dealloc(errorObject *self)
 {
+    PyObject_GC_UnTrack((PyObject *)self);
     error_clear(self);
+    PyMem_Free(self->codec);
+    CLEARPGRES(self->pgres);
+
     return Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
