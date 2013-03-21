@@ -1116,18 +1116,31 @@ exit:
     return res;
 }
 
+static int
+connection_clear(connectionObject *self)
+{
+    Py_CLEAR(self->tpc_xid);
+    Py_CLEAR(self->async_cursor);
+    Py_CLEAR(self->notice_list);
+    Py_CLEAR(self->notice_filter);
+    Py_CLEAR(self->notifies);
+    Py_CLEAR(self->string_types);
+    Py_CLEAR(self->binary_types);
+    return 0;
+}
+
 static void
 connection_dealloc(PyObject* obj)
 {
     connectionObject *self = (connectionObject *)obj;
 
-    if (self->weakreflist) {
-        PyObject_ClearWeakRefs(obj);
-    }
+    conn_close(self);
 
     PyObject_GC_UnTrack(self);
 
-    conn_close(self);
+    if (self->weakreflist) {
+        PyObject_ClearWeakRefs(obj);
+    }
 
     conn_notice_clean(self);
 
@@ -1137,13 +1150,7 @@ connection_dealloc(PyObject* obj)
     if (self->critical) free(self->critical);
     if (self->cancel) PQfreeCancel(self->cancel);
 
-    Py_CLEAR(self->tpc_xid);
-    Py_CLEAR(self->async_cursor);
-    Py_CLEAR(self->notice_list);
-    Py_CLEAR(self->notice_filter);
-    Py_CLEAR(self->notifies);
-    Py_CLEAR(self->string_types);
-    Py_CLEAR(self->binary_types);
+    connection_clear(self);
 
     pthread_mutex_destroy(&(self->lock));
 
@@ -1229,7 +1236,7 @@ PyTypeObject connectionType = {
                 /*tp_flags*/
     connectionType_doc, /*tp_doc*/
     (traverseproc)connection_traverse, /*tp_traverse*/
-    0,          /*tp_clear*/
+    (inquiry)connection_clear, /*tp_clear*/
     0,          /*tp_richcompare*/
     offsetof(connectionObject, weakreflist), /* tp_weaklistoffset */
     0,          /*tp_iter*/

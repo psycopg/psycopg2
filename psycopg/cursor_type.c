@@ -1864,28 +1864,37 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
     return 0;
 }
 
-static void
-cursor_dealloc(PyObject* obj)
+static int
+cursor_clear(cursorObject *self)
 {
-    cursorObject *self = (cursorObject *)obj;
-
-    if (self->weakreflist) {
-        PyObject_ClearWeakRefs(obj);
-    }
-
-    PyObject_GC_UnTrack(self);
-
-    PyMem_Free(self->name);
-
     Py_CLEAR(self->conn);
-    Py_CLEAR(self->casts);
     Py_CLEAR(self->description);
     Py_CLEAR(self->pgstatus);
+    Py_CLEAR(self->casts);
+    Py_CLEAR(self->caster);
+    Py_CLEAR(self->copyfile);
     Py_CLEAR(self->tuple_factory);
     Py_CLEAR(self->tzinfo_factory);
     Py_CLEAR(self->query);
     Py_CLEAR(self->string_types);
     Py_CLEAR(self->binary_types);
+    return 0;
+}
+
+static void
+cursor_dealloc(PyObject* obj)
+{
+    cursorObject *self = (cursorObject *)obj;
+
+    PyObject_GC_UnTrack(self);
+
+    if (self->weakreflist) {
+        PyObject_ClearWeakRefs(obj);
+    }
+
+    cursor_clear(self);
+
+    PyMem_Free(self->name);
 
     CLEARPGRES(self->pgres);
 
@@ -1988,7 +1997,7 @@ PyTypeObject cursorType = {
                 /*tp_flags*/
     cursorType_doc, /*tp_doc*/
     (traverseproc)cursor_traverse, /*tp_traverse*/
-    0,          /*tp_clear*/
+    (inquiry)cursor_clear, /*tp_clear*/
     0,          /*tp_richcompare*/
     offsetof(cursorObject, weakreflist), /*tp_weaklistoffset*/
     cursor_iter, /*tp_iter*/
