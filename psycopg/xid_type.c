@@ -131,25 +131,13 @@ xid_init(xidObject *self, PyObject *args, PyObject *kwargs)
         }
     }
 
-    self->format_id = PyInt_FromLong(format_id);
-    self->gtrid = Text_FromUTF8(gtrid);
-    self->bqual = Text_FromUTF8(bqual);
+    if (!(self->format_id = PyInt_FromLong(format_id))) { return -1; }
+    if (!(self->gtrid = Text_FromUTF8(gtrid))) { return -1; }
+    if (!(self->bqual = Text_FromUTF8(bqual))) { return -1; }
     Py_INCREF(Py_None); self->prepared = Py_None;
     Py_INCREF(Py_None); self->owner = Py_None;
     Py_INCREF(Py_None); self->database = Py_None;
 
-    return 0;
-}
-
-static int
-xid_traverse(xidObject *self, visitproc visit, void *arg)
-{
-    Py_VISIT(self->format_id);
-    Py_VISIT(self->gtrid);
-    Py_VISIT(self->bqual);
-    Py_VISIT(self->prepared);
-    Py_VISIT(self->owner);
-    Py_VISIT(self->database);
     return 0;
 }
 
@@ -295,9 +283,10 @@ PyTypeObject xidType = {
     0,          /*tp_getattro*/
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
+    /* Notify is not GC as it only has string attributes */
+    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /*tp_flags*/
     xid_doc, /*tp_doc*/
-    (traverseproc)xid_traverse, /*tp_traverse*/
+    0,          /*tp_traverse*/
     0,          /*tp_clear*/
     0,          /*tp_richcompare*/
     0,          /*tp_weaklistoffset*/

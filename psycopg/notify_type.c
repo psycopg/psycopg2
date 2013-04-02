@@ -79,27 +79,15 @@ notify_init(notifyObject *self, PyObject *args, PyObject *kwargs)
         payload = Text_FromUTF8("");
     }
 
-    Py_CLEAR(self->pid);
     Py_INCREF(pid);
     self->pid = pid;
 
-    Py_CLEAR(self->channel);
     Py_INCREF(channel);
     self->channel = channel;
 
-    Py_CLEAR(self->payload);
     Py_INCREF(payload);
     self->payload = payload;
 
-    return 0;
-}
-
-static int
-notify_traverse(notifyObject *self, visitproc visit, void *arg)
-{
-    Py_VISIT(self->pid);
-    Py_VISIT(self->channel);
-    Py_VISIT(self->payload);
     return 0;
 }
 
@@ -286,9 +274,10 @@ PyTypeObject notifyType = {
     0,          /*tp_getattro*/
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
+    /* Notify is not GC as it only has string attributes */
+    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /*tp_flags*/
     notify_doc, /*tp_doc*/
-    (traverseproc)notify_traverse, /*tp_traverse*/
+    0,          /*tp_traverse*/
     0,          /*tp_clear*/
     (richcmpfunc)notify_richcompare, /*tp_richcompare*/
     0,          /*tp_weaklistoffset*/
