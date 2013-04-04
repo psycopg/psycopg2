@@ -103,10 +103,6 @@ list_prepare(listObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "O!", &connectionType, &conn))
         return NULL;
 
-    /* note that we don't copy the encoding from the connection, but take a
-       reference to it; we'll need it during the recursive adapt() call (the
-       encoding is here for a future expansion that will make .getquoted()
-       work even without a connection to the backend. */
     Py_CLEAR(self->connection);
     Py_INCREF(conn);
     self->connection = conn;
@@ -154,7 +150,7 @@ static PyMethodDef listObject_methods[] = {
 /* initialization and finalization methods */
 
 static int
-list_setup(listObject *self, PyObject *obj, const char *enc)
+list_setup(listObject *self, PyObject *obj)
 {
     Dprintf("list_setup: init list object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
@@ -163,9 +159,6 @@ list_setup(listObject *self, PyObject *obj, const char *enc)
 
     if (!PyList_Check(obj))
         return -1;
-
-    /* FIXME: remove this orrible strdup */
-    if (enc) self->encoding = strdup(enc);
 
     self->connection = NULL;
     Py_INCREF(obj);
@@ -195,7 +188,6 @@ list_dealloc(PyObject* obj)
 
     Py_CLEAR(self->wrapped);
     Py_CLEAR(self->connection);
-    if (self->encoding) free(self->encoding);
 
     Dprintf("list_dealloc: deleted list object at %p, "
             "refcnt = " FORMAT_CODE_PY_SSIZE_T, obj, Py_REFCNT(obj));
@@ -207,12 +199,11 @@ static int
 list_init(PyObject *obj, PyObject *args, PyObject *kwds)
 {
     PyObject *l;
-    const char *enc = "latin-1"; /* default encoding as in Python */
 
-    if (!PyArg_ParseTuple(args, "O|s", &l, &enc))
+    if (!PyArg_ParseTuple(args, "O", &l))
         return -1;
 
-    return list_setup((listObject *)obj, l, enc);
+    return list_setup((listObject *)obj, l);
 }
 
 static PyObject *
@@ -279,10 +270,9 @@ PyObject *
 psyco_List(PyObject *module, PyObject *args)
 {
     PyObject *str;
-    const char *enc = "latin-1"; /* default encoding as in Python */
 
-    if (!PyArg_ParseTuple(args, "O|s", &str, &enc))
+    if (!PyArg_ParseTuple(args, "O", &str))
         return NULL;
 
-    return PyObject_CallFunction((PyObject *)&listType, "Os", str, enc);
+    return PyObject_CallFunctionObjArgs((PyObject *)&listType, "O", str, NULL);
 }

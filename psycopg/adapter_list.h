@@ -37,7 +37,6 @@ typedef struct {
 
     PyObject *wrapped;
     PyObject *connection;
-    char     *encoding;
 } listObject;
 
 HIDDEN PyObject *psyco_List(PyObject *module, PyObject *args);
