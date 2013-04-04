@@ -32,26 +32,32 @@
 
 #include <string.h>
 
+static const char *default_encoding = "latin1";
 
 /* qstring_quote - do the quote process on plain and unicode strings */
 
-BORROWED static PyObject *
+static PyObject *
 qstring_quote(qstringObject *self)
 {
-    PyObject *str;
-    char *s, *buffer;
+    PyObject *str = NULL;
+    char *s, *buffer = NULL;
     Py_ssize_t len, qlen;
+    const char *encoding = default_encoding;
+    PyObject *rv = NULL;
 
     /* if the wrapped object is an unicode object we can encode it to match
-       self->encoding but if the encoding is not specified we don't know what
+       conn->encoding but if the encoding is not specified we don't know what
        to do and we raise an exception */
+    if (self->conn) {
+        encoding = self->conn->codec;
+    }
 
-    Dprintf("qstring_quote: encoding to %s", self->encoding);
+    Dprintf("qstring_quote: encoding to %s", encoding);
 
-    if (PyUnicode_Check(self->wrapped) && self->encoding) {
-        str = PyUnicode_AsEncodedString(self->wrapped, self->encoding, NULL);
+    if (PyUnicode_Check(self->wrapped) && encoding) {
+        str = PyUnicode_AsEncodedString(self->wrapped, encoding, NULL);
         Dprintf("qstring_quote: got encoded object at %p", str);
-        if (str == NULL) return NULL;
+        if (str == NULL) goto exit;
     }
 
 #if PY_MAJOR_VERSION < 3
@@ -68,29 +74,28 @@ qstring_quote(qstringObject *self)
     else {
         PyErr_SetString(PyExc_TypeError,
                         "can't quote non-string object (or missing encoding)");
-        return NULL;
+        goto exit;
     }
 
     /* encode the string into buffer */
     Bytes_AsStringAndSize(str, &s, &len);
-    if (!(buffer = psycopg_escape_string(self->conn, s, len, NULL, &qlen))) {
-        Py_DECREF(str);
-        return NULL;
+    if (!(buffer = psycopg_escape_string((PyObject *)self->conn, s, len, NULL, &qlen))) {
+        goto exit;
     }
 
     if (qlen > (size_t) PY_SSIZE_T_MAX) {
         PyErr_SetString(PyExc_IndexError,
             "PG buffer too large to fit in Python buffer.");
-        PyMem_Free(buffer);
-        Py_DECREF(str);
-        return NULL;
+        goto exit;
     }
 
-    self->buffer = Bytes_FromStringAndSize(buffer, qlen);
-    PyMem_Free(buffer);
-    Py_DECREF(str);
+    rv = Bytes_FromStringAndSize(buffer, qlen);
 
-    return self->buffer;
+exit:
+    PyMem_Free(buffer);
+    Py_XDECREF(str);
+
+    return rv;
 }
 
 /* qstring_str, qstring_getquoted - return result of quoting */
@@ -99,7 +104,7 @@ static PyObject *
 qstring_getquoted(qstringObject *self, PyObject *args)
 {
     if (self->buffer == NULL) {
-        qstring_quote(self);
+        self->buffer = qstring_quote(self);
     }
     Py_XINCREF(self->buffer);
     return self->buffer;
@@ -114,18 +119,10 @@ qstring_str(qstringObject *self)
 static PyObject *
 qstring_prepare(qstringObject *self, PyObject *args)
 {
-    PyObject *conn;
+    connectionObject *conn;
 
     if (!PyArg_ParseTuple(args, "O!", &connectionType, &conn))
         return NULL;
-
-    /* we bother copying the encoding only if the wrapped string is unicode,
-       we don't need the encoding if that's not the case */
-    if (PyUnicode_Check(self->wrapped)) {
-        if (self->encoding) free(self->encoding);
-        self->encoding = strdup(((connectionObject *)conn)->codec);
-        Dprintf("qstring_prepare: set encoding to %s", self->encoding);
-    }
 
     Py_CLEAR(self->conn);
     Py_INCREF(conn);
@@ -151,6 +148,18 @@ qstring_conform(qstringObject *self, PyObject *args)
     return res;
 }
 
+static PyObject *
+qstring_get_encoding(qstringObject *self)
+{
+    const char *encoding = default_encoding;
+
+    if (self->conn) {
+        encoding = self->conn->codec;
+    }
+
+    return Text_FromUTF8(encoding);
+}
+
 /** the QuotedString object **/
 
 /* object member list */
@@ -158,7 +167,6 @@ qstring_conform(qstringObject *self, PyObject *args)
 static struct PyMemberDef qstringObject_members[] = {
     {"adapted", T_OBJECT, offsetof(qstringObject, wrapped), READONLY},
     {"buffer", T_OBJECT, offsetof(qstringObject, buffer), READONLY},
-    {"encoding", T_STRING, offsetof(qstringObject, encoding), READONLY},
     {NULL}
 };
 
@@ -173,21 +181,23 @@ static PyMethodDef qstringObject_methods[] = {
     {NULL}  /* Sentinel */
 };
 
+static PyGetSetDef qstringObject_getsets[] = {
+    { "encoding",
+        (getter)qstring_get_encoding,
+        (setter)NULL,
+        "current encoding of the adapter" },
+    {NULL}
+};
+
 /* initialization and finalization methods */
 
 static int
-qstring_setup(qstringObject *self, PyObject *str, const char *enc)
+qstring_setup(qstringObject *self, PyObject *str)
 {
     Dprintf("qstring_setup: init qstring object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
         self, Py_REFCNT(self)
       );
-
-    self->buffer = NULL;
-    self->conn = NULL;
-
-    /* FIXME: remove this orrible strdup */
-    if (enc) self->encoding = strdup(enc);
 
     Py_INCREF(str);
     self->wrapped = str;
@@ -219,8 +229,6 @@ qstring_dealloc(PyObject* obj)
     Py_CLEAR(self->buffer);
     Py_CLEAR(self->conn);
 
-    if (self->encoding) free(self->encoding);
-
     Dprintf("qstring_dealloc: deleted qstring object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
         obj, Py_REFCNT(obj)
@@ -233,12 +241,11 @@ static int
 qstring_init(PyObject *obj, PyObject *args, PyObject *kwds)
 {
     PyObject *str;
-    const char *enc = "latin-1"; /* default encoding as in Python */
 
-    if (!PyArg_ParseTuple(args, "O|s", &str, &enc))
+    if (!PyArg_ParseTuple(args, "O", &str))
         return -1;
 
-    return qstring_setup((qstringObject *)obj, str, enc);
+    return qstring_setup((qstringObject *)obj, str);
 }
 
 static PyObject *
@@ -257,7 +264,7 @@ qstring_repr(qstringObject *self)
 /* object type */
 
 #define qstringType_doc \
-"QuotedString(str, enc) -> new quoted object with 'enc' encoding"
+"QuotedString(str) -> new quoted object"
 
 PyTypeObject qstringType = {
     PyVarObject_HEAD_INIT(NULL, 0)
@@ -288,7 +295,7 @@ PyTypeObject qstringType = {
     0,          /*tp_iternext*/
     qstringObject_methods, /*tp_methods*/
     qstringObject_members, /*tp_members*/
-    0,          /*tp_getset*/
+    qstringObject_getsets, /*tp_getset*/
     0,          /*tp_base*/
     0,          /*tp_dict*/
     0,          /*tp_descr_get*/
@@ -306,10 +313,9 @@ PyObject *
 psyco_QuotedString(PyObject *module, PyObject *args)
 {
     PyObject *str;
-    const char *enc = "latin-1"; /* default encoding as in Python */
 
-    if (!PyArg_ParseTuple(args, "O|s", &str, &enc))
+    if (!PyArg_ParseTuple(args, "O", &str))
         return NULL;
 
-    return PyObject_CallFunction((PyObject *)&qstringType, "Os", str, enc);
+    return PyObject_CallFunctionObjArgs((PyObject *)&qstringType, str, NULL);
 }

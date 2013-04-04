@@ -162,6 +162,22 @@ class QuotingTestCase(unittest.TestCase):
             self.assert_(not self.conn.notices)
 
 
+class TestQuotedString(unittest.TestCase):
+    def setUp(self):
+        self.conn = psycopg2.connect(dsn)
+
+    def tearDown(self):
+        self.conn.close()
+
+    def test_encoding(self):
+        q = psycopg2.extensions.QuotedString('hi')
+        self.assertEqual(q.encoding, 'latin1')
+
+        self.conn.set_client_encoding('utf_8')
+        q.prepare(self.conn)
+        self.assertEqual(q.encoding, 'utf_8')
+
+
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
