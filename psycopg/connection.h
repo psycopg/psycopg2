@@ -74,7 +74,8 @@ struct connectionObject_notice {
     const char *message;
 };
 
-typedef struct {
+/* the typedef is forward-declared in psycopg.h */
+struct connectionObject {
     PyObject_HEAD
 
     pthread_mutex_t lock;   /* the global connection lock */
@@ -120,7 +121,7 @@ typedef struct {
 
     int autocommit;
 
-} connectionObject;
+};
 
 /* map isolation level values into a numeric const */
 typedef struct {

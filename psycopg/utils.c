@@ -44,11 +44,10 @@
  * including quotes.
  */
 char *
-psycopg_escape_string(PyObject *obj, const char *from, Py_ssize_t len,
+psycopg_escape_string(connectionObject *conn, const char *from, Py_ssize_t len,
                        char *to, Py_ssize_t *tolen)
 {
     Py_ssize_t ql;
-    connectionObject *conn = (connectionObject*)obj;
     int eq = (conn && (conn->equote)) ? 1 : 0;
 
     if (len == 0)

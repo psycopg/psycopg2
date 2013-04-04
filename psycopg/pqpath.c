@@ -750,7 +750,7 @@ pq_tpc_command_locked(connectionObject *conn, const char *cmd, const char *tid,
     PyEval_RestoreThread(*tstate);
 
     /* convert the xid into the postgres transaction_id and quote it. */
-    if (!(etid = psycopg_escape_string((PyObject *)conn, tid, 0, NULL, NULL)))
+    if (!(etid = psycopg_escape_string(conn, tid, 0, NULL, NULL)))
     { goto exit; }
 
     /* prepare the command to the server */

@@ -79,7 +79,7 @@ qstring_quote(qstringObject *self)
 
     /* encode the string into buffer */
     Bytes_AsStringAndSize(str, &s, &len);
-    if (!(buffer = psycopg_escape_string((PyObject *)self->conn, s, len, NULL, &qlen))) {
+    if (!(buffer = psycopg_escape_string(self->conn, s, len, NULL, &qlen))) {
         goto exit;
     }
 
