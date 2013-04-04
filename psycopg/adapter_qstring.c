@@ -75,7 +75,6 @@ qstring_quote(qstringObject *self)
     Bytes_AsStringAndSize(str, &s, &len);
     if (!(buffer = psycopg_escape_string(self->conn, s, len, NULL, &qlen))) {
         Py_DECREF(str);
-        PyErr_NoMemory();
         return NULL;
     }
 

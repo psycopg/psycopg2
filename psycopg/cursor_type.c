@@ -1375,13 +1375,11 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
 
     if (!(quoted_delimiter = psycopg_escape_string(
             (PyObject*)self->conn, sep, 0, NULL, NULL))) {
-        PyErr_NoMemory();
         goto exit;
     }
 
     if (!(quoted_null = psycopg_escape_string(
             (PyObject*)self->conn, null, 0, NULL, NULL))) {
-        PyErr_NoMemory();
         goto exit;
     }
 
@@ -1471,13 +1469,11 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
 
     if (!(quoted_delimiter = psycopg_escape_string(
             (PyObject*)self->conn, sep, 0, NULL, NULL))) {
-        PyErr_NoMemory();
         goto exit;
     }
 
     if (!(quoted_null = psycopg_escape_string(
             (PyObject*)self->conn, null, 0, NULL, NULL))) {
-        PyErr_NoMemory();
         goto exit;
     }
 
