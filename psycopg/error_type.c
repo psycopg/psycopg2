@@ -116,7 +116,7 @@ error_dealloc(errorObject *self)
     PyMem_Free(self->codec);
     CLEARPGRES(self->pgres);
 
-    return Py_TYPE(self)->tp_free((PyObject *)self);
+    Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
 
