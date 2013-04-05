@@ -133,8 +133,6 @@ static struct PyGetSetDef error_getsets[] = {
 };
 
 
-#if PY_VERSION_HEX >= 0x02050000
-
 /* Error.__reduce__
  *
  * The method is required to make exceptions picklable: set the cursor
@@ -229,21 +227,10 @@ error:
     return rv;
 }
 
-#endif  /* PY_VERSION_HEX >= 0x02050000 */
-
 static PyMethodDef error_methods[] = {
-#if PY_VERSION_HEX >= 0x02050000
-    /* Make Error and all its subclasses picklable.
-     *
-     * TODO: this comment applied to the __reduce_ex__ implementation: now
-     * pickling may work on Py 2.4 too... but it's 2013 now.
-     *
-     * Don't do it it on Py 2.4: [__reduce_ex__] it is not used by the pickle
-     * protocol, and if called manually fails in an unsettling way,
-     * probably because the exceptions were old-style classes. */
+    /* Make Error and all its subclasses picklable. */
     {"__reduce__", (PyCFunction)psyco_error_reduce, METH_NOARGS },
     {"__setstate__", (PyCFunction)psyco_error_setstate, METH_O },
-#endif
     {NULL}
 };
 

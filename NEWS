@@ -28,6 +28,7 @@ Bug fixes:
 Other changes:
 
 - Added support for Python 3.3.
+- Dropped support for Python 2.4. Please use Psycopg 2.4.x if you need it.
 - `~psycopg2.errorcodes` map updated to PostgreSQL 9.2.
 - Dropped Zope adapter from source repository. ZPsycopgDA now has its own
   project at <http://github.com/psycopg/ZPsycopgDA>.
