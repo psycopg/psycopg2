@@ -414,26 +414,27 @@ static struct PyMemberDef typecastObject_members[] = {
     {NULL}
 };
 
-static void
-typecast_dealloc(PyObject *obj)
+static int
+typecast_clear(typecastObject *self)
 {
-    typecastObject *self = (typecastObject*)obj;
-
-    PyObject_GC_UnTrack(self);
-
     Py_CLEAR(self->values);
     Py_CLEAR(self->name);
     Py_CLEAR(self->pcast);
     Py_CLEAR(self->bcast);
+    return 0;
+}
 
-    Py_TYPE(obj)->tp_free(obj);
+static void
+typecast_dealloc(typecastObject *self)
+{
+    PyObject_GC_UnTrack(self);
+    typecast_clear(self);
+    Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
 static int
-typecast_traverse(PyObject *obj, visitproc visit, void *arg)
+typecast_traverse(typecastObject *self, visitproc visit, void *arg)
 {
-    typecastObject *self = (typecastObject*)obj;
-
     Py_VISIT(self->values);
     Py_VISIT(self->name);
     Py_VISIT(self->pcast);
@@ -484,7 +485,7 @@ PyTypeObject typecastType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.type",
     sizeof(typecastObject), 0,
-    typecast_dealloc, /*tp_dealloc*/
+    (destructor)typecast_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/
     0,          /*tp_getattr*/
     0,          /*tp_setattr*/
@@ -502,8 +503,8 @@ PyTypeObject typecastType = {
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_RICHCOMPARE |
       Py_TPFLAGS_HAVE_GC, /*tp_flags*/
     "psycopg type-casting object", /*tp_doc*/
-    typecast_traverse, /*tp_traverse*/
-    0,          /*tp_clear*/
+    (traverseproc)typecast_traverse, /*tp_traverse*/
+    (inquiry)typecast_clear, /*tp_clear*/
     typecast_richcompare, /*tp_richcompare*/
     0,          /*tp_weaklistoffset*/
     0,          /*tp_iter*/

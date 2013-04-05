@@ -172,27 +172,31 @@ list_setup(listObject *self, PyObject *obj)
 }
 
 static int
-list_traverse(PyObject *obj, visitproc visit, void *arg)
+list_traverse(listObject *self, visitproc visit, void *arg)
 {
-    listObject *self = (listObject *)obj;
-
     Py_VISIT(self->wrapped);
     Py_VISIT(self->connection);
     return 0;
 }
 
-static void
-list_dealloc(PyObject* obj)
+static int
+list_clear(listObject *self)
 {
-    listObject *self = (listObject *)obj;
-
     Py_CLEAR(self->wrapped);
     Py_CLEAR(self->connection);
+    return 0;
+}
+
+static void
+list_dealloc(listObject* self)
+{
+    PyObject_GC_UnTrack((PyObject *)self);
+    list_clear(self);
 
     Dprintf("list_dealloc: deleted list object at %p, "
-            "refcnt = " FORMAT_CODE_PY_SSIZE_T, obj, Py_REFCNT(obj));
+            "refcnt = " FORMAT_CODE_PY_SSIZE_T, self, Py_REFCNT(self));
 
-    Py_TYPE(obj)->tp_free(obj);
+    Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
 static int
@@ -227,7 +231,7 @@ PyTypeObject listType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.List",
     sizeof(listObject), 0,
-    list_dealloc, /*tp_dealloc*/
+    (destructor)list_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/
     0,          /*tp_getattr*/
     0,          /*tp_setattr*/
@@ -244,8 +248,8 @@ PyTypeObject listType = {
     0,          /*tp_as_buffer*/
     Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
     listType_doc, /*tp_doc*/
-    list_traverse, /*tp_traverse*/
-    0,          /*tp_clear*/
+    (traverseproc)list_traverse, /*tp_traverse*/
+    (inquiry)list_clear, /*tp_clear*/
     0,          /*tp_richcompare*/
     0,          /*tp_weaklistoffset*/
     0,          /*tp_iter*/
