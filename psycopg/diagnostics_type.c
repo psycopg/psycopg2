@@ -133,13 +133,6 @@ diagnostics_init(diagnosticsObject *self, PyObject *args, PyObject *kwds)
     return 0;
 }
 
-static int
-diagnostics_traverse(diagnosticsObject *self, visitproc visit, void *arg)
-{
-    Py_VISIT(self->err);
-    return 0;
-}
-
 static void
 diagnostics_dealloc(diagnosticsObject* self)
 {
@@ -183,9 +176,9 @@ PyTypeObject diagnosticsType = {
     0,          /*tp_getattro*/
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
+    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /*tp_flags*/
     diagnosticsType_doc, /*tp_doc*/
-    (traverseproc)diagnostics_traverse, /*tp_traverse*/
+    0,          /*tp_traverse*/
     0,          /*tp_clear*/
     0,          /*tp_richcompare*/
     0,          /*tp_weaklistoffset*/
