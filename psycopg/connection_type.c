@@ -1069,10 +1069,7 @@ connection_setup(connectionObject *self, const char *dsn, long int async)
             self, async, Py_REFCNT(self)
       );
 
-    if (!(self->dsn = strdup(dsn))) {
-        PyErr_NoMemory();
-        goto exit;
-    }
+    if (0 > psycopg_strdup(&self->dsn, dsn, 0)) { goto exit; }
     if (!(self->notice_list = PyList_New(0))) { goto exit; }
     if (!(self->notifies = PyList_New(0))) { goto exit; }
     self->async = async;
@@ -1135,7 +1132,7 @@ connection_dealloc(PyObject* obj)
 
     conn_notice_clean(self);
 
-    if (self->dsn) free(self->dsn);
+    PyMem_Free(self->dsn);
     PyMem_Free(self->encoding);
     PyMem_Free(self->codec);
     if (self->critical) free(self->critical);
