@@ -177,8 +177,7 @@ psyco_register_type(PyObject *self, PyObject *args)
         if (0 > typecast_add(type, NULL, 0)) { return NULL; }
     }
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 

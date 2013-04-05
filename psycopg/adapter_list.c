@@ -107,8 +107,7 @@ list_prepare(listObject *self, PyObject *args)
     Py_INCREF(conn);
     self->connection = conn;
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 static PyObject *

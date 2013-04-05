@@ -42,8 +42,7 @@
 static PyObject *
 psyco_isqlquote_getquoted(isqlquoteObject *self, PyObject *args)
 {
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 /* getbinary - return quoted representation for object */
@@ -54,8 +53,7 @@ psyco_isqlquote_getquoted(isqlquoteObject *self, PyObject *args)
 static PyObject *
 psyco_isqlquote_getbinary(isqlquoteObject *self, PyObject *args)
 {
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 /* getbuffer - return quoted representation for object */
@@ -66,8 +64,7 @@ psyco_isqlquote_getbinary(isqlquoteObject *self, PyObject *args)
 static PyObject *
 psyco_isqlquote_getbuffer(isqlquoteObject *self, PyObject *args)
 {
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 

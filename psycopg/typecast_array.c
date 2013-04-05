@@ -253,7 +253,7 @@ typecast_GENERIC_ARRAY_cast(const char *str, Py_ssize_t len, PyObject *curs)
     Dprintf("typecast_GENERIC_ARRAY_cast: str = '%s',"
             " len = " FORMAT_CODE_PY_SSIZE_T, str, len);
 
-    if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
+    if (str == NULL) { Py_RETURN_NONE; }
     if (str[0] == '[')
         typecast_array_cleanup(&str, &len);
     if (str[0] != '{') {

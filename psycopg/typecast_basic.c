@@ -31,7 +31,7 @@ typecast_INTEGER_cast(const char *s, Py_ssize_t len, PyObject *curs)
 {
     char buffer[12];
 
-    if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
+    if (s == NULL) { Py_RETURN_NONE; }
     if (s[len] != '\0') {
         strncpy(buffer, s, (size_t) len); buffer[len] = '\0';
         s = buffer;
@@ -49,7 +49,7 @@ typecast_LONGINTEGER_cast(const char *s, Py_ssize_t len, PyObject *curs)
 {
     char buffer[24];
 
-    if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
+    if (s == NULL) { Py_RETURN_NONE; }
     if (s[len] != '\0') {
         strncpy(buffer, s, (size_t) len); buffer[len] = '\0';
         s = buffer;
@@ -64,7 +64,7 @@ typecast_FLOAT_cast(const char *s, Py_ssize_t len, PyObject *curs)
 {
     PyObject *str = NULL, *flo = NULL;
 
-    if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
+    if (s == NULL) { Py_RETURN_NONE; }
     if (!(str = Text_FromUTF8AndSize(s, len))) { return NULL; }
 #if PY_MAJOR_VERSION < 3
     flo = PyFloat_FromString(str, NULL);
@@ -81,7 +81,7 @@ typecast_FLOAT_cast(const char *s, Py_ssize_t len, PyObject *curs)
 static PyObject *
 typecast_STRING_cast(const char *s, Py_ssize_t len, PyObject *curs)
 {
-    if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
+    if (s == NULL) { Py_RETURN_NONE; }
     return PyString_FromStringAndSize(s, len);
 }
 #else
@@ -95,7 +95,7 @@ typecast_UNICODE_cast(const char *s, Py_ssize_t len, PyObject *curs)
 {
     char *enc;
 
-    if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
+    if (s == NULL) { Py_RETURN_NONE; }
 
     enc = ((cursorObject*)curs)->conn->codec;
     return PyUnicode_Decode(s, len, enc, NULL);
@@ -108,7 +108,7 @@ typecast_BOOLEAN_cast(const char *s, Py_ssize_t len, PyObject *curs)
 {
     PyObject *res;
 
-    if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
+    if (s == NULL) { Py_RETURN_NONE; }
 
     if (s[0] == 't')
         res = Py_True;
@@ -128,7 +128,7 @@ typecast_DECIMAL_cast(const char *s, Py_ssize_t len, PyObject *curs)
     PyObject *decimalType;
     char *buffer;
 
-    if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
+    if (s == NULL) { Py_RETURN_NONE; }
 
     if ((buffer = PyMem_Malloc(len+1)) == NULL)
         return PyErr_NoMemory();

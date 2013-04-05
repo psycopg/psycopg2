@@ -58,8 +58,7 @@ psyco_diagnostics_get_field(diagnosticsObject *self, void *closure)
     const char *errortext;
 
     if (!self->err->pgres) {
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
 
     errortext = PQresultErrorField(self->err->pgres, (Py_intptr_t) closure);

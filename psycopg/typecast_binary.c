@@ -146,7 +146,7 @@ typecast_BINARY_cast(const char *s, Py_ssize_t l, PyObject *curs)
     char *buffer = NULL;
     Py_ssize_t len;
 
-    if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
+    if (s == NULL) { Py_RETURN_NONE; }
 
     if (s[0] == '\\' && s[1] == 'x') {
         /* This is a buffer escaped in hex format: libpq before 9.0 can't

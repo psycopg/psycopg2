@@ -128,8 +128,7 @@ qstring_prepare(qstringObject *self, PyObject *args)
     Py_INCREF(conn);
     self->conn = conn;
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 static PyObject *

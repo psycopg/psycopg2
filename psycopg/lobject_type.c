@@ -59,8 +59,7 @@ psyco_lobj_close(lobjectObject *self, PyObject *args)
             return NULL;
     }
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 /* write method - write data to the lobject */
@@ -213,10 +212,9 @@ static PyObject *
 psyco_lobj_unlink(lobjectObject *self, PyObject *args)
 {
     if (lobject_unlink(self) < 0)
-    	return NULL;
+        return NULL;
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 /* export method - export lobject's content to given file */
@@ -230,15 +228,14 @@ psyco_lobj_export(lobjectObject *self, PyObject *args)
     const char *filename;
 
     if (!PyArg_ParseTuple(args, "s", &filename))
-    	return NULL;
+        return NULL;
 
     EXC_IF_LOBJ_LEVEL0(self);
 
     if (lobject_export(self, filename) < 0)
-    	return NULL;
+        return NULL;
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -272,8 +269,7 @@ psyco_lobj_truncate(lobjectObject *self, PyObject *args)
     if (lobject_truncate(self, len) < 0)
         return NULL;
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 #endif /* PG_VERSION_HEX >= 0x080300 */

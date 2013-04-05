@@ -130,8 +130,7 @@ psyco_conn_close(connectionObject *self)
     conn_close(self);
     Dprintf("psyco_conn_close: connection at %p closed", self);
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -149,8 +148,7 @@ psyco_conn_commit(connectionObject *self)
     if (conn_commit(self) < 0)
         return NULL;
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -169,8 +167,7 @@ psyco_conn_rollback(connectionObject *self)
     if (conn_rollback(self) < 0)
         return NULL;
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -254,8 +251,7 @@ psyco_conn_tpc_prepare(connectionObject *self)
      * can be performed until commit. */
     self->status = CONN_STATUS_PREPARED;
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -583,8 +579,7 @@ psyco_conn_set_session(connectionObject *self, PyObject *args, PyObject *kwargs)
         return NULL;
     }
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -666,8 +661,7 @@ psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
         return NULL;
     }
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 /* set_client_encoding method - set client encoding */
@@ -730,8 +724,7 @@ psyco_conn_get_parameter_status(connectionObject *self, PyObject *args)
 
     val = PQparameterStatus(self->pgconn, param);
     if (!val) {
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
     return conn_text_from_chars(self, val);
 }
@@ -831,8 +824,7 @@ psyco_conn_reset(connectionObject *self)
     if (res < 0)
         return NULL;
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 static PyObject *
@@ -939,8 +931,7 @@ psyco_conn_cancel(connectionObject *self)
         PyErr_SetString(OperationalError, errbuf);
         return NULL;
     }
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 #endif  /* PSYCOPG_EXTENSIONS */

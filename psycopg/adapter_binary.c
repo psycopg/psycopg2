@@ -159,8 +159,7 @@ binary_prepare(binaryObject *self, PyObject *args)
     self->conn = conn;
     Py_INCREF(self->conn);
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 static PyObject *

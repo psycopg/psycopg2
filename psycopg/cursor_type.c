@@ -70,8 +70,7 @@ psyco_curs_close(cursorObject *self)
     Dprintf("psyco_curs_close: cursor at %p closed", self);
 
 exit:
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -496,8 +495,7 @@ psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
     }
 
     /* success */
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 #define psyco_curs_executemany_doc \
@@ -553,8 +551,7 @@ psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
     self->rowcount = rowcount;
 
     if (!PyErr_Occurred()) {
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
     else {
         return NULL;
@@ -778,8 +775,7 @@ psyco_curs_fetchone(cursorObject *self)
 
     if (self->row >= self->rowcount) {
         /* we exausted available data: return None */
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
 
     res = _psyco_curs_buildrow(self, self->row);
@@ -1103,8 +1099,7 @@ psyco_curs_setinputsizes(cursorObject *self, PyObject *args)
 
     EXC_IF_CURS_CLOSED(self);
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -1124,8 +1119,7 @@ psyco_curs_setoutputsize(cursorObject *self, PyObject *args)
 
     EXC_IF_CURS_CLOSED(self);
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -1189,8 +1183,7 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
         if (_psyco_curs_prefetch(self) < 0) return NULL;
     }
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 

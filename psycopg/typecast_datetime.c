@@ -48,7 +48,7 @@ typecast_PYDATE_cast(const char *str, Py_ssize_t len, PyObject *curs)
     PyObject* obj = NULL;
     int n, y=0, m=0, d=0;
 
-    if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
+    if (str == NULL) { Py_RETURN_NONE; }
 
     if (!strcmp(str, "infinity") || !strcmp(str, "-infinity")) {
         if (str[0] == '-') {
@@ -92,7 +92,7 @@ typecast_PYDATETIME_cast(const char *str, Py_ssize_t len, PyObject *curs)
     int hh=0, mm=0, ss=0, us=0, tz=0;
     const char *tp = NULL;
 
-    if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
+    if (str == NULL) { Py_RETURN_NONE; }
 
     /* check for infinity */
     if (!strcmp(str, "infinity") || !strcmp(str, "-infinity")) {
@@ -177,7 +177,7 @@ typecast_PYTIME_cast(const char *str, Py_ssize_t len, PyObject *curs)
     PyObject *tzinfo_factory;
     int n, hh=0, mm=0, ss=0, us=0, tz=0;
 
-    if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
+    if (str == NULL) { Py_RETURN_NONE; }
 
     n = typecast_parse_time(str, NULL, &len, &hh, &mm, &ss, &us, &tz);
     Dprintf("typecast_PYTIME_cast: n = %d, len = " FORMAT_CODE_PY_SSIZE_T ", "
@@ -226,7 +226,7 @@ typecast_PYINTERVAL_cast(const char *str, Py_ssize_t len, PyObject *curs)
     int part = 0, sec;
     double micro;
 
-    if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
+    if (str == NULL) { Py_RETURN_NONE; }
 
     Dprintf("typecast_PYINTERVAL_cast: s = %s", str);
 
