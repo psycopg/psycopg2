@@ -24,21 +24,12 @@
 
 import psycopg2
 import psycopg2.extensions
-import time
 import unittest
 import gc
 
-from testconfig import dsn
+from testutils import ConnectingTestCase, skip_if_no_uuid
 
-from testutils import skip_if_no_uuid
-
-class StolenReferenceTestCase(unittest.TestCase):
-    def setUp(self):
-        self.conn = psycopg2.connect(dsn)
-
-    def tearDown(self):
-        self.conn.close()
-
+class StolenReferenceTestCase(ConnectingTestCase):
     @skip_if_no_uuid
     def test_stolen_reference_bug(self):
         def fish(val, cur):

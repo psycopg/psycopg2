@@ -25,24 +25,19 @@
 import os
 import time
 import threading
-from testutils import unittest, decorate_all_tests
-from testutils import skip_before_postgres, skip_after_postgres, skip_if_no_superuser
 from operator import attrgetter
 
 import psycopg2
 import psycopg2.errorcodes
 import psycopg2.extensions
+
+from testutils import unittest, decorate_all_tests, skip_if_no_superuser
+from testutils import skip_before_postgres, skip_after_postgres
+from testutils import ConnectingTestCase, skip_if_tpc_disabled
 from testconfig import dsn, dbname
 
-class ConnectionTests(unittest.TestCase):
 
-    def setUp(self):
-        self.conn = psycopg2.connect(dsn)
-
-    def tearDown(self):
-        if not self.conn.closed:
-            self.conn.close()
-
+class ConnectionTests(ConnectingTestCase):
     def test_closed_attribute(self):
         conn = self.conn
         self.assertEqual(conn.closed, False)
@@ -153,7 +148,7 @@ class ConnectionTests(unittest.TestCase):
     @skip_before_postgres(8, 2)
     def test_concurrent_execution(self):
         def slave():
-            cnn = psycopg2.connect(dsn)
+            cnn = self.connect()
             cur = cnn.cursor()
             cur.execute("select pg_sleep(4)")
             cur.close()
@@ -183,7 +178,7 @@ class ConnectionTests(unittest.TestCase):
         oldenc = os.environ.get('PGCLIENTENCODING')
         os.environ['PGCLIENTENCODING'] = 'utf-8'    # malformed spelling
         try:
-            self.conn = psycopg2.connect(dsn)
+            self.conn = self.connect()
         finally:
             if oldenc is not None:
                 os.environ['PGCLIENTENCODING'] = oldenc
@@ -230,10 +225,11 @@ class ConnectionTests(unittest.TestCase):
         self.assert_(not notices, "%d notices raised" % len(notices))
 
 
-class IsolationLevelsTestCase(unittest.TestCase):
+class IsolationLevelsTestCase(ConnectingTestCase):
 
     def setUp(self):
-        self._conns = []
+        ConnectingTestCase.setUp(self)
+
         conn = self.connect()
         cur = conn.cursor()
         try:
@@ -243,17 +239,6 @@ class IsolationLevelsTestCase(unittest.TestCase):
         cur.execute("create table isolevel (id integer);")
         conn.commit()
         conn.close()
-
-    def tearDown(self):
-        # close the connections used in the test
-        for conn in self._conns:
-            if not conn.closed:
-                conn.close()
-
-    def connect(self):
-        conn = psycopg2.connect(dsn)
-        self._conns.append(conn)
-        return conn
 
     def test_isolation_level(self):
         conn = self.connect()
@@ -420,20 +405,16 @@ class IsolationLevelsTestCase(unittest.TestCase):
             cnn.set_isolation_level, 1)
 
 
-class ConnectionTwoPhaseTests(unittest.TestCase):
+class ConnectionTwoPhaseTests(ConnectingTestCase):
     def setUp(self):
-        self._conns = []
+        ConnectingTestCase.setUp(self)
 
         self.make_test_table()
         self.clear_test_xacts()
 
     def tearDown(self):
         self.clear_test_xacts()
-
-        # close the connections used in the test
-        for conn in self._conns:
-            if not conn.closed:
-                conn.close()
+        ConnectingTestCase.tearDown(self)
 
     def clear_test_xacts(self):
         """Rollback all the prepared transaction in the testing db."""
@@ -485,11 +466,6 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
         rv = cur.fetchone()[0]
         cnn.close()
         return rv
-
-    def connect(self, **kwargs):
-        conn = psycopg2.connect(dsn, **kwargs)
-        self._conns.append(conn)
-        return conn
 
     def test_tpc_commit(self):
         cnn = self.connect()
@@ -802,18 +778,10 @@ class ConnectionTwoPhaseTests(unittest.TestCase):
         self.assertEqual(None, xid.bqual)
 
 
-from testutils import skip_if_tpc_disabled
 decorate_all_tests(ConnectionTwoPhaseTests, skip_if_tpc_disabled)
 
 
-class TransactionControlTests(unittest.TestCase):
-    def setUp(self):
-        self.conn = psycopg2.connect(dsn)
-
-    def tearDown(self):
-        if not self.conn.closed:
-            self.conn.close()
-
+class TransactionControlTests(ConnectingTestCase):
     def test_closed(self):
         self.conn.close()
         self.assertRaises(psycopg2.InterfaceError,
@@ -955,14 +923,7 @@ class TransactionControlTests(unittest.TestCase):
             self.conn.set_session, readonly=True, deferrable=True)
 
 
-class AutocommitTests(unittest.TestCase):
-    def setUp(self):
-        self.conn = psycopg2.connect(dsn)
-
-    def tearDown(self):
-        if not self.conn.closed:
-            self.conn.close()
-
+class AutocommitTests(ConnectingTestCase):
     def test_closed(self):
         self.conn.close()
         self.assertRaises(psycopg2.InterfaceError,

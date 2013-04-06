@@ -26,16 +26,10 @@ import time
 import psycopg2
 import psycopg2.extensions
 from psycopg2.extensions import b
-from testconfig import dsn
-from testutils import unittest, skip_before_postgres, skip_if_no_namedtuple
+from testutils import unittest, ConnectingTestCase, skip_before_postgres
+from testutils import skip_if_no_namedtuple
 
-class CursorTests(unittest.TestCase):
-
-    def setUp(self):
-        self.conn = psycopg2.connect(dsn)
-
-    def tearDown(self):
-        self.conn.close()
+class CursorTests(ConnectingTestCase):
 
     def test_close_idempotent(self):
         cur = self.conn.cursor()

@@ -23,9 +23,7 @@
 # License for more details.
 
 from testutils import unittest, skip_before_python, skip_before_postgres
-from testutils import skip_copy_if_green
-
-from testconfig import dsn
+from testutils import ConnectingTestCase, skip_copy_if_green
 
 import psycopg2
 
@@ -138,13 +136,7 @@ class ConnectTestCase(unittest.TestCase):
             psycopg2.connect, 'dbname=foo', no_such_param='meh')
 
 
-class ExceptionsTestCase(unittest.TestCase):
-    def setUp(self):
-        self.conn = psycopg2.connect(dsn)
-
-    def tearDown(self):
-        self.conn.close()
-
+class ExceptionsTestCase(ConnectingTestCase):
     def test_attributes(self):
         cur = self.conn.cursor()
         try:

@@ -30,9 +30,8 @@ from functools import wraps
 import psycopg2
 import psycopg2.extensions
 from psycopg2.extensions import b
-from testconfig import dsn
 from testutils import unittest, decorate_all_tests, skip_if_tpc_disabled
-from testutils import skip_if_green
+from testutils import ConnectingTestCase, skip_if_green
 
 def skip_if_no_lo(f):
     @wraps(f)
@@ -47,10 +46,9 @@ def skip_if_no_lo(f):
 skip_lo_if_green = skip_if_green("libpq doesn't support LO in async mode")
 
 
-class LargeObjectMixin(object):
-    # doesn't derive from TestCase to avoid repeating tests twice.
+class LargeObjectTestCase(ConnectingTestCase):
     def setUp(self):
-        self.conn = self.connect()
+        ConnectingTestCase.setUp(self)
         self.lo_oid = None
         self.tmpdir = None
 
@@ -69,13 +67,11 @@ class LargeObjectMixin(object):
                 pass
             else:
                 lo.unlink()
-        self.conn.close()
 
-    def connect(self):
-        return psycopg2.connect(dsn)
+        ConnectingTestCase.tearDown(self)
 
 
-class LargeObjectTests(LargeObjectMixin, unittest.TestCase):
+class LargeObjectTests(LargeObjectTestCase):
     def test_create(self):
         lo = self.conn.lobject()
         self.assertNotEqual(lo, None)
@@ -374,8 +370,7 @@ class LargeObjectTests(LargeObjectMixin, unittest.TestCase):
             self.conn.tpc_commit()
 
 
-decorate_all_tests(LargeObjectTests, skip_if_no_lo)
-decorate_all_tests(LargeObjectTests, skip_lo_if_green)
+decorate_all_tests(LargeObjectTests, skip_if_no_lo, skip_lo_if_green)
 
 
 def skip_if_no_truncate(f):
@@ -394,7 +389,7 @@ def skip_if_no_truncate(f):
 
     return skip_if_no_truncate_
 
-class LargeObjectTruncateTests(LargeObjectMixin, unittest.TestCase):
+class LargeObjectTruncateTests(LargeObjectTestCase):
     def test_truncate(self):
         lo = self.conn.lobject()
         lo.write("some data")
@@ -430,9 +425,8 @@ class LargeObjectTruncateTests(LargeObjectMixin, unittest.TestCase):
 
         self.assertRaises(psycopg2.ProgrammingError, lo.truncate)
 
-decorate_all_tests(LargeObjectTruncateTests, skip_if_no_lo)
-decorate_all_tests(LargeObjectTruncateTests, skip_lo_if_green)
-decorate_all_tests(LargeObjectTruncateTests, skip_if_no_truncate)
+decorate_all_tests(LargeObjectTruncateTests,
+    skip_if_no_lo, skip_lo_if_green, skip_if_no_truncate)
 
 
 def test_suite():

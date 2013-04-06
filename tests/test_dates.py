@@ -23,10 +23,9 @@
 # License for more details.
 
 import math
-import unittest
 import psycopg2
 from psycopg2.tz import FixedOffsetTimezone, ZERO
-from testconfig import dsn
+from testutils import unittest, ConnectingTestCase
 
 class CommonDatetimeTestsMixin:
 
@@ -93,19 +92,16 @@ class CommonDatetimeTestsMixin:
         self.assertEqual(value, None)
 
 
-class DatetimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
+class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
     """Tests for the datetime based date handling in psycopg2."""
 
     def setUp(self):
-        self.conn = psycopg2.connect(dsn)
+        ConnectingTestCase.setUp(self)
         self.curs = self.conn.cursor()
         self.DATE = psycopg2.extensions.PYDATE
         self.TIME = psycopg2.extensions.PYTIME
         self.DATETIME = psycopg2.extensions.PYDATETIME
         self.INTERVAL = psycopg2.extensions.PYINTERVAL
-
-    def tearDown(self):
-        self.conn.close()
 
     def test_parse_bc_date(self):
         # datetime does not support BC dates
@@ -311,11 +307,11 @@ if not hasattr(psycopg2.extensions, 'PYDATETIME'):
     del DatetimeTests
 
 
-class mxDateTimeTests(unittest.TestCase, CommonDatetimeTestsMixin):
+class mxDateTimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
     """Tests for the mx.DateTime based date handling in psycopg2."""
 
     def setUp(self):
-        self.conn = psycopg2.connect(dsn)
+        ConnectingTestCase.setUp(self)
         self.curs = self.conn.cursor()
         self.DATE = psycopg2._psycopg.MXDATE
         self.TIME = psycopg2._psycopg.MXTIME
@@ -556,6 +552,7 @@ class FixedOffsetTimezoneTests(unittest.TestCase):
             tz21, tz22 = pickle.loads(pickle.dumps([tz11, tz12], proto))
             self.assertEqual(tz11, tz21)
             self.assertEqual(tz12, tz22)
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

@@ -21,13 +21,11 @@ from datetime import date, datetime
 from functools import wraps
 
 from testutils import unittest, skip_if_no_uuid, skip_before_postgres
-from testutils import decorate_all_tests
+from testutils import ConnectingTestCase, decorate_all_tests
 
 import psycopg2
 import psycopg2.extras
 from psycopg2.extensions import b
-
-from testconfig import dsn
 
 
 def filter_scs(conn, s):
@@ -36,14 +34,8 @@ def filter_scs(conn, s):
     else:
         return s.replace(b("E'"), b("'"))
 
-class TypesExtrasTests(unittest.TestCase):
+class TypesExtrasTests(ConnectingTestCase):
     """Test that all type conversions are working."""
-
-    def setUp(self):
-        self.conn = psycopg2.connect(dsn)
-
-    def tearDown(self):
-        self.conn.close()
 
     def execute(self, *args):
         curs = self.conn.cursor()
@@ -135,13 +127,7 @@ def skip_if_no_hstore(f):
 
     return skip_if_no_hstore_
 
-class HstoreTestCase(unittest.TestCase):
-    def setUp(self):
-        self.conn = psycopg2.connect(dsn)
-
-    def tearDown(self):
-        self.conn.close()
-
+class HstoreTestCase(ConnectingTestCase):
     def test_adapt_8(self):
         if self.conn.server_version >= 90000:
             return self.skipTest("skipping dict adaptation with PG pre-9 syntax")
@@ -276,7 +262,7 @@ class HstoreTestCase(unittest.TestCase):
         oids = HstoreAdapter.get_oids(self.conn)
         try:
             register_hstore(self.conn, globally=True)
-            conn2 = psycopg2.connect(dsn)
+            conn2 = self.connect()
             try:
                 cur2 = self.conn.cursor()
                 cur2.execute("select 'a => b'::hstore")
@@ -429,7 +415,7 @@ class HstoreTestCase(unittest.TestCase):
         from psycopg2.extras import RealDictConnection
         from psycopg2.extras import register_hstore
 
-        conn = psycopg2.connect(dsn, connection_factory=RealDictConnection)
+        conn = self.connect(connection_factory=RealDictConnection)
         try:
             register_hstore(conn)
             curs = conn.cursor()
@@ -438,7 +424,7 @@ class HstoreTestCase(unittest.TestCase):
         finally:
             conn.close()
 
-        conn = psycopg2.connect(dsn, connection_factory=RealDictConnection)
+        conn = self.connect(connection_factory=RealDictConnection)
         try:
             curs = conn.cursor()
             register_hstore(curs)
@@ -460,13 +446,7 @@ def skip_if_no_composite(f):
 
     return skip_if_no_composite_
 
-class AdaptTypeTestCase(unittest.TestCase):
-    def setUp(self):
-        self.conn = psycopg2.connect(dsn)
-
-    def tearDown(self):
-        self.conn.close()
-
+class AdaptTypeTestCase(ConnectingTestCase):
     @skip_if_no_composite
     def test_none_in_record(self):
         curs = self.conn.cursor()
@@ -621,8 +601,8 @@ class AdaptTypeTestCase(unittest.TestCase):
     def test_register_on_connection(self):
         self._create_type("type_ii", [("a", "integer"), ("b", "integer")])
 
-        conn1 = psycopg2.connect(dsn)
-        conn2 = psycopg2.connect(dsn)
+        conn1 = self.connect()
+        conn2 = self.connect()
         try:
             psycopg2.extras.register_composite("type_ii", conn1)
             curs1 = conn1.cursor()
@@ -639,8 +619,8 @@ class AdaptTypeTestCase(unittest.TestCase):
     def test_register_globally(self):
         self._create_type("type_ii", [("a", "integer"), ("b", "integer")])
 
-        conn1 = psycopg2.connect(dsn)
-        conn2 = psycopg2.connect(dsn)
+        conn1 = self.connect()
+        conn2 = self.connect()
         try:
             t = psycopg2.extras.register_composite("type_ii", conn1, globally=True)
             try:
@@ -765,7 +745,7 @@ class AdaptTypeTestCase(unittest.TestCase):
         from psycopg2.extras import register_composite
         self._create_type("type_ii", [("a", "integer"), ("b", "integer")])
 
-        conn = psycopg2.connect(dsn, connection_factory=RealDictConnection)
+        conn = self.connect(connection_factory=RealDictConnection)
         try:
             register_composite('type_ii', conn)
             curs = conn.cursor()
@@ -774,7 +754,7 @@ class AdaptTypeTestCase(unittest.TestCase):
         finally:
             conn.close()
 
-        conn = psycopg2.connect(dsn, connection_factory=RealDictConnection)
+        conn = self.connect(connection_factory=RealDictConnection)
         try:
             curs = conn.cursor()
             register_composite('type_ii', conn)
@@ -867,13 +847,7 @@ def skip_if_no_json_type(f):
 
     return skip_if_no_json_type_
 
-class JsonTestCase(unittest.TestCase):
-    def setUp(self):
-        self.conn = psycopg2.connect(dsn)
-
-    def tearDown(self):
-        self.conn.close()
-
+class JsonTestCase(ConnectingTestCase):
     @skip_if_json_module
     def test_module_not_available(self):
         from psycopg2.extras import Json
@@ -1259,12 +1233,7 @@ def skip_if_no_range(f):
     return skip_if_no_range_
 
 
-class RangeCasterTestCase(unittest.TestCase):
-    def setUp(self):
-        self.conn = psycopg2.connect(dsn)
-
-    def tearDown(self):
-        self.conn.close()
+class RangeCasterTestCase(ConnectingTestCase):
 
     builtin_ranges = ('int4range', 'int8range', 'numrange',
         'daterange', 'tsrange', 'tstzrange')

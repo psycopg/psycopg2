@@ -27,21 +27,14 @@ import decimal
 import sys
 from functools import wraps
 import testutils
-from testutils import unittest, decorate_all_tests
-from testconfig import dsn
+from testutils import unittest, ConnectingTestCase, decorate_all_tests
 
 import psycopg2
 from psycopg2.extensions import b
 
 
-class TypesBasicTests(unittest.TestCase):
+class TypesBasicTests(ConnectingTestCase):
     """Test that all type conversions are working."""
-
-    def setUp(self):
-        self.conn = psycopg2.connect(dsn)
-
-    def tearDown(self):
-        self.conn.close()
 
     def execute(self, *args):
         curs = self.conn.cursor()

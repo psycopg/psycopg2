@@ -28,27 +28,23 @@ from __future__ import with_statement
 import psycopg2
 import psycopg2.extensions as ext
 
-from testconfig import dsn
-from testutils import unittest
+from testutils import unittest, ConnectingTestCase
 
-class TestMixin(object):
+class WithTestCase(ConnectingTestCase):
     def setUp(self):
-        self.conn = conn = psycopg2.connect(dsn)
-        curs = conn.cursor()
+        ConnectingTestCase.setUp(self)
+        curs = self.conn.cursor()
         try:
             curs.execute("delete from test_with")
-            conn.commit()
+            self.conn.commit()
         except psycopg2.ProgrammingError:
             # assume table doesn't exist
-            conn.rollback()
+            self.conn.rollback()
             curs.execute("create table test_with (id integer primary key)")
-            conn.commit()
-
-    def tearDown(self):
-        self.conn.close()
+            self.conn.commit()
 
 
-class WithConnectionTestCase(TestMixin, unittest.TestCase):
+class WithConnectionTestCase(WithTestCase):
     def test_with_ok(self):
         with self.conn as conn:
             self.assert_(self.conn is conn)
@@ -65,7 +61,7 @@ class WithConnectionTestCase(TestMixin, unittest.TestCase):
         self.assertEqual(curs.fetchall(), [(1,)])
 
     def test_with_connect_idiom(self):
-        with psycopg2.connect(dsn) as conn:
+        with self.connect() as conn:
             self.assertEqual(conn.status, ext.STATUS_READY)
             curs = conn.cursor()
             curs.execute("insert into test_with values (2)")
@@ -122,7 +118,7 @@ class WithConnectionTestCase(TestMixin, unittest.TestCase):
                 commits.append(None)
                 super(MyConn, self).commit()
 
-        with psycopg2.connect(dsn, connection_factory=MyConn) as conn:
+        with self.connect(connection_factory=MyConn) as conn:
             curs = conn.cursor()
             curs.execute("insert into test_with values (10)")
 
@@ -141,7 +137,7 @@ class WithConnectionTestCase(TestMixin, unittest.TestCase):
                 super(MyConn, self).rollback()
 
         try:
-            with psycopg2.connect(dsn, connection_factory=MyConn) as conn:
+            with self.connect(connection_factory=MyConn) as conn:
                 curs = conn.cursor()
                 curs.execute("insert into test_with values (11)")
                 1/0
@@ -158,7 +154,7 @@ class WithConnectionTestCase(TestMixin, unittest.TestCase):
         self.assertEqual(curs.fetchall(), [])
 
 
-class WithCursorTestCase(TestMixin, unittest.TestCase):
+class WithCursorTestCase(WithTestCase):
     def test_with_ok(self):
         with self.conn as conn:
             with conn.cursor() as curs:

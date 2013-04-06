@@ -27,6 +27,7 @@
 import os
 import sys
 from functools import wraps
+from testconfig import dsn
 
 try:
     import unittest2
@@ -74,11 +75,57 @@ or unittest.TestCase.assert_ is not unittest.TestCase.assertTrue:
     unittest.TestCase.failUnlessEqual = unittest.TestCase.assertEqual
 
 
-def decorate_all_tests(cls, decorator):
-    """Apply *decorator* to all the tests defined in the TestCase *cls*."""
+class ConnectingTestCase(unittest.TestCase):
+    """A test case providing connections for tests.
+
+    A connection for the test is always available as `self.conn`. Others can be
+    created with `self.connect()`. All are closed on tearDown.
+
+    Subclasses needing to customize setUp and tearDown should remember to call
+    the base class implementations.
+    """
+    def setUp(self):
+        self._conns = []
+
+    def tearDown(self):
+        # close the connections used in the test
+        for conn in self._conns:
+            if not conn.closed:
+                conn.close()
+
+    def connect(self, **kwargs):
+        try:
+            self._conns
+        except AttributeError, e:
+            raise AttributeError(
+                "%s (did you remember calling ConnectingTestCase.setUp()?)"
+                % e)
+
+        import psycopg2
+        conn = psycopg2.connect(dsn, **kwargs)
+        self._conns.append(conn)
+        return conn
+
+    def _get_conn(self):
+        if not hasattr(self, '_the_conn'):
+            self._the_conn = self.connect()
+
+        return self._the_conn
+
+    def _set_conn(self, conn):
+        self._the_conn = conn
+
+    conn = property(_get_conn, _set_conn)
+
+
+def decorate_all_tests(cls, *decorators):
+    """
+    Apply all the *decorators* to all the tests defined in the TestCase *cls*.
+    """
     for n in dir(cls):
         if n.startswith('test'):
-            setattr(cls, n, decorator(getattr(cls, n)))
+            for d in decorators:
+                setattr(cls, n, d(getattr(cls, n)))
 
 
 def skip_if_no_uuid(f):
