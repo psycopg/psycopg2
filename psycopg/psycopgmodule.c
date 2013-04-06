@@ -409,8 +409,8 @@ static struct {
     PyObject **base;
     const char *docstr;
 } exctable[] = {
-    { "psycopg2.Error", &Error, &PyExc_StandardError, Error_doc },
-    { "psycopg2.Warning", &Warning, &PyExc_StandardError, Warning_doc },
+    { "psycopg2.Error", &Error, NULL, Error_doc },
+    { "psycopg2.Warning", &Warning, NULL, Warning_doc },
     { "psycopg2.InterfaceError", &InterfaceError, &Error, InterfaceError_doc },
     { "psycopg2.DatabaseError", &DatabaseError, &Error, DatabaseError_doc },
     { "psycopg2.InternalError", &InternalError, &DatabaseError, InternalError_doc },
@@ -458,8 +458,12 @@ psyco_errors_init(void)
             Py_CLEAR(str);
         }
 
+        /* can't put PyExc_StandardError in the static exctable:
+         * windows build will fail */
         if (!(*exctable[i].exc = PyErr_NewException(
-                exctable[i].name, *exctable[i].base, dict))) {
+                exctable[i].name,
+                exctable[i].base ? *exctable[i].base : PyExc_StandardError,
+                dict))) {
             goto exit;
         }
         Py_CLEAR(dict);
