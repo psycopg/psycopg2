@@ -159,7 +159,7 @@ def register_range(pgrange, pyrange, conn_or_curs, globally=False):
     of the returned `RangeCaster` object.
 
     The function queries the database on *conn_or_curs* to inspect the
-    *pgrange* type. Raise `~psycopg2.ProgrammingError` if the type is not
+    *pgrange* type and raises `~psycopg2.ProgrammingError` if the type is not
     found.  If querying the database is not advisable, use directly the
     `RangeCaster` class and register the adapter and typecasters using the
     provided functions.

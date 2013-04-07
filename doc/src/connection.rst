@@ -509,7 +509,7 @@ The ``connection`` class
     .. attribute:: cursor_factory
 
         The default cursor factory used by `~connection.cursor()` if the
-        parameter is no specified.
+        parameter is not specified.
 
         .. versionadded:: 2.5
 
