@@ -26,23 +26,16 @@ from testutils import unittest
 
 import psycopg2
 from psycopg2 import extensions
+from testutils import ConnectingTestCase, script_to_py3
 from testconfig import dsn
-from testutils import script_to_py3
 
 import sys
 import time
 import select
-import signal
 from subprocess import Popen, PIPE
 
 
-class NotifiesTests(unittest.TestCase):
-
-    def setUp(self):
-        self.conn = psycopg2.connect(dsn)
-
-    def tearDown(self):
-        self.conn.close()
+class NotifiesTests(ConnectingTestCase):
 
     def autocommit(self, conn):
         """Set a connection in autocommit mode."""

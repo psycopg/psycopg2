@@ -22,27 +22,19 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-try:
-    import decimal
-except:
-    pass
+import decimal
+
 import sys
+from functools import wraps
 import testutils
-from testutils import unittest, decorate_all_tests
-from testconfig import dsn
+from testutils import unittest, ConnectingTestCase, decorate_all_tests
 
 import psycopg2
 from psycopg2.extensions import b
 
 
-class TypesBasicTests(unittest.TestCase):
+class TypesBasicTests(ConnectingTestCase):
     """Test that all type conversions are working."""
-
-    def setUp(self):
-        self.conn = psycopg2.connect(dsn)
-
-    def tearDown(self):
-        self.conn.close()
 
     def execute(self, *args):
         curs = self.conn.cursor()
@@ -64,10 +56,6 @@ class TypesBasicTests(unittest.TestCase):
         self.failUnless(s == 1971, "wrong integer quoting: " + str(s))
         s = self.execute("SELECT %s AS foo", (1971L,))
         self.failUnless(s == 1971L, "wrong integer quoting: " + str(s))
-        if sys.version_info[0:2] < (2, 4):
-            s = self.execute("SELECT %s AS foo", (19.10,))
-            self.failUnless(abs(s - 19.10) < 0.001,
-                        "wrong float quoting: " + str(s))
 
     def testBoolean(self):
         x = self.execute("SELECT %s as foo", (False,))
@@ -76,21 +64,18 @@ class TypesBasicTests(unittest.TestCase):
         self.assert_(x is True)
 
     def testDecimal(self):
-        if sys.version_info[0:2] >= (2, 4):
-            s = self.execute("SELECT %s AS foo", (decimal.Decimal("19.10"),))
-            self.failUnless(s - decimal.Decimal("19.10") == 0,
-                            "wrong decimal quoting: " + str(s))
-            s = self.execute("SELECT %s AS foo", (decimal.Decimal("NaN"),))
-            self.failUnless(str(s) == "NaN", "wrong decimal quoting: " + str(s))
-            self.failUnless(type(s) == decimal.Decimal, "wrong decimal conversion: " + repr(s))
-            s = self.execute("SELECT %s AS foo", (decimal.Decimal("infinity"),))
-            self.failUnless(str(s) == "NaN", "wrong decimal quoting: " + str(s))
-            self.failUnless(type(s) == decimal.Decimal, "wrong decimal conversion: " + repr(s))
-            s = self.execute("SELECT %s AS foo", (decimal.Decimal("-infinity"),))
-            self.failUnless(str(s) == "NaN", "wrong decimal quoting: " + str(s))
-            self.failUnless(type(s) == decimal.Decimal, "wrong decimal conversion: " + repr(s))
-        else:
-            return self.skipTest("decimal not available")
+        s = self.execute("SELECT %s AS foo", (decimal.Decimal("19.10"),))
+        self.failUnless(s - decimal.Decimal("19.10") == 0,
+                        "wrong decimal quoting: " + str(s))
+        s = self.execute("SELECT %s AS foo", (decimal.Decimal("NaN"),))
+        self.failUnless(str(s) == "NaN", "wrong decimal quoting: " + str(s))
+        self.failUnless(type(s) == decimal.Decimal, "wrong decimal conversion: " + repr(s))
+        s = self.execute("SELECT %s AS foo", (decimal.Decimal("infinity"),))
+        self.failUnless(str(s) == "NaN", "wrong decimal quoting: " + str(s))
+        self.failUnless(type(s) == decimal.Decimal, "wrong decimal conversion: " + repr(s))
+        s = self.execute("SELECT %s AS foo", (decimal.Decimal("-infinity"),))
+        self.failUnless(str(s) == "NaN", "wrong decimal quoting: " + str(s))
+        self.failUnless(type(s) == decimal.Decimal, "wrong decimal conversion: " + repr(s))
 
     def testFloatNan(self):
         try:
@@ -126,7 +111,7 @@ class TypesBasicTests(unittest.TestCase):
             s = bytes(range(256))
             b = psycopg2.Binary(s)
             buf = self.execute("SELECT %s::bytea AS foo", (b,))
-            self.assertEqual(s, buf)
+            self.assertEqual(s, buf.tobytes())
 
     def testBinaryNone(self):
         b = psycopg2.Binary(None)
@@ -154,7 +139,7 @@ class TypesBasicTests(unittest.TestCase):
             s = bytes(range(256))
             buf = self.execute("SELECT %s::bytea AS foo", (psycopg2.Binary(s),))
             buf2 = self.execute("SELECT %s::bytea AS foo", (buf,))
-            self.assertEqual(s, buf2)
+            self.assertEqual(s, buf2.tobytes())
 
     def testArray(self):
         s = self.execute("SELECT %s AS foo", ([[1,2],[3,4]],))
@@ -461,6 +446,7 @@ class ByteaParserTest(unittest.TestCase):
         self.assertEqual(rv, tgt)
 
 def skip_if_cant_cast(f):
+    @wraps(f)
     def skip_if_cant_cast_(self, *args, **kwargs):
         if self._cast is None:
             return self.skipTest("can't test bytea parser: %s - %s"

@@ -55,14 +55,18 @@ from distutils.ccompiler import get_default_compiler
 from distutils.util import get_platform
 
 try:
-    from distutils.command.build_py import build_py_2to3 as build_py
+    from distutils.command.build_py import build_py_2to3
 except ImportError:
     from distutils.command.build_py import build_py
 else:
+    class build_py(build_py_2to3):
+        # workaround subclass for ticket #153
+        pass
+
     # Configure distutils to run our custom 2to3 fixers as well
     from lib2to3.refactor import get_fixers_from_package
-    build_py.fixer_names = get_fixers_from_package('lib2to3.fixes')
-    build_py.fixer_names.append('fix_b')
+    build_py.fixer_names = get_fixers_from_package('lib2to3.fixes') \
+        + [ 'fix_b' ]
     sys.path.insert(0, 'scripts')
 
 try:
@@ -73,7 +77,7 @@ except ImportError:
 # Take a look at http://www.python.org/dev/peps/pep-0386/
 # for a consistent versioning pattern.
 
-PSYCOPG_VERSION = '2.4.6'
+PSYCOPG_VERSION = '2.5'
 
 version_flags   = ['dt', 'dec']
 
@@ -347,14 +351,15 @@ class psycopg_build_ext(build_ext):
         self.libraries.append('ssl')
         self.libraries.append('crypto')
 
-    def finalize_linux2(self):
+    def finalize_linux(self):
         """Finalize build system configuration on GNU/Linux platform."""
         # tell piro that GCC is fine and dandy, but not so MS compilers
         for extension in self.extensions:
             extension.extra_compile_args.append(
                 '-Wdeclaration-after-statement')
 
-    finalize_linux3 = finalize_linux2
+    finalize_linux2 = finalize_linux
+    finalize_linux3 = finalize_linux
 
     def finalize_options(self):
         """Complete the build system configuation."""
@@ -423,6 +428,7 @@ sources = [
 
     'connection_int.c', 'connection_type.c',
     'cursor_int.c', 'cursor_type.c',
+    'diagnostics_type.c', 'error_type.c',
     'lobject_int.c', 'lobject_type.c',
     'notify_type.c', 'xid_type.c',
 
@@ -435,8 +441,8 @@ sources = [
 
 depends = [
     # headers
-    'config.h', 'pgtypes.h', 'psycopg.h', 'python.h',
-    'connection.h', 'cursor.h', 'green.h', 'lobject.h',
+    'config.h', 'pgtypes.h', 'psycopg.h', 'python.h', 'connection.h',
+    'cursor.h', 'diagnostics.h', 'error.h', 'green.h', 'lobject.h',
     'notify.h', 'pqpath.h', 'xid.h',
 
     'adapter_asis.h', 'adapter_binary.h', 'adapter_datetime.h',

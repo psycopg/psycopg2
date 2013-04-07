@@ -27,6 +27,7 @@ More advanced topics
     wait(aconn)
     acurs = aconn.cursor()
 
+
 .. index::
     double: Subclassing; Cursor
     double: Subclassing; Connection
@@ -44,6 +45,16 @@ usually sub-classed only to provide an easy way to create customized cursors
 but other uses are possible. `cursor` is much more interesting, because
 it is the class where query building, execution and result type-casting into
 Python variables happens.
+
+The `~psycopg2.extras` module contains several examples of :ref:`connection
+and cursor sublcasses <cursor-subclasses>`.
+
+.. note::
+
+    If you only need a customized cursor class, since Psycopg 2.5 you can use
+    the `~connection.cursor_factory` parameter of a regular connection instead
+    of creating a new `!connection` subclass.
+
 
 .. index::
     single: Example; Cursor subclass
@@ -403,13 +414,13 @@ this will be probably implemented in a future release.
 
 .. _green-support:
 
-Support to coroutine libraries
-------------------------------
+Support for coroutine libraries
+-------------------------------
 
 .. versionadded:: 2.2.0
 
-Psycopg can be used together with coroutine_\-based libraries, and participate
-to cooperative multithreading.
+Psycopg can be used together with coroutine_\-based libraries and participate
+in cooperative multithreading.
 
 Coroutine-based libraries (such as Eventlet_ or gevent_) can usually patch the
 Python standard library in order to enable a coroutine switch in the presence of

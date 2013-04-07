@@ -25,14 +25,16 @@
 import os
 import shutil
 import tempfile
+from functools import wraps
 
 import psycopg2
 import psycopg2.extensions
 from psycopg2.extensions import b
-from testconfig import dsn, green
 from testutils import unittest, decorate_all_tests, skip_if_tpc_disabled
+from testutils import ConnectingTestCase, skip_if_green
 
 def skip_if_no_lo(f):
+    @wraps(f)
     def skip_if_no_lo_(self):
         if self.conn.server_version < 80100:
             return self.skipTest("large objects only supported from PG 8.1")
@@ -41,20 +43,12 @@ def skip_if_no_lo(f):
 
     return skip_if_no_lo_
 
-def skip_if_green(f):
-    def skip_if_green_(self):
-        if green:
-            return self.skipTest("libpq doesn't support LO in async mode")
-        else:
-            return f(self)
-
-    return skip_if_green_
+skip_lo_if_green = skip_if_green("libpq doesn't support LO in async mode")
 
 
-class LargeObjectMixin(object):
-    # doesn't derive from TestCase to avoid repeating tests twice.
+class LargeObjectTestCase(ConnectingTestCase):
     def setUp(self):
-        self.conn = self.connect()
+        ConnectingTestCase.setUp(self)
         self.lo_oid = None
         self.tmpdir = None
 
@@ -73,13 +67,11 @@ class LargeObjectMixin(object):
                 pass
             else:
                 lo.unlink()
-        self.conn.close()
 
-    def connect(self):
-        return psycopg2.connect(dsn)
+        ConnectingTestCase.tearDown(self)
 
 
-class LargeObjectTests(LargeObjectMixin, unittest.TestCase):
+class LargeObjectTests(LargeObjectTestCase):
     def test_create(self):
         lo = self.conn.lobject()
         self.assertNotEqual(lo, None)
@@ -378,11 +370,11 @@ class LargeObjectTests(LargeObjectMixin, unittest.TestCase):
             self.conn.tpc_commit()
 
 
-decorate_all_tests(LargeObjectTests, skip_if_no_lo)
-decorate_all_tests(LargeObjectTests, skip_if_green)
+decorate_all_tests(LargeObjectTests, skip_if_no_lo, skip_lo_if_green)
 
 
 def skip_if_no_truncate(f):
+    @wraps(f)
     def skip_if_no_truncate_(self):
         if self.conn.server_version < 80300:
             return self.skipTest(
@@ -395,10 +387,12 @@ def skip_if_no_truncate(f):
 
         return f(self)
 
-class LargeObjectTruncateTests(LargeObjectMixin, unittest.TestCase):
+    return skip_if_no_truncate_
+
+class LargeObjectTruncateTests(LargeObjectTestCase):
     def test_truncate(self):
         lo = self.conn.lobject()
-        lo.write(b("some data"))
+        lo.write("some data")
         lo.close()
 
         lo = self.conn.lobject(lo.oid, "w")
@@ -407,17 +401,17 @@ class LargeObjectTruncateTests(LargeObjectMixin, unittest.TestCase):
         # seek position unchanged
         self.assertEqual(lo.tell(), 0)
         # data truncated
-        self.assertEqual(lo.read(), b("some"))
+        self.assertEqual(lo.read(), "some")
 
         lo.truncate(6)
         lo.seek(0)
         # large object extended with zeroes
-        self.assertEqual(lo.read(), b("some\x00\x00"))
+        self.assertEqual(lo.read(), "some\x00\x00")
 
         lo.truncate()
         lo.seek(0)
         # large object empty
-        self.assertEqual(lo.read(), b(""))
+        self.assertEqual(lo.read(), "")
 
     def test_truncate_after_close(self):
         lo = self.conn.lobject()
@@ -431,9 +425,8 @@ class LargeObjectTruncateTests(LargeObjectMixin, unittest.TestCase):
 
         self.assertRaises(psycopg2.ProgrammingError, lo.truncate)
 
-decorate_all_tests(LargeObjectTruncateTests, skip_if_no_lo)
-decorate_all_tests(LargeObjectTruncateTests, skip_if_green)
-decorate_all_tests(LargeObjectTruncateTests, skip_if_no_truncate)
+decorate_all_tests(LargeObjectTruncateTests,
+    skip_if_no_lo, skip_lo_if_green, skip_if_no_truncate)
 
 
 def test_suite():

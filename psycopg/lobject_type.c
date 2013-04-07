@@ -59,8 +59,7 @@ psyco_lobj_close(lobjectObject *self, PyObject *args)
             return NULL;
     }
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 /* write method - write data to the lobject */
@@ -128,7 +127,7 @@ psyco_lobj_read(lobjectObject *self, PyObject *args)
     Py_ssize_t size = -1;
     char *buffer;
 
-    if (!PyArg_ParseTuple(args, "|" CONV_CODE_PY_SSIZE_T,  &size)) return NULL;
+    if (!PyArg_ParseTuple(args, "|n",  &size)) return NULL;
 
     EXC_IF_LOBJ_CLOSED(self);
     EXC_IF_LOBJ_LEVEL0(self);
@@ -213,10 +212,9 @@ static PyObject *
 psyco_lobj_unlink(lobjectObject *self, PyObject *args)
 {
     if (lobject_unlink(self) < 0)
-    	return NULL;
+        return NULL;
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 /* export method - export lobject's content to given file */
@@ -230,15 +228,14 @@ psyco_lobj_export(lobjectObject *self, PyObject *args)
     const char *filename;
 
     if (!PyArg_ParseTuple(args, "s", &filename))
-    	return NULL;
+        return NULL;
 
     EXC_IF_LOBJ_LEVEL0(self);
 
     if (lobject_export(self, filename) < 0)
-    	return NULL;
+        return NULL;
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -272,8 +269,7 @@ psyco_lobj_truncate(lobjectObject *self, PyObject *args)
     if (lobject_truncate(self, len) < 0)
         return NULL;
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 #endif /* PG_VERSION_HEX >= 0x080300 */
@@ -333,7 +329,7 @@ lobject_setup(lobjectObject *self, connectionObject *conn,
 
     if (conn->autocommit) {
         psyco_set_error(ProgrammingError, NULL,
-            "can't use a lobject outside of transactions", NULL, NULL);
+            "can't use a lobject outside of transactions");
         return -1;
     }
 
@@ -392,12 +388,6 @@ lobject_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return type->tp_alloc(type, 0);
 }
 
-static void
-lobject_del(PyObject* self)
-{
-    PyObject_Del(self);
-}
-
 static PyObject *
 lobject_repr(lobjectObject *self)
 {
@@ -414,8 +404,7 @@ lobject_repr(lobjectObject *self)
 PyTypeObject lobjectType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.lobject",
-    sizeof(lobjectObject),
-    0,
+    sizeof(lobjectObject), 0,
     lobject_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/
     0,          /*tp_getattr*/
@@ -426,47 +415,30 @@ PyTypeObject lobjectType = {
     0,          /*tp_as_sequence*/
     0,          /*tp_as_mapping*/
     0,          /*tp_hash */
-
     0,          /*tp_call*/
     (reprfunc)lobject_repr, /*tp_str*/
     0,          /*tp_getattro*/
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
-
     Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_ITER, /*tp_flags*/
     lobjectType_doc, /*tp_doc*/
-
     0,          /*tp_traverse*/
     0,          /*tp_clear*/
-
     0,          /*tp_richcompare*/
     0,          /*tp_weaklistoffset*/
-
     0,          /*tp_iter*/
     0,          /*tp_iternext*/
-
-    /* Attribute descriptor and subclassing stuff */
-
     lobjectObject_methods, /*tp_methods*/
     lobjectObject_members, /*tp_members*/
     lobjectObject_getsets, /*tp_getset*/
     0,          /*tp_base*/
     0,          /*tp_dict*/
-
     0,          /*tp_descr_get*/
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
-
     lobject_init, /*tp_init*/
-    0, /*tp_alloc  Will be set to PyType_GenericAlloc in module init*/
+    0,          /*tp_alloc*/
     lobject_new, /*tp_new*/
-    (freefunc)lobject_del, /*tp_free  Low-level free-memory routine */
-    0,          /*tp_is_gc For PyObject_IS_GC */
-    0,          /*tp_bases*/
-    0,          /*tp_mro method resolution order */
-    0,          /*tp_cache*/
-    0,          /*tp_subclasses*/
-    0           /*tp_weaklist*/
 };
 
 #endif

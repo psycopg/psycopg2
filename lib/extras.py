@@ -25,16 +25,15 @@ and classes untill a better place in the distribution is found.
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-import os
-import sys
-import time
-import warnings
-import re as regex
+import os as _os
+import sys as _sys
+import time as _time
+import re as _re
 
 try:
-    import logging
+    import logging as _logging
 except:
-    logging = None
+    _logging = None
 
 import psycopg2
 from psycopg2 import extensions as _ext
@@ -192,7 +191,7 @@ class DictRow(list):
         self._index = data[1]
 
     # drop the crusty Py2 methods
-    if sys.version_info[0] > 2:
+    if _sys.version_info[0] > 2:
         items = iteritems; del iteritems
         keys = iterkeys; del iterkeys
         values = itervalues; del itervalues
@@ -302,21 +301,21 @@ class NamedTupleCursor(_cursor):
             nt = self.Record
             if nt is None:
                 nt = self.Record = self._make_nt()
-            return nt(*t)
+            return nt._make(t)
 
     def fetchmany(self, size=None):
         ts = super(NamedTupleCursor, self).fetchmany(size)
         nt = self.Record
         if nt is None:
             nt = self.Record = self._make_nt()
-        return [nt(*t) for t in ts]
+        return map(nt._make, ts)
 
     def fetchall(self):
         ts = super(NamedTupleCursor, self).fetchall()
         nt = self.Record
         if nt is None:
             nt = self.Record = self._make_nt()
-        return [nt(*t) for t in ts]
+        return map(nt._make, ts)
 
     def __iter__(self):
         it = super(NamedTupleCursor, self).__iter__()
@@ -326,10 +325,10 @@ class NamedTupleCursor(_cursor):
         if nt is None:
             nt = self.Record = self._make_nt()
 
-        yield nt(*t)
+        yield nt._make(t)
 
         while 1:
-            yield nt(*it.next())
+            yield nt._make(it.next())
 
     try:
         from collections import namedtuple
@@ -354,7 +353,7 @@ class LoggingConnection(_connection):
         instance from the standard logging module.
         """
         self._logobj = logobj
-        if logging and isinstance(logobj, logging.Logger):
+        if _logging and isinstance(logobj, _logging.Logger):
             self.log = self._logtologger
         else:
             self.log = self._logtofile
@@ -370,7 +369,7 @@ class LoggingConnection(_connection):
 
     def _logtofile(self, msg, curs):
         msg = self.filter(msg, curs)
-        if msg: self._logobj.write(msg + os.linesep)
+        if msg: self._logobj.write(msg + _os.linesep)
 
     def _logtologger(self, msg, curs):
         msg = self.filter(msg, curs)
@@ -418,9 +417,9 @@ class MinTimeLoggingConnection(LoggingConnection):
         self._mintime = mintime
 
     def filter(self, msg, curs):
-        t = (time.time() - curs.timestamp) * 1000
+        t = (_time.time() - curs.timestamp) * 1000
         if t > self._mintime:
-            return msg + os.linesep + "  (execution time: %d ms)" % t
+            return msg + _os.linesep + "  (execution time: %d ms)" % t
 
     def cursor(self, *args, **kwargs):
         kwargs.setdefault('cursor_factory', MinTimeLoggingCursor)
@@ -430,11 +429,11 @@ class MinTimeLoggingCursor(LoggingCursor):
     """The cursor sub-class companion to `MinTimeLoggingConnection`."""
 
     def execute(self, query, vars=None):
-        self.timestamp = time.time()
+        self.timestamp = _time.time()
         return LoggingCursor.execute(self, query, vars)
 
     def callproc(self, procname, vars=None):
-        self.timestamp = time.time()
+        self.timestamp = _time.time()
         return LoggingCursor.execute(self, procname, vars)
 
 
@@ -558,20 +557,21 @@ def register_tstz_w_secs(oids=None, conn_or_curs=None):
     These are now correctly handled by the default type caster, so currently
     the function doesn't do anything.
     """
+    import warnings
     warnings.warn("deprecated", DeprecationWarning)
 
-
-import select
-from psycopg2.extensions import POLL_OK, POLL_READ, POLL_WRITE
-from psycopg2 import OperationalError
 
 def wait_select(conn):
     """Wait until a connection or cursor has data available.
 
     The function is an example of a wait callback to be registered with
-    `~psycopg2.extensions.set_wait_callback()`. This function uses `!select()`
-    to wait for data available.
+    `~psycopg2.extensions.set_wait_callback()`. This function uses
+    :py:func:`~select.select()` to wait for data available.
+
     """
+    import select
+    from psycopg2.extensions import POLL_OK, POLL_READ, POLL_WRITE
+
     while 1:
         state = conn.poll()
         if state == POLL_OK:
@@ -581,11 +581,14 @@ def wait_select(conn):
         elif state == POLL_WRITE:
             select.select([], [conn.fileno()], [])
         else:
-            raise OperationalError("bad state from poll: %s" % state)
+            raise conn.OperationalError("bad state from poll: %s" % state)
 
 
 def _solve_conn_curs(conn_or_curs):
     """Return the connection and a DBAPI cursor from a connection or cursor."""
+    if conn_or_curs is None:
+        raise psycopg2.ProgrammingError("no connection or cursor provided")
+
     if hasattr(conn_or_curs, 'execute'):
         conn = conn_or_curs.connection
         curs = conn.cursor(cursor_factory=_cursor)
@@ -645,7 +648,7 @@ class HstoreAdapter(object):
 
     getquoted = _getquoted_9
 
-    _re_hstore = regex.compile(r"""
+    _re_hstore = _re.compile(r"""
         # hstore key:
         # a string of normal or escaped chars
         "((?: [^"\\] | \\. )*)"
@@ -656,10 +659,10 @@ class HstoreAdapter(object):
             | "((?: [^"\\] | \\. )*)"
         )
         (?:\s*,\s*|$) # pairs separated by comma or end of string.
-    """, regex.VERBOSE)
+    """, _re.VERBOSE)
 
     @classmethod
-    def parse(self, s, cur, _bsdec=regex.compile(r"\\(.)")):
+    def parse(self, s, cur, _bsdec=_re.compile(r"\\(.)")):
         """Parse an hstore representation in a Python string.
 
         The hstore is represented as something like::
@@ -783,7 +786,7 @@ def register_hstore(conn_or_curs, globally=False, unicode=False,
             array_oid = tuple([x for x in array_oid if x])
 
     # create and register the typecaster
-    if sys.version_info[0] < 3 and unicode:
+    if _sys.version_info[0] < 3 and unicode:
         cast = HstoreAdapter.parse_unicode
     else:
         cast = HstoreAdapter.parse
@@ -805,35 +808,10 @@ class CompositeCaster(object):
     querying the database at registration time is not desirable (such as when
     using an :ref:`asynchronous connections <async-support>`).
 
-    .. attribute:: name
-
-        The name of the PostgreSQL type.
-
-    .. attribute:: oid
-
-        The oid of the PostgreSQL type.
-
-    .. attribute:: array_oid
-
-        The oid of the PostgreSQL array type, if available.
-
-    .. attribute:: type
-
-        The type of the Python objects returned. If :py:func:`collections.namedtuple()`
-        is available, it is a named tuple with attributes equal to the type
-        components. Otherwise it is just the `!tuple` object.
-
-    .. attribute:: attnames
-
-        List of component names of the type to be casted.
-
-    .. attribute:: atttypes
-
-        List of component type oids of the type to be casted.
-
     """
-    def __init__(self, name, oid, attrs, array_oid=None):
+    def __init__(self, name, oid, attrs, array_oid=None, schema=None):
         self.name = name
+        self.schema = schema
         self.oid = oid
         self.array_oid = array_oid
 
@@ -857,17 +835,30 @@ class CompositeCaster(object):
                 "expecting %d components for the type %s, %d found instead" %
                 (len(self.atttypes), self.name, len(tokens)))
 
-        attrs = [ curs.cast(oid, token)
+        values = [ curs.cast(oid, token)
             for oid, token in zip(self.atttypes, tokens) ]
-        return self._ctor(*attrs)
 
-    _re_tokenize = regex.compile(r"""
+        return self.make(values)
+
+    def make(self, values):
+        """Return a new Python object representing the data being casted.
+
+        *values* is the list of attributes, already casted into their Python
+        representation.
+
+        You can subclass this method to :ref:`customize the composite cast
+        <custom-composite>`.
+        """
+
+        return self._ctor(values)
+
+    _re_tokenize = _re.compile(r"""
   \(? ([,)])                        # an empty token, representing NULL
 | \(? " ((?: [^"] | "")*) " [,)]    # or a quoted string
 | \(? ([^",)]+) [,)]                # or an unquoted string
-    """, regex.VERBOSE)
+    """, _re.VERBOSE)
 
-    _re_undouble = regex.compile(r'(["\\])\1')
+    _re_undouble = _re.compile(r'(["\\])\1')
 
     @classmethod
     def tokenize(self, s):
@@ -889,10 +880,10 @@ class CompositeCaster(object):
             from collections import namedtuple
         except ImportError:
             self.type = tuple
-            self._ctor = lambda *args: tuple(args)
+            self._ctor = self.type
         else:
             self.type = namedtuple(name, attnames)
-            self._ctor = self.type
+            self._ctor = self.type._make
 
     @classmethod
     def _from_db(self, name, conn_or_curs):
@@ -941,10 +932,10 @@ ORDER BY attnum;
         array_oid = recs[0][1]
         type_attrs = [ (r[2], r[3]) for r in recs ]
 
-        return CompositeCaster(tname, type_oid, type_attrs,
-            array_oid=array_oid)
+        return self(tname, type_oid, type_attrs,
+            array_oid=array_oid, schema=schema)
 
-def register_composite(name, conn_or_curs, globally=False):
+def register_composite(name, conn_or_curs, globally=False, factory=None):
     """Register a typecaster to convert a composite type into a tuple.
 
     :param name: the name of a PostgreSQL composite type, e.g. created using
@@ -954,14 +945,15 @@ def register_composite(name, conn_or_curs, globally=False):
         object, unless *globally* is set to `!True`
     :param globally: if `!False` (default) register the typecaster only on
         *conn_or_curs*, otherwise register it globally
-    :return: the registered `CompositeCaster` instance responsible for the
-        conversion
-
-    .. versionchanged:: 2.4.3
-        added support for array of composite types
-
+    :param factory: if specified it should be a `CompositeCaster` subclass: use
+        it to :ref:`customize how to cast composite types <custom-composite>`
+    :return: the registered `CompositeCaster` or *factory* instance
+        responsible for the conversion
     """
-    caster = CompositeCaster._from_db(name, conn_or_curs)
+    if factory is None:
+        factory = CompositeCaster
+
+    caster = factory._from_db(name, conn_or_curs)
     _ext.register_type(caster.typecaster, not globally and conn_or_curs or None)
 
     if caster.array_typecaster is not None:
@@ -970,4 +962,11 @@ def register_composite(name, conn_or_curs, globally=False):
     return caster
 
 
-__all__ = filter(lambda k: not k.startswith('_'), locals().keys())
+# expose the json adaptation stuff into the module
+from psycopg2._json import json, Json, register_json, register_default_json
+
+
+# Expose range-related objects
+from psycopg2._range import Range, NumericRange
+from psycopg2._range import DateRange, DateTimeRange, DateTimeTZRange
+from psycopg2._range import register_range, RangeAdapter, RangeCaster

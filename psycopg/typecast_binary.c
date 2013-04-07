@@ -55,7 +55,6 @@ chunk_repr(chunkObject *self)
 
 #if PY_MAJOR_VERSION < 3
 
-/* XXX support 3.0 buffer protocol */
 static Py_ssize_t
 chunk_getreadbuffer(chunkObject *self, Py_ssize_t segment, void **ptr)
 {
@@ -90,9 +89,15 @@ static PyBufferProcs chunk_as_buffer =
 /* 3.0 buffer interface */
 int chunk_getbuffer(PyObject *_self, Py_buffer *view, int flags)
 {
+    int rv;
     chunkObject *self = (chunkObject*)_self;
-    return PyBuffer_FillInfo(view, _self, self->base, self->len, 1, flags);
+    rv = PyBuffer_FillInfo(view, _self, self->base, self->len, 1, flags);
+    if (rv == 0) {
+        view->format = "c";
+    }
+    return rv;
 }
+
 static PyBufferProcs chunk_as_buffer =
 {
     chunk_getbuffer,
@@ -105,9 +110,8 @@ static PyBufferProcs chunk_as_buffer =
 
 PyTypeObject chunkType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "psycopg2._psycopg.chunk",   /* tp_name */
-    sizeof(chunkObject),        /* tp_basicsize */
-    0,                          /* tp_itemsize */
+    "psycopg2._psycopg.chunk",
+    sizeof(chunkObject), 0,
     (destructor) chunk_dealloc, /* tp_dealloc*/
     0,                          /* tp_print */
     0,                          /* tp_getattr */
@@ -142,7 +146,7 @@ typecast_BINARY_cast(const char *s, Py_ssize_t l, PyObject *curs)
     char *buffer = NULL;
     Py_ssize_t len;
 
-    if (s == NULL) {Py_INCREF(Py_None); return Py_None;}
+    if (s == NULL) { Py_RETURN_NONE; }
 
     if (s[0] == '\\' && s[1] == 'x') {
         /* This is a buffer escaped in hex format: libpq before 9.0 can't

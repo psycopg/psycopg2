@@ -32,21 +32,33 @@
 #include <string.h>
 #include <stdlib.h>
 
+/* Escape a string for sql inclusion.
+ *
+ * The function must be called holding the GIL.
+ *
+ * Return a pointer to a new string on the Python heap on success, else NULL
+ * and set an exception. The returned string includes quotes and leading E if
+ * needed.
+ *
+ * If tolen is set, it will contain the length of the escaped string,
+ * including quotes.
+ */
 char *
-psycopg_escape_string(PyObject *obj, const char *from, Py_ssize_t len,
+psycopg_escape_string(connectionObject *conn, const char *from, Py_ssize_t len,
                        char *to, Py_ssize_t *tolen)
 {
     Py_ssize_t ql;
-    connectionObject *conn = (connectionObject*)obj;
-    int eq = (conn && (conn->equote)) ? 1 : 0;   
+    int eq = (conn && (conn->equote)) ? 1 : 0;
 
     if (len == 0)
         len = strlen(from);
-    
+
     if (to == NULL) {
         to = (char *)PyMem_Malloc((len * 2 + 4) * sizeof(char));
-        if (to == NULL)
+        if (to == NULL) {
+            PyErr_NoMemory();
             return NULL;
+        }
     }
 
     {
@@ -59,15 +71,19 @@ psycopg_escape_string(PyObject *obj, const char *from, Py_ssize_t len,
                 ql = PQescapeString(to+eq+1, from, len);
     }
 
-    if (eq)
+    if (eq) {
         to[0] = 'E';
-    to[eq] = '\''; 
-    to[ql+eq+1] = '\'';
-    to[ql+eq+2] = '\0';
+        to[1] = to[ql+2] = '\'';
+        to[ql+3] = '\0';
+    }
+    else {
+        to[0] = to[ql+1] = '\'';
+        to[ql+2] = '\0';
+    }
 
     if (tolen)
         *tolen = ql+eq+2;
-        
+
     return to;
 }
 
@@ -115,10 +131,16 @@ psycopg_escape_identifier_easy(const char *from, Py_ssize_t len)
  *
  * Store the return in 'to' and return 0 in case of success, else return -1
  * and raise an exception.
+ *
+ * If from is null, store null into to.
  */
 RAISES_NEG int
 psycopg_strdup(char **to, const char *from, Py_ssize_t len)
 {
+    if (!from) {
+        *to = NULL;
+        return 0;
+    }
     if (!len) { len = strlen(from); }
     if (!(*to = PyMem_Malloc(len + 1))) {
         PyErr_NoMemory();

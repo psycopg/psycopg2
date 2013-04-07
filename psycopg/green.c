@@ -53,8 +53,7 @@ psyco_set_wait_callback(PyObject *self, PyObject *obj)
         wait_callback = NULL;
     }
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 

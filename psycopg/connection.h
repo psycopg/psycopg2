@@ -74,7 +74,8 @@ struct connectionObject_notice {
     const char *message;
 };
 
-typedef struct {
+/* the typedef is forward-declared in psycopg.h */
+struct connectionObject {
     PyObject_HEAD
 
     pthread_mutex_t lock;   /* the global connection lock */
@@ -88,7 +89,7 @@ typedef struct {
                                  2 that something horrible happened */
     long int mark;            /* number of commits/rollbacks done so far */
     int status;               /* status of the connection */
-    XidObject *tpc_xid;       /* Transaction ID in two-phase commit */
+    xidObject *tpc_xid;       /* Transaction ID in two-phase commit */
 
     long int async;           /* 1 means the connection is async */
     int protocol;             /* protocol version */
@@ -120,7 +121,8 @@ typedef struct {
 
     int autocommit;
 
-} connectionObject;
+    PyObject *cursor_factory;    /* default cursor factory from cursor() */
+};
 
 /* map isolation level values into a numeric const */
 typedef struct {
@@ -134,7 +136,6 @@ HIDDEN int  conn_get_standard_conforming_strings(PGconn *pgconn);
 RAISES_NEG HIDDEN int  conn_get_isolation_level(connectionObject *self);
 HIDDEN int  conn_get_protocol_version(PGconn *pgconn);
 HIDDEN int  conn_get_server_version(PGconn *pgconn);
-HIDDEN PGcancel *conn_get_cancel(PGconn *pgconn);
 HIDDEN void conn_notice_process(connectionObject *self);
 HIDDEN void conn_notice_clean(connectionObject *self);
 HIDDEN void conn_notifies_process(connectionObject *self);
@@ -151,9 +152,9 @@ HIDDEN int  conn_set_autocommit(connectionObject *self, int value);
 RAISES_NEG HIDDEN int  conn_switch_isolation_level(connectionObject *self, int level);
 RAISES_NEG HIDDEN int  conn_set_client_encoding(connectionObject *self, const char *enc);
 HIDDEN int  conn_poll(connectionObject *self);
-RAISES_NEG HIDDEN int  conn_tpc_begin(connectionObject *self, XidObject *xid);
+RAISES_NEG HIDDEN int  conn_tpc_begin(connectionObject *self, xidObject *xid);
 RAISES_NEG HIDDEN int  conn_tpc_command(connectionObject *self,
-                             const char *cmd, XidObject *xid);
+                             const char *cmd, xidObject *xid);
 HIDDEN PyObject *conn_tpc_recover(connectionObject *self);
 
 /* exception-raising macros */

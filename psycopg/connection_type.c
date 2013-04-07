@@ -52,63 +52,74 @@
 static PyObject *
 psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *kwargs)
 {
-    PyObject *obj;
+    PyObject *obj = NULL;
+    PyObject *rv = NULL;
     PyObject *name = Py_None;
     PyObject *factory = (PyObject *)&cursorType;
     PyObject *withhold = Py_False;
+    PyObject *scrollable = Py_None;
 
-    static char *kwlist[] = {"name", "cursor_factory", "withhold", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|OOO", kwlist,
-                                     &name, &factory, &withhold)) {
-        return NULL;
-    }
-
-    if (PyObject_IsTrue(withhold) && (name == Py_None)) {
-        PyErr_SetString(ProgrammingError,
-            "'withhold=True can be specified only for named cursors");
-        return NULL;
-    }
+    static char *kwlist[] = {
+        "name", "cursor_factory", "withhold", "scrollable", NULL};
 
     EXC_IF_CONN_CLOSED(self);
+
+    if (self->cursor_factory && self->cursor_factory != Py_None) {
+        factory = self->cursor_factory;
+    }
+
+    if (!PyArg_ParseTupleAndKeywords(
+            args, kwargs, "|OOOO", kwlist,
+            &name, &factory, &withhold, &scrollable)) {
+        goto exit;
+    }
 
     if (self->status != CONN_STATUS_READY &&
         self->status != CONN_STATUS_BEGIN &&
         self->status != CONN_STATUS_PREPARED) {
         PyErr_SetString(OperationalError,
                         "asynchronous connection attempt underway");
-        return NULL;
+        goto exit;
     }
 
     if (name != Py_None && self->async == 1) {
         PyErr_SetString(ProgrammingError,
                         "asynchronous connections "
                         "cannot produce named cursors");
-        return NULL;
+        goto exit;
     }
 
     Dprintf("psyco_conn_cursor: new %s cursor for connection at %p",
         (name == Py_None ? "unnamed" : "named"), self);
 
     if (!(obj = PyObject_CallFunctionObjArgs(factory, self, name, NULL))) {
-        return NULL;
+        goto exit;
     }
 
     if (PyObject_IsInstance(obj, (PyObject *)&cursorType) == 0) {
         PyErr_SetString(PyExc_TypeError,
             "cursor factory must be subclass of psycopg2._psycopg.cursor");
-        Py_DECREF(obj);
-        return NULL;
+        goto exit;
     }
 
-    if (PyObject_IsTrue(withhold))
-        ((cursorObject*)obj)->withhold = 1;
+    if (0 != psyco_curs_withhold_set((cursorObject *)obj, withhold)) {
+        goto exit;
+    }
+    if (0 != psyco_curs_scrollable_set((cursorObject *)obj, scrollable)) {
+        goto exit;
+    }
 
     Dprintf("psyco_conn_cursor: new cursor at %p: refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
         obj, Py_REFCNT(obj)
-      );
-    return obj;
+    );
+
+    rv = obj;
+    obj = NULL;
+
+exit:
+    Py_XDECREF(obj);
+    return rv;
 }
 
 
@@ -117,14 +128,13 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *kwargs)
 #define psyco_conn_close_doc "close() -- Close the connection."
 
 static PyObject *
-psyco_conn_close(connectionObject *self, PyObject *args)
+psyco_conn_close(connectionObject *self)
 {
     Dprintf("psyco_conn_close: closing connection at %p", self);
     conn_close(self);
     Dprintf("psyco_conn_close: connection at %p closed", self);
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -133,7 +143,7 @@ psyco_conn_close(connectionObject *self, PyObject *args)
 #define psyco_conn_commit_doc "commit() -- Commit all changes to database."
 
 static PyObject *
-psyco_conn_commit(connectionObject *self, PyObject *args)
+psyco_conn_commit(connectionObject *self)
 {
     EXC_IF_CONN_CLOSED(self);
     EXC_IF_CONN_ASYNC(self, commit);
@@ -142,8 +152,7 @@ psyco_conn_commit(connectionObject *self, PyObject *args)
     if (conn_commit(self) < 0)
         return NULL;
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -153,7 +162,7 @@ psyco_conn_commit(connectionObject *self, PyObject *args)
 "rollback() -- Roll back all changes done to database."
 
 static PyObject *
-psyco_conn_rollback(connectionObject *self, PyObject *args)
+psyco_conn_rollback(connectionObject *self)
 {
     EXC_IF_CONN_CLOSED(self);
     EXC_IF_CONN_ASYNC(self, rollback);
@@ -162,8 +171,7 @@ psyco_conn_rollback(connectionObject *self, PyObject *args)
     if (conn_rollback(self) < 0)
         return NULL;
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -176,7 +184,7 @@ psyco_conn_xid(connectionObject *self, PyObject *args, PyObject *kwargs)
     EXC_IF_CONN_CLOSED(self);
     EXC_IF_TPC_NOT_SUPPORTED(self);
 
-    return PyObject_Call((PyObject *)&XidType, args, kwargs);
+    return PyObject_Call((PyObject *)&xidType, args, kwargs);
 }
 
 
@@ -187,7 +195,7 @@ static PyObject *
 psyco_conn_tpc_begin(connectionObject *self, PyObject *args)
 {
     PyObject *rv = NULL;
-    XidObject *xid = NULL;
+    xidObject *xid = NULL;
     PyObject *oxid;
 
     EXC_IF_CONN_CLOSED(self);
@@ -227,7 +235,7 @@ exit:
 "tpc_prepare() -- perform the first phase of a two-phase transaction."
 
 static PyObject *
-psyco_conn_tpc_prepare(connectionObject *self, PyObject *args)
+psyco_conn_tpc_prepare(connectionObject *self)
 {
     EXC_IF_CONN_CLOSED(self);
     EXC_IF_CONN_ASYNC(self, tpc_prepare);
@@ -247,8 +255,7 @@ psyco_conn_tpc_prepare(connectionObject *self, PyObject *args)
      * can be performed until commit. */
     self->status = CONN_STATUS_PREPARED;
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -279,7 +286,7 @@ _psyco_conn_tpc_finish(connectionObject *self, PyObject *args,
     _finish_f opc_f, char *tpc_cmd)
 {
     PyObject *oxid = NULL;
-    XidObject *xid = NULL;
+    xidObject *xid = NULL;
     PyObject *rv = NULL;
 
     if (!PyArg_ParseTuple(args, "|O", &oxid)) { goto exit; }
@@ -371,7 +378,7 @@ psyco_conn_tpc_rollback(connectionObject *self, PyObject *args)
 "tpc_recover() -- returns a list of pending transaction IDs."
 
 static PyObject *
-psyco_conn_tpc_recover(connectionObject *self, PyObject *args)
+psyco_conn_tpc_recover(connectionObject *self)
 {
     EXC_IF_CONN_CLOSED(self);
     EXC_IF_CONN_ASYNC(self, tpc_recover);
@@ -379,6 +386,54 @@ psyco_conn_tpc_recover(connectionObject *self, PyObject *args)
     EXC_IF_TPC_NOT_SUPPORTED(self);
 
     return conn_tpc_recover(self);
+}
+
+
+#define psyco_conn_enter_doc \
+"__enter__ -> self"
+
+static PyObject *
+psyco_conn_enter(connectionObject *self)
+{
+    EXC_IF_CONN_CLOSED(self);
+
+    Py_INCREF(self);
+    return (PyObject *)self;
+}
+
+
+#define psyco_conn_exit_doc \
+"__exit__ -- commit if no exception, else roll back"
+
+static PyObject *
+psyco_conn_exit(connectionObject *self, PyObject *args)
+{
+    PyObject *type, *name, *tb;
+    PyObject *tmp = NULL;
+    PyObject *rv = NULL;
+
+    if (!PyArg_ParseTuple(args, "OOO", &type, &name, &tb)) {
+        goto exit;
+    }
+
+    if (type == Py_None) {
+        if (!(tmp = PyObject_CallMethod((PyObject *)self, "commit", NULL))) {
+            goto exit;
+        }
+    } else {
+        if (!(tmp = PyObject_CallMethod((PyObject *)self, "rollback", NULL))) {
+            goto exit;
+        }
+    }
+
+    /* success (of the commit or rollback, there may have been an exception in
+     * the block). Return None to avoid swallowing the exception */
+    rv = Py_None;
+    Py_INCREF(rv);
+
+exit:
+    Py_XDECREF(tmp);
+    return rv;
 }
 
 
@@ -528,8 +583,7 @@ psyco_conn_set_session(connectionObject *self, PyObject *args, PyObject *kwargs)
         return NULL;
     }
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -611,8 +665,7 @@ psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
         return NULL;
     }
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 /* set_client_encoding method - set client encoding */
@@ -645,7 +698,7 @@ psyco_conn_set_client_encoding(connectionObject *self, PyObject *args)
 "get_transaction_status() -- Get backend transaction status."
 
 static PyObject *
-psyco_conn_get_transaction_status(connectionObject *self, PyObject *args)
+psyco_conn_get_transaction_status(connectionObject *self)
 {
     EXC_IF_CONN_CLOSED(self);
 
@@ -675,8 +728,7 @@ psyco_conn_get_parameter_status(connectionObject *self, PyObject *args)
 
     val = PQparameterStatus(self->pgconn, param);
     if (!val) {
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
     return conn_text_from_chars(self, val);
 }
@@ -749,7 +801,7 @@ psyco_conn_lobject(connectionObject *self, PyObject *args, PyObject *keywds)
 "get_backend_pid() -- Get backend process id."
 
 static PyObject *
-psyco_conn_get_backend_pid(connectionObject *self, PyObject *args)
+psyco_conn_get_backend_pid(connectionObject *self)
 {
     EXC_IF_CONN_CLOSED(self);
 
@@ -762,7 +814,7 @@ psyco_conn_get_backend_pid(connectionObject *self, PyObject *args)
 "reset() -- Reset current connection to defaults."
 
 static PyObject *
-psyco_conn_reset(connectionObject *self, PyObject *args)
+psyco_conn_reset(connectionObject *self)
 {
     int res;
 
@@ -776,8 +828,7 @@ psyco_conn_reset(connectionObject *self, PyObject *args)
     if (res < 0)
         return NULL;
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 static PyObject *
@@ -790,7 +841,7 @@ psyco_conn_get_exception(PyObject *self, void *closure)
 }
 
 static PyObject *
-psyco_conn_poll(connectionObject *self, PyObject *args)
+psyco_conn_poll(connectionObject *self)
 {
     int res;
 
@@ -812,7 +863,7 @@ psyco_conn_poll(connectionObject *self, PyObject *args)
 "fileno() -> int -- Return file descriptor associated to database connection."
 
 static PyObject *
-psyco_conn_fileno(connectionObject *self, PyObject *args)
+psyco_conn_fileno(connectionObject *self)
 {
     long int socket;
 
@@ -831,7 +882,7 @@ psyco_conn_fileno(connectionObject *self, PyObject *args)
  "executing an asynchronous operation."
 
 static PyObject *
-psyco_conn_isexecuting(connectionObject *self, PyObject *args)
+psyco_conn_isexecuting(connectionObject *self)
 {
     /* synchronous connections will always return False */
     if (self->async == 0) {
@@ -863,7 +914,7 @@ psyco_conn_isexecuting(connectionObject *self, PyObject *args)
 "cancel() -- cancel the current operation"
 
 static PyObject *
-psyco_conn_cancel(connectionObject *self, PyObject *args)
+psyco_conn_cancel(connectionObject *self)
 {
     char errbuf[256];
 
@@ -884,8 +935,7 @@ psyco_conn_cancel(connectionObject *self, PyObject *args)
         PyErr_SetString(OperationalError, errbuf);
         return NULL;
     }
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 #endif  /* PSYCOPG_EXTENSIONS */
@@ -917,6 +967,10 @@ static struct PyMethodDef connectionObject_methods[] = {
      METH_VARARGS, psyco_conn_tpc_rollback_doc},
     {"tpc_recover", (PyCFunction)psyco_conn_tpc_recover,
      METH_NOARGS, psyco_conn_tpc_recover_doc},
+    {"__enter__", (PyCFunction)psyco_conn_enter,
+     METH_NOARGS, psyco_conn_enter_doc},
+    {"__exit__", (PyCFunction)psyco_conn_exit,
+     METH_VARARGS, psyco_conn_exit_doc},
 #ifdef PSYCOPG_EXTENSIONS
     {"set_session", (PyCFunction)psyco_conn_set_session,
      METH_VARARGS|METH_KEYWORDS, psyco_conn_set_session_doc},
@@ -963,6 +1017,8 @@ static struct PyMemberDef connectionObject_members[] = {
     {"status", T_INT,
         offsetof(connectionObject, status), READONLY,
         "The current transaction status."},
+    {"cursor_factory", T_OBJECT, offsetof(connectionObject, cursor_factory), 0,
+        "Default cursor_factory for cursor()."},
     {"string_types", T_OBJECT, offsetof(connectionObject, string_types), READONLY,
         "A set of typecasters to convert textual values."},
     {"binary_types", T_OBJECT, offsetof(connectionObject, binary_types), READONLY,
@@ -1019,10 +1075,7 @@ connection_setup(connectionObject *self, const char *dsn, long int async)
             self, async, Py_REFCNT(self)
       );
 
-    if (!(self->dsn = strdup(dsn))) {
-        PyErr_NoMemory();
-        goto exit;
-    }
+    if (0 > psycopg_strdup(&self->dsn, dsn, 0)) { goto exit; }
     if (!(self->notice_list = PyList_New(0))) { goto exit; }
     if (!(self->notifies = PyList_New(0))) { goto exit; }
     self->async = async;
@@ -1057,26 +1110,9 @@ exit:
     return res;
 }
 
-static void
-connection_dealloc(PyObject* obj)
+static int
+connection_clear(connectionObject *self)
 {
-    connectionObject *self = (connectionObject *)obj;
-
-    if (self->weakreflist) {
-        PyObject_ClearWeakRefs(obj);
-    }
-
-    PyObject_GC_UnTrack(self);
-
-    if (self->closed == 0) conn_close(self);
-
-    conn_notice_clean(self);
-
-    if (self->dsn) free(self->dsn);
-    PyMem_Free(self->encoding);
-    PyMem_Free(self->codec);
-    if (self->critical) free(self->critical);
-
     Py_CLEAR(self->tpc_xid);
     Py_CLEAR(self->async_cursor);
     Py_CLEAR(self->notice_list);
@@ -1084,6 +1120,31 @@ connection_dealloc(PyObject* obj)
     Py_CLEAR(self->notifies);
     Py_CLEAR(self->string_types);
     Py_CLEAR(self->binary_types);
+    return 0;
+}
+
+static void
+connection_dealloc(PyObject* obj)
+{
+    connectionObject *self = (connectionObject *)obj;
+
+    conn_close(self);
+
+    PyObject_GC_UnTrack(self);
+
+    if (self->weakreflist) {
+        PyObject_ClearWeakRefs(obj);
+    }
+
+    conn_notice_clean(self);
+
+    PyMem_Free(self->dsn);
+    PyMem_Free(self->encoding);
+    PyMem_Free(self->codec);
+    if (self->critical) free(self->critical);
+    if (self->cancel) PQfreeCancel(self->cancel);
+
+    connection_clear(self);
 
     pthread_mutex_destroy(&(self->lock));
 
@@ -1112,12 +1173,6 @@ static PyObject *
 connection_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
     return type->tp_alloc(type, 0);
-}
-
-static void
-connection_del(PyObject* self)
-{
-    PyObject_GC_Del(self);
 }
 
 static PyObject *
@@ -1154,8 +1209,7 @@ connection_traverse(connectionObject *self, visitproc visit, void *arg)
 PyTypeObject connectionType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.connection",
-    sizeof(connectionObject),
-    0,
+    sizeof(connectionObject), 0,
     connection_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/
     0,          /*tp_getattr*/
@@ -1166,47 +1220,30 @@ PyTypeObject connectionType = {
     0,          /*tp_as_sequence*/
     0,          /*tp_as_mapping*/
     0,          /*tp_hash */
-
     0,          /*tp_call*/
     (reprfunc)connection_repr, /*tp_str*/
     0,          /*tp_getattro*/
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
-
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC |
         Py_TPFLAGS_HAVE_WEAKREFS,
                 /*tp_flags*/
     connectionType_doc, /*tp_doc*/
-
     (traverseproc)connection_traverse, /*tp_traverse*/
-    0,          /*tp_clear*/
-
+    (inquiry)connection_clear, /*tp_clear*/
     0,          /*tp_richcompare*/
     offsetof(connectionObject, weakreflist), /* tp_weaklistoffset */
-
     0,          /*tp_iter*/
     0,          /*tp_iternext*/
-
-    /* Attribute descriptor and subclassing stuff */
-
     connectionObject_methods, /*tp_methods*/
     connectionObject_members, /*tp_members*/
     connectionObject_getsets, /*tp_getset*/
     0,          /*tp_base*/
     0,          /*tp_dict*/
-
     0,          /*tp_descr_get*/
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
-
     connection_init, /*tp_init*/
-    0, /*tp_alloc  will be set to PyType_GenericAlloc in module init*/
+    0,          /*tp_alloc*/
     connection_new, /*tp_new*/
-    (freefunc)connection_del, /*tp_free  Low-level free-memory routine */
-    0,          /*tp_is_gc For PyObject_IS_GC */
-    0,          /*tp_bases*/
-    0,          /*tp_mro method resolution order */
-    0,          /*tp_cache*/
-    0,          /*tp_subclasses*/
-    0           /*tp_weaklist*/
 };

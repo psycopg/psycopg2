@@ -26,7 +26,7 @@
 #ifndef PSYCOPG_NOTIFY_H
 #define PSYCOPG_NOTIFY_H 1
 
-extern HIDDEN PyTypeObject NotifyType;
+extern HIDDEN PyTypeObject notifyType;
 
 typedef struct {
   PyObject_HEAD
@@ -35,6 +35,6 @@ typedef struct {
   PyObject *channel;
   PyObject *payload;
 
-} NotifyObject;
+} notifyObject;
 
 #endif /* PSYCOPG_NOTIFY_H */

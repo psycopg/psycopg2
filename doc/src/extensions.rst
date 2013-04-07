@@ -13,7 +13,7 @@ The module contains a few objects and function extending the minimum set of
 functionalities defined by the |DBAPI|_.
 
 
-.. class:: connection
+.. class:: connection(dsn, async=False)
 
     Is the class usually returned by the `~psycopg2.connect()` function.
     It is exposed by the `extensions` module in order to allow
@@ -21,11 +21,9 @@ functionalities defined by the |DBAPI|_.
     `!connect()` function using the `connection_factory` parameter.
     See also :ref:`subclassing-connection`.
 
-    Subclasses should have constructor signature :samp:`({dsn}, {async}=0)`.
-
     For a complete description of the class, see `connection`.
 
-.. class:: cursor
+.. class:: cursor(conn, name=None)
 
     It is the class usually returnded by the `connection.cursor()`
     method. It is exposed by the `extensions` module in order to allow
@@ -137,6 +135,37 @@ functionalities defined by the |DBAPI|_.
     .. versionadded:: 2.3
 
     .. automethod:: from_string(s)
+
+
+.. autoclass:: Diagnostics(exception)
+
+    .. versionadded:: 2.5
+
+    The attributes currently available are:
+
+    .. attribute::
+        column_name
+        constraint_name
+        context
+        datatype_name
+        internal_position
+        internal_query
+        message_detail
+        message_hint
+        message_primary
+        schema_name
+        severity
+        source_file
+        source_function
+        source_line
+        sqlstate
+        statement_position
+        table_name
+
+        A string with the error field if available; `!None` if not available.
+        The attribute value is available only if the error sent by the server:
+        not all the fields are available for all the errors and for all the
+        server versions.
 
 
 .. autofunction:: set_wait_callback(f)

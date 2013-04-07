@@ -41,23 +41,6 @@ Homepage: http://initd.org/projects/psycopg2
 # Import modules needed by _psycopg to allow tools like py2exe to do
 # their work without bothering about the module dependencies.
 
-import sys, warnings
-if sys.version_info >= (2, 3):
-    try:
-        import datetime as _psycopg_needs_datetime
-    except:
-        warnings.warn(
-            "can't import datetime module probably needed by _psycopg",
-            RuntimeWarning)
-if sys.version_info >= (2, 4):
-    try:
-        import decimal as _psycopg_needs_decimal
-    except:
-        warnings.warn(
-            "can't import decimal module probably needed by _psycopg",
-            RuntimeWarning)
-del sys, warnings
-
 # Note: the first internal import should be _psycopg, otherwise the real cause
 # of a failed loading of the C module may get hidden, see
 # http://archives.postgresql.org/psycopg/2011-02/msg00044.php
@@ -118,7 +101,7 @@ del re
 
 def connect(dsn=None,
         database=None, user=None, password=None, host=None, port=None,
-        connection_factory=None, async=False, **kwargs):
+        connection_factory=None, cursor_factory=None, async=False, **kwargs):
     """
     Create a new database connection.
 
@@ -142,6 +125,9 @@ def connect(dsn=None,
     Using the *connection_factory* parameter a different class or connections
     factory can be specified. It should be a callable object taking a dsn
     argument.
+
+    Using the *cursor_factory* parameter, a new default cursor factory will be
+    used by cursor().
 
     Using *async*=True an asynchronous connection will be created.
 
@@ -175,8 +161,8 @@ def connect(dsn=None,
             dsn = " ".join(["%s=%s" % (k, _param_escape(str(v)))
                 for (k, v) in items])
 
-    return _connect(dsn, connection_factory=connection_factory, async=async)
+    conn = _connect(dsn, connection_factory=connection_factory, async=async)
+    if cursor_factory is not None:
+        conn.cursor_factory = cursor_factory
 
-
-__all__ = filter(lambda k: not k.startswith('_'), locals().keys())
-
+    return conn

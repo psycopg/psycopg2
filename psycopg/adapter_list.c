@@ -103,16 +103,11 @@ list_prepare(listObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "O!", &connectionType, &conn))
         return NULL;
 
-    /* note that we don't copy the encoding from the connection, but take a
-       reference to it; we'll need it during the recursive adapt() call (the
-       encoding is here for a future expansion that will make .getquoted()
-       work even without a connection to the backend. */
     Py_CLEAR(self->connection);
     Py_INCREF(conn);
     self->connection = conn;
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 static PyObject *
@@ -154,7 +149,7 @@ static PyMethodDef listObject_methods[] = {
 /* initialization and finalization methods */
 
 static int
-list_setup(listObject *self, PyObject *obj, const char *enc)
+list_setup(listObject *self, PyObject *obj)
 {
     Dprintf("list_setup: init list object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
@@ -163,9 +158,6 @@ list_setup(listObject *self, PyObject *obj, const char *enc)
 
     if (!PyList_Check(obj))
         return -1;
-
-    /* FIXME: remove this orrible strdup */
-    if (enc) self->encoding = strdup(enc);
 
     self->connection = NULL;
     Py_INCREF(obj);
@@ -179,52 +171,48 @@ list_setup(listObject *self, PyObject *obj, const char *enc)
 }
 
 static int
-list_traverse(PyObject *obj, visitproc visit, void *arg)
+list_traverse(listObject *self, visitproc visit, void *arg)
 {
-    listObject *self = (listObject *)obj;
-
     Py_VISIT(self->wrapped);
     Py_VISIT(self->connection);
     return 0;
 }
 
-static void
-list_dealloc(PyObject* obj)
+static int
+list_clear(listObject *self)
 {
-    listObject *self = (listObject *)obj;
-
     Py_CLEAR(self->wrapped);
     Py_CLEAR(self->connection);
-    if (self->encoding) free(self->encoding);
+    return 0;
+}
+
+static void
+list_dealloc(listObject* self)
+{
+    PyObject_GC_UnTrack((PyObject *)self);
+    list_clear(self);
 
     Dprintf("list_dealloc: deleted list object at %p, "
-            "refcnt = " FORMAT_CODE_PY_SSIZE_T, obj, Py_REFCNT(obj));
+            "refcnt = " FORMAT_CODE_PY_SSIZE_T, self, Py_REFCNT(self));
 
-    Py_TYPE(obj)->tp_free(obj);
+    Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
 static int
 list_init(PyObject *obj, PyObject *args, PyObject *kwds)
 {
     PyObject *l;
-    const char *enc = "latin-1"; /* default encoding as in Python */
 
-    if (!PyArg_ParseTuple(args, "O|s", &l, &enc))
+    if (!PyArg_ParseTuple(args, "O", &l))
         return -1;
 
-    return list_setup((listObject *)obj, l, enc);
+    return list_setup((listObject *)obj, l);
 }
 
 static PyObject *
 list_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
     return type->tp_alloc(type, 0);
-}
-
-static void
-list_del(PyObject* self)
-{
-    PyObject_GC_Del(self);
 }
 
 static PyObject *
@@ -241,61 +229,41 @@ list_repr(listObject *self)
 PyTypeObject listType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.List",
-    sizeof(listObject),
-    0,
-    list_dealloc, /*tp_dealloc*/
+    sizeof(listObject), 0,
+    (destructor)list_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/
     0,          /*tp_getattr*/
     0,          /*tp_setattr*/
-
     0,          /*tp_compare*/
     (reprfunc)list_repr, /*tp_repr*/
     0,          /*tp_as_number*/
     0,          /*tp_as_sequence*/
     0,          /*tp_as_mapping*/
     0,          /*tp_hash */
-
     0,          /*tp_call*/
     (reprfunc)list_str, /*tp_str*/
     0,          /*tp_getattro*/
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
-
     Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
-
     listType_doc, /*tp_doc*/
-
-    list_traverse, /*tp_traverse*/
-    0,          /*tp_clear*/
-
+    (traverseproc)list_traverse, /*tp_traverse*/
+    (inquiry)list_clear, /*tp_clear*/
     0,          /*tp_richcompare*/
     0,          /*tp_weaklistoffset*/
-
     0,          /*tp_iter*/
     0,          /*tp_iternext*/
-
-    /* Attribute descriptor and subclassing stuff */
-
     listObject_methods, /*tp_methods*/
     listObject_members, /*tp_members*/
     0,          /*tp_getset*/
     0,          /*tp_base*/
     0,          /*tp_dict*/
-
     0,          /*tp_descr_get*/
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
-
     list_init, /*tp_init*/
-    0, /*tp_alloc  will be set to PyType_GenericAlloc in module init*/
+    0,          /*tp_alloc*/
     list_new, /*tp_new*/
-    (freefunc)list_del, /*tp_free  Low-level free-memory routine */
-    0,          /*tp_is_gc For PyObject_IS_GC */
-    0,          /*tp_bases*/
-    0,          /*tp_mro method resolution order */
-    0,          /*tp_cache*/
-    0,          /*tp_subclasses*/
-    0           /*tp_weaklist*/
 };
 
 
@@ -305,10 +273,9 @@ PyObject *
 psyco_List(PyObject *module, PyObject *args)
 {
     PyObject *str;
-    const char *enc = "latin-1"; /* default encoding as in Python */
 
-    if (!PyArg_ParseTuple(args, "O|s", &str, &enc))
+    if (!PyArg_ParseTuple(args, "O", &str))
         return NULL;
 
-    return PyObject_CallFunction((PyObject *)&listType, "Os", str, enc);
+    return PyObject_CallFunctionObjArgs((PyObject *)&listType, "O", str, NULL);
 }

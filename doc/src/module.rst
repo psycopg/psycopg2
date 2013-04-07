@@ -7,7 +7,7 @@ The `psycopg2` module content
 
 The module interface respects the standard defined in the |DBAPI|_.
 
-.. index:: 
+.. index::
     single: Connection string
     double: Connection; Parameters
     single: Username; Connection
@@ -16,11 +16,14 @@ The module interface respects the standard defined in the |DBAPI|_.
     single: Port; Connection
     single: DSN (Database Source Name)
 
-.. function:: connect(dsn or params [, connection_factory] [, async=0])
+.. function::
+    connect(dsn, connection_factory=None, cursor_factory=None, async=False)
+    connect(\*\*kwargs, connection_factory=None, cursor_factory=None, async=False)
 
     Create a new database session and return a new `connection` object.
 
-    The connection parameters can be specified either as a string::
+    The connection parameters can be specified either as a `libpq connection
+    string`__ using the *dsn* parameter::
 
         conn = psycopg2.connect("dbname=test user=postgres password=secret")
 
@@ -28,9 +31,15 @@ The module interface respects the standard defined in the |DBAPI|_.
 
         conn = psycopg2.connect(database="test", user="postgres", password="secret")
 
+    The two call styles are mutually exclusive: you cannot specify connection
+    parameters as keyword arguments together with a connection string; only
+    the parameters not needed for the database connection (*i.e.*
+    *connection_factory*, *cursor_factory*, and *async*) are supported
+    together with the *dsn* argument.
+
     The basic connection parameters are:
 
-    - `!dbname` -- the database name (only in dsn string)
+    - `!dbname` -- the database name (only in the *dsn* string)
     - `!database` -- the database name (only as keyword argument)
     - `!user` -- user name used to authenticate
     - `!password` -- password used to authenticate
@@ -38,25 +47,44 @@ The module interface respects the standard defined in the |DBAPI|_.
     - `!port` -- connection port number (defaults to 5432 if not provided)
 
     Any other connection parameter supported by the client library/server can
-    be passed either in the connection string or as keyword. See the
-    PostgreSQL documentation for a complete `list of supported parameters`__.
+    be passed either in the connection string or as keywords. The PostgreSQL
+    documentation contains the complete list of the `supported parameters`__.
     Also note that the same parameters can be passed to the client library
     using `environment variables`__.
 
-    .. __: http://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-PQCONNECTDBPARAMS
-    .. __: http://www.postgresql.org/docs/current/static/libpq-envars.html
+    .. __:
+    .. _connstring: http://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-CONNSTRING
+    .. __:
+    .. _connparams: http://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-PARAMKEYWORDS
+    .. __:
+    .. _connenvvars: http://www.postgresql.org/docs/current/static/libpq-envars.html
 
     Using the *connection_factory* parameter a different class or
     connections factory can be specified. It should be a callable object
-    taking a *dsn* argument. See :ref:`subclassing-connection` for
-    details.
+    taking a *dsn* string argument. See :ref:`subclassing-connection` for
+    details.  If a *cursor_factory* is specified, the connection's
+    `~connection.cursor_factory` is set to it. If you only need customized
+    cursors you can use this parameter instead of subclassing a connection.
 
-    Using *async*\=1 an asynchronous connection will be created: see
+    Using *async*\=\ `!True` an asynchronous connection will be created: see
     :ref:`async-support` to know about advantages and limitations.
 
     .. versionchanged:: 2.4.3
         any keyword argument is passed to the connection. Previously only the
         basic parameters (plus `!sslmode`) were supported as keywords.
+
+    .. versionchanged:: 2.5
+        added the *cursor_factory* parameter.
+
+    .. seealso::
+
+        - libpq `connection string syntax`__
+        - libpq supported `connection parameters`__
+        - libpq supported `environment variables`__
+
+        .. __: connstring_
+        .. __: connparams_
+        .. __: connenvvars_
 
     .. extension::
 
@@ -135,10 +163,27 @@ available through the following exceptions:
 
         The cursor the exception was raised from; `None` if not applicable.
 
+    .. attribute:: diag
+
+        A `~psycopg2.extensions.Diagnostics` object containing further
+        information about the error. ::
+
+            >>> try:
+            ...     cur.execute("SELECT * FROM barf")
+            ... except Exception, e:
+            ...     pass
+
+            >>> e.diag.severity
+            'ERROR'
+            >>> e.diag.message_primary
+            'relation "barf" does not exist'
+
+        .. versionadded:: 2.5
+
     .. extension::
 
-        The `~Error.pgerror`, `~Error.pgcode`, and `~Error.cursor` attributes
-        are Psycopg extensions.
+        The `~Error.pgerror`, `~Error.pgcode`, `~Error.cursor`, and
+        `~Error.diag` attributes are Psycopg extensions.
 
 
 .. exception:: InterfaceError
@@ -258,15 +303,15 @@ the type codes for date, time and timestamp columns; see the
 Implementation Hints below for details).
 
 The module exports the following constructors and singletons:
-    
+
 .. function:: Date(year,month,day)
 
     This function constructs an object holding a date value.
-        
+
 .. function:: Time(hour,minute,second)
 
     This function constructs an object holding a time value.
-            
+
 .. function:: Timestamp(year,month,day,hour,minute,second)
 
     This function constructs an object holding a time stamp value.
@@ -278,11 +323,11 @@ The module exports the following constructors and singletons:
     the standard Python time module for details).
 
 .. function:: TimeFromTicks(ticks)
-  
+
     This function constructs an object holding a time value from the given
     ticks value (number of seconds since the epoch; see the documentation of
     the standard Python time module for details).
-    
+
 .. function:: TimestampFromTicks(ticks)
 
     This function constructs an object holding a time stamp value from the
@@ -290,10 +335,16 @@ The module exports the following constructors and singletons:
     documentation of the standard Python time module for details).
 
 .. function:: Binary(string)
-  
+
     This function constructs an object capable of holding a binary (long)
     string value.
-    
+
+.. note::
+
+    All the adapters returned by the module level factories (`!Binary`,
+    `!Date`, `!Time`, `!Timestamp` and the `!*FromTicks` variants) expose the
+    wrapped object (a regular Python object such as `!datetime`) in an
+    `!adapted` attribute.
 
 .. data:: STRING
 
@@ -304,17 +355,17 @@ The module exports the following constructors and singletons:
 
     This type object is used to describe (long) binary columns in a database
     (e.g. LONG, RAW, BLOBs).
-    
+
 .. data:: NUMBER
 
     This type object is used to describe numeric columns in a database.
 
 .. data:: DATETIME
-  
+
     This type object is used to describe date/time columns in a database.
-    
+
 .. data:: ROWID
-  
+
     This type object is used to describe the "Row ID" column in a database.
 
 

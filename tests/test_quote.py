@@ -23,14 +23,13 @@
 # License for more details.
 
 import sys
-from testutils import unittest
-from testconfig import dsn
+from testutils import unittest, ConnectingTestCase
 
 import psycopg2
 import psycopg2.extensions
 from psycopg2.extensions import b
 
-class QuotingTestCase(unittest.TestCase):
+class QuotingTestCase(ConnectingTestCase):
     r"""Checks the correct quoting of strings and binary objects.
 
     Since ver. 8.1, PostgreSQL is moving towards SQL standard conforming
@@ -48,12 +47,6 @@ class QuotingTestCase(unittest.TestCase):
     http://www.postgresql.org/docs/current/static/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS
     http://www.postgresql.org/docs/current/static/runtime-config-compatible.html
     """
-    def setUp(self):
-        self.conn = psycopg2.connect(dsn)
-
-    def tearDown(self):
-        self.conn.close()
-
     def test_string(self):
         data = """some data with \t chars
         to escape into, 'quotes' and \\ a backslash too.
@@ -160,6 +153,16 @@ class QuotingTestCase(unittest.TestCase):
             res = curs.fetchone()[0]
             self.assertEqual(res, data)
             self.assert_(not self.conn.notices)
+
+
+class TestQuotedString(ConnectingTestCase):
+    def test_encoding(self):
+        q = psycopg2.extensions.QuotedString('hi')
+        self.assertEqual(q.encoding, 'latin1')
+
+        self.conn.set_client_encoding('utf_8')
+        q.prepare(self.conn)
+        self.assertEqual(q.encoding, 'utf_8')
 
 
 def test_suite():

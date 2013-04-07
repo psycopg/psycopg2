@@ -50,7 +50,7 @@ extern PyObject *pyPsycopgTzFixedOffsetTimezone;
 "close() -- Close the cursor."
 
 static PyObject *
-psyco_curs_close(cursorObject *self, PyObject *args)
+psyco_curs_close(cursorObject *self)
 {
     EXC_IF_ASYNC_IN_PROGRESS(self, close);
 
@@ -70,8 +70,7 @@ psyco_curs_close(cursorObject *self, PyObject *args)
     Dprintf("psyco_curs_close: cursor at %p closed", self);
 
 exit:
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -118,7 +117,7 @@ _mogrify(PyObject *var, PyObject *fmt, cursorObject *curs, PyObject **new)
             if (kind == 2) {
                 Py_XDECREF(n);
                 psyco_set_error(ProgrammingError, curs,
-                   "argument formats can't be mixed", NULL, NULL);
+                   "argument formats can't be mixed");
                 return -1;
             }
             kind = 1;
@@ -190,7 +189,7 @@ _mogrify(PyObject *var, PyObject *fmt, cursorObject *curs, PyObject **new)
                 /* we found %( but not a ) */
                 Py_XDECREF(n);
                 psyco_set_error(ProgrammingError, curs,
-                   "incomplete placeholder: '%(' without ')'", NULL, NULL);
+                   "incomplete placeholder: '%(' without ')'");
                 return -1;
             }
             c = d + 1;  /* after the ) */
@@ -205,7 +204,7 @@ _mogrify(PyObject *var, PyObject *fmt, cursorObject *curs, PyObject **new)
             if (kind == 1) {
                 Py_XDECREF(n);
                 psyco_set_error(ProgrammingError, curs,
-                  "argument formats can't be mixed", NULL, NULL);
+                  "argument formats can't be mixed");
                 return -1;
             }
             kind = 2;
@@ -267,7 +266,7 @@ static PyObject *_psyco_curs_validate_sql_basic(
 
     if (!sql || !PyObject_IsTrue(sql)) {
         psyco_set_error(ProgrammingError, self,
-                         "can't execute an empty query", NULL, NULL);
+                         "can't execute an empty query");
         goto fail;
     }
 
@@ -338,8 +337,7 @@ _psyco_curs_merge_query_args(cursorObject *self,
                 if (!strcmp(s, "not enough arguments for format string")
                   || !strcmp(s, "not all arguments converted")) {
                     Dprintf("psyco_curs_execute:     -> got a match");
-                    psyco_set_error(ProgrammingError, self,
-                                     s, NULL, NULL);
+                    psyco_set_error(ProgrammingError, self, s);
                     pe = 1;
                 }
 
@@ -371,6 +369,7 @@ _psyco_curs_execute(cursorObject *self,
     int res = -1;
     int tmp;
     PyObject *fquery, *cvt = NULL;
+    const char *scroll;
 
     operation = _psyco_curs_validate_sql_basic(self, operation);
 
@@ -379,13 +378,8 @@ _psyco_curs_execute(cursorObject *self,
 
     if (operation == NULL) { goto exit; }
 
-    IFCLEARPGRES(self->pgres);
-
-    if (self->query) {
-        Py_DECREF(self->query);
-        self->query = NULL;
-    }
-
+    CLEARPGRES(self->pgres);
+    Py_CLEAR(self->query);
     Dprintf("psyco_curs_execute: starting execution of new query");
 
     /* here we are, and we have a sequence or a dictionary filled with
@@ -397,6 +391,21 @@ _psyco_curs_execute(cursorObject *self,
         if (0 > _mogrify(vars, operation, self, &cvt)) { goto exit; }
     }
 
+    switch (self->scrollable) {
+        case -1:
+            scroll = "";
+            break;
+        case 0:
+            scroll = "NO SCROLL ";
+            break;
+        case 1:
+            scroll = "SCROLL ";
+            break;
+        default:
+            PyErr_SetString(InternalError, "unexpected scrollable value");
+            goto exit;
+    }
+
     if (vars && cvt) {
         if (!(fquery = _psyco_curs_merge_query_args(self, operation, cvt))) {
             goto exit;
@@ -404,8 +413,9 @@ _psyco_curs_execute(cursorObject *self,
 
         if (self->name != NULL) {
             self->query = Bytes_FromFormat(
-                "DECLARE \"%s\" CURSOR %s HOLD FOR %s",
+                "DECLARE \"%s\" %sCURSOR %s HOLD FOR %s",
                 self->name,
+                scroll,
                 self->withhold ? "WITH" : "WITHOUT",
                 Bytes_AS_STRING(fquery));
             Py_DECREF(fquery);
@@ -417,8 +427,9 @@ _psyco_curs_execute(cursorObject *self,
     else {
         if (self->name != NULL) {
             self->query = Bytes_FromFormat(
-                "DECLARE \"%s\" CURSOR %s HOLD FOR %s",
+                "DECLARE \"%s\" %sCURSOR %s HOLD FOR %s",
                 self->name,
+                scroll,
                 self->withhold ? "WITH" : "WITHOUT",
                 Bytes_AS_STRING(operation));
         }
@@ -462,15 +473,14 @@ psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
     }
 
     if (self->name != NULL) {
-        if (self->query != Py_None) {
+        if (self->query) {
             psyco_set_error(ProgrammingError, self,
-                "can't call .execute() on named cursors more than once",
-                NULL, NULL);
+                "can't call .execute() on named cursors more than once");
             return NULL;
         }
         if (self->conn->autocommit) {
             psyco_set_error(ProgrammingError, self,
-                "can't use a named cursor outside of transactions", NULL, NULL);
+                "can't use a named cursor outside of transactions");
             return NULL;
         }
         EXC_IF_NO_MARK(self);
@@ -485,8 +495,7 @@ psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
     }
 
     /* success */
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 #define psyco_curs_executemany_doc \
@@ -515,7 +524,7 @@ psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
 
     if (self->name != NULL) {
         psyco_set_error(ProgrammingError, self,
-                "can't call .executemany() on named cursors", NULL, NULL);
+                "can't call .executemany() on named cursors");
         return NULL;
     }
 
@@ -542,8 +551,7 @@ psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
     self->rowcount = rowcount;
 
     if (!PyErr_Occurred()) {
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
     else {
         return NULL;
@@ -743,7 +751,7 @@ exit:
 }
 
 static PyObject *
-psyco_curs_fetchone(cursorObject *self, PyObject *args)
+psyco_curs_fetchone(cursorObject *self)
 {
     PyObject *res;
 
@@ -767,8 +775,7 @@ psyco_curs_fetchone(cursorObject *self, PyObject *args)
 
     if (self->row >= self->rowcount) {
         /* we exausted available data: return None */
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
 
     res = _psyco_curs_buildrow(self, self->row);
@@ -779,7 +786,7 @@ psyco_curs_fetchone(cursorObject *self, PyObject *args)
     if (self->row >= self->rowcount
         && self->conn->async_cursor
         && PyWeakref_GetObject(self->conn->async_cursor) == (PyObject*)self)
-        IFCLEARPGRES(self->pgres);
+        CLEARPGRES(self->pgres);
 
     return res;
 }
@@ -826,7 +833,7 @@ psyco_curs_next_named(cursorObject *self)
     if (self->row >= self->rowcount
         && self->conn->async_cursor
         && PyWeakref_GetObject(self->conn->async_cursor) == (PyObject*)self)
-        IFCLEARPGRES(self->pgres);
+        CLEARPGRES(self->pgres);
 
     return res;
 }
@@ -911,7 +918,7 @@ psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
     if (self->row >= self->rowcount
         && self->conn->async_cursor
         && PyWeakref_GetObject(self->conn->async_cursor) == (PyObject*)self)
-        IFCLEARPGRES(self->pgres);
+        CLEARPGRES(self->pgres);
 
     /* success */
     rv = list;
@@ -935,7 +942,7 @@ exit:
 "Return `!None` when no more data is available.\n"
 
 static PyObject *
-psyco_curs_fetchall(cursorObject *self, PyObject *args)
+psyco_curs_fetchall(cursorObject *self)
 {
     int i, size;
     PyObject *list = NULL;
@@ -980,7 +987,7 @@ psyco_curs_fetchall(cursorObject *self, PyObject *args)
     if (self->row >= self->rowcount
         && self->conn->async_cursor
         && PyWeakref_GetObject(self->conn->async_cursor) == (PyObject*)self)
-        IFCLEARPGRES(self->pgres);
+        CLEARPGRES(self->pgres);
 
     /* success */
     rv = list;
@@ -1020,7 +1027,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
 
     if (self->name != NULL) {
         psyco_set_error(ProgrammingError, self,
-                         "can't call .callproc() on named cursors", NULL, NULL);
+                         "can't call .callproc() on named cursors");
         goto exit;
     }
 
@@ -1067,7 +1074,7 @@ exit:
 "sets) and will raise a NotSupportedError exception."
 
 static PyObject *
-psyco_curs_nextset(cursorObject *self, PyObject *args)
+psyco_curs_nextset(cursorObject *self)
 {
     EXC_IF_CURS_CLOSED(self);
 
@@ -1092,8 +1099,7 @@ psyco_curs_setinputsizes(cursorObject *self, PyObject *args)
 
     EXC_IF_CURS_CLOSED(self);
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -1113,8 +1119,7 @@ psyco_curs_setoutputsize(cursorObject *self, PyObject *args)
 
     EXC_IF_CURS_CLOSED(self);
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -1147,13 +1152,13 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
             newpos = value;
         } else {
             psyco_set_error(ProgrammingError, self,
-                "scroll mode must be 'relative' or 'absolute'", NULL, NULL);
+                "scroll mode must be 'relative' or 'absolute'");
             return NULL;
         }
 
         if (newpos < 0 || newpos >= self->rowcount ) {
             psyco_set_error(ProgrammingError, self,
-                             "scroll destination out of bounds", NULL, NULL);
+                             "scroll destination out of bounds");
             return NULL;
         }
 
@@ -1178,8 +1183,43 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
         if (_psyco_curs_prefetch(self) < 0) return NULL;
     }
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
+}
+
+
+#define psyco_curs_enter_doc \
+"__enter__ -> self"
+
+static PyObject *
+psyco_curs_enter(cursorObject *self)
+{
+    Py_INCREF(self);
+    return (PyObject *)self;
+}
+
+#define psyco_curs_exit_doc \
+"__exit__ -- close the cursor"
+
+static PyObject *
+psyco_curs_exit(cursorObject *self, PyObject *args)
+{
+    PyObject *tmp = NULL;
+    PyObject *rv = NULL;
+
+    /* don't care about the arguments here: don't need to parse them */
+
+    if (!(tmp = PyObject_CallMethod((PyObject *)self, "close", ""))) {
+        goto exit;
+    }
+
+    /* success (of curs.close()).
+     * Return None to avoid swallowing the exception */
+    rv = Py_None;
+    Py_INCREF(rv);
+
+exit:
+    Py_XDECREF(tmp);
+    return rv;
 }
 
 
@@ -1311,7 +1351,7 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
     PyObject *file, *columns = NULL, *res = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
-        "O&s|ss" CONV_CODE_PY_SSIZE_T "O", kwlist,
+        "O&s|ssnO", kwlist,
         _psyco_curs_has_read_check, &file, &table_name, &sep, &null, &bufsize,
         &columns))
     {
@@ -1327,14 +1367,12 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
         goto exit;
 
     if (!(quoted_delimiter = psycopg_escape_string(
-            (PyObject*)self->conn, sep, 0, NULL, NULL))) {
-        PyErr_NoMemory();
+            self->conn, sep, 0, NULL, NULL))) {
         goto exit;
     }
 
     if (!(quoted_null = psycopg_escape_string(
-            (PyObject*)self->conn, null, 0, NULL, NULL))) {
-        PyErr_NoMemory();
+            self->conn, null, 0, NULL, NULL))) {
         goto exit;
     }
 
@@ -1423,14 +1461,12 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
         goto exit;
 
     if (!(quoted_delimiter = psycopg_escape_string(
-            (PyObject*)self->conn, sep, 0, NULL, NULL))) {
-        PyErr_NoMemory();
+            self->conn, sep, 0, NULL, NULL))) {
         goto exit;
     }
 
     if (!(quoted_null = psycopg_escape_string(
-            (PyObject*)self->conn, null, 0, NULL, NULL))) {
-        PyErr_NoMemory();
+            self->conn, null, 0, NULL, NULL))) {
         goto exit;
     }
 
@@ -1488,7 +1524,7 @@ psyco_curs_copy_expert(cursorObject *self, PyObject *args, PyObject *kwargs)
     static char *kwlist[] = {"sql", "file", "size", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
-        "OO|" CONV_CODE_PY_SSIZE_T, kwlist, &sql, &file, &bufsize))
+        "OO|n", kwlist, &sql, &file, &bufsize))
     { return NULL; }
 
     EXC_IF_CURS_CLOSED(self);
@@ -1567,22 +1603,70 @@ psyco_curs_withhold_get(cursorObject *self)
     return ret;
 }
 
-static int
+int
 psyco_curs_withhold_set(cursorObject *self, PyObject *pyvalue)
 {
     int value;
 
-    if (self->name == NULL) {
+    if (pyvalue != Py_False && self->name == NULL) {
         PyErr_SetString(ProgrammingError,
             "trying to set .withhold on unnamed cursor");
         return -1;
     }
-    
-    if ((value = PyObject_IsTrue(pyvalue)) == -1) 
+
+    if ((value = PyObject_IsTrue(pyvalue)) == -1)
         return -1;
 
     self->withhold = value;
-    
+
+    return 0;
+}
+
+#define psyco_curs_scrollable_doc \
+"Set or return cursor use of SCROLL"
+
+static PyObject *
+psyco_curs_scrollable_get(cursorObject *self)
+{
+    PyObject *ret = NULL;
+
+    switch (self->scrollable) {
+        case -1:
+            ret = Py_None;
+            break;
+        case 0:
+            ret = Py_False;
+            break;
+        case 1:
+            ret = Py_True;
+            break;
+        default:
+            PyErr_SetString(InternalError, "unexpected scrollable value");
+    }
+
+    Py_XINCREF(ret);
+    return ret;
+}
+
+int
+psyco_curs_scrollable_set(cursorObject *self, PyObject *pyvalue)
+{
+    int value;
+
+    if (pyvalue != Py_None && self->name == NULL) {
+        PyErr_SetString(ProgrammingError,
+            "trying to set .scrollable on unnamed cursor");
+        return -1;
+    }
+
+    if (pyvalue == Py_None) {
+        value = -1;
+    } else if ((value = PyObject_IsTrue(pyvalue)) == -1) {
+        return -1;
+    }
+
+    self->scrollable = value;
+
     return 0;
 }
 
@@ -1608,7 +1692,7 @@ cursor_next(PyObject *self)
 
     if (NULL == ((cursorObject*)self)->name) {
         /* we don't parse arguments: psyco_curs_fetchone will do that for us */
-        res = psyco_curs_fetchone((cursorObject*)self, NULL);
+        res = psyco_curs_fetchone((cursorObject*)self);
 
         /* convert a None to NULL to signal the end of iteration */
         if (res && res == Py_None) {
@@ -1650,6 +1734,10 @@ static struct PyMethodDef cursorObject_methods[] = {
     /* DBAPI-2.0 extensions */
     {"scroll", (PyCFunction)psyco_curs_scroll,
      METH_VARARGS|METH_KEYWORDS, psyco_curs_scroll_doc},
+    {"__enter__", (PyCFunction)psyco_curs_enter,
+     METH_NOARGS, psyco_curs_enter_doc},
+    {"__exit__", (PyCFunction)psyco_curs_exit,
+     METH_VARARGS, psyco_curs_exit_doc},
     /* psycopg extensions */
 #ifdef PSYCOPG_EXTENSIONS
     {"cast", (PyCFunction)psyco_curs_cast,
@@ -1712,6 +1800,10 @@ static struct PyGetSetDef cursorObject_getsets[] = {
       (getter)psyco_curs_withhold_get,
       (setter)psyco_curs_withhold_set,
       psyco_curs_withhold_doc, NULL },
+    { "scrollable",
+      (getter)psyco_curs_scrollable_get,
+      (setter)psyco_curs_scrollable_set,
+      psyco_curs_scrollable_doc, NULL },
 #endif
     {NULL}
 };
@@ -1740,31 +1832,15 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
     Py_INCREF(conn);
     self->conn = conn;
 
-    self->closed = 0;
-    self->withhold = 0;
     self->mark = conn->mark;
-    self->pgres = NULL;
     self->notuples = 1;
     self->arraysize = 1;
     self->itersize = 2000;
     self->rowcount = -1;
     self->lastoid = InvalidOid;
 
-    self->casts = NULL;
-    self->notice = NULL;
-
-    self->string_types = NULL;
-    self->binary_types = NULL;
-    self->weakreflist = NULL;
-
-    Py_INCREF(Py_None);
-    self->description = Py_None;
-    Py_INCREF(Py_None);
-    self->pgstatus = Py_None;
     Py_INCREF(Py_None);
     self->tuple_factory = Py_None;
-    Py_INCREF(Py_None);
-    self->query = Py_None;
 
     /* default tzinfo factory */
     Py_INCREF(pyPsycopgTzFixedOffsetTimezone);
@@ -1777,30 +1853,39 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
     return 0;
 }
 
-static void
-cursor_dealloc(PyObject* obj)
+static int
+cursor_clear(cursorObject *self)
 {
-    cursorObject *self = (cursorObject *)obj;
-
-    if (self->weakreflist) {
-        PyObject_ClearWeakRefs(obj);
-    }
-
-    PyObject_GC_UnTrack(self);
-
-    PyMem_Free(self->name);
-
     Py_CLEAR(self->conn);
-    Py_CLEAR(self->casts);
     Py_CLEAR(self->description);
     Py_CLEAR(self->pgstatus);
+    Py_CLEAR(self->casts);
+    Py_CLEAR(self->caster);
+    Py_CLEAR(self->copyfile);
     Py_CLEAR(self->tuple_factory);
     Py_CLEAR(self->tzinfo_factory);
     Py_CLEAR(self->query);
     Py_CLEAR(self->string_types);
     Py_CLEAR(self->binary_types);
+    return 0;
+}
 
-    IFCLEARPGRES(self->pgres);
+static void
+cursor_dealloc(PyObject* obj)
+{
+    cursorObject *self = (cursorObject *)obj;
+
+    PyObject_GC_UnTrack(self);
+
+    if (self->weakreflist) {
+        PyObject_ClearWeakRefs(obj);
+    }
+
+    cursor_clear(self);
+
+    PyMem_Free(self->name);
+
+    CLEARPGRES(self->pgres);
 
     Dprintf("cursor_dealloc: deleted cursor object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
@@ -1847,12 +1932,6 @@ cursor_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return type->tp_alloc(type, 0);
 }
 
-static void
-cursor_del(PyObject* self)
-{
-    PyObject_GC_Del(self);
-}
-
 static PyObject *
 cursor_repr(cursorObject *self)
 {
@@ -1886,8 +1965,7 @@ cursor_traverse(cursorObject *self, visitproc visit, void *arg)
 PyTypeObject cursorType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.cursor",
-    sizeof(cursorObject),
-    0,
+    sizeof(cursorObject), 0,
     cursor_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/
     0,          /*tp_getattr*/
@@ -1898,47 +1976,30 @@ PyTypeObject cursorType = {
     0,          /*tp_as_sequence*/
     0,          /*tp_as_mapping*/
     0,          /*tp_hash */
-
     0,          /*tp_call*/
     (reprfunc)cursor_repr, /*tp_str*/
     0,          /*tp_getattro*/
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
-
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_ITER |
       Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_HAVE_WEAKREFS ,
                 /*tp_flags*/
     cursorType_doc, /*tp_doc*/
-
     (traverseproc)cursor_traverse, /*tp_traverse*/
-    0,          /*tp_clear*/
-
+    (inquiry)cursor_clear, /*tp_clear*/
     0,          /*tp_richcompare*/
     offsetof(cursorObject, weakreflist), /*tp_weaklistoffset*/
-
     cursor_iter, /*tp_iter*/
     cursor_next, /*tp_iternext*/
-
-    /* Attribute descriptor and subclassing stuff */
-
     cursorObject_methods, /*tp_methods*/
     cursorObject_members, /*tp_members*/
     cursorObject_getsets, /*tp_getset*/
     0,          /*tp_base*/
     0,          /*tp_dict*/
-
     0,          /*tp_descr_get*/
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
-
     cursor_init, /*tp_init*/
-    0, /*tp_alloc  Will be set to PyType_GenericAlloc in module init*/
+    0,          /*tp_alloc*/
     cursor_new, /*tp_new*/
-    (freefunc)cursor_del, /*tp_free  Low-level free-memory routine */
-    0,          /*tp_is_gc For PyObject_IS_GC */
-    0,          /*tp_bases*/
-    0,          /*tp_mro method resolution order */
-    0,          /*tp_cache*/
-    0,          /*tp_subclasses*/
-    0           /*tp_weaklist*/
 };

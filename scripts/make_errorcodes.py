@@ -30,7 +30,8 @@ def main():
     filename = sys.argv[1]
 
     file_start = read_base_file(filename)
-    classes, errors = fetch_errors(['8.1', '8.2', '8.3', '8.4', '9.0', '9.1'])
+    classes, errors = fetch_errors(
+        ['8.1', '8.2', '8.3', '8.4', '9.0', '9.1', '9.2'])
 
     f = open(filename, "w")
     for line in file_start:

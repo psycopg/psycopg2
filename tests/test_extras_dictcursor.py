@@ -18,26 +18,23 @@ import time
 from datetime import timedelta
 import psycopg2
 import psycopg2.extras
-from testutils import unittest, skip_before_postgres, skip_if_no_namedtuple
-from testconfig import dsn
+from testutils import unittest, ConnectingTestCase, skip_before_postgres
+from testutils import skip_if_no_namedtuple
 
 
-class ExtrasDictCursorTests(unittest.TestCase):
+class ExtrasDictCursorTests(ConnectingTestCase):
     """Test if DictCursor extension class works."""
 
     def setUp(self):
-        self.conn = psycopg2.connect(dsn)
+        ConnectingTestCase.setUp(self)
         curs = self.conn.cursor()
         curs.execute("CREATE TEMPORARY TABLE ExtrasDictCursorTests (foo text)")
         curs.execute("INSERT INTO ExtrasDictCursorTests VALUES ('bar')")
         self.conn.commit()
 
-    def tearDown(self):
-        self.conn.close()
-
     def testDictConnCursorArgs(self):
         self.conn.close()
-        self.conn = psycopg2.connect(dsn, connection_factory=psycopg2.extras.DictConnection)
+        self.conn = self.connect(connection_factory=psycopg2.extras.DictConnection)
         cur = self.conn.cursor()
         self.assert_(isinstance(cur, psycopg2.extras.DictCursor))
         self.assertEqual(cur.name, None)
@@ -232,28 +229,23 @@ class ExtrasDictCursorTests(unittest.TestCase):
         self.assertEqual(r._column_mapping, r1._column_mapping)
 
 
-class NamedTupleCursorTest(unittest.TestCase):
+class NamedTupleCursorTest(ConnectingTestCase):
     def setUp(self):
+        ConnectingTestCase.setUp(self)
         from psycopg2.extras import NamedTupleConnection
 
         try:
             from collections import namedtuple
         except ImportError:
-            self.conn = None
             return
 
-        self.conn = psycopg2.connect(dsn,
-            connection_factory=NamedTupleConnection)
+        self.conn = self.connect(connection_factory=NamedTupleConnection)
         curs = self.conn.cursor()
         curs.execute("CREATE TEMPORARY TABLE nttest (i int, s text)")
         curs.execute("INSERT INTO nttest VALUES (1, 'foo')")
         curs.execute("INSERT INTO nttest VALUES (2, 'bar')")
         curs.execute("INSERT INTO nttest VALUES (3, 'baz')")
         self.conn.commit()
-
-    def tearDown(self):
-        if self.conn is not None:
-            self.conn.close()
 
     @skip_if_no_namedtuple
     def test_cursor_args(self):
@@ -359,9 +351,7 @@ class NamedTupleCursorTest(unittest.TestCase):
             # an import error somewhere
             from psycopg2.extras import NamedTupleConnection
             try:
-                if self.conn is not None:
-                    self.conn.close()
-                self.conn = psycopg2.connect(dsn,
+                self.conn = self.connect(
                     connection_factory=NamedTupleConnection)
                 curs = self.conn.cursor()
                 curs.execute("select 1")
@@ -371,8 +361,7 @@ class NamedTupleCursorTest(unittest.TestCase):
             else:
                 self.fail("expecting ImportError")
         else:
-            # skip the test
-            pass
+            return self.skipTest("namedtuple available")
 
     @skip_if_no_namedtuple
     def test_record_updated(self):

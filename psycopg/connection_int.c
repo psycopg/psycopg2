@@ -183,7 +183,7 @@ conn_notifies_process(connectionObject *self)
         if (!(channel = conn_text_from_chars(self, pgn->relname))) { goto error; }
         if (!(payload = conn_text_from_chars(self, pgn->extra))) { goto error; }
 
-        if (!(notify = PyObject_CallFunctionObjArgs((PyObject *)&NotifyType,
+        if (!(notify = PyObject_CallFunctionObjArgs((PyObject *)&notifyType,
                 pid, channel, payload, NULL))) {
             goto error;
         }
@@ -439,10 +439,22 @@ conn_get_server_version(PGconn *pgconn)
     return (int)PQserverVersion(pgconn);
 }
 
-PGcancel *
-conn_get_cancel(PGconn *pgconn)
+/* set up the cancel key of the connection.
+ * On success return 0, else set an exception and return -1
+ */
+RAISES_NEG static int
+conn_setup_cancel(connectionObject *self, PGconn *pgconn)
 {
-    return PQgetCancel(pgconn);
+    if (self->cancel) {
+        PQfreeCancel(self->cancel);
+    }
+
+    if (!(self->cancel = PQgetCancel(self->pgconn))) {
+        PyErr_SetString(OperationalError, "can't get cancellation key");
+        return -1;
+    }
+
+    return 0;
 }
 
 
@@ -486,9 +498,7 @@ conn_setup(connectionObject *self, PGconn *pgconn)
         return -1;
     }
 
-    self->cancel = conn_get_cancel(self->pgconn);
-    if (self->cancel == NULL) {
-        PyErr_SetString(OperationalError, "can't get cancellation key");
+    if (0 > conn_setup_cancel(self, pgconn)) {
         return -1;
     }
 
@@ -788,10 +798,8 @@ _conn_poll_setup_async(connectionObject *self)
         if (0 > conn_read_encoding(self, self->pgconn)) {
             break;
         }
-        self->cancel = conn_get_cancel(self->pgconn);
-        if (self->cancel == NULL) {
-            PyErr_SetString(OperationalError, "can't get cancellation key");
-            break;
+        if (0 > conn_setup_cancel(self, self->pgconn)) {
+            return -1;
         }
 
         /* asynchronous connections always use isolation level 0, the user is
@@ -890,7 +898,7 @@ conn_poll(connectionObject *self)
             }
 
             curs = (cursorObject *)py_curs;
-            IFCLEARPGRES(curs->pgres);
+            CLEARPGRES(curs->pgres);
             curs->pgres = pq_get_last_result(self);
 
             /* fetch the tuples (if there are any) and build the result. We
@@ -918,7 +926,8 @@ conn_poll(connectionObject *self)
 void
 conn_close(connectionObject *self)
 {
-    if (self->closed) {
+    /* a connection with closed == 2 still requires cleanup */
+    if (self->closed == 1) {
         return;
     }
 
@@ -936,7 +945,7 @@ conn_close(connectionObject *self)
 
 void conn_close_locked(connectionObject *self)
 {
-    if (self->closed) {
+    if (self->closed == 1) {
         return;
     }
 
@@ -957,8 +966,6 @@ void conn_close_locked(connectionObject *self)
         PQfinish(self->pgconn);
         self->pgconn = NULL;
         Dprintf("conn_close: PQfinish called");
-        PQfreeCancel(self->cancel);
-        self->cancel = NULL;
     }
 }
 
@@ -1213,7 +1220,7 @@ exit:
  * until PREPARE. */
 
 RAISES_NEG int
-conn_tpc_begin(connectionObject *self, XidObject *xid)
+conn_tpc_begin(connectionObject *self, xidObject *xid)
 {
     PGresult *pgres = NULL;
     char *error = NULL;
@@ -1247,7 +1254,7 @@ conn_tpc_begin(connectionObject *self, XidObject *xid)
  * for many commands and for recovered transactions. */
 
 RAISES_NEG int
-conn_tpc_command(connectionObject *self, const char *cmd, XidObject *xid)
+conn_tpc_command(connectionObject *self, const char *cmd, xidObject *xid)
 {
     PGresult *pgres = NULL;
     char *error = NULL;

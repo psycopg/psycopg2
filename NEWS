@@ -1,264 +1,302 @@
-What's new in psycopg 2.4.6
----------------------------
+What's new in psycopg 2.5
+-------------------------
 
-  - Fixed 'cursor()' arguments propagation in connection subclasses
-    and overriding of the 'cursor_factory' argument.  Thanks to
-    Corry Haines for the report and the initial patch (ticket #105).
-  - Dropped GIL release during string adaptation around a function call
-    invoking a Python API function, which could cause interpreter crash.
-    Thanks to Manu Cupcic for the report (ticket #110).
-  - Close a green connection if there is an error in the callback.
-    Maybe a harsh solution but it leaves the program responsive
-    (ticket #113).
-  - 'register_hstore()', 'register_composite()', 'tpc_recover()' work with
-    RealDictConnection and Cursor (ticket #114).
-  - Fixed broken pool for Zope and connections re-init across ZSQL methods
-    in the same request (tickets #123, #125, #142).
-  - connect() raises an exception instead of swallowing keyword arguments
-    when a connection string is specified as well (ticket #131).
-  - Discard any result produced by 'executemany()' (ticket #133).
-  - Fixed pickling of FixedOffsetTimezone objects (ticket #135).
-  - Release the GIL around PQgetResult calls after COPY (ticket #140).
-  - Fixed empty strings handling in composite caster (ticket #141).
-  - Fixed pickling of DictRow and RealDictRow objects.
+New features:
+
+- Added :ref:`JSON adaptation <adapt-json>`.
+- Added :ref:`support for PostgreSQL 9.2 range types <adapt-range>`.
+- `connection` and `cursor` objects can be used in ``with`` statements
+  as context managers as specified by recent |DBAPI|_ extension.
+- Added `~psycopg2.extensions.Diagnostics` object to get extended info
+  from a database error.  Many thanks to Matthew Woodcraft for the
+  implementation (:ticket:`#149`).
+- Added `connection.cursor_factory` attribute to customize the default
+  object returned by `~connection.cursor()`.
+- Added support for backward scrollable cursors. Thanks to Jon Nelson
+  for the initial patch (:ticket:`#108`).
+- Added a simple way to :ref:`customize casting of composite types
+  <adapt-composite>` into Python objects other than namedtuples.
+  Many thanks to Ronan Dunklau and Tobias Oberstein for the feature
+  development.
+- `connection.reset()` implemented using :sql:`DISCARD ALL` on server
+  versions supporting it.
+
+Bug fixes:
+
+- Properly cleanup memory of broken connections (:ticket:`#148`).
+- Fixed bad interaction of ``setup.py`` with other dependencies in
+  Distribute projects on Python 3 (:ticket:`#153`).
+
+Other changes:
+
+- Added support for Python 3.3.
+- Dropped support for Python 2.4. Please use Psycopg 2.4.x if you need it.
+- `~psycopg2.errorcodes` map updated to PostgreSQL 9.2.
+- Dropped Zope adapter from source repository. ZPsycopgDA now has its own
+  project at <http://github.com/psycopg/ZPsycopgDA>.
+
+
+What's new in psycopg 2.4.6
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Fixed 'cursor()' arguments propagation in connection subclasses
+  and overriding of the 'cursor_factory' argument.  Thanks to
+  Corry Haines for the report and the initial patch (:ticket:`#105`).
+- Dropped GIL release during string adaptation around a function call
+  invoking a Python API function, which could cause interpreter crash.
+  Thanks to Manu Cupcic for the report (:ticket:`#110`).
+- Close a green connection if there is an error in the callback.
+  Maybe a harsh solution but it leaves the program responsive
+  (:ticket:`#113`).
+- 'register_hstore()', 'register_composite()', 'tpc_recover()' work with
+  RealDictConnection and Cursor (:ticket:`#114`).
+- Fixed broken pool for Zope and connections re-init across ZSQL methods
+  in the same request (tickets #123, #125, #142).
+- connect() raises an exception instead of swallowing keyword arguments
+  when a connection string is specified as well (:ticket:`#131`).
+- Discard any result produced by 'executemany()' (:ticket:`#133`).
+- Fixed pickling of FixedOffsetTimezone objects (:ticket:`#135`).
+- Release the GIL around PQgetResult calls after COPY (:ticket:`#140`).
+- Fixed empty strings handling in composite caster (:ticket:`#141`).
+- Fixed pickling of DictRow and RealDictRow objects.
 
 
 What's new in psycopg 2.4.5
----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  - The close() methods on connections and cursors don't raise exceptions
-    if called on already closed objects.
-  - Fixed fetchmany() with no argument in cursor subclasses
-    (ticket #84).
-  - Use lo_creat() instead of lo_create() when possible for better
-    interaction with pgpool-II (ticket #88).
-  - Error and its subclasses are picklable, useful for multiprocessing
-    interaction (ticket #90).
-  - Better efficiency and formatting of timezone offset objects thanks
-    to Menno Smits (tickets #94, #95).
-  - Fixed 'rownumber' during iteration on cursor subclasses.
-    Regression introduced in 2.4.4 (ticket #100).
-  - Added support for 'inet' arrays.
-  - Fixed 'commit()' concurrency problem (ticket #103).
-  - Codebase cleaned up using the GCC Python plugin's static analysis
-    tool, which has revealed several unchecked return values, possible
-    NULL dereferences, reference counting problems. Many thanks to David
-    Malcolm for the useful tool and the assistance provided using it.
+- The close() methods on connections and cursors don't raise exceptions
+  if called on already closed objects.
+- Fixed fetchmany() with no argument in cursor subclasses
+  (:ticket:`#84`).
+- Use lo_creat() instead of lo_create() when possible for better
+  interaction with pgpool-II (:ticket:`#88`).
+- Error and its subclasses are picklable, useful for multiprocessing
+  interaction (:ticket:`#90`).
+- Better efficiency and formatting of timezone offset objects thanks
+  to Menno Smits (tickets #94, #95).
+- Fixed 'rownumber' during iteration on cursor subclasses.
+  Regression introduced in 2.4.4 (:ticket:`#100`).
+- Added support for 'inet' arrays.
+- Fixed 'commit()' concurrency problem (:ticket:`#103`).
+- Codebase cleaned up using the GCC Python plugin's static analysis
+  tool, which has revealed several unchecked return values, possible
+  NULL dereferences, reference counting problems. Many thanks to David
+  Malcolm for the useful tool and the assistance provided using it.
 
 
 What's new in psycopg 2.4.4
----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  - 'register_composite()' also works with the types implicitly defined
-    after a table row, not only with the ones created by 'CREATE TYPE'.
-  - Values for the isolation level symbolic constants restored to what
-    they were before release 2.4.2 to avoid breaking apps using the
-    values instead of the constants.
-  - Named DictCursor/RealDictCursor honour itersize (ticket #80).
-  - Fixed rollback on error on Zope (ticket #73).
-  - Raise 'DatabaseError' instead of 'Error' with empty libpq errors,
-    consistently with other disconnection-related errors: regression
-    introduced in release 2.4.1 (ticket #82).
+- 'register_composite()' also works with the types implicitly defined
+  after a table row, not only with the ones created by 'CREATE TYPE'.
+- Values for the isolation level symbolic constants restored to what
+  they were before release 2.4.2 to avoid breaking apps using the
+  values instead of the constants.
+- Named DictCursor/RealDictCursor honour itersize (:ticket:`#80`).
+- Fixed rollback on error on Zope (:ticket:`#73`).
+- Raise 'DatabaseError' instead of 'Error' with empty libpq errors,
+  consistently with other disconnection-related errors: regression
+  introduced in release 2.4.1 (:ticket:`#82`).
 
 
 What's new in psycopg 2.4.3
----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  - connect() supports all the keyword arguments supported by the
-    database
-  - Added 'new_array_type()' function for easy creation of array
-    typecasters.
-  - Added support for arrays of hstores and composite types (ticket #66).
-  - Fixed segfault in case of transaction started with connection lost
-    (and possibly other events).
-  - Fixed adaptation of Decimal type in sub-interpreters, such as in
-    certain mod_wsgi configurations (ticket #52).
-  - Rollback connections in transaction or in error before putting them
-    back into a pool. Also discard broken connections (ticket #62).
-  - Lazy import of the slow uuid module, thanks to Marko Kreen.
-  - Fixed NamedTupleCursor.executemany() (ticket #65).
-  - Fixed --static-libpq setup option (ticket #64).
-  - Fixed interaction between RealDictCursor and named cursors
-    (ticket #67).
-  - Dropped limit on the columns length in COPY operations (ticket #68).
-  - Fixed reference leak with arguments referenced more than once
-    in queries (ticket #81).
-  - Fixed typecasting of arrays containing consecutive backslashes.
-  - 'errorcodes' map updated to PostgreSQL 9.1.
+- connect() supports all the keyword arguments supported by the
+  database
+- Added 'new_array_type()' function for easy creation of array
+  typecasters.
+- Added support for arrays of hstores and composite types (:ticket:`#66`).
+- Fixed segfault in case of transaction started with connection lost
+  (and possibly other events).
+- Fixed adaptation of Decimal type in sub-interpreters, such as in
+  certain mod_wsgi configurations (:ticket:`#52`).
+- Rollback connections in transaction or in error before putting them
+  back into a pool. Also discard broken connections (:ticket:`#62`).
+- Lazy import of the slow uuid module, thanks to Marko Kreen.
+- Fixed NamedTupleCursor.executemany() (:ticket:`#65`).
+- Fixed --static-libpq setup option (:ticket:`#64`).
+- Fixed interaction between RealDictCursor and named cursors
+  (:ticket:`#67`).
+- Dropped limit on the columns length in COPY operations (:ticket:`#68`).
+- Fixed reference leak with arguments referenced more than once
+  in queries (:ticket:`#81`).
+- Fixed typecasting of arrays containing consecutive backslashes.
+- 'errorcodes' map updated to PostgreSQL 9.1.
 
 
 What's new in psycopg 2.4.2
----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  - Added 'set_session()' method and 'autocommit' property to the
-    connection. Added support for read-only sessions and, for PostgreSQL
-    9.1, for the "repeatable read" isolation level and the "deferrable"
-    transaction property.
-  - Psycopg doesn't execute queries at connection time to find the
-    default isolation level.
-  - Fixed bug with multithread code potentially causing loss of sync
-    with the server communication or lock of the client (ticket #55).
-  - Don't fail import if mx.DateTime module can't be found, even if its
-    support was built (ticket #53).
-  - Fixed escape for negative numbers prefixed by minus operator
-    (ticket #57).
-  - Fixed refcount issue during copy.  Reported and fixed by Dave
-    Malcolm (ticket #58, Red Hat Bug 711095).
-  - Trying to execute concurrent operations on the same connection
-    through concurrent green thread results in an error instead of a
-    deadlock.
-  - Fixed detection of pg_config on Window. Report and fix, plus some
-    long needed setup.py cleanup by Steve Lacy: thanks!
+- Added 'set_session()' method and 'autocommit' property to the
+  connection. Added support for read-only sessions and, for PostgreSQL
+  9.1, for the "repeatable read" isolation level and the "deferrable"
+  transaction property.
+- Psycopg doesn't execute queries at connection time to find the
+  default isolation level.
+- Fixed bug with multithread code potentially causing loss of sync
+  with the server communication or lock of the client (:ticket:`#55`).
+- Don't fail import if mx.DateTime module can't be found, even if its
+  support was built (:ticket:`#53`).
+- Fixed escape for negative numbers prefixed by minus operator
+  (:ticket:`#57`).
+- Fixed refcount issue during copy.  Reported and fixed by Dave
+  Malcolm (:ticket:`#58`, Red Hat Bug 711095).
+- Trying to execute concurrent operations on the same connection
+  through concurrent green thread results in an error instead of a
+  deadlock.
+- Fixed detection of pg_config on Window. Report and fix, plus some
+  long needed setup.py cleanup by Steve Lacy: thanks!
 
 
 What's new in psycopg 2.4.1
----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  - Use own parser for bytea output, not requiring anymore the libpq 9.0
-    to parse the hex format.
-  - Don't fail connection if the client encoding is a non-normalized
-    variant. Issue reported by Peter Eisentraut.
-  - Correctly detect an empty query sent to the backend (ticket #46).
-  - Fixed a SystemError clobbering libpq errors raised without SQLSTATE.
-    Bug vivisectioned by Eric Snow.
-  - Fixed interaction between NamedTuple and server-side cursors.
-  - Allow to specify --static-libpq on setup.py command line instead of
-    just in 'setup.cfg'. Patch provided by Matthew Ryan (ticket #48).
+- Use own parser for bytea output, not requiring anymore the libpq 9.0
+  to parse the hex format.
+- Don't fail connection if the client encoding is a non-normalized
+  variant. Issue reported by Peter Eisentraut.
+- Correctly detect an empty query sent to the backend (:ticket:`#46`).
+- Fixed a SystemError clobbering libpq errors raised without SQLSTATE.
+  Bug vivisectioned by Eric Snow.
+- Fixed interaction between NamedTuple and server-side cursors.
+- Allow to specify --static-libpq on setup.py command line instead of
+  just in 'setup.cfg'. Patch provided by Matthew Ryan (:ticket:`#48`).
 
 
 What's new in psycopg 2.4
 -------------------------
 
-* New features and changes:
+New features and changes:
 
-  - Added support for Python 3.1 and 3.2. The conversion has also
-    brought several improvements:
+- Added support for Python 3.1 and 3.2. The conversion has also
+  brought several improvements:
 
-    - Added 'b' and 't' mode to large objects: write can deal with both
-      bytes strings and unicode; read can return either bytes strings
-      or decoded unicode.
-    - COPY sends Unicode data to files implementing 'io.TextIOBase'.
-    - Improved PostgreSQL-Python encodings mapping.
-    - Added a few missing encodings: EUC_CN, EUC_JIS_2004, ISO885910,
-      ISO885916, LATIN10, SHIFT_JIS_2004.
-    - Dropped repeated dictionary lookups with unicode query/parameters.
+  - Added 'b' and 't' mode to large objects: write can deal with both
+    bytes strings and unicode; read can return either bytes strings
+    or decoded unicode.
+  - COPY sends Unicode data to files implementing 'io.TextIOBase'.
+  - Improved PostgreSQL-Python encodings mapping.
+  - Added a few missing encodings: EUC_CN, EUC_JIS_2004, ISO885910,
+    ISO885916, LATIN10, SHIFT_JIS_2004.
+  - Dropped repeated dictionary lookups with unicode query/parameters.
 
-  - Improvements to the named cusors:
+- Improvements to the named cusors:
 
-    - More efficient iteration on named cursors, fetching 'itersize'
-      records at time from the backend.
-    - The named cursors name can be an invalid identifier.
+  - More efficient iteration on named cursors, fetching 'itersize'
+    records at time from the backend.
+  - The named cursors name can be an invalid identifier.
 
-  - Improvements in data handling:
+- Improvements in data handling:
 
-    - Added 'register_composite()' function to cast PostgreSQL
-      composite types into Python tuples/namedtuples.
-    - Adapt types 'bytearray' (from Python 2.6), 'memoryview' (from
-      Python 2.7) and other objects implementing the "Revised Buffer
-      Protocol" to 'bytea' data type.
-    - The 'hstore' adapter can work even when the data type is not
-      installed in the 'public' namespace.
-    - Raise a clean exception instead of returning bad data when
-      receiving bytea in 'hex' format and the client libpq can't parse
-      them.
-    - Empty lists correctly roundtrip Python -> PostgreSQL -> Python.
+  - Added 'register_composite()' function to cast PostgreSQL
+    composite types into Python tuples/namedtuples.
+  - Adapt types 'bytearray' (from Python 2.6), 'memoryview' (from
+    Python 2.7) and other objects implementing the "Revised Buffer
+    Protocol" to 'bytea' data type.
+  - The 'hstore' adapter can work even when the data type is not
+    installed in the 'public' namespace.
+  - Raise a clean exception instead of returning bad data when
+    receiving bytea in 'hex' format and the client libpq can't parse
+    them.
+  - Empty lists correctly roundtrip Python -> PostgreSQL -> Python.
 
-  - Other changes:
+- Other changes:
 
-    - 'cursor.description' is provided as named tuples if available.
-    - The build script refuses to guess values if 'pg_config' is not
-      found.
-    - Connections and cursors are weakly referenceable.
+  - 'cursor.description' is provided as named tuples if available.
+  - The build script refuses to guess values if 'pg_config' is not
+    found.
+  - Connections and cursors are weakly referenceable.
 
-* Bug fixes:
+Bug fixes:
 
-  - Fixed adaptation of None in composite types (ticket #26). Bug
-    report by Karsten Hilbert.
-  - Fixed several reference leaks in less common code paths.
-  - Fixed segfault when a large object is closed and its connection no
-    more available.
-  - Added missing icon to ZPsycopgDA package, not available in Zope
-    2.12.9 (ticket #30). Bug report and patch by Pumukel.
-  - Fixed conversion of negative infinity (ticket #40). Bug report and
-    patch by Marti Raudsepp.
+- Fixed adaptation of None in composite types (:ticket:`#26`). Bug
+  report by Karsten Hilbert.
+- Fixed several reference leaks in less common code paths.
+- Fixed segfault when a large object is closed and its connection no
+  more available.
+- Added missing icon to ZPsycopgDA package, not available in Zope
+  2.12.9 (:ticket:`#30`). Bug report and patch by Pumukel.
+- Fixed conversion of negative infinity (:ticket:`#40`). Bug report and
+  patch by Marti Raudsepp.
 
 
 What's new in psycopg 2.3.2
----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  - Fixed segfault with middleware not passing DateStyle to the client
-    (ticket #24). Bug report and patch by Marti Raudsepp.
+- Fixed segfault with middleware not passing DateStyle to the client
+  (:ticket:`#24`). Bug report and patch by Marti Raudsepp.
 
 
 What's new in psycopg 2.3.1
----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  - Fixed build problem on CentOS 5.5 x86_64 (ticket #23).
+- Fixed build problem on CentOS 5.5 x86_64 (:ticket:`#23`).
 
 
-What's new in psycopg 2.3.0
----------------------------
+What's new in psycopg 2.3
+-------------------------
 
 psycopg 2.3 aims to expose some new features introduced in PostgreSQL 9.0.
 
-* Main new features:
+Main new features:
 
-  - `dict` to `hstore` adapter and `hstore` to `dict` typecaster, using both
-    9.0 and pre-9.0 syntax.
-  - Two-phase commit protocol support as per DBAPI specification.
-  - Support for payload in notifications received from the backed.
-  - `namedtuple`-returning cursor.
-  - Query execution cancel.
+- `dict` to `hstore` adapter and `hstore` to `dict` typecaster, using both
+  9.0 and pre-9.0 syntax.
+- Two-phase commit protocol support as per DBAPI specification.
+- Support for payload in notifications received from the backed.
+- `namedtuple`-returning cursor.
+- Query execution cancel.
 
-* Other features and changes:
+Other features and changes:
 
-  - Dropped support for protocol 2: Psycopg 2.3 can only connect to PostgreSQL
-    servers with version at least 7.4.
-  - Don't issue a query at every connection to detect the client encoding
-    and to set the datestyle to ISO if it is already compatible with what
-    expected.
-  - `mogrify()` now supports unicode queries.
-  - Subclasses of a type that can be adapted are adapted as the superclass.
-  - `errorcodes` knows a couple of new codes introduced in PostgreSQL 9.0.
-  - Dropped deprecated Psycopg "own quoting".
-  - Never issue a ROLLBACK on close/GC. This behaviour was introduced as a bug
-    in release 2.2, but trying to send a command while being destroyed has been
-    considered not safe.
+- Dropped support for protocol 2: Psycopg 2.3 can only connect to PostgreSQL
+  servers with version at least 7.4.
+- Don't issue a query at every connection to detect the client encoding
+  and to set the datestyle to ISO if it is already compatible with what
+  expected.
+- `mogrify()` now supports unicode queries.
+- Subclasses of a type that can be adapted are adapted as the superclass.
+- `errorcodes` knows a couple of new codes introduced in PostgreSQL 9.0.
+- Dropped deprecated Psycopg "own quoting".
+- Never issue a ROLLBACK on close/GC. This behaviour was introduced as a bug
+  in release 2.2, but trying to send a command while being destroyed has been
+  considered not safe.
 
-* Bug fixes:
+Bug fixes:
 
-  - Fixed use of `PQfreemem` instead of `free` in binary typecaster.
-  - Fixed access to freed memory in `conn_get_isolation_level()`.
-  - Fixed crash during Decimal adaptation with a few 2.5.x Python versions
-    (ticket #7).
-  - Fixed notices order (ticket #9).
+- Fixed use of `PQfreemem` instead of `free` in binary typecaster.
+- Fixed access to freed memory in `conn_get_isolation_level()`.
+- Fixed crash during Decimal adaptation with a few 2.5.x Python versions
+  (:ticket:`#7`).
+- Fixed notices order (:ticket:`#9`).
 
 
 What's new in psycopg 2.2.2
----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* Bux fixes:
+Bux fixes:
 
-  - the call to logging.basicConfig() in pool.py has been dropped: it was
-    messing with some projects using logging (and a library should not
-    initialize the logging system anyway.)
-  - psycopg now correctly handles time zones with seconds in the UTC offset.
-    The old register_tstz_w_secs() function is deprecated and will raise a
-    warning if called.
-  - Exceptions raised by the column iterator are propagated.
-  - Exceptions raised by executemany() interators are propagated.
+- the call to logging.basicConfig() in pool.py has been dropped: it was
+  messing with some projects using logging (and a library should not
+  initialize the logging system anyway.)
+- psycopg now correctly handles time zones with seconds in the UTC offset.
+  The old register_tstz_w_secs() function is deprecated and will raise a
+  warning if called.
+- Exceptions raised by the column iterator are propagated.
+- Exceptions raised by executemany() interators are propagated.
 
 
 What's new in psycopg 2.2.1
----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* Bux fixes:
+Bux fixes:
 
-  - psycopg now builds again on MS Windows.
+- psycopg now builds again on MS Windows.
 
 
-What's new in psycopg 2.2.0
----------------------------
+What's new in psycopg 2.2
+-------------------------
 
 This is the first release of the new 2.2 series, supporting not just one but
 two different ways of executing asynchronous queries, thanks to Jan and Daniele
@@ -269,262 +307,288 @@ psycopg now supports both classic select() loops and "green" coroutine
 libraries. It is all in the documentation, so just point your browser to
 doc/html/advanced.html.
 
-* Other new features:
+Other new features:
 
-  - truncate() method for lobjects.
-  - COPY functions are now a little bit faster.
-  - All builtin PostgreSQL to Python typecasters are now available from the
-    psycopg2.extensions module.
-  - Notifications from the backend are now available right after the execute()
-    call (before client code needed to call isbusy() to ensure NOTIFY
-    reception.)
-  - Better timezone support.
-  - Lots of documentation updates.
+- truncate() method for lobjects.
+- COPY functions are now a little bit faster.
+- All builtin PostgreSQL to Python typecasters are now available from the
+  psycopg2.extensions module.
+- Notifications from the backend are now available right after the execute()
+  call (before client code needed to call isbusy() to ensure NOTIFY
+  reception.)
+- Better timezone support.
+- Lots of documentation updates.
 
-* Bug fixes:
+Bug fixes:
 
-  - Fixed some gc/refcounting problems.
-  - Fixed reference leak in NOTIFY reception.
-  - Fixed problem with PostgreSQL not casting string literals to the correct
-    types in some situations: psycopg now add an explicit cast to dates, times
-    and bytea representations.
-  - Fixed TimestampFromTicks() and TimeFromTicks() for seconds >= 59.5.
-  - Fixed spurious exception raised when calling C typecasters from Python
-    ones.
+- Fixed some gc/refcounting problems.
+- Fixed reference leak in NOTIFY reception.
+- Fixed problem with PostgreSQL not casting string literals to the correct
+  types in some situations: psycopg now add an explicit cast to dates, times
+  and bytea representations.
+- Fixed TimestampFromTicks() and TimeFromTicks() for seconds >= 59.5.
+- Fixed spurious exception raised when calling C typecasters from Python
+  ones.
 
 
 What's new in psycopg 2.0.14
-----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* New features:
-  - Support for adapting tuples to PostgreSQL arrays is now enabled by
-    default and does not require importing psycopg2.extensions anymore.
-  - "can't adapt" error message now includes full type information.
-  - Thank to Daniele Varrazzo (piro) psycopg2's source package now includes
-    full documentation in HTML and plain text format.
+New features:
 
-* Bug fixes:
-  - No loss of precision when using floats anymore.
-  - decimal.Decimal "nan" and "infinity" correctly converted to PostgreSQL
-    numeric NaN values (note that PostgreSQL numeric type does not support
-    infinity but just NaNs.)
-  - psycopg2.extensions now includes Binary.
+- Support for adapting tuples to PostgreSQL arrays is now enabled by
+  default and does not require importing psycopg2.extensions anymore.
+- "can't adapt" error message now includes full type information.
+- Thank to Daniele Varrazzo (piro) psycopg2's source package now includes
+  full documentation in HTML and plain text format.
 
-* It seems we're good citizens of the free software ecosystem and that big
-  big big companies and people ranting on the pgsql-hackers mailing list
-  we'll now not dislike us. *g* (See LICENSE file for the details.)
+Bug fixes:
+
+- No loss of precision when using floats anymore.
+- decimal.Decimal "nan" and "infinity" correctly converted to PostgreSQL
+  numeric NaN values (note that PostgreSQL numeric type does not support
+  infinity but just NaNs.)
+- psycopg2.extensions now includes Binary.
+
+It seems we're good citizens of the free software ecosystem and that big
+big big companies and people ranting on the pgsql-hackers mailing list
+we'll now not dislike us. *g* (See LICENSE file for the details.)
 
 
 What's new in psycopg 2.0.13
-----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* New features:
-  - Support for UUID arrays.
-  - It is now possible to build psycopg linking to a static libpq
-    library.
+New features:
 
-* Bug fixes:
-  - Fixed a deadlock related to using the same connection with
-    multiple cursors from different threads.
-  - Builds again with MSVC.
+- Support for UUID arrays.
+- It is now possible to build psycopg linking to a static libpq
+  library.
+
+Bug fixes:
+
+- Fixed a deadlock related to using the same connection with
+  multiple cursors from different threads.
+- Builds again with MSVC.
 
 
 What's new in psycopg 2.0.12
-----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* New features:
-  - The connection object now has a reset() method that can be used to
-    reset the connection to its default state.
+New features:
 
-* Bug fixes:
-  - copy_to() and copy_from() now accept a much larger number of columns.
-  - Fixed PostgreSQL version detection.
-  - Fixed ZPsycopgDA version check.
-  - Fixed regression in ZPsycopgDA that made it behave wrongly when
-    receiving serialization errors: now the query is re-issued as it
-    should be by propagating the correct exception to Zope.
-  - Writing "large" large objects should now work.
+- The connection object now has a reset() method that can be used to
+  reset the connection to its default state.
+
+Bug fixes:
+
+- copy_to() and copy_from() now accept a much larger number of columns.
+- Fixed PostgreSQL version detection.
+- Fixed ZPsycopgDA version check.
+- Fixed regression in ZPsycopgDA that made it behave wrongly when
+  receiving serialization errors: now the query is re-issued as it
+  should be by propagating the correct exception to Zope.
+- Writing "large" large objects should now work.
 
 
 What's new in psycopg 2.0.11
-----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* New features:
-  - DictRow and RealDictRow now use less memory. If you inherit on them
-    remember to set __slots__ for your new attributes or be prepare to
-    go back to old memory usage.
+New features:
 
-* Bug fixes:
-  - Fixed exeception in setup.py.
-  - More robust detection of PostgreSQL development versions.
-  - Fixed exception in RealDictCursor, introduced in 2.0.10.
+- DictRow and RealDictRow now use less memory. If you inherit on them
+  remember to set __slots__ for your new attributes or be prepare to
+  go back to old memory usage.
+
+Bug fixes:
+
+- Fixed exeception in setup.py.
+- More robust detection of PostgreSQL development versions.
+- Fixed exception in RealDictCursor, introduced in 2.0.10.
 
 
 What's new in psycopg 2.0.10
-----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* New features:
-  - A specialized type-caster that can parse time zones with seconds is
-    now available. Note that after enabling it (see extras.py) "wrong"
-    time zones will be parsed without raising an exception but the
-    result will be rounded.
-  - DictCursor can be used as a named cursor.
-  - DictRow now implements more dict methods.
-  - The connection object now expose PostgreSQL server version as the
-    .server_version attribute and the protocol version used as
-    .protocol_version.
-  - The connection object has a .get_parameter_status() methods that
-    can be used to obtain useful information from the server.
+New features:
 
-* Bug fixes:
-  - None is now correctly always adapted to NULL.
-  - Two double memory free errors provoked by multithreading and
-    garbage collection are now fixed.
-  - Fixed usage of internal Python code in the notice processor; this
-    should fix segfaults when receiving a lot of notices in
-    multithreaded programs.
-  - Should build again on MSVC and Solaris.
-  - Should build with development versions of PostgreSQL (ones with
-    -devel version string.)
-  - Fixed some tests that failed even when psycopg was right.
+- A specialized type-caster that can parse time zones with seconds is
+  now available. Note that after enabling it (see extras.py) "wrong"
+  time zones will be parsed without raising an exception but the
+  result will be rounded.
+- DictCursor can be used as a named cursor.
+- DictRow now implements more dict methods.
+- The connection object now expose PostgreSQL server version as the
+  .server_version attribute and the protocol version used as
+  .protocol_version.
+- The connection object has a .get_parameter_status() methods that
+  can be used to obtain useful information from the server.
 
+Bug fixes:
 
-What's new in psycopg 2.0.9
----------------------------
-
-* New features:
-  - "import psycopg2.extras" to get some support for handling times
-    and timestamps with seconds in the time zone offset.
-  - DictCursors can now be used as named cursors.
-  
-* Bug fixes:
-  - register_type() now accept an explicit None as its second parameter.
-  - psycopg2 should build again on MSVC and Solaris.
+- None is now correctly always adapted to NULL.
+- Two double memory free errors provoked by multithreading and
+  garbage collection are now fixed.
+- Fixed usage of internal Python code in the notice processor; this
+  should fix segfaults when receiving a lot of notices in
+  multithreaded programs.
+- Should build again on MSVC and Solaris.
+- Should build with development versions of PostgreSQL (ones with
+  -devel version string.)
+- Fixed some tests that failed even when psycopg was right.
 
 
 What's new in psycopg 2.0.9
----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* New features:
-  - COPY TO/COPY FROM queries now can be of any size and psycopg will
-    correctly quote separators.
-  - float values Inf and NaN are now correctly handled and can
-    round-trip to the database.
-  - executemany() now return the numer of total INSERTed or UPDATEd
-    rows. Note that, as it has always been, executemany() should not
-    be used to execute multiple SELECT statements and while it will
-    execute the statements without any problem, it will return the
-    wrong value.
-  - copy_from() and copy_to() can now use quoted separators.
-  - "import psycopg2.extras" to get UUID support.
-  
-* Bug fixes:
-  - register_type() now works on connection and cursor subclasses.
-  - fixed a memory leak when using lobjects.
-  
+New features:
+
+- "import psycopg2.extras" to get some support for handling times
+  and timestamps with seconds in the time zone offset.
+- DictCursors can now be used as named cursors.
+
+Bug fixes:
+
+- register_type() now accept an explicit None as its second parameter.
+- psycopg2 should build again on MSVC and Solaris.
+
+
+What's new in psycopg 2.0.9
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+New features:
+
+- COPY TO/COPY FROM queries now can be of any size and psycopg will
+  correctly quote separators.
+- float values Inf and NaN are now correctly handled and can
+  round-trip to the database.
+- executemany() now return the numer of total INSERTed or UPDATEd
+  rows. Note that, as it has always been, executemany() should not
+  be used to execute multiple SELECT statements and while it will
+  execute the statements without any problem, it will return the
+  wrong value.
+- copy_from() and copy_to() can now use quoted separators.
+- "import psycopg2.extras" to get UUID support.
+
+Bug fixes:
+
+- register_type() now works on connection and cursor subclasses.
+- fixed a memory leak when using lobjects.
+
 
 What's new in psycopg 2.0.8
----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* New features:
-  - The connection object now has a get_backend_pid() method that
-    returns the current PostgreSQL connection backend process PID.
-  - The PostgreSQL large object API has been exposed through the
-    Cursor.lobject() method.
+New features:
 
-* Bug fixes:
-  - Some fixes to ZPsycopgDA have been merged from the Debian package.
-  - A memory leak was fixed in Cursor.executemany().
-  - A double free was fixed in pq_complete_error(), that caused crashes
-    under some error conditions.
+- The connection object now has a get_backend_pid() method that
+  returns the current PostgreSQL connection backend process PID.
+- The PostgreSQL large object API has been exposed through the
+  Cursor.lobject() method.
+
+Bug fixes:
+
+- Some fixes to ZPsycopgDA have been merged from the Debian package.
+- A memory leak was fixed in Cursor.executemany().
+- A double free was fixed in pq_complete_error(), that caused crashes
+  under some error conditions.
+
 
 What's new in psycopg 2.0.7
----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* Improved error handling:
-  - All instances of psycopg2.Error subclasses now have pgerror,
-    pgcode and cursor attributes.  They will be set to None if no
-    value is available.
-  - Exception classes are now chosen based on the SQLSTATE value from
-    the result.  (#184)
-  - The commit() and rollback() methods now set the pgerror and pgcode
-    attributes on exceptions. (#152)
-  - errors from commit() and rollback() are no longer considered
-    fatal. (#194)
-  - If a disconnect is detected during execute(), an exception will be
-    raised at that point rather than resulting in "ProgrammingError:
-    no results to fetch" later on. (#186)
+Improved error handling:
 
-* Better PostgreSQL compatibility:
-  - If the server uses standard_conforming_strings, perform
-    appropriate quoting.
-  - BC dates are now handled if psycopg is compiled with mxDateTime
-    support.  If using datetime, an appropriate ValueError is
-    raised. (#203)
+- All instances of psycopg2.Error subclasses now have pgerror,
+  pgcode and cursor attributes.  They will be set to None if no
+  value is available.
+- Exception classes are now chosen based on the SQLSTATE value from
+  the result.  (#184)
+- The commit() and rollback() methods now set the pgerror and pgcode
+  attributes on exceptions. (#152)
+- errors from commit() and rollback() are no longer considered
+  fatal. (#194)
+- If a disconnect is detected during execute(), an exception will be
+  raised at that point rather than resulting in "ProgrammingError:
+  no results to fetch" later on. (#186)
 
-* Other bug fixes:
-  - If multiple sub-interpreters are in use, do not share the Decimal
-    type between them. (#192)
-  - Buffer objects obtained from psycopg are now accepted by psycopg
-    too, without segfaulting. (#209)
-  - A few small changes were made to improve DB-API compatibility.
-    All the dbapi20 tests now pass.
+Better PostgreSQL compatibility:
 
-* Miscellaneous:
-  - The PSYCOPG_DISPLAY_SIZE option is now off by default.  This means
-    that display size will always be set to "None" in
-    cursor.description.  Calculating the display size was expensive,
-    and infrequently used so this should improve performance.
-  - New QueryCanceledError and TransactionRollbackError exceptions
-    have been added to the psycopg2.extensions module.  They can be
-    used to detect statement timeouts and deadlocks respectively.
-  - Cursor objects now have a "closed" attribute. (#164)
-  - If psycopg has been built with debug support, it is now necessary
-    to set the PSYCOPG_DEBUG environment variable to turn on debug
-    spew.
+- If the server uses standard_conforming_strings, perform
+  appropriate quoting.
+- BC dates are now handled if psycopg is compiled with mxDateTime
+  support.  If using datetime, an appropriate ValueError is
+  raised. (#203)
+
+Other bug fixes:
+
+- If multiple sub-interpreters are in use, do not share the Decimal
+  type between them. (#192)
+- Buffer objects obtained from psycopg are now accepted by psycopg
+  too, without segfaulting. (#209)
+- A few small changes were made to improve DB-API compatibility.
+  All the dbapi20 tests now pass.
+
+Miscellaneous:
+
+- The PSYCOPG_DISPLAY_SIZE option is now off by default.  This means
+  that display size will always be set to "None" in
+  cursor.description.  Calculating the display size was expensive,
+  and infrequently used so this should improve performance.
+- New QueryCanceledError and TransactionRollbackError exceptions
+  have been added to the psycopg2.extensions module.  They can be
+  used to detect statement timeouts and deadlocks respectively.
+- Cursor objects now have a "closed" attribute. (#164)
+- If psycopg has been built with debug support, it is now necessary
+  to set the PSYCOPG_DEBUG environment variable to turn on debug
+  spew.
+
 
 What's new in psycopg 2.0.6
----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* Better support for PostgreSQL, Python and win32:
-  - full support for PostgreSQL 8.2, including NULLs in arrays
-  - support for almost all existing PostgreSQL encodings
-  - full list of PostgreSQL error codes available by importing the
-    psycopg2.errorcodes module
-  - full support for Python 2.5 and 64 bit architectures
-  - better build support on win32 platform
+Better support for PostgreSQL, Python and win32:
 
-* Support for per-connection type-casters (used by ZPsycopgDA too, this
-  fixes a long standing bug that made different connections use a random
-  set of date/time type-casters instead of the configured one.)
+- full support for PostgreSQL 8.2, including NULLs in arrays
+- support for almost all existing PostgreSQL encodings
+- full list of PostgreSQL error codes available by importing the
+  psycopg2.errorcodes module
+- full support for Python 2.5 and 64 bit architectures
+- better build support on win32 platform
 
-* Better management of times and dates both from Python and in Zope.
+Support for per-connection type-casters (used by ZPsycopgDA too, this
+fixes a long standing bug that made different connections use a random
+set of date/time type-casters instead of the configured one.)
 
-* copy_to and copy_from now take an extra "columns" parameter.
+Better management of times and dates both from Python and in Zope.
 
-* Python tuples are now adapted to SQL sequences that can be used with
-  the "IN" operator by default if the psycopg2.extensions module is
-  imported (i.e., the SQL_IN adapter was moved from extras to extensions.)
+copy_to and copy_from now take an extra "columns" parameter.
 
-* Fixed some small buglets and build glitches:
-  - removed double mutex destroy
-  - removed all non-constant initializers
-  - fixed PyObject_HEAD declarations to avoid memory corruption
-    on 64 bit architectures
-  - fixed several Python API calls to work on 64 bit architectures
-  - applied compatibility macros from PEP 353
-  - now using more than one argument format raise an error instead of
-    a segfault
+Python tuples are now adapted to SQL sequences that can be used with
+the "IN" operator by default if the psycopg2.extensions module is
+imported (i.e., the SQL_IN adapter was moved from extras to extensions.)
+
+Fixed some small buglets and build glitches:
+
+- removed double mutex destroy
+- removed all non-constant initializers
+- fixed PyObject_HEAD declarations to avoid memory corruption
+  on 64 bit architectures
+- fixed several Python API calls to work on 64 bit architectures
+- applied compatibility macros from PEP 353
+- now using more than one argument format raise an error instead of
+  a segfault
+
 
 What's new in psycopg 2.0.5.1
-­----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Now it really, really builds on MSVC and older gcc versions.
 
 What's new in psycopg 2.0.5
-­--------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Fixed various buglets such as:
+
   - segfault when passing an empty string to Binary()
   - segfault on null queries
   - segfault and bad keyword naming in .executemany()
@@ -535,17 +599,17 @@ What's new in psycopg 2.0.5
 * connect() now accept both integers and strings as port parameter
 
 What's new in psycopg 2.0.4
----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Fixed float conversion bug introduced in 2.0.3.
 
 What's new in psycopg 2.0.3
----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Fixed various buglets and a memory leak (see ChangeLog for details)
 
 What's new in psycopg 2.0.2
----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Fixed a bug in array typecasting that sometimes made psycopg forget about
   the last element in the array.
@@ -556,7 +620,7 @@ What's new in psycopg 2.0.2
   version is issued only if __GCC__ is defined.)
 
 What's new in psycopg 2.0.1
----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * ZPsycopgDA now actually loads.
 
@@ -572,7 +636,7 @@ What's new in psycopg 2.0
   so that you all stop grumbling about psycopg 2 is still in beta.. :)
 
 What's new in psycopg 2.0 beta 7
---------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Ironed out last problems with times and date (should be quite solid now.)
 
@@ -580,18 +644,18 @@ What's new in psycopg 2.0 beta 7
 
 * Slightly better ZPsycopgDA (no more double connection objects in the menu
   and other minor fixes.)
-  
+
 * ProgrammingError exceptions now have three extra attributes: .cursor
   (it is possible to access the query that caused the exception using
   error.cursor.query), .pgerror and .pgcode (PostgreSQL original error
   text and code.)
-  
+
 * The build system uses pg_config when available.
-   
+
 * Documentation in the doc/ directory! (With many kudos to piro.)
 
 What's new in psycopg 2.0 beta 6
---------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Support for named cursors (see examples/fetch.py).
 
@@ -604,13 +668,13 @@ What's new in psycopg 2.0 beta 6
 * The "decimal" module is now used if available under Python 2.3.
 
 What's new in psycopg 2.0 beta 5
---------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Fixed all known bugs.
 
 * The initial isolation level is now read from the server and
   .set_isolation_level() now takes values defined in psycopg2.extensions.
-  
+
 * .callproc() implemented as a SELECT of the given procedure.
 
 * Better docstrings for a few functions/methods.
@@ -619,20 +683,20 @@ What's new in psycopg 2.0 beta 5
   local timezone into account. Also a tzinfo object (as per datetime module
   specifications) can be passed to the psycopg2.Time and psycopg2.Datetime
   constructors.
-  
+
 * All classes have been renamed to exist in the psycopg2._psycopg module,
   to fix problems with automatic documentation generators like epydoc.
-  
+
 * NOTIFY is correctly trapped (see examples/notify.py for example code.)
 
 What's new in psycopg 2.0 beta 4
---------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * psycopg module is now named psycopg2.
 
 * No more segfaults when a UNICODE query can't be converted to the
   backend encoding.
-  
+
 * No more segfaults on empty queries.
 
 * psycopg2.connect() now takes an integer for the port keyword parameter.
@@ -642,14 +706,14 @@ What's new in psycopg 2.0 beta 4
 * Fixed lots of small bugs, see ChangeLog for details.
 
 What's new in psycopg 2.0 beta 3
---------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * ZPsycopgDA now works (except table browsing.)
 
 * psycopg build again on Python 2.2.
 
 What's new in psycopg 2.0 beta 2
---------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Fixed ZPsycopgDA version check (ZPsycopgDA can now be imported in
   Zope.)
@@ -662,7 +726,7 @@ What's new in psycopg 2.0 beta 2
 * Generic fixed and memory leaks plugs.
 
 What's new in psycopg 2.0 beta 1
---------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Officially in beta (i.e., no new features will be added.)
 
@@ -689,9 +753,9 @@ What's new in psycopg 2.0 beta 1
 * Internal changes that allow much better user-defined type casters.
 
 * A lot of bugfixes (binary, datetime, 64 bit arches, GIL, .executemany())
- 
+
 What's new in psycopg 1.99.13
------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Added missing .executemany() method.
 
@@ -699,7 +763,7 @@ What's new in psycopg 1.99.13
   faster than before.)
 
 What's new in psycopg 1.99.12
------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * .rowcount should be ok and in sync with psycopg 1.
 
@@ -712,9 +776,9 @@ What's new in psycopg 1.99.12
 * getquoted() called for real by the mogrification code.
 
 What's new in psycopg 1.99.11
------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* 'cursor' argument in .cursor() connection method renamed to 
+* 'cursor' argument in .cursor() connection method renamed to
   'cursor_factory'.
 
 * changed 'tuple_factory' cursor attribute name to 'row_factory'.
@@ -725,7 +789,7 @@ What's new in psycopg 1.99.11
 * fixes to the async core.
 
 What's new in psycopg 1.99.10
------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * The adapt() function now fully supports the adaptation protocol
   described in PEP 246. Note that the adapters registry now is indexed
@@ -738,7 +802,7 @@ What's new in psycopg 1.99.10
   fetching (.fetchXXX() methods.)
 
 What's new in psycopg 1.99.9
-----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Added simple pooling code (psycopg.pool module); see the reworked
   examples/threads.py for example code.
@@ -753,69 +817,54 @@ What's new in psycopg 1.99.9
 * Isn't that enough? :)
 
 What's new in psycopg 1.99.8
-----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * added support for UNICODE queries.
+* added UNICODE typecaster; to activate it just do::
 
-* added UNICODE typecaster; to activate it just do:
-    
-    psycopg.extensions.register_type(psycopg.extensions.UNICODE)
-  
+      psycopg.extensions.register_type(psycopg.extensions.UNICODE)
+
   Note that the UNICODE typecaster override the STRING one, so it is
   not activated by default.
 
 * cursors now really support the iterator protocol.
-
 * solved the rounding errors in time conversions.
-
 * now cursors support .fileno() and .isready() methods, to be used in
   select() calls.
-
 * .copy_from() and .copy_in() methods are back in (still using the old
   protocol, will be updated to use new one in next releasae.)
-
 * fixed memory corruption bug reported on win32 platform.
 
 What's new in psycopg 1.99.7
-----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * added support for tuple factories in cursor objects (removed factory
   argument in favor of a .tuple_factory attribute on the cursor object);
   see the new module psycopg.extras for a cursor (DictCursor) that
   return rows as objects that support indexing both by position and
   column name.
-
 * added support for tzinfo objects in datetime.timestamp objects: the
-  PostgreSQL type "timestamp with time zone" is converted to 
+  PostgreSQL type "timestamp with time zone" is converted to
   datetime.timestamp with a FixedOffsetTimezone initialized as necessary.
 
 What's new in psycopg 1.99.6
-----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * sslmode parameter from 1.1.x
-
 * various datetime conversion improvements.
-
 * now psycopg should compile without mx or without native datetime
   (not both, obviously.)
-
 * included various win32/MSVC fixes (pthread.h changes, winsock2
   library, include path in setup.py, etc.)
-
 * ported interval fixes from 1.1.14/1.1.15.
-
 * the last query executed by a cursor is now available in the
   .query attribute.
-
 * conversion of unicode strings to backend encoding now uses a table
   (that still need to be filled.)
-
 * cursors now have a .mogrify() method that return the query string
   instead of executing it.
-
 * connection objects now have a .dsn read-only attribute that holds the
   connection string.
-
 * moved psycopg C module to _psycopg and made psycopg a python module:
   this allows for a neat separation of DBAPI-2.0 functionality and psycopg
   extensions; the psycopg namespace will be also used to provide
@@ -823,36 +872,33 @@ What's new in psycopg 1.99.6
   functions and the like.)
 
 What's new in psycopg 1.99.3
-----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * added support for python 2.3 datetime types (both ways) and made datetime
   the default set of typecasters when available.
-
 * added example: dt.py.
 
 What's new in psycopg 1.99.3
-----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * initial working support for unicode bound variables: UTF-8 and latin-1
   backend encodings are natively supported (and the encoding.py example even
   works!)
-
 * added .set_client_encoding() method on the connection object.
-
 * added examples: encoding.py, binary.py, lastrowid.py.
 
 What's new in psycopg 1.99.2
-----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * better typecasting:
+
   - DateTimeDelta used for postgresql TIME (merge from 1.1)
   - BYTEA now is converted to a real buffer object, not to a string
 
 * buffer objects are now adapted into Binary objects automatically.
-
 * ported scroll method from 1.1 (DBAPI-2.0 extension for cursors)
-
 * initial support for some DBAPI-2.0 extensions:
+
   - .rownumber attribute for cursors
   - .connection attribute for cursors
   - .next() and .__iter__() methods to have cursors support the iterator
@@ -860,7 +906,7 @@ What's new in psycopg 1.99.2
   - all exception objects are exported to the connection object
 
 What's new in psycopg 1.99.1
-----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * implemented microprotocols to adapt arbitrary types to the interface used by
   psycopg to bind variables in execute;
@@ -870,7 +916,7 @@ What's new in psycopg 1.99.1
 
 
 What's new in psycopg 1.99.0
-----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * reorganized the whole source tree;
 

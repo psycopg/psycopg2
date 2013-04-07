@@ -23,7 +23,6 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-import time
 import threading
 
 import psycopg2
@@ -31,21 +30,19 @@ import psycopg2.extensions
 from psycopg2 import extras
 
 from testconfig import dsn
-from testutils import unittest, skip_before_postgres
+from testutils import unittest, ConnectingTestCase, skip_before_postgres
 
-class CancelTests(unittest.TestCase):
+class CancelTests(ConnectingTestCase):
 
     def setUp(self):
-        self.conn = psycopg2.connect(dsn)
+        ConnectingTestCase.setUp(self)
+
         cur = self.conn.cursor()
         cur.execute('''
             CREATE TEMPORARY TABLE table1 (
               id int PRIMARY KEY
             )''')
         self.conn.commit()
-
-    def tearDown(self):
-        self.conn.close()
 
     def test_empty_cancel(self):
         self.conn.cancel()

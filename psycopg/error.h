@@ -1,6 +1,6 @@
-/* adapter_qstring.h - definition for the QuotedString type
+/* error.h - definition for the psycopg base Error type
  *
- * Copyright (C) 2003-2010 Federico Di Gregorio <fog@debian.org>
+ * Copyright (C) 2013  Daniele Varrazzo <daniele.varrazzo@gmail.com>
  *
  * This file is part of psycopg.
  *
@@ -23,32 +23,21 @@
  * License for more details.
  */
 
-#ifndef PSYCOPG_QSTRING_H
-#define PSYCOPG_QSTRING_H 1
+#ifndef PSYCOPG_ERROR_H
+#define PSYCOPG_ERROR_H 1
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-extern HIDDEN PyTypeObject qstringType;
+extern HIDDEN PyTypeObject errorType;
 
 typedef struct {
-    PyObject_HEAD
+    PyBaseExceptionObject exc;
 
-    PyObject *wrapped;
-    PyObject *buffer;
+    PyObject *pgerror;
+    PyObject *pgcode;
+    cursorObject *cursor;
+    char *codec;
+    PGresult *pgres;
+} errorObject;
 
-    connectionObject *conn;
-} qstringObject;
+HIDDEN PyObject *error_text_from_chars(errorObject *self, const char *str);
 
-/* functions exported to psycopgmodule.c */
-
-HIDDEN PyObject *psyco_QuotedString(PyObject *module, PyObject *args);
-#define psyco_QuotedString_doc \
-    "QuotedString(str, enc) -> new quoted string"
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* !defined(PSYCOPG_QSTRING_H) */
+#endif /* PSYCOPG_ERROR_H */

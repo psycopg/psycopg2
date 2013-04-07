@@ -58,7 +58,7 @@ except ImportError:
 
 from psycopg2._psycopg import adapt, adapters, encodings, connection, cursor, lobject, Xid
 from psycopg2._psycopg import string_types, binary_types, new_type, new_array_type, register_type
-from psycopg2._psycopg import ISQLQuote, Notify
+from psycopg2._psycopg import ISQLQuote, Notify, Diagnostics
 
 from psycopg2._psycopg import QueryCanceledError, TransactionRollbackError
 
@@ -151,6 +151,21 @@ class NoneAdapter(object):
         return _null
 
 
+# Create default json typecasters for PostgreSQL 9.2 oids
+from psycopg2._json import register_default_json
+
+try:
+    JSON, JSONARRAY = register_default_json()
+except ImportError:
+    pass
+
+del register_default_json
+
+
+# Create default Range typecasters
+from psycopg2. _range import Range
+del Range
+
 # Add the "cleaned" version of the encodings to the key.
 # When the encoding is set its name is cleaned up from - and _ and turned
 # uppercase, so an encoding not respecting these rules wouldn't be found in the
@@ -160,5 +175,3 @@ for k, v in encodings.items():
     encodings[k] = v
 
 del k, v
-
-__all__ = filter(lambda k: not k.startswith('_'), locals().keys())

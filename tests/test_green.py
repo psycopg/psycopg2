@@ -26,7 +26,8 @@ import unittest
 import psycopg2
 import psycopg2.extensions
 import psycopg2.extras
-from testconfig import dsn
+
+from testutils import ConnectingTestCase
 
 class ConnectionStub(object):
     """A `connection` wrapper allowing analysis of the `poll()` calls."""
@@ -42,14 +43,14 @@ class ConnectionStub(object):
         self.polls.append(rv)
         return rv
 
-class GreenTests(unittest.TestCase):
+class GreenTestCase(ConnectingTestCase):
     def setUp(self):
         self._cb = psycopg2.extensions.get_wait_callback()
         psycopg2.extensions.set_wait_callback(psycopg2.extras.wait_select)
-        self.conn = psycopg2.connect(dsn)
+        ConnectingTestCase.setUp(self)
 
     def tearDown(self):
-        self.conn.close()
+        ConnectingTestCase.tearDown(self)
         psycopg2.extensions.set_wait_callback(self._cb)
 
     def set_stub_wait_callback(self, conn):

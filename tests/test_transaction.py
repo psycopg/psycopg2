@@ -23,17 +23,16 @@
 # License for more details.
 
 import threading
-from testutils import unittest, skip_before_postgres
+from testutils import unittest, ConnectingTestCase, skip_before_postgres
 
 import psycopg2
 from psycopg2.extensions import (
     ISOLATION_LEVEL_SERIALIZABLE, STATUS_BEGIN, STATUS_READY)
-from testconfig import dsn
 
-class TransactionTests(unittest.TestCase):
+class TransactionTests(ConnectingTestCase):
 
     def setUp(self):
-        self.conn = psycopg2.connect(dsn)
+        ConnectingTestCase.setUp(self)
         self.conn.set_isolation_level(ISOLATION_LEVEL_SERIALIZABLE)
         curs = self.conn.cursor()
         curs.execute('''
@@ -50,9 +49,6 @@ class TransactionTests(unittest.TestCase):
         curs.execute('INSERT INTO table1 VALUES (1)')
         curs.execute('INSERT INTO table2 VALUES (1, 1)')
         self.conn.commit()
-
-    def tearDown(self):
-        self.conn.close()
 
     def test_rollback(self):
         # Test that rollback undoes changes
@@ -93,16 +89,17 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(curs.fetchone()[0], 1)
 
 
-class DeadlockSerializationTests(unittest.TestCase):
+class DeadlockSerializationTests(ConnectingTestCase):
     """Test deadlock and serialization failure errors."""
 
     def connect(self):
-        conn = psycopg2.connect(dsn)
+        conn = ConnectingTestCase.connect(self)
         conn.set_isolation_level(ISOLATION_LEVEL_SERIALIZABLE)
         return conn
 
     def setUp(self):
-        self.conn = self.connect()
+        ConnectingTestCase.setUp(self)
+
         curs = self.conn.cursor()
         # Drop table if it already exists
         try:
@@ -130,7 +127,8 @@ class DeadlockSerializationTests(unittest.TestCase):
         curs.execute("DROP TABLE table1")
         curs.execute("DROP TABLE table2")
         self.conn.commit()
-        self.conn.close()
+
+        ConnectingTestCase.tearDown(self)
 
     def test_deadlock(self):
         self.thread1_error = self.thread2_error = None
@@ -226,15 +224,12 @@ class DeadlockSerializationTests(unittest.TestCase):
                 error, psycopg2.extensions.TransactionRollbackError))
 
 
-class QueryCancellationTests(unittest.TestCase):
+class QueryCancellationTests(ConnectingTestCase):
     """Tests for query cancellation."""
 
     def setUp(self):
-        self.conn = psycopg2.connect(dsn)
+        ConnectingTestCase.setUp(self)
         self.conn.set_isolation_level(ISOLATION_LEVEL_SERIALIZABLE)
-
-    def tearDown(self):
-        self.conn.close()
 
     @skip_before_postgres(8, 2)
     def test_statement_timeout(self):

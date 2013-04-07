@@ -67,46 +67,28 @@ static const char database_doc[] =
     "Database the recovered transaction belongs to.";
 
 static PyMemberDef xid_members[] = {
-    { "format_id", T_OBJECT, offsetof(XidObject, format_id), READONLY, (char *)format_id_doc },
-    { "gtrid", T_OBJECT, offsetof(XidObject, gtrid), READONLY, (char *)gtrid_doc },
-    { "bqual", T_OBJECT, offsetof(XidObject, bqual), READONLY, (char *)bqual_doc },
-    { "prepared", T_OBJECT, offsetof(XidObject, prepared), READONLY, (char *)prepared_doc },
-    { "owner", T_OBJECT, offsetof(XidObject, owner), READONLY, (char *)owner_doc },
-    { "database", T_OBJECT, offsetof(XidObject, database), READONLY, (char *)database_doc },
+    { "format_id", T_OBJECT, offsetof(xidObject, format_id), READONLY, (char *)format_id_doc },
+    { "gtrid", T_OBJECT, offsetof(xidObject, gtrid), READONLY, (char *)gtrid_doc },
+    { "bqual", T_OBJECT, offsetof(xidObject, bqual), READONLY, (char *)bqual_doc },
+    { "prepared", T_OBJECT, offsetof(xidObject, prepared), READONLY, (char *)prepared_doc },
+    { "owner", T_OBJECT, offsetof(xidObject, owner), READONLY, (char *)owner_doc },
+    { "database", T_OBJECT, offsetof(xidObject, database), READONLY, (char *)database_doc },
     { NULL }
 };
 
 static PyObject *
 xid_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
-    XidObject *self;
-
-    if (!(self = (XidObject *)type->tp_alloc(type, 0))) { return NULL; }
-
-    Py_INCREF(Py_None);
-    self->format_id = Py_None;
-    Py_INCREF(Py_None);
-    self->gtrid = Py_None;
-    Py_INCREF(Py_None);
-    self->bqual = Py_None;
-    Py_INCREF(Py_None);
-    self->prepared = Py_None;
-    Py_INCREF(Py_None);
-    self->owner = Py_None;
-    Py_INCREF(Py_None);
-    self->database = Py_None;
-
-    return (PyObject *)self;
+    return type->tp_alloc(type, 0);
 }
 
 static int
-xid_init(XidObject *self, PyObject *args, PyObject *kwargs)
+xid_init(xidObject *self, PyObject *args, PyObject *kwargs)
 {
     static char *kwlist[] = {"format_id", "gtrid", "bqual", NULL};
     int format_id;
     size_t i, gtrid_len, bqual_len;
     const char *gtrid, *bqual;
-    PyObject *tmp;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "iss", kwlist,
                                      &format_id, &gtrid, &bqual))
@@ -149,35 +131,18 @@ xid_init(XidObject *self, PyObject *args, PyObject *kwargs)
         }
     }
 
-    tmp = self->format_id;
-    self->format_id = PyInt_FromLong(format_id);
-    Py_XDECREF(tmp);
+    if (!(self->format_id = PyInt_FromLong(format_id))) { return -1; }
+    if (!(self->gtrid = Text_FromUTF8(gtrid))) { return -1; }
+    if (!(self->bqual = Text_FromUTF8(bqual))) { return -1; }
+    Py_INCREF(Py_None); self->prepared = Py_None;
+    Py_INCREF(Py_None); self->owner = Py_None;
+    Py_INCREF(Py_None); self->database = Py_None;
 
-    tmp = self->gtrid;
-    self->gtrid = Text_FromUTF8(gtrid);
-    Py_XDECREF(tmp);
-
-    tmp = self->bqual;
-    self->bqual = Text_FromUTF8(bqual);
-    Py_XDECREF(tmp);
-
-    return 0;
-}
-
-static int
-xid_traverse(XidObject *self, visitproc visit, void *arg)
-{
-    Py_VISIT(self->format_id);
-    Py_VISIT(self->gtrid);
-    Py_VISIT(self->bqual);
-    Py_VISIT(self->prepared);
-    Py_VISIT(self->owner);
-    Py_VISIT(self->database);
     return 0;
 }
 
 static void
-xid_dealloc(XidObject *self)
+xid_dealloc(xidObject *self)
 {
     Py_CLEAR(self->format_id);
     Py_CLEAR(self->gtrid);
@@ -189,20 +154,14 @@ xid_dealloc(XidObject *self)
     Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
-static void
-xid_del(PyObject *self)
-{
-    PyObject_GC_Del(self);
-}
-
 static Py_ssize_t
-xid_len(XidObject *self)
+xid_len(xidObject *self)
 {
     return 3;
 }
 
 static PyObject *
-xid_getitem(XidObject *self, Py_ssize_t item)
+xid_getitem(xidObject *self, Py_ssize_t item)
 {
     if (item < 0)
         item += 3;
@@ -224,13 +183,13 @@ xid_getitem(XidObject *self, Py_ssize_t item)
 }
 
 static PyObject *
-xid_str(XidObject *self)
+xid_str(xidObject *self)
 {
     return xid_get_tid(self);
 }
 
 static PyObject *
-xid_repr(XidObject *self)
+xid_repr(xidObject *self)
 {
     PyObject *rv = NULL;
     PyObject *format = NULL;
@@ -305,66 +264,45 @@ static struct PyMethodDef xid_methods[] = {
     {NULL}
 };
 
-PyTypeObject XidType = {
+PyTypeObject xidType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2.extensions.Xid",
-    sizeof(XidObject),
-    0,
+    sizeof(xidObject), 0,
     (destructor)xid_dealloc, /* tp_dealloc */
     0,          /*tp_print*/
-
     0,          /*tp_getattr*/
     0,          /*tp_setattr*/
-
     0,          /*tp_compare*/
-
     (reprfunc)xid_repr, /*tp_repr*/
     0,          /*tp_as_number*/
     &xid_sequence, /*tp_as_sequence*/
     0,          /*tp_as_mapping*/
     0,          /*tp_hash */
-
     0,          /*tp_call*/
     (reprfunc)xid_str, /*tp_str*/
-
     0,          /*tp_getattro*/
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
-
-    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
+    /* Notify is not GC as it only has string attributes */
+    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /*tp_flags*/
     xid_doc, /*tp_doc*/
-
-    (traverseproc)xid_traverse, /*tp_traverse*/
+    0,          /*tp_traverse*/
     0,          /*tp_clear*/
-
     0,          /*tp_richcompare*/
     0,          /*tp_weaklistoffset*/
-
     0,          /*tp_iter*/
     0,          /*tp_iternext*/
-
-    /* Attribute descriptor and subclassing stuff */
-
     xid_methods, /*tp_methods*/
     xid_members, /*tp_members*/
     0,          /*tp_getset*/
     0,          /*tp_base*/
     0,          /*tp_dict*/
-
     0,          /*tp_descr_get*/
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
-
     (initproc)xid_init, /*tp_init*/
-    0, /*tp_alloc  will be set to PyType_GenericAlloc in module init*/
+    0,          /*tp_alloc*/
     xid_new, /*tp_new*/
-    (freefunc)xid_del, /*tp_free  Low-level free-memory routine */
-    0,          /*tp_is_gc For PyObject_IS_GC */
-    0,          /*tp_bases*/
-    0,          /*tp_mro method resolution order */
-    0,          /*tp_cache*/
-    0,          /*tp_subclasses*/
-    0           /*tp_weaklist*/
 };
 
 
@@ -376,13 +314,13 @@ PyTypeObject XidType = {
  * or use a regular string they have found in PostgreSQL's pg_prepared_xacts
  * in order to recover a transaction not generated by psycopg.
  */
-XidObject *xid_ensure(PyObject *oxid)
+xidObject *xid_ensure(PyObject *oxid)
 {
-    XidObject *rv = NULL;
+    xidObject *rv = NULL;
 
-    if (PyObject_TypeCheck(oxid, &XidType)) {
+    if (PyObject_TypeCheck(oxid, &xidType)) {
         Py_INCREF(oxid);
-        rv = (XidObject *)oxid;
+        rv = (xidObject *)oxid;
     }
     else {
         rv = xid_from_string(oxid);
@@ -445,7 +383,7 @@ _xid_decode64(PyObject *s)
  *   http://cvs.pgfoundry.org/cgi-bin/cvsweb.cgi/jdbc/pgjdbc/org/postgresql/xa/RecoveredXid.java?rev=1.2
  */
 PyObject *
-xid_get_tid(XidObject *self)
+xid_get_tid(xidObject *self)
 {
     PyObject *rv = NULL;
     PyObject *egtrid = NULL;
@@ -525,7 +463,7 @@ exit:
  *
  * Return NULL + exception if parsing failed. Else a new Xid object. */
 
-static XidObject *
+static xidObject *
 _xid_parse_string(PyObject *str) {
     PyObject *regex;
     PyObject *m = NULL;
@@ -536,7 +474,7 @@ _xid_parse_string(PyObject *str) {
     PyObject *ebqual = NULL;
     PyObject *gtrid = NULL;
     PyObject *bqual = NULL;
-    XidObject *rv = NULL;
+    xidObject *rv = NULL;
 
     /* check if the string is a possible XA triple with a regexp */
     if (!(regex = _xid_get_parse_regex())) { goto exit; }
@@ -560,7 +498,7 @@ _xid_parse_string(PyObject *str) {
     if (!(bqual = _xid_decode64(ebqual))) { goto exit; }
 
     /* Try to build the xid with the parsed material */
-    rv = (XidObject *)PyObject_CallFunctionObjArgs((PyObject *)&XidType,
+    rv = (xidObject *)PyObject_CallFunctionObjArgs((PyObject *)&xidType,
         format_id, gtrid, bqual, NULL);
 
 exit:
@@ -579,35 +517,31 @@ exit:
 /* Return a new Xid object representing a transaction ID not conform to
  * the XA specifications. */
 
-static XidObject *
+static xidObject *
 _xid_unparsed_from_string(PyObject *str) {
-    XidObject *xid = NULL;
-    XidObject *rv = NULL;
-    PyObject *tmp;
+    xidObject *xid = NULL;
+    xidObject *rv = NULL;
 
     /* fake args to work around the checks performed by the xid init */
-    if (!(xid = (XidObject *)PyObject_CallFunction((PyObject *)&XidType,
+    if (!(xid = (xidObject *)PyObject_CallFunction((PyObject *)&xidType,
             "iss", 0, "", ""))) {
         goto exit;
     }
 
     /* set xid.gtrid = str */
-    tmp = xid->gtrid;
+    Py_CLEAR(xid->gtrid);
     Py_INCREF(str);
     xid->gtrid = str;
-    Py_DECREF(tmp);
 
     /* set xid.format_id = None */
-    tmp = xid->format_id;
+    Py_CLEAR(xid->format_id);
     Py_INCREF(Py_None);
     xid->format_id = Py_None;
-    Py_DECREF(tmp);
 
     /* set xid.bqual = None */
-    tmp = xid->bqual;
+    Py_CLEAR(xid->bqual);
     Py_INCREF(Py_None);
     xid->bqual = Py_None;
-    Py_DECREF(tmp);
 
     /* return the finished object */
     rv = xid;
@@ -624,9 +558,9 @@ exit:
  * If the xid is in the format generated by Psycopg, unpack the tuple into
  * the struct members. Otherwise generate an "unparsed" xid.
  */
-XidObject *
+xidObject *
 xid_from_string(PyObject *str) {
-    XidObject *rv;
+    xidObject *rv;
 
     if (!(Bytes_Check(str) || PyUnicode_Check(str))) {
         PyErr_SetString(PyExc_TypeError, "not a valid transaction id");
@@ -654,7 +588,7 @@ xid_recover(PyObject *conn)
     PyObject *rv = NULL;
     PyObject *curs = NULL;
     PyObject *xids = NULL;
-    XidObject *xid = NULL;
+    xidObject *xid = NULL;
     PyObject *recs = NULL;
     PyObject *rec = NULL;
     PyObject *item = NULL;
@@ -693,34 +627,25 @@ xid_recover(PyObject *conn)
         /* Get the xid with the XA triple set */
         if (!(item = PySequence_GetItem(rec, 0))) { goto exit; }
         if (!(xid = xid_from_string(item))) { goto exit; }
-        Py_DECREF(item); item = NULL;
+        Py_CLEAR(item);
 
         /* set xid.prepared */
-        if (!(item = PySequence_GetItem(rec, 1))) { goto exit; }
-        tmp = xid->prepared;
-        xid->prepared = item;
-        Py_DECREF(tmp);
-        item = NULL;
+        Py_CLEAR(xid->prepared);
+        if (!(xid->prepared = PySequence_GetItem(rec, 1))) { goto exit; }
 
         /* set xid.owner */
-        if (!(item = PySequence_GetItem(rec, 2))) { goto exit; }
-        tmp = xid->owner;
-        xid->owner = item;
-        Py_DECREF(tmp);
-        item = NULL;
+        Py_CLEAR(xid->owner);
+        if (!(xid->owner = PySequence_GetItem(rec, 2))) { goto exit; }
 
         /* set xid.database */
-        if (!(item = PySequence_GetItem(rec, 3))) { goto exit; }
-        tmp = xid->database;
-        xid->database = item;
-        Py_DECREF(tmp);
-        item = NULL;
+        Py_CLEAR(xid->database);
+        if (!(xid->database = PySequence_GetItem(rec, 3))) { goto exit; }
 
         /* xid finished: add it to the returned list */
         PyList_SET_ITEM(xids, i, (PyObject *)xid);
         xid = NULL;  /* ref stolen */
 
-        Py_DECREF(rec); rec = NULL;
+        Py_CLEAR(rec);
     }
 
     /* set the return value. */

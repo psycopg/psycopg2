@@ -31,36 +31,12 @@
 #include <stringobject.h>
 #endif
 
-#if PY_VERSION_HEX < 0x02040000
-#  error "psycopg requires Python >= 2.4"
-#endif
-
 #if PY_VERSION_HEX < 0x02050000
-/* Function missing in Py 2.4 */
-#define PyErr_WarnEx(cat,msg,lvl) PyErr_Warn(cat,msg)
-#endif
-
-#if PY_VERSION_HEX < 0x02050000 && !defined(PY_SSIZE_T_MIN)
-  typedef int Py_ssize_t;
-  #define PY_SSIZE_T_MIN INT_MIN
-  #define PY_SSIZE_T_MAX INT_MAX
-  #define PY_FORMAT_SIZE_T ""
-  #define PyInt_FromSsize_t(x) PyInt_FromLong((x))
-
-  #define lenfunc inquiry
-  #define ssizeargfunc intargfunc
-  #define readbufferproc getreadbufferproc
-  #define writebufferproc getwritebufferproc
-  #define segcountproc getsegcountproc
-  #define charbufferproc getcharbufferproc
-
-  #define CONV_CODE_PY_SSIZE_T "i"
-#else
-  #define CONV_CODE_PY_SSIZE_T "n"
+#  error "psycopg requires Python >= 2.5"
 #endif
 
 /* hash() return size changed around version 3.2a4 on 64bit platforms.  Before
- *   this, the return size was always a long, regardless of arch.  ~3.2 
+ *   this, the return size was always a long, regardless of arch.  ~3.2
  *   introduced the Py_hash_t & Py_uhash_t typedefs with the resulting sizes
  *   based upon arch. */
 #if PY_VERSION_HEX < 0x030200A4
@@ -74,11 +50,6 @@ typedef unsigned long Py_uhash_t;
 #define Py_TYPE(ob)             (((PyObject*)(ob))->ob_type)
 #define Py_SIZE(ob)             (((PyVarObject*)(ob))->ob_size)
 #define PyVarObject_HEAD_INIT(x,n) PyObject_HEAD_INIT(x) n,
-#endif
-
-/* Missing at least in Python 2.4 */
-#ifndef Py_MEMCPY
-#define Py_MEMCPY memcpy
 #endif
 
 /* FORMAT_CODE_PY_SSIZE_T is for Py_ssize_t: */
@@ -114,6 +85,7 @@ typedef unsigned long Py_uhash_t;
 #define PyInt_AsLong           PyLong_AsLong
 #define PyInt_FromLong         PyLong_FromLong
 #define PyInt_FromSsize_t      PyLong_FromSsize_t
+#define PyExc_StandardError    PyExc_Exception
 #define PyString_FromFormat    PyUnicode_FromFormat
 #define Py_TPFLAGS_HAVE_ITER   0L
 #define Py_TPFLAGS_HAVE_RICHCOMPARE 0L

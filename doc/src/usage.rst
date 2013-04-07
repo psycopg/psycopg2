@@ -1,3 +1,5 @@
+.. _usage:
+
 Basic module usage
 ==================
 
@@ -49,7 +51,7 @@ The main entry points of Psycopg are:
   - create new `cursor`\s using the `~connection.cursor()` method to
     execute database commands and queries,
 
-  - terminate the session using the methods `~connection.commit()` or
+  - terminate transactions using the methods `~connection.commit()` or
     `~connection.rollback()`.
 
 - The class `cursor` allows interaction with the database:
@@ -202,28 +204,88 @@ Adaptation of Python values to SQL types
 Many standard Python types are adapted into SQL and returned as Python
 objects when a query is executed.
 
-If you need to convert other Python types to and from PostgreSQL data types,
-see :ref:`adapting-new-types` and :ref:`type-casting-from-sql-to-python`.  You
-can also find a few other specialized adapters in the `psycopg2.extras`
-module.
+The following table shows the default mapping between Python and PostgreSQL
+types:
 
-In the following examples the method `~cursor.mogrify()` is used to show
-the SQL string that would be sent to the database.
+..
+    TODO: The table is not rendered in text output
 
-.. _adapt-consts:
+.. only:: html
+
+  .. table::
+    :class: data-types
+
+    +--------------------+-------------------------+--------------------------+
+    | Python             | PostgreSQL              | See also                 |
+    +====================+=========================+==========================+
+    | `!None`            | :sql:`NULL`             | :ref:`adapt-consts`      |
+    +--------------------+-------------------------+                          |
+    | `!bool`            | :sql:`bool`             |                          |
+    +--------------------+-------------------------+--------------------------+
+    | `!float`           | | :sql:`real`           | :ref:`adapt-numbers`     |
+    |                    | | :sql:`double`         |                          |
+    +--------------------+-------------------------+                          |
+    | | `!int`           | | :sql:`smallint`       |                          |
+    | | `!long`          | | :sql:`integer`        |                          |
+    |                    | | :sql:`bigint`         |                          |
+    +--------------------+-------------------------+                          |
+    | `~decimal.Decimal` | :sql:`numeric`          |                          |
+    +--------------------+-------------------------+--------------------------+
+    | | `!str`           | | :sql:`varchar`        | :ref:`adapt-string`      |
+    | | `!unicode`       | | :sql:`text`           |                          |
+    +--------------------+-------------------------+--------------------------+
+    | | `buffer`         | :sql:`bytea`            | :ref:`adapt-binary`      |
+    | | `memoryview`     |                         |                          |
+    | | `bytearray`      |                         |                          |
+    | | `bytes`          |                         |                          |
+    | | Buffer protocol  |                         |                          |
+    +--------------------+-------------------------+--------------------------+
+    | `!date`            | :sql:`date`             | :ref:`adapt-date`        |
+    +--------------------+-------------------------+                          |
+    | `!time`            | :sql:`time`             |                          |
+    +--------------------+-------------------------+                          |
+    | `!datetime`        | | :sql:`timestamp`      |                          |
+    |                    | | :sql:`timestamptz`    |                          |
+    +--------------------+-------------------------+                          |
+    | `!timedelta`       | :sql:`interval`         |                          |
+    +--------------------+-------------------------+--------------------------+
+    | `!list`            | :sql:`ARRAY`            | :ref:`adapt-list`        |
+    +--------------------+-------------------------+--------------------------+
+    | | `!tuple`         | | Composite types       | | :ref:`adapt-tuple`     |
+    | | `!namedtuple`    | | :sql:`IN` syntax      | | :ref:`adapt-composite` |
+    +--------------------+-------------------------+--------------------------+
+    | `!dict`            | :sql:`hstore`           | :ref:`adapt-hstore`      |
+    +--------------------+-------------------------+--------------------------+
+    | Psycopg's `!Range` | :sql:`range`            | :ref:`adapt-range`       |
+    +--------------------+-------------------------+--------------------------+
+    | Anything\ |tm|     | :sql:`json`             | :ref:`adapt-json`        |
+    +--------------------+-------------------------+--------------------------+
+    | `uuid`             | :sql:`uuid`             | :ref:`adapt-uuid`        |
+    +--------------------+-------------------------+--------------------------+
+
+.. |tm| unicode:: U+2122
+
+The mapping is fairly customizable: see :ref:`adapting-new-types` and
+:ref:`type-casting-from-sql-to-python`.  You can also find a few other
+specialized adapters in the `psycopg2.extras` module.
+
 
 .. index::
     pair: None; Adaptation
     single: NULL; Adaptation
     pair: Boolean; Adaptation
 
-- Python `None` and boolean values `True` and `False` are converted into the
-  proper SQL literals::
+.. _adapt-consts:
+
+Constants adaptation
+^^^^^^^^^^^^^^^^^^^^
+
+Python `None` and boolean values `True` and `False` are converted into the
+proper SQL literals::
 
     >>> cur.mogrify("SELECT %s, %s, %s;", (None, True, False))
-    >>> 'SELECT NULL, true, false;'
+    'SELECT NULL, true, false;'
 
-.. _adapt-numbers:
 
 .. index::
     single: Adaptation; numbers
@@ -231,168 +293,48 @@ the SQL string that would be sent to the database.
     single: Float; Adaptation
     single: Decimal; Adaptation
 
-- Numeric objects: `int`, `long`, `float`, `~decimal.Decimal` are converted in
-  the PostgreSQL numerical representation::
+.. _adapt-numbers:
+
+Numbers adaptation
+^^^^^^^^^^^^^^^^^^
+
+Numeric objects: `int`, `long`, `float`, `~decimal.Decimal` are converted in
+the PostgreSQL numerical representation::
 
     >>> cur.mogrify("SELECT %s, %s, %s, %s;", (10, 10L, 10.0, Decimal("10.00")))
-    >>> 'SELECT 10, 10, 10.0, 10.00;'
+    'SELECT 10, 10, 10.0, 10.00;'
 
-.. _adapt-string:
+Reading from the database, integer types are converted into `!int`, floating
+point types are converted into `!float`, :sql:`numeric`\/\ :sql:`decimal` are
+converted into `!Decimal`.
+
+.. note::
+
+    Sometimes you may prefer to receive :sql:`numeric` data as `!float`
+    insted, for performance reason or ease of manipulation: you can configure
+    an adapter to :ref:`cast PostgreSQL numeric to Python float <faq-float>`.
+    This of course may imply a loss of precision.
+
+.. seealso:: `PostgreSQL numeric types
+    <http://www.postgresql.org/docs/current/static/datatype-numeric.html>`__
+
 
 .. index::
     pair: Strings; Adaptation
     single: Unicode; Adaptation
 
-- String types: `str`, `unicode` are converted in SQL string syntax.
-  `!unicode` objects (`!str` in Python 3) are encoded in the connection
-  `~connection.encoding` to be sent to the backend: trying to send a character
-  not supported by the encoding will result in an error. Received data can be
-  converted either as `!str` or `!unicode`: see :ref:`unicode-handling`.
+.. _adapt-string:
 
-.. _adapt-binary:
+Strings adaptation
+^^^^^^^^^^^^^^^^^^
 
-.. index::
-    single: Buffer; Adaptation
-    single: bytea; Adaptation
-    single: bytes; Adaptation
-    single: bytearray; Adaptation
-    single: memoryview; Adaptation
-    single: Binary string
-
-- Binary types: Python types representing binary objects are converted into
-  PostgreSQL binary string syntax, suitable for :sql:`bytea` fields.   Such
-  types are `buffer` (only available in Python 2), `memoryview` (available
-  from Python 2.7), `bytearray` (available from Python 2.6) and `bytes`
-  (only from Python 3: the name is available from Python 2.6 but it's only an
-  alias for the type `!str`). Any object implementing the `Revised Buffer
-  Protocol`__ should be usable as binary type where the protocol is supported
-  (i.e. from Python 2.6). Received data is returned as `!buffer` (in Python 2)
-  or `!memoryview` (in Python 3).
-
-  .. __: http://www.python.org/dev/peps/pep-3118/
-
-  .. versionchanged:: 2.4
-     only strings were supported before.
-
-  .. versionchanged:: 2.4.1
-     can parse the 'hex' format from 9.0 servers without relying on the
-     version of the client library.
-
-  .. note::
-
-    In Python 2, if you have binary data in a `!str` object, you can pass them
-    to a :sql:`bytea` field using the `psycopg2.Binary` wrapper::
-
-        mypic = open('picture.png', 'rb').read()
-        curs.execute("insert into blobs (file) values (%s)",
-            (psycopg2.Binary(mypic),))
-
-  .. warning::
-
-     Since version 9.0 PostgreSQL uses by default `a new "hex" format`__ to
-     emit :sql:`bytea` fields. Starting from Psycopg 2.4.1 the format is
-     correctly supported.  If you use a previous version you will need some
-     extra care when receiving bytea from PostgreSQL: you must have at least
-     libpq 9.0 installed on the client or alternatively you can set the
-     `bytea_output`__ configuration parameter to ``escape``, either in the
-     server configuration file or in the client session (using a query such as
-     ``SET bytea_output TO escape;``) before receiving binary data.
-
-     .. __: http://www.postgresql.org/docs/current/static/datatype-binary.html
-     .. __: http://www.postgresql.org/docs/current/static/runtime-config-client.html#GUC-BYTEA-OUTPUT
-
-.. _adapt-date:
-
-.. index::
-    single: Adaptation; Date/Time objects
-    single: Date objects; Adaptation
-    single: Time objects; Adaptation
-    single: Interval objects; Adaptation
-    single: mx.DateTime; Adaptation
-
-- Date and time objects: builtin `~datetime.datetime`, `~datetime.date`,
-  `~datetime.time`,  `~datetime.timedelta` are converted into PostgreSQL's
-  :sql:`timestamp`, :sql:`date`, :sql:`time`, :sql:`interval` data types.
-  Time zones are supported too.  The Egenix `mx.DateTime`_ objects are adapted
-  the same way::
-
-    >>> dt = datetime.datetime.now()
-    >>> dt
-    datetime.datetime(2010, 2, 8, 1, 40, 27, 425337)
-
-    >>> cur.mogrify("SELECT %s, %s, %s;", (dt, dt.date(), dt.time()))
-    "SELECT '2010-02-08T01:40:27.425337', '2010-02-08', '01:40:27.425337';"
-
-    >>> cur.mogrify("SELECT %s;", (dt - datetime.datetime(2010,1,1),))
-    "SELECT '38 days 6027.425337 seconds';"
-
-.. _adapt-list:
-
-.. index::
-    single: Array; Adaptation
-    double: Lists; Adaptation
-
-- Python lists are converted into PostgreSQL :sql:`ARRAY`\ s::
-
-    >>> cur.mogrify("SELECT %s;", ([10, 20, 30], ))
-    'SELECT ARRAY[10, 20, 30];'
-
-  .. note::
-
-    Reading back from PostgreSQL, arrays are converted to list of Python
-    objects as expected, but only if the types are known one. Arrays of
-    unknown types are returned as represented by the database (e.g.
-    ``{a,b,c}``). You can easily create a typecaster for :ref:`array of
-    unknown types <cast-array-unknown>`.
-
-.. _adapt-tuple:
-
-.. index::
-    double: Tuple; Adaptation
-    single: IN operator
-
-- Python tuples are converted in a syntax suitable for the SQL :sql:`IN`
-  operator and to represent a composite type::
-
-    >>> cur.mogrify("SELECT %s IN %s;", (10, (10, 20, 30)))
-    'SELECT 10 IN (10, 20, 30);'
-
-  .. note::
-
-    SQL doesn't allow an empty list in the IN operator, so your code should
-    guard against empty tuples.
-
-  If you want PostgreSQL composite types to be converted into a Python
-  tuple/namedtuple you can use the `~psycopg2.extras.register_composite()`
-  function.
-
-  .. versionadded:: 2.0.6
-     the tuple :sql:`IN` adaptation.
-
-  .. versionchanged:: 2.0.14
-     the tuple :sql:`IN` adapter is always active.  In previous releases it
-     was necessary to import the `~psycopg2.extensions` module to have it
-     registered.
-
-  .. versionchanged:: 2.3
-     `~collections.namedtuple` instances are adapted like regular tuples and
-     can thus be used to represent composite types.
-
-.. _adapt-dict:
-
-.. index::
-    single: dict; Adaptation
-    single: hstore; Adaptation
-
-- Python dictionaries are converted into the |hstore|_ data type. By default
-  the adapter is not enabled: see `~psycopg2.extras.register_hstore()` for
-  further details.
-
-  .. |hstore| replace:: :sql:`hstore`
-  .. _hstore: http://www.postgresql.org/docs/current/static/hstore.html
-
-  .. versionadded:: 2.3
-     the :sql:`hstore` adaptation.
+Python `str` and `unicode` are converted into the SQL string syntax.
+`!unicode` objects (`!str` in Python 3) are encoded in the connection
+`~connection.encoding` before sending to the backend: trying to send a
+character not supported by the encoding will result in an error. Data is
+usually received as `!str` (*i.e.* it is *decoded* on Python 3, left *encoded*
+on Python 2). However it is possible to receive `!unicode` on Python 2 too:
+see :ref:`unicode-handling`.
 
 
 .. index::
@@ -401,7 +343,7 @@ the SQL string that would be sent to the database.
 .. _unicode-handling:
 
 Unicode handling
-^^^^^^^^^^^^^^^^
+''''''''''''''''
 
 Psycopg can exchange Unicode data with a PostgreSQL database.  Python
 `!unicode` objects are automatically *encoded* in the client encoding
@@ -464,8 +406,95 @@ the connection or globally: see the function
         psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
         psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 
-    and then forget about this story.
+    and forget about this story.
 
+
+.. index::
+    single: Buffer; Adaptation
+    single: bytea; Adaptation
+    single: bytes; Adaptation
+    single: bytearray; Adaptation
+    single: memoryview; Adaptation
+    single: Binary string
+
+.. _adapt-binary:
+
+Binary adaptation
+^^^^^^^^^^^^^^^^^
+
+Binary types: Python types representing binary objects are converted into
+PostgreSQL binary string syntax, suitable for :sql:`bytea` fields.   Such
+types are `buffer` (only available in Python 2), `memoryview` (available
+from Python 2.7), `bytearray` (available from Python 2.6) and `bytes`
+(only from Python 3: the name is available from Python 2.6 but it's only an
+alias for the type `!str`). Any object implementing the `Revised Buffer
+Protocol`__ should be usable as binary type where the protocol is supported
+(i.e. from Python 2.6). Received data is returned as `!buffer` (in Python 2)
+or `!memoryview` (in Python 3).
+
+.. __: http://www.python.org/dev/peps/pep-3118/
+
+.. versionchanged:: 2.4
+   only strings were supported before.
+
+.. versionchanged:: 2.4.1
+   can parse the 'hex' format from 9.0 servers without relying on the
+   version of the client library.
+
+.. note::
+
+    In Python 2, if you have binary data in a `!str` object, you can pass them
+    to a :sql:`bytea` field using the `psycopg2.Binary` wrapper::
+
+        mypic = open('picture.png', 'rb').read()
+        curs.execute("insert into blobs (file) values (%s)",
+            (psycopg2.Binary(mypic),))
+
+.. warning::
+
+   Since version 9.0 PostgreSQL uses by default `a new "hex" format`__ to
+   emit :sql:`bytea` fields. Starting from Psycopg 2.4.1 the format is
+   correctly supported.  If you use a previous version you will need some
+   extra care when receiving bytea from PostgreSQL: you must have at least
+   libpq 9.0 installed on the client or alternatively you can set the
+   `bytea_output`__ configuration parameter to ``escape``, either in the
+   server configuration file or in the client session (using a query such as
+   ``SET bytea_output TO escape;``) before receiving binary data.
+
+   .. __: http://www.postgresql.org/docs/current/static/datatype-binary.html
+   .. __: http://www.postgresql.org/docs/current/static/runtime-config-client.html#GUC-BYTEA-OUTPUT
+
+
+.. index::
+    single: Adaptation; Date/Time objects
+    single: Date objects; Adaptation
+    single: Time objects; Adaptation
+    single: Interval objects; Adaptation
+    single: mx.DateTime; Adaptation
+
+.. _adapt-date:
+
+Date/Time objects adaptation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Date and time objects: builtin `~datetime.datetime`, `~datetime.date`,
+`~datetime.time`,  `~datetime.timedelta` are converted into PostgreSQL's
+:sql:`timestamp[tz]`, :sql:`date`, :sql:`time`, :sql:`interval` data types.
+Time zones are supported too.  The Egenix `mx.DateTime`_ objects are adapted
+the same way::
+
+    >>> dt = datetime.datetime.now()
+    >>> dt
+    datetime.datetime(2010, 2, 8, 1, 40, 27, 425337)
+
+    >>> cur.mogrify("SELECT %s, %s, %s;", (dt, dt.date(), dt.time()))
+    "SELECT '2010-02-08T01:40:27.425337', '2010-02-08', '01:40:27.425337';"
+
+    >>> cur.mogrify("SELECT %s;", (dt - datetime.datetime(2010,1,1),))
+    "SELECT '38 days 6027.425337 seconds';"
+
+.. seealso:: `PostgreSQL date/time types
+    <http://www.postgresql.org/docs/current/static/datatype-datetime.html>`__
 
 .. index::
     single: Time Zones
@@ -473,11 +502,12 @@ the connection or globally: see the function
 .. _tz-handling:
 
 Time zones handling
-^^^^^^^^^^^^^^^^^^^
+'''''''''''''''''''
 
-The PostgreSQL type :sql:`timestamp with time zone` is converted into Python
-`~datetime.datetime` objects with a `~datetime.datetime.tzinfo` attribute set
-to a `~psycopg2.tz.FixedOffsetTimezone` instance.
+The PostgreSQL type :sql:`timestamp with time zone` (a.k.a.
+:sql:`timestamptz`) is converted into Python `~datetime.datetime` objects with
+a `~datetime.datetime.tzinfo` attribute set to a
+`~psycopg2.tz.FixedOffsetTimezone` instance.
 
     >>> cur.execute("SET TIME ZONE 'Europe/Rome';")  # UTC + 1 hour
     >>> cur.execute("SELECT '2010-01-01 10:30:45'::timestamptz;")
@@ -498,6 +528,81 @@ rounded to the nearest minute, with an error of up to 30 seconds.
     timezones with seconds are supported (with rounding). Previously such
     timezones raised an error.  In order to deal with them in previous
     versions use `psycopg2.extras.register_tstz_w_secs()`.
+
+
+.. _adapt-list:
+
+Lists adaptation
+^^^^^^^^^^^^^^^^
+
+.. index::
+    single: Array; Adaptation
+    double: Lists; Adaptation
+
+Python lists are converted into PostgreSQL :sql:`ARRAY`\ s::
+
+    >>> cur.mogrify("SELECT %s;", ([10, 20, 30], ))
+    'SELECT ARRAY[10,20,30];'
+
+.. note::
+
+    You can use a Python list as the argument of the :sql:`IN` operator using
+    `the PostgreSQL ANY operator`__. ::
+
+        ids = [10, 20, 30]
+        cur.execute("SELECT * FROM data WHERE id = ANY(%s);", (ids,))
+
+    Furthermore :sql:`ANY` can also work with empty lists, whereas :sql:`IN ()`
+    is a SQL syntax error.
+
+    .. __: http://www.postgresql.org/docs/current/static/functions-subquery.html#FUNCTIONS-SUBQUERY-ANY-SOME
+
+.. note::
+
+    Reading back from PostgreSQL, arrays are converted to lists of Python
+    objects as expected, but only if the items are of a known known type.
+    Arrays of unknown types are returned as represented by the database (e.g.
+    ``{a,b,c}``). If you want to convert the items into Python objects you can
+    easily create a typecaster for :ref:`array of unknown types
+    <cast-array-unknown>`.
+
+
+.. _adapt-tuple:
+
+Tuples adaptation
+^^^^^^^^^^^^^^^^^^
+
+.. index::
+    double: Tuple; Adaptation
+    single: IN operator
+
+Python tuples are converted in a syntax suitable for the SQL :sql:`IN`
+operator and to represent a composite type::
+
+    >>> cur.mogrify("SELECT %s IN %s;", (10, (10, 20, 30)))
+    'SELECT 10 IN (10, 20, 30);'
+
+.. note::
+
+    SQL doesn't allow an empty list in the :sql:`IN` operator, so your code
+    should guard against empty tuples. Alternatively you can :ref:`use a
+    Python list <adapt-list>`.
+
+If you want PostgreSQL composite types to be converted into a Python
+tuple/namedtuple you can use the `~psycopg2.extras.register_composite()`
+function.
+
+.. versionadded:: 2.0.6
+   the tuple :sql:`IN` adaptation.
+
+.. versionchanged:: 2.0.14
+   the tuple :sql:`IN` adapter is always active.  In previous releases it
+   was necessary to import the `~psycopg2.extensions` module to have it
+   registered.
+
+.. versionchanged:: 2.3
+   `~collections.namedtuple` instances are adapted like regular tuples and
+   can thus be used to represent composite types.
 
 
 .. index:: Transaction, Begin, Commit, Rollback, Autocommit, Read only
@@ -527,7 +632,7 @@ It is possible to set the connection in *autocommit* mode: this way all the
 commands executed will be immediately committed and no rollback is possible. A
 few commands (e.g. :sql:`CREATE DATABASE`, :sql:`VACUUM`...) require to be run
 outside any transaction: in order to be able to run these commands from
-Psycopg, the session must be in autocommit mode: you can use the
+Psycopg, the connection must be in autocommit mode: you can use the
 `~connection.autocommit` property (`~connection.set_isolation_level()` in
 older versions).
 
@@ -544,6 +649,30 @@ A few other transaction properties can be set session-wide by the
 `!connection`: for instance it is possible to have read-only transactions or
 change the isolation level. See the `~connection.set_session()` method for all
 the details.
+
+
+.. index::
+    single: with statement
+
+``with`` statement
+^^^^^^^^^^^^^^^^^^
+
+Starting from version 2.5, psycopg2's connections and cursors are *context
+managers* and can be used with the ``with`` statement::
+
+    with psycopg2.connect(DSN) as conn:
+        with conn.cursor() as curs:
+            curs.execute(SQL)
+
+When a connection exits the ``with`` block, if no exception has been raised by
+the block, the transaction is committed. In case of exception the transaction
+is rolled back. In no case the connection is closed: a connection can be used
+in more than a ``with`` statement and each ``with`` block is effectively
+wrapped in a transaction.
+
+When a cursor exits the ``with`` block it is closed, releasing any resource
+eventually associated with it. The state of the transaction is not affected.
+
 
 
 .. index::
@@ -576,7 +705,9 @@ cursor is created using the `~connection.cursor()` method specifying the
 *name* parameter. Such cursor will behave mostly like a regular cursor,
 allowing the user to move in the dataset using the `~cursor.scroll()`
 method and to read the data using `~cursor.fetchone()` and
-`~cursor.fetchmany()` methods.
+`~cursor.fetchmany()` methods. Normally you can only scroll forward in a
+cursor: if you need to scroll backwards you should declare your cursor
+`~cursor.scrollable`.
 
 Named cursors are also :ref:`iterable <cursor-iterable>` like regular cursors.
 Note however that before Psycopg 2.4 iteration was performed fetching one

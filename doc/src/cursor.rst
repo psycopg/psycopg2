@@ -83,6 +83,11 @@ The ``cursor`` class
         The cursor will be unusable from this point forward; an
         `~psycopg2.InterfaceError` will be raised if any operation is
         attempted with the cursor.
+
+        .. versionchanged:: 2.5 if the cursor is used in a ``with`` statement,
+            the method is automatically called at the end of the ``with``
+            block.
+
             
     .. attribute:: closed
 
@@ -114,20 +119,51 @@ The ``cursor`` class
             The `name` attribute is a Psycopg extension to the |DBAPI|.
 
 
+    .. attribute:: scrollable
+
+        Read/write attribute: specifies if a named cursor is declared
+        :sql:`SCROLL`, hence is capable to scroll backwards (using
+        `~cursor.scroll()`). If `!True`, the cursor can be scrolled backwards,
+        if `!False` it is never scrollable. If `!None` (default) the cursor
+        scroll option is not specified, usually but not always meaning no
+        backward scroll (see the |declare-notes|__).
+
+        .. |declare-notes| replace:: :sql:`DECLARE` notes
+        .. __: http://www.postgresql.org/docs/current/static/sql-declare.html#SQL-DECLARE-NOTES
+
+        .. note::
+
+            set the value before calling `~cursor.execute()` or use the
+            `connection.cursor()` *scrollable* parameter, otherwise the value
+            will have no effect.
+
+        .. versionadded:: 2.5
+
+        .. extension::
+
+            The `scrollable` attribute is a Psycopg extension to the |DBAPI|.
+
+
     .. attribute:: withhold
-    
+
         Read/write attribute: specifies if a named cursor lifetime should
         extend outside of the current transaction, i.e., it is possible to
-        fetch from the cursor even after a `commection.commit()` (but not after
+        fetch from the cursor even after a `connection.commit()` (but not after
         a `connection.rollback()`).  See :ref:`server-side-cursors`
 
+        .. note::
+
+            set the value before calling `~cursor.execute()` or use the
+            `connection.cursor()` *withhold* parameter, otherwise the value
+            will have no effect.
+
         .. versionadded:: 2.4.3
-        
+
         .. extension::
 
             The `withhold` attribute is a Psycopg extension to the |DBAPI|.
-    
-    
+
+
     .. |execute*| replace:: `execute*()`
 
     .. _execute*:
@@ -297,7 +333,8 @@ The ``cursor`` class
         not changed.
 
         The method can be used both for client-side cursors and
-        :ref:`server-side cursors <server-side-cursors>`.
+        :ref:`server-side cursors <server-side-cursors>`. Server-side cursors
+        can usually scroll backwards only if declared `~cursor.scrollable`.
 
         .. note:: 
 
@@ -527,9 +564,18 @@ The ``cursor`` class
         |COPY|__ command documentation).
 
         :param sql: the :sql:`COPY` statement to execute.
-        :param file: a file-like object; must be a readable file for
-            :sql:`COPY FROM` or an writable file for :sql:`COPY TO`.
+        :param file: a file-like object to read or write (according to *sql*).
         :param size: size of the read buffer to be used in :sql:`COPY FROM`.
+
+        The *sql* statement should be in the form :samp:`COPY {table} TO
+        STDOUT` to export :samp:`{table}` to the *file* object passed as
+        argument or :samp:`COPY {table} FROM STDIN` to import the content of
+        the *file* object into :samp:`{table}`.
+
+        *file* must be a readable file-like object (as required by
+        `~cursor.copy_from()`) for *sql* statement :sql:`COPY ... FROM STDIN`
+        or a writable one (as required by `~cursor.copy_to()`) for :sql:`COPY
+        ... TO STDOUT`.
 
         Example:
 

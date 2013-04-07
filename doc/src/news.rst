@@ -1,0 +1,4 @@
+Release notes
+=============
+
+.. include:: ../../NEWS

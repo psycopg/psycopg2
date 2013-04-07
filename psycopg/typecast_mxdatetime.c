@@ -51,7 +51,7 @@ typecast_MXDATE_cast(const char *str, Py_ssize_t len, PyObject *curs)
     int hh=0, mm=0, ss=0, us=0, tz=0;
     const char *tp = NULL;
 
-    if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
+    if (str == NULL) { Py_RETURN_NONE; }
 
     Dprintf("typecast_MXDATE_cast: s = %s", str);
 
@@ -99,7 +99,7 @@ typecast_MXTIME_cast(const char *str, Py_ssize_t len, PyObject *curs)
 {
     int n, hh=0, mm=0, ss=0, us=0, tz=0;
 
-    if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
+    if (str == NULL) { Py_RETURN_NONE; }
 
     Dprintf("typecast_MXTIME_cast: s = %s", str);
 
@@ -129,7 +129,7 @@ typecast_MXINTERVAL_cast(const char *str, Py_ssize_t len, PyObject *curs)
     double v = 0.0, sign = 1.0;
     int part = 0;
 
-    if (str == NULL) {Py_INCREF(Py_None); return Py_None;}
+    if (str == NULL) { Py_RETURN_NONE; }
 
     Dprintf("typecast_MXINTERVAL_cast: s = %s", str);
 

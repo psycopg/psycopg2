@@ -38,6 +38,7 @@
 #include "psycopg/green.h"
 #include "psycopg/typecast.h"
 #include "psycopg/pgtypes.h"
+#include "psycopg/error.h"
 
 #include <string.h>
 
@@ -149,15 +150,20 @@ exception_from_sqlstate(const char *sqlstate)
 
 /* pq_raise - raise a python exception of the right kind
 
-   This function should be called while holding the GIL. */
+   This function should be called while holding the GIL.
+
+   The function passes the ownership of the pgres to the returned exception,
+   wherer the pgres was the explicit argument or taken from the cursor.
+   So, after calling it curs->pgres will be set to null */
 
 RAISES static void
-pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres)
+pq_raise(connectionObject *conn, cursorObject *curs, PGresult **pgres)
 {
     PyObject *exc = NULL;
     const char *err = NULL;
     const char *err2 = NULL;
     const char *code = NULL;
+    PyObject *pyerr = NULL;
 
     if (conn == NULL) {
         PyErr_SetString(DatabaseError,
@@ -171,13 +177,13 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres)
         conn->closed = 2;
 
     if (pgres == NULL && curs != NULL)
-        pgres = curs->pgres;
+        pgres = &curs->pgres;
 
-    if (pgres) {
-        err = PQresultErrorMessage(pgres);
+    if (pgres && *pgres) {
+        err = PQresultErrorMessage(*pgres);
         if (err != NULL) {
             Dprintf("pq_raise: PQresultErrorMessage: err=%s", err);
-            code = PQresultErrorField(pgres, PG_DIAG_SQLSTATE);
+            code = PQresultErrorField(*pgres, PG_DIAG_SQLSTATE);
         }
     }
     if (err == NULL) {
@@ -210,7 +216,26 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult *pgres)
     err2 = strip_severity(err);
     Dprintf("pq_raise: err2=%s", err2);
 
-    psyco_set_error(exc, curs, err2, err, code);
+    pyerr = psyco_set_error(exc, curs, err2);
+
+    if (pyerr && PyObject_TypeCheck(pyerr, &errorType)) {
+        errorObject *perr = (errorObject *)pyerr;
+
+        PyMem_Free(perr->codec);
+        psycopg_strdup(&perr->codec, conn->codec, 0);
+
+        Py_CLEAR(perr->pgerror);
+        perr->pgerror = error_text_from_chars(perr, err);
+
+        Py_CLEAR(perr->pgcode);
+        perr->pgcode = error_text_from_chars(perr, code);
+
+        CLEARPGRES(perr->pgres);
+        if (pgres && *pgres) {
+            perr->pgres = *pgres;
+            *pgres = NULL;
+        }
+    }
 }
 
 /* pq_set_critical, pq_resolve_critical - manage critical errors
@@ -369,7 +394,7 @@ pq_execute_command_locked(connectionObject *conn, const char *query,
     }
 
     retvalue = 0;
-    IFCLEARPGRES(*pgres);
+    CLEARPGRES(*pgres);
 
 cleanup:
     return retvalue;
@@ -388,14 +413,16 @@ pq_complete_error(connectionObject *conn, PGresult **pgres, char **error)
 {
     Dprintf("pq_complete_error: pgconn = %p, pgres = %p, error = %s",
             conn->pgconn, *pgres, *error ? *error : "(null)");
-    if (*pgres != NULL)
-        pq_raise(conn, NULL, *pgres);
+    if (*pgres != NULL) {
+        pq_raise(conn, NULL, pgres);
+        /* now *pgres is null */
+    }
     else if (*error != NULL) {
         PyErr_SetString(OperationalError, *error);
     } else {
         PyErr_SetString(OperationalError, "unknown error");
     }
-    IFCLEARPGRES(*pgres);
+
     if (*error) {
         free(*error);
         *error = NULL;
@@ -557,12 +584,18 @@ pq_reset_locked(connectionObject *conn, PGresult **pgres, char **error,
         if (retvalue != 0) return retvalue;
     }
 
-    retvalue = pq_execute_command_locked(conn, "RESET ALL", pgres, error, tstate);
-    if (retvalue != 0) return retvalue;
+    if (conn->server_version >= 80300) {
+        retvalue = pq_execute_command_locked(conn, "DISCARD ALL", pgres, error, tstate);
+        if (retvalue != 0) return retvalue;
+    }
+    else {
+        retvalue = pq_execute_command_locked(conn, "RESET ALL", pgres, error, tstate);
+        if (retvalue != 0) return retvalue;
 
-    retvalue = pq_execute_command_locked(conn,
-        "SET SESSION AUTHORIZATION DEFAULT", pgres, error, tstate);
-    if (retvalue != 0) return retvalue;
+        retvalue = pq_execute_command_locked(conn,
+            "SET SESSION AUTHORIZATION DEFAULT", pgres, error, tstate);
+        if (retvalue != 0) return retvalue;
+    }
 
     /* should set the tpc xid to null: postponed until we get the GIL again */
     conn->status = CONN_STATUS_READY;
@@ -717,7 +750,7 @@ pq_tpc_command_locked(connectionObject *conn, const char *cmd, const char *tid,
     PyEval_RestoreThread(*tstate);
 
     /* convert the xid into the postgres transaction_id and quote it. */
-    if (!(etid = psycopg_escape_string((PyObject *)conn, tid, 0, NULL, NULL)))
+    if (!(etid = psycopg_escape_string(conn, tid, 0, NULL, NULL)))
     { goto exit; }
 
     /* prepare the command to the server */
@@ -869,7 +902,7 @@ pq_execute(cursorObject *curs, const char *query, int async, int no_result)
     }
 
     if (async == 0) {
-        IFCLEARPGRES(curs->pgres);
+        CLEARPGRES(curs->pgres);
         Dprintf("pq_execute: executing SYNC query: pgconn = %p", curs->conn->pgconn);
         Dprintf("    %-.200s", query);
         if (!psyco_green()) {
@@ -908,7 +941,7 @@ pq_execute(cursorObject *curs, const char *query, int async, int no_result)
         Dprintf("pq_execute: executing ASYNC query: pgconn = %p", curs->conn->pgconn);
         Dprintf("    %-.200s", query);
 
-        IFCLEARPGRES(curs->pgres);
+        CLEARPGRES(curs->pgres);
         if (PQsendQuery(curs->conn->pgconn, query) == 0) {
             pthread_mutex_unlock(&(curs->conn->lock));
             Py_BLOCK_THREADS;
@@ -1305,7 +1338,7 @@ _pq_copy_in_v3(cursorObject *curs)
         /* XXX would be nice to propagate the exeption */
         res = PQputCopyEnd(curs->conn->pgconn, "error in .read() call");
 
-    IFCLEARPGRES(curs->pgres);
+    CLEARPGRES(curs->pgres);
 
     Dprintf("_pq_copy_in_v3: copy ended; res = %d", res);
 
@@ -1329,7 +1362,7 @@ _pq_copy_in_v3(cursorObject *curs)
                 break;
             if (PQresultStatus(curs->pgres) == PGRES_FATAL_ERROR)
                 pq_raise(curs->conn, curs, NULL);
-            IFCLEARPGRES(curs->pgres);
+            CLEARPGRES(curs->pgres);
         }
     }
 
@@ -1395,7 +1428,7 @@ _pq_copy_out_v3(cursorObject *curs)
     }
 
     /* and finally we grab the operation result from the backend */
-    IFCLEARPGRES(curs->pgres);
+    CLEARPGRES(curs->pgres);
     for (;;) {
         Py_BEGIN_ALLOW_THREADS;
         curs->pgres = PQgetResult(curs->conn->pgconn);
@@ -1405,7 +1438,7 @@ _pq_copy_out_v3(cursorObject *curs)
             break;
         if (PQresultStatus(curs->pgres) == PGRES_FATAL_ERROR)
             pq_raise(curs->conn, curs, NULL);
-        IFCLEARPGRES(curs->pgres);
+        CLEARPGRES(curs->pgres);
     }
     ret = 1;
 
@@ -1466,7 +1499,7 @@ pq_fetch(cursorObject *curs, int no_result)
         curs->rowcount = -1;
         /* error caught by out glorious notice handler */
         if (PyErr_Occurred()) ex = -1;
-        IFCLEARPGRES(curs->pgres);
+        CLEARPGRES(curs->pgres);
         break;
 
     case PGRES_COPY_IN:
@@ -1475,7 +1508,7 @@ pq_fetch(cursorObject *curs, int no_result)
         curs->rowcount = -1;
         /* error caught by out glorious notice handler */
         if (PyErr_Occurred()) ex = -1;
-        IFCLEARPGRES(curs->pgres);
+        CLEARPGRES(curs->pgres);
         break;
 
     case PGRES_TUPLES_OK:
@@ -1487,7 +1520,7 @@ pq_fetch(cursorObject *curs, int no_result)
         }
         else {
             Dprintf("pq_fetch: got tuples, discarding them");
-            IFCLEARPGRES(curs->pgres);
+            CLEARPGRES(curs->pgres);
             curs->rowcount = -1;
             ex = 0;
         }
@@ -1496,14 +1529,13 @@ pq_fetch(cursorObject *curs, int no_result)
     case PGRES_EMPTY_QUERY:
         PyErr_SetString(ProgrammingError,
             "can't execute an empty query");
-        IFCLEARPGRES(curs->pgres);
+        CLEARPGRES(curs->pgres);
         ex = -1;
         break;
 
     default:
         Dprintf("pq_fetch: uh-oh, something FAILED: pgconn = %p", curs->conn);
         pq_raise(curs->conn, curs, NULL);
-        IFCLEARPGRES(curs->pgres);
         ex = -1;
         break;
     }

@@ -129,15 +129,6 @@ pint_setup(pintObject *self, PyObject *obj)
     return 0;
 }
 
-static int
-pint_traverse(PyObject *obj, visitproc visit, void *arg)
-{
-    pintObject *self = (pintObject *)obj;
-
-    Py_VISIT(self->wrapped);
-    return 0;
-}
-
 static void
 pint_dealloc(PyObject* obj)
 {
@@ -170,12 +161,6 @@ pint_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return type->tp_alloc(type, 0);
 }
 
-static void
-pint_del(PyObject* self)
-{
-    PyObject_GC_Del(self);
-}
-
 static PyObject *
 pint_repr(pintObject *self)
 {
@@ -192,63 +177,41 @@ pint_repr(pintObject *self)
 PyTypeObject pintType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "psycopg2._psycopg.Int",
-    sizeof(pintObject),
-    0,
+    sizeof(pintObject), 0,
     pint_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/
-
     0,          /*tp_getattr*/
     0,          /*tp_setattr*/
-
     0,          /*tp_compare*/
-
     (reprfunc)pint_repr, /*tp_repr*/
     0,          /*tp_as_number*/
     0,          /*tp_as_sequence*/
     0,          /*tp_as_mapping*/
     0,          /*tp_hash */
-
     0,          /*tp_call*/
     (reprfunc)pint_str, /*tp_str*/
-
     0,          /*tp_getattro*/
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
-
-    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
+    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /*tp_flags*/
     pintType_doc, /*tp_doc*/
-
-    pint_traverse, /*tp_traverse*/
+    0,          /*tp_traverse*/
     0,          /*tp_clear*/
-
     0,          /*tp_richcompare*/
     0,          /*tp_weaklistoffset*/
-
     0,          /*tp_iter*/
     0,          /*tp_iternext*/
-
-    /* Attribute descriptor and subclassing stuff */
-
     pintObject_methods, /*tp_methods*/
     pintObject_members, /*tp_members*/
     0,          /*tp_getset*/
     0,          /*tp_base*/
     0,          /*tp_dict*/
-
     0,          /*tp_descr_get*/
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
-
     pint_init, /*tp_init*/
-    0, /*tp_alloc  will be set to PyType_GenericAlloc in module init*/
+    0,          /*tp_alloc*/
     pint_new, /*tp_new*/
-    (freefunc)pint_del, /*tp_free  Low-level free-memory routine */
-    0,          /*tp_is_gc For PyObject_IS_GC */
-    0,          /*tp_bases*/
-    0,          /*tp_mro method resolution order */
-    0,          /*tp_cache*/
-    0,          /*tp_subclasses*/
-    0           /*tp_weaklist*/
 };
 
 

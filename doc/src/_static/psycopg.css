@@ -26,3 +26,7 @@ a > tt.sql:hover {
 dl.faq dt {
     font-weight: bold;
 }
+
+table.data-types div.line-block {
+    margin-bottom: 0;
+}

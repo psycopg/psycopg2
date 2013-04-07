@@ -1,6 +1,6 @@
-/* adapter_qstring.h - definition for the QuotedString type
+/* diagnostics.c - definition for the psycopg Diagnostics type
  *
- * Copyright (C) 2003-2010 Federico Di Gregorio <fog@debian.org>
+ * Copyright (C) 2013 Matthew Woodcraft <matthew@woodcraft.me.uk>
  *
  * This file is part of psycopg.
  *
@@ -23,32 +23,18 @@
  * License for more details.
  */
 
-#ifndef PSYCOPG_QSTRING_H
-#define PSYCOPG_QSTRING_H 1
+#ifndef PSYCOPG_DIAGNOSTICS_H
+#define PSYCOPG_DIAGNOSTICS_H 1
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "psycopg/error.h"
 
-extern HIDDEN PyTypeObject qstringType;
+extern HIDDEN PyTypeObject diagnosticsType;
 
 typedef struct {
     PyObject_HEAD
 
-    PyObject *wrapped;
-    PyObject *buffer;
+    errorObject *err;  /* exception to retrieve the diagnostics from */
 
-    connectionObject *conn;
-} qstringObject;
+} diagnosticsObject;
 
-/* functions exported to psycopgmodule.c */
-
-HIDDEN PyObject *psyco_QuotedString(PyObject *module, PyObject *args);
-#define psyco_QuotedString_doc \
-    "QuotedString(str, enc) -> new quoted string"
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* !defined(PSYCOPG_QSTRING_H) */
+#endif /* PSYCOPG_DIAGNOSTICS_H */
