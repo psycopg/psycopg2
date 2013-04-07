@@ -10,6 +10,8 @@ New features:
 - Added `~psycopg2.extensions.Diagnostics` object to get extended info
   from a database error.  Many thanks to Matthew Woodcraft for the
   implementation (:ticket:`#149`).
+- Added `connection.cursor_factory` attribute to customize the default
+  object returned by `~connection.cursor()`.
 - Added support for backward scrollable cursors. Thanks to Jon Nelson
   for the initial patch (:ticket:`#108`).
 - Added a simple way to :ref:`customize casting of composite types

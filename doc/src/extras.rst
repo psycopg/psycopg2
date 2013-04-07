@@ -16,22 +16,27 @@ This module is a generic place used to hold little helper functions and
 classes until a better place in the distribution is found.
 
 
-.. index::
-    pair: Cursor; Dictionary
-
-.. _dict-cursor:
-
+.. _cursor-subclasses:
 
 Connection and cursor subclasses
 --------------------------------
 
 A few objects that change the way the results are returned by the cursor or
-modify the object behavior in some other way. Typically `!connection`
-subclasses are passed as *connection_factory* argument to
-`~psycopg2.connect()` so that the connection will generate the matching
-`!cursor` subclass. Alternatively a `!cursor` subclass can be used one-off by
-passing it as the *cursor_factory* argument to the `~connection.cursor()`
-method of a regular `!connection`.
+modify the object behavior in some other way. Typically `!cursor` subclasses
+are passed as *cursor_factory* argument to `~psycopg2.connect()` so that the
+connection's `~connection.cursor()` method will generate objects of this
+class.  Alternatively a `!cursor` subclass can be used one-off by passing it
+as the *cursor_factory* argument to the `!cursor()` method.
+
+If you want to use a `!connection` subclass you can pass it as the
+*connection_factory* argument of the `!connect()` function.
+
+
+.. index::
+    pair: Cursor; Dictionary
+
+.. _dict-cursor:
+
 
 Dictionary-like cursor
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -61,6 +66,11 @@ The records still support indexing as the original tuple:
 
 .. autoclass:: DictConnection
 
+    .. note::
+
+        Not very useful since Psycopg 2.5: you can use `psycopg2.connect`\
+        ``(dsn, cursor_factory=DictCursor)`` instead of `!DictConnection`.
+
 .. autoclass:: DictRow
 
 
@@ -70,6 +80,12 @@ Real dictionary cursor
 .. autoclass:: RealDictCursor
 
 .. autoclass:: RealDictConnection
+
+    .. note::
+
+        Not very useful since Psycopg 2.5: you can use `psycopg2.connect`\
+        ``(dsn, cursor_factory=RealDictCursor)`` instead of
+        `!RealDictConnection`.
 
 .. autoclass:: RealDictRow
 
@@ -100,6 +116,12 @@ expect it to be... ::
 .. autoclass:: NamedTupleCursor
 
 .. autoclass:: NamedTupleConnection
+
+    .. note::
+
+        Not very useful since Psycopg 2.5: you can use `psycopg2.connect`\
+        ``(dsn, cursor_factory=NamedTupleCursor)`` instead of
+        `!NamedTupleConnection`.
 
 
 .. index::

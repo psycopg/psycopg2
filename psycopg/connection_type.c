@@ -64,6 +64,10 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *kwargs)
 
     EXC_IF_CONN_CLOSED(self);
 
+    if (self->cursor_factory && self->cursor_factory != Py_None) {
+        factory = self->cursor_factory;
+    }
+
     if (!PyArg_ParseTupleAndKeywords(
             args, kwargs, "|OOOO", kwlist,
             &name, &factory, &withhold, &scrollable)) {
@@ -1013,6 +1017,8 @@ static struct PyMemberDef connectionObject_members[] = {
     {"status", T_INT,
         offsetof(connectionObject, status), READONLY,
         "The current transaction status."},
+    {"cursor_factory", T_OBJECT, offsetof(connectionObject, cursor_factory), 0,
+        "Default cursor_factory for cursor()."},
     {"string_types", T_OBJECT, offsetof(connectionObject, string_types), READONLY,
         "A set of typecasters to convert textual values."},
     {"binary_types", T_OBJECT, offsetof(connectionObject, binary_types), READONLY,

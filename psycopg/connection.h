@@ -121,6 +121,7 @@ struct connectionObject {
 
     int autocommit;
 
+    PyObject *cursor_factory;    /* default cursor factory from cursor() */
 };
 
 /* map isolation level values into a numeric const */

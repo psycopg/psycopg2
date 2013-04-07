@@ -224,6 +224,31 @@ class ConnectionTests(ConnectingTestCase):
 
         self.assert_(not notices, "%d notices raised" % len(notices))
 
+    def test_connect_cursor_factory(self):
+        import psycopg2.extras
+        conn = self.connect(cursor_factory=psycopg2.extras.DictCursor)
+        cur = conn.cursor()
+        cur.execute("select 1 as a")
+        self.assertEqual(cur.fetchone()['a'], 1)
+
+    def test_cursor_factory(self):
+        self.assertEqual(self.conn.cursor_factory, None)
+        cur = self.conn.cursor()
+        cur.execute("select 1 as a")
+        self.assertRaises(TypeError, (lambda r: r['a']), cur.fetchone())
+
+        self.conn.cursor_factory = psycopg2.extras.DictCursor
+        self.assertEqual(self.conn.cursor_factory, psycopg2.extras.DictCursor)
+        cur = self.conn.cursor()
+        cur.execute("select 1 as a")
+        self.assertEqual(cur.fetchone()['a'], 1)
+
+        self.conn.cursor_factory = None
+        self.assertEqual(self.conn.cursor_factory, None)
+        cur = self.conn.cursor()
+        cur.execute("select 1 as a")
+        self.assertRaises(TypeError, (lambda r: r['a']), cur.fetchone())
+
 
 class IsolationLevelsTestCase(ConnectingTestCase):
 

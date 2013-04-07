@@ -17,8 +17,8 @@ The module interface respects the standard defined in the |DBAPI|_.
     single: DSN (Database Source Name)
 
 .. function::
-    connect(dsn, connection_factory=None, async=False)
-    connect(\*\*kwargs, connection_factory=None, async=False)
+    connect(dsn, connection_factory=None, cursor_factory=None, async=False)
+    connect(\*\*kwargs, connection_factory=None, cursor_factory=None, async=False)
 
     Create a new database session and return a new `connection` object.
 
@@ -33,8 +33,9 @@ The module interface respects the standard defined in the |DBAPI|_.
 
     The two call styles are mutually exclusive: you cannot specify connection
     parameters as keyword arguments together with a connection string; only
-    *connection_factory* and *async* are supported together with the *dsn*
-    argument.
+    the parameters not needed for the database connection (*i.e.*
+    *connection_factory*, *cursor_factory*, and *async*) are supported
+    together with the *dsn* argument.
 
     The basic connection parameters are:
 
@@ -61,7 +62,9 @@ The module interface respects the standard defined in the |DBAPI|_.
     Using the *connection_factory* parameter a different class or
     connections factory can be specified. It should be a callable object
     taking a *dsn* string argument. See :ref:`subclassing-connection` for
-    details.
+    details.  If a *cursor_factory* is specified, the connection's
+    `~connection.cursor_factory` is set to it. If you only need customized
+    cursors you can use this parameter instead of subclassing a connection.
 
     Using *async*\=\ `!True` an asynchronous connection will be created: see
     :ref:`async-support` to know about advantages and limitations.
@@ -69,6 +72,9 @@ The module interface respects the standard defined in the |DBAPI|_.
     .. versionchanged:: 2.4.3
         any keyword argument is passed to the connection. Previously only the
         basic parameters (plus `!sslmode`) were supported as keywords.
+
+    .. versionchanged:: 2.5
+        added the *cursor_factory* parameter.
 
     .. seealso::
 

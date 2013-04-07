@@ -49,7 +49,8 @@ The ``connection`` class
         The *cursor_factory* argument can be used to create non-standard
         cursors. The class returned must be a subclass of
         `psycopg2.extensions.cursor`. See :ref:`subclassing-cursor` for
-        details.
+        details. A default factory for the connection can also be specified
+        using the `~connection.cursor_factory` attribute.
 
         .. versionchanged:: 2.4.3 added the *withhold* argument.
         .. versionchanged:: 2.5 added the *scrollable* argument.
@@ -503,6 +504,15 @@ The ``connection`` class
             list was composed by 2 items tuples :samp:`({pid},{channel})` and
             the payload was not accessible. To keep backward compatibility,
             `!Notify` objects can still be accessed as 2 items tuples.
+
+
+    .. attribute:: cursor_factory
+
+        The default cursor factory used by `~connection.cursor()` if the
+        parameter is no specified.
+
+        .. versionadded:: 2.5
+
 
     .. index::
         pair: Backend; PID
