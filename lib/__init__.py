@@ -166,7 +166,3 @@ def connect(dsn=None,
         conn.cursor_factory = cursor_factory
 
     return conn
-
-
-__all__ = filter(lambda k: not k.startswith('_'), locals().keys())
-

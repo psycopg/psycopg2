@@ -25,16 +25,15 @@ and classes untill a better place in the distribution is found.
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-import os
-import sys
-import time
-import warnings
-import re as regex
+import os as _os
+import sys as _sys
+import time as _time
+import re as _re
 
 try:
-    import logging
+    import logging as _logging
 except:
-    logging = None
+    _logging = None
 
 import psycopg2
 from psycopg2 import extensions as _ext
@@ -192,7 +191,7 @@ class DictRow(list):
         self._index = data[1]
 
     # drop the crusty Py2 methods
-    if sys.version_info[0] > 2:
+    if _sys.version_info[0] > 2:
         items = iteritems; del iteritems
         keys = iterkeys; del iterkeys
         values = itervalues; del itervalues
@@ -354,7 +353,7 @@ class LoggingConnection(_connection):
         instance from the standard logging module.
         """
         self._logobj = logobj
-        if logging and isinstance(logobj, logging.Logger):
+        if _logging and isinstance(logobj, _logging.Logger):
             self.log = self._logtologger
         else:
             self.log = self._logtofile
@@ -370,7 +369,7 @@ class LoggingConnection(_connection):
 
     def _logtofile(self, msg, curs):
         msg = self.filter(msg, curs)
-        if msg: self._logobj.write(msg + os.linesep)
+        if msg: self._logobj.write(msg + _os.linesep)
 
     def _logtologger(self, msg, curs):
         msg = self.filter(msg, curs)
@@ -418,9 +417,9 @@ class MinTimeLoggingConnection(LoggingConnection):
         self._mintime = mintime
 
     def filter(self, msg, curs):
-        t = (time.time() - curs.timestamp) * 1000
+        t = (_time.time() - curs.timestamp) * 1000
         if t > self._mintime:
-            return msg + os.linesep + "  (execution time: %d ms)" % t
+            return msg + _os.linesep + "  (execution time: %d ms)" % t
 
     def cursor(self, *args, **kwargs):
         kwargs.setdefault('cursor_factory', MinTimeLoggingCursor)
@@ -430,11 +429,11 @@ class MinTimeLoggingCursor(LoggingCursor):
     """The cursor sub-class companion to `MinTimeLoggingConnection`."""
 
     def execute(self, query, vars=None):
-        self.timestamp = time.time()
+        self.timestamp = _time.time()
         return LoggingCursor.execute(self, query, vars)
 
     def callproc(self, procname, vars=None):
-        self.timestamp = time.time()
+        self.timestamp = _time.time()
         return LoggingCursor.execute(self, procname, vars)
 
 
@@ -558,20 +557,21 @@ def register_tstz_w_secs(oids=None, conn_or_curs=None):
     These are now correctly handled by the default type caster, so currently
     the function doesn't do anything.
     """
+    import warnings
     warnings.warn("deprecated", DeprecationWarning)
 
-
-import select
-from psycopg2.extensions import POLL_OK, POLL_READ, POLL_WRITE
-from psycopg2 import OperationalError
 
 def wait_select(conn):
     """Wait until a connection or cursor has data available.
 
     The function is an example of a wait callback to be registered with
-    `~psycopg2.extensions.set_wait_callback()`. This function uses `!select()`
-    to wait for data available.
+    `~psycopg2.extensions.set_wait_callback()`. This function uses
+    :py:func:`~select.select()` to wait for data available.
+
     """
+    import select
+    from psycopg2.extensions import POLL_OK, POLL_READ, POLL_WRITE
+
     while 1:
         state = conn.poll()
         if state == POLL_OK:
@@ -581,7 +581,7 @@ def wait_select(conn):
         elif state == POLL_WRITE:
             select.select([], [conn.fileno()], [])
         else:
-            raise OperationalError("bad state from poll: %s" % state)
+            raise conn.OperationalError("bad state from poll: %s" % state)
 
 
 def _solve_conn_curs(conn_or_curs):
@@ -648,7 +648,7 @@ class HstoreAdapter(object):
 
     getquoted = _getquoted_9
 
-    _re_hstore = regex.compile(r"""
+    _re_hstore = _re.compile(r"""
         # hstore key:
         # a string of normal or escaped chars
         "((?: [^"\\] | \\. )*)"
@@ -659,10 +659,10 @@ class HstoreAdapter(object):
             | "((?: [^"\\] | \\. )*)"
         )
         (?:\s*,\s*|$) # pairs separated by comma or end of string.
-    """, regex.VERBOSE)
+    """, _re.VERBOSE)
 
     @classmethod
-    def parse(self, s, cur, _bsdec=regex.compile(r"\\(.)")):
+    def parse(self, s, cur, _bsdec=_re.compile(r"\\(.)")):
         """Parse an hstore representation in a Python string.
 
         The hstore is represented as something like::
@@ -786,7 +786,7 @@ def register_hstore(conn_or_curs, globally=False, unicode=False,
             array_oid = tuple([x for x in array_oid if x])
 
     # create and register the typecaster
-    if sys.version_info[0] < 3 and unicode:
+    if _sys.version_info[0] < 3 and unicode:
         cast = HstoreAdapter.parse_unicode
     else:
         cast = HstoreAdapter.parse
@@ -852,13 +852,13 @@ class CompositeCaster(object):
 
         return self._ctor(values)
 
-    _re_tokenize = regex.compile(r"""
+    _re_tokenize = _re.compile(r"""
   \(? ([,)])                        # an empty token, representing NULL
 | \(? " ((?: [^"] | "")*) " [,)]    # or a quoted string
 | \(? ([^",)]+) [,)]                # or an unquoted string
-    """, regex.VERBOSE)
+    """, _re.VERBOSE)
 
-    _re_undouble = regex.compile(r'(["\\])\1')
+    _re_undouble = _re.compile(r'(["\\])\1')
 
     @classmethod
     def tokenize(self, s):
@@ -970,7 +970,3 @@ from psycopg2._json import json, Json, register_json, register_default_json
 from psycopg2._range import Range, NumericRange
 from psycopg2._range import DateRange, DateTimeRange, DateTimeTZRange
 from psycopg2._range import register_range, RangeAdapter, RangeCaster
-
-
-__all__ = filter(lambda k: not k.startswith('_'), locals().keys())
-
