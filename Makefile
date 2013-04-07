@@ -11,7 +11,6 @@
 #
 # Create a source package::
 #
-#   make env  # required to build the documentation
 #   make sdist
 #
 # Run the test::
@@ -113,7 +112,7 @@ $(PACKAGE)/tests/%.py: tests/%.py
 	$(PYTHON) setup.py build_py $(BUILD_OPT)
 	touch $@
 
-$(SDIST): docs MANIFEST $(SOURCE)
+$(SDIST): MANIFEST $(SOURCE)
 	$(PYTHON) setup.py sdist $(SDIST_OPT)
 
 MANIFEST: MANIFEST.in $(SOURCE)
