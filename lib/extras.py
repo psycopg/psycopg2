@@ -450,13 +450,15 @@ class UUID_adapter(object):
     def __init__(self, uuid):
         self._uuid = uuid
 
-    def prepare(self, conn):
-        pass
+    def __conform__(self, proto):
+        if proto is _ext.ISQLQuote:
+            return self
 
     def getquoted(self):
-        return "'"+str(self._uuid)+"'::uuid"
+        return b("'%s'::uuid" % self._uuid)
 
-    __str__ = getquoted
+    def __str__(self):
+        return "'%s'::uuid" % self._uuid
 
 def register_uuid(oids=None, conn_or_curs=None):
     """Create the UUID type and an uuid.UUID adapter.
@@ -515,8 +517,8 @@ class Inet(object):
             obj.prepare(self._conn)
         return obj.getquoted() + b("::inet")
 
-    def __conform__(self, foo):
-        if foo is _ext.ISQLQuote:
+    def __conform__(self, proto):
+        if proto is _ext.ISQLQuote:
             return self
 
     def __str__(self):
