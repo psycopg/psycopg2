@@ -162,6 +162,10 @@ except ImportError:
 del register_default_json
 
 
+# Create default Range typecasters
+from psycopg2. _range import Range
+del Range
+
 # Add the "cleaned" version of the encodings to the key.
 # When the encoding is set its name is cleaned up from - and _ and turned
 # uppercase, so an encoding not respecting these rules wouldn't be found in the
