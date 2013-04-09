@@ -57,17 +57,18 @@ class NotifiesTests(ConnectingTestCase):
         script = ("""\
 import time
 time.sleep(%(sec)s)
-import psycopg2
-import psycopg2.extensions
+import %(module)s as psycopg2
+import %(module)s.extensions as ext
 conn = psycopg2.connect(%(dsn)r)
-conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+conn.set_isolation_level(ext.ISOLATION_LEVEL_AUTOCOMMIT)
 print conn.get_backend_pid()
 curs = conn.cursor()
 curs.execute("NOTIFY " %(name)r %(payload)r)
 curs.close()
 conn.close()
-"""
-            % { 'dsn': dsn, 'sec': sec, 'name': name, 'payload': payload})
+""" % {
+        'module': psycopg2.__name__,
+        'dsn': dsn, 'sec': sec, 'name': name, 'payload': payload})
 
         return Popen([sys.executable, '-c', script_to_py3(script)], stdout=PIPE)
 
