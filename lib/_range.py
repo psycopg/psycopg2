@@ -415,7 +415,7 @@ class NumberRangeAdapter(RangeAdapter):
     def getquoted(self):
         r = self.adapted
         if r.isempty:
-            return "'empty'"
+            return b("'empty'")
 
         if not r.lower_inf:
             # not exactly: we are relying that none of these object is really
@@ -431,8 +431,8 @@ class NumberRangeAdapter(RangeAdapter):
         else:
             upper = ''
 
-        return b("'%s%s,%s%s'" % (
-            r._bounds[0], lower, upper, r._bounds[1]))
+        return ("'%s%s,%s%s'" % (
+            r._bounds[0], lower, upper, r._bounds[1])).encode('ascii')
 
 # TODO: probably won't work with infs, nans and other tricky cases.
 register_adapter(NumericRange, NumberRangeAdapter)
