@@ -21,7 +21,7 @@ and stable as a rock.
 psycopg2 is different from the other database adapter because it was
 designed for heavily multi-threaded applications that create and destroy
 lots of cursors and make a conspicuous number of concurrent INSERTs or
-UPDATEs. psycopg2 also provide full asycronous operations and support
+UPDATEs. psycopg2 also provide full asynchronous operations and support
 for coroutine libraries.
 """
 
@@ -216,7 +216,7 @@ or with the pg_config option in 'setup.cfg'.
 class psycopg_build_ext(build_ext):
     """Conditionally complement the setup.cfg options file.
 
-    This class configures the include_dirs, libray_dirs, libraries
+    This class configures the include_dirs, library_dirs, libraries
     options as required by the system. Most of the configuration happens
     in finalize_options() method.
 
@@ -368,7 +368,7 @@ class psycopg_build_ext(build_ext):
     finalize_linux3 = finalize_linux
 
     def finalize_options(self):
-        """Complete the build system configuation."""
+        """Complete the build system configuration."""
         build_ext.finalize_options(self)
 
         pg_config_helper = PostgresConfig(self)

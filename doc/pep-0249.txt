@@ -255,7 +255,7 @@ Cursor Objects
             display_size, internal_size, precision, scale,
             null_ok). The first two items (name and type_code) are
             mandatory, the other five are optional and must be set to
-            None if meaningfull values are not provided.
+            None if meaningful values are not provided.
 
             This attribute will be None for operations that
             do not return rows or if the cursor has not had an

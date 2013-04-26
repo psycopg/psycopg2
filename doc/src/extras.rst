@@ -41,7 +41,7 @@ If you want to use a `!connection` subclass you can pass it as the
 Dictionary-like cursor
 ^^^^^^^^^^^^^^^^^^^^^^
 
-The dict cursors allow to access to the retrieved records using an iterface
+The dict cursors allow to access to the retrieved records using an interface
 similar to the Python dictionaries instead of the tuples.
 
     >>> dict_cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)

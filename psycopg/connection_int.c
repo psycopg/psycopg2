@@ -226,7 +226,7 @@ conn_get_standard_conforming_strings(PGconn *pgconn)
      * The presence of the 'standard_conforming_strings' parameter
      * means that the server _accepts_ the E'' quote.
      *
-     * If the paramer is off, the PQescapeByteaConn returns
+     * If the parameter is off, the PQescapeByteaConn returns
      * backslash escaped strings (e.g. '\001' -> "\\001"),
      * so the E'' quotes are required to avoid warnings
      * if 'escape_string_warning' is set.
@@ -1177,7 +1177,7 @@ conn_set_client_encoding(connectionObject *self, const char *enc)
         goto endlock;
     }
 
-    /* no error, we can proceeed and store the new encoding */
+    /* no error, we can proceed and store the new encoding */
     {
         char *tmp = self->encoding;
         self->encoding = clean_enc;

@@ -79,7 +79,7 @@ for row in curs.fetchall():
     print "done"
     print "  python type of image data is", type(row[0])
     
-# this rollback is required because we can't drop a table with a binary cusor
+# this rollback is required because we can't drop a table with a binary cursor
 # declared and still open
 conn.rollback()
 

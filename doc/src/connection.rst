@@ -678,7 +678,7 @@ The ``connection`` class
 
         Return one of the constants defined in :ref:`poll-constants`. If it
         returns `~psycopg2.extensions.POLL_OK` then the connection has been
-        estabilished or the query results are available on the client.
+        established or the query results are available on the client.
         Otherwise wait until the file descriptor returned by `fileno()` is
         ready to read or to write, as explained in :ref:`async-support`.
         `poll()` should be also used by the function installed by

@@ -1,7 +1,7 @@
 """Miscellaneous goodies for psycopg2
 
 This module is a generic place used to hold little helper functions
-and classes untill a better place in the distribution is found.
+and classes until a better place in the distribution is found.
 """
 # psycopg/extras.py - miscellaneous extra goodies for psycopg
 #
@@ -131,7 +131,7 @@ class DictCursor(DictCursorBase):
             self._query_executed = 0
 
 class DictRow(list):
-    """A row object that allow by-colmun-name access to data."""
+    """A row object that allow by-column-name access to data."""
 
     __slots__ = ('_index',)
 
@@ -406,7 +406,7 @@ class MinTimeLoggingConnection(LoggingConnection):
 
     This is just an example of how to sub-class `LoggingConnection` to
     provide some extra filtering for the logged queries. Both the
-    `inizialize()` and `filter()` methods are overwritten to make sure
+    `initialize()` and `filter()` methods are overwritten to make sure
     that only queries executing for more than ``mintime`` ms are logged.
 
     Note that this connection uses the specialized cursor

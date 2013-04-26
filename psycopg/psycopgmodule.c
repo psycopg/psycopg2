@@ -437,7 +437,7 @@ static struct {
 static int
 psyco_errors_init(void)
 {
-    /* the names of the exceptions here reflect the oranization of the
+    /* the names of the exceptions here reflect the organization of the
        psycopg2 module and not the fact the the original error objects
        live in _psycopg */
 

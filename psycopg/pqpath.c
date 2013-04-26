@@ -25,7 +25,7 @@
 
 /* IMPORTANT NOTE: no function in this file do its own connection locking
    except for pg_execute and pq_fetch (that are somehow high-level). This means
-   that all the othe functions should be called while holding a lock to the
+   that all the other functions should be called while holding a lock to the
    connection.
 */
 
@@ -153,7 +153,7 @@ exception_from_sqlstate(const char *sqlstate)
    This function should be called while holding the GIL.
 
    The function passes the ownership of the pgres to the returned exception,
-   wherer the pgres was the explicit argument or taken from the cursor.
+   where the pgres was the explicit argument or taken from the cursor.
    So, after calling it curs->pgres will be set to null */
 
 RAISES static void
@@ -781,7 +781,7 @@ exit:
    means that there is data available to be collected. -1 means an error, the
    exception will be set accordingly.
 
-   this fucntion locks the connection object
+   this function locks the connection object
    this function call Py_*_ALLOW_THREADS macros */
 
 int
@@ -974,7 +974,7 @@ pq_execute(cursorObject *curs, const char *query, int async, int no_result)
     /* if the execute was sync, we call pq_fetch() immediately,
        to respect the old DBAPI-2.0 compatible behaviour */
     if (async == 0) {
-        Dprintf("pq_execute: entering syncronous DBAPI compatibility mode");
+        Dprintf("pq_execute: entering synchronous DBAPI compatibility mode");
         if (pq_fetch(curs, no_result) < 0) return -1;
     }
     else {
@@ -1041,7 +1041,7 @@ pq_get_last_result(connectionObject *conn)
 
 /* pq_fetch - fetch data after a query
 
-   this fucntion locks the connection object
+   this function locks the connection object
    this function call Py_*_ALLOW_THREADS macros
 
    return value:
@@ -1335,7 +1335,7 @@ _pq_copy_in_v3(cursorObject *curs)
     else if (error == 2)
         res = PQputCopyEnd(curs->conn->pgconn, "error in PQputCopyData() call");
     else
-        /* XXX would be nice to propagate the exeption */
+        /* XXX would be nice to propagate the exception */
         res = PQputCopyEnd(curs->conn->pgconn, "error in .read() call");
 
     CLEARPGRES(curs->pgres);
@@ -1343,7 +1343,7 @@ _pq_copy_in_v3(cursorObject *curs)
     Dprintf("_pq_copy_in_v3: copy ended; res = %d", res);
 
     /* if the result is -1 we should not even try to get a result from the
-       bacause that will lock the current thread forever */
+       because that will lock the current thread forever */
     if (res == -1) {
         pq_raise(curs->conn, curs, NULL);
         /* FIXME: pq_raise check the connection but for some reason even

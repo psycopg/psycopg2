@@ -61,7 +61,7 @@ chunk_getreadbuffer(chunkObject *self, Py_ssize_t segment, void **ptr)
     if (segment != 0)
     {
         PyErr_SetString(PyExc_SystemError,
-                        "acessing non-existant buffer segment");
+                        "accessing non-existant buffer segment");
         return -1;
     }
     *ptr = self->base;
@@ -160,7 +160,7 @@ typecast_BINARY_cast(const char *s, Py_ssize_t l, PyObject *curs)
     }
     else {
         /* This is a buffer in the classic bytea format. So we can handle it
-         * to the PQunescapeBytea to have it parsed, rignt? ...Wrong. We
+         * to the PQunescapeBytea to have it parsed, right? ...Wrong. We
          * could, but then we'd have to record whether buffer was allocated by
          * Python or by the libpq to dispose it properly. Furthermore the
          * PQunescapeBytea interface is not the most brilliant as it wants a

@@ -1,4 +1,4 @@
-# encoding.py - show to change client enkoding (and test it works)
+# encoding.py - show to change client encoding (and test it works)
 # -*- encoding: utf8 -*-
 #
 # Copyright (C) 2004-2010 Federico Di Gregorio  <fog@debian.org>
