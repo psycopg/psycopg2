@@ -188,7 +188,7 @@ New features and changes:
     ISO885916, LATIN10, SHIFT_JIS_2004.
   - Dropped repeated dictionary lookups with unicode query/parameters.
 
-- Improvements to the named cusors:
+- Improvements to the named cursors:
 
   - More efficient iteration on named cursors, fetching 'itersize'
     records at time from the backend.
@@ -251,7 +251,7 @@ Main new features:
 - `dict` to `hstore` adapter and `hstore` to `dict` typecaster, using both
   9.0 and pre-9.0 syntax.
 - Two-phase commit protocol support as per DBAPI specification.
-- Support for payload in notifications received from the backed.
+- Support for payload in notifications received from the backend.
 - `namedtuple`-returning cursor.
 - Query execution cancel.
 
@@ -291,7 +291,7 @@ Bux fixes:
   The old register_tstz_w_secs() function is deprecated and will raise a
   warning if called.
 - Exceptions raised by the column iterator are propagated.
-- Exceptions raised by executemany() interators are propagated.
+- Exceptions raised by executemany() iterators are propagated.
 
 
 What's new in psycopg 2.2.1
@@ -408,7 +408,7 @@ New features:
 
 Bug fixes:
 
-- Fixed exeception in setup.py.
+- Fixed exception in setup.py.
 - More robust detection of PostgreSQL development versions.
 - Fixed exception in RealDictCursor, introduced in 2.0.10.
 
@@ -790,7 +790,7 @@ What's new in psycopg 1.99.11
 
 * changed 'tuple_factory' cursor attribute name to 'row_factory'.
 
-* the .cursor attribute is gone and connections and cursors are propely
+* the .cursor attribute is gone and connections and cursors are properly
   gc-managed.
 
 * fixes to the async core.
@@ -839,7 +839,7 @@ What's new in psycopg 1.99.8
 * now cursors support .fileno() and .isready() methods, to be used in
   select() calls.
 * .copy_from() and .copy_in() methods are back in (still using the old
-  protocol, will be updated to use new one in next releasae.)
+  protocol, will be updated to use new one in next release.)
 * fixed memory corruption bug reported on win32 platform.
 
 What's new in psycopg 1.99.7

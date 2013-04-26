@@ -59,7 +59,7 @@ extern "C" {
 HIDDEN psyco_errors_fill_RETURN psyco_errors_fill psyco_errors_fill_PROTO;
 HIDDEN psyco_errors_set_RETURN psyco_errors_set psyco_errors_set_PROTO;
 
-/* global excpetions */
+/* global exceptions */
 extern HIDDEN PyObject *Error, *Warning, *InterfaceError, *DatabaseError,
     *InternalError, *OperationalError, *ProgrammingError,
     *IntegrityError, *DataError, *NotSupportedError;
@@ -169,7 +169,7 @@ STEALS(1) HIDDEN PyObject * psycopg_ensure_text(PyObject *obj);
 "Error related to SQL query cancellation."
 
 #define TransactionRollbackError_doc \
-"Error causing transaction rollback (deadlocks, serialisation failures, etc)."
+"Error causing transaction rollback (deadlocks, serialization failures, etc)."
 #endif
 
 #ifdef __cplusplus

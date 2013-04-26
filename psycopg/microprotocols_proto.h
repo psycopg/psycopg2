@@ -1,4 +1,4 @@
-/* microporotocols_proto.h - definiton for psycopg's protocols
+/* microporotocols_proto.h - definition for psycopg's protocols
  *
  * Copyright (C) 2003-2010 Federico Di Gregorio <fog@debian.org>
  *

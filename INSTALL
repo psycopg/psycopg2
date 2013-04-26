@@ -93,7 +93,7 @@ You can compile psycopg under Windows platform with mingw32
 Dev-C++ (http://www.bloodshed.net/devcpp.html) and Code::Blocks
 (http://www.codeblocks.org). gcc binaries should be in your PATH.
 
-You need a PostgreSQL with include and libary files installed. At least v8.0
+You need a PostgreSQL with include and library files installed. At least v8.0
 is required.
 
 First you need to create a libpython2X.a as described in

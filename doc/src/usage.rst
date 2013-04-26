@@ -311,7 +311,7 @@ converted into `!Decimal`.
 .. note::
 
     Sometimes you may prefer to receive :sql:`numeric` data as `!float`
-    insted, for performance reason or ease of manipulation: you can configure
+    instead, for performance reason or ease of manipulation: you can configure
     an adapter to :ref:`cast PostgreSQL numeric to Python float <faq-float>`.
     This of course may imply a loss of precision.
 

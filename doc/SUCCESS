@@ -23,7 +23,7 @@ Date: 	23 Oct 2001 09:53:11 +0600
 
 We use psycopg and psycopg zope adapter since fisrt public
 release (it seems version 0.4). Now it works on 3 our sites and in intranet
-applications. We had few problems, but all problems were quckly
+applications. We had few problems, but all problems were quickly
 solved. The strong side of psycopg is that it's code is well organized
 and easy to understand. When I found a problem with non-ISO datestyle in first
 version of psycopg, it took for me 15 or 20 minutes to learn code and
