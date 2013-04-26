@@ -27,7 +27,7 @@ functionalities defined by the |DBAPI|_.
 
 .. class:: cursor
 
-    It is the class usually returnded by the `connection.cursor()`
+    It is the class usually returned by the `connection.cursor()`
     method. It is exposed by the `extensions` module in order to allow
     subclassing to extend its behaviour: the subclass should be passed to the
     `!cursor()` method using the `cursor_factory` parameter. See
@@ -398,7 +398,7 @@ The module exports a few exceptions in addition to the :ref:`standard ones
 
     (subclasses `~psycopg2.OperationalError`)
 
-    Error causing transaction rollback (deadlocks, serialisation failures,
+    Error causing transaction rollback (deadlocks, serialization failures,
     etc).  It can be trapped specifically to detect a deadlock.
 
     .. versionadded:: 2.0.7
@@ -486,7 +486,7 @@ set to one of the following constants:
     :sql:`SERIALIZABLE` isolation level. This is the strictest transactions
     isolation level, equivalent to having the transactions executed serially
     rather than concurrently. However applications using this level must be
-    prepared to retry reansactions due to serialization failures.
+    prepared to retry transactions due to serialization failures.
 
     Starting from PostgreSQL 9.1, this mode monitors for conditions which
     could make execution of a concurrent set of serializable transactions

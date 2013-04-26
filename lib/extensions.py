@@ -82,7 +82,7 @@ STATUS_SYNC     = 3  # currently unused
 STATUS_ASYNC    = 4  # currently unused
 STATUS_PREPARED = 5
 
-# This is a usefull mnemonic to check if the connection is in a transaction
+# This is a useful mnemonic to check if the connection is in a transaction
 STATUS_IN_TRANSACTION = STATUS_BEGIN
 
 """psycopg asynchronous connection polling values"""

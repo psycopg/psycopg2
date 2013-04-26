@@ -45,7 +45,7 @@ typedef struct {
 HIDDEN PyObject *psyco_Binary(PyObject *module, PyObject *args);
 #define psyco_Binary_doc \
     "Binary(buffer) -> new binary object\n\n" \
-    "Build an object capable to hold a bynary string value."
+    "Build an object capable to hold a binary string value."
 
 #ifdef __cplusplus
 }

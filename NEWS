@@ -151,7 +151,7 @@ What's new in psycopg 2.4
       ISO885916, LATIN10, SHIFT_JIS_2004.
     - Dropped repeated dictionary lookups with unicode query/parameters.
 
-  - Improvements to the named cusors:
+  - Improvements to the named cursors:
 
     - More efficient iteration on named cursors, fetching 'itersize'
       records at time from the backend.
@@ -214,7 +214,7 @@ psycopg 2.3 aims to expose some new features introduced in PostgreSQL 9.0.
   - `dict` to `hstore` adapter and `hstore` to `dict` typecaster, using both
     9.0 and pre-9.0 syntax.
   - Two-phase commit protocol support as per DBAPI specification.
-  - Support for payload in notifications received from the backed.
+  - Support for payload in notifications received from the backend.
   - `namedtuple`-returning cursor.
   - Query execution cancel.
 
@@ -254,7 +254,7 @@ What's new in psycopg 2.2.2
     The old register_tstz_w_secs() function is deprecated and will raise a
     warning if called.
   - Exceptions raised by the column iterator are propagated.
-  - Exceptions raised by executemany() interators are propagated.
+  - Exceptions raised by executemany() iterators are propagated.
 
 
 What's new in psycopg 2.2.1
@@ -363,7 +363,7 @@ What's new in psycopg 2.0.11
     go back to old memory usage.
 
 * Bug fixes:
-  - Fixed exeception in setup.py.
+  - Fixed exception in setup.py.
   - More robust detection of PostgreSQL development versions.
   - Fixed exception in RealDictCursor, introduced in 2.0.10.
 
@@ -727,7 +727,7 @@ What's new in psycopg 1.99.11
 
 * changed 'tuple_factory' cursor attribute name to 'row_factory'.
 
-* the .cursor attribute is gone and connections and cursors are propely
+* the .cursor attribute is gone and connections and cursors are properly
   gc-managed.
 
 * fixes to the async core.
@@ -780,7 +780,7 @@ What's new in psycopg 1.99.8
   select() calls.
 
 * .copy_from() and .copy_in() methods are back in (still using the old
-  protocol, will be updated to use new one in next releasae.)
+  protocol, will be updated to use new one in next release.)
 
 * fixed memory corruption bug reported on win32 platform.
 

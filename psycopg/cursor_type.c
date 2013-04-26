@@ -110,7 +110,7 @@ _mogrify(PyObject *var, PyObject *fmt, cursorObject *curs, PyObject **new)
         /* if we find '%(' then this is a dictionary, we:
            1/ find the matching ')' and extract the key name
            2/ locate the value in the dictionary (or return an error)
-           3/ mogrify the value into something usefull (quoting)...
+           3/ mogrify the value into something useful (quoting)...
            4/ ...and add it to the new dictionary to be used as argument
         */
         case '(':
@@ -315,7 +315,7 @@ _psyco_curs_merge_query_args(cursorObject *self,
            "not all arguments converted"
 
        and return the appropriate ProgrammingError. we do that by grabbing
-       the curren exception (we will later restore it if the type or the
+       the current exception (we will later restore it if the type or the
        strings do not match.) */
 
     if (!(fquery = Bytes_Format(query, args))) {
@@ -1730,7 +1730,7 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
         }
     }
 
-    /* FIXME: why does this raise an excpetion on the _next_ line of code?
+    /* FIXME: why does this raise an exception on the _next_ line of code?
     if (PyObject_IsInstance((PyObject*)conn,
                              (PyObject *)&connectionType) == 0) {
         PyErr_SetString(PyExc_TypeError,

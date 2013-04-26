@@ -117,7 +117,7 @@ Psycopg converts :sql:`decimal`\/\ :sql:`numeric` database types into Python `!D
         psycopg2.extensions.register_type(DEC2FLOAT)
 
     See :ref:`type-casting-from-sql-to-python` to read the relevant
-    documentation. If you find `!psycopg2.extensions.DECIMAL` not avalable, use
+    documentation. If you find `!psycopg2.extensions.DECIMAL` not available, use
     `!psycopg2._psycopg.DECIMAL` instead.
 
 

@@ -74,7 +74,7 @@ typecastObject_initlist typecast_builtins[] = {
 FOOTER = """    {NULL, NULL, NULL, NULL}\n};\n"""
 
 
-# usefull error reporting function
+# useful error reporting function
 def error(msg):
     """Report an error on stderr."""
     sys.stderr.write(msg+'\n')

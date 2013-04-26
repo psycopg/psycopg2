@@ -60,7 +60,7 @@ import sys
 # - Now a subclass of TestCase, to avoid requiring the driver stub
 #   to use multiple inheritance
 # - Reversed the polarity of buggy test in test_description
-# - Test exception heirarchy correctly
+# - Test exception hierarchy correctly
 # - self.populate is now self._populate(), so if a driver stub
 #   overrides self.ddl1 this change propogates
 # - VARCHAR columns now have a width, which will hopefully make the
@@ -188,7 +188,7 @@ class DatabaseAPI20Test(unittest.TestCase):
 
     def test_Exceptions(self):
         # Make sure required exceptions exist, and are in the
-        # defined heirarchy.
+        # defined hierarchy.
         if sys.version[0] == '3': #under Python 3 StardardError no longer exists
             self.failUnless(issubclass(self.driver.Warning,Exception))
             self.failUnless(issubclass(self.driver.Error,Exception))
@@ -504,7 +504,7 @@ class DatabaseAPI20Test(unittest.TestCase):
             self.assertRaises(self.driver.Error,cur.fetchone)
 
             # cursor.fetchone should raise an Error if called after
-            # executing a query that cannnot return rows
+            # executing a query that cannot return rows
             self.executeDDL1(cur)
             self.assertRaises(self.driver.Error,cur.fetchone)
 
@@ -516,7 +516,7 @@ class DatabaseAPI20Test(unittest.TestCase):
             self.failUnless(cur.rowcount in (-1,0))
 
             # cursor.fetchone should raise an Error if called after
-            # executing a query that cannnot return rows
+            # executing a query that cannot return rows
             cur.execute("insert into %sbooze values ('Victoria Bitter')" % (
                 self.table_prefix
                 ))
