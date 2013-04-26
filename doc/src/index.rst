@@ -15,16 +15,10 @@ Psycopg 2 is mostly implemented in C as a libpq_ wrapper, resulting in being
 both efficient and secure. It features client-side and :ref:`server-side
 <server-side-cursors>` cursors, :ref:`asynchronous communication
 <async-support>` and :ref:`notifications <async-notify>`, |COPY-TO-FROM|__
-support, and a flexible :ref:`objects adaptation system
-<python-types-adaptation>`. Many basic Python types are supported
-out-of-the-box and mapped to matching PostgreSQL data types, such as strings
-(both byte strings and Unicode), numbers (ints, longs, floats, decimals),
-booleans and date/time objects (both built-in and `mx.DateTime`_), several
-types of :ref:`binary objects <adapt-binary>`. Also available are mappings
-between lists and PostgreSQL arrays of any supported type, between
-:ref:`dictionaries and PostgreSQL hstore <adapt-hstore>`, between
-:ref:`tuples/namedtuples and PostgreSQL composite types <adapt-composite>`,
-and between Python objects and :ref:`JSON <adapt-json>`.
+support.  Many Python types are supported out-of-the-box and :ref:`adapted to
+matching PostgreSQL data types <python-types-adaptation>`; adaptation can be
+extended and customized thanks to a flexible :ref:`objects adaptation system
+<adapting-new-types>`.
 
 Psycopg 2 is both Unicode and Python 3 friendly.
 
