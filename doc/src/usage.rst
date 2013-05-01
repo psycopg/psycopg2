@@ -298,8 +298,8 @@ proper SQL literals::
 Numbers adaptation
 ^^^^^^^^^^^^^^^^^^
 
-Numeric objects: `int`, `long`, `float`, `~decimal.Decimal` are converted in
-the PostgreSQL numerical representation::
+Python numeric objects `int`, `long`, `float`, `~decimal.Decimal` are
+converted into a PostgreSQL numerical representation::
 
     >>> cur.mogrify("SELECT %s, %s, %s, %s;", (10, 10L, 10.0, Decimal("10.00")))
     'SELECT 10, 10, 10.0, 10.00;'
@@ -422,7 +422,7 @@ the connection or globally: see the function
 Binary adaptation
 ^^^^^^^^^^^^^^^^^
 
-Binary types: Python types representing binary objects are converted into
+Python types representing binary objects are converted into
 PostgreSQL binary string syntax, suitable for :sql:`bytea` fields.   Such
 types are `buffer` (only available in Python 2), `memoryview` (available
 from Python 2.7), `bytearray` (available from Python 2.6) and `bytes`
@@ -477,7 +477,7 @@ or `!memoryview` (in Python 3).
 Date/Time objects adaptation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Date and time objects: builtin `~datetime.datetime`, `~datetime.date`,
+Python builtin `~datetime.datetime`, `~datetime.date`,
 `~datetime.time`,  `~datetime.timedelta` are converted into PostgreSQL's
 :sql:`timestamp[tz]`, :sql:`date`, :sql:`time`, :sql:`interval` data types.
 Time zones are supported too.  The Egenix `mx.DateTime`_ objects are adapted
@@ -560,7 +560,7 @@ Python lists are converted into PostgreSQL :sql:`ARRAY`\ s::
 .. note::
 
     Reading back from PostgreSQL, arrays are converted to lists of Python
-    objects as expected, but only if the items are of a known known type.
+    objects as expected, but only if the items are of a known type.
     Arrays of unknown types are returned as represented by the database (e.g.
     ``{a,b,c}``). If you want to convert the items into Python objects you can
     easily create a typecaster for :ref:`array of unknown types
@@ -576,7 +576,7 @@ Tuples adaptation
     double: Tuple; Adaptation
     single: IN operator
 
-Python tuples are converted in a syntax suitable for the SQL :sql:`IN`
+Python tuples are converted into a syntax suitable for the SQL :sql:`IN`
 operator and to represent a composite type::
 
     >>> cur.mogrify("SELECT %s IN %s;", (10, (10, 20, 30)))
