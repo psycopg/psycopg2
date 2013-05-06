@@ -199,6 +199,20 @@ class CopyTests(ConnectingTestCase):
         f.seek(0)
         self.assertEqual(f.readline().rstrip(), about)
 
+        # same tests with setting size
+        f = io.StringIO()
+        f.write(about)
+        f.seek(0)
+        exp_size = 123
+        # hack here to leave file as is, only check size when reading
+        real_read = f.read
+        def read(_size, f=f, exp_size=exp_size):
+            self.assertEqual(_size, exp_size)
+            return real_read(_size)
+        f.read = read
+        curs.copy_expert('COPY tcopy (data) FROM STDIN', f, size=exp_size)
+        curs.execute("select data from tcopy;")
+        self.assertEqual(curs.fetchone()[0], abin)
 
     def _copy_from(self, curs, nrecs, srec, copykw):
         f = StringIO()
