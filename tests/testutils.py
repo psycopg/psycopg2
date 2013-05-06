@@ -293,6 +293,15 @@ def skip_if_green(reason):
 
 skip_copy_if_green = skip_if_green("copy in async mode currently not supported")
 
+def skip_if_no_getrefcount(f):
+    @wraps(f)
+    def skip_if_no_getrefcount_(self):
+        if not hasattr(sys, 'getrefcount'):
+            return self.skipTest('skipped, no sys.getrefcount()')
+        else:
+            return f(self)
+    return skip_if_no_getrefcount_
+
 def script_to_py3(script):
     """Convert a script to Python3 syntax if required."""
     if sys.version_info[0] < 3:
