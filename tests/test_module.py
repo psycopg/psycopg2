@@ -199,7 +199,7 @@ class ExceptionsTestCase(ConnectingTestCase):
         self.assertEqual(diag.sqlstate, '42P01')
 
         del diag
-        gc.collect()
+        gc.collect(); gc.collect()
         assert(w() is None)
 
     @skip_copy_if_green
