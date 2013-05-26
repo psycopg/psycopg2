@@ -1212,6 +1212,16 @@ class RangeTestCase(unittest.TestCase):
         assert_not_equal(Range(10, 20), Range(11, 20))
         assert_not_equal(Range(10, 20, '[)'), Range(10, 20, '[]'))
 
+    def test_eq_wrong_type(self):
+        from psycopg2.extras import Range
+        try:
+            Range(10, 20)==()
+        except TypeError, e:
+            self.assertEqual(
+                str(e), "Cannot compare Range(10, 20, '[)') with ()")
+        else:
+            self.fail('No exception raised')
+
     def test_not_ordered(self):
         from psycopg2.extras import Range
         self.assertRaises(TypeError, lambda: Range(empty=True) < Range(0,4))
