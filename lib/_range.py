@@ -121,7 +121,7 @@ class Range(object):
         return self._bounds is not None
 
     def __eq__(self, other):
-        if not isinstance(other, self.__class__):
+        if not isinstance(other, Range):
             return False
         return (self._lower == other._lower
             and self._upper == other._upper
