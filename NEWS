@@ -3,6 +3,8 @@ What's new in psycopg 2.5.1
 
 - Fixed build on Solaris 10 and 11 where the round() function is already
   declared (:ticket:`#146`).
+- Fixed comparison of `Range` with non-range objects (:ticket:`#164`).
+  Thanks to Chris Withers for the patch.
 
 
 What's new in psycopg 2.5
