@@ -1214,16 +1214,16 @@ class RangeTestCase(unittest.TestCase):
 
     def test_eq_wrong_type(self):
         from psycopg2.extras import Range
-        self.assertFalse(Range(10, 20)==())
+        self.assertNotEqual(Range(10, 20), ())
 
     def test_eq_subclass(self):
         from psycopg2.extras import Range, NumericRange
-        
+
         class IntRange(NumericRange): pass
         class PositiveIntRange(IntRange): pass
-        
-        self.assertTrue(Range(10, 20)==IntRange(10, 20))
-        self.assertTrue(PositiveIntRange(10, 20)==IntRange(10, 20))
+
+        self.assertEqual(Range(10, 20), IntRange(10, 20))
+        self.assertEqual(PositiveIntRange(10, 20), IntRange(10, 20))
 
     def test_not_ordered(self):
         from psycopg2.extras import Range
