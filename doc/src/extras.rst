@@ -453,6 +453,17 @@ automatically casted into instances of these classes.
 .. autoclass:: DateTimeRange
 .. autoclass:: DateTimeTZRange
 
+.. note::
+
+    Python lacks a representation for :sql:`infinity` date so Psycopg converts
+    the value to `date.max` and such. When written into the database these
+    dates will assume their literal value (e.g. :sql:`9999-12-31` instead of
+    :sql:`infinity`).  Check :ref:`infinite-dates-handling` for an example of
+    an alternative adapter to map `date.max` to :sql:`infinity`. An
+    alternative dates adapter will be used automatically by the `DateRange`
+    adapter and so on.
+
+
 Custom |range| types (created with |CREATE TYPE|_ :sql:`... AS RANGE`) can be
 adapted to a custom `Range` subclass:
 

@@ -496,6 +496,7 @@ the same way::
 .. seealso:: `PostgreSQL date/time types
     <http://www.postgresql.org/docs/current/static/datatype-datetime.html>`__
 
+
 .. index::
     single: Time Zones
 
@@ -528,6 +529,40 @@ rounded to the nearest minute, with an error of up to 30 seconds.
     timezones with seconds are supported (with rounding). Previously such
     timezones raised an error.  In order to deal with them in previous
     versions use `psycopg2.extras.register_tstz_w_secs()`.
+
+
+.. index::
+    double: Date Objects, Infinite
+
+.. _infinite-dates-handling:
+
+Infinite dates handling
+'''''''''''''''''''''''
+
+PostgreSQL can store the representation of an "infinite" date, timestamp, or
+interval. Infinite dates are not available to Python, so these objects are
+mapped to `!date.max`, `!datetime.max`, `!interval.max`. Unfortunately the
+mapping cannot be bidirectional so these dates will be stored back into the
+database with their values, such as :sql:`9999-12-31`.
+
+It is possible to create an alternative adapter for dates and other objects
+to map `date.max` to :sql:`infinity`, for instance::
+
+    class InfDateAdapter:
+        def __init__(self, wrapped):
+            self.wrapped = wrapped
+        def getquoted(self):
+            if self.wrapped == datetime.date.max:
+                return "'infinity'::date"
+            elif self.wrapped == datetime.date.min:
+                return "'-infinity'::date"
+            else:
+                return psycopg2.extensions.DateFromPy(self.wrapped).getquoted()
+
+    psycopg2.extensions.register_adapter(datetime.date, InfDateAdapter)
+
+Of course it will not be possible to write the value of `date.max` in the
+database anymore: :sql:`infinity` will be stored instead.
 
 
 .. _adapt-list:
