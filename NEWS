@@ -5,6 +5,8 @@ What's new in psycopg 2.5.1
   declared (:ticket:`#146`).
 - Fixed comparison of `Range` with non-range objects (:ticket:`#164`).
   Thanks to Chris Withers for the patch.
+- Fixed double-free on connection dealloc (:ticket:`#166`). Thanks to
+  Gangadharan S.A. for the report and fix suggestion.
 
 
 What's new in psycopg 2.5

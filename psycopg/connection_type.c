@@ -1128,9 +1128,12 @@ connection_dealloc(PyObject* obj)
 {
     connectionObject *self = (connectionObject *)obj;
 
-    conn_close(self);
-
+    /* Make sure to untrack the connection before calling conn_close, which may
+     * allow a different thread to try and dealloc the connection again,
+     * resulting in a double-free segfault (ticket #166). */
     PyObject_GC_UnTrack(self);
+
+    conn_close(self);
 
     if (self->weakreflist) {
         PyObject_ClearWeakRefs(obj);
