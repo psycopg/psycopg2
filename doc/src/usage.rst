@@ -532,7 +532,7 @@ rounded to the nearest minute, with an error of up to 30 seconds.
 
 
 .. index::
-    double: Date Objects, Infinite
+    double: Date objects; Infinite
 
 .. _infinite-dates-handling:
 
