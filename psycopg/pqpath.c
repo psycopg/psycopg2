@@ -893,7 +893,7 @@ pq_flush(connectionObject *conn)
 */
 
 RAISES_NEG int
-pq_execute(cursorObject *curs, const char *query, int async, int no_result)
+pq_execute(cursorObject *curs, const char *query, int async, int no_result, int no_begin)
 {
     PGresult *pgres = NULL;
     char *error = NULL;
@@ -916,7 +916,7 @@ pq_execute(cursorObject *curs, const char *query, int async, int no_result)
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(curs->conn->lock));
 
-    if (pq_begin_locked(curs->conn, &pgres, &error, &_save) < 0) {
+    if (!no_begin && pq_begin_locked(curs->conn, &pgres, &error, &_save) < 0) {
         pthread_mutex_unlock(&(curs->conn->lock));
         Py_BLOCK_THREADS;
         pq_complete_error(curs->conn, &pgres, &error);
