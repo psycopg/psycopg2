@@ -478,7 +478,7 @@ psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
                 "can't call .execute() on named cursors more than once");
             return NULL;
         }
-        if (self->conn->autocommit) {
+        if (self->conn->autocommit && !self->withhold) {
             psyco_set_error(ProgrammingError, self,
                 "can't use a named cursor outside of transactions");
             return NULL;
