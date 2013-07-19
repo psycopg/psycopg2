@@ -163,8 +163,16 @@ psyco_error_reduce(errorObject *self)
     if (2 != PyTuple_GET_SIZE(tuple)) { goto exit; }
 
     if (!(dict = PyDict_New())) { goto error; }
-    if (0 != PyDict_SetItemString(dict, "pgerror", self->pgerror)) { goto error; }
-    if (0 != PyDict_SetItemString(dict, "pgcode", self->pgcode)) { goto error; }
+    if (self->pgerror) {
+        if (0 != PyDict_SetItemString(dict, "pgerror", self->pgerror)) {
+            goto error;
+        }
+    }
+    if (self->pgcode) {
+        if (0 != PyDict_SetItemString(dict, "pgcode", self->pgcode)) {
+            goto error;
+        }
+    }
 
     {
         PyObject *newtuple;

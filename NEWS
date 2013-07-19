@@ -1,6 +1,13 @@
 Current release
 ---------------
 
+What's new in psycopg 2.5.2
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Fixed segfault pickling the exception raised on connection error
+  (:ticket:`#170`).
+
+
 What's new in psycopg 2.5.1
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
