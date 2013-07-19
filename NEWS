@@ -1,5 +1,8 @@
+Current release
+---------------
+
 What's new in psycopg 2.5.1
----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Fixed build on Solaris 10 and 11 where the round() function is already
   declared (:ticket:`#146`).
