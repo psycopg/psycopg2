@@ -82,8 +82,7 @@ except ImportError:
 
 # Take a look at http://www.python.org/dev/peps/pep-0386/
 # for a consistent versioning pattern.
-
-PSYCOPG_VERSION = '2.5.1'
+PSYCOPG_VERSION = '2.5.2.dev0'
 
 version_flags   = ['dt', 'dec']
 
