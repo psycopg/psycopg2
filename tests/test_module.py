@@ -279,6 +279,21 @@ class ExceptionsTestCase(ConnectingTestCase):
         self.assertEqual(e.pgcode, e1.pgcode)
         self.assert_(e1.cursor is None)
 
+    @skip_before_python(2, 5)
+    def test_pickle_connection_error(self):
+        # segfaults on psycopg 2.5.1 - see ticket #170
+        import pickle
+        try:
+            psycopg2.connect('dbname=nosuchdatabasemate')
+        except psycopg2.Error, exc:
+            e = exc
+
+        e1 = pickle.loads(pickle.dumps(e))
+
+        self.assertEqual(e.pgerror, e1.pgerror)
+        self.assertEqual(e.pgcode, e1.pgcode)
+        self.assert_(e1.cursor is None)
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
