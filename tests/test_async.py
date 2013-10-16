@@ -449,6 +449,16 @@ class AsyncTests(ConnectingTestCase):
         self.wait(self.conn)
         self.assertEqual(cur.fetchone(), (42,))
 
+    def test_async_connection_error_message(self):
+        try:
+            cnn = psycopg2.connect('dbname=thisdatabasedoesntexist', async=True)
+            self.wait(cnn)
+        except psycopg2.Error, e:
+            self.assertNotEqual(str(e), "asynchronous connection failed",
+                "connection error reason lost")
+        else:
+            self.fail("no exception raised")
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

@@ -6,6 +6,8 @@ What's new in psycopg 2.5.2
 
 - Fixed segfault pickling the exception raised on connection error
   (:ticket:`#170`).
+- Meaningful connection errors report a meaningful message, thanks to
+  Alexey Borzenkov (:ticket:`#173`).
 
 
 What's new in psycopg 2.5.1
