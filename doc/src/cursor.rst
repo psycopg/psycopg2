@@ -332,10 +332,6 @@ The ``cursor`` class
         `~psycopg2.ProgrammingError` is raised and the cursor position is
         not changed.
 
-        The method can be used both for client-side cursors and
-        :ref:`server-side cursors <server-side-cursors>`. Server-side cursors
-        can usually scroll backwards only if declared `~cursor.scrollable`.
-
         .. note:: 
 
             According to the |DBAPI|_, the exception raised for a cursor out
@@ -346,6 +342,13 @@ The ``cursor`` class
                     cur.scroll(1000 * 1000)
                 except (ProgrammingError, IndexError), exc:
                     deal_with_it(exc)
+
+        The method can be used both for client-side cursors and
+        :ref:`server-side cursors <server-side-cursors>`. Server-side cursors
+        can usually scroll backwards only if declared `~cursor.scrollable`.
+        Moving out-of-bound in a server-side cursor doesn't result in an
+        exception, if the backend doesn't raise any (Postgres doesn't tell us
+        in a reliable way if we went out of bound).
 
 
     .. attribute:: arraysize
