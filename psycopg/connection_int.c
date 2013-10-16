@@ -642,6 +642,7 @@ static int
 _conn_poll_connecting(connectionObject *self)
 {
     int res = PSYCO_POLL_ERROR;
+    const char *msg;
 
     Dprintf("conn_poll: poll connecting");
     switch (PQconnectPoll(self->pgconn)) {
@@ -656,7 +657,11 @@ _conn_poll_connecting(connectionObject *self)
         break;
     case PGRES_POLLING_FAILED:
     case PGRES_POLLING_ACTIVE:
-        PyErr_SetString(OperationalError, "asynchronous connection failed");
+        msg = PQerrorMessage(self->pgconn);
+        if (!(msg && *msg)) {
+            msg = "asynchronous connection failed";
+        }
+        PyErr_SetString(OperationalError, msg);
         res = PSYCO_POLL_ERROR;
         break;
     }

@@ -6,6 +6,8 @@ What's new in psycopg 2.4.7
     declared (:ticket:`#146`).
   - Fixed bad interaction of setup.py with other dependencies in
     Distribute project on Python 3 (ticket #153).
+  - Meaningful connection errors report a meaningful message, thanks to
+    Alexey Borzenkov (:ticket:`#173`).
 
 
 What's new in psycopg 2.4.6
