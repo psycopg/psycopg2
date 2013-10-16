@@ -343,7 +343,7 @@ class CursorTests(unittest.TestCase):
 
     @skip_before_postgres(8, 0)
     def test_scroll_named(self):
-        cur = self.conn.cursor()
+        cur = self.conn.cursor('tmp', scrollable=True)
         cur.execute("select generate_series(0,9)")
         cur.scroll(2)
         self.assertEqual(cur.fetchone(), (2,))
@@ -353,8 +353,6 @@ class CursorTests(unittest.TestCase):
         self.assertEqual(cur.fetchone(), (8,))
         cur.scroll(9, mode='absolute')
         self.assertEqual(cur.fetchone(), (9,))
-        self.assertRaises((IndexError, psycopg2.ProgrammingError),
-            cur.scroll, 10, mode='absolute')
 
 
 def test_suite():
