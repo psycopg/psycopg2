@@ -554,9 +554,9 @@ to map `date.max` to :sql:`infinity`, for instance::
             self.wrapped = wrapped
         def getquoted(self):
             if self.wrapped == datetime.date.max:
-                return "'infinity'::date"
+                return b"'infinity'::date"
             elif self.wrapped == datetime.date.min:
-                return "'-infinity'::date"
+                return b"'-infinity'::date"
             else:
                 return psycopg2.extensions.DateFromPy(self.wrapped).getquoted()
 
