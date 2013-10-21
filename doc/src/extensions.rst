@@ -352,8 +352,8 @@ details.
     `register_type()` to be used.
 
     :param oids: tuple of OIDs of the PostgreSQL type to convert. It should
-        probably be the oid of the array type (e.g. the ``typarray`` field in
-        the ``pg_type`` table.
+        probably contain the oid of the array type (e.g. the ``typarray``
+        field in the ``pg_type`` table).
     :param name: the name of the new type adapter.
     :param base_caster: a Psycopg typecaster, e.g. created using the
         `new_type()` function. The caster should be able to parse a single
@@ -366,11 +366,12 @@ details.
     .. note::
 
         The function can be used to create a generic array typecaster,
-        returning a list of strings: just use the `~psycopg2.STRING` as base
-        typecaster. For instance, if you want to receive from the database an
-        array of :sql:`macaddr`, each address represented by string, you can
-        use::
+        returning a list of strings: just use `psycopg2.STRING` as base
+        typecaster. For instance, if you want to receive an array of
+        :sql:`macaddr` from the database, each address represented by string,
+        you can use::
 
+            # select typarray from pg_type where typname = 'macaddr' -> 1040
             psycopg2.extensions.register_type(
                 psycopg2.extensions.new_array_type(
                     (1040,), 'MACADDR[]', psycopg2.STRING))
