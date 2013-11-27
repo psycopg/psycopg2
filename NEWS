@@ -8,6 +8,8 @@ What's new in psycopg 2.5.2
   (:ticket:`#170`).
 - Meaningful connection errors report a meaningful message, thanks to
   Alexey Borzenkov (:ticket:`#173`).
+- Manually creating `lobject` with the wrong parameter doesn't segfault
+  (:ticket:`#187`).
 
 
 What's new in psycopg 2.5.1
