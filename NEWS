@@ -8,6 +8,8 @@ What's new in psycopg 2.4.7
     Distribute project on Python 3 (ticket #153).
   - Meaningful connection errors report a meaningful message, thanks to
     Alexey Borzenkov (:ticket:`#173`).
+  - Manually creating `lobject` with the wrong parameter doesn't segfault
+    (:ticket:`#187`).
 
 
 What's new in psycopg 2.4.6

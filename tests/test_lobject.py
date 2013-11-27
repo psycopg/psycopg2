@@ -85,6 +85,10 @@ class LargeObjectTests(LargeObjectMixin, unittest.TestCase):
         self.assertNotEqual(lo, None)
         self.assertEqual(lo.mode[0], "w")
 
+    def test_connection_needed(self):
+        self.assertRaises(TypeError,
+            psycopg2.extensions.lobject, [])
+
     def test_open_non_existent(self):
         # By creating then removing a large object, we get an Oid that
         # should be unused.

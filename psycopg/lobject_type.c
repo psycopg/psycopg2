@@ -359,10 +359,12 @@ lobject_dealloc(PyObject* obj)
 {
     lobjectObject *self = (lobjectObject *)obj;
 
-    if (lobject_close(self) < 0)
-        PyErr_Print();
-    Py_XDECREF((PyObject*)self->conn);
-    PyMem_Free(self->smode);
+    if (self->conn) {   /* if not, init failed */
+        if (lobject_close(self) < 0)
+            PyErr_Print();
+        Py_XDECREF((PyObject*)self->conn);
+        PyMem_Free(self->smode);
+    }
 
     Dprintf("lobject_dealloc: deleted lobject object at %p, refcnt = "
             FORMAT_CODE_PY_SSIZE_T, obj, Py_REFCNT(obj));
@@ -376,10 +378,11 @@ lobject_init(PyObject *obj, PyObject *args, PyObject *kwds)
     int oid = (int)InvalidOid, new_oid = (int)InvalidOid;
     const char *smode = "";
     const char *new_file = NULL;
-    PyObject *conn;
+    PyObject *conn = NULL;
 
-    if (!PyArg_ParseTuple(args, "O|iziz",
-         &conn, &oid, &smode, &new_oid, &new_file))
+    if (!PyArg_ParseTuple(args, "O!|iziz",
+         &connectionType, &conn,
+         &oid, &smode, &new_oid, &new_file))
         return -1;
 
     return lobject_setup((lobjectObject *)obj,
