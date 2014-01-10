@@ -293,12 +293,11 @@ class psycopg_build_ext(build_ext):
             manifest = '_psycopg.vc9.x86.manifest'
             if platform == 'win-amd64':
                 manifest = '_psycopg.vc9.amd64.manifest'
+            ext_path = self.get_ext_fullpath(extension.name)
             self.compiler.spawn(
                 ['mt.exe', '-nologo', '-manifest',
                  os.path.join('psycopg', manifest),
-                 '-outputresource:%s;2' % (
-                        os.path.join(self.build_lib,
-                                     'psycopg2', '_psycopg.pyd'))])
+                 '-outputresource:%s;2' % ext_path])
 
     def finalize_win32(self):
         """Finalize build system configuration on win32 platform."""
