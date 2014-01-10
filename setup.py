@@ -293,7 +293,11 @@ class psycopg_build_ext(build_ext):
             manifest = '_psycopg.vc9.x86.manifest'
             if platform == 'win-amd64':
                 manifest = '_psycopg.vc9.amd64.manifest'
-            ext_path = self.get_ext_fullpath(extension.name)
+            try:
+                ext_path = self.get_ext_fullpath(extension.name)
+            except AttributeError:
+                ext_path = os.path.join(self.build_lib,
+                        'psycopg2', '_psycopg.pyd')
             self.compiler.spawn(
                 ['mt.exe', '-nologo', '-manifest',
                  os.path.join('psycopg', manifest),
