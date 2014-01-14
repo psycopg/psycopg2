@@ -191,6 +191,20 @@ Python objects.
 
 .. note::
 
+    If you are using the PostgreSQL :sql:`json` data type but you want to read
+    it as string in Python instead of having it parsed, your can either cast
+    the column to :sql:`text` in the query (it is an efficient operation, that
+    doesn't involve a copy)::
+
+        cur.execute("select jsondata::text from mytable")
+
+    or you can register a no-op `!loads()` function with
+    `register_default_json()`::
+
+        psycopg2.extras.register_default_json(loads=lambda x: x)
+
+.. note::
+
     You can use `~psycopg2.extensions.register_adapter()` to adapt any Python
     dictionary to JSON, either registering `Json` or any subclass or factory
     creating a compatible adapter::
@@ -204,7 +218,7 @@ Python objects.
     effects.
 
 If you want to customize the adaptation from Python to PostgreSQL you can
-either provide a custom `!dumps()` function to `!Json`::
+either provide a custom `!dumps()` function to `Json`::
 
     curs.execute("insert into mytable (jsondata) values (%s)",
         [Json({'a': 100}, dumps=simplejson.dumps)])
