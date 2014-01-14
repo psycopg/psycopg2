@@ -10,6 +10,7 @@ What's new in psycopg 2.4.7
     Alexey Borzenkov (:ticket:`#173`).
   - Manually creating `lobject` with the wrong parameter doesn't segfault
     (:ticket:`#187`).
+  - Fixed debug build on Windows, thanks to James Emerton.
 
 
 What's new in psycopg 2.4.6
