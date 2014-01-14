@@ -1,6 +1,12 @@
 Current release
 ---------------
 
+What's new in psycopg 2.5.3
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Fixed debug build on Windows, thanks to James Emerton.
+
+
 What's new in psycopg 2.5.2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
