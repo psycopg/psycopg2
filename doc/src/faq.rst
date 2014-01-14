@@ -125,6 +125,18 @@ Psycopg converts :sql:`decimal`\/\ :sql:`numeric` database types into Python `!D
     `!psycopg2._psycopg.DECIMAL` instead.
 
 
+.. _faq-json-adapt:
+.. cssclass:: faq
+
+Psycopg automatically converts PostgreSQL :sql:`json` data into Python objects. How can I receive strings instead?
+    The easiest way to avoid JSON parsing is to register a no-op function with
+    `~psycopg2.extras.register_default_json()`::
+
+        psycopg2.extras.register_default_json(loads=lambda x: x)
+
+    See :ref:`adapt-json` for further details.
+
+
 .. _faq-bytea-9.0:
 .. cssclass:: faq
 
