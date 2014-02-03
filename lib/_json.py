@@ -73,6 +73,9 @@ class Json(object):
         if proto is ISQLQuote:
             return self
 
+    def __repr__(self):
+        return self.dumps()
+
     def dumps(self, obj):
         """Serialize *obj* in JSON format.
 
