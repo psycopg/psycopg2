@@ -1225,12 +1225,65 @@ class RangeTestCase(unittest.TestCase):
         self.assertEqual(Range(10, 20), IntRange(10, 20))
         self.assertEqual(PositiveIntRange(10, 20), IntRange(10, 20))
 
-    def test_not_ordered(self):
+    # as the postgres docs describe for the server-side stuff,
+    # ordering is rather arbitrary, but will remain stable
+    # and consistent.
+
+    def test_ordering_lt(self):
         from psycopg2.extras import Range
-        self.assertRaises(TypeError, lambda: Range(empty=True) < Range(0,4))
-        self.assertRaises(TypeError, lambda: Range(1,2) > Range(0,4))
-        self.assertRaises(TypeError, lambda: Range(1,2) <= Range())
-        self.assertRaises(TypeError, lambda: Range(1,2) >= Range())
+        self.assertTrue(Range(empty=True) < Range(0, 4))
+        self.assertFalse(Range(1, 2) < Range(0, 4))
+        self.assertTrue(Range(0, 4) < Range(1, 2))
+        self.assertFalse(Range(1, 2) < Range())
+        self.assertTrue(Range() < Range(1, 2))
+        self.assertFalse(Range(1) < Range(upper=1))
+        self.assertFalse(Range() < Range())
+        self.assertFalse(Range(empty=True) < Range(empty=True))
+        self.assertFalse(Range(1, 2) < Range(1, 2))
+        self.assertTrue(1 < Range(1, 2))
+        self.assertFalse(Range(1, 2) < 1)
+
+    def test_ordering_gt(self):
+        from psycopg2.extras import Range
+        self.assertFalse(Range(empty=True) > Range(0, 4))
+        self.assertTrue(Range(1, 2) > Range(0, 4))
+        self.assertFalse(Range(0, 4) > Range(1, 2))
+        self.assertTrue(Range(1, 2) > Range())
+        self.assertFalse(Range() > Range(1, 2))
+        self.assertTrue(Range(1) > Range(upper=1))
+        self.assertFalse(Range() > Range())
+        self.assertFalse(Range(empty=True) > Range(empty=True))
+        self.assertFalse(Range(1, 2) > Range(1, 2))
+        self.assertFalse(1 > Range(1, 2))
+        self.assertTrue(Range(1, 2) > 1)
+
+    def test_ordering_le(self):
+        from psycopg2.extras import Range
+        self.assertTrue(Range(empty=True) <= Range(0, 4))
+        self.assertFalse(Range(1, 2) <= Range(0, 4))
+        self.assertTrue(Range(0, 4) <= Range(1, 2))
+        self.assertFalse(Range(1, 2) <= Range())
+        self.assertTrue(Range() <= Range(1, 2))
+        self.assertFalse(Range(1) <= Range(upper=1))
+        self.assertTrue(Range() <= Range())
+        self.assertTrue(Range(empty=True) <= Range(empty=True))
+        self.assertTrue(Range(1, 2) <= Range(1, 2))
+        self.assertTrue(1 <= Range(1, 2))
+        self.assertFalse(Range(1, 2) <= 1)
+
+    def test_ordering_ge(self):
+        from psycopg2.extras import Range
+        self.assertFalse(Range(empty=True) >= Range(0, 4))
+        self.assertTrue(Range(1, 2) >= Range(0, 4))
+        self.assertFalse(Range(0, 4) >= Range(1, 2))
+        self.assertTrue(Range(1, 2) >= Range())
+        self.assertFalse(Range() >= Range(1, 2))
+        self.assertTrue(Range(1) >= Range(upper=1))
+        self.assertTrue(Range() >= Range())
+        self.assertTrue(Range(empty=True) >= Range(empty=True))
+        self.assertTrue(Range(1, 2) >= Range(1, 2))
+        self.assertFalse(1 >= Range(1, 2))
+        self.assertTrue(Range(1, 2) >= 1)
 
 
 def skip_if_no_range(f):
