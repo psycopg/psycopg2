@@ -1229,61 +1229,61 @@ class RangeTestCase(unittest.TestCase):
     # ordering is rather arbitrary, but will remain stable
     # and consistent.
 
-    def test_ordering_lt(self):
+    def test_lt_ordering(self):
         from psycopg2.extras import Range
-        self.assertTrue(Range(empty=True) < Range(0, 4))
-        self.assertFalse(Range(1, 2) < Range(0, 4))
-        self.assertTrue(Range(0, 4) < Range(1, 2))
-        self.assertFalse(Range(1, 2) < Range())
-        self.assertTrue(Range() < Range(1, 2))
-        self.assertFalse(Range(1) < Range(upper=1))
-        self.assertFalse(Range() < Range())
-        self.assertFalse(Range(empty=True) < Range(empty=True))
-        self.assertFalse(Range(1, 2) < Range(1, 2))
-        self.assertTrue(1 < Range(1, 2))
-        self.assertFalse(Range(1, 2) < 1)
+        self.assert_(Range(empty=True) < Range(0, 4))
+        self.assert_(not Range(1, 2) < Range(0, 4))
+        self.assert_(Range(0, 4) < Range(1, 2))
+        self.assert_(not Range(1, 2) < Range())
+        self.assert_(Range() < Range(1, 2))
+        self.assert_(not Range(1) < Range(upper=1))
+        self.assert_(not Range() < Range())
+        self.assert_(not Range(empty=True) < Range(empty=True))
+        self.assert_(not Range(1, 2) < Range(1, 2))
+        self.assert_(1 < Range(1, 2))
+        self.assert_(not Range(1, 2) < 1)
 
-    def test_ordering_gt(self):
+    def test_gt_ordering(self):
         from psycopg2.extras import Range
-        self.assertFalse(Range(empty=True) > Range(0, 4))
-        self.assertTrue(Range(1, 2) > Range(0, 4))
-        self.assertFalse(Range(0, 4) > Range(1, 2))
-        self.assertTrue(Range(1, 2) > Range())
-        self.assertFalse(Range() > Range(1, 2))
-        self.assertTrue(Range(1) > Range(upper=1))
-        self.assertFalse(Range() > Range())
-        self.assertFalse(Range(empty=True) > Range(empty=True))
-        self.assertFalse(Range(1, 2) > Range(1, 2))
-        self.assertFalse(1 > Range(1, 2))
-        self.assertTrue(Range(1, 2) > 1)
+        self.assert_(not Range(empty=True) > Range(0, 4))
+        self.assert_(Range(1, 2) > Range(0, 4))
+        self.assert_(not Range(0, 4) > Range(1, 2))
+        self.assert_(Range(1, 2) > Range())
+        self.assert_(not Range() > Range(1, 2))
+        self.assert_(Range(1) > Range(upper=1))
+        self.assert_(not Range() > Range())
+        self.assert_(not Range(empty=True) > Range(empty=True))
+        self.assert_(not Range(1, 2) > Range(1, 2))
+        self.assert_(not 1 > Range(1, 2))
+        self.assert_(Range(1, 2) > 1)
 
-    def test_ordering_le(self):
+    def test_le_ordering(self):
         from psycopg2.extras import Range
-        self.assertTrue(Range(empty=True) <= Range(0, 4))
-        self.assertFalse(Range(1, 2) <= Range(0, 4))
-        self.assertTrue(Range(0, 4) <= Range(1, 2))
-        self.assertFalse(Range(1, 2) <= Range())
-        self.assertTrue(Range() <= Range(1, 2))
-        self.assertFalse(Range(1) <= Range(upper=1))
-        self.assertTrue(Range() <= Range())
-        self.assertTrue(Range(empty=True) <= Range(empty=True))
-        self.assertTrue(Range(1, 2) <= Range(1, 2))
-        self.assertTrue(1 <= Range(1, 2))
-        self.assertFalse(Range(1, 2) <= 1)
+        self.assert_(Range(empty=True) <= Range(0, 4))
+        self.assert_(not Range(1, 2) <= Range(0, 4))
+        self.assert_(Range(0, 4) <= Range(1, 2))
+        self.assert_(not Range(1, 2) <= Range())
+        self.assert_(Range() <= Range(1, 2))
+        self.assert_(not Range(1) <= Range(upper=1))
+        self.assert_(Range() <= Range())
+        self.assert_(Range(empty=True) <= Range(empty=True))
+        self.assert_(Range(1, 2) <= Range(1, 2))
+        self.assert_(1 <= Range(1, 2))
+        self.assert_(not Range(1, 2) <= 1)
 
-    def test_ordering_ge(self):
+    def test_ge_ordering(self):
         from psycopg2.extras import Range
-        self.assertFalse(Range(empty=True) >= Range(0, 4))
-        self.assertTrue(Range(1, 2) >= Range(0, 4))
-        self.assertFalse(Range(0, 4) >= Range(1, 2))
-        self.assertTrue(Range(1, 2) >= Range())
-        self.assertFalse(Range() >= Range(1, 2))
-        self.assertTrue(Range(1) >= Range(upper=1))
-        self.assertTrue(Range() >= Range())
-        self.assertTrue(Range(empty=True) >= Range(empty=True))
-        self.assertTrue(Range(1, 2) >= Range(1, 2))
-        self.assertFalse(1 >= Range(1, 2))
-        self.assertTrue(Range(1, 2) >= 1)
+        self.assert_(not Range(empty=True) >= Range(0, 4))
+        self.assert_(Range(1, 2) >= Range(0, 4))
+        self.assert_(not Range(0, 4) >= Range(1, 2))
+        self.assert_(Range(1, 2) >= Range())
+        self.assert_(not Range() >= Range(1, 2))
+        self.assert_(Range(1) >= Range(upper=1))
+        self.assert_(Range() >= Range())
+        self.assert_(Range(empty=True) >= Range(empty=True))
+        self.assert_(Range(1, 2) >= Range(1, 2))
+        self.assert_(not 1 >= Range(1, 2))
+        self.assert_(Range(1, 2) >= 1)
 
 
 def skip_if_no_range(f):
