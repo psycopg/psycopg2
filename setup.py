@@ -54,6 +54,7 @@ import os
 import sys
 import re
 import subprocess
+from setuptools import Command
 from distutils.core import setup, Extension
 from distutils.command.build_ext import build_ext
 from distutils.sysconfig import get_python_inc
