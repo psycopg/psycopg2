@@ -139,15 +139,35 @@ class Range(object):
 
     def __lt__(self, other):
         if not isinstance(other, Range):
-            return False
-        return ((self._lower, self._upper, self._bounds) <
-                (other._lower, other._upper, other._bounds))
+            return NotImplemented
+        for attr in self.__slots__:
+            self_value = getattr(self, attr)
+            other_value = getattr(other, attr)
+            if self_value == other_value:
+                pass
+            elif self_value is None:
+                return True
+            elif other_value is None:
+                return False
+            else:
+                return self_value < other_value
+        return False
 
     def __le__(self, other):
         if not isinstance(other, Range):
-            return False
-        return ((self._lower, self._upper, self._bounds) <=
-                (other._lower, other._upper, other._bounds))
+            return NotImplemented
+        for attr in self.__slots__:
+            self_value = getattr(self, attr)
+            other_value = getattr(other, attr)
+            if self_value == other_value:
+                pass
+            elif self_value is None:
+                return True
+            elif other_value is None:
+                return False
+            else:
+                return self_value <= other_value
+        return True
 
 
 def register_range(pgrange, pyrange, conn_or_curs, globally=False):
