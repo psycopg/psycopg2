@@ -437,8 +437,13 @@ user-defined |range| types can be adapted using `register_range()`.
 
     `!Range` objects are immutable, hashable, and support the ``in`` operator
     (checking if an element is within the range). They can be tested for
-    equivalence but not for ordering. Empty ranges evaluate to `!False` in
+    equivalence. Empty ranges evaluate to `!False` in
     boolean context, nonempty evaluate to `!True`.
+
+    `!Range` objects can be sorted although, as on the server-side,
+    this ordering is not particularly meangingful.
+
+    .. versionchanged:: 2.5.3
 
     Although it is possible to instantiate `!Range` objects, the class doesn't
     have an adapter registered, so you cannot normally pass these instances as

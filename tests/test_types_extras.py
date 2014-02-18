@@ -13,6 +13,7 @@
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
+from __future__ import with_statement
 
 import re
 import sys
@@ -22,6 +23,7 @@ from functools import wraps
 
 from testutils import unittest, skip_if_no_uuid, skip_before_postgres
 from testutils import ConnectingTestCase, decorate_all_tests
+from testutils import py3_raises_typeerror
 
 import psycopg2
 import psycopg2.extras
@@ -1225,12 +1227,73 @@ class RangeTestCase(unittest.TestCase):
         self.assertEqual(Range(10, 20), IntRange(10, 20))
         self.assertEqual(PositiveIntRange(10, 20), IntRange(10, 20))
 
-    def test_not_ordered(self):
+    # as the postgres docs describe for the server-side stuff,
+    # ordering is rather arbitrary, but will remain stable
+    # and consistent.
+
+    def test_lt_ordering(self):
         from psycopg2.extras import Range
-        self.assertRaises(TypeError, lambda: Range(empty=True) < Range(0,4))
-        self.assertRaises(TypeError, lambda: Range(1,2) > Range(0,4))
-        self.assertRaises(TypeError, lambda: Range(1,2) <= Range())
-        self.assertRaises(TypeError, lambda: Range(1,2) >= Range())
+        self.assert_(Range(empty=True) < Range(0, 4))
+        self.assert_(not Range(1, 2) < Range(0, 4))
+        self.assert_(Range(0, 4) < Range(1, 2))
+        self.assert_(not Range(1, 2) < Range())
+        self.assert_(Range() < Range(1, 2))
+        self.assert_(not Range(1) < Range(upper=1))
+        self.assert_(not Range() < Range())
+        self.assert_(not Range(empty=True) < Range(empty=True))
+        self.assert_(not Range(1, 2) < Range(1, 2))
+        with py3_raises_typeerror():
+            self.assert_(1 < Range(1, 2))
+        with py3_raises_typeerror():
+            self.assert_(not Range(1, 2) < 1)
+
+    def test_gt_ordering(self):
+        from psycopg2.extras import Range
+        self.assert_(not Range(empty=True) > Range(0, 4))
+        self.assert_(Range(1, 2) > Range(0, 4))
+        self.assert_(not Range(0, 4) > Range(1, 2))
+        self.assert_(Range(1, 2) > Range())
+        self.assert_(not Range() > Range(1, 2))
+        self.assert_(Range(1) > Range(upper=1))
+        self.assert_(not Range() > Range())
+        self.assert_(not Range(empty=True) > Range(empty=True))
+        self.assert_(not Range(1, 2) > Range(1, 2))
+        with py3_raises_typeerror():
+            self.assert_(not 1 > Range(1, 2))
+        with py3_raises_typeerror():
+            self.assert_(Range(1, 2) > 1)
+
+    def test_le_ordering(self):
+        from psycopg2.extras import Range
+        self.assert_(Range(empty=True) <= Range(0, 4))
+        self.assert_(not Range(1, 2) <= Range(0, 4))
+        self.assert_(Range(0, 4) <= Range(1, 2))
+        self.assert_(not Range(1, 2) <= Range())
+        self.assert_(Range() <= Range(1, 2))
+        self.assert_(not Range(1) <= Range(upper=1))
+        self.assert_(Range() <= Range())
+        self.assert_(Range(empty=True) <= Range(empty=True))
+        self.assert_(Range(1, 2) <= Range(1, 2))
+        with py3_raises_typeerror():
+            self.assert_(1 <= Range(1, 2))
+        with py3_raises_typeerror():
+            self.assert_(not Range(1, 2) <= 1)
+
+    def test_ge_ordering(self):
+        from psycopg2.extras import Range
+        self.assert_(not Range(empty=True) >= Range(0, 4))
+        self.assert_(Range(1, 2) >= Range(0, 4))
+        self.assert_(not Range(0, 4) >= Range(1, 2))
+        self.assert_(Range(1, 2) >= Range())
+        self.assert_(not Range() >= Range(1, 2))
+        self.assert_(Range(1) >= Range(upper=1))
+        self.assert_(Range() >= Range())
+        self.assert_(Range(empty=True) >= Range(empty=True))
+        self.assert_(Range(1, 2) >= Range(1, 2))
+        with py3_raises_typeerror():
+            self.assert_(not 1 >= Range(1, 2))
+        with py3_raises_typeerror():
+            self.assert_(Range(1, 2) >= 1)
 
 
 def skip_if_no_range(f):

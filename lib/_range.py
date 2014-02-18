@@ -133,12 +133,41 @@ class Range(object):
     def __hash__(self):
         return hash((self._lower, self._upper, self._bounds))
 
-    def __lt__(self, other):
-        raise TypeError(
-            'Range objects cannot be ordered; please refer to the PostgreSQL'
-            ' documentation to perform this operation in the database')
+    # as the postgres docs describe for the server-side stuff,
+    # ordering is rather arbitrary, but will remain stable
+    # and consistent.
 
-    __le__ = __gt__ = __ge__ = __lt__
+    def __lt__(self, other):
+        if not isinstance(other, Range):
+            return NotImplemented
+        for attr in self.__slots__:
+            self_value = getattr(self, attr)
+            other_value = getattr(other, attr)
+            if self_value == other_value:
+                pass
+            elif self_value is None:
+                return True
+            elif other_value is None:
+                return False
+            else:
+                return self_value < other_value
+        return False
+
+    def __le__(self, other):
+        if not isinstance(other, Range):
+            return NotImplemented
+        for attr in self.__slots__:
+            self_value = getattr(self, attr)
+            other_value = getattr(other, attr)
+            if self_value == other_value:
+                pass
+            elif self_value is None:
+                return True
+            elif other_value is None:
+                return False
+            else:
+                return self_value <= other_value
+        return True
 
 
 def register_range(pgrange, pyrange, conn_or_curs, globally=False):
