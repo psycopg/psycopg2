@@ -356,7 +356,7 @@ where typname = %s and ns.nspname = %s;
 
         m = self._re_range.match(s)
         if m is None:
-            raise InterfaceError("failed to parse range: %s")
+            raise InterfaceError("failed to parse range: '%s'" % s)
 
         lower = m.group(3)
         if lower is None:
