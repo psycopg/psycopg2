@@ -4,6 +4,8 @@ Current release
 What's new in psycopg 2.5.3
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+- Added arbitrary but stable order to `Range` objects, thanks to
+  Chris Withers (:ticket:`#193`).
 - Fixed debug build on Windows, thanks to James Emerton.
 
 
