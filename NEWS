@@ -1,6 +1,15 @@
 Current release
 ---------------
 
+What's new in psycopg 2.6
+-------------------------
+
+Bug fixes:
+
+- Json apapter's `!str()` returns the adapted content instead of the `!repr()`
+  (:ticket:`#191`).
+
+
 What's new in psycopg 2.5.3
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

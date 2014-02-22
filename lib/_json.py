@@ -92,6 +92,14 @@ class Json(object):
         s = self.dumps(self.adapted)
         return QuotedString(s).getquoted()
 
+    if sys.version_info < (3,):
+        def __str__(self):
+            return self.getquoted()
+    else:
+        def __str__(self):
+            # getquoted is binary in Py3
+            return self.getquoted().decode('ascii', errors='replace')
+
 
 def register_json(conn_or_curs=None, globally=False, loads=None,
         oid=None, array_oid=None):

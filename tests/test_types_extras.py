@@ -1055,6 +1055,17 @@ class JsonTestCase(ConnectingTestCase):
         self.assertEqual(data['a'], 100)
         self.assertEqual(data['b'], None)
 
+    @skip_if_no_json_module
+    def test_str(self):
+        snowman = u"\u2603"
+        obj = {'a': [1, 2, snowman]}
+        j = psycopg2.extensions.adapt(psycopg2.extras.Json(obj))
+        s = str(j)
+        self.assert_(isinstance(s, str))
+        # no pesky b's
+        self.assert_(s.startswith("'"))
+        self.assert_(s.endswith("'"))
+
 
 class RangeTestCase(unittest.TestCase):
     def test_noparam(self):
