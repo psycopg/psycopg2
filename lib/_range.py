@@ -154,20 +154,22 @@ class Range(object):
         return False
 
     def __le__(self, other):
-        if not isinstance(other, Range):
+        if self == other:
+            return True
+        else:
+            return self.__lt__(other)
+
+    def __gt__(self, other):
+        if isinstance(other, Range):
+            return other.__lt__(self)
+        else:
             return NotImplemented
-        for attr in self.__slots__:
-            self_value = getattr(self, attr)
-            other_value = getattr(other, attr)
-            if self_value == other_value:
-                pass
-            elif self_value is None:
-                return True
-            elif other_value is None:
-                return False
-            else:
-                return self_value <= other_value
-        return True
+
+    def __ge__(self, other):
+        if self == other:
+            return True
+        else:
+            return self.__gt__(other)
 
 
 def register_range(pgrange, pyrange, conn_or_curs, globally=False):
