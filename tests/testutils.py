@@ -329,3 +329,13 @@ def script_to_py3(script):
         f2.close()
         os.remove(filename)
 
+class py3_raises_typeerror(object):
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, type, exc, tb):
+        if sys.version_info[0] >= 3:
+            assert type is TypeError
+            return True
+        
