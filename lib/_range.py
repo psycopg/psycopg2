@@ -140,7 +140,7 @@ class Range(object):
     def __lt__(self, other):
         if not isinstance(other, Range):
             return NotImplemented
-        for attr in self.__slots__:
+        for attr in ('_lower', '_upper', '_bounds'):
             self_value = getattr(self, attr)
             other_value = getattr(other, attr)
             if self_value == other_value:
