@@ -506,10 +506,6 @@ conn_setup(connectionObject *self, PGconn *pgconn)
     pthread_mutex_lock(&self->lock);
     Py_BLOCK_THREADS;
 
-    if (psyco_green() && (0 > pq_set_non_blocking(self, 1))) {
-        return -1;
-    }
-
     if (!conn_is_datestyle_ok(self->pgconn)) {
         int res;
         Py_UNBLOCK_THREADS;
@@ -573,6 +569,9 @@ _conn_sync_connect(connectionObject *self)
 
     /* if the connection is green, wait to finish connection */
     if (green) {
+        if (0 > pq_set_non_blocking(self, 1)) {
+            return -1;
+        }
         if (0 != psyco_wait(self)) {
             return -1;
         }
