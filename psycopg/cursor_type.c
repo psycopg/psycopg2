@@ -1164,7 +1164,7 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
         char buffer[128];
 
         EXC_IF_NO_MARK(self);
-        EXC_IF_ASYNC_IN_PROGRESS(self, scroll)
+        EXC_IF_ASYNC_IN_PROGRESS(self, scroll);
         EXC_IF_TPC_PREPARED(self->conn, scroll);
 
         if (strcmp(mode, "absolute") == 0) {

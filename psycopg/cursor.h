@@ -90,30 +90,41 @@ HIDDEN void curs_reset(cursorObject *self);
 
 /* exception-raising macros */
 #define EXC_IF_CURS_CLOSED(self) \
-if ((self)->closed || ((self)->conn && (self)->conn->closed)) { \
-    PyErr_SetString(InterfaceError, "cursor already closed");   \
-    return NULL; }
+do \
+    if ((self)->closed || ((self)->conn && (self)->conn->closed)) { \
+        PyErr_SetString(InterfaceError, "cursor already closed"); \
+        return NULL; } \
+while (0)
 
 #define EXC_IF_NO_TUPLES(self) \
-if ((self)->notuples && (self)->name == NULL) {               \
-    PyErr_SetString(ProgrammingError, "no results to fetch"); \
-    return NULL; }
+do \
+    if ((self)->notuples && (self)->name == NULL) { \
+        PyErr_SetString(ProgrammingError, "no results to fetch"); \
+        return NULL; } \
+while (0)
 
 #define EXC_IF_NO_MARK(self) \
-if ((self)->mark != (self)->conn->mark && (self)->withhold == 0) {                                  \
-    PyErr_SetString(ProgrammingError, "named cursor isn't valid anymore"); \
-    return NULL; }
+do \
+    if ((self)->mark != (self)->conn->mark && (self)->withhold == 0) { \
+        PyErr_SetString(ProgrammingError, "named cursor isn't valid anymore"); \
+        return NULL; } \
+while (0)
 
-#define EXC_IF_CURS_ASYNC(self, cmd) if ((self)->conn->async == 1) { \
-    PyErr_SetString(ProgrammingError, #cmd " cannot be used "        \
-    "in asynchronous mode");                                         \
-    return NULL; }
+#define EXC_IF_CURS_ASYNC(self, cmd) \
+do \
+    if ((self)->conn->async == 1) { \
+        PyErr_SetString(ProgrammingError, \
+            #cmd " cannot be used in asynchronous mode"); \
+        return NULL; } \
+while (0)
 
 #define EXC_IF_ASYNC_IN_PROGRESS(self, cmd) \
-if ((self)->conn->async_cursor != NULL) {   \
-    PyErr_SetString(ProgrammingError, #cmd " cannot be used "        \
-    "while an asynchronous query is underway");                      \
-    return NULL; }
+do \
+    if ((self)->conn->async_cursor != NULL) { \
+        PyErr_SetString(ProgrammingError, \
+            #cmd " cannot be used while an asynchronous query is underway"); \
+    return NULL; } \
+while (0)
 
 #ifdef __cplusplus
 }
