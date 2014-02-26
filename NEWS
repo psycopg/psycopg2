@@ -8,6 +8,8 @@ What's new in psycopg 2.5.3
   Chris Withers (:ticket:`#193`).
 - Avoid blocking async connections on connect (:ticket:`#194`). Thanks to
   Adam Petrovich for the bug report and diagnosis.
+- Don't segfault using poorly defined cursor subclasses which forgot to call
+  the superclass init (:ticket:`#195`).
 - Fixed debug build on Windows, thanks to James Emerton.
 
 
