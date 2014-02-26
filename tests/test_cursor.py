@@ -413,6 +413,20 @@ class CursorTests(ConnectingTestCase):
         cur.scroll(9, mode='absolute')
         self.assertEqual(cur.fetchone(), (9,))
 
+    def test_bad_subclass(self):
+        # check that we get an error message instead of a segfault
+        # for badly written subclasses.
+        # see http://stackoverflow.com/questions/22019341/
+        class StupidCursor(psycopg2.extensions.cursor):
+            def __init__(self, *args, **kwargs):
+                # I am stupid so not calling superclass init
+                pass
+
+        cur = StupidCursor()
+        self.assertRaises(psycopg2.InterfaceError, cur.execute, 'select 1')
+        self.assertRaises(psycopg2.InterfaceError, cur.executemany,
+            'select 1', [])
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
