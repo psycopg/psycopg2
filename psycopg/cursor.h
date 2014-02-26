@@ -90,11 +90,14 @@ HIDDEN void curs_reset(cursorObject *self);
 
 /* exception-raising macros */
 #define EXC_IF_CURS_CLOSED(self) \
-do \
-    if ((self)->closed || ((self)->conn && (self)->conn->closed)) { \
+do { \
+    if (!(self)->conn) { \
+        PyErr_SetString(InterfaceError, "the cursor has no connection"); \
+        return NULL; } \
+    if ((self)->closed || (self)->conn->closed) { \
         PyErr_SetString(InterfaceError, "cursor already closed"); \
         return NULL; } \
-while (0)
+} while (0)
 
 #define EXC_IF_NO_TUPLES(self) \
 do \
