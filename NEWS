@@ -10,6 +10,7 @@ What's new in psycopg 2.5.3
   Adam Petrovich for the bug report and diagnosis.
 - Don't segfault using poorly defined cursor subclasses which forgot to call
   the superclass init (:ticket:`#195`).
+- It is now possible to call `get_transaction_status()` on closed connections.
 - Fixed debug build on Windows, thanks to James Emerton.
 
 
