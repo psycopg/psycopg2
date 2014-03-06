@@ -3,6 +3,8 @@ What's new in psycopg 2.4.7
 
   - Work around `pip issue #1630 <https://github.com/pypa/pip/issues/1630>`__
     making installation via ``pip -e git+url`` impossible (:ticket:`#18`).
+  - It is now possible to call `get_transaction_status()` on closed
+    connections.
   - Properly cleanup memory of broken connections (ticket #142).
   - Fixed build on Solaris 10 and 11 where the round() function is already
     declared (:ticket:`#146`).
