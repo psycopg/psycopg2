@@ -417,10 +417,18 @@ pq_complete_error(connectionObject *conn, PGresult **pgres, char **error)
         pq_raise(conn, NULL, pgres);
         /* now *pgres is null */
     }
-    else if (*error != NULL) {
-        PyErr_SetString(OperationalError, *error);
-    } else {
-        PyErr_SetString(OperationalError, "unknown error");
+    else {
+        if (*error != NULL) {
+            PyErr_SetString(OperationalError, *error);
+        } else {
+            PyErr_SetString(OperationalError, "unknown error");
+        }
+        /* Trivia: with a broken socket connection PQexec returns NULL, so we
+         * end up here. With a TCP connection we get a pgres with an error
+         * instead, and the connection gets closed in the pq_raise call above
+         * (see ticket #196)
+         */
+        conn->closed = 2;
     }
 
     if (*error) {

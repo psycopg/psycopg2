@@ -27,6 +27,8 @@ What's new in psycopg 2.5.3
   (:ticket:`#203`).
 - Don't segfault using poorly defined cursor subclasses which forgot to call
   the superclass init (:ticket:`#195`).
+- Mark the connection closed when a Socket connection is broken, as it
+  happens for TCP connections instead (:ticket:`#196`).
 - Fixed possible segfault in named cursors creation.
 - It is now possible to call `get_transaction_status()` on closed connections.
 - Fixed debug build on Windows, thanks to James Emerton.
