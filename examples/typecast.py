@@ -29,7 +29,7 @@ import psycopg2.extensions
 if len(sys.argv) > 1:
     DSN = sys.argv[1]
 
-print "Opening connection using dns:", DSN
+print "Opening connection using dsn:", DSN
 conn = psycopg2.connect(DSN)
 print "Encoding for this connection is", conn.encoding
 
