@@ -45,7 +45,7 @@ if len(sys.argv) > 1:
 if len(sys.argv) > 2:
     MODE = int(sys.argv[2])
     
-print "Opening connection using dns:", DSN
+print "Opening connection using dsn:", DSN
 conn = psycopg2.connect(DSN)
 curs = conn.cursor()
 
