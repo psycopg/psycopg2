@@ -260,7 +260,7 @@ class ConnectionTests(ConnectingTestCase):
         c = SubConnection("dbname=thereisnosuchdatabasemate password=foobar")
         self.assert_(c.closed, "connection failed so it must be closed")
         self.assert_('foobar' not in c.dsn, "password was not obscured")
-        pass
+
 
 class IsolationLevelsTestCase(ConnectingTestCase):
 
