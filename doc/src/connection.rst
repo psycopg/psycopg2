@@ -592,6 +592,8 @@ The ``connection`` class
         `psycopg2.extensions`: see :ref:`connection-status-constants`
         for the available values.
 
+        The status is undefined for `closed` connectons.
+
 
     .. method:: lobject([oid [, mode [, new_oid [, new_file [, lobject_factory]]]]])
 
