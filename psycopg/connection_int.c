@@ -629,14 +629,23 @@ _conn_async_connect(connectionObject *self)
 int
 conn_connect(connectionObject *self, long int async)
 {
-   if (async == 1) {
+    int rv;
+
+    if (async == 1) {
       Dprintf("con_connect: connecting in ASYNC mode");
-      return _conn_async_connect(self);
+      rv = _conn_async_connect(self);
     }
     else {
       Dprintf("con_connect: connecting in SYNC mode");
-      return _conn_sync_connect(self);
+      rv = _conn_sync_connect(self);
     }
+
+    if (rv != 0) {
+        /* connection failed, so let's close ourselves */
+        self->closed = 2;
+    }
+
+    return rv;
 }
 
 

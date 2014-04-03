@@ -218,6 +218,18 @@ class ConnectionTests(unittest.TestCase):
 
         self.assert_(not notices, "%d notices raised" % len(notices))
 
+    def test_failed_init_status(self):
+        class SubConnection(psycopg2.extensions.connection):
+            def __init__(self, dsn):
+                try:
+                    super(SubConnection, self).__init__(dsn)
+                except Exception:
+                    pass
+
+        c = SubConnection("dbname=thereisnosuchdatabasemate password=foobar")
+        self.assert_(c.closed, "connection failed so it must be closed")
+        self.assert_('foobar' not in c.dsn, "password was not obscured")
+        pass
 
 class IsolationLevelsTestCase(unittest.TestCase):
 
