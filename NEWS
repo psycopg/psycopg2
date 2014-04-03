@@ -11,7 +11,7 @@ What's new in psycopg 2.5.3
 - Fixed handling of dsn and closed attributes in connection subclasses
   failing to connect (from :ticket:`#192` discussion).
 - Fixed overflow opening a lobject with an oid not fitting in a signed int
-  (:ticket:`203`).
+  (:ticket:`#203`).
 - Don't segfault using poorly defined cursor subclasses which forgot to call
   the superclass init (:ticket:`#195`).
 - Fixed debug build on Windows, thanks to James Emerton.
