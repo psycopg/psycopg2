@@ -215,6 +215,8 @@ The ``cursor`` class
         exactly the one that would be sent to the database running the
         `~cursor.execute()` method or similar.
 
+        The returned string is always a bytes string.
+
             >>> cur.mogrify("INSERT INTO test (num, data) VALUES (%s, %s)", (42, 'bar'))
             "INSERT INTO test (num, data) VALUES (42, E'bar')"
 
@@ -427,11 +429,11 @@ The ``cursor`` class
     .. attribute:: query
 
         Read-only attribute containing the body of the last query sent to the
-        backend (including bound arguments). `!None` if no query has been
-        executed yet:
+        backend (including bound arguments) as bytes string. `!None` if no
+        query has been executed yet:
 
             >>> cur.execute("INSERT INTO test (num, data) VALUES (%s, %s)", (42, 'bar'))
-            >>> cur.query 
+            >>> cur.query
             "INSERT INTO test (num, data) VALUES (42, E'bar')"
 
         .. extension::
