@@ -16,6 +16,8 @@ What's new in psycopg 2.4.7
     failing to connect (from :ticket:`#192` discussion).
   - Don't segfault using poorly defined cursor subclasses which forgot to call
     the superclass init (:ticket:`#195`).
+  - Fixed overflow opening a lobject with an oid not fitting in a signed int
+    (:ticket:`#203`).
   - Fixed debug build on Windows, thanks to James Emerton.
 
 

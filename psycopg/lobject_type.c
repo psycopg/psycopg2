@@ -375,18 +375,18 @@ lobject_dealloc(PyObject* obj)
 static int
 lobject_init(PyObject *obj, PyObject *args, PyObject *kwds)
 {
-    int oid = (int)InvalidOid, new_oid = (int)InvalidOid;
+    Oid oid = InvalidOid, new_oid = InvalidOid;
     const char *smode = "";
     const char *new_file = NULL;
     PyObject *conn = NULL;
 
-    if (!PyArg_ParseTuple(args, "O!|iziz",
+    if (!PyArg_ParseTuple(args, "O!|IzIz",
          &connectionType, &conn,
          &oid, &smode, &new_oid, &new_file))
         return -1;
 
     return lobject_setup((lobjectObject *)obj,
-        (connectionObject *)conn, (Oid)oid, smode, (Oid)new_oid, new_file);
+        (connectionObject *)conn, oid, smode, new_oid, new_file);
 }
 
 static PyObject *
