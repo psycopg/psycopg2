@@ -748,7 +748,7 @@ psyco_conn_get_parameter_status(connectionObject *self, PyObject *args)
 static PyObject *
 psyco_conn_lobject(connectionObject *self, PyObject *args, PyObject *keywds)
 {
-    int oid = (int)InvalidOid, new_oid = (int)InvalidOid;
+    Oid oid = InvalidOid, new_oid = InvalidOid;
     const char *new_file = NULL;
     const char *smode = "";
     PyObject *factory = (PyObject *)&lobjectType;
@@ -757,7 +757,7 @@ psyco_conn_lobject(connectionObject *self, PyObject *args, PyObject *keywds)
     static char *kwlist[] = {"oid", "mode", "new_oid", "new_file",
                              "cursor_factory", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, keywds, "|izizO", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "|IzIzO", kwlist,
                                      &oid, &smode, &new_oid, &new_file,
                                      &factory)) {
         return NULL;
@@ -769,16 +769,16 @@ psyco_conn_lobject(connectionObject *self, PyObject *args, PyObject *keywds)
     EXC_IF_TPC_PREPARED(self, lobject);
 
     Dprintf("psyco_conn_lobject: new lobject for connection at %p", self);
-    Dprintf("psyco_conn_lobject:     parameters: oid = %d, mode = %s",
+    Dprintf("psyco_conn_lobject:     parameters: oid = %u, mode = %s",
             oid, smode);
     Dprintf("psyco_conn_lobject:     parameters: new_oid = %d, new_file = %s",
             new_oid, new_file);
 
     if (new_file)
-        obj = PyObject_CallFunction(factory, "Oisis",
+        obj = PyObject_CallFunction(factory, "OIsIs",
             self, oid, smode, new_oid, new_file);
     else
-        obj = PyObject_CallFunction(factory, "Oisi",
+        obj = PyObject_CallFunction(factory, "OIsI",
             self, oid, smode, new_oid);
 
     if (obj == NULL) return NULL;

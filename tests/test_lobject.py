@@ -373,6 +373,12 @@ class LargeObjectTests(LargeObjectTestCase):
         finally:
             self.conn.tpc_commit()
 
+    def test_large_oid(self):
+        # Test we don't overflow with an oid not fitting a signed int
+        try:
+            self.conn.lobject(0xFFFFFFFE)
+        except psycopg2.OperationalError:
+            pass
 
 decorate_all_tests(LargeObjectTests, skip_if_no_lo, skip_lo_if_green)
 
