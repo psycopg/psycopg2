@@ -1099,6 +1099,7 @@ connection_setup(connectionObject *self, const char *dsn, long int async)
         res = 0;
     }
 
+exit:
     /* here we obfuscate the password even if there was a connection error */
     pos = strstr(self->dsn, "password");
     if (pos != NULL) {
@@ -1106,7 +1107,6 @@ connection_setup(connectionObject *self, const char *dsn, long int async)
             *pos = 'x';
     }
 
-exit:
     return res;
 }
 
