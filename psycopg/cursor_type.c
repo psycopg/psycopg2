@@ -1814,31 +1814,34 @@ cursor_init(PyObject *obj, PyObject *args, PyObject *kwargs)
 {
     PyObject *conn;
     PyObject *name = Py_None;
-    const char *cname;
+    PyObject *bname = NULL;
+    const char *cname = NULL;
+    int rv = -1;
 
     static char *kwlist[] = {"conn", "name", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O!|O", kwlist,
             &connectionType, &conn, &name)) {
-        return -1;
+        goto exit;
     }
 
-    if (name == Py_None) {
-        cname = NULL;
-    } else {
+    if (name != Py_None) {
         Py_INCREF(name);   /* for ensure_bytes */
-        if (!(name = psycopg_ensure_bytes(name))) {
+        if (!(bname = psycopg_ensure_bytes(name))) {
             /* name has had a ref stolen */
-            return -1;
+            goto exit;
         }
-        Py_DECREF(name);
 
-        if (!(cname = Bytes_AsString(name))) {
-            return -1;
+        if (!(cname = Bytes_AsString(bname))) {
+            goto exit;
         }
     }
 
-    return cursor_setup((cursorObject *)obj, (connectionObject *)conn, cname);
+    rv = cursor_setup((cursorObject *)obj, (connectionObject *)conn, cname);
+
+exit:
+    Py_XDECREF(bname);
+    return rv;
 }
 
 static PyObject *
