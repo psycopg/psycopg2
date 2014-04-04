@@ -500,9 +500,11 @@ you probably need to install its companion -dev or -devel package."""
 
 # generate a nice version string to avoid confusion when users report bugs
 version_flags.append('pq3') # no more a choice
+
 for have in parser.get('build_ext', 'define').split(','):
     if have == 'PSYCOPG_EXTENSIONS':
         version_flags.append('ext')
+
 if version_flags:
     PSYCOPG_VERSION_EX = PSYCOPG_VERSION + " (%s)" % ' '.join(version_flags)
 else:
@@ -522,6 +524,13 @@ if parser.has_option('build_ext', 'static_libpq'):
     static_libpq = int(parser.get('build_ext', 'static_libpq'))
 else:
     static_libpq = 0
+
+# And now... explicitly add the defines from the .cfg files.
+# Looks like setuptools or some other cog doesn't add them to the command line
+# when called e.g. with "pip -e git+url'. This results in declarations
+# duplicate on the commandline, which I hope is not a problem.
+for define in parser.get('build_ext', 'define').split(','):
+    define_macros.append((define, '1'))
 
 # build the extension
 
