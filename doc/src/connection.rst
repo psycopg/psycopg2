@@ -348,7 +348,7 @@ The ``connection`` class
         pair: Transaction; Autocommit
         pair: Transaction; Isolation level
 
-    .. method:: set_session(*, isolation_level, readonly, deferrable, autocommit)
+    .. method:: set_session(*, isolation_level=None, readonly=None, deferrable=None, autocommit=None)
 
         Set one or more parameters for the next transactions or statements in
         the current session. See |SET TRANSACTION|_ for further details.
