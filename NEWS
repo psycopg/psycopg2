@@ -4,6 +4,8 @@ Current release
 What's new in psycopg 2.5.3
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+- Work around `pip issue #1630 <https://github.com/pypa/pip/issues/1630>`__
+  making installation via ``pip -e git+url`` impossible (:ticket:`#18`).
 - Added arbitrary but stable order to `Range` objects, thanks to
   Chris Withers (:ticket:`#193`).
 - Avoid blocking async connections on connect (:ticket:`#194`). Thanks to
