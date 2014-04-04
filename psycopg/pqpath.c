@@ -1101,9 +1101,8 @@ _pq_fetch_tuples(cursorObject *curs)
             cast = psyco_default_cast;
         }
 
-        Dprintf("_pq_fetch_tuples: using cast at %p (%s) for type %d",
-                cast, Bytes_AS_STRING(((typecastObject*)cast)->name),
-                PQftype(curs->pgres,i));
+        Dprintf("_pq_fetch_tuples: using cast at %p for type %d",
+                cast, PQftype(curs->pgres,i));
         Py_INCREF(cast);
         PyTuple_SET_ITEM(casts, i, cast);
 

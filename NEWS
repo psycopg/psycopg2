@@ -12,6 +12,8 @@ What's new in psycopg 2.4.7
     Alexey Borzenkov (:ticket:`#173`).
   - Manually creating `lobject` with the wrong parameter doesn't segfault
     (:ticket:`#187`).
+  - Fixed unsafe access to object names causing assertion failures in
+    Python 3 debug builds (:ticket:`#188`).
   - Avoid blocking async connections on connect (:ticket:`#194`). Thanks to
     Adam Petrovich for the bug report and diagnosis.
   - Fixed handling of dsn and closed attributes in connection subclasses
