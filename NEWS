@@ -15,18 +15,23 @@ What's new in psycopg 2.5.3
 
 - Work around `pip issue #1630 <https://github.com/pypa/pip/issues/1630>`__
   making installation via ``pip -e git+url`` impossible (:ticket:`#18`).
+- It is now possible to call `get_transaction_status()` on closed connections.
+- Fixed unsafe access to object names causing assertion failures in
+  Python 3 debug builds (:ticket:`#188`).
+- Mark the connection closed if found broken on `poll()` (from :ticket:`#192`
+  discussion)
+- Fixed handling of dsn and closed attributes in connection subclasses
+  failing to connect (from :ticket:`#192` discussion).
 - Added arbitrary but stable order to `Range` objects, thanks to
   Chris Withers (:ticket:`#193`).
 - Avoid blocking async connections on connect (:ticket:`#194`). Thanks to
   Adam Petrovich for the bug report and diagnosis.
-- Fixed unsafe access to object names causing assertion failures in
-  Python 3 debug builds (:ticket:`#188`).
-- Fixed handling of dsn and closed attributes in connection subclasses
-  failing to connect (from :ticket:`#192` discussion).
-- Fixed overflow opening a lobject with an oid not fitting in a signed int
-  (:ticket:`#203`).
 - Don't segfault using poorly defined cursor subclasses which forgot to call
   the superclass init (:ticket:`#195`).
+- Mark the connection closed when a Socket connection is broken, as it
+  happens for TCP connections instead (:ticket:`#196`).
+- Fixed overflow opening a lobject with an oid not fitting in a signed int
+  (:ticket:`#203`).
 - Fixed possible segfault in named cursors creation.
 - Fixed debug build on Windows, thanks to James Emerton.
 
