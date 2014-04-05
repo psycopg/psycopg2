@@ -22,7 +22,7 @@ The ``connection`` class
     :ref:`thread-safety` for details.
 
     .. method:: cursor(name=None, cursor_factory=None, scrollable=None, withhold=False)
-          
+
         Return a new `cursor` object using the connection.
 
         If *name* is specified, the returned cursor will be a :ref:`server
@@ -274,8 +274,8 @@ The ``connection`` class
 
         .. __: http://jdbc.postgresql.org/
 
-        Xids returned by `!tpc_recover()` also have extra attributes 
-        `~psycopg2.extensions.Xid.prepared`, `~psycopg2.extensions.Xid.owner`, 
+        Xids returned by `!tpc_recover()` also have extra attributes
+        `~psycopg2.extensions.Xid.prepared`, `~psycopg2.extensions.Xid.owner`,
         `~psycopg2.extensions.Xid.database` populated with the values read
         from the server.
 
@@ -348,7 +348,7 @@ The ``connection`` class
         pair: Transaction; Autocommit
         pair: Transaction; Isolation level
 
-    .. method:: set_session([isolation_level,] [readonly,] [deferrable,] [autocommit])
+    .. method:: set_session(*, isolation_level=None, readonly=None, deferrable=None, autocommit=None)
 
         Set one or more parameters for the next transactions or statements in
         the current session. See |SET TRANSACTION|_ for further details.
@@ -488,7 +488,7 @@ The ``connection`` class
         You can configure what messages to receive using `PostgreSQL logging
         configuration parameters`__ such as ``log_statement``,
         ``client_min_messages``, ``log_min_duration_statement`` etc.
-        
+
         .. __: http://www.postgresql.org/docs/current/static/runtime-config-logging.html
 
 
@@ -536,7 +536,7 @@ The ``connection`` class
         pair: Server; Parameters
 
     .. method:: get_parameter_status(parameter)
-    
+
         Look up a current parameter setting of the server.
 
         Potential values for ``parameter`` are: ``server_version``,
@@ -595,7 +595,7 @@ The ``connection`` class
         The number is formed by converting the major, minor, and revision
         numbers into two-decimal-digit numbers and appending them together.
         For example, version 8.1.5 will be returned as ``80105``.
-        
+
         .. seealso:: libpq docs for `PQserverVersion()`__ for details.
 
             .. __: http://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQSERVERVERSION
@@ -609,7 +609,7 @@ The ``connection`` class
     .. attribute:: status
 
         A read-only integer representing the status of the connection.
-        Symbolic constants for the values are defined in the module 
+        Symbolic constants for the values are defined in the module
         `psycopg2.extensions`: see :ref:`connection-status-constants`
         for the available values.
 
