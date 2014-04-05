@@ -355,7 +355,7 @@ lobject_dealloc(PyObject* obj)
 {
     lobjectObject *self = (lobjectObject *)obj;
 
-    if (self->conn) {   /* if not, init failed */
+    if (self->conn && self->fd != -1) {
         if (lobject_close(self) < 0)
             PyErr_Print();
         Py_XDECREF((PyObject*)self->conn);
