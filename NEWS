@@ -26,6 +26,7 @@ What's new in psycopg 2.4.7
     happens for TCP connections instead (:ticket:`#196`).
   - Fixed overflow opening a lobject with an oid not fitting in a signed int
     (:ticket:`#203`).
+  - Mark the connection closed if found broken on `poll()`.
   - Fixed possible segfault in named cursors creation.
   - Fixed debug build on Windows, thanks to James Emerton.
 
