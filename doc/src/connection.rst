@@ -283,8 +283,8 @@ The ``connection`` class
 
     .. attribute:: closed
 
-        Read-only attribute reporting whether the database connection is open
-        (0) or closed (1).
+        Read-only integer attribute: 0 if the connection is open, nonzero if
+        it is closed or broken.
 
 
     .. method:: cancel
