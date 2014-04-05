@@ -130,6 +130,7 @@ class LargeObjectTests(LargeObjectTestCase):
 
         self.assertRaises(psycopg2.OperationalError,
                           self.conn.lobject, 0, "w", lo.oid)
+        self.assert_(not self.conn.closed)
 
     def test_import(self):
         self.tmpdir = tempfile.mkdtemp()
