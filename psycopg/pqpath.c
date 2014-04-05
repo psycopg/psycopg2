@@ -428,7 +428,9 @@ pq_complete_error(connectionObject *conn, PGresult **pgres, char **error)
          * instead, and the connection gets closed in the pq_raise call above
          * (see ticket #196)
          */
-        conn->closed = 2;
+        if (CONNECTION_BAD == PQstatus(conn->pgconn)) {
+            conn->closed = 2;
+        }
     }
 
     if (*error) {
