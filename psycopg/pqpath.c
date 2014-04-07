@@ -388,12 +388,22 @@ pq_complete_error(connectionObject *conn, PGresult **pgres, char **error)
 {
     Dprintf("pq_complete_error: pgconn = %p, pgres = %p, error = %s",
             conn->pgconn, *pgres, *error ? *error : "(null)");
-    if (*pgres != NULL)
+    if (*pgres != NULL) {
         pq_raise(conn, NULL, *pgres);
-    else if (*error != NULL) {
-        PyErr_SetString(OperationalError, *error);
     } else {
-        PyErr_SetString(OperationalError, "unknown error");
+        if (*error != NULL) {
+            PyErr_SetString(OperationalError, *error);
+        } else {
+            PyErr_SetString(OperationalError, "unknown error");
+        }
+        /* Trivia: with a broken socket connection PQexec returns NULL, so we
+         * end up here. With a TCP connection we get a pgres with an error
+         * instead, and the connection gets closed in the pq_raise call above
+         * (see ticket #196)
+         */
+        if (CONNECTION_BAD == PQstatus(conn->pgconn)) {
+            conn->closed = 2;
+        }
     }
     IFCLEARPGRES(*pgres);
     if (*error) {
@@ -764,6 +774,12 @@ pq_is_busy(connectionObject *conn)
         Dprintf("pq_is_busy: PQconsumeInput() failed");
         pthread_mutex_unlock(&(conn->lock));
         Py_BLOCK_THREADS;
+
+        /* if the libpq says pgconn is lost, close the py conn */
+        if (CONNECTION_BAD == PQstatus(conn->pgconn)) {
+            conn->closed = 2;
+        }
+
         PyErr_SetString(OperationalError, PQerrorMessage(conn->pgconn));
         return -1;
     }
@@ -793,6 +809,12 @@ pq_is_busy_locked(connectionObject *conn)
 
     if (PQconsumeInput(conn->pgconn) == 0) {
         Dprintf("pq_is_busy_locked: PQconsumeInput() failed");
+
+        /* if the libpq says pgconn is lost, close the py conn */
+        if (CONNECTION_BAD == PQstatus(conn->pgconn)) {
+            conn->closed = 2;
+        }
+
         PyErr_SetString(OperationalError, PQerrorMessage(conn->pgconn));
         return -1;
     }

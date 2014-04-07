@@ -647,8 +647,6 @@ psyco_conn_set_client_encoding(connectionObject *self, PyObject *args)
 static PyObject *
 psyco_conn_get_transaction_status(connectionObject *self, PyObject *args)
 {
-    EXC_IF_CONN_CLOSED(self);
-
     return PyInt_FromLong((long)PQtransactionStatus(self->pgconn));
 }
 
