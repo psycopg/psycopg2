@@ -506,10 +506,6 @@ conn_setup(connectionObject *self, PGconn *pgconn)
     pthread_mutex_lock(&self->lock);
     Py_BLOCK_THREADS;
 
-    if (psyco_green() && (0 > pq_set_non_blocking(self, 1))) {
-        return -1;
-    }
-
     if (!conn_is_datestyle_ok(self->pgconn)) {
         int res;
         Py_UNBLOCK_THREADS;
@@ -573,6 +569,9 @@ _conn_sync_connect(connectionObject *self)
 
     /* if the connection is green, wait to finish connection */
     if (green) {
+        if (0 > pq_set_non_blocking(self, 1)) {
+            return -1;
+        }
         if (0 != psyco_wait(self)) {
             return -1;
         }
@@ -613,6 +612,11 @@ _conn_async_connect(connectionObject *self)
     }
 
     PQsetNoticeProcessor(pgconn, conn_notice_callback, (void*)self);
+
+    /* Set the connection to nonblocking now. */
+    if (pq_set_non_blocking(self, 1) != 0) {
+        return -1;
+    }
 
     /* The connection will be completed banging on poll():
      * First with _conn_poll_connecting() that will finish connection,
@@ -788,11 +792,6 @@ _conn_poll_setup_async(connectionObject *self)
 
     switch (self->status) {
     case CONN_STATUS_CONNECTING:
-        /* Set the connection to nonblocking now. */
-        if (pq_set_non_blocking(self, 1) != 0) {
-            break;
-        }
-
         self->equote = conn_get_standard_conforming_strings(self->pgconn);
         self->protocol = conn_get_protocol_version(self->pgconn);
         self->server_version = conn_get_server_version(self->pgconn);
