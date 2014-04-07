@@ -26,8 +26,9 @@ import time
 import psycopg2
 import psycopg2.extensions
 from psycopg2.extensions import b
-from testconfig import dsn, unittest, skip_before_postgres
-from testutils import skip_if_no_namedtuple, skip_if_no_getrefcount
+from testconfig import dsn
+from testutils import unittest, skip_if_no_namedtuple, skip_if_no_getrefcount
+from testutils import skip_before_postgres
 
 class CursorTests(unittest.TestCase):
 
@@ -340,19 +341,6 @@ class CursorTests(unittest.TestCase):
         cur.scroll(9, mode='absolute')
         self.assertRaises((IndexError, psycopg2.ProgrammingError),
             cur.scroll, 1)
-
-    @skip_before_postgres(8, 0)
-    def test_scroll_named(self):
-        cur = self.conn.cursor('tmp', scrollable=True)
-        cur.execute("select generate_series(0,9)")
-        cur.scroll(2)
-        self.assertEqual(cur.fetchone(), (2,))
-        cur.scroll(2)
-        self.assertEqual(cur.fetchone(), (5,))
-        cur.scroll(2, mode='relative')
-        self.assertEqual(cur.fetchone(), (8,))
-        cur.scroll(9, mode='absolute')
-        self.assertEqual(cur.fetchone(), (9,))
 
     def test_bad_subclass(self):
         # check that we get an error message instead of a segfault

@@ -224,7 +224,6 @@ def skip_if_no_superuser(f):
 
 
 def skip_if_no_getrefcount(f):
-    @wraps(f)
     def skip_if_no_getrefcount_(self):
         if not hasattr(sys, 'getrefcount'):
             return self.skipTest('skipped, no sys.getrefcount()')
