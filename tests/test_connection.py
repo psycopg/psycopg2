@@ -218,6 +218,13 @@ class ConnectionTests(unittest.TestCase):
 
         self.assert_(not notices, "%d notices raised" % len(notices))
 
+    def test_cursor_factory_none(self):
+        # issue #210
+        conn = psycopg2.connect(dsn)
+        cur = conn.cursor(cursor_factory=None)
+        self.assertEqual(type(cur), psycopg2.extensions.cursor)
+        conn.close()
+
     def test_failed_init_status(self):
         class SubConnection(psycopg2.extensions.connection):
             def __init__(self, dsn):

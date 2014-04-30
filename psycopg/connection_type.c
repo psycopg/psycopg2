@@ -54,7 +54,7 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *kwargs)
 {
     PyObject *obj;
     PyObject *name = Py_None;
-    PyObject *factory = (PyObject *)&cursorType;
+    PyObject *factory = Py_None;
     PyObject *withhold = Py_False;
 
     static char *kwlist[] = {"name", "cursor_factory", "withhold", NULL};
@@ -71,6 +71,10 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *kwargs)
     }
 
     EXC_IF_CONN_CLOSED(self);
+
+    if (factory == Py_None) {
+        factory = (PyObject *)&cursorType;
+    }
 
     if (self->status != CONN_STATUS_READY &&
         self->status != CONN_STATUS_BEGIN &&
