@@ -249,6 +249,16 @@ class ConnectionTests(ConnectingTestCase):
         cur.execute("select 1 as a")
         self.assertRaises(TypeError, (lambda r: r['a']), cur.fetchone())
 
+    def test_cursor_factory_none(self):
+        # issue #210
+        conn = self.connect()
+        cur = conn.cursor(cursor_factory=None)
+        self.assertEqual(type(cur), psycopg2.extensions.cursor)
+
+        conn = self.connect(cursor_factory=psycopg2.extras.DictCursor)
+        cur = conn.cursor(cursor_factory=None)
+        self.assertEqual(type(cur), psycopg2.extras.DictCursor)
+
     def test_failed_init_status(self):
         class SubConnection(psycopg2.extensions.connection):
             def __init__(self, dsn):

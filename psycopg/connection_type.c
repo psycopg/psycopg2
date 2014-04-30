@@ -55,7 +55,7 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *kwargs)
     PyObject *obj = NULL;
     PyObject *rv = NULL;
     PyObject *name = Py_None;
-    PyObject *factory = (PyObject *)&cursorType;
+    PyObject *factory = Py_None;
     PyObject *withhold = Py_False;
     PyObject *scrollable = Py_None;
 
@@ -64,14 +64,19 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *kwargs)
 
     EXC_IF_CONN_CLOSED(self);
 
-    if (self->cursor_factory && self->cursor_factory != Py_None) {
-        factory = self->cursor_factory;
-    }
-
     if (!PyArg_ParseTupleAndKeywords(
             args, kwargs, "|OOOO", kwlist,
             &name, &factory, &withhold, &scrollable)) {
         goto exit;
+    }
+
+    if (factory == Py_None) {
+        if (self->cursor_factory && self->cursor_factory != Py_None) {
+            factory = self->cursor_factory;
+        }
+        else {
+            factory = (PyObject *)&cursorType;
+        }
     }
 
     if (self->status != CONN_STATUS_READY &&
