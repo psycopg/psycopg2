@@ -23,6 +23,8 @@ What's new in psycopg 2.5.3
   happens for TCP connections instead (:ticket:`#196`).
 - Fixed overflow opening a lobject with an oid not fitting in a signed int
   (:ticket:`#203`).
+- Fixed handling of explicit default ``cursor_factory=None`` in
+  `connection.cursor()` (:ticket:`#210`).
 - Fixed possible segfault in named cursors creation.
 - Fixed debug build on Windows, thanks to James Emerton.
 
