@@ -285,6 +285,34 @@ class CopyTests(unittest.TestCase):
         curs.execute("select count(*) from manycols;")
         self.assertEqual(curs.fetchone()[0], 2)
 
+    def test_copy_rowcount(self):
+        curs = self.conn.cursor()
+
+        curs.copy_from(StringIO('aaa\nbbb\nccc\n'), 'tcopy', columns=['data'])
+        self.assertEqual(curs.rowcount, 3)
+
+        curs.copy_expert(
+            "copy tcopy (data) from stdin",
+            StringIO('ddd\neee\n'))
+        self.assertEqual(curs.rowcount, 2)
+
+        curs.copy_to(StringIO(), "tcopy")
+        self.assertEqual(curs.rowcount, 5)
+
+        curs.execute("insert into tcopy (data) values ('fff')")
+        curs.copy_expert("copy tcopy to stdout", StringIO())
+        self.assertEqual(curs.rowcount, 6)
+
+    def test_copy_rowcount_error(self):
+        curs = self.conn.cursor()
+
+        curs.execute("insert into tcopy (data) values ('fff')")
+        self.assertEqual(curs.rowcount, 1)
+
+        self.assertRaises(psycopg2.DataError,
+            curs.copy_from, StringIO('aaa\nbbb\nccc\n'), 'tcopy')
+        self.assertEqual(curs.rowcount, -1)
+
 
 decorate_all_tests(CopyTests, skip_if_green)
 

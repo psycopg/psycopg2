@@ -1231,6 +1231,20 @@ exit:
     return rv;
 }
 
+void
+_read_rowcount(cursorObject *curs)
+{
+    const char *rowcount;
+
+    rowcount = PQcmdTuples(curs->pgres);
+    Dprintf("_read_rowcount: PQcmdTuples = %s", rowcount);
+    if (!rowcount || !rowcount[0]) {
+        curs->rowcount = -1;
+    } else {
+        curs->rowcount = atoi(rowcount);
+    }
+}
+
 static int
 _pq_copy_in_v3(cursorObject *curs)
 {
@@ -1348,6 +1362,7 @@ _pq_copy_in_v3(cursorObject *curs)
 
             if (NULL == curs->pgres)
                 break;
+            _read_rowcount(curs);
             if (PQresultStatus(curs->pgres) == PGRES_FATAL_ERROR)
                 pq_raise(curs->conn, curs, NULL);
             IFCLEARPGRES(curs->pgres);
@@ -1424,6 +1439,7 @@ _pq_copy_out_v3(cursorObject *curs)
 
         if (NULL == curs->pgres)
             break;
+        _read_rowcount(curs);
         if (PQresultStatus(curs->pgres) == PGRES_FATAL_ERROR)
             pq_raise(curs->conn, curs, NULL);
         IFCLEARPGRES(curs->pgres);
@@ -1439,7 +1455,6 @@ int
 pq_fetch(cursorObject *curs, int no_result)
 {
     int pgstatus, ex = -1;
-    const char *rowcount;
 
     /* even if we fail, we remove any information about the previous query */
     curs_reset(curs);
@@ -1471,11 +1486,7 @@ pq_fetch(cursorObject *curs, int no_result)
 
     case PGRES_COMMAND_OK:
         Dprintf("pq_fetch: command returned OK (no tuples)");
-        rowcount = PQcmdTuples(curs->pgres);
-        if (!rowcount || !rowcount[0])
-          curs->rowcount = -1;
-        else
-          curs->rowcount = atoi(rowcount);
+        _read_rowcount(curs);
         curs->lastoid = PQoidValue(curs->pgres);
         CLEARPGRES(curs->pgres);
         ex = 1;
@@ -1483,8 +1494,8 @@ pq_fetch(cursorObject *curs, int no_result)
 
     case PGRES_COPY_OUT:
         Dprintf("pq_fetch: data from a COPY TO (no tuples)");
-        ex = _pq_copy_out_v3(curs);
         curs->rowcount = -1;
+        ex = _pq_copy_out_v3(curs);
         /* error caught by out glorious notice handler */
         if (PyErr_Occurred()) ex = -1;
         IFCLEARPGRES(curs->pgres);
@@ -1492,8 +1503,8 @@ pq_fetch(cursorObject *curs, int no_result)
 
     case PGRES_COPY_IN:
         Dprintf("pq_fetch: data from a COPY FROM (no tuples)");
-        ex = _pq_copy_in_v3(curs);
         curs->rowcount = -1;
+        ex = _pq_copy_in_v3(curs);
         /* error caught by out glorious notice handler */
         if (PyErr_Occurred()) ex = -1;
         IFCLEARPGRES(curs->pgres);
