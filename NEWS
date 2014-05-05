@@ -15,6 +15,8 @@ What's new in psycopg 2.5.3
 
 - Work around `pip issue #1630 <https://github.com/pypa/pip/issues/1630>`__
   making installation via ``pip -e git+url`` impossible (:ticket:`#18`).
+- Copy operations correctly set the `cursor.rowcount` attribute
+  (:ticket:`#180`).
 - It is now possible to call `get_transaction_status()` on closed connections.
 - Fixed unsafe access to object names causing assertion failures in
   Python 3 debug builds (:ticket:`#188`).
