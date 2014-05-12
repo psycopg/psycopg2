@@ -75,9 +75,9 @@ class AsyncTests(ConnectingTestCase):
             if state == psycopg2.extensions.POLL_OK:
                 break
             elif state == psycopg2.extensions.POLL_READ:
-                select.select([pollable], [], [])
+                select.select([pollable], [], [], 10)
             elif state == psycopg2.extensions.POLL_WRITE:
-                select.select([], [pollable], [])
+                select.select([], [pollable], [], 10)
             else:
                 raise Exception("Unexpected result from poll: %r", state)
 
