@@ -34,6 +34,7 @@ import psycopg2.extensions
 from testutils import unittest, decorate_all_tests, skip_if_no_superuser
 from testutils import skip_before_postgres, skip_after_postgres
 from testutils import ConnectingTestCase, skip_if_tpc_disabled
+from testutils import skip_if_windows
 from testconfig import dsn, dbname
 
 
@@ -64,6 +65,7 @@ class ConnectionTests(ConnectingTestCase):
 
     @skip_before_postgres(8, 4)
     @skip_if_no_superuser
+    @skip_if_windows
     def test_cleanup_on_badconn_close(self):
         # ticket #148
         conn = self.conn
