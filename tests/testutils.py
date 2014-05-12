@@ -25,6 +25,7 @@
 # Use unittest2 if available. Otherwise mock a skip facility with warnings.
 
 import os
+import platform
 import sys
 from functools import wraps
 from testconfig import dsn
@@ -301,6 +302,17 @@ def skip_if_no_getrefcount(f):
         else:
             return f(self)
     return skip_if_no_getrefcount_
+
+def skip_if_windows(f):
+    """Skip a test if run on windows"""
+    @wraps(f)
+    def skip_if_windows_(self):
+        if platform.system() == 'Windows':
+            return self.skipTest("Not supported on Windows")
+        else:
+            return f(self)
+    return skip_if_windows_
+
 
 def script_to_py3(script):
     """Convert a script to Python3 syntax if required."""
