@@ -506,7 +506,7 @@ psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
     PyObject *operation = NULL, *vars = NULL;
     PyObject *v, *iter = NULL;
-    int rowcount = 0;
+    long rowcount = 0;
 
     static char *kwlist[] = {"query", "vars_list", NULL};
 
