@@ -25,7 +25,7 @@
 import os
 import sys
 import string
-from testutils import unittest, decorate_all_tests, skip_if_no_iobase
+from testutils import unittest, decorate_all_tests, skip_if_no_iobase, skip_before_postgres
 from cStringIO import StringIO
 from itertools import cycle, izip
 
@@ -285,6 +285,7 @@ class CopyTests(unittest.TestCase):
         curs.execute("select count(*) from manycols;")
         self.assertEqual(curs.fetchone()[0], 2)
 
+    @skip_before_postgres(8, 2) # they don't send the count
     def test_copy_rowcount(self):
         curs = self.conn.cursor()
 
