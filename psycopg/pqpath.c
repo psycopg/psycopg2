@@ -1241,7 +1241,7 @@ _read_rowcount(cursorObject *curs)
     if (!rowcount || !rowcount[0]) {
         curs->rowcount = -1;
     } else {
-        curs->rowcount = atoi(rowcount);
+        curs->rowcount = atol(rowcount);
     }
 }
 
