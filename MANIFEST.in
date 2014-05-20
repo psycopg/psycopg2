@@ -2,7 +2,7 @@ recursive-include psycopg *.c *.h *.manifest
 recursive-include lib *.py
 recursive-include tests *.py
 recursive-include examples *.py somehackers.jpg whereareyou.jpg
-include doc/Makefile doc/README doc/HACKING doc/SUCCESS doc/COPYING* doc/*.txt
+include doc/Makefile doc/README doc/HACKING doc/SUCCESS doc/COPYING.LESSER doc/*.txt
 include doc/src/Makefile doc/src/conf.py doc/src/*.rst doc/src/_static/*
 recursive-include doc/src/tools *.py
 include doc/html/*.html doc/html/*.js doc/html/_sources/*.txt doc/html/_static/*
