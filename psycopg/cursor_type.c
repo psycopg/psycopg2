@@ -1024,6 +1024,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
     PyObject *parameters = Py_None;
     PyObject *operation = NULL;
     PyObject *res = NULL;
+    PyObject *parameter_names = NULL;
 
     if (!PyArg_ParseTuple(args, "s#|O",
           &procname, &procname_len, &parameters
@@ -1045,19 +1046,52 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
     }
 
     /* allocate some memory, build the SQL and create a PyString from it */
-    sl = procname_len + 17 + nparameters*3 - (nparameters ? 1 : 0);
-    sql = (char*)PyMem_Malloc(sl);
-    if (sql == NULL) {
-        PyErr_NoMemory();
-        goto exit;
-    }
 
-    sprintf(sql, "SELECT * FROM %s(", procname);
-    for(i=0; i<nparameters; i++) {
-        strcat(sql, "%s,");
+    if (nparameters > 0 && PyDict_Check(parameters)) {
+      /* for a dict, we put the parameter names into the SQL */
+      parameter_names = PyDict_Keys(parameters);
+
+      /* first we need to figure out how much space we need for the SQL */
+      sl = procname_len + 17 + nparameters*5 - (nparameters ? 1 : 0);
+      for(i=0; i<nparameters; i++) {
+        sl += strlen(Text_AsUTF8(PyList_GetItem(parameter_names, i)));
+      }
+
+      sql = (char*)PyMem_Malloc(sl);
+      if (sql == NULL) {
+          PyErr_NoMemory();
+          goto exit;
+      }
+
+      sprintf(sql, "SELECT * FROM %s(", procname);
+      for(i=0; i<nparameters; i++) {
+        /* like procname, param names are not sanitized. don't SQL inject yourself. */
+        strcat(sql, Text_AsUTF8(PyList_GetItem(parameter_names, i)));
+        strcat(sql, ":=%s,");
+      }
+      sql[sl-2] = ')';
+      sql[sl-1] = '\0';
+      Py_DECREF(parameter_names);
+
+      /* now that we have the query string we can discard the keys and proceed normally */
+      parameters = PyDict_Values(parameters);
     }
-    sql[sl-2] = ')';
-    sql[sl-1] = '\0';
+    else {
+      sl = procname_len + 17 + nparameters*3 - (nparameters ? 1 : 0);
+
+      sql = (char*)PyMem_Malloc(sl);
+      if (sql == NULL) {
+          PyErr_NoMemory();
+          goto exit;
+      }
+
+      sprintf(sql, "SELECT * FROM %s(", procname);
+      for(i=0; i<nparameters; i++) {
+          strcat(sql, "%s,");
+      }
+      sql[sl-2] = ')';
+      sql[sl-1] = '\0';
+    }
 
     if (!(operation = Bytes_FromString(sql))) { goto exit; }
 
