@@ -1024,6 +1024,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
     PyObject *parameters = Py_None;
     PyObject *operation = NULL;
     PyObject *res = NULL;
+    PyObject *parameter_name = NULL;
     PyObject *parameter_names = NULL;
 
     if (!PyArg_ParseTuple(args, "s#|O",
@@ -1054,7 +1055,12 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
       /* first we need to figure out how much space we need for the SQL */
       sl = procname_len + 17 + nparameters*5 - (nparameters ? 1 : 0);
       for(i=0; i<nparameters; i++) {
-        sl += strlen(Text_AsUTF8(PyList_GetItem(parameter_names, i)));
+        parameter_name = PyList_GetItem(parameter_names, i);
+        if (!Text_Check(parameter_name)) {
+          PyErr_SetString(PyExc_TypeError, "argument 2 must have string keys if Dict");
+          goto exit;
+        }
+        sl += strlen(Text_AsUTF8(parameter_name));
       }
 
       sql = (char*)PyMem_Malloc(sl);
