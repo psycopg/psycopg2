@@ -1064,6 +1064,13 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
       /* we will throw the sanitized C strings into a cache to not redo the work later */
       parameter_name_cstr_sanitized_CACHE = PyMem_New(char *, nparameters);
 
+      if (parameter_name_cstr_sanitized_CACHE == NULL) {
+        PyErr_NoMemory();
+        PyMem_Del(parameter_name_cstr_sanitized_CACHE);
+        Py_DECREF(parameter_names);
+        goto exit;
+      }
+
       for(i=0; i<nparameters; i++) {
         parameter_name = PyList_GetItem(parameter_names, i);
 
