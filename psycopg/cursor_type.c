@@ -1025,6 +1025,10 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
     PyObject *operation = NULL;
     PyObject *res = NULL;
     PyObject *parameter_name = NULL;
+    PyObject *parameter_name_bytes = NULL;
+    char *parameter_name_cstr = NULL;
+    char *parameter_name_cstr_sanitized = NULL;
+    char **parameter_name_cstr_sanitized_CACHE = NULL;
     PyObject *parameter_names = NULL;
 
     if (!PyArg_ParseTuple(args, "s#|O",
@@ -1048,40 +1052,71 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
 
     /* allocate some memory, build the SQL and create a PyString from it */
 
+    /* a dict requires special handling: we put the parameter names into the SQL */
     if (nparameters > 0 && PyDict_Check(parameters)) {
-      /* for a dict, we put the parameter names into the SQL */
+
       parameter_names = PyDict_Keys(parameters);
 
-      /* first we need to figure out how much space we need for the SQL */
-      sl = procname_len + 17 + nparameters*5 - (nparameters ? 1 : 0);
+      /* first we need to ensure the dict's keys are text */
       for(i=0; i<nparameters; i++) {
-        parameter_name = PyList_GetItem(parameter_names, i);
-        if (!Text_Check(parameter_name)) {
-          PyErr_SetString(PyExc_TypeError, "argument 2 must have string keys if Dict");
+        if (!Text_Check(PyList_GetItem(parameter_names, i))) {
+          PyErr_SetString(PyExc_TypeError, "argument 2 must have only string keys if Dict");
+          Py_DECREF(parameter_names);
           goto exit;
         }
-        sl += strlen(Text_AsUTF8(parameter_name));
       }
+
+      /* we need one extra pass to determine the amount of memory to allocate for the SQL */
+      sl = procname_len + 17 + nparameters*5 - (nparameters ? 1 : 0);
+
+      /* we will throw the sanitized C strings into a cache to not redo the work later */
+      parameter_name_cstr_sanitized_CACHE = PyMem_New(char *, nparameters);
+
+      for(i=0; i<nparameters; i++) {
+        parameter_name = PyList_GetItem(parameter_names, i);
+
+        Py_INCREF(parameter_name);
+        parameter_name_bytes = psycopg_ensure_bytes(parameter_name);
+        parameter_name_cstr = Bytes_AsString(parameter_name_bytes);
+        parameter_name_cstr_sanitized = PQescapeIdentifier(self->conn->pgconn, parameter_name_cstr, strlen(parameter_name_cstr));
+        Py_DECREF(parameter_name);
+
+        /* must add the length of the sanitized string to the length of the SQL string */
+        sl += strlen(parameter_name_cstr_sanitized);
+
+        parameter_name_cstr_sanitized_CACHE[i] = parameter_name_cstr_sanitized;
+      }
+
+      Py_DECREF(parameter_names);
 
       sql = (char*)PyMem_Malloc(sl);
       if (sql == NULL) {
-          PyErr_NoMemory();
-          goto exit;
+        PyErr_NoMemory();
+        for(i=0; i<nparameters; i++) {
+          PQfreemem(parameter_name_cstr_sanitized_CACHE[i]);
+        }
+        PyMem_Del(parameter_name_cstr_sanitized_CACHE);
+        goto exit;
       }
 
       sprintf(sql, "SELECT * FROM %s(", procname);
       for(i=0; i<nparameters; i++) {
+        parameter_name_cstr_sanitized = parameter_name_cstr_sanitized_CACHE[i];
         /* like procname, param names are not sanitized. don't SQL inject yourself. */
-        strcat(sql, Text_AsUTF8(PyList_GetItem(parameter_names, i)));
+        strcat(sql, parameter_name_cstr_sanitized);
         strcat(sql, ":=%s,");
+
+        PQfreemem(parameter_name_cstr_sanitized);
       }
+      PyMem_Del(parameter_name_cstr_sanitized_CACHE);
       sql[sl-2] = ')';
       sql[sl-1] = '\0';
-      Py_DECREF(parameter_names);
 
       /* now that we have the query string we can discard the keys and proceed normally */
       parameters = PyDict_Values(parameters);
     }
+
+    /* a list (or None) is a little bit simpler */
     else {
       sl = procname_len + 17 + nparameters*3 - (nparameters ? 1 : 0);
 
