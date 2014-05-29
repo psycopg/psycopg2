@@ -1017,11 +1017,13 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
     PyObject *res = NULL;
 
     int using_dict;
+#if PG_VERSION_HEX >= 0x090000
     PyObject *pname = NULL;
     PyObject *bpname = NULL;
     PyObject *pnames = NULL;
     char *cpname = NULL;
     char **scpnames = NULL;
+#endif
 
     if (!PyArg_ParseTuple(args, "s#|O", &procname, &procname_len,
                 &parameters)) {
@@ -1049,6 +1051,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
 
     /* A Dict is complicated. The parameter names go into the query */
     if (using_dict) {
+#if PG_VERSION_HEX >= 0x090000
         if (!(pnames = PyDict_Keys(parameters))) {
             PyErr_SetString(PyExc_RuntimeError,
                     "built-in 'keys' failed on a Dict!");
@@ -1113,6 +1116,11 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
                     "built-in 'values' failed on a Dict!");
             goto exit;
         }
+#else
+        PyErr_SetString(PyExc_NotImplementedError,
+            "named parameters require psycopg2 compiled against libpq 9.0+");
+        goto exit;
+#endif
     }
 
     /* a list (or None, or empty data structure) is a little bit simpler */
@@ -1147,6 +1155,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
     }
 
 exit:
+#if PG_VERSION_HEX >= 0x090000
     if (scpnames != NULL) {
         for (i = 0; i < nparameters; i++) {
             if (scpnames[i] != NULL) {
@@ -1156,6 +1165,7 @@ exit:
     }
     PyMem_Del(scpnames);
     Py_XDECREF(pnames);
+#endif
     Py_XDECREF(operation);
     PyMem_Free((void*)sql);
     return res;
