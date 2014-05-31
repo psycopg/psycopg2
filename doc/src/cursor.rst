@@ -201,12 +201,17 @@ The ``cursor`` class
             
         Call a stored database procedure with the given name. The sequence of
         parameters must contain one entry for each argument that the procedure
-        expects. The result of the call is returned as modified copy of the
-        input sequence. Input parameters are left untouched, output and
-        input/output parameters replaced with possibly new values.
-        
-        The procedure may also provide a result set as output. This must then
-        be made available through the standard |fetch*|_ methods.
+        expects. Overloaded procedures are supported. Named parameters can be
+        used with a PostgreSQL 9.0+ client by supplying the sequence of
+        parameters as a Dict.
+
+        This function is, at present, not DBAPI-compliant. The return value is
+        supposed to consist of the sequence of parameters with modified output
+        and input/output parameters. In future versions, the DBAPI-compliant
+        return value may be implemented, but for now the function returns None.
+
+        The procedure may provide a result set as output. This is then made
+        available through the standard |fetch*|_ methods.
 
 
     .. method:: mogrify(operation [, parameters])

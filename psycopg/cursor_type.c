@@ -1019,6 +1019,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
     int using_dict;
 #if PG_VERSION_HEX >= 0x090000
     PyObject *pname = NULL;
+    PyObject *spname = NULL;
     PyObject *bpname = NULL;
     PyObject *pnames = NULL;
     char *cpname = NULL;
@@ -1049,7 +1050,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
 
     using_dict = nparameters > 0 && PyDict_Check(parameters);
 
-    /* A Dict is complicated. The parameter names go into the query */
+    /* a Dict is complicated; the parameter names go into the query */
     if (using_dict) {
 #if PG_VERSION_HEX >= 0x090000
         if (!(pnames = PyDict_Keys(parameters))) {
@@ -1067,32 +1068,45 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
 
         memset(scpnames, 0, sizeof(char *) * nparameters);
 
-        /* Each parameter has to be processed. It's a few steps. */
+        /* each parameter has to be processed; it's a few steps. */
         for (i = 0; i < nparameters; i++) {
+            /* all errors are RuntimeErrors as they should never occur */
+
             if (!(pname = PyList_GetItem(pnames, i))) {
                 PyErr_SetString(PyExc_RuntimeError,
                         "built-in 'values' did not return List!");
                 goto exit;
             }
 
-            if (!(bpname = psycopg_ensure_bytes(pname))) {
-                PyErr_SetString(PyExc_TypeError,
-                        "argument 2 must have only string keys if Dict");
+            if (!(spname = PyObject_Str(pname))) {
+                PyErr_SetString(PyExc_RuntimeError,
+                        "built-in 'str' failed!");
+                goto exit;
+            }
+
+            /* this is the only function here that returns a new reference */
+            if (!(bpname = psycopg_ensure_bytes(spname))) {
+                PyErr_SetString(PyExc_RuntimeError,
+                        "failed to get Bytes from text!");
                 goto exit;
             }
 
             if (!(cpname = Bytes_AsString(bpname))) {
+                Py_XDECREF(bpname);
                 PyErr_SetString(PyExc_RuntimeError,
-                        "failed to get Bytes from String!");
+                        "failed to get cstr from Bytes!");
                 goto exit;
             }
 
             if (!(scpnames[i] = PQescapeIdentifier(self->conn->pgconn, cpname,
                         strlen(cpname)))) {
+                Py_XDECREF(bpname);
                 PyErr_SetString(PyExc_RuntimeError,
                         "libpq failed to escape identifier!");
                 goto exit;
             }
+
+            Py_XDECREF(bpname);
 
             sl += strlen(scpnames[i]);
         }
@@ -1147,11 +1161,11 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
 
     if (0 <= _psyco_curs_execute(self, operation, parameters,
                 self->conn->async, 0)) {
-        /* In the dict case, the parameters are already a new reference */
-        if (!using_dict) {
-            Py_INCREF(parameters);
-        }
-        res = parameters;
+      if (using_dict) {
+          Py_DECREF(parameters);
+      }
+      /* return None from this until it's DBAPI compliant... */
+      res = Py_None;
     }
 
 exit:

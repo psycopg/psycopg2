@@ -427,6 +427,43 @@ class CursorTests(ConnectingTestCase):
         self.assertRaises(psycopg2.InterfaceError, cur.executemany,
             'select 1', [])
 
+    # It would be inappropriate to test callproc's named parameters in the
+    # DBAPI2.0 test section because they are a psycopg2 extension.
+    @skip_before_postgres(9, 0)
+    def test_callproc_dict(self):
+        # This parameter name tests for injection and quote escaping
+        paramname = '''
+            Robert'); drop table "students" --
+        '''.strip()
+        escaped_paramname = '"%s"' % paramname.replace('"', '""')
+        procname = 'pg_temp.randall'
+
+        cur = self.conn.cursor()
+
+        # Set up the temporary function
+        cur.execute('''
+            CREATE FUNCTION %s(%s INT)
+            RETURNS INT AS
+                'SELECT $1 * $1'
+            LANGUAGE SQL
+        ''' % (procname, escaped_paramname));
+
+        # Make sure callproc works right
+        cur.callproc(procname, { paramname: 2 })
+        self.assertEquals(cur.fetchone()[0], 4)
+
+        # Make sure callproc fails right
+        failing_cases = [
+            ({ paramname: 2, 'foo': 'bar' }, psycopg2.ProgrammingError),
+            ({ paramname: '2' },             psycopg2.ProgrammingError),
+            ({ paramname: 'two' },           psycopg2.ProgrammingError),
+            ({ 'bjørn': 2 },                 psycopg2.ProgrammingError),
+            ({ 3: 2 },                       psycopg2.ProgrammingError),
+            ({ self: 2 },                    psycopg2.ProgrammingError),
+        ]
+        for parameter_sequence, exception in failing_cases:
+            self.assertRaises(exception, cur.callproc, procname, parameter_sequence)
+            self.conn.rollback()
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
