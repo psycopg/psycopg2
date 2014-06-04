@@ -1058,7 +1058,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
 
     /* a Dict is complicated; the parameter names go into the query */
     if (using_dict) {
-#if PG_VERSION_HEX >= 0x090000
+#if PG_VERSION_NUM >= 90000
         if (!(pnames = PyDict_Keys(parameters))) {
             goto exit;
         }
