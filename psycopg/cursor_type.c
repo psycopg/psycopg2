@@ -1060,8 +1060,6 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
     if (using_dict) {
 #if PG_VERSION_HEX >= 0x090000
         if (!(pnames = PyDict_Keys(parameters))) {
-            PyErr_SetString(PyExc_RuntimeError,
-                    "built-in 'keys' failed on a Dict!");
             goto exit;
         }
 
@@ -1079,36 +1077,26 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
             /* all errors are RuntimeErrors as they should never occur */
 
             if (!(pname = PyList_GetItem(pnames, i))) {
-                PyErr_SetString(PyExc_RuntimeError,
-                        "built-in 'values' did not return List!");
                 goto exit;
             }
 
             if (!(spname = PyObject_Str(pname))) {
-                PyErr_SetString(PyExc_RuntimeError,
-                        "built-in 'str' failed!");
                 goto exit;
             }
 
             /* this is the only function here that returns a new reference */
             if (!(bpname = psycopg_ensure_bytes(spname))) {
-                PyErr_SetString(PyExc_RuntimeError,
-                        "failed to get Bytes from text!");
                 goto exit;
             }
 
             if (!(cpname = Bytes_AsString(bpname))) {
                 Py_XDECREF(bpname);
-                PyErr_SetString(PyExc_RuntimeError,
-                        "failed to get cstr from Bytes!");
                 goto exit;
             }
 
             if (!(scpnames[i] = PQescapeIdentifier(self->conn->pgconn, cpname,
                         strlen(cpname)))) {
                 Py_XDECREF(bpname);
-                PyErr_SetString(PyExc_RuntimeError,
-                        "libpq failed to escape identifier!");
                 goto exit;
             }
 
@@ -1132,8 +1120,6 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
         sql[sl-1] = '\0';
 
         if (!(parameters = PyDict_Values(parameters))) {
-            PyErr_SetString(PyExc_RuntimeError,
-                    "built-in 'values' failed on a Dict!");
             goto exit;
         }
 #else
