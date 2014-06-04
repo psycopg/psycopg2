@@ -1042,9 +1042,8 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
     }
 
     if (parameters != Py_None) {
-        nparameters = PyObject_Length(parameters);
-        if (nparameters < 0) {
-            nparameters = 0;
+        if (-1 == (nparameters = PyObject_Length(parameters))) {
+            goto exit;
         }
     }
 
