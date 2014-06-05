@@ -457,9 +457,9 @@ class CursorTests(ConnectingTestCase):
             ({ paramname: 2, 'foo': 'bar' }, psycopg2.ProgrammingError),
             ({ paramname: '2' },             psycopg2.ProgrammingError),
             ({ paramname: 'two' },           psycopg2.ProgrammingError),
-            ({ 'bjørn': 2 },                 psycopg2.ProgrammingError),
-            ({ 3: 2 },                       psycopg2.ProgrammingError),
-            ({ self: 2 },                    psycopg2.ProgrammingError),
+            ({ u'bj\xc3rn': 2 },             psycopg2.ProgrammingError),
+            ({ 3: 2 },                       TypeError),
+            ({ self: 2 },                    TypeError),
         ]
         for parameter_sequence, exception in failing_cases:
             self.assertRaises(exception, cur.callproc, procname, parameter_sequence)

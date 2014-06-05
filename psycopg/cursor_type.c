@@ -1019,8 +1019,6 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
     int using_dict;
 #if PG_VERSION_HEX >= 0x090000
     PyObject *pname = NULL;
-    PyObject *spname = NULL;
-    PyObject *bpname = NULL;
     PyObject *pnames = NULL;
     char *cpname = NULL;
     char **scpnames = NULL;
@@ -1069,37 +1067,24 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
         for (i = 0; i < nparameters; i++) {
             /* all errors are RuntimeErrors as they should never occur */
 
-            if (!(pname = PyList_GetItem(pnames, i))) {
+            if (!(pname = PyList_GetItem(pnames, i))) { goto exit; }
+            Py_INCREF(pname);   /* was borrowed */
+
+            /* this also makes a check for keys being strings */
+            if (!(pname = psycopg_ensure_bytes(pname))) { goto exit; }
+            if (!(cpname = Bytes_AsString(pname))) { goto exit; }
+
+            if (!(scpnames[i] = PQescapeIdentifier(
+                    self->conn->pgconn, cpname, strlen(cpname)))) {
                 goto exit;
             }
 
-            if (!(spname = PyObject_Str(pname))) {
-                goto exit;
-            }
-
-            /* this is the only function here that returns a new reference */
-            if (!(bpname = psycopg_ensure_bytes(spname))) {
-                goto exit;
-            }
-
-            if (!(cpname = Bytes_AsString(bpname))) {
-                Py_XDECREF(bpname);
-                goto exit;
-            }
-
-            if (!(scpnames[i] = PQescapeIdentifier(self->conn->pgconn, cpname,
-                        strlen(cpname)))) {
-                Py_XDECREF(bpname);
-                goto exit;
-            }
-
-            Py_XDECREF(bpname);
+            Py_CLEAR(pname);
 
             sl += strlen(scpnames[i]);
         }
 
-        sql = (char*)PyMem_Malloc(sl);
-        if (sql == NULL) {
+        if (!(sql = (char*)PyMem_Malloc(sl))) {
             PyErr_NoMemory();
             goto exit;
         }
@@ -1163,6 +1148,7 @@ exit:
         }
     }
     PyMem_Del(scpnames);
+    Py_XDECREF(pname);
     Py_XDECREF(pnames);
 #endif
     Py_XDECREF(operation);
