@@ -1013,6 +1013,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
     char *sql = NULL;
     Py_ssize_t procname_len, i, nparameters = 0, sl = 0;
     PyObject *parameters = Py_None;
+    PyObject *pvals = NULL;
     PyObject *operation = NULL;
     PyObject *res = NULL;
 
@@ -1050,9 +1051,8 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
     /* a Dict is complicated; the parameter names go into the query */
     if (using_dict) {
 #if PG_VERSION_HEX >= 0x090000
-        if (!(pnames = PyDict_Keys(parameters))) {
-            goto exit;
-        }
+        if (!(pnames = PyDict_Keys(parameters))) { goto exit; }
+        if (!(pvals = PyDict_Values(parameters))) { goto exit; }
 
         sl = procname_len + 17 + nparameters * 5 - (nparameters ? 1 : 0);
 
@@ -1097,9 +1097,6 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
         sql[sl-2] = ')';
         sql[sl-1] = '\0';
 
-        if (!(parameters = PyDict_Values(parameters))) {
-            goto exit;
-        }
 #else
         PyErr_SetString(PyExc_NotImplementedError,
             "named parameters require psycopg2 compiled against libpq 9.0+");
@@ -1109,6 +1106,9 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
 
     /* a list (or None, or empty data structure) is a little bit simpler */
     else {
+        Py_INCREF(parameters);
+        pvals = parameters;
+
         sl = procname_len + 17 + nparameters * 3 - (nparameters ? 1 : 0);
 
         sql = (char*)PyMem_Malloc(sl);
@@ -1129,11 +1129,9 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
         goto exit;
     }
 
-    if (0 <= _psyco_curs_execute(self, operation, parameters,
-                self->conn->async, 0)) {
-      if (using_dict) {
-          Py_DECREF(parameters);
-      }
+    if (0 <= _psyco_curs_execute(
+            self, operation, pvals, self->conn->async, 0)) {
+
       /* return None from this until it's DBAPI compliant... */
       res = Py_None;
     }
@@ -1152,6 +1150,7 @@ exit:
     Py_XDECREF(pnames);
 #endif
     Py_XDECREF(operation);
+    Py_XDECREF(pvals);
     PyMem_Free((void*)sql);
     return res;
 }
