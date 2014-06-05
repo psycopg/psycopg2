@@ -1030,7 +1030,8 @@ _escape_identifier(PGconn *pgconn, const char *str, size_t length)
     rv = PQescapeIdentifier(pgconn, str, length);
     if (!rv) {
         char *msg;
-        if (!(msg = PQerrorMessage(pgconn))) {
+        msg = PQerrorMessage(pgconn);
+        if (!msg || !msg[0]) {
             msg = "no message provided";
         }
         PyErr_Format(InterfaceError, "failed to escape identifier: %s", msg);
