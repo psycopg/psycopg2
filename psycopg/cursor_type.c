@@ -1015,6 +1015,34 @@ exit:
 #define psyco_curs_callproc_doc \
 "callproc(procname, parameters=None) -- Execute stored procedure."
 
+/* Call PQescapeIdentifier.
+ *
+ * In case of error set a Python exception.
+ *
+ * TODO: this function can become more generic and go into utils
+ */
+static char *
+_escape_identifier(PGconn *pgconn, const char *str, size_t length)
+{
+    char *rv = NULL;
+
+#if PG_VERSION_NUM >= 90000
+    rv = PQescapeIdentifier(pgconn, str, length);
+    if (!rv) {
+        char *msg;
+        if (!(msg = PQerrorMessage(pgconn))) {
+            msg = "no message provided";
+        }
+        PyErr_Format(InterfaceError, "failed to escape identifier: %s", msg);
+    }
+#else
+    PyErr_Format(PyExc_NotImplementedError,
+        "named parameters require psycopg2 compiled against libpq 9.0+");
+#endif
+
+    return rv;
+}
+
 static PyObject *
 psyco_curs_callproc(cursorObject *self, PyObject *args)
 {
@@ -1022,17 +1050,15 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
     char *sql = NULL;
     Py_ssize_t procname_len, i, nparameters = 0, sl = 0;
     PyObject *parameters = Py_None;
-    PyObject *pvals = NULL;
     PyObject *operation = NULL;
     PyObject *res = NULL;
 
     int using_dict;
-#if PG_VERSION_HEX >= 0x090000
     PyObject *pname = NULL;
     PyObject *pnames = NULL;
+    PyObject *pvals = NULL;
     char *cpname = NULL;
     char **scpnames = NULL;
-#endif
 
     if (!PyArg_ParseTuple(args, "s#|O", &procname, &procname_len,
                 &parameters)) {
@@ -1057,7 +1083,6 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
 
     /* a Dict is complicated; the parameter names go into the query */
     if (using_dict) {
-#if PG_VERSION_NUM >= 90000
         if (!(pnames = PyDict_Keys(parameters))) { goto exit; }
         if (!(pvals = PyDict_Values(parameters))) { goto exit; }
 
@@ -1081,7 +1106,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
             if (!(pname = psycopg_ensure_bytes(pname))) { goto exit; }
             if (!(cpname = Bytes_AsString(pname))) { goto exit; }
 
-            if (!(scpnames[i] = PQescapeIdentifier(
+            if (!(scpnames[i] = _escape_identifier(
                     self->conn->pgconn, cpname, strlen(cpname)))) {
                 goto exit;
             }
@@ -1103,12 +1128,6 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
         }
         sql[sl-2] = ')';
         sql[sl-1] = '\0';
-
-#else
-        PyErr_SetString(PyExc_NotImplementedError,
-            "named parameters require psycopg2 compiled against libpq 9.0+");
-        goto exit;
-#endif
     }
 
     /* a list (or None, or empty data structure) is a little bit simpler */
@@ -1145,7 +1164,6 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
     }
 
 exit:
-#if PG_VERSION_HEX >= 0x090000
     if (scpnames != NULL) {
         for (i = 0; i < nparameters; i++) {
             if (scpnames[i] != NULL) {
@@ -1156,7 +1174,6 @@ exit:
     PyMem_Del(scpnames);
     Py_XDECREF(pname);
     Py_XDECREF(pnames);
-#endif
     Py_XDECREF(operation);
     Py_XDECREF(pvals);
     PyMem_Free((void*)sql);
