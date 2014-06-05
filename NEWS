@@ -10,6 +10,12 @@ Bug fixes:
   (:ticket:`#191`).
 
 
+What's new in psycopg 2.5.4
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Don't ignore silently the `cursor.callproc` argument without a length.
+
+
 What's new in psycopg 2.5.3
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
