@@ -465,6 +465,11 @@ class CursorTests(ConnectingTestCase):
             self.assertRaises(exception, cur.callproc, procname, parameter_sequence)
             self.conn.rollback()
 
+    def test_callproc_badparam(self):
+        cur = self.conn.cursor()
+        self.assertRaises(TypeError, cur.callproc, 'lower', 42)
+
+
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
