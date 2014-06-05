@@ -1139,8 +1139,9 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
     if (0 <= _psyco_curs_execute(
             self, operation, pvals, self->conn->async, 0)) {
 
-      /* return None from this until it's DBAPI compliant... */
-      res = Py_None;
+        /* return None from this until it's DBAPI compliant... */
+        Py_INCREF(Py_None);
+        res = Py_None;
     }
 
 exit:
