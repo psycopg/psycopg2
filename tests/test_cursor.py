@@ -427,6 +427,10 @@ class CursorTests(ConnectingTestCase):
         self.assertRaises(psycopg2.InterfaceError, cur.executemany,
             'select 1', [])
 
+    def test_callproc_badparam(self):
+        cur = self.conn.cursor()
+        self.assertRaises(TypeError, cur.callproc, 'lower', 42)
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
