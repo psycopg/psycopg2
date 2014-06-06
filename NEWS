@@ -1,6 +1,13 @@
 Current release
 ---------------
 
+What's new in psycopg 2.5.4
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Fixed segfault if COPY statements are executed instead of using the
+  proper methods (:ticket:`#219`).
+
+
 What's new in psycopg 2.5.3
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

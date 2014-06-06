@@ -1288,6 +1288,13 @@ _pq_copy_in_v3(cursorObject *curs)
     Py_ssize_t length = 0;
     int res, error = 0;
 
+    if (!curs->copyfile) {
+        PyErr_SetString(ProgrammingError,
+            "can't execute COPY FROM: use the copy_from() method instead");
+        error = 1;
+        goto exit;
+    }
+
     if (!(func = PyObject_GetAttrString(curs->copyfile, "read"))) {
         Dprintf("_pq_copy_in_v3: can't get o.read");
         error = 1;
@@ -1411,13 +1418,20 @@ exit:
 static int
 _pq_copy_out_v3(cursorObject *curs)
 {
-    PyObject *tmp = NULL, *func;
+    PyObject *tmp = NULL;
+    PyObject *func = NULL;
     PyObject *obj = NULL;
     int ret = -1;
     int is_text;
 
     char *buffer;
     Py_ssize_t len;
+
+    if (!curs->copyfile) {
+        PyErr_SetString(ProgrammingError,
+            "can't execute COPY TO: use the copy_to() method instead");
+        goto exit;
+    }
 
     if (!(func = PyObject_GetAttrString(curs->copyfile, "write"))) {
         Dprintf("_pq_copy_out_v3: can't get o.write");
