@@ -49,7 +49,7 @@ An example of the available constants defined in the module:
     >>> errorcodes.UNDEFINED_TABLE
     '42P01'
 
-Constants representing all the error values documented by PostgreSQL versions
+Constants representing all the error values defined by PostgreSQL versions
 between 8.1 and 9.2 are included in the module.
 
 

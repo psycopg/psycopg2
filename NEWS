@@ -16,6 +16,8 @@ What's new in psycopg 2.5.4
 - Fixed segfault if COPY statements are executed instead of using the
   proper methods (:ticket:`#219`).
 - Don't ignore silently the `cursor.callproc` argument without a length.
+- Added a few errors missing from `~psycopg2.errorcodes`, defined by
+  PostgreSQL but not documented.
 
 
 What's new in psycopg 2.5.3
