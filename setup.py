@@ -25,6 +25,8 @@ UPDATEs. psycopg2 also provide full asynchronous operations and support
 for coroutine libraries.
 """
 
+# note: if you are changing the list of supported Python version please fix
+# the docs in install.rst and the /features/ page on the website.
 classifiers = """\
 Development Status :: 5 - Production/Stable
 Intended Audience :: Developers
