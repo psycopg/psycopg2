@@ -1058,6 +1058,97 @@ class JsonTestCase(ConnectingTestCase):
         self.assertEqual(data['b'], None)
 
 
+def skip_if_no_jsonb_type(f):
+    return skip_before_postgres(9, 4)(f)
+
+class JsonbTestCase(ConnectingTestCase):
+    @staticmethod
+    def myloads(s):
+        import json
+        rv = json.loads(s)
+        rv['test'] = 1
+        return rv
+
+    def test_default_cast(self):
+        curs = self.conn.cursor()
+
+        curs.execute("""select '{"a": 100.0, "b": null}'::jsonb""")
+        self.assertEqual(curs.fetchone()[0], {'a': 100.0, 'b': None})
+
+        curs.execute("""select array['{"a": 100.0, "b": null}']::jsonb[]""")
+        self.assertEqual(curs.fetchone()[0], [{'a': 100.0, 'b': None}])
+
+    def test_register_on_connection(self):
+        psycopg2.extras.register_json(self.conn, loads=self.myloads, name='jsonb')
+        curs = self.conn.cursor()
+        curs.execute("""select '{"a": 100.0, "b": null}'::jsonb""")
+        self.assertEqual(curs.fetchone()[0], {'a': 100.0, 'b': None, 'test': 1})
+
+    def test_register_on_cursor(self):
+        curs = self.conn.cursor()
+        psycopg2.extras.register_json(curs, loads=self.myloads, name='jsonb')
+        curs.execute("""select '{"a": 100.0, "b": null}'::jsonb""")
+        self.assertEqual(curs.fetchone()[0], {'a': 100.0, 'b': None, 'test': 1})
+
+    def test_register_globally(self):
+        old = psycopg2.extensions.string_types.get(3802)
+        olda = psycopg2.extensions.string_types.get(3807)
+        try:
+            new, newa = psycopg2.extras.register_json(self.conn,
+                loads=self.myloads, globally=True, name='jsonb')
+            curs = self.conn.cursor()
+            curs.execute("""select '{"a": 100.0, "b": null}'::jsonb""")
+            self.assertEqual(curs.fetchone()[0], {'a': 100.0, 'b': None, 'test': 1})
+        finally:
+            psycopg2.extensions.string_types.pop(new.values[0])
+            psycopg2.extensions.string_types.pop(newa.values[0])
+            if old:
+                psycopg2.extensions.register_type(old)
+            if olda:
+                psycopg2.extensions.register_type(olda)
+
+    def test_loads(self):
+        json = psycopg2.extras.json
+        loads = lambda x: json.loads(x, parse_float=Decimal)
+        psycopg2.extras.register_json(self.conn, loads=loads, name='jsonb')
+        curs = self.conn.cursor()
+        curs.execute("""select '{"a": 100.0, "b": null}'::jsonb""")
+        data = curs.fetchone()[0]
+        self.assert_(isinstance(data['a'], Decimal))
+        self.assertEqual(data['a'], Decimal('100.0'))
+        # sure we are not manling json too?
+        curs.execute("""select '{"a": 100.0, "b": null}'::json""")
+        data = curs.fetchone()[0]
+        self.assert_(isinstance(data['a'], float))
+        self.assertEqual(data['a'], 100.0)
+
+    def test_register_default(self):
+        curs = self.conn.cursor()
+
+        loads = lambda x: psycopg2.extras.json.loads(x, parse_float=Decimal)
+        psycopg2.extras.register_default_jsonb(curs, loads=loads)
+
+        curs.execute("""select '{"a": 100.0, "b": null}'::jsonb""")
+        data = curs.fetchone()[0]
+        self.assert_(isinstance(data['a'], Decimal))
+        self.assertEqual(data['a'], Decimal('100.0'))
+
+        curs.execute("""select array['{"a": 100.0, "b": null}']::jsonb[]""")
+        data = curs.fetchone()[0]
+        self.assert_(isinstance(data[0]['a'], Decimal))
+        self.assertEqual(data[0]['a'], Decimal('100.0'))
+
+    def test_null(self):
+        curs = self.conn.cursor()
+        curs.execute("""select NULL::jsonb""")
+        self.assertEqual(curs.fetchone()[0], None)
+        curs.execute("""select NULL::jsonb[]""")
+        self.assertEqual(curs.fetchone()[0], None)
+
+decorate_all_tests(JsonbTestCase, skip_if_no_json_module)
+decorate_all_tests(JsonbTestCase, skip_if_no_jsonb_type)
+
+
 class RangeTestCase(unittest.TestCase):
     def test_noparam(self):
         from psycopg2.extras import Range
