@@ -47,6 +47,10 @@ else:
 JSON_OID = 114
 JSONARRAY_OID = 199
 
+# oids from PostgreSQL 9.4
+JSONB_OID = 3802
+JSONBARRAY_OID = 3807
+
 class Json(object):
     """
     An `~psycopg2.extensions.ISQLQuote` wrapper to adapt a Python object to
@@ -150,6 +154,18 @@ def register_default_json(conn_or_curs=None, globally=False, loads=None):
     """
     return register_json(conn_or_curs=conn_or_curs, globally=globally,
         loads=loads, oid=JSON_OID, array_oid=JSONARRAY_OID)
+
+def register_default_jsonb(conn_or_curs=None, globally=False, loads=None):
+    """
+    Create and register :sql:`jsonb` typecasters for PostgreSQL 9.4 and following.
+
+    As in `register_default_json()`, the function allows to register a
+    customized *loads* function for the :sql:`jsonb` type at its known oid for
+    PostgreSQL 9.4 and following versions.  All the parameters have the same
+    meaning of `register_json()`.
+    """
+    return register_json(conn_or_curs=conn_or_curs, globally=globally,
+        loads=loads, oid=JSONB_OID, array_oid=JSONBARRAY_OID, name='jsonb')
 
 def _create_json_typecasters(oid, array_oid, loads=None, name='JSON'):
     """Create typecasters for json data type."""
