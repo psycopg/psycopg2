@@ -248,6 +248,9 @@ from :sql:`json` into :py:class:`~decimal.Decimal` you can use::
 
 .. autofunction:: register_json
 
+    .. versionchanged:: 2.5.4
+        added the *name* parameter to enable :sql:`jsonb` support.
+
 .. autofunction:: register_default_json
 
 
