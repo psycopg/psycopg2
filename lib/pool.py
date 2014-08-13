@@ -42,8 +42,8 @@ class AbstractConnectionPool(object):
         with given parameters. The connection pool will support a maximum of
         about 'maxconn' connections.        
         """
-        self.minconn = minconn
-        self.maxconn = maxconn
+        self.minconn = int(minconn)
+        self.maxconn = int(maxconn)
         self.closed = False
         
         self._args = args
