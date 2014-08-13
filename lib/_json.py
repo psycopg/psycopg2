@@ -47,6 +47,10 @@ else:
 JSON_OID = 114
 JSONARRAY_OID = 199
 
+# oids from PostgreSQL 9.4
+JSONB_OID = 3802
+JSONBARRAY_OID = 3807
+
 class Json(object):
     """
     An `~psycopg2.extensions.ISQLQuote` wrapper to adapt a Python object to
@@ -94,7 +98,7 @@ class Json(object):
 
 
 def register_json(conn_or_curs=None, globally=False, loads=None,
-        oid=None, array_oid=None):
+        oid=None, array_oid=None, name='json'):
     """Create and register typecasters converting :sql:`json` type to Python objects.
 
     :param conn_or_curs: a connection or cursor used to find the :sql:`json`
@@ -110,17 +114,19 @@ def register_json(conn_or_curs=None, globally=False, loads=None,
         queried on *conn_or_curs*
     :param array_oid: the OID of the :sql:`json[]` array type if known;
         if not, it will be queried on *conn_or_curs*
+    :param name: the name of the data type to look for in *conn_or_curs*
 
     The connection or cursor passed to the function will be used to query the
-    database and look for the OID of the :sql:`json` type. No query is
-    performed if *oid* and *array_oid* are provided.  Raise
-    `~psycopg2.ProgrammingError` if the type is not found.
+    database and look for the OID of the :sql:`json` type (or an alternative
+    type if *name* if provided). No query is performed if *oid* and *array_oid*
+    are provided.  Raise `~psycopg2.ProgrammingError` if the type is not found.
 
     """
     if oid is None:
-        oid, array_oid = _get_json_oids(conn_or_curs)
+        oid, array_oid = _get_json_oids(conn_or_curs, name)
 
-    JSON, JSONARRAY = _create_json_typecasters(oid, array_oid, loads)
+    JSON, JSONARRAY = _create_json_typecasters(
+        oid, array_oid, loads=loads, name=name.upper())
 
     register_type(JSON, not globally and conn_or_curs or None)
 
@@ -141,7 +147,19 @@ def register_default_json(conn_or_curs=None, globally=False, loads=None):
     return register_json(conn_or_curs=conn_or_curs, globally=globally,
         loads=loads, oid=JSON_OID, array_oid=JSONARRAY_OID)
 
-def _create_json_typecasters(oid, array_oid, loads=None):
+def register_default_jsonb(conn_or_curs=None, globally=False, loads=None):
+    """
+    Create and register :sql:`jsonb` typecasters for PostgreSQL 9.4 and following.
+
+    As in `register_default_json()`, the function allows to register a
+    customized *loads* function for the :sql:`jsonb` type at its known oid for
+    PostgreSQL 9.4 and following versions.  All the parameters have the same
+    meaning of `register_json()`.
+    """
+    return register_json(conn_or_curs=conn_or_curs, globally=globally,
+        loads=loads, oid=JSONB_OID, array_oid=JSONBARRAY_OID, name='jsonb')
+
+def _create_json_typecasters(oid, array_oid, loads=None, name='JSON'):
     """Create typecasters for json data type."""
     if loads is None:
         if json is None:
@@ -154,15 +172,15 @@ def _create_json_typecasters(oid, array_oid, loads=None):
             return None
         return loads(s)
 
-    JSON = new_type((oid, ), 'JSON', typecast_json)
+    JSON = new_type((oid, ), name, typecast_json)
     if array_oid is not None:
-        JSONARRAY = new_array_type((array_oid, ), "JSONARRAY", JSON)
+        JSONARRAY = new_array_type((array_oid, ), "%sARRAY" % name, JSON)
     else:
         JSONARRAY = None
 
     return JSON, JSONARRAY
 
-def _get_json_oids(conn_or_curs):
+def _get_json_oids(conn_or_curs, name='json'):
     # lazy imports
     from psycopg2.extensions import STATUS_IN_TRANSACTION
     from psycopg2.extras import _solve_conn_curs
@@ -177,8 +195,8 @@ def _get_json_oids(conn_or_curs):
 
     # get the oid for the hstore
     curs.execute(
-        "SELECT t.oid, %s FROM pg_type t WHERE t.typname = 'json';"
-            % typarray)
+        "SELECT t.oid, %s FROM pg_type t WHERE t.typname = %%s;"
+            % typarray, (name,))
     r = curs.fetchone()
 
     # revert the status of the connection as before the command
@@ -186,7 +204,7 @@ def _get_json_oids(conn_or_curs):
         conn.rollback()
 
     if not r:
-        raise conn.ProgrammingError("json data type not found")
+        raise conn.ProgrammingError("%s data type not found" % name)
 
     return r
 
