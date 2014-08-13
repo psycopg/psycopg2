@@ -965,7 +965,8 @@ def register_composite(name, conn_or_curs, globally=False, factory=None):
 
 
 # expose the json adaptation stuff into the module
-from psycopg2._json import json, Json, register_json, register_default_json
+from psycopg2._json import json, Json, register_json
+from psycopg2._json import register_default_json, register_default_jsonb
 
 
 # Expose range-related objects
