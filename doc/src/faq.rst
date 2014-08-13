@@ -137,6 +137,20 @@ Psycopg automatically converts PostgreSQL :sql:`json` data into Python objects. 
     See :ref:`adapt-json` for further details.
 
 
+.. _faq-jsonb-adapt:
+.. cssclass:: faq
+
+Psycopg converts :sql:`json` values into Python objects but :sql:`jsonb` values are returned as strings. Can :sql:`jsonb` be converted automatically?
+    Automatic conversion of :sql:`jsonb` values is supported from Psycopg
+    release 2.5.4. For previous versions you can register the :sql:`json`
+    typecaster on the :sql:`jsonb` oids (which are known and not suppsed to
+    change in future PostgreSQL versions)::
+
+        psycopg2.extras.register_json(oid=3802, array_oid=3807, globally=True)
+
+    See :ref:`adapt-json` for further details.
+
+
 .. _faq-bytea-9.0:
 .. cssclass:: faq
 
