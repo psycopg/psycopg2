@@ -287,17 +287,3 @@ PyTypeObject qstringType = {
     0,          /*tp_alloc*/
     qstring_new, /*tp_new*/
 };
-
-
-/** module-level functions **/
-
-PyObject *
-psyco_QuotedString(PyObject *module, PyObject *args)
-{
-    PyObject *str;
-
-    if (!PyArg_ParseTuple(args, "O", &str))
-        return NULL;
-
-    return PyObject_CallFunctionObjArgs((PyObject *)&qstringType, str, NULL);
-}

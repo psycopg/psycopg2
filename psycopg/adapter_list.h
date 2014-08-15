@@ -39,10 +39,6 @@ typedef struct {
     PyObject *connection;
 } listObject;
 
-HIDDEN PyObject *psyco_List(PyObject *module, PyObject *args);
-#define psyco_List_doc \
-    "List(list, enc) -> new quoted list"
-
 #ifdef __cplusplus
 }
 #endif

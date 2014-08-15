@@ -206,17 +206,3 @@ PyTypeObject pintType = {
     0,          /*tp_alloc*/
     pint_new, /*tp_new*/
 };
-
-
-/** module-level functions **/
-
-PyObject *
-psyco_Int(PyObject *module, PyObject *args)
-{
-    PyObject *obj;
-
-    if (!PyArg_ParseTuple(args, "O", &obj))
-        return NULL;
-
-    return PyObject_CallFunctionObjArgs((PyObject *)&pintType, obj, NULL);
-}

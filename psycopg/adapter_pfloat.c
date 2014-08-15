@@ -220,17 +220,3 @@ PyTypeObject pfloatType = {
     0,          /*tp_alloc*/
     pfloat_new, /*tp_new*/
 };
-
-
-/** module-level functions **/
-
-PyObject *
-psyco_Float(PyObject *module, PyObject *args)
-{
-    PyObject *obj;
-
-    if (!PyArg_ParseTuple(args, "O", &obj))
-        return NULL;
-
-    return PyObject_CallFunctionObjArgs((PyObject *)&pfloatType, obj, NULL);
-}

@@ -678,20 +678,6 @@ static PyMethodDef psycopgMethods[] = {
     {"new_array_type", (PyCFunction)typecast_array_from_python,
      METH_VARARGS|METH_KEYWORDS, typecast_array_from_python_doc},
 
-    {"AsIs",  (PyCFunction)psyco_AsIs,
-     METH_VARARGS, psyco_AsIs_doc},
-    {"QuotedString",  (PyCFunction)psyco_QuotedString,
-     METH_VARARGS, psyco_QuotedString_doc},
-    {"Boolean",  (PyCFunction)psyco_Boolean,
-     METH_VARARGS, psyco_Boolean_doc},
-    {"Int",  (PyCFunction)psyco_Int,
-     METH_VARARGS, psyco_Int_doc},
-    {"Float",  (PyCFunction)psyco_Float,
-     METH_VARARGS, psyco_Float_doc},
-    {"Decimal",  (PyCFunction)psyco_Decimal,
-     METH_VARARGS, psyco_Decimal_doc},
-    {"Binary",  (PyCFunction)psyco_Binary,
-     METH_VARARGS, psyco_Binary_doc},
     {"Date",  (PyCFunction)psyco_Date,
      METH_VARARGS, psyco_Date_doc},
     {"Time",  (PyCFunction)psyco_Time,
@@ -704,8 +690,6 @@ static PyMethodDef psycopgMethods[] = {
      METH_VARARGS, psyco_TimeFromTicks_doc},
     {"TimestampFromTicks",  (PyCFunction)psyco_TimestampFromTicks,
      METH_VARARGS, psyco_TimestampFromTicks_doc},
-    {"List",  (PyCFunction)psyco_List,
-     METH_VARARGS, psyco_List_doc},
 
     {"DateFromPy",  (PyCFunction)psyco_DateFromPy,
      METH_VARARGS, psyco_DateFromPy_doc},
@@ -912,6 +896,14 @@ INIT_MODULE(_psycopg)(void)
     PyModule_AddObject(module, "Notify", (PyObject*)&notifyType);
     PyModule_AddObject(module, "Xid", (PyObject*)&xidType);
     PyModule_AddObject(module, "Diagnostics", (PyObject*)&diagnosticsType);
+    PyModule_AddObject(module, "AsIs", (PyObject*)&asisType);
+    PyModule_AddObject(module, "Binary", (PyObject*)&binaryType);
+    PyModule_AddObject(module, "Boolean", (PyObject*)&pbooleanType);
+    PyModule_AddObject(module, "Decimal", (PyObject*)&pdecimalType);
+    PyModule_AddObject(module, "Int", (PyObject*)&pintType);
+    PyModule_AddObject(module, "Float", (PyObject*)&pfloatType);
+    PyModule_AddObject(module, "List", (PyObject*)&listType);
+    PyModule_AddObject(module, "QuotedString", (PyObject*)&qstringType);
 #ifdef PSYCOPG_EXTENSIONS
     PyModule_AddObject(module, "lobject", (PyObject*)&lobjectType);
 #endif

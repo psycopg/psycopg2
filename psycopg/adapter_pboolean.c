@@ -191,17 +191,3 @@ PyTypeObject pbooleanType = {
     0,          /*tp_alloc*/
     pboolean_new, /*tp_new*/
 };
-
-
-/** module-level functions **/
-
-PyObject *
-psyco_Boolean(PyObject *module, PyObject *args)
-{
-    PyObject *obj;
-
-    if (!PyArg_ParseTuple(args, "O", &obj))
-        return NULL;
-
-    return PyObject_CallFunctionObjArgs((PyObject *)&pbooleanType, obj, NULL);
-}

@@ -247,17 +247,3 @@ PyTypeObject pdecimalType = {
     0,          /*tp_alloc*/
     pdecimal_new, /*tp_new*/
 };
-
-
-/** module-level functions **/
-
-PyObject *
-psyco_Decimal(PyObject *module, PyObject *args)
-{
-    PyObject *obj;
-
-    if (!PyArg_ParseTuple(args, "O", &obj))
-        return NULL;
-
-    return PyObject_CallFunctionObjArgs((PyObject *)&pdecimalType, obj, NULL);
-}

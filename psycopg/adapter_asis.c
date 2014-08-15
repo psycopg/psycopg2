@@ -194,17 +194,3 @@ PyTypeObject asisType = {
     0,          /*tp_alloc*/
     asis_new, /*tp_new*/
 };
-
-
-/** module-level functions **/
-
-PyObject *
-psyco_AsIs(PyObject *module, PyObject *args)
-{
-    PyObject *obj;
-
-    if (!PyArg_ParseTuple(args, "O", &obj))
-        return NULL;
-
-    return PyObject_CallFunctionObjArgs((PyObject *)&asisType, obj, NULL);
-}

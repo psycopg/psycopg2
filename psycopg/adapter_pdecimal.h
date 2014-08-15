@@ -40,12 +40,6 @@ typedef struct {
 
 } pdecimalObject;
 
-/* functions exported to psycopgmodule.c */
-
-HIDDEN PyObject *psyco_Decimal(PyObject *module, PyObject *args);
-#define psyco_Decimal_doc \
-    "Decimal(obj) -> new decimal.Decimal value"
-
 #ifdef __cplusplus
 }
 #endif
