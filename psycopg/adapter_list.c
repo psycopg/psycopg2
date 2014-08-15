@@ -272,10 +272,10 @@ PyTypeObject listType = {
 PyObject *
 psyco_List(PyObject *module, PyObject *args)
 {
-    PyObject *str;
+    PyObject *obj;
 
-    if (!PyArg_ParseTuple(args, "O", &str))
+    if (!PyArg_ParseTuple(args, "O", &obj))
         return NULL;
 
-    return PyObject_CallFunctionObjArgs((PyObject *)&listType, "O", str, NULL);
+    return PyObject_CallFunctionObjArgs((PyObject *)&listType, obj, NULL);
 }
