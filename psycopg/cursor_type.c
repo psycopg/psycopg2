@@ -1825,7 +1825,7 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
     if (PyObject_IsInstance((PyObject*)conn,
                              (PyObject *)&connectionType) == 0) {
         PyErr_SetString(PyExc_TypeError,
-            "argument 1 must be subclass of psycopg2._psycopg.connection");
+            "argument 1 must be subclass of psycopg2.extensions.connection");
         return -1;
     } */
     Py_INCREF(conn);
@@ -1966,7 +1966,7 @@ cursor_traverse(cursorObject *self, visitproc visit, void *arg)
 
 PyTypeObject cursorType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "psycopg2._psycopg.cursor",
+    "psycopg2.extensions.cursor",
     sizeof(cursorObject), 0,
     cursor_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/

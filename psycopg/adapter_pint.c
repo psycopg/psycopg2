@@ -164,7 +164,7 @@ pint_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static PyObject *
 pint_repr(pintObject *self)
 {
-    return PyString_FromFormat("<psycopg2._psycopg.Int object at %p>",
+    return PyString_FromFormat("<psycopg2.extensions.Int object at %p>",
                                 self);
 }
 
@@ -176,7 +176,7 @@ pint_repr(pintObject *self)
 
 PyTypeObject pintType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "psycopg2._psycopg.Int",
+    "psycopg2.extensions.Int",
     sizeof(pintObject), 0,
     pint_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/

@@ -257,7 +257,7 @@ binary_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static PyObject *
 binary_repr(binaryObject *self)
 {
-    return PyString_FromFormat("<psycopg2._psycopg.Binary object at %p>", self);
+    return PyString_FromFormat("<psycopg2.extensions.Binary object at %p>", self);
 }
 
 /* object type */
@@ -267,7 +267,7 @@ binary_repr(binaryObject *self)
 
 PyTypeObject binaryType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "psycopg2._psycopg.Binary",
+    "psycopg2.extensions.Binary",
     sizeof(binaryObject), 0,
     binary_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/

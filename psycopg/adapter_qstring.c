@@ -245,8 +245,8 @@ qstring_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static PyObject *
 qstring_repr(qstringObject *self)
 {
-    return PyString_FromFormat("<psycopg2._psycopg.QuotedString object at %p>",
-                                self);
+    return PyString_FromFormat(
+        "<psycopg2.extensions.QuotedString object at %p>", self);
 }
 
 /* object type */
@@ -256,7 +256,7 @@ qstring_repr(qstringObject *self)
 
 PyTypeObject qstringType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "psycopg2._psycopg.QuotedString",
+    "psycopg2.extensions.QuotedString",
     sizeof(qstringObject), 0,
     qstring_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/

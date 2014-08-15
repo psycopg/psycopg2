@@ -158,7 +158,7 @@ static const char diagnosticsType_doc[] =
 
 PyTypeObject diagnosticsType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "psycopg2._psycopg.Diagnostics",
+    "psycopg2.extensions.Diagnostics",
     sizeof(diagnosticsObject), 0,
     (destructor)diagnostics_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/

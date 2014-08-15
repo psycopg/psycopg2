@@ -149,7 +149,7 @@ pboolean_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static PyObject *
 pboolean_repr(pbooleanObject *self)
 {
-    return PyString_FromFormat("<psycopg2._psycopg.Boolean object at %p>",
+    return PyString_FromFormat("<psycopg2.extensions.Boolean object at %p>",
                                 self);
 }
 
@@ -161,7 +161,7 @@ pboolean_repr(pbooleanObject *self)
 
 PyTypeObject pbooleanType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "psycopg2._psycopg.Boolean",
+    "psycopg2.extensions.Boolean",
     sizeof(pbooleanObject), 0,
     pboolean_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/

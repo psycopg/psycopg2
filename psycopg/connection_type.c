@@ -103,7 +103,7 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *kwargs)
 
     if (PyObject_IsInstance(obj, (PyObject *)&cursorType) == 0) {
         PyErr_SetString(PyExc_TypeError,
-            "cursor factory must be subclass of psycopg2._psycopg.cursor");
+            "cursor factory must be subclass of psycopg2.extensions.cursor");
         goto exit;
     }
 
@@ -787,7 +787,7 @@ psyco_conn_lobject(connectionObject *self, PyObject *args, PyObject *keywds)
     if (obj == NULL) return NULL;
     if (PyObject_IsInstance(obj, (PyObject *)&lobjectType) == 0) {
         PyErr_SetString(PyExc_TypeError,
-            "lobject factory must be subclass of psycopg2._psycopg.lobject");
+            "lobject factory must be subclass of psycopg2.extensions.lobject");
         Py_DECREF(obj);
         return NULL;
     }
@@ -1214,7 +1214,7 @@ connection_traverse(connectionObject *self, visitproc visit, void *arg)
 
 PyTypeObject connectionType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "psycopg2._psycopg.connection",
+    "psycopg2.extensions.connection",
     sizeof(connectionObject), 0,
     connection_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/

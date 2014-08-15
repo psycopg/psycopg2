@@ -178,7 +178,7 @@ pfloat_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static PyObject *
 pfloat_repr(pfloatObject *self)
 {
-    return PyString_FromFormat("<psycopg2._psycopg.Float object at %p>",
+    return PyString_FromFormat("<psycopg2.extensions.Float object at %p>",
                                 self);
 }
 
@@ -190,7 +190,7 @@ pfloat_repr(pfloatObject *self)
 
 PyTypeObject pfloatType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "psycopg2._psycopg.Float",
+    "psycopg2.extensions.Float",
     sizeof(pfloatObject), 0,
     pfloat_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/

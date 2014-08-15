@@ -152,7 +152,7 @@ asis_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static PyObject *
 asis_repr(asisObject *self)
 {
-    return PyString_FromFormat("<psycopg2._psycopg.AsIs object at %p>", self);
+    return PyString_FromFormat("<psycopg2.extensions.AsIs object at %p>", self);
 }
 
 
@@ -163,7 +163,7 @@ asis_repr(asisObject *self)
 
 PyTypeObject asisType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "psycopg2._psycopg.AsIs",
+    "psycopg2.extensions.AsIs",
     sizeof(asisObject), 0,
     asis_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/
