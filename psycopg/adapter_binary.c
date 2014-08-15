@@ -254,11 +254,6 @@ binary_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return type->tp_alloc(type, 0);
 }
 
-static PyObject *
-binary_repr(binaryObject *self)
-{
-    return PyString_FromFormat("<psycopg2.extensions.Binary object at %p>", self);
-}
 
 /* object type */
 
@@ -274,7 +269,7 @@ PyTypeObject binaryType = {
     0,          /*tp_getattr*/
     0,          /*tp_setattr*/
     0,          /*tp_compare*/
-    (reprfunc)binary_repr, /*tp_repr*/
+    0,          /*tp_repr*/
     0,          /*tp_as_number*/
     0,          /*tp_as_sequence*/
     0,          /*tp_as_mapping*/

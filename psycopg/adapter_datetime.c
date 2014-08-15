@@ -214,12 +214,6 @@ pydatetime_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return type->tp_alloc(type, 0);
 }
 
-static PyObject *
-pydatetime_repr(pydatetimeObject *self)
-{
-    return PyString_FromFormat("<psycopg2._psycopg.datetime object at %p>",
-                                self);
-}
 
 /* object type */
 
@@ -235,7 +229,7 @@ PyTypeObject pydatetimeType = {
     0,          /*tp_getattr*/
     0,          /*tp_setattr*/
     0,          /*tp_compare*/
-    (reprfunc)pydatetime_repr, /*tp_repr*/
+    0,          /*tp_repr*/
     0,          /*tp_as_number*/
     0,          /*tp_as_sequence*/
     0,          /*tp_as_mapping*/

@@ -146,13 +146,6 @@ pboolean_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return type->tp_alloc(type, 0);
 }
 
-static PyObject *
-pboolean_repr(pbooleanObject *self)
-{
-    return PyString_FromFormat("<psycopg2.extensions.Boolean object at %p>",
-                                self);
-}
-
 
 /* object type */
 
@@ -168,7 +161,7 @@ PyTypeObject pbooleanType = {
     0,          /*tp_getattr*/
     0,          /*tp_setattr*/
     0,          /*tp_compare*/
-    (reprfunc)pboolean_repr, /*tp_repr*/
+    0,          /*tp_repr*/
     0,          /*tp_as_number*/
     0,          /*tp_as_sequence*/
     0,          /*tp_as_mapping*/

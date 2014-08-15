@@ -149,12 +149,6 @@ asis_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return type->tp_alloc(type, 0);
 }
 
-static PyObject *
-asis_repr(asisObject *self)
-{
-    return PyString_FromFormat("<psycopg2.extensions.AsIs object at %p>", self);
-}
-
 
 /* object type */
 
@@ -170,7 +164,7 @@ PyTypeObject asisType = {
     0,          /*tp_getattr*/
     0,          /*tp_setattr*/
     0,          /*tp_compare*/
-    (reprfunc)asis_repr, /*tp_repr*/
+    0,          /*tp_repr*/
     0,          /*tp_as_number*/
     0,          /*tp_as_sequence*/
     0,          /*tp_as_mapping*/
