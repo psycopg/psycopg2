@@ -235,6 +235,28 @@ class CursorTests(ConnectingTestCase):
         self.assertEqual(self.conn.get_transaction_status(),
                          psycopg2.extensions.TRANSACTION_STATUS_IDLE)
 
+    def test_withhold_autocommit(self):
+        self._create_withhold_table()
+        self.conn.commit()
+        self.conn.autocommit = True
+        curs = self.conn.cursor("w", withhold=True)
+        curs.execute("select data from withhold order by data")
+
+        self.assertEqual(curs.fetchone(), (10,))
+        self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
+        self.assertEqual(self.conn.get_transaction_status(),
+                         psycopg2.extensions.TRANSACTION_STATUS_IDLE)
+
+        self.conn.commit()
+        self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
+        self.assertEqual(self.conn.get_transaction_status(),
+                         psycopg2.extensions.TRANSACTION_STATUS_IDLE)
+
+        curs.close()
+        self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
+        self.assertEqual(self.conn.get_transaction_status(),
+                         psycopg2.extensions.TRANSACTION_STATUS_IDLE)
+
     def test_scrollable(self):
         self.assertRaises(psycopg2.ProgrammingError, self.conn.cursor,
                           scrollable=True)
