@@ -18,6 +18,9 @@ What's new in psycopg 2.5.4
   proper methods (:ticket:`#219`).
 - Force conversion of pool arguments to integer to avoid potentially unbounded
   pools (:ticket:`#220`).
+- Cursors :sql:`WITH HOLD` don't begin a new transaction upon move/fetch/close
+  (:ticket:`#228`).
+- Cursors :sql:`WITH HOLD` can be used in autocommit (:ticket:`#229`).
 - Don't ignore silently the `cursor.callproc` argument without a length.
 - Added a few errors missing from `~psycopg2.errorcodes`, defined by
   PostgreSQL but not documented.
