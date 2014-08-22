@@ -6,5 +6,5 @@ recursive-include doc README HACKING SUCCESS COPYING.LESSER pep-0249.txt
 recursive-include doc/src *.rst *.py *.css Makefile
 recursive-include scripts *.py *.sh
 include scripts/maketypes.sh scripts/buildtypes.py
-include AUTHORS README INSTALL LICENSE NEWS
+include AUTHORS README.rst INSTALL LICENSE NEWS
 include PKG-INFO MANIFEST.in MANIFEST setup.py setup.cfg Makefile
