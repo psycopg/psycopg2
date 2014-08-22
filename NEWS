@@ -132,7 +132,7 @@ What's new in psycopg 2.4.6
 - 'register_hstore()', 'register_composite()', 'tpc_recover()' work with
   RealDictConnection and Cursor (:ticket:`#114`).
 - Fixed broken pool for Zope and connections re-init across ZSQL methods
-  in the same request (tickets #123, #125, #142).
+  in the same request (:tickets:`#123, #125, #142`).
 - connect() raises an exception instead of swallowing keyword arguments
   when a connection string is specified as well (:ticket:`#131`).
 - Discard any result produced by 'executemany()' (:ticket:`#133`).
@@ -154,7 +154,7 @@ What's new in psycopg 2.4.5
 - Error and its subclasses are picklable, useful for multiprocessing
   interaction (:ticket:`#90`).
 - Better efficiency and formatting of timezone offset objects thanks
-  to Menno Smits (tickets #94, #95).
+  to Menno Smits (:tickets:`#94, #95`).
 - Fixed 'rownumber' during iteration on cursor subclasses.
   Regression introduced in 2.4.4 (:ticket:`#100`).
 - Added support for 'inet' arrays.
