@@ -206,6 +206,33 @@ supported.
 
 
 .. index::
+    single: tests
+
+.. _test-suite:
+
+Running the test suite
+^^^^^^^^^^^^^^^^^^^^^^
+
+The included ``Makefile`` allows to run all the tests included in the
+distribution. Just run::
+
+    make
+    make check
+
+The tests run against a database called ``psycopg2_test`` on UNIX socket and
+the standard port. You can configure a different database to run the test by
+setting the environment variables:
+
+- :envvar:`PSYCOPG2_TESTDB`
+- :envvar:`PSYCOPG2_TESTDB_HOST`
+- :envvar:`PSYCOPG2_TESTDB_PORT`
+- :envvar:`PSYCOPG2_TESTDB_USER`
+
+The database should already exist before running the tests.
+
+
+
+.. index::
     single: debug
     single: PSYCOPG_DEBUG
 
@@ -225,13 +252,13 @@ order to create a debug package:
 
 - :ref:`Compile and install <source-package>` the package.
 
-- Set the :envvar:`PSYCOPG_DEBUG` variable::
+- Set the :envvar:`PSYCOPG_DEBUG` environment variable::
 
     $ export PSYCOPG_DEBUG=1
 
 - Run your program (making sure that the `!psycopg2` package imported is the
   one you just compiled and not e.g. the system one): you will have a copious
-  stream of informations printed on stdout.
+  stream of informations printed on stderr.
 
 .. __: http://initd.org/psycopg/download/
 
