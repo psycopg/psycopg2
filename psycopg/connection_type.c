@@ -442,9 +442,6 @@ exit:
 }
 
 
-#ifdef PSYCOPG_EXTENSIONS
-
-
 /* parse a python object into one of the possible isolation level values */
 
 extern const IsolationLevel conn_isolevels[];
@@ -860,8 +857,6 @@ psyco_conn_poll(connectionObject *self)
 }
 
 
-/* extension: fileno - return the file descriptor of the connection */
-
 #define psyco_conn_fileno_doc \
 "fileno() -> int -- Return file descriptor associated to database connection."
 
@@ -877,8 +872,6 @@ psyco_conn_fileno(connectionObject *self)
     return PyInt_FromLong(socket);
 }
 
-
-/* extension: isexecuting - check for asynchronous operations */
 
 #define psyco_conn_isexecuting_doc                           \
 "isexecuting() -> bool -- Return True if the connection is " \
@@ -911,8 +904,6 @@ psyco_conn_isexecuting(connectionObject *self)
 }
 
 
-/* extension: cancel - cancel the current operation */
-
 #define psyco_conn_cancel_doc                           \
 "cancel() -- cancel the current operation"
 
@@ -940,8 +931,6 @@ psyco_conn_cancel(connectionObject *self)
     }
     Py_RETURN_NONE;
 }
-
-#endif  /* PSYCOPG_EXTENSIONS */
 
 
 /** the connection object **/
@@ -974,7 +963,6 @@ static struct PyMethodDef connectionObject_methods[] = {
      METH_NOARGS, psyco_conn_enter_doc},
     {"__exit__", (PyCFunction)psyco_conn_exit,
      METH_VARARGS, psyco_conn_exit_doc},
-#ifdef PSYCOPG_EXTENSIONS
     {"set_session", (PyCFunction)psyco_conn_set_session,
      METH_VARARGS|METH_KEYWORDS, psyco_conn_set_session_doc},
     {"set_isolation_level", (PyCFunction)psyco_conn_set_isolation_level,
@@ -999,14 +987,12 @@ static struct PyMethodDef connectionObject_methods[] = {
      METH_NOARGS, psyco_conn_isexecuting_doc},
     {"cancel", (PyCFunction)psyco_conn_cancel,
      METH_NOARGS, psyco_conn_cancel_doc},
-#endif
     {NULL}
 };
 
 /* object member list */
 
 static struct PyMemberDef connectionObject_members[] = {
-#ifdef PSYCOPG_EXTENSIONS
     {"closed", T_LONG, offsetof(connectionObject, closed), READONLY,
         "True if the connection is closed."},
     {"encoding", T_STRING, offsetof(connectionObject, encoding), READONLY,
@@ -1032,7 +1018,6 @@ static struct PyMemberDef connectionObject_members[] = {
     {"server_version", T_INT,
         offsetof(connectionObject, server_version), READONLY,
         "Server version."},
-#endif
     {NULL}
 };
 
@@ -1040,7 +1025,6 @@ static struct PyMemberDef connectionObject_members[] = {
     { #exc, psyco_conn_get_exception, NULL, exc ## _doc, &exc }
 
 static struct PyGetSetDef connectionObject_getsets[] = {
-    /* DBAPI-2.0 extensions (exception objects) */
     EXCEPTION_GETTER(Error),
     EXCEPTION_GETTER(Warning),
     EXCEPTION_GETTER(InterfaceError),
@@ -1051,7 +1035,6 @@ static struct PyGetSetDef connectionObject_getsets[] = {
     EXCEPTION_GETTER(IntegrityError),
     EXCEPTION_GETTER(DataError),
     EXCEPTION_GETTER(NotSupportedError),
-#ifdef PSYCOPG_EXTENSIONS
     { "autocommit",
         (getter)psyco_conn_autocommit_get,
         (setter)psyco_conn_autocommit_set,
@@ -1060,7 +1043,6 @@ static struct PyGetSetDef connectionObject_getsets[] = {
         (getter)psyco_conn_isolation_level_get,
         (setter)NULL,
         "The current isolation level." },
-#endif
     {NULL}
 };
 #undef EXCEPTION_GETTER

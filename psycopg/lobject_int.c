@@ -32,8 +32,6 @@
 
 #include <string.h>
 
-#ifdef PSYCOPG_EXTENSIONS
-
 static void
 collect_error(connectionObject *conn, char **error)
 {
@@ -490,6 +488,3 @@ lobject_truncate(lobjectObject *self, size_t len)
 }
 
 #endif /* PG_VERSION_HEX >= 0x080300 */
-
-#endif
-

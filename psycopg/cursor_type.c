@@ -559,7 +559,6 @@ psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
 }
 
 
-#ifdef PSYCOPG_EXTENSIONS
 #define psyco_curs_mogrify_doc \
 "mogrify(query, vars=None) -> str -- Return query after vars binding."
 
@@ -622,7 +621,6 @@ psyco_curs_mogrify(cursorObject *self, PyObject *args, PyObject *kwargs)
 
     return _psyco_curs_mogrify(self, operation, vars);
 }
-#endif
 
 
 /* cast method - convert an oid/string into a Python object */
@@ -1222,8 +1220,6 @@ exit:
 }
 
 
-#ifdef PSYCOPG_EXTENSIONS
-
 /* Return a newly allocated buffer containing the list of columns to be
  * copied. On error return NULL and set an exception.
  */
@@ -1669,8 +1665,6 @@ psyco_curs_scrollable_set(cursorObject *self, PyObject *pyvalue)
     return 0;
 }
 
-#endif
-
 
 /** the cursor object **/
 
@@ -1738,7 +1732,6 @@ static struct PyMethodDef cursorObject_methods[] = {
     {"__exit__", (PyCFunction)psyco_curs_exit,
      METH_VARARGS, psyco_curs_exit_doc},
     /* psycopg extensions */
-#ifdef PSYCOPG_EXTENSIONS
     {"cast", (PyCFunction)psyco_curs_cast,
      METH_VARARGS, psyco_curs_cast_doc},
     {"mogrify", (PyCFunction)psyco_curs_mogrify,
@@ -1749,7 +1742,6 @@ static struct PyMethodDef cursorObject_methods[] = {
      METH_VARARGS|METH_KEYWORDS, psyco_curs_copy_to_doc},
     {"copy_expert", (PyCFunction)psyco_curs_copy_expert,
      METH_VARARGS|METH_KEYWORDS, psyco_curs_copy_expert_doc},
-#endif
     {NULL}
 };
 
@@ -1775,7 +1767,6 @@ static struct PyMemberDef cursorObject_members[] = {
         "The current row position."},
     {"connection", T_OBJECT, OFFSETOF(conn), READONLY,
         "The connection where the cursor comes from."},
-#ifdef PSYCOPG_EXTENSIONS
     {"name", T_STRING, OFFSETOF(name), READONLY},
     {"statusmessage", T_OBJECT, OFFSETOF(pgstatus), READONLY,
         "The return message of the last command."},
@@ -1786,13 +1777,11 @@ static struct PyMemberDef cursorObject_members[] = {
     {"typecaster", T_OBJECT, OFFSETOF(caster), READONLY},
     {"string_types", T_OBJECT, OFFSETOF(string_types), 0},
     {"binary_types", T_OBJECT, OFFSETOF(binary_types), 0},
-#endif
     {NULL}
 };
 
 /* object calculated member list */
 static struct PyGetSetDef cursorObject_getsets[] = {
-#ifdef PSYCOPG_EXTENSIONS
     { "closed", (getter)psyco_curs_get_closed, NULL,
       psyco_curs_closed_doc, NULL },
     { "withhold",
@@ -1803,7 +1792,6 @@ static struct PyGetSetDef cursorObject_getsets[] = {
       (getter)psyco_curs_scrollable_get,
       (setter)psyco_curs_scrollable_set,
       psyco_curs_scrollable_doc, NULL },
-#endif
     {NULL}
 };
 

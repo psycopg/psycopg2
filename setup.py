@@ -511,10 +511,7 @@ you probably need to install its companion -dev or -devel package."""
 
 # generate a nice version string to avoid confusion when users report bugs
 version_flags.append('pq3') # no more a choice
-
-for have in parser.get('build_ext', 'define').split(','):
-    if have == 'PSYCOPG_EXTENSIONS':
-        version_flags.append('ext')
+version_flags.append('ext') # no more a choice
 
 if version_flags:
     PSYCOPG_VERSION_EX = PSYCOPG_VERSION + " (%s)" % ' '.join(version_flags)

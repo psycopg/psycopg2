@@ -398,9 +398,7 @@ exit:
 PyObject *Error, *Warning, *InterfaceError, *DatabaseError,
     *InternalError, *OperationalError, *ProgrammingError,
     *IntegrityError, *DataError, *NotSupportedError;
-#ifdef PSYCOPG_EXTENSIONS
 PyObject *QueryCanceledError, *TransactionRollbackError;
-#endif
 
 /* mapping between exception names and their PyObject */
 static struct {
@@ -423,13 +421,11 @@ static struct {
     { "psycopg2.DataError", &DataError, &DatabaseError, DataError_doc },
     { "psycopg2.NotSupportedError", &NotSupportedError, &DatabaseError,
         NotSupportedError_doc },
-#ifdef PSYCOPG_EXTENSIONS
     { "psycopg2.extensions.QueryCanceledError", &QueryCanceledError,
       &OperationalError, QueryCanceledError_doc },
     { "psycopg2.extensions.TransactionRollbackError",
       &TransactionRollbackError, &OperationalError,
       TransactionRollbackError_doc },
-#endif
     {NULL}  /* Sentinel */
 };
 
@@ -712,12 +708,10 @@ static PyMethodDef psycopgMethods[] = {
      METH_VARARGS, psyco_IntervalFromMx_doc},
 #endif
 
-#ifdef PSYCOPG_EXTENSIONS
     {"set_wait_callback",  (PyCFunction)psyco_set_wait_callback,
      METH_O, psyco_set_wait_callback_doc},
     {"get_wait_callback",  (PyCFunction)psyco_get_wait_callback,
      METH_NOARGS, psyco_get_wait_callback_doc},
-#endif
 
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
@@ -806,10 +800,8 @@ INIT_MODULE(_psycopg)(void)
     Py_TYPE(&diagnosticsType) = &PyType_Type;
     if (PyType_Ready(&diagnosticsType) == -1) goto exit;
 
-#ifdef PSYCOPG_EXTENSIONS
     Py_TYPE(&lobjectType) = &PyType_Type;
     if (PyType_Ready(&lobjectType) == -1) goto exit;
-#endif
 
     /* import mx.DateTime module, if necessary */
 #ifdef HAVE_MXDATETIME
@@ -904,9 +896,7 @@ INIT_MODULE(_psycopg)(void)
     PyModule_AddObject(module, "Float", (PyObject*)&pfloatType);
     PyModule_AddObject(module, "List", (PyObject*)&listType);
     PyModule_AddObject(module, "QuotedString", (PyObject*)&qstringType);
-#ifdef PSYCOPG_EXTENSIONS
     PyModule_AddObject(module, "lobject", (PyObject*)&lobjectType);
-#endif
 
     /* encodings dictionary in module dictionary */
     PyModule_AddObject(module, "encodings", psycoEncodings);
