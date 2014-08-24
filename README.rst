@@ -36,7 +36,9 @@ development packages installed in your system) the standard::
     sudo python setup.py install
 
 should work no problem.  In case you have any problem check the 'install' and
-the 'faq' documents in the docs or online.
+the 'faq' documents in the docs or online__.
+
+.. __: http://initd.org/psycopg/docs/install.html
 
 For any other resource (source code repository, bug tracker, mailing list)
 please check the `project homepage`__.
