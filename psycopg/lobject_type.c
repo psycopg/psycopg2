@@ -35,8 +35,6 @@
 #include <string.h>
 
 
-#ifdef PSYCOPG_EXTENSIONS
-
 /** public methods **/
 
 /* close method - close the lobject */
@@ -271,8 +269,6 @@ psyco_lobj_truncate(lobjectObject *self, PyObject *args)
 
     Py_RETURN_NONE;
 }
-
-#endif /* PG_VERSION_HEX >= 0x080300 */
 
 
 /** the lobject object **/

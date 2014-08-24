@@ -80,11 +80,7 @@ psyco_get_wait_callback(PyObject *self, PyObject *obj)
 int
 psyco_green()
 {
-#ifdef PSYCOPG_EXTENSIONS
     return (NULL != wait_callback);
-#else
-    return 0;
-#endif
 }
 
 /* Return the wait callback if available.

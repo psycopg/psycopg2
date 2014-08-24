@@ -152,11 +152,6 @@ static double round(double num)
 }
 #endif
 
-/* postgresql < 7.4 does not have PQfreemem */
-#ifndef HAVE_PQFREEMEM
-#define PQfreemem free
-#endif
-
 /* resolve missing isinf() function for Solaris */
 #if defined (__SVR4) && defined (__sun)
 #include <ieeefp.h>
