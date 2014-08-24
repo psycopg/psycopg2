@@ -1,23 +1,30 @@
-.PHONY: help clean html text doctest
+.PHONY: env help clean html text doctest
 
 docs: html text
 
 check: doctest
 
+# The environment is currently required to build the documentation.
+# It is not clean by 'make clean'
+
 help:
-	cd src && $(MAKE) $@
+	$(MAKE) SPHINXBUILD=$$(pwd)/env/bin/sphinx-build -C src $@
 
 html:
-	cd src && $(MAKE) $@
+	$(MAKE) SPHINXBUILD=$$(pwd)/env/bin/sphinx-build -C src $@
 	cp -r src/_build/html .
 
 text:
-	cd src && $(MAKE) $@
+	$(MAKE) SPHINXBUILD=$$(pwd)/env/bin/sphinx-build -C src $@
 	cd src && tools/stitch_text.py index.rst _build/text > ../psycopg2.txt
 
 doctest:
-	cd src && $(MAKE) $@
+	$(MAKE) SPHINXBUILD=$$(pwd)/env/bin/sphinx-build -C src $@
 
 clean:
-	cd src && $(MAKE) $@
+	$(MAKE) SPHINXBUILD=$$(pwd)/env/bin/sphinx-build -C src $@
 	rm -rf html psycopg2.txt
+
+env: requirements.txt
+	virtualenv env
+	./env/bin/pip install -r requirements.txt

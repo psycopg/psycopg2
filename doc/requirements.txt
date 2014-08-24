@@ -1,0 +1,3 @@
+# Packages only needed to build the docs
+Pygments>=1.5
+Sphinx>=1.2,<=1.3
