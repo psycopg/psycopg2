@@ -538,7 +538,8 @@ else:
 # when called e.g. with "pip -e git+url'. This results in declarations
 # duplicate on the commandline, which I hope is not a problem.
 for define in parser.get('build_ext', 'define').split(','):
-    define_macros.append((define, '1'))
+    if define:
+        define_macros.append((define, '1'))
 
 # build the extension
 
