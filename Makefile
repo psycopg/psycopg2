@@ -122,10 +122,10 @@ MANIFEST: MANIFEST.in $(SOURCE)
 
 # docs depend on the build as it partly use introspection.
 doc/html/genindex.html: $(PLATLIB) $(PURELIB) $(SOURCE_DOC)
-	PYTHONPATH=$(ENV_LIB):$(BUILD_DIR) $(MAKE) SPHINXBUILD=$(ENV_BIN)/sphinx-build -C doc html
+	PYTHONPATH=$(ENV_LIB):$(BUILD_DIR):$$PYTHONPATH $(MAKE) SPHINXBUILD=$(ENV_BIN)/sphinx-build -C doc html
 
 doc/psycopg2.txt: $(PLATLIB) $(PURELIB) $(SOURCE_DOC)
-	PYTHONPATH=$(ENV_LIB):$(BUILD_DIR) $(MAKE) SPHINXBUILD=$(ENV_BIN)/sphinx-build -C doc text
+	PYTHONPATH=$(ENV_LIB):$(BUILD_DIR):$$PYTHONPATH $(MAKE) SPHINXBUILD=$(ENV_BIN)/sphinx-build -C doc text
 
 doc/docs.zip: doc/html/genindex.html
 	(cd doc/html && zip -r ../docs.zip *)
