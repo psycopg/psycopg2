@@ -111,7 +111,7 @@ The module interface respects the standard defined in the |DBAPI|_.
 
 
 
-.. index:: 
+.. index::
     single: Exceptions; DB API
 
 .. _dbapi-exceptions:
@@ -122,12 +122,12 @@ Exceptions
 In compliance with the |DBAPI|_, the module makes informations about errors
 available through the following exceptions:
 
-.. exception:: Warning 
-            
+.. exception:: Warning
+
     Exception raised for important warnings like data truncations while
     inserting, etc. It is a subclass of the Python `~exceptions.StandardError`.
-            
-.. exception:: Error 
+
+.. exception:: Error
 
     Exception that is the base class of all other error exceptions. You can
     use this to catch all errors with one single `!except` statement. Warnings
@@ -150,7 +150,7 @@ available through the following exceptions:
 
         >>> try:
         ...     cur.execute("SELECT * FROM barf")
-        ... except Exception, e:
+        ... except psycopg2.Error as e:
         ...     pass
 
         >>> e.pgcode
@@ -159,6 +159,7 @@ available through the following exceptions:
         ERROR:  relation "barf" does not exist
         LINE 1: SELECT * FROM barf
                               ^
+
     .. attribute:: cursor
 
         The cursor the exception was raised from; `None` if not applicable.
@@ -170,7 +171,7 @@ available through the following exceptions:
 
             >>> try:
             ...     cur.execute("SELECT * FROM barf")
-            ... except Exception, e:
+            ... except psycopg2.Error, e:
             ...     pass
 
             >>> e.diag.severity
@@ -195,41 +196,41 @@ available through the following exceptions:
 
     Exception raised for errors that are related to the database.  It is a
     subclass of `Error`.
-    
+
 .. exception:: DataError
-  
+
     Exception raised for errors that are due to problems with the processed
     data like division by zero, numeric value out of range, etc. It is a
     subclass of `DatabaseError`.
-    
+
 .. exception:: OperationalError
-  
+
     Exception raised for errors that are related to the database's operation
     and not necessarily under the control of the programmer, e.g. an
     unexpected disconnect occurs, the data source name is not found, a
     transaction could not be processed, a memory allocation error occurred
     during processing, etc.  It is a subclass of `DatabaseError`.
-    
-.. exception:: IntegrityError             
-  
+
+.. exception:: IntegrityError
+
     Exception raised when the relational integrity of the database is
     affected, e.g. a foreign key check fails.  It is a subclass of
     `DatabaseError`.
-    
-.. exception:: InternalError 
-              
+
+.. exception:: InternalError
+
     Exception raised when the database encounters an internal error, e.g. the
     cursor is not valid anymore, the transaction is out of sync, etc.  It is a
     subclass of `DatabaseError`.
-    
+
 .. exception:: ProgrammingError
-  
+
     Exception raised for programming errors, e.g. table not found or already
     exists, syntax error in the SQL statement, wrong number of parameters
     specified, etc.  It is a subclass of `DatabaseError`.
-    
+
 .. exception:: NotSupportedError
-  
+
     Exception raised in case a method or database API was used which is not
     supported by the database, e.g. requesting a `!rollback()` on a
     connection that does not support transaction or has transactions turned
