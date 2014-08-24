@@ -37,21 +37,12 @@
 static PyObject *
 pboolean_getquoted(pbooleanObject *self, PyObject *args)
 {
-#ifdef PSYCOPG_NEW_BOOLEAN
     if (PyObject_IsTrue(self->wrapped)) {
         return Bytes_FromString("true");
     }
     else {
         return Bytes_FromString("false");
     }
-#else
-    if (PyObject_IsTrue(self->wrapped)) {
-        return Bytes_FromString("'t'");
-    }
-    else {
-        return Bytes_FromString("'f'");
-    }
-#endif
 }
 
 static PyObject *
