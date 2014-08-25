@@ -39,9 +39,6 @@
 #include <stdlib.h>
 
 
-extern PyObject *pyPsycopgTzFixedOffsetTimezone;
-
-
 /** DBAPI methods **/
 
 /* close method - close the cursor */
@@ -1842,8 +1839,17 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
     self->tuple_factory = Py_None;
 
     /* default tzinfo factory */
-    Py_INCREF(pyPsycopgTzFixedOffsetTimezone);
-    self->tzinfo_factory = pyPsycopgTzFixedOffsetTimezone;
+    {
+        PyObject *m = NULL;
+        if ((m = PyImport_ImportModule("psycopg2.tz"))) {
+            self->tzinfo_factory = PyObject_GetAttrString(
+                    m, "FixedOffsetTimezone");
+            Py_DECREF(m);
+        }
+        if (!self->tzinfo_factory) {
+            return -1;
+        }
+    }
 
     Dprintf("cursor_setup: good cursor object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
