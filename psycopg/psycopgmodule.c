@@ -58,11 +58,6 @@
 #include "psycopg/adapter_datetime.h"
 HIDDEN PyObject *pyDateTimeModuleP = NULL;
 
-/* pointers to the psycopg.tz classes */
-HIDDEN PyObject *pyPsycopgTzModule = NULL;
-HIDDEN PyObject *pyPsycopgTzLOCAL = NULL;
-HIDDEN PyObject *pyPsycopgTzFixedOffsetTimezone = NULL;
-
 HIDDEN PyObject *psycoEncodings = NULL;
 
 #ifdef PSYCOPG_DEBUG
@@ -834,18 +829,6 @@ INIT_MODULE(_psycopg)(void)
 
     Py_TYPE(&pydatetimeType) = &PyType_Type;
     if (PyType_Ready(&pydatetimeType) == -1) goto exit;
-
-    /* import psycopg2.tz anyway (TODO: replace with C-level module?) */
-    pyPsycopgTzModule = PyImport_ImportModule("psycopg2.tz");
-    if (pyPsycopgTzModule == NULL) {
-        Dprintf("initpsycopg: can't import psycopg2.tz module");
-        PyErr_SetString(PyExc_ImportError, "can't import psycopg2.tz module");
-        goto exit;
-    }
-    pyPsycopgTzLOCAL =
-        PyObject_GetAttrString(pyPsycopgTzModule, "LOCAL");
-    pyPsycopgTzFixedOffsetTimezone =
-        PyObject_GetAttrString(pyPsycopgTzModule, "FixedOffsetTimezone");
 
     /* initialize the module and grab module's dictionary */
 #if PY_MAJOR_VERSION < 3
