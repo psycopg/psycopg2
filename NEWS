@@ -26,6 +26,7 @@ What's new in psycopg 2.5.4
   PostgreSQL but not documented.
 - Make sure the internal `_psycopg.so` module can be imported stand-alone
   (to allow modules juggling such as the one described in :ticket:`#201`).
+- Fixed memory leak with large objects (regression introduced in 2.5.3).
 
 
 What's new in psycopg 2.5.3
