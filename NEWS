@@ -24,6 +24,8 @@ What's new in psycopg 2.5.4
 - Don't ignore silently the `cursor.callproc` argument without a length.
 - Added a few errors missing from `~psycopg2.errorcodes`, defined by
   PostgreSQL but not documented.
+- Make sure the internal `_psycopg.so` module can be imported stand-alone
+  (to allow modules juggling such as the one described in :ticket:`#201`).
 
 
 What's new in psycopg 2.5.3
