@@ -27,6 +27,7 @@ from testutils import py3_raises_typeerror
 
 import psycopg2
 import psycopg2.extras
+import psycopg2.extensions as ext
 from psycopg2.extensions import b
 
 
@@ -111,9 +112,9 @@ class TypesExtrasTests(ConnectingTestCase):
     def test_adapt_fail(self):
         class Foo(object): pass
         self.assertRaises(psycopg2.ProgrammingError,
-            psycopg2.extensions.adapt, Foo(), psycopg2.extensions.ISQLQuote, None)
+            psycopg2.extensions.adapt, Foo(), ext.ISQLQuote, None)
         try:
-            psycopg2.extensions.adapt(Foo(), psycopg2.extensions.ISQLQuote, None)
+            psycopg2.extensions.adapt(Foo(), ext.ISQLQuote, None)
         except psycopg2.ProgrammingError, err:
             self.failUnless(str(err) == "can't adapt type 'Foo'")
 
@@ -460,7 +461,6 @@ class AdaptTypeTestCase(ConnectingTestCase):
 
     def test_none_fast_path(self):
         # the None adapter is not actually invoked in regular adaptation
-        ext = psycopg2.extensions
 
         class WonkyAdapter(object):
             def __init__(self, obj): pass
@@ -923,7 +923,7 @@ class JsonTestCase(ConnectingTestCase):
             self.assertEqual(curs.mogrify("%s", (obj,)),
                 b("""'{"a": 123}'"""))
         finally:
-           del psycopg2.extensions.adapters[dict, psycopg2.extensions.ISQLQuote]
+           del psycopg2.extensions.adapters[dict, ext.ISQLQuote]
 
 
     def test_type_not_available(self):
@@ -1632,6 +1632,9 @@ class RangeCasterTestCase(ConnectingTestCase):
             self.assert_(not r1.lower_inc)
             self.assert_(r1.upper_inc)
 
+        # clear the adapters to allow precise count by scripts/refcounter.py
+        del ext.adapters[rc.range, ext.ISQLQuote]
+
     def test_range_escaping(self):
         from psycopg2.extras import register_range
         cur = self.conn.cursor()
@@ -1683,6 +1686,9 @@ class RangeCasterTestCase(ConnectingTestCase):
             self.assertEqual(ranges[i].lower_inf, r.lower_inf)
             self.assertEqual(ranges[i].upper_inf, r.upper_inf)
 
+        # clear the adapters to allow precise count by scripts/refcounter.py
+        del ext.adapters[TextRange, ext.ISQLQuote]
+
     def test_range_not_found(self):
         from psycopg2.extras import register_range
         cur = self.conn.cursor()
@@ -1715,6 +1721,10 @@ class RangeCasterTestCase(ConnectingTestCase):
         self.assertRaises(psycopg2.ProgrammingError,
             register_range, 'rs.r1', 'FailRange', cur)
         cur.execute("rollback to savepoint x;")
+
+        # clear the adapters to allow precise count by scripts/refcounter.py
+        for r in [ra1, ra2, rars2, rars3]:
+            del ext.adapters[r.range, ext.ISQLQuote]
 
 decorate_all_tests(RangeCasterTestCase, skip_if_no_range)
 
