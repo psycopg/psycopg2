@@ -52,7 +52,7 @@ psyco_lobj_close(lobjectObject *self, PyObject *args)
        opened large objects */
     if (!lobject_is_closed(self)
         && !self->conn->autocommit
-	&& self->conn->mark == self->mark)
+        && self->conn->mark == self->mark)
     {
         Dprintf("psyco_lobj_close: closing lobject at %p", self);
         if (lobject_close(self) < 0)
@@ -171,14 +171,14 @@ psyco_lobj_seek(lobjectObject *self, PyObject *args)
     int pos=0;
 
     if (!PyArg_ParseTuple(args, "i|i", &offset, &whence))
-    	return NULL;
+        return NULL;
 
     EXC_IF_LOBJ_CLOSED(self);
     EXC_IF_LOBJ_LEVEL0(self);
     EXC_IF_LOBJ_UNMARKED(self);
 
     if ((pos = lobject_seek(self, offset, whence)) < 0)
-    	return NULL;
+        return NULL;
 
     return PyInt_FromLong((long)pos);
 }
@@ -198,7 +198,7 @@ psyco_lobj_tell(lobjectObject *self, PyObject *args)
     EXC_IF_LOBJ_UNMARKED(self);
 
     if ((pos = lobject_tell(self)) < 0)
-    	return NULL;
+        return NULL;
 
     return PyInt_FromLong((long)pos);
 }
@@ -333,10 +333,9 @@ lobject_setup(lobjectObject *self, connectionObject *conn,
         return -1;
     }
 
+    Py_INCREF((PyObject*)conn);
     self->conn = conn;
     self->mark = conn->mark;
-
-    Py_INCREF((PyObject*)self->conn);
 
     self->fd = -1;
     self->oid = InvalidOid;
@@ -358,8 +357,8 @@ lobject_dealloc(PyObject* obj)
     if (self->conn && self->fd != -1) {
         if (lobject_close(self) < 0)
             PyErr_Print();
-        Py_XDECREF((PyObject*)self->conn);
     }
+    Py_CLEAR(self->conn);
     PyMem_Free(self->smode);
 
     Dprintf("lobject_dealloc: deleted lobject object at %p, refcnt = "
