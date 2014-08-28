@@ -72,15 +72,10 @@ def parse_errors_txt(url):
         m = re.match(r"(.....)\s+(?:E|W|S)\s+ERRCODE_(\S+)(?:\s+(\S+))?$", line)
         if m:
             errcode, macro, spec = m.groups()
-            # error 22008 has 2 macros and 1 def: give priority to the def
-            # as it's the one we used to parse from sgml
+            # skip errcodes without specs as they are not publically visible
             if not spec:
-                if errcode in errors[class_]:
-                    continue
-                errlabel = macro.upper()
-            else:
-                errlabel = spec.upper()
-
+                continue
+            errlabel = spec.upper()
             errors[class_][errcode] = errlabel
             continue
 
