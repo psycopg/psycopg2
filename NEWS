@@ -4,18 +4,18 @@ Current release
 What's new in psycopg 2.5.4
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- Added :sql:`jsonb` support for PostgreSQL 9.4.
-- Fixed segfault if COPY statements are executed instead of using the
-  proper methods (:ticket:`#219`).
+- Added :sql:`jsonb` support for PostgreSQL 9.4 (:ticket:`#226`).
+- Fixed segfault if COPY statements are passed to `~cursor.execute()` instead
+  of using the proper methods (:ticket:`#219`).
 - Force conversion of pool arguments to integer to avoid potentially unbounded
   pools (:ticket:`#220`).
 - Cursors :sql:`WITH HOLD` don't begin a new transaction upon move/fetch/close
   (:ticket:`#228`).
 - Cursors :sql:`WITH HOLD` can be used in autocommit (:ticket:`#229`).
-- Don't ignore silently the `cursor.callproc` argument without a length.
-- Make sure the internal `_psycopg.so` module can be imported stand-alone
-  (to allow modules juggling such as the one described in :ticket:`#201`).
-- Fixed memory leak with large objects (regression introduced in 2.5.3).
+- `~cursor.callproc()` doesn't silently ignore an argument without a length.
+- Fixed memory leak with large objects (:ticket:`#256`).
+- Make sure the internal ``_psycopg.so`` module can be imported stand-alone (to
+  allow modules juggling such as the one described in :ticket:`#201`).
 
 
 What's new in psycopg 2.5.3
