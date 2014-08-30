@@ -127,9 +127,6 @@ class ConnectionTests(ConnectingTestCase):
             cur.execute(sql)
 
         self.assertEqual(50, len(conn.notices))
-        self.assert_('table50' in conn.notices[0], conn.notices[0])
-        self.assert_('table51' in conn.notices[1], conn.notices[1])
-        self.assert_('table98' in conn.notices[-2], conn.notices[-2])
         self.assert_('table99' in conn.notices[-1], conn.notices[-1])
 
     def test_server_version(self):
