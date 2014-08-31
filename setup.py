@@ -560,6 +560,14 @@ download_url = (
     "http://initd.org/psycopg/tarballs/PSYCOPG-%s/psycopg2-%s.tar.gz"
     % ('-'.join(PSYCOPG_VERSION.split('.')[:2]), PSYCOPG_VERSION))
 
+try:
+    f = open("README.rst")
+    readme = f.read()
+    f.close()
+except:
+    print("failed to read readme: ignoring...")
+    readme = __doc__
+
 setup(name="psycopg2",
       version=PSYCOPG_VERSION,
       maintainer="Federico Di Gregorio",
@@ -570,8 +578,8 @@ setup(name="psycopg2",
       download_url=download_url,
       license="LGPL with exceptions or ZPL",
       platforms=["any"],
-      description=__doc__.split("\n")[0],
-      long_description="\n".join(__doc__.split("\n")[2:]),
+      description=readme.split("\n")[0],
+      long_description="\n".join(readme.split("\n")[2:]).lstrip(),
       classifiers=[x for x in classifiers.split("\n") if x],
       data_files=data_files,
       package_dir={'psycopg2': 'lib', 'psycopg2.tests': 'tests'},
