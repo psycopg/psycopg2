@@ -23,7 +23,6 @@ git clone $REPO_URL psycopg
 cd psycopg
 TAG=${VER//./_}
 git checkout -b $TAG $TAG
-make env    # to build the docs
 make sdist
 
 # Test the sdist just created
