@@ -189,7 +189,7 @@ deal with Python objects adaptation:
 
 .. function:: adapt(obj)
 
-    Return the SQL representation of *obj* as a string.  Raise a
+    Return the SQL representation of *obj* as an `ISQLQuote`.  Raise a
     `~psycopg2.ProgrammingError` if how to adapt the object is unknown.
     In order to allow new objects to be adapted, register a new adapter for it
     using the `register_adapter()` function.
@@ -203,7 +203,7 @@ deal with Python objects adaptation:
     Register a new adapter for the objects of class *class*.
 
     *adapter* should be a function taking a single argument (the object
-    to adapt) and returning an object conforming the `ISQLQuote`
+    to adapt) and returning an object conforming to the `ISQLQuote`
     protocol (e.g. exposing a `!getquoted()` method).  The `AsIs` is
     often useful for this task.
 
