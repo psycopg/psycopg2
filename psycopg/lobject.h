@@ -60,8 +60,8 @@ RAISES_NEG HIDDEN int lobject_export(lobjectObject *self, const char *filename);
 RAISES_NEG HIDDEN Py_ssize_t lobject_read(lobjectObject *self, char *buf, size_t len);
 RAISES_NEG HIDDEN Py_ssize_t lobject_write(lobjectObject *self, const char *buf,
                                 size_t len);
-RAISES_NEG HIDDEN int lobject_seek(lobjectObject *self, int pos, int whence);
-RAISES_NEG HIDDEN int lobject_tell(lobjectObject *self);
+RAISES_NEG HIDDEN long lobject_seek(lobjectObject *self, long pos, int whence);
+RAISES_NEG HIDDEN long lobject_tell(lobjectObject *self);
 RAISES_NEG HIDDEN int lobject_truncate(lobjectObject *self, size_t len);
 RAISES_NEG HIDDEN int lobject_close(lobjectObject *self);
 
