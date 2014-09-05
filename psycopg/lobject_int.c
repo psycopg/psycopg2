@@ -376,21 +376,21 @@ lobject_read(lobjectObject *self, char *buf, size_t len)
 
 /* lobject_seek - move the current position in the lo */
 
-RAISES_NEG int
-lobject_seek(lobjectObject *self, int pos, int whence)
+RAISES_NEG long
+lobject_seek(lobjectObject *self, long pos, int whence)
 {
     PGresult *pgres = NULL;
     char *error = NULL;
-    int where;
+    long where;
 
-    Dprintf("lobject_seek: fd = %d, pos = %d, whence = %d",
+    Dprintf("lobject_seek: fd = %d, pos = %Ld, whence = %d",
             self->fd, pos, whence);
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
 
-    where = lo_lseek(self->conn->pgconn, self->fd, pos, whence);
-    Dprintf("lobject_seek: where = %d", where);
+    where = lo_lseek64(self->conn->pgconn, self->fd, pos, whence);
+    Dprintf("lobject_seek: where = %Ld", where);
     if (where < 0)
         collect_error(self->conn, &error);
 
@@ -404,20 +404,20 @@ lobject_seek(lobjectObject *self, int pos, int whence)
 
 /* lobject_tell - tell the current position in the lo */
 
-RAISES_NEG int
+RAISES_NEG long
 lobject_tell(lobjectObject *self)
 {
     PGresult *pgres = NULL;
     char *error = NULL;
-    int where;
+    long where;
 
     Dprintf("lobject_tell: fd = %d", self->fd);
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
 
-    where = lo_tell(self->conn->pgconn, self->fd);
-    Dprintf("lobject_tell: where = %d", where);
+    where = lo_tell64(self->conn->pgconn, self->fd);
+    Dprintf("lobject_tell: where = %Ld", where);
     if (where < 0)
         collect_error(self->conn, &error);
 
