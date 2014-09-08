@@ -225,24 +225,6 @@ class LargeObjectTests(LargeObjectTestCase):
         self.assertEqual(lo.seek(-2, 2), length - 2)
         self.assertEqual(lo.read(), "ta")
 
-    def test_seek_tell_greater_than_2gb(self):
-        lo = self.conn.lobject()
-
-        # write chunks until its 3gb
-        length = 0
-        for _ in range(24):
-            # each chunk is written with 128mb
-            length += lo.write("data" * (1 << 25))
-        self.assertEqual(lo.tell(), length)
-        lo.close()
-        lo = self.conn.lobject(lo.oid)
-
-        # seek to 3gb - 4, last written text should be data
-        offset = (1 << 31) + (1 << 30) - 4  # 2gb + 1gb - 4
-        self.assertEqual(lo.seek(offset, 0), offset)
-        self.assertEqual(lo.tell(), offset)
-        self.assertEqual(lo.read(), "data")
-
     def test_unlink(self):
         lo = self.conn.lobject()
         lo.unlink()
@@ -456,6 +438,55 @@ class LargeObjectTruncateTests(LargeObjectTestCase):
 
 decorate_all_tests(LargeObjectTruncateTests,
     skip_if_no_lo, skip_lo_if_green, skip_if_no_truncate)
+
+
+def skip_if_no_lo64(f):
+    @wraps(f)
+    def skip_if_no_lo64_(self):
+        if self.conn.server_version < 90300:
+            return self.skipTest("large objects 64bit only supported from PG 9.3")
+        else:
+            return f(self)
+
+    return skip_if_no_lo64_
+
+class LargeObject64Tests(LargeObjectTestCase):
+    def test_seek_tell_truncate_greater_than_2gb(self):
+        lo = self.conn.lobject()
+
+        length = (1 << 31) + (1 << 30)  # 2gb + 1gb = 3gb
+        lo.truncate(length)
+
+        self.assertEqual(lo.seek(length, 0), length)
+        self.assertEqual(lo.tell(), length)
+
+decorate_all_tests(LargeObject64Tests,
+    skip_if_no_lo, skip_lo_if_green, skip_if_no_truncate, skip_if_no_lo64)
+
+
+def skip_if_lo64(f):
+    @wraps(f)
+    def skip_if_lo64_(self):
+        if self.conn.server_version >= 90300:
+            return self.skipTest("large objects 64bit only supported from PG 9.3")
+        else:
+            return f(self)
+
+    return skip_if_lo64_
+
+class LargeObjectNot64Tests(LargeObjectTestCase):
+    def test_seek_larger_than_2gb(self):
+        lo = self.conn.lobject()
+        offset = 1 << 32  # 4gb
+        self.assertRaises(psycopg2.InterfaceError, lo.seek, offset, 0)
+
+    def test_truncate_larger_than_2gb(self):
+        lo = self.conn.lobject()
+        length = 1 << 32  # 4gb
+        self.assertRaises(psycopg2.InterfaceError, lo.truncate, length)
+
+decorate_all_tests(LargeObjectNot64Tests,
+    skip_if_no_lo, skip_lo_if_green, skip_if_no_truncate, skip_if_lo64)
 
 
 def test_suite():

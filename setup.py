@@ -415,6 +415,13 @@ class psycopg_build_ext(build_ext):
 
             define_macros.append(("PG_VERSION_HEX", "0x%02X%02X%02X" %
                                   (int(pgmajor), int(pgminor), int(pgpatch))))
+
+            # enable lo64 if postgres >= 9.3
+            if int(pgmajor) >= 9 and int(pgminor) >= 3:
+                define_macros.append(("HAVE_LO64", "1"))
+            else:
+                define_macros.append(("HAVE_LO64", "0"))
+
         except Warning:
             w = sys.exc_info()[1]  # work around py 2/3 different syntax
             sys.stderr.write("Error: %s\n" % w)

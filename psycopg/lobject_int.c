@@ -389,7 +389,11 @@ lobject_seek(lobjectObject *self, long pos, int whence)
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
 
+#if HAVE_LO64
     where = lo_lseek64(self->conn->pgconn, self->fd, pos, whence);
+#else
+    where = (long)lo_lseek(self->conn->pgconn, self->fd, (int)pos, whence);
+#endif
     Dprintf("lobject_seek: where = %Ld", where);
     if (where < 0)
         collect_error(self->conn, &error);
@@ -416,7 +420,11 @@ lobject_tell(lobjectObject *self)
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
 
+#if HAVE_LO64
     where = lo_tell64(self->conn->pgconn, self->fd);
+#else
+    where = (long)lo_tell(self->conn->pgconn, self->fd);
+#endif
     Dprintf("lobject_tell: where = %Ld", where);
     if (where < 0)
         collect_error(self->conn, &error);
@@ -473,7 +481,11 @@ lobject_truncate(lobjectObject *self, size_t len)
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
 
+#if HAVE_LO64
+    retvalue = lo_truncate64(self->conn->pgconn, self->fd, len);
+#else
     retvalue = lo_truncate(self->conn->pgconn, self->fd, len);
+#endif
     Dprintf("lobject_truncate: result = %d", retvalue);
     if (retvalue < 0)
         collect_error(self->conn, &error);
