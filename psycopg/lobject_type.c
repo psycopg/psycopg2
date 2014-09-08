@@ -177,6 +177,14 @@ psyco_lobj_seek(lobjectObject *self, PyObject *args)
     EXC_IF_LOBJ_LEVEL0(self);
     EXC_IF_LOBJ_UNMARKED(self);
 
+#if !HAVE_LO64
+    if (offset > INT_MAX) {
+        psyco_set_error(InterfaceError, NULL,
+            "offset out of range");
+        return NULL;
+    }
+#endif
+
     if ((pos = lobject_seek(self, offset, whence)) < 0)
         return NULL;
 
@@ -257,14 +265,22 @@ psyco_lobj_get_closed(lobjectObject *self, void *closure)
 static PyObject *
 psyco_lobj_truncate(lobjectObject *self, PyObject *args)
 {
-    int len = 0;
+    long len = 0;
 
-    if (!PyArg_ParseTuple(args, "|i", &len))
+    if (!PyArg_ParseTuple(args, "|l", &len))
         return NULL;
 
     EXC_IF_LOBJ_CLOSED(self);
     EXC_IF_LOBJ_LEVEL0(self);
     EXC_IF_LOBJ_UNMARKED(self);
+
+#if !HAVE_LO64
+    if (len > INT_MAX) {
+        psyco_set_error(InterfaceError, NULL,
+            "len out of range");
+        return NULL;
+    }
+#endif
 
     if (lobject_truncate(self, len) < 0)
         return NULL;
