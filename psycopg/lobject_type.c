@@ -175,7 +175,7 @@ psyco_lobj_seek(lobjectObject *self, PyObject *args)
     EXC_IF_LOBJ_LEVEL0(self);
     EXC_IF_LOBJ_UNMARKED(self);
 
-#if !HAVE_LO64
+#ifndef HAVE_LO64
     if (offset > INT_MAX) {
         psyco_set_error(InterfaceError, NULL,
             "offset out of range");
@@ -272,7 +272,7 @@ psyco_lobj_truncate(lobjectObject *self, PyObject *args)
     EXC_IF_LOBJ_LEVEL0(self);
     EXC_IF_LOBJ_UNMARKED(self);
 
-#if !HAVE_LO64
+#ifndef HAVE_LO64
     if (len > INT_MAX) {
         psyco_set_error(InterfaceError, NULL,
             "len out of range");

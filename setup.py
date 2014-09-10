@@ -422,8 +422,6 @@ class psycopg_build_ext(build_ext):
             # enable lo64 if postgres >= 9.3
             if (pgmajor, pgminor) >= (9, 3):
                 define_macros.append(("HAVE_LO64", "1"))
-            else:
-                define_macros.append(("HAVE_LO64", "0"))
 
         except Warning:
             w = sys.exc_info()[1]  # work around py 2/3 different syntax

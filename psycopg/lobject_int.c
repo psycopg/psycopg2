@@ -389,7 +389,7 @@ lobject_seek(lobjectObject *self, long pos, int whence)
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
 
-#if HAVE_LO64
+#ifdef HAVE_LO64
     if (self->conn->server_version < 90300) {
         where = (long)lo_lseek(self->conn->pgconn, self->fd, (int)pos, whence);
     } else {
@@ -424,7 +424,7 @@ lobject_tell(lobjectObject *self)
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
 
-#if HAVE_LO64
+#ifdef HAVE_LO64
     if (self->conn->server_version < 90300) {
         where = (long)lo_tell(self->conn->pgconn, self->fd);
     } else {
@@ -489,7 +489,7 @@ lobject_truncate(lobjectObject *self, size_t len)
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
 
-#if HAVE_LO64
+#ifdef HAVE_LO64
     if (self->conn->server_version < 90300) {
         retvalue = lo_truncate(self->conn->pgconn, self->fd, len);
     } else {
