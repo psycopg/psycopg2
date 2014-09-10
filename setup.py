@@ -419,8 +419,8 @@ class psycopg_build_ext(build_ext):
             define_macros.append(("PG_VERSION_HEX", "0x%02X%02X%02X" %
                                   (pgmajor, pgminor, pgpatch)))
 
-            # enable lo64 if postgres >= 9.3
-            if (pgmajor, pgminor) >= (9, 3):
+            # enable lo64 if libpq >= 9.3 and Python 64 bits
+            if (pgmajor, pgminor) >= (9, 3) and sys.maxint > (1 << 32):
                 define_macros.append(("HAVE_LO64", "1"))
 
                 # Inject the flag in the version string already packed up
