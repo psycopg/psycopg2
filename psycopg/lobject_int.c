@@ -383,7 +383,7 @@ lobject_seek(lobjectObject *self, long pos, int whence)
     char *error = NULL;
     long where;
 
-    Dprintf("lobject_seek: fd = %d, pos = %Ld, whence = %d",
+    Dprintf("lobject_seek: fd = %d, pos = %ld, whence = %d",
             self->fd, pos, whence);
 
     Py_BEGIN_ALLOW_THREADS;
@@ -398,7 +398,7 @@ lobject_seek(lobjectObject *self, long pos, int whence)
 #else
     where = (long)lo_lseek(self->conn->pgconn, self->fd, (int)pos, whence);
 #endif
-    Dprintf("lobject_seek: where = %Ld", where);
+    Dprintf("lobject_seek: where = %ld", where);
     if (where < 0)
         collect_error(self->conn, &error);
 
@@ -433,7 +433,7 @@ lobject_tell(lobjectObject *self)
 #else
     where = (long)lo_tell(self->conn->pgconn, self->fd);
 #endif
-    Dprintf("lobject_tell: where = %Ld", where);
+    Dprintf("lobject_tell: where = %ld", where);
     if (where < 0)
         collect_error(self->conn, &error);
 
