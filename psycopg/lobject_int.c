@@ -390,7 +390,11 @@ lobject_seek(lobjectObject *self, long pos, int whence)
     pthread_mutex_lock(&(self->conn->lock));
 
 #if HAVE_LO64
-    where = lo_lseek64(self->conn->pgconn, self->fd, pos, whence);
+    if (self->conn->server_version < 90300) {
+        where = (long)lo_lseek(self->conn->pgconn, self->fd, (int)pos, whence);
+    } else {
+        where = lo_lseek64(self->conn->pgconn, self->fd, pos, whence);
+    }
 #else
     where = (long)lo_lseek(self->conn->pgconn, self->fd, (int)pos, whence);
 #endif
@@ -421,7 +425,11 @@ lobject_tell(lobjectObject *self)
     pthread_mutex_lock(&(self->conn->lock));
 
 #if HAVE_LO64
-    where = lo_tell64(self->conn->pgconn, self->fd);
+    if (self->conn->server_version < 90300) {
+        where = (long)lo_tell(self->conn->pgconn, self->fd);
+    } else {
+        where = lo_tell64(self->conn->pgconn, self->fd);
+    }
 #else
     where = (long)lo_tell(self->conn->pgconn, self->fd);
 #endif
@@ -482,7 +490,11 @@ lobject_truncate(lobjectObject *self, size_t len)
     pthread_mutex_lock(&(self->conn->lock));
 
 #if HAVE_LO64
-    retvalue = lo_truncate64(self->conn->pgconn, self->fd, len);
+    if (self->conn->server_version < 90300) {
+        retvalue = lo_truncate(self->conn->pgconn, self->fd, len);
+    } else {
+        retvalue = lo_truncate64(self->conn->pgconn, self->fd, len);
+    }
 #else
     retvalue = lo_truncate(self->conn->pgconn, self->fd, len);
 #endif
