@@ -423,6 +423,16 @@ class psycopg_build_ext(build_ext):
             if (pgmajor, pgminor) >= (9, 3):
                 define_macros.append(("HAVE_LO64", "1"))
 
+                # Inject the flag in the version string already packed up
+                # because we didn't know the version before.
+                # With distutils everything is complicated.
+                for i, t in enumerate(define_macros):
+                    if t[0] == 'PSYCOPG_VERSION':
+                        n = t[1].find(')')
+                        if n > 0:
+                            define_macros[i] = (
+                                t[0], t[1][:n] + ' lo64' + t[1][n:])
+
         except Warning:
             w = sys.exc_info()[1]  # work around py 2/3 different syntax
             sys.stderr.write("Error: %s\n" % w)
