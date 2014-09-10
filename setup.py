@@ -407,6 +407,9 @@ class psycopg_build_ext(build_ext):
                 pgmajor, pgminor, pgpatch = m.group(1, 2, 3)
                 if pgpatch is None or not pgpatch.isdigit():
                     pgpatch = 0
+                pgmajor = int(pgmajor)
+                pgminor = int(pgminor)
+                pgpatch = int(pgpatch)
             else:
                 sys.stderr.write(
                     "Error: could not determine PostgreSQL version from '%s'"
@@ -414,10 +417,10 @@ class psycopg_build_ext(build_ext):
                 sys.exit(1)
 
             define_macros.append(("PG_VERSION_HEX", "0x%02X%02X%02X" %
-                                  (int(pgmajor), int(pgminor), int(pgpatch))))
+                                  (pgmajor, pgminor, pgpatch)))
 
             # enable lo64 if postgres >= 9.3
-            if int(pgmajor) >= 9 and int(pgminor) >= 3:
+            if (pgmajor, pgminor) >= (9, 3):
                 define_macros.append(("HAVE_LO64", "1"))
             else:
                 define_macros.append(("HAVE_LO64", "0"))
