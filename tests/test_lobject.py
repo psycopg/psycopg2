@@ -443,7 +443,7 @@ decorate_all_tests(LargeObjectTruncateTests,
 def _has_lo64(conn):
     """Return (bool, msg) about the lo64 support"""
     if conn.server_version < 90300:
-        return (False, "server version %s doesn'ts support the lo64 API"
+        return (False, "server version %s doesn't support the lo64 API"
                 % conn.server_version)
 
     if 'lo64' not in psycopg2.__version__:
