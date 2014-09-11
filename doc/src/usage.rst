@@ -899,6 +899,18 @@ using the |lo_import|_ and |lo_export|_ libpq functions.
 .. |lo_export| replace:: `!lo_export()`
 .. _lo_export: http://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-EXPORT
 
+.. versionchanged:: 2.6
+    added support for large objects greated than 2GB. Note that the support is
+    enabled only if both these conditions are verified:
+
+    - the extension was built against libpq at least 9.3 (you can check if
+      `psycopg2.__version__` contains the ``lo64`` flag);
+    - the server version is at least PostgreSQL 9.3
+      (`~connection.server_version` must be >= ``90300``).
+
+    If the contitions are not met several `!lobject` methods will fail if the
+    arguments exceed 2GB.
+
 
 
 .. index::

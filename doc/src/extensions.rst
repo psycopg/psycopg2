@@ -40,17 +40,19 @@ functionalities defined by the |DBAPI|_.
 
     The class can be subclassed: see the `connection.lobject()` to know
     how to specify a `!lobject` subclass.
-    
+
     .. versionadded:: 2.0.8
 
     .. attribute:: oid
 
         Database OID of the object.
 
+
     .. attribute:: mode
 
         The mode the database was open. See `connection.lobject()` for a
         description of the available modes.
+
 
     .. method:: read(bytes=-1)
 
@@ -64,6 +66,7 @@ functionalities defined by the |DBAPI|_.
         .. versionchanged:: 2.4
             added Unicode support.
 
+
     .. method:: write(str)
 
         Write a string to the large object. Return the number of bytes
@@ -73,42 +76,60 @@ functionalities defined by the |DBAPI|_.
         .. versionchanged:: 2.4
             added Unicode support.
 
+
     .. method:: export(file_name)
 
         Export the large object content to the file system.
-        
+
         The method uses the efficient |lo_export|_ libpq function.
-        
+
         .. |lo_export| replace:: `!lo_export()`
         .. _lo_export: http://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-EXPORT
+
 
     .. method:: seek(offset, whence=0)
 
         Set the lobject current position.
 
+        .. versionchanged:: 2.6.0
+            added support for *offset* > 2GB.
+
+
     .. method:: tell()
 
         Return the lobject current position.
 
-    .. method:: truncate(len=0)
-
         .. versionadded:: 2.2.0
+
+        .. versionchanged:: 2.6.0
+            added support for return value > 2GB.
+
+
+    .. method:: truncate(len=0)
 
         Truncate the lobject to the given size.
 
-        The method will only be available if Psycopg has been built against libpq
-        from PostgreSQL 8.3 or later and can only be used with PostgreSQL servers
-        running these versions. It uses the |lo_truncate|_ libpq function.
+        The method will only be available if Psycopg has been built against
+        libpq from PostgreSQL 8.3 or later and can only be used with
+        PostgreSQL servers running these versions. It uses the |lo_truncate|_
+        libpq function.
 
         .. |lo_truncate| replace:: `!lo_truncate()`
         .. _lo_truncate: http://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-TRUNCATE
 
-        .. warning::
+        .. versionadded:: 2.2.0
 
-            If Psycopg is built with |lo_truncate| support (i.e. if the
-            :program:`pg_config` used during setup is version >= 8.3), but at
-            runtime an older libpq is found, Psycopg will fail to import.  See
-            :ref:`the lo_truncate FAQ <faq-lo_truncate>` about the problem.
+        .. versionchanged:: 2.6.0
+            added support for *len* > 2GB.
+
+    .. warning::
+
+        If Psycopg is built with |lo_truncate| support or with the 64 bits API
+        support (resp. from PostgreSQL versions 8.3 and 9.3) but at runtime an
+        older version of the dynamic library is found, the ``psycopg2`` module
+        will fail to import.  See :ref:`the lo_truncate FAQ <faq-lo_truncate>`
+        about the problem.
+
 
     .. method:: close()
 
