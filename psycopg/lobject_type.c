@@ -175,10 +175,21 @@ psyco_lobj_seek(lobjectObject *self, PyObject *args)
     EXC_IF_LOBJ_LEVEL0(self);
     EXC_IF_LOBJ_UNMARKED(self);
 
-#ifndef HAVE_LO64
-    if (offset > INT_MAX) {
-        psyco_set_error(InterfaceError, NULL,
-            "offset out of range");
+#ifdef HAVE_LO64
+    if ((offset < INT_MIN || offset > INT_MAX)
+            && self->conn->server_version < 90300) {
+        PyErr_Format(NotSupportedError,
+            "offset out of range (%ld): server version %d "
+            "does not support the lobject 64 API",
+            offset, self->conn->server_version);
+        return NULL;
+    }
+#else
+    if (offset < INT_MIN || offset > INT_MAX) {
+        PyErr_Format(InterfaceError,
+            "offset out of range (%ld): this psycopg version was not built "
+            "with lobject 64 API support",
+            offset);
         return NULL;
     }
 #endif
@@ -272,10 +283,20 @@ psyco_lobj_truncate(lobjectObject *self, PyObject *args)
     EXC_IF_LOBJ_LEVEL0(self);
     EXC_IF_LOBJ_UNMARKED(self);
 
-#ifndef HAVE_LO64
+#ifdef HAVE_LO64
+    if (len > INT_MAX && self->conn->server_version < 90300) {
+        PyErr_Format(NotSupportedError,
+            "len out of range (%ld): server version %d "
+            "does not support the lobject 64 API",
+            len, self->conn->server_version);
+        return NULL;
+    }
+#else
     if (len > INT_MAX) {
-        psyco_set_error(InterfaceError, NULL,
-            "len out of range");
+        PyErr_Format(InterfaceError,
+            "len out of range (%ld): this psycopg version was not built "
+            "with lobject 64 API support",
+            len);
         return NULL;
     }
 #endif
