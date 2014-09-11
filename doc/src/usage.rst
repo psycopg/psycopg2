@@ -145,13 +145,15 @@ query:
 The problem with the query parameters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The SQL representation for many data types is often not the same of the Python
-string representation.  The classic example is with single quotes in
-strings: SQL uses them as string constants bounds and requires them to be
-escaped, whereas in Python single quotes can be left unescaped in strings
-bounded by double quotes. For this reason a naïve approach to the composition
-of query strings, e.g. using string concatenation, is a recipe for terrible
-problems::
+The SQL representation of many data types is often different from their Python
+string representation. The typical example is with single quotes in strings:
+in SQL single quotes are used as string literal delimiters, so the ones
+appearing inside the string itself must be escaped, whereas in Python single
+quotes can be left unescaped if the string is delimited by double quotes.
+
+Because of the difference, sometime subtle, between the data types
+representations, a naïve approach to query strings composition, such as using
+Python strings concatenation, is a recipe for *terrible* problems::
 
     >>> SQL = "INSERT INTO authors (name) VALUES ('%s');" # NEVER DO THIS
     >>> data = ("O'Reilly", )
@@ -160,13 +162,13 @@ problems::
     LINE 1: INSERT INTO authors (name) VALUES ('O'Reilly')
                                                   ^
 
-If the variable containing the data to be sent to the database comes from an
-untrusted source (e.g. a form published on a web site) an attacker could
+If the variables containing the data to send to the database come from an
+untrusted source (such as a form published on a web site) an attacker could
 easily craft a malformed string, either gaining access to unauthorized data or
 performing destructive operations on the database. This form of attack is
 called `SQL injection`_ and is known to be one of the most widespread forms of
-attack to servers. Before continuing, please print `this page`__ as a memo and
-hang it onto your desk.
+attack to database servers. Before continuing, please print `this page`__ as a
+memo and hang it onto your desk.
 
 .. _SQL injection: http://en.wikipedia.org/wiki/SQL_injection
 .. __: http://xkcd.com/327/
