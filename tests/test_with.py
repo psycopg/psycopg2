@@ -200,6 +200,18 @@ class WithCursorTestCase(WithTestCase):
         self.assert_(curs.closed)
         self.assert_(closes)
 
+    def test_exception_swallow(self):
+        # bug #262: __exit__ calls cur.close() that hides the exception
+        # with another error.
+        try:
+            with self.conn as conn:
+                with conn.cursor('named') as cur:
+                    cur.execute("select 1/0")
+        except psycopg2.DataError, e:
+            self.assertEqual(e.pgcode, '22012')
+        else:
+            self.fail("where is my exception?")
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
