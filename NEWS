@@ -1,6 +1,13 @@
 Current release
 ---------------
 
+What's new in psycopg 2.5.5
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Named cursors used as context manager don't swallow the exception on exit
+  (:ticket:`#262`).
+
+
 What's new in psycopg 2.5.4
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

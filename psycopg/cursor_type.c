@@ -57,10 +57,24 @@ psyco_curs_close(cursorObject *self)
 
     if (self->name != NULL) {
         char buffer[128];
+        PGTransactionStatusType status;
 
-        EXC_IF_NO_MARK(self);
-        PyOS_snprintf(buffer, 127, "CLOSE \"%s\"", self->name);
-        if (pq_execute(self, buffer, 0, 0, 1) == -1) return NULL;
+        if (self->conn) {
+            status = PQtransactionStatus(self->conn->pgconn);
+        }
+        else {
+            status = PQTRANS_UNKNOWN;
+        }
+
+        if (!(status == PQTRANS_UNKNOWN || status == PQTRANS_INERROR)) {
+            EXC_IF_NO_MARK(self);
+            PyOS_snprintf(buffer, 127, "CLOSE \"%s\"", self->name);
+            if (pq_execute(self, buffer, 0, 0, 1) == -1) return NULL;
+        }
+        else {
+            Dprintf("skipping named curs close because tx status %d",
+                (int)status);
+        }
     }
 
     self->closed = 1;
