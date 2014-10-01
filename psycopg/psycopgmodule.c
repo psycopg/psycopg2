@@ -880,6 +880,7 @@ INIT_MODULE(_psycopg)(void)
     PyModule_AddObject(module, "List", (PyObject*)&listType);
     PyModule_AddObject(module, "QuotedString", (PyObject*)&qstringType);
     PyModule_AddObject(module, "lobject", (PyObject*)&lobjectType);
+    PyModule_AddObject(module, "Column", psyco_DescriptionType);
 
     /* encodings dictionary in module dictionary */
     PyModule_AddObject(module, "encodings", psycoEncodings);
