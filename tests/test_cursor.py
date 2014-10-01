@@ -23,6 +23,7 @@
 # License for more details.
 
 import time
+import pickle
 import psycopg2
 import psycopg2.extensions
 from psycopg2.extensions import b
@@ -399,6 +400,16 @@ class CursorTests(ConnectingTestCase):
         self.assert_(c.internal_size > 0)
         self.assertEqual(c.precision, None)
         self.assertEqual(c.scale, None)
+
+    def test_pickle_description(self):
+        curs = self.conn.cursor()
+        curs.execute('SELECT 1 AS foo')
+        description = curs.description
+
+        pickled = pickle.dumps(description, pickle.HIGHEST_PROTOCOL)
+        unpickled = pickle.loads(pickled)
+
+        self.assertEqual(description, unpickled)
 
     @skip_before_postgres(8, 0)
     def test_named_cursor_stealing(self):
