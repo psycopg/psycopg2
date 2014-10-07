@@ -136,16 +136,9 @@ def connect(dsn=None,
 
     """
     items = []
-    if database is not None:
-        items.append(('dbname', database))
-    if user is not None:
-        items.append(('user', user))
-    if password is not None:
-        items.append(('password', password))
-    if host is not None:
-        items.append(('host', host))
-    if port is not None:
-        items.append(('port', port))
+    for name, value in (('dbname', database), ('user', user), ('password', password), ('host', host), ('port', port)):
+        if value is not None:
+            items.append((name, value))
 
     items.extend([(k, v) for (k, v) in kwargs.iteritems() if v is not None])
 
