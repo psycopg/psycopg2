@@ -145,7 +145,9 @@ geometric type:
     ...        self.y = y
 
     >>> def adapt_point(point):
-    ...     return AsIs("'(%s, %s)'" % (adapt(point.x), adapt(point.y)))
+    ...     x = adapt(point.x).getquoted()
+    ...     y = adapt(point.y).getquoted()
+    ...     return AsIs("'(%s, %s)'" % (x, y))
 
     >>> register_adapter(Point, adapt_point)
 
