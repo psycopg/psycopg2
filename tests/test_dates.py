@@ -287,7 +287,17 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
 
     def test_type_roundtrip_time(self):
         from datetime import time
-        self._test_type_roundtrip(time(10,20,30))
+        tm = self._test_type_roundtrip(time(10,20,30))
+        self.assertEqual(None, tm.tzinfo)
+
+    def test_type_roundtrip_timetz(self):
+        from datetime import time
+        import psycopg2.tz
+        tz = psycopg2.tz.FixedOffsetTimezone(8*60)
+        tm1 = time(10,20,30, tzinfo=tz)
+        tm2 = self._test_type_roundtrip(tm1)
+        self.assertNotEqual(None, tm2.tzinfo)
+        self.assertEqual(tm1, tm2)
 
     def test_type_roundtrip_interval(self):
         from datetime import timedelta

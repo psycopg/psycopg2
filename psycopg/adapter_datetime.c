@@ -62,7 +62,10 @@ _pydatetime_string_date_time(pydatetimeObject *self)
     char *fmt = NULL;
     switch (self->type) {
     case PSYCO_DATETIME_TIME:
-        fmt = "'%s'::time";
+        tz = PyObject_GetAttrString(self->wrapped, "tzinfo");
+        if (!tz) { goto error; }
+        fmt = (tz == Py_None) ? "'%s'::time" : "'%s'::timetz";
+        Py_DECREF(tz);
         break;
     case PSYCO_DATETIME_DATE:
         fmt = "'%s'::date";
