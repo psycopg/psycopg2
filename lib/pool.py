@@ -86,7 +86,7 @@ class AbstractConnectionPool(object):
             return conn
         else:
             if len(self._used) == self.maxconn:
-                raise PoolError("connection pool exausted")
+                raise PoolError("connection pool exhausted")
             return self._connect(key)
 		 
     def _putconn(self, conn, key=None, close=False):
