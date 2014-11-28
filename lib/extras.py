@@ -26,7 +26,6 @@ and classes until a better place in the distribution is found.
 # License for more details.
 
 import os as _os
-import sys as _sys
 import time as _time
 import re as _re
 
@@ -37,6 +36,7 @@ except:
 
 import psycopg2
 from psycopg2 import extensions as _ext
+from psycopg2 import _py3
 from psycopg2.extensions import cursor as _cursor
 from psycopg2.extensions import connection as _connection
 from psycopg2.extensions import adapt as _A
@@ -191,7 +191,7 @@ class DictRow(list):
         self._index = data[1]
 
     # drop the crusty Py2 methods
-    if _sys.version_info[0] > 2:
+    if _py3.PY3:
         items = iteritems; del iteritems
         keys = iterkeys; del iterkeys
         values = itervalues; del itervalues
@@ -788,7 +788,7 @@ def register_hstore(conn_or_curs, globally=False, unicode=False,
             array_oid = tuple([x for x in array_oid if x])
 
     # create and register the typecaster
-    if _sys.version_info[0] < 3 and unicode:
+    if not _py3.PY3 and unicode:
         cast = HstoreAdapter.parse_unicode
     else:
         cast = HstoreAdapter.parse

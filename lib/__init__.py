@@ -59,7 +59,7 @@ from psycopg2._psycopg import NotSupportedError, OperationalError
 from psycopg2._psycopg import _connect, apilevel, threadsafety, paramstyle
 from psycopg2._psycopg import __version__
 
-from psycopg2 import tz
+from psycopg2 import tz, _py3
 
 
 # Register default adapters.
@@ -147,7 +147,7 @@ def connect(dsn=None,
     if port is not None:
         items.append(('port', port))
 
-    items.extend([(k, v) for (k, v) in kwargs.iteritems() if v is not None])
+    items.extend([(k, v) for (k, v) in _py3.iteritems(kwargs) if v is not None])
 
     if dsn is not None and items:
         raise TypeError(
