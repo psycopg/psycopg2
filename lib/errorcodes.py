@@ -29,6 +29,9 @@ This module contains symbolic names for all PostgreSQL error codes.
 #   http://www.postgresql.org/docs/current/static/errcodes-appendix.html
 #
 
+from psycopg2 import _py3
+
+
 def lookup(code, _cache={}):
     """Lookup an error code or class code and return its symbolic name.
 
@@ -38,7 +41,7 @@ def lookup(code, _cache={}):
         return _cache[code]
 
     # Generate the lookup map at first usage.
-    for k, v in globals().iteritems():
+    for k, v in _py3.iteritems(globals()):
         if isinstance(v, str) and len(v) in (2, 5):
             _cache[v] = k
 

@@ -30,7 +30,11 @@ from psycopg2 import extensions
 
 import time
 import select
-import StringIO
+
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 from testutils import ConnectingTestCase
 
@@ -250,7 +254,7 @@ class AsyncTests(ConnectingTestCase):
         # copy should fail
         self.assertRaises(psycopg2.ProgrammingError,
                           cur.copy_from,
-                          StringIO.StringIO("1\n3\n5\n\\.\n"), "table1")
+                          StringIO("1\n3\n5\n\\.\n"), "table1")
 
     def test_lobject_while_async(self):
         # large objects should be prohibited
@@ -453,7 +457,7 @@ class AsyncTests(ConnectingTestCase):
         try:
             cnn = psycopg2.connect('dbname=thisdatabasedoesntexist', async=True)
             self.wait(cnn)
-        except psycopg2.Error, e:
+        except psycopg2.Error as e:
             self.assertNotEqual(str(e), "asynchronous connection failed",
                 "connection error reason lost")
         else:

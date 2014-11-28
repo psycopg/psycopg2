@@ -54,8 +54,11 @@ class TypesBasicTests(ConnectingTestCase):
     def testNumber(self):
         s = self.execute("SELECT %s AS foo", (1971,))
         self.failUnless(s == 1971, "wrong integer quoting: " + str(s))
-        s = self.execute("SELECT %s AS foo", (1971L,))
-        self.failUnless(s == 1971L, "wrong integer quoting: " + str(s))
+
+    @testutils.skip_from_python(3)
+    def testLongNumber(self):
+        s = self.execute("SELECT %s AS foo", (long(1971),))
+        self.failUnless(s == long(1971), "wrong integer quoting: " + str(s))
 
     def testBoolean(self):
         x = self.execute("SELECT %s as foo", (False,))
@@ -285,8 +288,9 @@ class TypesBasicTests(ConnectingTestCase):
         self.assertEqual(1, f1)
         i1 = self.execute("select -%s;", (-1,))
         self.assertEqual(1, i1)
-        l1 = self.execute("select -%s;", (-1L,))
-        self.assertEqual(1, l1)
+        if sys.version[0] == 2:
+            l1 = self.execute("select -%s;", (long(-1),))
+            self.assertEqual(1, l1)
 
     def testGenericArray(self):
         a = self.execute("select '{1,2,3}'::int4[]")
@@ -365,7 +369,7 @@ class ByteaParserTest(unittest.TestCase):
     def setUp(self):
         try:
             self._cast = self._import_cast()
-        except Exception, e:
+        except Exception as e:
             self._cast = None
             self._exc = e
 

@@ -3,6 +3,8 @@ language: python
 python:
   - 2.6
   - 2.7
+  - 3.0
+  - 3.4
 
 before_script:
   - psql -c 'create database psycopg2_test;' -U postgres

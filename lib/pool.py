@@ -26,6 +26,7 @@ This module implements thread-safe (and not) connection pools.
 
 import psycopg2
 import psycopg2.extensions as _ext
+from psycopg2 import _py3
 
 
 class PoolError(psycopg2.Error):
@@ -204,8 +205,7 @@ class PersistentConnectionPool(AbstractConnectionPool):
 
         # we we'll need the thread module, to determine thread ids, so we
         # import it here and copy it in an instance variable
-        import thread
-        self.__thread = thread
+        self.__thread = _py3.thread
 
     def getconn(self):
         """Generate thread id and return a connection."""

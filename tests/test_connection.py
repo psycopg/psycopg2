@@ -72,10 +72,10 @@ class ConnectionTests(ConnectingTestCase):
         cur = conn.cursor()
         try:
             cur.execute("select pg_terminate_backend(pg_backend_pid())")
-        except psycopg2.OperationalError, e:
+        except psycopg2.OperationalError as e:
             if e.pgcode != psycopg2.errorcodes.ADMIN_SHUTDOWN:
                 raise
-        except psycopg2.DatabaseError, e:
+        except psycopg2.DatabaseError as e:
             # curiously when disconnected in green mode we get a DatabaseError
             # without pgcode.
             if e.pgcode is not None:
