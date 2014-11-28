@@ -26,8 +26,11 @@ import sys
 import string
 from testutils import unittest, ConnectingTestCase, decorate_all_tests
 from testutils import skip_if_no_iobase, skip_before_postgres
-from cStringIO import StringIO
-from itertools import cycle, izip
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from io import StringIO
+from itertools import cycle
 from subprocess import Popen, PIPE
 
 import psycopg2
@@ -38,8 +41,10 @@ from testconfig import dsn
 
 if sys.version_info[0] < 3:
     _base = object
+    from itertools import izip
 else:
-     from io import TextIOBase as _base
+    from io import TextIOBase as _base
+    izip = zip
 
 class MinimalRead(_base):
     """A file wrapper exposing the minimal interface to copy from."""
@@ -94,7 +99,7 @@ class CopyTests(ConnectingTestCase):
     def test_copy_from_cols(self):
         curs = self.conn.cursor()
         f = StringIO()
-        for i in xrange(10):
+        for i in range(10):
             f.write("%s\n" % (i,))
 
         f.seek(0)
@@ -106,7 +111,7 @@ class CopyTests(ConnectingTestCase):
     def test_copy_from_cols_err(self):
         curs = self.conn.cursor()
         f = StringIO()
-        for i in xrange(10):
+        for i in range(10):
             f.write("%s\n" % (i,))
 
         f.seek(0)
@@ -135,7 +140,7 @@ class CopyTests(ConnectingTestCase):
             about = abin.decode('latin1').replace('\\', '\\\\')
 
         else:
-            abin = bytes(range(32, 127) + range(160, 256)).decode('latin1')
+            abin = bytes(list(range(32, 127)) + list(range(160, 256))).decode('latin1')
             about = abin.replace('\\', '\\\\')
 
         curs = self.conn.cursor()
@@ -157,7 +162,7 @@ class CopyTests(ConnectingTestCase):
             abin = ''.join(map(chr, range(32, 127) + range(160, 255)))
             about = abin.replace('\\', '\\\\')
         else:
-            abin = bytes(range(32, 127) + range(160, 255)).decode('latin1')
+            abin = bytes(list(range(32, 127)) + list(range(160, 255))).decode('latin1')
             about = abin.replace('\\', '\\\\').encode('latin1')
 
         curs = self.conn.cursor()
@@ -179,9 +184,8 @@ class CopyTests(ConnectingTestCase):
             abin = ''.join(map(chr, range(32, 127) + range(160, 256)))
             abin = abin.decode('latin1')
             about = abin.replace('\\', '\\\\')
-
         else:
-            abin = bytes(range(32, 127) + range(160, 256)).decode('latin1')
+            abin = bytes(list(range(32, 127)) + list(range(160, 256))).decode('latin1')
             about = abin.replace('\\', '\\\\')
 
         import io
@@ -219,7 +223,7 @@ class CopyTests(ConnectingTestCase):
 
     def _copy_from(self, curs, nrecs, srec, copykw):
         f = StringIO()
-        for i, c in izip(xrange(nrecs), cycle(string.ascii_letters)):
+        for i, c in izip(range(nrecs), cycle(string.ascii_letters)):
             l = c * srec
             f.write("%s\t%s\n" % (i,l))
 

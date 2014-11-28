@@ -15,7 +15,9 @@
 # License for more details.
 
 import time
+import sys
 from datetime import timedelta
+
 import psycopg2
 import psycopg2.extras
 from testutils import unittest, ConnectingTestCase, skip_before_postgres
@@ -325,22 +327,37 @@ class NamedTupleCursorTest(ConnectingTestCase):
         i = iter(curs)
         self.assertEqual(curs.rownumber, 0)
 
-        t = i.next()
+        if sys.version[0] == '2':
+            t = i.next()
+        else:
+            t = next(i)
+
         self.assertEqual(t.i, 1)
         self.assertEqual(t.s, 'foo')
         self.assertEqual(curs.rownumber, 1)
         self.assertEqual(curs.rowcount, 3)
 
-        t = i.next()
+        if sys.version[0] == '2':
+            t = i.next()
+        else:
+            t = next(i)
+
         self.assertEqual(t.i, 2)
         self.assertEqual(t.s, 'bar')
         self.assertEqual(curs.rownumber, 2)
         self.assertEqual(curs.rowcount, 3)
 
-        t = i.next()
+        if sys.version[0] == '2':
+            t = i.next()
+        else:
+            t = next(i)
+
         self.assertEqual(t.i, 3)
         self.assertEqual(t.s, 'baz')
-        self.assertRaises(StopIteration, i.next)
+        if sys.version[0] == '2':
+            self.assertRaises(StopIteration, i.next)
+        else:
+            self.assertRaises(StopIteration, i.__next__)
         self.assertEqual(curs.rownumber, 3)
         self.assertEqual(curs.rowcount, 3)
 
@@ -426,7 +443,7 @@ class NamedTupleCursorTest(ConnectingTestCase):
         recs.extend(curs.fetchmany(5))
         recs.append(curs.fetchone())
         recs.extend(curs.fetchall())
-        self.assertEqual(range(10), [t.i for t in recs])
+        self.assertEqual(list(range(10)), [t.i for t in recs])
 
     @skip_if_no_namedtuple
     def test_named_fetchone(self):

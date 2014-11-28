@@ -324,14 +324,22 @@ class CursorTests(ConnectingTestCase):
 
     @skip_before_postgres(8, 2)
     def test_iter_named_cursor_efficient(self):
+        import sys
+
         curs = self.conn.cursor('tmp')
         # if these records are fetched in the same roundtrip their
         # timestamp will not be influenced by the pause in Python world.
         curs.execute("""select clock_timestamp() from generate_series(1,2)""")
+
         i = iter(curs)
-        t1 = (i.next())[0]  # the brackets work around a 2to3 bug
-        time.sleep(0.2)
-        t2 = (i.next())[0]
+        if sys.version[0] == '2':
+            t1 = (i.next())[0]  # the brackets work around a 2to3 bug
+            time.sleep(0.2)
+            t2 = (i.next())[0]
+        else:
+            t1 = (next(i))[0]  # the brackets work around a 2to3 bug
+            time.sleep(0.2)
+            t2 = (next(i))[0]
         self.assert_((t2 - t1).microseconds * 1e-6 < 0.1,
             "named cursor records fetched in 2 roundtrips (delta: %s)"
             % (t2 - t1))

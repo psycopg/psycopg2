@@ -97,7 +97,7 @@ class ConnectingTestCase(unittest.TestCase):
     def connect(self, **kwargs):
         try:
             self._conns
-        except AttributeError, e:
+        except AttributeError as e:
             raise AttributeError(
                 "%s (did you remember calling ConnectingTestCase.setUp()?)"
                 % e)
@@ -270,7 +270,7 @@ def skip_if_no_superuser(f):
         from psycopg2 import ProgrammingError
         try:
             return f(self)
-        except ProgrammingError, e:
+        except ProgrammingError as e:
             import psycopg2.errorcodes
             if e.pgcode == psycopg2.errorcodes.INSUFFICIENT_PRIVILEGE:
                 self.skipTest("skipped because not superuser")

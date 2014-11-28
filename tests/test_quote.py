@@ -95,7 +95,11 @@ class QuotingTestCase(ConnectingTestCase):
         data = u"""some data with \t chars
         to escape into, 'quotes', \u20ac euro sign and \\ a backslash too.
         """
-        data += u"".join(map(unichr, [ u for u in range(1,65536)
+        if sys.version[0] == '3':
+            chrtype = chr
+        else:
+            chrtype = unichr
+        data += u"".join(map(chrtype, [ u for u in range(1,65536)
             if not 0xD800 <= u <= 0xDFFF ]))    # surrogate area
         self.conn.set_client_encoding('UNICODE')
 
@@ -112,7 +116,7 @@ class QuotingTestCase(ConnectingTestCase):
         if sys.version_info[0] < 3:
             data = ''.join(map(chr, range(32, 127) + range(160, 256)))
         else:
-            data = bytes(range(32, 127) + range(160, 256)).decode('latin1')
+            data = bytes(list(range(32, 127)) + list(range(160, 256))).decode('latin1')
 
         # as string
         curs.execute("SELECT %s::text;", (data,))
@@ -136,7 +140,7 @@ class QuotingTestCase(ConnectingTestCase):
         if sys.version_info[0] < 3:
             data = ''.join(map(chr, range(32, 127) + range(128, 256)))
         else:
-            data = bytes(range(32, 127) + range(128, 256)).decode('koi8_r')
+            data = bytes(list(range(32, 127)) + list(range(128, 256))).decode('koi8_r')
 
         # as string
         curs.execute("SELECT %s::text;", (data,))

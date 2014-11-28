@@ -115,7 +115,7 @@ class TypesExtrasTests(ConnectingTestCase):
             psycopg2.extensions.adapt, Foo(), ext.ISQLQuote, None)
         try:
             psycopg2.extensions.adapt(Foo(), ext.ISQLQuote, None)
-        except psycopg2.ProgrammingError, err:
+        except psycopg2.ProgrammingError as err:
             self.failUnless(str(err) == "can't adapt type 'Foo'")
 
 
@@ -176,7 +176,7 @@ class HstoreTestCase(ConnectingTestCase):
 
         kk = m.group(1).split(b(", "))
         vv = m.group(2).split(b(", "))
-        ii = zip(kk, vv)
+        ii = list(zip(kk, vv))
         ii.sort()
 
         def f(*args):
@@ -255,8 +255,12 @@ class HstoreTestCase(ConnectingTestCase):
         self.assert_(t[0] is None)
         self.assertEqual(t[1], {})
         self.assertEqual(t[2], {u'a': u'b'})
-        self.assert_(isinstance(t[2].keys()[0], unicode))
-        self.assert_(isinstance(t[2].values()[0], unicode))
+        if sys.version[0] == '3':
+            self.assert_(isinstance(t[2].keys()[0], str))
+            self.assert_(isinstance(t[2].values()[0], str))
+        else:
+            self.assert_(isinstance(t[2].keys()[0], unicode))
+            self.assert_(isinstance(t[2].values()[0], unicode))
 
     @skip_if_no_hstore
     def test_register_globally(self):
@@ -315,6 +319,11 @@ class HstoreTestCase(ConnectingTestCase):
     @skip_if_no_hstore
     def test_roundtrip_unicode(self):
         from psycopg2.extras import register_hstore
+        if sys.version[0] == '3':
+            chrtype = chr
+        else:
+            chrtype = unichr
+
         register_hstore(self.conn, unicode=True)
         cur = self.conn.cursor()
 
@@ -325,13 +334,15 @@ class HstoreTestCase(ConnectingTestCase):
             for k, v in d1.iteritems():
                 self.assert_(k in d, k)
                 self.assertEqual(d[k], v)
-                self.assert_(isinstance(k, unicode))
-                self.assert_(v is None or isinstance(v, unicode))
-
+                if sys.version[0] == '3':
+                    self.assert_(isinstance(k, str))
+                    self.assert_(v is None or isinstance(v, str))
+                else:
+                    self.assert_(isinstance(k, unicode))
+                    self.assert_(v is None or isinstance(v, unicode))
         ok({})
         ok({'a': 'b', 'c': None, 'd': u'\u20ac', u'\u2603': 'e'})
-
-        ab = map(unichr, range(1, 1024))
+        ab = map(chrtype, range(1, 1024))
         ok({u''.join(ab): u''.join(ab)})
         ok(dict(zip(ab, ab)))
 
@@ -501,7 +512,7 @@ class AdaptTypeTestCase(ConnectingTestCase):
            '@,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,[,"\\\\",],'
            '^,_,`,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,{,|,},'
            '~,\x7f)',
-           map(chr, range(1, 128)))
+           list(map(chr, range(1, 128))))
         ok('(,"\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f'
            '\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f !'
            '""#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\\\]'
@@ -1577,7 +1588,7 @@ class RangeCasterTestCase(ConnectingTestCase):
         from psycopg2.tz import FixedOffsetTimezone
         cur = self.conn.cursor()
 
-        d1 = date(2012, 01, 01)
+        d1 = date(2012, 1, 1)
         d2 = date(2012, 12, 31)
         r = DateRange(d1, d2)
         cur.execute("select %s", (r,))
@@ -1650,8 +1661,8 @@ class RangeCasterTestCase(ConnectingTestCase):
         bounds = [ '[)', '(]', '()', '[]' ]
         ranges = [ TextRange(low, up, bounds[i % 4])
             for i, (low, up) in enumerate(zip(
-                [None] + map(chr, range(1, 128)),
-                map(chr, range(1,128)) + [None],
+                [None] + list(map(chr, range(1, 128))),
+                list(map(chr, range(1,128))) + [None],
                 ))]
         ranges.append(TextRange())
         ranges.append(TextRange(empty=True))
