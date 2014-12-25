@@ -4,6 +4,11 @@ Current release
 What's new in psycopg 2.6
 -------------------------
 
+New features:
+
+- Python `time` objects with a tzinfo specified and PostgreSQL :sql:`timetz`
+  data are converted into each other (ticket #272).
+
 Bug fixes:
 
 - Json apapter's `!str()` returns the adapted content instead of the `!repr()`
