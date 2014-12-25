@@ -7,6 +7,8 @@ What's new in psycopg 2.6
 New features:
 
 - Added support for large objects larger than 2GB.
+- Python `time` objects with a tzinfo specified and PostgreSQL :sql:`timetz`
+  data are converted into each other (ticket #272).
 
 Bug fixes:
 

@@ -245,7 +245,8 @@ types:
     +--------------------+-------------------------+--------------------------+
     | `!date`            | :sql:`date`             | :ref:`adapt-date`        |
     +--------------------+-------------------------+                          |
-    | `!time`            | :sql:`time`             |                          |
+    | `!time`            | | :sql:`time`           |                          |
+    |                    | | :sql:`timetz`         |                          |
     +--------------------+-------------------------+                          |
     | `!datetime`        | | :sql:`timestamp`      |                          |
     |                    | | :sql:`timestamptz`    |                          |
@@ -482,7 +483,7 @@ Date/Time objects adaptation
 
 Python builtin `~datetime.datetime`, `~datetime.date`,
 `~datetime.time`,  `~datetime.timedelta` are converted into PostgreSQL's
-:sql:`timestamp[tz]`, :sql:`date`, :sql:`time`, :sql:`interval` data types.
+:sql:`timestamp[tz]`, :sql:`date`, :sql:`time[tz]`, :sql:`interval` data types.
 Time zones are supported too.  The Egenix `mx.DateTime`_ objects are adapted
 the same way::
 
