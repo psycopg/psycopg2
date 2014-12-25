@@ -407,6 +407,9 @@ class psycopg_build_ext(build_ext):
                 pgmajor, pgminor, pgpatch = m.group(1, 2, 3)
                 if pgpatch is None or not pgpatch.isdigit():
                     pgpatch = 0
+                pgmajor = int(pgmajor)
+                pgminor = int(pgminor)
+                pgpatch = int(pgpatch)
             else:
                 sys.stderr.write(
                     "Error: could not determine PostgreSQL version from '%s'"
@@ -414,7 +417,22 @@ class psycopg_build_ext(build_ext):
                 sys.exit(1)
 
             define_macros.append(("PG_VERSION_HEX", "0x%02X%02X%02X" %
-                                  (int(pgmajor), int(pgminor), int(pgpatch))))
+                                  (pgmajor, pgminor, pgpatch)))
+
+            # enable lo64 if libpq >= 9.3 and Python 64 bits
+            if (pgmajor, pgminor) >= (9, 3) and sys.maxint > (1 << 32):
+                define_macros.append(("HAVE_LO64", "1"))
+
+                # Inject the flag in the version string already packed up
+                # because we didn't know the version before.
+                # With distutils everything is complicated.
+                for i, t in enumerate(define_macros):
+                    if t[0] == 'PSYCOPG_VERSION':
+                        n = t[1].find(')')
+                        if n > 0:
+                            define_macros[i] = (
+                                t[0], t[1][:n] + ' lo64' + t[1][n:])
+
         except Warning:
             w = sys.exc_info()[1]  # work around py 2/3 different syntax
             sys.stderr.write("Error: %s\n" % w)

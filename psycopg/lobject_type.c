@@ -121,7 +121,7 @@ static PyObject *
 psyco_lobj_read(lobjectObject *self, PyObject *args)
 {
     PyObject *res;
-    int where, end;
+    long where, end;
     Py_ssize_t size = -1;
     char *buffer;
 
@@ -165,20 +165,39 @@ psyco_lobj_read(lobjectObject *self, PyObject *args)
 static PyObject *
 psyco_lobj_seek(lobjectObject *self, PyObject *args)
 {
-    int offset, whence=0;
-    int pos=0;
+    long offset, pos=0;
+    int whence=0;
 
-    if (!PyArg_ParseTuple(args, "i|i", &offset, &whence))
+    if (!PyArg_ParseTuple(args, "l|i", &offset, &whence))
         return NULL;
 
     EXC_IF_LOBJ_CLOSED(self);
     EXC_IF_LOBJ_LEVEL0(self);
     EXC_IF_LOBJ_UNMARKED(self);
 
+#ifdef HAVE_LO64
+    if ((offset < INT_MIN || offset > INT_MAX)
+            && self->conn->server_version < 90300) {
+        PyErr_Format(NotSupportedError,
+            "offset out of range (%ld): server version %d "
+            "does not support the lobject 64 API",
+            offset, self->conn->server_version);
+        return NULL;
+    }
+#else
+    if (offset < INT_MIN || offset > INT_MAX) {
+        PyErr_Format(InterfaceError,
+            "offset out of range (%ld): this psycopg version was not built "
+            "with lobject 64 API support",
+            offset);
+        return NULL;
+    }
+#endif
+
     if ((pos = lobject_seek(self, offset, whence)) < 0)
         return NULL;
 
-    return PyInt_FromLong((long)pos);
+    return PyLong_FromLong(pos);
 }
 
 /* tell method - tell current position in the lobject */
@@ -189,7 +208,7 @@ psyco_lobj_seek(lobjectObject *self, PyObject *args)
 static PyObject *
 psyco_lobj_tell(lobjectObject *self, PyObject *args)
 {
-    int pos;
+    long pos;
 
     EXC_IF_LOBJ_CLOSED(self);
     EXC_IF_LOBJ_LEVEL0(self);
@@ -198,7 +217,7 @@ psyco_lobj_tell(lobjectObject *self, PyObject *args)
     if ((pos = lobject_tell(self)) < 0)
         return NULL;
 
-    return PyInt_FromLong((long)pos);
+    return PyLong_FromLong(pos);
 }
 
 /* unlink method - unlink (destroy) the lobject */
@@ -255,14 +274,32 @@ psyco_lobj_get_closed(lobjectObject *self, void *closure)
 static PyObject *
 psyco_lobj_truncate(lobjectObject *self, PyObject *args)
 {
-    int len = 0;
+    long len = 0;
 
-    if (!PyArg_ParseTuple(args, "|i", &len))
+    if (!PyArg_ParseTuple(args, "|l", &len))
         return NULL;
 
     EXC_IF_LOBJ_CLOSED(self);
     EXC_IF_LOBJ_LEVEL0(self);
     EXC_IF_LOBJ_UNMARKED(self);
+
+#ifdef HAVE_LO64
+    if (len > INT_MAX && self->conn->server_version < 90300) {
+        PyErr_Format(NotSupportedError,
+            "len out of range (%ld): server version %d "
+            "does not support the lobject 64 API",
+            len, self->conn->server_version);
+        return NULL;
+    }
+#else
+    if (len > INT_MAX) {
+        PyErr_Format(InterfaceError,
+            "len out of range (%ld): this psycopg version was not built "
+            "with lobject 64 API support",
+            len);
+        return NULL;
+    }
+#endif
 
     if (lobject_truncate(self, len) < 0)
         return NULL;

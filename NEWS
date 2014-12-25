@@ -4,6 +4,10 @@ Current release
 What's new in psycopg 2.6
 -------------------------
 
+New features:
+
+- Added support for large objects larger than 2GB.
+
 Bug fixes:
 
 - Json apapter's `!str()` returns the adapted content instead of the `!repr()`

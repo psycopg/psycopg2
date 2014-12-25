@@ -248,13 +248,20 @@ I can't compile `!psycopg2`: the compiler says *error: libpq-fe.h: No such file 
 .. cssclass:: faq
 
 `!psycopg2` raises `!ImportError` with message *_psycopg.so: undefined symbol: lo_truncate* when imported.
-    This means that Psycopg has been compiled with |lo_truncate|_ support,
-    which means that the libpq used at compile time was version >= 8.3, but at
-    runtime an older libpq library is found. You can use::
+    This means that Psycopg was compiled with |lo_truncate|_ support (*i.e.*
+    the libpq used at compile time was version >= 8.3) but at runtime an older
+    libpq dynamic library is found.
+
+    Fast-forward several years, if the message reports *undefined symbol:
+    lo_truncate64* it means that Psycopg was built with large objects 64 bits
+    API support (*i.e.* the libpq used at compile time was at least 9.3) but
+    at runtime an older libpq dynamic library is found.
+
+    You can use::
 
         $ ldd /path/to/packages/psycopg2/_psycopg.so | grep libpq
 
-    to find what is the version used at runtime.
+    to find what is the libpq dynamic library used at runtime.
 
     You can avoid the problem by using the same version of the
     :program:`pg_config` at install time and the libpq at runtime.
