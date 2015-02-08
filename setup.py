@@ -420,7 +420,7 @@ class psycopg_build_ext(build_ext):
                                   (pgmajor, pgminor, pgpatch)))
 
             # enable lo64 if libpq >= 9.3 and Python 64 bits
-            if (pgmajor, pgminor) >= (9, 3) and sys.maxint > (1 << 32):
+            if (pgmajor, pgminor) >= (9, 3) and is_py_64():
                 define_macros.append(("HAVE_LO64", "1"))
 
                 # Inject the flag in the version string already packed up
@@ -440,6 +440,13 @@ class psycopg_build_ext(build_ext):
 
         if hasattr(self, "finalize_" + sys.platform):
             getattr(self, "finalize_" + sys.platform)()
+
+def is_py_64():
+    # sys.maxint not available since Py 3.1;
+    # sys.maxsize not available before Py 2.6;
+    # this is portable at least between Py 2.4 and 3.4.
+    import struct
+    return struct.calcsize("P") > 4
 
 
 # let's start with macro definitions (the ones not already in setup.cfg)
