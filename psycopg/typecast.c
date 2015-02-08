@@ -164,6 +164,9 @@ typecast_parse_time(const char* s, const char** t, Py_ssize_t* len,
         while (usd++ < 6) *us *= 10;
     }
 
+    /* 24:00:00 -> 00:00:00 (ticket #278) */
+    if (*hh == 24) { *hh = 0; }
+
     return cz;
 }
 

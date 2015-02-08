@@ -319,6 +319,18 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         from datetime import timedelta
         self._test_type_roundtrip_array(timedelta(seconds=30))
 
+    def test_time_24(self):
+        from datetime import time
+
+        t = self.execute("select '24:00'::time;")
+        self.assertEqual(t, time(0, 0))
+
+        t = self.execute("select '24:00+05'::timetz;")
+        self.assertEqual(t, time(0, 0, tzinfo=FixedOffsetTimezone(300)))
+
+        t = self.execute("select '24:00+05:30'::timetz;")
+        self.assertEqual(t, time(0, 0, tzinfo=FixedOffsetTimezone(330)))
+
 
 # Only run the datetime tests if psycopg was compiled with support.
 if not hasattr(psycopg2.extensions, 'PYDATETIME'):
