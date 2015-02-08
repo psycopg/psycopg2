@@ -340,6 +340,34 @@ conn.close()
         proc.communicate()
         self.assertEqual(0, proc.returncode)
 
+    def test_copy_from_propagate_error(self):
+        class BrokenRead(_base):
+            def read(self, size):
+                return 1/0
+
+            def readline(self):
+                return 1/0
+
+        curs = self.conn.cursor()
+        # It seems we cannot do this, but now at least we propagate the error
+        # self.assertRaises(ZeroDivisionError,
+        #     curs.copy_from, BrokenRead(), "tcopy")
+        try:
+            curs.copy_from(BrokenRead(), "tcopy")
+        except Exception, e:
+            self.assert_('ZeroDivisionError' in str(e))
+
+    def test_copy_to_propagate_error(self):
+        class BrokenWrite(_base):
+            def write(self, data):
+                return 1/0
+
+        curs = self.conn.cursor()
+        curs.execute("insert into tcopy values (10, 'hi')")
+        self.assertRaises(ZeroDivisionError,
+            curs.copy_to, BrokenWrite(), "tcopy")
+
+
 decorate_all_tests(CopyTests, skip_copy_if_green)
 
 
