@@ -58,7 +58,7 @@ except ImportError:
 
 from psycopg2._psycopg import adapt, adapters, encodings, connection, cursor, lobject, Xid
 from psycopg2._psycopg import string_types, binary_types, new_type, new_array_type, register_type
-from psycopg2._psycopg import ISQLQuote, Notify, Diagnostics
+from psycopg2._psycopg import ISQLQuote, Notify, Diagnostics, Column
 
 from psycopg2._psycopg import QueryCanceledError, TransactionRollbackError
 

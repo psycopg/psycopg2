@@ -621,8 +621,10 @@ psyco_GetDecimalType(void)
 static PyObject *
 psyco_make_description_type(void)
 {
-    PyObject *nt = NULL;
     PyObject *coll = NULL;
+    PyObject *nt = NULL;
+    PyTypeObject *t = NULL;
+    PyObject *s = NULL;
     PyObject *rv = NULL;
 
     /* Try to import collections.namedtuple */
@@ -636,12 +638,26 @@ psyco_make_description_type(void)
     }
 
     /* Build the namedtuple */
-    rv = PyObject_CallFunction(nt, "ss", "Column",
-        "name type_code display_size internal_size precision scale null_ok");
+    if(!(t = (PyTypeObject *)PyObject_CallFunction(nt, "ss", "Column",
+        "name type_code display_size internal_size precision scale null_ok"))) {
+        goto exit;
+    }
+
+    /* Export the tuple on the extensions module
+     * Required to guarantee picklability on Py > 3.3 (see Python issue 21374)
+     * for previous Py version the module is psycopg2 anyway but for consistency
+     * we'd rather expose it from the extensions module. */
+    if (!(s = Text_FromUTF8("psycopg2.extensions"))) { goto exit; }
+    if (0 > PyDict_SetItemString(t->tp_dict, "__module__", s)) { goto exit; }
+
+    rv = (PyObject *)t;
+    t = NULL;
 
 exit:
     Py_XDECREF(coll);
     Py_XDECREF(nt);
+    Py_XDECREF((PyObject *)t);
+    Py_XDECREF(s);
 
     return rv;
 
