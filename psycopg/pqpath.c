@@ -1376,9 +1376,27 @@ _pq_copy_in_v3(cursorObject *curs)
         res = PQputCopyEnd(curs->conn->pgconn, NULL);
     else if (error == 2)
         res = PQputCopyEnd(curs->conn->pgconn, "error in PQputCopyData() call");
-    else
-        /* XXX would be nice to propagate the exception */
-        res = PQputCopyEnd(curs->conn->pgconn, "error in .read() call");
+    else {
+        char buf[1024];
+        strcpy(buf, "error in .read() call");
+        if (PyErr_Occurred()) {
+            PyObject *t, *ex, *tb;
+            PyErr_Fetch(&t, &ex, &tb);
+            if (ex) {
+                PyObject *str;
+                str = PyObject_Str(ex);
+                str = psycopg_ensure_bytes(str);
+                if (str) {
+                    PyOS_snprintf(buf, sizeof(buf),
+                        "error in .read() call: %s %s",
+                        ((PyTypeObject *)t)->tp_name, Bytes_AsString(str));
+                    Py_DECREF(str);
+                }
+            }
+            PyErr_Restore(t, ex, tb);
+        }
+        res = PQputCopyEnd(curs->conn->pgconn, buf);
+    }
 
     CLEARPGRES(curs->pgres);
 

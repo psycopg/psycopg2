@@ -6,6 +6,7 @@ What's new in psycopg 2.5.5
 
 - Named cursors used as context manager don't swallow the exception on exit
   (:ticket:`#262`).
+- Propagate read error messages in COPY FROM (:ticket:`#270`).
 - PostgreSQL time 24:00 is converted to Python 00:00 (:ticket:`#278`).
 
 
