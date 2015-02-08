@@ -309,7 +309,7 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         from datetime import timedelta
         self._test_type_roundtrip_array(timedelta(seconds=30))
 
-    @skip_before_postgres(8, 4)
+    @skip_before_postgres(8, 1)
     def test_time_24(self):
         from datetime import time
 

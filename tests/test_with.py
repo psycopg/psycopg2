@@ -207,6 +207,7 @@ class WithCursorTestCase(WithTestCase):
             with self.conn as conn:
                 with conn.cursor('named') as cur:
                     cur.execute("select 1/0")
+                    cur.fetchone()
         except psycopg2.DataError, e:
             self.assertEqual(e.pgcode, '22012')
         else:
