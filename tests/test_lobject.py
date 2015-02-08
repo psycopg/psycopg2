@@ -488,14 +488,14 @@ class LargeObjectNot64Tests(LargeObjectTestCase):
         lo = self.conn.lobject()
         offset = 1 << 32  # 4gb
         self.assertRaises(
-            (psycopg2.InterfaceError, psycopg2.NotSupportedError),
+            (OverflowError, psycopg2.InterfaceError, psycopg2.NotSupportedError),
             lo.seek, offset, 0)
 
     def test_truncate_larger_than_2gb(self):
         lo = self.conn.lobject()
         length = 1 << 32  # 4gb
         self.assertRaises(
-            (psycopg2.InterfaceError, psycopg2.NotSupportedError),
+            (OverflowError, psycopg2.InterfaceError, psycopg2.NotSupportedError),
             lo.truncate, length)
 
 decorate_all_tests(LargeObjectNot64Tests,
