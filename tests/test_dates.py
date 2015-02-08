@@ -25,7 +25,7 @@
 import math
 import psycopg2
 from psycopg2.tz import FixedOffsetTimezone, ZERO
-from testutils import unittest, ConnectingTestCase
+from testutils import unittest, ConnectingTestCase, skip_before_postgres
 
 class CommonDatetimeTestsMixin:
 
@@ -319,6 +319,7 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         from datetime import timedelta
         self._test_type_roundtrip_array(timedelta(seconds=30))
 
+    @skip_before_postgres(8, 4)
     def test_time_24(self):
         from datetime import time
 
