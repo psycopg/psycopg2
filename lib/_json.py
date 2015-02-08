@@ -102,7 +102,7 @@ class Json(object):
     else:
         def __str__(self):
             # getquoted is binary in Py3
-            return self.getquoted().decode('ascii', errors='replace')
+            return self.getquoted().decode('ascii', 'replace')
 
 
 def register_json(conn_or_curs=None, globally=False, loads=None,
