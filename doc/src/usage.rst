@@ -902,15 +902,17 @@ using the |lo_import|_ and |lo_export|_ libpq functions.
 
 .. versionchanged:: 2.6
     added support for large objects greated than 2GB. Note that the support is
-    enabled only if both these conditions are verified:
+    enabled only if all the following conditions are verified:
 
-    - the extension was built against libpq at least 9.3 (you can check if
-      `psycopg2.__version__` contains the ``lo64`` flag);
+    - the Python build is 64 bits;
+    - the extension was built against at least libpq 9.3;
     - the server version is at least PostgreSQL 9.3
       (`~connection.server_version` must be >= ``90300``).
 
-    If the contitions are not met several `!lobject` methods will fail if the
-    arguments exceed 2GB.
+    If Psycopg was built with 64 bits large objects support (i.e. the first
+    two contidions above are verified), the `psycopg2.__version__` constant
+    will contain the ``lo64`` flag.  If any of the contition is not met
+    several `!lobject` methods will fail if the arguments exceed 2GB.
 
 
 
