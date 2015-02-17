@@ -176,6 +176,26 @@ psyco_register_type(PyObject *self, PyObject *args)
 }
 
 
+
+/* Make sure libcrypto thread callbacks are set up. */
+static void
+psyco_libcrypto_threads_init(void)
+{
+    /* importing the ssl module sets up Python's libcrypto callbacks */
+    if (PyImport_ImportModule("ssl") != NULL) {
+        /* disable libcrypto setup in libpq, so it won't stomp on the callbacks
+           that have already been set up */
+#if PG_VERSION_HEX >= 0x080400
+        PQinitOpenSSL(1, 0);
+#endif
+    }
+    else {
+        /* might mean that Python has been compiled without OpenSSL support,
+           fall back to relying on libpq's libcrypto locking */
+        PyErr_Clear();
+    }
+}
+
 /* Initialize the default adapters map
  *
  * Return 0 on success, else -1 and set an exception.
@@ -813,6 +833,9 @@ INIT_MODULE(_psycopg)(void)
 
     Py_TYPE(&lobjectType) = &PyType_Type;
     if (PyType_Ready(&lobjectType) == -1) goto exit;
+
+    /* initialize libcrypto threading callbacks */
+    psyco_libcrypto_threads_init();
 
     /* import mx.DateTime module, if necessary */
 #ifdef HAVE_MXDATETIME
