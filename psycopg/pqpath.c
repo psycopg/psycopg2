@@ -1141,7 +1141,7 @@ _pq_fetch_tuples(cursorObject *curs)
 
         /* else if we got binary tuples and if we got a field that
            is binary use the default cast
-           FIXME: what the hell am I trying to do here? This just can't work..
+           FIXME: what the hell am I trying to do here? This just can't work.
         */
         if (pgbintuples && cast == psyco_default_binary_cast) {
             Dprintf("_pq_fetch_tuples: Binary cursor and "
