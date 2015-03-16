@@ -62,7 +62,7 @@ import sys
 # - Reversed the polarity of buggy test in test_description
 # - Test exception hierarchy correctly
 # - self.populate is now self._populate(), so if a driver stub
-#   overrides self.ddl1 this change propogates
+#   overrides self.ddl1 this change propagates
 # - VARCHAR columns now have a width, which will hopefully make the
 #   DDL even more portible (this will be reversed if it causes more problems)
 # - cursor.rowcount being checked after various execute and fetchXXX methods
@@ -804,7 +804,7 @@ class DatabaseAPI20Test(unittest.TestCase):
             con.close()
 
     def test_setoutputsize(self):
-        # Real test for setoutputsize is driver dependant
+        # Real test for setoutputsize is driver dependent
         raise NotImplementedError('Driver needed to override this test')
 
     def test_None(self):
