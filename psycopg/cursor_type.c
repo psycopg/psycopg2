@@ -1546,7 +1546,7 @@ psyco_curs_copy_expert(cursorObject *self, PyObject *args, PyObject *kwargs)
     if (sql == NULL) { goto exit; }
 
     /* This validation of file is rather weak, in that it doesn't enforce the
-       assocation between "COPY FROM" -> "read" and "COPY TO" -> "write".
+       association between "COPY FROM" -> "read" and "COPY TO" -> "write".
        However, the error handling in _pq_copy_[in|out] must be able to handle
        the case where the attempt to call file.read|write fails, so no harm
        done. */
