@@ -434,7 +434,7 @@ class MinTimeLoggingCursor(LoggingCursor):
 
     def callproc(self, procname, vars=None):
         self.timestamp = _time.time()
-        return LoggingCursor.execute(self, procname, vars)
+        return LoggingCursor.callproc(self, procname, vars)
 
 
 # a dbtype and adapter for Python UUID type
