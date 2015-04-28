@@ -7,22 +7,27 @@ check: doctest
 # The environment is currently required to build the documentation.
 # It is not clean by 'make clean'
 
-help:
-	$(MAKE) SPHINXBUILD=$$(pwd)/env/bin/sphinx-build -C src $@
+PYTHON := python$(PYTHON_VERSION)
+PYTHON_VERSION ?= $(shell $(PYTHON) -c 'import sys; print ("%d.%d" % sys.version_info[:2])')
+
+SPHOPTS=PYTHONPATH=$$(pwd)/../build/lib.$(PYTHON_VERSION)/ SPHINXBUILD=$$(pwd)/env/bin/sphinx-build
 
 html:
-	$(MAKE) SPHINXBUILD=$$(pwd)/env/bin/sphinx-build -C src $@
+	$(MAKE) PYTHON=$(PYTHON) -C .. package
+	$(MAKE) $(SPHOPTS) -C src $@
 	cp -r src/_build/html .
 
 text:
-	$(MAKE) SPHINXBUILD=$$(pwd)/env/bin/sphinx-build -C src $@
+	$(MAKE) PYTHON=$(PYTHON) -C .. package
+	$(MAKE) $(SPHOPTS) -C src $@
 	cd src && tools/stitch_text.py index.rst _build/text > ../psycopg2.txt
 
 doctest:
-	$(MAKE) SPHINXBUILD=$$(pwd)/env/bin/sphinx-build -C src $@
+	$(MAKE) PYTHON=$(PYTHON) -C .. package
+	$(MAKE) $(SPHOPTS) -C src $@
 
 clean:
-	$(MAKE) SPHINXBUILD=$$(pwd)/env/bin/sphinx-build -C src $@
+	$(MAKE) $(SPHOPTS) -C src $@
 	rm -rf html psycopg2.txt
 
 env: requirements.txt

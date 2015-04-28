@@ -102,10 +102,10 @@ MANIFEST: MANIFEST.in $(SOURCE)
 
 # docs depend on the build as it partly use introspection.
 doc/html/genindex.html: $(PLATLIB) $(PURELIB) $(SOURCE_DOC)
-	PYTHONPATH=:$(BUILD_DIR):$$PYTHONPATH $(MAKE) -C doc html
+	$(MAKE) -C doc html
 
 doc/psycopg2.txt: $(PLATLIB) $(PURELIB) $(SOURCE_DOC)
-	PYTHONPATH=$(BUILD_DIR):$$PYTHONPATH $(MAKE) -C doc text
+	$(MAKE) -C doc text
 
 doc/docs.zip: doc/html/genindex.html
 	(cd doc/html && zip -r ../docs.zip *)
