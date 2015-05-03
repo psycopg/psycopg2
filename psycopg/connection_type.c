@@ -840,6 +840,10 @@ psyco_conn_get_exception(PyObject *self, void *closure)
     return exception;
 }
 
+
+#define psyco_conn_poll_doc \
+"poll() -> int -- Advance the connection or query process without blocking."
+
 static PyObject *
 psyco_conn_poll(connectionObject *self)
 {
@@ -980,7 +984,7 @@ static struct PyMethodDef connectionObject_methods[] = {
     {"reset", (PyCFunction)psyco_conn_reset,
      METH_NOARGS, psyco_conn_reset_doc},
     {"poll", (PyCFunction)psyco_conn_poll,
-     METH_NOARGS, psyco_conn_lobject_doc},
+     METH_NOARGS, psyco_conn_poll_doc},
     {"fileno", (PyCFunction)psyco_conn_fileno,
      METH_NOARGS, psyco_conn_fileno_doc},
     {"isexecuting", (PyCFunction)psyco_conn_isexecuting,
