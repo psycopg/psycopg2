@@ -980,6 +980,10 @@ pq_execute(cursorObject *curs, const char *query, int async, int no_result, int 
         }
         else {
             /* there was an error */
+            pthread_mutex_unlock(&(curs->conn->lock));
+            Py_BLOCK_THREADS;
+            PyErr_SetString(OperationalError,
+                            PQerrorMessage(curs->conn->pgconn));
             return -1;
         }
     }
