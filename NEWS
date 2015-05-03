@@ -1,6 +1,12 @@
 Current release
 ---------------
 
+What's new in psycopg 2.6.1
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Fixed ``MinTimeLoggingCursor.callproc()`` (:ticket:`#309`).
+
+
 What's new in psycopg 2.6
 -------------------------
 
