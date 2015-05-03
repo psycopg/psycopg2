@@ -524,6 +524,13 @@ The ``cursor`` class
             >>> cur.fetchall()
             [(6, 42, 'foo'), (7, 74, 'bar')]
 
+        .. note:: the name of the table is not quoted: if the table name
+            contains uppercase letters or special characters it must be quoted
+            with double quotes::
+
+                cur.copy_from(f, '"TABLE"')
+
+
         .. versionchanged:: 2.0.6
             added the *columns* parameter.
 
@@ -552,6 +559,12 @@ The ``cursor`` class
             1|100|abc'def
             2|\N|dada
             ...
+
+        .. note:: the name of the table is not quoted: if the table name
+            contains uppercase letters or special characters it must be quoted
+            with double quotes::
+
+                cur.copy_to(f, '"TABLE"')
 
         .. versionchanged:: 2.0.6
             added the *columns* parameter.
