@@ -705,12 +705,27 @@ managers* and can be used with the ``with`` statement::
 
 When a connection exits the ``with`` block, if no exception has been raised by
 the block, the transaction is committed. In case of exception the transaction
-is rolled back. In no case the connection is closed: a connection can be used
-in more than a ``with`` statement and each ``with`` block is effectively
-wrapped in a transaction.
+is rolled back.
 
 When a cursor exits the ``with`` block it is closed, releasing any resource
 eventually associated with it. The state of the transaction is not affected.
+
+Note that, unlike file objects or other resources, exiting the connection's
+``with`` block *doesn't close the connection* but only the transaction
+associated with it: a connection can be used in more than a ``with`` statement
+and each ``with`` block is effectively wrapped in a separate transaction::
+
+    conn = psycopg2.connect(DSN)
+
+    with conn:
+        with conn.cursor() as curs:
+            curs.execute(SQL1)
+
+    with conn:
+        with conn.cursor() as curs:
+            curs.execute(SQL2)
+
+    conn.close()
 
 
 
