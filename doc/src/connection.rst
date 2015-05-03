@@ -351,17 +351,14 @@ The ``connection`` class
     .. method:: set_session(isolation_level=None, readonly=None, deferrable=None, autocommit=None)
 
         Set one or more parameters for the next transactions or statements in
-        the current session. See |SET TRANSACTION|_ for further details.
-
-        .. |SET TRANSACTION| replace:: :sql:`SET TRANSACTION`
-        .. _SET TRANSACTION: http://www.postgresql.org/docs/current/static/sql-set-transaction.html
+        the current session.
 
         :param isolation_level: set the `isolation level`_ for the next
-            transactions/statements.  The value can be one of the
-            :ref:`constants <isolation-level-constants>` defined in the
-            `~psycopg2.extensions` module or one of the literal values
-            ``READ UNCOMMITTED``, ``READ COMMITTED``, ``REPEATABLE READ``,
-            ``SERIALIZABLE``.
+            transactions/statements.  The value can be one of the literal
+            values ``READ UNCOMMITTED``, ``READ COMMITTED``, ``REPEATABLE
+            READ``, ``SERIALIZABLE`` or the equivalent :ref:`constant
+            <isolation-level-constants>` defined in the `~psycopg2.extensions`
+            module.
         :param readonly: if `!True`, set the connection to read only;
             read/write if `!False`.
         :param deferrable: if `!True`, set the connection to deferrable;
@@ -370,19 +367,14 @@ The ``connection`` class
             PostgreSQL session setting but an alias for setting the
             `autocommit` attribute.
 
-        Parameter passed as `!None` (the default for all) will not be changed.
-        The parameters *isolation_level*, *readonly* and *deferrable* also
-        accept the string ``DEFAULT`` as a value: the effect is to reset the
-        parameter to the server default.
-
         .. _isolation level:
             http://www.postgresql.org/docs/current/static/transaction-iso.html
 
-        The function must be invoked with no transaction in progress. At every
-        function invocation, only the specified parameters are changed.
-
-        The default for the values are defined by the server configuration:
-        see values for |default_transaction_isolation|__,
+        Arguments set to `!None` (the default for all) will not be changed.
+        The parameters *isolation_level*, *readonly* and *deferrable* also
+        accept the string ``DEFAULT`` as a value: the effect is to reset the
+        parameter to the server default.  Defaults are defined by the server
+        configuration: see values for |default_transaction_isolation|__,
         |default_transaction_read_only|__, |default_transaction_deferrable|__.
 
         .. |default_transaction_isolation| replace:: :sql:`default_transaction_isolation`
@@ -392,11 +384,19 @@ The ``connection`` class
         .. |default_transaction_deferrable| replace:: :sql:`default_transaction_deferrable`
         .. __: http://www.postgresql.org/docs/current/static/runtime-config-client.html#GUC-DEFAULT-TRANSACTION-DEFERRABLE
 
+        The function must be invoked with no transaction in progress.
+
         .. note::
 
             There is currently no builtin method to read the current value for
             the parameters: use :sql:`SHOW default_transaction_...` to read
             the values from the backend.
+
+        .. seealso:: |SET TRANSACTION|_ for further details about the behaviour
+            of the transaction parameters in the server.
+
+            .. |SET TRANSACTION| replace:: :sql:`SET TRANSACTION`
+            .. _SET TRANSACTION: http://www.postgresql.org/docs/current/static/sql-set-transaction.html
 
         .. versionadded:: 2.4.2
 
