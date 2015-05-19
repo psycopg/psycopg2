@@ -679,7 +679,7 @@ older versions).
 
     By default even a simple :sql:`SELECT` will start a transaction: in
     long-running programs, if no further action is taken, the session will
-    remain "idle in transaction", a condition non desiderable for several
+    remain "idle in transaction", an undesirable condition for several
     reasons (locks are held by the session, tables bloat...). For long lived
     scripts, either make sure to terminate a transaction as soon as possible or
     use an autocommit connection.
