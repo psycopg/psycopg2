@@ -291,7 +291,7 @@ something to read::
         else:
             conn.poll()
             while conn.notifies:
-                notify = conn.notifies.pop()
+                notify = conn.notifies.pop(0)
                 print "Got NOTIFY:", notify.pid, notify.channel, notify.payload
 
 Running the script and executing a command such as :sql:`NOTIFY test, 'hello'`
