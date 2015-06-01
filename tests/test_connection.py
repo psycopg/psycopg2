@@ -270,6 +270,37 @@ class ConnectionTests(ConnectingTestCase):
         self.assert_(c.closed, "connection failed so it must be closed")
         self.assert_('foobar' not in c.dsn, "password was not obscured")
 
+    def test_parse_dsn(self):
+        from psycopg2 import ProgrammingError
+        from psycopg2.extensions import parse_dsn
+
+        self.assertEqual(parse_dsn('dbname=test user=tester password=secret'),
+                         dict(user='tester', password='secret', dbname='test'),
+                         "simple DSN parsed")
+
+        self.assertEqual(parse_dsn("dbname='test 2' user=tester password=secret"),
+                         dict(user='tester', password='secret', dbname='test 2'),
+                         "DSN with quoting parsed")
+
+        self.assertEqual(parse_dsn('postgresql://tester:secret@/test'),
+                         dict(user='tester', password='secret', dbname='test'),
+                         "simple URI dsn parsed")
+
+        # Can't really use assertRaisesRegexp() here since we need to
+        # make sure that secret is *not* exposed in the error messgage
+        # (and it also requires python >= 2.7).
+        raised = False
+        try:
+            # unterminated quote after dbname:
+            parse_dsn("dbname='test 2 user=tester password=secret")
+        except ProgrammingError, e:
+            raised = True
+            self.assertTrue(e.message.find('secret') < 0,
+                            "DSN was not exposed in error message")
+        except e:
+            self.fail("unexpected error condition: " + repr(e))
+        self.assertTrue(raised, "ProgrammingError raised due to invalid DSN")
+
 
 class IsolationLevelsTestCase(ConnectingTestCase):
 

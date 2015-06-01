@@ -56,7 +56,7 @@ from psycopg2._psycopg import Error, Warning, DataError, DatabaseError, Programm
 from psycopg2._psycopg import IntegrityError, InterfaceError, InternalError
 from psycopg2._psycopg import NotSupportedError, OperationalError
 
-from psycopg2._psycopg import _connect, parse_dsn, apilevel, threadsafety, paramstyle
+from psycopg2._psycopg import _connect, apilevel, threadsafety, paramstyle
 from psycopg2._psycopg import __version__
 
 from psycopg2 import tz
