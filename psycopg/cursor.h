@@ -72,6 +72,8 @@ struct cursorObject {
 #define DEFAULT_COPYSIZE 16384
 #define DEFAULT_COPYBUFF  8192
 
+    int   keepalive_interval;   /* interval for keepalive messages in replication mode */
+
     PyObject *tuple_factory;    /* factory for result tuples */
     PyObject *tzinfo_factory;   /* factory for tzinfo objects */
 
@@ -87,6 +89,10 @@ struct cursorObject {
     PyObject *weakreflist;    /* list of weak references */
 
 };
+
+/* streaming replication modes */
+#define CURSOR_REPLICATION_PHYSICAL 0
+#define CURSOR_REPLICATION_LOGICAL  1
 
 
 /* C-callable functions in cursor_int.c and cursor_type.c */

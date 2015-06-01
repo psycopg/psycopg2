@@ -437,6 +437,144 @@ class MinTimeLoggingCursor(LoggingCursor):
         return LoggingCursor.callproc(self, procname, vars)
 
 
+class ReplicationConnection(_connection):
+    """A connection that uses `ReplicationCursor` automatically."""
+
+    def __init__(self, *args, **kwargs):
+        """Initializes a replication connection, by adding appropriate replication parameter to the provided dsn arguments."""
+
+        if len(args):
+            dsn = args[0]
+
+            # FIXME: could really use parse_dsn here
+
+            if dsn.startswith('postgres://') or dsn.startswith('postgresql://'):
+                # poor man's url parsing
+                if dsn.rfind('?') > 0:
+                    if not dsn.endswith('?'):
+                        dsn += '&'
+                else:
+                    dsn += '?'
+            else:
+                dsn += ' '
+            dsn += 'replication=database'
+            args = [dsn] + list(args[1:])
+        else:
+            dbname = kwargs.get('dbname', None)
+            if dbname is None:
+                kwargs['dbname'] = 'replication'
+
+            if kwargs.get('replication', None) is None:
+                kwargs['replication'] = 'database' if dbname else 'true'
+
+        super(ReplicationConnection, self).__init__(*args, **kwargs)
+
+        # prevent auto-issued BEGIN statements
+        self.autocommit = True
+
+    def cursor(self, *args, **kwargs):
+        kwargs.setdefault('cursor_factory', ReplicationCursor)
+        return super(ReplicationConnection, self).cursor(*args, **kwargs)
+
+
+"""Streamging replication types."""
+REPLICATION_PHYSICAL = 0
+REPLICATION_LOGICAL  = 1
+
+class ReplicationCursor(_cursor):
+    """A cursor used for replication commands."""
+
+    def identify_system(self):
+        """Get information about the cluster status."""
+
+        self.execute("IDENTIFY_SYSTEM")
+        return dict(zip(['systemid', 'timeline', 'xlogpos', 'dbname'],
+                        self.fetchall()[0]))
+
+    def quote_ident(self, ident):
+        # FIXME: use PQescapeIdentifier or psycopg_escape_identifier_easy, somehow
+        return '"%s"' % ident.replace('"', '""')
+
+    def create_replication_slot(self, slot_type, slot_name, output_plugin=None):
+        """Create streaming replication slot."""
+
+        command = "CREATE_REPLICATION_SLOT %s " % self.quote_ident(slot_name)
+
+        if slot_type == REPLICATION_LOGICAL:
+            if output_plugin is None:
+                raise RuntimeError("output_plugin is required for logical replication slot")
+
+            command += "LOGICAL %s" % self.quote_ident(output_plugin)
+
+        elif slot_type == REPLICATION_PHYSICAL:
+            if output_plugin is not None:
+                raise RuntimeError("output_plugin is not applicable to physical replication")
+
+            command += "PHYSICAL"
+
+        else:
+            raise RuntimeError("unrecognized replication slot type")
+
+        return self.execute(command)
+
+    def drop_replication_slot(self, slot_name):
+        """Drop streaming replication slot."""
+
+        command = "DROP_REPLICATION_SLOT %s" % self.quote_ident(slot_name)
+        return self.execute(command)
+
+    def start_replication(self, o, slot_type, slot_name=None, start_lsn=None,
+                          timeline=0, keepalive_interval=10, options=None):
+        """Start and consume replication stream."""
+
+        if keepalive_interval <= 0:
+            raise RuntimeError("keepalive_interval must be > 0: %d" % keepalive_interval)
+
+        command = "START_REPLICATION "
+
+        if slot_type == REPLICATION_LOGICAL and slot_name is None:
+                raise RuntimeError("slot_name is required for logical replication slot")
+
+        if slot_name:
+            command += "SLOT %s " % self.quote_ident(slot_name)
+
+        if slot_type == REPLICATION_LOGICAL:
+            command += "LOGICAL "
+        elif slot_type == REPLICATION_PHYSICAL:
+            command += "PHYSICAL "
+        else:
+            raise RuntimeError("unrecognized replication slot type")
+
+        if start_lsn is None:
+            start_lsn = '0/0'
+
+        # reparse lsn to catch possible garbage
+        lsn = start_lsn.split('/')
+        command += "%X/%X" % (int(lsn[0], 16), int(lsn[1], 16))
+
+        if timeline != 0:
+            if slot_type == REPLICATION_LOGICAL:
+                raise RuntimeError("cannot specify timeline for logical replication")
+
+            if timeline < 0:
+                raise RuntimeError("timeline must be >= 0: %d" % timeline)
+
+            command += " TIMELINE %d" % timeline
+
+        if options:
+            if slot_type == REPLICATION_PHYSICAL:
+                raise RuntimeError("cannot specify plugin options for physical replication")
+
+            command += " ("
+            for k,v in options.iteritems():
+                if not command.endswith('('):
+                    command += ", "
+                command += "%s %s" % (self.quote_ident(k), _A(str(v)).getquoted())
+            command += ")"
+
+        return self.start_replication_expert(o, command, keepalive_interval)
+
+
 # a dbtype and adapter for Python UUID type
 
 class UUID_adapter(object):

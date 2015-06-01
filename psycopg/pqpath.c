@@ -40,7 +40,14 @@
 #include "psycopg/pgtypes.h"
 #include "psycopg/error.h"
 
+#include "postgres_fe.h"
+#include "access/xlog_internal.h"
+#include "common/fe_memutils.h"
+#include "libpq-fe.h"
+
 #include <string.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 
 extern HIDDEN PyObject *psyco_DescriptionType;
@@ -1514,6 +1521,302 @@ exit:
     return ret;
 }
 
+/* support routines taken from pg_basebackup/streamutil.c */
+/*
+ * Frontend version of GetCurrentTimestamp(), since we are not linked with
+ * backend code. The protocol always uses integer timestamps, regardless of
+ * server setting.
+ */
+static int64
+feGetCurrentTimestamp(void)
+{
+    int64 result;
+    struct timeval tp;
+
+    gettimeofday(&tp, NULL);
+
+    result = (int64) tp.tv_sec -
+        ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
+
+    result = (result * USECS_PER_SEC) + tp.tv_usec;
+
+    return result;
+}
+
+/*
+ * Converts an int64 to network byte order.
+ */
+static void
+fe_sendint64(int64 i, char *buf)
+{
+    uint32 n32;
+
+    /* High order half first, since we're doing MSB-first */
+    n32 = (uint32) (i >> 32);
+    n32 = htonl(n32);
+    memcpy(&buf[0], &n32, 4);
+
+    /* Now the low order half */
+    n32 = (uint32) i;
+    n32 = htonl(n32);
+    memcpy(&buf[4], &n32, 4);
+}
+
+/*
+ * Converts an int64 from network byte order to native format.
+ */
+static int64
+fe_recvint64(char *buf)
+{
+    int64  result;
+    uint32 h32;
+    uint32 l32;
+
+    memcpy(&h32, buf, 4);
+    memcpy(&l32, buf + 4, 4);
+    h32 = ntohl(h32);
+    l32 = ntohl(l32);
+
+    result = h32;
+    result <<= 32;
+    result |= l32;
+
+    return result;
+}
+
+static int
+sendFeedback(PGconn *conn, XLogRecPtr written_lsn, XLogRecPtr fsync_lsn,
+             int replyRequested)
+{
+    char replybuf[1 + 8 + 8 + 8 + 8 + 1];
+    int len = 0;
+
+    Dprintf("_pq_copy_both_v3: confirming write up to %X/%X, flush to %X/%X\n",
+            (uint32) (written_lsn >> 32), (uint32) written_lsn,
+            (uint32) (fsync_lsn >> 32), (uint32) fsync_lsn);
+
+    replybuf[len] = 'r';
+    len += 1;
+    fe_sendint64(written_lsn, &replybuf[len]);	/* write */
+    len += 8;
+    fe_sendint64(fsync_lsn, &replybuf[len]);	/* flush */
+    len += 8;
+    fe_sendint64(InvalidXLogRecPtr, &replybuf[len]);	/* apply */
+    len += 8;
+    fe_sendint64(feGetCurrentTimestamp(), &replybuf[len]);	/* sendTime */
+    len += 8;
+    replybuf[len] = replyRequested ? 1 : 0;		/* replyRequested */
+    len += 1;
+
+    if (PQputCopyData(conn, replybuf, len) <= 0 || PQflush(conn)) {
+        return 0;
+    }
+
+    return 1;
+}
+
+/* used for streaming replication only */
+static int
+_pq_copy_both_v3(cursorObject *curs)
+{
+    PyObject *tmp = NULL;
+    PyObject *write_func = NULL;
+    PyObject *obj = NULL;
+    int ret = -1;
+    int is_text;
+
+    PGconn *conn;
+    char *buffer = NULL;
+    fd_set fds;
+    struct timeval last_comm, curr_time, ping_time, time_diff;
+    int len, hdr, reply, sel;
+
+    XLogRecPtr written_lsn = InvalidXLogRecPtr;
+    XLogRecPtr fsync_lsn = InvalidXLogRecPtr;
+    XLogRecPtr wal_end = InvalidXLogRecPtr;
+
+    if (!curs->copyfile) {
+        PyErr_SetString(ProgrammingError,
+            "can't execute START_REPLICATION: use the start_replication() method instead");
+        goto exit;
+    }
+
+    if (curs->keepalive_interval <= 0) {
+        PyErr_Format(PyExc_RuntimeError, "keepalive_interval must be > 0: %d",
+                     curs->keepalive_interval);
+        goto exit;
+    }
+
+    if (!(write_func = PyObject_GetAttrString(curs->copyfile, "write"))) {
+        Dprintf("_pq_copy_both_v3: can't get o.write");
+        goto exit;
+    }
+
+    /* if the file is text we must pass it unicode. */
+    if (-1 == (is_text = psycopg_is_text_file(curs->copyfile))) {
+        goto exit;
+    }
+
+    CLEARPGRES(curs->pgres);
+
+    /* timestamp of last communication with the server */
+    gettimeofday(&last_comm, NULL);
+
+    conn = curs->conn->pgconn;
+
+    while (1) {
+        len = PQgetCopyData(conn, &buffer, 1 /* async! */);
+        if (len < 0) {
+            break;
+        }
+        if (len == 0) {
+            FD_ZERO(&fds);
+            FD_SET(PQsocket(conn), &fds);
+
+            /* set up timeout according to keepalive_interval, but no less than 1 second */
+            gettimeofday(&curr_time, NULL);
+
+            ping_time = last_comm;
+            ping_time.tv_sec += curs->keepalive_interval;
+
+            if (timercmp(&ping_time, &curr_time, >)) {
+                timersub(&ping_time, &curr_time, &time_diff);
+
+                Py_BEGIN_ALLOW_THREADS;
+                sel = select(PQsocket(conn) + 1, &fds, NULL, NULL, &time_diff);
+                Py_END_ALLOW_THREADS;
+            }
+            else {
+                sel = 0; /* pretend select() timed out */
+            }
+
+            if (sel < 0) {
+                if (errno != EINTR) {
+                    PyErr_SetFromErrno(PyExc_OSError);
+                    goto exit;
+                }
+                if (PyErr_CheckSignals()) {
+                    goto exit;
+                }
+                continue;
+            }
+
+            if (sel > 0) {
+                if (!PQconsumeInput(conn)) {
+                    Dprintf("_pq_copy_both_v3: PQconsumeInput failed");
+                    pq_raise(curs->conn, curs, NULL);
+                    goto exit;
+                }
+            }
+            else { /* timeout */
+                if (!sendFeedback(conn, written_lsn, fsync_lsn, false)) {
+                    pq_raise(curs->conn, curs, NULL);
+                    goto exit;
+                }
+            }
+            gettimeofday(&last_comm, NULL);
+            continue;
+        }
+        if (len > 0 && buffer) {
+            gettimeofday(&last_comm, NULL);
+
+            Dprintf("_pq_copy_both_v3: msg=%c, len=%d", buffer[0], len);
+            if (buffer[0] == 'w') {
+                /* msgtype(1), dataStart(8), walEnd(8), sendTime(8) */
+                hdr = 1 + 8 + 8 + 8;
+                if (len < hdr + 1) {
+                    PyErr_Format(PyExc_RuntimeError,
+                                 "streaming header too small in data message: %d", len);
+                    goto exit;
+                }
+
+                wal_end = fe_recvint64(buffer + 1 + 8);
+
+                if (is_text) {
+                    obj = PyUnicode_Decode(buffer + hdr, len - hdr, curs->conn->codec, NULL);
+                }
+                else {
+                    obj = Bytes_FromStringAndSize(buffer + hdr, len - hdr);
+                }
+                if (!obj) { goto exit; }
+
+                tmp = PyObject_CallFunctionObjArgs(write_func, obj, NULL);
+                Py_DECREF(obj);
+
+                if (tmp == NULL) {
+                    Dprintf("_pq_copy_both_v3: write_func returned NULL");
+                    goto exit;
+                }
+
+                written_lsn = Max(wal_end, written_lsn);
+
+                /* if write() returned true-ish, we confirm LSN with the server */
+                if (PyObject_IsTrue(tmp)) {
+                    fsync_lsn = written_lsn;
+
+                    if (!sendFeedback(conn, written_lsn, fsync_lsn, false)) {
+                        pq_raise(curs->conn, curs, NULL);
+                        goto exit;
+                    }
+                    gettimeofday(&last_comm, NULL);
+                }
+                Py_DECREF(tmp);
+
+            }
+            else if (buffer[0] == 'k') {
+                /* msgtype(1), walEnd(8), sendTime(8), reply(1) */
+                hdr = 1 + 8 + 8;
+                if (len < hdr + 1) {
+                    PyErr_Format(PyExc_RuntimeError,
+                                 "streaming header too small in keepalive message: %d", len);
+                    goto exit;
+                }
+
+                reply = buffer[hdr];
+                if (reply) {
+                    if (!sendFeedback(conn, written_lsn, fsync_lsn, false)) {
+                        pq_raise(curs->conn, curs, NULL);
+                        goto exit;
+                    }
+                    gettimeofday(&last_comm, NULL);
+                }
+            }
+            else {
+                PyErr_Format(PyExc_RuntimeError,
+                             "unrecognized streaming message type: \"%c\"", buffer[0]);
+                goto exit;
+            }
+
+            /* buffer is allocated on every PQgetCopyData() call */
+            PQfreemem(buffer);
+            buffer = NULL;
+        }
+    }
+
+    if (len == -2) {
+        pq_raise(curs->conn, curs, NULL);
+        goto exit;
+    }
+    if (len == -1) {
+        curs->pgres = PQgetResult(curs->conn->pgconn);
+
+        if (curs->pgres && PQresultStatus(curs->pgres) == PGRES_FATAL_ERROR)
+            pq_raise(curs->conn, curs, NULL);
+
+        CLEARPGRES(curs->pgres);
+    }
+
+    ret = 1;
+
+exit:
+    if (buffer) {
+        PQfreemem(buffer);
+    }
+
+    Py_XDECREF(write_func);
+    return ret;
+}
+
 int
 pq_fetch(cursorObject *curs, int no_result)
 {
@@ -1568,6 +1871,15 @@ pq_fetch(cursorObject *curs, int no_result)
         Dprintf("pq_fetch: data from a COPY FROM (no tuples)");
         curs->rowcount = -1;
         ex = _pq_copy_in_v3(curs);
+        /* error caught by out glorious notice handler */
+        if (PyErr_Occurred()) ex = -1;
+        CLEARPGRES(curs->pgres);
+        break;
+
+    case PGRES_COPY_BOTH:
+        Dprintf("pq_fetch: data from a streaming replication slot (no tuples)");
+        curs->rowcount = -1;
+        ex = _pq_copy_both_v3(curs);
         /* error caught by out glorious notice handler */
         if (PyErr_Occurred()) ex = -1;
         CLEARPGRES(curs->pgres);

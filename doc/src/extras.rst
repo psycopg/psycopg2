@@ -141,6 +141,128 @@ Logging cursor
 
 .. autoclass:: MinTimeLoggingCursor
 
+Replication cursor
+^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: ReplicationConnection
+
+   This connection factory class can be used to open a special type of
+   connection that is used for streaming replication.
+
+   Example::
+
+       from psycopg2.extras import ReplicationConnection, REPLICATION_PHYSICAL, REPLICATION_LOGICAL
+       conn = psycopg2.connect(dsn, connection_factory=ReplicationConnection)
+       cur = conn.cursor()
+
+.. seealso::
+
+   - PostgreSQL `Replication protocol`__
+
+   .. __: http://www.postgresql.org/docs/current/static/protocol-replication.html
+
+.. autoclass:: ReplicationCursor
+
+    .. method:: identify_system()
+
+       Get information about the cluster status in form of a dict with
+       ``systemid``, ``timeline``, ``xlogpos`` and ``dbname`` as keys.
+
+       Example::
+
+           >>> print cur.identify_system()
+           {'timeline': 1, 'systemid': '1234567890123456789', 'dbname': 'test', 'xlogpos': '0/1ABCDEF'}
+
+    .. method:: create_replication_slot(slot_type, slot_name, output_plugin=None)
+
+       Create streaming replication slot.
+
+       :param slot_type: type of replication: either `REPLICATION_PHYSICAL` or
+                         `REPLICATION_LOGICAL`
+       :param slot_name: name of the replication slot to be created
+       :param output_plugin: name of the logical decoding output plugin to use
+                             (logical replication only)
+
+       Example::
+
+           cur.create_replication_slot(REPLICATION_LOGICAL, "testslot", "test_decoding")
+
+    .. method:: drop_replication_slot(slot_name)
+
+       Drop streaming replication slot.
+
+       :param slot_name: name of the replication slot to drop
+
+       Example::
+
+           cur.drop_replication_slot("testslot")
+
+    .. method:: start_replication(file, slot_type, slot_name=None, start_lsn=None, timeline=0, keepalive_interval=10, options=None)
+
+       Start and consume replication stream.
+
+       :param file: a file-like object to write replication stream messages to
+       :param slot_type: type of replication: either `REPLICATION_PHYSICAL` or
+                         `REPLICATION_LOGICAL`
+       :param slot_name: name of the replication slot to use (required for
+                         logical replication)
+       :param start_lsn: the point in replication stream (WAL position) to start
+                         from, in the form ``XXX/XXX`` (forward-slash separated
+                         pair of hexadecimals)
+       :param timeline: WAL history timeline to start streaming from (optional,
+                        can only be used with physical replication)
+       :param keepalive_interval: interval (in seconds) to send keepalive
+                                  messages to the server, in case there was no
+                                  communication during that period of time
+       :param options: an dictionary of options to pass to logical replication
+                       slot
+
+       The ``keepalive_interval`` must be greater than zero.
+
+       This method never returns unless an error message is sent from the
+       server, or the server closes connection, or there is an exception in the
+       ``write()`` method of the ``file`` object.
+
+       One can even use ``sys.stdout`` as the destination (this is only good for
+       testing purposes, however)::
+
+           >>> cur.start_replication(sys.stdout, "testslot")
+           ...
+
+       This method acts much like the `~cursor.copy_to()` with an important
+       distinction that ``write()`` method return value is dirving the
+       server-side replication cursor.  In order to report to the server that
+       the all the messages up to the current one have been stored reliably, one
+       should return true value (i.e. something that satisfies ``if retval:``
+       conidtion) from the ``write`` callback::
+
+           class ReplicationStreamWriter(object):
+               def write(self, msg):
+                   if store_message_reliably(msg):
+                       return True
+
+           cur.start_replication(writer, "testslot")
+           ...
+
+       .. note::
+
+           One needs to be aware that failure to update the server-side cursor
+           on any one replication slot properly by constantly consuming and
+           reporting success to the server can eventually lead to "disk full"
+           condition on the server, because the server retains all the WAL
+           segments that might be needed to stream the changes via currently
+           open replication slots.
+
+           Drop any open replication slots that are no longer being used.  The
+           list of open slots can be obtained by running a query like ``SELECT *
+           FROM pg_replication_slots``.
+
+.. data:: REPLICATION_PHYSICAL
+
+.. data:: REPLICATION_LOGICAL
+
+.. index::
+    pair: Cursor; Replication
 
 
 .. index::

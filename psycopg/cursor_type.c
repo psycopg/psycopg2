@@ -1579,6 +1579,43 @@ exit:
     return res;
 }
 
+#define psyco_curs_start_replication_expert_doc \
+"start_replication_expert(file, command, keepalive_interval) -- Start and consume replication stream with direct command."
+
+static PyObject *
+psyco_curs_start_replication_expert(cursorObject *self, PyObject *args)
+{
+    PyObject *file, *res = NULL;
+    char *command;
+    int keepalive_interval;
+
+    if (!PyArg_ParseTuple(args, "O&si",
+                          _psyco_curs_has_write_check, &file,
+                          &command, &keepalive_interval)) {
+        return NULL;
+    }
+
+    EXC_IF_CURS_CLOSED(self);
+    EXC_IF_CURS_ASYNC(self, start_replication_expert);
+    EXC_IF_GREEN(start_replication_expert);
+    EXC_IF_TPC_PREPARED(self->conn, start_replication_expert);
+
+    Dprintf("psyco_curs_start_replication_expert: command = %s", command);
+
+    self->copysize = 0;
+    Py_INCREF(file);
+    self->copyfile = file;
+    self->keepalive_interval = keepalive_interval;
+
+    if (pq_execute(self, command, 0, 1 /* no_result */, 1 /* no_begin */) >= 0) {
+        res = Py_None;
+        Py_INCREF(Py_None);
+    }
+    Py_CLEAR(self->copyfile);
+
+    return res;
+}
+
 /* extension: closed - return true if cursor is closed */
 
 #define psyco_curs_closed_doc \
@@ -1753,6 +1790,8 @@ static struct PyMethodDef cursorObject_methods[] = {
      METH_VARARGS|METH_KEYWORDS, psyco_curs_copy_to_doc},
     {"copy_expert", (PyCFunction)psyco_curs_copy_expert,
      METH_VARARGS|METH_KEYWORDS, psyco_curs_copy_expert_doc},
+    {"start_replication_expert", (PyCFunction)psyco_curs_start_replication_expert,
+     METH_VARARGS, psyco_curs_start_replication_expert_doc},
     {NULL}
 };
 
