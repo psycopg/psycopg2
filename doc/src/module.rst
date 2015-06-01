@@ -109,6 +109,12 @@ The module interface respects the standard defined in the |DBAPI|_.
     by the interface.  For `psycopg2` is ``pyformat``.  See also
     :ref:`query-parameters`.
 
+.. data:: __libpq_version__
+
+   Integer contant containing the version of ``libpq`` this `psycopg2`
+   module was compiled with.  If this value is ``>= 90100`` then you
+   may query for the actually loaded version of libpq using
+   `~psycopg2.extensions.libpq_version()`.
 
 
 .. index::

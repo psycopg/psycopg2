@@ -197,6 +197,16 @@ functionalities defined by the |DBAPI|_.
 
     .. versionadded:: 2.2.0
 
+.. function:: libpq_version()
+
+    Query actual ``libpq`` version loaded.
+
+    This function throws `NotSupportedError` if it was compiled with
+    ``libpq < 9.1``.
+
+    .. seealso:: libpq docs for `PQlibVersion()`__
+
+        .. __: http://www.postgresql.org/docs/current/static/libpq-misc.html#LIBPQ-PQLIBVERSION
 
 .. _sql-adaptation-objects:
 
