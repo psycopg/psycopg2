@@ -278,6 +278,9 @@ class ConnectionTests(ConnectingTestCase):
                          dict(user='tester', password='secret', dbname='test'),
                          "simple DSN parsed")
 
+        self.assertRaises(ProgrammingError, parse_dsn,
+                          "dbname=test 2 user=tester password=secret")
+
         self.assertEqual(parse_dsn("dbname='test 2' user=tester password=secret"),
                          dict(user='tester', password='secret', dbname='test 2'),
                          "DSN with quoting parsed")
