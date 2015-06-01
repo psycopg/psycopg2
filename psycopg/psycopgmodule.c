@@ -112,6 +112,44 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
     return conn;
 }
 
+#define psyco_parse_dsn_doc \
+"parse_dsn(dsn) -- Parse database connection string.\n\n"
+
+static PyObject *
+psyco_parse_dsn(PyObject *self, PyObject *args)
+{
+    char *dsn, *err;
+    PQconninfoOption *options = NULL, *o;
+    PyObject *res = NULL, *value;
+
+    if (!PyArg_ParseTuple(args, "s", &dsn)) {
+        return NULL;
+    }
+
+    options = PQconninfoParse(dsn, &err);
+    if (!options) {
+        PyErr_Format(PyExc_RuntimeError, "PQconninfoParse: %s: %s", dsn, err);
+        PQfreemem(err);
+        return NULL;
+    }
+
+    res = PyDict_New();
+    for (o = options; o->keyword != NULL; o++) {
+        if (o->val != NULL) {
+            value = PyString_FromString(o->val);
+            if (value == NULL || PyDict_SetItemString(res, o->keyword, value) != 0) {
+                Py_DECREF(res);
+                res = NULL;
+                break;
+            }
+        }
+    }
+
+    PQconninfoFree(options);
+
+    return res;
+}
+
 /** type registration **/
 #define psyco_register_type_doc \
 "register_type(obj, conn_or_curs) -> None -- register obj with psycopg type system\n\n" \
@@ -695,6 +733,8 @@ error:
 static PyMethodDef psycopgMethods[] = {
     {"_connect",  (PyCFunction)psyco_connect,
      METH_VARARGS|METH_KEYWORDS, psyco_connect_doc},
+    {"parse_dsn",  (PyCFunction)psyco_parse_dsn,
+     METH_VARARGS, psyco_parse_dsn_doc},
     {"adapt",  (PyCFunction)psyco_microprotocols_adapt,
      METH_VARARGS, psyco_microprotocols_adapt_doc},
 

@@ -78,6 +78,7 @@ The module interface respects the standard defined in the |DBAPI|_.
 
     .. seealso::
 
+        - `parse_dsn`
         - libpq `connection string syntax`__
         - libpq supported `connection parameters`__
         - libpq supported `environment variables`__
@@ -91,6 +92,17 @@ The module interface respects the standard defined in the |DBAPI|_.
         The parameters *connection_factory* and *async* are Psycopg extensions
         to the |DBAPI|.
 
+.. function:: parse_dsn(dsn)
+
+    Parse connection string into a dictionary of keywords and values.
+
+    Uses libpq's ``PQconninfoParse`` to parse the string according to
+    accepted format(s) and check for supported keywords.
+
+    Example::
+
+        >>> psycopg2.parse_dsn('dbname=test user=postgres password=secret')
+        {'password': 'secret', 'user': 'postgres', 'dbname': 'test'}
 
 .. data:: apilevel
 
