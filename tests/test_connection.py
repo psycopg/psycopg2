@@ -32,7 +32,7 @@ import psycopg2.errorcodes
 import psycopg2.extensions
 
 from testutils import unittest, decorate_all_tests, skip_if_no_superuser
-from testutils import skip_before_postgres, skip_after_postgres
+from testutils import skip_before_postgres, skip_after_postgres, skip_before_libpq
 from testutils import ConnectingTestCase, skip_if_tpc_disabled
 from testutils import skip_if_windows
 from testconfig import dsn, dbname
@@ -285,10 +285,6 @@ class ConnectionTests(ConnectingTestCase):
                          dict(user='tester', password='secret', dbname='test 2'),
                          "DSN with quoting parsed")
 
-        self.assertEqual(parse_dsn('postgresql://tester:secret@/test'),
-                         dict(user='tester', password='secret', dbname='test'),
-                         "simple URI dsn parsed")
-
         # Can't really use assertRaisesRegexp() here since we need to
         # make sure that secret is *not* exposed in the error messgage
         # (and it also requires python >= 2.7).
@@ -303,6 +299,27 @@ class ConnectionTests(ConnectingTestCase):
         except e:
             self.fail("unexpected error condition: " + repr(e))
         self.assertTrue(raised, "ProgrammingError raised due to invalid DSN")
+
+    @skip_before_libpq(9, 2)
+    def test_parse_dsn_uri(self):
+        from psycopg2 import ProgrammingError
+        from psycopg2.extensions import parse_dsn
+
+        self.assertEqual(parse_dsn('postgresql://tester:secret@/test'),
+                         dict(user='tester', password='secret', dbname='test'),
+                         "valid URI dsn parsed")
+
+        raised = False
+        try:
+            # extra '=' after port value
+            parse_dsn('postgresql://tester:secret@/test?port=1111=x')
+        except ProgrammingError, e:
+            raised = True
+            self.assertTrue(e.message.find('secret') < 0,
+                            "URI was not exposed in error message")
+        except e:
+            self.fail("unexpected error condition: " + repr(e))
+        self.assertTrue(raised, "ProgrammingError raised due to invalid URI")
 
 
 class IsolationLevelsTestCase(ConnectingTestCase):
