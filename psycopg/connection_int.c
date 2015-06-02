@@ -154,7 +154,7 @@ conn_notice_clean(connectionObject *self)
     while (notice != NULL) {
         tmp = notice;
         notice = notice->next;
-        free((void*)tmp->message);
+        free(tmp->message);
         free(tmp);
     }
 
