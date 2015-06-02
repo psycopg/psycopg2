@@ -488,7 +488,7 @@ class ReplicationCursor(_cursor):
         """Get information about the cluster status."""
 
         self.execute("IDENTIFY_SYSTEM")
-        return dict(zip(['systemid', 'timeline', 'xlogpos', 'dbname'],
+        return dict(zip([_.name for _ in self.description],
                         self.fetchall()[0]))
 
     def quote_ident(self, ident):
