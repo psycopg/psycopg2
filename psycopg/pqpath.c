@@ -40,15 +40,14 @@
 #include "psycopg/pgtypes.h"
 #include "psycopg/error.h"
 
-#include "postgres_fe.h"
-#include "access/xlog_internal.h"
-#include "common/fe_memutils.h"
 #include "libpq-fe.h"
 
-#include <string.h>
-#include <netinet/in.h>
+/* htonl, ntohl */
+#ifdef _WIN32
+#include <winsock2.h>
+#else
 #include <arpa/inet.h>
-
+#endif
 
 extern HIDDEN PyObject *psyco_DescriptionType;
 
@@ -1522,20 +1521,33 @@ exit:
 }
 
 /* support routines taken from pg_basebackup/streamutil.c */
+/* type and constant definitions from internal postgres includes */
+typedef unsigned int uint32;
+typedef unsigned PG_INT64_TYPE XLogRecPtr;
+
+#define InvalidXLogRecPtr ((XLogRecPtr) 0)
+
+/* Julian-date equivalents of Day 0 in Unix and Postgres reckoning */
+#define UNIX_EPOCH_JDATE	2440588 /* == date2j(1970, 1, 1) */
+#define POSTGRES_EPOCH_JDATE	2451545 /* == date2j(2000, 1, 1) */
+
+#define SECS_PER_DAY	86400
+#define USECS_PER_SEC	1000000LL
+
 /*
  * Frontend version of GetCurrentTimestamp(), since we are not linked with
  * backend code. The protocol always uses integer timestamps, regardless of
  * server setting.
  */
-static int64
+static pg_int64
 feGetCurrentTimestamp(void)
 {
-    int64 result;
+    pg_int64 result;
     struct timeval tp;
 
     gettimeofday(&tp, NULL);
 
-    result = (int64) tp.tv_sec -
+    result = (pg_int64) tp.tv_sec -
         ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
 
     result = (result * USECS_PER_SEC) + tp.tv_usec;
@@ -1547,7 +1559,7 @@ feGetCurrentTimestamp(void)
  * Converts an int64 to network byte order.
  */
 static void
-fe_sendint64(int64 i, char *buf)
+fe_sendint64(pg_int64 i, char *buf)
 {
     uint32 n32;
 
@@ -1565,10 +1577,10 @@ fe_sendint64(int64 i, char *buf)
 /*
  * Converts an int64 from network byte order to native format.
  */
-static int64
+static pg_int64
 fe_recvint64(char *buf)
 {
-    int64  result;
+    pg_int64 result;
     uint32 h32;
     uint32 l32;
 
@@ -1709,7 +1721,7 @@ _pq_copy_both_v3(cursorObject *curs)
                 }
             }
             else { /* timeout */
-                if (!sendFeedback(conn, written_lsn, fsync_lsn, false)) {
+                if (!sendFeedback(conn, written_lsn, fsync_lsn, 0)) {
                     pq_raise(curs->conn, curs, NULL);
                     goto exit;
                 }
@@ -1748,13 +1760,15 @@ _pq_copy_both_v3(cursorObject *curs)
                     goto exit;
                 }
 
-                written_lsn = Max(wal_end, written_lsn);
+                /* update the LSN position we've written up to */
+                if (written_lsn < wal_end)
+                    written_lsn = wal_end;
 
                 /* if write() returned true-ish, we confirm LSN with the server */
                 if (PyObject_IsTrue(tmp)) {
                     fsync_lsn = written_lsn;
 
-                    if (!sendFeedback(conn, written_lsn, fsync_lsn, false)) {
+                    if (!sendFeedback(conn, written_lsn, fsync_lsn, 0)) {
                         pq_raise(curs->conn, curs, NULL);
                         goto exit;
                     }
@@ -1774,7 +1788,7 @@ _pq_copy_both_v3(cursorObject *curs)
 
                 reply = buffer[hdr];
                 if (reply) {
-                    if (!sendFeedback(conn, written_lsn, fsync_lsn, false)) {
+                    if (!sendFeedback(conn, written_lsn, fsync_lsn, 0)) {
                         pq_raise(curs->conn, curs, NULL);
                         goto exit;
                     }
