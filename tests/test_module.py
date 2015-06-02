@@ -320,6 +320,15 @@ import _psycopg
         self.assertEqual(0, proc.returncode)
 
 
+class TestVersionDiscovery(unittest.TestCase):
+    def test_libpq_version(self):
+        self.assertTrue(type(psycopg2.__libpq_version__) is int)
+        try:
+            self.assertTrue(type(psycopg2.extensions.libpq_version()) is int)
+        except NotSupportedError:
+            self.assertTrue(psycopg2.__libpq_version__ < 90100)
+
+
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

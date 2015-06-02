@@ -266,7 +266,7 @@ psyco_lobj_get_closed(lobjectObject *self, void *closure)
     return closed;
 }
 
-#if PG_VERSION_HEX >= 0x080300
+#if PG_VERSION_NUM >= 80300
 
 #define psyco_lobj_truncate_doc \
 "truncate(len=0) -- Truncate large object to given size."
@@ -327,10 +327,10 @@ static struct PyMethodDef lobjectObject_methods[] = {
      METH_NOARGS, psyco_lobj_unlink_doc},
     {"export",(PyCFunction)psyco_lobj_export,
      METH_VARARGS, psyco_lobj_export_doc},
-#if PG_VERSION_HEX >= 0x080300
+#if PG_VERSION_NUM >= 80300
     {"truncate",(PyCFunction)psyco_lobj_truncate,
      METH_VARARGS, psyco_lobj_truncate_doc},
-#endif /* PG_VERSION_HEX >= 0x080300 */
+#endif /* PG_VERSION_NUM >= 80300 */
     {NULL}
 };
 

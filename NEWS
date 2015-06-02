@@ -1,6 +1,17 @@
 Current release
 ---------------
 
+What's new in psycopg 2.7
+-------------------------
+
+New features:
+
+- Added `~psycopg2.__libpq_version__` and
+  `~psycopg2.extensions.libpq_version()` to inspect the version of the
+  ``libpq`` library the module was compiled/loaded with
+  (:tickets:`#35, #323`).
+
+
 What's new in psycopg 2.6.1
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

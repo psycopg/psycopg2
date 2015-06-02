@@ -208,6 +208,18 @@ functionalities defined by the |DBAPI|_.
 
     .. versionadded:: 2.2.0
 
+.. function:: libpq_version()
+
+    Return the version number of the ``libpq`` dynamic library loaded as an
+    integer, in the same format of `~connection.server_version`.
+
+    Raise `~psycopg2.NotSupportedError` if the ``psycopg2`` module was
+    compiled with a ``libpq`` version lesser than 9.1 (which can be detected
+    by the `~psycopg2.__libpq_version__` constant).
+
+    .. seealso:: libpq docs for `PQlibVersion()`__.
+
+        .. __: http://www.postgresql.org/docs/current/static/libpq-misc.html#LIBPQ-PQLIBVERSION
 
 .. _sql-adaptation-objects:
 
