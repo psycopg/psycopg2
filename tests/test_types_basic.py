@@ -192,6 +192,40 @@ class TypesBasicTests(ConnectingTestCase):
             self.assertRaises(psycopg2.DataError,
                 psycopg2.extensions.STRINGARRAY, b(s), curs)
 
+    def testArrayOfNulls(self):
+        curs = self.conn.cursor()
+        curs.execute("""
+            create table na (
+              texta text[],
+              inta int[],
+              boola boolean[],
+
+              textaa text[][],
+              intaa int[][],
+              boolaa boolean[][]
+            )""")
+
+        curs.execute("insert into na (texta) values (%s)", ([None],))
+        curs.execute("insert into na (texta) values (%s)", (['a', None],))
+        curs.execute("insert into na (texta) values (%s)", ([None, None],))
+        curs.execute("insert into na (inta) values (%s)",  ([None],))
+        curs.execute("insert into na (inta) values (%s)",  ([42, None],))
+        curs.execute("insert into na (inta) values (%s)",  ([None, None],))
+        curs.execute("insert into na (boola) values (%s)", ([None],))
+        curs.execute("insert into na (boola) values (%s)", ([True, None],))
+        curs.execute("insert into na (boola) values (%s)", ([None, None],))
+
+        # TODO: array of array of nulls are not supported yet
+        # curs.execute("insert into na (textaa) values (%s)", ([[None]],))
+        curs.execute("insert into na (textaa) values (%s)", ([['a', None]],))
+        # curs.execute("insert into na (textaa) values (%s)", ([[None, None]],))
+        # curs.execute("insert into na (intaa) values (%s)",  ([[None]],))
+        curs.execute("insert into na (intaa) values (%s)",  ([[42, None]],))
+        # curs.execute("insert into na (intaa) values (%s)",  ([[None, None]],))
+        # curs.execute("insert into na (boolaa) values (%s)", ([[None]],))
+        curs.execute("insert into na (boolaa) values (%s)", ([[True, None]],))
+        # curs.execute("insert into na (boolaa) values (%s)", ([[None, None]],))
+
     @testutils.skip_from_python(3)
     def testTypeRoundtripBuffer(self):
         o1 = buffer("".join(map(chr, range(256))))
