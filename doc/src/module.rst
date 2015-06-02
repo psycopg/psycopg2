@@ -111,10 +111,11 @@ The module interface respects the standard defined in the |DBAPI|_.
 
 .. data:: __libpq_version__
 
-   Integer contant containing the version of ``libpq`` this `psycopg2`
-   module was compiled with.  If this value is ``>= 90100`` then you
-   may query for the actually loaded version of libpq using
-   `~psycopg2.extensions.libpq_version()`.
+   Integer constant reporting the version of the ``libpq`` library this
+   ``psycopg2`` module was compiled with (in the same format of
+   `~connection.server_version`).  If this value is lesser than ``90100``
+   then you may query the version of the actually loaded library using the
+   `~psycopg2.extensions.libpq_version()` function.
 
 
 .. index::
