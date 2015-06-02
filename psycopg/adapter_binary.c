@@ -39,7 +39,7 @@ static unsigned char *
 binary_escape(unsigned char *from, size_t from_length,
                size_t *to_length, PGconn *conn)
 {
-#if PG_VERSION_HEX >= 0x080104
+#if PG_VERSION_NUM >= 80104
     if (conn)
         return PQescapeByteaConn(conn, from, from_length, to_length);
     else

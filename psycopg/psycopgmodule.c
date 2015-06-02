@@ -185,7 +185,7 @@ psyco_libcrypto_threads_init(void)
     if (PyImport_ImportModule("ssl") != NULL) {
         /* disable libcrypto setup in libpq, so it won't stomp on the callbacks
            that have already been set up */
-#if PG_VERSION_HEX >= 0x080400
+#if PG_VERSION_NUM >= 80400
         PQinitOpenSSL(1, 0);
 #endif
     }
@@ -305,7 +305,7 @@ exit:
 static PyObject*
 psyco_libpq_version(PyObject *self)
 {
-#if PG_VERSION_HEX >= 0x090100
+#if PG_VERSION_NUM >= 90100
     return PyInt_FromLong(PQlibVersion());
 #else
     PyErr_SetString(NotSupportedError, "version discovery is not supported in libpq < 9.1");

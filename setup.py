@@ -419,9 +419,6 @@ class psycopg_build_ext(build_ext):
             define_macros.append(("PG_VERSION_NUM", "%d%02d%02d" %
                                   (pgmajor, pgminor, pgpatch)))
 
-            define_macros.append(("PG_VERSION_HEX", "0x%02X%02X%02X" %
-                                  (pgmajor, pgminor, pgpatch)))
-
             # enable lo64 if libpq >= 9.3 and Python 64 bits
             if (pgmajor, pgminor) >= (9, 3) and is_py_64():
                 define_macros.append(("HAVE_LO64", "1"))
