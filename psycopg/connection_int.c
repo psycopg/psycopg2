@@ -111,41 +111,60 @@ void
 conn_notice_process(connectionObject *self)
 {
     struct connectionObject_notice *notice;
-    Py_ssize_t nnotices;
+    PyObject *msg = NULL;
+    PyObject *tmp = NULL;
+    static PyObject *append;
 
     if (NULL == self->notice_pending) {
         return;
     }
 
-    notice =  self->notice_pending;
+    if (!append) {
+        if (!(append = Text_FromUTF8("append"))) {
+            goto error;
+        }
+    }
 
+    notice = self->notice_pending;
     while (notice != NULL) {
-        PyObject *msg;
-        msg = conn_text_from_chars(self, notice->message);
         Dprintf("conn_notice_process: %s", notice->message);
 
-        if (msg) {
-            PyList_Append(self->notice_list, msg);
-            Py_DECREF(msg);
+        if (!(msg = conn_text_from_chars(self, notice->message))) { goto error; }
+
+        if (!(tmp = PyObject_CallMethodObjArgs(
+                self->notice_list, append, msg, NULL))) {
+
+            goto error;
         }
-        else {
-            /* We don't really have a way to report errors, so gulp it.
-             * The function should only fail for out of memory, so we are
-             * likely going to die anyway. */
-            PyErr_Clear();
-        }
+
+        Py_DECREF(tmp); tmp = NULL;
+        Py_DECREF(msg); msg = NULL;
 
         notice = notice->next;
     }
 
     /* Remove the oldest item if the queue is getting too long. */
-    nnotices = PyList_GET_SIZE(self->notice_list);
-    if (nnotices > CONN_NOTICES_LIMIT) {
-        PySequence_DelSlice(self->notice_list,
-            0, nnotices - CONN_NOTICES_LIMIT);
+    if (PyList_Check(self->notice_list)) {
+        Py_ssize_t nnotices;
+        nnotices = PyList_GET_SIZE(self->notice_list);
+        if (nnotices > CONN_NOTICES_LIMIT) {
+            if (-1 == PySequence_DelSlice(self->notice_list,
+                    0, nnotices - CONN_NOTICES_LIMIT)) {
+                PyErr_Clear();
+            }
+        }
     }
 
     conn_notice_clean(self);
+    return;
+
+error:
+    Py_XDECREF(tmp);
+    Py_XDECREF(msg);
+    conn_notice_clean(self);
+
+    /* TODO: the caller doesn't expects errors from us */
+    PyErr_Clear();
 }
 
 void
@@ -177,6 +196,15 @@ conn_notifies_process(connectionObject *self)
     PGnotify *pgn = NULL;
     PyObject *notify = NULL;
     PyObject *pid = NULL, *channel = NULL, *payload = NULL;
+    PyObject *tmp = NULL;
+
+    static PyObject *append;
+
+    if (!append) {
+        if (!(append = Text_FromUTF8("append"))) {
+            goto error;
+        }
+    }
 
     while ((pgn = PQnotifies(self->pgconn)) != NULL) {
 
@@ -196,7 +224,11 @@ conn_notifies_process(connectionObject *self)
         Py_DECREF(channel); channel = NULL;
         Py_DECREF(payload); payload = NULL;
 
-        PyList_Append(self->notifies, (PyObject *)notify);
+        if (!(tmp = PyObject_CallMethodObjArgs(
+                self->notifies, append, notify, NULL))) {
+            goto error;
+        }
+        Py_DECREF(tmp); tmp = NULL;
 
         Py_DECREF(notify); notify = NULL;
         PQfreemem(pgn); pgn = NULL;
@@ -205,6 +237,7 @@ conn_notifies_process(connectionObject *self)
 
 error:
     if (pgn) { PQfreemem(pgn); }
+    Py_XDECREF(tmp);
     Py_XDECREF(notify);
     Py_XDECREF(pid);
     Py_XDECREF(channel);
