@@ -107,6 +107,7 @@ struct connectionObject {
     /* notice processing */
     PyObject *notice_list;
     struct connectionObject_notice *notice_pending;
+    struct connectionObject_notice *last_notice;
 
     /* notifies */
     PyObject *notifies;

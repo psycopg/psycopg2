@@ -87,13 +87,20 @@ conn_notice_callback(void *args, const char *message)
         /* Discard the notice in case of failed allocation. */
         return;
     }
+    notice->next = NULL;
     notice->message = strdup(message);
     if (NULL == notice->message) {
         free(notice);
         return;
     }
-    notice->next = self->notice_pending;
-    self->notice_pending = notice;
+
+    if (NULL == self->last_notice) {
+        self->notice_pending = self->last_notice = notice;
+    }
+    else {
+        self->last_notice->next = notice;
+        self->last_notice = notice;
+    }
 }
 
 /* Expose the notices received as Python objects.
@@ -111,17 +118,14 @@ conn_notice_process(connectionObject *self)
     }
 
     notice =  self->notice_pending;
-    nnotices = PyList_GET_SIZE(self->notice_list);
 
     while (notice != NULL) {
         PyObject *msg;
         msg = conn_text_from_chars(self, notice->message);
         Dprintf("conn_notice_process: %s", notice->message);
 
-        /* Respect the order in which notices were produced,
-           because in notice_list they are reversed (see ticket #9) */
         if (msg) {
-            PyList_Insert(self->notice_list, nnotices, msg);
+            PyList_Append(self->notice_list, msg);
             Py_DECREF(msg);
         }
         else {
@@ -158,7 +162,7 @@ conn_notice_clean(connectionObject *self)
         free(tmp);
     }
 
-    self->notice_pending = NULL;
+    self->last_notice = self->notice_pending = NULL;
 }
 
 
