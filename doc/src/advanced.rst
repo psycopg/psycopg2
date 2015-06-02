@@ -312,6 +312,10 @@ received from a previous version server will have the
     Added `~psycopg2.extensions.Notify` object and handling notification
     payload.
 
+.. versionchanged:: 2.7
+    The `~connection.notifies` attribute is writable: it is possible to
+    replace it with any object exposing an `!append()` method. An useful
+    example would be to use a `~collections.deque` object.
 
 
 .. index::

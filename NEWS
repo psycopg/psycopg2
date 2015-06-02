@@ -10,6 +10,9 @@ New features:
   `~psycopg2.extensions.libpq_version()` to inspect the version of the
   ``libpq`` library the module was compiled/loaded with
   (:tickets:`#35, #323`).
+- The attributes `~connection.notices` and `~connection.notifies` can be
+  customized replacing them with any object exposing an `!append()` method
+  (:ticket:`#326`).
 
 
 What's new in psycopg 2.6.1

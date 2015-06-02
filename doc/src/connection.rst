@@ -483,13 +483,21 @@ The ``connection`` class
             ['NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "foo_pkey" for table "foo"\n',
              'NOTICE:  CREATE TABLE will create implicit sequence "foo_id_seq" for serial column "foo.id"\n']
 
+        .. versionchanged:: 2.7
+            The `!notices` attribute is writable: the user may replace it
+            with any Python object exposing an `!append()` method. If
+            appending raises an exception the notice is silently
+            dropped.
+
         To avoid a leak in case excessive notices are generated, only the last
-        50 messages are kept.
+        50 messages are kept. This check is only in place if the `!notices`
+        attribute is a list: if any other object is used it will be up to the
+        user to guard from leakage.
 
         You can configure what messages to receive using `PostgreSQL logging
         configuration parameters`__ such as ``log_statement``,
         ``client_min_messages``, ``log_min_duration_statement`` etc.
-        
+
         .. __: http://www.postgresql.org/docs/current/static/runtime-config-logging.html
 
 
@@ -505,6 +513,12 @@ The ``connection`` class
             list was composed by 2 items tuples :samp:`({pid},{channel})` and
             the payload was not accessible. To keep backward compatibility,
             `!Notify` objects can still be accessed as 2 items tuples.
+
+        .. versionchanged:: 2.7
+            The `!notifies` attribute is writable: the user may replace it
+            with any Python object exposing an `!append()` method. If
+            appending raises an exception the notification is silently
+            dropped.
 
 
     .. attribute:: cursor_factory
