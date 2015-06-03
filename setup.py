@@ -462,6 +462,7 @@ data_files = []
 sources = [
     'psycopgmodule.c',
     'green.c', 'pqpath.c', 'utils.c', 'bytes_format.c',
+    'libpq_support.c', 'win32_support.c',
 
     'connection_int.c', 'connection_type.c',
     'cursor_int.c', 'cursor_type.c',
@@ -481,6 +482,7 @@ depends = [
     'config.h', 'pgtypes.h', 'psycopg.h', 'python.h', 'connection.h',
     'cursor.h', 'diagnostics.h', 'error.h', 'green.h', 'lobject.h',
     'notify.h', 'pqpath.h', 'xid.h',
+    'libpq_support.h', 'win32_support.h',
 
     'adapter_asis.h', 'adapter_binary.h', 'adapter_datetime.h',
     'adapter_list.h', 'adapter_pboolean.h', 'adapter_pdecimal.h',

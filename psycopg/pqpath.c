@@ -40,13 +40,14 @@
 #include "psycopg/pgtypes.h"
 #include "psycopg/error.h"
 
+#include "psycopg/libpq_support.h"
 #include "libpq-fe.h"
 
-/* htonl, ntohl */
 #ifdef _WIN32
+/* select() */
 #include <winsock2.h>
-#else
-#include <arpa/inet.h>
+/* gettimeofday() */
+#include "win32_support.h"
 #endif
 
 extern HIDDEN PyObject *psyco_DescriptionType;
@@ -1518,82 +1519,6 @@ _pq_copy_out_v3(cursorObject *curs)
 exit:
     Py_XDECREF(func);
     return ret;
-}
-
-/* support routines taken from pg_basebackup/streamutil.c */
-/* type and constant definitions from internal postgres includes */
-typedef unsigned int uint32;
-typedef unsigned PG_INT64_TYPE XLogRecPtr;
-
-#define InvalidXLogRecPtr ((XLogRecPtr) 0)
-
-/* Julian-date equivalents of Day 0 in Unix and Postgres reckoning */
-#define UNIX_EPOCH_JDATE	2440588 /* == date2j(1970, 1, 1) */
-#define POSTGRES_EPOCH_JDATE	2451545 /* == date2j(2000, 1, 1) */
-
-#define SECS_PER_DAY	86400
-#define USECS_PER_SEC	1000000LL
-
-/*
- * Frontend version of GetCurrentTimestamp(), since we are not linked with
- * backend code. The protocol always uses integer timestamps, regardless of
- * server setting.
- */
-static pg_int64
-feGetCurrentTimestamp(void)
-{
-    pg_int64 result;
-    struct timeval tp;
-
-    gettimeofday(&tp, NULL);
-
-    result = (pg_int64) tp.tv_sec -
-        ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
-
-    result = (result * USECS_PER_SEC) + tp.tv_usec;
-
-    return result;
-}
-
-/*
- * Converts an int64 to network byte order.
- */
-static void
-fe_sendint64(pg_int64 i, char *buf)
-{
-    uint32 n32;
-
-    /* High order half first, since we're doing MSB-first */
-    n32 = (uint32) (i >> 32);
-    n32 = htonl(n32);
-    memcpy(&buf[0], &n32, 4);
-
-    /* Now the low order half */
-    n32 = (uint32) i;
-    n32 = htonl(n32);
-    memcpy(&buf[4], &n32, 4);
-}
-
-/*
- * Converts an int64 from network byte order to native format.
- */
-static pg_int64
-fe_recvint64(char *buf)
-{
-    pg_int64 result;
-    uint32 h32;
-    uint32 l32;
-
-    memcpy(&h32, buf, 4);
-    memcpy(&l32, buf + 4, 4);
-    h32 = ntohl(h32);
-    l32 = ntohl(l32);
-
-    result = h32;
-    result <<= 32;
-    result |= l32;
-
-    return result;
 }
 
 static int
