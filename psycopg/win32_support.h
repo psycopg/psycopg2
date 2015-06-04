@@ -30,7 +30,11 @@
 #include <sys/time.h>
 
 #ifdef _WIN32
+#ifndef __MINGW32__
 HIDDEN int gettimeofday(struct timeval * tp, struct timezone * tzp);
+#endif
+
+HIDDEN void timersub(struct timeval *a, struct timeval *b, struct timeval *c);
 #endif
 
 #endif /* !defined(PSYCOPG_WIN32_SUPPORT_H) */

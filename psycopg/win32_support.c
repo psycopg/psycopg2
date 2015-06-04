@@ -29,6 +29,8 @@
 #include "psycopg/win32_support.h"
 
 #ifdef _WIN32
+
+#ifndef __MINGW32__
 /* millisecond-precision port of gettimeofday for Win32, taken from
    src/port/gettimeofday.c in PostgreSQL core */
 
@@ -58,4 +60,17 @@ gettimeofday(struct timeval * tp, struct timezone * tzp)
 
     return 0;
 }
-#endif /* _WIN32 */
+#endif /* !defined(__MINGW32__) */
+
+/* timersub is missing on mingw */
+void
+timersub(struct timeval *a, struct timeval *b, struct timeval *c)
+{
+    c->tv_sec  = a->tv_sec  - b->tv_sec;
+    c->tv_usec = a->tv_usec - b->tv_usec;
+    if (tv_usec < 0) {
+        c->tv_usec += 1000000;
+        c->tv_sec  -= 1;
+    }
+}
+#endif /* defined(_WIN32) */

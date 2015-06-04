@@ -1616,15 +1616,14 @@ _pq_copy_both_v3(cursorObject *curs)
             ping_time = last_comm;
             ping_time.tv_sec += curs->keepalive_interval;
 
-            if (timercmp(&ping_time, &curr_time, >)) {
-                timersub(&ping_time, &curr_time, &time_diff);
-
+            timersub(&ping_time, &curr_time, &time_diff);
+            if (time_diff.tv_sec > 0) {
                 Py_BEGIN_ALLOW_THREADS;
                 sel = select(PQsocket(conn) + 1, &fds, NULL, NULL, &time_diff);
                 Py_END_ALLOW_THREADS;
             }
             else {
-                sel = 0; /* pretend select() timed out */
+                sel = 0; /* we're past target time, pretend select() timed out */
             }
 
             if (sel < 0) {
