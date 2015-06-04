@@ -85,6 +85,7 @@
     <None Include="psycopg\config.h" />
     <None Include="psycopg\connection.h" />
     <None Include="psycopg\cursor.h" />
+    <None Include="psycopg\libpq_support.h" />
     <None Include="psycopg\microprotocols.h" />
     <None Include="psycopg\microprotocols_proto.h" />
     <None Include="psycopg\pgtypes.h" />
@@ -93,6 +94,7 @@
     <None Include="psycopg\python.h" />
     <None Include="psycopg\typecast.h" />
     <None Include="psycopg\typecast_binary.h" />
+    <None Include="psycopg\win32_support.h" />
     <None Include="scripts\buildtypes.py" />
     <None Include="scripts\maketypes.sh" />
     <None Include="ZPsycopgDA\dtml\add.dtml" />
@@ -217,6 +219,7 @@
     <Compile Include="psycopg\connection_type.c" />
     <Compile Include="psycopg\cursor_int.c" />
     <Compile Include="psycopg\cursor_type.c" />
+    <Compile Include="psycopg\libpq_support.c" />
     <Compile Include="psycopg\microprotocols.c" />
     <Compile Include="psycopg\microprotocols_proto.c" />
     <Compile Include="psycopg\pqpath.c" />
@@ -229,6 +232,7 @@
     <Compile Include="psycopg\typecast_datetime.c" />
     <Compile Include="psycopg\typecast_mxdatetime.c" />
     <Compile Include="psycopg\utils.c" />
+    <Compile Include="psycopg\win32_support.c" />
     <Compile Include="psycopg\lobject_int.c" />
     <Compile Include="psycopg\lobject_type.c" />
     <Compile Include="psycopg\adapter_pfloat.c" />
