@@ -1,4 +1,4 @@
-/* libpq_support.h - definitions for libpq_support.c
+/* replication_message.h - definition for the psycopg ReplicationMessage type
  *
  * Copyright (C) 2003-2015 Federico Di Gregorio <fog@debian.org>
  *
@@ -22,23 +22,31 @@
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
  * License for more details.
  */
-#ifndef PSYCOPG_LIBPQ_SUPPORT_H
-#define PSYCOPG_LIBPQ_SUPPORT_H 1
 
-#include "psycopg/config.h"
+#ifndef PSYCOPG_REPLICATION_MESSAGE_H
+#define PSYCOPG_REPLICATION_MESSAGE_H 1
 
-/* type and constant definitions from internal postgres includes */
-typedef unsigned int uint32;
-typedef unsigned PG_INT64_TYPE XLogRecPtr;
+#include "libpq_support.h"
 
-#define InvalidXLogRecPtr ((XLogRecPtr) 0)
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-/* have to use lowercase %x, as PyString_FromFormat can't do %X */
-#define XLOGFMTSTR "%x/%x"
-#define XLOGFMTARGS(x) ((uint32)((x) >> 32)), ((uint32)((x) & 0xFFFFFFFF))
+extern HIDDEN PyTypeObject replicationMessageType;
 
-HIDDEN pg_int64 feGetCurrentTimestamp(void);
-HIDDEN void fe_sendint64(pg_int64 i, char *buf);
-HIDDEN pg_int64 fe_recvint64(char *buf);
+/* the typedef is forward-declared in psycopg.h */
+struct replicationMessageObject {
+    PyObject_HEAD
 
-#endif /* !defined(PSYCOPG_LIBPQ_SUPPORT_H) */
+    PyObject *payload;
+
+    XLogRecPtr  data_start;
+    XLogRecPtr  wal_end;
+    /* send_time */
+};
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* !defined(PSYCOPG_REPLICATION_MESSAGE_H) */

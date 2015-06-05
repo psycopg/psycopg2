@@ -574,6 +574,10 @@ class ReplicationCursor(_cursor):
 
         return self.start_replication_expert(o, command, keepalive_interval)
 
+    # thin wrapper
+    def sync_server(self, msg):
+        return self.replication_sync_server(msg)
+
 
 # a dbtype and adapter for Python UUID type
 

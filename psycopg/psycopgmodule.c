@@ -28,6 +28,7 @@
 
 #include "psycopg/connection.h"
 #include "psycopg/cursor.h"
+#include "psycopg/replication_message.h"
 #include "psycopg/green.h"
 #include "psycopg/lobject.h"
 #include "psycopg/notify.h"
@@ -784,6 +785,9 @@ INIT_MODULE(_psycopg)(void)
 
     Py_TYPE(&cursorType) = &PyType_Type;
     if (PyType_Ready(&cursorType) == -1) goto exit;
+
+    Py_TYPE(&replicationMessageType) = &PyType_Type;
+    if (PyType_Ready(&replicationMessageType) == -1) goto exit;
 
     Py_TYPE(&typecastType) = &PyType_Type;
     if (PyType_Ready(&typecastType) == -1) goto exit;

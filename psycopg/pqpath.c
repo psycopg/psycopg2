@@ -35,6 +35,7 @@
 #include "psycopg/pqpath.h"
 #include "psycopg/connection.h"
 #include "psycopg/cursor.h"
+#include "psycopg/replication_message.h"
 #include "psycopg/green.h"
 #include "psycopg/typecast.h"
 #include "psycopg/pgtypes.h"
@@ -1528,9 +1529,8 @@ sendFeedback(PGconn *conn, XLogRecPtr written_lsn, XLogRecPtr fsync_lsn,
     char replybuf[1 + 8 + 8 + 8 + 8 + 1];
     int len = 0;
 
-    Dprintf("_pq_copy_both_v3: confirming write up to %X/%X, flush to %X/%X\n",
-            (uint32) (written_lsn >> 32), (uint32) written_lsn,
-            (uint32) (fsync_lsn >> 32), (uint32) fsync_lsn);
+    Dprintf("_pq_copy_both_v3: confirming write up to "XLOGFMTSTR", flush to "XLOGFMTSTR,
+            XLOGFMTARGS(written_lsn), XLOGFMTARGS(fsync_lsn));
 
     replybuf[len] = 'r';
     len += 1;
@@ -1559,6 +1559,7 @@ _pq_copy_both_v3(cursorObject *curs)
     PyObject *tmp = NULL;
     PyObject *write_func = NULL;
     PyObject *obj = NULL;
+    replicationMessageObject *msg = NULL;
     int ret = -1;
     int is_text;
 
@@ -1568,9 +1569,9 @@ _pq_copy_both_v3(cursorObject *curs)
     struct timeval last_comm, curr_time, ping_time, time_diff;
     int len, hdr, reply, sel;
 
-    XLogRecPtr written_lsn = InvalidXLogRecPtr;
-    XLogRecPtr fsync_lsn = InvalidXLogRecPtr;
-    XLogRecPtr wal_end = InvalidXLogRecPtr;
+    XLogRecPtr written_lsn = InvalidXLogRecPtr,
+        fsync_lsn = InvalidXLogRecPtr,
+        data_start, wal_end;
 
     if (!curs->copyfile) {
         PyErr_SetString(ProgrammingError,
@@ -1666,7 +1667,12 @@ _pq_copy_both_v3(cursorObject *curs)
                     goto exit;
                 }
 
-                wal_end = fe_recvint64(buffer + 1 + 8);
+                data_start = fe_recvint64(buffer + 1);
+                wal_end    = fe_recvint64(buffer + 1 + 8);
+                /*send_time  = fe_recvint64(buffer + 1 + 8 + 8);*/
+
+                Dprintf("_pq_copy_both_v3: data_start="XLOGFMTSTR", wal_end="XLOGFMTSTR,
+                        XLOGFMTARGS(data_start), XLOGFMTARGS(wal_end));
 
                 if (is_text) {
                     obj = PyUnicode_Decode(buffer + hdr, len - hdr, curs->conn->codec, NULL);
@@ -1676,21 +1682,36 @@ _pq_copy_both_v3(cursorObject *curs)
                 }
                 if (!obj) { goto exit; }
 
-                tmp = PyObject_CallFunctionObjArgs(write_func, obj, NULL);
+                msg = (replicationMessageObject *)
+                    PyObject_CallFunctionObjArgs((PyObject *)&replicationMessageType,
+                                                 obj, NULL);
                 Py_DECREF(obj);
+                if (!msg) { goto exit; }
+
+                msg->data_start = data_start;
+                msg->wal_end = wal_end;
+
+                tmp = PyObject_CallFunctionObjArgs(write_func, msg, NULL);
 
                 if (tmp == NULL) {
                     Dprintf("_pq_copy_both_v3: write_func returned NULL");
                     goto exit;
                 }
+                Py_DECREF(tmp);
 
                 /* update the LSN position we've written up to */
                 if (written_lsn < wal_end)
                     written_lsn = wal_end;
 
-                /* if write() returned true-ish, we confirm LSN with the server */
-                if (PyObject_IsTrue(tmp)) {
-                    fsync_lsn = written_lsn;
+                /* if requested by sync_server(msg), we confirm LSN with the server */
+                if (curs->repl_sync_msg) {
+                    Dprintf("_pq_copy_both_v3: server sync requested at "XLOGFMTSTR,
+                            XLOGFMTARGS(curs->repl_sync_msg->wal_end));
+
+                    if (fsync_lsn < curs->repl_sync_msg->wal_end)
+                        fsync_lsn = curs->repl_sync_msg->wal_end;
+
+                    Py_CLEAR(curs->repl_sync_msg);
 
                     if (!sendFeedback(conn, written_lsn, fsync_lsn, 0)) {
                         pq_raise(curs->conn, curs, NULL);
@@ -1698,8 +1719,14 @@ _pq_copy_both_v3(cursorObject *curs)
                     }
                     gettimeofday(&last_comm, NULL);
                 }
-                Py_DECREF(tmp);
 
+                if (curs->stop_replication) {
+                    Dprintf("_pq_copy_both_v3: stop_replication flag set by write_func");
+                    break;
+                }
+
+                Py_DECREF(msg);
+                msg = NULL;
             }
             else if (buffer[0] == 'k') {
                 /* msgtype(1), walEnd(8), sendTime(8), reply(1) */
@@ -1751,6 +1778,7 @@ exit:
         PQfreemem(buffer);
     }
 
+    Py_XDECREF(msg);
     Py_XDECREF(write_func);
     return ret;
 }

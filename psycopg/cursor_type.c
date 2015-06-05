@@ -28,6 +28,7 @@
 
 #include "psycopg/cursor.h"
 #include "psycopg/connection.h"
+#include "psycopg/replication_message.h"
 #include "psycopg/green.h"
 #include "psycopg/pqpath.h"
 #include "psycopg/typecast.h"
@@ -1605,15 +1606,66 @@ psyco_curs_start_replication_expert(cursorObject *self, PyObject *args)
     self->copysize = 0;
     Py_INCREF(file);
     self->copyfile = file;
+    self->in_replication = 1;
     self->keepalive_interval = keepalive_interval;
+    self->stop_replication = 0;
+    self->repl_sync_msg = NULL;
 
     if (pq_execute(self, command, 0, 1 /* no_result */, 1 /* no_begin */) >= 0) {
         res = Py_None;
         Py_INCREF(Py_None);
     }
+
+    Py_CLEAR(self->repl_sync_msg);
     Py_CLEAR(self->copyfile);
+    self->in_replication = 0;
 
     return res;
+}
+
+#define psyco_curs_stop_replication_doc \
+"start_replication() -- Set flag to break out of endless loop in start_replication()."
+
+static PyObject *
+psyco_curs_stop_replication(cursorObject *self)
+{
+    EXC_IF_CURS_CLOSED(self);
+
+    if (!self->in_replication) {
+        PyErr_SetString(ProgrammingError,
+                        "stop_replication() called when not in streaming replication loop");
+    } else {
+        self->stop_replication = 1;
+    }
+
+    Py_RETURN_NONE;
+}
+
+#define psyco_curs_replication_sync_server_doc \
+"replication_sync_server(msg) -- Set flag to sync the server up to this replication message."
+
+static PyObject *
+psyco_curs_replication_sync_server(cursorObject *self, PyObject *args)
+{
+    replicationMessageObject *msg;
+
+    EXC_IF_CURS_CLOSED(self);
+
+    if (!PyArg_ParseTuple(args, "O!", &replicationMessageType, &msg)) {
+        return NULL;
+    }
+
+    if (!self->in_replication) {
+        PyErr_SetString(ProgrammingError,
+                        "replication_sync_server() called when not in streaming replication loop");
+    } else {
+        Py_CLEAR(self->repl_sync_msg);
+
+        self->repl_sync_msg = msg;
+        Py_XINCREF(self->repl_sync_msg);
+    }
+
+    Py_RETURN_NONE;
 }
 
 /* extension: closed - return true if cursor is closed */
@@ -1792,6 +1844,10 @@ static struct PyMethodDef cursorObject_methods[] = {
      METH_VARARGS|METH_KEYWORDS, psyco_curs_copy_expert_doc},
     {"start_replication_expert", (PyCFunction)psyco_curs_start_replication_expert,
      METH_VARARGS, psyco_curs_start_replication_expert_doc},
+    {"stop_replication", (PyCFunction)psyco_curs_stop_replication,
+     METH_NOARGS, psyco_curs_stop_replication_doc},
+    {"replication_sync_server", (PyCFunction)psyco_curs_replication_sync_server,
+     METH_VARARGS, psyco_curs_replication_sync_server_doc},
     {NULL}
 };
 
@@ -1908,6 +1964,7 @@ cursor_clear(cursorObject *self)
     Py_CLEAR(self->casts);
     Py_CLEAR(self->caster);
     Py_CLEAR(self->copyfile);
+    Py_CLEAR(self->repl_sync_msg);
     Py_CLEAR(self->tuple_factory);
     Py_CLEAR(self->tzinfo_factory);
     Py_CLEAR(self->query);
@@ -1997,6 +2054,7 @@ cursor_traverse(cursorObject *self, visitproc visit, void *arg)
     Py_VISIT(self->casts);
     Py_VISIT(self->caster);
     Py_VISIT(self->copyfile);
+    Py_VISIT(self->repl_sync_msg);
     Py_VISIT(self->tuple_factory);
     Py_VISIT(self->tzinfo_factory);
     Py_VISIT(self->query);
