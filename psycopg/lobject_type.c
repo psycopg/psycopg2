@@ -276,10 +276,8 @@ psyco_lobj_truncate(lobjectObject *self, PyObject *args)
 {
     Py_ssize_t len = 0;
 
-    Dprintf("psyco_lobj_truncate: Enter lobject object at %p", self);
     if (!PyArg_ParseTuple(args, "|n", &len))
         return NULL;
-    Dprintf("psyco_lobj_truncate: Parsed Successfully");
 
     EXC_IF_LOBJ_CLOSED(self);
     EXC_IF_LOBJ_LEVEL0(self);
