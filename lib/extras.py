@@ -569,7 +569,7 @@ class ReplicationCursor(_cursor):
             for k,v in options.iteritems():
                 if not command.endswith('('):
                     command += ", "
-                command += "%s %s" % (self.quote_ident(k), _A(str(v)).getquoted())
+                command += "%s %s" % (self.quote_ident(k), _A(str(v)))
             command += ")"
 
         return self.start_replication_expert(o, command, keepalive_interval)
