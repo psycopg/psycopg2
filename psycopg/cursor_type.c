@@ -36,8 +36,10 @@
 #include "psycopg/microprotocols_proto.h"
 
 #include <string.h>
-
 #include <stdlib.h>
+
+/* python */
+#include "datetime.h"
 
 
 /** DBAPI methods **/
@@ -1581,78 +1583,182 @@ exit:
 }
 
 #define psyco_curs_start_replication_expert_doc \
-"start_replication_expert(file, command, keepalive_interval) -- Start and consume replication stream with direct command."
+"start_replication_expert(command, writer=None, keepalive_interval=10) -- Start and consume replication stream with direct command."
 
 static PyObject *
-psyco_curs_start_replication_expert(cursorObject *self, PyObject *args)
+psyco_curs_start_replication_expert(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
-    PyObject *file, *res = NULL;
+    PyObject *writer = NULL, *res = NULL;
     char *command;
-    int keepalive_interval;
+    double keepalive_interval = 10;
+    static char *kwlist[] = {"command", "writer", "keepalive_interval", NULL};
 
-    if (!PyArg_ParseTuple(args, "O&si",
-                          _psyco_curs_has_write_check, &file,
-                          &command, &keepalive_interval)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s|Od", kwlist,
+                                     &command, &writer, &keepalive_interval)) {
         return NULL;
     }
 
     EXC_IF_CURS_CLOSED(self);
-    EXC_IF_CURS_ASYNC(self, start_replication_expert);
     EXC_IF_GREEN(start_replication_expert);
     EXC_IF_TPC_PREPARED(self->conn, start_replication_expert);
 
     Dprintf("psyco_curs_start_replication_expert: command = %s", command);
 
-    self->copysize = 0;
-    Py_INCREF(file);
-    self->copyfile = file;
-    self->in_replication = 1;
-    self->keepalive_interval = keepalive_interval;
-    self->stop_replication = 0;
-    self->repl_sync_lsn = InvalidXLogRecPtr;
+    if (keepalive_interval < 1.0) {
+        psyco_set_error(ProgrammingError, self, "keepalive_interval must be >= 1sec");
+        return NULL;
+    }
 
-    if (pq_execute(self, command, 0, 1 /* no_result */, 1 /* no_begin */) >= 0) {
+    self->copysize = 0;
+    Py_XINCREF(writer);
+    self->copyfile = writer;
+
+    self->repl_stop = 0;
+    self->repl_keepalive_interval.tv_sec  = (int)keepalive_interval;
+    self->repl_keepalive_interval.tv_usec =
+        (keepalive_interval - (int)keepalive_interval)*1.0e6;
+
+    self->repl_write_lsn = InvalidXLogRecPtr;
+    self->repl_flush_lsn = InvalidXLogRecPtr;
+    self->repl_apply_lsn = InvalidXLogRecPtr;
+    self->repl_feedback_pending = 0;
+
+    gettimeofday(&self->repl_last_io, NULL);
+
+    if (pq_execute(self, command, self->conn->async,
+                   1 /* no_result */, 1 /* no_begin */) >= 0) {
         res = Py_None;
-        Py_INCREF(Py_None);
+        Py_INCREF(res);
     }
 
     Py_CLEAR(self->copyfile);
-    self->in_replication = 0;
 
     return res;
 }
 
 #define psyco_curs_stop_replication_doc \
-"start_replication() -- Set flag to break out of endless loop in start_replication()."
+"stop_replication() -- Set flag to break out of endless loop in start_replication() on sync connection."
 
 static PyObject *
 psyco_curs_stop_replication(cursorObject *self)
 {
     EXC_IF_CURS_CLOSED(self);
 
-    if (!self->in_replication) {
-        PyErr_SetString(ProgrammingError,
-                        "stop_replication() called when not in streaming replication loop");
-    } else {
-        self->stop_replication = 1;
-    }
+    self->repl_stop = 1;
 
     Py_RETURN_NONE;
 }
 
-#define psyco_curs_replication_sync_server_doc \
-"replication_sync_server(msg) -- Set flag to sync the server up to this replication message."
+#define psyco_curs_read_replication_message_doc \
+"read_replication_message(decode=True) -- Try reading a replication message from the server (non-blocking)."
 
 static PyObject *
-psyco_curs_replication_sync_server(cursorObject *self, PyObject *args)
+psyco_curs_read_replication_message(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
-    EXC_IF_CURS_CLOSED(self);
+    int decode = 1;
+    static char *kwlist[] = {"decode", NULL};
 
-    if (!PyArg_ParseTuple(args, "K", &self->repl_sync_lsn)) {
+    EXC_IF_CURS_CLOSED(self);
+    EXC_IF_GREEN(read_replication_message);
+    EXC_IF_TPC_PREPARED(self->conn, read_replication_message);
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|i", kwlist,
+                                     &decode)) {
         return NULL;
     }
 
-    Py_RETURN_NONE;
+    return pq_read_replication_message(self, decode);
+}
+
+static PyObject *
+curs_flush_replication_feedback(cursorObject *self, int reply)
+{
+    if (!self->repl_feedback_pending)
+        Py_RETURN_FALSE;
+
+    if (pq_send_replication_feedback(self, reply)) {
+        self->repl_feedback_pending = 0;
+        Py_RETURN_TRUE;
+    } else {
+        self->repl_feedback_pending = 1;
+        Py_RETURN_FALSE;
+    }
+}
+
+#define psyco_curs_send_replication_feedback_doc \
+"send_replication_feedback(write_lsn=0, flush_lsn=0, apply_lsn=0, reply=False) -- Try sending a replication feedback message to the server and optionally request a reply."
+
+static PyObject *
+psyco_curs_send_replication_feedback(cursorObject *self, PyObject *args, PyObject *kwargs)
+{
+    XLogRecPtr write_lsn = InvalidXLogRecPtr,
+               flush_lsn = InvalidXLogRecPtr,
+               apply_lsn = InvalidXLogRecPtr;
+    int reply = 0;
+    static char* kwlist[] = {"write_lsn", "flush_lsn", "apply_lsn", "reply", NULL};
+
+    EXC_IF_CURS_CLOSED(self);
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|KKKi", kwlist,
+                                     &write_lsn, &flush_lsn, &apply_lsn, &reply)) {
+        return NULL;
+    }
+
+    if (write_lsn > self->repl_write_lsn)
+        self->repl_write_lsn = write_lsn;
+
+    if (flush_lsn > self->repl_flush_lsn)
+        self->repl_flush_lsn = flush_lsn;
+
+    if (apply_lsn > self->repl_apply_lsn)
+        self->repl_apply_lsn = apply_lsn;
+
+    self->repl_feedback_pending = 1;
+
+    return curs_flush_replication_feedback(self, reply);
+}
+
+#define psyco_curs_flush_replication_feedback_doc \
+"flush_replication_feedback(reply=False) -- Try flushing the latest pending replication feedback message to the server and optionally request a reply."
+
+static PyObject *
+psyco_curs_flush_replication_feedback(cursorObject *self, PyObject *args, PyObject *kwargs)
+{
+    int reply = 0;
+    static char *kwlist[] = {"reply", NULL};
+
+    EXC_IF_CURS_CLOSED(self);
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|i", kwlist,
+                                     &reply)) {
+        return NULL;
+    }
+
+    return curs_flush_replication_feedback(self, reply);
+}
+
+#define psyco_curs_replication_io_timestamp_doc \
+"replication_io_timestamp -- the timestamp of latest IO with the server"
+
+static PyObject *
+psyco_curs_get_replication_io_timestamp(cursorObject *self)
+{
+    PyObject *tval, *res = NULL;
+    double seconds;
+
+    EXC_IF_CURS_CLOSED(self);
+
+    // TODO: move to a one-call init function
+    PyDateTime_IMPORT;
+
+    seconds = self->repl_last_io.tv_sec + self->repl_last_io.tv_usec / 1.0e6;
+
+    tval = Py_BuildValue("(d)", seconds);
+    if (tval) {
+        res = PyDateTime_FromTimestamp(tval);
+        Py_DECREF(tval);
+    }
+    return res;
 }
 
 /* extension: closed - return true if cursor is closed */
@@ -1830,11 +1936,15 @@ static struct PyMethodDef cursorObject_methods[] = {
     {"copy_expert", (PyCFunction)psyco_curs_copy_expert,
      METH_VARARGS|METH_KEYWORDS, psyco_curs_copy_expert_doc},
     {"start_replication_expert", (PyCFunction)psyco_curs_start_replication_expert,
-     METH_VARARGS, psyco_curs_start_replication_expert_doc},
+     METH_VARARGS|METH_KEYWORDS, psyco_curs_start_replication_expert_doc},
     {"stop_replication", (PyCFunction)psyco_curs_stop_replication,
      METH_NOARGS, psyco_curs_stop_replication_doc},
-    {"replication_sync_server", (PyCFunction)psyco_curs_replication_sync_server,
-     METH_VARARGS, psyco_curs_replication_sync_server_doc},
+    {"read_replication_message", (PyCFunction)psyco_curs_read_replication_message,
+     METH_VARARGS|METH_KEYWORDS, psyco_curs_read_replication_message_doc},
+    {"send_replication_feedback", (PyCFunction)psyco_curs_send_replication_feedback,
+     METH_VARARGS|METH_KEYWORDS, psyco_curs_send_replication_feedback_doc},
+    {"flush_replication_feedback", (PyCFunction)psyco_curs_flush_replication_feedback,
+     METH_VARARGS|METH_KEYWORDS, psyco_curs_flush_replication_feedback_doc},
     {NULL}
 };
 
@@ -1885,6 +1995,9 @@ static struct PyGetSetDef cursorObject_getsets[] = {
       (getter)psyco_curs_scrollable_get,
       (setter)psyco_curs_scrollable_set,
       psyco_curs_scrollable_doc, NULL },
+    { "replication_io_timestamp",
+      (getter)psyco_curs_get_replication_io_timestamp, NULL,
+      psyco_curs_replication_io_timestamp_doc, NULL },
     {NULL}
 };
 

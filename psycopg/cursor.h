@@ -73,10 +73,13 @@ struct cursorObject {
 #define DEFAULT_COPYSIZE 16384
 #define DEFAULT_COPYBUFF  8192
 
-    int   in_replication;       /* we're in streaming replication loop */
-    int   stop_replication;     /* client requested to stop replication */
-    int   keepalive_interval;   /* interval for keepalive messages in replication mode */
-    XLogRecPtr repl_sync_lsn;   /* set when the client asks us to sync the server */
+    int         repl_stop;             /* if client requested to stop replication */
+    struct timeval repl_keepalive_interval;   /* interval for keepalive messages in replication mode */
+    XLogRecPtr  repl_write_lsn;        /* LSN stats for replication feedback messages */
+    XLogRecPtr  repl_flush_lsn;
+    XLogRecPtr  repl_apply_lsn;
+    int         repl_feedback_pending; /* flag set when we couldn't send the feedback to the server */
+    struct timeval repl_last_io;       /* timestamp of the last exchange with the server */
 
     PyObject *tuple_factory;    /* factory for result tuples */
     PyObject *tzinfo_factory;   /* factory for tzinfo objects */
