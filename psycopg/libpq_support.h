@@ -37,6 +37,13 @@ typedef unsigned PG_INT64_TYPE XLogRecPtr;
 #define XLOGFMTSTR "%x/%x"
 #define XLOGFMTARGS(x) ((uint32)((x) >> 32)), ((uint32)((x) & 0xFFFFFFFF))
 
+/* Julian-date equivalents of Day 0 in Unix and Postgres reckoning */
+#define UNIX_EPOCH_JDATE	2440588 /* == date2j(1970, 1, 1) */
+#define POSTGRES_EPOCH_JDATE	2451545 /* == date2j(2000, 1, 1) */
+
+#define SECS_PER_DAY	86400
+#define USECS_PER_SEC	1000000LL
+
 HIDDEN pg_int64 feGetCurrentTimestamp(void);
 HIDDEN void fe_sendint64(pg_int64 i, char *buf);
 HIDDEN pg_int64 fe_recvint64(char *buf);

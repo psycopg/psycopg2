@@ -41,13 +41,6 @@
 
 /* support routines taken from pg_basebackup/streamutil.c */
 
-/* Julian-date equivalents of Day 0 in Unix and Postgres reckoning */
-#define UNIX_EPOCH_JDATE	2440588 /* == date2j(1970, 1, 1) */
-#define POSTGRES_EPOCH_JDATE	2451545 /* == date2j(2000, 1, 1) */
-
-#define SECS_PER_DAY	86400
-#define USECS_PER_SEC	1000000LL
-
 /*
  * Frontend version of GetCurrentTimestamp(), since we are not linked with
  * backend code. The protocol always uses integer timestamps, regardless of

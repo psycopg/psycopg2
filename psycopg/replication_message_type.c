@@ -27,14 +27,31 @@
 #include "psycopg/psycopg.h"
 
 #include "psycopg/replication_message.h"
+#include "psycopg/libpq_support.h"
+
+#include "datetime.h"
+
+RAISES_NEG int
+psyco_replmsg_datetime_init(void)
+{
+    Dprintf("psyco_replmsg_datetime_init: datetime init");
+
+    PyDateTime_IMPORT;
+
+    if (!PyDateTimeAPI) {
+        PyErr_SetString(PyExc_ImportError, "datetime initialization failed");
+        return -1;
+    }
+    return 0;
+}
 
 
 static PyObject *
 replmsg_repr(replicationMessageObject *self)
 {
     return PyString_FromFormat(
-        "<replicationMessage object at %p; data_start: "XLOGFMTSTR"; wal_end: "XLOGFMTSTR">",
-        self, XLOGFMTARGS(self->data_start), XLOGFMTARGS(self->wal_end));
+        "<replicationMessage object at %p; data_start: "XLOGFMTSTR"; wal_end: "XLOGFMTSTR"; send_time: %lld>",
+        self, XLOGFMTARGS(self->data_start), XLOGFMTARGS(self->wal_end), self->send_time);
 }
 
 static int
@@ -65,6 +82,26 @@ replmsg_dealloc(PyObject* obj)
     replmsg_clear(obj);
 }
 
+#define psyco_replmsg_send_time_doc \
+"send_time - Timestamp of the replication message departure from the server."
+
+static PyObject *
+psyco_replmsg_get_send_time(replicationMessageObject *self)
+{
+    PyObject *tval, *res = NULL;
+    double t;
+
+    t = (double)self->send_time / USECS_PER_SEC +
+        ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
+
+    tval = Py_BuildValue("(d)", t);
+    if (tval) {
+        res = PyDateTime_FromTimestamp(tval);
+        Py_DECREF(tval);
+    }
+
+    return res;
+}
 
 #define OFFSETOF(x) offsetof(replicationMessageObject, x)
 
@@ -77,6 +114,12 @@ static struct PyMemberDef replicationMessageObject_members[] = {
         "TODO"},
     {"wal_end", T_ULONGLONG, OFFSETOF(wal_end), READONLY,
         "TODO"},
+    {NULL}
+};
+
+static struct PyGetSetDef replicationMessageObject_getsets[] = {
+    { "send_time", (getter)psyco_replmsg_get_send_time, NULL,
+      psyco_replmsg_send_time_doc, NULL },
     {NULL}
 };
 
@@ -115,7 +158,7 @@ PyTypeObject replicationMessageType = {
     0, /*tp_iternext*/
     0, /*tp_methods*/
     replicationMessageObject_members, /*tp_members*/
-    0, /*tp_getset*/
+    replicationMessageObject_getsets, /*tp_getset*/
     0, /*tp_base*/
     0,          /*tp_dict*/
     0,          /*tp_descr_get*/

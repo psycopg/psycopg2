@@ -1572,6 +1572,7 @@ _pq_copy_both_v3(cursorObject *curs)
     XLogRecPtr written_lsn = InvalidXLogRecPtr,
         fsync_lsn = InvalidXLogRecPtr,
         data_start, wal_end;
+    pg_int64 send_time;
 
     if (!curs->copyfile) {
         PyErr_SetString(ProgrammingError,
@@ -1669,10 +1670,10 @@ _pq_copy_both_v3(cursorObject *curs)
 
                 data_start = fe_recvint64(buffer + 1);
                 wal_end    = fe_recvint64(buffer + 1 + 8);
-                /*send_time  = fe_recvint64(buffer + 1 + 8 + 8);*/
+                send_time  = fe_recvint64(buffer + 1 + 8 + 8);
 
-                Dprintf("_pq_copy_both_v3: data_start="XLOGFMTSTR", wal_end="XLOGFMTSTR,
-                        XLOGFMTARGS(data_start), XLOGFMTARGS(wal_end));
+                Dprintf("_pq_copy_both_v3: data_start="XLOGFMTSTR", wal_end="XLOGFMTSTR", send_time=%lld",
+                        XLOGFMTARGS(data_start), XLOGFMTARGS(wal_end), send_time);
 
                 if (is_text) {
                     obj = PyUnicode_Decode(buffer + hdr, len - hdr, curs->conn->codec, NULL);
@@ -1690,6 +1691,7 @@ _pq_copy_both_v3(cursorObject *curs)
 
                 msg->data_start = data_start;
                 msg->wal_end = wal_end;
+                msg->send_time = send_time;
 
                 tmp = PyObject_CallFunctionObjArgs(write_func, msg, NULL);
 

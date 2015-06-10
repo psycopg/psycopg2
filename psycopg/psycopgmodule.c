@@ -869,6 +869,7 @@ INIT_MODULE(_psycopg)(void)
     /* Initialize the PyDateTimeAPI everywhere is used */
     PyDateTime_IMPORT;
     if (psyco_adapter_datetime_init()) { goto exit; }
+    if (psyco_replmsg_datetime_init()) { goto exit; }
 
     Py_TYPE(&pydatetimeType) = &PyType_Type;
     if (PyType_Ready(&pydatetimeType) == -1) goto exit;
