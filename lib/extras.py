@@ -39,6 +39,7 @@ import psycopg2
 from psycopg2 import extensions as _ext
 from psycopg2.extensions import cursor as _cursor
 from psycopg2.extensions import connection as _connection
+from psycopg2.extensions import replicationMessage as ReplicationMessage
 from psycopg2.extensions import adapt as _A
 from psycopg2.extensions import b
 
@@ -515,13 +516,13 @@ class ReplicationCursor(_cursor):
         else:
             raise RuntimeError("unrecognized replication slot type")
 
-        return self.execute(command)
+        self.execute(command)
 
     def drop_replication_slot(self, slot_name):
         """Drop streaming replication slot."""
 
         command = "DROP_REPLICATION_SLOT %s" % self.quote_ident(slot_name)
-        return self.execute(command)
+        self.execute(command)
 
     def start_replication(self, o, slot_type, slot_name=None, start_lsn=None,
                           timeline=0, keepalive_interval=10, options=None):

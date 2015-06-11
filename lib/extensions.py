@@ -56,7 +56,7 @@ try:
 except ImportError:
     pass
 
-from psycopg2._psycopg import adapt, adapters, encodings, connection, cursor, lobject, Xid
+from psycopg2._psycopg import adapt, adapters, encodings, connection, cursor, replicationMessage, lobject, Xid
 from psycopg2._psycopg import string_types, binary_types, new_type, new_array_type, register_type
 from psycopg2._psycopg import ISQLQuote, Notify, Diagnostics, Column
 
