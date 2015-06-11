@@ -26,6 +26,7 @@
 #ifndef PSYCOPG_REPLICATION_MESSAGE_H
 #define PSYCOPG_REPLICATION_MESSAGE_H 1
 
+#include "cursor.h"
 #include "libpq_support.h"
 
 #ifdef __cplusplus
@@ -38,6 +39,7 @@ extern HIDDEN PyTypeObject replicationMessageType;
 struct replicationMessageObject {
     PyObject_HEAD
 
+    cursorObject *cursor;
     PyObject *payload;
 
     XLogRecPtr  data_start;

@@ -1685,7 +1685,7 @@ _pq_copy_both_v3(cursorObject *curs)
 
                 msg = (replicationMessageObject *)
                     PyObject_CallFunctionObjArgs((PyObject *)&replicationMessageType,
-                                                 obj, NULL);
+                                                 curs, obj, NULL);
                 Py_DECREF(obj);
                 if (!msg) { goto exit; }
 
@@ -1706,14 +1706,14 @@ _pq_copy_both_v3(cursorObject *curs)
                     written_lsn = wal_end;
 
                 /* if requested by sync_server(msg), we confirm LSN with the server */
-                if (curs->repl_sync_msg) {
+                if (curs->repl_sync_lsn != InvalidXLogRecPtr) {
                     Dprintf("_pq_copy_both_v3: server sync requested at "XLOGFMTSTR,
-                            XLOGFMTARGS(curs->repl_sync_msg->wal_end));
+                            XLOGFMTARGS(curs->repl_sync_lsn));
 
-                    if (fsync_lsn < curs->repl_sync_msg->wal_end)
-                        fsync_lsn = curs->repl_sync_msg->wal_end;
+                    if (fsync_lsn < curs->repl_sync_lsn)
+                        fsync_lsn = curs->repl_sync_lsn;
 
-                    Py_CLEAR(curs->repl_sync_msg);
+                    curs->repl_sync_lsn = InvalidXLogRecPtr;
 
                     if (!sendFeedback(conn, written_lsn, fsync_lsn, 0)) {
                         pq_raise(curs->conn, curs, NULL);

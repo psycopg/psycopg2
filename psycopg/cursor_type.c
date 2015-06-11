@@ -1609,14 +1609,13 @@ psyco_curs_start_replication_expert(cursorObject *self, PyObject *args)
     self->in_replication = 1;
     self->keepalive_interval = keepalive_interval;
     self->stop_replication = 0;
-    self->repl_sync_msg = NULL;
+    self->repl_sync_lsn = InvalidXLogRecPtr;
 
     if (pq_execute(self, command, 0, 1 /* no_result */, 1 /* no_begin */) >= 0) {
         res = Py_None;
         Py_INCREF(Py_None);
     }
 
-    Py_CLEAR(self->repl_sync_msg);
     Py_CLEAR(self->copyfile);
     self->in_replication = 0;
 
@@ -1647,22 +1646,10 @@ psyco_curs_stop_replication(cursorObject *self)
 static PyObject *
 psyco_curs_replication_sync_server(cursorObject *self, PyObject *args)
 {
-    replicationMessageObject *msg;
-
     EXC_IF_CURS_CLOSED(self);
 
-    if (!PyArg_ParseTuple(args, "O!", &replicationMessageType, &msg)) {
+    if (!PyArg_ParseTuple(args, "K", &self->repl_sync_lsn)) {
         return NULL;
-    }
-
-    if (!self->in_replication) {
-        PyErr_SetString(ProgrammingError,
-                        "replication_sync_server() called when not in streaming replication loop");
-    } else {
-        Py_CLEAR(self->repl_sync_msg);
-
-        self->repl_sync_msg = msg;
-        Py_XINCREF(self->repl_sync_msg);
     }
 
     Py_RETURN_NONE;
@@ -1964,7 +1951,6 @@ cursor_clear(cursorObject *self)
     Py_CLEAR(self->casts);
     Py_CLEAR(self->caster);
     Py_CLEAR(self->copyfile);
-    Py_CLEAR(self->repl_sync_msg);
     Py_CLEAR(self->tuple_factory);
     Py_CLEAR(self->tzinfo_factory);
     Py_CLEAR(self->query);
@@ -2054,7 +2040,6 @@ cursor_traverse(cursorObject *self, visitproc visit, void *arg)
     Py_VISIT(self->casts);
     Py_VISIT(self->caster);
     Py_VISIT(self->copyfile);
-    Py_VISIT(self->repl_sync_msg);
     Py_VISIT(self->tuple_factory);
     Py_VISIT(self->tzinfo_factory);
     Py_VISIT(self->query);

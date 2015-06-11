@@ -27,7 +27,6 @@
 #include "psycopg/psycopg.h"
 
 #include "psycopg/replication_message.h"
-#include "psycopg/libpq_support.h"
 
 #include "datetime.h"
 
@@ -59,8 +58,9 @@ replmsg_init(PyObject *obj, PyObject *args, PyObject *kwargs)
 {
     replicationMessageObject *self = (replicationMessageObject*) obj;
 
-    if (!PyArg_ParseTuple(args, "O", &self->payload))
+    if (!PyArg_ParseTuple(args, "O!O", &cursorType, &self->cursor, &self->payload))
         return -1;
+    Py_XINCREF(self->cursor);
     Py_XINCREF(self->payload);
 
     self->data_start = 0;
@@ -70,16 +70,17 @@ replmsg_init(PyObject *obj, PyObject *args, PyObject *kwargs)
 }
 
 static int
-replmsg_clear(PyObject *self)
+replmsg_clear(replicationMessageObject *self)
 {
-    Py_CLEAR(((replicationMessageObject*) self)->payload);
+    Py_CLEAR(self->cursor);
+    Py_CLEAR(self->payload);
     return 0;
 }
 
 static void
 replmsg_dealloc(PyObject* obj)
 {
-    replmsg_clear(obj);
+    replmsg_clear((replicationMessageObject*) obj);
 }
 
 #define psyco_replmsg_send_time_doc \
@@ -108,6 +109,8 @@ psyco_replmsg_get_send_time(replicationMessageObject *self)
 /* object member list */
 
 static struct PyMemberDef replicationMessageObject_members[] = {
+    {"cursor", T_OBJECT, OFFSETOF(cursor), READONLY,
+        "TODO"},
     {"payload", T_OBJECT, OFFSETOF(payload), READONLY,
         "TODO"},
     {"data_start", T_ULONGLONG, OFFSETOF(data_start), READONLY,
@@ -151,7 +154,7 @@ PyTypeObject replicationMessageType = {
                 /*tp_flags*/
     replicationMessageType_doc, /*tp_doc*/
     0,          /*tp_traverse*/
-    replmsg_clear, /*tp_clear*/
+    (inquiry)replmsg_clear, /*tp_clear*/
     0,          /*tp_richcompare*/
     0, /*tp_weaklistoffset*/
     0, /*tp_iter*/

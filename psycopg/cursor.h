@@ -27,6 +27,7 @@
 #define PSYCOPG_CURSOR_H 1
 
 #include "psycopg/connection.h"
+#include "libpq_support.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -75,7 +76,7 @@ struct cursorObject {
     int   in_replication;       /* we're in streaming replication loop */
     int   stop_replication;     /* client requested to stop replication */
     int   keepalive_interval;   /* interval for keepalive messages in replication mode */
-    replicationMessageObject *repl_sync_msg;    /* set when the client asks us to sync the server */
+    XLogRecPtr repl_sync_lsn;   /* set when the client asks us to sync the server */
 
     PyObject *tuple_factory;    /* factory for result tuples */
     PyObject *tzinfo_factory;   /* factory for tzinfo objects */
