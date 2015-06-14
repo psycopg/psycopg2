@@ -192,6 +192,7 @@ class TypesBasicTests(ConnectingTestCase):
             self.assertRaises(psycopg2.DataError,
                 psycopg2.extensions.STRINGARRAY, b(s), curs)
 
+    @testutils.skip_before_postgres(8, 2)
     def testArrayOfNulls(self):
         curs = self.conn.cursor()
         curs.execute("""
