@@ -2,8 +2,8 @@ recursive-include psycopg *.c *.h *.manifest
 recursive-include lib *.py
 recursive-include tests *.py
 recursive-include examples *.py somehackers.jpg whereareyou.jpg
-recursive-include doc README SUCCESS COPYING.LESSER pep-0249.txt
-recursive-include doc Makefile requirements.txt
+include doc/README.rst doc/SUCCESS doc/COPYING.LESSER doc/pep-0249.txt
+include doc/Makefile doc/requirements.txt
 recursive-include doc/src *.rst *.py *.css Makefile
 recursive-include scripts *.py *.sh
 include scripts/maketypes.sh scripts/buildtypes.py
