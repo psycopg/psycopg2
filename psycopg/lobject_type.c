@@ -197,7 +197,7 @@ psyco_lobj_seek(lobjectObject *self, PyObject *args)
     if ((pos = lobject_seek(self, offset, whence)) < 0)
         return NULL;
 
-    return PyLong_FromSsize_t(pos);
+    return PyInt_FromSsize_t(pos);
 }
 
 /* tell method - tell current position in the lobject */
@@ -217,7 +217,7 @@ psyco_lobj_tell(lobjectObject *self, PyObject *args)
     if ((pos = lobject_tell(self)) < 0)
         return NULL;
 
-    return PyLong_FromSsize_t(pos);
+    return PyInt_FromSsize_t(pos);
 }
 
 /* unlink method - unlink (destroy) the lobject */
