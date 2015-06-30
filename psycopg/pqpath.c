@@ -1062,6 +1062,10 @@ pq_get_last_result(connectionObject *conn)
             PQclear(result);
         }
         result = res;
+
+        /* After entering copy both mode, libpq will make a phony
+         * PGresult for us every time we query for it, so we need to
+         * break out of this endless loop. */
         if (PQresultStatus(result) == PGRES_COPY_BOTH) {
             break;
         }
