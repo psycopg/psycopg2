@@ -186,7 +186,7 @@ psyco_libcrypto_threads_init(void)
     if (PyImport_ImportModule("ssl") != NULL) {
         /* disable libcrypto setup in libpq, so it won't stomp on the callbacks
            that have already been set up */
-#if PG_VERSION_HEX >= 0x080400
+#if PG_VERSION_NUM >= 80400
         PQinitOpenSSL(1, 0);
 #endif
     }
@@ -299,6 +299,19 @@ exit:
     Py_XDECREF(call);
 
     return rv;
+}
+
+#define psyco_libpq_version_doc "Query actual libpq version loaded."
+
+static PyObject*
+psyco_libpq_version(PyObject *self)
+{
+#if PG_VERSION_NUM >= 90100
+    return PyInt_FromLong(PQlibVersion());
+#else
+    PyErr_SetString(NotSupportedError, "version discovery is not supported in libpq < 9.1");
+    return NULL;
+#endif
 }
 
 /* psyco_encodings_fill
@@ -705,6 +718,8 @@ static PyMethodDef psycopgMethods[] = {
      METH_VARARGS|METH_KEYWORDS, typecast_from_python_doc},
     {"new_array_type", (PyCFunction)typecast_array_from_python,
      METH_VARARGS|METH_KEYWORDS, typecast_array_from_python_doc},
+    {"libpq_version", (PyCFunction)psyco_libpq_version,
+     METH_NOARGS, psyco_libpq_version_doc},
 
     {"Date",  (PyCFunction)psyco_Date,
      METH_VARARGS, psyco_Date_doc},
@@ -904,6 +919,7 @@ INIT_MODULE(_psycopg)(void)
     /* set some module's parameters */
     PyModule_AddStringConstant(module, "__version__", PSYCOPG_VERSION);
     PyModule_AddStringConstant(module, "__doc__", "psycopg PostgreSQL driver");
+    PyModule_AddIntConstant(module, "__libpq_version__", PG_VERSION_NUM);
     PyModule_AddObject(module, "apilevel", Text_FromUTF8(APILEVEL));
     PyModule_AddObject(module, "threadsafety", PyInt_FromLong(THREADSAFETY));
     PyModule_AddObject(module, "paramstyle", Text_FromUTF8(PARAMSTYLE));

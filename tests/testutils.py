@@ -236,6 +236,43 @@ def skip_after_postgres(*ver):
         return skip_after_postgres__
     return skip_after_postgres_
 
+def libpq_version():
+    import psycopg2
+    v = psycopg2.__libpq_version__
+    if v >= 90100:
+        v = psycopg2.extensions.libpq_version()
+    return v
+
+def skip_before_libpq(*ver):
+    """Skip a test if libpq we're linked to is older than a certain version."""
+    ver = ver + (0,) * (3 - len(ver))
+    def skip_before_libpq_(f):
+        @wraps(f)
+        def skip_before_libpq__(self):
+            v = libpq_version()
+            if v < int("%d%02d%02d" % ver):
+                return self.skipTest("skipped because libpq %d" % v)
+            else:
+                return f(self)
+
+        return skip_before_libpq__
+    return skip_before_libpq_
+
+def skip_after_libpq(*ver):
+    """Skip a test if libpq we're linked to is newer than a certain version."""
+    ver = ver + (0,) * (3 - len(ver))
+    def skip_after_libpq_(f):
+        @wraps(f)
+        def skip_after_libpq__(self):
+            v = libpq_version()
+            if v >= int("%d%02d%02d" % ver):
+                return self.skipTest("skipped because libpq %s" % v)
+            else:
+                return f(self)
+
+        return skip_after_libpq__
+    return skip_after_libpq_
+
 def skip_before_python(*ver):
     """Skip a test on Python before a certain version."""
     def skip_before_python_(f):
