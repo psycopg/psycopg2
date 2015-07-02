@@ -1689,13 +1689,10 @@ _pq_copy_both_v3(cursorObject *curs)
 {
     PyObject *msg, *tmp = NULL;
     PyObject *write_func = NULL;
-    int ret = -1;
-    int is_text;
-
+    int is_text, fd, sel, ret = -1;
     PGconn *pgconn;
     fd_set fds;
     struct timeval curr_time, ping_time, time_diff;
-    int sel;
 
     if (!curs->copyfile) {
         psyco_set_error(ProgrammingError, curs,
@@ -1724,8 +1721,14 @@ _pq_copy_both_v3(cursorObject *curs)
         else if (msg == Py_None) {
             Py_DECREF(msg);
 
+            fd = PQsocket(pgconn);
+            if (fd < 0) {
+                pq_raise(curs->conn, curs, NULL);
+                goto exit;
+            }
+
             FD_ZERO(&fds);
-            FD_SET(PQsocket(pgconn), &fds);
+            FD_SET(fd, &fds);
 
             gettimeofday(&curr_time, NULL);
 
@@ -1736,7 +1739,7 @@ _pq_copy_both_v3(cursorObject *curs)
             timersub(&ping_time, &curr_time, &time_diff);
             if (time_diff.tv_sec > 0) {
                 Py_BEGIN_ALLOW_THREADS;
-                sel = select(PQsocket(pgconn) + 1, &fds, NULL, NULL, &time_diff);
+                sel = select(fd + 1, &fds, NULL, NULL, &time_diff);
                 Py_END_ALLOW_THREADS;
             }
             else {
