@@ -1542,14 +1542,19 @@ pq_read_replication_message(cursorObject *curs, int decode)
     Dprintf("pq_read_replication_message(decode=%d)", decode);
 
 retry:
-    if (!PQconsumeInput(curs->conn->pgconn)) {
-        goto none;
-    }
-
     Py_BEGIN_ALLOW_THREADS;
     len = PQgetCopyData(curs->conn->pgconn, &buffer, 1 /* async */);
     Py_END_ALLOW_THREADS;
+
     if (len == 0) {
+        /* We should only try reading more data into the internal buffer when
+         * there is nothing available at the moment.  Otherwise, with a really
+         * highly loaded server we might be reading a number of messages for
+         * every single one we process, thus overgrowing the internal buffer
+         * until the system runs out of memory. */
+        if (PQconsumeInput(curs->conn->pgconn)) {
+            goto retry;
+        }
         goto none;
     }
 
