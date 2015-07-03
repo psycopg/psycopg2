@@ -80,7 +80,11 @@ replmsg_clear(replicationMessageObject *self)
 static void
 replmsg_dealloc(PyObject* obj)
 {
+    PyObject_GC_UnTrack(obj);
+
     replmsg_clear((replicationMessageObject*) obj);
+
+    Py_TYPE(obj)->tp_free(obj);
 }
 
 #define psyco_replmsg_send_time_doc \
