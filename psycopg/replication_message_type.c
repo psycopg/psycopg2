@@ -70,6 +70,14 @@ replmsg_init(PyObject *obj, PyObject *args, PyObject *kwargs)
 }
 
 static int
+replmsg_traverse(replicationMessageObject *self, visitproc visit, void *arg)
+{
+    Py_VISIT((PyObject* )self->cursor);
+    Py_VISIT(self->payload);
+    return 0;
+}
+
+static int
 replmsg_clear(replicationMessageObject *self)
 {
     Py_CLEAR(self->cursor);
@@ -154,10 +162,10 @@ PyTypeObject replicationMessageType = {
     0,          /*tp_getattro*/
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-                /*tp_flags*/
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE |
+      Py_TPFLAGS_HAVE_GC, /*tp_flags*/
     replicationMessageType_doc, /*tp_doc*/
-    0,          /*tp_traverse*/
+    (traverseproc)replmsg_traverse, /*tp_traverse*/
     (inquiry)replmsg_clear, /*tp_clear*/
     0,          /*tp_richcompare*/
     0, /*tp_weaklistoffset*/
