@@ -142,15 +142,19 @@ static int pthread_mutex_init(pthread_mutex_t *mutex, void* fake)
 #endif
 #endif
 
+/* what's this, we have no round function either? */
 #if (defined(__FreeBSD__) && __FreeBSD_version < 503000) \
     || (defined(_WIN32) && !defined(__GNUC__)) \
     || (defined(sun) || defined(__sun__)) \
         && (defined(__SunOS_5_8) || defined(__SunOS_5_9))
-/* what's this, we have no round function either? */
+
+/* round has been added in the standard library with MSVC 2015 */
+#if _MSC_VER < 1900
 static double round(double num)
 {
   return (num >= 0) ? floor(num + 0.5) : ceil(num - 0.5);
 }
+#endif
 #endif
 
 /* resolve missing isinf() function for Solaris */
