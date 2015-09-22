@@ -129,14 +129,15 @@ static int pthread_mutex_init(pthread_mutex_t *mutex, void* fake)
 /* remove the inline keyword, since it doesn't work unless C++ file */
 #define inline
 
-/* Hmmm, MSVC doesn't have a isnan/isinf function, but has _isnan function */
+/* Hmmm, MSVC <2015 doesn't have a isnan/isinf function, but has _isnan function */
 #if defined (_MSC_VER)
+#if !defined(isnan)
 #define isnan(x) (_isnan(x))
 /* The following line was hacked together from simliar code by Bjorn Reese
  * in libxml2 code */
 #define isinf(x) ((_fpclass(x) == _FPCLASS_PINF) ? 1 \
 	: ((_fpclass(x) == _FPCLASS_NINF) ? -1 : 0))
-
+#endif
 #define strcasecmp(x, y) lstrcmpi(x, y)
 #endif
 #endif
