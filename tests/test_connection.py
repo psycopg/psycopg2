@@ -26,6 +26,7 @@ import os
 import time
 import threading
 from operator import attrgetter
+from StringIO import StringIO
 
 import psycopg2
 import psycopg2.errorcodes
@@ -1065,6 +1066,17 @@ class AutocommitTests(ConnectingTestCase):
         self.assertEqual(cur.fetchone()[0], 'serializable')
         cur.execute("SHOW default_transaction_read_only;")
         self.assertEqual(cur.fetchone()[0], 'on')
+
+
+class ReplicationTest(ConnectingTestCase):
+    @skip_before_postgres(9, 0)
+    def test_replication_not_supported(self):
+        conn = self.repl_connect()
+        if conn is None: return
+        cur = conn.cursor()
+        f = StringIO()
+        self.assertRaises(psycopg2.NotSupportedError,
+            cur.copy_expert, "START_REPLICATION 0/0", f)
 
 
 def test_suite():
