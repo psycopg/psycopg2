@@ -190,8 +190,10 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult **pgres)
        raise and a meaningful message is better than an empty one.
        Note: it can happen without it being our error: see ticket #82 */
     if (err == NULL || err[0] == '\0') {
-        PyErr_SetString(DatabaseError,
-            "error with no message from the libpq");
+        PyErr_Format(DatabaseError,
+            "error with status %s and no message from the libpq",
+            PQresStatus(pgres == NULL ?
+                PQstatus(conn->pgconn) : PQresultStatus(*pgres)));
         return;
     }
 
