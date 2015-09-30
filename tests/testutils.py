@@ -28,7 +28,7 @@ import os
 import platform
 import sys
 from functools import wraps
-from testconfig import dsn
+from testconfig import dsn, repl_dsn
 
 try:
     import unittest2
@@ -103,9 +103,33 @@ class ConnectingTestCase(unittest.TestCase):
                 "%s (did you remember calling ConnectingTestCase.setUp()?)"
                 % e)
 
+        if 'dsn' in kwargs:
+            conninfo = kwargs.pop('dsn')
+        else:
+            conninfo = dsn
         import psycopg2
-        conn = psycopg2.connect(dsn, **kwargs)
+        conn = psycopg2.connect(conninfo, **kwargs)
         self._conns.append(conn)
+        return conn
+
+    def repl_connect(self, **kwargs):
+        """Return a connection set up for replication
+
+        The connection is on "PSYCOPG2_TEST_REPL_DSN" unless overridden by
+        a *dsn* kwarg.
+
+        Should raise a skip test if not available, but guard for None on
+        old Python versions.
+        """
+        if 'dsn' not in kwargs:
+            kwargs['dsn'] = repl_dsn
+        import psycopg2
+        try:
+            conn = self.connect(**kwargs)
+        except psycopg2.OperationalError, e:
+            return self.skipTest("replication db not configured: %s" % e)
+
+        conn.autocommit = True
         return conn
 
     def _get_conn(self):
@@ -388,4 +412,3 @@ class py3_raises_typeerror(object):
         if sys.version_info[0] >= 3:
             assert type is TypeError
             return True
-        

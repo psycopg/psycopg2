@@ -19,6 +19,8 @@ What's new in psycopg 2.6.2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Report the server response status on errors (such as :ticket:`#281`).
+- Raise NotSupportedError on unhandled server response status
+  (:ticket:`#352`).
 
 
 What's new in psycopg 2.6.1
