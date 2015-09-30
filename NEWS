@@ -15,6 +15,12 @@ New features:
   (:ticket:`#326`).
 
 
+What's new in psycopg 2.6.2
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Report the server response status on errors (such as :ticket:`#281`).
+
+
 What's new in psycopg 2.6.1
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
