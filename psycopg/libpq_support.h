@@ -26,9 +26,9 @@
 #define PSYCOPG_LIBPQ_SUPPORT_H 1
 
 #include "psycopg/config.h"
+#include "internal/c.h"
 
-/* type and constant definitions from internal postgres includes */
-typedef unsigned int uint32;
+/* type and constant definitions from internal postgres includes not available otherwise */
 typedef unsigned PG_INT64_TYPE XLogRecPtr;
 
 #define InvalidXLogRecPtr ((XLogRecPtr) 0)
