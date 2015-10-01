@@ -611,3 +611,6 @@ Coroutine support
 
 .. autofunction:: wait_select(conn)
 
+    .. versionchanged:: 2.6.2
+        allow to cancel a query using :kbd:`Ctrl-C`, see
+        :ref:`the FAQ <faq-interrupt-query>` for an example.
