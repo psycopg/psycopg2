@@ -449,7 +449,7 @@ class ReplicationConnectionBase(_connection):
     classes.  Uses `ReplicationCursor` automatically.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, dsn, **kwargs):
         """
         Initializes a replication connection by adding appropriate
         parameters to the provided DSN and tweaking the connection
@@ -466,21 +466,16 @@ class ReplicationConnectionBase(_connection):
         else:
             raise psycopg2.ProgrammingError("unrecognized replication type: %s" % self.replication_type)
 
-        # FIXME: could really use parse_dsn here
-        dsn = args[0]
-        if dsn.startswith('postgres://') or dsn.startswith('postgresql://'):
-            # poor man's url parsing
-            if dsn.rfind('?') > 0:
-                if not dsn.endswith('?'):
-                    dsn += '&'
-            else:
-                dsn += '?'
-        else:
-            dsn += ' '
-        dsn += 'replication=%s' % replication
-        args = [dsn] + list(args[1:])
+        items = _ext.parse_dsn(dsn)
 
-        super(ReplicationConnectionBase, self).__init__(*args, **kwargs)
+        # we add an appropriate replication keyword parameter, unless
+        # user has specified one explicitly in the DSN
+        items.setdefault('replication', replication)
+
+        dsn = " ".join(["%s=%s" % (k, psycopg2._param_escape(str(v)))
+                        for (k, v) in items.iteritems()])
+
+        super(ReplicationConnectionBase, self).__init__(dsn, **kwargs)
 
         # prevent auto-issued BEGIN statements
         if not self.async:
