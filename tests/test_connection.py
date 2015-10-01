@@ -333,7 +333,7 @@ class ParseDsnTestCase(ConnectingTestCase):
             parse_dsn("dbname='test 2 user=tester password=secret")
         except ProgrammingError, e:
             raised = True
-            self.assertTrue(e.message.find('secret') < 0,
+            self.assertTrue(str(e).find('secret') < 0,
                             "DSN was not exposed in error message")
         except e:
             self.fail("unexpected error condition: " + repr(e))
@@ -354,7 +354,7 @@ class ParseDsnTestCase(ConnectingTestCase):
             parse_dsn('postgresql://tester:secret@/test?port=1111=x')
         except ProgrammingError, e:
             raised = True
-            self.assertTrue(e.message.find('secret') < 0,
+            self.assertTrue(str(e).find('secret') < 0,
                             "URI was not exposed in error message")
         except e:
             self.fail("unexpected error condition: " + repr(e))
