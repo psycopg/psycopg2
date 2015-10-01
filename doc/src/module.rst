@@ -78,6 +78,7 @@ The module interface respects the standard defined in the |DBAPI|_.
 
     .. seealso::
 
+        - `~psycopg2.extensions.parse_dsn`
         - libpq `connection string syntax`__
         - libpq supported `connection parameters`__
         - libpq supported `environment variables`__
@@ -90,7 +91,6 @@ The module interface respects the standard defined in the |DBAPI|_.
 
         The parameters *connection_factory* and *async* are Psycopg extensions
         to the |DBAPI|.
-
 
 .. data:: apilevel
 

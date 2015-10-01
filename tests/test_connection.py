@@ -23,6 +23,7 @@
 # License for more details.
 
 import os
+import sys
 import time
 import threading
 from operator import attrgetter
@@ -33,7 +34,7 @@ import psycopg2.errorcodes
 import psycopg2.extensions
 
 from testutils import unittest, decorate_all_tests, skip_if_no_superuser
-from testutils import skip_before_postgres, skip_after_postgres
+from testutils import skip_before_postgres, skip_after_postgres, skip_before_libpq
 from testutils import ConnectingTestCase, skip_if_tpc_disabled
 from testutils import skip_if_windows
 from testconfig import dsn, dbname
@@ -306,6 +307,78 @@ class ConnectionTests(ConnectingTestCase):
         c = SubConnection("dbname=thereisnosuchdatabasemate password=foobar")
         self.assert_(c.closed, "connection failed so it must be closed")
         self.assert_('foobar' not in c.dsn, "password was not obscured")
+
+
+class ParseDsnTestCase(ConnectingTestCase):
+    def test_parse_dsn(self):
+        from psycopg2 import ProgrammingError
+        from psycopg2.extensions import parse_dsn
+
+        self.assertEqual(parse_dsn('dbname=test user=tester password=secret'),
+                         dict(user='tester', password='secret', dbname='test'),
+                         "simple DSN parsed")
+
+        self.assertRaises(ProgrammingError, parse_dsn,
+                          "dbname=test 2 user=tester password=secret")
+
+        self.assertEqual(parse_dsn("dbname='test 2' user=tester password=secret"),
+                         dict(user='tester', password='secret', dbname='test 2'),
+                         "DSN with quoting parsed")
+
+        # Can't really use assertRaisesRegexp() here since we need to
+        # make sure that secret is *not* exposed in the error messgage
+        # (and it also requires python >= 2.7).
+        raised = False
+        try:
+            # unterminated quote after dbname:
+            parse_dsn("dbname='test 2 user=tester password=secret")
+        except ProgrammingError, e:
+            raised = True
+            self.assertTrue(str(e).find('secret') < 0,
+                            "DSN was not exposed in error message")
+        except e:
+            self.fail("unexpected error condition: " + repr(e))
+        self.assertTrue(raised, "ProgrammingError raised due to invalid DSN")
+
+    @skip_before_libpq(9, 2)
+    def test_parse_dsn_uri(self):
+        from psycopg2.extensions import parse_dsn
+
+        self.assertEqual(parse_dsn('postgresql://tester:secret@/test'),
+                         dict(user='tester', password='secret', dbname='test'),
+                         "valid URI dsn parsed")
+
+        raised = False
+        try:
+            # extra '=' after port value
+            parse_dsn(dsn='postgresql://tester:secret@/test?port=1111=x')
+        except psycopg2.ProgrammingError, e:
+            raised = True
+            self.assertTrue(str(e).find('secret') < 0,
+                            "URI was not exposed in error message")
+        except e:
+            self.fail("unexpected error condition: " + repr(e))
+        self.assertTrue(raised, "ProgrammingError raised due to invalid URI")
+
+    def test_unicode_value(self):
+        from psycopg2.extensions import parse_dsn
+        snowman = u"\u2603"
+        d = parse_dsn('dbname=' + snowman)
+        if sys.version_info[0] < 3:
+            self.assertEqual(d['dbname'], snowman.encode('utf8'))
+        else:
+            self.assertEqual(d['dbname'], snowman)
+
+    def test_unicode_key(self):
+        from psycopg2.extensions import parse_dsn
+        snowman = u"\u2603"
+        self.assertRaises(psycopg2.ProgrammingError, parse_dsn,
+            snowman + '=' + snowman)
+
+    def test_bad_param(self):
+        from psycopg2.extensions import parse_dsn
+        self.assertRaises(TypeError, parse_dsn, None)
+        self.assertRaises(TypeError, parse_dsn, 42)
 
 
 class IsolationLevelsTestCase(ConnectingTestCase):
