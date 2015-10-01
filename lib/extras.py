@@ -438,53 +438,78 @@ class MinTimeLoggingCursor(LoggingCursor):
         return LoggingCursor.callproc(self, procname, vars)
 
 
-class ReplicationConnection(_connection):
-    """A connection that uses `ReplicationCursor` automatically."""
+"""Replication connection types."""
+REPLICATION_LOGICAL  = "LOGICAL"
+REPLICATION_PHYSICAL = "PHYSICAL"
+
+
+class ReplicationConnectionBase(_connection):
+    """
+    Base class for Logical and Physical replication connection
+    classes.  Uses `ReplicationCursor` automatically.
+    """
 
     def __init__(self, *args, **kwargs):
-        """Initializes a replication connection, by adding appropriate replication parameter to the provided dsn arguments."""
+        """
+        Initializes a replication connection by adding appropriate
+        parameters to the provided DSN and tweaking the connection
+        attributes.
+        """
 
-        if len(args):
-            dsn = args[0]
+        # replication_type is set in subclasses
+        if self.replication_type == REPLICATION_LOGICAL:
+            replication = 'database'
 
-            # FIXME: could really use parse_dsn here
+        elif self.replication_type == REPLICATION_PHYSICAL:
+            replication = 'true'
 
-            if dsn.startswith('postgres://') or dsn.startswith('postgresql://'):
-                # poor man's url parsing
-                if dsn.rfind('?') > 0:
-                    if not dsn.endswith('?'):
-                        dsn += '&'
-                else:
-                    dsn += '?'
-            else:
-                dsn += ' '
-            dsn += 'replication=database'
-            args = [dsn] + list(args[1:])
         else:
-            dbname = kwargs.get('dbname', None)
-            if dbname is None:
-                kwargs['dbname'] = 'replication'
+            raise psycopg2.ProgrammingError("unrecognized replication type: %s" % self.replication_type)
 
-            if kwargs.get('replication', None) is None:
-                kwargs['replication'] = 'database' if dbname else 'true'
+        # FIXME: could really use parse_dsn here
+        dsn = args[0]
+        if dsn.startswith('postgres://') or dsn.startswith('postgresql://'):
+            # poor man's url parsing
+            if dsn.rfind('?') > 0:
+                if not dsn.endswith('?'):
+                    dsn += '&'
+            else:
+                dsn += '?'
+        else:
+            dsn += ' '
+        dsn += 'replication=%s' % replication
+        args = [dsn] + list(args[1:])
 
-        super(ReplicationConnection, self).__init__(*args, **kwargs)
+        super(ReplicationConnectionBase, self).__init__(*args, **kwargs)
 
         # prevent auto-issued BEGIN statements
         if not self.async:
             self.autocommit = True
 
-    def cursor(self, *args, **kwargs):
-        kwargs.setdefault('cursor_factory', ReplicationCursor)
-        return super(ReplicationConnection, self).cursor(*args, **kwargs)
+        if self.cursor_factory is None:
+            self.cursor_factory = ReplicationCursor
+
+    def quote_ident(self, ident):
+        # FIXME: use PQescapeIdentifier or psycopg_escape_identifier_easy, somehow
+        return '"%s"' % ident.replace('"', '""')
 
 
-"""Streamging replication types."""
-REPLICATION_LOGICAL  = "LOGICAL"
-REPLICATION_PHYSICAL = "PHYSICAL"
+class LogicalReplicationConnection(ReplicationConnectionBase):
+
+    def __init__(self, *args, **kwargs):
+        self.replication_type = REPLICATION_LOGICAL
+        super(LogicalReplicationConnection, self).__init__(*args, **kwargs)
+
+
+class PhysicalReplicationConnection(ReplicationConnectionBase):
+
+    def __init__(self, *args, **kwargs):
+        self.replication_type = REPLICATION_PHYSICAL
+        super(PhysicalReplicationConnection, self).__init__(*args, **kwargs)
+
 
 class ReplicationCursor(_cursor):
-    """A cursor used for replication commands."""
+    """A cursor used for communication on the replication protocol."""
 
     def identify_system(self):
         """Get information about the cluster status."""
@@ -493,47 +518,49 @@ class ReplicationCursor(_cursor):
         return dict(zip([_.name for _ in self.description],
                         self.fetchall()[0]))
 
-    def quote_ident(self, ident):
-        # FIXME: use PQescapeIdentifier or psycopg_escape_identifier_easy, somehow
-        return '"%s"' % ident.replace('"', '""')
-
-    def create_replication_slot(self, slot_type, slot_name, output_plugin=None):
+    def create_replication_slot(self, slot_name, slot_type=None, output_plugin=None):
         """Create streaming replication slot."""
 
-        command = "CREATE_REPLICATION_SLOT %s " % self.quote_ident(slot_name)
+        command = "CREATE_REPLICATION_SLOT %s " % self.connection.quote_ident(slot_name)
+
+        if slot_type is None:
+            slot_type = self.connection.replication_type
 
         if slot_type == REPLICATION_LOGICAL:
             if output_plugin is None:
-                raise psycopg2.ProgrammingError("output plugin name is required for logical replication slot")
+                raise psycopg2.ProgrammingError("output plugin name is required to create logical replication slot")
 
-            command += "%s %s" % (slot_type, self.quote_ident(output_plugin))
+            command += "%s %s" % (slot_type, self.connection.quote_ident(output_plugin))
 
         elif slot_type == REPLICATION_PHYSICAL:
             if output_plugin is not None:
-                raise psycopg2.ProgrammingError("cannot specify output plugin name for physical replication slot")
+                raise psycopg2.ProgrammingError("cannot specify output plugin name when creating physical replication slot")
 
             command += slot_type
 
         else:
-            raise psycopg2.ProgrammingError("unrecognized replication slot type: %s" % slot_type)
+            raise psycopg2.ProgrammingError("unrecognized replication type: %s" % slot_type)
 
         self.execute(command)
 
     def drop_replication_slot(self, slot_name):
         """Drop streaming replication slot."""
 
-        command = "DROP_REPLICATION_SLOT %s" % self.quote_ident(slot_name)
+        command = "DROP_REPLICATION_SLOT %s" % self.connection.quote_ident(slot_name)
         self.execute(command)
 
-    def start_replication(self, slot_type, slot_name=None, writer=None, start_lsn=0,
+    def start_replication(self, slot_name=None, writer=None, slot_type=None, start_lsn=0,
                           timeline=0, keepalive_interval=10, options=None):
         """Start and consume replication stream."""
 
         command = "START_REPLICATION "
 
+        if slot_type is None:
+            slot_type = self.connection.replication_type
+
         if slot_type == REPLICATION_LOGICAL:
             if slot_name:
-                command += "SLOT %s " % self.quote_ident(slot_name)
+                command += "SLOT %s " % self.connection.quote_ident(slot_name)
             else:
                 raise psycopg2.ProgrammingError("slot name is required for logical replication")
 
@@ -541,11 +568,11 @@ class ReplicationCursor(_cursor):
 
         elif slot_type == REPLICATION_PHYSICAL:
             if slot_name:
-                command += "SLOT %s " % self.quote_ident(slot_name)
-
+                command += "SLOT %s " % self.connection.quote_ident(slot_name)
             # don't add "PHYSICAL", before 9.4 it was just START_REPLICATION XXX/XXX
+
         else:
-            raise psycopg2.ProgrammingError("unrecognized replication slot type: %s" % slot_type)
+            raise psycopg2.ProgrammingError("unrecognized replication type: %s" % slot_type)
 
         if type(start_lsn) is str:
             lsn = start_lsn.split('/')
@@ -569,7 +596,7 @@ class ReplicationCursor(_cursor):
             for k,v in options.iteritems():
                 if not command.endswith('('):
                     command += ", "
-                command += "%s %s" % (self.quote_ident(k), _A(str(v)))
+                command += "%s %s" % (self.connection.quote_ident(k), _A(str(v)))
             command += ")"
 
         return self.start_replication_expert(command, writer=writer,

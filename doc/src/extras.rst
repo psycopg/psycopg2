@@ -144,20 +144,36 @@ Logging cursor
 Replication cursor
 ^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: ReplicationConnection
+.. autoclass:: LogicalReplicationConnection
 
    This connection factory class can be used to open a special type of
-   connection that is used for streaming replication.
+   connection that is used for logical replication.
 
    Example::
 
-       from psycopg2.extras import ReplicationConnection, REPLICATION_PHYSICAL, REPLICATION_LOGICAL
-       conn = psycopg2.connect(dsn, connection_factory=ReplicationConnection)
-       cur = conn.cursor()
+       from psycopg2.extras import LogicalReplicationConnection
+       log_conn = psycopg2.connect(dsn, connection_factory=LogicalReplicationConnection)
+       log_cur = log_conn.cursor()
+
+
+.. autoclass:: PhysicalReplicationConnection
+
+   This connection factory class can be used to open a special type of
+   connection that is used for physical replication.
+
+   Example::
+
+       from psycopg2.extras import PhysicalReplicationConnection
+       phys_conn = psycopg2.connect(dsn, connection_factory=PhysicalReplicationConnection)
+       phys_cur = phys_conn.cursor()
+
+
+   Both `LogicalReplicationConnection` and `PhysicalReplicationConnection` use
+   `ReplicationCursor` for actual communication on the connection.
 
 .. seealso::
 
-   - PostgreSQL `Replication protocol`__
+   - PostgreSQL `Streaming Replication Protocol`__
 
    .. __: http://www.postgresql.org/docs/current/static/protocol-replication.html
 
@@ -173,19 +189,38 @@ Replication cursor
            >>> cur.identify_system()
            {'timeline': 1, 'systemid': '1234567890123456789', 'dbname': 'test', 'xlogpos': '0/1ABCDEF'}
 
-    .. method:: create_replication_slot(slot_type, slot_name, output_plugin=None)
+    .. method:: create_replication_slot(slot_name, output_plugin=None)
 
        Create streaming replication slot.
 
-       :param slot_type: type of replication: either `REPLICATION_PHYSICAL` or
-                         `REPLICATION_LOGICAL`
        :param slot_name: name of the replication slot to be created
-       :param output_plugin: name of the logical decoding output plugin to use
-                             (logical replication only)
+       :param slot_type: type of replication: should be either
+                         `REPLICATION_LOGICAL` or `REPLICATION_PHYSICAL`
+       :param output_plugin: name of the logical decoding output plugin to be
+                             used by the slot; required for logical
+                             replication connections, disallowed for physical
 
        Example::
 
-           cur.create_replication_slot(REPLICATION_LOGICAL, "testslot", "test_decoding")
+           log_cur.create_replication_slot("logical1", "test_decoding")
+           phys_cur.create_replication_slot("physical1")
+
+           # either logical or physical replication connection
+           cur.create_replication_slot("slot1", slot_type=REPLICATION_LOGICAL)
+
+       When creating a slot on a logical replication connection, a logical
+       replication slot is created by default.  Logical replication requires
+       name of the logical decoding output plugin to be specified.
+
+       When creating a slot on a physical replication connection, a physical
+       replication slot is created by default.  No output plugin parameter is
+       required or allowed when creating a physical replication slot.
+
+       In either case, the type of slot being created can be specified
+       explicitly using *slot_type* parameter.
+
+       Replication slots are a feature of PostgreSQL server starting with
+       version 9.4.
 
     .. method:: drop_replication_slot(slot_name)
 
@@ -195,18 +230,24 @@ Replication cursor
 
        Example::
 
-           cur.drop_replication_slot("testslot")
+           # either logical or physical replication connection
+           cur.drop_replication_slot("slot1")
 
-    .. method:: start_replication(slot_type, slot_name=None, writer=None, start_lsn=0, timeline=0, keepalive_interval=10, options=None)
+       This 
+           
+       Replication slots are a feature of PostgreSQL server starting with
+       version 9.4.
 
-       Start a replication stream.  On non-asynchronous connection, also
-       consume the stream messages.
+    .. method:: start_replication(slot_name=None, writer=None, slot_type=None, start_lsn=0, timeline=0, keepalive_interval=10, options=None)
 
-       :param slot_type: type of replication: either `REPLICATION_PHYSICAL` or
-                         `REPLICATION_LOGICAL`
-       :param slot_name: name of the replication slot to use (required for
-                         logical replication)
+       Start replication on the connection.
+
+       :param slot_name: name of the replication slot to use; required for
+                         logical replication, physical replication can work
+                         with or without a slot
        :param writer: a file-like object to write replication messages to
+       :param slot_type: type of replication: should be either
+                         `REPLICATION_LOGICAL` or `REPLICATION_PHYSICAL`
        :param start_lsn: the optional LSN position to start replicating from,
                          can be an integer or a string of hexadecimal digits
                          in the form ``XXX/XXX``
@@ -215,8 +256,22 @@ Replication cursor
        :param keepalive_interval: interval (in seconds) to send keepalive
                                   messages to the server
        :param options: a dictionary of options to pass to logical replication
-                       slot (not allowed with physical replication, use
+                       slot (not allowed with physical replication, set to
                        *None*)
+
+       If not specified using *slot_type* parameter, the type of replication
+       to be started is defined by the type of replication connection.
+       Logical replication is only allowed on logical replication connection,
+       but physical replication can be used with both types of connection.
+
+       On the other hand, physical replication doesn't require a named
+       replication slot to be used, only logical one does.  In any case,
+       logical replication and replication slots are a feature of PostgreSQL
+       server starting with version 9.4.  Physical replication can be used
+       starting with 9.0.
+
+       If a *slot_name* is specified, the slot must exist on the server and
+       its type must match the replication type used.
 
        When used on non-asynchronous connection this method enters an endless
        loop, reading messages from the server and passing them to ``write()``
@@ -391,10 +446,8 @@ Replication cursor
 
         A reference to the corresponding `~ReplicationCursor` object.
 
-
-.. data:: REPLICATION_PHYSICAL
-
 .. data:: REPLICATION_LOGICAL
+.. data:: REPLICATION_PHYSICAL
 
 .. index::
     pair: Cursor; Replication
