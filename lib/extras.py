@@ -544,9 +544,9 @@ class ReplicationCursor(_cursor):
         command = "DROP_REPLICATION_SLOT %s" % self.connection.quote_ident(slot_name)
         self.execute(command)
 
-    def start_replication(self, slot_name=None, writer=None, slot_type=None, start_lsn=0,
-                          timeline=0, keepalive_interval=10, options=None):
-        """Start and consume replication stream."""
+    def start_replication(self, slot_name=None, slot_type=None, start_lsn=0,
+                          timeline=0, options=None):
+        """Start replication stream."""
 
         command = "START_REPLICATION "
 
@@ -594,8 +594,7 @@ class ReplicationCursor(_cursor):
                 command += "%s %s" % (self.connection.quote_ident(k), _A(str(v)))
             command += ")"
 
-        return self.start_replication_expert(command, writer=writer,
-                                             keepalive_interval=keepalive_interval)
+        return self.start_replication_expert(command)
 
     def send_feedback_message(self, written_lsn=0, sync_lsn=0, apply_lsn=0, reply_requested=False):
         return self.send_replication_feedback(written_lsn, sync_lsn, apply_lsn, reply_requested)

@@ -36,6 +36,7 @@
 #include "psycopg/microprotocols_proto.h"
 
 #include <string.h>
+
 #include <stdlib.h>
 
 /* python */
@@ -1588,13 +1589,11 @@ exit:
 static PyObject *
 psyco_curs_start_replication_expert(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
-    PyObject *writer = NULL, *res = NULL;
+    PyObject *res = NULL;
     char *command;
-    double keepalive_interval = 10;
-    static char *kwlist[] = {"command", "writer", "keepalive_interval", NULL};
+    static char *kwlist[] = {"command", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s|Od", kwlist,
-                                     &command, &writer, &keepalive_interval)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s", kwlist, &command)) {
         return NULL;
     }
 
@@ -1602,21 +1601,15 @@ psyco_curs_start_replication_expert(cursorObject *self, PyObject *args, PyObject
     EXC_IF_GREEN(start_replication_expert);
     EXC_IF_TPC_PREPARED(self->conn, start_replication_expert);
 
-    Dprintf("psyco_curs_start_replication_expert: command = %s", command);
-
-    if (keepalive_interval < 1.0) {
-        psyco_set_error(ProgrammingError, self, "keepalive_interval must be >= 1sec");
+    if (self->repl_started) {
+        psyco_set_error(ProgrammingError, self, "replication already in progress");
         return NULL;
     }
 
-    self->copysize = 0;
-    Py_XINCREF(writer);
-    self->copyfile = writer;
+    Dprintf("psyco_curs_start_replication_expert: command = %s", command);
 
+    self->copysize = 0;
     self->repl_stop = 0;
-    self->repl_keepalive_interval.tv_sec  = (int)keepalive_interval;
-    self->repl_keepalive_interval.tv_usec =
-        (keepalive_interval - (int)keepalive_interval)*1.0e6;
 
     self->repl_write_lsn = InvalidXLogRecPtr;
     self->repl_flush_lsn = InvalidXLogRecPtr;
@@ -1631,7 +1624,7 @@ psyco_curs_start_replication_expert(cursorObject *self, PyObject *args, PyObject
         Py_INCREF(res);
     }
 
-    Py_CLEAR(self->copyfile);
+    self->repl_started = 1;
 
     return res;
 }
@@ -1643,10 +1636,52 @@ static PyObject *
 psyco_curs_stop_replication(cursorObject *self)
 {
     EXC_IF_CURS_CLOSED(self);
+    EXC_IF_CURS_ASYNC(self, stop_replication);
+
+    if (!self->repl_started || self->repl_stop) {
+        psyco_set_error(ProgrammingError, self, "replication is not in progress");
+        return NULL;
+    }
 
     self->repl_stop = 1;
 
     Py_RETURN_NONE;
+}
+
+#define psyco_curs_consume_replication_stream_doc \
+"consume_replication_stream(consumer, keepalive_interval=10) -- Consume replication stream."
+
+static PyObject *
+psyco_curs_consume_replication_stream(cursorObject *self, PyObject *args, PyObject *kwargs)
+{
+    PyObject *consumer = NULL, *res = NULL;
+    int decode = 0;
+    double keepalive_interval = 10;
+    static char *kwlist[] = {"consumer", "decode", "keepalive_interval", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|id", kwlist,
+                                     &consumer, &decode, &keepalive_interval)) {
+        return NULL;
+    }
+
+    EXC_IF_CURS_CLOSED(self);
+    EXC_IF_CURS_ASYNC(self, consume_replication_stream);
+    EXC_IF_GREEN(consume_replication_stream);
+    EXC_IF_TPC_PREPARED(self->conn, consume_replication_stream);
+
+    Dprintf("psyco_curs_consume_replication_stream");
+
+    if (keepalive_interval < 1.0) {
+        psyco_set_error(ProgrammingError, self, "keepalive_interval must be >= 1 (sec)");
+        return NULL;
+    }
+
+    if (pq_copy_both(self, consumer, decode, keepalive_interval) >= 0) {
+        res = Py_None;
+        Py_INCREF(res);
+    }
+
+    return res;
 }
 
 #define psyco_curs_read_replication_message_doc \
@@ -1673,7 +1708,7 @@ psyco_curs_read_replication_message(cursorObject *self, PyObject *args, PyObject
 static PyObject *
 curs_flush_replication_feedback(cursorObject *self, int reply)
 {
-    if (!self->repl_feedback_pending)
+    if (!(self->repl_feedback_pending || reply))
         Py_RETURN_FALSE;
 
     if (pq_send_replication_feedback(self, reply)) {
@@ -1939,6 +1974,8 @@ static struct PyMethodDef cursorObject_methods[] = {
      METH_VARARGS|METH_KEYWORDS, psyco_curs_start_replication_expert_doc},
     {"stop_replication", (PyCFunction)psyco_curs_stop_replication,
      METH_NOARGS, psyco_curs_stop_replication_doc},
+    {"consume_replication_stream", (PyCFunction)psyco_curs_consume_replication_stream,
+     METH_VARARGS|METH_KEYWORDS, psyco_curs_consume_replication_stream_doc},
     {"read_replication_message", (PyCFunction)psyco_curs_read_replication_message,
      METH_VARARGS|METH_KEYWORDS, psyco_curs_read_replication_message_doc},
     {"send_replication_feedback", (PyCFunction)psyco_curs_send_replication_feedback,

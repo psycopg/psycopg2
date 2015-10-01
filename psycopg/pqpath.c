@@ -1531,18 +1531,28 @@ exit:
     return ret;
 }
 
-/* ignores keepalive messages */
+/* Tries to read the next message from the replication stream, without
+   blocking, in both sync and async connection modes.  If no message
+   is ready in the CopyData buffer, tries to read from the server,
+   again without blocking.  If that doesn't help, returns Py_None.
+   The caller is then supposed to block on the socket(s) and call this
+   function again.
+
+   Any keepalive messages from the server are silently consumed and
+   are never returned to the caller.
+ */
 PyObject *
 pq_read_replication_message(cursorObject *curs, int decode)
 {
     char *buffer = NULL;
-    int len, consumed = 0, hdr, reply;
+    int len, data_size, consumed, hdr, reply;
     XLogRecPtr data_start, wal_end;
     pg_int64 send_time;
     PyObject *str = NULL, *msg = NULL;
 
     Dprintf("pq_read_replication_message(decode=%d)", decode);
 
+    consumed = 0;
 retry:
     len = PQgetCopyData(curs->conn->pgconn, &buffer, 1 /* async */);
 
@@ -1570,10 +1580,12 @@ retry:
     }
 
     if (len == -2) {
+        /* serious error */
         pq_raise(curs->conn, curs, NULL);
         goto exit;
     }
     if (len == -1) {
+        /* EOF */
         curs->pgres = PQgetResult(curs->conn->pgconn);
 
         if (curs->pgres && PQresultStatus(curs->pgres) == PGRES_FATAL_ERROR) {
@@ -1595,13 +1607,14 @@ retry:
 
     Dprintf("pq_read_replication_message: msg=%c, len=%d", buffer[0], len);
     if (buffer[0] == 'w') {
-        /* msgtype(1), dataStart(8), walEnd(8), sendTime(8) */
+        /* XLogData: msgtype(1), dataStart(8), walEnd(8), sendTime(8) */
         hdr = 1 + 8 + 8 + 8;
         if (len < hdr + 1) {
             psyco_set_error(OperationalError, curs, "data message header too small");
             goto exit;
         }
 
+        data_size  = len - hdr;
         data_start = fe_recvint64(buffer + 1);
         wal_end    = fe_recvint64(buffer + 1 + 8);
         send_time  = fe_recvint64(buffer + 1 + 8 + 8);
@@ -1609,12 +1622,13 @@ retry:
         Dprintf("pq_read_replication_message: data_start="XLOGFMTSTR", wal_end="XLOGFMTSTR,
                 XLOGFMTARGS(data_start), XLOGFMTARGS(wal_end));
 
-        Dprintf("pq_read_replication_message: >>%.*s<<", len - hdr, buffer + hdr);
+        Dprintf("pq_read_replication_message: >>%.*s<<", data_size, buffer + hdr);
 
+        /* XXX it would be wise to check if it's really a logical replication */
         if (decode) {
-            str = PyUnicode_Decode(buffer + hdr, len - hdr, curs->conn->codec, NULL);
+            str = PyUnicode_Decode(buffer + hdr, data_size, curs->conn->codec, NULL);
         } else {
-            str = Bytes_FromStringAndSize(buffer + hdr, len - hdr);
+            str = Bytes_FromStringAndSize(buffer + hdr, data_size);
         }
         if (!str) { goto exit; }
 
@@ -1623,12 +1637,13 @@ retry:
         Py_DECREF(str);
         if (!msg) { goto exit; }
 
+        ((replicationMessageObject *)msg)->data_size = data_size;
         ((replicationMessageObject *)msg)->data_start = data_start;
         ((replicationMessageObject *)msg)->wal_end = wal_end;
         ((replicationMessageObject *)msg)->send_time = send_time;
     }
     else if (buffer[0] == 'k') {
-        /* msgtype(1), walEnd(8), sendTime(8), reply(1) */
+        /* Primary keepalive message: msgtype(1), walEnd(8), sendTime(8), reply(1) */
         hdr = 1 + 8 + 8;
         if (len < hdr + 1) {
             psyco_set_error(OperationalError, curs, "keepalive message header too small");
@@ -1641,6 +1656,7 @@ retry:
                 if (curs->conn->async) {
                     curs->repl_feedback_pending = 1;
                 } else {
+                    /* XXX not sure if this was a good idea after all */
                     pq_raise(curs->conn, curs, NULL);
                     goto exit;
                 }
@@ -1699,38 +1715,36 @@ pq_send_replication_feedback(cursorObject* curs, int reply_requested)
     return 1;
 }
 
-/* used for streaming replication only */
-static int
-_pq_copy_both_v3(cursorObject *curs)
+/* Calls pq_read_replication_message in an endless loop, until
+   stop_replication is called or a fatal error occurs.  The messages
+   are passed to the consumer object.
+
+   When no message is available, blocks on the connection socket, but
+   manages to send keepalive messages to the server as needed.
+*/
+int
+pq_copy_both(cursorObject *curs, PyObject *consumer, int decode, double keepalive_interval)
 {
     PyObject *msg, *tmp = NULL;
-    PyObject *write_func = NULL;
-    int is_text, fd, sel, ret = -1;
+    PyObject *consume_func = NULL;
+    int fd, sel, ret = -1;
     PGconn *pgconn;
     fd_set fds;
-    struct timeval curr_time, ping_time, time_diff;
+    struct timeval keep_intr, curr_time, ping_time, timeout;
 
-    if (!curs->copyfile) {
-        psyco_set_error(ProgrammingError, curs,
-            "can't execute START_REPLICATION directly: use the start_replication() method instead");
-        goto exit;
-    }
-
-    if (!(write_func = PyObject_GetAttrString(curs->copyfile, "write"))) {
-        Dprintf("_pq_copy_both_v3: can't get o.write");
-        goto exit;
-    }
-
-    /* if the file is text we must pass it unicode. */
-    if (-1 == (is_text = psycopg_is_text_file(curs->copyfile))) {
+    if (!(consume_func = PyObject_GetAttrString(consumer, "consume"))) {
+        Dprintf("pq_copy_both: can't get o.consume");
         goto exit;
     }
 
     CLEARPGRES(curs->pgres);
     pgconn = curs->conn->pgconn;
 
+    keep_intr.tv_sec  = (int)keepalive_interval;
+    keep_intr.tv_usec = (keepalive_interval - keep_intr.tv_sec)*1.0e6;
+
     while (1) {
-        msg = pq_read_replication_message(curs, is_text);
+        msg = pq_read_replication_message(curs, decode);
         if (!msg) {
             goto exit;
         }
@@ -1748,14 +1762,12 @@ _pq_copy_both_v3(cursorObject *curs)
 
             gettimeofday(&curr_time, NULL);
 
-            ping_time = curs->repl_last_io;
-            ping_time.tv_sec  += curs->repl_keepalive_interval.tv_sec;
-            ping_time.tv_usec += curs->repl_keepalive_interval.tv_usec;
+            timeradd(&curs->repl_last_io, &keep_intr, &ping_time);
+            timersub(&ping_time, &curr_time, &timeout);
 
-            timersub(&ping_time, &curr_time, &time_diff);
-            if (time_diff.tv_sec > 0) {
+            if (timeout.tv_sec >= 0) {
                 Py_BEGIN_ALLOW_THREADS;
-                sel = select(fd + 1, &fds, NULL, NULL, &time_diff);
+                sel = select(fd + 1, &fds, NULL, NULL, &timeout);
                 Py_END_ALLOW_THREADS;
             }
             else {
@@ -1782,17 +1794,17 @@ _pq_copy_both_v3(cursorObject *curs)
             continue;
         }
         else {
-            tmp = PyObject_CallFunctionObjArgs(write_func, msg, NULL);
+            tmp = PyObject_CallFunctionObjArgs(consume_func, msg, NULL);
             Py_DECREF(msg);
 
             if (tmp == NULL) {
-                Dprintf("_pq_copy_both_v3: write_func returned NULL");
+                Dprintf("pq_copy_both: consume_func returned NULL");
                 goto exit;
             }
             Py_DECREF(tmp);
 
             if (curs->repl_stop) {
-                Dprintf("_pq_copy_both_v3: repl_stop flag set by write_func");
+                Dprintf("pq_copy_both: repl_stop flag set by consume_func");
                 break;
             }
         }
@@ -1801,7 +1813,7 @@ _pq_copy_both_v3(cursorObject *curs)
     ret = 1;
 
 exit:
-    Py_XDECREF(write_func);
+    Py_XDECREF(consume_func);
     return ret;
 }
 
@@ -1867,13 +1879,14 @@ pq_fetch(cursorObject *curs, int no_result)
     case PGRES_COPY_BOTH:
         Dprintf("pq_fetch: data from a streaming replication slot (no tuples)");
         curs->rowcount = -1;
-        if (curs->conn->async) {
+        ex = 0;
+        /*if (curs->conn->async) {
             ex = 0;
         } else {
             ex = _pq_copy_both_v3(curs);
-            /* error caught by out glorious notice handler */
+            
             if (PyErr_Occurred()) ex = -1;
-        }
+        }*/
         CLEARPGRES(curs->pgres);
         break;
 

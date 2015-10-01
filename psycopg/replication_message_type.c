@@ -49,8 +49,9 @@ static PyObject *
 replmsg_repr(replicationMessageObject *self)
 {
     return PyString_FromFormat(
-        "<replicationMessage object at %p; data_start: "XLOGFMTSTR"; wal_end: "XLOGFMTSTR"; send_time: %lld>",
-        self, XLOGFMTARGS(self->data_start), XLOGFMTARGS(self->wal_end), self->send_time);
+        "<replicationMessage object at %p; data_size: %d; data_start: "XLOGFMTSTR"; wal_end: "XLOGFMTSTR"; send_time: %lld>",
+        self, self->data_size, XLOGFMTARGS(self->data_start), XLOGFMTARGS(self->wal_end),
+        self->send_time);
 }
 
 static int
@@ -63,8 +64,10 @@ replmsg_init(PyObject *obj, PyObject *args, PyObject *kwargs)
     Py_XINCREF(self->cursor);
     Py_XINCREF(self->payload);
 
+    self->data_size = 0;
     self->data_start = 0;
     self->wal_end = 0;
+    self->send_time = 0;
 
     return 0;
 }
@@ -124,6 +127,8 @@ static struct PyMemberDef replicationMessageObject_members[] = {
     {"cursor", T_OBJECT, OFFSETOF(cursor), READONLY,
         "TODO"},
     {"payload", T_OBJECT, OFFSETOF(payload), READONLY,
+        "TODO"},
+    {"data_size", T_INT, OFFSETOF(data_size), READONLY,
         "TODO"},
     {"data_start", T_ULONGLONG, OFFSETOF(data_start), READONLY,
         "TODO"},

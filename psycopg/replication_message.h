@@ -42,6 +42,7 @@ struct replicationMessageObject {
     cursorObject *cursor;
     PyObject *payload;
 
+    int         data_size;
     XLogRecPtr  data_start;
     XLogRecPtr  wal_end;
     pg_int64    send_time;

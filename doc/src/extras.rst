@@ -144,32 +144,40 @@ Logging cursor
 Replication cursor
 ^^^^^^^^^^^^^^^^^^
 
+.. autoclass:: ReplicationConnectionBase
+
+
+The following replication types are defined:
+
+.. data:: REPLICATION_LOGICAL
+.. data:: REPLICATION_PHYSICAL
+
+
 .. autoclass:: LogicalReplicationConnection
 
-   This connection factory class can be used to open a special type of
-   connection that is used for logical replication.
+    This connection factory class can be used to open a special type of
+    connection that is used for logical replication.
 
-   Example::
+    Example::
 
-       from psycopg2.extras import LogicalReplicationConnection
-       log_conn = psycopg2.connect(dsn, connection_factory=LogicalReplicationConnection)
-       log_cur = log_conn.cursor()
+        from psycopg2.extras import LogicalReplicationConnection
+        log_conn = psycopg2.connect(dsn, connection_factory=LogicalReplicationConnection)
+        log_cur = log_conn.cursor()
 
 
 .. autoclass:: PhysicalReplicationConnection
 
-   This connection factory class can be used to open a special type of
-   connection that is used for physical replication.
+    This connection factory class can be used to open a special type of
+    connection that is used for physical replication.
 
-   Example::
+    Example::
 
-       from psycopg2.extras import PhysicalReplicationConnection
-       phys_conn = psycopg2.connect(dsn, connection_factory=PhysicalReplicationConnection)
-       phys_cur = phys_conn.cursor()
+        from psycopg2.extras import PhysicalReplicationConnection
+        phys_conn = psycopg2.connect(dsn, connection_factory=PhysicalReplicationConnection)
+        phys_cur = phys_conn.cursor()
 
-
-   Both `LogicalReplicationConnection` and `PhysicalReplicationConnection` use
-   `ReplicationCursor` for actual communication on the connection.
+    Both `LogicalReplicationConnection` and `PhysicalReplicationConnection` use
+    `ReplicationCursor` for actual communication on the connection.
 
 .. seealso::
 
@@ -177,160 +185,237 @@ Replication cursor
 
    .. __: http://www.postgresql.org/docs/current/static/protocol-replication.html
 
+
+The individual messages in the replication stream are presented by
+`ReplicationMessage` objects:
+
+.. autoclass:: ReplicationMessage
+
+    .. attribute:: payload
+
+        The actual data received from the server.  An instance of either
+        ``str`` or ``unicode``, depending on the method that was used to
+        produce this message.
+
+    .. attribute:: data_size
+
+        The raw size of the message payload (before possible unicode
+        conversion).
+
+    .. attribute:: data_start
+
+        LSN position of the start of the message.
+
+    .. attribute:: wal_end
+
+        LSN position of the current end of WAL on the server.
+
+    .. attribute:: send_time
+
+        A `~datetime` object representing the server timestamp at the moment
+        when the message was sent.
+
+    .. attribute:: cursor
+
+        A reference to the corresponding `ReplicationCursor` object.
+
+
 .. autoclass:: ReplicationCursor
 
     .. method:: identify_system()
 
-       Execute ``IDENTIFY_SYSTEM`` command of the streaming replication
-       protocol and return the result as a dictionary.
+        Execute ``IDENTIFY_SYSTEM`` command of the streaming replication
+        protocol and return the result as a dictionary.
 
-       Example::
+        Example::
 
-           >>> cur.identify_system()
-           {'timeline': 1, 'systemid': '1234567890123456789', 'dbname': 'test', 'xlogpos': '0/1ABCDEF'}
+            >>> cur.identify_system()
+            {'timeline': 1, 'systemid': '1234567890123456789', 'dbname': 'test', 'xlogpos': '0/1ABCDEF'}
 
     .. method:: create_replication_slot(slot_name, output_plugin=None)
 
-       Create streaming replication slot.
+        Create streaming replication slot.
 
-       :param slot_name: name of the replication slot to be created
-       :param slot_type: type of replication: should be either
-                         `REPLICATION_LOGICAL` or `REPLICATION_PHYSICAL`
-       :param output_plugin: name of the logical decoding output plugin to be
-                             used by the slot; required for logical
-                             replication connections, disallowed for physical
+        :param slot_name: name of the replication slot to be created
+        :param slot_type: type of replication: should be either
+                          `REPLICATION_LOGICAL` or `REPLICATION_PHYSICAL`
+        :param output_plugin: name of the logical decoding output plugin to be
+                              used by the slot; required for logical
+                              replication connections, disallowed for physical
 
-       Example::
+        Example::
 
-           log_cur.create_replication_slot("logical1", "test_decoding")
-           phys_cur.create_replication_slot("physical1")
+            log_cur.create_replication_slot("logical1", "test_decoding")
+            phys_cur.create_replication_slot("physical1")
 
-           # either logical or physical replication connection
-           cur.create_replication_slot("slot1", slot_type=REPLICATION_LOGICAL)
+            # either logical or physical replication connection
+            cur.create_replication_slot("slot1", slot_type=REPLICATION_LOGICAL)
 
-       When creating a slot on a logical replication connection, a logical
-       replication slot is created by default.  Logical replication requires
-       name of the logical decoding output plugin to be specified.
+        When creating a slot on a logical replication connection, a logical
+        replication slot is created by default.  Logical replication requires
+        name of the logical decoding output plugin to be specified.
 
-       When creating a slot on a physical replication connection, a physical
-       replication slot is created by default.  No output plugin parameter is
-       required or allowed when creating a physical replication slot.
+        When creating a slot on a physical replication connection, a physical
+        replication slot is created by default.  No output plugin parameter is
+        required or allowed when creating a physical replication slot.
 
-       In either case, the type of slot being created can be specified
-       explicitly using *slot_type* parameter.
+        In either case, the type of slot being created can be specified
+        explicitly using *slot_type* parameter.
 
-       Replication slots are a feature of PostgreSQL server starting with
-       version 9.4.
+        Replication slots are a feature of PostgreSQL server starting with
+        version 9.4.
 
     .. method:: drop_replication_slot(slot_name)
 
-       Drop streaming replication slot.
+        Drop streaming replication slot.
 
-       :param slot_name: name of the replication slot to drop
+        :param slot_name: name of the replication slot to drop
 
-       Example::
+        Example::
 
-           # either logical or physical replication connection
-           cur.drop_replication_slot("slot1")
+            # either logical or physical replication connection
+            cur.drop_replication_slot("slot1")
 
-       This 
-           
-       Replication slots are a feature of PostgreSQL server starting with
-       version 9.4.
+        Replication slots are a feature of PostgreSQL server starting with
+        version 9.4.
 
-    .. method:: start_replication(slot_name=None, writer=None, slot_type=None, start_lsn=0, timeline=0, keepalive_interval=10, options=None)
+    .. method:: start_replication(slot_name=None, slot_type=None, start_lsn=0, timeline=0, options=None)
 
-       Start replication on the connection.
+        Start replication on the connection.
 
-       :param slot_name: name of the replication slot to use; required for
-                         logical replication, physical replication can work
-                         with or without a slot
-       :param writer: a file-like object to write replication messages to
-       :param slot_type: type of replication: should be either
-                         `REPLICATION_LOGICAL` or `REPLICATION_PHYSICAL`
-       :param start_lsn: the optional LSN position to start replicating from,
-                         can be an integer or a string of hexadecimal digits
-                         in the form ``XXX/XXX``
-       :param timeline: WAL history timeline to start streaming from (optional,
-                        can only be used with physical replication)
-       :param keepalive_interval: interval (in seconds) to send keepalive
-                                  messages to the server
-       :param options: a dictionary of options to pass to logical replication
-                       slot (not allowed with physical replication, set to
-                       *None*)
+        :param slot_name: name of the replication slot to use; required for
+                          logical replication, physical replication can work
+                          with or without a slot
+        :param slot_type: type of replication: should be either
+                          `REPLICATION_LOGICAL` or `REPLICATION_PHYSICAL`
+        :param start_lsn: the optional LSN position to start replicating from,
+                          can be an integer or a string of hexadecimal digits
+                          in the form ``XXX/XXX``
+        :param timeline: WAL history timeline to start streaming from (optional,
+                         can only be used with physical replication)
+        :param options: a dictionary of options to pass to logical replication
+                        slot (not allowed with physical replication)
 
-       If not specified using *slot_type* parameter, the type of replication
-       to be started is defined by the type of replication connection.
-       Logical replication is only allowed on logical replication connection,
-       but physical replication can be used with both types of connection.
+        If a *slot_name* is specified, the slot must exist on the server and
+        its type must match the replication type used.
 
-       On the other hand, physical replication doesn't require a named
-       replication slot to be used, only logical one does.  In any case,
-       logical replication and replication slots are a feature of PostgreSQL
-       server starting with version 9.4.  Physical replication can be used
-       starting with 9.0.
+        If not specified using *slot_type* parameter, the type of replication
+        is defined by the type of replication connection.  Logical replication
+        is only allowed on logical replication connection, but physical
+        replication can be used with both types of connection.
 
-       If a *slot_name* is specified, the slot must exist on the server and
-       its type must match the replication type used.
+        On the other hand, physical replication doesn't require a named
+        replication slot to be used, only logical one does.  In any case,
+        logical replication and replication slots are a feature of PostgreSQL
+        server starting with version 9.4.  Physical replication can be used
+        starting with 9.0.
 
-       When used on non-asynchronous connection this method enters an endless
-       loop, reading messages from the server and passing them to ``write()``
-       method of the *writer* object.  This is similar to operation of the
-       `~cursor.copy_to()` method.  It also sends keepalive messages to the
-       server, in case there were no new data from it for the duration of
-       *keepalive_interval* seconds (this parameter's value must be equal to
-       at least than 1 second, but it can have a fractional part).
+        If *start_lsn* is specified, the requested stream will start from that
+        LSN.  The default is `!None`, which passes the LSN ``0/0``, causing
+        replay to begin at the last point at which the server got replay
+        confirmation from the client for, or the oldest available point for a
+        new slot.
 
-       With asynchronous connection, this method returns immediately and the
-       calling code can start reading the replication messages in a loop.
+        The server might produce an error if a WAL file for the given LSN has
+        already been recycled, or it may silently start streaming from a later
+        position: the client can verify the actual position using information
+        provided the `ReplicationMessage` attributes.  The exact server
+        behavior depends on the type of replication and use of slots.
 
-       A sketch implementation of the *writer* object for logical replication
-       might look similar to the following::
+        A *timeline* parameter can only be specified with physical replication
+        and only starting with server version 9.3.
 
-           from io import TextIOBase
+        A dictionary of *options* may be passed to the logical decoding plugin
+        on a logical replication slot.  The set of supported options depends
+        on the output plugin that was used to create the slot.  Must be
+        `!None` for physical replication.
 
-           class LogicalStreamWriter(TextIOBase):
+        This function constructs a ``START_REPLICATION`` command and calls
+        `start_replication_expert()` internally.
 
-               def write(self, msg):
-                   self.store_message_data(msg.payload)
+        After starting the replication, to actually consume the incoming
+        server messages, use `consume_replication_stream()` or implement a
+        loop around `read_replication_message()` in case of asynchronous
+        connection.
 
-                   if self.should_report_to_the_server_now(msg):
-                       msg.cursor.send_replication_feedback(flush_lsn=msg.wal_end)
+    .. method:: start_replication_expert(command)
 
-       First, like with the `~cursor.copy_to()` method, the code that calls
-       the provided ``write()`` method checks if the *writer* object is
-       inherited from `~io.TextIOBase`.  If that is the case, the message
-       payload to be passed is converted to unicode using the connection's
-       `~connection.encoding` information.  Otherwise, the message is passed
-       as is.
+        Start replication on the connection using provided ``START_REPLICATION``
+        command.
 
-       The *msg* object being passed is an instance of `~ReplicationMessage`
-       class.
+    .. method:: consume_replication_stream(consumer, decode=False, keepalive_interval=10)
 
-       After storing certain amount of messages' data reliably, the client
-       should send a confirmation message to the server.  This should be done
-       by calling `~send_replication_feedback()` method on the corresponding
-       replication cursor.  A reference to the cursor is provided in the
-       `~ReplicationMessage` as an attribute.
+        :param consumer: an object providing ``consume()`` method
+        :param decode: a flag indicating that unicode conversion should be
+                       performed on the messages received from the server
+        :param keepalive_interval: interval (in seconds) to send keepalive
+                                   messages to the server
 
-       .. warning::
+        This method can only be used with synchronous connection.  For
+        asynchronous connections see `read_replication_message()`.
 
-           Failure to properly notify the server by constantly consuming and
-           reporting success at appropriate times can eventually lead to "disk
-           full" condition on the server, because the server retains all the
-           WAL segments that might be needed to stream the changes via all of
-           the currently open replication slots.
+        Before calling this method to consume the stream, use
+        `start_replication()` first.
 
-           On the other hand, it is not recommended to send a confirmation
-           after every processed message, since that will put an unnecessary
-           load on network and the server.  A possible strategy is to confirm
-           after every COMMIT message.
+        When called, this method enters an endless loop, reading messages from
+        the server and passing them to ``consume()`` method of the *consumer*
+        object.  In order to make this method break out of the loop and
+        return, the ``consume()`` method can call `stop_replication()` on the
+        cursor or it can throw an exception.
+
+        If *decode* is set to `!True`, the messages read from the server are
+        converted according to the connection `~connection.encoding`.  This
+        parameter should not be set with physical replication.
+
+        This method also sends keepalive messages to the server, in case there
+        were no new data from the server for the duration of
+        *keepalive_interval* (in seconds).  The value of this parameter must
+        be equal to at least 1 second, but it can have a fractional part.
+
+        The following example is a sketch implementation of *consumer* object
+        for logical replication::
+
+            class LogicalStreamConsumer(object):
+
+                def consume(self, msg):
+                    self.store_message_data(msg.payload)
+
+                    if self.should_report_to_the_server_now(msg):
+                        msg.cursor.send_replication_feedback(flush_lsn=msg.data_start)
+
+            consumer = LogicalStreamConsumer()
+            cur.consume_replication_stream(consumer, decode=True)
+
+        The *msg* objects passed to the ``consume()`` method are instances of
+        `ReplicationMessage` class.
+
+        After storing certain amount of messages' data reliably, the client
+        should send a confirmation message to the server.  This should be done
+        by calling `send_replication_feedback()` method on the corresponding
+        replication cursor.  A reference to the cursor is provided in the
+        `ReplicationMessage` as an attribute.
+
+        .. warning::
+
+            When using replication with slots, failure to properly notify the
+            server by constantly consuming and reporting success at
+            appropriate times can eventually lead to "disk full" condition on
+            the server, because the server retains all the WAL segments that
+            might be needed to stream the changes via all of the currently
+            open replication slots.
+
+            On the other hand, it is not recommended to send a confirmation
+            after every processed message, since that will put an unnecessary
+            load on network and the server.  A possible strategy is to confirm
+            after every COMMIT message.
 
     .. method:: stop_replication()
 
-        In non-asynchronous connection, when called from the ``write()``
-        method, tell the code in `~start_replication` to break out of the
-        endless loop and return.
+        This method can be called on synchronous connections from the
+        ``consume()`` method of a ``consumer`` object in order to break out of
+        the endless loop in `consume_replication_stream()`.  If called on
+        asynchronous connection or outside of the consume loop, this method
+        raises an error.
 
     .. method:: send_replication_feedback(write_lsn=0, flush_lsn=0, apply_lsn=0, reply=False)
 
@@ -344,29 +429,37 @@ Replication cursor
         :param reply: request the server to send back a keepalive message immediately
 
         Use this method to report to the server that all messages up to a
-        certain LSN position have been stored and may be discarded.
+        certain LSN position have been stored on the client and may be
+        discarded on the server.
 
         This method can also be called with all default parameters' values to
-        send a keepalive message to the server.
+        just send a keepalive message to the server.
 
-        In case of asynchronous connection, if the feedback message cannot be
-        sent at the moment, remembers the passed LSN positions for a later
-        hopefully successful call or call to `~flush_replication_feedback()`.
+        If the feedback message could not be sent, updates the passed LSN
+        positions in the cursor for a later call to
+        `flush_replication_feedback()` and returns `!False`, otherwise returns
+        `!True`.
 
     .. method:: flush_replication_feedback(reply=False)
 
         :param reply: request the server to send back a keepalive message immediately
 
         This method tries to flush the latest replication feedback message
-        that `~send_replication_feedback()` was trying to send, if any.
+        that `send_replication_feedback()` was trying to send but couldn't.
+
+        If *reply* is `!True` sends a keepalive message in either case.
+
+        Returns `!True` if the feedback message was sent successfully,
+        `!False` otherwise.
 
     Low-level methods for asynchronous connection operation.
 
-    With the non-asynchronous connection, a single call to
-    `~start_replication()` handles all the complexity, but at times it might
-    be beneficial to use low-level interface for better control, in particular
-    to `~select.select()` on multiple sockets.  The following methods are
-    provided for asynchronous operation:
+    With the synchronous connection, a call to `consume_replication_stream()`
+    handles all the complexity of handling the incoming messages and sending
+    keepalive replies, but at times it might be beneficial to use low-level
+    interface for better control, in particular to `~select.select()` on
+    multiple sockets.  The following methods are provided for asynchronous
+    operation:
 
     .. method:: read_replication_message(decode=True)
 
@@ -374,18 +467,18 @@ Replication cursor
                        performed on the data received from the server
 
         This method should be used in a loop with asynchronous connections
-        after calling `~start_replication()` once.
+        after calling `start_replication()` once.
 
         It tries to read the next message from the server, without blocking
-        and returns an instance of `~ReplicationMessage` or *None*, in case
+        and returns an instance of `ReplicationMessage` or `!None`, in case
         there are no more data messages from the server at the moment.
 
         It is expected that the calling code will call this method repeatedly
         in order to consume all of the messages that might have been buffered,
-        until *None* is returned.  After receiving a *None* value from this
-        method, one might use `~select.select()` or `~select.poll()` on the
-        corresponding connection to block the process until there is more data
-        from the server.
+        until `!None` is returned.  After receiving a `!None` value from this
+        method, the caller should use `~select.select()` or `~select.poll()`
+        on the corresponding connection to block the process until there is
+        more data from the server.
 
         The server can send keepalive messages to the client periodically.
         Such messages are silently consumed by this method and are never
@@ -409,45 +502,19 @@ Replication cursor
 
         keepalive_interval = 10.0
         while True:
-            if (datetime.now() - cur.replication_io_timestamp).total_seconds() >= keepalive_interval:
-                cur.send_replication_feedback()
+            msg = cur.read_replication_message()
+            if msg:
+                consumer.consume(msg)
+            else:
+                timeout = keepalive_interval - (datetime.now() - cur.replication_io_timestamp).total_seconds()
+                if timeout > 0:
+                    sel = select.select([cur], [], [], timeout)
+                else:
+                    sel = []
 
-            while True:
-                msg = cur.read_replication_message()
-                if not msg:
-                    break
-                writer.write(msg)
+                if not sel:
+                    cur.send_replication_feedback()
 
-            timeout = keepalive_interval - (datetime.now() - cur.replication_io_timestamp).total_seconds()
-            if timeout > 0:
-                select.select([cur], [], [], timeout)
-
-.. autoclass:: ReplicationMessage
-
-    .. attribute:: payload
-
-        The actual data received from the server.  An instance of either
-        ``str`` or ``unicode``.
-
-    .. attribute:: data_start
-
-        LSN position of the start of the message.
-
-    .. attribute:: wal_end
-
-        LSN position of the end of the message.
-
-    .. attribute:: send_time
-
-        A `~datetime` object representing the server timestamp at the moment
-        when the message was sent.
-
-    .. attribute:: cursor
-
-        A reference to the corresponding `~ReplicationCursor` object.
-
-.. data:: REPLICATION_LOGICAL
-.. data:: REPLICATION_PHYSICAL
 
 .. index::
     pair: Cursor; Replication

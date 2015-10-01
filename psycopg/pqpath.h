@@ -72,6 +72,8 @@ HIDDEN int pq_execute_command_locked(connectionObject *conn,
 RAISES HIDDEN void pq_complete_error(connectionObject *conn, PGresult **pgres,
                               char **error);
 
+HIDDEN int pq_copy_both(cursorObject *curs, PyObject *consumer,
+                        int decode, double keepalive_interval);
 HIDDEN PyObject *pq_read_replication_message(cursorObject *curs, int decode);
 HIDDEN int pq_send_replication_feedback(cursorObject *curs, int reply_requested);
 

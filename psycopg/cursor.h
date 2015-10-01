@@ -73,7 +73,9 @@ struct cursorObject {
 #define DEFAULT_COPYSIZE 16384
 #define DEFAULT_COPYBUFF  8192
 
-    int         repl_stop;             /* if client requested to stop replication */
+    /* replication cursor attrs */
+    int         repl_started:1;          /* if replication is started */
+    int         repl_stop:1;             /* if client requested to stop replication */
     struct timeval repl_keepalive_interval;   /* interval for keepalive messages in replication mode */
     XLogRecPtr  repl_write_lsn;        /* LSN stats for replication feedback messages */
     XLogRecPtr  repl_flush_lsn;
