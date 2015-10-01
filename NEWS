@@ -16,6 +16,7 @@ What's new in psycopg 2.6.1
 - Fixed deadlock in multithread programs using OpenSSL (:ticket:`#290`).
 - Correctly unlock the connection after error in flush (:ticket:`#294`).
 - Fixed ``MinTimeLoggingCursor.callproc()`` (:ticket:`#309`).
+- Added support for MSVC 2015 compiler (:ticket:`#350`).
 
 
 What's new in psycopg 2.6
