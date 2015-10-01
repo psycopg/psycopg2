@@ -154,7 +154,8 @@ class ConnectionTests(ConnectingTestCase):
             sql = " ".join(["create temp table table2_%d (id serial);" % j for j in range(i, i+10)])
             cur.execute(sql)
 
-        self.assertEqual(100, len(conn.notices))
+        self.assertEqual(len([n for n in conn.notices if 'CREATE TABLE' in n]),
+            100)
 
     def test_notices_noappend(self):
         conn = self.conn
