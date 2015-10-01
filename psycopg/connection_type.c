@@ -1001,8 +1001,8 @@ static struct PyMemberDef connectionObject_members[] = {
         "True if the connection is closed."},
     {"encoding", T_STRING, offsetof(connectionObject, encoding), READONLY,
         "The current client encoding."},
-    {"notices", T_OBJECT, offsetof(connectionObject, notice_list), READONLY},
-    {"notifies", T_OBJECT, offsetof(connectionObject, notifies), READONLY},
+    {"notices", T_OBJECT, offsetof(connectionObject, notice_list), 0},
+    {"notifies", T_OBJECT, offsetof(connectionObject, notifies), 0},
     {"dsn", T_STRING, offsetof(connectionObject, dsn), READONLY,
         "The current connection string."},
     {"async", T_LONG, offsetof(connectionObject, async), READONLY,
@@ -1105,7 +1105,6 @@ connection_clear(connectionObject *self)
     Py_CLEAR(self->tpc_xid);
     Py_CLEAR(self->async_cursor);
     Py_CLEAR(self->notice_list);
-    Py_CLEAR(self->notice_filter);
     Py_CLEAR(self->notifies);
     Py_CLEAR(self->string_types);
     Py_CLEAR(self->binary_types);
@@ -1181,7 +1180,6 @@ connection_traverse(connectionObject *self, visitproc visit, void *arg)
     Py_VISIT((PyObject *)(self->tpc_xid));
     Py_VISIT(self->async_cursor);
     Py_VISIT(self->notice_list);
-    Py_VISIT(self->notice_filter);
     Py_VISIT(self->notifies);
     Py_VISIT(self->string_types);
     Py_VISIT(self->binary_types);

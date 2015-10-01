@@ -291,7 +291,7 @@ something to read::
         else:
             conn.poll()
             while conn.notifies:
-                notify = conn.notifies.pop()
+                notify = conn.notifies.pop(0)
                 print "Got NOTIFY:", notify.pid, notify.channel, notify.payload
 
 Running the script and executing a command such as :sql:`NOTIFY test, 'hello'`
@@ -312,6 +312,10 @@ received from a previous version server will have the
     Added `~psycopg2.extensions.Notify` object and handling notification
     payload.
 
+.. versionchanged:: 2.7
+    The `~connection.notifies` attribute is writable: it is possible to
+    replace it with any object exposing an `!append()` method. An useful
+    example would be to use a `~collections.deque` object.
 
 
 .. index::

@@ -26,6 +26,7 @@ import os
 import time
 import threading
 from operator import attrgetter
+from StringIO import StringIO
 
 import psycopg2
 import psycopg2.errorcodes
@@ -128,6 +129,42 @@ class ConnectionTests(ConnectingTestCase):
 
         self.assertEqual(50, len(conn.notices))
         self.assert_('table99' in conn.notices[-1], conn.notices[-1])
+
+    def test_notices_deque(self):
+        from collections import deque
+
+        conn = self.conn
+        self.conn.notices = deque()
+        cur = conn.cursor()
+        if self.conn.server_version >= 90300:
+            cur.execute("set client_min_messages=debug1")
+
+        cur.execute("create temp table table1 (id serial); create temp table table2 (id serial);")
+        cur.execute("create temp table table3 (id serial); create temp table table4 (id serial);")
+        self.assertEqual(len(conn.notices), 4)
+        self.assert_('table1' in conn.notices.popleft())
+        self.assert_('table2' in conn.notices.popleft())
+        self.assert_('table3' in conn.notices.popleft())
+        self.assert_('table4' in conn.notices.popleft())
+        self.assertEqual(len(conn.notices), 0)
+
+        # not limited, but no error
+        for i in range(0, 100, 10):
+            sql = " ".join(["create temp table table2_%d (id serial);" % j for j in range(i, i+10)])
+            cur.execute(sql)
+
+        self.assertEqual(100, len(conn.notices))
+
+    def test_notices_noappend(self):
+        conn = self.conn
+        self.conn.notices = None    # will make an error swallowes ok
+        cur = conn.cursor()
+        if self.conn.server_version >= 90300:
+            cur.execute("set client_min_messages=debug1")
+
+        cur.execute("create temp table table1 (id serial);")
+
+        self.assertEqual(self.conn.notices, None)
 
     def test_server_version(self):
         self.assert_(self.conn.server_version)
@@ -1116,6 +1153,17 @@ class AutocommitTests(ConnectingTestCase):
         self.assertEqual(cur.fetchone()[0], 'serializable')
         cur.execute("SHOW default_transaction_read_only;")
         self.assertEqual(cur.fetchone()[0], 'on')
+
+
+class ReplicationTest(ConnectingTestCase):
+    @skip_before_postgres(9, 0)
+    def test_replication_not_supported(self):
+        conn = self.repl_connect()
+        if conn is None: return
+        cur = conn.cursor()
+        f = StringIO()
+        self.assertRaises(psycopg2.NotSupportedError,
+            cur.copy_expert, "START_REPLICATION 0/0", f)
 
 
 def test_suite():
