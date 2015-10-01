@@ -307,6 +307,8 @@ class ConnectionTests(ConnectingTestCase):
         self.assert_(c.closed, "connection failed so it must be closed")
         self.assert_('foobar' not in c.dsn, "password was not obscured")
 
+
+class ParseDsnTestCase(ConnectingTestCase):
     def test_parse_dsn(self):
         from psycopg2 import ProgrammingError
         from psycopg2.extensions import parse_dsn
