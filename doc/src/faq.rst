@@ -223,6 +223,37 @@ What are the advantages or disadvantages of using named cursors?
     little memory on the client and to skip or discard parts of the result set.
 
 
+.. _faq-interrupt-query:
+.. cssclass:: faq
+
+How do I interrupt a long-running query in an interactive shell?
+    Normally the interactive shell becomes unresponsive to :kbd:`Ctrl-C` when
+    running a query. Using a connection in green mode allows Python to
+    receive and handle the interrupt, although it may leave the connection
+    broken, if the async callback doesn't handle the `!KeyboardInterrupt`
+    correctly.
+
+    Starting from psycopg 2.6.2, the `~psycopg2.extras.wait_select` callback
+    can handle a :kbd:`Ctrl-C` correctly. For previous versions, you can use
+    `this implementation`__.
+
+    .. __: http://initd.org/psycopg/articles/2014/07/20/cancelling-postgresql-statements-python/
+
+    .. code-block:: pycon
+
+        >>> psycopg2.extensions.set_wait_callback(psycopg2.extensions.wait_select)
+        >>> cnn = psycopg2.connect('')
+        >>> cur = cnn.cursor()
+        >>> cur.execute("select pg_sleep(10)")
+        ^C
+        Traceback (most recent call last):
+          File "<stdin>", line 1, in <module>
+          QueryCanceledError: canceling statement due to user request
+
+        >>> cnn.rollback()
+        >>> # You can use the connection and cursor again from here
+
+
 .. _faq-compile:
 
 Problems compiling and deploying psycopg2

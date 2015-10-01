@@ -575,15 +575,20 @@ def wait_select(conn):
     from psycopg2.extensions import POLL_OK, POLL_READ, POLL_WRITE
 
     while 1:
-        state = conn.poll()
-        if state == POLL_OK:
-            break
-        elif state == POLL_READ:
-            select.select([conn.fileno()], [], [])
-        elif state == POLL_WRITE:
-            select.select([], [conn.fileno()], [])
-        else:
-            raise conn.OperationalError("bad state from poll: %s" % state)
+        try:
+            state = conn.poll()
+            if state == POLL_OK:
+                break
+            elif state == POLL_READ:
+                select.select([conn.fileno()], [], [])
+            elif state == POLL_WRITE:
+                select.select([], [conn.fileno()], [])
+            else:
+                raise conn.OperationalError("bad state from poll: %s" % state)
+        except KeyboardInterrupt:
+            conn.cancel()
+            # the loop will be broken by a server error
+            continue
 
 
 def _solve_conn_curs(conn_or_curs):

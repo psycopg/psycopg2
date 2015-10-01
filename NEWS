@@ -20,6 +20,9 @@ What's new in psycopg 2.6.2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Report the server response status on errors (such as :ticket:`#281`).
+- The `~psycopg2.extras.wait_select` callback allows interrupting a
+  long-running query in an interactive shell using :kbd:`Ctrl-C`
+  (:ticket:`#333`).
 - Raise `!NotSupportedError` on unhandled server response status
   (:ticket:`#352`).
 - Fixed `!PersistentConnectionPool` on Python 3 (:ticket:`#348`).
