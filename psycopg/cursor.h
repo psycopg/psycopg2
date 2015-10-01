@@ -97,10 +97,6 @@ struct cursorObject {
 
 };
 
-/* streaming replication modes */
-#define CURSOR_REPLICATION_PHYSICAL 0
-#define CURSOR_REPLICATION_LOGICAL  1
-
 
 /* C-callable functions in cursor_int.c and cursor_type.c */
 BORROWED HIDDEN PyObject *curs_get_cast(cursorObject *self, PyObject *oid);

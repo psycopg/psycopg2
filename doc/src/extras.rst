@@ -197,7 +197,7 @@ Replication cursor
 
            cur.drop_replication_slot("testslot")
 
-    .. method:: start_replication(slot_type, slot_name=None, writer=None, start_lsn=None, timeline=0, keepalive_interval=10, options=None)
+    .. method:: start_replication(slot_type, slot_name=None, writer=None, start_lsn=0, timeline=0, keepalive_interval=10, options=None)
 
        Start a replication stream.  On non-asynchronous connection, also
        consume the stream messages.
@@ -207,15 +207,16 @@ Replication cursor
        :param slot_name: name of the replication slot to use (required for
                          logical replication)
        :param writer: a file-like object to write replication messages to
-       :param start_lsn: the LSN position to start from, in the form
-                         ``XXX/XXX`` (forward-slash separated pair of
-                         hexadecimals)
+       :param start_lsn: the optional LSN position to start replicating from,
+                         can be an integer or a string of hexadecimal digits
+                         in the form ``XXX/XXX``
        :param timeline: WAL history timeline to start streaming from (optional,
                         can only be used with physical replication)
        :param keepalive_interval: interval (in seconds) to send keepalive
                                   messages to the server
        :param options: a dictionary of options to pass to logical replication
-                       slot
+                       slot (not allowed with physical replication, use
+                       *None*)
 
        When used on non-asynchronous connection this method enters an endless
        loop, reading messages from the server and passing them to ``write()``
