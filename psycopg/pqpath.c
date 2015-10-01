@@ -198,8 +198,10 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult **pgres)
        raise and a meaningful message is better than an empty one.
        Note: it can happen without it being our error: see ticket #82 */
     if (err == NULL || err[0] == '\0') {
-        PyErr_SetString(DatabaseError,
-            "error with no message from the libpq");
+        PyErr_Format(DatabaseError,
+            "error with status %s and no message from the libpq",
+            PQresStatus(pgres == NULL ?
+                PQstatus(conn->pgconn) : PQresultStatus(*pgres)));
         return;
     }
 
@@ -1897,9 +1899,24 @@ pq_fetch(cursorObject *curs, int no_result)
         ex = -1;
         break;
 
-    default:
-        Dprintf("pq_fetch: uh-oh, something FAILED: pgconn = %p", curs->conn);
+    case PGRES_BAD_RESPONSE:
+    case PGRES_NONFATAL_ERROR:
+    case PGRES_FATAL_ERROR:
+        Dprintf("pq_fetch: uh-oh, something FAILED: status = %d pgconn = %p",
+            status, curs->conn);
         pq_raise(curs->conn, curs, NULL);
+        ex = -1;
+        break;
+
+    default:
+        /* PGRES_COPY_BOTH, PGRES_SINGLE_TUPLE, future statuses */
+        Dprintf("pq_fetch: got unsupported result: status = %d pgconn = %p",
+            status, curs->conn);
+        PyErr_Format(NotSupportedError,
+            "got server response with unsupported status %s",
+            PQresStatus(curs->pgres == NULL ?
+                PQstatus(curs->conn->pgconn) : PQresultStatus(curs->pgres)));
+        CLEARPGRES(curs->pgres);
         ex = -1;
         break;
     }

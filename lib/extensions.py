@@ -56,11 +56,12 @@ try:
 except ImportError:
     pass
 
-from psycopg2._psycopg import adapt, adapters, encodings, connection, cursor, replicationMessage, lobject, Xid, libpq_version
+from psycopg2._psycopg import adapt, adapters, encodings, connection, cursor, lobject, Xid, libpq_version, parse_dsn
 from psycopg2._psycopg import string_types, binary_types, new_type, new_array_type, register_type
 from psycopg2._psycopg import ISQLQuote, Notify, Diagnostics, Column
 
 from psycopg2._psycopg import QueryCanceledError, TransactionRollbackError
+from psycopg2._psycopg import replicationMessage
 
 try:
     from psycopg2._psycopg import set_wait_callback, get_wait_callback

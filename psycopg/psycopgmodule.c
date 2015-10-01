@@ -113,6 +113,59 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
     return conn;
 }
 
+#define psyco_parse_dsn_doc "parse_dsn(dsn) -> dict"
+
+static PyObject *
+psyco_parse_dsn(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+    char *err = NULL;
+    PQconninfoOption *options = NULL, *o;
+    PyObject *dict = NULL, *res = NULL, *dsn;
+
+    static char *kwlist[] = {"dsn", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", kwlist, &dsn)) {
+        return NULL;
+    }
+
+    Py_INCREF(dsn); /* for ensure_bytes */
+    if (!(dsn = psycopg_ensure_bytes(dsn))) { goto exit; }
+
+    options = PQconninfoParse(Bytes_AS_STRING(dsn), &err);
+    if (options == NULL) {
+        if (err != NULL) {
+            PyErr_Format(ProgrammingError, "error parsing the dsn: %s", err);
+            PQfreemem(err);
+        } else {
+            PyErr_SetString(OperationalError, "PQconninfoParse() failed");
+        }
+        goto exit;
+    }
+
+    if (!(dict = PyDict_New())) { goto exit; }
+    for (o = options; o->keyword != NULL; o++) {
+        if (o->val != NULL) {
+            PyObject *value;
+            if (!(value = Text_FromUTF8(o->val))) { goto exit; }
+            if (PyDict_SetItemString(dict, o->keyword, value) != 0) {
+                Py_DECREF(value);
+                goto exit;
+            }
+            Py_DECREF(value);
+        }
+    }
+
+    /* success */
+    res = dict;
+    dict = NULL;
+
+exit:
+    PQconninfoFree(options);    /* safe on null */
+    Py_XDECREF(dict);
+    Py_XDECREF(dsn);
+
+    return res;
+}
+
 /** type registration **/
 #define psyco_register_type_doc \
 "register_type(obj, conn_or_curs) -> None -- register obj with psycopg type system\n\n" \
@@ -709,6 +762,8 @@ error:
 static PyMethodDef psycopgMethods[] = {
     {"_connect",  (PyCFunction)psyco_connect,
      METH_VARARGS|METH_KEYWORDS, psyco_connect_doc},
+    {"parse_dsn",  (PyCFunction)psyco_parse_dsn,
+     METH_VARARGS|METH_KEYWORDS, psyco_parse_dsn_doc},
     {"adapt",  (PyCFunction)psyco_microprotocols_adapt,
      METH_VARARGS, psyco_microprotocols_adapt_doc},
 

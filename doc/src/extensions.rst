@@ -12,6 +12,17 @@
 The module contains a few objects and function extending the minimum set of
 functionalities defined by the |DBAPI|_.
 
+.. function:: parse_dsn(dsn)
+
+    Parse connection string into a dictionary of keywords and values.
+
+    Uses libpq's ``PQconninfoParse`` to parse the string according to
+    accepted format(s) and check for supported keywords.
+
+    Example::
+
+        >>> psycopg2.extensions.parse_dsn('dbname=test user=postgres password=secret')
+        {'password': 'secret', 'user': 'postgres', 'dbname': 'test'}
 
 .. class:: connection(dsn, async=False)
 
