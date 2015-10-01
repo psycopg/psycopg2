@@ -23,6 +23,7 @@
 # License for more details.
 
 import os
+import sys
 import time
 import threading
 from operator import attrgetter
@@ -341,7 +342,6 @@ class ParseDsnTestCase(ConnectingTestCase):
 
     @skip_before_libpq(9, 2)
     def test_parse_dsn_uri(self):
-        from psycopg2 import ProgrammingError
         from psycopg2.extensions import parse_dsn
 
         self.assertEqual(parse_dsn('postgresql://tester:secret@/test'),
@@ -351,14 +351,34 @@ class ParseDsnTestCase(ConnectingTestCase):
         raised = False
         try:
             # extra '=' after port value
-            parse_dsn('postgresql://tester:secret@/test?port=1111=x')
-        except ProgrammingError, e:
+            parse_dsn(dsn='postgresql://tester:secret@/test?port=1111=x')
+        except psycopg2.ProgrammingError, e:
             raised = True
             self.assertTrue(str(e).find('secret') < 0,
                             "URI was not exposed in error message")
         except e:
             self.fail("unexpected error condition: " + repr(e))
         self.assertTrue(raised, "ProgrammingError raised due to invalid URI")
+
+    def test_unicode_value(self):
+        from psycopg2.extensions import parse_dsn
+        snowman = u"\u2603"
+        d = parse_dsn('dbname=' + snowman)
+        if sys.version_info[0] < 3:
+            self.assertEqual(d['dbname'], snowman.encode('utf8'))
+        else:
+            self.assertEqual(d['dbname'], snowman)
+
+    def test_unicode_key(self):
+        from psycopg2.extensions import parse_dsn
+        snowman = u"\u2603"
+        self.assertRaises(psycopg2.ProgrammingError, parse_dsn,
+            snowman + '=' + snowman)
+
+    def test_bad_param(self):
+        from psycopg2.extensions import parse_dsn
+        self.assertRaises(TypeError, parse_dsn, None)
+        self.assertRaises(TypeError, parse_dsn, 42)
 
 
 class IsolationLevelsTestCase(ConnectingTestCase):

@@ -115,17 +115,21 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
 #define psyco_parse_dsn_doc "parse_dsn(dsn) -> dict"
 
 static PyObject *
-psyco_parse_dsn(PyObject *self, PyObject *args)
+psyco_parse_dsn(PyObject *self, PyObject *args, PyObject *kwargs)
 {
-    char *dsn, *err = NULL;
+    char *err = NULL;
     PQconninfoOption *options = NULL, *o;
-    PyObject *res = NULL, *value;
+    PyObject *dict = NULL, *res = NULL, *dsn;
 
-    if (!PyArg_ParseTuple(args, "s", &dsn)) {
+    static char *kwlist[] = {"dsn", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", kwlist, &dsn)) {
         return NULL;
     }
 
-    options = PQconninfoParse(dsn, &err);
+    Py_INCREF(dsn); /* for ensure_bytes */
+    if (!(dsn = psycopg_ensure_bytes(dsn))) { goto exit; }
+
+    options = PQconninfoParse(Bytes_AS_STRING(dsn), &err);
     if (options == NULL) {
         if (err != NULL) {
             PyErr_Format(ProgrammingError, "error parsing the dsn: %s", err);
@@ -133,31 +137,30 @@ psyco_parse_dsn(PyObject *self, PyObject *args)
         } else {
             PyErr_SetString(OperationalError, "PQconninfoParse() failed");
         }
-        return NULL;
+        goto exit;
     }
 
-    res = PyDict_New();
-    if (res != NULL) {
-        for (o = options; o->keyword != NULL; o++) {
-            if (o->val != NULL) {
-                value = Text_FromUTF8(o->val);
-                if (value == NULL) {
-                    Py_DECREF(res);
-                    res = NULL;
-                    break;
-                }
-                if (PyDict_SetItemString(res, o->keyword, value) != 0) {
-                    Py_DECREF(value);
-                    Py_DECREF(res);
-                    res = NULL;
-                    break;
-                }
+    if (!(dict = PyDict_New())) { goto exit; }
+    for (o = options; o->keyword != NULL; o++) {
+        if (o->val != NULL) {
+            PyObject *value;
+            if (!(value = Text_FromUTF8(o->val))) { goto exit; }
+            if (PyDict_SetItemString(dict, o->keyword, value) != 0) {
                 Py_DECREF(value);
+                goto exit;
             }
+            Py_DECREF(value);
         }
     }
 
-    PQconninfoFree(options);
+    /* success */
+    res = dict;
+    dict = NULL;
+
+exit:
+    PQconninfoFree(options);    /* safe on null */
+    Py_XDECREF(dict);
+    Py_XDECREF(dsn);
 
     return res;
 }
@@ -759,7 +762,7 @@ static PyMethodDef psycopgMethods[] = {
     {"_connect",  (PyCFunction)psyco_connect,
      METH_VARARGS|METH_KEYWORDS, psyco_connect_doc},
     {"parse_dsn",  (PyCFunction)psyco_parse_dsn,
-     METH_VARARGS, psyco_parse_dsn_doc},
+     METH_VARARGS|METH_KEYWORDS, psyco_parse_dsn_doc},
     {"adapt",  (PyCFunction)psyco_microprotocols_adapt,
      METH_VARARGS, psyco_microprotocols_adapt_doc},
 
