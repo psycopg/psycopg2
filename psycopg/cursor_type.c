@@ -1815,7 +1815,7 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
     Dprintf("cursor_setup: parameters: name = %s, conn = %p", name, conn);
 
     if (name) {
-        if (!(self->name = psycopg_escape_identifier_easy(name, 0))) {
+        if (!(self->name = psycopg_escape_identifier(conn, name, 0))) {
             return -1;
         }
     }

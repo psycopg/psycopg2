@@ -733,6 +733,38 @@ psyco_conn_get_parameter_status(connectionObject *self, PyObject *args)
     return conn_text_from_chars(self, val);
 }
 
+/* quote_ident - Quote identifier */
+
+#define psyco_conn_quote_ident_doc \
+"quote_ident(str) -- Quote identifier according to PostgreSQL quoting rules.\n\n" \
+"Requires libpq >= 9.0, which provides PQescapeIdentifier()."
+
+static PyObject *
+psyco_conn_quote_ident(connectionObject *self, PyObject *args)
+{
+#if PG_VERSION_NUM >= 90000
+    const char *str = NULL;
+    char *quoted;
+    PyObject *result;
+
+    EXC_IF_CONN_CLOSED(self);
+
+    if (!PyArg_ParseTuple(args, "s", &str)) return NULL;
+
+    quoted = PQescapeIdentifier(self->pgconn, str, strlen(str));
+    if (!quoted) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+    result = conn_text_from_chars(self, quoted);
+    PQfreemem(quoted);
+
+    return result;
+#else
+    PyErr_SetString(NotSupportedError, "PQescapeIdentifier not supported by libpq < 9.0");
+#endif
+}
+
 
 /* lobject method - allocate a new lobject */
 
@@ -991,6 +1023,8 @@ static struct PyMethodDef connectionObject_methods[] = {
      METH_NOARGS, psyco_conn_isexecuting_doc},
     {"cancel", (PyCFunction)psyco_conn_cancel,
      METH_NOARGS, psyco_conn_cancel_doc},
+    {"quote_ident", (PyCFunction)psyco_conn_quote_ident,
+     METH_VARARGS, psyco_conn_quote_ident_doc},
     {NULL}
 };
 
