@@ -222,16 +222,6 @@ The individual messages in the replication stream are presented by
 
 .. autoclass:: ReplicationCursor
 
-    .. method:: identify_system()
-
-        Execute ``IDENTIFY_SYSTEM`` command of the streaming replication
-        protocol and return the result as a dictionary.
-
-        Example::
-
-            >>> cur.identify_system()
-            {'timeline': 1, 'systemid': '1234567890123456789', 'dbname': 'test', 'xlogpos': '0/1ABCDEF'}
-
     .. method:: create_replication_slot(slot_name, slot_type=None, output_plugin=None)
 
         Create streaming replication slot.

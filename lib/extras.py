@@ -506,13 +506,6 @@ class PhysicalReplicationConnection(ReplicationConnectionBase):
 class ReplicationCursor(_cursor):
     """A cursor used for communication on the replication protocol."""
 
-    def identify_system(self):
-        """Get information about the cluster status."""
-
-        self.execute("IDENTIFY_SYSTEM")
-        return dict(zip([_.name for _ in self.description],
-                        self.fetchall()[0]))
-
     def create_replication_slot(self, slot_name, slot_type=None, output_plugin=None):
         """Create streaming replication slot."""
 
@@ -594,7 +587,7 @@ class ReplicationCursor(_cursor):
                 command += "%s %s" % (self.connection.quote_ident(k), _A(str(v)))
             command += ")"
 
-        return self.start_replication_expert(command)
+        self.start_replication_expert(command)
 
     def send_feedback_message(self, written_lsn=0, sync_lsn=0, apply_lsn=0, reply_requested=False):
         return self.send_replication_feedback(written_lsn, sync_lsn, apply_lsn, reply_requested)
