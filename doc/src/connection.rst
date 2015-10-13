@@ -582,6 +582,16 @@ The ``connection`` class
 
             .. __: http://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQTRANSACTIONSTATUS
 
+    .. method:: quote_ident(str)
+    
+        Return quoted identifier according to PostgreSQL quoting rules.
+
+        Requires libpq >= 9.0.
+
+        .. seealso:: libpq docs for `PQescapeIdentifier()`__.
+
+            .. __: http://www.postgresql.org/docs/current/static/libpq-exec.html#LIBPQ-PQESCAPEIDENTIFIER
+
 
     .. index::
         pair: Protocol; Version

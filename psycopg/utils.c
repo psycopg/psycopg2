@@ -87,7 +87,7 @@ psycopg_escape_string(connectionObject *conn, const char *from, Py_ssize_t len,
     return to;
 }
 
-/* Escape a string to build a valid PostgreSQL identifier
+/* Escape a string to build a valid PostgreSQL identifier.
  *
  * Allocate a new buffer on the Python heap containing the new string.
  * 'len' is optional: if 0 the length is calculated.
@@ -96,7 +96,10 @@ psycopg_escape_string(connectionObject *conn, const char *from, Py_ssize_t len,
  *
  * WARNING: this function is not so safe to allow untrusted input: it does no
  * check for multibyte chars. Such a function should be built on
- * PQescapeIndentifier, which is only available from PostgreSQL 9.0.
+ * PQescapeIdentifier, which is only available from PostgreSQL 9.0.
+ *
+ * See below for psycopg_escape_identifier (which requires a connection
+ * object).
  */
 char *
 psycopg_escape_identifier_easy(const char *from, Py_ssize_t len)
@@ -123,6 +126,54 @@ psycopg_escape_identifier_easy(const char *from, Py_ssize_t len)
 
     return rv;
 }
+
+/* Escape a string to build a valid PostgreSQL identifier.
+ *
+ * Allocate a new buffer on the Python heap containing the new string.
+ * 'len' is optional: if 0 the length is calculated.
+ *
+ * The returned string doesn't include quotes.
+ *
+ * Uses PQescapeIdentifier internally, if available.
+ */
+#if PG_VERSION_NUM >= 90000
+char *
+psycopg_escape_identifier(connectionObject *conn, const char *from, Py_ssize_t len)
+{
+    char *rv;
+    char *str;
+    Py_ssize_t res_len;
+
+    if (!len) { len = strlen(from); }
+    str = PQescapeIdentifier(conn->pgconn, from, len);
+    if (!str) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    res_len = strlen(str);
+    /* allocate enough mem, sans the quotes */
+    if (!(rv = PyMem_New(char, 1 + res_len - 2))) {
+        free(str);
+        PyErr_NoMemory();
+        return NULL;
+    }
+    /* de-quote */
+    strncpy(rv, str + 1, res_len - 2);
+    rv[res_len - 2] = 0;
+
+    PQfreemem(str);
+
+    return rv;
+}
+#else
+char *
+psycopg_escape_identifier(connectionObject *conn, const char *from, Py_ssize_t len)
+{
+    (void) conn;
+    return psycopg_escape_identifier_easy(from, len);
+}
+#endif
 
 /* Duplicate a string.
  *
