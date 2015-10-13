@@ -165,6 +165,13 @@ class TestQuotedString(ConnectingTestCase):
         self.assertEqual(q.encoding, 'utf_8')
 
 
+class TestQuotedIdentifier(ConnectingTestCase):
+    def test_identifier(self):
+        from psycopg2.extensions import quote_ident
+        self.assertEqual(quote_ident('blah-blah', self.conn), '"blah-blah"')
+        self.assertEqual(quote_ident('quote"inside', self.conn), '"quote""inside"')
+
+
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

@@ -165,6 +165,42 @@ exit:
     return res;
 }
 
+
+#define psyco_quote_ident_doc "quote_ident(str, conn_or_curs) -> str"
+
+static PyObject *
+psyco_quote_ident(PyObject *self, PyObject *args)
+{
+    const char *str = NULL;
+    char *quoted;
+    PyObject *obj, *result;
+    connectionObject *conn;
+
+    if (!PyArg_ParseTuple(args, "sO", &str, &obj)) return NULL;
+
+    if (PyObject_TypeCheck(obj, &cursorType)) {
+        conn = ((cursorObject*)obj)->conn;
+    }
+    else if (PyObject_TypeCheck(obj, &connectionType)) {
+        conn = (connectionObject*)obj;
+    }
+    else {
+        PyErr_SetString(PyExc_TypeError,
+                        "argument 2 must be a connection or a cursor");
+        return NULL;
+    }
+
+    quoted = PQescapeIdentifier(conn->pgconn, str, strlen(str));
+    if (!quoted) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+    result = conn_text_from_chars(conn, quoted);
+    PQfreemem(quoted);
+
+    return result;
+}
+
 /** type registration **/
 #define psyco_register_type_doc \
 "register_type(obj, conn_or_curs) -> None -- register obj with psycopg type system\n\n" \
@@ -768,6 +804,8 @@ static PyMethodDef psycopgMethods[] = {
      METH_VARARGS|METH_KEYWORDS, psyco_parse_dsn_doc},
     {"adapt",  (PyCFunction)psyco_microprotocols_adapt,
      METH_VARARGS, psyco_microprotocols_adapt_doc},
+    {"quote_ident",  (PyCFunction)psyco_quote_ident,
+     METH_VARARGS, psyco_quote_ident_doc},
 
     {"register_type", (PyCFunction)psyco_register_type,
      METH_VARARGS, psyco_register_type_doc},

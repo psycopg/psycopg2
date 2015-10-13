@@ -87,7 +87,7 @@ psycopg_escape_string(connectionObject *conn, const char *from, Py_ssize_t len,
     return to;
 }
 
-/* Escape a string to build a valid PostgreSQL identifier
+/* Escape a string to build a valid PostgreSQL identifier.
  *
  * Allocate a new buffer on the Python heap containing the new string.
  * 'len' is optional: if 0 the length is calculated.
@@ -96,7 +96,7 @@ psycopg_escape_string(connectionObject *conn, const char *from, Py_ssize_t len,
  *
  * WARNING: this function is not so safe to allow untrusted input: it does no
  * check for multibyte chars. Such a function should be built on
- * PQescapeIndentifier, which is only available from PostgreSQL 9.0.
+ * PQescapeIdentifier, which is only available from PostgreSQL 9.0.
  */
 char *
 psycopg_escape_identifier_easy(const char *from, Py_ssize_t len)
