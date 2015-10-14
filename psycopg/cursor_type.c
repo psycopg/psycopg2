@@ -1624,8 +1624,6 @@ psyco_curs_start_replication_expert(cursorObject *self, PyObject *args, PyObject
         Py_INCREF(res);
     }
 
-    self->repl_started = 1;
-
     return res;
 }
 
@@ -1675,6 +1673,8 @@ psyco_curs_consume_replication_stream(cursorObject *self, PyObject *args, PyObje
         psyco_set_error(ProgrammingError, self, "keepalive_interval must be >= 1 (sec)");
         return NULL;
     }
+
+    self->repl_started = 1;
 
     if (pq_copy_both(self, consumer, decode, keepalive_interval) >= 0) {
         res = Py_None;

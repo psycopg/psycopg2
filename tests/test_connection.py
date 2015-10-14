@@ -1197,6 +1197,18 @@ class ReplicationTest(ConnectingTestCase):
         cur.execute("IDENTIFY_SYSTEM")
         cur.fetchall()
 
+    @skip_before_postgres(9, 0)
+    def test_stop_replication_raises(self):
+        import psycopg2.extras
+        conn = self.repl_connect(connection_factory=psycopg2.extras.PhysicalReplicationConnection)
+        if conn is None: return
+        cur = conn.cursor()
+        self.assertRaises(psycopg2.ProgrammingError, cur.stop_replication)
+
+        cur.start_replication()
+        self.assertRaises(psycopg2.ProgrammingError, cur.stop_replication)
+
+
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
