@@ -76,6 +76,7 @@ struct cursorObject {
     /* replication cursor attrs */
     int         repl_started:1;          /* if replication is started */
     int         repl_stop:1;             /* if client requested to stop replication */
+    int         repl_consuming:1;        /* if running the consume loop */
     struct timeval repl_keepalive_interval;   /* interval for keepalive messages in replication mode */
     XLogRecPtr  repl_write_lsn;        /* LSN stats for replication feedback messages */
     XLogRecPtr  repl_flush_lsn;
@@ -144,6 +145,22 @@ do \
     if ((self)->conn->async_cursor != NULL) { \
         PyErr_SetString(ProgrammingError, \
             #cmd " cannot be used while an asynchronous query is underway"); \
+    return NULL; } \
+while (0)
+
+#define EXC_IF_REPLICATING(self, cmd) \
+do \
+    if ((self)->repl_started) { \
+        PyErr_SetString(ProgrammingError, \
+            #cmd " cannot be used when replication is already in progress"); \
+    return NULL; } \
+while (0)
+
+#define EXC_IF_NOT_REPLICATING(self, cmd) \
+do \
+    if (!(self)->repl_started) { \
+        PyErr_SetString(ProgrammingError, \
+            #cmd " cannot be used when replication is not in progress"); \
     return NULL; } \
 while (0)
 
