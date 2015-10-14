@@ -501,9 +501,9 @@ The individual messages in the replication stream are presented by
                 if timeout > 0:
                     sel = select.select([cur], [], [], timeout)
                 else:
-                    sel = []
+                    sel = ([], [], [])
 
-                if not sel:
+                if not sel[0]:
                     cur.send_replication_feedback()
 
 
