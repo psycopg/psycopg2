@@ -1180,14 +1180,22 @@ class AutocommitTests(ConnectingTestCase):
 
 class ReplicationTest(ConnectingTestCase):
     @skip_before_postgres(9, 0)
-    def test_replication_not_supported(self):
-        conn = self.repl_connect()
+    def test_physical_replication_connection(self):
+        import psycopg2.extras
+        conn = self.repl_connect(connection_factory=psycopg2.extras.PhysicalReplicationConnection)
         if conn is None: return
         cur = conn.cursor()
-        f = StringIO()
-        self.assertRaises(psycopg2.NotSupportedError,
-            cur.copy_expert, "START_REPLICATION 0/0", f)
+        cur.execute("IDENTIFY_SYSTEM")
+        cur.fetchall()
 
+    @skip_before_postgres(9, 4)
+    def test_logical_replication_connection(self):
+        import psycopg2.extras
+        conn = self.repl_connect(connection_factory=psycopg2.extras.LogicalReplicationConnection)
+        if conn is None: return
+        cur = conn.cursor()
+        cur.execute("IDENTIFY_SYSTEM")
+        cur.fetchall()
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
