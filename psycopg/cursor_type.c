@@ -1684,6 +1684,7 @@ psyco_curs_consume_replication_stream(cursorObject *self, PyObject *args, PyObje
     }
 
     self->repl_consuming = 0;
+    self->repl_stop = 0; /* who knows, what if we will be called again? */
 
     return res;
 }
