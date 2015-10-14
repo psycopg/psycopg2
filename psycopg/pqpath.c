@@ -1760,6 +1760,7 @@ pq_copy_both(cursorObject *curs, PyObject *consume, int decode, double keepalive
             FD_ZERO(&fds);
             FD_SET(fd, &fds);
 
+            /* how long can we wait before we need to send a keepalive? */
             gettimeofday(&curr_time, NULL);
 
             timeradd(&curs->repl_last_io, &keep_intr, &ping_time);
@@ -1880,13 +1881,7 @@ pq_fetch(cursorObject *curs, int no_result)
         Dprintf("pq_fetch: data from a streaming replication slot (no tuples)");
         curs->rowcount = -1;
         ex = 0;
-        /*if (curs->conn->async) {
-            ex = 0;
-        } else {
-            ex = _pq_copy_both_v3(curs);
-            
-            if (PyErr_Occurred()) ex = -1;
-        }*/
+        /* nothing to do here: _pq_copy_both_v3 will be called separately */
         CLEARPGRES(curs->pgres);
         break;
 
