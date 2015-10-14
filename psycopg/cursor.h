@@ -107,6 +107,8 @@ HIDDEN void curs_reset(cursorObject *self);
 HIDDEN int psyco_curs_withhold_set(cursorObject *self, PyObject *pyvalue);
 HIDDEN int psyco_curs_scrollable_set(cursorObject *self, PyObject *pyvalue);
 
+RAISES_NEG int psyco_curs_datetime_init(void);
+
 /* exception-raising macros */
 #define EXC_IF_CURS_CLOSED(self) \
 do { \

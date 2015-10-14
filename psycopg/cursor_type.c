@@ -1780,6 +1780,21 @@ psyco_curs_flush_replication_feedback(cursorObject *self, PyObject *args, PyObje
     return curs_flush_replication_feedback(self, reply);
 }
 
+
+RAISES_NEG int
+psyco_curs_datetime_init(void)
+{
+    Dprintf("psyco_curs_datetime_init: datetime init");
+
+    PyDateTime_IMPORT;
+
+    if (!PyDateTimeAPI) {
+        PyErr_SetString(PyExc_ImportError, "datetime initialization failed");
+        return -1;
+    }
+    return 0;
+}
+
 #define psyco_curs_replication_io_timestamp_doc \
 "replication_io_timestamp -- the timestamp of latest IO with the server"
 
@@ -1790,9 +1805,6 @@ psyco_curs_get_replication_io_timestamp(cursorObject *self)
     double seconds;
 
     EXC_IF_CURS_CLOSED(self);
-
-    // TODO: move to a one-call init function
-    PyDateTime_IMPORT;
 
     seconds = self->repl_last_io.tv_sec + self->repl_last_io.tv_usec / 1.0e6;
 
