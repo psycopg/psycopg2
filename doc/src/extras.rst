@@ -333,9 +333,9 @@ The individual messages in the replication stream are presented by
         Start replication on the connection using provided ``START_REPLICATION``
         command.
 
-    .. method:: consume_replication_stream(consumer, decode=False, keepalive_interval=10)
+    .. method:: consume_replication_stream(consume, decode=False, keepalive_interval=10)
 
-        :param consumer: an object providing ``consume()`` method
+        :param consume: a callable object with signature ``consume(msg)``
         :param decode: a flag indicating that unicode conversion should be
                        performed on the messages received from the server
         :param keepalive_interval: interval (in seconds) to send keepalive
@@ -348,10 +348,9 @@ The individual messages in the replication stream are presented by
         `start_replication()` first.
 
         When called, this method enters an endless loop, reading messages from
-        the server and passing them to ``consume()`` method of the *consumer*
-        object.  In order to make this method break out of the loop and
-        return, the ``consume()`` method can call `stop_replication()` on the
-        cursor or it can throw an exception.
+        the server and passing them to ``consume()``.  In order to make this
+        method break out of the loop and return, ``consume()`` can call
+        `stop_replication()` on the cursor or it can throw an exception.
 
         If *decode* is set to `!True`, the messages read from the server are
         converted according to the connection `~connection.encoding`.  This
@@ -362,12 +361,12 @@ The individual messages in the replication stream are presented by
         *keepalive_interval* (in seconds).  The value of this parameter must
         be equal to at least 1 second, but it can have a fractional part.
 
-        The following example is a sketch implementation of *consumer* object
-        for logical replication::
+        The following example is a sketch implementation of ``consume()``
+        callable for logical replication::
 
             class LogicalStreamConsumer(object):
 
-                def consume(self, msg):
+                def __call__(self, msg):
                     self.store_message_data(msg.payload)
 
                     if self.should_report_to_the_server_now(msg):
@@ -376,7 +375,7 @@ The individual messages in the replication stream are presented by
             consumer = LogicalStreamConsumer()
             cur.consume_replication_stream(consumer, decode=True)
 
-        The *msg* objects passed to the ``consume()`` method are instances of
+        The *msg* objects passed to ``consume()`` are instances of
         `ReplicationMessage` class.
 
         After storing certain amount of messages' data reliably, the client
@@ -401,11 +400,10 @@ The individual messages in the replication stream are presented by
 
     .. method:: stop_replication()
 
-        This method can be called on synchronous connections from the
-        ``consume()`` method of a ``consumer`` object in order to break out of
-        the endless loop in `consume_replication_stream()`.  If called on
-        asynchronous connection or outside of the consume loop, this method
-        raises an error.
+        This method can be called on synchronous connection from the
+        ``consume()`` callable in order to break out of the endless loop in
+        `consume_replication_stream()`.  If called on asynchronous connection
+        or when replication is not in progress, this method raises an error.
 
     .. method:: send_replication_feedback(write_lsn=0, flush_lsn=0, apply_lsn=0, reply=False)
 
@@ -490,11 +488,14 @@ The individual messages in the replication stream are presented by
 
     An actual example of asynchronous operation might look like this::
 
+        def consume(msg):
+            ...
+
         keepalive_interval = 10.0
         while True:
             msg = cur.read_replication_message()
             if msg:
-                consumer.consume(msg)
+                consume(msg)
             else:
                 timeout = keepalive_interval - (datetime.now() - cur.replication_io_timestamp).total_seconds()
                 if timeout > 0:

@@ -1723,7 +1723,7 @@ pq_send_replication_feedback(cursorObject* curs, int reply_requested)
    manages to send keepalive messages to the server as needed.
 */
 int
-pq_copy_both(cursorObject *curs, PyObject *consumer, int decode, double keepalive_interval)
+pq_copy_both(cursorObject *curs, PyObject *consume, int decode, double keepalive_interval)
 {
     PyObject *msg, *tmp = NULL;
     PyObject *consume_func = NULL;
@@ -1732,8 +1732,8 @@ pq_copy_both(cursorObject *curs, PyObject *consumer, int decode, double keepaliv
     fd_set fds;
     struct timeval keep_intr, curr_time, ping_time, timeout;
 
-    if (!(consume_func = PyObject_GetAttrString(consumer, "consume"))) {
-        Dprintf("pq_copy_both: can't get o.consume");
+    if (!(consume_func = PyObject_GetAttrString(consume, "__call__"))) {
+        Dprintf("pq_copy_both: expected callable consume object");
         goto exit;
     }
 
@@ -1743,7 +1743,7 @@ pq_copy_both(cursorObject *curs, PyObject *consumer, int decode, double keepaliv
     keep_intr.tv_sec  = (int)keepalive_interval;
     keep_intr.tv_usec = (keepalive_interval - keep_intr.tv_sec)*1.0e6;
 
-    while (1) {
+    while (!curs->repl_stop) {
         msg = pq_read_replication_message(curs, decode);
         if (!msg) {
             goto exit;

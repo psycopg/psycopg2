@@ -1206,7 +1206,11 @@ class ReplicationTest(ConnectingTestCase):
         self.assertRaises(psycopg2.ProgrammingError, cur.stop_replication)
 
         cur.start_replication()
-        self.assertRaises(psycopg2.ProgrammingError, cur.stop_replication)
+        cur.stop_replication() # doesn't raise now
+
+        def consume(msg):
+            pass
+        cur.consume_replication_stream(consume) # should return at once
 
 
 def test_suite():

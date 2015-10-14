@@ -1622,13 +1622,15 @@ psyco_curs_start_replication_expert(cursorObject *self, PyObject *args, PyObject
                    1 /* no_result */, 1 /* no_begin */) >= 0) {
         res = Py_None;
         Py_INCREF(res);
+
+        self->repl_started = 1;
     }
 
     return res;
 }
 
 #define psyco_curs_stop_replication_doc \
-"stop_replication() -- Set flag to break out of endless loop in start_replication() on sync connection."
+"stop_replication() -- Set flag to break out of the endless loop in consume_replication_stream()."
 
 static PyObject *
 psyco_curs_stop_replication(cursorObject *self)
@@ -1652,13 +1654,13 @@ psyco_curs_stop_replication(cursorObject *self)
 static PyObject *
 psyco_curs_consume_replication_stream(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
-    PyObject *consumer = NULL, *res = NULL;
+    PyObject *consume = NULL, *res = NULL;
     int decode = 0;
     double keepalive_interval = 10;
-    static char *kwlist[] = {"consumer", "decode", "keepalive_interval", NULL};
+    static char *kwlist[] = {"consume", "decode", "keepalive_interval", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|id", kwlist,
-                                     &consumer, &decode, &keepalive_interval)) {
+                                     &consume, &decode, &keepalive_interval)) {
         return NULL;
     }
 
@@ -1674,9 +1676,7 @@ psyco_curs_consume_replication_stream(cursorObject *self, PyObject *args, PyObje
         return NULL;
     }
 
-    self->repl_started = 1;
-
-    if (pq_copy_both(self, consumer, decode, keepalive_interval) >= 0) {
+    if (pq_copy_both(self, consume, decode, keepalive_interval) >= 0) {
         res = Py_None;
         Py_INCREF(res);
     }
@@ -1709,7 +1709,7 @@ static PyObject *
 curs_flush_replication_feedback(cursorObject *self, int reply)
 {
     if (!(self->repl_feedback_pending || reply))
-        Py_RETURN_FALSE;
+        Py_RETURN_TRUE;
 
     if (pq_send_replication_feedback(self, reply)) {
         self->repl_feedback_pending = 0;
