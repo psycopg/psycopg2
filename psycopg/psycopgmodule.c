@@ -165,6 +165,62 @@ exit:
     return res;
 }
 
+
+#define psyco_quote_ident_doc \
+"quote_ident(str, conn_or_curs) -> str -- wrapper around PQescapeIdentifier\n\n" \
+":Parameters:\n" \
+"  * `str`: A bytes or unicode object\n" \
+"  * `conn_or_curs`: A connection or cursor, required"
+
+static PyObject *
+psyco_quote_ident(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+#if PG_VERSION_NUM >= 90000
+    PyObject *ident = NULL, *obj = NULL, *result = NULL;
+    connectionObject *conn;
+    const char *str;
+    char *quoted = NULL;
+
+    static char *kwlist[] = {"ident", "scope", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO", kwlist, &ident, &obj)) {
+        return NULL;
+    }
+
+    if (PyObject_TypeCheck(obj, &cursorType)) {
+        conn = ((cursorObject*)obj)->conn;
+    }
+    else if (PyObject_TypeCheck(obj, &connectionType)) {
+        conn = (connectionObject*)obj;
+    }
+    else {
+        PyErr_SetString(PyExc_TypeError,
+                        "argument 2 must be a connection or a cursor");
+        return NULL;
+    }
+
+    Py_INCREF(ident); /* for ensure_bytes */
+    if (!(ident = psycopg_ensure_bytes(ident))) { goto exit; }
+
+    str = Bytes_AS_STRING(ident);
+
+    quoted = PQescapeIdentifier(conn->pgconn, str, strlen(str));
+    if (!quoted) {
+        PyErr_NoMemory();
+        goto exit;
+    }
+    result = conn_text_from_chars(conn, quoted);
+
+exit:
+    PQfreemem(quoted);
+    Py_XDECREF(ident);
+
+    return result;
+#else
+    PyErr_SetString(NotSupportedError, "PQescapeIdentifier not available in libpq < 9.0");
+    return NULL;
+#endif
+}
+
 /** type registration **/
 #define psyco_register_type_doc \
 "register_type(obj, conn_or_curs) -> None -- register obj with psycopg type system\n\n" \
@@ -766,6 +822,8 @@ static PyMethodDef psycopgMethods[] = {
      METH_VARARGS|METH_KEYWORDS, psyco_connect_doc},
     {"parse_dsn",  (PyCFunction)psyco_parse_dsn,
      METH_VARARGS|METH_KEYWORDS, psyco_parse_dsn_doc},
+    {"quote_ident", (PyCFunction)psyco_quote_ident,
+     METH_VARARGS|METH_KEYWORDS, psyco_quote_ident_doc},
     {"adapt",  (PyCFunction)psyco_microprotocols_adapt,
      METH_VARARGS, psyco_microprotocols_adapt_doc},
 
