@@ -1212,6 +1212,20 @@ class ReplicationTest(ConnectingTestCase):
             pass
         cur.consume_replication_stream(consume) # should return at once
 
+    @skip_before_postgres(9, 4) # slots require 9.4
+    def test_create_replication_slot(self):
+        import psycopg2.extras
+        conn = self.repl_connect(connection_factory=psycopg2.extras.PhysicalReplicationConnection)
+        if conn is None: return
+        cur = conn.cursor()
+
+        slot = "test_slot1"
+        try:
+            cur.create_replication_slot(slot)
+            self.assertRaises(psycopg2.ProgrammingError, cur.create_replication_slot, slot)
+        finally:
+            cur.drop_replication_slot(slot)
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
