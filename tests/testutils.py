@@ -27,6 +27,7 @@
 import os
 import platform
 import sys
+import select
 from functools import wraps
 from testconfig import dsn, repl_dsn
 
@@ -129,7 +130,8 @@ class ConnectingTestCase(unittest.TestCase):
         except psycopg2.OperationalError, e:
             return self.skipTest("replication db not configured: %s" % e)
 
-        conn.autocommit = True
+        if not conn.async:
+            conn.autocommit = True
         return conn
 
     def _get_conn(self):
@@ -142,6 +144,23 @@ class ConnectingTestCase(unittest.TestCase):
         self._the_conn = conn
 
     conn = property(_get_conn, _set_conn)
+
+    # for use with async connections only
+    def wait(self, cur_or_conn):
+        import psycopg2.extensions
+        pollable = cur_or_conn
+        if not hasattr(pollable, 'poll'):
+            pollable = cur_or_conn.connection
+        while True:
+            state = pollable.poll()
+            if state == psycopg2.extensions.POLL_OK:
+                break
+            elif state == psycopg2.extensions.POLL_READ:
+                select.select([pollable], [], [], 10)
+            elif state == psycopg2.extensions.POLL_WRITE:
+                select.select([], [pollable], [], 10)
+            else:
+                raise Exception("Unexpected result from poll: %r", state)
 
 
 def decorate_all_tests(cls, *decorators):

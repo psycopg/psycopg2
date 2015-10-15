@@ -1178,55 +1178,6 @@ class AutocommitTests(ConnectingTestCase):
         self.assertEqual(cur.fetchone()[0], 'on')
 
 
-class ReplicationTest(ConnectingTestCase):
-    @skip_before_postgres(9, 0)
-    def test_physical_replication_connection(self):
-        import psycopg2.extras
-        conn = self.repl_connect(connection_factory=psycopg2.extras.PhysicalReplicationConnection)
-        if conn is None: return
-        cur = conn.cursor()
-        cur.execute("IDENTIFY_SYSTEM")
-        cur.fetchall()
-
-    @skip_before_postgres(9, 4)
-    def test_logical_replication_connection(self):
-        import psycopg2.extras
-        conn = self.repl_connect(connection_factory=psycopg2.extras.LogicalReplicationConnection)
-        if conn is None: return
-        cur = conn.cursor()
-        cur.execute("IDENTIFY_SYSTEM")
-        cur.fetchall()
-
-    @skip_before_postgres(9, 0)
-    def test_stop_replication_raises(self):
-        import psycopg2.extras
-        conn = self.repl_connect(connection_factory=psycopg2.extras.PhysicalReplicationConnection)
-        if conn is None: return
-        cur = conn.cursor()
-        self.assertRaises(psycopg2.ProgrammingError, cur.stop_replication)
-
-        cur.start_replication()
-        cur.stop_replication() # doesn't raise now
-
-        def consume(msg):
-            pass
-        cur.consume_replication_stream(consume) # should return at once
-
-    @skip_before_postgres(9, 4) # slots require 9.4
-    def test_create_replication_slot(self):
-        import psycopg2.extras
-        conn = self.repl_connect(connection_factory=psycopg2.extras.PhysicalReplicationConnection)
-        if conn is None: return
-        cur = conn.cursor()
-
-        slot = "test_slot1"
-        try:
-            cur.create_replication_slot(slot)
-            self.assertRaises(psycopg2.ProgrammingError, cur.create_replication_slot, slot)
-        finally:
-            cur.drop_replication_slot(slot)
-
-
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
