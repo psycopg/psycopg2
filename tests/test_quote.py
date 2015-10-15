@@ -23,7 +23,7 @@
 # License for more details.
 
 import sys
-from testutils import unittest, ConnectingTestCase
+from testutils import unittest, ConnectingTestCase, skip_before_libpq
 
 import psycopg2
 import psycopg2.extensions
@@ -166,10 +166,21 @@ class TestQuotedString(ConnectingTestCase):
 
 
 class TestQuotedIdentifier(ConnectingTestCase):
+    @skip_before_libpq(9, 0)
     def test_identifier(self):
         from psycopg2.extensions import quote_ident
         self.assertEqual(quote_ident('blah-blah', self.conn), '"blah-blah"')
         self.assertEqual(quote_ident('quote"inside', self.conn), '"quote""inside"')
+
+    @skip_before_libpq(9, 0)
+    def test_unicode_ident(self):
+        from psycopg2.extensions import quote_ident
+        snowman = u"\u2603"
+        quoted = '"' + snowman + '"'
+        if sys.version_info[0] < 3:
+            self.assertEqual(quote_ident(snowman, self.conn), quoted.encode('utf8'))
+        else:
+            self.assertEqual(quote_ident(snowman, self.conn), quoted)
 
 
 def test_suite():
