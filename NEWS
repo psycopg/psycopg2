@@ -14,6 +14,7 @@ New features:
 - The attributes `~connection.notices` and `~connection.notifies` can be
   customized replacing them with any object exposing an `!append()` method
   (:ticket:`#326`).
+- Added `~psycopg2.extensions.quote_ident()` function (:ticket:`#359`).
 
 
 What's new in psycopg 2.6.2
