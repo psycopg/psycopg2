@@ -221,6 +221,19 @@ functionalities defined by the |DBAPI|_.
 
         .. __: http://www.postgresql.org/docs/current/static/libpq-misc.html#LIBPQ-PQLIBVERSION
 
+.. function:: quote_ident(str, scope)
+
+    Return quoted identifier according to PostgreSQL quoting rules.
+
+    The *scope* must be a `connection` or a `cursor`, the underlying
+    connection encoding is used for any necessary character conversion.
+
+    Requires libpq >= 9.0.
+
+    .. seealso:: libpq docs for `PQescapeIdentifier()`__
+
+        .. __: http://www.postgresql.org/docs/current/static/libpq-exec.html#LIBPQ-PQESCAPEIDENTIFIER
+
 .. _sql-adaptation-objects:
 
 SQL adaptation protocol objects
