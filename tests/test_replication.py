@@ -33,6 +33,9 @@ from testutils import ConnectingTestCase
 
 class ReplicationTestCase(ConnectingTestCase):
     def setUp(self):
+        from testconfig import repl_dsn
+        if not repl_dsn:
+            self.skipTest("replication tests disabled by default")
         super(ReplicationTestCase, self).setUp()
         self._slots = []
 
@@ -98,6 +101,19 @@ class ReplicationTest(ReplicationTestCase):
 
         self.create_replication_slot(cur, slot)
         self.assertRaises(psycopg2.ProgrammingError, self.create_replication_slot, cur, slot)
+
+    @skip_before_postgres(9, 4) # slots require 9.4
+    def test_start_on_missing_replication_slot(self):
+        conn = self.repl_connect(connection_factory=PhysicalReplicationConnection)
+        if conn is None: return
+        cur = conn.cursor()
+
+        slot = "test_slot1"
+
+        self.assertRaises(psycopg2.ProgrammingError, cur.start_replication, slot)
+
+        self.create_replication_slot(cur, slot)
+        cur.start_replication(slot)
 
 
 class AsyncReplicationTest(ReplicationTestCase):
