@@ -500,6 +500,18 @@ class PhysicalReplicationConnection(ReplicationConnectionBase):
         super(PhysicalReplicationConnection, self).__init__(*args, **kwargs)
 
 
+class StopReplication(Exception):
+    """
+    Exception used to break out of the endless loop in
+    `~ReplicationCursor.consume_replication_stream()`.
+
+    Subclass of `~exceptions.Exception`.  Intentionally *not* inherited from
+    `~psycopg2.Error` as occurrence of this exception does not indicate an
+    error.
+    """
+    pass
+
+
 class ReplicationCursor(_cursor):
     """A cursor used for communication on the replication protocol."""
 

@@ -1605,7 +1605,6 @@ psyco_curs_start_replication_expert(cursorObject *self, PyObject *args, PyObject
     Dprintf("psyco_curs_start_replication_expert: %s", command);
 
     self->copysize = 0;
-    self->repl_stop = 0;
     self->repl_consuming = 0;
 
     self->repl_write_lsn = InvalidXLogRecPtr;
@@ -1624,21 +1623,6 @@ psyco_curs_start_replication_expert(cursorObject *self, PyObject *args, PyObject
     }
 
     return res;
-}
-
-#define psyco_curs_stop_replication_doc \
-"stop_replication() -- Set flag to break out of the endless loop in consume_replication_stream()."
-
-static PyObject *
-psyco_curs_stop_replication(cursorObject *self)
-{
-    EXC_IF_CURS_CLOSED(self);
-    EXC_IF_CURS_ASYNC(self, stop_replication);
-    EXC_IF_NOT_REPLICATING(self, stop_replication);
-
-    self->repl_stop = 1;
-
-    Py_RETURN_NONE;
 }
 
 #define psyco_curs_consume_replication_stream_doc \
@@ -1684,7 +1668,6 @@ psyco_curs_consume_replication_stream(cursorObject *self, PyObject *args, PyObje
     }
 
     self->repl_consuming = 0;
-    self->repl_stop = 0; /* who knows, what if we will be called again? */
 
     return res;
 }
@@ -1992,8 +1975,6 @@ static struct PyMethodDef cursorObject_methods[] = {
      METH_VARARGS|METH_KEYWORDS, psyco_curs_copy_expert_doc},
     {"start_replication_expert", (PyCFunction)psyco_curs_start_replication_expert,
      METH_VARARGS|METH_KEYWORDS, psyco_curs_start_replication_expert_doc},
-    {"stop_replication", (PyCFunction)psyco_curs_stop_replication,
-     METH_NOARGS, psyco_curs_stop_replication_doc},
     {"consume_replication_stream", (PyCFunction)psyco_curs_consume_replication_stream,
      METH_VARARGS|METH_KEYWORDS, psyco_curs_consume_replication_stream_doc},
     {"read_replication_message", (PyCFunction)psyco_curs_read_replication_message,

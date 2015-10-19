@@ -1743,7 +1743,7 @@ pq_copy_both(cursorObject *curs, PyObject *consume, int decode, double keepalive
     keep_intr.tv_sec  = (int)keepalive_interval;
     keep_intr.tv_usec = (keepalive_interval - keep_intr.tv_sec)*1.0e6;
 
-    while (!curs->repl_stop) {
+    while (1) {
         msg = pq_read_replication_message(curs, decode);
         if (!msg) {
             goto exit;
@@ -1803,11 +1803,6 @@ pq_copy_both(cursorObject *curs, PyObject *consume, int decode, double keepalive
                 goto exit;
             }
             Py_DECREF(tmp);
-
-            if (curs->repl_stop) {
-                Dprintf("pq_copy_both: repl_stop flag set by consume_func");
-                break;
-            }
         }
     }
 

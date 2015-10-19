@@ -348,9 +348,11 @@ The individual messages in the replication stream are presented by
         `start_replication()` first.
 
         When called, this method enters an endless loop, reading messages from
-        the server and passing them to ``consume()``.  In order to make this
-        method break out of the loop and return, ``consume()`` can call
-        `stop_replication()` on the cursor or it can throw an exception.
+        the server and passing them to ``consume()``, then waiting for more
+        messages from the server.  In order to make this method break out of
+        the loop and return, ``consume()`` can throw a `StopReplication`
+        exception (any unhandled exception will make it break out of the loop
+        as well).
 
         If *decode* is set to `!True`, the messages read from the server are
         converted according to the connection `~connection.encoding`.  This
@@ -397,13 +399,6 @@ The individual messages in the replication stream are presented by
             after every processed message, since that will put an unnecessary
             load on network and the server.  A possible strategy is to confirm
             after every COMMIT message.
-
-    .. method:: stop_replication()
-
-        This method can be called on synchronous connection from the
-        ``consume()`` callable in order to break out of the endless loop in
-        `consume_replication_stream()`.  If called on asynchronous connection
-        or when replication is not in progress, this method raises an error.
 
     .. method:: send_replication_feedback(write_lsn=0, flush_lsn=0, apply_lsn=0, reply=False)
 
@@ -506,9 +501,10 @@ The individual messages in the replication stream are presented by
                 if not sel[0]:
                     cur.send_replication_feedback()
 
-
 .. index::
     pair: Cursor; Replication
+
+.. autoclass:: StopReplication
 
 
 .. index::
