@@ -38,3 +38,5 @@ if dbpass is not None:
 repl_dsn = os.environ.get('PSYCOPG2_TEST_REPL_DSN', None)
 if repl_dsn == '':
     repl_dsn = dsn
+
+repl_slot = os.environ.get('PSYCOPG2_TEST_REPL_SLOT', 'psycopg2_test_slot')
