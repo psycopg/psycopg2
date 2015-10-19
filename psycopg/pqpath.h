@@ -27,6 +27,7 @@
 #define PSYCOPG_PQPATH_H 1
 
 #include "psycopg/cursor.h"
+#include "psycopg/replication_cursor.h"
 #include "psycopg/connection.h"
 
 /* macro to clean the pg result */
@@ -72,9 +73,10 @@ HIDDEN int pq_execute_command_locked(connectionObject *conn,
 RAISES HIDDEN void pq_complete_error(connectionObject *conn, PGresult **pgres,
                               char **error);
 
-HIDDEN int pq_copy_both(cursorObject *curs, PyObject *consumer,
+/* replication protocol support */
+HIDDEN int pq_copy_both(replicationCursorObject *repl, PyObject *consumer,
                         int decode, double keepalive_interval);
-HIDDEN PyObject *pq_read_replication_message(cursorObject *curs, int decode);
-HIDDEN int pq_send_replication_feedback(cursorObject *curs, int reply_requested);
+HIDDEN PyObject *pq_read_replication_message(replicationCursorObject *repl, int decode);
+HIDDEN int pq_send_replication_feedback(replicationCursorObject *repl, int reply_requested);
 
 #endif /* !defined(PSYCOPG_PQPATH_H) */

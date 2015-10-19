@@ -92,6 +92,7 @@
     <None Include="psycopg\pqpath.h" />
     <None Include="psycopg\psycopg.h" />
     <None Include="psycopg\python.h" />
+    <None Include="psycopg\replication_cursor.h" />
     <None Include="psycopg\replication_message.h" />
     <None Include="psycopg\typecast.h" />
     <None Include="psycopg\typecast_binary.h" />
@@ -225,6 +226,7 @@
     <Compile Include="psycopg\microprotocols_proto.c" />
     <Compile Include="psycopg\pqpath.c" />
     <Compile Include="psycopg\psycopgmodule.c" />
+    <Compile Include="psycopg\replication_cursor_type.c" />
     <Compile Include="psycopg\replication_message_type.c" />
     <Compile Include="psycopg\typecast.c" />
     <Compile Include="psycopg\typecast_array.c" />

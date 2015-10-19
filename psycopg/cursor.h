@@ -27,7 +27,6 @@
 #define PSYCOPG_CURSOR_H 1
 
 #include "psycopg/connection.h"
-#include "libpq_support.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -74,14 +73,6 @@ struct cursorObject {
 #define DEFAULT_COPYBUFF  8192
 
     /* replication cursor attrs */
-    int         repl_started:1;          /* if replication is started */
-    int         repl_consuming:1;        /* if running the consume loop */
-    struct timeval repl_keepalive_interval;   /* interval for keepalive messages in replication mode */
-    XLogRecPtr  repl_write_lsn;        /* LSN stats for replication feedback messages */
-    XLogRecPtr  repl_flush_lsn;
-    XLogRecPtr  repl_apply_lsn;
-    int         repl_feedback_pending; /* flag set when we couldn't send the feedback to the server */
-    struct timeval repl_last_io;       /* timestamp of the last exchange with the server */
 
     PyObject *tuple_factory;    /* factory for result tuples */
     PyObject *tzinfo_factory;   /* factory for tzinfo objects */
@@ -106,7 +97,7 @@ HIDDEN void curs_reset(cursorObject *self);
 HIDDEN int psyco_curs_withhold_set(cursorObject *self, PyObject *pyvalue);
 HIDDEN int psyco_curs_scrollable_set(cursorObject *self, PyObject *pyvalue);
 
-RAISES_NEG int psyco_curs_datetime_init(void);
+HIDDEN int psyco_curs_init(PyObject *obj, PyObject *args, PyObject *kwargs);
 
 /* exception-raising macros */
 #define EXC_IF_CURS_CLOSED(self) \
@@ -146,22 +137,6 @@ do \
     if ((self)->conn->async_cursor != NULL) { \
         PyErr_SetString(ProgrammingError, \
             #cmd " cannot be used while an asynchronous query is underway"); \
-    return NULL; } \
-while (0)
-
-#define EXC_IF_REPLICATING(self, cmd) \
-do \
-    if ((self)->repl_started) { \
-        PyErr_SetString(ProgrammingError, \
-            #cmd " cannot be used when replication is already in progress"); \
-    return NULL; } \
-while (0)
-
-#define EXC_IF_NOT_REPLICATING(self, cmd) \
-do \
-    if (!(self)->repl_started) { \
-        PyErr_SetString(ProgrammingError, \
-            #cmd " cannot be used when replication is not in progress"); \
     return NULL; } \
 while (0)
 

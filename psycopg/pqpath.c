@@ -35,6 +35,7 @@
 #include "psycopg/pqpath.h"
 #include "psycopg/connection.h"
 #include "psycopg/cursor.h"
+#include "psycopg/replication_cursor.h"
 #include "psycopg/replication_message.h"
 #include "psycopg/green.h"
 #include "psycopg/typecast.h"
@@ -1542,19 +1543,23 @@ exit:
    are never returned to the caller.
  */
 PyObject *
-pq_read_replication_message(cursorObject *curs, int decode)
+pq_read_replication_message(replicationCursorObject *repl, int decode)
 {
+    cursorObject *curs = &repl->cur;
+    connectionObject *conn = curs->conn;
+    PGconn *pgconn = conn->pgconn;
     char *buffer = NULL;
     int len, data_size, consumed, hdr, reply;
     XLogRecPtr data_start, wal_end;
     pg_int64 send_time;
-    PyObject *str = NULL, *msg = NULL;
+    PyObject *str = NULL, *result = NULL;
+    replicationMessageObject *msg = NULL;
 
     Dprintf("pq_read_replication_message(decode=%d)", decode);
 
     consumed = 0;
 retry:
-    len = PQgetCopyData(curs->conn->pgconn, &buffer, 1 /* async */);
+    len = PQgetCopyData(pgconn, &buffer, 1 /* async */);
 
     if (len == 0) {
         /* If we've tried reading some data, but there was none, bail out. */
@@ -1566,8 +1571,8 @@ retry:
            server we might be reading a number of messages for every single
            one we process, thus overgrowing the internal buffer until the
            client system runs out of memory. */
-        if (!PQconsumeInput(curs->conn->pgconn)) {
-            pq_raise(curs->conn, curs, NULL);
+        if (!PQconsumeInput(pgconn)) {
+            pq_raise(conn, curs, NULL);
             goto exit;
         }
         /* But PQconsumeInput() doesn't tell us if it has actually read
@@ -1581,15 +1586,15 @@ retry:
 
     if (len == -2) {
         /* serious error */
-        pq_raise(curs->conn, curs, NULL);
+        pq_raise(conn, curs, NULL);
         goto exit;
     }
     if (len == -1) {
         /* EOF */
-        curs->pgres = PQgetResult(curs->conn->pgconn);
+        curs->pgres = PQgetResult(pgconn);
 
         if (curs->pgres && PQresultStatus(curs->pgres) == PGRES_FATAL_ERROR) {
-            pq_raise(curs->conn, curs, NULL);
+            pq_raise(conn, curs, NULL);
             goto exit;
         }
 
@@ -1603,7 +1608,7 @@ retry:
     consumed = 1;
 
     /* ok, we did really read something: update the io timestamp */
-    gettimeofday(&curs->repl_last_io, NULL);
+    gettimeofday(&repl->last_io, NULL);
 
     Dprintf("pq_read_replication_message: msg=%c, len=%d", buffer[0], len);
     if (buffer[0] == 'w') {
@@ -1626,21 +1631,22 @@ retry:
 
         /* XXX it would be wise to check if it's really a logical replication */
         if (decode) {
-            str = PyUnicode_Decode(buffer + hdr, data_size, curs->conn->codec, NULL);
+            str = PyUnicode_Decode(buffer + hdr, data_size, conn->codec, NULL);
         } else {
             str = Bytes_FromStringAndSize(buffer + hdr, data_size);
         }
         if (!str) { goto exit; }
 
-        msg = PyObject_CallFunctionObjArgs((PyObject *)&replicationMessageType,
-                                           curs, str, NULL);
+        result = PyObject_CallFunctionObjArgs((PyObject *)&replicationMessageType,
+                                              curs, str, NULL);
         Py_DECREF(str);
-        if (!msg) { goto exit; }
+        if (!result) { goto exit; }
 
-        ((replicationMessageObject *)msg)->data_size = data_size;
-        ((replicationMessageObject *)msg)->data_start = data_start;
-        ((replicationMessageObject *)msg)->wal_end = wal_end;
-        ((replicationMessageObject *)msg)->send_time = send_time;
+        msg = (replicationMessageObject *)result;
+        msg->data_size  = data_size;
+        msg->data_start = data_start;
+        msg->wal_end    = wal_end;
+        msg->send_time  = send_time;
     }
     else if (buffer[0] == 'k') {
         /* Primary keepalive message: msgtype(1), walEnd(8), sendTime(8), reply(1) */
@@ -1652,17 +1658,17 @@ retry:
 
         reply = buffer[hdr];
         if (reply) {
-            if (!pq_send_replication_feedback(curs, 0)) {
-                if (curs->conn->async) {
-                    curs->repl_feedback_pending = 1;
+            if (!pq_send_replication_feedback(repl, 0)) {
+                if (conn->async) {
+                    repl->feedback_pending = 1;
                 } else {
                     /* XXX not sure if this was a good idea after all */
-                    pq_raise(curs->conn, curs, NULL);
+                    pq_raise(conn, curs, NULL);
                     goto exit;
                 }
             }
             else {
-                gettimeofday(&curs->repl_last_io, NULL);
+                gettimeofday(&repl->last_io, NULL);
             }
         }
 
@@ -1680,37 +1686,38 @@ exit:
         PQfreemem(buffer);
     }
 
-    return msg;
+    return result;
 
 none:
-    msg = Py_None;
-    Py_INCREF(msg);
+    result = Py_None;
+    Py_INCREF(result);
     goto exit;
 }
 
 int
-pq_send_replication_feedback(cursorObject* curs, int reply_requested)
+pq_send_replication_feedback(replicationCursorObject *repl, int reply_requested)
 {
+    cursorObject *curs = &repl->cur;
+    PGconn *pgconn = curs->conn->pgconn;
     char replybuf[1 + 8 + 8 + 8 + 8 + 1];
     int len = 0;
 
     Dprintf("pq_send_replication_feedback: write="XLOGFMTSTR", flush="XLOGFMTSTR", apply="XLOGFMTSTR,
-            XLOGFMTARGS(curs->repl_write_lsn),
-            XLOGFMTARGS(curs->repl_flush_lsn),
-            XLOGFMTARGS(curs->repl_apply_lsn));
+            XLOGFMTARGS(repl->write_lsn),
+            XLOGFMTARGS(repl->flush_lsn),
+            XLOGFMTARGS(repl->apply_lsn));
 
     replybuf[len] = 'r'; len += 1;
-    fe_sendint64(curs->repl_write_lsn, &replybuf[len]); len += 8;
-    fe_sendint64(curs->repl_flush_lsn, &replybuf[len]); len += 8;
-    fe_sendint64(curs->repl_apply_lsn, &replybuf[len]); len += 8;
+    fe_sendint64(repl->write_lsn, &replybuf[len]); len += 8;
+    fe_sendint64(repl->flush_lsn, &replybuf[len]); len += 8;
+    fe_sendint64(repl->apply_lsn, &replybuf[len]); len += 8;
     fe_sendint64(feGetCurrentTimestamp(), &replybuf[len]); len += 8;
     replybuf[len] = reply_requested ? 1 : 0; len += 1;
 
-    if (PQputCopyData(curs->conn->pgconn, replybuf, len) <= 0 ||
-        PQflush(curs->conn->pgconn) != 0) {
+    if (PQputCopyData(pgconn, replybuf, len) <= 0 || PQflush(pgconn) != 0) {
         return 0;
     }
-    gettimeofday(&curs->repl_last_io, NULL);
+    gettimeofday(&repl->last_io, NULL);
 
     return 1;
 }
@@ -1723,12 +1730,15 @@ pq_send_replication_feedback(cursorObject* curs, int reply_requested)
    manages to send keepalive messages to the server as needed.
 */
 int
-pq_copy_both(cursorObject *curs, PyObject *consume, int decode, double keepalive_interval)
+pq_copy_both(replicationCursorObject *repl, PyObject *consume, int decode,
+             double keepalive_interval)
 {
+    cursorObject *curs = &repl->cur;
+    connectionObject *conn = curs->conn;
+    PGconn *pgconn = conn->pgconn;
     PyObject *msg, *tmp = NULL;
     PyObject *consume_func = NULL;
     int fd, sel, ret = -1;
-    PGconn *pgconn;
     fd_set fds;
     struct timeval keep_intr, curr_time, ping_time, timeout;
 
@@ -1738,13 +1748,12 @@ pq_copy_both(cursorObject *curs, PyObject *consume, int decode, double keepalive
     }
 
     CLEARPGRES(curs->pgres);
-    pgconn = curs->conn->pgconn;
 
     keep_intr.tv_sec  = (int)keepalive_interval;
     keep_intr.tv_usec = (keepalive_interval - keep_intr.tv_sec)*1.0e6;
 
     while (1) {
-        msg = pq_read_replication_message(curs, decode);
+        msg = pq_read_replication_message(repl, decode);
         if (!msg) {
             goto exit;
         }
@@ -1753,7 +1762,7 @@ pq_copy_both(cursorObject *curs, PyObject *consume, int decode, double keepalive
 
             fd = PQsocket(pgconn);
             if (fd < 0) {
-                pq_raise(curs->conn, curs, NULL);
+                pq_raise(conn, curs, NULL);
                 goto exit;
             }
 
@@ -1763,7 +1772,7 @@ pq_copy_both(cursorObject *curs, PyObject *consume, int decode, double keepalive
             /* how long can we wait before we need to send a keepalive? */
             gettimeofday(&curr_time, NULL);
 
-            timeradd(&curs->repl_last_io, &keep_intr, &ping_time);
+            timeradd(&repl->last_io, &keep_intr, &ping_time);
             timersub(&ping_time, &curr_time, &timeout);
 
             if (timeout.tv_sec >= 0) {
@@ -1787,8 +1796,8 @@ pq_copy_both(cursorObject *curs, PyObject *consume, int decode, double keepalive
             }
 
             if (sel == 0) {
-                if (!pq_send_replication_feedback(curs, 0)) {
-                    pq_raise(curs->conn, curs, NULL);
+                if (!pq_send_replication_feedback(repl, 0)) {
+                    pq_raise(conn, curs, NULL);
                     goto exit;
                 }
             }
@@ -1876,7 +1885,7 @@ pq_fetch(cursorObject *curs, int no_result)
         Dprintf("pq_fetch: data from a streaming replication slot (no tuples)");
         curs->rowcount = -1;
         ex = 0;
-        /* nothing to do here: _pq_copy_both_v3 will be called separately */
+        /* nothing to do here: pq_copy_both will be called separately */
         CLEARPGRES(curs->pgres);
         break;
 

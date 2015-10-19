@@ -39,7 +39,8 @@ import psycopg2
 from psycopg2 import extensions as _ext
 from psycopg2.extensions import cursor as _cursor
 from psycopg2.extensions import connection as _connection
-from psycopg2.extensions import replicationMessage as ReplicationMessage
+from psycopg2.extensions import ReplicationCursor as _replicationCursor
+from psycopg2.extensions import ReplicationMessage
 from psycopg2.extensions import adapt as _A, quote_ident
 from psycopg2.extensions import b
 
@@ -503,7 +504,7 @@ class PhysicalReplicationConnection(ReplicationConnectionBase):
 class StopReplication(Exception):
     """
     Exception used to break out of the endless loop in
-    `~ReplicationCursor.consume_replication_stream()`.
+    `~ReplicationCursor.consume_stream()`.
 
     Subclass of `~exceptions.Exception`.  Intentionally *not* inherited from
     `~psycopg2.Error` as occurrence of this exception does not indicate an
@@ -512,7 +513,7 @@ class StopReplication(Exception):
     pass
 
 
-class ReplicationCursor(_cursor):
+class ReplicationCursor(_replicationCursor):
     """A cursor used for communication on the replication protocol."""
 
     def create_replication_slot(self, slot_name, slot_type=None, output_plugin=None):
@@ -597,9 +598,6 @@ class ReplicationCursor(_cursor):
             command += ")"
 
         self.start_replication_expert(command)
-
-    def send_feedback_message(self, written_lsn=0, sync_lsn=0, apply_lsn=0, reply_requested=False):
-        return self.send_replication_feedback(written_lsn, sync_lsn, apply_lsn, reply_requested)
 
     # allows replication cursors to be used in select.select() directly
     def fileno(self):

@@ -61,7 +61,7 @@ from psycopg2._psycopg import string_types, binary_types, new_type, new_array_ty
 from psycopg2._psycopg import ISQLQuote, Notify, Diagnostics, Column
 
 from psycopg2._psycopg import QueryCanceledError, TransactionRollbackError
-from psycopg2._psycopg import replicationMessage
+from psycopg2._psycopg import ReplicationCursor, ReplicationMessage
 
 try:
     from psycopg2._psycopg import set_wait_callback, get_wait_callback

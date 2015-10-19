@@ -324,16 +324,15 @@ The individual messages in the replication stream are presented by
         `start_replication_expert()` internally.
 
         After starting the replication, to actually consume the incoming
-        server messages, use `consume_replication_stream()` or implement a
-        loop around `read_replication_message()` in case of asynchronous
-        connection.
+        server messages, use `consume_stream()` or implement a loop around
+        `read_message()` in case of asynchronous connection.
 
     .. method:: start_replication_expert(command)
 
         Start replication on the connection using provided ``START_REPLICATION``
         command.
 
-    .. method:: consume_replication_stream(consume, decode=False, keepalive_interval=10)
+    .. method:: consume_stream(consume, decode=False, keepalive_interval=10)
 
         :param consume: a callable object with signature ``consume(msg)``
         :param decode: a flag indicating that unicode conversion should be
@@ -342,7 +341,7 @@ The individual messages in the replication stream are presented by
                                    messages to the server
 
         This method can only be used with synchronous connection.  For
-        asynchronous connections see `read_replication_message()`.
+        asynchronous connections see `read_message()`.
 
         Before calling this method to consume the stream, use
         `start_replication()` first.
@@ -372,18 +371,18 @@ The individual messages in the replication stream are presented by
                     self.store_message_data(msg.payload)
 
                     if self.should_report_to_the_server_now(msg):
-                        msg.cursor.send_replication_feedback(flush_lsn=msg.data_start)
+                        msg.cursor.send_feedback(flush_lsn=msg.data_start)
 
             consumer = LogicalStreamConsumer()
-            cur.consume_replication_stream(consumer, decode=True)
+            cur.consume_stream(consumer, decode=True)
 
         The *msg* objects passed to ``consume()`` are instances of
         `ReplicationMessage` class.
 
         After storing certain amount of messages' data reliably, the client
         should send a confirmation message to the server.  This should be done
-        by calling `send_replication_feedback()` method on the corresponding
-        replication cursor.  A reference to the cursor is provided in the
+        by calling `send_feedback()` method on the corresponding replication
+        cursor.  A reference to the cursor is provided in the
         `ReplicationMessage` as an attribute.
 
         .. warning::
@@ -400,7 +399,7 @@ The individual messages in the replication stream are presented by
             load on network and the server.  A possible strategy is to confirm
             after every COMMIT message.
 
-    .. method:: send_replication_feedback(write_lsn=0, flush_lsn=0, apply_lsn=0, reply=False)
+    .. method:: send_feedback(write_lsn=0, flush_lsn=0, apply_lsn=0, reply=False)
 
         :param write_lsn: a LSN position up to which the client has written the data locally
         :param flush_lsn: a LSN position up to which the client has stored the
@@ -419,16 +418,15 @@ The individual messages in the replication stream are presented by
         just send a keepalive message to the server.
 
         If the feedback message could not be sent, updates the passed LSN
-        positions in the cursor for a later call to
-        `flush_replication_feedback()` and returns `!False`, otherwise returns
-        `!True`.
+        positions in the cursor for a later call to `flush_feedback()` and
+        returns `!False`, otherwise returns `!True`.
 
-    .. method:: flush_replication_feedback(reply=False)
+    .. method:: flush_feedback(reply=False)
 
         :param reply: request the server to send back a keepalive message immediately
 
         This method tries to flush the latest replication feedback message
-        that `send_replication_feedback()` was trying to send but couldn't.
+        that `send_feedback()` was trying to send but couldn't.
 
         If *reply* is `!True` sends a keepalive message in either case.
 
@@ -437,14 +435,13 @@ The individual messages in the replication stream are presented by
 
     Low-level methods for asynchronous connection operation.
 
-    With the synchronous connection, a call to `consume_replication_stream()`
-    handles all the complexity of handling the incoming messages and sending
-    keepalive replies, but at times it might be beneficial to use low-level
-    interface for better control, in particular to `~select.select()` on
-    multiple sockets.  The following methods are provided for asynchronous
-    operation:
+    With the synchronous connection, a call to `consume_stream()` handles all
+    the complexity of handling the incoming messages and sending keepalive
+    replies, but at times it might be beneficial to use low-level interface
+    for better control, in particular to `~select.select()` on multiple
+    sockets.  The following methods are provided for asynchronous operation:
 
-    .. method:: read_replication_message(decode=True)
+    .. method:: read_message(decode=True)
 
         :param decode: a flag indicating that unicode conversion should be
                        performed on the data received from the server
@@ -475,7 +472,7 @@ The individual messages in the replication stream are presented by
         This is a convenience method which allows replication cursor to be
         used directly in `~select.select()` or `~select.poll()` calls.
 
-    .. attribute:: replication_io_timestamp
+    .. attribute:: io_timestamp
 
         A `~datetime` object representing the timestamp at the moment of last
         communication with the server (a data or keepalive message in either
@@ -488,18 +485,19 @@ The individual messages in the replication stream are presented by
 
         keepalive_interval = 10.0
         while True:
-            msg = cur.read_replication_message()
+            msg = cur.read_message()
             if msg:
                 consume(msg)
             else:
-                timeout = keepalive_interval - (datetime.now() - cur.replication_io_timestamp).total_seconds()
+                now = datetime.now()
+                timeout = keepalive_interval - (now - cur.io_timestamp).total_seconds()
                 if timeout > 0:
                     sel = select.select([cur], [], [], timeout)
                 else:
                     sel = ([], [], [])
 
                 if not sel[0]:
-                    cur.send_replication_feedback()
+                    cur.send_feedback()
 
 .. index::
     pair: Cursor; Replication

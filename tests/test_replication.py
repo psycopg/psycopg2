@@ -47,12 +47,16 @@ class ReplicationTestCase(ConnectingTestCase):
         # first close all connections, as they might keep the slot(s) active
         super(ReplicationTestCase, self).tearDown()
 
+        import time
+        time.sleep(0.025)  # sometimes the slot is still active, wait a little
+
         if self._slots:
-            kill_conn = self.repl_connect(connection_factory=PhysicalReplicationConnection)
+            kill_conn = self.connect()
             if kill_conn:
                 kill_cur = kill_conn.cursor()
                 for slot in self._slots:
-                    kill_cur.drop_replication_slot(slot)
+                    kill_cur.execute("SELECT pg_drop_replication_slot(%s)", (slot,))
+                kill_conn.commit()
                 kill_conn.close()
 
     def create_replication_slot(self, cur, slot_name=testconfig.repl_slot, **kwargs):
@@ -127,7 +131,7 @@ class ReplicationTest(ReplicationTestCase):
         cur.start_replication(self.slot)
         def consume(msg):
             raise StopReplication()
-        self.assertRaises(StopReplication, cur.consume_replication_stream, consume)
+        self.assertRaises(StopReplication, cur.consume_stream, consume)
 
 
 class AsyncReplicationTest(ReplicationTestCase):
@@ -148,14 +152,22 @@ class AsyncReplicationTest(ReplicationTestCase):
 
         self.msg_count = 0
         def consume(msg):
+            # just check the methods
+            log = "%s: %s" % (cur.io_timestamp, repr(msg))
+
             self.msg_count += 1
             if self.msg_count > 3:
+                cur.flush_feedback(reply=True)
                 raise StopReplication()
+
+            cur.send_feedback(flush_lsn=msg.data_start)
+
+        self.assertRaises(psycopg2.ProgrammingError, cur.consume_stream, consume)
 
         def process_stream():
             from select import select
             while True:
-                msg = cur.read_replication_message()
+                msg = cur.read_message()
                 if msg:
                     consume(msg)
                 else:

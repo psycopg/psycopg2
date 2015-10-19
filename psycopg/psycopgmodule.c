@@ -28,6 +28,7 @@
 
 #include "psycopg/connection.h"
 #include "psycopg/cursor.h"
+#include "psycopg/replication_cursor.h"
 #include "psycopg/replication_message.h"
 #include "psycopg/green.h"
 #include "psycopg/lobject.h"
@@ -917,6 +918,9 @@ INIT_MODULE(_psycopg)(void)
     Py_TYPE(&cursorType) = &PyType_Type;
     if (PyType_Ready(&cursorType) == -1) goto exit;
 
+    Py_TYPE(&replicationCursorType) = &PyType_Type;
+    if (PyType_Ready(&replicationCursorType) == -1) goto exit;
+
     Py_TYPE(&replicationMessageType) = &PyType_Type;
     if (PyType_Ready(&replicationMessageType) == -1) goto exit;
 
@@ -1000,7 +1004,7 @@ INIT_MODULE(_psycopg)(void)
     /* Initialize the PyDateTimeAPI everywhere is used */
     PyDateTime_IMPORT;
     if (psyco_adapter_datetime_init()) { goto exit; }
-    if (psyco_curs_datetime_init()) { goto exit; }
+    if (psyco_repl_curs_datetime_init()) { goto exit; }
     if (psyco_replmsg_datetime_init()) { goto exit; }
 
     Py_TYPE(&pydatetimeType) = &PyType_Type;
@@ -1044,7 +1048,8 @@ INIT_MODULE(_psycopg)(void)
     /* put new types in module dictionary */
     PyModule_AddObject(module, "connection", (PyObject*)&connectionType);
     PyModule_AddObject(module, "cursor", (PyObject*)&cursorType);
-    PyModule_AddObject(module, "replicationMessage", (PyObject*)&replicationMessageType);
+    PyModule_AddObject(module, "ReplicationCursor", (PyObject*)&replicationCursorType);
+    PyModule_AddObject(module, "ReplicationMessage", (PyObject*)&replicationMessageType);
     PyModule_AddObject(module, "ISQLQuote", (PyObject*)&isqlquoteType);
     PyModule_AddObject(module, "Notify", (PyObject*)&notifyType);
     PyModule_AddObject(module, "Xid", (PyObject*)&xidType);
