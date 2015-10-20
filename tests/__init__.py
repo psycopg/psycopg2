@@ -31,6 +31,7 @@ import test_bugX000
 import test_bug_gc
 import test_cancel
 import test_connection
+import test_replication
 import test_copy
 import test_cursor
 import test_dates
@@ -68,6 +69,7 @@ def test_suite():
     suite.addTest(test_bug_gc.test_suite())
     suite.addTest(test_cancel.test_suite())
     suite.addTest(test_connection.test_suite())
+    suite.addTest(test_replication.test_suite())
     suite.addTest(test_copy.test_suite())
     suite.addTest(test_cursor.test_suite())
     suite.addTest(test_dates.test_suite())

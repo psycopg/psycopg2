@@ -128,6 +128,7 @@
     <None Include="tests\test_bugX000.py" />
     <None Include="tests\test_types_extras.py" />
     <None Include="tests\test_connection.py" />
+    <None Include="tests\test_replication.py" />
     <None Include="tests\test_dates.py" />
     <None Include="tests\test_lobject.py" />
     <None Include="tests\test_quote.py" />
