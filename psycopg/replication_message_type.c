@@ -146,7 +146,7 @@ static struct PyGetSetDef replicationMessageObject_getsets[] = {
 /* object type */
 
 #define replicationMessageType_doc \
-"A database replication message."
+"A replication protocol message."
 
 PyTypeObject replicationMessageType = {
     PyVarObject_HEAD_INIT(NULL, 0)

@@ -514,7 +514,7 @@ class StopReplication(Exception):
 
 
 class ReplicationCursor(_replicationCursor):
-    """A cursor used for communication on the replication protocol."""
+    """A cursor used for communication on replication connections."""
 
     def create_replication_slot(self, slot_name, slot_type=None, output_plugin=None):
         """Create streaming replication slot."""
