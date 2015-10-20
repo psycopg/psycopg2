@@ -92,12 +92,13 @@ struct cursorObject {
 
 
 /* C-callable functions in cursor_int.c and cursor_type.c */
+HIDDEN int cursor_init(PyObject *obj, PyObject *args, PyObject *kwargs);
+
 BORROWED HIDDEN PyObject *curs_get_cast(cursorObject *self, PyObject *oid);
 HIDDEN void curs_reset(cursorObject *self);
 HIDDEN int psyco_curs_withhold_set(cursorObject *self, PyObject *pyvalue);
 HIDDEN int psyco_curs_scrollable_set(cursorObject *self, PyObject *pyvalue);
 
-HIDDEN int psyco_curs_init(PyObject *obj, PyObject *args, PyObject *kwargs);
 
 /* exception-raising macros */
 #define EXC_IF_CURS_CLOSED(self) \
