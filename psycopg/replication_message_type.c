@@ -49,7 +49,7 @@ static PyObject *
 replmsg_repr(replicationMessageObject *self)
 {
     return PyString_FromFormat(
-        "<ReplicationMessage object at %p; data_size: %d; data_start: "XLOGFMTSTR"; wal_end: "XLOGFMTSTR"; send_time: %lld>",
+        "<ReplicationMessage object at %p; data_size: %d; data_start: "XLOGFMTSTR"; wal_end: "XLOGFMTSTR"; send_time: " INT64_FORMAT ">",
         self, self->data_size, XLOGFMTARGS(self->data_start), XLOGFMTARGS(self->wal_end),
         self->send_time);
 }
