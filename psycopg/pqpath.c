@@ -1737,12 +1737,11 @@ pq_copy_both(replicationCursorObject *repl, PyObject *consume, int decode,
     connectionObject *conn = curs->conn;
     PGconn *pgconn = conn->pgconn;
     PyObject *msg, *tmp = NULL;
-    PyObject *consume_func = NULL;
     int fd, sel, ret = -1;
     fd_set fds;
     struct timeval keep_intr, curr_time, ping_time, timeout;
 
-    if (!(consume_func = PyObject_GetAttrString(consume, "__call__"))) {
+    if (!PyCallable_Check(consume)) {
         Dprintf("pq_copy_both: expected callable consume object");
         goto exit;
     }
@@ -1804,11 +1803,11 @@ pq_copy_both(replicationCursorObject *repl, PyObject *consume, int decode,
             continue;
         }
         else {
-            tmp = PyObject_CallFunctionObjArgs(consume_func, msg, NULL);
+            tmp = PyObject_CallFunctionObjArgs(consume, msg, NULL);
             Py_DECREF(msg);
 
             if (tmp == NULL) {
-                Dprintf("pq_copy_both: consume_func returned NULL");
+                Dprintf("pq_copy_both: consume returned NULL");
                 goto exit;
             }
             Py_DECREF(tmp);
@@ -1818,7 +1817,6 @@ pq_copy_both(replicationCursorObject *repl, PyObject *consume, int decode,
     ret = 1;
 
 exit:
-    Py_XDECREF(consume_func);
     return ret;
 }
 
