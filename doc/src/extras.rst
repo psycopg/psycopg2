@@ -560,6 +560,9 @@ The individual messages in the replication stream are represented by
 
     An actual example of asynchronous operation might look like this::
 
+      from select import select
+      from datetime import datetime
+
       def consume(msg):
           ...
 
@@ -571,14 +574,12 @@ The individual messages in the replication stream are represented by
           else:
               now = datetime.now()
               timeout = keepalive_interval - (now - cur.io_timestamp).total_seconds()
-              if timeout > 0:
-                  sel = select.select([cur], [], [], timeout)
-              else:
-                  sel = ([], [], [])
-
-              if not sel[0]:
-                  # timed out, send keepalive message
-                  cur.send_feedback()
+              try:
+                  sel = select([cur], [], [], max(0, timeout))
+                  if not any(sel):
+                      cur.send_feedback()  # timed out, send keepalive message
+              except InterruptedError:
+                  pass  # recalculate timeout and continue
 
 .. index::
     pair: Cursor; Replication
