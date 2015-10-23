@@ -157,7 +157,7 @@ class AsyncReplicationTest(ReplicationTestCase):
 
             self.msg_count += 1
             if self.msg_count > 3:
-                cur.flush_feedback(reply=True)
+                cur.send_feedback(reply=True)
                 raise StopReplication()
 
             cur.send_feedback(flush_lsn=msg.data_start)

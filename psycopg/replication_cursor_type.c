@@ -130,28 +130,21 @@ static PyObject *
 psyco_repl_curs_read_message(replicationCursorObject *self)
 {
     cursorObject *curs = &self->cur;
+    replicationMessageObject *msg = NULL;
 
     EXC_IF_CURS_CLOSED(curs);
     EXC_IF_GREEN(read_message);
     EXC_IF_TPC_PREPARED(self->cur.conn, read_message);
     EXC_IF_NOT_REPLICATING(self, read_message);
 
-    return pq_read_replication_message(self);
-}
-
-static PyObject *
-repl_curs_flush_feedback(replicationCursorObject *self, int reply)
-{
-    if (!(self->feedback_pending || reply))
-        Py_RETURN_TRUE;
-
-    if (pq_send_replication_feedback(self, reply)) {
-        self->feedback_pending = 0;
-        Py_RETURN_TRUE;
-    } else {
-        self->feedback_pending = 1;
-        Py_RETURN_FALSE;
+    if (pq_read_replication_message(self, &msg) < 0) {
+        return NULL;
     }
+    if (msg) {
+        return (PyObject *)msg;
+    }
+
+    Py_RETURN_NONE;
 }
 
 #define psyco_repl_curs_send_feedback_doc \
@@ -162,9 +155,7 @@ psyco_repl_curs_send_feedback(replicationCursorObject *self,
                               PyObject *args, PyObject *kwargs)
 {
     cursorObject *curs = &self->cur;
-    XLogRecPtr write_lsn = InvalidXLogRecPtr,
-               flush_lsn = InvalidXLogRecPtr,
-               apply_lsn = InvalidXLogRecPtr;
+    XLogRecPtr write_lsn = 0, flush_lsn = 0, apply_lsn = 0;
     int reply = 0;
     static char* kwlist[] = {"write_lsn", "flush_lsn", "apply_lsn", "reply", NULL};
 
@@ -185,31 +176,11 @@ psyco_repl_curs_send_feedback(replicationCursorObject *self,
     if (apply_lsn > self->apply_lsn)
         self->apply_lsn = apply_lsn;
 
-    self->feedback_pending = 1;
-
-    return repl_curs_flush_feedback(self, reply);
-}
-
-#define psyco_repl_curs_flush_feedback_doc \
-"flush_feedback(reply=False) -- Try flushing the latest pending replication feedback message to the server and optionally request a reply."
-
-static PyObject *
-psyco_repl_curs_flush_feedback(replicationCursorObject *self,
-                               PyObject *args, PyObject *kwargs)
-{
-    cursorObject *curs = &self->cur;
-    int reply = 0;
-    static char *kwlist[] = {"reply", NULL};
-
-    EXC_IF_CURS_CLOSED(curs);
-    EXC_IF_NOT_REPLICATING(self, flush_feedback);
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|i", kwlist,
-                                     &reply)) {
+    if (pq_send_replication_feedback(self, reply) < 0) {
         return NULL;
     }
 
-    return repl_curs_flush_feedback(self, reply);
+    Py_RETURN_NONE;
 }
 
 
@@ -260,8 +231,6 @@ static struct PyMethodDef replicationCursorObject_methods[] = {
      METH_NOARGS, psyco_repl_curs_read_message_doc},
     {"send_feedback", (PyCFunction)psyco_repl_curs_send_feedback,
      METH_VARARGS|METH_KEYWORDS, psyco_repl_curs_send_feedback_doc},
-    {"flush_feedback", (PyCFunction)psyco_repl_curs_flush_feedback,
-     METH_VARARGS|METH_KEYWORDS, psyco_repl_curs_flush_feedback_doc},
     {NULL}
 };
 
@@ -281,10 +250,9 @@ replicationCursor_setup(replicationCursorObject* self)
     self->consuming = 0;
     self->decode = 0;
 
-    self->write_lsn = InvalidXLogRecPtr;
-    self->flush_lsn = InvalidXLogRecPtr;
-    self->apply_lsn = InvalidXLogRecPtr;
-    self->feedback_pending = 0;
+    self->write_lsn = 0;
+    self->flush_lsn = 0;
+    self->apply_lsn = 0;
 
     return 0;
 }

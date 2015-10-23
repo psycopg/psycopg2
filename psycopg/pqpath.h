@@ -27,8 +27,9 @@
 #define PSYCOPG_PQPATH_H 1
 
 #include "psycopg/cursor.h"
-#include "psycopg/replication_cursor.h"
 #include "psycopg/connection.h"
+#include "psycopg/replication_cursor.h"
+#include "psycopg/replication_message.h"
 
 /* macro to clean the pg result */
 #define CLEARPGRES(pgres)   do { PQclear(pgres); pgres = NULL; } while (0)
@@ -76,7 +77,8 @@ RAISES HIDDEN void pq_complete_error(connectionObject *conn, PGresult **pgres,
 /* replication protocol support */
 HIDDEN int pq_copy_both(replicationCursorObject *repl, PyObject *consumer,
                         double keepalive_interval);
-HIDDEN PyObject *pq_read_replication_message(replicationCursorObject *repl);
+HIDDEN int pq_read_replication_message(replicationCursorObject *repl,
+                                       replicationMessageObject **msg);
 HIDDEN int pq_send_replication_feedback(replicationCursorObject *repl, int reply_requested);
 
 #endif /* !defined(PSYCOPG_PQPATH_H) */

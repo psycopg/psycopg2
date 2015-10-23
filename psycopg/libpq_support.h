@@ -31,8 +31,6 @@
 /* type and constant definitions from internal postgres includes not available otherwise */
 typedef unsigned PG_INT64_TYPE XLogRecPtr;
 
-#define InvalidXLogRecPtr ((XLogRecPtr) 0)
-
 /* have to use lowercase %x, as PyString_FromFormat can't do %X */
 #define XLOGFMTSTR "%x/%x"
 #define XLOGFMTARGS(x) ((uint32)((x) >> 32)), ((uint32)((x) & 0xFFFFFFFF))

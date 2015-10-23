@@ -492,22 +492,6 @@ The individual messages in the replication stream are represented by
         This method can also be called with all default parameters' values to
         just send a keepalive message to the server.
 
-        If the feedback message could not be sent, updates the passed LSN
-        positions in the cursor for a later call to `flush_feedback()` and
-        returns `!False`, otherwise returns `!True`.
-
-    .. method:: flush_feedback(reply=False)
-
-        :param reply: request the server to send back a keepalive message immediately
-
-        This method tries to flush the latest replication feedback message
-        that `send_feedback()` was trying to send but couldn't.
-
-        If *reply* is `!True` sends a keepalive message in either case.
-
-        Returns `!True` if the feedback message was sent successfully,
-        `!False` otherwise.
-
     Low-level replication cursor methods for :ref:`asynchronous connection
     <async-support>` operation.
 
