@@ -1543,7 +1543,7 @@ exit:
    are never returned to the caller.
  */
 PyObject *
-pq_read_replication_message(replicationCursorObject *repl, int decode)
+pq_read_replication_message(replicationCursorObject *repl)
 {
     cursorObject *curs = &repl->cur;
     connectionObject *conn = curs->conn;
@@ -1555,7 +1555,7 @@ pq_read_replication_message(replicationCursorObject *repl, int decode)
     PyObject *str = NULL, *result = NULL;
     replicationMessageObject *msg = NULL;
 
-    Dprintf("pq_read_replication_message(decode=%d)", decode);
+    Dprintf("pq_read_replication_message");
 
     consumed = 0;
 retry:
@@ -1629,8 +1629,7 @@ retry:
 
         Dprintf("pq_read_replication_message: >>%.*s<<", data_size, buffer + hdr);
 
-        /* XXX it would be wise to check if it's really a logical replication */
-        if (decode) {
+        if (repl->decode) {
             str = PyUnicode_Decode(buffer + hdr, data_size, conn->codec, NULL);
         } else {
             str = Bytes_FromStringAndSize(buffer + hdr, data_size);
@@ -1730,8 +1729,7 @@ pq_send_replication_feedback(replicationCursorObject *repl, int reply_requested)
    manages to send keepalive messages to the server as needed.
 */
 int
-pq_copy_both(replicationCursorObject *repl, PyObject *consume, int decode,
-             double keepalive_interval)
+pq_copy_both(replicationCursorObject *repl, PyObject *consume, double keepalive_interval)
 {
     cursorObject *curs = &repl->cur;
     connectionObject *conn = curs->conn;
@@ -1752,7 +1750,7 @@ pq_copy_both(replicationCursorObject *repl, PyObject *consume, int decode,
     keep_intr.tv_usec = (keepalive_interval - keep_intr.tv_sec)*1.0e6;
 
     while (1) {
-        msg = pq_read_replication_message(repl, decode);
+        msg = pq_read_replication_message(repl);
         if (!msg) {
             goto exit;
         }

@@ -38,10 +38,11 @@ extern HIDDEN PyTypeObject replicationCursorType;
 typedef struct replicationCursorObject {
     cursorObject cur;
 
-    int         started:1;          /* if replication is started */
-    int         consuming:1;        /* if running the consume loop */
+    int         started:1;        /* if replication is started */
+    int         consuming:1;      /* if running the consume loop */
+    int         decode:1;         /* if we should use character decoding on the messages */
 
-    struct timeval last_io;       /* timestamp of the last exchange with the server */
+    struct timeval last_io  ;     /* timestamp of the last exchange with the server */
     struct timeval keepalive_interval;   /* interval for keepalive messages in replication mode */
 
     XLogRecPtr  write_lsn;        /* LSN stats for replication feedback messages */

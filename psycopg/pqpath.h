@@ -75,8 +75,8 @@ RAISES HIDDEN void pq_complete_error(connectionObject *conn, PGresult **pgres,
 
 /* replication protocol support */
 HIDDEN int pq_copy_both(replicationCursorObject *repl, PyObject *consumer,
-                        int decode, double keepalive_interval);
-HIDDEN PyObject *pq_read_replication_message(replicationCursorObject *repl, int decode);
+                        double keepalive_interval);
+HIDDEN PyObject *pq_read_replication_message(replicationCursorObject *repl);
 HIDDEN int pq_send_replication_feedback(replicationCursorObject *repl, int reply_requested);
 
 #endif /* !defined(PSYCOPG_PQPATH_H) */

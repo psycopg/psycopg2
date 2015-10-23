@@ -185,10 +185,10 @@ replication::
      connection_factory=psycopg2.extras.LogicalReplicationConnection)
   cur = conn.cursor()
   try:
-      cur.start_replication(slot_name='pytest')
+      cur.start_replication(slot_name='pytest', decode=True)  # test_decoding produces textual output
   except psycopg2.ProgrammingError:
       cur.create_replication_slot('pytest', output_plugin='test_decoding')
-      cur.start_replication(slot_name='pytest')
+      cur.start_replication(slot_name='pytest', decode=True)
 
   class DemoConsumer(object):
       def __call__(self, msg):
@@ -260,9 +260,12 @@ The individual messages in the replication stream are represented by
 
     .. attribute:: payload
 
-        The actual data received from the server.  An instance of either
-        ``str`` or ``unicode``, depending on the method that was used to
-        produce this message.
+        The actual data received from the server.
+
+        An instance of either `bytes()` or `unicode()`, depending on the value
+        of `decode` option passed to `ReplicationCursor.start_replication()`
+        on the connection.  See `ReplicationCursor.read_message()` for
+        details.
 
     .. attribute:: data_size
 
@@ -336,7 +339,7 @@ The individual messages in the replication stream are represented by
         Replication slots are a feature of PostgreSQL server starting with
         version 9.4.
 
-    .. method:: start_replication(slot_name=None, slot_type=None, start_lsn=0, timeline=0, options=None)
+    .. method:: start_replication(slot_name=None, slot_type=None, start_lsn=0, timeline=0, options=None, decode=False)
 
         Start replication on the connection.
 
@@ -352,6 +355,8 @@ The individual messages in the replication stream are represented by
                          can only be used with physical replication)
         :param options: a dictionary of options to pass to logical replication
                         slot (not allowed with physical replication)
+        :param decode: a flag indicating that unicode conversion should be
+                       performed on messages received from the server
 
         If a *slot_name* is specified, the slot must exist on the server and
         its type must match the replication type used.
@@ -387,6 +392,11 @@ The individual messages in the replication stream are represented by
         on the output plugin that was used to create the slot.  Must be
         `!None` for physical replication.
 
+        If *decode* is set to `!True` the messages received from the server
+        would be converted according to the connection `~connection.encoding`.
+        *This parameter should not be set with physical replication or with
+        logical replication plugins that produce binary output.*
+
         This function constructs a ``START_REPLICATION`` command and calls
         `start_replication_expert()` internally.
 
@@ -395,42 +405,39 @@ The individual messages in the replication stream are represented by
         `read_message()` in case of :ref:`asynchronous connection
         <async-support>`.
 
-    .. method:: start_replication_expert(command)
+    .. method:: start_replication_expert(command, decode=False)
 
-        Start replication on the connection using provided ``START_REPLICATION``
-        command.
+        Start replication on the connection using provided
+        ``START_REPLICATION`` command.  See `start_replication()` for
+        description of *decode* parameter.
 
-    .. method:: consume_stream(consume, decode=False, keepalive_interval=10)
+    .. method:: consume_stream(consume, keepalive_interval=10)
 
         :param consume: a callable object with signature ``consume(msg)``
-        :param decode: a flag indicating that unicode conversion should be
-                       performed on the messages received from the server
         :param keepalive_interval: interval (in seconds) to send keepalive
                                    messages to the server
 
         This method can only be used with synchronous connection.  For
         asynchronous connections see `read_message()`.
 
-        Before calling this method to consume the stream use
+        Before using this method to consume the stream call
         `start_replication()` first.
 
         This method enters an endless loop reading messages from the server
-        and passing them to ``consume()``, then waiting for more messages from
-        the server.  In order to make this method break out of the loop and
-        return, ``consume()`` can throw a `StopReplication` exception.  Any
-        unhandled exception will make it break out of the loop as well.
+        and passing them to ``consume()`` one at a time, then waiting for more
+        messages from the server.  In order to make this method break out of
+        the loop and return, ``consume()`` can throw a `StopReplication`
+        exception.  Any unhandled exception will make it break out of the loop
+        as well.
 
-        If *decode* is set to `!True` the messages read from the server are
-        converted according to the connection `~connection.encoding`.  This
-        parameter should not be set with physical replication.
+        The *msg* object passed to ``consume()`` is an instance of
+        `ReplicationMessage` class.  See `read_message()` for details about
+        message decoding.
 
         This method also sends keepalive messages to the server in case there
         were no new data from the server for the duration of
         *keepalive_interval* (in seconds).  The value of this parameter must
         be set to at least 1 second, but it can have a fractional part.
-
-        The *msg* objects passed to ``consume()`` are instances of
-        `ReplicationMessage` class.
 
         After processing certain amount of messages the client should send a
         confirmation message to the server.  This should be done by calling
@@ -452,7 +459,7 @@ The individual messages in the replication stream are represented by
                         msg.cursor.send_feedback(flush_lsn=msg.data_start)
 
             consumer = LogicalStreamConsumer()
-            cur.consume_stream(consumer, decode=True)
+            cur.consume_stream(consumer)
 
         .. warning::
 
@@ -510,17 +517,21 @@ The individual messages in the replication stream are represented by
     for better control, in particular to `~select` on multiple sockets.  The
     following methods are provided for asynchronous operation:
 
-    .. method:: read_message(decode=True)
+    .. method:: read_message()
 
-        :param decode: a flag indicating that unicode conversion should be
-                       performed on the data received from the server
+        Try to read the next message from the server without blocking and
+        return an instance of `ReplicationMessage` or `!None`, in case there
+        are no more data messages from the server at the moment.
 
         This method should be used in a loop with asynchronous connections
-        after calling `start_replication()` once.
+        (after calling `start_replication()` once).  For synchronous
+        connections see `consume_stream()`.
 
-        It tries to read the next message from the server without blocking and
-        returns an instance of `ReplicationMessage` or `!None`, in case there
-        are no more data messages from the server at the moment.
+        The returned message's `ReplicationMessage.payload` is an instance of
+        `unicode()` decoded according to connection `connection.encoding`
+        *iff* `decode` was set to `!True` in the initial call to
+        `start_replication()` on this connection, otherwise it is an instance
+        of `bytes()` with no decoding.
 
         It is expected that the calling code will call this method repeatedly
         in order to consume all of the messages that might have been buffered

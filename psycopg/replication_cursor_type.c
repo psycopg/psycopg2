@@ -38,8 +38,8 @@
 #include "datetime.h"
 
 
-#define psyco_repl_curs_start_replication_expert_doc                                \
-"start_replication_expert(command, writer=None, keepalive_interval=10) -- Start replication stream with a directly given command."
+#define psyco_repl_curs_start_replication_expert_doc \
+"start_replication_expert(command, decode=False) -- Start replication with a given command."
 
 static PyObject *
 psyco_repl_curs_start_replication_expert(replicationCursorObject *self,
@@ -49,9 +49,10 @@ psyco_repl_curs_start_replication_expert(replicationCursorObject *self,
     connectionObject *conn = self->cur.conn;
     PyObject *res = NULL;
     char *command;
-    static char *kwlist[] = {"command", NULL};
+    long int decode = 0;
+    static char *kwlist[] = {"command", "decode", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s", kwlist, &command)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s|l", kwlist, &command, &decode)) {
         return NULL;
     }
 
@@ -60,17 +61,15 @@ psyco_repl_curs_start_replication_expert(replicationCursorObject *self,
     EXC_IF_TPC_PREPARED(conn, start_replication_expert);
     EXC_IF_REPLICATING(self, start_replication_expert);
 
-    Dprintf("psyco_repl_curs_start_replication_expert: %s", command);
-
-    /*    self->copysize = 0;*/
-
-    gettimeofday(&self->last_io, NULL);
+    Dprintf("psyco_repl_curs_start_replication_expert: '%s'; decode: %d", command, decode);
 
     if (pq_execute(curs, command, conn->async, 1 /* no_result */, 1 /* no_begin */) >= 0) {
         res = Py_None;
         Py_INCREF(res);
 
         self->started = 1;
+        self->decode = decode;
+        gettimeofday(&self->last_io, NULL);
     }
 
     return res;
@@ -85,12 +84,11 @@ psyco_repl_curs_consume_stream(replicationCursorObject *self,
 {
     cursorObject *curs = &self->cur;
     PyObject *consume = NULL, *res = NULL;
-    int decode = 0;
     double keepalive_interval = 10;
-    static char *kwlist[] = {"consume", "decode", "keepalive_interval", NULL};
+    static char *kwlist[] = {"consume", "keepalive_interval", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|id", kwlist,
-                                     &consume, &decode, &keepalive_interval)) {
+                                     &consume, &keepalive_interval)) {
         return NULL;
     }
 
@@ -115,7 +113,7 @@ psyco_repl_curs_consume_stream(replicationCursorObject *self,
 
     self->consuming = 1;
 
-    if (pq_copy_both(self, consume, decode, keepalive_interval) >= 0) {
+    if (pq_copy_both(self, consume, keepalive_interval) >= 0) {
         res = Py_None;
         Py_INCREF(res);
     }
@@ -126,27 +124,19 @@ psyco_repl_curs_consume_stream(replicationCursorObject *self,
 }
 
 #define psyco_repl_curs_read_message_doc \
-"read_message(decode=True) -- Try reading a replication message from the server (non-blocking)."
+"read_message() -- Try reading a replication message from the server (non-blocking)."
 
 static PyObject *
-psyco_repl_curs_read_message(replicationCursorObject *self,
-                             PyObject *args, PyObject *kwargs)
+psyco_repl_curs_read_message(replicationCursorObject *self)
 {
     cursorObject *curs = &self->cur;
-    int decode = 1;
-    static char *kwlist[] = {"decode", NULL};
 
     EXC_IF_CURS_CLOSED(curs);
     EXC_IF_GREEN(read_message);
     EXC_IF_TPC_PREPARED(self->cur.conn, read_message);
     EXC_IF_NOT_REPLICATING(self, read_message);
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|i", kwlist,
-                                     &decode)) {
-        return NULL;
-    }
-
-    return pq_read_replication_message(self, decode);
+    return pq_read_replication_message(self);
 }
 
 static PyObject *
@@ -267,7 +257,7 @@ static struct PyMethodDef replicationCursorObject_methods[] = {
     {"consume_stream", (PyCFunction)psyco_repl_curs_consume_stream,
      METH_VARARGS|METH_KEYWORDS, psyco_repl_curs_consume_stream_doc},
     {"read_message", (PyCFunction)psyco_repl_curs_read_message,
-     METH_VARARGS|METH_KEYWORDS, psyco_repl_curs_read_message_doc},
+     METH_NOARGS, psyco_repl_curs_read_message_doc},
     {"send_feedback", (PyCFunction)psyco_repl_curs_send_feedback,
      METH_VARARGS|METH_KEYWORDS, psyco_repl_curs_send_feedback_doc},
     {"flush_feedback", (PyCFunction)psyco_repl_curs_flush_feedback,
@@ -289,6 +279,7 @@ replicationCursor_setup(replicationCursorObject* self)
 {
     self->started = 0;
     self->consuming = 0;
+    self->decode = 0;
 
     self->write_lsn = InvalidXLogRecPtr;
     self->flush_lsn = InvalidXLogRecPtr;
