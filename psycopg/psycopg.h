@@ -120,6 +120,7 @@ typedef struct connectionObject connectionObject;
 typedef struct replicationMessageObject replicationMessageObject;
 
 /* some utility functions */
+HIDDEN PyObject *parse_arg(int pos, char *name, PyObject *defval, PyObject *args, PyObject *kwargs);
 HIDDEN PyObject *psyco_parse_args(PyObject *self, PyObject *args, PyObject *kwargs);
 HIDDEN PyObject *psyco_parse_dsn(PyObject *self, PyObject *args, PyObject *kwargs);
 HIDDEN PyObject *psyco_make_dsn(PyObject *self, PyObject *args, PyObject *kwargs);

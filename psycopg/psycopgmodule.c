@@ -28,6 +28,7 @@
 
 #include "psycopg/connection.h"
 #include "psycopg/cursor.h"
+#include "psycopg/replication_connection.h"
 #include "psycopg/replication_cursor.h"
 #include "psycopg/replication_message.h"
 #include "psycopg/green.h"
@@ -74,7 +75,7 @@ HIDDEN PyObject *psyco_DescriptionType = NULL;
 
 
 /* finds a keyword or positional arg (pops it from kwargs if found there) */
-static PyObject *
+PyObject *
 parse_arg(int pos, char *name, PyObject *defval, PyObject *args, PyObject *kwargs)
 {
     Py_ssize_t nargs = PyTuple_GET_SIZE(args);
@@ -1114,6 +1115,9 @@ INIT_MODULE(_psycopg)(void)
     Py_TYPE(&cursorType) = &PyType_Type;
     if (PyType_Ready(&cursorType) == -1) goto exit;
 
+    Py_TYPE(&replicationConnectionType) = &PyType_Type;
+    if (PyType_Ready(&replicationConnectionType) == -1) goto exit;
+
     Py_TYPE(&replicationCursorType) = &PyType_Type;
     if (PyType_Ready(&replicationCursorType) == -1) goto exit;
 
@@ -1237,6 +1241,8 @@ INIT_MODULE(_psycopg)(void)
     PyModule_AddStringConstant(module, "__version__", PSYCOPG_VERSION);
     PyModule_AddStringConstant(module, "__doc__", "psycopg PostgreSQL driver");
     PyModule_AddIntConstant(module, "__libpq_version__", PG_VERSION_NUM);
+    PyModule_AddIntMacro(module, REPLICATION_PHYSICAL);
+    PyModule_AddIntMacro(module, REPLICATION_LOGICAL);
     PyModule_AddObject(module, "apilevel", Text_FromUTF8(APILEVEL));
     PyModule_AddObject(module, "threadsafety", PyInt_FromLong(THREADSAFETY));
     PyModule_AddObject(module, "paramstyle", Text_FromUTF8(PARAMSTYLE));
@@ -1244,6 +1250,7 @@ INIT_MODULE(_psycopg)(void)
     /* put new types in module dictionary */
     PyModule_AddObject(module, "connection", (PyObject*)&connectionType);
     PyModule_AddObject(module, "cursor", (PyObject*)&cursorType);
+    PyModule_AddObject(module, "ReplicationConnection", (PyObject*)&replicationConnectionType);
     PyModule_AddObject(module, "ReplicationCursor", (PyObject*)&replicationCursorType);
     PyModule_AddObject(module, "ReplicationMessage", (PyObject*)&replicationMessageType);
     PyModule_AddObject(module, "ISQLQuote", (PyObject*)&isqlquoteType);
@@ -1284,6 +1291,9 @@ INIT_MODULE(_psycopg)(void)
     /* create a standard set of exceptions and add them to the module's dict */
     if (0 != psyco_errors_init()) { goto exit; }
     psyco_errors_fill(dict);
+
+    replicationPhysicalConst = PyDict_GetItemString(dict, "REPLICATION_PHYSICAL");
+    replicationLogicalConst  = PyDict_GetItemString(dict, "REPLICATION_LOGICAL");
 
     Dprintf("initpsycopg: module initialization complete");
 

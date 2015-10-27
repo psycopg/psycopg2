@@ -129,9 +129,6 @@ class ConnectingTestCase(unittest.TestCase):
             conn = self.connect(**kwargs)
         except psycopg2.OperationalError, e:
             return self.skipTest("replication db not configured: %s" % e)
-
-        if not conn.async:
-            conn.autocommit = True
         return conn
 
     def _get_conn(self):
