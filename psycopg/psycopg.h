@@ -120,11 +120,17 @@ typedef struct connectionObject connectionObject;
 typedef struct replicationMessageObject replicationMessageObject;
 
 /* some utility functions */
+HIDDEN PyObject *psyco_parse_args(PyObject *self, PyObject *args, PyObject *kwargs);
+HIDDEN PyObject *psyco_parse_dsn(PyObject *self, PyObject *args, PyObject *kwargs);
+HIDDEN PyObject *psyco_make_dsn(PyObject *self, PyObject *args, PyObject *kwargs);
+
 RAISES HIDDEN PyObject *psyco_set_error(PyObject *exc, cursorObject *curs, const char *msg);
 
 HIDDEN char *psycopg_escape_string(connectionObject *conn,
               const char *from, Py_ssize_t len, char *to, Py_ssize_t *tolen);
 HIDDEN char *psycopg_escape_identifier_easy(const char *from, Py_ssize_t len);
+HIDDEN char *psycopg_escape_conninfo(const char *from, Py_ssize_t len);
+
 HIDDEN int psycopg_strdup(char **to, const char *from, Py_ssize_t len);
 HIDDEN int psycopg_is_text_file(PyObject *f);
 
