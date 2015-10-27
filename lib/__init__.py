@@ -56,7 +56,7 @@ from psycopg2._psycopg import Error, Warning, DataError, DatabaseError, Programm
 from psycopg2._psycopg import IntegrityError, InterfaceError, InternalError
 from psycopg2._psycopg import NotSupportedError, OperationalError
 
-from psycopg2._psycopg import _connect, apilevel, threadsafety, paramstyle
+from psycopg2._psycopg import _connect, parse_args, apilevel, threadsafety, paramstyle
 from psycopg2._psycopg import __version__, __libpq_version__
 
 from psycopg2 import tz
@@ -80,27 +80,8 @@ else:
     _ext.register_adapter(Decimal, Adapter)
     del Decimal, Adapter
 
-import re
-
-def _param_escape(s,
-        re_escape=re.compile(r"([\\'])"),
-        re_space=re.compile(r'\s')):
-    """
-    Apply the escaping rule required by PQconnectdb
-    """
-    if not s: return "''"
-
-    s = re_escape.sub(r'\\\1', s)
-    if re_space.search(s):
-        s = "'" + s + "'"
-
-    return s
-
-del re
-
 
 def connect(dsn=None,
-        database=None, user=None, password=None, host=None, port=None,
         connection_factory=None, cursor_factory=None, async=False, **kwargs):
     """
     Create a new database connection.
@@ -135,33 +116,7 @@ def connect(dsn=None,
     library: the list of supported parameters depends on the library version.
 
     """
-    items = []
-    if database is not None:
-        items.append(('dbname', database))
-    if user is not None:
-        items.append(('user', user))
-    if password is not None:
-        items.append(('password', password))
-    if host is not None:
-        items.append(('host', host))
-    if port is not None:
-        items.append(('port', port))
-
-    items.extend([(k, v) for (k, v) in kwargs.iteritems() if v is not None])
-
-    if dsn is not None and items:
-        raise TypeError(
-            "'%s' is an invalid keyword argument when the dsn is specified"
-                % items[0][0])
-
-    if dsn is None:
-        if not items:
-            raise TypeError('missing dsn and no parameters')
-        else:
-            dsn = " ".join(["%s=%s" % (k, _param_escape(str(v)))
-                for (k, v) in items])
-
-    conn = _connect(dsn, connection_factory=connection_factory, async=async)
+    conn = _connect(dsn, connection_factory, async, **kwargs)
     if cursor_factory is not None:
         conn.cursor_factory = cursor_factory
 

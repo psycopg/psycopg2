@@ -24,6 +24,28 @@ functionalities defined by the |DBAPI|_.
         >>> psycopg2.extensions.parse_dsn('dbname=test user=postgres password=secret')
         {'password': 'secret', 'user': 'postgres', 'dbname': 'test'}
 
+.. function:: make_dsn(**kwargs)
+
+    Wrap keyword parameters into a connection string, applying necessary
+    quoting and escaping any special characters (namely, single quote and
+    backslash).
+
+    Example (note the order of parameters in the resulting string is
+    arbitrary)::
+
+        >>> psycopg2.extensions.make_dsn(dbname='test', user='postgres', password='secret')
+        'user=postgres dbname=test password=secret'
+
+    As a special case, the *database* keyword is translated to *dbname*::
+
+        >>> psycopg2.extensions.make_dsn(database='test')
+        'dbname=test'
+
+    An example of quoting (using `print()` for clarity)::
+
+        >>> print(psycopg2.extensions.make_dsn(database='test', password="some\\thing ''special"))
+        password='some\\thing \'\'special' dbname=test
+
 .. class:: connection(dsn, async=False)
 
     Is the class usually returned by the `~psycopg2.connect()` function.
