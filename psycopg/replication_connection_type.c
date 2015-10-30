@@ -110,6 +110,10 @@ replicationConnection_init(PyObject *obj, PyObject *args, PyObject *kwargs)
     if (!PyMapping_HasKeyString(kwargs, "replication")) {
         PyMapping_SetItemString(kwargs, "replication", Text_FromUTF8(repl));
     }
+    /* with physical specify dbname=replication for .pgpass lookup */
+    if (self->type == REPLICATION_PHYSICAL) {
+        PyMapping_SetItemString(kwargs, "dbname", Text_FromUTF8("replication"));
+    }
 
     Py_DECREF(dsn);
     if (!(dsn = psyco_make_dsn(NULL, NULL, kwargs))) { goto exit; }
