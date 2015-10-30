@@ -131,6 +131,9 @@ STEALS(1) HIDDEN PyObject * psycopg_ensure_bytes(PyObject *obj);
 
 STEALS(1) HIDDEN PyObject * psycopg_ensure_text(PyObject *obj);
 
+HIDDEN PyObject *psycopg_dict_from_conninfo_options(PQconninfoOption *options,
+              int include_password);
+
 /* Exceptions docstrings */
 #define Error_doc \
 "Base class for error exceptions."

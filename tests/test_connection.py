@@ -381,6 +381,12 @@ class ParseDsnTestCase(ConnectingTestCase):
         self.assertRaises(TypeError, parse_dsn, None)
         self.assertRaises(TypeError, parse_dsn, 42)
 
+    def test_get_dsn_paramaters(self):
+        conn = self.connect()
+        d = conn.get_dsn_parameters()
+        self.assertEqual(d['dbname'], dbname)  # the only param we can check reliably
+        self.assertNotIn('password', d)
+
 
 class IsolationLevelsTestCase(ConnectingTestCase):
 
