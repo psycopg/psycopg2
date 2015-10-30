@@ -381,6 +381,7 @@ class ParseDsnTestCase(ConnectingTestCase):
         self.assertRaises(TypeError, parse_dsn, None)
         self.assertRaises(TypeError, parse_dsn, 42)
 
+    @skip_before_libpq(9, 3)
     def test_get_dsn_parameters(self):
         conn = self.connect()
         d = conn.get_dsn_parameters()
