@@ -26,6 +26,7 @@ This module implements thread-safe (and not) connection pools.
 
 import psycopg2
 import psycopg2.extensions as _ext
+from contextlib import contextmanager
 
 
 class PoolError(psycopg2.Error):
@@ -121,6 +122,14 @@ class AbstractConnectionPool(object):
         if not self.closed or key in self._used:
             del self._used[key]
             del self._rused[id(conn)]
+
+    @property
+    @contextmanager
+    def quick_cursor(self):
+        """A ContextManager for quickly getting a  cursor"""
+        with self.getconn() as conn, conn.cursor() as cur:
+                    yield cur
+        self.putconn(conn)
 
     def _closeall(self):
         """Close all connections.
