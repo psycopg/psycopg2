@@ -25,6 +25,8 @@ UPDATEs. psycopg2 also provide full asynchronous operations and support
 for coroutine libraries.
 """
 
+# note: if you are changing the list of supported Python version please fix
+# the docs in install.rst and the /features/ page on the website.
 classifiers = """\
 Development Status :: 5 - Production/Stable
 Intended Audience :: Developers
@@ -84,7 +86,7 @@ except ImportError:
 # Take a look at http://www.python.org/dev/peps/pep-0386/
 # for a consistent versioning pattern.
 
-PSYCOPG_VERSION = '2.6.dev0'
+PSYCOPG_VERSION = '2.7.dev0'
 
 version_flags   = ['dt', 'dec']
 
@@ -405,14 +407,32 @@ class psycopg_build_ext(build_ext):
                 pgmajor, pgminor, pgpatch = m.group(1, 2, 3)
                 if pgpatch is None or not pgpatch.isdigit():
                     pgpatch = 0
+                pgmajor = int(pgmajor)
+                pgminor = int(pgminor)
+                pgpatch = int(pgpatch)
             else:
                 sys.stderr.write(
                     "Error: could not determine PostgreSQL version from '%s'"
                                                                 % pgversion)
                 sys.exit(1)
 
-            define_macros.append(("PG_VERSION_HEX", "0x%02X%02X%02X" %
-                                  (int(pgmajor), int(pgminor), int(pgpatch))))
+            define_macros.append(("PG_VERSION_NUM", "%d%02d%02d" %
+                                  (pgmajor, pgminor, pgpatch)))
+
+            # enable lo64 if libpq >= 9.3 and Python 64 bits
+            if (pgmajor, pgminor) >= (9, 3) and is_py_64():
+                define_macros.append(("HAVE_LO64", "1"))
+
+                # Inject the flag in the version string already packed up
+                # because we didn't know the version before.
+                # With distutils everything is complicated.
+                for i, t in enumerate(define_macros):
+                    if t[0] == 'PSYCOPG_VERSION':
+                        n = t[1].find(')')
+                        if n > 0:
+                            define_macros[i] = (
+                                t[0], t[1][:n] + ' lo64' + t[1][n:])
+
         except Warning:
             w = sys.exc_info()[1]  # work around py 2/3 different syntax
             sys.stderr.write("Error: %s\n" % w)
@@ -420,6 +440,13 @@ class psycopg_build_ext(build_ext):
 
         if hasattr(self, "finalize_" + sys.platform):
             getattr(self, "finalize_" + sys.platform)()
+
+def is_py_64():
+    # sys.maxint not available since Py 3.1;
+    # sys.maxsize not available before Py 2.6;
+    # this is portable at least between Py 2.4 and 3.4.
+    import struct
+    return struct.calcsize("P") > 4
 
 
 # let's start with macro definitions (the ones not already in setup.cfg)
@@ -509,10 +536,7 @@ you probably need to install its companion -dev or -devel package."""
 
 # generate a nice version string to avoid confusion when users report bugs
 version_flags.append('pq3') # no more a choice
-
-for have in parser.get('build_ext', 'define').split(','):
-    if have == 'PSYCOPG_EXTENSIONS':
-        version_flags.append('ext')
+version_flags.append('ext') # no more a choice
 
 if version_flags:
     PSYCOPG_VERSION_EX = PSYCOPG_VERSION + " (%s)" % ' '.join(version_flags)
@@ -539,7 +563,8 @@ else:
 # when called e.g. with "pip -e git+url'. This results in declarations
 # duplicate on the commandline, which I hope is not a problem.
 for define in parser.get('build_ext', 'define').split(','):
-    define_macros.append((define, '1'))
+    if define:
+        define_macros.append((define, '1'))
 
 # build the extension
 
@@ -560,6 +585,14 @@ download_url = (
     "http://initd.org/psycopg/tarballs/PSYCOPG-%s/psycopg2-%s.tar.gz"
     % ('-'.join(PSYCOPG_VERSION.split('.')[:2]), PSYCOPG_VERSION))
 
+try:
+    f = open("README.rst")
+    readme = f.read()
+    f.close()
+except:
+    print("failed to read readme: ignoring...")
+    readme = __doc__
+
 setup(name="psycopg2",
       version=PSYCOPG_VERSION,
       maintainer="Federico Di Gregorio",
@@ -570,8 +603,8 @@ setup(name="psycopg2",
       download_url=download_url,
       license="LGPL with exceptions or ZPL",
       platforms=["any"],
-      description=__doc__.split("\n")[0],
-      long_description="\n".join(__doc__.split("\n")[2:]),
+      description=readme.split("\n")[0],
+      long_description="\n".join(readme.split("\n")[2:]).lstrip(),
       classifiers=[x for x in classifiers.split("\n") if x],
       data_files=data_files,
       package_dir={'psycopg2': 'lib', 'psycopg2.tests': 'tests'},

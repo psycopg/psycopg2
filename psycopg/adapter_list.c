@@ -39,6 +39,14 @@ list_quote(listObject *self)
     /*  adapt the list by calling adapt() recursively and then wrapping
         everything into "ARRAY[]" */
     PyObject *tmp = NULL, *str = NULL, *joined = NULL, *res = NULL;
+
+    /*  list consisting of only NULL don't work with the ARRAY[] construct
+     *  so we use the {NULL,...} syntax. Note however that list of lists where
+     *  some element is a list of only null still fails: for that we should use
+     *  the '{...}' syntax uniformly but we cannot do it in the current
+     *  infrastructure. TODO in psycopg3 */
+    int all_nulls = 1;
+
     Py_ssize_t i, len;
 
     len = PyList_GET_SIZE(self->wrapped);
@@ -60,6 +68,7 @@ list_quote(listObject *self)
             quoted = microprotocol_getquoted(wrapped,
                                        (connectionObject*)self->connection);
             if (quoted == NULL) goto error;
+            all_nulls = 0;
         }
 
         /* here we don't loose a refcnt: SET_ITEM does not change the
@@ -74,7 +83,12 @@ list_quote(listObject *self)
     joined = PyObject_CallMethod(str, "join", "(O)", tmp);
     if (joined == NULL) goto error;
 
-    res = Bytes_FromFormat("ARRAY[%s]", Bytes_AsString(joined));
+    /* PG doesn't like ARRAY[NULL..] */
+    if (!all_nulls) {
+        res = Bytes_FromFormat("ARRAY[%s]", Bytes_AsString(joined));
+    } else {
+        res = Bytes_FromFormat("'{%s}'", Bytes_AsString(joined));
+    }
 
  error:
     Py_XDECREF(tmp);
@@ -215,11 +229,6 @@ list_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return type->tp_alloc(type, 0);
 }
 
-static PyObject *
-list_repr(listObject *self)
-{
-    return PyString_FromFormat("<psycopg2._psycopg.List object at %p>", self);
-}
 
 /* object type */
 
@@ -235,7 +244,7 @@ PyTypeObject listType = {
     0,          /*tp_getattr*/
     0,          /*tp_setattr*/
     0,          /*tp_compare*/
-    (reprfunc)list_repr, /*tp_repr*/
+    0,          /*tp_repr*/
     0,          /*tp_as_number*/
     0,          /*tp_as_sequence*/
     0,          /*tp_as_mapping*/
@@ -265,17 +274,3 @@ PyTypeObject listType = {
     0,          /*tp_alloc*/
     list_new, /*tp_new*/
 };
-
-
-/** module-level functions **/
-
-PyObject *
-psyco_List(PyObject *module, PyObject *args)
-{
-    PyObject *str;
-
-    if (!PyArg_ParseTuple(args, "O", &str))
-        return NULL;
-
-    return PyObject_CallFunctionObjArgs((PyObject *)&listType, "O", str, NULL);
-}

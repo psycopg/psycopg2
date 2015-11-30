@@ -25,7 +25,7 @@
 import math
 import psycopg2
 from psycopg2.tz import FixedOffsetTimezone, ZERO
-from testutils import unittest, ConnectingTestCase
+from testutils import unittest, ConnectingTestCase, skip_before_postgres
 
 class CommonDatetimeTestsMixin:
 
@@ -287,7 +287,17 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
 
     def test_type_roundtrip_time(self):
         from datetime import time
-        self._test_type_roundtrip(time(10,20,30))
+        tm = self._test_type_roundtrip(time(10,20,30))
+        self.assertEqual(None, tm.tzinfo)
+
+    def test_type_roundtrip_timetz(self):
+        from datetime import time
+        import psycopg2.tz
+        tz = psycopg2.tz.FixedOffsetTimezone(8*60)
+        tm1 = time(10,20,30, tzinfo=tz)
+        tm2 = self._test_type_roundtrip(tm1)
+        self.assertNotEqual(None, tm2.tzinfo)
+        self.assertEqual(tm1, tm2)
 
     def test_type_roundtrip_interval(self):
         from datetime import timedelta
@@ -308,6 +318,19 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
     def test_type_roundtrip_interval_array(self):
         from datetime import timedelta
         self._test_type_roundtrip_array(timedelta(seconds=30))
+
+    @skip_before_postgres(8, 1)
+    def test_time_24(self):
+        from datetime import time
+
+        t = self.execute("select '24:00'::time;")
+        self.assertEqual(t, time(0, 0))
+
+        t = self.execute("select '24:00+05'::timetz;")
+        self.assertEqual(t, time(0, 0, tzinfo=FixedOffsetTimezone(300)))
+
+        t = self.execute("select '24:00+05:30'::timetz;")
+        self.assertEqual(t, time(0, 0, tzinfo=FixedOffsetTimezone(330)))
 
 
 # Only run the datetime tests if psycopg was compiled with support.

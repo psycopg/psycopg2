@@ -160,23 +160,27 @@ JSON_ adaptation
 ^^^^^^^^^^^^^^^^
 
 .. versionadded:: 2.5
+.. versionchanged:: 2.5.4
+    added |jsonb| support. In previous versions |jsonb| values are returned
+    as strings. See :ref:`the FAQ <faq-jsonb-adapt>` for a workaround.
 
-Psycopg can adapt Python objects to and from the PostgreSQL |pgjson|_ type.
-With PostgreSQL 9.2 adaptation is available out-of-the-box. To use JSON data
-with previous database versions (either with the `9.1 json extension`__, but
-even if you want to convert text fields to JSON) you can use
-`register_json()`.
+Psycopg can adapt Python objects to and from the PostgreSQL |pgjson|_ and
+|jsonb| types.  With PostgreSQL 9.2 and following versions adaptation is
+available out-of-the-box. To use JSON data with previous database versions
+(either with the `9.1 json extension`__, but even if you want to convert text
+fields to JSON) you can use the `register_json()` function.
 
 .. __: http://people.planetpostgresql.org/andrew/index.php?/archives/255-JSON-for-PG-9.2-...-and-now-for-9.1!.html
 
-The Python library used to convert Python objects to JSON depends on the
-language version: with Python 2.6 and following the :py:mod:`json` module from
-the standard library is used; with previous versions the `simplejson`_ module
-is used if available. Note that the last `!simplejson` version supporting
-Python 2.4 is the 2.0.9.
+The Python library used by default to convert Python objects to JSON and to
+parse data from the database depends on the language version: with Python 2.6
+and following the :py:mod:`json` module from the standard library is used;
+with previous versions the `simplejson`_ module is used if available. Note
+that the last `!simplejson` version supporting Python 2.4 is the 2.0.9.
 
 .. _JSON: http://www.json.org/
 .. |pgjson| replace:: :sql:`json`
+.. |jsonb| replace:: :sql:`jsonb`
 .. _pgjson: http://www.postgresql.org/docs/current/static/datatype-json.html
 .. _simplejson: http://pypi.python.org/pypi/simplejson/
 
@@ -186,8 +190,8 @@ the `Json` adapter::
     curs.execute("insert into mytable (jsondata) values (%s)",
         [Json({'a': 100})])
 
-Reading from the database, |pgjson| values will be automatically converted to
-Python objects.
+Reading from the database, |pgjson| and |jsonb| values will be automatically
+converted to Python objects.
 
 .. note::
 
@@ -233,9 +237,11 @@ or you can subclass it overriding the `~Json.dumps()` method::
         [MyJson({'a': 100})])
 
 Customizing the conversion from PostgreSQL to Python can be done passing a
-custom `!loads()` function to `register_json()` (or `register_default_json()`
-for PostgreSQL 9.2).  For example, if you want to convert the float values
-from :sql:`json` into :py:class:`~decimal.Decimal` you can use::
+custom `!loads()` function to `register_json()`.  For the builtin data types
+(|pgjson| from PostgreSQL 9.2, |jsonb| from PostgreSQL 9.4) use
+`register_default_json()` and `register_default_jsonb()`.  For example, if you
+want to convert the float values from :sql:`json` into
+:py:class:`~decimal.Decimal` you can use::
 
     loads = lambda x: json.loads(x, parse_float=Decimal)
     psycopg2.extras.register_json(conn, loads=loads)
@@ -248,7 +254,14 @@ from :sql:`json` into :py:class:`~decimal.Decimal` you can use::
 
 .. autofunction:: register_json
 
+    .. versionchanged:: 2.5.4
+        added the *name* parameter to enable :sql:`jsonb` support.
+
 .. autofunction:: register_default_json
+
+.. autofunction:: register_default_jsonb
+
+    .. versionadded:: 2.5.4
 
 
 
@@ -598,3 +611,6 @@ Coroutine support
 
 .. autofunction:: wait_select(conn)
 
+    .. versionchanged:: 2.6.2
+        allow to cancel a query using :kbd:`Ctrl-C`, see
+        :ref:`the FAQ <faq-interrupt-query>` for an example.

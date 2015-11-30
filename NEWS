@@ -1,13 +1,85 @@
 Current release
 ---------------
 
+What's new in psycopg 2.7
+-------------------------
+
+New features:
+
+- Added `~psycopg2.extensions.parse_dsn()` function (:ticket:`#321`).
+- Added `~psycopg2.__libpq_version__` and
+  `~psycopg2.extensions.libpq_version()` to inspect the version of the
+  ``libpq`` library the module was compiled/loaded with
+  (:tickets:`#35, #323`).
+- The attributes `~connection.notices` and `~connection.notifies` can be
+  customized replacing them with any object exposing an `!append()` method
+  (:ticket:`#326`).
+- Added `~psycopg2.extensions.quote_ident()` function (:ticket:`#359`).
+
+
+What's new in psycopg 2.6.2
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Report the server response status on errors (such as :ticket:`#281`).
+- The `~psycopg2.extras.wait_select` callback allows interrupting a
+  long-running query in an interactive shell using :kbd:`Ctrl-C`
+  (:ticket:`#333`).
+- Raise `!NotSupportedError` on unhandled server response status
+  (:ticket:`#352`).
+- Fixed `!PersistentConnectionPool` on Python 3 (:ticket:`#348`).
+
+
+What's new in psycopg 2.6.1
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Lists consisting of only `None` are escaped correctly (:ticket:`#285`).
+- Fixed deadlock in multithread programs using OpenSSL (:ticket:`#290`).
+- Correctly unlock the connection after error in flush (:ticket:`#294`).
+- Fixed `!MinTimeLoggingCursor.callproc()` (:ticket:`#309`).
+- Added support for MSVC 2015 compiler (:ticket:`#350`).
+
+
 What's new in psycopg 2.6
 -------------------------
 
+New features:
+
+- Added support for large objects larger than 2GB. Many thanks to Blake Rouse
+  and the MAAS Team for the feature development.
+- Python `time` objects with a tzinfo specified and PostgreSQL :sql:`timetz`
+  data are converted into each other (:ticket:`#272`).
+
 Bug fixes:
 
-- Json apapter's `!str()` returns the adapted content instead of the `!repr()`
+- Json adapter's `!str()` returns the adapted content instead of the `!repr()`
   (:ticket:`#191`).
+
+
+What's new in psycopg 2.5.5
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Named cursors used as context manager don't swallow the exception on exit
+  (:ticket:`#262`).
+- `cursor.description` can be pickled (:ticket:`#265`).
+- Propagate read error messages in COPY FROM (:ticket:`#270`).
+- PostgreSQL time 24:00 is converted to Python 00:00 (:ticket:`#278`).
+
+
+What's new in psycopg 2.5.4
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Added :sql:`jsonb` support for PostgreSQL 9.4 (:ticket:`#226`).
+- Fixed segfault if COPY statements are passed to `~cursor.execute()` instead
+  of using the proper methods (:ticket:`#219`).
+- Force conversion of pool arguments to integer to avoid potentially unbounded
+  pools (:ticket:`#220`).
+- Cursors :sql:`WITH HOLD` don't begin a new transaction upon move/fetch/close
+  (:ticket:`#228`).
+- Cursors :sql:`WITH HOLD` can be used in autocommit (:ticket:`#229`).
+- `~cursor.callproc()` doesn't silently ignore an argument without a length.
+- Fixed memory leak with large objects (:ticket:`#256`).
+- Make sure the internal ``_psycopg.so`` module can be imported stand-alone (to
+  allow modules juggling such as the one described in :ticket:`#201`).
 
 
 What's new in psycopg 2.5.3
@@ -115,7 +187,7 @@ What's new in psycopg 2.4.6
 - 'register_hstore()', 'register_composite()', 'tpc_recover()' work with
   RealDictConnection and Cursor (:ticket:`#114`).
 - Fixed broken pool for Zope and connections re-init across ZSQL methods
-  in the same request (tickets #123, #125, #142).
+  in the same request (:tickets:`#123, #125, #142`).
 - connect() raises an exception instead of swallowing keyword arguments
   when a connection string is specified as well (:ticket:`#131`).
 - Discard any result produced by 'executemany()' (:ticket:`#133`).
@@ -137,7 +209,7 @@ What's new in psycopg 2.4.5
 - Error and its subclasses are picklable, useful for multiprocessing
   interaction (:ticket:`#90`).
 - Better efficiency and formatting of timezone offset objects thanks
-  to Menno Smits (tickets #94, #95).
+  to Menno Smits (:tickets:`#94, #95`).
 - Fixed 'rownumber' during iteration on cursor subclasses.
   Regression introduced in 2.4.4 (:ticket:`#100`).
 - Added support for 'inet' arrays.

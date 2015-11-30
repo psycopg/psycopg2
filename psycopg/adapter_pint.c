@@ -161,13 +161,6 @@ pint_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return type->tp_alloc(type, 0);
 }
 
-static PyObject *
-pint_repr(pintObject *self)
-{
-    return PyString_FromFormat("<psycopg2._psycopg.Int object at %p>",
-                                self);
-}
-
 
 /* object type */
 
@@ -176,14 +169,14 @@ pint_repr(pintObject *self)
 
 PyTypeObject pintType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "psycopg2._psycopg.Int",
+    "psycopg2.extensions.Int",
     sizeof(pintObject), 0,
     pint_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/
     0,          /*tp_getattr*/
     0,          /*tp_setattr*/
     0,          /*tp_compare*/
-    (reprfunc)pint_repr, /*tp_repr*/
+    0,          /*tp_repr*/
     0,          /*tp_as_number*/
     0,          /*tp_as_sequence*/
     0,          /*tp_as_mapping*/
@@ -213,17 +206,3 @@ PyTypeObject pintType = {
     0,          /*tp_alloc*/
     pint_new, /*tp_new*/
 };
-
-
-/** module-level functions **/
-
-PyObject *
-psyco_Int(PyObject *module, PyObject *args)
-{
-    PyObject *obj;
-
-    if (!PyArg_ParseTuple(args, "O", &obj))
-        return NULL;
-
-    return PyObject_CallFunctionObjArgs((PyObject *)&pintType, obj, NULL);
-}

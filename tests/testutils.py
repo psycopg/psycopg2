@@ -28,7 +28,7 @@ import os
 import platform
 import sys
 from functools import wraps
-from testconfig import dsn
+from testconfig import dsn, repl_dsn
 
 try:
     import unittest2
@@ -65,7 +65,8 @@ else:
 
     unittest.TestCase.skipTest = skipTest
 
-# Silence warnings caused by the stubborness of the Python unittest maintainers
+# Silence warnings caused by the stubbornness of the Python unittest
+# maintainers
 # http://bugs.python.org/issue9424
 if not hasattr(unittest.TestCase, 'assert_') \
 or unittest.TestCase.assert_ is not unittest.TestCase.assertTrue:
@@ -102,9 +103,33 @@ class ConnectingTestCase(unittest.TestCase):
                 "%s (did you remember calling ConnectingTestCase.setUp()?)"
                 % e)
 
+        if 'dsn' in kwargs:
+            conninfo = kwargs.pop('dsn')
+        else:
+            conninfo = dsn
         import psycopg2
-        conn = psycopg2.connect(dsn, **kwargs)
+        conn = psycopg2.connect(conninfo, **kwargs)
         self._conns.append(conn)
+        return conn
+
+    def repl_connect(self, **kwargs):
+        """Return a connection set up for replication
+
+        The connection is on "PSYCOPG2_TEST_REPL_DSN" unless overridden by
+        a *dsn* kwarg.
+
+        Should raise a skip test if not available, but guard for None on
+        old Python versions.
+        """
+        if 'dsn' not in kwargs:
+            kwargs['dsn'] = repl_dsn
+        import psycopg2
+        try:
+            conn = self.connect(**kwargs)
+        except psycopg2.OperationalError, e:
+            return self.skipTest("replication db not configured: %s" % e)
+
+        conn.autocommit = True
         return conn
 
     def _get_conn(self):
@@ -235,6 +260,43 @@ def skip_after_postgres(*ver):
         return skip_after_postgres__
     return skip_after_postgres_
 
+def libpq_version():
+    import psycopg2
+    v = psycopg2.__libpq_version__
+    if v >= 90100:
+        v = psycopg2.extensions.libpq_version()
+    return v
+
+def skip_before_libpq(*ver):
+    """Skip a test if libpq we're linked to is older than a certain version."""
+    ver = ver + (0,) * (3 - len(ver))
+    def skip_before_libpq_(f):
+        @wraps(f)
+        def skip_before_libpq__(self):
+            v = libpq_version()
+            if v < int("%d%02d%02d" % ver):
+                return self.skipTest("skipped because libpq %d" % v)
+            else:
+                return f(self)
+
+        return skip_before_libpq__
+    return skip_before_libpq_
+
+def skip_after_libpq(*ver):
+    """Skip a test if libpq we're linked to is newer than a certain version."""
+    ver = ver + (0,) * (3 - len(ver))
+    def skip_after_libpq_(f):
+        @wraps(f)
+        def skip_after_libpq__(self):
+            v = libpq_version()
+            if v >= int("%d%02d%02d" % ver):
+                return self.skipTest("skipped because libpq %s" % v)
+            else:
+                return f(self)
+
+        return skip_after_libpq__
+    return skip_after_libpq_
+
 def skip_before_python(*ver):
     """Skip a test on Python before a certain version."""
     def skip_before_python_(f):
@@ -350,4 +412,3 @@ class py3_raises_typeerror(object):
         if sys.version_info[0] >= 3:
             assert type is TypeError
             return True
-        

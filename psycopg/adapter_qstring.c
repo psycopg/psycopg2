@@ -242,12 +242,6 @@ qstring_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return type->tp_alloc(type, 0);
 }
 
-static PyObject *
-qstring_repr(qstringObject *self)
-{
-    return PyString_FromFormat("<psycopg2._psycopg.QuotedString object at %p>",
-                                self);
-}
 
 /* object type */
 
@@ -256,14 +250,14 @@ qstring_repr(qstringObject *self)
 
 PyTypeObject qstringType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "psycopg2._psycopg.QuotedString",
+    "psycopg2.extensions.QuotedString",
     sizeof(qstringObject), 0,
     qstring_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/
     0,          /*tp_getattr*/
     0,          /*tp_setattr*/
     0,          /*tp_compare*/
-    (reprfunc)qstring_repr, /*tp_repr*/
+    0,          /*tp_repr*/
     0,          /*tp_as_number*/
     0,          /*tp_as_sequence*/
     0,          /*tp_as_mapping*/
@@ -293,17 +287,3 @@ PyTypeObject qstringType = {
     0,          /*tp_alloc*/
     qstring_new, /*tp_new*/
 };
-
-
-/** module-level functions **/
-
-PyObject *
-psyco_QuotedString(PyObject *module, PyObject *args)
-{
-    PyObject *str;
-
-    if (!PyArg_ParseTuple(args, "O", &str))
-        return NULL;
-
-    return PyObject_CallFunctionObjArgs((PyObject *)&qstringType, str, NULL);
-}

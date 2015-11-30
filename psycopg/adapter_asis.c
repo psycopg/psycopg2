@@ -149,12 +149,6 @@ asis_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return type->tp_alloc(type, 0);
 }
 
-static PyObject *
-asis_repr(asisObject *self)
-{
-    return PyString_FromFormat("<psycopg2._psycopg.AsIs object at %p>", self);
-}
-
 
 /* object type */
 
@@ -163,14 +157,14 @@ asis_repr(asisObject *self)
 
 PyTypeObject asisType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "psycopg2._psycopg.AsIs",
+    "psycopg2.extensions.AsIs",
     sizeof(asisObject), 0,
     asis_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/
     0,          /*tp_getattr*/
     0,          /*tp_setattr*/
     0,          /*tp_compare*/
-    (reprfunc)asis_repr, /*tp_repr*/
+    0,          /*tp_repr*/
     0,          /*tp_as_number*/
     0,          /*tp_as_sequence*/
     0,          /*tp_as_mapping*/
@@ -200,17 +194,3 @@ PyTypeObject asisType = {
     0,          /*tp_alloc*/
     asis_new, /*tp_new*/
 };
-
-
-/** module-level functions **/
-
-PyObject *
-psyco_AsIs(PyObject *module, PyObject *args)
-{
-    PyObject *obj;
-
-    if (!PyArg_ParseTuple(args, "O", &obj))
-        return NULL;
-
-    return PyObject_CallFunctionObjArgs((PyObject *)&asisType, obj, NULL);
-}

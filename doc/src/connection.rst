@@ -351,17 +351,14 @@ The ``connection`` class
     .. method:: set_session(isolation_level=None, readonly=None, deferrable=None, autocommit=None)
 
         Set one or more parameters for the next transactions or statements in
-        the current session. See |SET TRANSACTION|_ for further details.
-
-        .. |SET TRANSACTION| replace:: :sql:`SET TRANSACTION`
-        .. _SET TRANSACTION: http://www.postgresql.org/docs/current/static/sql-set-transaction.html
+        the current session.
 
         :param isolation_level: set the `isolation level`_ for the next
-            transactions/statements.  The value can be one of the
-            :ref:`constants <isolation-level-constants>` defined in the
-            `~psycopg2.extensions` module or one of the literal values
-            ``READ UNCOMMITTED``, ``READ COMMITTED``, ``REPEATABLE READ``,
-            ``SERIALIZABLE``.
+            transactions/statements.  The value can be one of the literal
+            values ``READ UNCOMMITTED``, ``READ COMMITTED``, ``REPEATABLE
+            READ``, ``SERIALIZABLE`` or the equivalent :ref:`constant
+            <isolation-level-constants>` defined in the `~psycopg2.extensions`
+            module.
         :param readonly: if `!True`, set the connection to read only;
             read/write if `!False`.
         :param deferrable: if `!True`, set the connection to deferrable;
@@ -370,19 +367,14 @@ The ``connection`` class
             PostgreSQL session setting but an alias for setting the
             `autocommit` attribute.
 
-        Parameter passed as `!None` (the default for all) will not be changed.
-        The parameters *isolation_level*, *readonly* and *deferrable* also
-        accept the string ``DEFAULT`` as a value: the effect is to reset the
-        parameter to the server default.
-
         .. _isolation level:
             http://www.postgresql.org/docs/current/static/transaction-iso.html
 
-        The function must be invoked with no transaction in progress. At every
-        function invocation, only the specified parameters are changed.
-
-        The default for the values are defined by the server configuration:
-        see values for |default_transaction_isolation|__,
+        Arguments set to `!None` (the default for all) will not be changed.
+        The parameters *isolation_level*, *readonly* and *deferrable* also
+        accept the string ``DEFAULT`` as a value: the effect is to reset the
+        parameter to the server default.  Defaults are defined by the server
+        configuration: see values for |default_transaction_isolation|__,
         |default_transaction_read_only|__, |default_transaction_deferrable|__.
 
         .. |default_transaction_isolation| replace:: :sql:`default_transaction_isolation`
@@ -392,11 +384,19 @@ The ``connection`` class
         .. |default_transaction_deferrable| replace:: :sql:`default_transaction_deferrable`
         .. __: http://www.postgresql.org/docs/current/static/runtime-config-client.html#GUC-DEFAULT-TRANSACTION-DEFERRABLE
 
+        The function must be invoked with no transaction in progress.
+
         .. note::
 
             There is currently no builtin method to read the current value for
             the parameters: use :sql:`SHOW default_transaction_...` to read
             the values from the backend.
+
+        .. seealso:: |SET TRANSACTION|_ for further details about the behaviour
+            of the transaction parameters in the server.
+
+            .. |SET TRANSACTION| replace:: :sql:`SET TRANSACTION`
+            .. _SET TRANSACTION: http://www.postgresql.org/docs/current/static/sql-set-transaction.html
 
         .. versionadded:: 2.4.2
 
@@ -419,8 +419,8 @@ The ``connection`` class
 
             By default, any query execution, including a simple :sql:`SELECT`
             will start a transaction: for long-running programs, if no further
-            action is taken, the session will remain "idle in transaction", a
-            condition non desiderable for several reasons (locks are held by
+            action is taken, the session will remain "idle in transaction", an
+            undesirable condition for several reasons (locks are held by
             the session, tables bloat...). For long lived scripts, either
             ensure to terminate a transaction as soon as possible or use an
             autocommit connection.
@@ -483,13 +483,21 @@ The ``connection`` class
             ['NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "foo_pkey" for table "foo"\n',
              'NOTICE:  CREATE TABLE will create implicit sequence "foo_id_seq" for serial column "foo.id"\n']
 
+        .. versionchanged:: 2.7
+            The `!notices` attribute is writable: the user may replace it
+            with any Python object exposing an `!append()` method. If
+            appending raises an exception the notice is silently
+            dropped.
+
         To avoid a leak in case excessive notices are generated, only the last
-        50 messages are kept.
+        50 messages are kept. This check is only in place if the `!notices`
+        attribute is a list: if any other object is used it will be up to the
+        user to guard from leakage.
 
         You can configure what messages to receive using `PostgreSQL logging
         configuration parameters`__ such as ``log_statement``,
         ``client_min_messages``, ``log_min_duration_statement`` etc.
-        
+
         .. __: http://www.postgresql.org/docs/current/static/runtime-config-logging.html
 
 
@@ -505,6 +513,12 @@ The ``connection`` class
             list was composed by 2 items tuples :samp:`({pid},{channel})` and
             the payload was not accessible. To keep backward compatibility,
             `!Notify` objects can still be accessed as 2 items tuples.
+
+        .. versionchanged:: 2.7
+            The `!notifies` attribute is writable: the user may replace it
+            with any Python object exposing an `!append()` method. If
+            appending raises an exception the notification is silently
+            dropped.
 
 
     .. attribute:: cursor_factory

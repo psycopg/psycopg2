@@ -44,10 +44,9 @@
     <None Include="INSTALL" />
     <None Include="LICENSE" />
     <None Include="MANIFEST.in" />
-    <None Include="README" />
+    <None Include="README.rst" />
     <None Include="setup.cfg" />
     <None Include="setup.py" />
-    <None Include="doc\HACKING" />
     <None Include="doc\SUCCESS" />
     <None Include="examples\binary.py" />
     <None Include="examples\copy_from.py" />

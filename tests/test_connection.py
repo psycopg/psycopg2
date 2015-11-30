@@ -23,16 +23,18 @@
 # License for more details.
 
 import os
+import sys
 import time
 import threading
 from operator import attrgetter
+from StringIO import StringIO
 
 import psycopg2
 import psycopg2.errorcodes
 import psycopg2.extensions
 
 from testutils import unittest, decorate_all_tests, skip_if_no_superuser
-from testutils import skip_before_postgres, skip_after_postgres
+from testutils import skip_before_postgres, skip_after_postgres, skip_before_libpq
 from testutils import ConnectingTestCase, skip_if_tpc_disabled
 from testutils import skip_if_windows
 from testconfig import dsn, dbname
@@ -127,10 +129,44 @@ class ConnectionTests(ConnectingTestCase):
             cur.execute(sql)
 
         self.assertEqual(50, len(conn.notices))
-        self.assert_('table50' in conn.notices[0], conn.notices[0])
-        self.assert_('table51' in conn.notices[1], conn.notices[1])
-        self.assert_('table98' in conn.notices[-2], conn.notices[-2])
         self.assert_('table99' in conn.notices[-1], conn.notices[-1])
+
+    def test_notices_deque(self):
+        from collections import deque
+
+        conn = self.conn
+        self.conn.notices = deque()
+        cur = conn.cursor()
+        if self.conn.server_version >= 90300:
+            cur.execute("set client_min_messages=debug1")
+
+        cur.execute("create temp table table1 (id serial); create temp table table2 (id serial);")
+        cur.execute("create temp table table3 (id serial); create temp table table4 (id serial);")
+        self.assertEqual(len(conn.notices), 4)
+        self.assert_('table1' in conn.notices.popleft())
+        self.assert_('table2' in conn.notices.popleft())
+        self.assert_('table3' in conn.notices.popleft())
+        self.assert_('table4' in conn.notices.popleft())
+        self.assertEqual(len(conn.notices), 0)
+
+        # not limited, but no error
+        for i in range(0, 100, 10):
+            sql = " ".join(["create temp table table2_%d (id serial);" % j for j in range(i, i+10)])
+            cur.execute(sql)
+
+        self.assertEqual(len([n for n in conn.notices if 'CREATE TABLE' in n]),
+            100)
+
+    def test_notices_noappend(self):
+        conn = self.conn
+        self.conn.notices = None    # will make an error swallowes ok
+        cur = conn.cursor()
+        if self.conn.server_version >= 90300:
+            cur.execute("set client_min_messages=debug1")
+
+        cur.execute("create temp table table1 (id serial);")
+
+        self.assertEqual(self.conn.notices, None)
 
     def test_server_version(self):
         self.assert_(self.conn.server_version)
@@ -272,6 +308,78 @@ class ConnectionTests(ConnectingTestCase):
         c = SubConnection("dbname=thereisnosuchdatabasemate password=foobar")
         self.assert_(c.closed, "connection failed so it must be closed")
         self.assert_('foobar' not in c.dsn, "password was not obscured")
+
+
+class ParseDsnTestCase(ConnectingTestCase):
+    def test_parse_dsn(self):
+        from psycopg2 import ProgrammingError
+        from psycopg2.extensions import parse_dsn
+
+        self.assertEqual(parse_dsn('dbname=test user=tester password=secret'),
+                         dict(user='tester', password='secret', dbname='test'),
+                         "simple DSN parsed")
+
+        self.assertRaises(ProgrammingError, parse_dsn,
+                          "dbname=test 2 user=tester password=secret")
+
+        self.assertEqual(parse_dsn("dbname='test 2' user=tester password=secret"),
+                         dict(user='tester', password='secret', dbname='test 2'),
+                         "DSN with quoting parsed")
+
+        # Can't really use assertRaisesRegexp() here since we need to
+        # make sure that secret is *not* exposed in the error messgage
+        # (and it also requires python >= 2.7).
+        raised = False
+        try:
+            # unterminated quote after dbname:
+            parse_dsn("dbname='test 2 user=tester password=secret")
+        except ProgrammingError, e:
+            raised = True
+            self.assertTrue(str(e).find('secret') < 0,
+                            "DSN was not exposed in error message")
+        except e:
+            self.fail("unexpected error condition: " + repr(e))
+        self.assertTrue(raised, "ProgrammingError raised due to invalid DSN")
+
+    @skip_before_libpq(9, 2)
+    def test_parse_dsn_uri(self):
+        from psycopg2.extensions import parse_dsn
+
+        self.assertEqual(parse_dsn('postgresql://tester:secret@/test'),
+                         dict(user='tester', password='secret', dbname='test'),
+                         "valid URI dsn parsed")
+
+        raised = False
+        try:
+            # extra '=' after port value
+            parse_dsn(dsn='postgresql://tester:secret@/test?port=1111=x')
+        except psycopg2.ProgrammingError, e:
+            raised = True
+            self.assertTrue(str(e).find('secret') < 0,
+                            "URI was not exposed in error message")
+        except e:
+            self.fail("unexpected error condition: " + repr(e))
+        self.assertTrue(raised, "ProgrammingError raised due to invalid URI")
+
+    def test_unicode_value(self):
+        from psycopg2.extensions import parse_dsn
+        snowman = u"\u2603"
+        d = parse_dsn('dbname=' + snowman)
+        if sys.version_info[0] < 3:
+            self.assertEqual(d['dbname'], snowman.encode('utf8'))
+        else:
+            self.assertEqual(d['dbname'], snowman)
+
+    def test_unicode_key(self):
+        from psycopg2.extensions import parse_dsn
+        snowman = u"\u2603"
+        self.assertRaises(psycopg2.ProgrammingError, parse_dsn,
+            snowman + '=' + snowman)
+
+    def test_bad_param(self):
+        from psycopg2.extensions import parse_dsn
+        self.assertRaises(TypeError, parse_dsn, None)
+        self.assertRaises(TypeError, parse_dsn, 42)
 
 
 class IsolationLevelsTestCase(ConnectingTestCase):
@@ -1068,6 +1176,17 @@ class AutocommitTests(ConnectingTestCase):
         self.assertEqual(cur.fetchone()[0], 'serializable')
         cur.execute("SHOW default_transaction_read_only;")
         self.assertEqual(cur.fetchone()[0], 'on')
+
+
+class ReplicationTest(ConnectingTestCase):
+    @skip_before_postgres(9, 0)
+    def test_replication_not_supported(self):
+        conn = self.repl_connect()
+        if conn is None: return
+        cur = conn.cursor()
+        f = StringIO()
+        self.assertRaises(psycopg2.NotSupportedError,
+            cur.copy_expert, "START_REPLICATION 0/0", f)
 
 
 def test_suite():

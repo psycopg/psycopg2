@@ -58,11 +58,6 @@
 #include "psycopg/adapter_datetime.h"
 HIDDEN PyObject *pyDateTimeModuleP = NULL;
 
-/* pointers to the psycopg.tz classes */
-HIDDEN PyObject *pyPsycopgTzModule = NULL;
-HIDDEN PyObject *pyPsycopgTzLOCAL = NULL;
-HIDDEN PyObject *pyPsycopgTzFixedOffsetTimezone = NULL;
-
 HIDDEN PyObject *psycoEncodings = NULL;
 
 #ifdef PSYCOPG_DEBUG
@@ -115,6 +110,115 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
     }
 
     return conn;
+}
+
+#define psyco_parse_dsn_doc "parse_dsn(dsn) -> dict"
+
+static PyObject *
+psyco_parse_dsn(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+    char *err = NULL;
+    PQconninfoOption *options = NULL, *o;
+    PyObject *dict = NULL, *res = NULL, *dsn;
+
+    static char *kwlist[] = {"dsn", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", kwlist, &dsn)) {
+        return NULL;
+    }
+
+    Py_INCREF(dsn); /* for ensure_bytes */
+    if (!(dsn = psycopg_ensure_bytes(dsn))) { goto exit; }
+
+    options = PQconninfoParse(Bytes_AS_STRING(dsn), &err);
+    if (options == NULL) {
+        if (err != NULL) {
+            PyErr_Format(ProgrammingError, "error parsing the dsn: %s", err);
+            PQfreemem(err);
+        } else {
+            PyErr_SetString(OperationalError, "PQconninfoParse() failed");
+        }
+        goto exit;
+    }
+
+    if (!(dict = PyDict_New())) { goto exit; }
+    for (o = options; o->keyword != NULL; o++) {
+        if (o->val != NULL) {
+            PyObject *value;
+            if (!(value = Text_FromUTF8(o->val))) { goto exit; }
+            if (PyDict_SetItemString(dict, o->keyword, value) != 0) {
+                Py_DECREF(value);
+                goto exit;
+            }
+            Py_DECREF(value);
+        }
+    }
+
+    /* success */
+    res = dict;
+    dict = NULL;
+
+exit:
+    PQconninfoFree(options);    /* safe on null */
+    Py_XDECREF(dict);
+    Py_XDECREF(dsn);
+
+    return res;
+}
+
+
+#define psyco_quote_ident_doc \
+"quote_ident(str, conn_or_curs) -> str -- wrapper around PQescapeIdentifier\n\n" \
+":Parameters:\n" \
+"  * `str`: A bytes or unicode object\n" \
+"  * `conn_or_curs`: A connection or cursor, required"
+
+static PyObject *
+psyco_quote_ident(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+#if PG_VERSION_NUM >= 90000
+    PyObject *ident = NULL, *obj = NULL, *result = NULL;
+    connectionObject *conn;
+    const char *str;
+    char *quoted = NULL;
+
+    static char *kwlist[] = {"ident", "scope", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO", kwlist, &ident, &obj)) {
+        return NULL;
+    }
+
+    if (PyObject_TypeCheck(obj, &cursorType)) {
+        conn = ((cursorObject*)obj)->conn;
+    }
+    else if (PyObject_TypeCheck(obj, &connectionType)) {
+        conn = (connectionObject*)obj;
+    }
+    else {
+        PyErr_SetString(PyExc_TypeError,
+                        "argument 2 must be a connection or a cursor");
+        return NULL;
+    }
+
+    Py_INCREF(ident); /* for ensure_bytes */
+    if (!(ident = psycopg_ensure_bytes(ident))) { goto exit; }
+
+    str = Bytes_AS_STRING(ident);
+
+    quoted = PQescapeIdentifier(conn->pgconn, str, strlen(str));
+    if (!quoted) {
+        PyErr_NoMemory();
+        goto exit;
+    }
+    result = conn_text_from_chars(conn, quoted);
+
+exit:
+    PQfreemem(quoted);
+    Py_XDECREF(ident);
+
+    return result;
+#else
+    PyErr_SetString(NotSupportedError, "PQescapeIdentifier not available in libpq < 9.0");
+    return NULL;
+#endif
 }
 
 /** type registration **/
@@ -180,6 +284,29 @@ psyco_register_type(PyObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
+
+
+/* Make sure libcrypto thread callbacks are set up. */
+static void
+psyco_libcrypto_threads_init(void)
+{
+    PyObject *m;
+
+    /* importing the ssl module sets up Python's libcrypto callbacks */
+    if ((m = PyImport_ImportModule("ssl"))) {
+        /* disable libcrypto setup in libpq, so it won't stomp on the callbacks
+           that have already been set up */
+#if PG_VERSION_NUM >= 80400
+        PQinitOpenSSL(1, 0);
+#endif
+        Py_DECREF(m);
+    }
+    else {
+        /* might mean that Python has been compiled without OpenSSL support,
+           fall back to relying on libpq's libcrypto locking */
+        PyErr_Clear();
+    }
+}
 
 /* Initialize the default adapters map
  *
@@ -283,6 +410,19 @@ exit:
     Py_XDECREF(call);
 
     return rv;
+}
+
+#define psyco_libpq_version_doc "Query actual libpq version loaded."
+
+static PyObject*
+psyco_libpq_version(PyObject *self)
+{
+#if PG_VERSION_NUM >= 90100
+    return PyInt_FromLong(PQlibVersion());
+#else
+    PyErr_SetString(NotSupportedError, "version discovery is not supported in libpq < 9.1");
+    return NULL;
+#endif
 }
 
 /* psyco_encodings_fill
@@ -398,9 +538,7 @@ exit:
 PyObject *Error, *Warning, *InterfaceError, *DatabaseError,
     *InternalError, *OperationalError, *ProgrammingError,
     *IntegrityError, *DataError, *NotSupportedError;
-#ifdef PSYCOPG_EXTENSIONS
 PyObject *QueryCanceledError, *TransactionRollbackError;
-#endif
 
 /* mapping between exception names and their PyObject */
 static struct {
@@ -423,13 +561,11 @@ static struct {
     { "psycopg2.DataError", &DataError, &DatabaseError, DataError_doc },
     { "psycopg2.NotSupportedError", &NotSupportedError, &DatabaseError,
         NotSupportedError_doc },
-#ifdef PSYCOPG_EXTENSIONS
     { "psycopg2.extensions.QueryCanceledError", &QueryCanceledError,
       &OperationalError, QueryCanceledError_doc },
     { "psycopg2.extensions.TransactionRollbackError",
       &TransactionRollbackError, &OperationalError,
       TransactionRollbackError_doc },
-#endif
     {NULL}  /* Sentinel */
 };
 
@@ -630,8 +766,10 @@ psyco_GetDecimalType(void)
 static PyObject *
 psyco_make_description_type(void)
 {
-    PyObject *nt = NULL;
     PyObject *coll = NULL;
+    PyObject *nt = NULL;
+    PyTypeObject *t = NULL;
+    PyObject *s = NULL;
     PyObject *rv = NULL;
 
     /* Try to import collections.namedtuple */
@@ -645,12 +783,26 @@ psyco_make_description_type(void)
     }
 
     /* Build the namedtuple */
-    rv = PyObject_CallFunction(nt, "ss", "Column",
-        "name type_code display_size internal_size precision scale null_ok");
+    if(!(t = (PyTypeObject *)PyObject_CallFunction(nt, "ss", "Column",
+        "name type_code display_size internal_size precision scale null_ok"))) {
+        goto exit;
+    }
+
+    /* Export the tuple on the extensions module
+     * Required to guarantee picklability on Py > 3.3 (see Python issue 21374)
+     * for previous Py version the module is psycopg2 anyway but for consistency
+     * we'd rather expose it from the extensions module. */
+    if (!(s = Text_FromUTF8("psycopg2.extensions"))) { goto exit; }
+    if (0 > PyDict_SetItemString(t->tp_dict, "__module__", s)) { goto exit; }
+
+    rv = (PyObject *)t;
+    t = NULL;
 
 exit:
     Py_XDECREF(coll);
     Py_XDECREF(nt);
+    Py_XDECREF((PyObject *)t);
+    Py_XDECREF(s);
 
     return rv;
 
@@ -668,6 +820,10 @@ error:
 static PyMethodDef psycopgMethods[] = {
     {"_connect",  (PyCFunction)psyco_connect,
      METH_VARARGS|METH_KEYWORDS, psyco_connect_doc},
+    {"parse_dsn",  (PyCFunction)psyco_parse_dsn,
+     METH_VARARGS|METH_KEYWORDS, psyco_parse_dsn_doc},
+    {"quote_ident", (PyCFunction)psyco_quote_ident,
+     METH_VARARGS|METH_KEYWORDS, psyco_quote_ident_doc},
     {"adapt",  (PyCFunction)psyco_microprotocols_adapt,
      METH_VARARGS, psyco_microprotocols_adapt_doc},
 
@@ -677,21 +833,9 @@ static PyMethodDef psycopgMethods[] = {
      METH_VARARGS|METH_KEYWORDS, typecast_from_python_doc},
     {"new_array_type", (PyCFunction)typecast_array_from_python,
      METH_VARARGS|METH_KEYWORDS, typecast_array_from_python_doc},
+    {"libpq_version", (PyCFunction)psyco_libpq_version,
+     METH_NOARGS, psyco_libpq_version_doc},
 
-    {"AsIs",  (PyCFunction)psyco_AsIs,
-     METH_VARARGS, psyco_AsIs_doc},
-    {"QuotedString",  (PyCFunction)psyco_QuotedString,
-     METH_VARARGS, psyco_QuotedString_doc},
-    {"Boolean",  (PyCFunction)psyco_Boolean,
-     METH_VARARGS, psyco_Boolean_doc},
-    {"Int",  (PyCFunction)psyco_Int,
-     METH_VARARGS, psyco_Int_doc},
-    {"Float",  (PyCFunction)psyco_Float,
-     METH_VARARGS, psyco_Float_doc},
-    {"Decimal",  (PyCFunction)psyco_Decimal,
-     METH_VARARGS, psyco_Decimal_doc},
-    {"Binary",  (PyCFunction)psyco_Binary,
-     METH_VARARGS, psyco_Binary_doc},
     {"Date",  (PyCFunction)psyco_Date,
      METH_VARARGS, psyco_Date_doc},
     {"Time",  (PyCFunction)psyco_Time,
@@ -704,8 +848,6 @@ static PyMethodDef psycopgMethods[] = {
      METH_VARARGS, psyco_TimeFromTicks_doc},
     {"TimestampFromTicks",  (PyCFunction)psyco_TimestampFromTicks,
      METH_VARARGS, psyco_TimestampFromTicks_doc},
-    {"List",  (PyCFunction)psyco_List,
-     METH_VARARGS, psyco_List_doc},
 
     {"DateFromPy",  (PyCFunction)psyco_DateFromPy,
      METH_VARARGS, psyco_DateFromPy_doc},
@@ -728,12 +870,10 @@ static PyMethodDef psycopgMethods[] = {
      METH_VARARGS, psyco_IntervalFromMx_doc},
 #endif
 
-#ifdef PSYCOPG_EXTENSIONS
     {"set_wait_callback",  (PyCFunction)psyco_set_wait_callback,
      METH_O, psyco_set_wait_callback_doc},
     {"get_wait_callback",  (PyCFunction)psyco_get_wait_callback,
      METH_NOARGS, psyco_get_wait_callback_doc},
-#endif
 
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
@@ -822,10 +962,11 @@ INIT_MODULE(_psycopg)(void)
     Py_TYPE(&diagnosticsType) = &PyType_Type;
     if (PyType_Ready(&diagnosticsType) == -1) goto exit;
 
-#ifdef PSYCOPG_EXTENSIONS
     Py_TYPE(&lobjectType) = &PyType_Type;
     if (PyType_Ready(&lobjectType) == -1) goto exit;
-#endif
+
+    /* initialize libcrypto threading callbacks */
+    psyco_libcrypto_threads_init();
 
     /* import mx.DateTime module, if necessary */
 #ifdef HAVE_MXDATETIME
@@ -859,18 +1000,6 @@ INIT_MODULE(_psycopg)(void)
     Py_TYPE(&pydatetimeType) = &PyType_Type;
     if (PyType_Ready(&pydatetimeType) == -1) goto exit;
 
-    /* import psycopg2.tz anyway (TODO: replace with C-level module?) */
-    pyPsycopgTzModule = PyImport_ImportModule("psycopg2.tz");
-    if (pyPsycopgTzModule == NULL) {
-        Dprintf("initpsycopg: can't import psycopg2.tz module");
-        PyErr_SetString(PyExc_ImportError, "can't import psycopg2.tz module");
-        goto exit;
-    }
-    pyPsycopgTzLOCAL =
-        PyObject_GetAttrString(pyPsycopgTzModule, "LOCAL");
-    pyPsycopgTzFixedOffsetTimezone =
-        PyObject_GetAttrString(pyPsycopgTzModule, "FixedOffsetTimezone");
-
     /* initialize the module and grab module's dictionary */
 #if PY_MAJOR_VERSION < 3
     module = Py_InitModule("_psycopg", psycopgMethods);
@@ -901,6 +1030,7 @@ INIT_MODULE(_psycopg)(void)
     /* set some module's parameters */
     PyModule_AddStringConstant(module, "__version__", PSYCOPG_VERSION);
     PyModule_AddStringConstant(module, "__doc__", "psycopg PostgreSQL driver");
+    PyModule_AddIntConstant(module, "__libpq_version__", PG_VERSION_NUM);
     PyModule_AddObject(module, "apilevel", Text_FromUTF8(APILEVEL));
     PyModule_AddObject(module, "threadsafety", PyInt_FromLong(THREADSAFETY));
     PyModule_AddObject(module, "paramstyle", Text_FromUTF8(PARAMSTYLE));
@@ -912,9 +1042,16 @@ INIT_MODULE(_psycopg)(void)
     PyModule_AddObject(module, "Notify", (PyObject*)&notifyType);
     PyModule_AddObject(module, "Xid", (PyObject*)&xidType);
     PyModule_AddObject(module, "Diagnostics", (PyObject*)&diagnosticsType);
-#ifdef PSYCOPG_EXTENSIONS
+    PyModule_AddObject(module, "AsIs", (PyObject*)&asisType);
+    PyModule_AddObject(module, "Binary", (PyObject*)&binaryType);
+    PyModule_AddObject(module, "Boolean", (PyObject*)&pbooleanType);
+    PyModule_AddObject(module, "Decimal", (PyObject*)&pdecimalType);
+    PyModule_AddObject(module, "Int", (PyObject*)&pintType);
+    PyModule_AddObject(module, "Float", (PyObject*)&pfloatType);
+    PyModule_AddObject(module, "List", (PyObject*)&listType);
+    PyModule_AddObject(module, "QuotedString", (PyObject*)&qstringType);
     PyModule_AddObject(module, "lobject", (PyObject*)&lobjectType);
-#endif
+    PyModule_AddObject(module, "Column", psyco_DescriptionType);
 
     /* encodings dictionary in module dictionary */
     PyModule_AddObject(module, "encodings", psycoEncodings);

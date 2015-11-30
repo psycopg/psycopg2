@@ -145,13 +145,15 @@ query:
 The problem with the query parameters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The SQL representation for many data types is often not the same of the Python
-string representation.  The classic example is with single quotes in
-strings: SQL uses them as string constants bounds and requires them to be
-escaped, whereas in Python single quotes can be left unescaped in strings
-bounded by double quotes. For this reason a naïve approach to the composition
-of query strings, e.g. using string concatenation, is a recipe for terrible
-problems::
+The SQL representation of many data types is often different from their Python
+string representation. The typical example is with single quotes in strings:
+in SQL single quotes are used as string literal delimiters, so the ones
+appearing inside the string itself must be escaped, whereas in Python single
+quotes can be left unescaped if the string is delimited by double quotes.
+
+Because of the difference, sometime subtle, between the data types
+representations, a naïve approach to query strings composition, such as using
+Python strings concatenation, is a recipe for *terrible* problems::
 
     >>> SQL = "INSERT INTO authors (name) VALUES ('%s');" # NEVER DO THIS
     >>> data = ("O'Reilly", )
@@ -160,13 +162,13 @@ problems::
     LINE 1: INSERT INTO authors (name) VALUES ('O'Reilly')
                                                   ^
 
-If the variable containing the data to be sent to the database comes from an
-untrusted source (e.g. a form published on a web site) an attacker could
+If the variables containing the data to send to the database come from an
+untrusted source (such as a form published on a web site) an attacker could
 easily craft a malformed string, either gaining access to unauthorized data or
 performing destructive operations on the database. This form of attack is
 called `SQL injection`_ and is known to be one of the most widespread forms of
-attack to servers. Before continuing, please print `this page`__ as a memo and
-hang it onto your desk.
+attack to database servers. Before continuing, please print `this page`__ as a
+memo and hang it onto your desk.
 
 .. _SQL injection: http://en.wikipedia.org/wiki/SQL_injection
 .. __: http://xkcd.com/327/
@@ -243,7 +245,8 @@ types:
     +--------------------+-------------------------+--------------------------+
     | `!date`            | :sql:`date`             | :ref:`adapt-date`        |
     +--------------------+-------------------------+                          |
-    | `!time`            | :sql:`time`             |                          |
+    | `!time`            | | :sql:`time`           |                          |
+    |                    | | :sql:`timetz`         |                          |
     +--------------------+-------------------------+                          |
     | `!datetime`        | | :sql:`timestamp`      |                          |
     |                    | | :sql:`timestamptz`    |                          |
@@ -480,7 +483,7 @@ Date/Time objects adaptation
 
 Python builtin `~datetime.datetime`, `~datetime.date`,
 `~datetime.time`,  `~datetime.timedelta` are converted into PostgreSQL's
-:sql:`timestamp[tz]`, :sql:`date`, :sql:`time`, :sql:`interval` data types.
+:sql:`timestamp[tz]`, :sql:`date`, :sql:`time[tz]`, :sql:`interval` data types.
 Time zones are supported too.  The Egenix `mx.DateTime`_ objects are adapted
 the same way::
 
@@ -676,7 +679,7 @@ older versions).
 
     By default even a simple :sql:`SELECT` will start a transaction: in
     long-running programs, if no further action is taken, the session will
-    remain "idle in transaction", a condition non desiderable for several
+    remain "idle in transaction", an undesirable condition for several
     reasons (locks are held by the session, tables bloat...). For long lived
     scripts, either make sure to terminate a transaction as soon as possible or
     use an autocommit connection.
@@ -702,12 +705,27 @@ managers* and can be used with the ``with`` statement::
 
 When a connection exits the ``with`` block, if no exception has been raised by
 the block, the transaction is committed. In case of exception the transaction
-is rolled back. In no case the connection is closed: a connection can be used
-in more than a ``with`` statement and each ``with`` block is effectively
-wrapped in a transaction.
+is rolled back.
 
 When a cursor exits the ``with`` block it is closed, releasing any resource
 eventually associated with it. The state of the transaction is not affected.
+
+Note that, unlike file objects or other resources, exiting the connection's
+``with`` block *doesn't close the connection* but only the transaction
+associated with it: a connection can be used in more than a ``with`` statement
+and each ``with`` block is effectively wrapped in a separate transaction::
+
+    conn = psycopg2.connect(DSN)
+
+    with conn:
+        with conn.cursor() as curs:
+            curs.execute(SQL1)
+
+    with conn:
+        with conn.cursor() as curs:
+            curs.execute(SQL2)
+
+    conn.close()
 
 
 
@@ -896,6 +914,20 @@ using the |lo_import|_ and |lo_export|_ libpq functions.
 .. _lo_import: http://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-IMPORT
 .. |lo_export| replace:: `!lo_export()`
 .. _lo_export: http://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-EXPORT
+
+.. versionchanged:: 2.6
+    added support for large objects greated than 2GB. Note that the support is
+    enabled only if all the following conditions are verified:
+
+    - the Python build is 64 bits;
+    - the extension was built against at least libpq 9.3;
+    - the server version is at least PostgreSQL 9.3
+      (`~connection.server_version` must be >= ``90300``).
+
+    If Psycopg was built with 64 bits large objects support (i.e. the first
+    two contidions above are verified), the `psycopg2.__version__` constant
+    will contain the ``lo64`` flag.  If any of the contition is not met
+    several `!lobject` methods will fail if the arguments exceed 2GB.
 
 
 

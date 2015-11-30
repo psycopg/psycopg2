@@ -40,12 +40,6 @@ typedef struct {
 
 } pintObject;
 
-/* functions exported to psycopgmodule.c */
-
-HIDDEN PyObject *psyco_Int(PyObject *module, PyObject *args);
-#define psyco_Int_doc \
-    "Int(obj) -> new int value"
-
 #ifdef __cplusplus
 }
 #endif

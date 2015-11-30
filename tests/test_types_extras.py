@@ -27,6 +27,7 @@ from testutils import py3_raises_typeerror
 
 import psycopg2
 import psycopg2.extras
+import psycopg2.extensions as ext
 from psycopg2.extensions import b
 
 
@@ -111,9 +112,9 @@ class TypesExtrasTests(ConnectingTestCase):
     def test_adapt_fail(self):
         class Foo(object): pass
         self.assertRaises(psycopg2.ProgrammingError,
-            psycopg2.extensions.adapt, Foo(), psycopg2.extensions.ISQLQuote, None)
+            psycopg2.extensions.adapt, Foo(), ext.ISQLQuote, None)
         try:
-            psycopg2.extensions.adapt(Foo(), psycopg2.extensions.ISQLQuote, None)
+            psycopg2.extensions.adapt(Foo(), ext.ISQLQuote, None)
         except psycopg2.ProgrammingError, err:
             self.failUnless(str(err) == "can't adapt type 'Foo'")
 
@@ -460,7 +461,6 @@ class AdaptTypeTestCase(ConnectingTestCase):
 
     def test_none_fast_path(self):
         # the None adapter is not actually invoked in regular adaptation
-        ext = psycopg2.extensions
 
         class WonkyAdapter(object):
             def __init__(self, obj): pass
@@ -923,7 +923,7 @@ class JsonTestCase(ConnectingTestCase):
             self.assertEqual(curs.mogrify("%s", (obj,)),
                 b("""'{"a": 123}'"""))
         finally:
-           del psycopg2.extensions.adapters[dict, psycopg2.extensions.ISQLQuote]
+           del psycopg2.extensions.adapters[dict, ext.ISQLQuote]
 
 
     def test_type_not_available(self):
@@ -1067,6 +1067,97 @@ class JsonTestCase(ConnectingTestCase):
         # no pesky b's
         self.assert_(s.startswith("'"))
         self.assert_(s.endswith("'"))
+
+
+def skip_if_no_jsonb_type(f):
+    return skip_before_postgres(9, 4)(f)
+
+class JsonbTestCase(ConnectingTestCase):
+    @staticmethod
+    def myloads(s):
+        import json
+        rv = json.loads(s)
+        rv['test'] = 1
+        return rv
+
+    def test_default_cast(self):
+        curs = self.conn.cursor()
+
+        curs.execute("""select '{"a": 100.0, "b": null}'::jsonb""")
+        self.assertEqual(curs.fetchone()[0], {'a': 100.0, 'b': None})
+
+        curs.execute("""select array['{"a": 100.0, "b": null}']::jsonb[]""")
+        self.assertEqual(curs.fetchone()[0], [{'a': 100.0, 'b': None}])
+
+    def test_register_on_connection(self):
+        psycopg2.extras.register_json(self.conn, loads=self.myloads, name='jsonb')
+        curs = self.conn.cursor()
+        curs.execute("""select '{"a": 100.0, "b": null}'::jsonb""")
+        self.assertEqual(curs.fetchone()[0], {'a': 100.0, 'b': None, 'test': 1})
+
+    def test_register_on_cursor(self):
+        curs = self.conn.cursor()
+        psycopg2.extras.register_json(curs, loads=self.myloads, name='jsonb')
+        curs.execute("""select '{"a": 100.0, "b": null}'::jsonb""")
+        self.assertEqual(curs.fetchone()[0], {'a': 100.0, 'b': None, 'test': 1})
+
+    def test_register_globally(self):
+        old = psycopg2.extensions.string_types.get(3802)
+        olda = psycopg2.extensions.string_types.get(3807)
+        try:
+            new, newa = psycopg2.extras.register_json(self.conn,
+                loads=self.myloads, globally=True, name='jsonb')
+            curs = self.conn.cursor()
+            curs.execute("""select '{"a": 100.0, "b": null}'::jsonb""")
+            self.assertEqual(curs.fetchone()[0], {'a': 100.0, 'b': None, 'test': 1})
+        finally:
+            psycopg2.extensions.string_types.pop(new.values[0])
+            psycopg2.extensions.string_types.pop(newa.values[0])
+            if old:
+                psycopg2.extensions.register_type(old)
+            if olda:
+                psycopg2.extensions.register_type(olda)
+
+    def test_loads(self):
+        json = psycopg2.extras.json
+        loads = lambda x: json.loads(x, parse_float=Decimal)
+        psycopg2.extras.register_json(self.conn, loads=loads, name='jsonb')
+        curs = self.conn.cursor()
+        curs.execute("""select '{"a": 100.0, "b": null}'::jsonb""")
+        data = curs.fetchone()[0]
+        self.assert_(isinstance(data['a'], Decimal))
+        self.assertEqual(data['a'], Decimal('100.0'))
+        # sure we are not manling json too?
+        curs.execute("""select '{"a": 100.0, "b": null}'::json""")
+        data = curs.fetchone()[0]
+        self.assert_(isinstance(data['a'], float))
+        self.assertEqual(data['a'], 100.0)
+
+    def test_register_default(self):
+        curs = self.conn.cursor()
+
+        loads = lambda x: psycopg2.extras.json.loads(x, parse_float=Decimal)
+        psycopg2.extras.register_default_jsonb(curs, loads=loads)
+
+        curs.execute("""select '{"a": 100.0, "b": null}'::jsonb""")
+        data = curs.fetchone()[0]
+        self.assert_(isinstance(data['a'], Decimal))
+        self.assertEqual(data['a'], Decimal('100.0'))
+
+        curs.execute("""select array['{"a": 100.0, "b": null}']::jsonb[]""")
+        data = curs.fetchone()[0]
+        self.assert_(isinstance(data[0]['a'], Decimal))
+        self.assertEqual(data[0]['a'], Decimal('100.0'))
+
+    def test_null(self):
+        curs = self.conn.cursor()
+        curs.execute("""select NULL::jsonb""")
+        self.assertEqual(curs.fetchone()[0], None)
+        curs.execute("""select NULL::jsonb[]""")
+        self.assertEqual(curs.fetchone()[0], None)
+
+decorate_all_tests(JsonbTestCase, skip_if_no_json_module)
+decorate_all_tests(JsonbTestCase, skip_if_no_jsonb_type)
 
 
 class RangeTestCase(unittest.TestCase):
@@ -1541,6 +1632,9 @@ class RangeCasterTestCase(ConnectingTestCase):
             self.assert_(not r1.lower_inc)
             self.assert_(r1.upper_inc)
 
+        # clear the adapters to allow precise count by scripts/refcounter.py
+        del ext.adapters[rc.range, ext.ISQLQuote]
+
     def test_range_escaping(self):
         from psycopg2.extras import register_range
         cur = self.conn.cursor()
@@ -1592,6 +1686,9 @@ class RangeCasterTestCase(ConnectingTestCase):
             self.assertEqual(ranges[i].lower_inf, r.lower_inf)
             self.assertEqual(ranges[i].upper_inf, r.upper_inf)
 
+        # clear the adapters to allow precise count by scripts/refcounter.py
+        del ext.adapters[TextRange, ext.ISQLQuote]
+
     def test_range_not_found(self):
         from psycopg2.extras import register_range
         cur = self.conn.cursor()
@@ -1624,6 +1721,10 @@ class RangeCasterTestCase(ConnectingTestCase):
         self.assertRaises(psycopg2.ProgrammingError,
             register_range, 'rs.r1', 'FailRange', cur)
         cur.execute("rollback to savepoint x;")
+
+        # clear the adapters to allow precise count by scripts/refcounter.py
+        for r in [ra1, ra2, rars2, rars3]:
+            del ext.adapters[r.range, ext.ISQLQuote]
 
 decorate_all_tests(RangeCasterTestCase, skip_if_no_range)
 

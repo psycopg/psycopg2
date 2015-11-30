@@ -440,6 +440,68 @@ decorate_all_tests(LargeObjectTruncateTests,
     skip_if_no_lo, skip_lo_if_green, skip_if_no_truncate)
 
 
+def _has_lo64(conn):
+    """Return (bool, msg) about the lo64 support"""
+    if conn.server_version < 90300:
+        return (False, "server version %s doesn't support the lo64 API"
+                % conn.server_version)
+
+    if 'lo64' not in psycopg2.__version__:
+        return (False, "this psycopg build doesn't support the lo64 API")
+
+    return (True, "this server and build support the lo64 API")
+
+def skip_if_no_lo64(f):
+    @wraps(f)
+    def skip_if_no_lo64_(self):
+        lo64, msg = _has_lo64(self.conn)
+        if not lo64: return self.skipTest(msg)
+        else: return f(self)
+
+    return skip_if_no_lo64_
+
+class LargeObject64Tests(LargeObjectTestCase):
+    def test_seek_tell_truncate_greater_than_2gb(self):
+        lo = self.conn.lobject()
+
+        length = (1 << 31) + (1 << 30)  # 2gb + 1gb = 3gb
+        lo.truncate(length)
+
+        self.assertEqual(lo.seek(length, 0), length)
+        self.assertEqual(lo.tell(), length)
+
+decorate_all_tests(LargeObject64Tests,
+    skip_if_no_lo, skip_lo_if_green, skip_if_no_truncate, skip_if_no_lo64)
+
+
+def skip_if_lo64(f):
+    @wraps(f)
+    def skip_if_lo64_(self):
+        lo64, msg = _has_lo64(self.conn)
+        if lo64: return self.skipTest(msg)
+        else: return f(self)
+
+    return skip_if_lo64_
+
+class LargeObjectNot64Tests(LargeObjectTestCase):
+    def test_seek_larger_than_2gb(self):
+        lo = self.conn.lobject()
+        offset = 1 << 32  # 4gb
+        self.assertRaises(
+            (OverflowError, psycopg2.InterfaceError, psycopg2.NotSupportedError),
+            lo.seek, offset, 0)
+
+    def test_truncate_larger_than_2gb(self):
+        lo = self.conn.lobject()
+        length = 1 << 32  # 4gb
+        self.assertRaises(
+            (OverflowError, psycopg2.InterfaceError, psycopg2.NotSupportedError),
+            lo.truncate, length)
+
+decorate_all_tests(LargeObjectNot64Tests,
+    skip_if_no_lo, skip_lo_if_green, skip_if_no_truncate, skip_if_lo64)
+
+
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

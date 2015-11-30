@@ -40,12 +40,6 @@ typedef struct {
 
 } asisObject;
 
-/* functions exported to psycopgmodule.c */
-
-HIDDEN PyObject *psyco_AsIs(PyObject *module, PyObject *args);
-#define psyco_AsIs_doc \
-    "AsIs(obj) -> new AsIs wrapper object"
-
 #ifdef __cplusplus
 }
 #endif

@@ -103,7 +103,7 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *kwargs)
 
     if (PyObject_IsInstance(obj, (PyObject *)&cursorType) == 0) {
         PyErr_SetString(PyExc_TypeError,
-            "cursor factory must be subclass of psycopg2._psycopg.cursor");
+            "cursor factory must be subclass of psycopg2.extensions.cursor");
         goto exit;
     }
 
@@ -440,9 +440,6 @@ exit:
     Py_XDECREF(tmp);
     return rv;
 }
-
-
-#ifdef PSYCOPG_EXTENSIONS
 
 
 /* parse a python object into one of the possible isolation level values */
@@ -787,7 +784,7 @@ psyco_conn_lobject(connectionObject *self, PyObject *args, PyObject *keywds)
     if (obj == NULL) return NULL;
     if (PyObject_IsInstance(obj, (PyObject *)&lobjectType) == 0) {
         PyErr_SetString(PyExc_TypeError,
-            "lobject factory must be subclass of psycopg2._psycopg.lobject");
+            "lobject factory must be subclass of psycopg2.extensions.lobject");
         Py_DECREF(obj);
         return NULL;
     }
@@ -843,6 +840,10 @@ psyco_conn_get_exception(PyObject *self, void *closure)
     return exception;
 }
 
+
+#define psyco_conn_poll_doc \
+"poll() -> int -- Advance the connection or query process without blocking."
+
 static PyObject *
 psyco_conn_poll(connectionObject *self)
 {
@@ -860,8 +861,6 @@ psyco_conn_poll(connectionObject *self)
 }
 
 
-/* extension: fileno - return the file descriptor of the connection */
-
 #define psyco_conn_fileno_doc \
 "fileno() -> int -- Return file descriptor associated to database connection."
 
@@ -877,8 +876,6 @@ psyco_conn_fileno(connectionObject *self)
     return PyInt_FromLong(socket);
 }
 
-
-/* extension: isexecuting - check for asynchronous operations */
 
 #define psyco_conn_isexecuting_doc                           \
 "isexecuting() -> bool -- Return True if the connection is " \
@@ -911,8 +908,6 @@ psyco_conn_isexecuting(connectionObject *self)
 }
 
 
-/* extension: cancel - cancel the current operation */
-
 #define psyco_conn_cancel_doc                           \
 "cancel() -- cancel the current operation"
 
@@ -940,8 +935,6 @@ psyco_conn_cancel(connectionObject *self)
     }
     Py_RETURN_NONE;
 }
-
-#endif  /* PSYCOPG_EXTENSIONS */
 
 
 /** the connection object **/
@@ -974,7 +967,6 @@ static struct PyMethodDef connectionObject_methods[] = {
      METH_NOARGS, psyco_conn_enter_doc},
     {"__exit__", (PyCFunction)psyco_conn_exit,
      METH_VARARGS, psyco_conn_exit_doc},
-#ifdef PSYCOPG_EXTENSIONS
     {"set_session", (PyCFunction)psyco_conn_set_session,
      METH_VARARGS|METH_KEYWORDS, psyco_conn_set_session_doc},
     {"set_isolation_level", (PyCFunction)psyco_conn_set_isolation_level,
@@ -992,27 +984,25 @@ static struct PyMethodDef connectionObject_methods[] = {
     {"reset", (PyCFunction)psyco_conn_reset,
      METH_NOARGS, psyco_conn_reset_doc},
     {"poll", (PyCFunction)psyco_conn_poll,
-     METH_NOARGS, psyco_conn_lobject_doc},
+     METH_NOARGS, psyco_conn_poll_doc},
     {"fileno", (PyCFunction)psyco_conn_fileno,
      METH_NOARGS, psyco_conn_fileno_doc},
     {"isexecuting", (PyCFunction)psyco_conn_isexecuting,
      METH_NOARGS, psyco_conn_isexecuting_doc},
     {"cancel", (PyCFunction)psyco_conn_cancel,
      METH_NOARGS, psyco_conn_cancel_doc},
-#endif
     {NULL}
 };
 
 /* object member list */
 
 static struct PyMemberDef connectionObject_members[] = {
-#ifdef PSYCOPG_EXTENSIONS
     {"closed", T_LONG, offsetof(connectionObject, closed), READONLY,
         "True if the connection is closed."},
     {"encoding", T_STRING, offsetof(connectionObject, encoding), READONLY,
         "The current client encoding."},
-    {"notices", T_OBJECT, offsetof(connectionObject, notice_list), READONLY},
-    {"notifies", T_OBJECT, offsetof(connectionObject, notifies), READONLY},
+    {"notices", T_OBJECT, offsetof(connectionObject, notice_list), 0},
+    {"notifies", T_OBJECT, offsetof(connectionObject, notifies), 0},
     {"dsn", T_STRING, offsetof(connectionObject, dsn), READONLY,
         "The current connection string."},
     {"async", T_LONG, offsetof(connectionObject, async), READONLY,
@@ -1032,7 +1022,6 @@ static struct PyMemberDef connectionObject_members[] = {
     {"server_version", T_INT,
         offsetof(connectionObject, server_version), READONLY,
         "Server version."},
-#endif
     {NULL}
 };
 
@@ -1040,7 +1029,6 @@ static struct PyMemberDef connectionObject_members[] = {
     { #exc, psyco_conn_get_exception, NULL, exc ## _doc, &exc }
 
 static struct PyGetSetDef connectionObject_getsets[] = {
-    /* DBAPI-2.0 extensions (exception objects) */
     EXCEPTION_GETTER(Error),
     EXCEPTION_GETTER(Warning),
     EXCEPTION_GETTER(InterfaceError),
@@ -1051,7 +1039,6 @@ static struct PyGetSetDef connectionObject_getsets[] = {
     EXCEPTION_GETTER(IntegrityError),
     EXCEPTION_GETTER(DataError),
     EXCEPTION_GETTER(NotSupportedError),
-#ifdef PSYCOPG_EXTENSIONS
     { "autocommit",
         (getter)psyco_conn_autocommit_get,
         (setter)psyco_conn_autocommit_set,
@@ -1060,7 +1047,6 @@ static struct PyGetSetDef connectionObject_getsets[] = {
         (getter)psyco_conn_isolation_level_get,
         (setter)NULL,
         "The current isolation level." },
-#endif
     {NULL}
 };
 #undef EXCEPTION_GETTER
@@ -1119,7 +1105,6 @@ connection_clear(connectionObject *self)
     Py_CLEAR(self->tpc_xid);
     Py_CLEAR(self->async_cursor);
     Py_CLEAR(self->notice_list);
-    Py_CLEAR(self->notice_filter);
     Py_CLEAR(self->notifies);
     Py_CLEAR(self->string_types);
     Py_CLEAR(self->binary_types);
@@ -1195,7 +1180,6 @@ connection_traverse(connectionObject *self, visitproc visit, void *arg)
     Py_VISIT((PyObject *)(self->tpc_xid));
     Py_VISIT(self->async_cursor);
     Py_VISIT(self->notice_list);
-    Py_VISIT(self->notice_filter);
     Py_VISIT(self->notifies);
     Py_VISIT(self->string_types);
     Py_VISIT(self->binary_types);
@@ -1214,7 +1198,7 @@ connection_traverse(connectionObject *self, visitproc visit, void *arg)
 
 PyTypeObject connectionType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "psycopg2._psycopg.connection",
+    "psycopg2.extensions.connection",
     sizeof(connectionObject), 0,
     connection_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/

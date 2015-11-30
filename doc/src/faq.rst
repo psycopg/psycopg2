@@ -137,6 +137,20 @@ Psycopg automatically converts PostgreSQL :sql:`json` data into Python objects. 
     See :ref:`adapt-json` for further details.
 
 
+.. _faq-jsonb-adapt:
+.. cssclass:: faq
+
+Psycopg converts :sql:`json` values into Python objects but :sql:`jsonb` values are returned as strings. Can :sql:`jsonb` be converted automatically?
+    Automatic conversion of :sql:`jsonb` values is supported from Psycopg
+    release 2.5.4. For previous versions you can register the :sql:`json`
+    typecaster on the :sql:`jsonb` oids (which are known and not suppsed to
+    change in future PostgreSQL versions)::
+
+        psycopg2.extras.register_json(oid=3802, array_oid=3807, globally=True)
+
+    See :ref:`adapt-json` for further details.
+
+
 .. _faq-bytea-9.0:
 .. cssclass:: faq
 
@@ -209,6 +223,37 @@ What are the advantages or disadvantages of using named cursors?
     little memory on the client and to skip or discard parts of the result set.
 
 
+.. _faq-interrupt-query:
+.. cssclass:: faq
+
+How do I interrupt a long-running query in an interactive shell?
+    Normally the interactive shell becomes unresponsive to :kbd:`Ctrl-C` when
+    running a query. Using a connection in green mode allows Python to
+    receive and handle the interrupt, although it may leave the connection
+    broken, if the async callback doesn't handle the `!KeyboardInterrupt`
+    correctly.
+
+    Starting from psycopg 2.6.2, the `~psycopg2.extras.wait_select` callback
+    can handle a :kbd:`Ctrl-C` correctly. For previous versions, you can use
+    `this implementation`__.
+
+    .. __: http://initd.org/psycopg/articles/2014/07/20/cancelling-postgresql-statements-python/
+
+    .. code-block:: pycon
+
+        >>> psycopg2.extensions.set_wait_callback(psycopg2.extensions.wait_select)
+        >>> cnn = psycopg2.connect('')
+        >>> cur = cnn.cursor()
+        >>> cur.execute("select pg_sleep(10)")
+        ^C
+        Traceback (most recent call last):
+          File "<stdin>", line 1, in <module>
+          QueryCanceledError: canceling statement due to user request
+
+        >>> cnn.rollback()
+        >>> # You can use the connection and cursor again from here
+
+
 .. _faq-compile:
 
 Problems compiling and deploying psycopg2
@@ -234,13 +279,20 @@ I can't compile `!psycopg2`: the compiler says *error: libpq-fe.h: No such file 
 .. cssclass:: faq
 
 `!psycopg2` raises `!ImportError` with message *_psycopg.so: undefined symbol: lo_truncate* when imported.
-    This means that Psycopg has been compiled with |lo_truncate|_ support,
-    which means that the libpq used at compile time was version >= 8.3, but at
-    runtime an older libpq library is found. You can use::
+    This means that Psycopg was compiled with |lo_truncate|_ support (*i.e.*
+    the libpq used at compile time was version >= 8.3) but at runtime an older
+    libpq dynamic library is found.
+
+    Fast-forward several years, if the message reports *undefined symbol:
+    lo_truncate64* it means that Psycopg was built with large objects 64 bits
+    API support (*i.e.* the libpq used at compile time was at least 9.3) but
+    at runtime an older libpq dynamic library is found.
+
+    You can use::
 
         $ ldd /path/to/packages/psycopg2/_psycopg.so | grep libpq
 
-    to find what is the version used at runtime.
+    to find what is the libpq dynamic library used at runtime.
 
     You can avoid the problem by using the same version of the
     :program:`pg_config` at install time and the libpq at runtime.

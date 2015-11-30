@@ -434,7 +434,7 @@ class MinTimeLoggingCursor(LoggingCursor):
 
     def callproc(self, procname, vars=None):
         self.timestamp = _time.time()
-        return LoggingCursor.execute(self, procname, vars)
+        return LoggingCursor.callproc(self, procname, vars)
 
 
 # a dbtype and adapter for Python UUID type
@@ -575,15 +575,20 @@ def wait_select(conn):
     from psycopg2.extensions import POLL_OK, POLL_READ, POLL_WRITE
 
     while 1:
-        state = conn.poll()
-        if state == POLL_OK:
-            break
-        elif state == POLL_READ:
-            select.select([conn.fileno()], [], [])
-        elif state == POLL_WRITE:
-            select.select([], [conn.fileno()], [])
-        else:
-            raise conn.OperationalError("bad state from poll: %s" % state)
+        try:
+            state = conn.poll()
+            if state == POLL_OK:
+                break
+            elif state == POLL_READ:
+                select.select([conn.fileno()], [], [])
+            elif state == POLL_WRITE:
+                select.select([], [conn.fileno()], [])
+            else:
+                raise conn.OperationalError("bad state from poll: %s" % state)
+        except KeyboardInterrupt:
+            conn.cancel()
+            # the loop will be broken by a server error
+            continue
 
 
 def _solve_conn_curs(conn_or_curs):
@@ -965,7 +970,8 @@ def register_composite(name, conn_or_curs, globally=False, factory=None):
 
 
 # expose the json adaptation stuff into the module
-from psycopg2._json import json, Json, register_json, register_default_json
+from psycopg2._json import json, Json, register_json
+from psycopg2._json import register_default_json, register_default_jsonb
 
 
 # Expose range-related objects

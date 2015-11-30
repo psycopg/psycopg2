@@ -36,7 +36,7 @@
 HIDDEN PGresult *pq_get_last_result(connectionObject *conn);
 RAISES_NEG HIDDEN int pq_fetch(cursorObject *curs, int no_result);
 RAISES_NEG HIDDEN int pq_execute(cursorObject *curs, const char *query,
-                                 int async, int no_result);
+                                 int async, int no_result, int no_begin);
 HIDDEN int pq_send_query(connectionObject *conn, const char *query);
 HIDDEN int pq_begin_locked(connectionObject *conn, PGresult **pgres,
                            char **error, PyThreadState **tstate);

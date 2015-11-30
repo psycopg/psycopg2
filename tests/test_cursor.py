@@ -23,6 +23,7 @@
 # License for more details.
 
 import time
+import pickle
 import psycopg2
 import psycopg2.extensions
 from psycopg2.extensions import b
@@ -176,10 +177,7 @@ class CursorTests(ConnectingTestCase):
         curs.execute("select data from invname order by data")
         self.assertEqual(curs.fetchall(), [(10,), (20,), (30,)])
 
-    def test_withhold(self):
-        self.assertRaises(psycopg2.ProgrammingError, self.conn.cursor,
-                          withhold=True)
-
+    def _create_withhold_table(self):
         curs = self.conn.cursor()
         try:
             curs.execute("drop table withhold")
@@ -190,6 +188,11 @@ class CursorTests(ConnectingTestCase):
             curs.execute("insert into withhold values (%s)", (i,))
         curs.close()
 
+    def test_withhold(self):
+        self.assertRaises(psycopg2.ProgrammingError, self.conn.cursor,
+                          withhold=True)
+
+        self._create_withhold_table()
         curs = self.conn.cursor("W")
         self.assertEqual(curs.withhold, False);
         curs.withhold = True
@@ -208,6 +211,52 @@ class CursorTests(ConnectingTestCase):
         curs = self.conn.cursor()
         curs.execute("drop table withhold")
         self.conn.commit()
+
+    def test_withhold_no_begin(self):
+        self._create_withhold_table()
+        curs = self.conn.cursor("w", withhold=True)
+        curs.execute("select data from withhold order by data")
+        self.assertEqual(curs.fetchone(), (10,))
+        self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_BEGIN)
+        self.assertEqual(self.conn.get_transaction_status(),
+                         psycopg2.extensions.TRANSACTION_STATUS_INTRANS)
+
+        self.conn.commit()
+        self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
+        self.assertEqual(self.conn.get_transaction_status(),
+                         psycopg2.extensions.TRANSACTION_STATUS_IDLE)
+
+        self.assertEqual(curs.fetchone(), (20,))
+        self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
+        self.assertEqual(self.conn.get_transaction_status(),
+                         psycopg2.extensions.TRANSACTION_STATUS_IDLE)
+
+        curs.close()
+        self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
+        self.assertEqual(self.conn.get_transaction_status(),
+                         psycopg2.extensions.TRANSACTION_STATUS_IDLE)
+
+    def test_withhold_autocommit(self):
+        self._create_withhold_table()
+        self.conn.commit()
+        self.conn.autocommit = True
+        curs = self.conn.cursor("w", withhold=True)
+        curs.execute("select data from withhold order by data")
+
+        self.assertEqual(curs.fetchone(), (10,))
+        self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
+        self.assertEqual(self.conn.get_transaction_status(),
+                         psycopg2.extensions.TRANSACTION_STATUS_IDLE)
+
+        self.conn.commit()
+        self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
+        self.assertEqual(self.conn.get_transaction_status(),
+                         psycopg2.extensions.TRANSACTION_STATUS_IDLE)
+
+        curs.close()
+        self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
+        self.assertEqual(self.conn.get_transaction_status(),
+                         psycopg2.extensions.TRANSACTION_STATUS_IDLE)
 
     def test_scrollable(self):
         self.assertRaises(psycopg2.ProgrammingError, self.conn.cursor,
@@ -352,6 +401,16 @@ class CursorTests(ConnectingTestCase):
         self.assertEqual(c.precision, None)
         self.assertEqual(c.scale, None)
 
+    def test_pickle_description(self):
+        curs = self.conn.cursor()
+        curs.execute('SELECT 1 AS foo')
+        description = curs.description
+
+        pickled = pickle.dumps(description, pickle.HIGHEST_PROTOCOL)
+        unpickled = pickle.loads(pickled)
+
+        self.assertEqual(description, unpickled)
+
     @skip_before_postgres(8, 0)
     def test_named_cursor_stealing(self):
         # you can use a named cursor to iterate on a refcursor created
@@ -427,6 +486,10 @@ class CursorTests(ConnectingTestCase):
         self.assertRaises(psycopg2.InterfaceError, cur.executemany,
             'select 1', [])
 
+    def test_callproc_badparam(self):
+        cur = self.conn.cursor()
+        self.assertRaises(TypeError, cur.callproc, 'lower', 42)
+
     # It would be inappropriate to test callproc's named parameters in the
     # DBAPI2.0 test section because they are a psycopg2 extension.
     @skip_before_postgres(9, 0)
@@ -464,10 +527,6 @@ class CursorTests(ConnectingTestCase):
         for parameter_sequence, exception in failing_cases:
             self.assertRaises(exception, cur.callproc, procname, parameter_sequence)
             self.conn.rollback()
-
-    def test_callproc_badparam(self):
-        cur = self.conn.cursor()
-        self.assertRaises(TypeError, cur.callproc, 'lower', 42)
 
 
 def test_suite():

@@ -35,8 +35,6 @@
 #include <string.h>
 
 
-#ifdef PSYCOPG_EXTENSIONS
-
 /** public methods **/
 
 /* close method - close the lobject */
@@ -52,7 +50,7 @@ psyco_lobj_close(lobjectObject *self, PyObject *args)
        opened large objects */
     if (!lobject_is_closed(self)
         && !self->conn->autocommit
-	&& self->conn->mark == self->mark)
+        && self->conn->mark == self->mark)
     {
         Dprintf("psyco_lobj_close: closing lobject at %p", self);
         if (lobject_close(self) < 0)
@@ -123,7 +121,7 @@ static PyObject *
 psyco_lobj_read(lobjectObject *self, PyObject *args)
 {
     PyObject *res;
-    int where, end;
+    long where, end;
     Py_ssize_t size = -1;
     char *buffer;
 
@@ -167,20 +165,39 @@ psyco_lobj_read(lobjectObject *self, PyObject *args)
 static PyObject *
 psyco_lobj_seek(lobjectObject *self, PyObject *args)
 {
-    int offset, whence=0;
-    int pos=0;
+    long offset, pos=0;
+    int whence=0;
 
-    if (!PyArg_ParseTuple(args, "i|i", &offset, &whence))
-    	return NULL;
+    if (!PyArg_ParseTuple(args, "l|i", &offset, &whence))
+        return NULL;
 
     EXC_IF_LOBJ_CLOSED(self);
     EXC_IF_LOBJ_LEVEL0(self);
     EXC_IF_LOBJ_UNMARKED(self);
 
-    if ((pos = lobject_seek(self, offset, whence)) < 0)
-    	return NULL;
+#ifdef HAVE_LO64
+    if ((offset < INT_MIN || offset > INT_MAX)
+            && self->conn->server_version < 90300) {
+        PyErr_Format(NotSupportedError,
+            "offset out of range (%ld): server version %d "
+            "does not support the lobject 64 API",
+            offset, self->conn->server_version);
+        return NULL;
+    }
+#else
+    if (offset < INT_MIN || offset > INT_MAX) {
+        PyErr_Format(InterfaceError,
+            "offset out of range (%ld): this psycopg version was not built "
+            "with lobject 64 API support",
+            offset);
+        return NULL;
+    }
+#endif
 
-    return PyInt_FromLong((long)pos);
+    if ((pos = lobject_seek(self, offset, whence)) < 0)
+        return NULL;
+
+    return PyLong_FromLong(pos);
 }
 
 /* tell method - tell current position in the lobject */
@@ -191,16 +208,16 @@ psyco_lobj_seek(lobjectObject *self, PyObject *args)
 static PyObject *
 psyco_lobj_tell(lobjectObject *self, PyObject *args)
 {
-    int pos;
+    long pos;
 
     EXC_IF_LOBJ_CLOSED(self);
     EXC_IF_LOBJ_LEVEL0(self);
     EXC_IF_LOBJ_UNMARKED(self);
 
     if ((pos = lobject_tell(self)) < 0)
-    	return NULL;
+        return NULL;
 
-    return PyInt_FromLong((long)pos);
+    return PyLong_FromLong(pos);
 }
 
 /* unlink method - unlink (destroy) the lobject */
@@ -249,7 +266,7 @@ psyco_lobj_get_closed(lobjectObject *self, void *closure)
     return closed;
 }
 
-#if PG_VERSION_HEX >= 0x080300
+#if PG_VERSION_NUM >= 80300
 
 #define psyco_lobj_truncate_doc \
 "truncate(len=0) -- Truncate large object to given size."
@@ -257,22 +274,38 @@ psyco_lobj_get_closed(lobjectObject *self, void *closure)
 static PyObject *
 psyco_lobj_truncate(lobjectObject *self, PyObject *args)
 {
-    int len = 0;
+    long len = 0;
 
-    if (!PyArg_ParseTuple(args, "|i", &len))
+    if (!PyArg_ParseTuple(args, "|l", &len))
         return NULL;
 
     EXC_IF_LOBJ_CLOSED(self);
     EXC_IF_LOBJ_LEVEL0(self);
     EXC_IF_LOBJ_UNMARKED(self);
 
+#ifdef HAVE_LO64
+    if (len > INT_MAX && self->conn->server_version < 90300) {
+        PyErr_Format(NotSupportedError,
+            "len out of range (%ld): server version %d "
+            "does not support the lobject 64 API",
+            len, self->conn->server_version);
+        return NULL;
+    }
+#else
+    if (len > INT_MAX) {
+        PyErr_Format(InterfaceError,
+            "len out of range (%ld): this psycopg version was not built "
+            "with lobject 64 API support",
+            len);
+        return NULL;
+    }
+#endif
+
     if (lobject_truncate(self, len) < 0)
         return NULL;
 
     Py_RETURN_NONE;
 }
-
-#endif /* PG_VERSION_HEX >= 0x080300 */
 
 
 /** the lobject object **/
@@ -294,10 +327,10 @@ static struct PyMethodDef lobjectObject_methods[] = {
      METH_NOARGS, psyco_lobj_unlink_doc},
     {"export",(PyCFunction)psyco_lobj_export,
      METH_VARARGS, psyco_lobj_export_doc},
-#if PG_VERSION_HEX >= 0x080300
+#if PG_VERSION_NUM >= 80300
     {"truncate",(PyCFunction)psyco_lobj_truncate,
      METH_VARARGS, psyco_lobj_truncate_doc},
-#endif /* PG_VERSION_HEX >= 0x080300 */
+#endif /* PG_VERSION_NUM >= 80300 */
     {NULL}
 };
 
@@ -333,10 +366,9 @@ lobject_setup(lobjectObject *self, connectionObject *conn,
         return -1;
     }
 
+    Py_INCREF((PyObject*)conn);
     self->conn = conn;
     self->mark = conn->mark;
-
-    Py_INCREF((PyObject*)self->conn);
 
     self->fd = -1;
     self->oid = InvalidOid;
@@ -358,8 +390,8 @@ lobject_dealloc(PyObject* obj)
     if (self->conn && self->fd != -1) {
         if (lobject_close(self) < 0)
             PyErr_Print();
-        Py_XDECREF((PyObject*)self->conn);
     }
+    Py_CLEAR(self->conn);
     PyMem_Free(self->smode);
 
     Dprintf("lobject_dealloc: deleted lobject object at %p, refcnt = "
@@ -406,7 +438,7 @@ lobject_repr(lobjectObject *self)
 
 PyTypeObject lobjectType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "psycopg2._psycopg.lobject",
+    "psycopg2.extensions.lobject",
     sizeof(lobjectObject), 0,
     lobject_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/

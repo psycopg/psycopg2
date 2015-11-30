@@ -175,13 +175,6 @@ pfloat_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return type->tp_alloc(type, 0);
 }
 
-static PyObject *
-pfloat_repr(pfloatObject *self)
-{
-    return PyString_FromFormat("<psycopg2._psycopg.Float object at %p>",
-                                self);
-}
-
 
 /* object type */
 
@@ -190,14 +183,14 @@ pfloat_repr(pfloatObject *self)
 
 PyTypeObject pfloatType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "psycopg2._psycopg.Float",
+    "psycopg2.extensions.Float",
     sizeof(pfloatObject), 0,
     pfloat_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/
     0,          /*tp_getattr*/
     0,          /*tp_setattr*/
     0,          /*tp_compare*/
-    (reprfunc)pfloat_repr, /*tp_repr*/
+    0,          /*tp_repr*/
     0,          /*tp_as_number*/
     0,          /*tp_as_sequence*/
     0,          /*tp_as_mapping*/
@@ -227,17 +220,3 @@ PyTypeObject pfloatType = {
     0,          /*tp_alloc*/
     pfloat_new, /*tp_new*/
 };
-
-
-/** module-level functions **/
-
-PyObject *
-psyco_Float(PyObject *module, PyObject *args)
-{
-    PyObject *obj;
-
-    if (!PyArg_ParseTuple(args, "O", &obj))
-        return NULL;
-
-    return PyObject_CallFunctionObjArgs((PyObject *)&pfloatType, obj, NULL);
-}

@@ -28,10 +28,13 @@ from testutils import unittest, ConnectingTestCase, decorate_all_tests
 from testutils import skip_if_no_iobase, skip_before_postgres
 from cStringIO import StringIO
 from itertools import cycle, izip
+from subprocess import Popen, PIPE
 
 import psycopg2
 import psycopg2.extensions
-from testutils import skip_copy_if_green
+from testutils import skip_copy_if_green, script_to_py3
+from testconfig import dsn
+
 
 if sys.version_info[0] < 3:
     _base = object
@@ -300,6 +303,69 @@ class CopyTests(ConnectingTestCase):
         self.assertRaises(psycopg2.DataError,
             curs.copy_from, StringIO('aaa\nbbb\nccc\n'), 'tcopy')
         self.assertEqual(curs.rowcount, -1)
+
+    def test_copy_from_segfault(self):
+        # issue #219
+        script = ("""\
+import psycopg2
+conn = psycopg2.connect(%(dsn)r)
+curs = conn.cursor()
+curs.execute("create table copy_segf (id int)")
+try:
+    curs.execute("copy copy_segf from stdin")
+except psycopg2.ProgrammingError:
+    pass
+conn.close()
+""" % { 'dsn': dsn,})
+
+        proc = Popen([sys.executable, '-c', script_to_py3(script)])
+        proc.communicate()
+        self.assertEqual(0, proc.returncode)
+
+    def test_copy_to_segfault(self):
+        # issue #219
+        script = ("""\
+import psycopg2
+conn = psycopg2.connect(%(dsn)r)
+curs = conn.cursor()
+curs.execute("create table copy_segf (id int)")
+try:
+    curs.execute("copy copy_segf to stdout")
+except psycopg2.ProgrammingError:
+    pass
+conn.close()
+""" % { 'dsn': dsn,})
+
+        proc = Popen([sys.executable, '-c', script_to_py3(script)], stdout=PIPE)
+        proc.communicate()
+        self.assertEqual(0, proc.returncode)
+
+    def test_copy_from_propagate_error(self):
+        class BrokenRead(_base):
+            def read(self, size):
+                return 1/0
+
+            def readline(self):
+                return 1/0
+
+        curs = self.conn.cursor()
+        # It seems we cannot do this, but now at least we propagate the error
+        # self.assertRaises(ZeroDivisionError,
+        #     curs.copy_from, BrokenRead(), "tcopy")
+        try:
+            curs.copy_from(BrokenRead(), "tcopy")
+        except Exception, e:
+            self.assert_('ZeroDivisionError' in str(e))
+
+    def test_copy_to_propagate_error(self):
+        class BrokenWrite(_base):
+            def write(self, data):
+                return 1/0
+
+        curs = self.conn.cursor()
+        curs.execute("insert into tcopy values (10, 'hi')")
+        self.assertRaises(ZeroDivisionError,
+            curs.copy_to, BrokenWrite(), "tcopy")
 
 
 decorate_all_tests(CopyTests, skip_copy_if_green)

@@ -202,13 +202,6 @@ pdecimal_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return type->tp_alloc(type, 0);
 }
 
-static PyObject *
-pdecimal_repr(pdecimalObject *self)
-{
-    return PyString_FromFormat("<psycopg2._psycopg.Decimal object at %p>",
-                                self);
-}
-
 
 /* object type */
 
@@ -224,7 +217,7 @@ PyTypeObject pdecimalType = {
     0,          /*tp_getattr*/
     0,          /*tp_setattr*/
     0,          /*tp_compare*/
-    (reprfunc)pdecimal_repr, /*tp_repr*/
+    0,          /*tp_repr*/
     0,          /*tp_as_number*/
     0,          /*tp_as_sequence*/
     0,          /*tp_as_mapping*/
@@ -254,17 +247,3 @@ PyTypeObject pdecimalType = {
     0,          /*tp_alloc*/
     pdecimal_new, /*tp_new*/
 };
-
-
-/** module-level functions **/
-
-PyObject *
-psyco_Decimal(PyObject *module, PyObject *args)
-{
-    PyObject *obj;
-
-    if (!PyArg_ParseTuple(args, "O", &obj))
-        return NULL;
-
-    return PyObject_CallFunctionObjArgs((PyObject *)&pdecimalType, obj, NULL);
-}

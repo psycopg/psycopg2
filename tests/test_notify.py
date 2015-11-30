@@ -155,6 +155,27 @@ conn.close()
         self.assertEqual('foo', notify.channel)
         self.assertEqual('Hello, world!', notify.payload)
 
+    def test_notify_deque(self):
+        from collections import deque
+        self.autocommit(self.conn)
+        self.conn.notifies = deque()
+        self.listen('foo')
+        self.notify('foo').communicate()
+        time.sleep(0.5)
+        self.conn.poll()
+        notify = self.conn.notifies.popleft()
+        self.assert_(isinstance(notify, psycopg2.extensions.Notify))
+        self.assertEqual(len(self.conn.notifies), 0)
+
+    def test_notify_noappend(self):
+        self.autocommit(self.conn)
+        self.conn.notifies = None
+        self.listen('foo')
+        self.notify('foo').communicate()
+        time.sleep(0.5)
+        self.conn.poll()
+        self.assertEqual(self.conn.notifies, None)
+
     def test_notify_init(self):
         n = psycopg2.extensions.Notify(10, 'foo')
         self.assertEqual(10, n.pid)
@@ -191,6 +212,7 @@ conn.close()
         self.assertEqual(hash((10, 'foo')), hash(Notify(10, 'foo')))
         self.assertNotEqual(hash(Notify(10, 'foo', 'bar')),
             hash(Notify(10, 'foo')))
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

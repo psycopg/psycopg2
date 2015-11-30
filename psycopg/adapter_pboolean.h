@@ -40,12 +40,6 @@ typedef struct {
 
 } pbooleanObject;
 
-/* functions exported to psycopgmodule.c */
-
-HIDDEN PyObject *psyco_Boolean(PyObject *module, PyObject *args);
-#define psyco_Boolean_doc \
-    "Boolean(obj) -> new boolean value"
-
 #ifdef __cplusplus
 }
 #endif

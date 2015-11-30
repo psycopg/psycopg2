@@ -32,8 +32,6 @@
 
 #include <string.h>
 
-#ifdef PSYCOPG_EXTENSIONS
-
 static void
 collect_error(connectionObject *conn, char **error)
 {
@@ -378,21 +376,29 @@ lobject_read(lobjectObject *self, char *buf, size_t len)
 
 /* lobject_seek - move the current position in the lo */
 
-RAISES_NEG int
-lobject_seek(lobjectObject *self, int pos, int whence)
+RAISES_NEG long
+lobject_seek(lobjectObject *self, long pos, int whence)
 {
     PGresult *pgres = NULL;
     char *error = NULL;
-    int where;
+    long where;
 
-    Dprintf("lobject_seek: fd = %d, pos = %d, whence = %d",
+    Dprintf("lobject_seek: fd = %d, pos = %ld, whence = %d",
             self->fd, pos, whence);
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
 
-    where = lo_lseek(self->conn->pgconn, self->fd, pos, whence);
-    Dprintf("lobject_seek: where = %d", where);
+#ifdef HAVE_LO64
+    if (self->conn->server_version < 90300) {
+        where = (long)lo_lseek(self->conn->pgconn, self->fd, (int)pos, whence);
+    } else {
+        where = lo_lseek64(self->conn->pgconn, self->fd, pos, whence);
+    }
+#else
+    where = (long)lo_lseek(self->conn->pgconn, self->fd, (int)pos, whence);
+#endif
+    Dprintf("lobject_seek: where = %ld", where);
     if (where < 0)
         collect_error(self->conn, &error);
 
@@ -406,20 +412,28 @@ lobject_seek(lobjectObject *self, int pos, int whence)
 
 /* lobject_tell - tell the current position in the lo */
 
-RAISES_NEG int
+RAISES_NEG long
 lobject_tell(lobjectObject *self)
 {
     PGresult *pgres = NULL;
     char *error = NULL;
-    int where;
+    long where;
 
     Dprintf("lobject_tell: fd = %d", self->fd);
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
 
-    where = lo_tell(self->conn->pgconn, self->fd);
-    Dprintf("lobject_tell: where = %d", where);
+#ifdef HAVE_LO64
+    if (self->conn->server_version < 90300) {
+        where = (long)lo_tell(self->conn->pgconn, self->fd);
+    } else {
+        where = lo_tell64(self->conn->pgconn, self->fd);
+    }
+#else
+    where = (long)lo_tell(self->conn->pgconn, self->fd);
+#endif
+    Dprintf("lobject_tell: where = %ld", where);
     if (where < 0)
         collect_error(self->conn, &error);
 
@@ -460,7 +474,7 @@ lobject_export(lobjectObject *self, const char *filename)
     return retvalue;
 }
 
-#if PG_VERSION_HEX >= 0x080300
+#if PG_VERSION_NUM >= 80300
 
 RAISES_NEG int
 lobject_truncate(lobjectObject *self, size_t len)
@@ -475,7 +489,15 @@ lobject_truncate(lobjectObject *self, size_t len)
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
 
+#ifdef HAVE_LO64
+    if (self->conn->server_version < 90300) {
+        retvalue = lo_truncate(self->conn->pgconn, self->fd, len);
+    } else {
+        retvalue = lo_truncate64(self->conn->pgconn, self->fd, len);
+    }
+#else
     retvalue = lo_truncate(self->conn->pgconn, self->fd, len);
+#endif
     Dprintf("lobject_truncate: result = %d", retvalue);
     if (retvalue < 0)
         collect_error(self->conn, &error);
@@ -489,7 +511,4 @@ lobject_truncate(lobjectObject *self, size_t len)
 
 }
 
-#endif /* PG_VERSION_HEX >= 0x080300 */
-
-#endif
-
+#endif /* PG_VERSION_NUM >= 80300 */

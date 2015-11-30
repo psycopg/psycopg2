@@ -41,12 +41,6 @@ typedef struct {
     connectionObject *conn;
 } qstringObject;
 
-/* functions exported to psycopgmodule.c */
-
-HIDDEN PyObject *psyco_QuotedString(PyObject *module, PyObject *args);
-#define psyco_QuotedString_doc \
-    "QuotedString(str, enc) -> new quoted string"
-
 #ifdef __cplusplus
 }
 #endif

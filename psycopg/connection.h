@@ -71,7 +71,7 @@ extern HIDDEN PyTypeObject connectionType;
 
 struct connectionObject_notice {
     struct connectionObject_notice *next;
-    const char *message;
+    char *message;
 };
 
 /* the typedef is forward-declared in psycopg.h */
@@ -106,8 +106,8 @@ struct connectionObject {
 
     /* notice processing */
     PyObject *notice_list;
-    PyObject *notice_filter;
     struct connectionObject_notice *notice_pending;
+    struct connectionObject_notice *last_notice;
 
     /* notifies */
     PyObject *notifies;

@@ -113,11 +113,7 @@ exception_from_sqlstate(const char *sqlstate)
     case '4':
         switch (sqlstate[1]) {
         case '0': /* Class 40 - Transaction Rollback */
-#ifdef PSYCOPG_EXTENSIONS
             return TransactionRollbackError;
-#else
-            return OperationalError;
-#endif
         case '2': /* Class 42 - Syntax Error or Access Rule Violation */
         case '4': /* Class 44 - WITH CHECK OPTION Violation */
             return ProgrammingError;
@@ -129,11 +125,9 @@ exception_from_sqlstate(const char *sqlstate)
            Class 55 - Object Not In Prerequisite State
            Class 57 - Operator Intervention
            Class 58 - System Error (errors external to PostgreSQL itself) */
-#ifdef PSYCOPG_EXTENSIONS
         if (!strcmp(sqlstate, "57014"))
             return QueryCanceledError;
         else
-#endif
             return OperationalError;
     case 'F': /* Class F0 - Configuration File Error */
         return InternalError;
@@ -196,8 +190,10 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult **pgres)
        raise and a meaningful message is better than an empty one.
        Note: it can happen without it being our error: see ticket #82 */
     if (err == NULL || err[0] == '\0') {
-        PyErr_SetString(DatabaseError,
-            "error with no message from the libpq");
+        PyErr_Format(DatabaseError,
+            "error with status %s and no message from the libpq",
+            PQresStatus(pgres == NULL ?
+                PQstatus(conn->pgconn) : PQresultStatus(*pgres)));
         return;
     }
 
@@ -893,7 +889,7 @@ pq_flush(connectionObject *conn)
 */
 
 RAISES_NEG int
-pq_execute(cursorObject *curs, const char *query, int async, int no_result)
+pq_execute(cursorObject *curs, const char *query, int async, int no_result, int no_begin)
 {
     PGresult *pgres = NULL;
     char *error = NULL;
@@ -916,7 +912,7 @@ pq_execute(cursorObject *curs, const char *query, int async, int no_result)
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(curs->conn->lock));
 
-    if (pq_begin_locked(curs->conn, &pgres, &error, &_save) < 0) {
+    if (!no_begin && pq_begin_locked(curs->conn, &pgres, &error, &_save) < 0) {
         pthread_mutex_unlock(&(curs->conn->lock));
         Py_BLOCK_THREADS;
         pq_complete_error(curs->conn, &pgres, &error);
@@ -986,6 +982,10 @@ pq_execute(cursorObject *curs, const char *query, int async, int no_result)
         }
         else {
             /* there was an error */
+            pthread_mutex_unlock(&(curs->conn->lock));
+            Py_BLOCK_THREADS;
+            PyErr_SetString(OperationalError,
+                            PQerrorMessage(curs->conn->pgconn));
             return -1;
         }
     }
@@ -1288,6 +1288,13 @@ _pq_copy_in_v3(cursorObject *curs)
     Py_ssize_t length = 0;
     int res, error = 0;
 
+    if (!curs->copyfile) {
+        PyErr_SetString(ProgrammingError,
+            "can't execute COPY FROM: use the copy_from() method instead");
+        error = 1;
+        goto exit;
+    }
+
     if (!(func = PyObject_GetAttrString(curs->copyfile, "read"))) {
         Dprintf("_pq_copy_in_v3: can't get o.read");
         error = 1;
@@ -1369,9 +1376,27 @@ _pq_copy_in_v3(cursorObject *curs)
         res = PQputCopyEnd(curs->conn->pgconn, NULL);
     else if (error == 2)
         res = PQputCopyEnd(curs->conn->pgconn, "error in PQputCopyData() call");
-    else
-        /* XXX would be nice to propagate the exception */
-        res = PQputCopyEnd(curs->conn->pgconn, "error in .read() call");
+    else {
+        char buf[1024];
+        strcpy(buf, "error in .read() call");
+        if (PyErr_Occurred()) {
+            PyObject *t, *ex, *tb;
+            PyErr_Fetch(&t, &ex, &tb);
+            if (ex) {
+                PyObject *str;
+                str = PyObject_Str(ex);
+                str = psycopg_ensure_bytes(str);
+                if (str) {
+                    PyOS_snprintf(buf, sizeof(buf),
+                        "error in .read() call: %s %s",
+                        ((PyTypeObject *)t)->tp_name, Bytes_AsString(str));
+                    Py_DECREF(str);
+                }
+            }
+            PyErr_Restore(t, ex, tb);
+        }
+        res = PQputCopyEnd(curs->conn->pgconn, buf);
+    }
 
     CLEARPGRES(curs->pgres);
 
@@ -1411,13 +1436,20 @@ exit:
 static int
 _pq_copy_out_v3(cursorObject *curs)
 {
-    PyObject *tmp = NULL, *func;
+    PyObject *tmp = NULL;
+    PyObject *func = NULL;
     PyObject *obj = NULL;
     int ret = -1;
     int is_text;
 
     char *buffer;
     Py_ssize_t len;
+
+    if (!curs->copyfile) {
+        PyErr_SetString(ProgrammingError,
+            "can't execute COPY TO: use the copy_to() method instead");
+        goto exit;
+    }
 
     if (!(func = PyObject_GetAttrString(curs->copyfile, "write"))) {
         Dprintf("_pq_copy_out_v3: can't get o.write");
@@ -1565,9 +1597,24 @@ pq_fetch(cursorObject *curs, int no_result)
         ex = -1;
         break;
 
-    default:
-        Dprintf("pq_fetch: uh-oh, something FAILED: pgconn = %p", curs->conn);
+    case PGRES_BAD_RESPONSE:
+    case PGRES_NONFATAL_ERROR:
+    case PGRES_FATAL_ERROR:
+        Dprintf("pq_fetch: uh-oh, something FAILED: status = %d pgconn = %p",
+            pgstatus, curs->conn);
         pq_raise(curs->conn, curs, NULL);
+        ex = -1;
+        break;
+
+    default:
+        /* PGRES_COPY_BOTH, PGRES_SINGLE_TUPLE, future statuses */
+        Dprintf("pq_fetch: got unsupported result: status = %d pgconn = %p",
+            pgstatus, curs->conn);
+        PyErr_Format(NotSupportedError,
+            "got server response with unsupported status %s",
+            PQresStatus(curs->pgres == NULL ?
+                PQstatus(curs->conn->pgconn) : PQresultStatus(curs->pgres)));
+        CLEARPGRES(curs->pgres);
         ex = -1;
         break;
     }

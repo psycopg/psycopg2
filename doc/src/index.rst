@@ -43,9 +43,9 @@ Psycopg 2 is both Unicode and Python 3 friendly.
    cursor
    advanced
    extensions
+   extras
    tz
    pool
-   extras
    errorcodes
    faq
    news

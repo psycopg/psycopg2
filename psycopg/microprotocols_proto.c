@@ -142,7 +142,7 @@ isqlquote_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
 PyTypeObject isqlquoteType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "psycopg2._psycopg.ISQLQuote",
+    "psycopg2.extensions.ISQLQuote",
     sizeof(isqlquoteObject), 0,
     isqlquote_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/

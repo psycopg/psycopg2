@@ -22,8 +22,12 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
+import os
+import sys
+from subprocess import Popen
+
 from testutils import unittest, skip_before_python, skip_before_postgres
-from testutils import ConnectingTestCase, skip_copy_if_green
+from testutils import ConnectingTestCase, skip_copy_if_green, script_to_py3
 
 import psycopg2
 
@@ -293,6 +297,36 @@ class ExceptionsTestCase(ConnectingTestCase):
         self.assertEqual(e.pgerror, e1.pgerror)
         self.assertEqual(e.pgcode, e1.pgcode)
         self.assert_(e1.cursor is None)
+
+
+class TestExtensionModule(unittest.TestCase):
+    def test_import_internal(self):
+        # check that the internal package can be imported "naked"
+        # we may break this property if there is a compelling reason to do so,
+        # however having it allows for some import juggling such as the one
+        # required in ticket #201.
+        pkgdir = os.path.dirname(psycopg2.__file__)
+        pardir = os.path.dirname(pkgdir)
+        self.assert_(pardir in sys.path)
+        script = ("""
+import sys
+sys.path.remove(%r)
+sys.path.insert(0, %r)
+import _psycopg
+""" % (pardir, pkgdir))
+
+        proc = Popen([sys.executable, '-c', script_to_py3(script)])
+        proc.communicate()
+        self.assertEqual(0, proc.returncode)
+
+
+class TestVersionDiscovery(unittest.TestCase):
+    def test_libpq_version(self):
+        self.assertTrue(type(psycopg2.__libpq_version__) is int)
+        try:
+            self.assertTrue(type(psycopg2.extensions.libpq_version()) is int)
+        except NotSupportedError:
+            self.assertTrue(psycopg2.__libpq_version__ < 90100)
 
 
 def test_suite():

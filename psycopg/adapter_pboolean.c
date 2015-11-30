@@ -37,21 +37,12 @@
 static PyObject *
 pboolean_getquoted(pbooleanObject *self, PyObject *args)
 {
-#ifdef PSYCOPG_NEW_BOOLEAN
     if (PyObject_IsTrue(self->wrapped)) {
         return Bytes_FromString("true");
     }
     else {
         return Bytes_FromString("false");
     }
-#else
-    if (PyObject_IsTrue(self->wrapped)) {
-        return Bytes_FromString("'t'");
-    }
-    else {
-        return Bytes_FromString("'f'");
-    }
-#endif
 }
 
 static PyObject *
@@ -146,13 +137,6 @@ pboolean_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return type->tp_alloc(type, 0);
 }
 
-static PyObject *
-pboolean_repr(pbooleanObject *self)
-{
-    return PyString_FromFormat("<psycopg2._psycopg.Boolean object at %p>",
-                                self);
-}
-
 
 /* object type */
 
@@ -161,14 +145,14 @@ pboolean_repr(pbooleanObject *self)
 
 PyTypeObject pbooleanType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "psycopg2._psycopg.Boolean",
+    "psycopg2.extensions.Boolean",
     sizeof(pbooleanObject), 0,
     pboolean_dealloc, /*tp_dealloc*/
     0,          /*tp_print*/
     0,          /*tp_getattr*/
     0,          /*tp_setattr*/
     0,          /*tp_compare*/
-    (reprfunc)pboolean_repr, /*tp_repr*/
+    0,          /*tp_repr*/
     0,          /*tp_as_number*/
     0,          /*tp_as_sequence*/
     0,          /*tp_as_mapping*/
@@ -198,17 +182,3 @@ PyTypeObject pbooleanType = {
     0,          /*tp_alloc*/
     pboolean_new, /*tp_new*/
 };
-
-
-/** module-level functions **/
-
-PyObject *
-psyco_Boolean(PyObject *module, PyObject *args)
-{
-    PyObject *obj;
-
-    if (!PyArg_ParseTuple(args, "O", &obj))
-        return NULL;
-
-    return PyObject_CallFunctionObjArgs((PyObject *)&pbooleanType, obj, NULL);
-}

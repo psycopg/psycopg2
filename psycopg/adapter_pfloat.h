@@ -40,12 +40,6 @@ typedef struct {
 
 } pfloatObject;
 
-/* functions exported to psycopgmodule.c */
-
-HIDDEN PyObject *psyco_Float(PyObject *module, PyObject *args);
-#define psyco_Float_doc \
-    "Float(obj) -> new float value"
-
 #ifdef __cplusplus
 }
 #endif
