@@ -236,10 +236,12 @@ class psycopg_build_ext(build_ext):
          "Compile with OpenSSL built PostgreSQL libraries (Windows only)."),
         ('static-libpq', None,
          "Statically link the PostgreSQL client library"),
+        ('use-rpath', None,
+         "Set -rpath to the runtime location of libpq as given by pg_config")
     ])
 
     boolean_options = build_ext.boolean_options[:]
-    boolean_options.extend(('use-pydatetime', 'have-ssl', 'static-libpq'))
+    boolean_options.extend(('use-pydatetime', 'have-ssl', 'static-libpq', 'use-rpath'))
 
     def __init__(self, *args, **kwargs):
         build_ext.__init__(self, *args, **kwargs)
@@ -253,6 +255,7 @@ class psycopg_build_ext(build_ext):
         self.have_ssl = have_ssl
         self.static_libpq = static_libpq
         self.pg_config = None
+        self.use_rpath = 0
 
     def compiler_is_msvc(self):
         return self.get_compiler_name().lower().startswith('msvc')
@@ -387,6 +390,8 @@ class psycopg_build_ext(build_ext):
                     os.path.join(pg_config_helper.query("libdir"), "libpq.a"))
         else:
             self.libraries.append("pq")
+            if self.use_rpath: 
+                self.rpath = [pg_config_helper.query("libdir")]
 
         try:
             self.library_dirs.append(pg_config_helper.query("libdir"))
@@ -440,6 +445,13 @@ class psycopg_build_ext(build_ext):
 
         if hasattr(self, "finalize_" + sys.platform):
             getattr(self, "finalize_" + sys.platform)()
+
+    def build_extension(self, ext):
+        # HACK: runtime library dirs are correctly fixed by ccompiler only
+        # if ext.runtime_library_dirs is None, but the build_ext sets it
+        # to null.
+        ext.runtime_library_dirs = None
+        build_ext.build_extension(self, ext)
 
 def is_py_64():
     # sys.maxint not available since Py 3.1;
