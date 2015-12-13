@@ -95,8 +95,8 @@ psycopg_escape_string(connectionObject *conn, const char *from, Py_ssize_t len,
  * The returned string doesn't include quotes.
  *
  * WARNING: this function is not so safe to allow untrusted input: it does no
- * check for multibyte chars. Such a function should be built on
- * PQescapeIdentifier, which is only available from PostgreSQL 9.0.
+ * check for multibyte chars. Functions otherwise reliant on PostgreSQL 9.0
+ * and above should use the below function psycopg_escape_identifier instead.
  */
 char *
 psycopg_escape_identifier_easy(const char *from, Py_ssize_t len)
@@ -123,6 +123,35 @@ psycopg_escape_identifier_easy(const char *from, Py_ssize_t len)
 
     return rv;
 }
+
+
+/* Call PostgreSQL 9.0+ function PQescapeIdentifier.
+ *
+ * In case of error set a Python exception.
+ */
+char *
+psycopg_escape_identifier(PGconn *pgconn, const char *str, size_t length)
+{
+    char *rv = NULL;
+
+#if PG_VERSION_NUM >= 90000
+    rv = PQescapeIdentifier(pgconn, str, length);
+    if (!rv) {
+        char *msg;
+        msg = PQerrorMessage(pgconn);
+        if (!msg || !msg[0]) {
+            msg = "no message provided";
+        }
+        PyErr_Format(InterfaceError, "failed to escape identifier: %s", msg);
+    }
+#else
+    PyErr_Format(PyExc_NotImplementedError,
+        "PQescapeIdentifier requires psycopg2 compiled against libpq 9.0+");
+#endif
+
+    return rv;
+}
+
 
 /* Duplicate a string.
  *

@@ -59,7 +59,6 @@
 HIDDEN PyObject *pyDateTimeModuleP = NULL;
 
 HIDDEN PyObject *psycoEncodings = NULL;
-
 #ifdef PSYCOPG_DEBUG
 HIDDEN int psycopg_debug_enabled = 0;
 #endif
@@ -175,7 +174,6 @@ exit:
 static PyObject *
 psyco_quote_ident(PyObject *self, PyObject *args, PyObject *kwargs)
 {
-#if PG_VERSION_NUM >= 90000
     PyObject *ident = NULL, *obj = NULL, *result = NULL;
     connectionObject *conn;
     const char *str;
@@ -203,9 +201,8 @@ psyco_quote_ident(PyObject *self, PyObject *args, PyObject *kwargs)
 
     str = Bytes_AS_STRING(ident);
 
-    quoted = PQescapeIdentifier(conn->pgconn, str, strlen(str));
+    quoted = psycopg_escape_identifier(conn->pgconn, str, strlen(str));
     if (!quoted) {
-        PyErr_NoMemory();
         goto exit;
     }
     result = conn_text_from_chars(conn, quoted);
@@ -215,10 +212,6 @@ exit:
     Py_XDECREF(ident);
 
     return result;
-#else
-    PyErr_SetString(NotSupportedError, "PQescapeIdentifier not available in libpq < 9.0");
-    return NULL;
-#endif
 }
 
 /** type registration **/

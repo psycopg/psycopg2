@@ -1015,35 +1015,6 @@ exit:
 #define psyco_curs_callproc_doc \
 "callproc(procname, parameters=None) -- Execute stored procedure."
 
-/* Call PQescapeIdentifier.
- *
- * In case of error set a Python exception.
- *
- * TODO: this function can become more generic and go into utils
- */
-static char *
-_escape_identifier(PGconn *pgconn, const char *str, size_t length)
-{
-    char *rv = NULL;
-
-#if PG_VERSION_NUM >= 90000
-    rv = PQescapeIdentifier(pgconn, str, length);
-    if (!rv) {
-        char *msg;
-        msg = PQerrorMessage(pgconn);
-        if (!msg || !msg[0]) {
-            msg = "no message provided";
-        }
-        PyErr_Format(InterfaceError, "failed to escape identifier: %s", msg);
-    }
-#else
-    PyErr_Format(PyExc_NotImplementedError,
-        "named parameters require psycopg2 compiled against libpq 9.0+");
-#endif
-
-    return rv;
-}
-
 static PyObject *
 psyco_curs_callproc(cursorObject *self, PyObject *args)
 {
@@ -1107,7 +1078,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
             if (!(pname = psycopg_ensure_bytes(pname))) { goto exit; }
             if (!(cpname = Bytes_AsString(pname))) { goto exit; }
 
-            if (!(scpnames[i] = _escape_identifier(
+            if (!(scpnames[i] = psycopg_escape_identifier(
                     self->conn->pgconn, cpname, strlen(cpname)))) {
                 goto exit;
             }
@@ -1158,10 +1129,14 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
 
     if (0 <= _psyco_curs_execute(
             self, operation, pvals, self->conn->async, 0)) {
-
-        /* return None from this until it's DBAPI compliant... */
-        Py_INCREF(Py_None);
-        res = Py_None;
+        /* The dict case is outside DBAPI scope anyway, so simply return None */
+        if (using_dict) {
+            Py_INCREF(Py_None);
+            res = Py_None;
+        }
+        else {
+            res = pvals;
+        }
     }
 
 exit:
