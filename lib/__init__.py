@@ -82,13 +82,14 @@ else:
 
 import re
 
-def _param_escape(s,
-        re_escape=re.compile(r"([\\'])"),
-        re_space=re.compile(r'\s')):
+
+def _param_escape(s, re_escape=re.compile(r"([\\'])"),
+                  re_space=re.compile(r'\s')):
     """
     Apply the escaping rule required by PQconnectdb
     """
-    if not s: return "''"
+    if not s:
+        return "''"
 
     s = re_escape.sub(r'\\\1', s)
     if re_space.search(s):
@@ -99,9 +100,8 @@ def _param_escape(s,
 del re
 
 
-def connect(dsn=None,
-        database=None, user=None, password=None, host=None, port=None,
-        connection_factory=None, cursor_factory=None, async=False, **kwargs):
+def connect(dsn=None, database=None, user=None, password=None, host=None, port=None,
+            connection_factory=None, cursor_factory=None, async=False, **kwargs):
     """
     Create a new database connection.
 
@@ -152,14 +152,14 @@ def connect(dsn=None,
     if dsn is not None and items:
         raise TypeError(
             "'%s' is an invalid keyword argument when the dsn is specified"
-                % items[0][0])
+            % items[0][0])
 
     if dsn is None:
         if not items:
             raise TypeError('missing dsn and no parameters')
         else:
             dsn = " ".join(["%s=%s" % (k, _param_escape(str(v)))
-                for (k, v) in items])
+                           for (k, v) in items])
 
     conn = _connect(dsn, connection_factory=connection_factory, async=async)
     if cursor_factory is not None:

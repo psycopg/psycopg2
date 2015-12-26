@@ -30,6 +30,7 @@ from psycopg2._psycopg import ProgrammingError, InterfaceError
 from psycopg2.extensions import ISQLQuote, adapt, register_adapter, b
 from psycopg2.extensions import new_type, new_array_type, register_type
 
+
 class Range(object):
     """Python representation for a PostgreSQL |range|_ type.
 
@@ -57,7 +58,8 @@ class Range(object):
         if self._bounds is None:
             return "%s(empty=True)" % self.__class__.__name__
         else:
-            return "%s(%r, %r, %r)" % (self.__class__.__name__,
+            return "%s(%r, %r, %r)" % (
+                self.__class__.__name__,
                 self._lower, self._upper, self._bounds)
 
     @property
@@ -124,8 +126,8 @@ class Range(object):
         if not isinstance(other, Range):
             return False
         return (self._lower == other._lower
-            and self._upper == other._upper
-            and self._bounds == other._bounds)
+                and self._upper == other._upper
+                and self._bounds == other._bounds)
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -248,7 +250,7 @@ class RangeAdapter(object):
             upper = b('NULL')
 
         return b(self.name + '(') + lower + b(', ') + upper \
-                + b(", '%s')" % r._bounds)
+            + b(", '%s')" % r._bounds)
 
 
 class RangeCaster(object):
@@ -318,7 +320,7 @@ class RangeCaster(object):
 
         if conn.server_version < 90200:
             raise ProgrammingError("range types not available in version %s"
-                % conn.server_version)
+                                   % conn.server_version)
 
         # Store the transaction status of the connection to revert it after use
         conn_status = conn.status
@@ -349,8 +351,7 @@ where typname = %s and ns.nspname = %s;
             rec = curs.fetchone()
 
             # revert the status of the connection as before the command
-            if (conn_status != STATUS_IN_TRANSACTION
-            and not conn.autocommit):
+            if (conn_status != STATUS_IN_TRANSACTION and not conn.autocommit):
                 conn.rollback()
 
         if not rec:
@@ -359,8 +360,8 @@ where typname = %s and ns.nspname = %s;
 
         type, subtype, array = rec
 
-        return RangeCaster(name, pyrange,
-            oid=type, subtype_oid=subtype, array_oid=array)
+        return RangeCaster(
+            name, pyrange, oid=type, subtype_oid=subtype, array_oid=array)
 
     _re_range = re.compile(r"""
         ( \(|\[ )                   # lower bound flag
@@ -425,13 +426,16 @@ class NumericRange(Range):
     """
     pass
 
+
 class DateRange(Range):
     """Represents :sql:`daterange` values."""
     pass
 
+
 class DateTimeRange(Range):
     """Represents :sql:`tsrange` values."""
     pass
+
 
 class DateTimeTZRange(Range):
     """Represents :sql:`tstzrange` values."""
@@ -475,27 +479,25 @@ register_adapter(NumericRange, NumberRangeAdapter)
 
 # note: the adapter is registered more than once, but this is harmless.
 int4range_caster = RangeCaster(NumberRangeAdapter, NumericRange,
-    oid=3904, subtype_oid=23, array_oid=3905)
+                               oid=3904, subtype_oid=23, array_oid=3905)
 int4range_caster._register()
 
 int8range_caster = RangeCaster(NumberRangeAdapter, NumericRange,
-    oid=3926, subtype_oid=20, array_oid=3927)
+                               oid=3926, subtype_oid=20, array_oid=3927)
 int8range_caster._register()
 
 numrange_caster = RangeCaster(NumberRangeAdapter, NumericRange,
-    oid=3906, subtype_oid=1700, array_oid=3907)
+                              oid=3906, subtype_oid=1700, array_oid=3907)
 numrange_caster._register()
 
 daterange_caster = RangeCaster('daterange', DateRange,
-    oid=3912, subtype_oid=1082, array_oid=3913)
+                               oid=3912, subtype_oid=1082, array_oid=3913)
 daterange_caster._register()
 
 tsrange_caster = RangeCaster('tsrange', DateTimeRange,
-    oid=3908, subtype_oid=1114, array_oid=3909)
+                             oid=3908, subtype_oid=1114, array_oid=3909)
 tsrange_caster._register()
 
 tstzrange_caster = RangeCaster('tstzrange', DateTimeTZRange,
-    oid=3910, subtype_oid=1184, array_oid=3911)
+                               oid=3910, subtype_oid=1184, array_oid=3911)
 tstzrange_caster._register()
-
-

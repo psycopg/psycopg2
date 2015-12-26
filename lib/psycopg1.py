@@ -36,16 +36,18 @@ from psycopg2 import *
 import psycopg2.extensions as _ext
 _2connect = connect
 
+
 def connect(*args, **kwargs):
     """connect(dsn, ...) -> new psycopg 1.1.x compatible connection object"""
     kwargs['connection_factory'] = connection
     conn = _2connect(*args, **kwargs)
     conn.set_isolation_level(_ext.ISOLATION_LEVEL_READ_COMMITTED)
     return conn
-    
+
+
 class connection(_2connection):
     """psycopg 1.1.x connection."""
-    
+
     def cursor(self):
         """cursor() -> new psycopg 1.1.x compatible cursor object"""
         return _2connection.cursor(self, cursor_factory=cursor)
@@ -56,7 +58,7 @@ class connection(_2connection):
             self.set_isolation_level(_ext.ISOLATION_LEVEL_AUTOCOMMIT)
         else:
             self.set_isolation_level(_ext.ISOLATION_LEVEL_READ_COMMITTED)
-            
+
 
 class cursor(_2cursor):
     """psycopg 1.1.x cursor.
@@ -71,25 +73,24 @@ class cursor(_2cursor):
         for i in range(len(self.description)):
             res[self.description[i][0]] = row[i]
         return res
-    
+
     def dictfetchone(self):
         row = _2cursor.fetchone(self)
         if row:
             return self.__build_dict(row)
         else:
             return row
-            
+
     def dictfetchmany(self, size):
         res = []
         rows = _2cursor.fetchmany(self, size)
         for row in rows:
             res.append(self.__build_dict(row))
         return res
-    
+
     def dictfetchall(self):
         res = []
         rows = _2cursor.fetchall(self)
         for row in rows:
             res.append(self.__build_dict(row))
         return res
-
