@@ -2,7 +2,7 @@
 
 This module holds two different tzinfo implementations that can be used as
 the 'tzinfo' argument to datetime constructors, directly passed to psycopg
-functions or used to set the .tzinfo_factory attribute in cursors. 
+functions or used to set the .tzinfo_factory attribute in cursors.
 """
 # psycopg/tz.py - tzinfo implementation
 #
@@ -31,6 +31,7 @@ import time
 
 ZERO = datetime.timedelta(0)
 
+
 class FixedOffsetTimezone(datetime.tzinfo):
     """Fixed offset in minutes east from UTC.
 
@@ -52,7 +53,7 @@ class FixedOffsetTimezone(datetime.tzinfo):
 
     def __init__(self, offset=None, name=None):
         if offset is not None:
-            self._offset = datetime.timedelta(minutes = offset)
+            self._offset = datetime.timedelta(minutes=offset)
         if name is not None:
             self._name = name
 
@@ -85,7 +86,7 @@ class FixedOffsetTimezone(datetime.tzinfo):
         else:
             seconds = self._offset.seconds + self._offset.days * 86400
             hours, seconds = divmod(seconds, 3600)
-            minutes = seconds/60
+            minutes = seconds / 60
             if minutes:
                 return "%+03d:%d" % (hours, minutes)
             else:
@@ -95,12 +96,13 @@ class FixedOffsetTimezone(datetime.tzinfo):
         return ZERO
 
 
-STDOFFSET = datetime.timedelta(seconds = -time.timezone)
+STDOFFSET = datetime.timedelta(seconds=-time.timezone)
 if time.daylight:
-    DSTOFFSET = datetime.timedelta(seconds = -time.altzone)
+    DSTOFFSET = datetime.timedelta(seconds=-time.altzone)
 else:
     DSTOFFSET = STDOFFSET
 DSTDIFF = DSTOFFSET - STDOFFSET
+
 
 class LocalTimezone(datetime.tzinfo):
     """Platform idea of local timezone.

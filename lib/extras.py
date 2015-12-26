@@ -106,6 +106,7 @@ class DictConnection(_connection):
         kwargs.setdefault('cursor_factory', DictCursor)
         return super(DictConnection, self).cursor(*args, **kwargs)
 
+
 class DictCursor(DictCursorBase):
     """A cursor that keeps a list of column name -> index mappings."""
 
@@ -129,6 +130,7 @@ class DictCursor(DictCursorBase):
             for i in range(len(self.description)):
                 self.index[self.description[i][0]] = i
             self._query_executed = 0
+
 
 class DictRow(list):
     """A row object that allow by-column-name access to data."""
@@ -192,10 +194,10 @@ class DictRow(list):
 
     # drop the crusty Py2 methods
     if _sys.version_info[0] > 2:
-        items = iteritems; del iteritems
-        keys = iterkeys; del iterkeys
-        values = itervalues; del itervalues
-        del has_key
+        items = iteritems
+        keys = iterkeys
+        values = itervalues
+        del itervalues, has_key, iteritems, iterkeys
 
 
 class RealDictConnection(_connection):
@@ -203,6 +205,7 @@ class RealDictConnection(_connection):
     def cursor(self, *args, **kwargs):
         kwargs.setdefault('cursor_factory', RealDictCursor)
         return super(RealDictConnection, self).cursor(*args, **kwargs)
+
 
 class RealDictCursor(DictCursorBase):
     """A cursor that uses a real dict as the base type for rows.
@@ -232,6 +235,7 @@ class RealDictCursor(DictCursorBase):
             for i in range(len(self.description)):
                 self.column_mapping.append(self.description[i][0])
             self._query_executed = 0
+
 
 class RealDictRow(dict):
     """A `!dict` subclass representing a data record."""
@@ -264,6 +268,7 @@ class NamedTupleConnection(_connection):
     def cursor(self, *args, **kwargs):
         kwargs.setdefault('cursor_factory', NamedTupleCursor)
         return super(NamedTupleConnection, self).cursor(*args, **kwargs)
+
 
 class NamedTupleCursor(_cursor):
     """A cursor that generates results as `~collections.namedtuple`.
@@ -369,11 +374,13 @@ class LoggingConnection(_connection):
 
     def _logtofile(self, msg, curs):
         msg = self.filter(msg, curs)
-        if msg: self._logobj.write(msg + _os.linesep)
+        if msg:
+            self._logobj.write(msg + _os.linesep)
 
     def _logtologger(self, msg, curs):
         msg = self.filter(msg, curs)
-        if msg: self._logobj.debug(msg)
+        if msg:
+            self._logobj.debug(msg)
 
     def _check(self):
         if not hasattr(self, '_logobj'):
@@ -384,6 +391,7 @@ class LoggingConnection(_connection):
         self._check()
         kwargs.setdefault('cursor_factory', LoggingCursor)
         return super(LoggingConnection, self).cursor(*args, **kwargs)
+
 
 class LoggingCursor(_cursor):
     """A cursor that logs queries using its connection logging facilities."""
@@ -425,6 +433,7 @@ class MinTimeLoggingConnection(LoggingConnection):
         kwargs.setdefault('cursor_factory', MinTimeLoggingCursor)
         return LoggingConnection.cursor(self, *args, **kwargs)
 
+
 class MinTimeLoggingCursor(LoggingCursor):
     """The cursor sub-class companion to `MinTimeLoggingConnection`."""
 
@@ -459,6 +468,7 @@ class UUID_adapter(object):
     def __str__(self):
         return "'%s'::uuid" % self._uuid
 
+
 def register_uuid(oids=None, conn_or_curs=None):
     """Create the UUID type and an uuid.UUID adapter.
 
@@ -480,8 +490,9 @@ def register_uuid(oids=None, conn_or_curs=None):
         oid1 = oids
         oid2 = 2951
 
-    _ext.UUID = _ext.new_type((oid1, ), "UUID",
-            lambda data, cursor: data and uuid.UUID(data) or None)
+    _ext.UUID = _ext.new_type(
+        (oid1, ), "UUID",
+        lambda data, cursor: data and uuid.UUID(data) or None)
     _ext.UUIDARRAY = _ext.new_array_type((oid2,), "UUID[]", _ext.UUID)
 
     _ext.register_type(_ext.UUID, conn_or_curs)
@@ -523,6 +534,7 @@ class Inet(object):
     def __str__(self):
         return str(self.addr)
 
+
 def register_inet(oid=None, conn_or_curs=None):
     """Create the INET type and an Inet adapter.
 
@@ -542,7 +554,7 @@ def register_inet(oid=None, conn_or_curs=None):
         oid2 = 1041
 
     _ext.INET = _ext.new_type((oid1, ), "INET",
-            lambda data, cursor: data and Inet(data) or None)
+                              lambda data, cursor: data and Inet(data) or None)
     _ext.INETARRAY = _ext.new_array_type((oid2, ), "INETARRAY", _ext.INET)
 
     _ext.register_type(_ext.INET, conn_or_curs)
@@ -736,14 +748,14 @@ WHERE typname = 'hstore';
             rv1.append(oids[1])
 
         # revert the status of the connection as before the command
-        if (conn_status != _ext.STATUS_IN_TRANSACTION
-        and not conn.autocommit):
-            conn.rollback()
+        if (conn_status != _ext.STATUS_IN_TRANSACTION and not conn.autocommit):
+                conn.rollback()
 
         return tuple(rv0), tuple(rv1)
 
+
 def register_hstore(conn_or_curs, globally=False, unicode=False,
-        oid=None, array_oid=None):
+                    oid=None, array_oid=None):
     """Register adapter and typecaster for `!dict`\-\ |hstore| conversions.
 
     :param conn_or_curs: a connection or cursor: the typecaster will be
@@ -822,8 +834,8 @@ class CompositeCaster(object):
         self.oid = oid
         self.array_oid = array_oid
 
-        self.attnames = [ a[0] for a in attrs ]
-        self.atttypes = [ a[1] for a in attrs ]
+        self.attnames = [a[0] for a in attrs]
+        self.atttypes = [a[1] for a in attrs]
         self._create_type(name, self.attnames)
         self.typecaster = _ext.new_type((oid,), name, self.parse)
         if array_oid:
@@ -842,8 +854,8 @@ class CompositeCaster(object):
                 "expecting %d components for the type %s, %d found instead" %
                 (len(self.atttypes), self.name, len(tokens)))
 
-        values = [ curs.cast(oid, token)
-            for oid, token in zip(self.atttypes, tokens) ]
+        values = [curs.cast(oid, token)
+                  for oid, token in zip(self.atttypes, tokens)]
 
         return self.make(values)
 
@@ -927,8 +939,7 @@ ORDER BY attnum;
         recs = curs.fetchall()
 
         # revert the status of the connection as before the command
-        if (conn_status != _ext.STATUS_IN_TRANSACTION
-        and not conn.autocommit):
+        if (conn_status != _ext.STATUS_IN_TRANSACTION and not conn.autocommit):
             conn.rollback()
 
         if not recs:
@@ -937,10 +948,11 @@ ORDER BY attnum;
 
         type_oid = recs[0][0]
         array_oid = recs[0][1]
-        type_attrs = [ (r[2], r[3]) for r in recs ]
+        type_attrs = [(r[2], r[3]) for r in recs]
 
         return self(tname, type_oid, type_attrs,
-            array_oid=array_oid, schema=schema)
+                    array_oid=array_oid, schema=schema)
+
 
 def register_composite(name, conn_or_curs, globally=False, factory=None):
     """Register a typecaster to convert a composite type into a tuple.

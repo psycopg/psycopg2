@@ -7,7 +7,7 @@ This module holds all the extensions to the DBAPI-2.0 provided by psycopg.
 - `lobject` -- the new-type inheritable large object class
 - `adapt()` -- exposes the PEP-246_ compatible adapting mechanism used
   by psycopg to adapt Python types to PostgreSQL ones
-  
+
 .. _PEP-246: http://www.python.org/peps/pep-0246.html
 """
 # psycopg/extensions.py - DBAPI-2.0 extensions specific to psycopg
@@ -56,7 +56,9 @@ try:
 except ImportError:
     pass
 
-from psycopg2._psycopg import adapt, adapters, encodings, connection, cursor, lobject, Xid, libpq_version, parse_dsn, quote_ident
+from psycopg2._psycopg import (
+    adapt, adapters, encodings, connection, cursor, lobject, Xid, libpq_version,
+    parse_dsn, quote_ident)
 from psycopg2._psycopg import string_types, binary_types, new_type, new_array_type, register_type
 from psycopg2._psycopg import ISQLQuote, Notify, Diagnostics, Column
 
@@ -68,32 +70,32 @@ except ImportError:
     pass
 
 """Isolation level values."""
-ISOLATION_LEVEL_AUTOCOMMIT          = 0
-ISOLATION_LEVEL_READ_UNCOMMITTED    = 4
-ISOLATION_LEVEL_READ_COMMITTED      = 1
-ISOLATION_LEVEL_REPEATABLE_READ     = 2
-ISOLATION_LEVEL_SERIALIZABLE        = 3
+ISOLATION_LEVEL_AUTOCOMMIT = 0
+ISOLATION_LEVEL_READ_UNCOMMITTED = 4
+ISOLATION_LEVEL_READ_COMMITTED = 1
+ISOLATION_LEVEL_REPEATABLE_READ = 2
+ISOLATION_LEVEL_SERIALIZABLE = 3
 
 """psycopg connection status values."""
-STATUS_SETUP    = 0
-STATUS_READY    = 1
-STATUS_BEGIN    = 2
-STATUS_SYNC     = 3  # currently unused
-STATUS_ASYNC    = 4  # currently unused
+STATUS_SETUP = 0
+STATUS_READY = 1
+STATUS_BEGIN = 2
+STATUS_SYNC = 3  # currently unused
+STATUS_ASYNC = 4  # currently unused
 STATUS_PREPARED = 5
 
 # This is a useful mnemonic to check if the connection is in a transaction
 STATUS_IN_TRANSACTION = STATUS_BEGIN
 
 """psycopg asynchronous connection polling values"""
-POLL_OK    = 0
-POLL_READ  = 1
+POLL_OK = 0
+POLL_READ = 1
 POLL_WRITE = 2
 POLL_ERROR = 3
 
 """Backend transaction status values."""
-TRANSACTION_STATUS_IDLE    = 0
-TRANSACTION_STATUS_ACTIVE  = 1
+TRANSACTION_STATUS_IDLE = 0
+TRANSACTION_STATUS_ACTIVE = 1
 TRANSACTION_STATUS_INTRANS = 2
 TRANSACTION_STATUS_INERROR = 3
 TRANSACTION_STATUS_UNKNOWN = 4
@@ -107,6 +109,7 @@ if _sys.version_info[0] < 3:
 else:
     def b(s):
         return s.encode('utf8')
+
 
 def register_adapter(typ, callable):
     """Register 'callable' as an ISQLQuote adapter for type 'typ'."""
