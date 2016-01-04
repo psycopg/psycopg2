@@ -551,6 +551,67 @@ def register_inet(oid=None, conn_or_curs=None):
     return _ext.INET
 
 
+# a type, dbtype and adapter for PostgreSQL cidr type
+
+class Cidr(object):
+    """Wrap a string to allow for correct SQL-quoting of cidr values.
+
+    Note that this adapter does NOT check the passed value to make
+    sure it really is an cidr-compatible address but DOES call adapt()
+    on it to make sure it is impossible to execute an SQL-injection
+    by passing an evil value to the initializer.
+    """
+    def __init__(self, addr):
+        self.addr = addr
+
+    def __repr__(self):
+        return "%s(%r)" % (self.__class__.__name__, self.addr)
+
+    def prepare(self, conn):
+        self._conn = conn
+
+    def getquoted(self):
+        obj = _A(self.addr)
+        if hasattr(obj, 'prepare'):
+            obj.prepare(self._conn)
+        return obj.getquoted() + b("::cidr")
+
+    def __conform__(self, proto):
+        if proto is _ext.ISQLQuote:
+            return self
+
+    def __str__(self):
+        return str(self.addr)
+
+
+def register_cidr(oid=None, conn_or_curs=None):
+    """Create the CIDR type and an Cidr adapter.
+
+    :param oid: oid for the PostgreSQL :sql:`cidr` type, or 2-items sequence
+        with oids of the type and the array. If not specified, use PostgreSQL
+        standard oids.
+    :param conn_or_curs: where to register the typecaster. If not specified,
+        register it globally.
+    """
+    if not oid:
+        oid1 = 650
+        oid2 = 651
+    elif isinstance(oid, (list, tuple)):
+        oid1, oid2 = oid
+    else:
+        oid1 = oid
+        oid2 = 651
+
+    _ext.CIDR = _ext.new_type((oid1, ), "CIDR",
+            lambda data, cursor: data and Cidr(data) or None)
+    _ext.CIDRARRAY = _ext.new_array_type((oid2, ), "CIDRARRAY", _ext.CIDR)
+
+    _ext.register_type(_ext.CIDR, conn_or_curs)
+    _ext.register_type(_ext.CIDRARRAY, conn_or_curs)
+
+    return _ext.CIDR
+
+
 def register_tstz_w_secs(oids=None, conn_or_curs=None):
     """The function used to register an alternate type caster for
     :sql:`TIMESTAMP WITH TIME ZONE` to deal with historical time zones with
