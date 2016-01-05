@@ -38,11 +38,10 @@ extern HIDDEN PyTypeObject replicationCursorType;
 typedef struct replicationCursorObject {
     cursorObject cur;
 
-    int         started:1;        /* if replication is started */
     int         consuming:1;      /* if running the consume loop */
     int         decode:1;         /* if we should use character decoding on the messages */
 
-    struct timeval last_io  ;     /* timestamp of the last exchange with the server */
+    struct timeval last_io;       /* timestamp of the last exchange with the server */
     struct timeval keepalive_interval;   /* interval for keepalive messages in replication mode */
 
     XLogRecPtr  write_lsn;        /* LSNs for replication feedback messages */
@@ -52,23 +51,6 @@ typedef struct replicationCursorObject {
 
 
 RAISES_NEG int psyco_repl_curs_datetime_init(void);
-
-/* exception-raising macros */
-#define EXC_IF_REPLICATING(self, cmd) \
-do \
-    if ((self)->started) { \
-        PyErr_SetString(ProgrammingError, \
-            #cmd " cannot be used when replication is already in progress"); \
-    return NULL; } \
-while (0)
-
-#define EXC_IF_NOT_REPLICATING(self, cmd) \
-do \
-    if (!(self)->started) { \
-        PyErr_SetString(ProgrammingError, \
-            #cmd " cannot be used when replication is not in progress"); \
-    return NULL; } \
-while (0)
 
 #ifdef __cplusplus
 }

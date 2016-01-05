@@ -1870,8 +1870,11 @@ pq_fetch(cursorObject *curs, int no_result)
         Dprintf("pq_fetch: data from a streaming replication slot (no tuples)");
         curs->rowcount = -1;
         ex = 0;
-        /* nothing to do here: pq_copy_both will be called separately */
-        CLEARPGRES(curs->pgres);
+        /* Nothing to do here: pq_copy_both will be called separately.
+
+           Also don't clear the result status: it's checked in
+           consume_stream. */
+        /*CLEARPGRES(curs->pgres);*/
         break;
 
     case PGRES_TUPLES_OK:

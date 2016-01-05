@@ -119,6 +119,18 @@ class ReplicationTest(ReplicationTestCase):
         cur.start_replication(self.slot)
 
     @skip_before_postgres(9, 4) # slots require 9.4
+    def test_start_and_recover_from_error(self):
+        conn = self.repl_connect(connection_factory=LogicalReplicationConnection)
+        if conn is None: return
+        cur = conn.cursor()
+
+        self.create_replication_slot(cur, output_plugin='test_decoding')
+
+        self.assertRaises(psycopg2.DataError, cur.start_replication,
+                          slot_name=self.slot, options=dict(invalid_param='value'))
+        cur.start_replication(slot_name=self.slot)
+
+    @skip_before_postgres(9, 4) # slots require 9.4
     def test_stop_replication(self):
         conn = self.repl_connect(connection_factory=LogicalReplicationConnection)
         if conn is None: return
@@ -162,6 +174,7 @@ class AsyncReplicationTest(ReplicationTestCase):
 
             cur.send_feedback(flush_lsn=msg.data_start)
 
+        # cannot be used in asynchronous mode
         self.assertRaises(psycopg2.ProgrammingError, cur.consume_stream, consume)
 
         def process_stream():
