@@ -301,6 +301,10 @@ class psycopg_build_ext(build_ext):
             except AttributeError:
                 ext_path = os.path.join(self.build_lib,
                         'psycopg2', '_psycopg.pyd')
+            # Make sure spawn() will work if compile() was never
+            # called. https://github.com/psycopg/psycopg2/issues/380
+            if not self.compiler.initialized:
+                self.compiler.initialize()
             self.compiler.spawn(
                 ['mt.exe', '-nologo', '-manifest',
                  os.path.join('psycopg', manifest),
