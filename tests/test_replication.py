@@ -126,8 +126,14 @@ class ReplicationTest(ReplicationTestCase):
 
         self.create_replication_slot(cur, output_plugin='test_decoding')
 
-        self.assertRaises(psycopg2.DataError, cur.start_replication,
-                          slot_name=self.slot, options=dict(invalid_param='value'))
+        # try with invalid options
+        cur.start_replication(slot_name=self.slot, options={'invalid_param': 'value'})
+        def consume(msg):
+            pass
+        # we don't see the error from the server before we try to read the data
+        self.assertRaises(psycopg2.DataError, cur.consume_stream, consume)
+
+        # try with correct command
         cur.start_replication(slot_name=self.slot)
 
     @skip_before_postgres(9, 4) # slots require 9.4
