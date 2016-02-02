@@ -270,7 +270,7 @@ wasting resources.
 
 A simple application could poll the connection from time to time to check if
 something new has arrived. A better strategy is to use some I/O completion
-function such as :py:func:`~select.select` to sleep until awaken from the kernel when there is
+function such as :py:func:`~select.select` to sleep until awakened by the kernel when there is
 some data to read on the connection, thereby using no CPU unless there is
 something to read::
 
