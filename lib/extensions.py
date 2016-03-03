@@ -158,7 +158,7 @@ class NoneAdapter(object):
 def make_dsn(dsn=None, **kwargs):
     """Convert a set of keywords into a connection strings."""
     if dsn is None and not kwargs:
-        raise TypeError('missing dsn and no parameters')
+        return ''
 
     # If no kwarg is specified don't mung the dsn, but verify it
     if not kwargs:

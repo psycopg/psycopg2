@@ -381,8 +381,8 @@ class MakeDsnTestCase(ConnectingTestCase):
     def assertDsnEqual(self, dsn1, dsn2):
         self.assertEqual(set(dsn1.split()), set(dsn2.split()))
 
-    def test_there_has_to_be_something(self):
-        self.assertRaises(TypeError, ext.make_dsn)
+    def test_empty_arguments(self):
+        self.assertEqual(ext.make_dsn(), '')
 
     def test_empty_string(self):
         dsn = ext.make_dsn('')

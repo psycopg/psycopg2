@@ -497,11 +497,8 @@ Other functions
 
     Put together the arguments in *kwargs* into a connection string. If *dsn*
     is specified too, merge the arguments coming from both the sources. If the
-    same argument is specified in both the sources, the *kwargs* version
-    overrides the *dsn* version.
-
-    At least one parameter is required (either *dsn* or any keyword). Note
-    that the empty string is a valid connection string.
+    same argument name is specified in both the sources, the *kwargs* value
+    overrides the *dsn* value.
 
     The input arguments are validated: the output should always be a valid
     connection string (as far as `parse_dsn()` is concerned). If not raise
