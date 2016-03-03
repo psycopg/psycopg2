@@ -116,9 +116,6 @@ def connect(dsn=None, connection_factory=None, cursor_factory=None,
     library: the list of supported parameters depends on the library version.
 
     """
-    if dsn is None and not kwargs:
-        raise TypeError('missing dsn and no parameters')
-
     dsn = _ext.make_dsn(dsn, **kwargs)
     conn = _connect(dsn, connection_factory=connection_factory, async=async)
     if cursor_factory is not None:
