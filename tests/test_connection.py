@@ -384,6 +384,10 @@ class MakeDsnTestCase(ConnectingTestCase):
     def test_there_has_to_be_something(self):
         self.assertRaises(TypeError, ext.make_dsn)
 
+    def test_empty_string(self):
+        dsn = ext.make_dsn('')
+        self.assertEqual(dsn, '')
+
     def test_empty_param(self):
         dsn = ext.make_dsn(database='sony', password='')
         self.assertDsnEqual(dsn, "dbname=sony password=''")
