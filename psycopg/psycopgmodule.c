@@ -112,7 +112,8 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
     return conn;
 }
 
-#define psyco_parse_dsn_doc "parse_dsn(dsn) -> dict"
+#define psyco_parse_dsn_doc \
+"parse_dsn(dsn) -> dict -- parse a connection string into parameters"
 
 static PyObject *
 psyco_parse_dsn(PyObject *self, PyObject *args, PyObject *kwargs)
