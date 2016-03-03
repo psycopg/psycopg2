@@ -7,7 +7,7 @@ This module holds all the extensions to the DBAPI-2.0 provided by psycopg.
 - `lobject` -- the new-type inheritable large object class
 - `adapt()` -- exposes the PEP-246_ compatible adapting mechanism used
   by psycopg to adapt Python types to PostgreSQL ones
-  
+
 .. _PEP-246: http://www.python.org/peps/pep-0246.html
 """
 # psycopg/extensions.py - DBAPI-2.0 extensions specific to psycopg
@@ -31,6 +31,9 @@ This module holds all the extensions to the DBAPI-2.0 provided by psycopg.
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
+
+import re as _re
+import sys as _sys
 
 from psycopg2._psycopg import UNICODE, INTEGER, LONGINTEGER, BOOLEAN, FLOAT
 from psycopg2._psycopg import TIME, DATE, INTERVAL, DECIMAL
@@ -56,7 +59,8 @@ try:
 except ImportError:
     pass
 
-from psycopg2._psycopg import adapt, adapters, encodings, connection, cursor, lobject, Xid, libpq_version, parse_dsn, quote_ident
+from psycopg2._psycopg import adapt, adapters, encodings, connection, cursor
+from psycopg2._psycopg import lobject, Xid, libpq_version, parse_dsn, quote_ident
 from psycopg2._psycopg import string_types, binary_types, new_type, new_array_type, register_type
 from psycopg2._psycopg import ISQLQuote, Notify, Diagnostics, Column
 
@@ -98,7 +102,6 @@ TRANSACTION_STATUS_INTRANS = 2
 TRANSACTION_STATUS_INERROR = 3
 TRANSACTION_STATUS_UNKNOWN = 4
 
-import sys as _sys
 
 # Return bytes from a string
 if _sys.version_info[0] < 3:
@@ -107,6 +110,7 @@ if _sys.version_info[0] < 3:
 else:
     def b(s):
         return s.encode('utf8')
+
 
 def register_adapter(typ, callable):
     """Register 'callable' as an ISQLQuote adapter for type 'typ'."""
@@ -149,6 +153,41 @@ class NoneAdapter(object):
 
     def getquoted(self, _null=b("NULL")):
         return _null
+
+
+def make_dsn(dsn=None, **kwargs):
+    """Convert a set of keywords into a connection strings."""
+    # Override the dsn with the parameters
+    if 'database' in kwargs:
+        if 'dbname' in kwargs:
+            raise TypeError(
+                "you can't specify both 'database' and 'dbname' arguments")
+        kwargs['dbname'] = kwargs.pop('database')
+
+    if dsn is not None:
+        tmp = parse_dsn(dsn)
+        tmp.update(kwargs)
+        kwargs = tmp
+
+    dsn = " ".join(["%s=%s" % (k, _param_escape(str(v)))
+        for (k, v) in kwargs.iteritems()])
+    return dsn
+
+
+def _param_escape(s,
+        re_escape=_re.compile(r"([\\'])"),
+        re_space=_re.compile(r'\s')):
+    """
+    Apply the escaping rule required by PQconnectdb
+    """
+    if not s:
+        return "''"
+
+    s = re_escape.sub(r'\\\1', s)
+    if re_space.search(s):
+        s = "'" + s + "'"
+
+    return s
 
 
 # Create default json typecasters for PostgreSQL 9.2 oids
