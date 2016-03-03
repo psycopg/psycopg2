@@ -388,52 +388,63 @@ class MakeDsnTestCase(ConnectingTestCase):
         dsn = ext.make_dsn('')
         self.assertEqual(dsn, '')
 
+    def test_params_validation(self):
+        self.assertRaises(psycopg2.ProgrammingError,
+            ext.make_dsn, 'dbnamo=a')
+        self.assertRaises(psycopg2.ProgrammingError,
+            ext.make_dsn, dbnamo='a')
+        self.assertRaises(psycopg2.ProgrammingError,
+            ext.make_dsn, 'dbname=a', nosuchparam='b')
+
     def test_empty_param(self):
-        dsn = ext.make_dsn(database='sony', password='')
+        dsn = ext.make_dsn(dbname='sony', password='')
         self.assertDsnEqual(dsn, "dbname=sony password=''")
 
     def test_escape(self):
-        dsn = ext.make_dsn(database='hello world')
+        dsn = ext.make_dsn(dbname='hello world')
         self.assertEqual(dsn, "dbname='hello world'")
 
-        dsn = ext.make_dsn(database=r'back\slash')
+        dsn = ext.make_dsn(dbname=r'back\slash')
         self.assertEqual(dsn, r"dbname=back\\slash")
 
-        dsn = ext.make_dsn(database="quo'te")
+        dsn = ext.make_dsn(dbname="quo'te")
         self.assertEqual(dsn, r"dbname=quo\'te")
 
-        dsn = ext.make_dsn(database="with\ttab")
+        dsn = ext.make_dsn(dbname="with\ttab")
         self.assertEqual(dsn, "dbname='with\ttab'")
 
-        dsn = ext.make_dsn(database=r"\every thing'")
+        dsn = ext.make_dsn(dbname=r"\every thing'")
         self.assertEqual(dsn, r"dbname='\\every thing\''")
 
+    def test_database_is_a_keyword(self):
+        self.assertEqual(ext.make_dsn(database='sigh'), "dbname=sigh")
+
     def test_params_merging(self):
-        dsn = ext.make_dsn('dbname=foo', database='bar')
-        self.assertEqual(dsn, 'dbname=bar')
+        dsn = ext.make_dsn('dbname=foo host=bar', host='baz')
+        self.assertDsnEqual(dsn, 'dbname=foo host=baz')
 
         dsn = ext.make_dsn('dbname=foo', user='postgres')
         self.assertDsnEqual(dsn, 'dbname=foo user=postgres')
 
     def test_no_dsn_munging(self):
-        dsn = ext.make_dsn('nosuchparam=whatevs')
-        self.assertEqual(dsn, 'nosuchparam=whatevs')
-
-        dsn = ext.make_dsn(nosuchparam='whatevs')
-        self.assertEqual(dsn, 'nosuchparam=whatevs')
-
-        self.assertRaises(psycopg2.ProgrammingError,
-            ext.make_dsn, 'nosuchparam=whatevs', andthis='either')
+        dsnin = 'dbname=a host=b user=c password=d'
+        dsn = ext.make_dsn(dsnin)
+        self.assertEqual(dsn, dsnin)
 
     @skip_before_libpq(9, 2)
     def test_url_is_cool(self):
-        dsn = ext.make_dsn('postgresql://tester:secret@/test')
-        self.assertEqual(dsn, 'postgresql://tester:secret@/test')
+        url = 'postgresql://tester:secret@/test?application_name=wat'
+        dsn = ext.make_dsn(url)
+        self.assertEqual(dsn, url)
 
-        dsn = ext.make_dsn('postgresql://tester:secret@/test',
-            application_name='woot')
+        dsn = ext.make_dsn(url, application_name='woot')
         self.assertDsnEqual(dsn,
             'dbname=test user=tester password=secret application_name=woot')
+
+        self.assertRaises(psycopg2.ProgrammingError,
+            ext.make_dsn, 'postgresql://tester:secret@/test?nosuch=param')
+        self.assertRaises(psycopg2.ProgrammingError,
+            ext.make_dsn, url, nosuch="param")
 
 
 class IsolationLevelsTestCase(ConnectingTestCase):

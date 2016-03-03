@@ -160,8 +160,9 @@ def make_dsn(dsn=None, **kwargs):
     if dsn is None and not kwargs:
         raise TypeError('missing dsn and no parameters')
 
-    # If no kwarg is specified don't mung the dsn
+    # If no kwarg is specified don't mung the dsn, but verify it
     if not kwargs:
+        parse_dsn(dsn)
         return dsn
 
     # Override the dsn with the parameters
@@ -178,6 +179,10 @@ def make_dsn(dsn=None, **kwargs):
 
     dsn = " ".join(["%s=%s" % (k, _param_escape(str(v)))
         for (k, v) in kwargs.iteritems()])
+
+    # verify that the returned dsn is valid
+    parse_dsn(dsn)
+
     return dsn
 
 
