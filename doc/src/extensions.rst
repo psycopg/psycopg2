@@ -491,19 +491,52 @@ Other functions
         .. __: http://www.postgresql.org/docs/current/static/libpq-misc.html#LIBPQ-PQLIBVERSION
 
 
+.. function:: make_dsn(dsn=None, \*\*kwargs)
+
+    Create a valid connection string from arguments.
+
+    Put together the arguments in *kwargs* into a connection string. If *dsn*
+    is specified too, merge the arguments coming from both the sources. If the
+    same argument name is specified in both the sources, the *kwargs* value
+    overrides the *dsn* value.
+
+    The input arguments are validated: the output should always be a valid
+    connection string (as far as `parse_dsn()` is concerned). If not raise
+    `~psycopg2.ProgrammingError`.
+
+    Example::
+
+        >>> from psycopg2.extensions import make_dsn
+        >>> make_dsn('dbname=foo host=example.com', password="s3cr3t")
+        'host=example.com password=s3cr3t dbname=foo'
+
+    .. versionadded:: 2.7
+
+
 .. function:: parse_dsn(dsn)
 
     Parse connection string into a dictionary of keywords and values.
 
-    Uses libpq's ``PQconninfoParse`` to parse the string according to
-    accepted format(s) and check for supported keywords.
+    Parsing is delegated to the libpq: different versions of the client
+    library may support different formats or parameters (for example,
+    `connection URIs`__ are only supported from libpq 9.2).  Raise
+    `~psycopg2.ProgrammingError` if the *dsn* is not valid.
+
+    .. __: http://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-CONNSTRING
 
     Example::
 
-        >>> psycopg2.extensions.parse_dsn('dbname=test user=postgres password=secret')
+        >>> from psycopg2.extensions import parse_dsn
+        >>> parse_dsn('dbname=test user=postgres password=secret')
         {'password': 'secret', 'user': 'postgres', 'dbname': 'test'}
+        >>> parse_dsn("postgresql://someone@example.com/somedb?connect_timeout=10")
+        {'host': 'example.com', 'user': 'someone', 'dbname': 'somedb', 'connect_timeout': '10'}
 
     .. versionadded:: 2.7
+
+    .. seealso:: libpq docs for `PQconninfoParse()`__.
+
+        .. __: http://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-PQCONNINFOPARSE
 
 
 .. function:: quote_ident(str, scope)
