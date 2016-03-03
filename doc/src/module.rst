@@ -17,7 +17,7 @@ The module interface respects the standard defined in the |DBAPI|_.
     single: DSN (Database Source Name)
 
 .. function::
-    connect(dsn, connection_factory=None, cursor_factory=None, async=False, \*\*kwargs)
+    connect(dsn=None, connection_factory=None, cursor_factory=None, async=False, \*\*kwargs)
 
     Create a new database session and return a new `connection` object.
 
@@ -31,7 +31,9 @@ The module interface respects the standard defined in the |DBAPI|_.
         conn = psycopg2.connect(dbname"test", user="postgres", password="secret")
 
     or using a mix of both: if the same parameter name is specified in both
-    sources the *kwargs* value will have precedence over the *dsn* value.
+    sources, the *kwargs* value will have precedence over the *dsn* value.
+    Note that either the *dsn* or at least one connection-related keyword
+    argument is required.
 
     The basic connection parameters are:
 
@@ -42,7 +44,7 @@ The module interface respects the standard defined in the |DBAPI|_.
     - `!port` -- connection port number (defaults to 5432 if not provided)
 
     Any other connection parameter supported by the client library/server can
-    be passed either in the connection string or as keywords. The PostgreSQL
+    be passed either in the connection string or as a keyword. The PostgreSQL
     documentation contains the complete list of the `supported parameters`__.
     Also note that the same parameters can be passed to the client library
     using `environment variables`__.
@@ -87,8 +89,8 @@ The module interface respects the standard defined in the |DBAPI|_.
 
     .. extension::
 
-        The parameters *connection_factory* and *async* are Psycopg extensions
-        to the |DBAPI|.
+        The non-connection-related keyword parameters are Psycopg extensions
+        to the |DBAPI|_.
 
 .. data:: apilevel
 
