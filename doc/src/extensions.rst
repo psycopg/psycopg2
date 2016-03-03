@@ -491,6 +491,27 @@ Other functions
         .. __: http://www.postgresql.org/docs/current/static/libpq-misc.html#LIBPQ-PQLIBVERSION
 
 
+.. function:: make_dsn(dsn=None, \*\*kwargs)
+
+    Create a connection string from arguments.
+
+    Put together the arguments in *kwargs* into a connection string. If *dsn*
+    is specified too, merge the arguments coming from both the sources. If the
+    same argument is specified in both the sources, the *kwargs* version
+    overrides the *dsn* version
+
+    At least one param is required (either *dsn* or any keyword). Note that
+    the empty string is a valid connection string.
+
+    Example::
+
+        >>> from psycopg2.extensions import make_dsn
+        >>> make_dsn('dbname=foo host=example.com', password="s3cr3t")
+        'host=example.com password=s3cr3t dbname=foo'
+
+    .. versionadded:: 2.7
+
+
 .. function:: parse_dsn(dsn)
 
     Parse connection string into a dictionary of keywords and values.
@@ -500,7 +521,8 @@ Other functions
 
     Example::
 
-        >>> psycopg2.extensions.parse_dsn('dbname=test user=postgres password=secret')
+        >>> from psycopg2.extensions import parse_dsn
+        >>> parse_dsn('dbname=test user=postgres password=secret')
         {'password': 'secret', 'user': 'postgres', 'dbname': 'test'}
 
     .. versionadded:: 2.7

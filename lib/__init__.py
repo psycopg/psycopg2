@@ -86,7 +86,7 @@ def connect(dsn=None, connection_factory=None, cursor_factory=None,
     """
     Create a new database connection.
 
-    The connection parameters can be specified either as a string:
+    The connection parameters can be specified as a string:
 
         conn = psycopg2.connect("dbname=test user=postgres password=secret")
 
@@ -94,7 +94,7 @@ def connect(dsn=None, connection_factory=None, cursor_factory=None,
 
         conn = psycopg2.connect(database="test", user="postgres", password="secret")
 
-    The basic connection parameters are:
+    Or as a mix of both. The basic connection parameters are:
 
     - *dbname*: the database name
     - *database*: the database name (only as keyword argument)
