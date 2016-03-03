@@ -12,17 +12,12 @@
 The module contains a few objects and function extending the minimum set of
 functionalities defined by the |DBAPI|_.
 
-.. function:: parse_dsn(dsn)
+Classes definitions
+-------------------
 
-    Parse connection string into a dictionary of keywords and values.
-
-    Uses libpq's ``PQconninfoParse`` to parse the string according to
-    accepted format(s) and check for supported keywords.
-
-    Example::
-
-        >>> psycopg2.extensions.parse_dsn('dbname=test user=postgres password=secret')
-        {'password': 'secret', 'user': 'postgres', 'dbname': 'test'}
+Instances of these classes are usually returned by factory functions or
+attributes. Their definitions are exposed here to allow subclassing,
+introspection etc.
 
 .. class:: connection(dsn, async=False)
 
@@ -34,6 +29,7 @@ functionalities defined by the |DBAPI|_.
 
     For a complete description of the class, see `connection`.
 
+
 .. class:: cursor(conn, name=None)
 
     It is the class usually returned by the `connection.cursor()`
@@ -43,6 +39,7 @@ functionalities defined by the |DBAPI|_.
     also :ref:`subclassing-cursor`.
 
     For a complete description of the class, see `cursor`.
+
 
 .. class:: lobject(conn [, oid [, mode [, new_oid [, new_file ]]]])
 
@@ -200,39 +197,6 @@ functionalities defined by the |DBAPI|_.
         server versions.
 
 
-.. autofunction:: set_wait_callback(f)
-
-    .. versionadded:: 2.2.0
-
-.. autofunction:: get_wait_callback()
-
-    .. versionadded:: 2.2.0
-
-.. function:: libpq_version()
-
-    Return the version number of the ``libpq`` dynamic library loaded as an
-    integer, in the same format of `~connection.server_version`.
-
-    Raise `~psycopg2.NotSupportedError` if the ``psycopg2`` module was
-    compiled with a ``libpq`` version lesser than 9.1 (which can be detected
-    by the `~psycopg2.__libpq_version__` constant).
-
-    .. seealso:: libpq docs for `PQlibVersion()`__.
-
-        .. __: http://www.postgresql.org/docs/current/static/libpq-misc.html#LIBPQ-PQLIBVERSION
-
-.. function:: quote_ident(str, scope)
-
-    Return quoted identifier according to PostgreSQL quoting rules.
-
-    The *scope* must be a `connection` or a `cursor`, the underlying
-    connection encoding is used for any necessary character conversion.
-
-    Requires libpq >= 9.0.
-
-    .. seealso:: libpq docs for `PQescapeIdentifier()`__
-
-        .. __: http://www.postgresql.org/docs/current/static/libpq-exec.html#LIBPQ-PQESCAPEIDENTIFIER
 
 .. _sql-adaptation-objects:
 
@@ -489,6 +453,73 @@ The module exports a few exceptions in addition to the :ref:`standard ones
     etc).  It can be trapped specifically to detect a deadlock.
 
     .. versionadded:: 2.0.7
+
+
+
+.. _coroutines-functions:
+
+Coroutines support functions
+----------------------------
+
+These functions are used to set and retrieve the callback function for
+:ref:`cooperation with coroutine libraries <green-support>`.
+
+.. versionadded:: 2.2.0
+
+.. autofunction:: set_wait_callback(f)
+
+.. autofunction:: get_wait_callback()
+
+
+
+Other functions
+---------------
+
+.. function:: libpq_version()
+
+    Return the version number of the ``libpq`` dynamic library loaded as an
+    integer, in the same format of `~connection.server_version`.
+
+    Raise `~psycopg2.NotSupportedError` if the ``psycopg2`` module was
+    compiled with a ``libpq`` version lesser than 9.1 (which can be detected
+    by the `~psycopg2.__libpq_version__` constant).
+
+    .. versionadded:: 2.7
+
+    .. seealso:: libpq docs for `PQlibVersion()`__.
+
+        .. __: http://www.postgresql.org/docs/current/static/libpq-misc.html#LIBPQ-PQLIBVERSION
+
+
+.. function:: parse_dsn(dsn)
+
+    Parse connection string into a dictionary of keywords and values.
+
+    Uses libpq's ``PQconninfoParse`` to parse the string according to
+    accepted format(s) and check for supported keywords.
+
+    Example::
+
+        >>> psycopg2.extensions.parse_dsn('dbname=test user=postgres password=secret')
+        {'password': 'secret', 'user': 'postgres', 'dbname': 'test'}
+
+    .. versionadded:: 2.7
+
+
+.. function:: quote_ident(str, scope)
+
+    Return quoted identifier according to PostgreSQL quoting rules.
+
+    The *scope* must be a `connection` or a `cursor`, the underlying
+    connection encoding is used for any necessary character conversion.
+
+    Requires libpq >= 9.0.
+
+    .. versionadded:: 2.7
+
+    .. seealso:: libpq docs for `PQescapeIdentifier()`__
+
+        .. __: http://www.postgresql.org/docs/current/static/libpq-exec.html#LIBPQ-PQESCAPEIDENTIFIER
 
 
 
