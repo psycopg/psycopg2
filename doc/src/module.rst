@@ -17,37 +17,34 @@ The module interface respects the standard defined in the |DBAPI|_.
     single: DSN (Database Source Name)
 
 .. function::
-    connect(dsn, connection_factory=None, cursor_factory=None, async=False)
-    connect(\*\*kwargs, connection_factory=None, cursor_factory=None, async=False)
+    connect(dsn=None, connection_factory=None, cursor_factory=None, async=False, \*\*kwargs)
 
     Create a new database session and return a new `connection` object.
 
-    The connection parameters can be specified either as a `libpq connection
+    The connection parameters can be specified as a `libpq connection
     string`__ using the *dsn* parameter::
 
         conn = psycopg2.connect("dbname=test user=postgres password=secret")
 
     or using a set of keyword arguments::
 
-        conn = psycopg2.connect(database="test", user="postgres", password="secret")
+        conn = psycopg2.connect(dbname"test", user="postgres", password="secret")
 
-    The two call styles are mutually exclusive: you cannot specify connection
-    parameters as keyword arguments together with a connection string; only
-    the parameters not needed for the database connection (*i.e.*
-    *connection_factory*, *cursor_factory*, and *async*) are supported
-    together with the *dsn* argument.
+    or using a mix of both: if the same parameter name is specified in both
+    sources, the *kwargs* value will have precedence over the *dsn* value.
+    Note that either the *dsn* or at least one connection-related keyword
+    argument is required.
 
     The basic connection parameters are:
 
-    - `!dbname` -- the database name (only in the *dsn* string)
-    - `!database` -- the database name (only as keyword argument)
+    - `!dbname` -- the database name (`!database` is a deprecated alias)
     - `!user` -- user name used to authenticate
     - `!password` -- password used to authenticate
     - `!host` -- database host address (defaults to UNIX socket if not provided)
     - `!port` -- connection port number (defaults to 5432 if not provided)
 
     Any other connection parameter supported by the client library/server can
-    be passed either in the connection string or as keywords. The PostgreSQL
+    be passed either in the connection string or as a keyword. The PostgreSQL
     documentation contains the complete list of the `supported parameters`__.
     Also note that the same parameters can be passed to the client library
     using `environment variables`__.
@@ -76,6 +73,9 @@ The module interface respects the standard defined in the |DBAPI|_.
     .. versionchanged:: 2.5
         added the *cursor_factory* parameter.
 
+    .. versionchanged:: 2.7
+        both *dsn* and keyword arguments can be specified.
+
     .. seealso::
 
         - `~psycopg2.extensions.parse_dsn`
@@ -89,8 +89,8 @@ The module interface respects the standard defined in the |DBAPI|_.
 
     .. extension::
 
-        The parameters *connection_factory* and *async* are Psycopg extensions
-        to the |DBAPI|.
+        The non-connection-related keyword parameters are Psycopg extensions
+        to the |DBAPI|_.
 
 .. data:: apilevel
 

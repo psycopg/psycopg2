@@ -199,7 +199,8 @@ exit:
 }
 
 
-#define psyco_parse_dsn_doc "parse_dsn(dsn) -> dict"
+#define psyco_parse_dsn_doc \
+"parse_dsn(dsn) -> dict -- parse a connection string into parameters"
 
 PyObject *
 psyco_parse_dsn(PyObject *self, PyObject *args, PyObject *kwargs)
@@ -219,7 +220,7 @@ psyco_parse_dsn(PyObject *self, PyObject *args, PyObject *kwargs)
     options = PQconninfoParse(Bytes_AS_STRING(dsn), &err);
     if (options == NULL) {
         if (err != NULL) {
-            PyErr_Format(ProgrammingError, "error parsing the dsn: %s", err);
+            PyErr_Format(ProgrammingError, "invalid dsn: %s", err);
             PQfreemem(err);
         } else {
             PyErr_SetString(OperationalError, "PQconninfoParse() failed");

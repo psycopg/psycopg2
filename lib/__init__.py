@@ -81,12 +81,12 @@ else:
     del Decimal, Adapter
 
 
-def connect(dsn=None,
-        connection_factory=None, cursor_factory=None, async=False, **kwargs):
+def connect(dsn=None, connection_factory=None, cursor_factory=None,
+        async=False, **kwargs):
     """
     Create a new database connection.
 
-    The connection parameters can be specified either as a string:
+    The connection parameters can be specified as a string:
 
         conn = psycopg2.connect("dbname=test user=postgres password=secret")
 
@@ -94,9 +94,9 @@ def connect(dsn=None,
 
         conn = psycopg2.connect(database="test", user="postgres", password="secret")
 
-    The basic connection parameters are:
+    Or as a mix of both. The basic connection parameters are:
 
-    - *dbname*: the database name (only in dsn string)
+    - *dbname*: the database name
     - *database*: the database name (only as keyword argument)
     - *user*: user name used to authenticate
     - *password*: password used to authenticate
@@ -116,7 +116,11 @@ def connect(dsn=None,
     library: the list of supported parameters depends on the library version.
 
     """
-    conn = _connect(dsn, connection_factory, async, **kwargs)
+    if dsn is None and not kwargs:
+        raise TypeError('missing dsn and no parameters')
+
+    dsn = _ext.make_dsn(dsn, **kwargs)
+    conn = _connect(dsn, connection_factory=connection_factory, async=async)
     if cursor_factory is not None:
         conn.cursor_factory = cursor_factory
 
