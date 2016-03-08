@@ -92,13 +92,8 @@ $(PACKAGE)/tests/%.py: tests/%.py
 	$(PYTHON) setup.py build_py $(BUILD_OPT)
 	touch $@
 
-$(SDIST): MANIFEST $(SOURCE)
+$(SDIST): $(SOURCE)
 	$(PYTHON) setup.py sdist $(SDIST_OPT)
-
-MANIFEST: MANIFEST.in $(SOURCE)
-	# Run twice as MANIFEST.in includes MANIFEST
-	$(PYTHON) setup.py sdist --manifest-only
-	$(PYTHON) setup.py sdist --manifest-only
 
 # docs depend on the build as it partly use introspection.
 doc/html/genindex.html: $(PLATLIB) $(PURELIB) $(SOURCE_DOC)
@@ -111,5 +106,5 @@ doc/docs.zip: doc/html/genindex.html
 	(cd doc/html && zip -r ../docs.zip *)
 
 clean:
-	rm -rf build MANIFEST
+	rm -rf build
 	$(MAKE) -C doc clean
