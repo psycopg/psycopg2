@@ -18,7 +18,7 @@ The current `!psycopg2` implementation supports:
     NOTE: keep consistent with setup.py and the /features/ page.
 
 - Python 2 versions from 2.5 to 2.7
-- Python 3 versions from 3.1 to 3.4
+- Python 3 versions from 3.1 to 3.5
 - PostgreSQL versions from 7.4 to 9.4
 
 .. _PostgreSQL: http://www.postgresql.org/
