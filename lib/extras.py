@@ -39,12 +39,12 @@ import psycopg2
 from psycopg2 import extensions as _ext
 from psycopg2.extensions import cursor as _cursor
 from psycopg2.extensions import connection as _connection
-from psycopg2.extensions import REPLICATION_PHYSICAL, REPLICATION_LOGICAL
-from psycopg2.extensions import ReplicationConnection as _replicationConnection
-from psycopg2.extensions import ReplicationCursor as _replicationCursor
-from psycopg2.extensions import ReplicationMessage
 from psycopg2.extensions import adapt as _A, quote_ident
 from psycopg2.extensions import b
+from psycopg2._psycopg import REPLICATION_PHYSICAL, REPLICATION_LOGICAL
+from psycopg2._psycopg import ReplicationConnection as _replicationConnection
+from psycopg2._psycopg import ReplicationCursor as _replicationCursor
+from psycopg2._psycopg import ReplicationMessage
 
 
 class DictCursorBase(_cursor):
