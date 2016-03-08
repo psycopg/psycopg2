@@ -73,7 +73,6 @@ HIDDEN PyObject *psyco_null = NULL;
 /* The type of the cursor.description items */
 HIDDEN PyObject *psyco_DescriptionType = NULL;
 
-
 /** connect module-level function **/
 #define psyco_connect_doc \
 "_connect(dsn, [connection_factory], [async]) -- New database connection.\n\n"
@@ -87,6 +86,7 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
     int async = 0;
 
     static char *kwlist[] = {"dsn", "connection_factory", "async", NULL};
+
     if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|Oi", kwlist,
                                      &dsn, &factory, &async)) {
         return NULL;

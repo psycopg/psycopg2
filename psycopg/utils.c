@@ -124,50 +124,6 @@ psycopg_escape_identifier_easy(const char *from, Py_ssize_t len)
     return rv;
 }
 
-char *
-psycopg_escape_conninfo(const char *from, Py_ssize_t len)
-{
-    char *rv = NULL;
-    const char *src;
-    const char *end;
-    char *dst;
-    int space = 0;
-
-    if (!len) { len = strlen(from); }
-    end = from + len;
-
-    if (!(rv = PyMem_Malloc(3 + 2 * len))) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-
-    /* check for any whitespace or empty string */
-    if (from < end && *from) {
-        for (src = from; src < end && *src; ++src) {
-            if (isspace(*src)) {
-                space = 1;
-                break;
-            }
-        }
-    } else {
-        /* empty string: we should produce '' */
-        space = 1;
-    }
-
-    dst = rv;
-    if (space) { *(dst++) = '\''; }
-    /* scan and copy */
-    for (src = from; src < end && *src; ++src, ++dst) {
-        if (*src == '\'' || *src == '\\')
-            *(dst++) = '\\';
-        *dst = *src;
-    }
-    if (space) { *(dst++) = '\''; }
-    *dst = '\0';
-
-    return rv;
-}
-
 /* Duplicate a string.
  *
  * Allocate a new buffer on the Python heap containing the new string.
