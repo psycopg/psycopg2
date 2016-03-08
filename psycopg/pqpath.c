@@ -1393,7 +1393,11 @@ _pq_copy_in_v3(cursorObject *curs)
                     Py_DECREF(str);
                 }
             }
-            PyErr_Restore(t, ex, tb);
+            /* Clear the Py exception: it will be re-raised from the libpq */
+            Py_XDECREF(t);
+            Py_XDECREF(ex);
+            Py_XDECREF(tb);
+            PyErr_Clear();
         }
         res = PQputCopyEnd(curs->conn->pgconn, buf);
     }
