@@ -58,81 +58,88 @@ psyco_repl_conn_get_type(replicationConnectionObject *self)
     return res;
 }
 
+
 static int
 replicationConnection_init(PyObject *obj, PyObject *args, PyObject *kwargs)
 {
     replicationConnectionObject *self = (replicationConnectionObject *)obj;
-    PyObject *dsn = NULL;
-    PyObject *async = NULL;
-    PyObject *tmp = NULL;
-    const char *repl = NULL;
+    PyObject *dsn = NULL, *replication_type = NULL,
+        *item = NULL, *ext = NULL, *make_dsn = NULL,
+        *extras = NULL, *cursor = NULL;
+    int async = 0;
     int ret = -1;
 
-    Py_XINCREF(args);
-    Py_XINCREF(kwargs);
+    /* 'replication_type' is not actually optional, but there's no
+       good way to put it before 'async' in the list */
+    static char *kwlist[] = {"dsn", "async", "replication_type", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|iO", kwlist,
+                                     &dsn, &async, &replication_type)) { return ret; }
 
-    /* dsn, async, replication_type */
-    if (!(dsn = parse_arg(0, "dsn", Py_None, args, kwargs))) { goto exit; }
-    if (!(async = parse_arg(1, "async", Py_False, args, kwargs))) { goto exit; }
-    if (!(tmp = parse_arg(2, "replication_type", Py_None, args, kwargs))) { goto exit; }
+    /*
+      We have to call make_dsn() to add replication-specific
+      connection parameters, because the DSN might be an URI (if there
+      were no keyword arguments to connect() it is passed unchanged).
+    */
+    /* we reuse args and kwargs to call make_dsn() and parent type's tp_init() */
+    if (!(kwargs = PyDict_New())) { return ret; }
+    Py_INCREF(args);
 
-    if (tmp == replicationPhysicalConst) {
+    /* we also reuse the dsn to hold the result of the make_dsn() call */
+    Py_INCREF(dsn);
+
+    if (!(ext = PyImport_ImportModule("psycopg2.extensions"))) { goto exit; }
+    if (!(make_dsn = PyObject_GetAttrString(ext, "make_dsn"))) { goto exit; }
+
+    /* all the nice stuff is located in python-level ReplicationCursor class */
+    if (!(extras = PyImport_ImportModule("psycopg2.extras"))) { goto exit; }
+    if (!(cursor = PyObject_GetAttrString(extras, "ReplicationCursor"))) { goto exit; }
+
+    /* checking the object reference helps to avoid recognizing
+       unrelated integer constants as valid input values */
+    if (replication_type == replicationPhysicalConst) {
         self->type = REPLICATION_PHYSICAL;
-        repl = "true";
-    } else if (tmp == replicationLogicalConst) {
+
+#define SET_ITEM(k, v) \
+        if (!(item = Text_FromUTF8(#v))) { goto exit; } \
+        if (PyDict_SetItemString(kwargs, #k, item) != 0) { goto exit; } \
+        Py_DECREF(item); \
+        item = NULL;
+
+        SET_ITEM(replication, true);
+        SET_ITEM(dbname, replication);  /* required for .pgpass lookup */
+    } else if (replication_type == replicationLogicalConst) {
         self->type = REPLICATION_LOGICAL;
-        repl = "database";
+
+        SET_ITEM(replication, database);
+#undef SET_ITEM
     } else {
         PyErr_SetString(PyExc_TypeError,
                         "replication_type must be either REPLICATION_PHYSICAL or REPLICATION_LOGICAL");
         goto exit;
     }
-    Py_DECREF(tmp);
-    tmp = NULL;
-
-    if (dsn != Py_None) {
-        if (kwargs && PyMapping_Size(kwargs) > 0) {
-            PyErr_SetString(PyExc_TypeError, "both dsn and parameters given");
-            goto exit;
-        } else {
-            if (!(tmp = PyTuple_Pack(1, dsn))) { goto exit; }
-
-            Py_XDECREF(kwargs);
-            if (!(kwargs = psyco_parse_dsn(NULL, tmp, NULL))) { goto exit; }
-        }
-    } else {
-        if (!(kwargs && PyMapping_Size(kwargs) > 0)) {
-            PyErr_SetString(PyExc_TypeError, "missing dsn and no parameters");
-            goto exit;
-        }
-    }
-
-    if (!PyMapping_HasKeyString(kwargs, "replication")) {
-        PyMapping_SetItemString(kwargs, "replication", Text_FromUTF8(repl));
-    }
-    /* with physical specify dbname=replication for .pgpass lookup */
-    if (self->type == REPLICATION_PHYSICAL) {
-        PyMapping_SetItemString(kwargs, "dbname", Text_FromUTF8("replication"));
-    }
-
-    Py_DECREF(dsn);
-    if (!(dsn = psyco_make_dsn(NULL, NULL, kwargs))) { goto exit; }
 
     Py_DECREF(args);
-    Py_DECREF(kwargs);
-    kwargs = NULL;
-    if (!(args = PyTuple_Pack(2, dsn, async))) { goto exit; }
+    if (!(args = PyTuple_Pack(1, dsn))) { goto exit; }
 
+    Py_DECREF(dsn);
+    if (!(dsn = PyObject_Call(make_dsn, args, kwargs))) { goto exit; }
+
+    Py_DECREF(args);
+    if (!(args = Py_BuildValue("(Oi)", dsn, async))) { goto exit; }
+
+    /* only attempt the connection once we've handled all possible errors */
     if ((ret = connectionType.tp_init(obj, args, NULL)) < 0) { goto exit; }
 
     self->conn.autocommit = 1;
-    self->conn.cursor_factory = (PyObject *)&replicationCursorType;
-    Py_INCREF(self->conn.cursor_factory);
+    Py_INCREF(self->conn.cursor_factory = cursor);
 
 exit:
-    Py_XDECREF(tmp);
+    Py_XDECREF(item);
+    Py_XDECREF(ext);
+    Py_XDECREF(make_dsn);
+    Py_XDECREF(extras);
+    Py_XDECREF(cursor);
     Py_XDECREF(dsn);
-    Py_XDECREF(async);
     Py_XDECREF(args);
     Py_XDECREF(kwargs);
 

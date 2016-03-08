@@ -441,25 +441,14 @@ class MinTimeLoggingCursor(LoggingCursor):
         return LoggingCursor.callproc(self, procname, vars)
 
 
-class ReplicationConnectionBase(_replicationConnection):
-    """
-    Base class for Logical and Physical replication connection
-    classes.  Uses `ReplicationCursor` automatically.
-    """
-
-    def __init__(self, *args, **kwargs):
-        super(ReplicationConnectionBase, self).__init__(*args, **kwargs)
-        self.cursor_factory = ReplicationCursor
-
-
-class LogicalReplicationConnection(ReplicationConnectionBase):
+class LogicalReplicationConnection(_replicationConnection):
 
     def __init__(self, *args, **kwargs):
         kwargs['replication_type'] = REPLICATION_LOGICAL
         super(LogicalReplicationConnection, self).__init__(*args, **kwargs)
 
 
-class PhysicalReplicationConnection(ReplicationConnectionBase):
+class PhysicalReplicationConnection(_replicationConnection):
 
     def __init__(self, *args, **kwargs):
         kwargs['replication_type'] = REPLICATION_PHYSICAL

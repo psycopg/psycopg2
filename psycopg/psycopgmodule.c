@@ -74,103 +74,23 @@ HIDDEN PyObject *psyco_null = NULL;
 HIDDEN PyObject *psyco_DescriptionType = NULL;
 
 
-/* finds a keyword or positional arg (pops it from kwargs if found there) */
-PyObject *
-parse_arg(int pos, char *name, PyObject *defval, PyObject *args, PyObject *kwargs)
-{
-    Py_ssize_t nargs = PyTuple_GET_SIZE(args);
-    PyObject *val = NULL;
-
-    if (kwargs && PyMapping_HasKeyString(kwargs, name)) {
-        val = PyMapping_GetItemString(kwargs, name);
-        Py_XINCREF(val);
-        PyMapping_DelItemString(kwargs, name); /* pop from the kwargs dict! */
-    }
-    if (nargs > pos) {
-        if (!val) {
-            val = PyTuple_GET_ITEM(args, pos);
-            Py_XINCREF(val);
-        } else {
-            PyErr_Format(PyExc_TypeError,
-                         "parse_args() got multiple values for keyword argument '%s'", name);
-            return NULL;
-        }
-    }
-    if (!val) {
-        val = defval;
-        Py_XINCREF(val);
-    }
-
-    return val;
-}
-
-
-#define psyco_parse_args_doc \
-"parse_args(...) -- parse connection parameters.\n\n" \
-"Return a tuple of (dsn, connection_factory, async)"
-
-PyObject *
-psyco_parse_args(PyObject *self, PyObject *args, PyObject *kwargs)
-{
-    Py_ssize_t nargs = PyTuple_GET_SIZE(args);
-    PyObject *dsn = NULL;
-    PyObject *factory = NULL;
-    PyObject *async = NULL;
-    PyObject *res = NULL;
-
-    if (nargs > 3) {
-        PyErr_Format(PyExc_TypeError,
-                     "parse_args() takes at most 3 arguments (%d given)", (int)nargs);
-        goto exit;
-    }
-    /* parse and remove all keywords we know, so they are not interpreted as part of DSN */
-    if (!(dsn = parse_arg(0, "dsn", Py_None, args, kwargs))) { goto exit; }
-    if (!(factory = parse_arg(1, "connection_factory", Py_None,
-                              args, kwargs))) { goto exit; }
-    if (!(async = parse_arg(2, "async", Py_False, args, kwargs))) { goto exit; }
-
-    if (kwargs && PyMapping_Size(kwargs) > 0) {
-        if (dsn == Py_None) {
-            Py_DECREF(dsn);
-            if (!(dsn = psyco_make_dsn(NULL, NULL, kwargs))) { goto exit; }
-        } else {
-            PyErr_SetString(PyExc_TypeError, "both dsn and parameters given");
-            goto exit;
-        }
-    } else {
-        if (dsn == Py_None) {
-            PyErr_SetString(PyExc_TypeError, "missing dsn and no parameters");
-            goto exit;
-        }
-    }
-
-    res = PyTuple_Pack(3, dsn, factory, async);
-
-exit:
-    Py_XDECREF(dsn);
-    Py_XDECREF(factory);
-    Py_XDECREF(async);
-
-    return res;
-}
-
-
 /** connect module-level function **/
 #define psyco_connect_doc \
-"_connect(dsn, [connection_factory], [async], **kwargs) -- New database connection.\n\n"
+"_connect(dsn, [connection_factory], [async]) -- New database connection.\n\n"
 
 static PyObject *
 psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
 {
     PyObject *conn = NULL;
-    PyObject *tuple = NULL;
     PyObject *factory = NULL;
     const char *dsn = NULL;
     int async = 0;
 
-    if (!(tuple = psyco_parse_args(self, args, keywds))) { goto exit; }
-
-    if (!PyArg_ParseTuple(tuple, "s|Oi", &dsn, &factory, &async)) { goto exit; }
+    static char *kwlist[] = {"dsn", "connection_factory", "async", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|Oi", kwlist,
+                                     &dsn, &factory, &async)) {
+        return NULL;
+    }
 
     Dprintf("psyco_connect: dsn = '%s', async = %d", dsn, async);
 
@@ -192,9 +112,6 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
         conn = PyObject_CallFunction(factory, "si", dsn, async);
     }
 
-exit:
-    Py_XDECREF(tuple);
-
     return conn;
 }
 
@@ -202,7 +119,7 @@ exit:
 #define psyco_parse_dsn_doc \
 "parse_dsn(dsn) -> dict -- parse a connection string into parameters"
 
-PyObject *
+static PyObject *
 psyco_parse_dsn(PyObject *self, PyObject *args, PyObject *kwargs)
 {
     char *err = NULL;
@@ -249,114 +166,6 @@ exit:
     PQconninfoFree(options);    /* safe on null */
     Py_XDECREF(dict);
     Py_XDECREF(dsn);
-
-    return res;
-}
-
-
-#define psyco_make_dsn_doc "make_dsn(**kwargs) -> str"
-
-PyObject *
-psyco_make_dsn(PyObject *self, PyObject *args, PyObject *kwargs)
-{
-    Py_ssize_t len, pos;
-    PyObject *res = NULL;
-    PyObject *key = NULL, *value = NULL;
-    PyObject *newkey, *newval;
-    PyObject *dict = NULL;
-    char *str = NULL, *p, *q;
-
-    if (args && (len = PyTuple_Size(args)) > 0) {
-        PyErr_Format(PyExc_TypeError, "make_dsn() takes no arguments (%d given)", (int)len);
-        goto exit;
-    }
-    if (kwargs == NULL) {
-        return Text_FromUTF8("");
-    }
-
-    /* iterate through kwargs, calculating the total resulting string
-       length and saving prepared key/values to a temp. dict */
-    if (!(dict = PyDict_New())) { goto exit; }
-
-    len = 0;
-    pos = 0;
-    while (PyDict_Next(kwargs, &pos, &key, &value)) {
-        if (value == NULL || value == Py_None) { continue; }
-
-        Py_INCREF(key); /* for ensure_bytes */
-        if (!(newkey = psycopg_ensure_bytes(key))) { goto exit; }
-
-        /* special handling of 'database' keyword */
-        if (strcmp(Bytes_AsString(newkey), "database") == 0) {
-            key = Bytes_FromString("dbname");
-            Py_DECREF(newkey);
-        } else {
-            key = newkey;
-        }
-
-        /* now transform the value */
-        if (Bytes_CheckExact(value)) {
-            Py_INCREF(value);
-        } else if (PyUnicode_CheckExact(value)) {
-            if (!(value = PyUnicode_AsUTF8String(value))) { goto exit; }
-        } else {
-            /* this could be port=5432, so we need to get the text representation */
-            if (!(value = PyObject_Str(value))) { goto exit; }
-            /* and still ensure it's bytes() (but no need to incref here) */
-            if (!(value = psycopg_ensure_bytes(value))) { goto exit; }
-        }
-
-        /* passing NULL for plen checks for NIL bytes in content and errors out */
-        if (Bytes_AsStringAndSize(value, &str, NULL) < 0) { goto exit; }
-        /* escape any special chars */
-        if (!(str = psycopg_escape_conninfo(str, 0))) { goto exit; }
-        if (!(newval = Bytes_FromString(str))) {
-            goto exit;
-        }
-        PyMem_Free(str);
-        str = NULL;
-        Py_DECREF(value);
-        value = newval;
-
-        /* finally put into the temp. dict */
-        if (PyDict_SetItem(dict, key, value) < 0) { goto exit; }
-
-        len += Bytes_GET_SIZE(key) + Bytes_GET_SIZE(value) + 2; /* =, space or NIL */
-
-        Py_DECREF(key);
-        Py_DECREF(value);
-    }
-    key = NULL;
-    value = NULL;
-
-    if (!(str = PyMem_Malloc(len))) {
-        PyErr_NoMemory();
-        goto exit;
-    }
-
-    p = str;
-    pos = 0;
-    while (PyDict_Next(dict, &pos, &newkey, &newval)) {
-        if (p != str) {
-            *(p++) = ' ';
-        }
-        if (Bytes_AsStringAndSize(newkey, &q, &len) < 0) { goto exit; }
-        strncpy(p, q, len);
-        p += len;
-        *(p++) = '=';
-        if (Bytes_AsStringAndSize(newval, &q, &len) < 0) { goto exit; }
-        strncpy(p, q, len);
-        p += len;
-    }
-    *p = '\0';
-
-    res = Text_FromUTF8AndSize(str, p - str);
-
-exit:
-    PyMem_Free(str);
-    Py_XDECREF(key);
-    Py_XDECREF(value);
-    Py_XDECREF(dict);
 
     return res;
 }
@@ -1016,12 +825,8 @@ error:
 static PyMethodDef psycopgMethods[] = {
     {"_connect",  (PyCFunction)psyco_connect,
      METH_VARARGS|METH_KEYWORDS, psyco_connect_doc},
-    {"parse_args",  (PyCFunction)psyco_parse_args,
-     METH_VARARGS|METH_KEYWORDS, psyco_parse_args_doc},
     {"parse_dsn",  (PyCFunction)psyco_parse_dsn,
      METH_VARARGS|METH_KEYWORDS, psyco_parse_dsn_doc},
-    {"make_dsn",  (PyCFunction)psyco_make_dsn,
-     METH_VARARGS|METH_KEYWORDS, psyco_make_dsn_doc},
     {"quote_ident", (PyCFunction)psyco_quote_ident,
      METH_VARARGS|METH_KEYWORDS, psyco_quote_ident_doc},
     {"adapt",  (PyCFunction)psyco_microprotocols_adapt,

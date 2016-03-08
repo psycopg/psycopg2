@@ -40,8 +40,10 @@ typedef struct replicationConnectionObject {
     long int type;
 } replicationConnectionObject;
 
-#define REPLICATION_PHYSICAL 1
-#define REPLICATION_LOGICAL  2
+/* The funny constant values should help to avoid mixups with some
+   commonly used numbers like 1 and 2. */
+#define REPLICATION_PHYSICAL 12345678
+#define REPLICATION_LOGICAL  87654321
 
 extern HIDDEN PyObject *replicationPhysicalConst;
 extern HIDDEN PyObject *replicationLogicalConst;

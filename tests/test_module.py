@@ -40,7 +40,7 @@ class ConnectTestCase(unittest.TestCase):
             self.args = (dsn, connection_factory, async)
 
         self._connect_orig = psycopg2._connect
-        psycopg2._connect = connect_stub
+        psycopg2._connect = conect_stub
 
     def tearDown(self):
         psycopg2._connect = self._connect_orig

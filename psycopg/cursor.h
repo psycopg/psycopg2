@@ -72,8 +72,6 @@ struct cursorObject {
 #define DEFAULT_COPYSIZE 16384
 #define DEFAULT_COPYBUFF  8192
 
-    /* replication cursor attrs */
-
     PyObject *tuple_factory;    /* factory for result tuples */
     PyObject *tzinfo_factory;   /* factory for tzinfo objects */
 
