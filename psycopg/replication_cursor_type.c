@@ -59,7 +59,6 @@ psyco_repl_curs_start_replication_expert(replicationCursorObject *self,
     EXC_IF_CURS_CLOSED(curs);
     EXC_IF_GREEN(start_replication_expert);
     EXC_IF_TPC_PREPARED(conn, start_replication_expert);
-    EXC_IF_REPLICATING(self, start_replication_expert);
 
     Dprintf("psyco_repl_curs_start_replication_expert: '%s'; decode: %d", command, decode);
 
@@ -67,7 +66,6 @@ psyco_repl_curs_start_replication_expert(replicationCursorObject *self,
         res = Py_None;
         Py_INCREF(res);
 
-        self->started = 1;
         self->decode = decode;
         gettimeofday(&self->last_io, NULL);
     }
@@ -96,13 +94,6 @@ psyco_repl_curs_consume_stream(replicationCursorObject *self,
     EXC_IF_CURS_ASYNC(curs, consume_stream);
     EXC_IF_GREEN(consume_stream);
     EXC_IF_TPC_PREPARED(self->cur.conn, consume_stream);
-    EXC_IF_NOT_REPLICATING(self, consume_stream);
-
-    if (self->consuming) {
-        PyErr_SetString(ProgrammingError,
-                        "consume_stream cannot be used when already in the consume loop");
-        return NULL;
-    }
 
     Dprintf("psyco_repl_curs_consume_stream");
 
@@ -110,6 +101,19 @@ psyco_repl_curs_consume_stream(replicationCursorObject *self,
         psyco_set_error(ProgrammingError, curs, "keepalive_interval must be >= 1 (sec)");
         return NULL;
     }
+
+    if (self->consuming) {
+        PyErr_SetString(ProgrammingError,
+                        "consume_stream cannot be used when already in the consume loop");
+        return NULL;
+    }
+
+    if (curs->pgres == NULL || PQresultStatus(curs->pgres) != PGRES_COPY_BOTH) {
+        PyErr_SetString(ProgrammingError,
+                        "consume_stream: not replicating, call start_replication first");
+        return NULL;
+    }
+    CLEARPGRES(curs->pgres);
 
     self->consuming = 1;
 
@@ -135,7 +139,6 @@ psyco_repl_curs_read_message(replicationCursorObject *self)
     EXC_IF_CURS_CLOSED(curs);
     EXC_IF_GREEN(read_message);
     EXC_IF_TPC_PREPARED(self->cur.conn, read_message);
-    EXC_IF_NOT_REPLICATING(self, read_message);
 
     if (pq_read_replication_message(self, &msg) < 0) {
         return NULL;
@@ -160,7 +163,6 @@ psyco_repl_curs_send_feedback(replicationCursorObject *self,
     static char* kwlist[] = {"write_lsn", "flush_lsn", "apply_lsn", "reply", NULL};
 
     EXC_IF_CURS_CLOSED(curs);
-    EXC_IF_NOT_REPLICATING(self, send_feedback);
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|KKKi", kwlist,
                                      &write_lsn, &flush_lsn, &apply_lsn, &reply)) {
@@ -248,7 +250,6 @@ replicationCursor_init(PyObject *obj, PyObject *args, PyObject *kwargs)
 {
     replicationCursorObject *self = (replicationCursorObject *)obj;
 
-    self->started = 0;
     self->consuming = 0;
     self->decode = 0;
 
