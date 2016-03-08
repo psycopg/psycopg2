@@ -31,6 +31,7 @@ What's new in psycopg 2.6.2
   (:ticket:`#352`).
 - Fixed `!PersistentConnectionPool` on Python 3 (:ticket:`#348`).
 - Added support for setuptools/wheel (:ticket:`#370`).
+- Fix build on Windows with Python 3.5, VS 2015 (:ticket:`#380`).
 - Fixed `!errorcodes.lookup` initialization thread-safety (:ticket:`#382`).
 
 
