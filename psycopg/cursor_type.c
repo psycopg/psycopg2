@@ -1901,7 +1901,7 @@ cursor_dealloc(PyObject* obj)
     Py_TYPE(obj)->tp_free(obj);
 }
 
-int
+static int
 cursor_init(PyObject *obj, PyObject *args, PyObject *kwargs)
 {
     PyObject *conn;

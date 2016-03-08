@@ -244,8 +244,10 @@ static struct PyGetSetDef replicationCursorObject_getsets[] = {
 };
 
 static int
-replicationCursor_setup(replicationCursorObject* self)
+replicationCursor_init(PyObject *obj, PyObject *args, PyObject *kwargs)
 {
+    replicationCursorObject *self = (replicationCursorObject *)obj;
+
     self->started = 0;
     self->consuming = 0;
     self->decode = 0;
@@ -254,14 +256,7 @@ replicationCursor_setup(replicationCursorObject* self)
     self->flush_lsn = 0;
     self->apply_lsn = 0;
 
-    return 0;
-}
-
-static int
-replicationCursor_init(PyObject *obj, PyObject *args, PyObject *kwargs)
-{
-    replicationCursor_setup((replicationCursorObject *)obj);
-    return cursor_init(obj, args, kwargs);
+    return cursorType.tp_init(obj, args, kwargs);
 }
 
 static PyObject *
