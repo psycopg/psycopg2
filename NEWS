@@ -30,6 +30,7 @@ What's new in psycopg 2.6.2
 - Raise `!NotSupportedError` on unhandled server response status
   (:ticket:`#352`).
 - Fixed `!PersistentConnectionPool` on Python 3 (:ticket:`#348`).
+- Added support for setuptools/wheel (:ticket:`#370`).
 - Fixed `!errorcodes.lookup` initialization thread-safety (:ticket:`#382`).
 
 
