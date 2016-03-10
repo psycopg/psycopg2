@@ -376,12 +376,12 @@ lobject_read(lobjectObject *self, char *buf, size_t len)
 
 /* lobject_seek - move the current position in the lo */
 
-RAISES_NEG long
-lobject_seek(lobjectObject *self, long pos, int whence)
+RAISES_NEG Py_ssize_t
+lobject_seek(lobjectObject *self, Py_ssize_t pos, int whence)
 {
     PGresult *pgres = NULL;
     char *error = NULL;
-    long where;
+    Py_ssize_t where;
 
     Dprintf("lobject_seek: fd = %d, pos = %ld, whence = %d",
             self->fd, pos, whence);
@@ -391,12 +391,12 @@ lobject_seek(lobjectObject *self, long pos, int whence)
 
 #ifdef HAVE_LO64
     if (self->conn->server_version < 90300) {
-        where = (long)lo_lseek(self->conn->pgconn, self->fd, (int)pos, whence);
+        where = (Py_ssize_t)lo_lseek(self->conn->pgconn, self->fd, (int)pos, whence);
     } else {
-        where = lo_lseek64(self->conn->pgconn, self->fd, pos, whence);
+        where = (Py_ssize_t)lo_lseek64(self->conn->pgconn, self->fd, pos, whence);
     }
 #else
-    where = (long)lo_lseek(self->conn->pgconn, self->fd, (int)pos, whence);
+    where = (Py_ssize_t)lo_lseek(self->conn->pgconn, self->fd, (int)pos, whence);
 #endif
     Dprintf("lobject_seek: where = %ld", where);
     if (where < 0)
@@ -412,12 +412,12 @@ lobject_seek(lobjectObject *self, long pos, int whence)
 
 /* lobject_tell - tell the current position in the lo */
 
-RAISES_NEG long
+RAISES_NEG Py_ssize_t
 lobject_tell(lobjectObject *self)
 {
     PGresult *pgres = NULL;
     char *error = NULL;
-    long where;
+    Py_ssize_t where;
 
     Dprintf("lobject_tell: fd = %d", self->fd);
 
@@ -426,12 +426,12 @@ lobject_tell(lobjectObject *self)
 
 #ifdef HAVE_LO64
     if (self->conn->server_version < 90300) {
-        where = (long)lo_tell(self->conn->pgconn, self->fd);
+        where = (Py_ssize_t)lo_tell(self->conn->pgconn, self->fd);
     } else {
-        where = lo_tell64(self->conn->pgconn, self->fd);
+        where = (Py_ssize_t)lo_tell64(self->conn->pgconn, self->fd);
     }
 #else
-    where = (long)lo_tell(self->conn->pgconn, self->fd);
+    where = (Py_ssize_t)lo_tell(self->conn->pgconn, self->fd);
 #endif
     Dprintf("lobject_tell: where = %ld", where);
     if (where < 0)
