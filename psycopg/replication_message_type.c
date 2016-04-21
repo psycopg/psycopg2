@@ -125,15 +125,15 @@ psyco_replmsg_get_send_time(replicationMessageObject *self)
 
 static struct PyMemberDef replicationMessageObject_members[] = {
     {"cursor", T_OBJECT, OFFSETOF(cursor), READONLY,
-        "TODO"},
+        "Related ReplcationCursor object."},
     {"payload", T_OBJECT, OFFSETOF(payload), READONLY,
-        "TODO"},
+        "The actual message data."},
     {"data_size", T_INT, OFFSETOF(data_size), READONLY,
-        "TODO"},
+        "Raw size of the message data in bytes."},
     {"data_start", T_ULONGLONG, OFFSETOF(data_start), READONLY,
-        "TODO"},
+        "LSN position of the start of this message."},
     {"wal_end", T_ULONGLONG, OFFSETOF(wal_end), READONLY,
-        "TODO"},
+        "LSN position of the current end of WAL on the server."},
     {NULL}
 };
 
