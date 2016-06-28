@@ -100,7 +100,7 @@ class ConnectingTestCase(unittest.TestCase):
             self._conns
         except AttributeError, e:
             raise AttributeError(
-                "%s (did you remember calling ConnectingTestCase.setUp()?)"
+                "%s (did you forget to call ConnectingTestCase.setUp()?)"
                 % e)
 
         if 'dsn' in kwargs:
