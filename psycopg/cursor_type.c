@@ -335,7 +335,7 @@ _psyco_curs_merge_query_args(cursorObject *self,
         PyErr_Fetch(&err, &arg, &trace);
 
         if (err && PyErr_GivenExceptionMatches(err, PyExc_TypeError)) {
-            Dprintf("psyco_curs_execute: TypeError exception catched");
+            Dprintf("psyco_curs_execute: TypeError exception caught");
             PyErr_NormalizeException(&err, &arg, &trace);
 
             if (PyObject_HasAttrString(arg, "args")) {
