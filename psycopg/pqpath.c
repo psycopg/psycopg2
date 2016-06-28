@@ -167,8 +167,10 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult **pgres)
 
     /* if the connection has somehow beed broken, we mark the connection
        object as closed but requiring cleanup */
-    if (conn->pgconn != NULL && PQstatus(conn->pgconn) == CONNECTION_BAD)
+    if (conn->pgconn != NULL && PQstatus(conn->pgconn) == CONNECTION_BAD) {
         conn->closed = 2;
+        exc = OperationalError;
+    }
 
     if (pgres == NULL && curs != NULL)
         pgres = &curs->pgres;
@@ -202,9 +204,9 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult **pgres)
     if (code != NULL) {
         exc = exception_from_sqlstate(code);
     }
-    else {
-        /* Fallback if there is no exception code (reported happening e.g.
-         * when the connection is closed). */
+    else if (exc == NULL) {
+        /* Fallback if there is no exception code (unless we already
+           determined that the connection was closed). */
         exc = DatabaseError;
     }
 

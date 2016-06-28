@@ -527,7 +527,7 @@ class CursorTests(ConnectingTestCase):
                 cur.execute('select pg_terminate_backend(%s)', (pid1,))
 
             time.sleep(0.001)
-            with self.assertRaises(psycopg2.DatabaseError):
+            with self.assertRaises(psycopg2.OperationalError):
                 with victim_conn.cursor() as cur:
                     cur.execute('select 1')
                     wait_func(victim_conn)
