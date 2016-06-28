@@ -934,6 +934,9 @@ pq_execute(cursorObject *curs, const char *query, int async, int no_result, int 
 
         /* dont let pgres = NULL go to pq_fetch() */
         if (curs->pgres == NULL) {
+            if (CONNECTION_BAD == PQstatus(curs->conn->pgconn)) {
+                curs->conn->closed = 2;
+            }
             pthread_mutex_unlock(&(curs->conn->lock));
             Py_BLOCK_THREADS;
             if (!PyErr_Occurred()) {
@@ -961,6 +964,9 @@ pq_execute(cursorObject *curs, const char *query, int async, int no_result, int 
 
         CLEARPGRES(curs->pgres);
         if (PQsendQuery(curs->conn->pgconn, query) == 0) {
+            if (CONNECTION_BAD == PQstatus(curs->conn->pgconn)) {
+                curs->conn->closed = 2;
+            }
             pthread_mutex_unlock(&(curs->conn->lock));
             Py_BLOCK_THREADS;
             PyErr_SetString(OperationalError,
