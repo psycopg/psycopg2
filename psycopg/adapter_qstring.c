@@ -87,8 +87,7 @@ qstring_quote(qstringObject *self)
 
     /* if the wrapped object is not a string, this is an error */
     else {
-        PyErr_SetString(PyExc_TypeError,
-                        "can't quote non-string object (or missing encoding)");
+        PyErr_SetString(PyExc_TypeError, "can't quote non-string object");
         goto exit;
     }
 

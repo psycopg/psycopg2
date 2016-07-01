@@ -344,43 +344,6 @@ class TypesBasicTests(ConnectingTestCase):
         self.assertEqual(a, [2,4,'nada'])
 
 
-class TestStringAdapter(ConnectingTestCase):
-    def test_encoding_default(self):
-        from psycopg2.extensions import adapt
-        a = adapt("hello")
-        self.assertEqual(a.encoding, 'latin1')
-        self.assertEqual(a.getquoted(), "'hello'")
-
-        egrave = u'\xe8'
-        self.assertEqual(adapt(egrave).getquoted(), "'\xe8'")
-
-    def test_encoding_error(self):
-        from psycopg2.extensions import adapt
-        snowman = u"\u2603"
-        a = adapt(snowman)
-        self.assertRaises(UnicodeEncodeError, a.getquoted)
-
-    def test_set_encoding(self):
-        from psycopg2.extensions import adapt
-        snowman = u"\u2603"
-        a = adapt(snowman)
-        a.encoding = 'utf8'
-        self.assertEqual(a.encoding, 'utf8')
-        self.assertEqual(a.getquoted(), "'\xe2\x98\x83'")
-
-    def test_connection_wins_anyway(self):
-        from psycopg2.extensions import adapt
-        snowman = u"\u2603"
-        a = adapt(snowman)
-        a.encoding = 'latin9'
-
-        self.conn.set_client_encoding('utf8')
-        a.prepare(self.conn)
-
-        self.assertEqual(a.encoding, 'utf_8')
-        self.assertEqual(a.getquoted(), "'\xe2\x98\x83'")
-
-
 class AdaptSubclassTest(unittest.TestCase):
     def test_adapt_subtype(self):
         from psycopg2.extensions import adapt
