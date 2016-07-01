@@ -23,6 +23,7 @@
 # License for more details.
 
 import sys
+import testutils
 from testutils import unittest, ConnectingTestCase
 
 import psycopg2
@@ -204,6 +205,14 @@ class TestQuotedString(ConnectingTestCase):
         a.prepare(self.conn)
 
         self.assertEqual(a.encoding, 'utf_8')
+        self.assertEqual(a.getquoted(), b("'\xe2\x98\x83'"))
+
+    @testutils.skip_before_python(3)
+    def test_adapt_bytes(self):
+        snowman = u"\u2603"
+        self.conn.set_client_encoding('utf8')
+        a = psycopg2.extensions.QuotedString(snowman.encode('utf8'))
+        a.prepare(self.conn)
         self.assertEqual(a.getquoted(), b("'\xe2\x98\x83'"))
 
 

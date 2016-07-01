@@ -13,6 +13,7 @@ What's new in psycopg 2.6.2
   (:ticket:`#333`).
 - Fixed `!PersistentConnectionPool` on Python 3 (:ticket:`#348`).
 - Fixed segfault on `repr()` of an unitialized connection (:ticket:`#361`).
+- Allow adapting bytes using QuotedString on Python 3 too (:ticket:`#365`).
 - Added support for setuptools/wheel (:ticket:`#370`).
 - Fix build on Windows with Python 3.5, VS 2015 (:ticket:`#380`).
 - Fixed `!errorcodes.lookup` initialization thread-safety (:ticket:`#382`).
