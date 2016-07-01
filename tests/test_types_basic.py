@@ -95,11 +95,11 @@ class TypesBasicTests(ConnectingTestCase):
         except ValueError:
             return self.skipTest("inf not available on this platform")
         s = self.execute("SELECT %s AS foo", (float("inf"),))
-        self.failUnless(str(s) == "inf", "wrong float quoting: " + str(s))      
+        self.failUnless(str(s) == "inf", "wrong float quoting: " + str(s))
         self.failUnless(type(s) == float, "wrong float conversion: " + repr(s))
 
         s = self.execute("SELECT %s AS foo", (float("-inf"),))
-        self.failUnless(str(s) == "-inf", "wrong float quoting: " + str(s))      
+        self.failUnless(str(s) == "-inf", "wrong float quoting: " + str(s))
 
     def testBinary(self):
         if sys.version_info[0] < 3:
@@ -344,6 +344,43 @@ class TypesBasicTests(ConnectingTestCase):
         self.assertEqual(a, [2,4,'nada'])
 
 
+class TestStringAdapter(ConnectingTestCase):
+    def test_encoding_default(self):
+        from psycopg2.extensions import adapt
+        a = adapt("hello")
+        self.assertEqual(a.encoding, 'latin1')
+        self.assertEqual(a.getquoted(), "'hello'")
+
+        egrave = u'\xe8'
+        self.assertEqual(adapt(egrave).getquoted(), "'\xe8'")
+
+    def test_encoding_error(self):
+        from psycopg2.extensions import adapt
+        snowman = u"\u2603"
+        a = adapt(snowman)
+        self.assertRaises(UnicodeEncodeError, a.getquoted)
+
+    def test_set_encoding(self):
+        from psycopg2.extensions import adapt
+        snowman = u"\u2603"
+        a = adapt(snowman)
+        a.encoding = 'utf8'
+        self.assertEqual(a.encoding, 'utf8')
+        self.assertEqual(a.getquoted(), "'\xe2\x98\x83'")
+
+    def test_connection_wins_anyway(self):
+        from psycopg2.extensions import adapt
+        snowman = u"\u2603"
+        a = adapt(snowman)
+        a.encoding = 'latin9'
+
+        self.conn.set_client_encoding('utf8')
+        a.prepare(self.conn)
+
+        self.assertEqual(a.encoding, 'utf_8')
+        self.assertEqual(a.getquoted(), "'\xe2\x98\x83'")
+
+
 class AdaptSubclassTest(unittest.TestCase):
     def test_adapt_subtype(self):
         from psycopg2.extensions import adapt
@@ -364,8 +401,8 @@ class AdaptSubclassTest(unittest.TestCase):
         try:
             self.assertEqual(b('b'), adapt(C()).getquoted())
         finally:
-           del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
-           del psycopg2.extensions.adapters[B, psycopg2.extensions.ISQLQuote]
+            del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
+            del psycopg2.extensions.adapters[B, psycopg2.extensions.ISQLQuote]
 
     @testutils.skip_from_python(3)
     def test_no_mro_no_joy(self):
@@ -378,8 +415,7 @@ class AdaptSubclassTest(unittest.TestCase):
         try:
             self.assertRaises(psycopg2.ProgrammingError, adapt, B())
         finally:
-           del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
-
+            del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
 
     @testutils.skip_before_python(3)
     def test_adapt_subtype_3(self):
@@ -392,7 +428,7 @@ class AdaptSubclassTest(unittest.TestCase):
         try:
             self.assertEqual(b("a"), adapt(B()).getquoted())
         finally:
-           del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
+            del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
 
 
 class ByteaParserTest(unittest.TestCase):
@@ -480,6 +516,7 @@ class ByteaParserTest(unittest.TestCase):
 
         self.assertEqual(rv, tgt)
 
+
 def skip_if_cant_cast(f):
     @wraps(f)
     def skip_if_cant_cast_(self, *args, **kwargs):
@@ -499,4 +536,3 @@ def test_suite():
 
 if __name__ == "__main__":
     unittest.main()
-
