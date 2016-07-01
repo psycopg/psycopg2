@@ -1171,7 +1171,7 @@ connection_repr(connectionObject *self)
 {
     return PyString_FromFormat(
         "<connection object at %p; dsn: '%s', closed: %ld>",
-        self, self->dsn, self->closed);
+        self, (self->dsn ? self->dsn : "<unintialized>"), self->closed);
 }
 
 static int
