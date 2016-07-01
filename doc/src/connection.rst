@@ -568,6 +568,9 @@ The ``connection`` class
         .. versionadded:: 2.0.12
 
 
+    .. index::
+        pair: Connection; Parameters
+
     .. method:: get_dsn_parameters()
 
         Get the effective dsn parameters for the connection as a dictionary.
@@ -584,6 +587,8 @@ The ``connection`` class
         .. seealso:: libpq docs for `PQconninfo()`__ for details.
 
             .. __: http://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-PQCONNINFO
+
+        .. versionadded:: 2.7
 
 
     .. index::

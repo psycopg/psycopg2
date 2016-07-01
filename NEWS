@@ -15,6 +15,7 @@ New features:
   customized replacing them with any object exposing an `!append()` method
   (:ticket:`#326`).
 - Added `~psycopg2.extensions.quote_ident()` function (:ticket:`#359`).
+- Added `~connection.get_dsn_parameters()` connection method (:ticket:`#364`).
 
 
 What's new in psycopg 2.6.2
