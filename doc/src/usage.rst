@@ -864,11 +864,19 @@ Using COPY TO and COPY FROM
 
 Psycopg `cursor` objects provide an interface to the efficient
 PostgreSQL |COPY|__ command to move data from files to tables and back.
+
+Currently no adaptation is provided between Python and PostgreSQL types on
+|COPY|: the file can be any Python file-like object but its format must be in
+the format accepted by `PostgreSQL COPY command`__ (data fromat, escaped
+characters, etc).
+
+.. __: COPY_
+
 The methods exposed are:
 
 `~cursor.copy_from()`
     Reads data *from* a file-like object appending them to a database table
-    (:sql:`COPY table FROM file` syntax). The source file must have both
+    (:sql:`COPY table FROM file` syntax). The source file must provide both
     `!read()` and `!readline()` method.
 
 `~cursor.copy_to()`
