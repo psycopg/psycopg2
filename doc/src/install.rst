@@ -106,13 +106,15 @@ Install from a package
 
 **Microsoft Windows**
     There are two options to install a precompiled `psycopg2` package under windows:
-    
-    **Option 1:** Using `pip`__ (Included in python 2.7.9+ and python 3.4+) and a binary wheel package.  Launch windows' command prompt (`cmd.exe`) and execute the following command::
+
+    **Option 1:** Using `pip`__ (Included in python 2.7.9+ and python 3.4+)
+    and a binary wheel package.  Launch windows' command prompt (`cmd.exe`)
+    and execute the following command::
     
         pip install psycopg2
-    
+
     .. __: https://pip.pypa.io/en/stable/installing/
-    
+
     **Option 2:** Jason Erickson maintains a packaged `Windows port of Psycopg`__ with
     installation executable. Download. Double click. Done.
 
