@@ -119,8 +119,8 @@ static PyObject *
 psyco_parse_dsn(PyObject *self, PyObject *args, PyObject *kwargs)
 {
     char *err = NULL;
-    PQconninfoOption *options = NULL, *o;
-    PyObject *dict = NULL, *res = NULL, *dsn;
+    PQconninfoOption *options = NULL;
+    PyObject *res = NULL, *dsn;
 
     static char *kwlist[] = {"dsn", NULL};
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", kwlist, &dsn)) {
@@ -141,26 +141,10 @@ psyco_parse_dsn(PyObject *self, PyObject *args, PyObject *kwargs)
         goto exit;
     }
 
-    if (!(dict = PyDict_New())) { goto exit; }
-    for (o = options; o->keyword != NULL; o++) {
-        if (o->val != NULL) {
-            PyObject *value;
-            if (!(value = Text_FromUTF8(o->val))) { goto exit; }
-            if (PyDict_SetItemString(dict, o->keyword, value) != 0) {
-                Py_DECREF(value);
-                goto exit;
-            }
-            Py_DECREF(value);
-        }
-    }
-
-    /* success */
-    res = dict;
-    dict = NULL;
+    res = psycopg_dict_from_conninfo_options(options, /* include_password = */ 1);
 
 exit:
     PQconninfoFree(options);    /* safe on null */
-    Py_XDECREF(dict);
     Py_XDECREF(dsn);
 
     return res;

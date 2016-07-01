@@ -247,3 +247,32 @@ psycopg_is_text_file(PyObject *f)
     }
 }
 
+/* Make a dict out of PQconninfoOption array */
+PyObject *
+psycopg_dict_from_conninfo_options(PQconninfoOption *options, int include_password)
+{
+    PyObject *dict, *res = NULL;
+    PQconninfoOption *o;
+
+    if (!(dict = PyDict_New())) { goto exit; }
+    for (o = options; o->keyword != NULL; o++) {
+        if (o->val != NULL &&
+            (include_password || strcmp(o->keyword, "password") != 0)) {
+            PyObject *value;
+            if (!(value = Text_FromUTF8(o->val))) { goto exit; }
+            if (PyDict_SetItemString(dict, o->keyword, value) != 0) {
+                Py_DECREF(value);
+                goto exit;
+            }
+            Py_DECREF(value);
+        }
+    }
+
+    res = dict;
+    dict = NULL;
+
+exit:
+    Py_XDECREF(dict);
+
+    return res;
+}
