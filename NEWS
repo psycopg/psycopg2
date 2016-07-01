@@ -39,6 +39,7 @@ What's new in psycopg 2.6.2
 - Fixed `!errorcodes.lookup` initialization thread-safety (:ticket:`#382`).
 - Fixed `!read()` exception propagation in copy_from (:ticket:`#412`).
 - Fixed possible NULL TZ decref  (:ticket:`#424`).
+- `~psycopg2.errorcodes` map updated to PostgreSQL 9.5.
 
 
 What's new in psycopg 2.6.1

@@ -33,7 +33,7 @@ def main():
     file_start = read_base_file(filename)
     # If you add a version to the list fix the docs (errorcodes.rst, err.rst)
     classes, errors = fetch_errors(
-        ['8.1', '8.2', '8.3', '8.4', '9.0', '9.1', '9.2', '9.3', '9.4'])
+        ['8.1', '8.2', '8.3', '8.4', '9.0', '9.1', '9.2', '9.3', '9.4', '9.5'])
 
     f = open(filename, "w")
     for line in file_start:
