@@ -189,7 +189,7 @@ class TestStringAdapter(ConnectingTestCase):
         from psycopg2.extensions import adapt
         a = adapt("hello")
         self.assertEqual(a.encoding, 'latin1')
-        self.assertEqual(a.getquoted(), "'hello'")
+        self.assertEqual(a.getquoted(), b("'hello'"))
 
         # NOTE: we can't really test an encoding different from utf8, because
         # when encoding without connection the libpq will use parameters from
@@ -212,7 +212,7 @@ class TestStringAdapter(ConnectingTestCase):
         a = adapt(snowman)
         a.encoding = 'utf8'
         self.assertEqual(a.encoding, 'utf8')
-        self.assertEqual(a.getquoted(), "'\xe2\x98\x83'")
+        self.assertEqual(a.getquoted(), b("'\xe2\x98\x83'"))
 
     def test_connection_wins_anyway(self):
         from psycopg2.extensions import adapt
@@ -224,7 +224,7 @@ class TestStringAdapter(ConnectingTestCase):
         a.prepare(self.conn)
 
         self.assertEqual(a.encoding, 'utf_8')
-        self.assertEqual(a.getquoted(), "'\xe2\x98\x83'")
+        self.assertEqual(a.getquoted(), b("'\xe2\x98\x83'"))
 
 
 def test_suite():
