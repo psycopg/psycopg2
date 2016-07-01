@@ -18,6 +18,7 @@ What's new in psycopg 2.6.2
 - Fix build on Windows with Python 3.5, VS 2015 (:ticket:`#380`).
 - Fixed `!errorcodes.lookup` initialization thread-safety (:ticket:`#382`).
 - Fixed `!read()` exception propagation in copy_from (:ticket:`#412`).
+- Fixed possible NULL TZ decref  (:ticket:`#424`).
 
 
 What's new in psycopg 2.6.1

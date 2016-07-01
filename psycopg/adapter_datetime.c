@@ -451,7 +451,7 @@ psyco_TimestampFromTicks(PyObject *self, PyObject *args)
         tz);
 
 exit:
-    Py_DECREF(tz);
+    Py_XDECREF(tz);
     Py_XDECREF(m);
     return res;
 }
