@@ -75,15 +75,13 @@ qstring_quote(qstringObject *self)
         }
     }
 
-#if PY_MAJOR_VERSION < 3
-    /* if the wrapped object is a simple string, we don't know how to
+    /* if the wrapped object is a binary string, we don't know how to
        (re)encode it, so we pass it as-is */
-    else if (PyString_Check(self->wrapped)) {
+    else if (Bytes_Check(self->wrapped)) {
         str = self->wrapped;
         /* INCREF to make it ref-wise identical to unicode one */
         Py_INCREF(str);
     }
-#endif
 
     /* if the wrapped object is not a string, this is an error */
     else {
