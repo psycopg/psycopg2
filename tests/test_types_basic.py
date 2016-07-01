@@ -95,11 +95,11 @@ class TypesBasicTests(ConnectingTestCase):
         except ValueError:
             return self.skipTest("inf not available on this platform")
         s = self.execute("SELECT %s AS foo", (float("inf"),))
-        self.failUnless(str(s) == "inf", "wrong float quoting: " + str(s))      
+        self.failUnless(str(s) == "inf", "wrong float quoting: " + str(s))
         self.failUnless(type(s) == float, "wrong float conversion: " + repr(s))
 
         s = self.execute("SELECT %s AS foo", (float("-inf"),))
-        self.failUnless(str(s) == "-inf", "wrong float quoting: " + str(s))      
+        self.failUnless(str(s) == "-inf", "wrong float quoting: " + str(s))
 
     def testBinary(self):
         if sys.version_info[0] < 3:
@@ -364,8 +364,8 @@ class AdaptSubclassTest(unittest.TestCase):
         try:
             self.assertEqual(b('b'), adapt(C()).getquoted())
         finally:
-           del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
-           del psycopg2.extensions.adapters[B, psycopg2.extensions.ISQLQuote]
+            del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
+            del psycopg2.extensions.adapters[B, psycopg2.extensions.ISQLQuote]
 
     @testutils.skip_from_python(3)
     def test_no_mro_no_joy(self):
@@ -378,8 +378,7 @@ class AdaptSubclassTest(unittest.TestCase):
         try:
             self.assertRaises(psycopg2.ProgrammingError, adapt, B())
         finally:
-           del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
-
+            del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
 
     @testutils.skip_before_python(3)
     def test_adapt_subtype_3(self):
@@ -392,7 +391,7 @@ class AdaptSubclassTest(unittest.TestCase):
         try:
             self.assertEqual(b("a"), adapt(B()).getquoted())
         finally:
-           del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
+            del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
 
 
 class ByteaParserTest(unittest.TestCase):
@@ -480,6 +479,7 @@ class ByteaParserTest(unittest.TestCase):
 
         self.assertEqual(rv, tgt)
 
+
 def skip_if_cant_cast(f):
     @wraps(f)
     def skip_if_cant_cast_(self, *args, **kwargs):
@@ -499,4 +499,3 @@ def test_suite():
 
 if __name__ == "__main__":
     unittest.main()
-

@@ -29,6 +29,7 @@ import psycopg2
 import psycopg2.extensions
 from psycopg2.extensions import b
 
+
 class QuotingTestCase(ConnectingTestCase):
     r"""Checks the correct quoting of strings and binary objects.
 
@@ -51,7 +52,7 @@ class QuotingTestCase(ConnectingTestCase):
         data = """some data with \t chars
         to escape into, 'quotes' and \\ a backslash too.
         """
-        data += "".join(map(chr, range(1,127)))
+        data += "".join(map(chr, range(1, 127)))
 
         curs = self.conn.cursor()
         curs.execute("SELECT %s;", (data,))
@@ -90,13 +91,13 @@ class QuotingTestCase(ConnectingTestCase):
         if server_encoding != "UTF8":
             return self.skipTest(
                 "Unicode test skipped since server encoding is %s"
-                    % server_encoding)
+                % server_encoding)
 
         data = u"""some data with \t chars
         to escape into, 'quotes', \u20ac euro sign and \\ a backslash too.
         """
-        data += u"".join(map(unichr, [ u for u in range(1,65536)
-            if not 0xD800 <= u <= 0xDFFF ]))    # surrogate area
+        data += u"".join(map(unichr, [u for u in range(1, 65536)
+            if not 0xD800 <= u <= 0xDFFF]))    # surrogate area
         self.conn.set_client_encoding('UNICODE')
 
         psycopg2.extensions.register_type(psycopg2.extensions.UNICODE, self.conn)
@@ -156,7 +157,7 @@ class QuotingTestCase(ConnectingTestCase):
 
 
 class TestQuotedString(ConnectingTestCase):
-    def test_encoding(self):
+    def test_encoding_from_conn(self):
         q = psycopg2.extensions.QuotedString('hi')
         self.assertEqual(q.encoding, 'latin1')
 
@@ -164,10 +165,50 @@ class TestQuotedString(ConnectingTestCase):
         q.prepare(self.conn)
         self.assertEqual(q.encoding, 'utf_8')
 
+    def test_encoding_default(self):
+        from psycopg2.extensions import adapt
+        a = adapt("hello")
+        self.assertEqual(a.encoding, 'latin1')
+        self.assertEqual(a.getquoted(), "'hello'")
+
+        # NOTE: we can't really test an encoding different from utf8, because
+        # when encoding without connection the libpq will use parameters from
+        # a previous one, so what would happens depends jn the tests run order.
+        # egrave = u'\xe8'
+        # self.assertEqual(adapt(egrave).getquoted(), "'\xe8'")
+
+    def test_encoding_error(self):
+        from psycopg2.extensions import adapt
+        snowman = u"\u2603"
+        a = adapt(snowman)
+        self.assertRaises(UnicodeEncodeError, a.getquoted)
+
+    def test_set_encoding(self):
+        # Note: this works-ish mostly in case when the standard db connection
+        # we test with is utf8, otherwise the encoding chosen by PQescapeString
+        # may give bad results.
+        from psycopg2.extensions import adapt
+        snowman = u"\u2603"
+        a = adapt(snowman)
+        a.encoding = 'utf8'
+        self.assertEqual(a.encoding, 'utf8')
+        self.assertEqual(a.getquoted(), "'\xe2\x98\x83'")
+
+    def test_connection_wins_anyway(self):
+        from psycopg2.extensions import adapt
+        snowman = u"\u2603"
+        a = adapt(snowman)
+        a.encoding = 'latin9'
+
+        self.conn.set_client_encoding('utf8')
+        a.prepare(self.conn)
+
+        self.assertEqual(a.encoding, 'utf_8')
+        self.assertEqual(a.getquoted(), "'\xe2\x98\x83'")
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
 if __name__ == "__main__":
     unittest.main()
-

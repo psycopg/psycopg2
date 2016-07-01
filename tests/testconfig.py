@@ -34,5 +34,3 @@ if dbuser is not None:
     dsn += ' user=%s' % dbuser
 if dbpass is not None:
     dsn += ' password=%s' % dbpass
-
-
