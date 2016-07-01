@@ -351,7 +351,8 @@ class psycopg_build_ext(build_ext):
         self.libraries.append("advapi32")
         if self.compiler_is_msvc():
             # MSVC requires an explicit "libpq"
-            self.libraries.remove("pq")
+            if "pq" in self.libraries:
+                self.libraries.remove("pq")
             self.libraries.append("secur32")
             self.libraries.append("libpq")
             self.libraries.append("shfolder")
