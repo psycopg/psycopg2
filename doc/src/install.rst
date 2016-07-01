@@ -51,6 +51,16 @@ extension packages, *above all if you are a Windows or a Mac OS user*, please
 use a pre-compiled package and go straight to the :ref:`module usage <usage>`
 avoid bothering with the gory details.
 
+.. note::
+
+    Regardless of the way `!psycopg2` is installed, at runtime it will need to
+    use the libpq_ library. `!psycopg2` relies on the host OS to find the
+    library file (usually ``libpq.so`` or ``libpq.dll``): if the library is
+    installed in a standard location there is usually no problem; if the
+    library is in a non-standard location you will have to tell somehow
+    psycopg how to find it, which is OS-dependent (for instance setting a
+    suitable :envvar:`LD_LIBRARY_PATH` on Linux).
+
 
 
 .. _install-from-package:
