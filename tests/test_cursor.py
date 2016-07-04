@@ -27,7 +27,8 @@ import pickle
 import psycopg2
 import psycopg2.extensions
 from testutils import (unittest, ConnectingTestCase, skip_before_postgres,
-    skip_if_no_namedtuple, skip_if_no_getrefcount, slow)
+    skip_if_no_namedtuple, skip_if_no_getrefcount, slow, skip_if_no_superuser,
+    skip_if_windows)
 
 import psycopg2.extras
 
@@ -539,6 +540,9 @@ class CursorTests(ConnectingTestCase):
             self.assertRaises(exception, cur.callproc, procname, parameter_sequence)
             self.conn.rollback()
 
+    @skip_if_no_superuser
+    @skip_if_windows
+    @skip_before_postgres(8, 4)
     def test_external_close_sync(self):
         # If a "victim" connection is closed by a "control" connection
         # behind psycopg2's back, psycopg2 always handles it correctly:
@@ -550,6 +554,9 @@ class CursorTests(ConnectingTestCase):
         wait_func = lambda conn: None
         self._test_external_close(control_conn, connect_func, wait_func)
 
+    @skip_if_no_superuser
+    @skip_if_windows
+    @skip_before_postgres(8, 4)
     def test_external_close_async(self):
         # Issue #443 is in the async code too. Since the fix is duplicated,
         # so is the test.
@@ -575,10 +582,13 @@ class CursorTests(ConnectingTestCase):
                 cur.execute('select pg_terminate_backend(%s)', (pid1,))
 
             time.sleep(0.001)
-            with self.assertRaises(psycopg2.OperationalError):
+
+            def f():
                 with victim_conn.cursor() as cur:
                     cur.execute('select 1')
                     wait_func(victim_conn)
+
+            self.assertRaises(psycopg2.OperationalError, f)
 
             self.assertEqual(victim_conn.closed, 2)
 
