@@ -22,6 +22,8 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
+from __future__ import with_statement
+
 import time
 import pickle
 import psycopg2
@@ -528,12 +530,13 @@ class CursorTests(ConnectingTestCase):
             with control_conn.cursor() as cur:
                 cur.execute('select pg_terminate_backend(%s)', (pid1,))
 
-            time.sleep(0.001)
-            with self.assertRaises(psycopg2.OperationalError):
+            def f():
                 with victim_conn.cursor() as cur:
                     cur.execute('select 1')
                     wait_func(victim_conn)
 
+            time.sleep(0.001)
+            self.assertRaises(psycopg2.OperationalError, f)
             self.assertEqual(victim_conn.closed, 2)
 
 
