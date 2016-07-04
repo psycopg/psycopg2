@@ -71,16 +71,8 @@ class ConnectionTests(ConnectingTestCase):
         # ticket #148
         conn = self.conn
         cur = conn.cursor()
-        try:
-            cur.execute("select pg_terminate_backend(pg_backend_pid())")
-        except psycopg2.OperationalError, e:
-            if e.pgcode != psycopg2.errorcodes.ADMIN_SHUTDOWN:
-                raise
-        except psycopg2.DatabaseError, e:
-            # curiously when disconnected in green mode we get a DatabaseError
-            # without pgcode.
-            if e.pgcode is not None:
-                raise
+        self.assertRaises(psycopg2.OperationalError,
+            cur.execute, "select pg_terminate_backend(pg_backend_pid())")
 
         self.assertEqual(conn.closed, 2)
         conn.close()

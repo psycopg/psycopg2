@@ -193,7 +193,8 @@ class TestQuotedString(ConnectingTestCase):
         a = adapt(snowman)
         a.encoding = 'utf8'
         self.assertEqual(a.encoding, 'utf8')
-        self.assertEqual(a.getquoted(), b("'\xe2\x98\x83'"))
+        q = a.getquoted()
+        self.assert_(q in (b("'\xe2\x98\x83'"), b("E'\xe2\x98\x83'")), q)
 
     def test_connection_wins_anyway(self):
         from psycopg2.extensions import adapt
@@ -205,7 +206,8 @@ class TestQuotedString(ConnectingTestCase):
         a.prepare(self.conn)
 
         self.assertEqual(a.encoding, 'utf_8')
-        self.assertEqual(a.getquoted(), b("'\xe2\x98\x83'"))
+        q = a.getquoted()
+        self.assert_(q in (b("'\xe2\x98\x83'"), b("E'\xe2\x98\x83'")), q)
 
     @testutils.skip_before_python(3)
     def test_adapt_bytes(self):
@@ -213,7 +215,8 @@ class TestQuotedString(ConnectingTestCase):
         self.conn.set_client_encoding('utf8')
         a = psycopg2.extensions.QuotedString(snowman.encode('utf8'))
         a.prepare(self.conn)
-        self.assertEqual(a.getquoted(), b("'\xe2\x98\x83'"))
+        q = a.getquoted()
+        self.assert_(q in (b("'\xe2\x98\x83'"), b("E'\xe2\x98\x83'")), q)
 
 
 def test_suite():

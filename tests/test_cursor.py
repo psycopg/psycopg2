@@ -32,6 +32,8 @@ import psycopg2.extras
 from psycopg2.extensions import b
 from testutils import unittest, ConnectingTestCase, skip_before_postgres
 from testutils import skip_if_no_namedtuple, skip_if_no_getrefcount
+from testutils import skip_if_no_superuser, skip_if_windows
+
 
 class CursorTests(ConnectingTestCase):
 
@@ -51,8 +53,10 @@ class CursorTests(ConnectingTestCase):
         conn = self.conn
         cur = conn.cursor()
         cur.execute("create temp table test_exc (data int);")
+
         def buggygen():
-            yield 1//0
+            yield 1 // 0
+
         self.assertRaises(ZeroDivisionError,
             cur.executemany, "insert into test_exc values (%s)", buggygen())
         cur.close()
@@ -197,16 +201,16 @@ class CursorTests(ConnectingTestCase):
 
         self._create_withhold_table()
         curs = self.conn.cursor("W")
-        self.assertEqual(curs.withhold, False);
+        self.assertEqual(curs.withhold, False)
         curs.withhold = True
-        self.assertEqual(curs.withhold, True);
+        self.assertEqual(curs.withhold, True)
         curs.execute("select data from withhold order by data")
         self.conn.commit()
         self.assertEqual(curs.fetchall(), [(10,), (20,), (30,)])
         curs.close()
 
         curs = self.conn.cursor("W", withhold=True)
-        self.assertEqual(curs.withhold, True);
+        self.assertEqual(curs.withhold, True)
         curs.execute("select data from withhold order by data")
         self.conn.commit()
         self.assertEqual(curs.fetchall(), [(10,), (20,), (30,)])
@@ -268,18 +272,18 @@ class CursorTests(ConnectingTestCase):
         curs = self.conn.cursor()
         curs.execute("create table scrollable (data int)")
         curs.executemany("insert into scrollable values (%s)",
-            [ (i,) for i in range(100) ])
+            [(i,) for i in range(100)])
         curs.close()
 
         for t in range(2):
             if not t:
                 curs = self.conn.cursor("S")
-                self.assertEqual(curs.scrollable, None);
+                self.assertEqual(curs.scrollable, None)
                 curs.scrollable = True
             else:
                 curs = self.conn.cursor("S", scrollable=True)
 
-            self.assertEqual(curs.scrollable, True);
+            self.assertEqual(curs.scrollable, True)
             curs.itersize = 10
 
             # complex enough to make postgres cursors declare without
@@ -307,7 +311,7 @@ class CursorTests(ConnectingTestCase):
         curs = self.conn.cursor()
         curs.execute("create table scrollable (data int)")
         curs.executemany("insert into scrollable values (%s)",
-            [ (i,) for i in range(100) ])
+            [(i,) for i in range(100)])
         curs.close()
 
         curs = self.conn.cursor("S")    # default scrollability
@@ -344,7 +348,7 @@ class CursorTests(ConnectingTestCase):
     def test_iter_named_cursor_default_itersize(self):
         curs = self.conn.cursor('tmp')
         curs.execute('select generate_series(1,50)')
-        rv = [ (r[0], curs.rownumber) for r in curs ]
+        rv = [(r[0], curs.rownumber) for r in curs]
         # everything swallowed in one gulp
         self.assertEqual(rv, [(i,i) for i in range(1,51)])
 
@@ -353,7 +357,7 @@ class CursorTests(ConnectingTestCase):
         curs = self.conn.cursor('tmp')
         curs.itersize = 30
         curs.execute('select generate_series(1,50)')
-        rv = [ (r[0], curs.rownumber) for r in curs ]
+        rv = [(r[0], curs.rownumber) for r in curs]
         # everything swallowed in two gulps
         self.assertEqual(rv, [(i,((i - 1) % 30) + 1) for i in range(1,51)])
 
@@ -493,6 +497,8 @@ class CursorTests(ConnectingTestCase):
         cur = self.conn.cursor()
         self.assertRaises(TypeError, cur.callproc, 'lower', 42)
 
+    @skip_if_no_superuser
+    @skip_if_windows
     @skip_before_postgres(8, 4)
     def test_external_close_sync(self):
         # If a "victim" connection is closed by a "control" connection
@@ -505,6 +511,8 @@ class CursorTests(ConnectingTestCase):
         wait_func = lambda conn: None
         self._test_external_close(control_conn, connect_func, wait_func)
 
+    @skip_if_no_superuser
+    @skip_if_windows
     @skip_before_postgres(8, 4)
     def test_external_close_async(self):
         # Issue #443 is in the async code too. Since the fix is duplicated,
