@@ -491,6 +491,7 @@ class CursorTests(ConnectingTestCase):
         cur = self.conn.cursor()
         self.assertRaises(TypeError, cur.callproc, 'lower', 42)
 
+    @skip_before_postgres(8, 4)
     def test_external_close_sync(self):
         # If a "victim" connection is closed by a "control" connection
         # behind psycopg2's back, psycopg2 always handles it correctly:
@@ -502,6 +503,7 @@ class CursorTests(ConnectingTestCase):
         wait_func = lambda conn: None
         self._test_external_close(control_conn, connect_func, wait_func)
 
+    @skip_before_postgres(8, 4)
     def test_external_close_async(self):
         # Issue #443 is in the async code too. Since the fix is duplicated,
         # so is the test.
