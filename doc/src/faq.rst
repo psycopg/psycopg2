@@ -73,7 +73,7 @@ Why does `!cursor.execute()` raise the exception *can't adapt*?
 
 I can't pass an integer or a float parameter to my query: it says *a number is required*, but *it is* a number!
     In your query string, you always have to use ``%s``  placeholders,
-    event when passing a number.  All Python objects are converted by Psycopg
+    even when passing a number.  All Python objects are converted by Psycopg
     in their SQL representation, so they get passed to the query as strings.
     See :ref:`query-parameters`. ::
 
