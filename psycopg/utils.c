@@ -50,8 +50,13 @@ psycopg_escape_string(connectionObject *conn, const char *from, Py_ssize_t len,
     Py_ssize_t ql;
     int eq = (conn && (conn->equote)) ? 1 : 0;
 
-    if (len == 0)
+    if (len == 0) {
         len = strlen(from);
+    } else if (strchr(from, '\0') != from + len) {
+        PyErr_Format(PyExc_ValueError, "A string literal cannot contain NUL (0x00) characters.");
+
+	return NULL;
+    }
 
     if (to == NULL) {
         to = (char *)PyMem_Malloc((len * 2 + 4) * sizeof(char));
