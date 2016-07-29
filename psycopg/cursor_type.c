@@ -1343,7 +1343,7 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
 
     const char *sep = "\t";
     const char *null = "\\N";
-    const char *quote = '"';
+    const char *quote = "\"";
 
     const char *command =
         "COPY %s%s FROM stdin WITH DELIMITER AS %s NULL AS %s QUOTE AS %s CSV";
