@@ -1343,14 +1343,17 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
 
     const char *sep = "\t";
     const char *null = "\\N";
+    const char *quote = "'";
+
     const char *command =
-        "COPY %s%s FROM stdin WITH DELIMITER AS %s NULL AS %s";
+        "COPY %s%s FROM stdin WITH DELIMITER AS %s NULL AS %s FORMAT AS CSV QUOTE AS %s";
 
     Py_ssize_t query_size;
     char *query = NULL;
     char *columnlist = NULL;
     char *quoted_delimiter = NULL;
     char *quoted_null = NULL;
+    char *quoted_quote = NULL;
 
     const char *table_name;
     Py_ssize_t bufsize = DEFAULT_COPYBUFF;
@@ -1382,15 +1385,19 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
         goto exit;
     }
 
+    if (!(quoted_quote = psycopg_escape_string(
+            self->conn, quote, 0, NULL, NULL))) {
+        goto exit;
+    }
     query_size = strlen(command) + strlen(table_name) + strlen(columnlist)
-        + strlen(quoted_delimiter) + strlen(quoted_null) + 1;
+        + strlen(quoted_delimiter) + strlen(quoted_null) strlen(quoted_quote) + 1;
     if (!(query = PyMem_New(char, query_size))) {
         PyErr_NoMemory();
         goto exit;
     }
 
     PyOS_snprintf(query, query_size, command,
-        table_name, columnlist, quoted_delimiter, quoted_null);
+        table_name, columnlist, quoted_delimiter, quoted_null, quoted_quote);
 
     Dprintf("psyco_curs_copy_from: query = %s", query);
 
@@ -1409,6 +1416,7 @@ exit:
     PyMem_Free(columnlist);
     PyMem_Free(quoted_delimiter);
     PyMem_Free(quoted_null);
+    PyMem_Free(quoted_quote);
     PyMem_Free(query);
 
     return res;
