@@ -1361,7 +1361,7 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
     PyObject *file, *columns = NULL, *res = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
-        "O&s|ssnO", kwlist,
+        "O&s|ssnOss", kwlist,
         _psyco_curs_has_read_check, &file, &table_name, &sep, &null, &bufsize,
         &columns, &quote, &format))
     {
