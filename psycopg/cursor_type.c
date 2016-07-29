@@ -1346,7 +1346,7 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
     const char *quote = "'";
 
     const char *command =
-        "COPY %s%s FROM stdin WITH DELIMITER AS %s NULL AS %s FORMAT AS CSV QUOTE AS %s";
+        "COPY %s%s FROM stdin WITH DELIMITER AS %s NULL AS %s QUOTE AS %s CSV";
 
     Py_ssize_t query_size;
     char *query = NULL;
