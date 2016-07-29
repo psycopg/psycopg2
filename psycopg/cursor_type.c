@@ -1312,7 +1312,7 @@ exit:
 /* extension: copy_from - implements COPY FROM */
 
 #define psyco_curs_copy_from_doc \
-"copy_from(file, table, sep='\\t', null='\\\\N', size=8192, columns=None) -- Copy table from file."
+"copy_from(file, table, sep='\\t', null='\\\\N', size=8192, columns=None, quote='\"', format='TXT') -- Copy table from file."
 
 STEALS(1) static int
 _psyco_curs_has_read_check(PyObject *o, PyObject **var)
