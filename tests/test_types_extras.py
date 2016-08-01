@@ -20,6 +20,7 @@ import sys
 from decimal import Decimal
 from datetime import date, datetime
 from functools import wraps
+from pickle import dumps, loads
 
 from testutils import unittest, skip_if_no_uuid, skip_before_postgres
 from testutils import ConnectingTestCase, decorate_all_tests
@@ -1396,6 +1397,12 @@ class RangeTestCase(unittest.TestCase):
             self.assert_(not 1 >= Range(1, 2))
         with py3_raises_typeerror():
             self.assert_(Range(1, 2) >= 1)
+
+    def test_pickling(self):
+        from psycopg2.extras import Range
+
+        r = Range(0, 4)
+        self.assertEqual(loads(dumps(r)), r)
 
 
 def skip_if_no_range(f):
