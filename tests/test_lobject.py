@@ -225,6 +225,24 @@ class LargeObjectTests(LargeObjectTestCase):
         self.assertEqual(lo.seek(-2, 2), length - 2)
         self.assertEqual(lo.read(), "ta")
 
+    def test_seek_tell_greater_than_2gb(self):
+        lo = self.conn.lobject()
+
+        # write chunks until its 3gb
+        length = 0
+        for _ in range(24):
+            # each chunk is written with 128mb
+            length += lo.write("data" * (1 << 25))
+        self.assertEqual(lo.tell(), length)
+        lo.close()
+        lo = self.conn.lobject(lo.oid)
+
+        # seek to 3gb - 4, last written text should be data
+        offset = (1 << 31) + (1 << 30) - 4  # 2gb + 1gb - 4
+        self.assertEqual(lo.seek(offset, 0), offset)
+        self.assertEqual(lo.tell(), offset)
+        self.assertEqual(lo.read(), "data")
+
     def test_unlink(self):
         lo = self.conn.lobject()
         lo.unlink()

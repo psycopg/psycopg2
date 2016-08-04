@@ -123,7 +123,7 @@ static PyObject *
 psyco_lobj_read(lobjectObject *self, PyObject *args)
 {
     PyObject *res;
-    int where, end;
+    long where, end;
     Py_ssize_t size = -1;
     char *buffer;
 
@@ -167,10 +167,10 @@ psyco_lobj_read(lobjectObject *self, PyObject *args)
 static PyObject *
 psyco_lobj_seek(lobjectObject *self, PyObject *args)
 {
-    int offset, whence=0;
-    int pos=0;
+    long offset, pos=0;
+    int whence=0;
 
-    if (!PyArg_ParseTuple(args, "i|i", &offset, &whence))
+    if (!PyArg_ParseTuple(args, "l|i", &offset, &whence))
         return NULL;
 
     EXC_IF_LOBJ_CLOSED(self);
@@ -180,7 +180,7 @@ psyco_lobj_seek(lobjectObject *self, PyObject *args)
     if ((pos = lobject_seek(self, offset, whence)) < 0)
         return NULL;
 
-    return PyInt_FromLong((long)pos);
+    return PyLong_FromLong(pos);
 }
 
 /* tell method - tell current position in the lobject */
@@ -191,7 +191,7 @@ psyco_lobj_seek(lobjectObject *self, PyObject *args)
 static PyObject *
 psyco_lobj_tell(lobjectObject *self, PyObject *args)
 {
-    int pos;
+    long pos;
 
     EXC_IF_LOBJ_CLOSED(self);
     EXC_IF_LOBJ_LEVEL0(self);
@@ -200,7 +200,7 @@ psyco_lobj_tell(lobjectObject *self, PyObject *args)
     if ((pos = lobject_tell(self)) < 0)
         return NULL;
 
-    return PyInt_FromLong((long)pos);
+    return PyLong_FromLong(pos);
 }
 
 /* unlink method - unlink (destroy) the lobject */
