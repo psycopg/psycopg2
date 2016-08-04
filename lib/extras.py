@@ -968,6 +968,25 @@ def register_composite(name, conn_or_curs, globally=False, factory=None):
 
     return caster
 
+class Insert_Values(list):
+    def __init__(self, list_of_tuples):
+        assert isinstance(list_of_tuples, list), 'Insert_Values argument must be a list'
+        tuples_length = set()
+        for t in list_of_tuples:
+            assert isinstance(t, tuple), 'The Insert_Values list elements must all be tuples'
+            tuples_length.add(len(t))
+        assert len(tuples_length) > 0, 'The Insert_Values List must not be empty'
+        assert len(tuples_length) == 1, 'All Insert_Values tuples must have the same length'
+        self._list_of_tuples = list_of_tuples
+    def __str__(self):
+        return str(self._list_of_tuples)
+
+def adapt_insert_values(values):
+    l = [_A(t).getquoted() for t in values._list_of_tuples]
+    return _ext.AsIs(','.join(l))
+
+def register_insert_values():
+    _ext.register_adapter(Insert_Values, adapt_insert_values)
 
 # expose the json adaptation stuff into the module
 from psycopg2._json import json, Json, register_json
