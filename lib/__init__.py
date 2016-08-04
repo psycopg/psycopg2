@@ -55,6 +55,7 @@ from psycopg2._psycopg import DateFromTicks, TimeFromTicks, TimestampFromTicks
 from psycopg2._psycopg import Error, Warning, DataError, DatabaseError, ProgrammingError
 from psycopg2._psycopg import IntegrityError, InterfaceError, InternalError
 from psycopg2._psycopg import NotSupportedError, OperationalError
+from psycopg2._psycopg import Column
 
 from psycopg2._psycopg import _connect, apilevel, threadsafety, paramstyle
 from psycopg2._psycopg import __version__, __libpq_version__
