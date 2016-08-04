@@ -34,13 +34,16 @@ from psycopg2._psycopg import new_type, new_array_type, register_type
 
 
 # import the best json implementation available
-if sys.version_info[:2] >= (2,6):
-    import json
-else:
-    try:
-        import simplejson as json
-    except ImportError:
-        json = None
+try:
+    import ujson as json
+except ImportError:
+    if sys.version_info[:2] >= (2,6):
+        import json
+    else:
+        try:
+            import simplejson as json
+        except ImportError:
+            json = None
 
 
 # oids from PostgreSQL 9.2
