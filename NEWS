@@ -21,6 +21,12 @@ New features:
 - Added `~connection.get_dsn_parameters()` connection method (:ticket:`#364`).
 
 
+What's new in psycopg 2.6.3
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Make `~psycopg2.extras.Range` objects picklable (:ticket:`#462`).
+
+
 What's new in psycopg 2.6.2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
