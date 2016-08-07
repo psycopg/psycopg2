@@ -62,6 +62,15 @@ class QuotingTestCase(ConnectingTestCase):
         self.assertEqual(res, data)
         self.assert_(not self.conn.notices)
 
+    def test_string_null_terminator(self):
+        curs = self.conn.cursor()
+        data = 'abcd\x01\x00cdefg'
+
+        with self.assertRaises(ValueError) as e:
+            curs.execute("SELECT %s", (data,))
+
+        self.assertEquals(e.exception.message, 'A string literal cannot contain NUL (0x00) characters.')
+
     def test_binary(self):
         data = b("""some data with \000\013 binary
         stuff into, 'quotes' and \\ a backslash too.
