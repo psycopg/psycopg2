@@ -1,6 +1,12 @@
 Current release
 ---------------
 
+What's new in psycopg 2.6.3
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Make `~psycopg2.extras.Range` objects picklable (:ticket:`#462`).
+
+
 What's new in psycopg 2.6.2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

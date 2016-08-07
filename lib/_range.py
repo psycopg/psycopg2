@@ -171,6 +171,17 @@ class Range(object):
         else:
             return self.__gt__(other)
 
+    def __getstate__(self):
+        return dict(
+            (slot, getattr(self, slot))
+            for slot in self.__slots__
+            if hasattr(self, slot)
+        )
+
+    def __setstate__(self, state):
+        for slot, value in state.items():
+            setattr(self, slot, value)
+
 
 def register_range(pgrange, pyrange, conn_or_curs, globally=False):
     """Create and register an adapter and the typecasters to convert between
