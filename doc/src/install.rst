@@ -18,7 +18,7 @@ The current `!psycopg2` implementation supports:
     NOTE: keep consistent with setup.py and the /features/ page.
 
 - Python 2 versions from 2.5 to 2.7
-- Python 3 versions from 3.1 to 3.4
+- Python 3 versions from 3.1 to 3.5
 - PostgreSQL versions from 7.4 to 9.4
 
 .. _PostgreSQL: http://www.postgresql.org/
@@ -50,6 +50,16 @@ a pure Python module. So, if you don't have experience compiling Python
 extension packages, *above all if you are a Windows or a Mac OS user*, please
 use a pre-compiled package and go straight to the :ref:`module usage <usage>`
 avoid bothering with the gory details.
+
+.. note::
+
+    Regardless of the way `!psycopg2` is installed, at runtime it will need to
+    use the libpq_ library. `!psycopg2` relies on the host OS to find the
+    library file (usually ``libpq.so`` or ``libpq.dll``): if the library is
+    installed in a standard location there is usually no problem; if the
+    library is in a non-standard location you will have to tell somehow
+    psycopg how to find it, which is OS-dependent (for instance setting a
+    suitable :envvar:`LD_LIBRARY_PATH` on Linux).
 
 
 
@@ -95,7 +105,17 @@ Install from a package
     pair: Install; Windows
 
 **Microsoft Windows**
-    Jason Erickson maintains a packaged `Windows port of Psycopg`__ with
+    There are two options to install a precompiled `psycopg2` package under windows:
+
+    **Option 1:** Using `pip`__ (Included in python 2.7.9+ and python 3.4+)
+    and a binary wheel package.  Launch windows' command prompt (`cmd.exe`)
+    and execute the following command::
+    
+        pip install psycopg2
+
+    .. __: https://pip.pypa.io/en/stable/installing/
+
+    **Option 2:** Jason Erickson maintains a packaged `Windows port of Psycopg`__ with
     installation executable. Download. Double click. Done.
 
     .. __: http://www.stickpeople.com/projects/python/win-psycopg/

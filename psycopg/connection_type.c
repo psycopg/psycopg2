@@ -733,6 +733,37 @@ psyco_conn_get_parameter_status(connectionObject *self, PyObject *args)
     return conn_text_from_chars(self, val);
 }
 
+/* get_dsn_parameters method - Get connection parameters */
+
+#define psyco_conn_get_dsn_parameters_doc \
+"get_dsn_parameters() -- Get effective connection parameters.\n\n"
+
+static PyObject *
+psyco_conn_get_dsn_parameters(connectionObject *self)
+{
+#if PG_VERSION_NUM >= 90300
+    PyObject *res = NULL;
+    PQconninfoOption *options = NULL;
+
+    EXC_IF_CONN_CLOSED(self);
+
+    if (!(options = PQconninfo(self->pgconn))) {
+        PyErr_NoMemory();
+        goto exit;
+    }
+
+    res = psycopg_dict_from_conninfo_options(options, /* include_password = */ 0);
+
+exit:
+    PQconninfoFree(options);
+
+    return res;
+#else
+    PyErr_SetString(NotSupportedError, "PQconninfo not available in libpq < 9.3");
+    return NULL;
+#endif
+}
+
 
 /* lobject method - allocate a new lobject */
 
@@ -977,6 +1008,8 @@ static struct PyMethodDef connectionObject_methods[] = {
      METH_NOARGS, psyco_conn_get_transaction_status_doc},
     {"get_parameter_status", (PyCFunction)psyco_conn_get_parameter_status,
      METH_VARARGS, psyco_conn_get_parameter_status_doc},
+    {"get_dsn_parameters", (PyCFunction)psyco_conn_get_dsn_parameters,
+     METH_NOARGS, psyco_conn_get_dsn_parameters_doc},
     {"get_backend_pid", (PyCFunction)psyco_conn_get_backend_pid,
      METH_NOARGS, psyco_conn_get_backend_pid_doc},
     {"lobject", (PyCFunction)psyco_conn_lobject,
@@ -1171,7 +1204,7 @@ connection_repr(connectionObject *self)
 {
     return PyString_FromFormat(
         "<connection object at %p; dsn: '%s', closed: %ld>",
-        self, self->dsn, self->closed);
+        self, (self->dsn ? self->dsn : "<unintialized>"), self->closed);
 }
 
 static int

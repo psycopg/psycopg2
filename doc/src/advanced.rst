@@ -47,7 +47,7 @@ it is the class where query building, execution and result type-casting into
 Python variables happens.
 
 The `~psycopg2.extras` module contains several examples of :ref:`connection
-and cursor sublcasses <cursor-subclasses>`.
+and cursor subclasses <cursor-subclasses>`.
 
 .. note::
 

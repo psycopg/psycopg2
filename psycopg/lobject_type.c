@@ -105,7 +105,7 @@ psyco_lobj_write(lobjectObject *self, PyObject *args)
         goto exit;
     }
 
-    rv = PyInt_FromLong((long)res);
+    rv = PyInt_FromSsize_t((Py_ssize_t)res);
 
 exit:
     Py_XDECREF(data);
@@ -121,7 +121,7 @@ static PyObject *
 psyco_lobj_read(lobjectObject *self, PyObject *args)
 {
     PyObject *res;
-    long where, end;
+    Py_ssize_t where, end;
     Py_ssize_t size = -1;
     char *buffer;
 
@@ -165,10 +165,10 @@ psyco_lobj_read(lobjectObject *self, PyObject *args)
 static PyObject *
 psyco_lobj_seek(lobjectObject *self, PyObject *args)
 {
-    long offset, pos=0;
+    Py_ssize_t offset, pos=0;
     int whence=0;
 
-    if (!PyArg_ParseTuple(args, "l|i", &offset, &whence))
+    if (!PyArg_ParseTuple(args, "n|i", &offset, &whence))
         return NULL;
 
     EXC_IF_LOBJ_CLOSED(self);
@@ -187,8 +187,8 @@ psyco_lobj_seek(lobjectObject *self, PyObject *args)
 #else
     if (offset < INT_MIN || offset > INT_MAX) {
         PyErr_Format(InterfaceError,
-            "offset out of range (%ld): this psycopg version was not built "
-            "with lobject 64 API support",
+            "offset out of range (" FORMAT_CODE_PY_SSIZE_T "): "
+            "this psycopg version was not built with lobject 64 API support",
             offset);
         return NULL;
     }
@@ -197,7 +197,7 @@ psyco_lobj_seek(lobjectObject *self, PyObject *args)
     if ((pos = lobject_seek(self, offset, whence)) < 0)
         return NULL;
 
-    return PyLong_FromLong(pos);
+    return PyInt_FromSsize_t(pos);
 }
 
 /* tell method - tell current position in the lobject */
@@ -208,7 +208,7 @@ psyco_lobj_seek(lobjectObject *self, PyObject *args)
 static PyObject *
 psyco_lobj_tell(lobjectObject *self, PyObject *args)
 {
-    long pos;
+    Py_ssize_t pos;
 
     EXC_IF_LOBJ_CLOSED(self);
     EXC_IF_LOBJ_LEVEL0(self);
@@ -217,7 +217,7 @@ psyco_lobj_tell(lobjectObject *self, PyObject *args)
     if ((pos = lobject_tell(self)) < 0)
         return NULL;
 
-    return PyLong_FromLong(pos);
+    return PyInt_FromSsize_t(pos);
 }
 
 /* unlink method - unlink (destroy) the lobject */
@@ -274,9 +274,9 @@ psyco_lobj_get_closed(lobjectObject *self, void *closure)
 static PyObject *
 psyco_lobj_truncate(lobjectObject *self, PyObject *args)
 {
-    long len = 0;
+    Py_ssize_t len = 0;
 
-    if (!PyArg_ParseTuple(args, "|l", &len))
+    if (!PyArg_ParseTuple(args, "|n", &len))
         return NULL;
 
     EXC_IF_LOBJ_CLOSED(self);
@@ -286,16 +286,16 @@ psyco_lobj_truncate(lobjectObject *self, PyObject *args)
 #ifdef HAVE_LO64
     if (len > INT_MAX && self->conn->server_version < 90300) {
         PyErr_Format(NotSupportedError,
-            "len out of range (%ld): server version %d "
-            "does not support the lobject 64 API",
+            "len out of range (" FORMAT_CODE_PY_SSIZE_T "): "
+            "server version %d does not support the lobject 64 API",
             len, self->conn->server_version);
         return NULL;
     }
 #else
     if (len > INT_MAX) {
         PyErr_Format(InterfaceError,
-            "len out of range (%ld): this psycopg version was not built "
-            "with lobject 64 API support",
+            "len out of range (" FORMAT_CODE_PY_SSIZE_T "): "
+            "this psycopg version was not built with lobject 64 API support",
             len);
         return NULL;
     }

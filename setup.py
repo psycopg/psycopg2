@@ -41,6 +41,7 @@ Programming Language :: Python :: 3.1
 Programming Language :: Python :: 3.2
 Programming Language :: Python :: 3.3
 Programming Language :: Python :: 3.4
+Programming Language :: Python :: 3.5
 Programming Language :: C
 Programming Language :: SQL
 Topic :: Database
@@ -57,7 +58,10 @@ import os
 import sys
 import re
 import subprocess
-from distutils.core import setup, Extension
+try:
+    from setuptools import setup, Extension
+except ImportError:
+    from distutils.core import setup, Extension
 from distutils.command.build_ext import build_ext
 from distutils.sysconfig import get_python_inc
 from distutils.ccompiler import get_default_compiler
@@ -301,6 +305,10 @@ class psycopg_build_ext(build_ext):
             except AttributeError:
                 ext_path = os.path.join(self.build_lib,
                         'psycopg2', '_psycopg.pyd')
+            # Make sure spawn() will work if compile() was never
+            # called. https://github.com/psycopg/psycopg2/issues/380
+            if not self.compiler.initialized:
+                self.compiler.initialize()
             self.compiler.spawn(
                 ['mt.exe', '-nologo', '-manifest',
                  os.path.join('psycopg', manifest),
@@ -343,7 +351,8 @@ class psycopg_build_ext(build_ext):
         self.libraries.append("advapi32")
         if self.compiler_is_msvc():
             # MSVC requires an explicit "libpq"
-            self.libraries.remove("pq")
+            if "pq" in self.libraries:
+                self.libraries.remove("pq")
             self.libraries.append("secur32")
             self.libraries.append("libpq")
             self.libraries.append("shfolder")

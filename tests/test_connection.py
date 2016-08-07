@@ -446,6 +446,13 @@ class MakeDsnTestCase(ConnectingTestCase):
         self.assertRaises(psycopg2.ProgrammingError,
             ext.make_dsn, url, nosuch="param")
 
+    @skip_before_libpq(9, 3)
+    def test_get_dsn_parameters(self):
+        conn = self.connect()
+        d = conn.get_dsn_parameters()
+        self.assertEqual(d['dbname'], dbname)  # the only param we can check reliably
+        self.assertNotIn('password', d)
+
 
 class IsolationLevelsTestCase(ConnectingTestCase):
 

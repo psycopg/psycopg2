@@ -170,11 +170,11 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult **pgres)
 
     if (conn == NULL) {
         PyErr_SetString(DatabaseError,
-            "psycopg went psycotic and raised a null error");
+            "psycopg went psychotic and raised a null error");
         return;
     }
 
-    /* if the connection has somehow beed broken, we mark the connection
+    /* if the connection has somehow been broken, we mark the connection
        object as closed but requiring cleanup */
     if (conn->pgconn != NULL && PQstatus(conn->pgconn) == CONNECTION_BAD)
         conn->closed = 2;
@@ -916,7 +916,7 @@ pq_execute(cursorObject *curs, const char *query, int async, int no_result, int 
         PyErr_SetString(OperationalError, PQerrorMessage(curs->conn->pgconn));
         return -1;
     }
-    Dprintf("curs_execute: pg connection at %p OK", curs->conn->pgconn);
+    Dprintf("pq_execute: pg connection at %p OK", curs->conn->pgconn);
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(curs->conn->lock));
@@ -941,7 +941,7 @@ pq_execute(cursorObject *curs, const char *query, int async, int no_result, int 
             Py_UNBLOCK_THREADS;
         }
 
-        /* dont let pgres = NULL go to pq_fetch() */
+        /* don't let pgres = NULL go to pq_fetch() */
         if (curs->pgres == NULL) {
             pthread_mutex_unlock(&(curs->conn->lock));
             Py_BLOCK_THREADS;
@@ -1409,7 +1409,11 @@ _pq_copy_in_v3(cursorObject *curs)
                     Py_DECREF(str);
                 }
             }
-            PyErr_Restore(t, ex, tb);
+            /* Clear the Py exception: it will be re-raised from the libpq */
+            Py_XDECREF(t);
+            Py_XDECREF(ex);
+            Py_XDECREF(tb);
+            PyErr_Clear();
         }
         res = PQputCopyEnd(curs->conn->pgconn, buf);
     }
