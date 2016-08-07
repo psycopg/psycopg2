@@ -515,6 +515,8 @@ resources about the topic.
 .. index::
     single: Replication
 
+.. _replication-support:
+
 Replication protocol support
 ----------------------------
 

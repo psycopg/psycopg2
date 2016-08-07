@@ -148,10 +148,7 @@ Logging cursor
 Replication connection and cursor classes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. index::
-    pair: Connection; replication
-
-.. autoclass:: ReplicationConnectionBase
+See :ref:`replication-support` for an introduction to the topic.
 
 
 The following replication types are defined:
@@ -159,6 +156,9 @@ The following replication types are defined:
 .. data:: REPLICATION_LOGICAL
 .. data:: REPLICATION_PHYSICAL
 
+
+.. index::
+    pair: Connection; replication
 
 .. autoclass:: LogicalReplicationConnection
 
@@ -200,8 +200,8 @@ The individual messages in the replication stream are represented by
         The actual data received from the server.
 
         An instance of either `bytes()` or `unicode()`, depending on the value
-        of `decode` option passed to `ReplicationCursor.start_replication()`
-        on the connection.  See `ReplicationCursor.read_message()` for
+        of `decode` option passed to `~ReplicationCursor.start_replication()`
+        on the connection.  See `~ReplicationCursor.read_message()` for
         details.
 
     .. attribute:: data_size
@@ -353,7 +353,7 @@ The individual messages in the replication stream are represented by
 
     .. method:: consume_stream(consume, keepalive_interval=10)
 
-        :param consume: a callable object with signature ``consume(msg)``
+        :param consume: a callable object with signature :samp:`consume({msg})`
         :param keepalive_interval: interval (in seconds) to send keepalive
                                    messages to the server
 
@@ -451,11 +451,11 @@ The individual messages in the replication stream are represented by
         (after calling `start_replication()` once).  For synchronous
         connections see `consume_stream()`.
 
-        The returned message's `ReplicationMessage.payload` is an instance of
-        `unicode()` decoded according to connection `connection.encoding`
-        *iff* `decode` was set to `!True` in the initial call to
+        The returned message's `~ReplicationMessage.payload` is an instance of
+        `!unicode` decoded according to connection `~connection.encoding`
+        *iff* *decode* was set to `!True` in the initial call to
         `start_replication()` on this connection, otherwise it is an instance
-        of `bytes()` with no decoding.
+        of `!bytes` with no decoding.
 
         It is expected that the calling code will call this method repeatedly
         in order to consume all of the messages that might have been buffered
