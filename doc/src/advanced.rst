@@ -547,7 +547,7 @@ Make sure that replication connections are permitted for user ``postgres`` in
 ``pg_hba.conf`` and reload the server configuration.  You also need to set
 ``wal_level=logical`` and ``max_wal_senders``, ``max_replication_slots`` to
 value greater than zero in ``postgresql.conf`` (these changes require a server
-restart).  Create a database ``psycopg2test``.
+restart).  Create a database ``psycopg2_test``.
 
 Then run the following code to quickly try the replication support out.  This
 is not production code -- it has no error handling, it sends feedback too
@@ -559,7 +559,7 @@ replication::
   import psycopg2
   import psycopg2.extras
 
-  conn = psycopg2.connect('dbname=psycopg2test user=postgres',
+  conn = psycopg2.connect('dbname=psycopg2_test user=postgres',
      connection_factory=psycopg2.extras.LogicalReplicationConnection)
   cur = conn.cursor()
   try:
@@ -589,7 +589,7 @@ replication::
         "until the slot is dropped.", file=sys.stderr)
 
 
-You can now make changes to the ``psycopg2test`` database using a normal
+You can now make changes to the ``psycopg2_test`` database using a normal
 psycopg2 session, ``psql``, etc. and see the logical decoding stream printed
 by this demo client.
 
