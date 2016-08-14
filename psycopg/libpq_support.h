@@ -26,10 +26,10 @@
 #define PSYCOPG_LIBPQ_SUPPORT_H 1
 
 #include "psycopg/config.h"
-#include "internal/c.h"
 
-/* type and constant definitions from internal postgres includes not available otherwise */
+/* type and constant definitions from internal postgres include */
 typedef unsigned PG_INT64_TYPE XLogRecPtr;
+typedef uint32_t uint32;
 
 /* have to use lowercase %x, as PyString_FromFormat can't do %X */
 #define XLOGFMTSTR "%x/%x"
