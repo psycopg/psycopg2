@@ -46,15 +46,15 @@
  * backend code. The protocol always uses integer timestamps, regardless of
  * server setting.
  */
-pg_int64
+int64_t
 feGetCurrentTimestamp(void)
 {
-    pg_int64 result;
+    int64_t result;
     struct timeval tp;
 
     gettimeofday(&tp, NULL);
 
-    result = (pg_int64) tp.tv_sec -
+    result = (int64_t) tp.tv_sec -
         ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
 
     result = (result * USECS_PER_SEC) + tp.tv_usec;
@@ -66,17 +66,17 @@ feGetCurrentTimestamp(void)
  * Converts an int64 to network byte order.
  */
 void
-fe_sendint64(pg_int64 i, char *buf)
+fe_sendint64(int64_t i, char *buf)
 {
-    uint32 n32;
+    uint32_t n32;
 
     /* High order half first, since we're doing MSB-first */
-    n32 = (uint32) (i >> 32);
+    n32 = (uint32_t) (i >> 32);
     n32 = htonl(n32);
     memcpy(&buf[0], &n32, 4);
 
     /* Now the low order half */
-    n32 = (uint32) i;
+    n32 = (uint32_t) i;
     n32 = htonl(n32);
     memcpy(&buf[4], &n32, 4);
 }
@@ -84,12 +84,12 @@ fe_sendint64(pg_int64 i, char *buf)
 /*
  * Converts an int64 from network byte order to native format.
  */
-pg_int64
+int64_t
 fe_recvint64(char *buf)
 {
-    pg_int64 result;
-    uint32 h32;
-    uint32 l32;
+    int64_t result;
+    uint32_t h32;
+    uint32_t l32;
 
     memcpy(&h32, buf, 4);
     memcpy(&l32, buf + 4, 4);

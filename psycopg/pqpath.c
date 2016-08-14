@@ -1555,7 +1555,7 @@ pq_read_replication_message(replicationCursorObject *repl, replicationMessageObj
     char *buffer = NULL;
     int len, data_size, consumed, hdr, reply;
     XLogRecPtr data_start, wal_end;
-    pg_int64 send_time;
+    int64_t send_time;
     PyObject *str = NULL, *result = NULL;
     int ret = -1;
 

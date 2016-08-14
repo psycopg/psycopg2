@@ -45,7 +45,7 @@ struct replicationMessageObject {
     int         data_size;
     XLogRecPtr  data_start;
     XLogRecPtr  wal_end;
-    pg_int64    send_time;
+    int64_t     send_time;
 };
 
 RAISES_NEG int psyco_replmsg_datetime_init(void);

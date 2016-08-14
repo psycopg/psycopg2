@@ -29,11 +29,10 @@
 
 /* type and constant definitions from internal postgres include */
 typedef unsigned PG_INT64_TYPE XLogRecPtr;
-typedef uint32_t uint32;
 
 /* have to use lowercase %x, as PyString_FromFormat can't do %X */
 #define XLOGFMTSTR "%x/%x"
-#define XLOGFMTARGS(x) ((uint32)((x) >> 32)), ((uint32)((x) & 0xFFFFFFFF))
+#define XLOGFMTARGS(x) ((uint32_t)((x) >> 32)), ((uint32_t)((x) & 0xFFFFFFFF))
 
 /* Julian-date equivalents of Day 0 in Unix and Postgres reckoning */
 #define UNIX_EPOCH_JDATE	2440588 /* == date2j(1970, 1, 1) */
@@ -42,8 +41,8 @@ typedef uint32_t uint32;
 #define SECS_PER_DAY	86400
 #define USECS_PER_SEC	1000000LL
 
-HIDDEN pg_int64 feGetCurrentTimestamp(void);
-HIDDEN void fe_sendint64(pg_int64 i, char *buf);
-HIDDEN pg_int64 fe_recvint64(char *buf);
+HIDDEN int64_t feGetCurrentTimestamp(void);
+HIDDEN void fe_sendint64(int64_t i, char *buf);
+HIDDEN int64_t fe_recvint64(char *buf);
 
 #endif /* !defined(PSYCOPG_LIBPQ_SUPPORT_H) */
