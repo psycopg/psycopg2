@@ -117,6 +117,7 @@ HIDDEN PyObject *psyco_GetDecimalType(void);
 /* forward declarations */
 typedef struct cursorObject cursorObject;
 typedef struct connectionObject connectionObject;
+typedef struct replicationMessageObject replicationMessageObject;
 
 /* some utility functions */
 RAISES HIDDEN PyObject *psyco_set_error(PyObject *exc, cursorObject *curs, const char *msg);

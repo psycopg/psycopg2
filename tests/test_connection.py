@@ -1246,18 +1246,6 @@ class AutocommitTests(ConnectingTestCase):
         self.assertEqual(cur.fetchone()[0], 'on')
 
 
-class ReplicationTest(ConnectingTestCase):
-    @skip_before_postgres(9, 0)
-    def test_replication_not_supported(self):
-        conn = self.repl_connect()
-        if conn is None:
-            return
-        cur = conn.cursor()
-        f = StringIO()
-        self.assertRaises(psycopg2.NotSupportedError,
-            cur.copy_expert, "START_REPLICATION 0/0", f)
-
-
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

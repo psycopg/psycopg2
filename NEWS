@@ -6,6 +6,8 @@ What's new in psycopg 2.7
 
 New features:
 
+- Added :ref:`replication-support` (:ticket:`#322`). Main authors are
+  Oleksandr Shulgin and Craig Ringer, who deserve a huge thank you.
 - Added `~psycopg2.extensions.parse_dsn()` and
   `~psycopg2.extensions.make_dsn()` functions (:tickets:`#321, #363`).
   `~psycopg2.connect()` now can take both *dsn* and keyword arguments, merging

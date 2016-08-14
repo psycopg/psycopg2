@@ -7,8 +7,6 @@ dbhost = os.environ.get('PSYCOPG2_TESTDB_HOST', None)
 dbport = os.environ.get('PSYCOPG2_TESTDB_PORT', None)
 dbuser = os.environ.get('PSYCOPG2_TESTDB_USER', None)
 dbpass = os.environ.get('PSYCOPG2_TESTDB_PASSWORD', None)
-repl_dsn = os.environ.get('PSYCOPG2_TEST_REPL_DSN',
-    "dbname=psycopg2_test replication=1")
 
 # Check if we want to test psycopg's green path.
 green = os.environ.get('PSYCOPG2_TEST_GREEN', None)
@@ -34,3 +32,11 @@ if dbuser is not None:
     dsn += ' user=%s' % dbuser
 if dbpass is not None:
     dsn += ' password=%s' % dbpass
+
+# Don't run replication tests if REPL_DSN is not set, default to normal DSN if
+# set to empty string.
+repl_dsn = os.environ.get('PSYCOPG2_TEST_REPL_DSN', None)
+if repl_dsn == '':
+    repl_dsn = dsn
+
+repl_slot = os.environ.get('PSYCOPG2_TEST_REPL_SLOT', 'psycopg2_test_slot')

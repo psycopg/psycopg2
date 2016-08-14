@@ -29,7 +29,6 @@ import psycopg2
 from psycopg2 import extensions
 
 import time
-import select
 import StringIO
 
 from testutils import ConnectingTestCase
@@ -65,21 +64,6 @@ class AsyncTests(ConnectingTestCase):
               id int PRIMARY KEY
             )''')
         self.wait(curs)
-
-    def wait(self, cur_or_conn):
-        pollable = cur_or_conn
-        if not hasattr(pollable, 'poll'):
-            pollable = cur_or_conn.connection
-        while True:
-            state = pollable.poll()
-            if state == psycopg2.extensions.POLL_OK:
-                break
-            elif state == psycopg2.extensions.POLL_READ:
-                select.select([pollable], [], [], 10)
-            elif state == psycopg2.extensions.POLL_WRITE:
-                select.select([], [pollable], [], 10)
-            else:
-                raise Exception("Unexpected result from poll: %r", state)
 
     def test_connection_setup(self):
         cur = self.conn.cursor()

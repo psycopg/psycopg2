@@ -116,6 +116,12 @@ class ConnectTestCase(unittest.TestCase):
         self.assertEqual(self.args[1], None)
         self.assert_(self.args[2])
 
+    def test_int_port_param(self):
+        psycopg2.connect(database='sony', port=6543)
+        dsn = " %s " % self.args[0]
+        self.assertIn(" dbname=sony ", dsn)
+        self.assertIn(" port=6543 ", dsn)
+
     def test_empty_param(self):
         psycopg2.connect(database='sony', password='')
         self.assertDsnEqual(self.args[0], "dbname=sony password=''")
