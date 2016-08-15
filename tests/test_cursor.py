@@ -26,7 +26,6 @@ import time
 import pickle
 import psycopg2
 import psycopg2.extensions
-from psycopg2.extensions import b
 from testutils import unittest, ConnectingTestCase, skip_before_postgres
 from testutils import skip_if_no_namedtuple, skip_if_no_getrefcount
 
@@ -63,28 +62,28 @@ class CursorTests(ConnectingTestCase):
         # unicode query containing only ascii data
         cur.execute(u"SELECT 'foo';")
         self.assertEqual('foo', cur.fetchone()[0])
-        self.assertEqual(b("SELECT 'foo';"), cur.mogrify(u"SELECT 'foo';"))
+        self.assertEqual(b"SELECT 'foo';", cur.mogrify(u"SELECT 'foo';"))
 
         conn.set_client_encoding('UTF8')
         snowman = u"\u2603"
 
         # unicode query with non-ascii data
         cur.execute(u"SELECT '%s';" % snowman)
-        self.assertEqual(snowman.encode('utf8'), b(cur.fetchone()[0]))
+        self.assertEqual(snowman.encode('utf8'), cur.fetchone()[0].encode('utf8'))
         self.assertEqual(("SELECT '%s';" % snowman).encode('utf8'),
-            cur.mogrify(u"SELECT '%s';" % snowman).replace(b("E'"), b("'")))
+            cur.mogrify(u"SELECT '%s';" % snowman).replace(b"E'", b"'"))
 
         # unicode args
         cur.execute("SELECT %s;", (snowman,))
-        self.assertEqual(snowman.encode("utf-8"), b(cur.fetchone()[0]))
+        self.assertEqual(snowman.encode("utf-8"), cur.fetchone()[0].encode('utf8'))
         self.assertEqual(("SELECT '%s';" % snowman).encode('utf8'),
-            cur.mogrify("SELECT %s;", (snowman,)).replace(b("E'"), b("'")))
+            cur.mogrify("SELECT %s;", (snowman,)).replace(b"E'", b"'"))
 
         # unicode query and args
         cur.execute(u"SELECT %s;", (snowman,))
-        self.assertEqual(snowman.encode("utf-8"), b(cur.fetchone()[0]))
+        self.assertEqual(snowman.encode("utf-8"), cur.fetchone()[0].encode('utf8'))
         self.assertEqual(("SELECT '%s';" % snowman).encode('utf8'),
-            cur.mogrify(u"SELECT %s;", (snowman,)).replace(b("E'"), b("'")))
+            cur.mogrify(u"SELECT %s;", (snowman,)).replace(b"E'", b"'"))
 
     def test_mogrify_decimal_explodes(self):
         # issue #7: explodes on windows with python 2.5 and psycopg 2.2.2
@@ -95,7 +94,7 @@ class CursorTests(ConnectingTestCase):
 
         conn = self.conn
         cur = conn.cursor()
-        self.assertEqual(b('SELECT 10.3;'),
+        self.assertEqual(b'SELECT 10.3;',
             cur.mogrify("SELECT %s;", (Decimal("10.3"),)))
 
     @skip_if_no_getrefcount

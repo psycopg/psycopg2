@@ -30,7 +30,6 @@ import testutils
 from testutils import unittest, ConnectingTestCase, decorate_all_tests
 
 import psycopg2
-from psycopg2.extensions import b
 
 
 class TypesBasicTests(ConnectingTestCase):
@@ -190,7 +189,7 @@ class TypesBasicTests(ConnectingTestCase):
         ss = ['', '{', '{}}', '{' * 20 + '}' * 20]
         for s in ss:
             self.assertRaises(psycopg2.DataError,
-                psycopg2.extensions.STRINGARRAY, b(s), curs)
+                psycopg2.extensions.STRINGARRAY, s.encode('utf8'), curs)
 
     @testutils.skip_before_postgres(8, 2)
     def testArrayOfNulls(self):
@@ -309,9 +308,9 @@ class TypesBasicTests(ConnectingTestCase):
     def testByteaHexCheckFalsePositive(self):
         # the check \x -> x to detect bad bytea decode
         # may be fooled if the first char is really an 'x'
-        o1 = psycopg2.Binary(b('x'))
+        o1 = psycopg2.Binary(b'x')
         o2 = self.execute("SELECT %s::bytea AS foo", (o1,))
-        self.assertEqual(b('x'), o2[0])
+        self.assertEqual(b'x', o2[0])
 
     def testNegNumber(self):
         d1 = self.execute("select -%s;", (decimal.Decimal('-1.0'),))
@@ -362,7 +361,7 @@ class AdaptSubclassTest(unittest.TestCase):
         register_adapter(A, lambda a: AsIs("a"))
         register_adapter(B, lambda b: AsIs("b"))
         try:
-            self.assertEqual(b('b'), adapt(C()).getquoted())
+            self.assertEqual(b'b', adapt(C()).getquoted())
         finally:
             del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
             del psycopg2.extensions.adapters[B, psycopg2.extensions.ISQLQuote]
@@ -389,7 +388,7 @@ class AdaptSubclassTest(unittest.TestCase):
 
         register_adapter(A, lambda a: AsIs("a"))
         try:
-            self.assertEqual(b("a"), adapt(B()).getquoted())
+            self.assertEqual(b"a", adapt(B()).getquoted())
         finally:
             del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
 
@@ -434,19 +433,19 @@ class ByteaParserTest(unittest.TestCase):
         self.assertEqual(rv, None)
 
     def test_blank(self):
-        rv = self.cast(b(''))
-        self.assertEqual(rv, b(''))
+        rv = self.cast(b'')
+        self.assertEqual(rv, b'')
 
     def test_blank_hex(self):
         # Reported as problematic in ticket #48
-        rv = self.cast(b('\\x'))
-        self.assertEqual(rv, b(''))
+        rv = self.cast(b'\\x')
+        self.assertEqual(rv, b'')
 
     def test_full_hex(self, upper=False):
         buf = ''.join(("%02x" % i) for i in range(256))
         if upper: buf = buf.upper()
         buf = '\\x' + buf
-        rv = self.cast(b(buf))
+        rv = self.cast(buf.encode('utf8'))
         if sys.version_info[0] < 3:
             self.assertEqual(rv, ''.join(map(chr, range(256))))
         else:
@@ -457,7 +456,7 @@ class ByteaParserTest(unittest.TestCase):
 
     def test_full_escaped_octal(self):
         buf = ''.join(("\\%03o" % i) for i in range(256))
-        rv = self.cast(b(buf))
+        rv = self.cast(buf.encode('utf8'))
         if sys.version_info[0] < 3:
             self.assertEqual(rv, ''.join(map(chr, range(256))))
         else:
@@ -469,7 +468,7 @@ class ByteaParserTest(unittest.TestCase):
         buf += string.ascii_letters
         buf += ''.join('\\' + c for c in string.ascii_letters)
         buf += '\\\\'
-        rv = self.cast(b(buf))
+        rv = self.cast(buf.encode('utf8'))
         if sys.version_info[0] < 3:
             tgt = ''.join(map(chr, range(32))) \
                 + string.ascii_letters * 2 + '\\'

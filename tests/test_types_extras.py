@@ -29,14 +29,13 @@ from testutils import py3_raises_typeerror
 import psycopg2
 import psycopg2.extras
 import psycopg2.extensions as ext
-from psycopg2.extensions import b
 
 
 def filter_scs(conn, s):
     if conn.get_parameter_status("standard_conforming_strings") == 'off':
         return s
     else:
-        return s.replace(b("E'"), b("'"))
+        return s.replace(b"E'", b"'")
 
 class TypesExtrasTests(ConnectingTestCase):
     """Test that all type conversions are working."""
@@ -99,7 +98,7 @@ class TypesExtrasTests(ConnectingTestCase):
         a = psycopg2.extensions.adapt(i)
         a.prepare(self.conn)
         self.assertEqual(
-            filter_scs(self.conn, b("E'192.168.1.0/24'::inet")),
+            filter_scs(self.conn, b"E'192.168.1.0/24'::inet"),
             a.getquoted())
 
         # adapts ok with unicode too
@@ -107,7 +106,7 @@ class TypesExtrasTests(ConnectingTestCase):
         a = psycopg2.extensions.adapt(i)
         a.prepare(self.conn)
         self.assertEqual(
-            filter_scs(self.conn, b("E'192.168.1.0/24'::inet")),
+            filter_scs(self.conn, b"E'192.168.1.0/24'::inet"),
             a.getquoted())
 
     def test_adapt_fail(self):
@@ -146,17 +145,17 @@ class HstoreTestCase(ConnectingTestCase):
         a.prepare(self.conn)
         q = a.getquoted()
 
-        self.assert_(q.startswith(b("((")), q)
-        ii = q[1:-1].split(b("||"))
+        self.assert_(q.startswith(b"(("), q)
+        ii = q[1:-1].split(b"||")
         ii.sort()
 
         self.assertEqual(len(ii), len(o))
-        self.assertEqual(ii[0], filter_scs(self.conn, b("(E'a' => E'1')")))
-        self.assertEqual(ii[1], filter_scs(self.conn, b("(E'b' => E'''')")))
-        self.assertEqual(ii[2], filter_scs(self.conn, b("(E'c' => NULL)")))
+        self.assertEqual(ii[0], filter_scs(self.conn, b"(E'a' => E'1')"))
+        self.assertEqual(ii[1], filter_scs(self.conn, b"(E'b' => E'''')"))
+        self.assertEqual(ii[2], filter_scs(self.conn, b"(E'c' => NULL)"))
         if 'd' in o:
             encc = u'\xe0'.encode(psycopg2.extensions.encodings[self.conn.encoding])
-            self.assertEqual(ii[3], filter_scs(self.conn, b("(E'd' => E'") + encc + b("')")))
+            self.assertEqual(ii[3], filter_scs(self.conn, b"(E'd' => E'" + encc + b"')"))
 
     def test_adapt_9(self):
         if self.conn.server_version < 90000:
@@ -172,11 +171,11 @@ class HstoreTestCase(ConnectingTestCase):
         a.prepare(self.conn)
         q = a.getquoted()
 
-        m = re.match(b(r'hstore\(ARRAY\[([^\]]+)\], ARRAY\[([^\]]+)\]\)'), q)
+        m = re.match(br'hstore\(ARRAY\[([^\]]+)\], ARRAY\[([^\]]+)\]\)', q)
         self.assert_(m, repr(q))
 
-        kk = m.group(1).split(b(", "))
-        vv = m.group(2).split(b(", "))
+        kk = m.group(1).split(b", ")
+        vv = m.group(2).split(b", ")
         ii = zip(kk, vv)
         ii.sort()
 
@@ -184,12 +183,12 @@ class HstoreTestCase(ConnectingTestCase):
             return tuple([filter_scs(self.conn, s) for s in args])
 
         self.assertEqual(len(ii), len(o))
-        self.assertEqual(ii[0], f(b("E'a'"), b("E'1'")))
-        self.assertEqual(ii[1], f(b("E'b'"), b("E''''")))
-        self.assertEqual(ii[2], f(b("E'c'"), b("NULL")))
+        self.assertEqual(ii[0], f(b"E'a'", b"E'1'"))
+        self.assertEqual(ii[1], f(b"E'b'", b"E''''"))
+        self.assertEqual(ii[2], f(b"E'c'", b"NULL"))
         if 'd' in o:
             encc = u'\xe0'.encode(psycopg2.extensions.encodings[self.conn.encoding])
-            self.assertEqual(ii[3], f(b("E'd'"), b("E'") + encc + b("'")))
+            self.assertEqual(ii[3], f(b"E'd'", b"E'" + encc + b"'"))
 
     def test_parse(self):
         from psycopg2.extras import HstoreAdapter
@@ -455,7 +454,7 @@ class AdaptTypeTestCase(ConnectingTestCase):
     def test_none_in_record(self):
         curs = self.conn.cursor()
         s = curs.mogrify("SELECT %s;", [(42, None)])
-        self.assertEqual(b("SELECT (42, NULL);"), s)
+        self.assertEqual(b"SELECT (42, NULL);", s)
         curs.execute("SELECT %s;", [(42, None)])
         d = curs.fetchone()[0]
         self.assertEqual("(42,)", d)
@@ -475,7 +474,7 @@ class AdaptTypeTestCase(ConnectingTestCase):
             self.assertEqual(ext.adapt(None).getquoted(), "NOPE!")
 
             s = curs.mogrify("SELECT %s;", (None,))
-            self.assertEqual(b("SELECT NULL;"), s)
+            self.assertEqual(b"SELECT NULL;", s)
 
         finally:
             ext.register_adapter(type(None), orig_adapter)
@@ -892,7 +891,7 @@ class JsonTestCase(ConnectingTestCase):
         obj = Decimal('123.45')
         dumps = lambda obj: json.dumps(obj, cls=DecimalEncoder)
         self.assertEqual(curs.mogrify("%s", (Json(obj, dumps=dumps),)),
-            b("'123.45'"))
+            b"'123.45'")
 
     @skip_if_no_json_module
     def test_adapt_subclass(self):
@@ -910,8 +909,7 @@ class JsonTestCase(ConnectingTestCase):
 
         curs = self.conn.cursor()
         obj = Decimal('123.45')
-        self.assertEqual(curs.mogrify("%s", (MyJson(obj),)),
-            b("'123.45'"))
+        self.assertEqual(curs.mogrify("%s", (MyJson(obj),)), b"'123.45'")
 
     @skip_if_no_json_module
     def test_register_on_dict(self):
@@ -921,8 +919,7 @@ class JsonTestCase(ConnectingTestCase):
         try:
             curs = self.conn.cursor()
             obj = {'a': 123}
-            self.assertEqual(curs.mogrify("%s", (obj,)),
-                b("""'{"a": 123}'"""))
+            self.assertEqual(curs.mogrify("%s", (obj,)), b"""'{"a": 123}'""")
         finally:
            del psycopg2.extensions.adapters[dict, ext.ISQLQuote]
 

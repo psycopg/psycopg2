@@ -33,7 +33,6 @@ Intended Audience :: Developers
 License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)
 License :: OSI Approved :: Zope Public License
 Programming Language :: Python
-Programming Language :: Python :: 2.5
 Programming Language :: Python :: 2.6
 Programming Language :: Python :: 2.7
 Programming Language :: Python :: 3
@@ -76,10 +75,6 @@ else:
         # workaround subclass for ticket #153
         pass
 
-    # Configure distutils to run our custom 2to3 fixers as well
-    from lib2to3.refactor import get_fixers_from_package
-    build_py.fixer_names = get_fixers_from_package('lib2to3.fixes') \
-        + [ 'fix_b' ]
     sys.path.insert(0, 'scripts')
 
 try:

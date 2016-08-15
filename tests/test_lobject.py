@@ -29,7 +29,6 @@ from functools import wraps
 
 import psycopg2
 import psycopg2.extensions
-from psycopg2.extensions import b
 from testutils import unittest, decorate_all_tests, skip_if_tpc_disabled
 from testutils import ConnectingTestCase, skip_if_green
 
@@ -99,7 +98,7 @@ class LargeObjectTests(LargeObjectTestCase):
         lo = self.conn.lobject()
         lo2 = self.conn.lobject(lo.oid, "w")
         self.assertEqual(lo2.mode[0], "w")
-        lo2.write(b("some data"))
+        lo2.write(b"some data")
 
     def test_open_mode_n(self):
         # Openning an object in mode "n" gives us a closed lobject.
@@ -136,7 +135,7 @@ class LargeObjectTests(LargeObjectTestCase):
         self.tmpdir = tempfile.mkdtemp()
         filename = os.path.join(self.tmpdir, "data.txt")
         fp = open(filename, "wb")
-        fp.write(b("some data"))
+        fp.write(b"some data")
         fp.close()
 
         lo = self.conn.lobject(0, "r", 0, filename)
@@ -150,7 +149,7 @@ class LargeObjectTests(LargeObjectTestCase):
 
     def test_write(self):
         lo = self.conn.lobject()
-        self.assertEqual(lo.write(b("some data")), len("some data"))
+        self.assertEqual(lo.write(b"some data"), len("some data"))
 
     def test_write_large(self):
         lo = self.conn.lobject()
@@ -159,7 +158,7 @@ class LargeObjectTests(LargeObjectTestCase):
 
     def test_read(self):
         lo = self.conn.lobject()
-        length = lo.write(b("some data"))
+        length = lo.write(b"some data")
         lo.close()
 
         lo = self.conn.lobject(lo.oid)
@@ -170,14 +169,14 @@ class LargeObjectTests(LargeObjectTestCase):
 
     def test_read_binary(self):
         lo = self.conn.lobject()
-        length = lo.write(b("some data"))
+        length = lo.write(b"some data")
         lo.close()
 
         lo = self.conn.lobject(lo.oid, "rb")
         x = lo.read(4)
-        self.assertEqual(type(x), type(b('')))
-        self.assertEqual(x, b("some"))
-        self.assertEqual(lo.read(), b(" data"))
+        self.assertEqual(type(x), type(b''))
+        self.assertEqual(x, b"some")
+        self.assertEqual(lo.read(), b" data")
 
     def test_read_text(self):
         lo = self.conn.lobject()
@@ -206,7 +205,7 @@ class LargeObjectTests(LargeObjectTestCase):
 
     def test_seek_tell(self):
         lo = self.conn.lobject()
-        length = lo.write(b("some data"))
+        length = lo.write(b"some data")
         self.assertEqual(lo.tell(), length)
         lo.close()
         lo = self.conn.lobject(lo.oid)
@@ -236,7 +235,7 @@ class LargeObjectTests(LargeObjectTestCase):
 
     def test_export(self):
         lo = self.conn.lobject()
-        lo.write(b("some data"))
+        lo.write(b"some data")
 
         self.tmpdir = tempfile.mkdtemp()
         filename = os.path.join(self.tmpdir, "data.txt")
@@ -244,7 +243,7 @@ class LargeObjectTests(LargeObjectTestCase):
         self.assertTrue(os.path.exists(filename))
         f = open(filename, "rb")
         try:
-            self.assertEqual(f.read(), b("some data"))
+            self.assertEqual(f.read(), b"some data")
         finally:
             f.close()
 
@@ -256,7 +255,7 @@ class LargeObjectTests(LargeObjectTestCase):
     def test_write_after_close(self):
         lo = self.conn.lobject()
         lo.close()
-        self.assertRaises(psycopg2.InterfaceError, lo.write, b("some data"))
+        self.assertRaises(psycopg2.InterfaceError, lo.write, b"some data")
 
     def test_read_after_close(self):
         lo = self.conn.lobject()
@@ -281,7 +280,7 @@ class LargeObjectTests(LargeObjectTestCase):
 
     def test_export_after_close(self):
         lo = self.conn.lobject()
-        lo.write(b("some data"))
+        lo.write(b"some data")
         lo.close()
 
         self.tmpdir = tempfile.mkdtemp()
@@ -290,7 +289,7 @@ class LargeObjectTests(LargeObjectTestCase):
         self.assertTrue(os.path.exists(filename))
         f = open(filename, "rb")
         try:
-            self.assertEqual(f.read(), b("some data"))
+            self.assertEqual(f.read(), b"some data")
         finally:
             f.close()
 
@@ -307,7 +306,7 @@ class LargeObjectTests(LargeObjectTestCase):
         self.lo_oid = lo.oid
         self.conn.commit()
 
-        self.assertRaises(psycopg2.ProgrammingError, lo.write, b("some data"))
+        self.assertRaises(psycopg2.ProgrammingError, lo.write, b"some data")
 
     def test_read_after_commit(self):
         lo = self.conn.lobject()
@@ -340,7 +339,7 @@ class LargeObjectTests(LargeObjectTestCase):
 
     def test_export_after_commit(self):
         lo = self.conn.lobject()
-        lo.write(b("some data"))
+        lo.write(b"some data")
         self.conn.commit()
 
         self.tmpdir = tempfile.mkdtemp()
@@ -349,7 +348,7 @@ class LargeObjectTests(LargeObjectTestCase):
         self.assertTrue(os.path.exists(filename))
         f = open(filename, "rb")
         try:
-            self.assertEqual(f.read(), b("some data"))
+            self.assertEqual(f.read(), b"some data")
         finally:
             f.close()
 

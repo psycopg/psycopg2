@@ -103,15 +103,6 @@ TRANSACTION_STATUS_INERROR = 3
 TRANSACTION_STATUS_UNKNOWN = 4
 
 
-# Return bytes from a string
-if _sys.version_info[0] < 3:
-    def b(s):
-        return s
-else:
-    def b(s):
-        return s.encode('utf8')
-
-
 def register_adapter(typ, callable):
     """Register 'callable' as an ISQLQuote adapter for type 'typ'."""
     adapters[(typ, ISQLQuote)] = callable
@@ -136,7 +127,7 @@ class SQL_IN(object):
                 if hasattr(obj, 'prepare'):
                     obj.prepare(self._conn)
         qobjs = [o.getquoted() for o in pobjs]
-        return b('(') + b(', ').join(qobjs) + b(')')
+        return b'(' + b', '.join(qobjs) + b')'
 
     def __str__(self):
         return str(self.getquoted())
@@ -151,7 +142,7 @@ class NoneAdapter(object):
     def __init__(self, obj):
         pass
 
-    def getquoted(self, _null=b("NULL")):
+    def getquoted(self, _null=b"NULL"):
         return _null
 
 
