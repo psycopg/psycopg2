@@ -28,7 +28,6 @@ from testutils import unittest, ConnectingTestCase
 
 import psycopg2
 import psycopg2.extensions
-from psycopg2.extensions import b
 
 
 class QuotingTestCase(ConnectingTestCase):
@@ -69,12 +68,13 @@ class QuotingTestCase(ConnectingTestCase):
         with self.assertRaises(ValueError) as e:
             curs.execute("SELECT %s", (data,))
 
-        self.assertEquals(e.exception.message, 'A string literal cannot contain NUL (0x00) characters.')
+        self.assertEquals(str(e.exception),
+            'A string literal cannot contain NUL (0x00) characters.')
 
     def test_binary(self):
-        data = b("""some data with \000\013 binary
+        data = b"""some data with \000\013 binary
         stuff into, 'quotes' and \\ a backslash too.
-        """)
+        """
         if sys.version_info[0] < 3:
             data += "".join(map(chr, range(256)))
         else:
@@ -87,7 +87,7 @@ class QuotingTestCase(ConnectingTestCase):
         else:
             res = curs.fetchone()[0].tobytes()
 
-        if res[0] in (b('x'), ord(b('x'))) and self.conn.server_version >= 90000:
+        if res[0] in (b'x', ord(b'x')) and self.conn.server_version >= 90000:
             return self.skipTest(
                 "bytea broken with server >= 9.0, libpq < 9")
 
@@ -199,7 +199,7 @@ class TestStringAdapter(ConnectingTestCase):
         from psycopg2.extensions import adapt
         a = adapt("hello")
         self.assertEqual(a.encoding, 'latin1')
-        self.assertEqual(a.getquoted(), b("'hello'"))
+        self.assertEqual(a.getquoted(), b"'hello'")
 
         # NOTE: we can't really test an encoding different from utf8, because
         # when encoding without connection the libpq will use parameters from
@@ -222,7 +222,7 @@ class TestStringAdapter(ConnectingTestCase):
         a = adapt(snowman)
         a.encoding = 'utf8'
         self.assertEqual(a.encoding, 'utf8')
-        self.assertEqual(a.getquoted(), b("'\xe2\x98\x83'"))
+        self.assertEqual(a.getquoted(), b"'\xe2\x98\x83'")
 
     def test_connection_wins_anyway(self):
         from psycopg2.extensions import adapt
@@ -234,7 +234,7 @@ class TestStringAdapter(ConnectingTestCase):
         a.prepare(self.conn)
 
         self.assertEqual(a.encoding, 'utf_8')
-        self.assertEqual(a.getquoted(), b("'\xe2\x98\x83'"))
+        self.assertEqual(a.getquoted(), b"'\xe2\x98\x83'")
 
     @testutils.skip_before_python(3)
     def test_adapt_bytes(self):
@@ -242,7 +242,7 @@ class TestStringAdapter(ConnectingTestCase):
         self.conn.set_client_encoding('utf8')
         a = psycopg2.extensions.QuotedString(snowman.encode('utf8'))
         a.prepare(self.conn)
-        self.assertEqual(a.getquoted(), b("'\xe2\x98\x83'"))
+        self.assertEqual(a.getquoted(), b"'\xe2\x98\x83'")
 
 
 def test_suite():

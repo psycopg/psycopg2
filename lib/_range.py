@@ -27,7 +27,7 @@
 import re
 
 from psycopg2._psycopg import ProgrammingError, InterfaceError
-from psycopg2.extensions import ISQLQuote, adapt, register_adapter, b
+from psycopg2.extensions import ISQLQuote, adapt, register_adapter
 from psycopg2.extensions import new_type, new_array_type, register_type
 
 class Range(object):
@@ -240,7 +240,7 @@ class RangeAdapter(object):
 
         r = self.adapted
         if r.isempty:
-            return b("'empty'::" + self.name)
+            return b"'empty'::" + self.name.encode('utf8')
 
         if r.lower is not None:
             a = adapt(r.lower)
@@ -248,7 +248,7 @@ class RangeAdapter(object):
                 a.prepare(self._conn)
             lower = a.getquoted()
         else:
-            lower = b('NULL')
+            lower = b'NULL'
 
         if r.upper is not None:
             a = adapt(r.upper)
@@ -256,10 +256,10 @@ class RangeAdapter(object):
                 a.prepare(self._conn)
             upper = a.getquoted()
         else:
-            upper = b('NULL')
+            upper = b'NULL'
 
-        return b(self.name + '(') + lower + b(', ') + upper \
-                + b(", '%s')" % r._bounds)
+        return self.name.encode('utf8') + b'(' + lower + b', ' + upper \
+            + b", '" + r._bounds.encode('utf8') + b"')"
 
 
 class RangeCaster(object):
@@ -459,7 +459,7 @@ class NumberRangeAdapter(RangeAdapter):
     def getquoted(self):
         r = self.adapted
         if r.isempty:
-            return b("'empty'")
+            return b"'empty'"
 
         if not r.lower_inf:
             # not exactly: we are relying that none of these object is really
