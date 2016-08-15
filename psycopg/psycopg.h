@@ -26,6 +26,10 @@
 #ifndef PSYCOPG_H
 #define PSYCOPG_H 1
 
+#if PG_VERSION_NUM < 90100
+#error "Psycopg requires PostgreSQL client library (libpq) >= 9.1"
+#endif
+
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <libpq-fe.h>

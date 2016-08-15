@@ -1913,7 +1913,7 @@ pq_fetch(cursorObject *curs, int no_result)
         break;
 
     default:
-        /* PGRES_COPY_BOTH, PGRES_SINGLE_TUPLE, future statuses */
+        /* PGRES_SINGLE_TUPLE, future statuses */
         Dprintf("pq_fetch: got unsupported result: status = %d pgconn = %p",
             pgstatus, curs->conn);
         PyErr_Format(NotSupportedError,
