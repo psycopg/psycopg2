@@ -25,6 +25,8 @@ New features:
 Other changes:
 
 - Dropped support for Python 2.5.
+- Dropped support for client library older than PostgreSQL 9.1 (but older
+  server versions are still supported).
 
 
 What's new in psycopg 2.6.3
