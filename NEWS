@@ -22,6 +22,10 @@ New features:
 - Added `~psycopg2.extensions.quote_ident()` function (:ticket:`#359`).
 - Added `~connection.get_dsn_parameters()` connection method (:ticket:`#364`).
 
+Other changes:
+
+- Dropped support for Python 2.5.
+
 
 What's new in psycopg 2.6.3
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
