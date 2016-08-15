@@ -474,8 +474,6 @@ lobject_export(lobjectObject *self, const char *filename)
     return retvalue;
 }
 
-#if PG_VERSION_NUM >= 80300
-
 RAISES_NEG int
 lobject_truncate(lobjectObject *self, size_t len)
 {
@@ -510,5 +508,3 @@ lobject_truncate(lobjectObject *self, size_t len)
     return retvalue;
 
 }
-
-#endif /* PG_VERSION_NUM >= 80300 */

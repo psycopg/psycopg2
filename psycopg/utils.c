@@ -67,12 +67,10 @@ psycopg_escape_string(connectionObject *conn, const char *from, Py_ssize_t len,
     }
 
     {
-        #if PG_VERSION_NUM >= 80104
             int err;
             if (conn && conn->pgconn)
                 ql = PQescapeStringConn(conn->pgconn, to+eq+1, from, len, &err);
             else
-        #endif
                 ql = PQescapeString(to+eq+1, from, len);
     }
 

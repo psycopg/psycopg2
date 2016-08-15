@@ -164,7 +164,6 @@ exit:
 static PyObject *
 psyco_quote_ident(PyObject *self, PyObject *args, PyObject *kwargs)
 {
-#if PG_VERSION_NUM >= 90000
     PyObject *ident = NULL, *obj = NULL, *result = NULL;
     connectionObject *conn;
     const char *str;
@@ -204,10 +203,6 @@ exit:
     Py_XDECREF(ident);
 
     return result;
-#else
-    PyErr_SetString(NotSupportedError, "PQescapeIdentifier not available in libpq < 9.0");
-    return NULL;
-#endif
 }
 
 /** type registration **/
@@ -285,9 +280,7 @@ psyco_libcrypto_threads_init(void)
     if ((m = PyImport_ImportModule("ssl"))) {
         /* disable libcrypto setup in libpq, so it won't stomp on the callbacks
            that have already been set up */
-#if PG_VERSION_NUM >= 80400
         PQinitOpenSSL(1, 0);
-#endif
         Py_DECREF(m);
     }
     else {
