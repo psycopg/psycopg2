@@ -241,7 +241,7 @@ How do I interrupt a long-running query in an interactive shell?
 
     .. code-block:: pycon
 
-        >>> psycopg2.extensions.set_wait_callback(psycopg2.extensions.wait_select)
+        >>> psycopg2.extensions.set_wait_callback(psycopg2.extras.wait_select)
         >>> cnn = psycopg2.connect('')
         >>> cur = cnn.cursor()
         >>> cur.execute("select pg_sleep(10)")
