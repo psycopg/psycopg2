@@ -908,7 +908,7 @@ WHERE typname = 'hstore';
 
 def register_hstore(conn_or_curs, globally=False, unicode=False,
                     oid=None, array_oid=None):
-    """Register adapter and typecaster for `!dict`\-\ |hstore| conversions.
+    r"""Register adapter and typecaster for `!dict`\-\ |hstore| conversions.
 
     :param conn_or_curs: a connection or cursor: the typecaster will be
         registered only on this object unless *globally* is set to `!True`
