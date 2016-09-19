@@ -126,10 +126,12 @@ class AbstractConnectionPool(object):
     @property
     @contextmanager
     def quick_cursor(self):
-        """A ContextManager for quickly getting a  cursor"""
-        with self.getconn() as conn, conn.cursor() as cur:
-                    yield cur
-        self.putconn(conn)
+        """A ContextManager for quickly getting a cursor"""
+        try:
+           with self.getconn() as conn, conn.cursor() as cur:
+              yield cur
+        finally:
+           self.putconn(conn)
 
     def _closeall(self):
         """Close all connections.
