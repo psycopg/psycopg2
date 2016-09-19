@@ -123,7 +123,6 @@ class AbstractConnectionPool(object):
             del self._used[key]
             del self._rused[id(conn)]
 
-    @property
     @contextmanager
     def quick_cursor(self):
         """A ContextManager for quickly getting a cursor"""
