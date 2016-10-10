@@ -32,6 +32,7 @@ except NameError:
 from threading import Thread
 from psycopg2 import errorcodes
 
+
 class ErrocodeTests(ConnectingTestCase):
     def test_lookup_threadsafe(self):
 
@@ -39,6 +40,7 @@ class ErrocodeTests(ConnectingTestCase):
         MAX_CYCLES = 2000
 
         errs = []
+
         def f(pg_code='40001'):
             try:
                 errorcodes.lookup(pg_code)

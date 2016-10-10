@@ -33,6 +33,7 @@ import StringIO
 
 from testutils import ConnectingTestCase
 
+
 class PollableStub(object):
     """A 'pollable' wrapper allowing analysis of the `poll()` calls."""
     def __init__(self, pollable):
@@ -68,6 +69,7 @@ class AsyncTests(ConnectingTestCase):
     def test_connection_setup(self):
         cur = self.conn.cursor()
         sync_cur = self.sync_conn.cursor()
+        del cur, sync_cur
 
         self.assert_(self.conn.async)
         self.assert_(not self.sync_conn.async)
@@ -77,7 +79,7 @@ class AsyncTests(ConnectingTestCase):
 
         # check other properties to be found on the connection
         self.assert_(self.conn.server_version)
-        self.assert_(self.conn.protocol_version in (2,3))
+        self.assert_(self.conn.protocol_version in (2, 3))
         self.assert_(self.conn.encoding in psycopg2.extensions.encodings)
 
     def test_async_named_cursor(self):
@@ -108,6 +110,7 @@ class AsyncTests(ConnectingTestCase):
     def test_async_after_async(self):
         cur = self.conn.cursor()
         cur2 = self.conn.cursor()
+        del cur2
 
         cur.execute("insert into table1 values (1)")
 
@@ -422,14 +425,14 @@ class AsyncTests(ConnectingTestCase):
     def test_async_cursor_gone(self):
         import gc
         cur = self.conn.cursor()
-        cur.execute("select 42;");
+        cur.execute("select 42;")
         del cur
         gc.collect()
         self.assertRaises(psycopg2.InterfaceError, self.wait, self.conn)
 
         # The connection is still usable
         cur = self.conn.cursor()
-        cur.execute("select 42;");
+        cur.execute("select 42;")
         self.wait(self.conn)
         self.assertEqual(cur.fetchone(), (42,))
 
@@ -449,4 +452,3 @@ def test_suite():
 
 if __name__ == "__main__":
     unittest.main()
-

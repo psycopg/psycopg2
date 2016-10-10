@@ -29,6 +29,7 @@ import psycopg2.extensions
 from testutils import unittest, ConnectingTestCase, skip_before_postgres
 from testutils import skip_if_no_namedtuple, skip_if_no_getrefcount
 
+
 class CursorTests(ConnectingTestCase):
 
     def test_close_idempotent(self):
@@ -47,8 +48,10 @@ class CursorTests(ConnectingTestCase):
         conn = self.conn
         cur = conn.cursor()
         cur.execute("create temp table test_exc (data int);")
+
         def buggygen():
-            yield 1//0
+            yield 1 // 0
+
         self.assertRaises(ZeroDivisionError,
             cur.executemany, "insert into test_exc values (%s)", buggygen())
         cur.close()
@@ -102,8 +105,7 @@ class CursorTests(ConnectingTestCase):
         # issue #81: reference leak when a parameter value is referenced
         # more than once from a dict.
         cur = self.conn.cursor()
-        i = lambda x: x
-        foo = i('foo') * 10
+        foo = (lambda x: x)('foo') * 10
         import sys
         nref1 = sys.getrefcount(foo)
         cur.mogrify("select %(foo)s, %(foo)s, %(foo)s", {'foo': foo})
@@ -135,7 +137,7 @@ class CursorTests(ConnectingTestCase):
             self.assertEqual(Decimal('123.45'), curs.cast(1700, '123.45'))
 
         from datetime import date
-        self.assertEqual(date(2011,1,2), curs.cast(1082, '2011-01-02'))
+        self.assertEqual(date(2011, 1, 2), curs.cast(1082, '2011-01-02'))
         self.assertEqual("who am i?", curs.cast(705, 'who am i?'))  # unknown
 
     def test_cast_specificity(self):
@@ -158,7 +160,8 @@ class CursorTests(ConnectingTestCase):
         curs = self.conn.cursor()
         w = ref(curs)
         del curs
-        import gc; gc.collect()
+        import gc
+        gc.collect()
         self.assert_(w() is None)
 
     def test_null_name(self):
@@ -168,7 +171,7 @@ class CursorTests(ConnectingTestCase):
     def test_invalid_name(self):
         curs = self.conn.cursor()
         curs.execute("create temp table invname (data int);")
-        for i in (10,20,30):
+        for i in (10, 20, 30):
             curs.execute("insert into invname values (%s)", (i,))
         curs.close()
 
@@ -193,16 +196,16 @@ class CursorTests(ConnectingTestCase):
 
         self._create_withhold_table()
         curs = self.conn.cursor("W")
-        self.assertEqual(curs.withhold, False);
+        self.assertEqual(curs.withhold, False)
         curs.withhold = True
-        self.assertEqual(curs.withhold, True);
+        self.assertEqual(curs.withhold, True)
         curs.execute("select data from withhold order by data")
         self.conn.commit()
         self.assertEqual(curs.fetchall(), [(10,), (20,), (30,)])
         curs.close()
 
         curs = self.conn.cursor("W", withhold=True)
-        self.assertEqual(curs.withhold, True);
+        self.assertEqual(curs.withhold, True)
         curs.execute("select data from withhold order by data")
         self.conn.commit()
         self.assertEqual(curs.fetchall(), [(10,), (20,), (30,)])
@@ -264,18 +267,18 @@ class CursorTests(ConnectingTestCase):
         curs = self.conn.cursor()
         curs.execute("create table scrollable (data int)")
         curs.executemany("insert into scrollable values (%s)",
-            [ (i,) for i in range(100) ])
+            [(i,) for i in range(100)])
         curs.close()
 
         for t in range(2):
             if not t:
                 curs = self.conn.cursor("S")
-                self.assertEqual(curs.scrollable, None);
+                self.assertEqual(curs.scrollable, None)
                 curs.scrollable = True
             else:
                 curs = self.conn.cursor("S", scrollable=True)
 
-            self.assertEqual(curs.scrollable, True);
+            self.assertEqual(curs.scrollable, True)
             curs.itersize = 10
 
             # complex enough to make postgres cursors declare without
@@ -303,7 +306,7 @@ class CursorTests(ConnectingTestCase):
         curs = self.conn.cursor()
         curs.execute("create table scrollable (data int)")
         curs.executemany("insert into scrollable values (%s)",
-            [ (i,) for i in range(100) ])
+            [(i,) for i in range(100)])
         curs.close()
 
         curs = self.conn.cursor("S")    # default scrollability
@@ -340,18 +343,18 @@ class CursorTests(ConnectingTestCase):
     def test_iter_named_cursor_default_itersize(self):
         curs = self.conn.cursor('tmp')
         curs.execute('select generate_series(1,50)')
-        rv = [ (r[0], curs.rownumber) for r in curs ]
+        rv = [(r[0], curs.rownumber) for r in curs]
         # everything swallowed in one gulp
-        self.assertEqual(rv, [(i,i) for i in range(1,51)])
+        self.assertEqual(rv, [(i, i) for i in range(1, 51)])
 
     @skip_before_postgres(8, 0)
     def test_iter_named_cursor_itersize(self):
         curs = self.conn.cursor('tmp')
         curs.itersize = 30
         curs.execute('select generate_series(1,50)')
-        rv = [ (r[0], curs.rownumber) for r in curs ]
+        rv = [(r[0], curs.rownumber) for r in curs]
         # everything swallowed in two gulps
-        self.assertEqual(rv, [(i,((i - 1) % 30) + 1) for i in range(1,51)])
+        self.assertEqual(rv, [(i, ((i - 1) % 30) + 1) for i in range(1, 51)])
 
     @skip_before_postgres(8, 0)
     def test_iter_named_cursor_rownumber(self):

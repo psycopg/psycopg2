@@ -33,71 +33,69 @@ This module holds all the extensions to the DBAPI-2.0 provided by psycopg.
 # License for more details.
 
 import re as _re
-import sys as _sys
 
-from psycopg2._psycopg import UNICODE, INTEGER, LONGINTEGER, BOOLEAN, FLOAT
-from psycopg2._psycopg import TIME, DATE, INTERVAL, DECIMAL
-from psycopg2._psycopg import BINARYARRAY, BOOLEANARRAY, DATEARRAY, DATETIMEARRAY
-from psycopg2._psycopg import DECIMALARRAY, FLOATARRAY, INTEGERARRAY, INTERVALARRAY
-from psycopg2._psycopg import LONGINTEGERARRAY, ROWIDARRAY, STRINGARRAY, TIMEARRAY
-from psycopg2._psycopg import UNICODEARRAY
+from psycopg2._psycopg import (                             # noqa
+    BINARYARRAY, BOOLEAN, BOOLEANARRAY, DATE, DATEARRAY, DATETIMEARRAY,
+    DECIMAL, DECIMALARRAY, FLOAT, FLOATARRAY, INTEGER, INTEGERARRAY,
+    INTERVAL, INTERVALARRAY, LONGINTEGER, LONGINTEGERARRAY, ROWIDARRAY,
+    STRINGARRAY, TIME, TIMEARRAY, UNICODE, UNICODEARRAY,
+    AsIs, Binary, Boolean, Float, Int, QuotedString, )
 
-from psycopg2._psycopg import Binary, Boolean, Int, Float, QuotedString, AsIs
 try:
-    from psycopg2._psycopg import MXDATE, MXDATETIME, MXINTERVAL, MXTIME
-    from psycopg2._psycopg import MXDATEARRAY, MXDATETIMEARRAY, MXINTERVALARRAY, MXTIMEARRAY
-    from psycopg2._psycopg import DateFromMx, TimeFromMx, TimestampFromMx
-    from psycopg2._psycopg import IntervalFromMx
+    from psycopg2._psycopg import (                         # noqa
+        MXDATE, MXDATETIME, MXINTERVAL, MXTIME,
+        MXDATEARRAY, MXDATETIMEARRAY, MXINTERVALARRAY, MXTIMEARRAY,
+        DateFromMx, TimeFromMx, TimestampFromMx, IntervalFromMx, )
 except ImportError:
     pass
 
 try:
-    from psycopg2._psycopg import PYDATE, PYDATETIME, PYINTERVAL, PYTIME
-    from psycopg2._psycopg import PYDATEARRAY, PYDATETIMEARRAY, PYINTERVALARRAY, PYTIMEARRAY
-    from psycopg2._psycopg import DateFromPy, TimeFromPy, TimestampFromPy
-    from psycopg2._psycopg import IntervalFromPy
+    from psycopg2._psycopg import (                         # noqa
+        PYDATE, PYDATETIME, PYINTERVAL, PYTIME,
+        PYDATEARRAY, PYDATETIMEARRAY, PYINTERVALARRAY, PYTIMEARRAY,
+        DateFromPy, TimeFromPy, TimestampFromPy, IntervalFromPy, )
 except ImportError:
     pass
 
-from psycopg2._psycopg import adapt, adapters, encodings, connection, cursor
-from psycopg2._psycopg import lobject, Xid, libpq_version, parse_dsn, quote_ident
-from psycopg2._psycopg import string_types, binary_types, new_type, new_array_type, register_type
-from psycopg2._psycopg import ISQLQuote, Notify, Diagnostics, Column
+from psycopg2._psycopg import (                             # noqa
+    adapt, adapters, encodings, connection, cursor,
+    lobject, Xid, libpq_version, parse_dsn, quote_ident,
+    string_types, binary_types, new_type, new_array_type, register_type,
+    ISQLQuote, Notify, Diagnostics, Column,
+    QueryCanceledError, TransactionRollbackError,
+    set_wait_callback, get_wait_callback, )
 
-from psycopg2._psycopg import QueryCanceledError, TransactionRollbackError
-
-try:
-    from psycopg2._psycopg import set_wait_callback, get_wait_callback
-except ImportError:
-    pass
 
 """Isolation level values."""
-ISOLATION_LEVEL_AUTOCOMMIT          = 0
-ISOLATION_LEVEL_READ_UNCOMMITTED    = 4
-ISOLATION_LEVEL_READ_COMMITTED      = 1
-ISOLATION_LEVEL_REPEATABLE_READ     = 2
-ISOLATION_LEVEL_SERIALIZABLE        = 3
+ISOLATION_LEVEL_AUTOCOMMIT = 0
+ISOLATION_LEVEL_READ_UNCOMMITTED = 4
+ISOLATION_LEVEL_READ_COMMITTED = 1
+ISOLATION_LEVEL_REPEATABLE_READ = 2
+ISOLATION_LEVEL_SERIALIZABLE = 3
+
 
 """psycopg connection status values."""
-STATUS_SETUP    = 0
-STATUS_READY    = 1
-STATUS_BEGIN    = 2
-STATUS_SYNC     = 3  # currently unused
-STATUS_ASYNC    = 4  # currently unused
+STATUS_SETUP = 0
+STATUS_READY = 1
+STATUS_BEGIN = 2
+STATUS_SYNC = 3  # currently unused
+STATUS_ASYNC = 4  # currently unused
 STATUS_PREPARED = 5
 
 # This is a useful mnemonic to check if the connection is in a transaction
 STATUS_IN_TRANSACTION = STATUS_BEGIN
 
+
 """psycopg asynchronous connection polling values"""
-POLL_OK    = 0
-POLL_READ  = 1
+POLL_OK = 0
+POLL_READ = 1
 POLL_WRITE = 2
 POLL_ERROR = 3
 
+
 """Backend transaction status values."""
-TRANSACTION_STATUS_IDLE    = 0
-TRANSACTION_STATUS_ACTIVE  = 1
+TRANSACTION_STATUS_IDLE = 0
+TRANSACTION_STATUS_ACTIVE = 1
 TRANSACTION_STATUS_INTRANS = 2
 TRANSACTION_STATUS_INERROR = 3
 TRANSACTION_STATUS_UNKNOWN = 4
@@ -194,7 +192,7 @@ def _param_escape(s,
 
 
 # Create default json typecasters for PostgreSQL 9.2 oids
-from psycopg2._json import register_default_json, register_default_jsonb
+from psycopg2._json import register_default_json, register_default_jsonb    # noqa
 
 try:
     JSON, JSONARRAY = register_default_json()
@@ -206,7 +204,7 @@ del register_default_json, register_default_jsonb
 
 
 # Create default Range typecasters
-from psycopg2. _range import Range
+from psycopg2. _range import Range                              # noqa
 del Range
 
 

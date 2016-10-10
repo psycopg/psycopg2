@@ -69,8 +69,8 @@ else:
 # Silence warnings caused by the stubbornness of the Python unittest
 # maintainers
 # http://bugs.python.org/issue9424
-if not hasattr(unittest.TestCase, 'assert_') \
-or unittest.TestCase.assert_ is not unittest.TestCase.assertTrue:
+if (not hasattr(unittest.TestCase, 'assert_')
+        or unittest.TestCase.assert_ is not unittest.TestCase.assertTrue):
     # mavaff...
     unittest.TestCase.assert_ = unittest.TestCase.assertTrue
     unittest.TestCase.failUnless = unittest.TestCase.assertTrue
@@ -175,7 +175,7 @@ def skip_if_no_uuid(f):
     @wraps(f)
     def skip_if_no_uuid_(self):
         try:
-            import uuid
+            import uuid             # noqa
         except ImportError:
             return self.skipTest("uuid not available in this Python version")
 
@@ -223,7 +223,7 @@ def skip_if_no_namedtuple(f):
     @wraps(f)
     def skip_if_no_namedtuple_(self):
         try:
-            from collections import namedtuple
+            from collections import namedtuple              # noqa
         except ImportError:
             return self.skipTest("collections.namedtuple not available")
         else:
@@ -237,7 +237,7 @@ def skip_if_no_iobase(f):
     @wraps(f)
     def skip_if_no_iobase_(self):
         try:
-            from io import TextIOBase
+            from io import TextIOBase                       # noqa
         except ImportError:
             return self.skipTest("io.TextIOBase not found.")
         else:
@@ -249,6 +249,7 @@ def skip_if_no_iobase(f):
 def skip_before_postgres(*ver):
     """Skip a test on PostgreSQL before a certain version."""
     ver = ver + (0,) * (3 - len(ver))
+
     def skip_before_postgres_(f):
         @wraps(f)
         def skip_before_postgres__(self):
@@ -261,9 +262,11 @@ def skip_before_postgres(*ver):
         return skip_before_postgres__
     return skip_before_postgres_
 
+
 def skip_after_postgres(*ver):
     """Skip a test on PostgreSQL after (including) a certain version."""
     ver = ver + (0,) * (3 - len(ver))
+
     def skip_after_postgres_(f):
         @wraps(f)
         def skip_after_postgres__(self):
@@ -276,6 +279,7 @@ def skip_after_postgres(*ver):
         return skip_after_postgres__
     return skip_after_postgres_
 
+
 def libpq_version():
     import psycopg2
     v = psycopg2.__libpq_version__
@@ -283,9 +287,11 @@ def libpq_version():
         v = psycopg2.extensions.libpq_version()
     return v
 
+
 def skip_before_libpq(*ver):
     """Skip a test if libpq we're linked to is older than a certain version."""
     ver = ver + (0,) * (3 - len(ver))
+
     def skip_before_libpq_(f):
         @wraps(f)
         def skip_before_libpq__(self):
@@ -298,9 +304,11 @@ def skip_before_libpq(*ver):
         return skip_before_libpq__
     return skip_before_libpq_
 
+
 def skip_after_libpq(*ver):
     """Skip a test if libpq we're linked to is newer than a certain version."""
     ver = ver + (0,) * (3 - len(ver))
+
     def skip_after_libpq_(f):
         @wraps(f)
         def skip_after_libpq__(self):
@@ -312,6 +320,7 @@ def skip_after_libpq(*ver):
 
         return skip_after_libpq__
     return skip_after_libpq_
+
 
 def skip_before_python(*ver):
     """Skip a test on Python before a certain version."""
@@ -327,6 +336,7 @@ def skip_before_python(*ver):
         return skip_before_python__
     return skip_before_python_
 
+
 def skip_from_python(*ver):
     """Skip a test on Python after (including) a certain version."""
     def skip_from_python_(f):
@@ -340,6 +350,7 @@ def skip_from_python(*ver):
 
         return skip_from_python__
     return skip_from_python_
+
 
 def skip_if_no_superuser(f):
     """Skip a test if the database user running the test is not a superuser"""
@@ -357,6 +368,7 @@ def skip_if_no_superuser(f):
 
     return skip_if_no_superuser_
 
+
 def skip_if_green(reason):
     def skip_if_green_(f):
         @wraps(f)
@@ -372,6 +384,7 @@ def skip_if_green(reason):
 
 skip_copy_if_green = skip_if_green("copy in async mode currently not supported")
 
+
 def skip_if_no_getrefcount(f):
     @wraps(f)
     def skip_if_no_getrefcount_(self):
@@ -380,6 +393,7 @@ def skip_if_no_getrefcount(f):
         else:
             return f(self)
     return skip_if_no_getrefcount_
+
 
 def skip_if_windows(f):
     """Skip a test if run on windows"""
@@ -418,6 +432,7 @@ def script_to_py3(script):
     finally:
         f2.close()
         os.remove(filename)
+
 
 class py3_raises_typeerror(object):
 

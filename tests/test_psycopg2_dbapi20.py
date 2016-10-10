@@ -30,12 +30,13 @@ import psycopg2
 
 from testconfig import dsn
 
+
 class Psycopg2Tests(dbapi20.DatabaseAPI20Test):
     driver = psycopg2
     connect_args = ()
     connect_kw_args = {'dsn': dsn}
 
-    lower_func = 'lower' # For stored procedure test
+    lower_func = 'lower'    # For stored procedure test
 
     def test_setoutputsize(self):
         # psycopg2's setoutputsize() is a no-op

@@ -30,6 +30,7 @@ import psycopg2.extensions as ext
 
 from testutils import unittest, ConnectingTestCase
 
+
 class WithTestCase(ConnectingTestCase):
     def setUp(self):
         ConnectingTestCase.setUp(self)
@@ -93,7 +94,7 @@ class WithConnectionTestCase(WithTestCase):
             with self.conn as conn:
                 curs = conn.cursor()
                 curs.execute("insert into test_with values (3)")
-                1/0
+                1 / 0
 
         self.assertRaises(ZeroDivisionError, f)
         self.assertEqual(self.conn.status, ext.STATUS_READY)
@@ -113,6 +114,7 @@ class WithConnectionTestCase(WithTestCase):
 
     def test_subclass_commit(self):
         commits = []
+
         class MyConn(ext.connection):
             def commit(self):
                 commits.append(None)
@@ -131,6 +133,7 @@ class WithConnectionTestCase(WithTestCase):
 
     def test_subclass_rollback(self):
         rollbacks = []
+
         class MyConn(ext.connection):
             def rollback(self):
                 rollbacks.append(None)
@@ -140,7 +143,7 @@ class WithConnectionTestCase(WithTestCase):
             with self.connect(connection_factory=MyConn) as conn:
                 curs = conn.cursor()
                 curs.execute("insert into test_with values (11)")
-                1/0
+                1 / 0
         except ZeroDivisionError:
             pass
         else:
@@ -175,7 +178,7 @@ class WithCursorTestCase(WithTestCase):
             with self.conn as conn:
                 with conn.cursor() as curs:
                     curs.execute("insert into test_with values (5)")
-                    1/0
+                    1 / 0
         except ZeroDivisionError:
             pass
 
@@ -189,6 +192,7 @@ class WithCursorTestCase(WithTestCase):
 
     def test_subclass(self):
         closes = []
+
         class MyCurs(ext.cursor):
             def close(self):
                 closes.append(None)

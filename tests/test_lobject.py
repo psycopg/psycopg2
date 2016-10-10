@@ -32,6 +32,7 @@ import psycopg2.extensions
 from testutils import unittest, decorate_all_tests, skip_if_tpc_disabled
 from testutils import ConnectingTestCase, skip_if_green
 
+
 def skip_if_no_lo(f):
     @wraps(f)
     def skip_if_no_lo_(self):
@@ -158,7 +159,7 @@ class LargeObjectTests(LargeObjectTestCase):
 
     def test_read(self):
         lo = self.conn.lobject()
-        length = lo.write(b"some data")
+        lo.write(b"some data")
         lo.close()
 
         lo = self.conn.lobject(lo.oid)
@@ -169,7 +170,7 @@ class LargeObjectTests(LargeObjectTestCase):
 
     def test_read_binary(self):
         lo = self.conn.lobject()
-        length = lo.write(b"some data")
+        lo.write(b"some data")
         lo.close()
 
         lo = self.conn.lobject(lo.oid, "rb")
@@ -181,7 +182,7 @@ class LargeObjectTests(LargeObjectTestCase):
     def test_read_text(self):
         lo = self.conn.lobject()
         snowman = u"\u2603"
-        length = lo.write(u"some data " + snowman)
+        lo.write(u"some data " + snowman)
         lo.close()
 
         lo = self.conn.lobject(lo.oid, "rt")
@@ -193,7 +194,7 @@ class LargeObjectTests(LargeObjectTestCase):
     def test_read_large(self):
         lo = self.conn.lobject()
         data = "data" * 1000000
-        length = lo.write("some" + data)
+        lo.write("some" + data)
         lo.close()
 
         lo = self.conn.lobject(lo.oid)
@@ -399,6 +400,7 @@ def skip_if_no_truncate(f):
 
     return skip_if_no_truncate_
 
+
 class LargeObjectTruncateTests(LargeObjectTestCase):
     def test_truncate(self):
         lo = self.conn.lobject()
@@ -450,14 +452,18 @@ def _has_lo64(conn):
 
     return (True, "this server and build support the lo64 API")
 
+
 def skip_if_no_lo64(f):
     @wraps(f)
     def skip_if_no_lo64_(self):
         lo64, msg = _has_lo64(self.conn)
-        if not lo64: return self.skipTest(msg)
-        else: return f(self)
+        if not lo64:
+            return self.skipTest(msg)
+        else:
+            return f(self)
 
     return skip_if_no_lo64_
+
 
 class LargeObject64Tests(LargeObjectTestCase):
     def test_seek_tell_truncate_greater_than_2gb(self):
@@ -477,10 +483,13 @@ def skip_if_lo64(f):
     @wraps(f)
     def skip_if_lo64_(self):
         lo64, msg = _has_lo64(self.conn)
-        if lo64: return self.skipTest(msg)
-        else: return f(self)
+        if lo64:
+            return self.skipTest(msg)
+        else:
+            return f(self)
 
     return skip_if_lo64_
+
 
 class LargeObjectNot64Tests(LargeObjectTestCase):
     def test_seek_larger_than_2gb(self):

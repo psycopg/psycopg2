@@ -47,19 +47,20 @@ Homepage: http://initd.org/projects/psycopg2
 
 # Import the DBAPI-2.0 stuff into top-level module.
 
-from psycopg2._psycopg import BINARY, NUMBER, STRING, DATETIME, ROWID
+from psycopg2._psycopg import (                     # noqa
+    BINARY, NUMBER, STRING, DATETIME, ROWID,
 
-from psycopg2._psycopg import Binary, Date, Time, Timestamp
-from psycopg2._psycopg import DateFromTicks, TimeFromTicks, TimestampFromTicks
+    Binary, Date, Time, Timestamp,
+    DateFromTicks, TimeFromTicks, TimestampFromTicks,
 
-from psycopg2._psycopg import Error, Warning, DataError, DatabaseError, ProgrammingError
-from psycopg2._psycopg import IntegrityError, InterfaceError, InternalError
-from psycopg2._psycopg import NotSupportedError, OperationalError
+    Error, Warning, DataError, DatabaseError, ProgrammingError, IntegrityError,
+    InterfaceError, InternalError, NotSupportedError, OperationalError,
 
-from psycopg2._psycopg import _connect, apilevel, threadsafety, paramstyle
-from psycopg2._psycopg import __version__, __libpq_version__
+    _connect, apilevel, threadsafety, paramstyle,
+    __version__, __libpq_version__,
+)
 
-from psycopg2 import tz
+from psycopg2 import tz                             # noqa
 
 
 # Register default adapters.
@@ -82,7 +83,7 @@ else:
 
 
 def connect(dsn=None, connection_factory=None, cursor_factory=None,
-        async=False, **kwargs):
+            async=False, **kwargs):
     """
     Create a new database connection.
 

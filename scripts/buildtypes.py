@@ -19,8 +19,8 @@
 # code defines the DBAPITypeObject fundamental types and warns for
 # undefined types.
 
-import sys, os, string, copy
-from string import split, join, strip
+import sys
+from string import split, strip
 
 
 # here is the list of the foundamental types we want to import from
@@ -37,7 +37,7 @@ basic_types = (['NUMBER', ['INT8', 'INT4', 'INT2', 'FLOAT8', 'FLOAT4',
                ['STRING', ['NAME', 'CHAR', 'TEXT', 'BPCHAR',
                            'VARCHAR']],
                ['BOOLEAN', ['BOOL']],
-               ['DATETIME', ['TIMESTAMP', 'TIMESTAMPTZ', 
+               ['DATETIME', ['TIMESTAMP', 'TIMESTAMPTZ',
                              'TINTERVAL', 'INTERVAL']],
                ['TIME', ['TIME', 'TIMETZ']],
                ['DATE', ['DATE']],
@@ -73,8 +73,7 @@ FOOTER = """    {NULL, NULL, NULL, NULL}\n};\n"""
 # useful error reporting function
 def error(msg):
     """Report an error on stderr."""
-    sys.stderr.write(msg+'\n')
-    
+    sys.stderr.write(msg + '\n')
 
 # read couples from stdin and build list
 read_types = []
@@ -91,14 +90,14 @@ for t in basic_types:
     for v in t[1]:
         found = filter(lambda x, y=v: x[0] == y, read_types)
         if len(found) == 0:
-            error(v+': value not found')
+            error(v + ': value not found')
         elif len(found) > 1:
-            error(v+': too many values')
+            error(v + ': too many values')
         else:
             found_types[k].append(int(found[0][1]))
 
 # now outputs to stdout the right C-style definitions
-stypes = "" ; sstruct = ""
+stypes = sstruct = ""
 for t in basic_types:
     k = t[0]
     s = str(found_types[k])
@@ -108,7 +107,7 @@ for t in basic_types:
                 % (k, k, k))
 for t in array_types:
     kt = t[0]
-    ka = t[0]+'ARRAY'
+    ka = t[0] + 'ARRAY'
     s = str(t[1])
     s = '{' + s[1:-1] + ', 0}'
     stypes = stypes + ('static long int typecast_%s_types[] = %s;\n' % (ka, s))

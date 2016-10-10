@@ -25,6 +25,7 @@ import unittest
 from pprint import pprint
 from collections import defaultdict
 
+
 def main():
     opt = parse_args()
 
@@ -58,6 +59,7 @@ def main():
 
     return rv
 
+
 def parse_args():
     import optparse
 
@@ -83,7 +85,7 @@ def dump(i, opt):
         c[type(o)] += 1
 
     pprint(
-        sorted(((v,str(k)) for k,v in c.items()), reverse=True),
+        sorted(((v, str(k)) for k, v in c.items()), reverse=True),
         stream=open("debug-%02d.txt" % i, "w"))
 
     if opt.objs:
@@ -95,7 +97,7 @@ def dump(i, opt):
 
         # TODO: very incomplete
         if t is dict:
-            co.sort(key = lambda d: d.items())
+            co.sort(key=lambda d: d.items())
         else:
             co.sort()
 
@@ -104,4 +106,3 @@ def dump(i, opt):
 
 if __name__ == '__main__':
     sys.exit(main())
-

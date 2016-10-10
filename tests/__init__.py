@@ -52,6 +52,7 @@ if sys.version_info[:2] >= (2, 5):
 else:
     test_with = None
 
+
 def test_suite():
     # If connection to test db fails, bail out early.
     import psycopg2

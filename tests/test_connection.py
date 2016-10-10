@@ -27,17 +27,16 @@ import sys
 import time
 import threading
 from operator import attrgetter
-from StringIO import StringIO
 
 import psycopg2
 import psycopg2.errorcodes
-import psycopg2.extensions
-ext = psycopg2.extensions
+from psycopg2 import extensions as ext
 
-from testutils import unittest, decorate_all_tests, skip_if_no_superuser
-from testutils import skip_before_postgres, skip_after_postgres, skip_before_libpq
-from testutils import ConnectingTestCase, skip_if_tpc_disabled
-from testutils import skip_if_windows
+from testutils import (
+    unittest, decorate_all_tests, skip_if_no_superuser,
+    skip_before_postgres, skip_after_postgres, skip_before_libpq,
+    ConnectingTestCase, skip_if_tpc_disabled, skip_if_windows)
+
 from testconfig import dsn, dbname
 
 
@@ -112,8 +111,14 @@ class ConnectionTests(ConnectingTestCase):
         cur = conn.cursor()
         if self.conn.server_version >= 90300:
             cur.execute("set client_min_messages=debug1")
-        cur.execute("create temp table table1 (id serial); create temp table table2 (id serial);")
-        cur.execute("create temp table table3 (id serial); create temp table table4 (id serial);")
+        cur.execute("""
+            create temp table table1 (id serial);
+            create temp table table2 (id serial);
+            """)
+        cur.execute("""
+            create temp table table3 (id serial);
+            create temp table table4 (id serial);
+            """)
         self.assertEqual(4, len(conn.notices))
         self.assert_('table1' in conn.notices[0])
         self.assert_('table2' in conn.notices[1])
@@ -126,7 +131,8 @@ class ConnectionTests(ConnectingTestCase):
         if self.conn.server_version >= 90300:
             cur.execute("set client_min_messages=debug1")
         for i in range(0, 100, 10):
-            sql = " ".join(["create temp table table%d (id serial);" % j for j in range(i, i + 10)])
+            sql = " ".join(["create temp table table%d (id serial);" % j
+                            for j in range(i, i + 10)])
             cur.execute(sql)
 
         self.assertEqual(50, len(conn.notices))
@@ -141,8 +147,13 @@ class ConnectionTests(ConnectingTestCase):
         if self.conn.server_version >= 90300:
             cur.execute("set client_min_messages=debug1")
 
-        cur.execute("create temp table table1 (id serial); create temp table table2 (id serial);")
-        cur.execute("create temp table table3 (id serial); create temp table table4 (id serial);")
+        cur.execute("""
+            create temp table table1 (id serial);
+            create temp table table2 (id serial);
+            """)
+        cur.execute("""
+            create temp table table3 (id serial);
+            create temp table table4 (id serial);""")
         self.assertEqual(len(conn.notices), 4)
         self.assert_('table1' in conn.notices.popleft())
         self.assert_('table2' in conn.notices.popleft())
@@ -152,7 +163,8 @@ class ConnectionTests(ConnectingTestCase):
 
         # not limited, but no error
         for i in range(0, 100, 10):
-            sql = " ".join(["create temp table table2_%d (id serial);" % j for j in range(i, i + 10)])
+            sql = " ".join(["create temp table table2_%d (id serial);" % j
+                            for j in range(i, i + 10)])
             cur.execute(sql)
 
         self.assertEqual(len([n for n in conn.notices if 'CREATE TABLE' in n]),
@@ -315,16 +327,18 @@ class ParseDsnTestCase(ConnectingTestCase):
     def test_parse_dsn(self):
         from psycopg2 import ProgrammingError
 
-        self.assertEqual(ext.parse_dsn('dbname=test user=tester password=secret'),
-                         dict(user='tester', password='secret', dbname='test'),
-                         "simple DSN parsed")
+        self.assertEqual(
+            ext.parse_dsn('dbname=test user=tester password=secret'),
+            dict(user='tester', password='secret', dbname='test'),
+            "simple DSN parsed")
 
         self.assertRaises(ProgrammingError, ext.parse_dsn,
                           "dbname=test 2 user=tester password=secret")
 
-        self.assertEqual(ext.parse_dsn("dbname='test 2' user=tester password=secret"),
-                         dict(user='tester', password='secret', dbname='test 2'),
-                         "DSN with quoting parsed")
+        self.assertEqual(
+            ext.parse_dsn("dbname='test 2' user=tester password=secret"),
+            dict(user='tester', password='secret', dbname='test 2'),
+            "DSN with quoting parsed")
 
         # Can't really use assertRaisesRegexp() here since we need to
         # make sure that secret is *not* exposed in the error messgage
@@ -485,7 +499,8 @@ class IsolationLevelsTestCase(ConnectingTestCase):
 
         levels = [
             (None, psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT),
-            ('read uncommitted', psycopg2.extensions.ISOLATION_LEVEL_READ_UNCOMMITTED),
+            ('read uncommitted',
+                psycopg2.extensions.ISOLATION_LEVEL_READ_UNCOMMITTED),
             ('read committed', psycopg2.extensions.ISOLATION_LEVEL_READ_COMMITTED),
             ('repeatable read', psycopg2.extensions.ISOLATION_LEVEL_REPEATABLE_READ),
             ('serializable', psycopg2.extensions.ISOLATION_LEVEL_SERIALIZABLE),

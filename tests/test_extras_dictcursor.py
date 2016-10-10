@@ -39,7 +39,8 @@ class ExtrasDictCursorTests(ConnectingTestCase):
         self.assert_(isinstance(cur, psycopg2.extras.DictCursor))
         self.assertEqual(cur.name, None)
         # overridable
-        cur = self.conn.cursor('foo', cursor_factory=psycopg2.extras.NamedTupleCursor)
+        cur = self.conn.cursor('foo',
+            cursor_factory=psycopg2.extras.NamedTupleCursor)
         self.assertEqual(cur.name, 'foo')
         self.assert_(isinstance(cur, psycopg2.extras.NamedTupleCursor))
 
@@ -80,7 +81,6 @@ class ExtrasDictCursorTests(ConnectingTestCase):
         self.failUnless(row[0] == 'bar')
         return row
 
-
     def testDictCursorWithPlainCursorRealFetchOne(self):
         self._testWithPlainCursorReal(lambda curs: curs.fetchone())
 
@@ -109,7 +109,6 @@ class ExtrasDictCursorTests(ConnectingTestCase):
         curs.execute("SELECT * FROM ExtrasDictCursorTests")
         row = getter(curs)
         self.failUnless(row['foo'] == 'bar')
-
 
     def testDictCursorWithNamedCursorFetchOne(self):
         self._testWithNamedCursor(lambda curs: curs.fetchone())
@@ -146,7 +145,6 @@ class ExtrasDictCursorTests(ConnectingTestCase):
         self.failUnless(row['foo'] == 'bar')
         self.failUnless(row[0] == 'bar')
 
-
     def testDictCursorRealWithNamedCursorFetchOne(self):
         self._testWithNamedCursorReal(lambda curs: curs.fetchone())
 
@@ -176,11 +174,11 @@ class ExtrasDictCursorTests(ConnectingTestCase):
         self._testIterRowNumber(curs)
 
     def _testWithNamedCursorReal(self, getter):
-        curs = self.conn.cursor('aname', cursor_factory=psycopg2.extras.RealDictCursor)
+        curs = self.conn.cursor('aname',
+            cursor_factory=psycopg2.extras.RealDictCursor)
         curs.execute("SELECT * FROM ExtrasDictCursorTests")
         row = getter(curs)
         self.failUnless(row['foo'] == 'bar')
-
 
     def _testNamedCursorNotGreedy(self, curs):
         curs.itersize = 2
@@ -235,7 +233,7 @@ class NamedTupleCursorTest(ConnectingTestCase):
         from psycopg2.extras import NamedTupleConnection
 
         try:
-            from collections import namedtuple
+            from collections import namedtuple      # noqa
         except ImportError:
             return
 
@@ -346,7 +344,7 @@ class NamedTupleCursorTest(ConnectingTestCase):
 
     def test_error_message(self):
         try:
-            from collections import namedtuple
+            from collections import namedtuple          # noqa
         except ImportError:
             # an import error somewhere
             from psycopg2.extras import NamedTupleConnection
@@ -390,6 +388,7 @@ class NamedTupleCursorTest(ConnectingTestCase):
         from psycopg2.extras import NamedTupleCursor
         f_orig = NamedTupleCursor._make_nt
         calls = [0]
+
         def f_patched(self_):
             calls[0] += 1
             return f_orig(self_)
