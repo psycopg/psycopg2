@@ -70,21 +70,27 @@ class CursorTests(ConnectingTestCase):
         conn.set_client_encoding('UTF8')
         snowman = u"\u2603"
 
+        def b(s):
+            if isinstance(s, unicode):
+                return s.encode('utf8')
+            else:
+                return s
+
         # unicode query with non-ascii data
         cur.execute(u"SELECT '%s';" % snowman)
-        self.assertEqual(snowman.encode('utf8'), cur.fetchone()[0].encode('utf8'))
+        self.assertEqual(snowman.encode('utf8'), b(cur.fetchone()[0]))
         self.assertEqual(("SELECT '%s';" % snowman).encode('utf8'),
             cur.mogrify(u"SELECT '%s';" % snowman).replace(b"E'", b"'"))
 
         # unicode args
         cur.execute("SELECT %s;", (snowman,))
-        self.assertEqual(snowman.encode("utf-8"), cur.fetchone()[0].encode('utf8'))
+        self.assertEqual(snowman.encode("utf-8"), b(cur.fetchone()[0]))
         self.assertEqual(("SELECT '%s';" % snowman).encode('utf8'),
             cur.mogrify("SELECT %s;", (snowman,)).replace(b"E'", b"'"))
 
         # unicode query and args
         cur.execute(u"SELECT %s;", (snowman,))
-        self.assertEqual(snowman.encode("utf-8"), cur.fetchone()[0].encode('utf8'))
+        self.assertEqual(snowman.encode("utf-8"), b(cur.fetchone()[0]))
         self.assertEqual(("SELECT '%s';" % snowman).encode('utf8'),
             cur.mogrify(u"SELECT %s;", (snowman,)).replace(b"E'", b"'"))
 
