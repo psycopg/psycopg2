@@ -62,7 +62,7 @@ except ImportError:
 
 intersphinx_mapping = {
     'py': ('http://docs.python.org/', None),
-    'py3': ('http://docs.python.org/3.2', None),
+    'py3': ('http://docs.python.org/3.4', None),
     }
 
 # Pattern to generate links to the bug tracker

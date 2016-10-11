@@ -59,6 +59,10 @@ from psycopg2._range import (                               # noqa
     register_range, RangeAdapter, RangeCaster)
 
 
+# Expose ipaddress-related objects
+from psycopg2._ipaddress import register_ipaddress          # noqa
+
+
 class DictCursorBase(_cursor):
     """Base class for all dict-like cursors."""
 
@@ -686,6 +690,11 @@ def register_inet(oid=None, conn_or_curs=None):
     :param conn_or_curs: where to register the typecaster. If not specified,
         register it globally.
     """
+    import warnings
+    warnings.warn(
+        "the inet adapter is deprecated, it's not very useful",
+        DeprecationWarning)
+
     if not oid:
         oid1 = 869
         oid2 = 1041

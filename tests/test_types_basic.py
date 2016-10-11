@@ -349,6 +349,16 @@ class TypesBasicTests(ConnectingTestCase):
         a = self.execute("select '{1, 2, NULL}'::int4[]")
         self.assertEqual(a, [2, 4, 'nada'])
 
+    @testutils.skip_before_postgres(8, 2)
+    def testNetworkArray(self):
+        # we don't know these types, but we know their arrays
+        a = self.execute("select '{192.168.0.1/24}'::inet[]")
+        self.assertEqual(a, ['192.168.0.1/24'])
+        a = self.execute("select '{192.168.0.0/24}'::cidr[]")
+        self.assertEqual(a, ['192.168.0.0/24'])
+        a = self.execute("select '{10:20:30:40:50:60}'::macaddr[]")
+        self.assertEqual(a, ['10:20:30:40:50:60'])
+
 
 class AdaptSubclassTest(unittest.TestCase):
     def test_adapt_subtype(self):
