@@ -686,6 +686,11 @@ def register_inet(oid=None, conn_or_curs=None):
     :param conn_or_curs: where to register the typecaster. If not specified,
         register it globally.
     """
+    import warnings
+    warnings.warn(
+        "the inet adapter is deprecated, it's not very useful",
+        DeprecationWarning)
+
     if not oid:
         oid1 = 869
         oid2 = 1041

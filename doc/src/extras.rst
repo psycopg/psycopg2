@@ -934,8 +934,9 @@ UUID data type
 :sql:`inet` data type
 ^^^^^^^^^^^^^^^^^^^^^^
 
-.. versionadded:: 2.0.9
-.. versionchanged:: 2.4.5 added inet array support.
+.. deprecated:: 2.7
+    these objects will not receive further development and disappear in future
+    versions
 
 .. doctest::
 

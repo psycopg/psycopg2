@@ -19,6 +19,7 @@ New features:
 - The attributes `~connection.notices` and `~connection.notifies` can be
   customized replacing them with any object exposing an `!append()` method
   (:ticket:`#326`).
+- old ``inet`` adapters deprecated (:ticket:`#343`).
 - Added `~psycopg2.extensions.quote_ident()` function (:ticket:`#359`).
 - Added `~connection.get_dsn_parameters()` connection method (:ticket:`#364`).
 
