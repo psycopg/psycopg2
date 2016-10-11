@@ -59,6 +59,10 @@ from psycopg2._range import (                               # noqa
     register_range, RangeAdapter, RangeCaster)
 
 
+# Expose ipaddress-related objects
+from psycopg2._ipaddress import register_ipaddress          # noqa
+
+
 class DictCursorBase(_cursor):
     """Base class for all dict-like cursors."""
 

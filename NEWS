@@ -19,8 +19,9 @@ New features:
 - The attributes `~connection.notices` and `~connection.notifies` can be
   customized replacing them with any object exposing an `!append()` method
   (:ticket:`#326`).
-- old ``inet`` adapters deprecated, but arrays of network types converted
-  to lists by default (:tickets:`#343, #387`).
+- Adapt network types to `ipaddress` objects when available. When not
+  enabled, convert arrays of network types to lists by default. The old `!Inet`
+  adapter is deprecated (:tickets:`#317, #343, #387`).
 - Added `~psycopg2.extensions.quote_ident()` function (:ticket:`#359`).
 - Added `~connection.get_dsn_parameters()` connection method (:ticket:`#364`).
 
