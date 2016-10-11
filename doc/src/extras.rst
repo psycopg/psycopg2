@@ -930,13 +930,20 @@ UUID data type
 
 .. index::
     pair: INET; Data types
+    pair: CIDR; Data types
+    pair: MACADDR; Data types
 
-:sql:`inet` data type
-^^^^^^^^^^^^^^^^^^^^^^
+Networking data type
+^^^^^^^^^^^^^^^^^^^^
 
-.. deprecated:: 2.7
-    these objects will not receive further development and disappear in future
-    versions
+Psycopg casts the PostgreSQL networking data types (:sql:`inet`, :sql:`cidr`,
+:sql:`macaddr`) into ordinary strings. However their array are detected as
+arrays and directly cast into lists.
+
+.. versionchanged:: 2.7
+    in previous version array of networking types were not treated as arrays
+
+.. autofunction:: register_inet
 
 .. doctest::
 
@@ -950,11 +957,16 @@ UUID data type
     >>> cur.fetchone()[0].addr
     '192.168.0.1/24'
 
+.. deprecated:: 2.7
+    this function will not receive further development and disappear in future
+    versions
 
-.. autofunction:: register_inet
 
 .. autoclass:: Inet
 
+.. deprecated:: 2.7
+    this object will not receive further development and disappear in future
+    versions
 
 
 .. index::
