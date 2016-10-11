@@ -60,7 +60,7 @@ psyco_repl_curs_start_replication_expert(replicationCursorObject *self,
     EXC_IF_GREEN(start_replication_expert);
     EXC_IF_TPC_PREPARED(conn, start_replication_expert);
 
-    Dprintf("psyco_repl_curs_start_replication_expert: '%s'; decode: %d", command, decode);
+    Dprintf("psyco_repl_curs_start_replication_expert: '%s'; decode: %ld", command, decode);
 
     if (pq_execute(curs, command, conn->async, 1 /* no_result */, 1 /* no_begin */) >= 0) {
         res = Py_None;
