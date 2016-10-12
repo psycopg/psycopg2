@@ -93,12 +93,17 @@ typecast_STRING_cast(const char *s, Py_ssize_t len, PyObject *curs)
 static PyObject *
 typecast_UNICODE_cast(const char *s, Py_ssize_t len, PyObject *curs)
 {
-    char *enc;
+    connectionObject *conn;
 
     if (s == NULL) { Py_RETURN_NONE; }
 
-    enc = ((cursorObject*)curs)->conn->codec;
-    return PyUnicode_Decode(s, len, enc, NULL);
+    conn = ((cursorObject*)curs)->conn;
+    if (conn->cdecoder) {
+        return conn->cdecoder(s, len, NULL);
+    }
+    else {
+        return PyUnicode_Decode(s, len, conn->codec, NULL);
+    }
 }
 
 /** BOOLEAN - cast boolean value into right python object **/

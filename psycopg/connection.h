@@ -122,6 +122,9 @@ struct connectionObject {
     int autocommit;
 
     PyObject *cursor_factory;    /* default cursor factory from cursor() */
+
+    /* Pointer to a decoding function, e.g. PyUnicode_DecodeUTF8 */
+    PyObject *(*cdecoder)(const char *, Py_ssize_t, const char *);
 };
 
 /* map isolation level values into a numeric const */

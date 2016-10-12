@@ -361,6 +361,31 @@ exit:
     return rv;
 }
 
+
+/* set fast access functions according to the currently selected codec
+ */
+void
+conn_set_fast_codec(connectionObject *self)
+{
+    Dprintf("conn_set_fast_codec: codec=%s", self->codec);
+
+    if (0 == strcmp(self->codec, "utf_8")) {
+        Dprintf("conn_set_fast_codec: PyUnicode_DecodeUTF8");
+        self->cdecoder = PyUnicode_DecodeUTF8;
+        return;
+    }
+
+    if (0 == strcmp(self->codec, "iso8859_1")) {
+        Dprintf("conn_set_fast_codec: PyUnicode_DecodeLatin1");
+        self->cdecoder = PyUnicode_DecodeLatin1;
+        return;
+    }
+
+    Dprintf("conn_set_fast_codec: no fast codec");
+    self->cdecoder = NULL;
+}
+
+
 /* Read the client encoding from the connection.
  *
  * Store the encoding in the pgconn->encoding field and the name of the
@@ -401,6 +426,8 @@ conn_read_encoding(connectionObject *self, PGconn *pgconn)
     PyMem_Free(self->codec);
     self->codec = codec;
     codec = NULL;
+
+    conn_set_fast_codec(self);
 
     rv = 0;
 
@@ -1242,6 +1269,8 @@ conn_set_client_encoding(connectionObject *self, const char *enc)
         PyMem_Free(tmp);
         codec = NULL;
     }
+
+    conn_set_fast_codec(self);
 
     Dprintf("conn_set_client_encoding: set encoding to %s (codec: %s)",
             self->encoding, self->codec);
