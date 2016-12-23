@@ -66,10 +66,13 @@ class QuotingTestCase(ConnectingTestCase):
         curs = self.conn.cursor()
         data = 'abcd\x01\x00cdefg'
 
-        with self.assertRaises(ValueError) as e:
+        try:
             curs.execute("SELECT %s", (data,))
-
-        self.assertEquals(e.exception.message, 'A string literal cannot contain NUL (0x00) characters.')
+        except ValueError as e:
+            self.assertEquals(str(e),
+                'A string literal cannot contain NUL (0x00) characters.')
+        else:
+            self.fail("ValueError not raised")
 
     def test_binary(self):
         data = b("""some data with \000\013 binary
