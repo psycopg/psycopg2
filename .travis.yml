@@ -1,5 +1,11 @@
 language: python
 
+services:
+  - postgresql
+
+addons:
+    postgresql: 9.4
+
 python:
   - 2.6
   - 2.7
