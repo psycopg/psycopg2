@@ -12,6 +12,7 @@ python:
 
 before_script:
   - psql -c 'create database psycopg2_test;' -U postgres
+  - psql -c 'create extension hstore;' -U postgres
 
 install:
   - python setup.py install
