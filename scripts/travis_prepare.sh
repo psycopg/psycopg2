@@ -20,16 +20,18 @@ set_param () {
 create () {
     version=$1
     port=$2
-    dbname=psycopg2_test_$port
+    dbname=psycopg2_test
 
     pg_createcluster -p $port --start-conf manual $version psycopg
     set_param "$version" max_prepared_transactions 10
-    sed -i "s/local\s*all\s*postgres.*/local all postgres trust/" \
-        "/etc/postgresql/$version/psycopg/pg_hba.conf"
     pg_ctlcluster "$version" psycopg start
 
     sudo -u postgres psql -c "create user travis" "port=$port"
+    sudo -u postgres psql -c "create database $dbname" "port=$port"
+    sudo -u postgres psql -c "grant create on database $dbname to travis" "port=$port"
+    sudo -u postgres psql -c "create extension hstore" "port=$port dbname=$dbname"
 }
+
 
 # Would give a permission denied error in the travis build dir
 cd /

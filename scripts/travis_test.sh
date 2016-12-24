@@ -8,18 +8,7 @@ set -e
 run_test () {
     version=$1
     port=$2
-    pyver=$(python -c "import sys; print(''.join(map(str,sys.version_info[:2])))")
-    dbname=psycopg_test_$pyver
-
-    # Create a database for each python version to allow tests to run in parallel
-    psql -c "create database $dbname" \
-        "user=postgres port=$port dbname=postgres"
-
-    psql -c "grant create on database $dbname to travis" \
-        "user=postgres port=$port dbname=postgres"
-
-    psql -c "create extension hstore" \
-        "user=postgres port=$port dbname=$dbname"
+    dbname=psycopg2_test
 
     printf "\n\nRunning tests against PostgreSQL $version\n\n"
     export PSYCOPG2_TESTDB=$dbname

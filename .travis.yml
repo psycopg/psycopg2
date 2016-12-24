@@ -7,19 +7,18 @@ language: python
 python:
   - 2.7
   - 3.6-dev
-  - 3.5
   - 2.6
+  - 3.5
   - 3.4
   - 3.3
   - 3.2
 
 install:
   - python setup.py install
+  - sudo scripts/travis_prepare.sh
 
 script:
-  - sudo scripts/travis_prepare.sh
   - scripts/travis_test.sh
-
 
 notifications:
   email: false
