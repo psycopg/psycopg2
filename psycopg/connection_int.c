@@ -504,7 +504,6 @@ dsn_has_replication(char *pgdsn)
     connopts = PQconninfoParse(pgdsn, NULL);
 
     for(ptr = connopts; ptr->keyword != NULL; ptr++) {
-      printf("keyword %s val %s\n", ptr->keyword, ptr->val);
       if(strcmp(ptr->keyword, "replication") == 0 && ptr->val != NULL)
         ret = 1;
     }
