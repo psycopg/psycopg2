@@ -384,6 +384,11 @@ class psycopg_build_ext(build_ext):
 
     def finalize_options(self):
         """Complete the build system configuration."""
+        # An empty option in the setup.cfg causes self.libraries to include
+        # an empty string in the list of libraries
+        if self.libraries is not None and not self.libraries.strip():
+            self.libraries = None
+
         build_ext.finalize_options(self)
 
         pg_config_helper = PostgresConfig(self)
@@ -515,7 +520,7 @@ if parser.has_option('build_ext', 'mx_include_dir'):
     mxincludedir = parser.get('build_ext', 'mx_include_dir')
 else:
     mxincludedir = os.path.join(get_python_inc(plat_specific=1), "mx")
-if os.path.exists(mxincludedir):
+if mxincludedir.strip() and os.path.exists(mxincludedir):
     # Build the support for mx: we will check at runtime if it can be imported
     include_dirs.append(mxincludedir)
     define_macros.append(('HAVE_MXDATETIME', '1'))
