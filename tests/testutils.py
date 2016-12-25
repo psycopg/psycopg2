@@ -122,6 +122,9 @@ class ConnectingTestCase(unittest.TestCase):
         Should raise a skip test if not available, but guard for None on
         old Python versions.
         """
+        if repl_dsn is None:
+            return self.skipTest("replication tests disabled by default")
+
         if 'dsn' not in kwargs:
             kwargs['dsn'] = repl_dsn
         import psycopg2

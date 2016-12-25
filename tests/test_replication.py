@@ -35,11 +35,7 @@ from testutils import ConnectingTestCase
 
 class ReplicationTestCase(ConnectingTestCase):
     def setUp(self):
-        if not testconfig.repl_dsn:
-            self.skipTest("replication tests disabled by default")
-
         super(ReplicationTestCase, self).setUp()
-
         self.slot = testconfig.repl_slot
         self._slots = []
 

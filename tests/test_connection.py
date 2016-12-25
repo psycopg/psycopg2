@@ -465,7 +465,7 @@ class MakeDsnTestCase(ConnectingTestCase):
         conn = self.connect()
         d = conn.get_dsn_parameters()
         self.assertEqual(d['dbname'], dbname)  # the only param we can check reliably
-        self.assertNotIn('password', d)
+        self.assert_('password' not in d, d)
 
 
 class IsolationLevelsTestCase(ConnectingTestCase):
