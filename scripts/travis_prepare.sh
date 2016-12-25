@@ -23,10 +23,27 @@ create () {
     dbname=psycopg2_test
 
     pg_createcluster -p $port --start-conf manual $version psycopg
+
+    # for two-phase commit testing
     set_param "$version" max_prepared_transactions 10
+
+    # for replication testing
+    set_param "$version" max_wal_senders 5
+    set_param "$version" max_replication_slots 5
+    if [ "$version" == "9.2" -o "$version" == "9.3" ]
+    then
+        set_param "$version" wal_level hot_standby
+    else
+        set_param "$version" wal_level logical
+    fi
+
+    echo "local replication travis trust" \
+        >> "/etc/postgresql/$version/psycopg/pg_hba.conf"
+
+
     pg_ctlcluster "$version" psycopg start
 
-    sudo -u postgres psql -c "create user travis" "port=$port"
+    sudo -u postgres psql -c "create user travis replication" "port=$port"
     sudo -u postgres psql -c "create database $dbname" "port=$port"
     sudo -u postgres psql -c "grant create on database $dbname to travis" "port=$port"
     sudo -u postgres psql -c "create extension hstore" "port=$port dbname=$dbname"
