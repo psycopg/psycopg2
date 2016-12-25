@@ -541,21 +541,22 @@ conn_setup(connectionObject *self, PGconn *pgconn)
 {
     PGresult *pgres = NULL;
     char *error = NULL;
+    int rv = -1;
 
     self->equote = conn_get_standard_conforming_strings(pgconn);
     self->server_version = conn_get_server_version(pgconn);
     self->protocol = conn_get_protocol_version(self->pgconn);
     if (3 != self->protocol) {
         PyErr_SetString(InterfaceError, "only protocol 3 supported");
-        return -1;
+        goto exit;
     }
 
     if (0 > conn_read_encoding(self, pgconn)) {
-        return -1;
+        goto exit;
     }
 
     if (0 > conn_setup_cancel(self, pgconn)) {
-        return -1;
+        goto exit;
     }
 
     Py_BEGIN_ALLOW_THREADS;
@@ -570,18 +571,23 @@ conn_setup(connectionObject *self, PGconn *pgconn)
         Py_BLOCK_THREADS;
         if (res < 0) {
             pq_complete_error(self, &pgres, &error);
-            return -1;
+            goto unlock;
         }
     }
 
     /* for reset */
     self->autocommit = 0;
 
+    /* success */
+    rv = 0;
+
+unlock:
     Py_UNBLOCK_THREADS;
     pthread_mutex_unlock(&self->lock);
     Py_END_ALLOW_THREADS;
 
-    return 0;
+exit:
+    return rv;
 }
 
 /* conn_connect - execute a connection to the database */
