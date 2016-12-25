@@ -27,9 +27,10 @@ from psycopg2.extras import (
     PhysicalReplicationConnection, LogicalReplicationConnection, StopReplication)
 
 import testconfig
-from testutils import unittest
-from testutils import skip_before_postgres
-from testutils import ConnectingTestCase
+from testutils import unittest, ConnectingTestCase
+from testutils import skip_before_postgres, skip_if_green
+
+skip_repl_if_green = skip_if_green("replication not supported in green mode")
 
 
 class ReplicationTestCase(ConnectingTestCase):
@@ -123,6 +124,7 @@ class ReplicationTest(ReplicationTestCase):
             psycopg2.ProgrammingError, self.create_replication_slot, cur)
 
     @skip_before_postgres(9, 4)  # slots require 9.4
+    @skip_repl_if_green
     def test_start_on_missing_replication_slot(self):
         conn = self.repl_connect(connection_factory=PhysicalReplicationConnection)
         if conn is None:
@@ -136,6 +138,7 @@ class ReplicationTest(ReplicationTestCase):
         cur.start_replication(self.slot)
 
     @skip_before_postgres(9, 4)  # slots require 9.4
+    @skip_repl_if_green
     def test_start_and_recover_from_error(self):
         conn = self.repl_connect(connection_factory=LogicalReplicationConnection)
         if conn is None:
@@ -157,6 +160,7 @@ class ReplicationTest(ReplicationTestCase):
         cur.start_replication(slot_name=self.slot)
 
     @skip_before_postgres(9, 4)     # slots require 9.4
+    @skip_repl_if_green
     def test_stop_replication(self):
         conn = self.repl_connect(connection_factory=LogicalReplicationConnection)
         if conn is None:
@@ -176,6 +180,7 @@ class ReplicationTest(ReplicationTestCase):
 
 class AsyncReplicationTest(ReplicationTestCase):
     @skip_before_postgres(9, 4)     # slots require 9.4
+    @skip_repl_if_green
     def test_async_replication(self):
         conn = self.repl_connect(
             connection_factory=LogicalReplicationConnection, async=1)
