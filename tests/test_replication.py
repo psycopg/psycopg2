@@ -23,7 +23,6 @@
 # License for more details.
 
 import psycopg2
-import psycopg2.extensions
 from psycopg2.extras import (
     PhysicalReplicationConnection, LogicalReplicationConnection, StopReplication)
 
@@ -83,6 +82,20 @@ class ReplicationTest(ReplicationTestCase):
     @skip_before_postgres(9, 0)
     def test_physical_replication_connection(self):
         conn = self.repl_connect(connection_factory=PhysicalReplicationConnection)
+        if conn is None:
+            return
+        cur = conn.cursor()
+        cur.execute("IDENTIFY_SYSTEM")
+        cur.fetchall()
+
+    @skip_before_postgres(9, 0)
+    def test_datestyle(self):
+        if testconfig.repl_dsn is None:
+            return self.skipTest("replication tests disabled by default")
+
+        conn = self.repl_connect(
+            dsn=testconfig.repl_dsn, options='-cdatestyle=german',
+            connection_factory=PhysicalReplicationConnection)
         if conn is None:
             return
         cur = conn.cursor()
@@ -168,7 +181,7 @@ class AsyncReplicationTest(ReplicationTestCase):
             connection_factory=LogicalReplicationConnection, async=1)
         if conn is None:
             return
-        self.wait(conn)
+
         cur = conn.cursor()
 
         self.create_replication_slot(cur, output_plugin='test_decoding')
