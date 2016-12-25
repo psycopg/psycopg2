@@ -36,7 +36,7 @@ What's new in psycopg 2.6.3
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Throw an exception trying to pass ``NULL`` chars as parameters
-  (:ticket:`#420).
+  (:ticket:`#420`).
 - Make `~psycopg2.extras.Range` objects picklable (:ticket:`#462`).
 
 
