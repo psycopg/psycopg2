@@ -90,40 +90,36 @@ psycopg_escape_string(connectionObject *conn, const char *from, Py_ssize_t len,
     return to;
 }
 
-/* Escape a string to build a valid PostgreSQL identifier.
+/* Escape a string for inclusion in a query as identifier.
  *
- * Allocate a new buffer on the Python heap containing the new string.
  * 'len' is optional: if 0 the length is calculated.
  *
- * The returned string doesn't include quotes.
- *
- * WARNING: this function is not so safe to allow untrusted input: it does no
- * check for multibyte chars. Such a function should be built on
- * PQescapeIdentifier, which is only available from PostgreSQL 9.0.
+ * Return a string allocated by Postgres: free it using PQfreemem
+ * In case of error set a Python exception.
  */
 char *
-psycopg_escape_identifier_easy(const char *from, Py_ssize_t len)
+psycopg_escape_identifier(connectionObject *conn, const char *str, size_t len)
 {
-    char *rv;
-    const char *src;
-    char *dst;
+    char *rv = NULL;
 
-    if (!len) { len = strlen(from); }
-    if (!(rv = PyMem_New(char, 1 + 2 * len))) {
-        PyErr_NoMemory();
-        return NULL;
+    if (!conn || !conn->pgconn) {
+        PyErr_SetString(InterfaceError, "connection not valid");
+        goto exit;
     }
 
-    /* The only thing to do is double quotes */
-    for (src = from, dst = rv; *src; ++src, ++dst) {
-        *dst = *src;
-        if ('"' == *src) {
-            *++dst = '"';
+    if (!len) { len = strlen(str); }
+
+    rv = PQescapeIdentifier(conn->pgconn, str, len);
+    if (!rv) {
+        char *msg;
+        msg = PQerrorMessage(conn->pgconn);
+        if (!msg || !msg[0]) {
+            msg = "no message provided";
         }
+        PyErr_Format(InterfaceError, "failed to escape identifier: %s", msg);
     }
 
-    *dst = '\0';
-
+exit:
     return rv;
 }
 

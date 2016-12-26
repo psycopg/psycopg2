@@ -80,6 +80,7 @@ struct cursorObject {
     char *qattr;          /* quoting attr, used when quoting strings */
     char *notice;         /* a notice from the backend */
     char *name;           /* this cursor name */
+    char *qname;          /* this cursor name, quoted */
 
     PyObject *string_types;   /* a set of typecasters for string types */
     PyObject *binary_types;   /* a set of typecasters for binary types */
