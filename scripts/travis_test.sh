@@ -16,11 +16,11 @@ run_test () {
     export PSYCOPG2_TESTDB_USER=travis
     export PSYCOPG2_TEST_REPL_DSN=
 
-    python -c "from psycopg2 import tests; tests.unittest.main(defaultTest='tests.test_suite')" --verbose
+    python -c "from psycopg2 import tests; tests.unittest.main(defaultTest='tests.test_suite')"
 
     printf "\n\nRunning tests against PostgreSQL $version (green mode)\n\n"
     export PSYCOPG2_TEST_GREEN=1
-    python -c "from psycopg2 import tests; tests.unittest.main(defaultTest='tests.test_suite')" --verbose
+    python -c "from psycopg2 import tests; tests.unittest.main(defaultTest='tests.test_suite')"
 }
 
 run_test 9.6 54396
