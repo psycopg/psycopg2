@@ -62,7 +62,6 @@
 HIDDEN PyObject *pyDateTimeModuleP = NULL;
 
 HIDDEN PyObject *psycoEncodings = NULL;
-
 #ifdef PSYCOPG_DEBUG
 HIDDEN int psycopg_debug_enabled = 0;
 #endif
@@ -191,9 +190,8 @@ psyco_quote_ident(PyObject *self, PyObject *args, PyObject *kwargs)
 
     str = Bytes_AS_STRING(ident);
 
-    quoted = PQescapeIdentifier(conn->pgconn, str, strlen(str));
+    quoted = psycopg_escape_identifier(conn, str, strlen(str));
     if (!quoted) {
-        PyErr_NoMemory();
         goto exit;
     }
     result = conn_text_from_chars(conn, quoted);

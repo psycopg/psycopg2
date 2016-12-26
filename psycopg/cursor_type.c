@@ -1025,10 +1025,17 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
     PyObject *operation = NULL;
     PyObject *res = NULL;
 
-    if (!PyArg_ParseTuple(args, "s#|O",
-          &procname, &procname_len, &parameters
-       ))
-    { goto exit; }
+    int using_dict;
+    PyObject *pname = NULL;
+    PyObject *pnames = NULL;
+    PyObject *pvals = NULL;
+    char *cpname = NULL;
+    char **scpnames = NULL;
+
+    if (!PyArg_ParseTuple(args, "s#|O", &procname, &procname_len,
+                &parameters)) {
+        goto exit;
+    }
 
     EXC_IF_CURS_CLOSED(self);
     EXC_IF_ASYNC_IN_PROGRESS(self, callproc);
@@ -1036,7 +1043,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
 
     if (self->name != NULL) {
         psyco_set_error(ProgrammingError, self,
-                         "can't call .callproc() on named cursors");
+                "can't call .callproc() on named cursors");
         goto exit;
     }
 
@@ -1044,31 +1051,108 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
         if (-1 == (nparameters = PyObject_Length(parameters))) { goto exit; }
     }
 
-    /* allocate some memory, build the SQL and create a PyString from it */
-    sl = procname_len + 17 + nparameters*3 - (nparameters ? 1 : 0);
-    sql = (char*)PyMem_Malloc(sl);
-    if (sql == NULL) {
-        PyErr_NoMemory();
+    using_dict = nparameters > 0 && PyDict_Check(parameters);
+
+    /* a Dict is complicated; the parameter names go into the query */
+    if (using_dict) {
+        if (!(pnames = PyDict_Keys(parameters))) { goto exit; }
+        if (!(pvals = PyDict_Values(parameters))) { goto exit; }
+
+        sl = procname_len + 17 + nparameters * 5 - (nparameters ? 1 : 0);
+
+        if (!(scpnames = PyMem_New(char *, nparameters))) {
+            PyErr_NoMemory();
+            goto exit;
+        }
+
+        memset(scpnames, 0, sizeof(char *) * nparameters);
+
+        /* each parameter has to be processed; it's a few steps. */
+        for (i = 0; i < nparameters; i++) {
+            /* all errors are RuntimeErrors as they should never occur */
+
+            if (!(pname = PyList_GetItem(pnames, i))) { goto exit; }
+            Py_INCREF(pname);   /* was borrowed */
+
+            /* this also makes a check for keys being strings */
+            if (!(pname = psycopg_ensure_bytes(pname))) { goto exit; }
+            if (!(cpname = Bytes_AsString(pname))) { goto exit; }
+
+            if (!(scpnames[i] = psycopg_escape_identifier(
+                    self->conn, cpname, 0))) {
+                Py_CLEAR(pname);
+                goto exit;
+            }
+
+            Py_CLEAR(pname);
+
+            sl += strlen(scpnames[i]);
+        }
+
+        if (!(sql = (char*)PyMem_Malloc(sl))) {
+            PyErr_NoMemory();
+            goto exit;
+        }
+
+        sprintf(sql, "SELECT * FROM %s(", procname);
+        for (i = 0; i < nparameters; i++) {
+            strcat(sql, scpnames[i]);
+            strcat(sql, ":=%s,");
+        }
+        sql[sl-2] = ')';
+        sql[sl-1] = '\0';
+    }
+
+    /* a list (or None, or empty data structure) is a little bit simpler */
+    else {
+        Py_INCREF(parameters);
+        pvals = parameters;
+
+        sl = procname_len + 17 + nparameters * 3 - (nparameters ? 1 : 0);
+
+        sql = (char*)PyMem_Malloc(sl);
+        if (sql == NULL) {
+            PyErr_NoMemory();
+            goto exit;
+        }
+
+        sprintf(sql, "SELECT * FROM %s(", procname);
+        for (i = 0; i < nparameters; i++) {
+            strcat(sql, "%s,");
+        }
+        sql[sl-2] = ')';
+        sql[sl-1] = '\0';
+    }
+
+    if (!(operation = Bytes_FromString(sql))) {
         goto exit;
     }
 
-    sprintf(sql, "SELECT * FROM %s(", procname);
-    for(i=0; i<nparameters; i++) {
-        strcat(sql, "%s,");
-    }
-    sql[sl-2] = ')';
-    sql[sl-1] = '\0';
-
-    if (!(operation = Bytes_FromString(sql))) { goto exit; }
-
-    if (0 <= _psyco_curs_execute(self, operation, parameters,
-            self->conn->async, 0)) {
-        Py_INCREF(parameters);
-        res = parameters;
+    if (0 <= _psyco_curs_execute(
+            self, operation, pvals, self->conn->async, 0)) {
+        /* The dict case is outside DBAPI scope anyway, so simply return None */
+        if (using_dict) {
+            res = Py_None;
+        }
+        else {
+            res = pvals;
+        }
+        Py_INCREF(res);
     }
 
 exit:
+    if (scpnames != NULL) {
+        for (i = 0; i < nparameters; i++) {
+            if (scpnames[i] != NULL) {
+                PQfreemem(scpnames[i]);
+            }
+        }
+    }
+    PyMem_Del(scpnames);
+    Py_XDECREF(pname);
+    Py_XDECREF(pnames);
     Py_XDECREF(operation);
+    Py_XDECREF(pvals);
     PyMem_Free((void*)sql);
     return res;
 }

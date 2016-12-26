@@ -123,6 +123,7 @@ exit:
     return rv;
 }
 
+
 /* Duplicate a string.
  *
  * Allocate a new buffer on the Python heap containing the new string.
