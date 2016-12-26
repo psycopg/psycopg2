@@ -202,8 +202,7 @@ The ``cursor`` class
         Call a stored database procedure with the given name. The sequence of
         parameters must contain one entry for each argument that the procedure
         expects. Overloaded procedures are supported. Named parameters can be
-        used with a PostgreSQL 9.0+ client by supplying the sequence of
-        parameters as a Dict.
+        used by supplying the parameters as a dictionary.
 
         This function is, at present, not DBAPI-compliant. The return value is
         supposed to consist of the sequence of parameters with modified output
@@ -213,6 +212,8 @@ The ``cursor`` class
         The procedure may provide a result set as output. This is then made
         available through the standard |fetch*|_ methods.
 
+        .. versionchanged:: 2.7
+          added support for named arguments.
 
     .. method:: mogrify(operation [, parameters])
 

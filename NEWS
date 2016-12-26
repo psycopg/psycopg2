@@ -24,6 +24,7 @@ New features:
   adapter is deprecated (:tickets:`#317, #343, #387`).
 - Added `~psycopg2.extensions.quote_ident()` function (:ticket:`#359`).
 - Added `~connection.get_dsn_parameters()` connection method (:ticket:`#364`).
+- `~cursor.callproc()` now accepts a dictionary of parameters (:ticket:`#381`).
 
 Other changes:
 
