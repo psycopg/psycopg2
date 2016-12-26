@@ -1080,6 +1080,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
 
             if (!(scpnames[i] = psycopg_escape_identifier(
                     self->conn, cpname, 0))) {
+                Py_CLEAR(pname);
                 goto exit;
             }
 
@@ -1131,12 +1132,12 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
             self, operation, pvals, self->conn->async, 0)) {
         /* The dict case is outside DBAPI scope anyway, so simply return None */
         if (using_dict) {
-            Py_INCREF(Py_None);
             res = Py_None;
         }
         else {
             res = pvals;
         }
+        Py_INCREF(res);
     }
 
 exit:
