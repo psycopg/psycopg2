@@ -165,7 +165,6 @@ psyco_quote_ident(PyObject *self, PyObject *args, PyObject *kwargs)
 {
     PyObject *ident = NULL, *obj = NULL, *result = NULL;
     connectionObject *conn;
-    const char *str;
     char *quoted = NULL;
 
     static char *kwlist[] = {"ident", "scope", NULL};
@@ -188,12 +187,9 @@ psyco_quote_ident(PyObject *self, PyObject *args, PyObject *kwargs)
     Py_INCREF(ident); /* for ensure_bytes */
     if (!(ident = psycopg_ensure_bytes(ident))) { goto exit; }
 
-    str = Bytes_AS_STRING(ident);
+    if (!(quoted = psycopg_escape_identifier(conn,
+        Bytes_AS_STRING(ident), Bytes_GET_SIZE(ident)))) { goto exit; }
 
-    quoted = psycopg_escape_identifier(conn, str, strlen(str));
-    if (!quoted) {
-        goto exit;
-    }
     result = conn_text_from_chars(conn, quoted);
 
 exit:

@@ -178,7 +178,7 @@ qstring_set_encoding(qstringObject *self, PyObject *pyenc)
     Py_INCREF(pyenc);
     if (!(pyenc = psycopg_ensure_bytes(pyenc))) { goto exit; }
     if (!(tmp = Bytes_AsString(pyenc))) { goto exit; }
-    if (0 > psycopg_strdup(&cenc, tmp, 0)) { goto exit; }
+    if (0 > psycopg_strdup(&cenc, tmp, -1)) { goto exit; }
 
     Dprintf("qstring_set_encoding: encoding set to %s", cenc);
     PyMem_Free((void *)self->encoding);

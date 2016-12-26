@@ -227,7 +227,7 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult **pgres)
         errorObject *perr = (errorObject *)pyerr;
 
         PyMem_Free(perr->pyenc);
-        psycopg_strdup(&perr->pyenc, conn->pyenc, 0);
+        psycopg_strdup(&perr->pyenc, conn->pyenc, -1);
 
         Py_CLEAR(perr->pgerror);
         perr->pgerror = error_text_from_chars(perr, err);
@@ -765,7 +765,7 @@ pq_tpc_command_locked(connectionObject *conn, const char *cmd, const char *tid,
     PyEval_RestoreThread(*tstate);
 
     /* convert the xid into the postgres transaction_id and quote it. */
-    if (!(etid = psycopg_escape_string(conn, tid, 0, NULL, NULL)))
+    if (!(etid = psycopg_escape_string(conn, tid, -1, NULL, NULL)))
     { goto exit; }
 
     /* prepare the command to the server */

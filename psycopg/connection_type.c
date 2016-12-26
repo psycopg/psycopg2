@@ -1097,7 +1097,7 @@ connection_setup(connectionObject *self, const char *dsn, long int async)
             self, async, Py_REFCNT(self)
       );
 
-    if (0 > psycopg_strdup(&self->dsn, dsn, 0)) { goto exit; }
+    if (0 > psycopg_strdup(&self->dsn, dsn, -1)) { goto exit; }
     if (!(self->notice_list = PyList_New(0))) { goto exit; }
     if (!(self->notifies = PyList_New(0))) { goto exit; }
     self->async = async;

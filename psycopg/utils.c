@@ -40,6 +40,8 @@
  * and set an exception. The returned string includes quotes and leading E if
  * needed.
  *
+ * `len` is optional: if < 0 it will be calculated.
+ *
  * If tolen is set, it will contain the length of the escaped string,
  * including quotes.
  */
@@ -50,7 +52,7 @@ psycopg_escape_string(connectionObject *conn, const char *from, Py_ssize_t len,
     Py_ssize_t ql;
     int eq = (conn && (conn->equote)) ? 1 : 0;
 
-    if (len == 0) {
+    if (len < 0) {
         len = strlen(from);
     } else if (strchr(from, '\0') != from + len) {
         PyErr_Format(PyExc_ValueError, "A string literal cannot contain NUL (0x00) characters.");
@@ -92,13 +94,13 @@ psycopg_escape_string(connectionObject *conn, const char *from, Py_ssize_t len,
 
 /* Escape a string for inclusion in a query as identifier.
  *
- * 'len' is optional: if 0 the length is calculated.
+ * 'len' is optional: if < 0 it will be calculated.
  *
  * Return a string allocated by Postgres: free it using PQfreemem
  * In case of error set a Python exception.
  */
 char *
-psycopg_escape_identifier(connectionObject *conn, const char *str, size_t len)
+psycopg_escape_identifier(connectionObject *conn, const char *str, Py_ssize_t len)
 {
     char *rv = NULL;
 
@@ -107,7 +109,7 @@ psycopg_escape_identifier(connectionObject *conn, const char *str, size_t len)
         goto exit;
     }
 
-    if (!len) { len = strlen(str); }
+    if (len < 0) { len = strlen(str); }
 
     rv = PQescapeIdentifier(conn->pgconn, str, len);
     if (!rv) {
@@ -127,7 +129,7 @@ exit:
 /* Duplicate a string.
  *
  * Allocate a new buffer on the Python heap containing the new string.
- * 'len' is optional: if 0 the length is calculated.
+ * 'len' is optional: if < 0 the length is calculated.
  *
  * Store the return in 'to' and return 0 in case of success, else return -1
  * and raise an exception.
@@ -141,7 +143,7 @@ psycopg_strdup(char **to, const char *from, Py_ssize_t len)
         *to = NULL;
         return 0;
     }
-    if (!len) { len = strlen(from); }
+    if (len < 0) { len = strlen(from); }
     if (!(*to = PyMem_Malloc(len + 1))) {
         PyErr_NoMemory();
         return -1;
