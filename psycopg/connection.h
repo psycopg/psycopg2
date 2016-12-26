@@ -83,6 +83,7 @@ struct connectionObject {
     char *dsn;              /* data source name */
     char *critical;         /* critical error on this connection */
     char *encoding;         /* current backend encoding */
+    /* TODO: drop */
     char *pyenc;            /* connection encoding python name */
 
     long int closed;          /* 1 means connection has been closed;
@@ -125,6 +126,9 @@ struct connectionObject {
 
     /* Pointer to a decoding function, e.g. PyUnicode_DecodeUTF8 */
     PyObject *(*cdecoder)(const char *, Py_ssize_t, const char *);
+
+    PyObject *pyencoder;        /* python codec encoding function */
+    PyObject *pydecoder;        /* python codec decoding function */
 };
 
 /* map isolation level values into a numeric const */

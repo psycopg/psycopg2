@@ -364,7 +364,7 @@ exit:
 
 /* set fast access functions according to the currently selected encoding
  */
-void
+static void
 conn_set_fast_codec(connectionObject *self)
 {
     Dprintf("conn_set_fast_codec: encoding=%s", self->pyenc);
@@ -386,21 +386,72 @@ conn_set_fast_codec(connectionObject *self)
 }
 
 
+/* Convert a Postgres encoding into Python encoding and decoding functions.
+ *
+ * Return 0 on success, else -1 and set an exception.
+ */
+RAISES_NEG static int
+conn_get_python_codec(const char *encoding, PyObject **pyenc, PyObject **pydec)
+{
+    int rv = -1;
+    char *pgenc = NULL;
+    PyObject *encname = NULL;
+    PyObject *m = NULL, *f = NULL, *codec = NULL;
+    PyObject *enc_tmp = NULL, *dec_tmp = NULL;
+
+    if (0 > clear_encoding_name(encoding, &pgenc)) { goto exit; }
+
+    /* Find the Py encoding name from the PG encoding */
+    if (!(encname = PyDict_GetItemString(psycoEncodings, pgenc))) {
+        PyErr_Format(OperationalError,
+            "no Python encoding for PostgreSQL encoding '%s'", pgenc);
+        goto exit;
+    }
+    Py_INCREF(encname);
+
+    /* Look up the python codec */
+    if (!(m = PyImport_ImportModule("codecs"))) { goto exit; }
+    if (!(f = PyObject_GetAttrString(m, "lookup"))) { goto exit; }
+    if (!(codec = PyObject_CallFunctionObjArgs(f, encname, NULL))) { goto exit; }
+    if (!(enc_tmp = PyObject_GetAttrString(codec, "encode"))) { goto exit; }
+    if (!(dec_tmp = PyObject_GetAttrString(codec, "decode"))) { goto exit; }
+
+    /* success */
+    *pyenc = enc_tmp; enc_tmp = NULL;
+    *pydec = dec_tmp; dec_tmp = NULL;
+    rv = 0;
+
+exit:
+    Py_XDECREF(enc_tmp);
+    Py_XDECREF(dec_tmp);
+    Py_XDECREF(codec);
+    Py_XDECREF(f);
+    Py_XDECREF(m);
+    Py_XDECREF(encname);
+    PyMem_Free(pgenc);
+
+    return rv;
+}
+
+
 /* Store the encoding in the pgconn->encoding field and set the other related
  * encoding fields in the connection structure.
  *
- * Return 0 on success, else -1.
+ * Return 0 on success, else -1 and set an exception.
  */
 RAISES_NEG static int
 conn_set_encoding(connectionObject *self, const char *encoding)
 {
     int rv = -1;
     char *pgenc = NULL, *pyenc = NULL;
+    PyObject *enc_tmp = NULL, *dec_tmp = NULL;
 
-    if (0 > clear_encoding_name(encoding, &pgenc)) { goto exit; }
+    if (0 > clear_encoding_name(encoding, &pgenc)) { goto exit; } /* TODO: drop */
 
     /* Look for this encoding in Python codecs. */
-    if (0 > conn_pgenc_to_pyenc(pgenc, &pyenc)) { goto exit; }
+    if (0 > conn_pgenc_to_pyenc(pgenc, &pyenc)) { goto exit; } /* TODO: drop */
+
+    if (0 > conn_get_python_codec(encoding, &enc_tmp, &dec_tmp)) { goto exit; }
 
     /* Good, success: store the encoding/pyenc in the connection. */
     {
@@ -411,17 +462,28 @@ conn_set_encoding(connectionObject *self, const char *encoding)
     }
 
     {
+        /* TODO: drop */
         char *tmp = self->pyenc;
         self->pyenc = pyenc;
         PyMem_Free(tmp);
         pyenc = NULL;
     }
 
+    Py_CLEAR(self->pyencoder);
+    self->pyencoder = enc_tmp;
+    enc_tmp = NULL;
+
+    Py_CLEAR(self->pydecoder);
+    self->pydecoder = dec_tmp;
+    dec_tmp = NULL;
+
     conn_set_fast_codec(self);
 
     rv = 0;
 
 exit:
+    Py_XDECREF(enc_tmp);
+    Py_XDECREF(dec_tmp);
     PyMem_Free(pgenc);
     PyMem_Free(pyenc);
     return rv;

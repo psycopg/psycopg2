@@ -1141,6 +1141,9 @@ connection_clear(connectionObject *self)
     Py_CLEAR(self->notifies);
     Py_CLEAR(self->string_types);
     Py_CLEAR(self->binary_types);
+    Py_CLEAR(self->cursor_factory);
+    Py_CLEAR(self->pyencoder);
+    Py_CLEAR(self->pydecoder);
     return 0;
 }
 
@@ -1216,6 +1219,9 @@ connection_traverse(connectionObject *self, visitproc visit, void *arg)
     Py_VISIT(self->notifies);
     Py_VISIT(self->string_types);
     Py_VISIT(self->binary_types);
+    Py_VISIT(self->cursor_factory);
+    Py_VISIT(self->pyencoder);
+    Py_VISIT(self->pydecoder);
     return 0;
 }
 
