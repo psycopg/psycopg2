@@ -15,7 +15,7 @@ run_test () {
     export PSYCOPG2_TESTDB_PORT=$port
     export PSYCOPG2_TESTDB_USER=travis
     export PSYCOPG2_TEST_REPL_DSN=
-
+    unset PSYCOPG2_TEST_GREEN
     python -c "from psycopg2 import tests; tests.unittest.main(defaultTest='tests.test_suite')"
 
     printf "\n\nRunning tests against PostgreSQL $version (green mode)\n\n"
