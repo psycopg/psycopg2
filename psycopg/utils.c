@@ -90,68 +90,36 @@ psycopg_escape_string(connectionObject *conn, const char *from, Py_ssize_t len,
     return to;
 }
 
-/* Escape a string to build a valid PostgreSQL identifier.
+/* Escape a string for inclusion in a query as identifier.
  *
- * Allocate a new buffer on the Python heap containing the new string.
  * 'len' is optional: if 0 the length is calculated.
  *
- * The returned string doesn't include quotes.
- *
- * WARNING: this function is not so safe to allow untrusted input: it does no
- * check for multibyte chars. Functions otherwise reliant on PostgreSQL 9.0
- * and above should use the below function psycopg_escape_identifier instead.
- */
-char *
-psycopg_escape_identifier_easy(const char *from, Py_ssize_t len)
-{
-    char *rv;
-    const char *src;
-    char *dst;
-
-    if (!len) { len = strlen(from); }
-    if (!(rv = PyMem_New(char, 1 + 2 * len))) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-
-    /* The only thing to do is double quotes */
-    for (src = from, dst = rv; *src; ++src, ++dst) {
-        *dst = *src;
-        if ('"' == *src) {
-            *++dst = '"';
-        }
-    }
-
-    *dst = '\0';
-
-    return rv;
-}
-
-
-/* Call PostgreSQL 9.0+ function PQescapeIdentifier.
- *
+ * Return a string allocated by Postgres: free it using PQfreemem
  * In case of error set a Python exception.
  */
 char *
-psycopg_escape_identifier(PGconn *pgconn, const char *str, size_t length)
+psycopg_escape_identifier(connectionObject *conn, const char *str, size_t len)
 {
     char *rv = NULL;
 
-#if PG_VERSION_NUM >= 90000
-    rv = PQescapeIdentifier(pgconn, str, length);
+    if (!conn || !conn->pgconn) {
+        PyErr_SetString(InterfaceError, "connection not valid");
+        goto exit;
+    }
+
+    if (!len) { len = strlen(str); }
+
+    rv = PQescapeIdentifier(conn->pgconn, str, len);
     if (!rv) {
         char *msg;
-        msg = PQerrorMessage(pgconn);
+        msg = PQerrorMessage(conn->pgconn);
         if (!msg || !msg[0]) {
             msg = "no message provided";
         }
         PyErr_Format(InterfaceError, "failed to escape identifier: %s", msg);
     }
-#else
-    PyErr_Format(PyExc_NotImplementedError,
-        "PQescapeIdentifier requires psycopg2 compiled against libpq 9.0+");
-#endif
 
+exit:
     return rv;
 }
 

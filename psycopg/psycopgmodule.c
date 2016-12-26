@@ -190,7 +190,7 @@ psyco_quote_ident(PyObject *self, PyObject *args, PyObject *kwargs)
 
     str = Bytes_AS_STRING(ident);
 
-    quoted = psycopg_escape_identifier(conn->pgconn, str, strlen(str));
+    quoted = psycopg_escape_identifier(conn, str, strlen(str));
     if (!quoted) {
         goto exit;
     }
