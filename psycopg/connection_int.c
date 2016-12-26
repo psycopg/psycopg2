@@ -362,7 +362,7 @@ exit:
 }
 
 
-/* set fast access functions according to the currently selected codec
+/* set fast access functions according to the currently selected encoding
  */
 void
 conn_set_fast_codec(connectionObject *self)
@@ -386,46 +386,36 @@ conn_set_fast_codec(connectionObject *self)
 }
 
 
-/* Read the client encoding from the connection.
+/* Store the encoding in the pgconn->encoding field and set the other related
+ * encoding fields in the connection structure.
  *
- * Store the encoding in the pgconn->encoding field and the name of the
- * matching python encoding in pyenc. The buffers are allocated on the Python
- * heap.
- *
- * Return 0 on success, else nonzero.
+ * Return 0 on success, else -1.
  */
 RAISES_NEG static int
-conn_read_encoding(connectionObject *self, PGconn *pgconn)
+conn_set_encoding(connectionObject *self, const char *encoding)
 {
-    char *pgenc = NULL, *pyenc = NULL;
-    const char *tmp;
     int rv = -1;
+    char *pgenc = NULL, *pyenc = NULL;
 
-    tmp = PQparameterStatus(pgconn, "client_encoding");
-    Dprintf("conn_connect: client encoding: %s", tmp ? tmp : "(none)");
-    if (!tmp) {
-        PyErr_SetString(OperationalError,
-            "server didn't return client encoding");
-        goto exit;
-    }
-
-    if (0 > clear_encoding_name(tmp, &pgenc)) {
-        goto exit;
-    }
+    if (0 > clear_encoding_name(encoding, &pgenc)) { goto exit; }
 
     /* Look for this encoding in Python codecs. */
-    if (0 > conn_pgenc_to_pyenc(pgenc, &pyenc)) {
-        goto exit;
-    }
+    if (0 > conn_pgenc_to_pyenc(pgenc, &pyenc)) { goto exit; }
 
     /* Good, success: store the encoding/pyenc in the connection. */
-    PyMem_Free(self->encoding);
-    self->encoding = pgenc;
-    pgenc = NULL;
+    {
+        char *tmp = self->encoding;
+        self->encoding = pgenc;
+        PyMem_Free(tmp);
+        pgenc = NULL;
+    }
 
-    PyMem_Free(self->pyenc);
-    self->pyenc = pyenc;
-    pyenc = NULL;
+    {
+        char *tmp = self->pyenc;
+        self->pyenc = pyenc;
+        PyMem_Free(tmp);
+        pyenc = NULL;
+    }
 
     conn_set_fast_codec(self);
 
@@ -434,6 +424,35 @@ conn_read_encoding(connectionObject *self, PGconn *pgconn)
 exit:
     PyMem_Free(pgenc);
     PyMem_Free(pyenc);
+    return rv;
+}
+
+
+/* Read the client encoding from the backend and store it in the connection.
+ *
+ * Return 0 on success, else -1.
+ */
+RAISES_NEG static int
+conn_read_encoding(connectionObject *self, PGconn *pgconn)
+{
+    const char *encoding;
+    int rv = -1;
+
+    encoding = PQparameterStatus(pgconn, "client_encoding");
+    Dprintf("conn_connect: client encoding: %s", encoding ? encoding : "(none)");
+    if (!encoding) {
+        PyErr_SetString(OperationalError,
+            "server didn't return client encoding");
+        goto exit;
+    }
+
+    if (0 > conn_set_encoding(self, encoding)) {
+        goto exit;
+    }
+
+    rv = 0;
+
+exit:
     return rv;
 }
 
@@ -1282,33 +1301,19 @@ conn_set_client_encoding(connectionObject *self, const char *pgenc)
         goto endlock;
     }
 
-    /* no error, we can proceed and store the new encoding */
-    {
-        char *tmp = self->encoding;
-        self->encoding = clean_enc;
-        PyMem_Free(tmp);
-        clean_enc = NULL;
-    }
-
-    /* Store the python encoding name too. */
-    {
-        char *tmp = self->pyenc;
-        self->pyenc = pyenc;
-        PyMem_Free(tmp);
-        pyenc = NULL;
-    }
-
-    conn_set_fast_codec(self);
-
-    Dprintf("conn_set_client_encoding: set encoding to %s (Python: %s)",
-            self->encoding, self->pyenc);
-
 endlock:
     pthread_mutex_unlock(&self->lock);
     Py_END_ALLOW_THREADS;
 
-    if (res < 0)
+    if (res < 0) {
         pq_complete_error(self, &pgres, &error);
+        goto exit;
+    }
+
+    res = conn_set_encoding(self, pgenc);
+
+    Dprintf("conn_set_client_encoding: set encoding to %s (Python: %s)",
+            self->encoding, self->pyenc);
 
 exit:
     PyMem_Free(clean_enc);
