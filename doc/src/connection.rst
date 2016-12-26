@@ -569,6 +569,29 @@ The ``connection`` class
 
 
     .. index::
+        pair: Connection; Parameters
+
+    .. method:: get_dsn_parameters()
+
+        Get the effective dsn parameters for the connection as a dictionary.
+
+        The *password* parameter is removed from the result.
+
+        Example::
+
+            >>> conn.get_dsn_parameters()
+            {'dbname': 'test', 'user': 'postgres', 'port': '5432', 'sslmode': 'prefer'}
+
+        Requires libpq >= 9.3.
+
+        .. seealso:: libpq docs for `PQconninfo()`__ for details.
+
+            .. __: http://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-PQCONNINFO
+
+        .. versionadded:: 2.7
+
+
+    .. index::
         pair: Transaction; Status
 
     .. method:: get_transaction_status()

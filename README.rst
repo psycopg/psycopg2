@@ -44,3 +44,8 @@ For any other resource (source code repository, bug tracker, mailing list)
 please check the `project homepage`__.
 
 .. __: http://initd.org/psycopg/
+
+
+.. image:: https://travis-ci.org/psycopg/psycopg2.svg?branch=master
+    :target: https://travis-ci.org/psycopg/psycopg2
+    :alt: Build Status

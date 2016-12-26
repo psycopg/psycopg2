@@ -494,6 +494,25 @@ conn_setup_cancel(connectionObject *self, PGconn *pgconn)
     return 0;
 }
 
+/* Return 1 if the "replication" keyword is set in the DSN, 0 otherwise */
+static int
+dsn_has_replication(char *pgdsn)
+{
+    int ret = 0;
+    PQconninfoOption *connopts, *ptr;
+
+    connopts = PQconninfoParse(pgdsn, NULL);
+
+    for(ptr = connopts; ptr->keyword != NULL; ptr++) {
+      if(strcmp(ptr->keyword, "replication") == 0 && ptr->val != NULL)
+        ret = 1;
+    }
+
+    PQconninfoFree(connopts);
+
+    return ret;
+}
+
 
 /* Return 1 if the server datestyle allows us to work without problems,
    0 if it needs to be set to something better, e.g. ISO. */
@@ -522,28 +541,29 @@ conn_setup(connectionObject *self, PGconn *pgconn)
 {
     PGresult *pgres = NULL;
     char *error = NULL;
+    int rv = -1;
 
     self->equote = conn_get_standard_conforming_strings(pgconn);
     self->server_version = conn_get_server_version(pgconn);
     self->protocol = conn_get_protocol_version(self->pgconn);
     if (3 != self->protocol) {
         PyErr_SetString(InterfaceError, "only protocol 3 supported");
-        return -1;
+        goto exit;
     }
 
     if (0 > conn_read_encoding(self, pgconn)) {
-        return -1;
+        goto exit;
     }
 
     if (0 > conn_setup_cancel(self, pgconn)) {
-        return -1;
+        goto exit;
     }
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
     Py_BLOCK_THREADS;
 
-    if (!conn_is_datestyle_ok(self->pgconn)) {
+    if (!dsn_has_replication(self->dsn) && !conn_is_datestyle_ok(self->pgconn)) {
         int res;
         Py_UNBLOCK_THREADS;
         res = pq_set_guc_locked(self, "datestyle", "ISO",
@@ -551,18 +571,23 @@ conn_setup(connectionObject *self, PGconn *pgconn)
         Py_BLOCK_THREADS;
         if (res < 0) {
             pq_complete_error(self, &pgres, &error);
-            return -1;
+            goto unlock;
         }
     }
 
     /* for reset */
     self->autocommit = 0;
 
+    /* success */
+    rv = 0;
+
+unlock:
     Py_UNBLOCK_THREADS;
     pthread_mutex_unlock(&self->lock);
     Py_END_ALLOW_THREADS;
 
-    return 0;
+exit:
+    return rv;
 }
 
 /* conn_connect - execute a connection to the database */
@@ -859,8 +884,11 @@ _conn_poll_setup_async(connectionObject *self)
         self->autocommit = 1;
 
         /* If the datestyle is ISO or anything else good,
-         * we can skip the CONN_STATUS_DATESTYLE step. */
-        if (!conn_is_datestyle_ok(self->pgconn)) {
+         * we can skip the CONN_STATUS_DATESTYLE step.
+         * Note that we cannot change the datestyle on a replication
+         * connection.
+         */
+        if (!dsn_has_replication(self->dsn) && !conn_is_datestyle_ok(self->pgconn)) {
             Dprintf("conn_poll: status -> CONN_STATUS_DATESTYLE");
             self->status = CONN_STATUS_DATESTYLE;
             if (0 == pq_send_query(self, psyco_datestyle)) {

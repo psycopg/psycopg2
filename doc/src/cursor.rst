@@ -499,6 +499,9 @@ The ``cursor`` class
 
     .. rubric:: COPY-related methods
 
+    Efficiently copy data from file-like objects to the database and back. See
+    :ref:`copy` for an overview.
+
     .. extension::
 
         The :sql:`COPY` command is a PostgreSQL extension to the SQL standard.
@@ -507,7 +510,7 @@ The ``cursor`` class
     .. method:: copy_from(file, table, sep='\\t', null='\\\\N', size=8192, columns=None)
 
         Read data *from* the file-like object *file* appending them to
-        the table named *table*.  See :ref:`copy` for an overview.
+        the table named *table*.
 
         :param file: file-like object to read data from.  It must have both
             `!read()` and `!readline()` methods.

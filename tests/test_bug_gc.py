@@ -29,6 +29,7 @@ import gc
 
 from testutils import ConnectingTestCase, skip_if_no_uuid
 
+
 class StolenReferenceTestCase(ConnectingTestCase):
     @skip_if_no_uuid
     def test_stolen_reference_bug(self):
@@ -41,8 +42,10 @@ class StolenReferenceTestCase(ConnectingTestCase):
         curs.execute("select 'b5219e01-19ab-4994-b71e-149225dc51e4'::uuid")
         curs.fetchone()
 
+
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == "__main__":
     unittest.main()

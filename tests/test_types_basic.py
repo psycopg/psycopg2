@@ -30,7 +30,6 @@ import testutils
 from testutils import unittest, ConnectingTestCase, decorate_all_tests
 
 import psycopg2
-from psycopg2.extensions import b
 
 
 class TypesBasicTests(ConnectingTestCase):
@@ -69,13 +68,16 @@ class TypesBasicTests(ConnectingTestCase):
                         "wrong decimal quoting: " + str(s))
         s = self.execute("SELECT %s AS foo", (decimal.Decimal("NaN"),))
         self.failUnless(str(s) == "NaN", "wrong decimal quoting: " + str(s))
-        self.failUnless(type(s) == decimal.Decimal, "wrong decimal conversion: " + repr(s))
+        self.failUnless(type(s) == decimal.Decimal,
+                        "wrong decimal conversion: " + repr(s))
         s = self.execute("SELECT %s AS foo", (decimal.Decimal("infinity"),))
         self.failUnless(str(s) == "NaN", "wrong decimal quoting: " + str(s))
-        self.failUnless(type(s) == decimal.Decimal, "wrong decimal conversion: " + repr(s))
+        self.failUnless(type(s) == decimal.Decimal,
+                        "wrong decimal conversion: " + repr(s))
         s = self.execute("SELECT %s AS foo", (decimal.Decimal("-infinity"),))
         self.failUnless(str(s) == "NaN", "wrong decimal quoting: " + str(s))
-        self.failUnless(type(s) == decimal.Decimal, "wrong decimal conversion: " + repr(s))
+        self.failUnless(type(s) == decimal.Decimal,
+                        "wrong decimal conversion: " + repr(s))
 
     def testFloatNan(self):
         try:
@@ -95,11 +97,11 @@ class TypesBasicTests(ConnectingTestCase):
         except ValueError:
             return self.skipTest("inf not available on this platform")
         s = self.execute("SELECT %s AS foo", (float("inf"),))
-        self.failUnless(str(s) == "inf", "wrong float quoting: " + str(s))      
+        self.failUnless(str(s) == "inf", "wrong float quoting: " + str(s))
         self.failUnless(type(s) == float, "wrong float conversion: " + repr(s))
 
         s = self.execute("SELECT %s AS foo", (float("-inf"),))
-        self.failUnless(str(s) == "-inf", "wrong float quoting: " + str(s))      
+        self.failUnless(str(s) == "-inf", "wrong float quoting: " + str(s))
 
     def testBinary(self):
         if sys.version_info[0] < 3:
@@ -142,8 +144,8 @@ class TypesBasicTests(ConnectingTestCase):
             self.assertEqual(s, buf2.tobytes())
 
     def testArray(self):
-        s = self.execute("SELECT %s AS foo", ([[1,2],[3,4]],))
-        self.failUnlessEqual(s, [[1,2],[3,4]])
+        s = self.execute("SELECT %s AS foo", ([[1, 2], [3, 4]],))
+        self.failUnlessEqual(s, [[1, 2], [3, 4]])
         s = self.execute("SELECT %s AS foo", (['one', 'two', 'three'],))
         self.failUnlessEqual(s, ['one', 'two', 'three'])
 
@@ -151,9 +153,12 @@ class TypesBasicTests(ConnectingTestCase):
         # ticket #42
         import datetime
         curs = self.conn.cursor()
-        curs.execute("create table array_test (id integer, col timestamp without time zone[])")
+        curs.execute(
+            "create table array_test "
+            "(id integer, col timestamp without time zone[])")
 
-        curs.execute("insert into array_test values (%s, %s)", (1, [datetime.date(2011,2,14)]))
+        curs.execute("insert into array_test values (%s, %s)",
+            (1, [datetime.date(2011, 2, 14)]))
         curs.execute("select col from array_test where id = 1")
         self.assertEqual(curs.fetchone()[0], [datetime.datetime(2011, 2, 14, 0, 0)])
 
@@ -190,8 +195,9 @@ class TypesBasicTests(ConnectingTestCase):
         ss = ['', '{', '{}}', '{' * 20 + '}' * 20]
         for s in ss:
             self.assertRaises(psycopg2.DataError,
-                psycopg2.extensions.STRINGARRAY, b(s), curs)
+                psycopg2.extensions.STRINGARRAY, s.encode('utf8'), curs)
 
+    @testutils.skip_before_postgres(8, 2)
     def testArrayOfNulls(self):
         curs = self.conn.cursor()
         curs.execute("""
@@ -208,9 +214,9 @@ class TypesBasicTests(ConnectingTestCase):
         curs.execute("insert into na (texta) values (%s)", ([None],))
         curs.execute("insert into na (texta) values (%s)", (['a', None],))
         curs.execute("insert into na (texta) values (%s)", ([None, None],))
-        curs.execute("insert into na (inta) values (%s)",  ([None],))
-        curs.execute("insert into na (inta) values (%s)",  ([42, None],))
-        curs.execute("insert into na (inta) values (%s)",  ([None, None],))
+        curs.execute("insert into na (inta) values (%s)", ([None],))
+        curs.execute("insert into na (inta) values (%s)", ([42, None],))
+        curs.execute("insert into na (inta) values (%s)", ([None, None],))
         curs.execute("insert into na (boola) values (%s)", ([None],))
         curs.execute("insert into na (boola) values (%s)", ([True, None],))
         curs.execute("insert into na (boola) values (%s)", ([None, None],))
@@ -220,7 +226,7 @@ class TypesBasicTests(ConnectingTestCase):
         curs.execute("insert into na (textaa) values (%s)", ([['a', None]],))
         # curs.execute("insert into na (textaa) values (%s)", ([[None, None]],))
         # curs.execute("insert into na (intaa) values (%s)",  ([[None]],))
-        curs.execute("insert into na (intaa) values (%s)",  ([[42, None]],))
+        curs.execute("insert into na (intaa) values (%s)", ([[42, None]],))
         # curs.execute("insert into na (intaa) values (%s)",  ([[None, None]],))
         # curs.execute("insert into na (boolaa) values (%s)", ([[None]],))
         curs.execute("insert into na (boolaa) values (%s)", ([[True, None]],))
@@ -308,9 +314,9 @@ class TypesBasicTests(ConnectingTestCase):
     def testByteaHexCheckFalsePositive(self):
         # the check \x -> x to detect bad bytea decode
         # may be fooled if the first char is really an 'x'
-        o1 = psycopg2.Binary(b('x'))
+        o1 = psycopg2.Binary(b'x')
         o2 = self.execute("SELECT %s::bytea AS foo", (o1,))
-        self.assertEqual(b('x'), o2[0])
+        self.assertEqual(b'x', o2[0])
 
     def testNegNumber(self):
         d1 = self.execute("select -%s;", (decimal.Decimal('-1.0'),))
@@ -323,30 +329,43 @@ class TypesBasicTests(ConnectingTestCase):
         self.assertEqual(1, l1)
 
     def testGenericArray(self):
-        a = self.execute("select '{1,2,3}'::int4[]")
-        self.assertEqual(a, [1,2,3])
-        a = self.execute("select array['a','b','''']::text[]")
-        self.assertEqual(a, ['a','b',"'"])
+        a = self.execute("select '{1, 2, 3}'::int4[]")
+        self.assertEqual(a, [1, 2, 3])
+        a = self.execute("select array['a', 'b', '''']::text[]")
+        self.assertEqual(a, ['a', 'b', "'"])
 
     @testutils.skip_before_postgres(8, 2)
     def testGenericArrayNull(self):
         def caster(s, cur):
-            if s is None: return "nada"
+            if s is None:
+                return "nada"
             return int(s) * 2
         base = psycopg2.extensions.new_type((23,), "INT4", caster)
         array = psycopg2.extensions.new_array_type((1007,), "INT4ARRAY", base)
 
         psycopg2.extensions.register_type(array, self.conn)
-        a = self.execute("select '{1,2,3}'::int4[]")
-        self.assertEqual(a, [2,4,6])
-        a = self.execute("select '{1,2,NULL}'::int4[]")
-        self.assertEqual(a, [2,4,'nada'])
+        a = self.execute("select '{1, 2, 3}'::int4[]")
+        self.assertEqual(a, [2, 4, 6])
+        a = self.execute("select '{1, 2, NULL}'::int4[]")
+        self.assertEqual(a, [2, 4, 'nada'])
+
+    @testutils.skip_before_postgres(8, 2)
+    def testNetworkArray(self):
+        # we don't know these types, but we know their arrays
+        a = self.execute("select '{192.168.0.1/24}'::inet[]")
+        self.assertEqual(a, ['192.168.0.1/24'])
+        a = self.execute("select '{192.168.0.0/24}'::cidr[]")
+        self.assertEqual(a, ['192.168.0.0/24'])
+        a = self.execute("select '{10:20:30:40:50:60}'::macaddr[]")
+        self.assertEqual(a, ['10:20:30:40:50:60'])
 
 
 class AdaptSubclassTest(unittest.TestCase):
     def test_adapt_subtype(self):
         from psycopg2.extensions import adapt
-        class Sub(str): pass
+
+        class Sub(str):
+            pass
         s1 = "hel'lo"
         s2 = Sub(s1)
         self.assertEqual(adapt(s1).getquoted(), adapt(s2).getquoted())
@@ -354,44 +373,54 @@ class AdaptSubclassTest(unittest.TestCase):
     def test_adapt_most_specific(self):
         from psycopg2.extensions import adapt, register_adapter, AsIs
 
-        class A(object): pass
-        class B(A): pass
-        class C(B): pass
+        class A(object):
+            pass
+
+        class B(A):
+            pass
+
+        class C(B):
+            pass
 
         register_adapter(A, lambda a: AsIs("a"))
         register_adapter(B, lambda b: AsIs("b"))
         try:
-            self.assertEqual(b('b'), adapt(C()).getquoted())
+            self.assertEqual(b'b', adapt(C()).getquoted())
         finally:
-           del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
-           del psycopg2.extensions.adapters[B, psycopg2.extensions.ISQLQuote]
+            del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
+            del psycopg2.extensions.adapters[B, psycopg2.extensions.ISQLQuote]
 
     @testutils.skip_from_python(3)
     def test_no_mro_no_joy(self):
         from psycopg2.extensions import adapt, register_adapter, AsIs
 
-        class A: pass
-        class B(A): pass
+        class A:
+            pass
+
+        class B(A):
+            pass
 
         register_adapter(A, lambda a: AsIs("a"))
         try:
             self.assertRaises(psycopg2.ProgrammingError, adapt, B())
         finally:
-           del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
-
+            del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
 
     @testutils.skip_before_python(3)
     def test_adapt_subtype_3(self):
         from psycopg2.extensions import adapt, register_adapter, AsIs
 
-        class A: pass
-        class B(A): pass
+        class A:
+            pass
+
+        class B(A):
+            pass
 
         register_adapter(A, lambda a: AsIs("a"))
         try:
-            self.assertEqual(b("a"), adapt(B()).getquoted())
+            self.assertEqual(b"a", adapt(B()).getquoted())
         finally:
-           del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
+            del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
 
 
 class ByteaParserTest(unittest.TestCase):
@@ -434,19 +463,20 @@ class ByteaParserTest(unittest.TestCase):
         self.assertEqual(rv, None)
 
     def test_blank(self):
-        rv = self.cast(b(''))
-        self.assertEqual(rv, b(''))
+        rv = self.cast(b'')
+        self.assertEqual(rv, b'')
 
     def test_blank_hex(self):
         # Reported as problematic in ticket #48
-        rv = self.cast(b('\\x'))
-        self.assertEqual(rv, b(''))
+        rv = self.cast(b'\\x')
+        self.assertEqual(rv, b'')
 
     def test_full_hex(self, upper=False):
         buf = ''.join(("%02x" % i) for i in range(256))
-        if upper: buf = buf.upper()
+        if upper:
+            buf = buf.upper()
         buf = '\\x' + buf
-        rv = self.cast(b(buf))
+        rv = self.cast(buf.encode('utf8'))
         if sys.version_info[0] < 3:
             self.assertEqual(rv, ''.join(map(chr, range(256))))
         else:
@@ -457,7 +487,7 @@ class ByteaParserTest(unittest.TestCase):
 
     def test_full_escaped_octal(self):
         buf = ''.join(("\\%03o" % i) for i in range(256))
-        rv = self.cast(b(buf))
+        rv = self.cast(buf.encode('utf8'))
         if sys.version_info[0] < 3:
             self.assertEqual(rv, ''.join(map(chr, range(256))))
         else:
@@ -469,7 +499,7 @@ class ByteaParserTest(unittest.TestCase):
         buf += string.ascii_letters
         buf += ''.join('\\' + c for c in string.ascii_letters)
         buf += '\\\\'
-        rv = self.cast(b(buf))
+        rv = self.cast(buf.encode('utf8'))
         if sys.version_info[0] < 3:
             tgt = ''.join(map(chr, range(32))) \
                 + string.ascii_letters * 2 + '\\'
@@ -478,6 +508,7 @@ class ByteaParserTest(unittest.TestCase):
                 (string.ascii_letters * 2 + '\\').encode('ascii')
 
         self.assertEqual(rv, tgt)
+
 
 def skip_if_cant_cast(f):
     @wraps(f)
@@ -498,4 +529,3 @@ def test_suite():
 
 if __name__ == "__main__":
     unittest.main()
-

@@ -28,6 +28,9 @@
 
 #include "psycopg/connection.h"
 #include "psycopg/cursor.h"
+#include "psycopg/replication_connection.h"
+#include "psycopg/replication_cursor.h"
+#include "psycopg/replication_message.h"
 #include "psycopg/green.h"
 #include "psycopg/lobject.h"
 #include "psycopg/notify.h"
@@ -111,14 +114,16 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
     return conn;
 }
 
-#define psyco_parse_dsn_doc "parse_dsn(dsn) -> dict"
+
+#define psyco_parse_dsn_doc \
+"parse_dsn(dsn) -> dict -- parse a connection string into parameters"
 
 static PyObject *
 psyco_parse_dsn(PyObject *self, PyObject *args, PyObject *kwargs)
 {
     char *err = NULL;
-    PQconninfoOption *options = NULL, *o;
-    PyObject *dict = NULL, *res = NULL, *dsn;
+    PQconninfoOption *options = NULL;
+    PyObject *res = NULL, *dsn;
 
     static char *kwlist[] = {"dsn", NULL};
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", kwlist, &dsn)) {
@@ -131,7 +136,7 @@ psyco_parse_dsn(PyObject *self, PyObject *args, PyObject *kwargs)
     options = PQconninfoParse(Bytes_AS_STRING(dsn), &err);
     if (options == NULL) {
         if (err != NULL) {
-            PyErr_Format(ProgrammingError, "error parsing the dsn: %s", err);
+            PyErr_Format(ProgrammingError, "invalid dsn: %s", err);
             PQfreemem(err);
         } else {
             PyErr_SetString(OperationalError, "PQconninfoParse() failed");
@@ -139,26 +144,10 @@ psyco_parse_dsn(PyObject *self, PyObject *args, PyObject *kwargs)
         goto exit;
     }
 
-    if (!(dict = PyDict_New())) { goto exit; }
-    for (o = options; o->keyword != NULL; o++) {
-        if (o->val != NULL) {
-            PyObject *value;
-            if (!(value = Text_FromUTF8(o->val))) { goto exit; }
-            if (PyDict_SetItemString(dict, o->keyword, value) != 0) {
-                Py_DECREF(value);
-                goto exit;
-            }
-            Py_DECREF(value);
-        }
-    }
-
-    /* success */
-    res = dict;
-    dict = NULL;
+    res = psycopg_dict_from_conninfo_options(options, /* include_password = */ 1);
 
 exit:
     PQconninfoFree(options);    /* safe on null */
-    Py_XDECREF(dict);
     Py_XDECREF(dsn);
 
     return res;
@@ -289,9 +278,7 @@ psyco_libcrypto_threads_init(void)
     if ((m = PyImport_ImportModule("ssl"))) {
         /* disable libcrypto setup in libpq, so it won't stomp on the callbacks
            that have already been set up */
-#if PG_VERSION_NUM >= 80400
         PQinitOpenSSL(1, 0);
-#endif
         Py_DECREF(m);
     }
     else {
@@ -909,6 +896,15 @@ INIT_MODULE(_psycopg)(void)
     Py_TYPE(&cursorType) = &PyType_Type;
     if (PyType_Ready(&cursorType) == -1) goto exit;
 
+    Py_TYPE(&replicationConnectionType) = &PyType_Type;
+    if (PyType_Ready(&replicationConnectionType) == -1) goto exit;
+
+    Py_TYPE(&replicationCursorType) = &PyType_Type;
+    if (PyType_Ready(&replicationCursorType) == -1) goto exit;
+
+    Py_TYPE(&replicationMessageType) = &PyType_Type;
+    if (PyType_Ready(&replicationMessageType) == -1) goto exit;
+
     Py_TYPE(&typecastType) = &PyType_Type;
     if (PyType_Ready(&typecastType) == -1) goto exit;
 
@@ -989,6 +985,8 @@ INIT_MODULE(_psycopg)(void)
     /* Initialize the PyDateTimeAPI everywhere is used */
     PyDateTime_IMPORT;
     if (psyco_adapter_datetime_init()) { goto exit; }
+    if (psyco_repl_curs_datetime_init()) { goto exit; }
+    if (psyco_replmsg_datetime_init()) { goto exit; }
 
     Py_TYPE(&pydatetimeType) = &PyType_Type;
     if (PyType_Ready(&pydatetimeType) == -1) goto exit;
@@ -1024,6 +1022,8 @@ INIT_MODULE(_psycopg)(void)
     PyModule_AddStringConstant(module, "__version__", PSYCOPG_VERSION);
     PyModule_AddStringConstant(module, "__doc__", "psycopg PostgreSQL driver");
     PyModule_AddIntConstant(module, "__libpq_version__", PG_VERSION_NUM);
+    PyModule_AddIntMacro(module, REPLICATION_PHYSICAL);
+    PyModule_AddIntMacro(module, REPLICATION_LOGICAL);
     PyModule_AddObject(module, "apilevel", Text_FromUTF8(APILEVEL));
     PyModule_AddObject(module, "threadsafety", PyInt_FromLong(THREADSAFETY));
     PyModule_AddObject(module, "paramstyle", Text_FromUTF8(PARAMSTYLE));
@@ -1031,6 +1031,9 @@ INIT_MODULE(_psycopg)(void)
     /* put new types in module dictionary */
     PyModule_AddObject(module, "connection", (PyObject*)&connectionType);
     PyModule_AddObject(module, "cursor", (PyObject*)&cursorType);
+    PyModule_AddObject(module, "ReplicationConnection", (PyObject*)&replicationConnectionType);
+    PyModule_AddObject(module, "ReplicationCursor", (PyObject*)&replicationCursorType);
+    PyModule_AddObject(module, "ReplicationMessage", (PyObject*)&replicationMessageType);
     PyModule_AddObject(module, "ISQLQuote", (PyObject*)&isqlquoteType);
     PyModule_AddObject(module, "Notify", (PyObject*)&notifyType);
     PyModule_AddObject(module, "Xid", (PyObject*)&xidType);
@@ -1069,6 +1072,9 @@ INIT_MODULE(_psycopg)(void)
     /* create a standard set of exceptions and add them to the module's dict */
     if (0 != psyco_errors_init()) { goto exit; }
     psyco_errors_fill(dict);
+
+    replicationPhysicalConst = PyDict_GetItemString(dict, "REPLICATION_PHYSICAL");
+    replicationLogicalConst  = PyDict_GetItemString(dict, "REPLICATION_LOGICAL");
 
     Dprintf("initpsycopg: module initialization complete");
 

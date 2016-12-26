@@ -30,12 +30,14 @@ import psycopg2
 
 from testconfig import dsn
 
+
 class Psycopg2Tests(dbapi20.DatabaseAPI20Test):
     driver = psycopg2
     connect_args = ()
     connect_kw_args = {'dsn': dsn}
 
     lower_func = 'lower' # For stored procedure test
+
     def test_callproc(self):
         # Until DBAPI 2.0 compliance, callproc should return None or it's just
         # misleading. Therefore, we will skip the return value test for

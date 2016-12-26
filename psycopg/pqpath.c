@@ -35,13 +35,22 @@
 #include "psycopg/pqpath.h"
 #include "psycopg/connection.h"
 #include "psycopg/cursor.h"
+#include "psycopg/replication_cursor.h"
+#include "psycopg/replication_message.h"
 #include "psycopg/green.h"
 #include "psycopg/typecast.h"
 #include "psycopg/pgtypes.h"
 #include "psycopg/error.h"
 
-#include <string.h>
+#include "psycopg/libpq_support.h"
+#include "libpq-fe.h"
 
+#ifdef _WIN32
+/* select() */
+#include <winsock2.h>
+/* gettimeofday() */
+#include "win32_support.h"
+#endif
 
 extern HIDDEN PyObject *psyco_DescriptionType;
 
@@ -161,11 +170,11 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult **pgres)
 
     if (conn == NULL) {
         PyErr_SetString(DatabaseError,
-            "psycopg went psycotic and raised a null error");
+            "psycopg went psychotic and raised a null error");
         return;
     }
 
-    /* if the connection has somehow beed broken, we mark the connection
+    /* if the connection has somehow been broken, we mark the connection
        object as closed but requiring cleanup */
     if (conn->pgconn != NULL && PQstatus(conn->pgconn) == CONNECTION_BAD)
         conn->closed = 2;
@@ -907,7 +916,7 @@ pq_execute(cursorObject *curs, const char *query, int async, int no_result, int 
         PyErr_SetString(OperationalError, PQerrorMessage(curs->conn->pgconn));
         return -1;
     }
-    Dprintf("curs_execute: pg connection at %p OK", curs->conn->pgconn);
+    Dprintf("pq_execute: pg connection at %p OK", curs->conn->pgconn);
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(curs->conn->lock));
@@ -932,7 +941,7 @@ pq_execute(cursorObject *curs, const char *query, int async, int no_result, int 
             Py_UNBLOCK_THREADS;
         }
 
-        /* dont let pgres = NULL go to pq_fetch() */
+        /* don't let pgres = NULL go to pq_fetch() */
         if (curs->pgres == NULL) {
             pthread_mutex_unlock(&(curs->conn->lock));
             Py_BLOCK_THREADS;
@@ -1056,6 +1065,13 @@ pq_get_last_result(connectionObject *conn)
             PQclear(result);
         }
         result = res;
+
+        /* After entering copy both mode, libpq will make a phony
+         * PGresult for us every time we query for it, so we need to
+         * break out of this endless loop. */
+        if (PQresultStatus(result) == PGRES_COPY_BOTH) {
+            break;
+        }
     }
 
     return result;
@@ -1393,7 +1409,11 @@ _pq_copy_in_v3(cursorObject *curs)
                     Py_DECREF(str);
                 }
             }
-            PyErr_Restore(t, ex, tb);
+            /* Clear the Py exception: it will be re-raised from the libpq */
+            Py_XDECREF(t);
+            Py_XDECREF(ex);
+            Py_XDECREF(tb);
+            PyErr_Clear();
         }
         res = PQputCopyEnd(curs->conn->pgconn, buf);
     }
@@ -1516,6 +1536,281 @@ exit:
     return ret;
 }
 
+/* Tries to read the next message from the replication stream, without
+   blocking, in both sync and async connection modes.  If no message
+   is ready in the CopyData buffer, tries to read from the server,
+   again without blocking.  If that doesn't help, returns Py_None.
+   The caller is then supposed to block on the socket(s) and call this
+   function again.
+
+   Any keepalive messages from the server are silently consumed and
+   are never returned to the caller.
+ */
+int
+pq_read_replication_message(replicationCursorObject *repl, replicationMessageObject **msg)
+{
+    cursorObject *curs = &repl->cur;
+    connectionObject *conn = curs->conn;
+    PGconn *pgconn = conn->pgconn;
+    char *buffer = NULL;
+    int len, data_size, consumed, hdr, reply;
+    XLogRecPtr data_start, wal_end;
+    int64_t send_time;
+    PyObject *str = NULL, *result = NULL;
+    int ret = -1;
+
+    Dprintf("pq_read_replication_message");
+
+    *msg = NULL;
+    consumed = 0;
+
+retry:
+    len = PQgetCopyData(pgconn, &buffer, 1 /* async */);
+
+    if (len == 0) {
+        /* If we've tried reading some data, but there was none, bail out. */
+        if (consumed) {
+            ret = 0;
+            goto exit;
+        }
+        /* We should only try reading more data when there is nothing
+           available at the moment.  Otherwise, with a really highly loaded
+           server we might be reading a number of messages for every single
+           one we process, thus overgrowing the internal buffer until the
+           client system runs out of memory. */
+        if (!PQconsumeInput(pgconn)) {
+            pq_raise(conn, curs, NULL);
+            goto exit;
+        }
+        /* But PQconsumeInput() doesn't tell us if it has actually read
+           anything into the internal buffer and there is no (supported) way
+           to ask libpq about this directly.  The way we check is setting the
+           flag and re-trying PQgetCopyData(): if that returns 0 again,
+           there's no more data available in the buffer, so we return None. */
+        consumed = 1;
+        goto retry;
+    }
+
+    if (len == -2) {
+        /* serious error */
+        pq_raise(conn, curs, NULL);
+        goto exit;
+    }
+    if (len == -1) {
+        /* EOF */
+        curs->pgres = PQgetResult(pgconn);
+
+        if (curs->pgres && PQresultStatus(curs->pgres) == PGRES_FATAL_ERROR) {
+            pq_raise(conn, curs, NULL);
+            goto exit;
+        }
+
+        CLEARPGRES(curs->pgres);
+        ret = 0;
+        goto exit;
+    }
+
+    /* It also makes sense to set this flag here to make us return early in
+       case of retry due to keepalive message.  Any pending data on the socket
+       will trigger read condition in select() in the calling code anyway. */
+    consumed = 1;
+
+    /* ok, we did really read something: update the io timestamp */
+    gettimeofday(&repl->last_io, NULL);
+
+    Dprintf("pq_read_replication_message: msg=%c, len=%d", buffer[0], len);
+    if (buffer[0] == 'w') {
+        /* XLogData: msgtype(1), dataStart(8), walEnd(8), sendTime(8) */
+        hdr = 1 + 8 + 8 + 8;
+        if (len < hdr + 1) {
+            psyco_set_error(OperationalError, curs, "data message header too small");
+            goto exit;
+        }
+
+        data_size  = len - hdr;
+        data_start = fe_recvint64(buffer + 1);
+        wal_end    = fe_recvint64(buffer + 1 + 8);
+        send_time  = fe_recvint64(buffer + 1 + 8 + 8);
+
+        Dprintf("pq_read_replication_message: data_start="XLOGFMTSTR", wal_end="XLOGFMTSTR,
+                XLOGFMTARGS(data_start), XLOGFMTARGS(wal_end));
+
+        Dprintf("pq_read_replication_message: >>%.*s<<", data_size, buffer + hdr);
+
+        if (repl->decode) {
+            str = PyUnicode_Decode(buffer + hdr, data_size, conn->codec, NULL);
+        } else {
+            str = Bytes_FromStringAndSize(buffer + hdr, data_size);
+        }
+        if (!str) { goto exit; }
+
+        result = PyObject_CallFunctionObjArgs((PyObject *)&replicationMessageType,
+                                              curs, str, NULL);
+        Py_DECREF(str);
+        if (!result) { goto exit; }
+
+        *msg = (replicationMessageObject *)result;
+        (*msg)->data_size  = data_size;
+        (*msg)->data_start = data_start;
+        (*msg)->wal_end    = wal_end;
+        (*msg)->send_time  = send_time;
+    }
+    else if (buffer[0] == 'k') {
+        /* Primary keepalive message: msgtype(1), walEnd(8), sendTime(8), reply(1) */
+        hdr = 1 + 8 + 8;
+        if (len < hdr + 1) {
+            psyco_set_error(OperationalError, curs, "keepalive message header too small");
+            goto exit;
+        }
+
+        reply = buffer[hdr];
+        if (reply && pq_send_replication_feedback(repl, 0) < 0) {
+            goto exit;
+        }
+
+        PQfreemem(buffer);
+        buffer = NULL;
+        goto retry;
+    }
+    else {
+        psyco_set_error(OperationalError, curs, "unrecognized replication message type");
+        goto exit;
+    }
+
+    ret = 0;
+
+exit:
+    if (buffer) {
+        PQfreemem(buffer);
+    }
+
+    return ret;
+}
+
+int
+pq_send_replication_feedback(replicationCursorObject *repl, int reply_requested)
+{
+    cursorObject *curs = &repl->cur;
+    connectionObject *conn = curs->conn;
+    PGconn *pgconn = conn->pgconn;
+    char replybuf[1 + 8 + 8 + 8 + 8 + 1];
+    int len = 0;
+
+    Dprintf("pq_send_replication_feedback: write="XLOGFMTSTR", flush="XLOGFMTSTR", apply="XLOGFMTSTR,
+            XLOGFMTARGS(repl->write_lsn),
+            XLOGFMTARGS(repl->flush_lsn),
+            XLOGFMTARGS(repl->apply_lsn));
+
+    replybuf[len] = 'r'; len += 1;
+    fe_sendint64(repl->write_lsn, &replybuf[len]); len += 8;
+    fe_sendint64(repl->flush_lsn, &replybuf[len]); len += 8;
+    fe_sendint64(repl->apply_lsn, &replybuf[len]); len += 8;
+    fe_sendint64(feGetCurrentTimestamp(), &replybuf[len]); len += 8;
+    replybuf[len] = reply_requested ? 1 : 0; len += 1;
+
+    if (PQputCopyData(pgconn, replybuf, len) <= 0 || PQflush(pgconn) != 0) {
+        pq_raise(conn, curs, NULL);
+        return -1;
+    }
+    gettimeofday(&repl->last_io, NULL);
+
+    return 0;
+}
+
+/* Calls pq_read_replication_message in an endless loop, until
+   stop_replication is called or a fatal error occurs.  The messages
+   are passed to the consumer object.
+
+   When no message is available, blocks on the connection socket, but
+   manages to send keepalive messages to the server as needed.
+*/
+int
+pq_copy_both(replicationCursorObject *repl, PyObject *consume, double keepalive_interval)
+{
+    cursorObject *curs = &repl->cur;
+    connectionObject *conn = curs->conn;
+    PGconn *pgconn = conn->pgconn;
+    replicationMessageObject *msg = NULL;
+    PyObject *tmp = NULL;
+    int fd, sel, ret = -1;
+    fd_set fds;
+    struct timeval keep_intr, curr_time, ping_time, timeout;
+
+    if (!PyCallable_Check(consume)) {
+        Dprintf("pq_copy_both: expected callable consume object");
+        goto exit;
+    }
+
+    CLEARPGRES(curs->pgres);
+
+    keep_intr.tv_sec  = (int)keepalive_interval;
+    keep_intr.tv_usec = (keepalive_interval - keep_intr.tv_sec)*1.0e6;
+
+    while (1) {
+        if (pq_read_replication_message(repl, &msg) < 0) {
+            goto exit;
+        }
+        else if (msg == NULL) {
+            fd = PQsocket(pgconn);
+            if (fd < 0) {
+                pq_raise(conn, curs, NULL);
+                goto exit;
+            }
+
+            FD_ZERO(&fds);
+            FD_SET(fd, &fds);
+
+            /* how long can we wait before we need to send a keepalive? */
+            gettimeofday(&curr_time, NULL);
+
+            timeradd(&repl->last_io, &keep_intr, &ping_time);
+            timersub(&ping_time, &curr_time, &timeout);
+
+            if (timeout.tv_sec >= 0) {
+                Py_BEGIN_ALLOW_THREADS;
+                sel = select(fd + 1, &fds, NULL, NULL, &timeout);
+                Py_END_ALLOW_THREADS;
+            }
+            else {
+                sel = 0; /* we're past target time, pretend select() timed out */
+            }
+
+            if (sel < 0) {
+                if (errno != EINTR) {
+                    PyErr_SetFromErrno(PyExc_OSError);
+                    goto exit;
+                }
+                if (PyErr_CheckSignals()) {
+                    goto exit;
+                }
+                continue;
+            }
+
+            if (sel == 0) {
+                if (pq_send_replication_feedback(repl, 0) < 0) {
+                    goto exit;
+                }
+            }
+            continue;
+        }
+        else {
+            tmp = PyObject_CallFunctionObjArgs(consume, msg, NULL);
+            Py_DECREF(msg);
+
+            if (tmp == NULL) {
+                Dprintf("pq_copy_both: consume returned NULL");
+                goto exit;
+            }
+            Py_DECREF(tmp);
+        }
+    }
+
+    ret = 1;
+
+exit:
+    return ret;
+}
+
 int
 pq_fetch(cursorObject *curs, int no_result)
 {
@@ -1575,6 +1870,17 @@ pq_fetch(cursorObject *curs, int no_result)
         CLEARPGRES(curs->pgres);
         break;
 
+    case PGRES_COPY_BOTH:
+        Dprintf("pq_fetch: data from a streaming replication slot (no tuples)");
+        curs->rowcount = -1;
+        ex = 0;
+        /* Nothing to do here: pq_copy_both will be called separately.
+
+           Also don't clear the result status: it's checked in
+           consume_stream. */
+        /*CLEARPGRES(curs->pgres);*/
+        break;
+
     case PGRES_TUPLES_OK:
         if (!no_result) {
             Dprintf("pq_fetch: got tuples");
@@ -1607,7 +1913,7 @@ pq_fetch(cursorObject *curs, int no_result)
         break;
 
     default:
-        /* PGRES_COPY_BOTH, PGRES_SINGLE_TUPLE, future statuses */
+        /* PGRES_SINGLE_TUPLE, future statuses */
         Dprintf("pq_fetch: got unsupported result: status = %d pgconn = %p",
             pgstatus, curs->conn);
         PyErr_Format(NotSupportedError,

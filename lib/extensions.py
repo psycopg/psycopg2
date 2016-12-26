@@ -7,7 +7,7 @@ This module holds all the extensions to the DBAPI-2.0 provided by psycopg.
 - `lobject` -- the new-type inheritable large object class
 - `adapt()` -- exposes the PEP-246_ compatible adapting mechanism used
   by psycopg to adapt Python types to PostgreSQL ones
-  
+
 .. _PEP-246: http://www.python.org/peps/pep-0246.html
 """
 # psycopg/extensions.py - DBAPI-2.0 extensions specific to psycopg
@@ -32,81 +32,74 @@ This module holds all the extensions to the DBAPI-2.0 provided by psycopg.
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-from psycopg2._psycopg import UNICODE, INTEGER, LONGINTEGER, BOOLEAN, FLOAT
-from psycopg2._psycopg import TIME, DATE, INTERVAL, DECIMAL
-from psycopg2._psycopg import BINARYARRAY, BOOLEANARRAY, DATEARRAY, DATETIMEARRAY
-from psycopg2._psycopg import DECIMALARRAY, FLOATARRAY, INTEGERARRAY, INTERVALARRAY
-from psycopg2._psycopg import LONGINTEGERARRAY, ROWIDARRAY, STRINGARRAY, TIMEARRAY
-from psycopg2._psycopg import UNICODEARRAY
+import re as _re
 
-from psycopg2._psycopg import Binary, Boolean, Int, Float, QuotedString, AsIs
+from psycopg2._psycopg import (                             # noqa
+    BINARYARRAY, BOOLEAN, BOOLEANARRAY, DATE, DATEARRAY, DATETIMEARRAY,
+    DECIMAL, DECIMALARRAY, FLOAT, FLOATARRAY, INTEGER, INTEGERARRAY,
+    INTERVAL, INTERVALARRAY, LONGINTEGER, LONGINTEGERARRAY, ROWIDARRAY,
+    STRINGARRAY, TIME, TIMEARRAY, UNICODE, UNICODEARRAY,
+    AsIs, Binary, Boolean, Float, Int, QuotedString, )
+
 try:
-    from psycopg2._psycopg import MXDATE, MXDATETIME, MXINTERVAL, MXTIME
-    from psycopg2._psycopg import MXDATEARRAY, MXDATETIMEARRAY, MXINTERVALARRAY, MXTIMEARRAY
-    from psycopg2._psycopg import DateFromMx, TimeFromMx, TimestampFromMx
-    from psycopg2._psycopg import IntervalFromMx
+    from psycopg2._psycopg import (                         # noqa
+        MXDATE, MXDATETIME, MXINTERVAL, MXTIME,
+        MXDATEARRAY, MXDATETIMEARRAY, MXINTERVALARRAY, MXTIMEARRAY,
+        DateFromMx, TimeFromMx, TimestampFromMx, IntervalFromMx, )
 except ImportError:
     pass
 
 try:
-    from psycopg2._psycopg import PYDATE, PYDATETIME, PYINTERVAL, PYTIME
-    from psycopg2._psycopg import PYDATEARRAY, PYDATETIMEARRAY, PYINTERVALARRAY, PYTIMEARRAY
-    from psycopg2._psycopg import DateFromPy, TimeFromPy, TimestampFromPy
-    from psycopg2._psycopg import IntervalFromPy
+    from psycopg2._psycopg import (                         # noqa
+        PYDATE, PYDATETIME, PYINTERVAL, PYTIME,
+        PYDATEARRAY, PYDATETIMEARRAY, PYINTERVALARRAY, PYTIMEARRAY,
+        DateFromPy, TimeFromPy, TimestampFromPy, IntervalFromPy, )
 except ImportError:
     pass
 
-from psycopg2._psycopg import adapt, adapters, encodings, connection, cursor, lobject, Xid, libpq_version, parse_dsn, quote_ident
-from psycopg2._psycopg import string_types, binary_types, new_type, new_array_type, register_type
-from psycopg2._psycopg import ISQLQuote, Notify, Diagnostics, Column
+from psycopg2._psycopg import (                             # noqa
+    adapt, adapters, encodings, connection, cursor,
+    lobject, Xid, libpq_version, parse_dsn, quote_ident,
+    string_types, binary_types, new_type, new_array_type, register_type,
+    ISQLQuote, Notify, Diagnostics, Column,
+    QueryCanceledError, TransactionRollbackError,
+    set_wait_callback, get_wait_callback, )
 
-from psycopg2._psycopg import QueryCanceledError, TransactionRollbackError
-
-try:
-    from psycopg2._psycopg import set_wait_callback, get_wait_callback
-except ImportError:
-    pass
 
 """Isolation level values."""
-ISOLATION_LEVEL_AUTOCOMMIT          = 0
-ISOLATION_LEVEL_READ_UNCOMMITTED    = 4
-ISOLATION_LEVEL_READ_COMMITTED      = 1
-ISOLATION_LEVEL_REPEATABLE_READ     = 2
-ISOLATION_LEVEL_SERIALIZABLE        = 3
+ISOLATION_LEVEL_AUTOCOMMIT = 0
+ISOLATION_LEVEL_READ_UNCOMMITTED = 4
+ISOLATION_LEVEL_READ_COMMITTED = 1
+ISOLATION_LEVEL_REPEATABLE_READ = 2
+ISOLATION_LEVEL_SERIALIZABLE = 3
+
 
 """psycopg connection status values."""
-STATUS_SETUP    = 0
-STATUS_READY    = 1
-STATUS_BEGIN    = 2
-STATUS_SYNC     = 3  # currently unused
-STATUS_ASYNC    = 4  # currently unused
+STATUS_SETUP = 0
+STATUS_READY = 1
+STATUS_BEGIN = 2
+STATUS_SYNC = 3  # currently unused
+STATUS_ASYNC = 4  # currently unused
 STATUS_PREPARED = 5
 
 # This is a useful mnemonic to check if the connection is in a transaction
 STATUS_IN_TRANSACTION = STATUS_BEGIN
 
+
 """psycopg asynchronous connection polling values"""
-POLL_OK    = 0
-POLL_READ  = 1
+POLL_OK = 0
+POLL_READ = 1
 POLL_WRITE = 2
 POLL_ERROR = 3
 
+
 """Backend transaction status values."""
-TRANSACTION_STATUS_IDLE    = 0
-TRANSACTION_STATUS_ACTIVE  = 1
+TRANSACTION_STATUS_IDLE = 0
+TRANSACTION_STATUS_ACTIVE = 1
 TRANSACTION_STATUS_INTRANS = 2
 TRANSACTION_STATUS_INERROR = 3
 TRANSACTION_STATUS_UNKNOWN = 4
 
-import sys as _sys
-
-# Return bytes from a string
-if _sys.version_info[0] < 3:
-    def b(s):
-        return s
-else:
-    def b(s):
-        return s.encode('utf8')
 
 def register_adapter(typ, callable):
     """Register 'callable' as an ISQLQuote adapter for type 'typ'."""
@@ -132,7 +125,7 @@ class SQL_IN(object):
                 if hasattr(obj, 'prepare'):
                     obj.prepare(self._conn)
         qobjs = [o.getquoted() for o in pobjs]
-        return b('(') + b(', ').join(qobjs) + b(')')
+        return b'(' + b', '.join(qobjs) + b')'
 
     def __str__(self):
         return str(self.getquoted())
@@ -147,12 +140,59 @@ class NoneAdapter(object):
     def __init__(self, obj):
         pass
 
-    def getquoted(self, _null=b("NULL")):
+    def getquoted(self, _null=b"NULL"):
         return _null
 
 
+def make_dsn(dsn=None, **kwargs):
+    """Convert a set of keywords into a connection strings."""
+    if dsn is None and not kwargs:
+        return ''
+
+    # If no kwarg is specified don't mung the dsn, but verify it
+    if not kwargs:
+        parse_dsn(dsn)
+        return dsn
+
+    # Override the dsn with the parameters
+    if 'database' in kwargs:
+        if 'dbname' in kwargs:
+            raise TypeError(
+                "you can't specify both 'database' and 'dbname' arguments")
+        kwargs['dbname'] = kwargs.pop('database')
+
+    if dsn is not None:
+        tmp = parse_dsn(dsn)
+        tmp.update(kwargs)
+        kwargs = tmp
+
+    dsn = " ".join(["%s=%s" % (k, _param_escape(str(v)))
+        for (k, v) in kwargs.iteritems()])
+
+    # verify that the returned dsn is valid
+    parse_dsn(dsn)
+
+    return dsn
+
+
+def _param_escape(s,
+        re_escape=_re.compile(r"([\\'])"),
+        re_space=_re.compile(r'\s')):
+    """
+    Apply the escaping rule required by PQconnectdb
+    """
+    if not s:
+        return "''"
+
+    s = re_escape.sub(r'\\\1', s)
+    if re_space.search(s):
+        s = "'" + s + "'"
+
+    return s
+
+
 # Create default json typecasters for PostgreSQL 9.2 oids
-from psycopg2._json import register_default_json, register_default_jsonb
+from psycopg2._json import register_default_json, register_default_jsonb    # noqa
 
 try:
     JSON, JSONARRAY = register_default_json()
@@ -164,7 +204,7 @@ del register_default_json, register_default_jsonb
 
 
 # Create default Range typecasters
-from psycopg2. _range import Range
+from psycopg2. _range import Range                              # noqa
 del Range
 
 

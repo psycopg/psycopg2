@@ -50,8 +50,13 @@ psycopg_escape_string(connectionObject *conn, const char *from, Py_ssize_t len,
     Py_ssize_t ql;
     int eq = (conn && (conn->equote)) ? 1 : 0;
 
-    if (len == 0)
+    if (len == 0) {
         len = strlen(from);
+    } else if (strchr(from, '\0') != from + len) {
+        PyErr_Format(PyExc_ValueError, "A string literal cannot contain NUL (0x00) characters.");
+
+	return NULL;
+    }
 
     if (to == NULL) {
         to = (char *)PyMem_Malloc((len * 2 + 4) * sizeof(char));
@@ -62,12 +67,10 @@ psycopg_escape_string(connectionObject *conn, const char *from, Py_ssize_t len,
     }
 
     {
-        #if PG_VERSION_NUM >= 80104
             int err;
             if (conn && conn->pgconn)
                 ql = PQescapeStringConn(conn->pgconn, to+eq+1, from, len, &err);
             else
-        #endif
                 ql = PQescapeString(to+eq+1, from, len);
     }
 
@@ -276,3 +279,32 @@ psycopg_is_text_file(PyObject *f)
     }
 }
 
+/* Make a dict out of PQconninfoOption array */
+PyObject *
+psycopg_dict_from_conninfo_options(PQconninfoOption *options, int include_password)
+{
+    PyObject *dict, *res = NULL;
+    PQconninfoOption *o;
+
+    if (!(dict = PyDict_New())) { goto exit; }
+    for (o = options; o->keyword != NULL; o++) {
+        if (o->val != NULL &&
+            (include_password || strcmp(o->keyword, "password") != 0)) {
+            PyObject *value;
+            if (!(value = Text_FromUTF8(o->val))) { goto exit; }
+            if (PyDict_SetItemString(dict, o->keyword, value) != 0) {
+                Py_DECREF(value);
+                goto exit;
+            }
+            Py_DECREF(value);
+        }
+    }
+
+    res = dict;
+    dict = NULL;
+
+exit:
+    Py_XDECREF(dict);
+
+    return res;
+}

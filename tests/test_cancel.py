@@ -32,6 +32,7 @@ from psycopg2 import extras
 from testconfig import dsn
 from testutils import unittest, ConnectingTestCase, skip_before_postgres
 
+
 class CancelTests(ConnectingTestCase):
 
     def setUp(self):
@@ -71,6 +72,7 @@ class CancelTests(ConnectingTestCase):
             except Exception, e:
                 errors.append(e)
                 raise
+            del cur
 
         thread1 = threading.Thread(target=neverending, args=(self.conn, ))
         # wait a bit to make sure that the other thread is already in

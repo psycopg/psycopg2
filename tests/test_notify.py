@@ -67,8 +67,8 @@ curs.execute("NOTIFY " %(name)r %(payload)r)
 curs.close()
 conn.close()
 """ % {
-        'module': psycopg2.__name__,
-        'dsn': dsn, 'sec': sec, 'name': name, 'payload': payload})
+            'module': psycopg2.__name__,
+            'dsn': dsn, 'sec': sec, 'name': name, 'payload': payload})
 
         return Popen([sys.executable, '-c', script_to_py3(script)], stdout=PIPE)
 
@@ -79,7 +79,7 @@ conn.close()
         proc = self.notify('foo', 1)
 
         t0 = time.time()
-        ready = select.select([self.conn], [], [], 5)
+        select.select([self.conn], [], [], 5)
         t1 = time.time()
         self.assert_(0.99 < t1 - t0 < 4, t1 - t0)
 
@@ -107,7 +107,7 @@ conn.close()
         names = dict.fromkeys(['foo', 'bar', 'baz'])
         for (pid, name) in self.conn.notifies:
             self.assertEqual(pids[name], pid)
-            names.pop(name) # raise if name found twice
+            names.pop(name)     # raise if name found twice
 
     def test_notifies_received_on_execute(self):
         self.autocommit(self.conn)
@@ -217,6 +217,6 @@ conn.close()
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
+
 if __name__ == "__main__":
     unittest.main()
-

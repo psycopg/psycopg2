@@ -39,6 +39,9 @@ typedef struct {
     PyObject *buffer;
 
     connectionObject *conn;
+
+    const char *encoding;
+
 } qstringObject;
 
 #ifdef __cplusplus

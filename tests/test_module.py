@@ -31,9 +31,11 @@ from testutils import ConnectingTestCase, skip_copy_if_green, script_to_py3
 
 import psycopg2
 
+
 class ConnectTestCase(unittest.TestCase):
     def setUp(self):
         self.args = None
+
         def conect_stub(dsn, connection_factory=None, async=False):
             self.args = (dsn, connection_factory, async)
 
@@ -42,6 +44,9 @@ class ConnectTestCase(unittest.TestCase):
 
     def tearDown(self):
         psycopg2._connect = self._connect_orig
+
+    def assertDsnEqual(self, dsn1, dsn2):
+        self.assertEqual(set(dsn1.split()), set(dsn2.split()))
 
     def test_there_has_to_be_something(self):
         self.assertRaises(TypeError, psycopg2.connect)
@@ -57,8 +62,8 @@ class ConnectTestCase(unittest.TestCase):
         self.assertEqual(self.args[2], False)
 
     def test_dsn(self):
-        psycopg2.connect('dbname=blah x=y')
-        self.assertEqual(self.args[0], 'dbname=blah x=y')
+        psycopg2.connect('dbname=blah host=y')
+        self.assertEqual(self.args[0], 'dbname=blah host=y')
         self.assertEqual(self.args[1], None)
         self.assertEqual(self.args[2], False)
 
@@ -83,37 +88,43 @@ class ConnectTestCase(unittest.TestCase):
         self.assertEqual(len(self.args[0].split()), 4)
 
     def test_generic_keywords(self):
-        psycopg2.connect(foo='bar')
-        self.assertEqual(self.args[0], 'foo=bar')
+        psycopg2.connect(options='stuff')
+        self.assertEqual(self.args[0], 'options=stuff')
 
     def test_factory(self):
         def f(dsn, async=False):
             pass
 
-        psycopg2.connect(database='foo', bar='baz', connection_factory=f)
-        self.assertEqual(self.args[0], 'dbname=foo bar=baz')
+        psycopg2.connect(database='foo', host='baz', connection_factory=f)
+        self.assertDsnEqual(self.args[0], 'dbname=foo host=baz')
         self.assertEqual(self.args[1], f)
         self.assertEqual(self.args[2], False)
 
-        psycopg2.connect("dbname=foo bar=baz", connection_factory=f)
-        self.assertEqual(self.args[0], 'dbname=foo bar=baz')
+        psycopg2.connect("dbname=foo host=baz", connection_factory=f)
+        self.assertDsnEqual(self.args[0], 'dbname=foo host=baz')
         self.assertEqual(self.args[1], f)
         self.assertEqual(self.args[2], False)
 
     def test_async(self):
-        psycopg2.connect(database='foo', bar='baz', async=1)
-        self.assertEqual(self.args[0], 'dbname=foo bar=baz')
+        psycopg2.connect(database='foo', host='baz', async=1)
+        self.assertDsnEqual(self.args[0], 'dbname=foo host=baz')
         self.assertEqual(self.args[1], None)
         self.assert_(self.args[2])
 
-        psycopg2.connect("dbname=foo bar=baz", async=True)
-        self.assertEqual(self.args[0], 'dbname=foo bar=baz')
+        psycopg2.connect("dbname=foo host=baz", async=True)
+        self.assertDsnEqual(self.args[0], 'dbname=foo host=baz')
         self.assertEqual(self.args[1], None)
         self.assert_(self.args[2])
+
+    def test_int_port_param(self):
+        psycopg2.connect(database='sony', port=6543)
+        dsn = " %s " % self.args[0]
+        self.assert_(" dbname=sony " in dsn, dsn)
+        self.assert_(" port=6543 " in dsn, dsn)
 
     def test_empty_param(self):
         psycopg2.connect(database='sony', password='')
-        self.assertEqual(self.args[0], "dbname=sony password=''")
+        self.assertDsnEqual(self.args[0], "dbname=sony password=''")
 
     def test_escape(self):
         psycopg2.connect(database='hello world')
@@ -131,13 +142,12 @@ class ConnectTestCase(unittest.TestCase):
         psycopg2.connect(database=r"\every thing'")
         self.assertEqual(self.args[0], r"dbname='\\every thing\''")
 
-    def test_no_kwargs_swallow(self):
-        self.assertRaises(TypeError,
-            psycopg2.connect, 'dbname=foo', database='foo')
-        self.assertRaises(TypeError,
-            psycopg2.connect, 'dbname=foo', user='postgres')
-        self.assertRaises(TypeError,
-            psycopg2.connect, 'dbname=foo', no_such_param='meh')
+    def test_params_merging(self):
+        psycopg2.connect('dbname=foo', database='bar')
+        self.assertEqual(self.args[0], 'dbname=bar')
+
+        psycopg2.connect('dbname=foo', user='postgres')
+        self.assertDsnEqual(self.args[0], 'dbname=foo user=postgres')
 
 
 class ExceptionsTestCase(ConnectingTestCase):
@@ -203,7 +213,8 @@ class ExceptionsTestCase(ConnectingTestCase):
         self.assertEqual(diag.sqlstate, '42P01')
 
         del diag
-        gc.collect(); gc.collect()
+        gc.collect()
+        gc.collect()
         assert(w() is None)
 
     @skip_copy_if_green
@@ -325,7 +336,7 @@ class TestVersionDiscovery(unittest.TestCase):
         self.assertTrue(type(psycopg2.__libpq_version__) is int)
         try:
             self.assertTrue(type(psycopg2.extensions.libpq_version()) is int)
-        except NotSupportedError:
+        except psycopg2.NotSupportedError:
             self.assertTrue(psycopg2.__libpq_version__ < 90100)
 
 

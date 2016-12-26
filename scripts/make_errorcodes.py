@@ -23,6 +23,7 @@ from collections import defaultdict
 
 from BeautifulSoup import BeautifulSoup as BS
 
+
 def main():
     if len(sys.argv) != 2:
         print >>sys.stderr, "usage: %s /path/to/errorcodes.py" % sys.argv[0]
@@ -33,13 +34,14 @@ def main():
     file_start = read_base_file(filename)
     # If you add a version to the list fix the docs (errorcodes.rst, err.rst)
     classes, errors = fetch_errors(
-        ['8.1', '8.2', '8.3', '8.4', '9.0', '9.1', '9.2', '9.3', '9.4'])
+        ['8.1', '8.2', '8.3', '8.4', '9.0', '9.1', '9.2', '9.3', '9.4', '9.5'])
 
     f = open(filename, "w")
     for line in file_start:
         print >>f, line
     for line in generate_module_data(classes, errors):
         print >>f, line
+
 
 def read_base_file(filename):
     rv = []
@@ -49,6 +51,7 @@ def read_base_file(filename):
             return rv
 
     raise ValueError("can't find the separator. Is this the right file?")
+
 
 def parse_errors_txt(url):
     classes = {}
@@ -84,6 +87,7 @@ def parse_errors_txt(url):
 
     return classes, errors
 
+
 def parse_errors_sgml(url):
     page = BS(urllib2.urlopen(url))
     table = page('table')[1]('tbody')[0]
@@ -92,7 +96,7 @@ def parse_errors_sgml(url):
     errors = defaultdict(dict)
 
     for tr in table('tr'):
-        if tr.td.get('colspan'): # it's a class
+        if tr.td.get('colspan'):    # it's a class
             label = ' '.join(' '.join(tr(text=True)).split()) \
                 .replace(u'\u2014', '-').encode('ascii')
             assert label.startswith('Class')
@@ -100,7 +104,7 @@ def parse_errors_sgml(url):
             assert len(class_) == 2
             classes[class_] = label
 
-        else: # it's an error
+        else:   # it's an error
             errcode = tr.tt.string.encode("ascii")
             assert len(errcode) == 5
 
@@ -124,11 +128,12 @@ def parse_errors_sgml(url):
     return classes, errors
 
 errors_sgml_url = \
-        "http://www.postgresql.org/docs/%s/static/errcodes-appendix.html"
+    "http://www.postgresql.org/docs/%s/static/errcodes-appendix.html"
 
 errors_txt_url = \
-        "http://git.postgresql.org/gitweb/?p=postgresql.git;a=blob_plain;" \
-        "f=src/backend/utils/errcodes.txt;hb=REL%s_STABLE"
+    "http://git.postgresql.org/gitweb/?p=postgresql.git;a=blob_plain;" \
+    "f=src/backend/utils/errcodes.txt;hb=REL%s_STABLE"
+
 
 def fetch_errors(versions):
     classes = {}
@@ -148,14 +153,15 @@ def fetch_errors(versions):
 
     return classes, errors
 
+
 def generate_module_data(classes, errors):
     yield ""
     yield "# Error classes"
     for clscode, clslabel in sorted(classes.items()):
         err = clslabel.split(" - ")[1].split("(")[0] \
-                .strip().replace(" ", "_").replace('/', "_").upper()
+            .strip().replace(" ", "_").replace('/', "_").upper()
         yield "CLASS_%s = %r" % (err, clscode)
-    
+
     for clscode, clslabel in sorted(classes.items()):
         yield ""
         yield "# %s" % clslabel
@@ -163,7 +169,6 @@ def generate_module_data(classes, errors):
         for errcode, errlabel in sorted(errors[clscode].items()):
             yield "%s = %r" % (errlabel, errcode)
 
+
 if __name__ == '__main__':
     sys.exit(main())
-
-

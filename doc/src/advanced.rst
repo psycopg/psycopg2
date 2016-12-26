@@ -47,7 +47,7 @@ it is the class where query building, execution and result type-casting into
 Python variables happens.
 
 The `~psycopg2.extras` module contains several examples of :ref:`connection
-and cursor sublcasses <cursor-subclasses>`.
+and cursor subclasses <cursor-subclasses>`.
 
 .. note::
 
@@ -270,7 +270,7 @@ wasting resources.
 
 A simple application could poll the connection from time to time to check if
 something new has arrived. A better strategy is to use some I/O completion
-function such as :py:func:`~select.select` to sleep until awaken from the kernel when there is
+function such as :py:func:`~select.select` to sleep until awakened by the kernel when there is
 some data to read on the connection, thereby using no CPU unless there is
 something to read::
 
@@ -423,7 +423,7 @@ this will be probably implemented in a future release.
 Support for coroutine libraries
 -------------------------------
 
-.. versionadded:: 2.2.0
+.. versionadded:: 2.2
 
 Psycopg can be used together with coroutine_\-based libraries and participate
 in cooperative multithreading.
@@ -509,3 +509,90 @@ resources about the topic.
     conn.commit()
     cur.close()
     conn.close()
+
+
+
+.. index::
+    single: Replication
+
+.. _replication-support:
+
+Replication protocol support
+----------------------------
+
+.. versionadded:: 2.7
+
+Modern PostgreSQL servers (version 9.0 and above) support replication.  The
+replication protocol is built on top of the client-server protocol and can be
+operated using ``libpq``, as such it can be also operated by ``psycopg2``.
+The replication protocol can be operated on both synchronous and
+:ref:`asynchronous <async-support>` connections.
+
+Server version 9.4 adds a new feature called *Logical Replication*.
+
+.. seealso::
+
+   - PostgreSQL `Streaming Replication Protocol`__
+
+   .. __: http://www.postgresql.org/docs/current/static/protocol-replication.html
+
+
+Logical replication Quick-Start
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You must be using PostgreSQL server version 9.4 or above to run this quick
+start.
+
+Make sure that replication connections are permitted for user ``postgres`` in
+``pg_hba.conf`` and reload the server configuration.  You also need to set
+``wal_level=logical`` and ``max_wal_senders``, ``max_replication_slots`` to
+value greater than zero in ``postgresql.conf`` (these changes require a server
+restart).  Create a database ``psycopg2_test``.
+
+Then run the following code to quickly try the replication support out.  This
+is not production code -- it has no error handling, it sends feedback too
+often, etc. -- and it's only intended as a simple demo of logical
+replication::
+
+  from __future__ import print_function
+  import sys
+  import psycopg2
+  import psycopg2.extras
+
+  conn = psycopg2.connect('dbname=psycopg2_test user=postgres',
+     connection_factory=psycopg2.extras.LogicalReplicationConnection)
+  cur = conn.cursor()
+  try:
+      # test_decoding produces textual output
+      cur.start_replication(slot_name='pytest', decode=True)
+  except psycopg2.ProgrammingError:
+      cur.create_replication_slot('pytest', output_plugin='test_decoding')
+      cur.start_replication(slot_name='pytest', decode=True)
+
+  class DemoConsumer(object):
+      def __call__(self, msg):
+          print(msg.payload)
+          msg.cursor.send_feedback(flush_lsn=msg.data_start)
+
+  democonsumer = DemoConsumer()
+
+  print("Starting streaming, press Control-C to end...", file=sys.stderr)
+  try:
+     cur.consume_stream(democonsumer)
+  except KeyboardInterrupt:
+     cur.close()
+     conn.close()
+     print("The slot 'pytest' still exists. Drop it with "
+        "SELECT pg_drop_replication_slot('pytest'); if no longer needed.",
+        file=sys.stderr)
+     print("WARNING: Transaction logs will accumulate in pg_xlog "
+        "until the slot is dropped.", file=sys.stderr)
+
+
+You can now make changes to the ``psycopg2_test`` database using a normal
+psycopg2 session, ``psql``, etc. and see the logical decoding stream printed
+by this demo client.
+
+This will continue running until terminated with ``Control-C``.
+
+For the details see :ref:`replication-objects`.

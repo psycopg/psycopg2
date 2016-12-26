@@ -29,6 +29,7 @@ import psycopg2
 from psycopg2.extensions import (
     ISOLATION_LEVEL_SERIALIZABLE, STATUS_BEGIN, STATUS_READY)
 
+
 class TransactionTests(ConnectingTestCase):
 
     def setUp(self):
@@ -147,6 +148,7 @@ class DeadlockSerializationTests(ConnectingTestCase):
                 self.thread1_error = exc
                 step1.set()
             conn.close()
+
         def task2():
             try:
                 conn = self.connect()
@@ -174,7 +176,7 @@ class DeadlockSerializationTests(ConnectingTestCase):
         self.assertFalse(self.thread1_error and self.thread2_error)
         error = self.thread1_error or self.thread2_error
         self.assertTrue(isinstance(
-                error, psycopg2.extensions.TransactionRollbackError))
+            error, psycopg2.extensions.TransactionRollbackError))
 
     def test_serialisation_failure(self):
         self.thread1_error = self.thread2_error = None
@@ -195,6 +197,7 @@ class DeadlockSerializationTests(ConnectingTestCase):
                 self.thread1_error = exc
                 step1.set()
             conn.close()
+
         def task2():
             try:
                 conn = self.connect()
@@ -221,7 +224,7 @@ class DeadlockSerializationTests(ConnectingTestCase):
         self.assertFalse(self.thread1_error and self.thread2_error)
         error = self.thread1_error or self.thread2_error
         self.assertTrue(isinstance(
-                error, psycopg2.extensions.TransactionRollbackError))
+            error, psycopg2.extensions.TransactionRollbackError))
 
 
 class QueryCancellationTests(ConnectingTestCase):

@@ -73,7 +73,7 @@ Why does `!cursor.execute()` raise the exception *can't adapt*?
 
 I can't pass an integer or a float parameter to my query: it says *a number is required*, but *it is* a number!
     In your query string, you always have to use ``%s``  placeholders,
-    event when passing a number.  All Python objects are converted by Psycopg
+    even when passing a number.  All Python objects are converted by Psycopg
     in their SQL representation, so they get passed to the query as strings.
     See :ref:`query-parameters`. ::
 
@@ -241,7 +241,7 @@ How do I interrupt a long-running query in an interactive shell?
 
     .. code-block:: pycon
 
-        >>> psycopg2.extensions.set_wait_callback(psycopg2.extensions.wait_select)
+        >>> psycopg2.extensions.set_wait_callback(psycopg2.extras.wait_select)
         >>> cnn = psycopg2.connect('')
         >>> cur = cnn.cursor()
         >>> cur.execute("select pg_sleep(10)")

@@ -27,6 +27,7 @@ import psycopg2
 from psycopg2.tz import FixedOffsetTimezone, ZERO
 from testutils import unittest, ConnectingTestCase, skip_before_postgres
 
+
 class CommonDatetimeTestsMixin:
 
     def execute(self, *args):
@@ -144,10 +145,10 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         # The Python datetime module does not support time zone
         # offsets that are not a whole number of minutes.
         # We round the offset to the nearest minute.
-        self.check_time_tz("+01:15:00",  60 * (60 + 15))
-        self.check_time_tz("+01:15:29",  60 * (60 + 15))
-        self.check_time_tz("+01:15:30",  60 * (60 + 16))
-        self.check_time_tz("+01:15:59",  60 * (60 + 16))
+        self.check_time_tz("+01:15:00", 60 * (60 + 15))
+        self.check_time_tz("+01:15:29", 60 * (60 + 15))
+        self.check_time_tz("+01:15:30", 60 * (60 + 16))
+        self.check_time_tz("+01:15:59", 60 * (60 + 16))
         self.check_time_tz("-01:15:00", -60 * (60 + 15))
         self.check_time_tz("-01:15:29", -60 * (60 + 15))
         self.check_time_tz("-01:15:30", -60 * (60 + 16))
@@ -180,10 +181,10 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         # The Python datetime module does not support time zone
         # offsets that are not a whole number of minutes.
         # We round the offset to the nearest minute.
-        self.check_datetime_tz("+01:15:00",  60 * (60 + 15))
-        self.check_datetime_tz("+01:15:29",  60 * (60 + 15))
-        self.check_datetime_tz("+01:15:30",  60 * (60 + 16))
-        self.check_datetime_tz("+01:15:59",  60 * (60 + 16))
+        self.check_datetime_tz("+01:15:00", 60 * (60 + 15))
+        self.check_datetime_tz("+01:15:29", 60 * (60 + 15))
+        self.check_datetime_tz("+01:15:30", 60 * (60 + 16))
+        self.check_datetime_tz("+01:15:59", 60 * (60 + 16))
         self.check_datetime_tz("-01:15:00", -60 * (60 + 15))
         self.check_datetime_tz("-01:15:29", -60 * (60 + 15))
         self.check_datetime_tz("-01:15:30", -60 * (60 + 16))
@@ -269,32 +270,32 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
 
     def test_type_roundtrip_date(self):
         from datetime import date
-        self._test_type_roundtrip(date(2010,5,3))
+        self._test_type_roundtrip(date(2010, 5, 3))
 
     def test_type_roundtrip_datetime(self):
         from datetime import datetime
-        dt = self._test_type_roundtrip(datetime(2010,5,3,10,20,30))
+        dt = self._test_type_roundtrip(datetime(2010, 5, 3, 10, 20, 30))
         self.assertEqual(None, dt.tzinfo)
 
     def test_type_roundtrip_datetimetz(self):
         from datetime import datetime
         import psycopg2.tz
-        tz = psycopg2.tz.FixedOffsetTimezone(8*60)
-        dt1 = datetime(2010,5,3,10,20,30, tzinfo=tz)
+        tz = psycopg2.tz.FixedOffsetTimezone(8 * 60)
+        dt1 = datetime(2010, 5, 3, 10, 20, 30, tzinfo=tz)
         dt2 = self._test_type_roundtrip(dt1)
         self.assertNotEqual(None, dt2.tzinfo)
         self.assertEqual(dt1, dt2)
 
     def test_type_roundtrip_time(self):
         from datetime import time
-        tm = self._test_type_roundtrip(time(10,20,30))
+        tm = self._test_type_roundtrip(time(10, 20, 30))
         self.assertEqual(None, tm.tzinfo)
 
     def test_type_roundtrip_timetz(self):
         from datetime import time
         import psycopg2.tz
-        tz = psycopg2.tz.FixedOffsetTimezone(8*60)
-        tm1 = time(10,20,30, tzinfo=tz)
+        tz = psycopg2.tz.FixedOffsetTimezone(8 * 60)
+        tm1 = time(10, 20, 30, tzinfo=tz)
         tm2 = self._test_type_roundtrip(tm1)
         self.assertNotEqual(None, tm2.tzinfo)
         self.assertEqual(tm1, tm2)
@@ -305,15 +306,15 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
 
     def test_type_roundtrip_date_array(self):
         from datetime import date
-        self._test_type_roundtrip_array(date(2010,5,3))
+        self._test_type_roundtrip_array(date(2010, 5, 3))
 
     def test_type_roundtrip_datetime_array(self):
         from datetime import datetime
-        self._test_type_roundtrip_array(datetime(2010,5,3,10,20,30))
+        self._test_type_roundtrip_array(datetime(2010, 5, 3, 10, 20, 30))
 
     def test_type_roundtrip_time_array(self):
         from datetime import time
-        self._test_type_roundtrip_array(time(10,20,30))
+        self._test_type_roundtrip_array(time(10, 20, 30))
 
     def test_type_roundtrip_interval_array(self):
         from datetime import timedelta
@@ -355,8 +356,10 @@ class mxDateTimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         psycopg2.extensions.register_type(self.INTERVAL, self.conn)
         psycopg2.extensions.register_type(psycopg2.extensions.MXDATEARRAY, self.conn)
         psycopg2.extensions.register_type(psycopg2.extensions.MXTIMEARRAY, self.conn)
-        psycopg2.extensions.register_type(psycopg2.extensions.MXDATETIMEARRAY, self.conn)
-        psycopg2.extensions.register_type(psycopg2.extensions.MXINTERVALARRAY, self.conn)
+        psycopg2.extensions.register_type(
+            psycopg2.extensions.MXDATETIMEARRAY, self.conn)
+        psycopg2.extensions.register_type(
+            psycopg2.extensions.MXINTERVALARRAY, self.conn)
 
     def tearDown(self):
         self.conn.close()
@@ -479,15 +482,15 @@ class mxDateTimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
 
     def test_type_roundtrip_date(self):
         from mx.DateTime import Date
-        self._test_type_roundtrip(Date(2010,5,3))
+        self._test_type_roundtrip(Date(2010, 5, 3))
 
     def test_type_roundtrip_datetime(self):
         from mx.DateTime import DateTime
-        self._test_type_roundtrip(DateTime(2010,5,3,10,20,30))
+        self._test_type_roundtrip(DateTime(2010, 5, 3, 10, 20, 30))
 
     def test_type_roundtrip_time(self):
         from mx.DateTime import Time
-        self._test_type_roundtrip(Time(10,20,30))
+        self._test_type_roundtrip(Time(10, 20, 30))
 
     def test_type_roundtrip_interval(self):
         from mx.DateTime import DateTimeDeltaFrom
@@ -495,15 +498,15 @@ class mxDateTimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
 
     def test_type_roundtrip_date_array(self):
         from mx.DateTime import Date
-        self._test_type_roundtrip_array(Date(2010,5,3))
+        self._test_type_roundtrip_array(Date(2010, 5, 3))
 
     def test_type_roundtrip_datetime_array(self):
         from mx.DateTime import DateTime
-        self._test_type_roundtrip_array(DateTime(2010,5,3,10,20,30))
+        self._test_type_roundtrip_array(DateTime(2010, 5, 3, 10, 20, 30))
 
     def test_type_roundtrip_time_array(self):
         from mx.DateTime import Time
-        self._test_type_roundtrip_array(Time(10,20,30))
+        self._test_type_roundtrip_array(Time(10, 20, 30))
 
     def test_type_roundtrip_interval_array(self):
         from mx.DateTime import DateTimeDeltaFrom
@@ -549,22 +552,30 @@ class FixedOffsetTimezoneTests(unittest.TestCase):
 
     def test_repr_with_positive_offset(self):
         tzinfo = FixedOffsetTimezone(5 * 60)
-        self.assertEqual(repr(tzinfo), "psycopg2.tz.FixedOffsetTimezone(offset=300, name=None)")
+        self.assertEqual(repr(tzinfo),
+            "psycopg2.tz.FixedOffsetTimezone(offset=300, name=None)")
 
     def test_repr_with_negative_offset(self):
         tzinfo = FixedOffsetTimezone(-5 * 60)
-        self.assertEqual(repr(tzinfo), "psycopg2.tz.FixedOffsetTimezone(offset=-300, name=None)")
+        self.assertEqual(repr(tzinfo),
+            "psycopg2.tz.FixedOffsetTimezone(offset=-300, name=None)")
 
     def test_repr_with_name(self):
         tzinfo = FixedOffsetTimezone(name="FOO")
-        self.assertEqual(repr(tzinfo), "psycopg2.tz.FixedOffsetTimezone(offset=0, name='FOO')")
+        self.assertEqual(repr(tzinfo),
+            "psycopg2.tz.FixedOffsetTimezone(offset=0, name='FOO')")
 
     def test_instance_caching(self):
-        self.assert_(FixedOffsetTimezone(name="FOO") is FixedOffsetTimezone(name="FOO"))
-        self.assert_(FixedOffsetTimezone(7 * 60) is FixedOffsetTimezone(7 * 60))
-        self.assert_(FixedOffsetTimezone(-9 * 60, 'FOO') is FixedOffsetTimezone(-9 * 60, 'FOO'))
-        self.assert_(FixedOffsetTimezone(9 * 60) is not FixedOffsetTimezone(9 * 60, 'FOO'))
-        self.assert_(FixedOffsetTimezone(name='FOO') is not FixedOffsetTimezone(9 * 60, 'FOO'))
+        self.assert_(FixedOffsetTimezone(name="FOO")
+            is FixedOffsetTimezone(name="FOO"))
+        self.assert_(FixedOffsetTimezone(7 * 60)
+            is FixedOffsetTimezone(7 * 60))
+        self.assert_(FixedOffsetTimezone(-9 * 60, 'FOO')
+            is FixedOffsetTimezone(-9 * 60, 'FOO'))
+        self.assert_(FixedOffsetTimezone(9 * 60)
+            is not FixedOffsetTimezone(9 * 60, 'FOO'))
+        self.assert_(FixedOffsetTimezone(name='FOO')
+            is not FixedOffsetTimezone(9 * 60, 'FOO'))
 
     def test_pickle(self):
         # ticket #135

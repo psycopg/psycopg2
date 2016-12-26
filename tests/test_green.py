@@ -29,6 +29,7 @@ import psycopg2.extras
 
 from testutils import ConnectingTestCase
 
+
 class ConnectionStub(object):
     """A `connection` wrapper allowing analysis of the `poll()` calls."""
     def __init__(self, conn):
@@ -42,6 +43,7 @@ class ConnectionStub(object):
         rv = self.conn.poll()
         self.polls.append(rv)
         return rv
+
 
 class GreenTestCase(ConnectingTestCase):
     def setUp(self):
@@ -89,7 +91,7 @@ class GreenTestCase(ConnectingTestCase):
         curs.fetchone()
 
         # now try to do something that will fail in the callback
-        psycopg2.extensions.set_wait_callback(lambda conn: 1//0)
+        psycopg2.extensions.set_wait_callback(lambda conn: 1 // 0)
         self.assertRaises(ZeroDivisionError, curs.execute, "select 2")
 
         self.assert_(conn.closed)

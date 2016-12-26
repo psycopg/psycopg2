@@ -23,11 +23,12 @@
 # License for more details.
 
 import sys
-from testutils import unittest, ConnectingTestCase, skip_before_libpq
+import testutils
+from testutils import unittest, ConnectingTestCase
 
 import psycopg2
 import psycopg2.extensions
-from psycopg2.extensions import b
+
 
 class QuotingTestCase(ConnectingTestCase):
     r"""Checks the correct quoting of strings and binary objects.
@@ -51,7 +52,7 @@ class QuotingTestCase(ConnectingTestCase):
         data = """some data with \t chars
         to escape into, 'quotes' and \\ a backslash too.
         """
-        data += "".join(map(chr, range(1,127)))
+        data += "".join(map(chr, range(1, 127)))
 
         curs = self.conn.cursor()
         curs.execute("SELECT %s;", (data,))
@@ -60,10 +61,22 @@ class QuotingTestCase(ConnectingTestCase):
         self.assertEqual(res, data)
         self.assert_(not self.conn.notices)
 
+    def test_string_null_terminator(self):
+        curs = self.conn.cursor()
+        data = 'abcd\x01\x00cdefg'
+
+        try:
+            curs.execute("SELECT %s", (data,))
+        except ValueError as e:
+            self.assertEquals(str(e),
+                'A string literal cannot contain NUL (0x00) characters.')
+        else:
+            self.fail("ValueError not raised")
+
     def test_binary(self):
-        data = b("""some data with \000\013 binary
+        data = b"""some data with \000\013 binary
         stuff into, 'quotes' and \\ a backslash too.
-        """)
+        """
         if sys.version_info[0] < 3:
             data += "".join(map(chr, range(256)))
         else:
@@ -76,7 +89,7 @@ class QuotingTestCase(ConnectingTestCase):
         else:
             res = curs.fetchone()[0].tobytes()
 
-        if res[0] in (b('x'), ord(b('x'))) and self.conn.server_version >= 90000:
+        if res[0] in (b'x', ord(b'x')) and self.conn.server_version >= 90000:
             return self.skipTest(
                 "bytea broken with server >= 9.0, libpq < 9")
 
@@ -90,13 +103,13 @@ class QuotingTestCase(ConnectingTestCase):
         if server_encoding != "UTF8":
             return self.skipTest(
                 "Unicode test skipped since server encoding is %s"
-                    % server_encoding)
+                % server_encoding)
 
         data = u"""some data with \t chars
         to escape into, 'quotes', \u20ac euro sign and \\ a backslash too.
         """
-        data += u"".join(map(unichr, [ u for u in range(1,65536)
-            if not 0xD800 <= u <= 0xDFFF ]))    # surrogate area
+        data += u"".join(map(unichr, [u for u in range(1, 65536)
+            if not 0xD800 <= u <= 0xDFFF]))    # surrogate area
         self.conn.set_client_encoding('UNICODE')
 
         psycopg2.extensions.register_type(psycopg2.extensions.UNICODE, self.conn)
@@ -156,7 +169,7 @@ class QuotingTestCase(ConnectingTestCase):
 
 
 class TestQuotedString(ConnectingTestCase):
-    def test_encoding(self):
+    def test_encoding_from_conn(self):
         q = psycopg2.extensions.QuotedString('hi')
         self.assertEqual(q.encoding, 'latin1')
 
@@ -166,13 +179,13 @@ class TestQuotedString(ConnectingTestCase):
 
 
 class TestQuotedIdentifier(ConnectingTestCase):
-    @skip_before_libpq(9, 0)
+    @testutils.skip_before_libpq(9, 0)
     def test_identifier(self):
         from psycopg2.extensions import quote_ident
         self.assertEqual(quote_ident('blah-blah', self.conn), '"blah-blah"')
         self.assertEqual(quote_ident('quote"inside', self.conn), '"quote""inside"')
 
-    @skip_before_libpq(9, 0)
+    @testutils.skip_before_libpq(9, 0)
     def test_unicode_ident(self):
         from psycopg2.extensions import quote_ident
         snowman = u"\u2603"
@@ -183,9 +196,59 @@ class TestQuotedIdentifier(ConnectingTestCase):
             self.assertEqual(quote_ident(snowman, self.conn), quoted)
 
 
+class TestStringAdapter(ConnectingTestCase):
+    def test_encoding_default(self):
+        from psycopg2.extensions import adapt
+        a = adapt("hello")
+        self.assertEqual(a.encoding, 'latin1')
+        self.assertEqual(a.getquoted(), b"'hello'")
+
+        # NOTE: we can't really test an encoding different from utf8, because
+        # when encoding without connection the libpq will use parameters from
+        # a previous one, so what would happens depends jn the tests run order.
+        # egrave = u'\xe8'
+        # self.assertEqual(adapt(egrave).getquoted(), "'\xe8'")
+
+    def test_encoding_error(self):
+        from psycopg2.extensions import adapt
+        snowman = u"\u2603"
+        a = adapt(snowman)
+        self.assertRaises(UnicodeEncodeError, a.getquoted)
+
+    def test_set_encoding(self):
+        # Note: this works-ish mostly in case when the standard db connection
+        # we test with is utf8, otherwise the encoding chosen by PQescapeString
+        # may give bad results.
+        from psycopg2.extensions import adapt
+        snowman = u"\u2603"
+        a = adapt(snowman)
+        a.encoding = 'utf8'
+        self.assertEqual(a.encoding, 'utf8')
+        self.assertEqual(a.getquoted(), b"'\xe2\x98\x83'")
+
+    def test_connection_wins_anyway(self):
+        from psycopg2.extensions import adapt
+        snowman = u"\u2603"
+        a = adapt(snowman)
+        a.encoding = 'latin9'
+
+        self.conn.set_client_encoding('utf8')
+        a.prepare(self.conn)
+
+        self.assertEqual(a.encoding, 'utf_8')
+        self.assertEqual(a.getquoted(), b"'\xe2\x98\x83'")
+
+    @testutils.skip_before_python(3)
+    def test_adapt_bytes(self):
+        snowman = u"\u2603"
+        self.conn.set_client_encoding('utf8')
+        a = psycopg2.extensions.QuotedString(snowman.encode('utf8'))
+        a.prepare(self.conn)
+        self.assertEqual(a.getquoted(), b"'\xe2\x98\x83'")
+
+
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
 if __name__ == "__main__":
     unittest.main()
-

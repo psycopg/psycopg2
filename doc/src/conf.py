@@ -42,9 +42,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Psycopg'
-from datetime import date
-year = date.today().year
-copyright = u'2001-%s, Federico Di Gregorio, Daniele Varrazzo' % year
+copyright = u'2001-2016, Federico Di Gregorio, Daniele Varrazzo'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -63,8 +61,8 @@ except ImportError:
     release = version
 
 intersphinx_mapping = {
-    'py': ('http://docs.python.org/', None),
-    'py3': ('http://docs.python.org/3.2', None),
+    'py': ('http://docs.python.org/2', None),
+    'py3': ('http://docs.python.org/3', None),
     }
 
 # Pattern to generate links to the bug tracker

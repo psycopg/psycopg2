@@ -39,7 +39,8 @@ from testconfig import dsn
 if sys.version_info[0] < 3:
     _base = object
 else:
-     from io import TextIOBase as _base
+    from io import TextIOBase as _base
+
 
 class MinimalRead(_base):
     """A file wrapper exposing the minimal interface to copy from."""
@@ -51,6 +52,7 @@ class MinimalRead(_base):
 
     def readline(self):
         return self.f.readline()
+
 
 class MinimalWrite(_base):
     """A file wrapper exposing the minimal interface to copy to."""
@@ -78,7 +80,7 @@ class CopyTests(ConnectingTestCase):
     def test_copy_from(self):
         curs = self.conn.cursor()
         try:
-            self._copy_from(curs, nrecs=1024, srec=10*1024, copykw={})
+            self._copy_from(curs, nrecs=1024, srec=10 * 1024, copykw={})
         finally:
             curs.close()
 
@@ -86,8 +88,8 @@ class CopyTests(ConnectingTestCase):
         # Trying to trigger a "would block" error
         curs = self.conn.cursor()
         try:
-            self._copy_from(curs, nrecs=10*1024, srec=10*1024,
-                copykw={'size': 20*1024*1024})
+            self._copy_from(curs, nrecs=10 * 1024, srec=10 * 1024,
+                copykw={'size': 20 * 1024 * 1024})
         finally:
             curs.close()
 
@@ -110,6 +112,7 @@ class CopyTests(ConnectingTestCase):
             f.write("%s\n" % (i,))
 
         f.seek(0)
+
         def cols():
             raise ZeroDivisionError()
             yield 'id'
@@ -120,8 +123,8 @@ class CopyTests(ConnectingTestCase):
     def test_copy_to(self):
         curs = self.conn.cursor()
         try:
-            self._copy_from(curs, nrecs=1024, srec=10*1024, copykw={})
-            self._copy_to(curs, srec=10*1024)
+            self._copy_from(curs, nrecs=1024, srec=10 * 1024, copykw={})
+            self._copy_to(curs, srec=10 * 1024)
         finally:
             curs.close()
 
@@ -209,9 +212,11 @@ class CopyTests(ConnectingTestCase):
         exp_size = 123
         # hack here to leave file as is, only check size when reading
         real_read = f.read
+
         def read(_size, f=f, exp_size=exp_size):
             self.assertEqual(_size, exp_size)
             return real_read(_size)
+
         f.read = read
         curs.copy_expert('COPY tcopy (data) FROM STDIN', f, size=exp_size)
         curs.execute("select data from tcopy;")
@@ -221,7 +226,7 @@ class CopyTests(ConnectingTestCase):
         f = StringIO()
         for i, c in izip(xrange(nrecs), cycle(string.ascii_letters)):
             l = c * srec
-            f.write("%s\t%s\n" % (i,l))
+            f.write("%s\t%s\n" % (i, l))
 
         f.seek(0)
         curs.copy_from(MinimalRead(f), "tcopy", **copykw)
@@ -258,24 +263,24 @@ class CopyTests(ConnectingTestCase):
             curs.copy_expert, 'COPY tcopy (data) FROM STDIN', f)
 
     def test_copy_no_column_limit(self):
-        cols = [ "c%050d" % i for i in range(200) ]
+        cols = ["c%050d" % i for i in range(200)]
 
         curs = self.conn.cursor()
         curs.execute('CREATE TEMPORARY TABLE manycols (%s)' % ',\n'.join(
-            [ "%s int" % c for c in cols]))
+            ["%s int" % c for c in cols]))
         curs.execute("INSERT INTO manycols DEFAULT VALUES")
 
         f = StringIO()
-        curs.copy_to(f, "manycols", columns = cols)
+        curs.copy_to(f, "manycols", columns=cols)
         f.seek(0)
         self.assertEqual(f.read().split(), ['\\N'] * len(cols))
 
         f.seek(0)
-        curs.copy_from(f, "manycols", columns = cols)
+        curs.copy_from(f, "manycols", columns=cols)
         curs.execute("select count(*) from manycols;")
         self.assertEqual(curs.fetchone()[0], 2)
 
-    @skip_before_postgres(8, 2) # they don't send the count
+    @skip_before_postgres(8, 2)     # they don't send the count
     def test_copy_rowcount(self):
         curs = self.conn.cursor()
 
@@ -316,7 +321,7 @@ try:
 except psycopg2.ProgrammingError:
     pass
 conn.close()
-""" % { 'dsn': dsn,})
+""" % {'dsn': dsn})
 
         proc = Popen([sys.executable, '-c', script_to_py3(script)])
         proc.communicate()
@@ -334,7 +339,7 @@ try:
 except psycopg2.ProgrammingError:
     pass
 conn.close()
-""" % { 'dsn': dsn,})
+""" % {'dsn': dsn})
 
         proc = Popen([sys.executable, '-c', script_to_py3(script)], stdout=PIPE)
         proc.communicate()
@@ -343,10 +348,10 @@ conn.close()
     def test_copy_from_propagate_error(self):
         class BrokenRead(_base):
             def read(self, size):
-                return 1/0
+                return 1 / 0
 
             def readline(self):
-                return 1/0
+                return 1 / 0
 
         curs = self.conn.cursor()
         # It seems we cannot do this, but now at least we propagate the error
@@ -360,7 +365,7 @@ conn.close()
     def test_copy_to_propagate_error(self):
         class BrokenWrite(_base):
             def write(self, data):
-                return 1/0
+                return 1 / 0
 
         curs = self.conn.cursor()
         curs.execute("insert into tcopy values (10, 'hi')")

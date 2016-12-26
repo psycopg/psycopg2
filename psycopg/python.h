@@ -31,8 +31,8 @@
 #include <stringobject.h>
 #endif
 
-#if PY_VERSION_HEX < 0x02050000
-#  error "psycopg requires Python >= 2.5"
+#if PY_VERSION_HEX < 0x02060000
+#  error "psycopg requires Python >= 2.6"
 #endif
 
 /* hash() return size changed around version 3.2a4 on 64bit platforms.  Before

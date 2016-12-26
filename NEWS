@@ -6,7 +6,12 @@ What's new in psycopg 2.7
 
 New features:
 
-- Added `~psycopg2.extensions.parse_dsn()` function (:ticket:`#321`).
+- Added :ref:`replication-support` (:ticket:`#322`). Main authors are
+  Oleksandr Shulgin and Craig Ringer, who deserve a huge thank you.
+- Added `~psycopg2.extensions.parse_dsn()` and
+  `~psycopg2.extensions.make_dsn()` functions (:tickets:`#321, #363`).
+  `~psycopg2.connect()` now can take both *dsn* and keyword arguments, merging
+  them together.
 - Added `~psycopg2.__libpq_version__` and
   `~psycopg2.extensions.libpq_version()` to inspect the version of the
   ``libpq`` library the module was compiled/loaded with
@@ -14,19 +19,46 @@ New features:
 - The attributes `~connection.notices` and `~connection.notifies` can be
   customized replacing them with any object exposing an `!append()` method
   (:ticket:`#326`).
+- Adapt network types to `ipaddress` objects when available. When not
+  enabled, convert arrays of network types to lists by default. The old `!Inet`
+  adapter is deprecated (:tickets:`#317, #343, #387`).
 - Added `~psycopg2.extensions.quote_ident()` function (:ticket:`#359`).
+- Added `~connection.get_dsn_parameters()` connection method (:ticket:`#364`).
+
+Other changes:
+
+- Dropped support for Python 2.5.
+- Dropped support for client library older than PostgreSQL 9.1 (but older
+  server versions are still supported).
+
+
+What's new in psycopg 2.6.3
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Throw an exception trying to pass ``NULL`` chars as parameters
+  (:ticket:`#420`).
+- Make `~psycopg2.extras.Range` objects picklable (:ticket:`#462`).
 
 
 What's new in psycopg 2.6.2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Report the server response status on errors (such as :ticket:`#281`).
+- Raise `!NotSupportedError` on unhandled server response status
+  (:ticket:`#352`).
+- Allow overriding string adapter encoding with no connection (:ticket:`#331`).
 - The `~psycopg2.extras.wait_select` callback allows interrupting a
   long-running query in an interactive shell using :kbd:`Ctrl-C`
   (:ticket:`#333`).
-- Raise `!NotSupportedError` on unhandled server response status
-  (:ticket:`#352`).
 - Fixed `!PersistentConnectionPool` on Python 3 (:ticket:`#348`).
+- Fixed segfault on `repr()` of an unitialized connection (:ticket:`#361`).
+- Allow adapting bytes using QuotedString on Python 3 too (:ticket:`#365`).
+- Added support for setuptools/wheel (:ticket:`#370`).
+- Fix build on Windows with Python 3.5, VS 2015 (:ticket:`#380`).
+- Fixed `!errorcodes.lookup` initialization thread-safety (:ticket:`#382`).
+- Fixed `!read()` exception propagation in copy_from (:ticket:`#412`).
+- Fixed possible NULL TZ decref  (:ticket:`#424`).
+- `~psycopg2.errorcodes` map updated to PostgreSQL 9.5.
 
 
 What's new in psycopg 2.6.1
