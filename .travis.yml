@@ -1,13 +1,24 @@
+# Travis CI configuration file for psycopg2
+
+dist: trusty
+sudo: required
 language: python
 
 python:
-  - 2.6
   - 2.7
-
-before_script:
-  - psql -c 'create database psycopg2_test;' -U postgres
+  - 3.6-dev
+  - 2.6
+  - 3.5
+  - 3.4
+  - 3.3
+  - 3.2
 
 install:
   - python setup.py install
+  - sudo scripts/travis_prepare.sh
 
-script: make check
+script:
+  - scripts/travis_test.sh
+
+notifications:
+  email: false

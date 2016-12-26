@@ -23,23 +23,19 @@
 # License for more details.
 
 import psycopg2
-import psycopg2.extensions
 from psycopg2.extras import (
     PhysicalReplicationConnection, LogicalReplicationConnection, StopReplication)
 
 import testconfig
-from testutils import unittest
-from testutils import skip_before_postgres
-from testutils import ConnectingTestCase
+from testutils import unittest, ConnectingTestCase
+from testutils import skip_before_postgres, skip_if_green
+
+skip_repl_if_green = skip_if_green("replication not supported in green mode")
 
 
 class ReplicationTestCase(ConnectingTestCase):
     def setUp(self):
-        if not testconfig.repl_dsn:
-            self.skipTest("replication tests disabled by default")
-
         super(ReplicationTestCase, self).setUp()
-
         self.slot = testconfig.repl_slot
         self._slots = []
 
@@ -93,6 +89,20 @@ class ReplicationTest(ReplicationTestCase):
         cur.execute("IDENTIFY_SYSTEM")
         cur.fetchall()
 
+    @skip_before_postgres(9, 0)
+    def test_datestyle(self):
+        if testconfig.repl_dsn is None:
+            return self.skipTest("replication tests disabled by default")
+
+        conn = self.repl_connect(
+            dsn=testconfig.repl_dsn, options='-cdatestyle=german',
+            connection_factory=PhysicalReplicationConnection)
+        if conn is None:
+            return
+        cur = conn.cursor()
+        cur.execute("IDENTIFY_SYSTEM")
+        cur.fetchall()
+
     @skip_before_postgres(9, 4)
     def test_logical_replication_connection(self):
         conn = self.repl_connect(connection_factory=LogicalReplicationConnection)
@@ -114,6 +124,7 @@ class ReplicationTest(ReplicationTestCase):
             psycopg2.ProgrammingError, self.create_replication_slot, cur)
 
     @skip_before_postgres(9, 4)  # slots require 9.4
+    @skip_repl_if_green
     def test_start_on_missing_replication_slot(self):
         conn = self.repl_connect(connection_factory=PhysicalReplicationConnection)
         if conn is None:
@@ -127,6 +138,7 @@ class ReplicationTest(ReplicationTestCase):
         cur.start_replication(self.slot)
 
     @skip_before_postgres(9, 4)  # slots require 9.4
+    @skip_repl_if_green
     def test_start_and_recover_from_error(self):
         conn = self.repl_connect(connection_factory=LogicalReplicationConnection)
         if conn is None:
@@ -148,6 +160,7 @@ class ReplicationTest(ReplicationTestCase):
         cur.start_replication(slot_name=self.slot)
 
     @skip_before_postgres(9, 4)     # slots require 9.4
+    @skip_repl_if_green
     def test_stop_replication(self):
         conn = self.repl_connect(connection_factory=LogicalReplicationConnection)
         if conn is None:
@@ -167,12 +180,13 @@ class ReplicationTest(ReplicationTestCase):
 
 class AsyncReplicationTest(ReplicationTestCase):
     @skip_before_postgres(9, 4)     # slots require 9.4
+    @skip_repl_if_green
     def test_async_replication(self):
         conn = self.repl_connect(
             connection_factory=LogicalReplicationConnection, async=1)
         if conn is None:
             return
-        self.wait(conn)
+
         cur = conn.cursor()
 
         self.create_replication_slot(cur, output_plugin='test_decoding')

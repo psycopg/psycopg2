@@ -36,7 +36,31 @@ class Psycopg2Tests(dbapi20.DatabaseAPI20Test):
     connect_args = ()
     connect_kw_args = {'dsn': dsn}
 
-    lower_func = 'lower'    # For stored procedure test
+    lower_func = 'lower' # For stored procedure test
+
+    def test_callproc(self):
+        # Until DBAPI 2.0 compliance, callproc should return None or it's just
+        # misleading. Therefore, we will skip the return value test for
+        # callproc and only perform the fetch test.
+        #
+        # For what it's worth, the DBAPI2.0 test_callproc doesn't actually
+        # test for DBAPI2.0 compliance! It doesn't check for modified OUT and
+        # IN/OUT parameters in the return values!
+        con = self._connect()
+        try:
+            cur = con.cursor()
+            if self.lower_func and hasattr(cur,'callproc'):
+                cur.callproc(self.lower_func,('FOO',))
+                r = cur.fetchall()
+                self.assertEqual(len(r),1,'callproc produced no result set')
+                self.assertEqual(len(r[0]),1,
+                    'callproc produced invalid result set'
+                    )
+                self.assertEqual(r[0][0],'foo',
+                    'callproc produced invalid results'
+                    )
+        finally:
+            con.close()
 
     def test_setoutputsize(self):
         # psycopg2's setoutputsize() is a no-op

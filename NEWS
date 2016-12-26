@@ -24,6 +24,7 @@ New features:
   adapter is deprecated (:tickets:`#317, #343, #387`).
 - Added `~psycopg2.extensions.quote_ident()` function (:ticket:`#359`).
 - Added `~connection.get_dsn_parameters()` connection method (:ticket:`#364`).
+- `~cursor.callproc()` now accepts a dictionary of parameters (:ticket:`#381`).
 
 Other changes:
 
@@ -36,7 +37,7 @@ What's new in psycopg 2.6.3
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Throw an exception trying to pass ``NULL`` chars as parameters
-  (:ticket:`#420).
+  (:ticket:`#420`).
 - Make `~psycopg2.extras.Range` objects picklable (:ticket:`#462`).
 
 
