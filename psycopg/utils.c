@@ -278,3 +278,57 @@ exit:
 
     return res;
 }
+
+
+/* Convert a C string into Python Text using a specified codec.
+ *
+ * The codec is the python function codec.getdecoder(enc). It is only used on
+ * Python 3 to return unicode: in Py2 the function returns a string.
+ *
+ * len is optional: use -1 to have it calculated by the function.
+ */
+PyObject *
+psycopg_text_from_chars_safe(const char *str, Py_ssize_t len, PyObject *decoder)
+{
+#if PY_MAJOR_VERSION < 3
+
+    if (!str) { Py_RETURN_NONE; }
+
+    if (len < 0) { len = strlen(str); }
+
+    return PyString_FromStringAndSize(str, len);
+
+#else
+
+    static PyObject *replace = NULL;
+    PyObject *rv = NULL;
+    PyObject *b = NULL;
+    PyObject *t = NULL;
+
+    if (!str) { Py_RETURN_NONE; }
+
+    if (len < 0) { len = strlen(str); }
+
+    if (decoder) {
+        if (!replace) {
+            if (!(replace = PyUnicode_FromString("replace"))) { goto exit; }
+        }
+        if (!(b = PyBytes_FromStringAndSize(str, len))) { goto exit; }
+        if (!(t = PyObject_CallFunctionObjArgs(decoder, b, replace, NULL))) {
+            goto exit;
+        }
+
+        if (!(rv = PyTuple_GetItem(t, 0))) { goto exit; }
+        Py_INCREF(rv);
+    }
+    else {
+        rv = PyUnicode_DecodeASCII(str, len, "replace");
+    }
+
+exit:
+    Py_XDECREF(t);
+    Py_XDECREF(b);
+    return rv;
+
+#endif
+}

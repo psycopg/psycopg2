@@ -98,12 +98,7 @@ typecast_UNICODE_cast(const char *s, Py_ssize_t len, PyObject *curs)
     if (s == NULL) { Py_RETURN_NONE; }
 
     conn = ((cursorObject*)curs)->conn;
-    if (conn->cdecoder) {
-        return conn->cdecoder(s, len, NULL);
-    }
-    else {
-        return PyUnicode_Decode(s, len, conn->pyenc, NULL);
-    }
+    return conn_decode(conn, s, len);
 }
 
 /** BOOLEAN - cast boolean value into right python object **/

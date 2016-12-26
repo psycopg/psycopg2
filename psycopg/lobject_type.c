@@ -86,9 +86,7 @@ psyco_lobj_write(lobjectObject *self, PyObject *args)
         data = obj;
     }
     else if (PyUnicode_Check(obj)) {
-        if (!(data = PyUnicode_AsEncodedString(obj, self->conn->pyenc, NULL))) {
-            goto exit;
-        }
+        if (!(data = conn_encode(self->conn, obj))) { goto exit; }
     }
     else {
         PyErr_Format(PyExc_TypeError,
@@ -150,7 +148,7 @@ psyco_lobj_read(lobjectObject *self, PyObject *args)
     if (self->mode & LOBJECT_BINARY) {
         res = Bytes_FromStringAndSize(buffer, size);
     } else {
-        res = PyUnicode_Decode(buffer, size, self->conn->pyenc, NULL);
+        res = conn_decode(self->conn, buffer, size);
     }
     PyMem_Free(buffer);
 

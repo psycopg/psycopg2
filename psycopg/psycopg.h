@@ -132,6 +132,8 @@ HIDDEN char *psycopg_escape_identifier(connectionObject *conn,
               const char *str, Py_ssize_t len);
 HIDDEN int psycopg_strdup(char **to, const char *from, Py_ssize_t len);
 HIDDEN int psycopg_is_text_file(PyObject *f);
+HIDDEN PyObject *psycopg_text_from_chars_safe(
+        const char *str, Py_ssize_t len, PyObject *decoder);
 
 STEALS(1) HIDDEN PyObject * psycopg_ensure_bytes(PyObject *obj);
 
