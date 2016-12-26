@@ -1164,7 +1164,7 @@ connection_dealloc(PyObject* obj)
 
     PyMem_Free(self->dsn);
     PyMem_Free(self->encoding);
-    PyMem_Free(self->codec);
+    PyMem_Free(self->pyenc);
     if (self->critical) free(self->critical);
     if (self->cancel) PQfreeCancel(self->cancel);
 

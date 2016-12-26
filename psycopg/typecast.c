@@ -672,7 +672,7 @@ typecast_cast(PyObject *obj, const char *str, Py_ssize_t len, PyObject *curs)
             s = PyString_FromStringAndSize(str, len);
 #else
             s = PyUnicode_Decode(str, len,
-                ((cursorObject *)curs)->conn->codec, NULL);
+                ((cursorObject *)curs)->conn->pyenc, NULL);
 #endif
         }
         else {

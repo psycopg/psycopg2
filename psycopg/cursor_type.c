@@ -286,7 +286,7 @@ static PyObject *_psyco_curs_validate_sql_basic(
         Py_INCREF(sql);
     }
     else if (PyUnicode_Check(sql)) {
-        char *enc = self->conn->codec;
+        char *enc = self->conn->pyenc;
         sql = PyUnicode_AsEncodedString(sql, enc, NULL);
         /* if there was an error during the encoding from unicode to the
            target encoding, we just let the exception propagate */

@@ -417,7 +417,7 @@ details.
 
 .. data:: encodings
 
-    Mapping from `PostgreSQL encoding`__ names to `Python codec`__ names.
+    Mapping from `PostgreSQL encoding`__ to `Python encoding`__ names.
     Used by Psycopg when adapting or casting unicode strings. See
     :ref:`unicode-handling`.
 

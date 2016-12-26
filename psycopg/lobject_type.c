@@ -86,7 +86,7 @@ psyco_lobj_write(lobjectObject *self, PyObject *args)
         data = obj;
     }
     else if (PyUnicode_Check(obj)) {
-        if (!(data = PyUnicode_AsEncodedString(obj, self->conn->codec, NULL))) {
+        if (!(data = PyUnicode_AsEncodedString(obj, self->conn->pyenc, NULL))) {
             goto exit;
         }
     }
@@ -150,7 +150,7 @@ psyco_lobj_read(lobjectObject *self, PyObject *args)
     if (self->mode & LOBJECT_BINARY) {
         res = Bytes_FromStringAndSize(buffer, size);
     } else {
-        res = PyUnicode_Decode(buffer, size, self->conn->codec, NULL);
+        res = PyUnicode_Decode(buffer, size, self->conn->pyenc, NULL);
     }
     PyMem_Free(buffer);
 

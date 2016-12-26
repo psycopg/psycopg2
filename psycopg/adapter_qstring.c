@@ -43,7 +43,7 @@ _qstring_get_encoding(qstringObject *self)
        conn->encoding but if the encoding is not specified we don't know what
        to do and we raise an exception */
     if (self->conn) {
-        return self->conn->codec;
+        return self->conn->pyenc;
     }
     else {
         return self->encoding ? self->encoding : default_encoding;

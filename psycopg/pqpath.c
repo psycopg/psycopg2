@@ -226,8 +226,8 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult **pgres)
     if (pyerr && PyObject_TypeCheck(pyerr, &errorType)) {
         errorObject *perr = (errorObject *)pyerr;
 
-        PyMem_Free(perr->codec);
-        psycopg_strdup(&perr->codec, conn->codec, 0);
+        PyMem_Free(perr->pyenc);
+        psycopg_strdup(&perr->pyenc, conn->pyenc, 0);
 
         Py_CLEAR(perr->pgerror);
         perr->pgerror = error_text_from_chars(perr, err);
@@ -1332,8 +1332,8 @@ _pq_copy_in_v3(cursorObject *curs)
         /* a file may return unicode if implements io.TextIOBase */
         if (PyUnicode_Check(o)) {
             PyObject *tmp;
-            Dprintf("_pq_copy_in_v3: encoding in %s", curs->conn->codec);
-            if (!(tmp = PyUnicode_AsEncodedString(o, curs->conn->codec, NULL))) {
+            Dprintf("_pq_copy_in_v3: encoding in %s", curs->conn->pyenc);
+            if (!(tmp = PyUnicode_AsEncodedString(o, curs->conn->pyenc, NULL))) {
                 Dprintf("_pq_copy_in_v3: encoding() failed");
                 error = 1;
                 break;
@@ -1488,7 +1488,7 @@ _pq_copy_out_v3(cursorObject *curs)
 
         if (len > 0 && buffer) {
             if (is_text) {
-                obj = PyUnicode_Decode(buffer, len, curs->conn->codec, NULL);
+                obj = PyUnicode_Decode(buffer, len, curs->conn->pyenc, NULL);
             } else {
                 obj = Bytes_FromStringAndSize(buffer, len);
             }
@@ -1638,7 +1638,7 @@ retry:
         Dprintf("pq_read_replication_message: >>%.*s<<", data_size, buffer + hdr);
 
         if (repl->decode) {
-            str = PyUnicode_Decode(buffer + hdr, data_size, conn->codec, NULL);
+            str = PyUnicode_Decode(buffer + hdr, data_size, conn->pyenc, NULL);
         } else {
             str = Bytes_FromStringAndSize(buffer + hdr, data_size);
         }

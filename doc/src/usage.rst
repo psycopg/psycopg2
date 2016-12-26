@@ -355,7 +355,7 @@ Unicode handling
 Psycopg can exchange Unicode data with a PostgreSQL database.  Python
 `!unicode` objects are automatically *encoded* in the client encoding
 defined on the database connection (the `PostgreSQL encoding`__, available in
-`connection.encoding`, is translated into a `Python codec`__ using the
+`connection.encoding`, is translated into a `Python encoding`__ using the
 `~psycopg2.extensions.encodings` mapping)::
 
     >>> print u, type(u)

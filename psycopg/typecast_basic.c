@@ -102,7 +102,7 @@ typecast_UNICODE_cast(const char *s, Py_ssize_t len, PyObject *curs)
         return conn->cdecoder(s, len, NULL);
     }
     else {
-        return PyUnicode_Decode(s, len, conn->codec, NULL);
+        return PyUnicode_Decode(s, len, conn->pyenc, NULL);
     }
 }
 

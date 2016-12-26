@@ -43,7 +43,7 @@ error_text_from_chars(errorObject *self, const char *str)
         return PyString_FromString(str);
 #else
         return PyUnicode_Decode(str, strlen(str),
-            self->codec ? self->codec : "ascii", "replace");
+            self->pyenc ? self->pyenc : "ascii", "replace");
 #endif
 }
 
@@ -113,7 +113,7 @@ error_dealloc(errorObject *self)
 {
     PyObject_GC_UnTrack((PyObject *)self);
     error_clear(self);
-    PyMem_Free(self->codec);
+    PyMem_Free(self->pyenc);
     CLEARPGRES(self->pgres);
 
     Py_TYPE(self)->tp_free((PyObject *)self);
