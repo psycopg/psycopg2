@@ -451,17 +451,15 @@ conn_get_python_codec(const char *encoding,
     int rv = -1;
     char *pgenc = NULL;
     PyObject *encname = NULL;
-    PyObject *m = NULL, *f = NULL, *codec = NULL;
     PyObject *enc_tmp = NULL, *dec_tmp = NULL;
 
+    /* get the Python name of the encoding as a C string */
     if (!(encname = conn_pgenc_to_pyenc(encoding, &pgenc))) { goto exit; }
+    if (!(encname = psycopg_ensure_bytes(encname))) { goto exit; }
 
-    /* Look up the python codec */
-    if (!(m = PyImport_ImportModule("codecs"))) { goto exit; }
-    if (!(f = PyObject_GetAttrString(m, "lookup"))) { goto exit; }
-    if (!(codec = PyObject_CallFunctionObjArgs(f, encname, NULL))) { goto exit; }
-    if (!(enc_tmp = PyObject_GetAttrString(codec, "encode"))) { goto exit; }
-    if (!(dec_tmp = PyObject_GetAttrString(codec, "decode"))) { goto exit; }
+    /* Look up the codec functions */
+    if (!(enc_tmp = PyCodec_Encoder(Bytes_AS_STRING(encname)))) { goto exit; }
+    if (!(dec_tmp = PyCodec_Decoder(Bytes_AS_STRING(encname)))) { goto exit; }
 
     /* success */
     *pyenc = enc_tmp; enc_tmp = NULL;
@@ -472,9 +470,6 @@ conn_get_python_codec(const char *encoding,
 exit:
     Py_XDECREF(enc_tmp);
     Py_XDECREF(dec_tmp);
-    Py_XDECREF(codec);
-    Py_XDECREF(f);
-    Py_XDECREF(m);
     Py_XDECREF(encname);
     PyMem_Free(pgenc);
 

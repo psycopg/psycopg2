@@ -122,9 +122,11 @@ struct connectionObject {
 
     PyObject *cursor_factory;    /* default cursor factory from cursor() */
 
-    /* Pointer to a decoding function, e.g. PyUnicode_DecodeUTF8 */
+    /* Optional pointer to a decoding C function, e.g. PyUnicode_DecodeUTF8 */
     PyObject *(*cdecoder)(const char *, Py_ssize_t, const char *);
 
+    /* Pointers to python encoding/decoding functions, e.g.
+     * codecs.getdecoder('utf8') */
     PyObject *pyencoder;        /* python codec encoding function */
     PyObject *pydecoder;        /* python codec decoding function */
 };
