@@ -675,8 +675,7 @@ typecast_cast(PyObject *obj, const char *str, Py_ssize_t len, PyObject *curs)
 #if PY_MAJOR_VERSION < 3
             s = PyString_FromStringAndSize(str, len);
 #else
-            s = PyUnicode_Decode(str, len,
-                ((cursorObject *)curs)->conn->codec, NULL);
+            s = conn_decode(((cursorObject *)curs)->conn, str, len);
 #endif
         }
         else {

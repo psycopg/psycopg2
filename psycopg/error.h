@@ -34,7 +34,7 @@ typedef struct {
     PyObject *pgerror;
     PyObject *pgcode;
     cursorObject *cursor;
-    char *codec;
+    PyObject *pydecoder;
     PGresult *pgres;
 } errorObject;
 

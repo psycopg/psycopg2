@@ -251,9 +251,7 @@ microprotocol_getquoted(PyObject *obj, connectionObject *conn)
     /* Convert to bytes. */
     if (res && PyUnicode_CheckExact(res)) {
         PyObject *b;
-        const char *codec;
-        codec = (conn && conn->codec) ? conn->codec : "utf8";
-        b = PyUnicode_AsEncodedString(res, codec, NULL);
+        b = conn_encode(conn, res);
         Py_DECREF(res);
         res = b;
     }

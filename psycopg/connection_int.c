@@ -58,12 +58,75 @@ const IsolationLevel conn_isolevels[] = {
 PyObject *
 conn_text_from_chars(connectionObject *self, const char *str)
 {
-#if PY_MAJOR_VERSION < 3
-        return PyString_FromString(str);
-#else
-        const char *codec = self ? self->codec : "ascii";
-        return PyUnicode_Decode(str, strlen(str), codec, "replace");
-#endif
+    return psycopg_text_from_chars_safe(str, -1, self ? self->pydecoder : NULL);
+}
+
+
+/* Encode an unicode object into a bytes object in the connection encoding.
+ *
+ * If no connection or encoding is available, default to utf8
+ */
+PyObject *
+conn_encode(connectionObject *self, PyObject *u)
+{
+    PyObject *t = NULL;
+    PyObject *rv = NULL;
+
+    if (!(self && self->pyencoder)) {
+        rv = PyUnicode_AsUTF8String(u);
+        goto exit;
+    }
+
+    if (!(t = PyObject_CallFunctionObjArgs(self->pyencoder, u, NULL))) {
+        goto exit;
+    }
+
+    if (!(rv = PyTuple_GetItem(t, 0))) { goto exit; }
+    Py_INCREF(rv);
+
+exit:
+    Py_XDECREF(t);
+
+    return rv;
+}
+
+
+/* decode a c string into a Python unicode in the connection encoding
+ *
+ * len can be < 0: in this case it will be calculated
+ *
+ * If no connection or encoding is available, default to utf8
+ */
+PyObject *
+conn_decode(connectionObject *self, const char *str, Py_ssize_t len)
+{
+    PyObject *b = NULL;
+    PyObject *t = NULL;
+    PyObject *rv = NULL;
+
+    if (len < 0) { len = strlen(str); }
+
+    if (self) {
+        if (self->cdecoder) {
+            return self->cdecoder(str, len, NULL);
+        }
+        else if (self->pydecoder) {
+            if (!(b = Bytes_FromStringAndSize(str, len))) { goto exit; }
+            if (!(t = PyObject_CallFunctionObjArgs(self->pydecoder, b, NULL))) {
+                goto exit;
+            }
+            rv = PyTuple_GetItem(t, 0);
+            Py_XINCREF(rv);
+        }
+    }
+    else {
+        return PyUnicode_FromStringAndSize(str, len);
+    }
+
+exit:
+    Py_XDECREF(t);
+    Py_XDECREF(b);
+    return rv;
 }
 
 /* conn_notice_callback - process notices */
@@ -321,92 +384,168 @@ exit:
     return rv;
 }
 
-/* Convert a PostgreSQL encoding to a Python codec.
- *
- * Set 'codec' to a new copy of the codec name allocated on the Python heap.
- * Return 0 in case of success, else -1 and set an exception.
- *
- * 'enc' should be already normalized (uppercase, no - or _).
+/* set fast access functions according to the currently selected encoding
  */
-RAISES_NEG static int
-conn_encoding_to_codec(const char *enc, char **codec)
+static void
+conn_set_fast_codec(connectionObject *self)
 {
-    char *tmp;
-    Py_ssize_t size;
-    PyObject *pyenc = NULL;
-    int rv = -1;
+    Dprintf("conn_set_fast_codec: encoding=%s", self->encoding);
 
-    /* Find the Py codec name from the PG encoding */
-    if (!(pyenc = PyDict_GetItemString(psycoEncodings, enc))) {
+    if (0 == strcmp(self->encoding, "UTF8")) {
+        Dprintf("conn_set_fast_codec: PyUnicode_DecodeUTF8");
+        self->cdecoder = PyUnicode_DecodeUTF8;
+        return;
+    }
+
+    if (0 == strcmp(self->encoding, "LATIN1")) {
+        Dprintf("conn_set_fast_codec: PyUnicode_DecodeLatin1");
+        self->cdecoder = PyUnicode_DecodeLatin1;
+        return;
+    }
+
+    Dprintf("conn_set_fast_codec: no fast codec");
+    self->cdecoder = NULL;
+}
+
+
+/* Return the Python encoding from a PostgreSQL encoding.
+ *
+ * Optionally return the clean version of the postgres encoding too
+ */
+PyObject *
+conn_pgenc_to_pyenc(const char *encoding, char **clean_encoding)
+{
+    char *pgenc = NULL;
+    PyObject *rv = NULL;
+
+    if (0 > clear_encoding_name(encoding, &pgenc)) { goto exit; }
+    if (!(rv = PyDict_GetItemString(psycoEncodings, pgenc))) {
         PyErr_Format(OperationalError,
-            "no Python codec for client encoding '%s'", enc);
+            "no Python encoding for PostgreSQL encoding '%s'", pgenc);
         goto exit;
     }
+    Py_INCREF(rv);
 
-    /* Convert the codec in a bytes string to extract the c string. */
-    Py_INCREF(pyenc);
-    if (!(pyenc = psycopg_ensure_bytes(pyenc))) {
-        goto exit;
+    if (clean_encoding) {
+        *clean_encoding = pgenc;
     }
-
-    if (-1 == Bytes_AsStringAndSize(pyenc, &tmp, &size)) {
-        goto exit;
+    else {
+        PyMem_Free(pgenc);
     }
-
-    /* have our own copy of the python codec name */
-    rv = psycopg_strdup(codec, tmp, size);
 
 exit:
-    Py_XDECREF(pyenc);
     return rv;
 }
 
-/* Read the client encoding from the connection.
+/* Convert a Postgres encoding into Python encoding and decoding functions.
  *
- * Store the encoding in the pgconn->encoding field and the name of the
- * matching python codec in codec. The buffers are allocated on the Python
- * heap.
+ * Set clean_encoding to a clean version of the Postgres encoding name
+ * and pyenc and pydec to python codec functions.
  *
- * Return 0 on success, else nonzero.
+ * Return 0 on success, else -1 and set an exception.
+ */
+RAISES_NEG static int
+conn_get_python_codec(const char *encoding,
+    char **clean_encoding, PyObject **pyenc, PyObject **pydec)
+{
+    int rv = -1;
+    char *pgenc = NULL;
+    PyObject *encname = NULL;
+    PyObject *enc_tmp = NULL, *dec_tmp = NULL;
+
+    /* get the Python name of the encoding as a C string */
+    if (!(encname = conn_pgenc_to_pyenc(encoding, &pgenc))) { goto exit; }
+    if (!(encname = psycopg_ensure_bytes(encname))) { goto exit; }
+
+    /* Look up the codec functions */
+    if (!(enc_tmp = PyCodec_Encoder(Bytes_AS_STRING(encname)))) { goto exit; }
+    if (!(dec_tmp = PyCodec_Decoder(Bytes_AS_STRING(encname)))) { goto exit; }
+
+    /* success */
+    *pyenc = enc_tmp; enc_tmp = NULL;
+    *pydec = dec_tmp; dec_tmp = NULL;
+    *clean_encoding = pgenc; pgenc = NULL;
+    rv = 0;
+
+exit:
+    Py_XDECREF(enc_tmp);
+    Py_XDECREF(dec_tmp);
+    Py_XDECREF(encname);
+    PyMem_Free(pgenc);
+
+    return rv;
+}
+
+
+/* Store the encoding in the pgconn->encoding field and set the other related
+ * encoding fields in the connection structure.
+ *
+ * Return 0 on success, else -1 and set an exception.
+ */
+RAISES_NEG static int
+conn_store_encoding(connectionObject *self, const char *encoding)
+{
+    int rv = -1;
+    char *pgenc = NULL;
+    PyObject *enc_tmp = NULL, *dec_tmp = NULL;
+
+    if (0 > conn_get_python_codec(encoding, &pgenc, &enc_tmp, &dec_tmp)) {
+        goto exit;
+    }
+
+    /* Good, success: store the encoding/codec in the connection. */
+    {
+        char *tmp = self->encoding;
+        self->encoding = pgenc;
+        PyMem_Free(tmp);
+        pgenc = NULL;
+    }
+
+    Py_CLEAR(self->pyencoder);
+    self->pyencoder = enc_tmp;
+    enc_tmp = NULL;
+
+    Py_CLEAR(self->pydecoder);
+    self->pydecoder = dec_tmp;
+    dec_tmp = NULL;
+
+    conn_set_fast_codec(self);
+
+    rv = 0;
+
+exit:
+    Py_XDECREF(enc_tmp);
+    Py_XDECREF(dec_tmp);
+    PyMem_Free(pgenc);
+    return rv;
+}
+
+
+/* Read the client encoding from the backend and store it in the connection.
+ *
+ * Return 0 on success, else -1.
  */
 RAISES_NEG static int
 conn_read_encoding(connectionObject *self, PGconn *pgconn)
 {
-    char *enc = NULL, *codec = NULL;
-    const char *tmp;
+    const char *encoding;
     int rv = -1;
 
-    tmp = PQparameterStatus(pgconn, "client_encoding");
-    Dprintf("conn_connect: client encoding: %s", tmp ? tmp : "(none)");
-    if (!tmp) {
+    encoding = PQparameterStatus(pgconn, "client_encoding");
+    Dprintf("conn_connect: client encoding: %s", encoding ? encoding : "(none)");
+    if (!encoding) {
         PyErr_SetString(OperationalError,
             "server didn't return client encoding");
         goto exit;
     }
 
-    if (0 > clear_encoding_name(tmp, &enc)) {
+    if (0 > conn_store_encoding(self, encoding)) {
         goto exit;
     }
-
-    /* Look for this encoding in Python codecs. */
-    if (0 > conn_encoding_to_codec(enc, &codec)) {
-        goto exit;
-    }
-
-    /* Good, success: store the encoding/codec in the connection. */
-    PyMem_Free(self->encoding);
-    self->encoding = enc;
-    enc = NULL;
-
-    PyMem_Free(self->codec);
-    self->codec = codec;
-    codec = NULL;
 
     rv = 0;
 
 exit:
-    PyMem_Free(enc);
-    PyMem_Free(codec);
     return rv;
 }
 
@@ -1225,21 +1364,19 @@ endlock:
 /* conn_set_client_encoding - switch client encoding on connection */
 
 RAISES_NEG int
-conn_set_client_encoding(connectionObject *self, const char *enc)
+conn_set_client_encoding(connectionObject *self, const char *pgenc)
 {
     PGresult *pgres = NULL;
     char *error = NULL;
     int res = -1;
-    char *codec = NULL;
     char *clean_enc = NULL;
+
+    /* We must know what python encoding this encoding is. */
+    if (0 > clear_encoding_name(pgenc, &clean_enc)) { goto exit; }
 
     /* If the current encoding is equal to the requested one we don't
        issue any query to the backend */
-    if (strcmp(self->encoding, enc) == 0) return 0;
-
-    /* We must know what python codec this encoding is. */
-    if (0 > clear_encoding_name(enc, &clean_enc)) { goto exit; }
-    if (0 > conn_encoding_to_codec(clean_enc, &codec)) { goto exit; }
+    if (strcmp(self->encoding, clean_enc) == 0) return 0;
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
@@ -1255,35 +1392,21 @@ conn_set_client_encoding(connectionObject *self, const char *enc)
         goto endlock;
     }
 
-    /* no error, we can proceed and store the new encoding */
-    {
-        char *tmp = self->encoding;
-        self->encoding = clean_enc;
-        PyMem_Free(tmp);
-        clean_enc = NULL;
-    }
-
-    /* Store the python codec too. */
-    {
-        char *tmp = self->codec;
-        self->codec = codec;
-        PyMem_Free(tmp);
-        codec = NULL;
-    }
-
-    Dprintf("conn_set_client_encoding: set encoding to %s (codec: %s)",
-            self->encoding, self->codec);
-
 endlock:
     pthread_mutex_unlock(&self->lock);
     Py_END_ALLOW_THREADS;
 
-    if (res < 0)
+    if (res < 0) {
         pq_complete_error(self, &pgres, &error);
+        goto exit;
+    }
+
+    res = conn_store_encoding(self, pgenc);
+
+    Dprintf("conn_set_client_encoding: encoding set to %s", self->encoding);
 
 exit:
     PyMem_Free(clean_enc);
-    PyMem_Free(codec);
 
     return res;
 }

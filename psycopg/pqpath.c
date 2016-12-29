@@ -167,6 +167,7 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult **pgres)
     const char *err2 = NULL;
     const char *code = NULL;
     PyObject *pyerr = NULL;
+    PyObject *pgerror = NULL, *pgcode = NULL;
 
     if (conn == NULL) {
         PyErr_SetString(DatabaseError,
@@ -221,19 +222,37 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult **pgres)
     err2 = strip_severity(err);
     Dprintf("pq_raise: err2=%s", err2);
 
+    /* decode now the details of the error, because after psyco_set_error
+     * decoding will fail.
+     */
+    if (!(pgerror = conn_text_from_chars(conn, err))) {
+        /* we can't really handle an exception while handling this error
+         * so just print it. */
+        PyErr_Print();
+        PyErr_Clear();
+    }
+
+    if (!(pgcode = conn_text_from_chars(conn, code))) {
+        PyErr_Print();
+        PyErr_Clear();
+    }
+
     pyerr = psyco_set_error(exc, curs, err2);
 
     if (pyerr && PyObject_TypeCheck(pyerr, &errorType)) {
         errorObject *perr = (errorObject *)pyerr;
 
-        PyMem_Free(perr->codec);
-        psycopg_strdup(&perr->codec, conn->codec, 0);
+        Py_CLEAR(perr->pydecoder);
+        Py_XINCREF(conn->pydecoder);
+        perr->pydecoder = conn->pydecoder;
 
         Py_CLEAR(perr->pgerror);
-        perr->pgerror = error_text_from_chars(perr, err);
+        perr->pgerror = pgerror;
+        pgerror = NULL;
 
         Py_CLEAR(perr->pgcode);
-        perr->pgcode = error_text_from_chars(perr, code);
+        perr->pgcode = pgcode;
+        pgcode = NULL;
 
         CLEARPGRES(perr->pgres);
         if (pgres && *pgres) {
@@ -241,6 +260,9 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult **pgres)
             *pgres = NULL;
         }
     }
+
+    Py_XDECREF(pgerror);
+    Py_XDECREF(pgcode);
 }
 
 /* pq_set_critical, pq_resolve_critical - manage critical errors
@@ -765,7 +787,7 @@ pq_tpc_command_locked(connectionObject *conn, const char *cmd, const char *tid,
     PyEval_RestoreThread(*tstate);
 
     /* convert the xid into the postgres transaction_id and quote it. */
-    if (!(etid = psycopg_escape_string(conn, tid, 0, NULL, NULL)))
+    if (!(etid = psycopg_escape_string(conn, tid, -1, NULL, NULL)))
     { goto exit; }
 
     /* prepare the command to the server */
@@ -1332,8 +1354,7 @@ _pq_copy_in_v3(cursorObject *curs)
         /* a file may return unicode if implements io.TextIOBase */
         if (PyUnicode_Check(o)) {
             PyObject *tmp;
-            Dprintf("_pq_copy_in_v3: encoding in %s", curs->conn->codec);
-            if (!(tmp = PyUnicode_AsEncodedString(o, curs->conn->codec, NULL))) {
+            if (!(tmp = conn_encode(curs->conn, o))) {
                 Dprintf("_pq_copy_in_v3: encoding() failed");
                 error = 1;
                 break;
@@ -1488,7 +1509,7 @@ _pq_copy_out_v3(cursorObject *curs)
 
         if (len > 0 && buffer) {
             if (is_text) {
-                obj = PyUnicode_Decode(buffer, len, curs->conn->codec, NULL);
+                obj = conn_decode(curs->conn, buffer, len);
             } else {
                 obj = Bytes_FromStringAndSize(buffer, len);
             }
@@ -1638,7 +1659,7 @@ retry:
         Dprintf("pq_read_replication_message: >>%.*s<<", data_size, buffer + hdr);
 
         if (repl->decode) {
-            str = PyUnicode_Decode(buffer + hdr, data_size, conn->codec, NULL);
+            str = conn_decode(conn, buffer + hdr, data_size);
         } else {
             str = Bytes_FromStringAndSize(buffer + hdr, data_size);
         }

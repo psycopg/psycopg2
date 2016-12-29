@@ -34,17 +34,7 @@
 PyObject *
 error_text_from_chars(errorObject *self, const char *str)
 {
-    if (str == NULL) {
-        Py_INCREF(Py_None);
-        return (Py_None);
-    }
-
-#if PY_MAJOR_VERSION < 3
-        return PyString_FromString(str);
-#else
-        return PyUnicode_Decode(str, strlen(str),
-            self->codec ? self->codec : "ascii", "replace");
-#endif
+    return psycopg_text_from_chars_safe(str, -1, self->pydecoder);
 }
 
 
@@ -93,6 +83,7 @@ error_traverse(errorObject *self, visitproc visit, void *arg)
     Py_VISIT(self->pgerror);
     Py_VISIT(self->pgcode);
     Py_VISIT(self->cursor);
+    Py_VISIT(self->pydecoder);
 
     return ((PyTypeObject *)PyExc_StandardError)->tp_traverse(
         (PyObject *)self, visit, arg);
@@ -104,6 +95,7 @@ error_clear(errorObject *self)
     Py_CLEAR(self->pgerror);
     Py_CLEAR(self->pgcode);
     Py_CLEAR(self->cursor);
+    Py_CLEAR(self->pydecoder);
 
     return ((PyTypeObject *)PyExc_StandardError)->tp_clear((PyObject *)self);
 }
@@ -113,7 +105,6 @@ error_dealloc(errorObject *self)
 {
     PyObject_GC_UnTrack((PyObject *)self);
     error_clear(self);
-    PyMem_Free(self->codec);
     CLEARPGRES(self->pgres);
 
     Py_TYPE(self)->tp_free((PyObject *)self);

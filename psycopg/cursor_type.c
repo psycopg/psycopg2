@@ -286,11 +286,7 @@ static PyObject *_psyco_curs_validate_sql_basic(
         Py_INCREF(sql);
     }
     else if (PyUnicode_Check(sql)) {
-        char *enc = self->conn->codec;
-        sql = PyUnicode_AsEncodedString(sql, enc, NULL);
-        /* if there was an error during the encoding from unicode to the
-           target encoding, we just let the exception propagate */
-        if (sql == NULL) { goto fail; }
+        if (!(sql = conn_encode(self->conn, sql))) { goto fail; }
     }
     else {
         /* the  is not unicode or string, raise an error */
@@ -1079,7 +1075,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
             if (!(cpname = Bytes_AsString(pname))) { goto exit; }
 
             if (!(scpnames[i] = psycopg_escape_identifier(
-                    self->conn, cpname, 0))) {
+                    self->conn, cpname, -1))) {
                 Py_CLEAR(pname);
                 goto exit;
             }
@@ -1457,12 +1453,12 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
         goto exit;
 
     if (!(quoted_delimiter = psycopg_escape_string(
-            self->conn, sep, 0, NULL, NULL))) {
+            self->conn, sep, -1, NULL, NULL))) {
         goto exit;
     }
 
     if (!(quoted_null = psycopg_escape_string(
-            self->conn, null, 0, NULL, NULL))) {
+            self->conn, null, -1, NULL, NULL))) {
         goto exit;
     }
 
@@ -1551,12 +1547,12 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
         goto exit;
 
     if (!(quoted_delimiter = psycopg_escape_string(
-            self->conn, sep, 0, NULL, NULL))) {
+            self->conn, sep, -1, NULL, NULL))) {
         goto exit;
     }
 
     if (!(quoted_null = psycopg_escape_string(
-            self->conn, null, 0, NULL, NULL))) {
+            self->conn, null, -1, NULL, NULL))) {
         goto exit;
     }
 
@@ -1899,10 +1895,10 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
     Dprintf("cursor_setup: parameters: name = %s, conn = %p", name, conn);
 
     if (name) {
-        if (0 > psycopg_strdup(&self->name, name, 0)) {
+        if (0 > psycopg_strdup(&self->name, name, -1)) {
             return -1;
         }
-        if (!(self->qname = psycopg_escape_identifier(conn, name, 0))) {
+        if (!(self->qname = psycopg_escape_identifier(conn, name, -1))) {
             return -1;
         }
     }

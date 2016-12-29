@@ -1097,7 +1097,7 @@ connection_setup(connectionObject *self, const char *dsn, long int async)
             self, async, Py_REFCNT(self)
       );
 
-    if (0 > psycopg_strdup(&self->dsn, dsn, 0)) { goto exit; }
+    if (0 > psycopg_strdup(&self->dsn, dsn, -1)) { goto exit; }
     if (!(self->notice_list = PyList_New(0))) { goto exit; }
     if (!(self->notifies = PyList_New(0))) { goto exit; }
     self->async = async;
@@ -1141,6 +1141,9 @@ connection_clear(connectionObject *self)
     Py_CLEAR(self->notifies);
     Py_CLEAR(self->string_types);
     Py_CLEAR(self->binary_types);
+    Py_CLEAR(self->cursor_factory);
+    Py_CLEAR(self->pyencoder);
+    Py_CLEAR(self->pydecoder);
     return 0;
 }
 
@@ -1164,7 +1167,6 @@ connection_dealloc(PyObject* obj)
 
     PyMem_Free(self->dsn);
     PyMem_Free(self->encoding);
-    PyMem_Free(self->codec);
     if (self->critical) free(self->critical);
     if (self->cancel) PQfreeCancel(self->cancel);
 
@@ -1216,6 +1218,9 @@ connection_traverse(connectionObject *self, visitproc visit, void *arg)
     Py_VISIT(self->notifies);
     Py_VISIT(self->string_types);
     Py_VISIT(self->binary_types);
+    Py_VISIT(self->cursor_factory);
+    Py_VISIT(self->pyencoder);
+    Py_VISIT(self->pydecoder);
     return 0;
 }
 

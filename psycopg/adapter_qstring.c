@@ -36,20 +36,6 @@ static const char *default_encoding = "latin1";
 
 /* qstring_quote - do the quote process on plain and unicode strings */
 
-const char *
-_qstring_get_encoding(qstringObject *self)
-{
-    /* if the wrapped object is an unicode object we can encode it to match
-       conn->encoding but if the encoding is not specified we don't know what
-       to do and we raise an exception */
-    if (self->conn) {
-        return self->conn->codec;
-    }
-    else {
-        return self->encoding ? self->encoding : default_encoding;
-    }
-}
-
 static PyObject *
 qstring_quote(qstringObject *self)
 {
@@ -59,19 +45,15 @@ qstring_quote(qstringObject *self)
     const char *encoding;
     PyObject *rv = NULL;
 
-    encoding = _qstring_get_encoding(self);
-    Dprintf("qstring_quote: encoding to %s", encoding);
-
     if (PyUnicode_Check(self->wrapped)) {
-        if (encoding) {
-            str = PyUnicode_AsEncodedString(self->wrapped, encoding, NULL);
-            Dprintf("qstring_quote: got encoded object at %p", str);
-            if (str == NULL) goto exit;
+        if (self->conn) {
+            if (!(str = conn_encode(self->conn, self->wrapped))) { goto exit; }
         }
         else {
-            PyErr_SetString(PyExc_TypeError,
-                "missing encoding to encode unicode object");
-            goto exit;
+            encoding = self->encoding ? self->encoding : default_encoding;
+            if(!(str = PyUnicode_AsEncodedString(self->wrapped, encoding, NULL))) {
+                goto exit;
+            }
         }
     }
 
@@ -162,9 +144,12 @@ qstring_conform(qstringObject *self, PyObject *args)
 static PyObject *
 qstring_get_encoding(qstringObject *self)
 {
-    const char *encoding;
-    encoding = _qstring_get_encoding(self);
-    return Text_FromUTF8(encoding);
+    if (self->conn) {
+        return conn_pgenc_to_pyenc(self->conn->encoding, NULL);
+    }
+    else {
+        return Text_FromUTF8(self->encoding ? self->encoding : default_encoding);
+    }
 }
 
 static int
@@ -178,7 +163,7 @@ qstring_set_encoding(qstringObject *self, PyObject *pyenc)
     Py_INCREF(pyenc);
     if (!(pyenc = psycopg_ensure_bytes(pyenc))) { goto exit; }
     if (!(tmp = Bytes_AsString(pyenc))) { goto exit; }
-    if (0 > psycopg_strdup(&cenc, tmp, 0)) { goto exit; }
+    if (0 > psycopg_strdup(&cenc, tmp, -1)) { goto exit; }
 
     Dprintf("qstring_set_encoding: encoding set to %s", cenc);
     PyMem_Free((void *)self->encoding);

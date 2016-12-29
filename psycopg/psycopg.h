@@ -129,9 +129,11 @@ RAISES HIDDEN PyObject *psyco_set_error(PyObject *exc, cursorObject *curs, const
 HIDDEN char *psycopg_escape_string(connectionObject *conn,
               const char *from, Py_ssize_t len, char *to, Py_ssize_t *tolen);
 HIDDEN char *psycopg_escape_identifier(connectionObject *conn,
-              const char *str, size_t len);
+              const char *str, Py_ssize_t len);
 HIDDEN int psycopg_strdup(char **to, const char *from, Py_ssize_t len);
 HIDDEN int psycopg_is_text_file(PyObject *f);
+HIDDEN PyObject *psycopg_text_from_chars_safe(
+        const char *str, Py_ssize_t len, PyObject *decoder);
 
 STEALS(1) HIDDEN PyObject * psycopg_ensure_bytes(PyObject *obj);
 

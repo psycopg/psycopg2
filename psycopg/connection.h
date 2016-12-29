@@ -83,7 +83,6 @@ struct connectionObject {
     char *dsn;              /* data source name */
     char *critical;         /* critical error on this connection */
     char *encoding;         /* current backend encoding */
-    char *codec;            /* python codec name for encoding */
 
     long int closed;          /* 1 means connection has been closed;
                                  2 that something horrible happened */
@@ -122,6 +121,14 @@ struct connectionObject {
     int autocommit;
 
     PyObject *cursor_factory;    /* default cursor factory from cursor() */
+
+    /* Optional pointer to a decoding C function, e.g. PyUnicode_DecodeUTF8 */
+    PyObject *(*cdecoder)(const char *, Py_ssize_t, const char *);
+
+    /* Pointers to python encoding/decoding functions, e.g.
+     * codecs.getdecoder('utf8') */
+    PyObject *pyencoder;        /* python codec encoding function */
+    PyObject *pydecoder;        /* python codec decoding function */
 };
 
 /* map isolation level values into a numeric const */
@@ -132,7 +139,10 @@ typedef struct {
 
 /* C-callable functions in connection_int.c and connection_ext.c */
 HIDDEN PyObject *conn_text_from_chars(connectionObject *pgconn, const char *str);
+HIDDEN PyObject *conn_encode(connectionObject *self, PyObject *b);
+HIDDEN PyObject *conn_decode(connectionObject *self, const char *str, Py_ssize_t len);
 HIDDEN int  conn_get_standard_conforming_strings(PGconn *pgconn);
+HIDDEN PyObject *conn_pgenc_to_pyenc(const char *encoding, char **clean_encoding);
 RAISES_NEG HIDDEN int  conn_get_isolation_level(connectionObject *self);
 HIDDEN int  conn_get_protocol_version(PGconn *pgconn);
 HIDDEN int  conn_get_server_version(PGconn *pgconn);
