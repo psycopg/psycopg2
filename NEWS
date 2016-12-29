@@ -27,6 +27,8 @@ New features:
 - `~cursor.callproc()` now accepts a dictionary of parameters (:ticket:`#381`).
 - Using Python C API decoding functions and codecs caching for faster
   unicode encoding/decoding (:ticket:`#473`).
+- Fixed error caused by missing decoding `~psycopg2.extras.LoggingConnection`
+  (:ticket:`#483`).
 
 Other changes:
 

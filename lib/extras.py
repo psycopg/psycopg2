@@ -395,6 +395,8 @@ class LoggingConnection(_connection):
     def _logtofile(self, msg, curs):
         msg = self.filter(msg, curs)
         if msg:
+            if _sys.version_info[0] >= 3 and isinstance(msg, bytes):
+                msg = msg.decode(_ext.encodings[self.encoding], 'replace')
             self._logobj.write(msg + _os.linesep)
 
     def _logtologger(self, msg, curs):
