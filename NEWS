@@ -25,6 +25,8 @@ New features:
 - Added `~psycopg2.extensions.quote_ident()` function (:ticket:`#359`).
 - Added `~connection.get_dsn_parameters()` connection method (:ticket:`#364`).
 - `~cursor.callproc()` now accepts a dictionary of parameters (:ticket:`#381`).
+- Using Python C API decoding functions and codecs caching for faster
+  unicode encoding/decoding (:ticket:`#473`).
 
 Other changes:
 
