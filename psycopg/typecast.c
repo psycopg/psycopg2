@@ -491,7 +491,11 @@ PyTypeObject typecastType = {
     0,          /*tp_print*/
     0,          /*tp_getattr*/
     0,          /*tp_setattr*/
+#if PY_VERSION_HEX < 0x03000000
     typecast_cmp, /*tp_compare*/
+#else
+    0,          /*tp_reserved*/
+#endif
     typecast_repr, /*tp_repr*/
     0,          /*tp_as_number*/
     0,          /*tp_as_sequence*/
