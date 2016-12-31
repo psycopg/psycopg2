@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-# # test_ipaddress.py - tests for ipaddress support #
+#
+# test_ipaddress.py - tests for ipaddress support
+#
 # Copyright (C) 2016 Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 #
 # psycopg2 is free software: you can redistribute it and/or modify it
