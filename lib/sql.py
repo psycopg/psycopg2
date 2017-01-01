@@ -204,7 +204,7 @@ re_compose = re.compile("""
     """, re.VERBOSE)
 
 
-def compose(sql, args=None):
+def compose(sql, args=()):
     phs = list(re_compose.finditer(sql))
 
     # check placeholders consistent
@@ -240,8 +240,8 @@ def compose(sql, args=None):
         return _compose_map(sql, phs, args)
 
     else:
-        if not isinstance(args, collections.Sequence) and args:
-            raise TypeError(
+        if isinstance(args, collections.Sequence) and args:
+            raise ValueError(
                 "the sql string expects no value, got %s instead" % len(args))
         # If args are a mapping, no placeholder is an acceptable case
 
@@ -267,7 +267,7 @@ def _compose_seq(sql, phs, args):
     if phs:
         rv.append(SQL(sql[phs[-1].end():]))
     else:
-        rv.append(sql)
+        rv.append(SQL(sql))
 
     return Composed(rv)
 

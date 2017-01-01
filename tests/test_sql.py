@@ -55,6 +55,21 @@ class ComposeTests(ConnectingTestCase):
         s1 = s.as_string(self.conn)
         self.assertEqual(s1, "select '2016-12-31'::date;")
 
+    def test_compose_empty(self):
+        s = sql.compose("select foo;")
+        s1 = s.as_string(self.conn)
+        self.assertEqual(s1, "select foo;")
+
+    def test_compose_badnargs(self):
+        self.assertRaises(ValueError, sql.compose, "select foo;", [10])
+        self.assertRaises(ValueError, sql.compose, "select %s;")
+        self.assertRaises(ValueError, sql.compose, "select %s;", [])
+        self.assertRaises(ValueError, sql.compose, "select %s;", [10, 20])
+
+    def test_compose_bad_args_type(self):
+        self.assertRaises(TypeError, sql.compose, "select %s;", {'a': 10})
+        self.assertRaises(TypeError, sql.compose, "select %(x)s;", [10])
+
     def test_must_be_adaptable(self):
         class Foo(object):
             pass
