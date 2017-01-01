@@ -145,6 +145,20 @@ class SQL(Composable):
     """
     A `Composable` representing a snippet of SQL string to be included verbatim.
 
+    `!SQL` supports the ``%`` operator to incorporate variable parts of a query
+    into a template: the operator takes a sequence or mapping of `Composable`
+    (according to the style of the placeholders in the *string*) and returning
+    a `Composed` object.
+
+    Example::
+
+        >>> query = sql.SQL("select %s from %s") % [
+        ...    sql.SQL(', ').join([sql.Identifier('foo'), sql.Identifier('bar')]),
+        ...    sql.Identifier('table')]
+        >>> query.as_string(conn)
+        select "foo", "bar" from "table"'
+
+
     .. automethod:: join
     """
     def __init__(self, string):
@@ -155,6 +169,9 @@ class SQL(Composable):
     def __repr__(self):
         return "sql.SQL(%r)" % (self._wrapped,)
 
+    def __mod__(self, args):
+        return _compose(self._wrapped, args)
+
     def as_string(self, conn_or_curs):
         return self._wrapped
 
@@ -162,7 +179,7 @@ class SQL(Composable):
         """
         Join a sequence of `Composable` or a `Composed` and return a `!Composed`.
 
-        Use the object value to separate the *seq* elements.
+        Use the object *string* to separate the *seq* elements.
 
         Example::
 
@@ -215,7 +232,13 @@ class Literal(Composable):
     """
     Represent an SQL value to be included in a query.
 
-    The object follows the normal :ref:`adaptation rules <python-types-adaptation>`
+    Usually you will want to include placeholders in the query and pass values
+    as `~cursor.execute()` arguments. If however you really really need to
+    include a literal value in the query you can use this object.
+
+    The string returned by `!as_string()` follows the normal :ref:`adaptation
+    rules <python-types-adaptation>` for Python objects.
+
     """
     def __init__(self, wrapped):
         self._wrapped = wrapped
@@ -254,13 +277,13 @@ class Placeholder(Composable):
 
     Examples::
 
-        >>> sql.compose("insert into table (%s) values (%s)", [
+        >>> (sql.SQL("insert into table (%s) values (%s)") % [
         ...     sql.SQL(', ').join(map(sql.Identifier, names)),
         ...     sql.SQL(', ').join(sql.Placeholder() * 3)
         ... ]).as_string(conn)
         'insert into table ("foo", "bar", "baz") values (%s, %s, %s)'
 
-        >>> sql.compose("insert into table (%s) values (%s)", [
+        >>> (sql.SQL("insert into table (%s) values (%s)") % [
         ...     sql.SQL(', ').join(map(sql.Identifier, names)),
         ...     sql.SQL(', ').join(map(sql.Placeholder, names))
         ... ]).as_string(conn)
@@ -297,7 +320,7 @@ re_compose = re.compile("""
     """, re.VERBOSE)
 
 
-def compose(sql, args=None):
+def _compose(sql, args=None):
     """
     Merge an SQL string with some variable parts.
 
@@ -313,17 +336,6 @@ def compose(sql, args=None):
 
     The value returned is a `Composed` instance obtained replacing the
     arguments to the query placeholders.
-
-    Example::
-
-        >>> query = sql.compose(
-        ...    "select %s from %s", [
-        ...        sql.SQL(', ').join(
-        ...            [sql.Identifier('foo'), sql.Identifier('bar')]),
-        ...        sql.Identifier('table')])
-        >>> query.as_string(conn)
-        select "foo", "bar" from "table"'
-
     """
     if args is None:
         args = ()
