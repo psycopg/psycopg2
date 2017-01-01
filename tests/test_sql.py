@@ -189,6 +189,12 @@ class ComposedTest(ConnectingTestCase):
     def test_class(self):
         self.assert_(issubclass(sql.Composed, sql.Composible))
 
+    def test_repr(self):
+        obj = sql.Composed([sql.Literal("foo"), sql.Identifier("b'ar")])
+        self.assertEqual(repr(obj),
+            """sql.Composed([sql.Literal('foo'), sql.Identifier("b'ar")])""")
+        self.assertEqual(str(obj), repr(obj))
+
     def test_join(self):
         obj = sql.Composed([sql.Literal("foo"), sql.Identifier("b'ar")])
         obj = obj.join(", ")

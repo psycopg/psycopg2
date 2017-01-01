@@ -54,7 +54,7 @@ class Composed(Composible):
             self._seq.append(i)
 
     def __repr__(self):
-        return "sql.Composed(%r)" % (self.seq,)
+        return "sql.Composed(%r)" % (self._seq,)
 
     def as_string(self, conn_or_curs):
         rv = []
