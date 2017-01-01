@@ -72,9 +72,9 @@ class Composed(Composable):
     """
     A `Composable` object obtained concatenating a sequence of `Composable`.
 
-    The object is usually created using `compose()` and the `Composable`
-    operators. However it is possible to create a `!Composed` directly
-    specifying a sequence of `Composable` as arguments.
+    The object is usually created using `Composable` operators. However it is
+    possible to create a `!Composed` directly specifying a sequence of
+    `Composable` as arguments.
 
     Example::
 
@@ -230,7 +230,7 @@ class Identifier(Composable):
 
 class Literal(Composable):
     """
-    Represent an SQL value to be included in a query.
+    A `Composable` representing an SQL value to include in a query.
 
     Usually you will want to include placeholders in the query and pass values
     as `~cursor.execute()` arguments. If however you really really need to

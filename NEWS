@@ -6,6 +6,7 @@ What's new in psycopg 2.7
 
 New features:
 
+- Added `~psycopg2.sql` module to generate SQL dynamically (:ticket:`#308`).
 - Added :ref:`replication-support` (:ticket:`#322`). Main authors are
   Oleksandr Shulgin and Craig Ringer, who deserve a huge thank you.
 - Added `~psycopg2.extensions.parse_dsn()` and
