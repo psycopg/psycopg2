@@ -267,10 +267,34 @@ _mogrify(PyObject *var, PyObject *fmt, cursorObject *curs, PyObject **new)
     return 0;
 }
 
+/* Return 1 if `obj` is a `psycopg2.sql.Composible` instance, else 0
+ * Set an exception and return -1 in case of error.
+ */
+RAISES_NEG static int
+_curs_is_composible(PyObject *obj)
+{
+    int rv = -1;
+    PyObject *m = NULL;
+    PyObject *comp = NULL;
+
+    if (!(m = PyImport_ImportModule("psycopg2.sql"))) { goto exit; }
+    if (!(comp = PyObject_GetAttrString(m, "Composible"))) { goto exit; }
+    rv = PyObject_IsInstance(obj, comp);
+
+exit:
+    Py_XDECREF(comp);
+    Py_XDECREF(m);
+    return rv;
+
+}
+
 static PyObject *_psyco_curs_validate_sql_basic(
     cursorObject *self, PyObject *sql
   )
 {
+    PyObject *rv = NULL;
+    int comp;
+
     /* Performs very basic validation on an incoming SQL string.
        Returns a new reference to a str instance on success; NULL on failure,
        after having set an exception. */
@@ -278,26 +302,32 @@ static PyObject *_psyco_curs_validate_sql_basic(
     if (!sql || !PyObject_IsTrue(sql)) {
         psyco_set_error(ProgrammingError, self,
                          "can't execute an empty query");
-        goto fail;
+        goto exit;
     }
 
     if (Bytes_Check(sql)) {
         /* Necessary for ref-count symmetry with the unicode case: */
         Py_INCREF(sql);
+        rv = sql;
     }
     else if (PyUnicode_Check(sql)) {
-        if (!(sql = conn_encode(self->conn, sql))) { goto fail; }
+        if (!(rv = conn_encode(self->conn, sql))) { goto exit; }
+    }
+    else if (0 != (comp = _curs_is_composible(sql))) {
+        if (comp < 0) { goto exit; }
+        if (!(rv = PyObject_CallMethod(sql, "as_string", "O", self->conn))) {
+            goto exit;
+        }
     }
     else {
         /* the  is not unicode or string, raise an error */
         PyErr_SetString(PyExc_TypeError,
-                        "argument 1 must be a string or unicode object");
-        goto fail;
+            "argument 1 must be a string or unicode object");
+        goto exit;
     }
 
-    return sql; /* new reference */
-    fail:
-        return NULL;
+exit:
+    return rv;
 }
 
 /* Merge together a query string and its arguments.
