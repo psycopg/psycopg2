@@ -60,6 +60,15 @@ class ComposeTests(ConnectingTestCase):
         s1 = s.as_string(self.conn)
         self.assertEqual(s1, "select foo;")
 
+    def test_percent_escape(self):
+        s = sql.compose("42 %% %s", [sql.Literal(7)])
+        s1 = s.as_string(self.conn)
+        self.assertEqual(s1, "42 % 7")
+
+        s = sql.compose("42 %% 7")
+        s1 = s.as_string(self.conn)
+        self.assertEqual(s1, "42 % 7")
+
     def test_compose_badnargs(self):
         self.assertRaises(ValueError, sql.compose, "select foo;", [10])
         self.assertRaises(ValueError, sql.compose, "select %s;")
