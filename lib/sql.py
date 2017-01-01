@@ -78,9 +78,10 @@ class Composed(Composable):
 
     Example::
 
-        >>> sql.Composed([sql.SQL("insert into "), sql.Identifier("table")]) \\
-        ...     .as_string(conn)
-        'insert into "table"'
+        >>> comp = sql.Composed(
+        ...     [sql.SQL("insert into "), sql.Identifier("table")])
+        >>> print(comp.as_string(conn))
+        insert into "table"
 
     .. automethod:: join
     """
@@ -119,8 +120,8 @@ class Composed(Composable):
         Example::
 
             >>> fields = sql.Identifier('foo') + sql.Identifier('bar')  # a Composed
-            >>> fields.join(', ').as_string(conn)
-            '"foo", "bar"'
+            >>> print(fields.join(', ').as_string(conn))
+            "foo", "bar"
 
         """
         if isinstance(joiner, basestring):
@@ -155,9 +156,8 @@ class SQL(Composable):
         >>> query = sql.SQL("select %s from %s") % [
         ...    sql.SQL(', ').join([sql.Identifier('foo'), sql.Identifier('bar')]),
         ...    sql.Identifier('table')]
-        >>> query.as_string(conn)
-        select "foo", "bar" from "table"'
-
+        >>> print(query.as_string(conn))
+        select "foo", "bar" from "table"
 
     .. automethod:: join
     """
@@ -184,8 +184,8 @@ class SQL(Composable):
         Example::
 
             >>> snip - sql.SQL(', ').join(map(sql.Identifier, ['foo', 'bar', 'baz']))
-            >>> snip.as_string(conn)
-            '"foo", "bar", "baz"'
+            >>> print(snip.as_string(conn))
+            "foo", "bar", "baz"
         """
         if isinstance(seq, Composed):
             seq = seq._seq
@@ -214,6 +214,15 @@ class Identifier(Composable):
 
     .. __: https://www.postgresql.org/docs/current/static/sql-syntax-lexical.html# \
         SQL-SYNTAX-IDENTIFIERS
+
+    Example::
+
+        >>> t1 = sql.Identifier("foo")
+        >>> t2 = sql.Identifier("ba'r")
+        >>> t3 = sql.Identifier('ba"z')
+        >>> print(sql.SQL(', ').join([t1, t2, t3]).as_string(conn))
+        "foo", "ba'r", "ba""z"
+
     """
     def __init__(self, string):
         if not isinstance(string, basestring):
@@ -238,6 +247,14 @@ class Literal(Composable):
 
     The string returned by `!as_string()` follows the normal :ref:`adaptation
     rules <python-types-adaptation>` for Python objects.
+
+    Example::
+
+        >>> s1 = sql.Literal("foo")
+        >>> s2 = sql.Literal("ba'r")
+        >>> s3 = sql.Literal(42)
+        >>> print(sql.SQL(', ').join([s1, s2, s3]).as_string(conn))
+        'foo', 'ba''r', 42
 
     """
     def __init__(self, wrapped):
@@ -277,17 +294,20 @@ class Placeholder(Composable):
 
     Examples::
 
-        >>> (sql.SQL("insert into table (%s) values (%s)") % [
-        ...     sql.SQL(', ').join(map(sql.Identifier, names)),
-        ...     sql.SQL(', ').join(sql.Placeholder() * 3)
-        ... ]).as_string(conn)
-        'insert into table ("foo", "bar", "baz") values (%s, %s, %s)'
+        >>> names = ['foo', 'bar', 'baz']
 
-        >>> (sql.SQL("insert into table (%s) values (%s)") % [
+        >>> q1 = sql.SQL("insert into table (%s) values (%s)") % [
         ...     sql.SQL(', ').join(map(sql.Identifier, names)),
-        ...     sql.SQL(', ').join(map(sql.Placeholder, names))
-        ... ]).as_string(conn)
-        'insert into table ("foo", "bar", "baz") values (%(foo)s, %(bar)s, %(baz)s)'
+        ...     sql.SQL(', ').join(sql.Placeholder() * 3)]
+        >>> print(q1.as_string(conn))
+        insert into table ("foo", "bar", "baz") values (%s, %s, %s)
+
+        >>> q2 = sql.SQL("insert into table (%s) values (%s)") % [
+        ...         sql.SQL(', ').join(map(sql.Identifier, names)),
+        ...         sql.SQL(', ').join(map(sql.Placeholder, names))]
+        >>> print(q2.as_string(conn))
+        insert into table ("foo", "bar", "baz") values (%(foo)s, %(bar)s, %(baz)s)
+
     """
 
     def __init__(self, name=None):

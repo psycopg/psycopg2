@@ -151,6 +151,24 @@ Psycopg converts :sql:`json` values into Python objects but :sql:`jsonb` values 
     See :ref:`adapt-json` for further details.
 
 
+.. _faq-identifier:
+.. cssclass:: faq
+
+How can I pass field/table names to a query?
+    The arguments in the `~cursor.execute()` methods can only represent data
+    to pass to the query: they cannot represent a table or field name::
+
+        # This doesn't work
+        cur.execute("insert into %s values (%s)", ["my_table", 42])
+
+    If you want to build a query dynamically you can use the objects exposed
+    by the `psycopg2.sql` module::
+
+        cur.execute(
+            sql.SQL("insert into %s values (%%s)") % [sql.Identifier("my_table")],
+            [42])
+
+
 .. _faq-bytea-9.0:
 .. cssclass:: faq
 

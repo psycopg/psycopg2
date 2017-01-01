@@ -132,9 +132,10 @@ query:
     >>> cur.execute("INSERT INTO foo VALUES (%s)", ("bar",)) # correct
     >>> cur.execute("INSERT INTO foo VALUES (%s)", ["bar"])  # correct
 
-- Only variable values should be bound via this method: it shouldn't be used
-  to set table or field names. For these elements, ordinary string formatting
-  should be used before running `~cursor.execute()`.
+- Only query values should be bound via this method: it shouldn't be used to
+  merge table or field names to the query. If you need to generate dynamically
+  an SQL query (for instance choosing dynamically a table name) you can use
+  the facilities provided by the `psycopg2.sql` module.
 
 
 

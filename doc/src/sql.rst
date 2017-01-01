@@ -9,7 +9,7 @@
 
 The module contains objects and functions useful to generate SQL dynamically,
 in a convenient and safe way. SQL identifiers (e.g. names of tables and
-fields) cannot be passed to the `~cursor.execute()` function like query
+fields) cannot be passed to the `~cursor.execute()` method like query
 arguments::
 
     # This will not work
@@ -45,7 +45,7 @@ in the presence of a table or field name with containing characters to escape,
 or will present a potentially exploitable weakness.
 
 The objects exposed by the `!psycopg2.sql` module allow generating SQL
-statements on the fly, separating clearly the variable parts in the statement
+statements on the fly, separating clearly the variable parts of the statement
 from the query parameters::
 
     from psycopg2 import sql
