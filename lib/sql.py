@@ -24,7 +24,9 @@
 # License for more details.
 
 import re
+import sys
 import collections
+
 from psycopg2 import extensions as ext
 
 
@@ -146,19 +148,23 @@ class Literal(Composible):
         return "sql.Literal(%r)" % (self._wrapped,)
 
     def as_string(self, conn_or_curs):
+        # is it a connection or cursor?
+        if isinstance(conn_or_curs, ext.connection):
+            conn = conn_or_curs
+        elif isinstance(conn_or_curs, ext.cursor):
+            conn = conn_or_curs.connection
+        else:
+            raise TypeError("conn_or_curs must be a connection or a cursor")
+
         a = ext.adapt(self._wrapped)
         if hasattr(a, 'prepare'):
-            # is it a connection or cursor?
-            if isinstance(conn_or_curs, ext.connection):
-                conn = conn_or_curs
-            elif isinstance(conn_or_curs, ext.cursor):
-                conn = conn_or_curs.connection
-            else:
-                raise TypeError("conn_or_curs must be a connection or a cursor")
-
             a.prepare(conn)
 
-        return a.getquoted()
+        rv = a.getquoted()
+        if sys.version_info[0] >= 3 and isinstance(rv, bytes):
+            rv = rv.decode(ext.encodings[conn.encoding])
+
+        return rv
 
     def __mul__(self, n):
         return Composed([self] * n)

@@ -107,7 +107,6 @@ class IdentifierTests(ConnectingTestCase):
     def test_init(self):
         self.assert_(isinstance(sql.Identifier('foo'), sql.Identifier))
         self.assert_(isinstance(sql.Identifier(u'foo'), sql.Identifier))
-        self.assert_(isinstance(sql.Identifier(b'foo'), sql.Identifier))
         self.assertRaises(TypeError, sql.Identifier, 10)
         self.assertRaises(TypeError, sql.Identifier, dt.date(2016, 12, 31))
 
@@ -155,7 +154,6 @@ class SQLTests(ConnectingTestCase):
     def test_init(self):
         self.assert_(isinstance(sql.SQL('foo'), sql.SQL))
         self.assert_(isinstance(sql.SQL(u'foo'), sql.SQL))
-        self.assert_(isinstance(sql.SQL(b'foo'), sql.SQL))
         self.assertRaises(TypeError, sql.SQL, 10)
         self.assertRaises(TypeError, sql.SQL, dt.date(2016, 12, 31))
 

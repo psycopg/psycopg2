@@ -293,7 +293,8 @@ static PyObject *_psyco_curs_validate_sql_basic(
   )
 {
     PyObject *rv = NULL;
-    int comp;
+    PyObject *comp = NULL;
+    int iscomp;
 
     /* Performs very basic validation on an incoming SQL string.
        Returns a new reference to a str instance on success; NULL on failure,
@@ -313,20 +314,36 @@ static PyObject *_psyco_curs_validate_sql_basic(
     else if (PyUnicode_Check(sql)) {
         if (!(rv = conn_encode(self->conn, sql))) { goto exit; }
     }
-    else if (0 != (comp = _curs_is_composible(sql))) {
-        if (comp < 0) { goto exit; }
-        if (!(rv = PyObject_CallMethod(sql, "as_string", "O", self->conn))) {
+    else if (0 != (iscomp = _curs_is_composible(sql))) {
+        if (iscomp < 0) { goto exit; }
+        if (!(comp = PyObject_CallMethod(sql, "as_string", "O", self->conn))) {
+            goto exit;
+        }
+
+        if (Bytes_Check(comp)) {
+            rv = comp;
+            comp = NULL;
+        }
+        else if (PyUnicode_Check(comp)) {
+            if (!(rv = conn_encode(self->conn, comp))) { goto exit; }
+        }
+        else {
+            PyErr_Format(PyExc_TypeError,
+                "as_string() should return a string: got %s instead",
+                Py_TYPE(comp)->tp_name);
             goto exit;
         }
     }
     else {
         /* the  is not unicode or string, raise an error */
-        PyErr_SetString(PyExc_TypeError,
-            "argument 1 must be a string or unicode object");
+        PyErr_Format(PyExc_TypeError,
+            "argument 1 must be a string or unicode object: got %s instead",
+            Py_TYPE(sql)->tp_name);
         goto exit;
     }
 
 exit:
+    Py_XDECREF(comp);
     return rv;
 }
 
