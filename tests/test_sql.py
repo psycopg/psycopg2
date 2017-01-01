@@ -208,6 +208,11 @@ class SQLTests(ConnectingTestCase):
         self.assert_(isinstance(obj, sql.Composed))
         self.assertEqual(obj.as_string(self.conn), '"foo", bar, 42')
 
+        obj = sql.SQL(", ").join(
+            sql.Composed([sql.Identifier('foo'), sql.SQL('bar'), sql.Literal(42)]))
+        self.assert_(isinstance(obj, sql.Composed))
+        self.assertEqual(obj.as_string(self.conn), '"foo", bar, 42')
+
 
 class ComposedTest(ConnectingTestCase):
     def test_class(self):
