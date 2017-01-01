@@ -117,7 +117,7 @@ class ComposeTests(ConnectingTestCase):
 
 class IdentifierTests(ConnectingTestCase):
     def test_class(self):
-        self.assert_(issubclass(sql.Identifier, sql.Composible))
+        self.assert_(issubclass(sql.Identifier, sql.Composable))
 
     def test_init(self):
         self.assert_(isinstance(sql.Identifier('foo'), sql.Identifier))
@@ -140,7 +140,7 @@ class IdentifierTests(ConnectingTestCase):
 
 class LiteralTests(ConnectingTestCase):
     def test_class(self):
-        self.assert_(issubclass(sql.Literal, sql.Composible))
+        self.assert_(issubclass(sql.Literal, sql.Composable))
 
     def test_init(self):
         self.assert_(isinstance(sql.Literal('foo'), sql.Literal))
@@ -164,7 +164,7 @@ class LiteralTests(ConnectingTestCase):
 
 class SQLTests(ConnectingTestCase):
     def test_class(self):
-        self.assert_(issubclass(sql.SQL, sql.Composible))
+        self.assert_(issubclass(sql.SQL, sql.Composable))
 
     def test_init(self):
         self.assert_(isinstance(sql.SQL('foo'), sql.SQL))
@@ -202,7 +202,7 @@ class SQLTests(ConnectingTestCase):
 
 class ComposedTest(ConnectingTestCase):
     def test_class(self):
-        self.assert_(issubclass(sql.Composed, sql.Composible))
+        self.assert_(issubclass(sql.Composed, sql.Composable))
 
     def test_repr(self):
         obj = sql.Composed([sql.Literal("foo"), sql.Identifier("b'ar")])
@@ -236,7 +236,7 @@ class ComposedTest(ConnectingTestCase):
 
 class PlaceholderTest(ConnectingTestCase):
     def test_class(self):
-        self.assert_(issubclass(sql.Placeholder, sql.Composible))
+        self.assert_(issubclass(sql.Placeholder, sql.Composable))
 
     def test_alias(self):
         self.assert_(sql.Placeholder is sql.PH)

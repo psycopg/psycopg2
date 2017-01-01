@@ -30,7 +30,7 @@ import collections
 from psycopg2 import extensions as ext
 
 
-class Composible(object):
+class Composable(object):
     """Base class for objects that can be used to compose an SQL string."""
     def as_string(self, conn_or_curs):
         raise NotImplementedError
@@ -38,19 +38,19 @@ class Composible(object):
     def __add__(self, other):
         if isinstance(other, Composed):
             return Composed([self]) + other
-        if isinstance(other, Composible):
+        if isinstance(other, Composable):
             return Composed([self]) + Composed([other])
         else:
             return NotImplemented
 
 
-class Composed(Composible):
+class Composed(Composable):
     def __init__(self, seq):
         self._seq = []
         for i in seq:
-            if not isinstance(i, Composible):
+            if not isinstance(i, Composable):
                 raise TypeError(
-                    "Composed elements must be Composible, got %r instead" % i)
+                    "Composed elements must be Composable, got %r instead" % i)
             self._seq.append(i)
 
     def __repr__(self):
@@ -65,7 +65,7 @@ class Composed(Composible):
     def __add__(self, other):
         if isinstance(other, Composed):
             return Composed(self._seq + other._seq)
-        if isinstance(other, Composible):
+        if isinstance(other, Composable):
             return Composed(self._seq + [other])
         else:
             return NotImplemented
@@ -92,7 +92,7 @@ class Composed(Composible):
         return Composed(rv)
 
 
-class SQL(Composible):
+class SQL(Composable):
     def __init__(self, wrapped):
         if not isinstance(wrapped, basestring):
             raise TypeError("SQL values must be strings")
@@ -122,7 +122,7 @@ class SQL(Composible):
         return Composed(rv)
 
 
-class Identifier(Composible):
+class Identifier(Composable):
     def __init__(self, wrapped):
         if not isinstance(wrapped, basestring):
             raise TypeError("SQL identifiers must be strings")
@@ -140,7 +140,7 @@ class Identifier(Composible):
         return ext.quote_ident(self._wrapped, conn_or_curs)
 
 
-class Literal(Composible):
+class Literal(Composable):
     def __init__(self, wrapped):
         self._wrapped = wrapped
 
@@ -170,7 +170,7 @@ class Literal(Composible):
         return Composed([self] * n)
 
 
-class Placeholder(Composible):
+class Placeholder(Composable):
     def __init__(self, name=None):
         if isinstance(name, basestring):
             if ')' in name:

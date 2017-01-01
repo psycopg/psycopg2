@@ -267,7 +267,7 @@ _mogrify(PyObject *var, PyObject *fmt, cursorObject *curs, PyObject **new)
     return 0;
 }
 
-/* Return 1 if `obj` is a `psycopg2.sql.Composible` instance, else 0
+/* Return 1 if `obj` is a `psycopg2.sql.Composable` instance, else 0
  * Set an exception and return -1 in case of error.
  */
 RAISES_NEG static int
@@ -278,7 +278,7 @@ _curs_is_composible(PyObject *obj)
     PyObject *comp = NULL;
 
     if (!(m = PyImport_ImportModule("psycopg2.sql"))) { goto exit; }
-    if (!(comp = PyObject_GetAttrString(m, "Composible"))) { goto exit; }
+    if (!(comp = PyObject_GetAttrString(m, "Composable"))) { goto exit; }
     rv = PyObject_IsInstance(obj, comp);
 
 exit:
