@@ -127,7 +127,7 @@ rst_epilog = """
 
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
-html_theme = 'default'
+html_theme = 'classic'
 
 # The stylesheet to use with HTML output: this will include the original one
 # adding a few classes.
