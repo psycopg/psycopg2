@@ -23,24 +23,27 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-import re
 import sys
-import collections
+import string
 
 from psycopg2 import extensions as ext
+
+
+_formatter = string.Formatter()
 
 
 class Composable(object):
     """
     Abstract base class for objects that can be used to compose an SQL string.
 
-    Composables can be passed directly to `~cursor.execute()` and
+    `!Composable` objects can be passed directly to `~cursor.execute()` and
     `~cursor.executemany()`.
 
-    Composables can be joined using the ``+`` operator: the result will be
-    a `Composed` instance containing the objects joined. The operator ``*`` is
-    also supported with an integer argument: the result is a `!Composed`
-    instance containing the left argument repeated as many times as requested.
+    `!Composable` objects can be joined using the ``+`` operator: the result
+    will be a `Composed` instance containing the objects joined. The operator
+    ``*`` is also supported with an integer argument: the result is a
+    `!Composed` instance containing the left argument repeated as many times as
+    requested.
 
     .. automethod:: as_string
     """
@@ -144,20 +147,21 @@ class Composed(Composable):
 
 class SQL(Composable):
     """
-    A `Composable` representing a snippet of SQL string to be included verbatim.
+    A `Composable` representing a snippet of SQL statement.
 
-    `!SQL` supports the ``%`` operator to incorporate variable parts of a query
-    into a template: the operator takes a sequence or mapping of `Composable`
-    (according to the style of the placeholders in the *string*) and returning
-    a `Composed` object.
+    `!SQL` exposes `join()` and `format()` methods useful to create a template
+    where to merge variable parts of a query (for instance field or table
+    names).
 
     Example::
 
-        >>> query = sql.SQL("select %s from %s") % [
+        >>> query = sql.SQL("select {} from {}").format(
         ...    sql.SQL(', ').join([sql.Identifier('foo'), sql.Identifier('bar')]),
-        ...    sql.Identifier('table')]
+        ...    sql.Identifier('table'))
         >>> print(query.as_string(conn))
         select "foo", "bar" from "table"
+
+    .. automethod:: format
 
     .. automethod:: join
     """
@@ -169,11 +173,72 @@ class SQL(Composable):
     def __repr__(self):
         return "sql.SQL(%r)" % (self._wrapped,)
 
-    def __mod__(self, args):
-        return _compose(self._wrapped, args)
-
     def as_string(self, conn_or_curs):
         return self._wrapped
+
+    def format(self, *args, **kwargs):
+        """
+        Merge `Composable` objects into a template.
+
+        :param `Composable` args: parameters to replace to numbered
+            (``{0}``, ``{1}``) or auto-numbered (``{}``) placeholders
+        :param `Composable` kwargs: parameters to replace to named (``{name}``)
+            placeholders
+        :return: the union of the `!SQL` string with placeholders replaced
+        :rtype: `Composed`
+
+        The method is similar to the Python `str.format()` method: the string
+        template supports auto-numbered (``{}``), numbered (``{0}``,
+        ``{1}``...), and named placeholders (``{name}``), with positional
+        arguments replacing the numbered placeholders and keywords replacing
+        the named ones. However placeholder modifiers (``{{0!r}}``,
+        ``{{0:<10}}``) are not supported. Only `!Composable` objects can be
+        passed to the template.
+
+        Example::
+
+            >>> print(sql.SQL("select * from {} where {} = %s")
+            ...     .format(sql.Identifier('people'), sql.Identifier('id'))
+            ...     .as_string(conn))
+            select * from "people" where "id" = %s
+
+            >>> print(sql.SQL("select * from {tbl} where {pkey} = %s")
+            ...     .format(tbl=sql.Identifier('people'), pkey=sql.Identifier('id'))
+            ...     .as_string(conn))
+            select * from "people" where "id" = %s
+
+        """
+        rv = []
+        autonum = 0
+        for pre, name, spec, conv in _formatter.parse(self._wrapped):
+            if spec:
+                raise ValueError("no format specification supported by SQL")
+            if conv:
+                raise ValueError("no format conversion supported by SQL")
+            if pre:
+                rv.append(SQL(pre))
+
+            if name is None:
+                continue
+
+            if name.isdigit():
+                if autonum:
+                    raise ValueError(
+                        "cannot switch from automatic field numbering to manual")
+                rv.append(args[int(name)])
+                autonum = None
+
+            elif not name:
+                if autonum is None:
+                    raise ValueError(
+                        "cannot switch from manual field numbering to automatic")
+                rv.append(args[autonum])
+                autonum += 1
+
+            else:
+                rv.append(kwargs[name])
+
+        return Composed(rv)
 
     def join(self, seq):
         """
@@ -183,7 +248,8 @@ class SQL(Composable):
 
         Example::
 
-            >>> snip - sql.SQL(', ').join(map(sql.Identifier, ['foo', 'bar', 'baz']))
+            >>> snip = sql.SQL(', ').join(
+            ...     sql.Identifier(n) for n in ['foo', 'bar', 'baz'])
             >>> print(snip.as_string(conn))
             "foo", "bar", "baz"
         """
@@ -329,123 +395,6 @@ class Placeholder(Composable):
             return "%%(%s)s" % self._name
         else:
             return "%s"
-
-
-re_compose = re.compile("""
-    %                           # percent sign
-    (?:
-        ([%s])                  # either % or s
-        | \( ([^\)]+) \) s      # or a (named)s placeholder (named captured)
-    )
-    """, re.VERBOSE)
-
-
-def _compose(sql, args=None):
-    """
-    Merge an SQL string with some variable parts.
-
-    The *sql* string can contain placeholders such as `%s` or `%(name)s`.
-    If the string must contain a literal ``%`` symbol use ``%%``. Note that,
-    unlike `~cursor.execute()`, the replacement ``%%`` |=>| ``%`` is *always*
-    performed, even if there is no argument.
-
-    .. |=>| unicode:: 0x21D2 .. double right arrow
-
-    *args* must be a sequence or mapping (according to the placeholder style)
-    of `Composable` instances.
-
-    The value returned is a `Composed` instance obtained replacing the
-    arguments to the query placeholders.
-    """
-    if args is None:
-        args = ()
-
-    phs = list(re_compose.finditer(sql))
-
-    # check placeholders consistent
-    counts = {'%': 0, 's': 0, None: 0}
-    for ph in phs:
-        counts[ph.group(1)] += 1
-
-    npos = counts['s']
-    nnamed = counts[None]
-
-    if npos and nnamed:
-        raise ValueError(
-            "the sql string contains both named and positional placeholders")
-
-    elif npos:
-        if not isinstance(args, collections.Sequence):
-            raise TypeError(
-                "the sql string expects values in a sequence, got %s instead"
-                % type(args).__name__)
-
-        if len(args) != npos:
-            raise ValueError(
-                "the sql string expects %s values, got %s" % (npos, len(args)))
-
-        return _compose_seq(sql, phs, args)
-
-    elif nnamed:
-        if not isinstance(args, collections.Mapping):
-            raise TypeError(
-                "the sql string expects values in a mapping, got %s instead"
-                % type(args))
-
-        return _compose_map(sql, phs, args)
-
-    else:
-        if isinstance(args, collections.Sequence) and args:
-            raise ValueError(
-                "the sql string expects no value, got %s instead" % len(args))
-        # If args are a mapping, no placeholder is an acceptable case
-
-        # Convert %% into %
-        return _compose_seq(sql, phs, ())
-
-
-def _compose_seq(sql, phs, args):
-    rv = []
-    j = 0
-    for i, ph in enumerate(phs):
-        if i:
-            rv.append(SQL(sql[phs[i - 1].end():ph.start()]))
-        else:
-            rv.append(SQL(sql[0:ph.start()]))
-
-        if ph.group(1) == 's':
-            rv.append(args[j])
-            j += 1
-        else:
-            rv.append(SQL('%'))
-
-    if phs:
-        rv.append(SQL(sql[phs[-1].end():]))
-    else:
-        rv.append(SQL(sql))
-
-    return Composed(rv)
-
-
-def _compose_map(sql, phs, args):
-    rv = []
-    for i, ph in enumerate(phs):
-        if i:
-            rv.append(SQL(sql[phs[i - 1].end():ph.start()]))
-        else:
-            rv.append(SQL(sql[0:ph.start()]))
-
-        if ph.group(2):
-            rv.append(args[ph.group(2)])
-        else:
-            rv.append(SQL('%'))
-
-    if phs:
-        rv.append(SQL(sql[phs[-1].end():]))
-    else:
-        rv.append(sql)
-
-    return Composed(rv)
 
 
 # Alias

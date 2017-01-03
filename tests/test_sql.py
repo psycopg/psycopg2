@@ -25,65 +25,89 @@
 import datetime as dt
 from testutils import unittest, ConnectingTestCase
 
+import psycopg2
 from psycopg2 import sql
 
 
-class ComposeTests(ConnectingTestCase):
+class SqlFormatTests(ConnectingTestCase):
     def test_pos(self):
-        s = sql.SQL("select %s from %s") \
-            % (sql.Identifier('field'), sql.Identifier('table'))
+        s = sql.SQL("select {} from {}").format(
+            sql.Identifier('field'), sql.Identifier('table'))
+        s1 = s.as_string(self.conn)
+        self.assert_(isinstance(s1, str))
+        self.assertEqual(s1, 'select "field" from "table"')
+
+    def test_pos_spec(self):
+        s = sql.SQL("select {0} from {1}").format(
+            sql.Identifier('field'), sql.Identifier('table'))
+        s1 = s.as_string(self.conn)
+        self.assert_(isinstance(s1, str))
+        self.assertEqual(s1, 'select "field" from "table"')
+
+        s = sql.SQL("select {1} from {0}").format(
+            sql.Identifier('table'), sql.Identifier('field'))
         s1 = s.as_string(self.conn)
         self.assert_(isinstance(s1, str))
         self.assertEqual(s1, 'select "field" from "table"')
 
     def test_dict(self):
-        s = sql.SQL("select %(f)s from %(t)s") \
-            % {'f': sql.Identifier('field'), 't': sql.Identifier('table')}
+        s = sql.SQL("select {f} from {t}").format(
+            f=sql.Identifier('field'), t=sql.Identifier('table'))
         s1 = s.as_string(self.conn)
         self.assert_(isinstance(s1, str))
         self.assertEqual(s1, 'select "field" from "table"')
 
     def test_unicode(self):
-        s = sql.SQL(u"select %s from %s") \
-            % (sql.Identifier(u'field'), sql.Identifier('table'))
+        s = sql.SQL(u"select {} from {}").format(
+            sql.Identifier(u'field'), sql.Identifier('table'))
         s1 = s.as_string(self.conn)
         self.assert_(isinstance(s1, unicode))
         self.assertEqual(s1, u'select "field" from "table"')
 
     def test_compose_literal(self):
-        s = sql.SQL("select %s;") % [sql.Literal(dt.date(2016, 12, 31))]
+        s = sql.SQL("select {};").format(sql.Literal(dt.date(2016, 12, 31)))
         s1 = s.as_string(self.conn)
         self.assertEqual(s1, "select '2016-12-31'::date;")
 
     def test_compose_empty(self):
-        s = sql.SQL("select foo;") % ()
+        s = sql.SQL("select foo;").format()
         s1 = s.as_string(self.conn)
         self.assertEqual(s1, "select foo;")
 
     def test_percent_escape(self):
-        s = sql.SQL("42 %% %s") % [sql.Literal(7)]
+        s = sql.SQL("42 % {}").format(sql.Literal(7))
         s1 = s.as_string(self.conn)
         self.assertEqual(s1, "42 % 7")
 
-        s = sql.SQL("42 %% 7") % []
-        s1 = s.as_string(self.conn)
-        self.assertEqual(s1, "42 % 7")
+    def test_braces_escape(self):
+        s = sql.SQL("{{{}}}").format(sql.Literal(7))
+        self.assertEqual(s.as_string(self.conn), "{7}")
+        s = sql.SQL("{{1,{}}}").format(sql.Literal(7))
+        self.assertEqual(s.as_string(self.conn), "{1,7}")
 
     def test_compose_badnargs(self):
-        self.assertRaises(ValueError, sql.SQL("select foo;").__mod__, [10])
-        self.assertRaises(ValueError, sql.SQL("select %s;").__mod__, [])
-        self.assertRaises(ValueError, sql.SQL("select %s;").__mod__, [10, 20])
+        self.assertRaises(IndexError, sql.SQL("select {};").format)
+        self.assertRaises(ValueError, sql.SQL("select {} {1};").format, 10, 20)
+        self.assertRaises(ValueError, sql.SQL("select {0} {};").format, 10, 20)
 
     def test_compose_bad_args_type(self):
-        self.assertRaises(TypeError, sql.SQL("select %s;").__mod__, {'a': 10})
-        self.assertRaises(TypeError, sql.SQL("select %(x)s;").__mod__, [10])
+        self.assertRaises(IndexError, sql.SQL("select {};").format, a=10)
+        self.assertRaises(KeyError, sql.SQL("select {x};").format, 10)
+
+    def test_must_be_composable(self):
+        self.assertRaises(TypeError, sql.SQL("select {};").format, 'foo')
+        self.assertRaises(TypeError, sql.SQL("select {};").format, 10)
+
+    def test_no_modifiers(self):
+        self.assertRaises(ValueError, sql.SQL("select {a!r};").format, a=10)
+        self.assertRaises(ValueError, sql.SQL("select {a:<};").format, a=10)
 
     def test_must_be_adaptable(self):
         class Foo(object):
             pass
 
-        self.assertRaises(TypeError,
-            sql.SQL("select %s;").__mod__, [Foo()])
+        self.assertRaises(psycopg2.ProgrammingError,
+            sql.SQL("select {};").format(sql.Literal(Foo())).as_string, self.conn)
 
     def test_execute(self):
         cur = self.conn.cursor()
@@ -93,11 +117,10 @@ class ComposeTests(ConnectingTestCase):
                 foo text, bar text, "ba'z" text)
             """)
         cur.execute(
-            sql.SQL("insert into %s (id, %s) values (%%s, %s)") % [
+            sql.SQL("insert into {} (id, {}) values (%s, {})").format(
                 sql.Identifier('test_compose'),
                 sql.SQL(', ').join(map(sql.Identifier, ['foo', 'bar', "ba'z"])),
-                (sql.PH() * 3).join(', '),
-            ],
+                (sql.PH() * 3).join(', ')),
             (10, 'a', 'b', 'c'))
 
         cur.execute("select * from test_compose")
@@ -111,11 +134,10 @@ class ComposeTests(ConnectingTestCase):
                 foo text, bar text, "ba'z" text)
             """)
         cur.executemany(
-            sql.SQL("insert into %s (id, %s) values (%%s, %s)") % [
+            sql.SQL("insert into {} (id, {}) values (%s, {})").format(
                 sql.Identifier('test_compose'),
                 sql.SQL(', ').join(map(sql.Identifier, ['foo', 'bar', "ba'z"])),
-                (sql.PH() * 3).join(', '),
-            ],
+                (sql.PH() * 3).join(', ')),
             [(10, 'a', 'b', 'c'), (20, 'd', 'e', 'f')])
 
         cur.execute("select * from test_compose")
@@ -168,6 +190,13 @@ class LiteralTests(ConnectingTestCase):
         self.assertEqual(
             sql.Literal(dt.date(2017, 1, 1)).as_string(self.conn),
             "'2017-01-01'::date")
+
+    def test_must_be_adaptable(self):
+        class Foo(object):
+            pass
+
+        self.assertRaises(psycopg2.ProgrammingError,
+            sql.Literal(Foo()).as_string, self.conn)
 
 
 class SQLTests(ConnectingTestCase):

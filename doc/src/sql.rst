@@ -51,7 +51,8 @@ from the query parameters::
     from psycopg2 import sql
 
     cur.execute(
-        sql.SQL("insert into %s values (%%s, %%s)") % [sql.Identifier('my_table')],
+        sql.SQL("insert into {} values (%s, %s)")
+            .format(sql.Identifier('my_table')),
         [10, 20])
 
 
