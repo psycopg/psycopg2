@@ -58,12 +58,32 @@ from the query parameters::
 
 .. autoclass:: Composable
 
+    .. automethod:: as_string
+
+
 .. autoclass:: SQL
+
+    .. autoattribute:: string
+
+    .. automethod:: format
+
+    .. automethod:: join
+
 
 .. autoclass:: Identifier
 
+    .. autoattribute:: string
+
 .. autoclass:: Literal
+
+    .. autoattribute:: wrapped
 
 .. autoclass:: Placeholder
 
+    .. autoattribute:: name
+
 .. autoclass:: Composed
+
+    .. autoattribute:: seq
+
+    .. automethod:: join
