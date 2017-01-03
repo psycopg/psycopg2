@@ -171,7 +171,7 @@ class SQL(Composable):
 
     Example::
 
-        >>> query = sql.SQL("select {} from {}").format(
+        >>> query = sql.SQL("select {0} from {1}").format(
         ...    sql.SQL(', ').join([sql.Identifier('foo'), sql.Identifier('bar')]),
         ...    sql.Identifier('table'))
         >>> print(query.as_string(conn))
@@ -202,12 +202,12 @@ class SQL(Composable):
         :rtype: `Composed`
 
         The method is similar to the Python `str.format()` method: the string
-        template supports auto-numbered (``{}``), numbered (``{0}``,
-        ``{1}``...), and named placeholders (``{name}``), with positional
-        arguments replacing the numbered placeholders and keywords replacing
-        the named ones. However placeholder modifiers (``{0!r}``, ``{0:<10}``)
-        are not supported. Only `!Composable` objects can be passed to the
-        template.
+        template supports auto-numbered (``{}``, only available from Python
+        2.7), numbered (``{0}``, ``{1}``...), and named placeholders
+        (``{name}``), with positional arguments replacing the numbered
+        placeholders and keywords replacing the named ones. However placeholder
+        modifiers (``{0!r}``, ``{0:<10}``) are not supported. Only
+        `!Composable` objects can be passed to the template.
 
         Example::
 

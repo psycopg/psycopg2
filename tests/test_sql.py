@@ -23,13 +23,14 @@
 # License for more details.
 
 import datetime as dt
-from testutils import unittest, ConnectingTestCase
+from testutils import unittest, ConnectingTestCase, skip_before_python
 
 import psycopg2
 from psycopg2 import sql
 
 
 class SqlFormatTests(ConnectingTestCase):
+    @skip_before_python(2, 7)
     def test_pos(self):
         s = sql.SQL("select {} from {}").format(
             sql.Identifier('field'), sql.Identifier('table'))
@@ -58,14 +59,14 @@ class SqlFormatTests(ConnectingTestCase):
         self.assertEqual(s1, 'select "field" from "table"')
 
     def test_unicode(self):
-        s = sql.SQL(u"select {} from {}").format(
+        s = sql.SQL(u"select {0} from {1}").format(
             sql.Identifier(u'field'), sql.Identifier('table'))
         s1 = s.as_string(self.conn)
         self.assert_(isinstance(s1, unicode))
         self.assertEqual(s1, u'select "field" from "table"')
 
     def test_compose_literal(self):
-        s = sql.SQL("select {};").format(sql.Literal(dt.date(2016, 12, 31)))
+        s = sql.SQL("select {0};").format(sql.Literal(dt.date(2016, 12, 31)))
         s1 = s.as_string(self.conn)
         self.assertEqual(s1, "select '2016-12-31'::date;")
 
@@ -75,28 +76,32 @@ class SqlFormatTests(ConnectingTestCase):
         self.assertEqual(s1, "select foo;")
 
     def test_percent_escape(self):
-        s = sql.SQL("42 % {}").format(sql.Literal(7))
+        s = sql.SQL("42 % {0}").format(sql.Literal(7))
         s1 = s.as_string(self.conn)
         self.assertEqual(s1, "42 % 7")
 
     def test_braces_escape(self):
-        s = sql.SQL("{{{}}}").format(sql.Literal(7))
+        s = sql.SQL("{{{0}}}").format(sql.Literal(7))
         self.assertEqual(s.as_string(self.conn), "{7}")
-        s = sql.SQL("{{1,{}}}").format(sql.Literal(7))
+        s = sql.SQL("{{1,{0}}}").format(sql.Literal(7))
         self.assertEqual(s.as_string(self.conn), "{1,7}")
 
     def test_compose_badnargs(self):
+        self.assertRaises(IndexError, sql.SQL("select {0};").format)
+
+    @skip_before_python(2, 7)
+    def test_compose_badnargs_auto(self):
         self.assertRaises(IndexError, sql.SQL("select {};").format)
         self.assertRaises(ValueError, sql.SQL("select {} {1};").format, 10, 20)
         self.assertRaises(ValueError, sql.SQL("select {0} {};").format, 10, 20)
 
     def test_compose_bad_args_type(self):
-        self.assertRaises(IndexError, sql.SQL("select {};").format, a=10)
+        self.assertRaises(IndexError, sql.SQL("select {0};").format, a=10)
         self.assertRaises(KeyError, sql.SQL("select {x};").format, 10)
 
     def test_must_be_composable(self):
-        self.assertRaises(TypeError, sql.SQL("select {};").format, 'foo')
-        self.assertRaises(TypeError, sql.SQL("select {};").format, 10)
+        self.assertRaises(TypeError, sql.SQL("select {0};").format, 'foo')
+        self.assertRaises(TypeError, sql.SQL("select {0};").format, 10)
 
     def test_no_modifiers(self):
         self.assertRaises(ValueError, sql.SQL("select {a!r};").format, a=10)
@@ -107,7 +112,7 @@ class SqlFormatTests(ConnectingTestCase):
             pass
 
         self.assertRaises(psycopg2.ProgrammingError,
-            sql.SQL("select {};").format(sql.Literal(Foo())).as_string, self.conn)
+            sql.SQL("select {0};").format(sql.Literal(Foo())).as_string, self.conn)
 
     def test_execute(self):
         cur = self.conn.cursor()
@@ -117,7 +122,7 @@ class SqlFormatTests(ConnectingTestCase):
                 foo text, bar text, "ba'z" text)
             """)
         cur.execute(
-            sql.SQL("insert into {} (id, {}) values (%s, {})").format(
+            sql.SQL("insert into {0} (id, {1}) values (%s, {2})").format(
                 sql.Identifier('test_compose'),
                 sql.SQL(', ').join(map(sql.Identifier, ['foo', 'bar', "ba'z"])),
                 (sql.Placeholder() * 3).join(', ')),
@@ -134,7 +139,7 @@ class SqlFormatTests(ConnectingTestCase):
                 foo text, bar text, "ba'z" text)
             """)
         cur.executemany(
-            sql.SQL("insert into {} (id, {}) values (%s, {})").format(
+            sql.SQL("insert into {0} (id, {1}) values (%s, {2})").format(
                 sql.Identifier('test_compose'),
                 sql.SQL(', ').join(map(sql.Identifier, ['foo', 'bar', "ba'z"])),
                 (sql.Placeholder() * 3).join(', ')),
