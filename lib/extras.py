@@ -106,18 +106,21 @@ class DictCursorBase(_cursor):
         return res
 
     def __iter__(self):
-        if self._prefetch:
-            res = super(DictCursorBase, self).__iter__()
-            first = res.next()
-        if self._query_executed:
-            self._build_index()
-        if not self._prefetch:
-            res = super(DictCursorBase, self).__iter__()
-            first = res.next()
+        try:
+            if self._prefetch:
+                res = super(DictCursorBase, self).__iter__()
+                first = res.next()
+            if self._query_executed:
+                self._build_index()
+            if not self._prefetch:
+                res = super(DictCursorBase, self).__iter__()
+                first = res.next()
 
-        yield first
-        while 1:
-            yield res.next()
+            yield first
+            while 1:
+                yield res.next()
+        except StopIteration:
+            return
 
 
 class DictConnection(_connection):
@@ -343,17 +346,20 @@ class NamedTupleCursor(_cursor):
         return map(nt._make, ts)
 
     def __iter__(self):
-        it = super(NamedTupleCursor, self).__iter__()
-        t = it.next()
+        try:
+            it = super(NamedTupleCursor, self).__iter__()
+            t = it.next()
 
-        nt = self.Record
-        if nt is None:
-            nt = self.Record = self._make_nt()
+            nt = self.Record
+            if nt is None:
+                nt = self.Record = self._make_nt()
 
-        yield nt._make(t)
+            yield nt._make(t)
 
-        while 1:
-            yield nt._make(it.next())
+            while 1:
+                yield nt._make(it.next())
+        except StopIteration:
+            return
 
     try:
         from collections import namedtuple
