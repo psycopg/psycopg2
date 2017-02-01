@@ -1177,7 +1177,7 @@ def execute_batch(cur, sql, argslist, page_size=100):
     """
     for page in _paginate(argslist, page_size=page_size):
         sqls = [cur.mogrify(sql, args) for args in page]
-        cur.execute(";".join(sqls))
+        cur.execute(b";".join(sqls))
 
 
 def execute_values(cur, sql, argslist, template=None, page_size=100):
@@ -1219,5 +1219,7 @@ def execute_values(cur, sql, argslist, template=None, page_size=100):
     for page in _paginate(argslist, page_size=page_size):
         if template is None:
             template = '(%s)' % ','.join(['%s'] * len(page[0]))
-        values = ",".join(cur.mogrify(template, args) for args in page)
+        values = b",".join(cur.mogrify(template, args) for args in page)
+        if isinstance(values, bytes) and _sys.version_info[0] > 2:
+            values = values.decode(_ext.encodings[cur.connection.encoding])
         cur.execute(sql % (values,))

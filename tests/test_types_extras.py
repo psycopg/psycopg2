@@ -1829,7 +1829,7 @@ class TestFastExecute(ConnectingTestCase):
             page_size=10)
 
         # last command was 5 statements
-        self.assertEqual(sum(c == ';' for c in cur.query), 4)
+        self.assertEqual(sum(c == u';' for c in cur.query.decode('ascii')), 4)
 
         cur.execute("select id, val from testfast order by id")
         self.assertEqual(cur.fetchall(), [(i, i * 10) for i in range(25)])
@@ -1886,7 +1886,7 @@ class TestFastExecute(ConnectingTestCase):
             page_size=10)
 
         # last statement was 5 tuples (one parens is for the fields list)
-        self.assertEqual(sum(c == '(' for c in cur.query), 6)
+        self.assertEqual(sum(c == '(' for c in cur.query.decode('ascii')), 6)
 
         cur.execute("select id, val from testfast order by id")
         self.assertEqual(cur.fetchall(), [(i, i * 10) for i in range(25)])
