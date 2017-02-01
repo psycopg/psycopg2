@@ -4,10 +4,11 @@
 #
 # Run this script with something like:
 #
-# docker run -t --rm -v `pwd`:/psycopg2 quay.io/pypa/manylinux1_x86_64 /psycopg2/scripts/build-manylinux.sh
-# docker run -t --rm -v `pwd`:/psycopg2 quay.io/pypa/manylinux1_i686 linux32 /psycopg2/scripts/build-manylinux.sh
+# docker run --rm -v `pwd`:/psycopg2 quay.io/pypa/manylinux1_x86_64 /psycopg2/scripts/build-manylinux.sh
+# docker run --rm -v `pwd`:/psycopg2 quay.io/pypa/manylinux1_i686 linux32 /psycopg2/scripts/build-manylinux.sh
 #
-# (Note: -t is requrired for sudo)
+# Tests run against a postgres on the host. Use -e PSYCOPG_TESTDB_USER=... etc
+# to configure tests run.
 
 set -e -x
 
@@ -16,7 +17,7 @@ set -e -x
 # rpm -Uvh "http://yum.postgresql.org/9.5/redhat/rhel-5-x86_64/pgdg-redhat95-9.5-3.noarch.rpm"
 wget -O "/tmp/pgdg.rpm" "https://download.postgresql.org/pub/repos/yum/9.5/redhat/rhel-5-x86_64/pgdg-centos95-9.5-3.noarch.rpm"
 rpm -Uv "/tmp/pgdg.rpm"
-yum install -y postgresql95-devel postgresql95-server sudo
+yum install -y postgresql95-devel
 
 # Make pg_config available
 export PGPATH=/usr/pgsql-9.5/bin/
@@ -36,13 +37,11 @@ for WHL in "$WHEELSDIR"/*.whl; do
     auditwheel repair "$WHL" -w "$WHEELSDIR"
 done
 
-# Create a test cluster
-/usr/bin/sudo -u postgres "$PGPATH/initdb" -D /var/lib/pgsql/9.5/data/
-/usr/bin/sudo -u postgres "$PGPATH/pg_ctl" -D /var/lib/pgsql/9.5/data/ start
-sleep 5     # wait server started
-/usr/bin/sudo -u postgres "$PGPATH/createdb" psycopg2_test
+# Make sure libpq is not in the system
+yum remove -y postgresql95-devel
 
-export PSYCOPG2_TESTDB_USER=postgres
+# Connect to the host to test. Use 'docker -e' to pass other variables
+export PSYCOPG2_TESTDB_HOST=$(ip route show | awk '/default/ {print $3}')
 
 # Install packages and test
 for PYBIN in /opt/python/*/bin; do
