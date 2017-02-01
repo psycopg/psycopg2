@@ -1141,3 +1141,83 @@ def register_composite(name, conn_or_curs, globally=False, factory=None):
             caster.array_typecaster, not globally and conn_or_curs or None)
 
     return caster
+
+
+def _paginate(seq, page_size):
+    """Consume an iterable and return it in chunks.
+
+    Every chunk is at most `page_size`. Never return an empty chunk.
+    """
+    page = []
+    it = iter(seq)
+    while 1:
+        try:
+            for i in xrange(page_size):
+                page.append(it.next())
+            yield page
+            page = []
+        except StopIteration:
+            if page:
+                yield page
+            return
+
+
+def execute_batch(cur, sql, argslist, page_size=100):
+    """Execute groups of statements in fewer server roundtrips.
+
+    Execute *sql* several times, against all parameters set (sequences or
+    mappings) found in *argslist*.
+
+    The function is semantically similar to `~cursor.executemany()`, but has a
+    different implementation: Psycopg will join the statements into fewer
+    multi-statement commands, reducing the number of server roundtrips,
+    resulting in better performances. Every command contains at most
+    *page_size* statements.
+
+    """
+    for page in _paginate(argslist, page_size=page_size):
+        sqls = [cur.mogrify(sql, args) for args in page]
+        cur.execute(";".join(sqls))
+
+
+def execute_values(cur, sql, argslist, template=None, page_size=100):
+    '''Execute a statement using :sql:`VALUES` with a sequence of parameters.
+
+    *sql* must contain a single ``%s`` placeholder, which will be replaced by a
+    `VALUES list`__.  Every statement will contain at most *page_size* sets of
+    arguments.
+
+    .. __: https://www.postgresql.org/docs/current/static/queries-values.html
+
+    *template* is the part merged to the arguments, so it should be compatible
+    with the content of *argslist* (it should contain the right number of
+    arguments if *argslist* is a sequence of sequences, or compatible names if
+    *argslist* is a sequence of mappings). If not specified, assume the
+    arguments are sequence and use a simple positional template (i.e.
+    ``(%s, %s, ...)``).
+
+    While :sql:`INSERT` is an obvious candidate for this function it is
+    possible to use it with other statements, for example::
+
+        >>> cur.execute(
+        ... "create table test (id int primary key, v1 int, v2 int)")
+
+        >>> execute_values(cur,
+        ... "INSERT INTO test (id, v1, v2) VALUES %s",
+        ... [(1, 2, 3), (4, 5, 6), (7, 8, 9)])
+
+        >>> execute_values(cur,
+        ... """UPDATE test SET v1 = data.v1 FROM (VALUES %s) AS data (id, v1)
+        ... WHERE test.id = data.id""",
+        ... [(1, 20), (4, 50)])
+
+        >>> cur.execute("select * from test order by id")
+        >>> cur.fetchall()
+        [(1, 20, 3), (4, 50, 6), (7, 8, 9)])
+
+    '''
+    for page in _paginate(argslist, page_size=page_size):
+        if template is None:
+            template = '(%s)' % ','.join(['%s'] * len(page[0]))
+        values = ",".join(cur.mogrify(template, args) for args in page)
+        cur.execute(sql % (values,))

@@ -1766,6 +1766,132 @@ class RangeCasterTestCase(ConnectingTestCase):
 decorate_all_tests(RangeCasterTestCase, skip_if_no_range)
 
 
+class TestFastExecute(ConnectingTestCase):
+    def setUp(self):
+        super(TestFastExecute, self).setUp()
+        cur = self.conn.cursor()
+        cur.execute(
+            "create table testfast (id serial primary key, date date, val int)")
+
+    def test_paginate(self):
+        def pag(seq):
+            return psycopg2.extras._paginate(seq, 100)
+
+        self.assertEqual(list(pag([])), [])
+        self.assertEqual(list(pag([1])), [[1]])
+        self.assertEqual(list(pag(range(99))), [list(range(99))])
+        self.assertEqual(list(pag(range(100))), [list(range(100))])
+        self.assertEqual(list(pag(range(101))), [list(range(100)), [100]])
+        self.assertEqual(
+            list(pag(range(200))), [list(range(100)), list(range(100, 200))])
+        self.assertEqual(
+            list(pag(range(1000))),
+            [list(range(i * 100, (i + 1) * 100)) for i in range(10)])
+
+    def test_execute_batch_empty(self):
+        cur = self.conn.cursor()
+        psycopg2.extras.execute_batch(cur,
+            "insert into testfast (id, val) values (%s, %s)",
+            [])
+        cur.execute("select * from testfast order by id")
+        self.assertEqual(cur.fetchall(), [])
+
+    def test_execute_batch_one(self):
+        cur = self.conn.cursor()
+        psycopg2.extras.execute_batch(cur,
+            "insert into testfast (id, val) values (%s, %s)",
+            iter([(1, 10)]))
+        cur.execute("select id, val from testfast order by id")
+        self.assertEqual(cur.fetchall(), [(1, 10)])
+
+    def test_execute_batch_tuples(self):
+        cur = self.conn.cursor()
+        psycopg2.extras.execute_batch(cur,
+            "insert into testfast (id, date, val) values (%s, %s, %s)",
+            ((i, date(2017, 1, i + 1), i * 10) for i in range(10)))
+        cur.execute("select id, date, val from testfast order by id")
+        self.assertEqual(cur.fetchall(),
+            [(i, date(2017, 1, i + 1), i * 10) for i in range(10)])
+
+    def test_execute_batch_many(self):
+        cur = self.conn.cursor()
+        psycopg2.extras.execute_batch(cur,
+            "insert into testfast (id, val) values (%s, %s)",
+            ((i, i * 10) for i in range(1000)))
+        cur.execute("select id, val from testfast order by id")
+        self.assertEqual(cur.fetchall(), [(i, i * 10) for i in range(1000)])
+
+    def test_execute_batch_pages(self):
+        cur = self.conn.cursor()
+        psycopg2.extras.execute_batch(cur,
+            "insert into testfast (id, val) values (%s, %s)",
+            ((i, i * 10) for i in range(25)),
+            page_size=10)
+
+        # last command was 5 statements
+        self.assertEqual(sum(c == ';' for c in cur.query), 4)
+
+        cur.execute("select id, val from testfast order by id")
+        self.assertEqual(cur.fetchall(), [(i, i * 10) for i in range(25)])
+
+    def test_execute_values_empty(self):
+        cur = self.conn.cursor()
+        psycopg2.extras.execute_values(cur,
+            "insert into testfast (id, val) values %s",
+            [])
+        cur.execute("select * from testfast order by id")
+        self.assertEqual(cur.fetchall(), [])
+
+    def test_execute_values_one(self):
+        cur = self.conn.cursor()
+        psycopg2.extras.execute_values(cur,
+            "insert into testfast (id, val) values %s",
+            iter([(1, 10)]))
+        cur.execute("select id, val from testfast order by id")
+        self.assertEqual(cur.fetchall(), [(1, 10)])
+
+    def test_execute_values_tuples(self):
+        cur = self.conn.cursor()
+        psycopg2.extras.execute_values(cur,
+            "insert into testfast (id, date, val) values %s",
+            ((i, date(2017, 1, i + 1), i * 10) for i in range(10)))
+        cur.execute("select id, date, val from testfast order by id")
+        self.assertEqual(cur.fetchall(),
+            [(i, date(2017, 1, i + 1), i * 10) for i in range(10)])
+
+    def test_execute_values_dicts(self):
+        cur = self.conn.cursor()
+        psycopg2.extras.execute_values(cur,
+            "insert into testfast (id, date, val) values %s",
+            (dict(id=i, date=date(2017, 1, i + 1), val=i * 10, foo="bar")
+                for i in range(10)),
+            template='(%(id)s, %(date)s, %(val)s)')
+        cur.execute("select id, date, val from testfast order by id")
+        self.assertEqual(cur.fetchall(),
+            [(i, date(2017, 1, i + 1), i * 10) for i in range(10)])
+
+    def test_execute_values_many(self):
+        cur = self.conn.cursor()
+        psycopg2.extras.execute_values(cur,
+            "insert into testfast (id, val) values %s",
+            ((i, i * 10) for i in range(1000)))
+        cur.execute("select id, val from testfast order by id")
+        self.assertEqual(cur.fetchall(), [(i, i * 10) for i in range(1000)])
+
+    def test_execute_values_pages(self):
+        cur = self.conn.cursor()
+        psycopg2.extras.execute_values(cur,
+            "insert into testfast (id, val) values %s",
+            ((i, i * 10) for i in range(25)),
+            page_size=10)
+
+        # last statement was 5 tuples (one parens is for the fields list)
+        self.assertEqual(sum(c == '(' for c in cur.query), 6)
+
+        cur.execute("select id, val from testfast order by id")
+        self.assertEqual(cur.fetchall(), [(i, i * 10) for i in range(25)])
+
+
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

@@ -974,6 +974,31 @@ converted into lists of strings.
         future versions.
 
 
+
+.. _fast-exec:
+
+Fast execution helpers
+----------------------
+
+The current implementation of `~cursor.executemany()` is (using an extremely
+charitable understatement) not particularly performing. These functions can
+be used to speed up the repeated execution of a statement againts a set of
+parameters.  By reducing the number of server roundtrips the performance can be
+`orders of magnitude better`__ than using `!executemany()`.
+
+.. __: https://github.com/psycopg/psycopg2/issues/491#issuecomment-276551038
+
+
+.. autofunction:: execute_batch
+
+    .. versionadded:: 2.7
+
+.. autofunction:: execute_values
+
+    .. versionadded:: 2.7
+
+
+
 .. index::
     single: Time zones; Fractional
 
