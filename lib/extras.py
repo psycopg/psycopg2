@@ -1220,6 +1220,6 @@ def execute_values(cur, sql, argslist, template=None, page_size=100):
         if template is None:
             template = '(%s)' % ','.join(['%s'] * len(page[0]))
         values = b",".join(cur.mogrify(template, args) for args in page)
-        if isinstance(values, bytes) and _sys.version_info[0] > 2:
+        if isinstance(values, bytes):
             values = values.decode(_ext.encodings[cur.connection.encoding])
         cur.execute(sql % (values,))

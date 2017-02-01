@@ -1770,8 +1770,8 @@ class TestFastExecute(ConnectingTestCase):
     def setUp(self):
         super(TestFastExecute, self).setUp()
         cur = self.conn.cursor()
-        cur.execute(
-            "create table testfast (id serial primary key, date date, val int)")
+        cur.execute("""create table testfast (
+            id serial primary key, date date, val int, data text)""")
 
     def test_paginate(self):
         def pag(seq):
@@ -1834,6 +1834,32 @@ class TestFastExecute(ConnectingTestCase):
         cur.execute("select id, val from testfast order by id")
         self.assertEqual(cur.fetchall(), [(i, i * 10) for i in range(25)])
 
+    def test_execute_batch_unicode(self):
+        cur = self.conn.cursor()
+        ext.register_type(ext.UNICODE, cur)
+        snowman = u"\u2603"
+
+        # unicode in statement
+        psycopg2.extras.execute_batch(cur,
+            "insert into testfast (id, data) values (%%s, %%s) -- %s" % snowman,
+            [(1, 'x')])
+        cur.execute("select id, data from testfast where id = 1")
+        self.assertEqual(cur.fetchone(), (1, 'x'))
+
+        # unicode in data
+        psycopg2.extras.execute_batch(cur,
+            "insert into testfast (id, data) values (%s, %s)",
+            [(2, snowman)])
+        cur.execute("select id, data from testfast where id = 2")
+        self.assertEqual(cur.fetchone(), (2, snowman))
+
+        # unicode in both
+        psycopg2.extras.execute_batch(cur,
+            "insert into testfast (id, data) values (%%s, %%s) -- %s" % snowman,
+            [(3, snowman)])
+        cur.execute("select id, data from testfast where id = 3")
+        self.assertEqual(cur.fetchone(), (3, snowman))
+
     def test_execute_values_empty(self):
         cur = self.conn.cursor()
         psycopg2.extras.execute_values(cur,
@@ -1890,6 +1916,32 @@ class TestFastExecute(ConnectingTestCase):
 
         cur.execute("select id, val from testfast order by id")
         self.assertEqual(cur.fetchall(), [(i, i * 10) for i in range(25)])
+
+    def test_execute_values_unicode(self):
+        cur = self.conn.cursor()
+        ext.register_type(ext.UNICODE, cur)
+        snowman = u"\u2603"
+
+        # unicode in statement
+        psycopg2.extras.execute_values(cur,
+            "insert into testfast (id, data) values %%s -- %s" % snowman,
+            [(1, 'x')])
+        cur.execute("select id, data from testfast where id = 1")
+        self.assertEqual(cur.fetchone(), (1, 'x'))
+
+        # unicode in data
+        psycopg2.extras.execute_values(cur,
+            "insert into testfast (id, data) values %s",
+            [(2, snowman)])
+        cur.execute("select id, data from testfast where id = 2")
+        self.assertEqual(cur.fetchone(), (2, snowman))
+
+        # unicode in both
+        psycopg2.extras.execute_values(cur,
+            "insert into testfast (id, data) values %%s -- %s" % snowman,
+            [(3, snowman)])
+        cur.execute("select id, data from testfast where id = 3")
+        self.assertEqual(cur.fetchone(), (3, snowman))
 
 
 def test_suite():
