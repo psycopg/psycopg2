@@ -1241,19 +1241,20 @@ def execute_values(cur, sql, argslist, template=None, page_size=100):
 
     for page in _paginate(argslist, page_size=page_size):
         if template is None:
-            template = '(%s)' % ','.join(['%s'] * len(page[0]))
-        parts = [pre]
+            template = b'(' + b','.join([b'%s'] * len(page[0])) + b')'
+        parts = pre[:]
         for args in page:
             parts.append(cur.mogrify(template, args))
             parts.append(b',')
-        parts[-1] = post
+        parts[-1:] = post
         cur.execute(b''.join(parts))
 
 
 def _split_sql(sql):
     """Split *sql* on a single ``%s`` placeholder.
 
-    Return a (pre, post) pair around the ``%s``, with ``%%`` -> ``%`` replacement.
+    Split on the %s, perform %% replacement and return pre, post lists of
+    snippets.
     """
     curr = pre = []
     post = []
@@ -1278,4 +1279,4 @@ def _split_sql(sql):
     if curr is pre:
         raise ValueError("the query doesn't contain any '%s' placeholder")
 
-    return b''.join(pre), b''.join(post)
+    return pre, post
