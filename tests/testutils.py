@@ -447,7 +447,6 @@ def script_to_py3(script):
 
 
 class py3_raises_typeerror(object):
-
     def __enter__(self):
         pass
 
@@ -455,3 +454,13 @@ class py3_raises_typeerror(object):
         if sys.version_info[0] >= 3:
             assert type is TypeError
             return True
+
+
+def slow(f):
+    """Decorator to mark slow tests we may want to skip"""
+    @wraps(f)
+    def slow_(self):
+        if os.environ.get('PSYCOPG2_TEST_FAST'):
+            return self.skipTest("slow test")
+        return f(self)
+    return slow_

@@ -23,7 +23,7 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-from testutils import unittest, skip_before_postgres
+from testutils import unittest, skip_before_postgres, slow
 
 import psycopg2
 from psycopg2 import extensions
@@ -318,6 +318,7 @@ class AsyncTests(ConnectingTestCase):
         self.assert_(conn.async)
         conn.close()
 
+    @slow
     def test_flush_on_write(self):
         # a very large query requires a flush loop to be sent to the backend
         curs = self.conn.cursor()

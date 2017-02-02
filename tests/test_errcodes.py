@@ -22,7 +22,7 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-from testutils import unittest, ConnectingTestCase
+from testutils import unittest, ConnectingTestCase, slow
 
 try:
     reload
@@ -34,6 +34,7 @@ from psycopg2 import errorcodes
 
 
 class ErrocodeTests(ConnectingTestCase):
+    @slow
     def test_lookup_threadsafe(self):
 
         # Increase if it does not fail with KeyError

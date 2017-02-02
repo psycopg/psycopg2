@@ -23,7 +23,7 @@
 # License for more details.
 
 import threading
-from testutils import unittest, ConnectingTestCase, skip_before_postgres
+from testutils import unittest, ConnectingTestCase, skip_before_postgres, slow
 
 import psycopg2
 from psycopg2.extensions import (
@@ -131,6 +131,7 @@ class DeadlockSerializationTests(ConnectingTestCase):
 
         ConnectingTestCase.tearDown(self)
 
+    @slow
     def test_deadlock(self):
         self.thread1_error = self.thread2_error = None
         step1 = threading.Event()
@@ -178,6 +179,7 @@ class DeadlockSerializationTests(ConnectingTestCase):
         self.assertTrue(isinstance(
             error, psycopg2.extensions.TransactionRollbackError))
 
+    @slow
     def test_serialisation_failure(self):
         self.thread1_error = self.thread2_error = None
         step1 = threading.Event()

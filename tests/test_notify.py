@@ -26,7 +26,7 @@ from testutils import unittest
 
 import psycopg2
 from psycopg2 import extensions
-from testutils import ConnectingTestCase, script_to_py3
+from testutils import ConnectingTestCase, script_to_py3, slow
 from testconfig import dsn
 
 import sys
@@ -72,6 +72,7 @@ conn.close()
 
         return Popen([sys.executable, '-c', script_to_py3(script)], stdout=PIPE)
 
+    @slow
     def test_notifies_received_on_poll(self):
         self.autocommit(self.conn)
         self.listen('foo')
@@ -90,6 +91,7 @@ conn.close()
         self.assertEqual(pid, self.conn.notifies[0][0])
         self.assertEqual('foo', self.conn.notifies[0][1])
 
+    @slow
     def test_many_notifies(self):
         self.autocommit(self.conn)
         for name in ['foo', 'bar', 'baz']:
@@ -119,6 +121,7 @@ conn.close()
         self.assertEqual(pid, self.conn.notifies[0][0])
         self.assertEqual('foo', self.conn.notifies[0][1])
 
+    @slow
     def test_notify_object(self):
         self.autocommit(self.conn)
         self.listen('foo')
@@ -128,6 +131,7 @@ conn.close()
         notify = self.conn.notifies[0]
         self.assert_(isinstance(notify, psycopg2.extensions.Notify))
 
+    @slow
     def test_notify_attributes(self):
         self.autocommit(self.conn)
         self.listen('foo')
@@ -140,6 +144,7 @@ conn.close()
         self.assertEqual('foo', notify.channel)
         self.assertEqual('', notify.payload)
 
+    @slow
     def test_notify_payload(self):
         if self.conn.server_version < 90000:
             return self.skipTest("server version %s doesn't support notify payload"
@@ -155,6 +160,7 @@ conn.close()
         self.assertEqual('foo', notify.channel)
         self.assertEqual('Hello, world!', notify.payload)
 
+    @slow
     def test_notify_deque(self):
         from collections import deque
         self.autocommit(self.conn)
@@ -167,6 +173,7 @@ conn.close()
         self.assert_(isinstance(notify, psycopg2.extensions.Notify))
         self.assertEqual(len(self.conn.notifies), 0)
 
+    @slow
     def test_notify_noappend(self):
         self.autocommit(self.conn)
         self.conn.notifies = None

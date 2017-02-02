@@ -30,7 +30,7 @@ import psycopg2.extensions
 from psycopg2 import extras
 
 from testconfig import dsn
-from testutils import unittest, ConnectingTestCase, skip_before_postgres
+from testutils import unittest, ConnectingTestCase, skip_before_postgres, slow
 
 
 class CancelTests(ConnectingTestCase):
@@ -48,6 +48,7 @@ class CancelTests(ConnectingTestCase):
     def test_empty_cancel(self):
         self.conn.cancel()
 
+    @slow
     @skip_before_postgres(8, 2)
     def test_cancel(self):
         errors = []

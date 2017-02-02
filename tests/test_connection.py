@@ -35,7 +35,7 @@ from psycopg2 import extensions as ext
 from testutils import (
     unittest, decorate_all_tests, skip_if_no_superuser,
     skip_before_postgres, skip_after_postgres, skip_before_libpq,
-    ConnectingTestCase, skip_if_tpc_disabled, skip_if_windows)
+    ConnectingTestCase, skip_if_tpc_disabled, skip_if_windows, slow)
 
 from testconfig import dsn, dbname
 
@@ -196,6 +196,7 @@ class ConnectionTests(ConnectingTestCase):
         self.assertRaises(psycopg2.NotSupportedError,
             cnn.xid, 42, "foo", "bar")
 
+    @slow
     @skip_before_postgres(8, 2)
     def test_concurrent_execution(self):
         def slave():
@@ -246,6 +247,7 @@ class ConnectionTests(ConnectingTestCase):
         gc.collect()
         self.assert_(w() is None)
 
+    @slow
     def test_commit_concurrency(self):
         # The problem is the one reported in ticket #103. Because of bad
         # status check, we commit even when a commit is already on its way.
@@ -899,6 +901,7 @@ class ConnectionTwoPhaseTests(ConnectingTestCase):
             (dbname,))
         self.assertEqual('42_Z3RyaWQ=_YnF1YWw=', cur.fetchone()[0])
 
+    @slow
     def test_xid_roundtrip(self):
         for fid, gtrid, bqual in [
             (0, "", ""),
@@ -921,6 +924,7 @@ class ConnectionTwoPhaseTests(ConnectingTestCase):
 
             cnn.tpc_rollback(xid)
 
+    @slow
     def test_unparsed_roundtrip(self):
         for tid in [
             '',

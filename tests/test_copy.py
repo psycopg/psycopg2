@@ -24,8 +24,8 @@
 
 import sys
 import string
-from testutils import unittest, ConnectingTestCase, decorate_all_tests
-from testutils import skip_if_no_iobase, skip_before_postgres
+from testutils import (unittest, ConnectingTestCase, decorate_all_tests,
+    skip_if_no_iobase, skip_before_postgres, slow)
 from cStringIO import StringIO
 from itertools import cycle, izip
 from subprocess import Popen, PIPE
@@ -77,6 +77,7 @@ class CopyTests(ConnectingTestCase):
               data text
             )''')
 
+    @slow
     def test_copy_from(self):
         curs = self.conn.cursor()
         try:
@@ -84,6 +85,7 @@ class CopyTests(ConnectingTestCase):
         finally:
             curs.close()
 
+    @slow
     def test_copy_from_insane_size(self):
         # Trying to trigger a "would block" error
         curs = self.conn.cursor()
@@ -120,6 +122,7 @@ class CopyTests(ConnectingTestCase):
         self.assertRaises(ZeroDivisionError,
             curs.copy_from, MinimalRead(f), "tcopy", columns=cols())
 
+    @slow
     def test_copy_to(self):
         curs = self.conn.cursor()
         try:
