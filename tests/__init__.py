@@ -22,6 +22,11 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
+# Convert warnings into errors here. We can't do it with -W because on
+# Travis importing site raises a warning.
+import warnings
+warnings.simplefilter('error')  # noqa
+
 import sys
 from testconfig import dsn
 from testutils import unittest

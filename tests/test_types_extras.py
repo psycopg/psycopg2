@@ -17,6 +17,7 @@ from __future__ import with_statement
 
 import re
 import sys
+import warnings
 from decimal import Decimal
 from datetime import date, datetime
 from functools import wraps
@@ -77,7 +78,10 @@ class TypesExtrasTests(ConnectingTestCase):
         self.failUnless(type(s) == list and len(s) == 0)
 
     def testINET(self):
-        psycopg2.extras.register_inet()
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', DeprecationWarning)
+            psycopg2.extras.register_inet()
+
         i = psycopg2.extras.Inet("192.168.1.0/24")
         s = self.execute("SELECT %s AS foo", (i,))
         self.failUnless(i.addr == s.addr)
@@ -86,7 +90,10 @@ class TypesExtrasTests(ConnectingTestCase):
         self.failUnless(s is None)
 
     def testINETARRAY(self):
-        psycopg2.extras.register_inet()
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', DeprecationWarning)
+            psycopg2.extras.register_inet()
+
         i = psycopg2.extras.Inet("192.168.1.0/24")
         s = self.execute("SELECT %s AS foo", ([i],))
         self.failUnless(i.addr == s[0].addr)

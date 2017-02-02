@@ -50,7 +50,9 @@ else:
             @wraps(f)
             def skipIf__(self):
                 if cond:
-                    warnings.warn(msg)
+                    with warnings.catch_warnings():
+                        warnings.simplefilter('always', UserWarning)
+                        warnings.warn(msg)
                     return
                 else:
                     return f(self)
@@ -61,7 +63,9 @@ else:
         return skipIf(True, msg)
 
     def skipTest(self, msg):
-        warnings.warn(msg)
+        with warnings.catch_warnings():
+            warnings.simplefilter('always', UserWarning)
+            warnings.warn(msg)
         return
 
     unittest.TestCase.skipTest = skipTest
