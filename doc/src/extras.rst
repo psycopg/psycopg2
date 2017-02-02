@@ -993,6 +993,38 @@ parameters.  By reducing the number of server roundtrips the performance can be
 
     .. versionadded:: 2.7
 
+.. note::
+
+    `!execute_batch()` can be also used in conjunction with PostgreSQL
+    prepared statements using |PREPARE|_, |EXECUTE|_, |DEALLOCATE|_.
+    Instead of executing::
+
+        execute_batch(cur,
+            "big and complex SQL with %s %s params",
+            params_list)
+
+    it is possible to execute something like::
+
+        cur.execute("PREPARE stmt AS big and complex SQL with $1 $2 params")
+        execute_batch(cur, "EXECUTE stmt (%s, %s)", params_list)
+        cur.execute("DEALLOCATE stmt")
+
+    which may bring further performance benefits: if the operation to perform
+    is complex, every single execution will be faster as the query plan is
+    already cached; furthermore the amount of data to send on the server will
+    be lesser (one |EXECUTE| per param set instead of the whole, likely
+    longer, statement).
+
+    .. |PREPARE| replace:: :sql:`PREPARE`
+    .. _PREPARE: https://www.postgresql.org/docs/current/static/sql-prepare.html
+
+    .. |EXECUTE| replace:: :sql:`EXECUTE`
+    .. _EXECUTE: https://www.postgresql.org/docs/current/static/sql-execute.html
+
+    .. |DEALLOCATE| replace:: :sql:`DEALLOCATE`
+    .. _DEALLOCATE: https://www.postgresql.org/docs/current/static/sql-deallocate.html
+
+
 .. autofunction:: execute_values
 
     .. versionadded:: 2.7
