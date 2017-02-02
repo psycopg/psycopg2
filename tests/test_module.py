@@ -26,8 +26,8 @@ import os
 import sys
 from subprocess import Popen
 
-from testutils import unittest, skip_before_python, skip_before_postgres
-from testutils import ConnectingTestCase, skip_copy_if_green, script_to_py3
+from testutils import (unittest, skip_before_python, skip_before_postgres,
+    ConnectingTestCase, skip_copy_if_green, script_to_py3, slow)
 
 import psycopg2
 
@@ -311,6 +311,7 @@ class ExceptionsTestCase(ConnectingTestCase):
 
 
 class TestExtensionModule(unittest.TestCase):
+    @slow
     def test_import_internal(self):
         # check that the internal package can be imported "naked"
         # we may break this property if there is a compelling reason to do so,

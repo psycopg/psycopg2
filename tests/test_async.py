@@ -97,6 +97,7 @@ class AsyncTests(ConnectingTestCase):
         self.assertFalse(self.conn.isexecuting())
         self.assertEquals(cur.fetchone()[0], "a")
 
+    @slow
     @skip_before_postgres(8, 2)
     def test_async_callproc(self):
         cur = self.conn.cursor()
@@ -107,6 +108,7 @@ class AsyncTests(ConnectingTestCase):
         self.assertFalse(self.conn.isexecuting())
         self.assertEquals(cur.fetchall()[0][0], '')
 
+    @slow
     def test_async_after_async(self):
         cur = self.conn.cursor()
         cur2 = self.conn.cursor()

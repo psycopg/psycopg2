@@ -111,6 +111,7 @@ conn.close()
             self.assertEqual(pids[name], pid)
             names.pop(name)     # raise if name found twice
 
+    @slow
     def test_notifies_received_on_execute(self):
         self.autocommit(self.conn)
         self.listen('foo')

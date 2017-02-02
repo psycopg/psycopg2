@@ -312,6 +312,7 @@ class CopyTests(ConnectingTestCase):
             curs.copy_from, StringIO('aaa\nbbb\nccc\n'), 'tcopy')
         self.assertEqual(curs.rowcount, -1)
 
+    @slow
     def test_copy_from_segfault(self):
         # issue #219
         script = ("""\
@@ -330,6 +331,7 @@ conn.close()
         proc.communicate()
         self.assertEqual(0, proc.returncode)
 
+    @slow
     def test_copy_to_segfault(self):
         # issue #219
         script = ("""\

@@ -29,8 +29,8 @@ from functools import wraps
 
 import psycopg2
 import psycopg2.extensions
-from testutils import unittest, decorate_all_tests, skip_if_tpc_disabled
-from testutils import ConnectingTestCase, skip_if_green
+from testutils import (unittest, decorate_all_tests, skip_if_tpc_disabled,
+    ConnectingTestCase, skip_if_green, slow)
 
 
 def skip_if_no_lo(f):
@@ -191,6 +191,7 @@ class LargeObjectTests(LargeObjectTestCase):
         self.assertEqual(x, u"some")
         self.assertEqual(lo.read(), u" data " + snowman)
 
+    @slow
     def test_read_large(self):
         lo = self.conn.lobject()
         data = "data" * 1000000

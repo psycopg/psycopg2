@@ -125,6 +125,7 @@ class ConnectionTests(ConnectingTestCase):
         self.assert_('table3' in conn.notices[2])
         self.assert_('table4' in conn.notices[3])
 
+    @slow
     def test_notices_limited(self):
         conn = self.conn
         cur = conn.cursor()
@@ -138,6 +139,7 @@ class ConnectionTests(ConnectingTestCase):
         self.assertEqual(50, len(conn.notices))
         self.assert_('table99' in conn.notices[-1], conn.notices[-1])
 
+    @slow
     def test_notices_deque(self):
         from collections import deque
 
