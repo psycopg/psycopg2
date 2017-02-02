@@ -172,33 +172,38 @@ The ``cursor`` class
 
 
     .. method:: execute(operation [, parameters])
-      
+
         Prepare and execute a database operation (query or command).
 
         Parameters may be provided as sequence or mapping and will be bound to
         variables in the operation.  Variables are specified either with
         positional (``%s``) or named (:samp:`%({name})s`) placeholders. See
         :ref:`query-parameters`.
-        
+
         The method returns `!None`. If a query was executed, the returned
         values can be retrieved using |fetch*|_ methods.
 
 
     .. method:: executemany(operation, seq_of_parameters)
-      
+
         Prepare a database operation (query or command) and then execute it
         against all parameter tuples or mappings found in the sequence
         `seq_of_parameters`.
-        
+
         The function is mostly useful for commands that update the database:
         any result set returned by the query is discarded.
-        
+
         Parameters are bounded to the query using the same rules described in
         the `~cursor.execute()` method.
 
+        .. warning::
+            In its current implementation this method is not faster than
+            executing `~cursor.execute()` in a loop. For better performance
+            you can use the functions described in :ref:`fast-exec`.
+
 
     .. method:: callproc(procname [, parameters])
-            
+
         Call a stored database procedure with the given name. The sequence of
         parameters must contain one entry for each argument that the procedure
         expects. Overloaded procedures are supported. Named parameters can be
