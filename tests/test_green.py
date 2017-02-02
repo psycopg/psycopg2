@@ -27,7 +27,7 @@ import psycopg2
 import psycopg2.extensions
 import psycopg2.extras
 
-from testutils import ConnectingTestCase
+from testutils import ConnectingTestCase, slow
 
 
 class ConnectionStub(object):
@@ -61,6 +61,7 @@ class GreenTestCase(ConnectingTestCase):
             lambda conn: psycopg2.extras.wait_select(stub))
         return stub
 
+    @slow
     def test_flush_on_write(self):
         # a very large query requires a flush loop to be sent to the backend
         conn = self.conn

@@ -22,9 +22,8 @@ from datetime import date, datetime
 from functools import wraps
 from pickle import dumps, loads
 
-from testutils import unittest, skip_if_no_uuid, skip_before_postgres
-from testutils import ConnectingTestCase, decorate_all_tests
-from testutils import py3_raises_typeerror
+from testutils import (unittest, skip_if_no_uuid, skip_before_postgres,
+    ConnectingTestCase, decorate_all_tests, py3_raises_typeerror, slow)
 
 import psycopg2
 import psycopg2.extras
@@ -708,6 +707,7 @@ class AdaptTypeTestCase(ConnectingTestCase):
         curs.execute("select (1,2)::type_ii")
         self.assertRaises(psycopg2.DataError, curs.fetchone)
 
+    @slow
     @skip_if_no_composite
     @skip_before_postgres(8, 4)
     def test_from_tables(self):

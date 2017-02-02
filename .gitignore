@@ -13,3 +13,4 @@ scripts/pypi_docs_upload.py
 env
 .tox
 /rel
+/wheels
