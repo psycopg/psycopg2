@@ -457,7 +457,12 @@ class py3_raises_typeerror(object):
 
 
 def slow(f):
-    """Decorator to mark slow tests we may want to skip"""
+    """Decorator to mark slow tests we may want to skip
+
+    Note: in order to find slow tests you can run:
+
+    make check 2>&1 | ts -i "%.s" | sort -n
+    """
     @wraps(f)
     def slow_(self):
         if os.environ.get('PSYCOPG2_TEST_FAST'):
