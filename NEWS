@@ -29,6 +29,8 @@ New features:
   unicode encoding/decoding (:ticket:`#473`).
 - Fixed error caused by missing decoding `~psycopg2.extras.LoggingConnection`
   (:ticket:`#483`).
+- Added ``async_`` as an alias for ``async`` to support Python 3.7 where
+  ``async`` will become a keyword (:ticket:`#495`).
 
 Other changes:
 
