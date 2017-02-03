@@ -1,4 +1,4 @@
-@import url("default.css");
+@import url("classic.css");
 
 blockquote {
     font-style: italic;
@@ -14,11 +14,13 @@ div.dbapi-extension {
     border: 1px solid #aaf;
 }
 
+code.sql,
 tt.sql {
     font-size: 1em;
     background-color: transparent;
 }
 
+a > code.sql:hover,
 a > tt.sql:hover {
     text-decoration: underline;
 }

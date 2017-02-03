@@ -29,6 +29,8 @@ introspection etc.
 
     For a complete description of the class, see `connection`.
 
+    .. versionchanged:: 2.7
+        *async_* can be used as alias for *async*.
 
 .. class:: cursor(conn, name=None)
 

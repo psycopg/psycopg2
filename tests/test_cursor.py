@@ -26,8 +26,8 @@ import time
 import pickle
 import psycopg2
 import psycopg2.extensions
-from testutils import unittest, ConnectingTestCase, skip_before_postgres
-from testutils import skip_if_no_namedtuple, skip_if_no_getrefcount
+from testutils import (unittest, ConnectingTestCase, skip_before_postgres,
+    skip_if_no_namedtuple, skip_if_no_getrefcount, slow)
 
 
 class CursorTests(ConnectingTestCase):
@@ -331,6 +331,7 @@ class CursorTests(ConnectingTestCase):
         curs.scroll(2)
         self.assertRaises(psycopg2.OperationalError, curs.scroll, -1)
 
+    @slow
     @skip_before_postgres(8, 2)
     def test_iter_named_cursor_efficient(self):
         curs = self.conn.cursor('tmp')

@@ -82,14 +82,16 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
     PyObject *conn = NULL;
     PyObject *factory = NULL;
     const char *dsn = NULL;
-    int async = 0;
+    int async = 0, async_ = 0;
 
-    static char *kwlist[] = {"dsn", "connection_factory", "async", NULL};
+    static char *kwlist[] = {"dsn", "connection_factory", "async", "async_", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|Oi", kwlist,
-                                     &dsn, &factory, &async)) {
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|Oii", kwlist,
+            &dsn, &factory, &async, &async_)) {
         return NULL;
     }
+
+    if (async_) { async = async_; }
 
     Dprintf("psyco_connect: dsn = '%s', async = %d", dsn, async);
 

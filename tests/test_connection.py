@@ -33,9 +33,9 @@ import psycopg2.errorcodes
 from psycopg2 import extensions as ext
 
 from testutils import (
-    unittest, decorate_all_tests, skip_if_no_superuser,
+    unittest, assertDsnEqual, decorate_all_tests, skip_if_no_superuser,
     skip_before_postgres, skip_after_postgres, skip_before_libpq,
-    ConnectingTestCase, skip_if_tpc_disabled, skip_if_windows)
+    ConnectingTestCase, skip_if_tpc_disabled, skip_if_windows, slow)
 
 from testconfig import dsn, dbname
 
@@ -125,6 +125,7 @@ class ConnectionTests(ConnectingTestCase):
         self.assert_('table3' in conn.notices[2])
         self.assert_('table4' in conn.notices[3])
 
+    @slow
     def test_notices_limited(self):
         conn = self.conn
         cur = conn.cursor()
@@ -138,6 +139,7 @@ class ConnectionTests(ConnectingTestCase):
         self.assertEqual(50, len(conn.notices))
         self.assert_('table99' in conn.notices[-1], conn.notices[-1])
 
+    @slow
     def test_notices_deque(self):
         from collections import deque
 
@@ -196,6 +198,7 @@ class ConnectionTests(ConnectingTestCase):
         self.assertRaises(psycopg2.NotSupportedError,
             cnn.xid, 42, "foo", "bar")
 
+    @slow
     @skip_before_postgres(8, 2)
     def test_concurrent_execution(self):
         def slave():
@@ -246,6 +249,7 @@ class ConnectionTests(ConnectingTestCase):
         gc.collect()
         self.assert_(w() is None)
 
+    @slow
     def test_commit_concurrency(self):
         # The problem is the one reported in ticket #103. Because of bad
         # status check, we commit even when a commit is already on its way.
@@ -392,9 +396,6 @@ class ParseDsnTestCase(ConnectingTestCase):
 
 
 class MakeDsnTestCase(ConnectingTestCase):
-    def assertDsnEqual(self, dsn1, dsn2):
-        self.assertEqual(set(dsn1.split()), set(dsn2.split()))
-
     def test_empty_arguments(self):
         self.assertEqual(ext.make_dsn(), '')
 
@@ -412,7 +413,7 @@ class MakeDsnTestCase(ConnectingTestCase):
 
     def test_empty_param(self):
         dsn = ext.make_dsn(dbname='sony', password='')
-        self.assertDsnEqual(dsn, "dbname=sony password=''")
+        assertDsnEqual(self, dsn, "dbname=sony password=''")
 
     def test_escape(self):
         dsn = ext.make_dsn(dbname='hello world')
@@ -435,10 +436,10 @@ class MakeDsnTestCase(ConnectingTestCase):
 
     def test_params_merging(self):
         dsn = ext.make_dsn('dbname=foo host=bar', host='baz')
-        self.assertDsnEqual(dsn, 'dbname=foo host=baz')
+        assertDsnEqual(self, dsn, 'dbname=foo host=baz')
 
         dsn = ext.make_dsn('dbname=foo', user='postgres')
-        self.assertDsnEqual(dsn, 'dbname=foo user=postgres')
+        assertDsnEqual(self, dsn, 'dbname=foo user=postgres')
 
     def test_no_dsn_munging(self):
         dsnin = 'dbname=a host=b user=c password=d'
@@ -452,7 +453,7 @@ class MakeDsnTestCase(ConnectingTestCase):
         self.assertEqual(dsn, url)
 
         dsn = ext.make_dsn(url, application_name='woot')
-        self.assertDsnEqual(dsn,
+        assertDsnEqual(self, dsn,
             'dbname=test user=tester password=secret application_name=woot')
 
         self.assertRaises(psycopg2.ProgrammingError,
@@ -899,6 +900,7 @@ class ConnectionTwoPhaseTests(ConnectingTestCase):
             (dbname,))
         self.assertEqual('42_Z3RyaWQ=_YnF1YWw=', cur.fetchone()[0])
 
+    @slow
     def test_xid_roundtrip(self):
         for fid, gtrid, bqual in [
             (0, "", ""),
@@ -921,6 +923,7 @@ class ConnectionTwoPhaseTests(ConnectingTestCase):
 
             cnn.tpc_rollback(xid)
 
+    @slow
     def test_unparsed_roundtrip(self):
         for tid in [
             '',

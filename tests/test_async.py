@@ -23,7 +23,7 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-from testutils import unittest, skip_before_postgres
+from testutils import unittest, skip_before_postgres, slow
 
 import psycopg2
 from psycopg2 import extensions
@@ -55,7 +55,7 @@ class AsyncTests(ConnectingTestCase):
         ConnectingTestCase.setUp(self)
 
         self.sync_conn = self.conn
-        self.conn = self.connect(async=True)
+        self.conn = self.connect(async_=True)
 
         self.wait(self.conn)
 
@@ -71,8 +71,8 @@ class AsyncTests(ConnectingTestCase):
         sync_cur = self.sync_conn.cursor()
         del cur, sync_cur
 
-        self.assert_(self.conn.async)
-        self.assert_(not self.sync_conn.async)
+        self.assert_(self.conn.async_)
+        self.assert_(not self.sync_conn.async_)
 
         # the async connection should be in isolevel 0
         self.assertEquals(self.conn.isolation_level, 0)
@@ -97,6 +97,7 @@ class AsyncTests(ConnectingTestCase):
         self.assertFalse(self.conn.isexecuting())
         self.assertEquals(cur.fetchone()[0], "a")
 
+    @slow
     @skip_before_postgres(8, 2)
     def test_async_callproc(self):
         cur = self.conn.cursor()
@@ -107,6 +108,7 @@ class AsyncTests(ConnectingTestCase):
         self.assertFalse(self.conn.isexecuting())
         self.assertEquals(cur.fetchall()[0][0], '')
 
+    @slow
     def test_async_after_async(self):
         cur = self.conn.cursor()
         cur2 = self.conn.cursor()
@@ -310,14 +312,15 @@ class AsyncTests(ConnectingTestCase):
 
     def test_async_subclass(self):
         class MyConn(psycopg2.extensions.connection):
-            def __init__(self, dsn, async=0):
-                psycopg2.extensions.connection.__init__(self, dsn, async=async)
+            def __init__(self, dsn, async_=0):
+                psycopg2.extensions.connection.__init__(self, dsn, async_=async_)
 
-        conn = self.connect(connection_factory=MyConn, async=True)
+        conn = self.connect(connection_factory=MyConn, async_=True)
         self.assert_(isinstance(conn, MyConn))
-        self.assert_(conn.async)
+        self.assert_(conn.async_)
         conn.close()
 
+    @slow
     def test_flush_on_write(self):
         # a very large query requires a flush loop to be sent to the backend
         curs = self.conn.cursor()
@@ -438,7 +441,7 @@ class AsyncTests(ConnectingTestCase):
 
     def test_async_connection_error_message(self):
         try:
-            cnn = psycopg2.connect('dbname=thisdatabasedoesntexist', async=True)
+            cnn = psycopg2.connect('dbname=thisdatabasedoesntexist', async_=True)
             self.wait(cnn)
         except psycopg2.Error, e:
             self.assertNotEqual(str(e), "asynchronous connection failed",

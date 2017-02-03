@@ -26,8 +26,8 @@ import os
 import sys
 from subprocess import Popen
 
-from testutils import unittest, skip_before_python, skip_before_postgres
-from testutils import ConnectingTestCase, skip_copy_if_green, script_to_py3
+from testutils import (unittest, skip_before_python, skip_before_postgres,
+    ConnectingTestCase, skip_copy_if_green, script_to_py3, assertDsnEqual, slow)
 
 import psycopg2
 
@@ -36,24 +36,21 @@ class ConnectTestCase(unittest.TestCase):
     def setUp(self):
         self.args = None
 
-        def conect_stub(dsn, connection_factory=None, async=False):
-            self.args = (dsn, connection_factory, async)
+        def connect_stub(dsn, connection_factory=None, async_=False):
+            self.args = (dsn, connection_factory, async_)
 
         self._connect_orig = psycopg2._connect
-        psycopg2._connect = conect_stub
+        psycopg2._connect = connect_stub
 
     def tearDown(self):
         psycopg2._connect = self._connect_orig
 
-    def assertDsnEqual(self, dsn1, dsn2):
-        self.assertEqual(set(dsn1.split()), set(dsn2.split()))
-
     def test_there_has_to_be_something(self):
         self.assertRaises(TypeError, psycopg2.connect)
         self.assertRaises(TypeError, psycopg2.connect,
-            connection_factory=lambda dsn, async=False: None)
+            connection_factory=lambda dsn, async_=False: None)
         self.assertRaises(TypeError, psycopg2.connect,
-            async=True)
+            async_=True)
 
     def test_no_keywords(self):
         psycopg2.connect('')
@@ -92,27 +89,27 @@ class ConnectTestCase(unittest.TestCase):
         self.assertEqual(self.args[0], 'options=stuff')
 
     def test_factory(self):
-        def f(dsn, async=False):
+        def f(dsn, async_=False):
             pass
 
         psycopg2.connect(database='foo', host='baz', connection_factory=f)
-        self.assertDsnEqual(self.args[0], 'dbname=foo host=baz')
+        assertDsnEqual(self, self.args[0], 'dbname=foo host=baz')
         self.assertEqual(self.args[1], f)
         self.assertEqual(self.args[2], False)
 
         psycopg2.connect("dbname=foo host=baz", connection_factory=f)
-        self.assertDsnEqual(self.args[0], 'dbname=foo host=baz')
+        assertDsnEqual(self, self.args[0], 'dbname=foo host=baz')
         self.assertEqual(self.args[1], f)
         self.assertEqual(self.args[2], False)
 
     def test_async(self):
-        psycopg2.connect(database='foo', host='baz', async=1)
-        self.assertDsnEqual(self.args[0], 'dbname=foo host=baz')
+        psycopg2.connect(database='foo', host='baz', async_=1)
+        assertDsnEqual(self, self.args[0], 'dbname=foo host=baz')
         self.assertEqual(self.args[1], None)
         self.assert_(self.args[2])
 
-        psycopg2.connect("dbname=foo host=baz", async=True)
-        self.assertDsnEqual(self.args[0], 'dbname=foo host=baz')
+        psycopg2.connect("dbname=foo host=baz", async_=True)
+        assertDsnEqual(self, self.args[0], 'dbname=foo host=baz')
         self.assertEqual(self.args[1], None)
         self.assert_(self.args[2])
 
@@ -124,7 +121,7 @@ class ConnectTestCase(unittest.TestCase):
 
     def test_empty_param(self):
         psycopg2.connect(database='sony', password='')
-        self.assertDsnEqual(self.args[0], "dbname=sony password=''")
+        assertDsnEqual(self, self.args[0], "dbname=sony password=''")
 
     def test_escape(self):
         psycopg2.connect(database='hello world')
@@ -147,7 +144,7 @@ class ConnectTestCase(unittest.TestCase):
         self.assertEqual(self.args[0], 'dbname=bar')
 
         psycopg2.connect('dbname=foo', user='postgres')
-        self.assertDsnEqual(self.args[0], 'dbname=foo user=postgres')
+        assertDsnEqual(self, self.args[0], 'dbname=foo user=postgres')
 
 
 class ExceptionsTestCase(ConnectingTestCase):
@@ -311,6 +308,7 @@ class ExceptionsTestCase(ConnectingTestCase):
 
 
 class TestExtensionModule(unittest.TestCase):
+    @slow
     def test_import_internal(self):
         # check that the internal package can be imported "naked"
         # we may break this property if there is a compelling reason to do so,

@@ -706,8 +706,12 @@ The ``connection`` class
 
 
     .. attribute:: async
+                   async_
 
         Read only attribute: 1 if the connection is asynchronous, 0 otherwise.
+
+        .. versionchanged:: 2.7 added the `!async_` alias for Python versions
+            where `!async` is a keyword.
 
 
     .. method:: poll()

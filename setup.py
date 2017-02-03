@@ -50,7 +50,11 @@ else:
         # workaround subclass for ticket #153
         pass
 
-    sys.path.insert(0, 'scripts')
+    # Configure distutils to run our custom 2to3 fixers as well
+    from lib2to3.refactor import get_fixers_from_package
+    build_py.fixer_names = [f for f in get_fixers_from_package('lib2to3.fixes')
+        # creates a pending deprecation warning on py 3.4
+        if not f.endswith('.fix_reload')]
 
 try:
     import configparser
@@ -79,6 +83,7 @@ Programming Language :: Python :: 3.2
 Programming Language :: Python :: 3.3
 Programming Language :: Python :: 3.4
 Programming Language :: Python :: 3.5
+Programming Language :: Python :: 3.6
 Programming Language :: C
 Programming Language :: SQL
 Topic :: Database
