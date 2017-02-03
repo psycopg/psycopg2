@@ -37,6 +37,7 @@ import test_cursor
 import test_dates
 import test_errcodes
 import test_extras_dictcursor
+import test_fast_executemany
 import test_green
 import test_ipaddress
 import test_lobject
@@ -74,6 +75,7 @@ def test_suite():
     suite.addTest(test_dates.test_suite())
     suite.addTest(test_errcodes.test_suite())
     suite.addTest(test_extras_dictcursor.test_suite())
+    suite.addTest(test_fast_executemany.test_suite())
     suite.addTest(test_green.test_suite())
     suite.addTest(test_ipaddress.test_suite())
     suite.addTest(test_lobject.test_suite())
