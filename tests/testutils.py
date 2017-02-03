@@ -134,7 +134,7 @@ class ConnectingTestCase(unittest.TestCase):
         import psycopg2
         try:
             conn = self.connect(**kwargs)
-            if conn.async == 1:
+            if conn.async_ == 1:
                 self.wait(conn)
         except psycopg2.OperationalError, e:
             # If pgcode is not set it is a genuine connection error
@@ -459,3 +459,7 @@ class py3_raises_typeerror(object):
         if sys.version_info[0] >= 3:
             assert type is TypeError
             return True
+
+
+def assertDsnEqual(testsuite, dsn1, dsn2):
+    testsuite.assertEqual(set(dsn1.split()), set(dsn2.split()))

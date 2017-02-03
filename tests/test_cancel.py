@@ -87,7 +87,7 @@ class CancelTests(ConnectingTestCase):
 
     @skip_before_postgres(8, 2)
     def test_async_cancel(self):
-        async_conn = psycopg2.connect(dsn, async=True)
+        async_conn = psycopg2.connect(dsn, async_=True)
         self.assertRaises(psycopg2.OperationalError, async_conn.cancel)
         extras.wait_select(async_conn)
         cur = async_conn.cursor()
@@ -101,7 +101,7 @@ class CancelTests(ConnectingTestCase):
         self.assertEqual(cur.fetchall(), [(1, )])
 
     def test_async_connection_cancel(self):
-        async_conn = psycopg2.connect(dsn, async=True)
+        async_conn = psycopg2.connect(dsn, async_=True)
         async_conn.close()
         self.assertTrue(async_conn.closed)
 

@@ -33,7 +33,7 @@ import psycopg2.errorcodes
 from psycopg2 import extensions as ext
 
 from testutils import (
-    unittest, decorate_all_tests, skip_if_no_superuser,
+    unittest, assertDsnEqual, decorate_all_tests, skip_if_no_superuser,
     skip_before_postgres, skip_after_postgres, skip_before_libpq,
     ConnectingTestCase, skip_if_tpc_disabled, skip_if_windows)
 
@@ -392,9 +392,6 @@ class ParseDsnTestCase(ConnectingTestCase):
 
 
 class MakeDsnTestCase(ConnectingTestCase):
-    def assertDsnEqual(self, dsn1, dsn2):
-        self.assertEqual(set(dsn1.split()), set(dsn2.split()))
-
     def test_empty_arguments(self):
         self.assertEqual(ext.make_dsn(), '')
 
@@ -412,7 +409,7 @@ class MakeDsnTestCase(ConnectingTestCase):
 
     def test_empty_param(self):
         dsn = ext.make_dsn(dbname='sony', password='')
-        self.assertDsnEqual(dsn, "dbname=sony password=''")
+        assertDsnEqual(self, dsn, "dbname=sony password=''")
 
     def test_escape(self):
         dsn = ext.make_dsn(dbname='hello world')
@@ -435,10 +432,10 @@ class MakeDsnTestCase(ConnectingTestCase):
 
     def test_params_merging(self):
         dsn = ext.make_dsn('dbname=foo host=bar', host='baz')
-        self.assertDsnEqual(dsn, 'dbname=foo host=baz')
+        assertDsnEqual(self, dsn, 'dbname=foo host=baz')
 
         dsn = ext.make_dsn('dbname=foo', user='postgres')
-        self.assertDsnEqual(dsn, 'dbname=foo user=postgres')
+        assertDsnEqual(self, dsn, 'dbname=foo user=postgres')
 
     def test_no_dsn_munging(self):
         dsnin = 'dbname=a host=b user=c password=d'
@@ -452,7 +449,7 @@ class MakeDsnTestCase(ConnectingTestCase):
         self.assertEqual(dsn, url)
 
         dsn = ext.make_dsn(url, application_name='woot')
-        self.assertDsnEqual(dsn,
+        assertDsnEqual(self, dsn,
             'dbname=test user=tester password=secret application_name=woot')
 
         self.assertRaises(psycopg2.ProgrammingError,
