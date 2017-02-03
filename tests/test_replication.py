@@ -183,7 +183,7 @@ class AsyncReplicationTest(ReplicationTestCase):
     @skip_repl_if_green
     def test_async_replication(self):
         conn = self.repl_connect(
-            connection_factory=LogicalReplicationConnection, async=1)
+            connection_factory=LogicalReplicationConnection, async_=1)
         if conn is None:
             return
 

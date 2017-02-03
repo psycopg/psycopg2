@@ -1040,6 +1040,8 @@ static struct PyMemberDef connectionObject_members[] = {
         "The current connection string."},
     {"async", T_LONG, offsetof(connectionObject, async), READONLY,
         "True if the connection is asynchronous."},
+    {"async_", T_LONG, offsetof(connectionObject, async), READONLY,
+        "True if the connection is asynchronous."},
     {"status", T_INT,
         offsetof(connectionObject, status), READONLY,
         "The current transaction status."},
@@ -1186,12 +1188,14 @@ static int
 connection_init(PyObject *obj, PyObject *args, PyObject *kwds)
 {
     const char *dsn;
-    long int async = 0;
-    static char *kwlist[] = {"dsn", "async", NULL};
+    long int async = 0, async_ = 0;
+    static char *kwlist[] = {"dsn", "async", "async_", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|l", kwlist, &dsn, &async))
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|ll", kwlist,
+            &dsn, &async, &async_))
         return -1;
 
+    if (async_) { async = async_; }
     return connection_setup((connectionObject *)obj, dsn, async);
 }
 

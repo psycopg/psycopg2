@@ -22,6 +22,11 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
+# Convert warnings into errors here. We can't do it with -W because on
+# Travis importing site raises a warning.
+import warnings
+warnings.simplefilter('error')  # noqa
+
 import sys
 from testconfig import dsn
 from testutils import unittest
@@ -50,6 +55,9 @@ import test_types_basic
 import test_types_extras
 import test_with
 
+if sys.version_info[:2] < (3, 6):
+    import test_async_keyword
+
 
 def test_suite():
     # If connection to test db fails, bail out early.
@@ -65,6 +73,8 @@ def test_suite():
 
     suite = unittest.TestSuite()
     suite.addTest(test_async.test_suite())
+    if sys.version_info[:2] < (3, 6):
+        suite.addTest(test_async_keyword.test_suite())
     suite.addTest(test_bugX000.test_suite())
     suite.addTest(test_bug_gc.test_suite())
     suite.addTest(test_cancel.test_suite())

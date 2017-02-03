@@ -55,7 +55,7 @@ class AsyncTests(ConnectingTestCase):
         ConnectingTestCase.setUp(self)
 
         self.sync_conn = self.conn
-        self.conn = self.connect(async=True)
+        self.conn = self.connect(async_=True)
 
         self.wait(self.conn)
 
@@ -71,8 +71,8 @@ class AsyncTests(ConnectingTestCase):
         sync_cur = self.sync_conn.cursor()
         del cur, sync_cur
 
-        self.assert_(self.conn.async)
-        self.assert_(not self.sync_conn.async)
+        self.assert_(self.conn.async_)
+        self.assert_(not self.sync_conn.async_)
 
         # the async connection should be in isolevel 0
         self.assertEquals(self.conn.isolation_level, 0)
@@ -312,12 +312,12 @@ class AsyncTests(ConnectingTestCase):
 
     def test_async_subclass(self):
         class MyConn(psycopg2.extensions.connection):
-            def __init__(self, dsn, async=0):
-                psycopg2.extensions.connection.__init__(self, dsn, async=async)
+            def __init__(self, dsn, async_=0):
+                psycopg2.extensions.connection.__init__(self, dsn, async_=async_)
 
-        conn = self.connect(connection_factory=MyConn, async=True)
+        conn = self.connect(connection_factory=MyConn, async_=True)
         self.assert_(isinstance(conn, MyConn))
-        self.assert_(conn.async)
+        self.assert_(conn.async_)
         conn.close()
 
     @slow
@@ -441,7 +441,7 @@ class AsyncTests(ConnectingTestCase):
 
     def test_async_connection_error_message(self):
         try:
-            cnn = psycopg2.connect('dbname=thisdatabasedoesntexist', async=True)
+            cnn = psycopg2.connect('dbname=thisdatabasedoesntexist', async_=True)
             self.wait(cnn)
         except psycopg2.Error, e:
             self.assertNotEqual(str(e), "asynchronous connection failed",

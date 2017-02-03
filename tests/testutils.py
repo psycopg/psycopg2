@@ -50,7 +50,9 @@ else:
             @wraps(f)
             def skipIf__(self):
                 if cond:
-                    warnings.warn(msg)
+                    with warnings.catch_warnings():
+                        warnings.simplefilter('always', UserWarning)
+                        warnings.warn(msg)
                     return
                 else:
                     return f(self)
@@ -61,7 +63,9 @@ else:
         return skipIf(True, msg)
 
     def skipTest(self, msg):
-        warnings.warn(msg)
+        with warnings.catch_warnings():
+            warnings.simplefilter('always', UserWarning)
+            warnings.warn(msg)
         return
 
     unittest.TestCase.skipTest = skipTest
@@ -130,7 +134,7 @@ class ConnectingTestCase(unittest.TestCase):
         import psycopg2
         try:
             conn = self.connect(**kwargs)
-            if conn.async == 1:
+            if conn.async_ == 1:
                 self.wait(conn)
         except psycopg2.OperationalError, e:
             # If pgcode is not set it is a genuine connection error
@@ -469,3 +473,7 @@ def slow(f):
             return self.skipTest("slow test")
         return f(self)
     return slow_
+
+
+def assertDsnEqual(testsuite, dsn1, dsn2):
+    testsuite.assertEqual(set(dsn1.split()), set(dsn2.split()))

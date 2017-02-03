@@ -27,7 +27,10 @@ from testutils import unittest, ConnectingTestCase, slow
 try:
     reload
 except NameError:
-    from imp import reload
+    try:
+        from importlib import reload
+    except ImportError:
+        from imp import reload
 
 from threading import Thread
 from psycopg2 import errorcodes

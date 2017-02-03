@@ -64,7 +64,8 @@ The module interface respects the standard defined in the |DBAPI|_.
     cursors you can use this parameter instead of subclassing a connection.
 
     Using *async*\=\ `!True` an asynchronous connection will be created: see
-    :ref:`async-support` to know about advantages and limitations.
+    :ref:`async-support` to know about advantages and limitations. *async_* is
+    a valid alias for the Python version where ``async`` is a keyword.
 
     .. versionchanged:: 2.4.3
         any keyword argument is passed to the connection. Previously only the
@@ -75,6 +76,9 @@ The module interface respects the standard defined in the |DBAPI|_.
 
     .. versionchanged:: 2.7
         both *dsn* and keyword arguments can be specified.
+
+    .. versionchanged:: 2.7
+        added *async_* alias.
 
     .. seealso::
 

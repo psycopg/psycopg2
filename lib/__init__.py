@@ -82,8 +82,7 @@ else:
     del Decimal, Adapter
 
 
-def connect(dsn=None, connection_factory=None, cursor_factory=None,
-            async=False, **kwargs):
+def connect(dsn=None, connection_factory=None, cursor_factory=None, **kwargs):
     """
     Create a new database connection.
 
@@ -111,17 +110,24 @@ def connect(dsn=None, connection_factory=None, cursor_factory=None,
     Using the *cursor_factory* parameter, a new default cursor factory will be
     used by cursor().
 
-    Using *async*=True an asynchronous connection will be created.
+    Using *async*=True an asynchronous connection will be created. *async_* is
+    a valid alias (for Python versions where ``async`` is a keyword).
 
     Any other keyword parameter will be passed to the underlying client
     library: the list of supported parameters depends on the library version.
 
     """
+    kwasync = {}
+    if 'async' in kwargs:
+        kwasync['async'] = kwargs.pop('async')
+    if 'async_' in kwargs:
+        kwasync['async_'] = kwargs.pop('async_')
+
     if dsn is None and not kwargs:
         raise TypeError('missing dsn and no parameters')
 
     dsn = _ext.make_dsn(dsn, **kwargs)
-    conn = _connect(dsn, connection_factory=connection_factory, async=async)
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
     if cursor_factory is not None:
         conn.cursor_factory = cursor_factory
 
