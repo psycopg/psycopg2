@@ -1194,9 +1194,11 @@ conn_set_autocommit(connectionObject *self, int value)
     return 0;
 }
 
+
 /* Promote an isolation level to one of the levels supported by the server */
 
-static int _adjust_isolevel(connectionObject *self, int level) {
+static int
+_adjust_isolevel(connectionObject *self, int level) {
     if (self->server_version < 80000) {
         if (level == ISOLATION_LEVEL_READ_UNCOMMITTED) {
             level = ISOLATION_LEVEL_READ_COMMITTED;
@@ -1209,93 +1211,21 @@ static int _adjust_isolevel(connectionObject *self, int level) {
 }
 
 
-/* parse a python object into one of the possible isolation level values */
-
+/* Change the state of the session */
 RAISES_NEG int
-conn_parse_isolevel(connectionObject *self, PyObject *pyval)
+conn_set_session(connectionObject *self, int autocommit,
+        int isolevel, int readonly, int deferrable)
 {
-    int rv = -1;
-    long level;
+    isolevel = _adjust_isolevel(self, isolevel);
 
-    Py_INCREF(pyval);   /* for ensure_bytes */
+    self->isolevel = isolevel;
+    self->readonly = readonly;
+    self->deferrable = deferrable;
+    self->autocommit = autocommit;
 
-    /* parse from one of the level constants */
-    if (PyInt_Check(pyval)) {
-        level = PyInt_AsLong(pyval);
-        if (level == -1 && PyErr_Occurred()) { goto exit; }
-        if (level < 1 || level > 4) {
-            PyErr_SetString(PyExc_ValueError,
-                "isolation_level must be between 1 and 4");
-            goto exit;
-        }
-
-        rv = level;
-    }
-
-    /* parse from the string -- this includes "default" */
-
-    else {
-        if (!(pyval = psycopg_ensure_bytes(pyval))) {
-            goto exit;
-        }
-        for (level = 1; level <= 4; level++) {
-            if (0 == strcasecmp(srv_isolevels[level], Bytes_AS_STRING(pyval))) {
-                rv = level;
-                break;
-            }
-        }
-        if (rv < 0 && 0 == strcasecmp("default", Bytes_AS_STRING(pyval))) {
-            rv = ISOLATION_LEVEL_DEFAULT;
-        }
-        if (rv < 0) {
-            PyErr_Format(PyExc_ValueError,
-                "bad value for isolation_level: '%s'", Bytes_AS_STRING(pyval));
-            goto exit;
-        }
-    }
-
-    rv = _adjust_isolevel(self, rv);
-
-exit:
-    Py_XDECREF(pyval);
-
-    return rv;
+    return 0;
 }
 
-/* convert False/True/"default" -> 0/1/2 */
-
-RAISES_NEG int
-conn_parse_onoff(PyObject *pyval)
-{
-    int rv = -1;
-
-    Py_INCREF(pyval);   /* for ensure_bytes */
-
-    if (PyUnicode_CheckExact(pyval) || Bytes_CheckExact(pyval)) {
-        if (!(pyval = psycopg_ensure_bytes(pyval))) {
-            goto exit;
-        }
-        if (0 == strcasecmp("default", Bytes_AS_STRING(pyval))) {
-            rv = STATE_DEFAULT;
-        }
-        else {
-            PyErr_Format(PyExc_ValueError,
-                "the only string accepted is 'default'; got %s",
-                Bytes_AS_STRING(pyval));
-            goto exit;
-        }
-    }
-    else {
-        int istrue;
-        if (0 > (istrue = PyObject_IsTrue(pyval))) { goto exit; }
-        rv = istrue ? STATE_ON : STATE_OFF;
-    }
-
-exit:
-    Py_XDECREF(pyval);
-
-    return rv;
-}
 
 /* conn_switch_isolation_level - switch isolation level on the connection */
 

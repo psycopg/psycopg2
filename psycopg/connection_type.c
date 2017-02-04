@@ -36,6 +36,9 @@
 #include <string.h>
 #include <ctype.h>
 
+extern HIDDEN const char *srv_isolevels[];
+extern HIDDEN const char *srv_readonly[];
+extern HIDDEN const char *srv_deferrable[];
 
 /** DBAPI methods **/
 
@@ -442,6 +445,92 @@ exit:
 }
 
 
+/* parse a python object into one of the possible isolation level values */
+
+RAISES_NEG static int
+_psyco_conn_parse_isolevel(PyObject *pyval)
+{
+    int rv = -1;
+    long level;
+
+    Py_INCREF(pyval);   /* for ensure_bytes */
+
+    /* parse from one of the level constants */
+    if (PyInt_Check(pyval)) {
+        level = PyInt_AsLong(pyval);
+        if (level == -1 && PyErr_Occurred()) { goto exit; }
+        if (level < 1 || level > 4) {
+            PyErr_SetString(PyExc_ValueError,
+                "isolation_level must be between 1 and 4");
+            goto exit;
+        }
+
+        rv = level;
+    }
+
+    /* parse from the string -- this includes "default" */
+
+    else {
+        if (!(pyval = psycopg_ensure_bytes(pyval))) {
+            goto exit;
+        }
+        for (level = 1; level <= 4; level++) {
+            if (0 == strcasecmp(srv_isolevels[level], Bytes_AS_STRING(pyval))) {
+                rv = level;
+                break;
+            }
+        }
+        if (rv < 0 && 0 == strcasecmp("default", Bytes_AS_STRING(pyval))) {
+            rv = ISOLATION_LEVEL_DEFAULT;
+        }
+        if (rv < 0) {
+            PyErr_Format(PyExc_ValueError,
+                "bad value for isolation_level: '%s'", Bytes_AS_STRING(pyval));
+            goto exit;
+        }
+    }
+
+exit:
+    Py_XDECREF(pyval);
+
+    return rv;
+}
+
+/* convert False/True/"default" -> 0/1/2 */
+
+RAISES_NEG static int
+_psyco_conn_parse_onoff(PyObject *pyval)
+{
+    int rv = -1;
+
+    Py_INCREF(pyval);   /* for ensure_bytes */
+
+    if (PyUnicode_CheckExact(pyval) || Bytes_CheckExact(pyval)) {
+        if (!(pyval = psycopg_ensure_bytes(pyval))) {
+            goto exit;
+        }
+        if (0 == strcasecmp("default", Bytes_AS_STRING(pyval))) {
+            rv = STATE_DEFAULT;
+        }
+        else {
+            PyErr_Format(PyExc_ValueError,
+                "the only string accepted is 'default'; got %s",
+                Bytes_AS_STRING(pyval));
+            goto exit;
+        }
+    }
+    else {
+        int istrue;
+        if (0 > (istrue = PyObject_IsTrue(pyval))) { goto exit; }
+        rv = istrue ? STATE_ON : STATE_OFF;
+    }
+
+exit:
+    Py_XDECREF(pyval);
+
+    return rv;
+}
+
 /* set_session - set default transaction characteristics */
 
 #define psyco_conn_set_session_doc \
@@ -474,13 +563,13 @@ psyco_conn_set_session(connectionObject *self, PyObject *args, PyObject *kwargs)
     }
 
     if (Py_None != isolevel) {
-        if (0 > (c_isolevel = conn_parse_isolevel(self, isolevel))) {
+        if (0 > (c_isolevel = _psyco_conn_parse_isolevel(isolevel))) {
             return NULL;
         }
     }
 
     if (Py_None != readonly) {
-        if (0 > (c_readonly = conn_parse_onoff(readonly))) {
+        if (0 > (c_readonly = _psyco_conn_parse_onoff(readonly))) {
             return NULL;
         }
     }
@@ -491,7 +580,7 @@ psyco_conn_set_session(connectionObject *self, PyObject *args, PyObject *kwargs)
                 " from PostgreSQL 9.1");
             return NULL;
         }
-        if (0 > (c_deferrable = conn_parse_onoff(readonly))) {
+        if (0 > (c_deferrable = _psyco_conn_parse_onoff(readonly))) {
             return NULL;
         }
     }
@@ -500,10 +589,10 @@ psyco_conn_set_session(connectionObject *self, PyObject *args, PyObject *kwargs)
         if (-1 == (c_autocommit = PyObject_IsTrue(autocommit))) { return NULL; }
     }
 
-    self->isolevel = c_isolevel;
-    self->readonly = c_readonly;
-    self->deferrable = c_deferrable;
-    self->autocommit = c_autocommit;
+    if (0 > conn_set_session(
+                self, c_autocommit, c_isolevel, c_readonly, c_deferrable)) {
+        return NULL;
+    }
 
     Py_RETURN_NONE;
 }
