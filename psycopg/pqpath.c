@@ -53,7 +53,9 @@
 #endif
 
 extern HIDDEN PyObject *psyco_DescriptionType;
-
+extern HIDDEN const char *srv_isolevels[];
+extern HIDDEN const char *srv_readonly[];
+extern HIDDEN const char *srv_deferrable[];
 
 /* Strip off the severity from a Postgres error message. */
 static const char *
@@ -479,6 +481,8 @@ int
 pq_begin_locked(connectionObject *conn, PGresult **pgres, char **error,
                 PyThreadState **tstate)
 {
+    const size_t bufsize = 256;
+    char buf[bufsize];
     int result;
 
     Dprintf("pq_begin_locked: pgconn = %p, autocommit = %d, status = %d",
@@ -489,7 +493,14 @@ pq_begin_locked(connectionObject *conn, PGresult **pgres, char **error,
         return 0;
     }
 
-    result = pq_execute_command_locked(conn, "BEGIN", pgres, error, tstate);
+    snprintf(buf, bufsize, "BEGIN%s%s%s%s%s",
+        conn->server_version < 80000 ? ";SET TRANSACTION" : "",
+        (conn->isolevel >= 1 && conn->isolevel <= 4) ? " ISOLATION LEVEL " : "",
+        srv_isolevels[conn->isolevel],
+        srv_readonly[conn->readonly],
+        srv_deferrable[conn->deferrable]);
+
+    result = pq_execute_command_locked(conn, buf, pgres, error, tstate);
     if (result == 0)
         conn->status = CONN_STATUS_BEGIN;
 

@@ -442,86 +442,6 @@ exit:
 }
 
 
-/* parse a python object into one of the possible isolation level values */
-
-extern const IsolationLevel conn_isolevels[];
-
-static const char *
-_psyco_conn_parse_isolevel(connectionObject *self, PyObject *pyval)
-{
-    const IsolationLevel *isolevel = NULL;
-
-    Py_INCREF(pyval);   /* for ensure_bytes */
-
-    /* parse from one of the level constants */
-    if (PyInt_Check(pyval)) {
-        long level = PyInt_AsLong(pyval);
-        if (level == -1 && PyErr_Occurred()) { goto exit; }
-        if (level < 1 || level > 4) {
-            PyErr_SetString(PyExc_ValueError,
-                "isolation_level must be between 1 and 4");
-            goto exit;
-        }
-
-        isolevel = conn_isolevels;
-        while ((++isolevel)->value != level)
-            ; /* continue */
-    }
-
-    /* parse from the string -- this includes "default" */
-    else {
-        isolevel = conn_isolevels;
-        while ((++isolevel)->name) {
-            if (!(pyval = psycopg_ensure_bytes(pyval))) {
-                goto exit;
-            }
-            if (0 == strcasecmp(isolevel->name, Bytes_AS_STRING(pyval))) {
-                break;
-            }
-        }
-        if (!isolevel->name) {
-            char msg[256];
-            snprintf(msg, sizeof(msg),
-                "bad value for isolation_level: '%s'", Bytes_AS_STRING(pyval));
-            PyErr_SetString(PyExc_ValueError, msg);
-        }
-    }
-
-    /* use only supported levels on older PG versions */
-    if (isolevel && self->server_version < 80000) {
-        if (isolevel->value == ISOLATION_LEVEL_READ_UNCOMMITTED
-            || isolevel->value == ISOLATION_LEVEL_REPEATABLE_READ) {
-            ++isolevel;
-        }
-    }
-
-exit:
-    Py_XDECREF(pyval);
-
-    return isolevel ? isolevel->name : NULL;
-}
-
-/* convert True/False/"default" into a C string */
-
-static const char *
-_psyco_conn_parse_onoff(PyObject *pyval)
-{
-    int istrue = PyObject_IsTrue(pyval);
-    if (-1 == istrue) { return NULL; }
-    if (istrue) {
-        int cmp;
-        PyObject *pydef;
-        if (!(pydef = Text_FromUTF8("default"))) { return NULL; }
-        cmp = PyObject_RichCompareBool(pyval, pydef, Py_EQ);
-        Py_DECREF(pydef);
-        if (-1 == cmp) { return NULL; }
-        return cmp ? "default" : "on";
-    }
-    else {
-        return "off";
-    }
-}
-
 /* set_session - set default transaction characteristics */
 
 #define psyco_conn_set_session_doc \
@@ -536,9 +456,9 @@ psyco_conn_set_session(connectionObject *self, PyObject *args, PyObject *kwargs)
     PyObject *deferrable = Py_None;
     PyObject *autocommit = Py_None;
 
-    const char *c_isolevel = NULL;
-    const char *c_readonly = NULL;
-    const char *c_deferrable = NULL;
+    int c_isolevel = self->isolevel;
+    int c_readonly = self->readonly;
+    int c_deferrable = self->deferrable;
     int c_autocommit = self->autocommit;
 
     static char *kwlist[] =
@@ -554,13 +474,13 @@ psyco_conn_set_session(connectionObject *self, PyObject *args, PyObject *kwargs)
     }
 
     if (Py_None != isolevel) {
-        if (!(c_isolevel = _psyco_conn_parse_isolevel(self, isolevel))) {
+        if (0 > (c_isolevel = conn_parse_isolevel(self, isolevel))) {
             return NULL;
         }
     }
 
     if (Py_None != readonly) {
-        if (!(c_readonly = _psyco_conn_parse_onoff(readonly))) {
+        if (0 > (c_readonly = conn_parse_onoff(readonly))) {
             return NULL;
         }
     }
@@ -571,19 +491,19 @@ psyco_conn_set_session(connectionObject *self, PyObject *args, PyObject *kwargs)
                 " from PostgreSQL 9.1");
             return NULL;
         }
-        if (!(c_deferrable = _psyco_conn_parse_onoff(deferrable))) {
+        if (0 > (c_deferrable = conn_parse_onoff(readonly))) {
             return NULL;
         }
     }
+
     if (Py_None != autocommit) {
-        c_autocommit = PyObject_IsTrue(autocommit);
-        if (-1 == c_autocommit) { return NULL; }
+        if (-1 == (c_autocommit = PyObject_IsTrue(autocommit))) { return NULL; }
     }
 
-    if (0 > conn_set_session(self,
-            c_isolevel, c_readonly, c_deferrable, c_autocommit)) {
-        return NULL;
-    }
+    self->isolevel = c_isolevel;
+    self->readonly = c_readonly;
+    self->deferrable = c_deferrable;
+    self->autocommit = c_autocommit;
 
     Py_RETURN_NONE;
 }
@@ -1107,6 +1027,9 @@ connection_setup(connectionObject *self, const char *dsn, long int async)
     self->async_status = ASYNC_DONE;
     if (!(self->string_types = PyDict_New())) { goto exit; }
     if (!(self->binary_types = PyDict_New())) { goto exit; }
+    self->isolevel = ISOLATION_LEVEL_DEFAULT;
+    self->readonly = STATE_DEFAULT;
+    self->deferrable = STATE_DEFAULT;
     /* other fields have been zeroed by tp_alloc */
 
     pthread_mutex_init(&(self->lock), NULL);
