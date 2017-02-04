@@ -166,10 +166,8 @@ HIDDEN void conn_close(connectionObject *self);
 HIDDEN void conn_close_locked(connectionObject *self);
 RAISES_NEG HIDDEN int  conn_commit(connectionObject *self);
 RAISES_NEG HIDDEN int  conn_rollback(connectionObject *self);
-HIDDEN int  conn_set_autocommit(connectionObject *self, int value);
 RAISES_NEG HIDDEN int conn_set_session(connectionObject *self, int autocommit,
         int isolevel, int readonly, int deferrable);
-RAISES_NEG HIDDEN int  conn_switch_isolation_level(connectionObject *self, int level);
 RAISES_NEG HIDDEN int  conn_set_client_encoding(connectionObject *self, const char *enc);
 HIDDEN int  conn_poll(connectionObject *self);
 RAISES_NEG HIDDEN int  conn_tpc_begin(connectionObject *self, xidObject *xid);

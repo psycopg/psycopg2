@@ -531,6 +531,14 @@ exit:
     return rv;
 }
 
+#define _set_session_checks(self,what) \
+do { \
+    EXC_IF_CONN_CLOSED(self); \
+    EXC_IF_CONN_ASYNC(self, what); \
+    EXC_IF_IN_TRANSACTION(self, what); \
+    EXC_IF_TPC_PREPARED(self, what); \
+} while(0)
+
 /* set_session - set default transaction characteristics */
 
 #define psyco_conn_set_session_doc \
@@ -553,9 +561,7 @@ psyco_conn_set_session(connectionObject *self, PyObject *args, PyObject *kwargs)
     static char *kwlist[] =
         {"isolation_level", "readonly", "deferrable", "autocommit", NULL};
 
-    EXC_IF_CONN_CLOSED(self);
-    EXC_IF_CONN_ASYNC(self, set_session);
-    EXC_IF_IN_TRANSACTION(self, set_session);
+    _set_session_checks(self, set_session);
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|OOOO", kwlist,
             &isolevel, &readonly, &deferrable, &autocommit)) {
@@ -615,9 +621,7 @@ _psyco_conn_autocommit_set_checks(connectionObject *self)
 {
     /* wrapper to use the EXC_IF macros.
      * return NULL in case of error, else whatever */
-    EXC_IF_CONN_CLOSED(self);
-    EXC_IF_CONN_ASYNC(self, autocommit);
-    EXC_IF_IN_TRANSACTION(self, autocommit);
+    _set_session_checks(self, autocommit);
     return Py_None;     /* borrowed */
 }
 
@@ -628,7 +632,10 @@ psyco_conn_autocommit_set(connectionObject *self, PyObject *pyvalue)
 
     if (!_psyco_conn_autocommit_set_checks(self)) { return -1; }
     if (-1 == (value = PyObject_IsTrue(pyvalue))) { return -1; }
-    if (0 != conn_set_autocommit(self, value)) { return -1; }
+    if (0 > conn_set_session(self, value,
+                self->isolevel, self->readonly, self->deferrable)) {
+        return -1;
+    }
 
     return 0;
 }
@@ -660,9 +667,7 @@ psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
 {
     int level = 1;
 
-    EXC_IF_CONN_CLOSED(self);
-    EXC_IF_CONN_ASYNC(self, set_isolation_level);
-    EXC_IF_TPC_PREPARED(self, set_isolation_level);
+    _set_session_checks(self, set_isolation_level);
 
     if (!PyArg_ParseTuple(args, "i", &level)) return NULL;
 
@@ -672,8 +677,17 @@ psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
         return NULL;
     }
 
-    if (conn_switch_isolation_level(self, level) < 0) {
-        return NULL;
+    if (level == 0) {
+        if (0 > conn_set_session(self, 1,
+                ISOLATION_LEVEL_DEFAULT, self->readonly, self->deferrable)) {
+            return NULL;
+        }
+    }
+    else {
+        if (0 > conn_set_session(self, 0,
+                level, self->readonly, self->deferrable)) {
+            return NULL;
+        }
     }
 
     Py_RETURN_NONE;

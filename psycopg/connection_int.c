@@ -1180,68 +1180,36 @@ conn_rollback(connectionObject *self)
     return res;
 }
 
-int
-conn_set_autocommit(connectionObject *self, int value)
-{
-    Py_BEGIN_ALLOW_THREADS;
-    pthread_mutex_lock(&self->lock);
-
-    self->autocommit = value;
-
-    pthread_mutex_unlock(&self->lock);
-    Py_END_ALLOW_THREADS;
-
-    return 0;
-}
-
-
-/* Promote an isolation level to one of the levels supported by the server */
-
-static int
-_adjust_isolevel(connectionObject *self, int level) {
-    if (self->server_version < 80000) {
-        if (level == ISOLATION_LEVEL_READ_UNCOMMITTED) {
-            level = ISOLATION_LEVEL_READ_COMMITTED;
-        }
-        else if (level == ISOLATION_LEVEL_REPEATABLE_READ) {
-            level = ISOLATION_LEVEL_SERIALIZABLE;
-        }
-    }
-    return level;
-}
-
 
 /* Change the state of the session */
 RAISES_NEG int
 conn_set_session(connectionObject *self, int autocommit,
         int isolevel, int readonly, int deferrable)
 {
-    isolevel = _adjust_isolevel(self, isolevel);
+    /* Promote an isolation level to one of the levels supported by the server */
+    if (self->server_version < 80000) {
+        if (isolevel == ISOLATION_LEVEL_READ_UNCOMMITTED) {
+            isolevel = ISOLATION_LEVEL_READ_COMMITTED;
+        }
+        else if (isolevel == ISOLATION_LEVEL_REPEATABLE_READ) {
+            isolevel = ISOLATION_LEVEL_SERIALIZABLE;
+        }
+    }
+
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&self->lock);
 
     self->isolevel = isolevel;
     self->readonly = readonly;
     self->deferrable = deferrable;
     self->autocommit = autocommit;
 
-    return 0;
-}
+    pthread_mutex_unlock(&self->lock);
+    Py_END_ALLOW_THREADS;
 
-
-/* conn_switch_isolation_level - switch isolation level on the connection */
-
-RAISES_NEG int
-conn_switch_isolation_level(connectionObject *self, int level)
-{
-    if (level == 0) {
-        self->autocommit = 1;
-    }
-    else {
-        level = _adjust_isolevel(self, level);
-        self->isolevel = level;
-        self->autocommit = 0;
-    }
-
-    Dprintf("conn_switch_isolation_level: switched to level %d", level);
+    Dprintf(
+        "conn_set_session: autocommit %d, isolevel %d, readonly %d, deferrable %d",
+        autocommit, isolevel, readonly, deferrable);
 
     return 0;
 }
