@@ -41,7 +41,7 @@ const char *srv_isolevels[] = {
     "REPEATABLE READ",
     "SERIALIZABLE",
     "READ UNCOMMITTED",
-    ""      /* default */
+    "default"       /* only to set GUC, not for BEGIN */
 };
 
 /* Read only false, true */
@@ -57,6 +57,15 @@ const char *srv_deferrable[] = {
     " DEFERRABLE",
     ""      /* default */
 };
+
+/* On/Off/Default GUC states
+ */
+const char *srv_state_guc[] = {
+    "off",
+    "on",
+    "default"
+};
+
 
 /* Return a new "string" from a char* from the database.
  *
@@ -1186,6 +1195,10 @@ RAISES_NEG int
 conn_set_session(connectionObject *self, int autocommit,
         int isolevel, int readonly, int deferrable)
 {
+    int rv = -1;
+    PGresult *pgres = NULL;
+    char *error = NULL;
+
     /* Promote an isolation level to one of the levels supported by the server */
     if (self->server_version < 80000) {
         if (isolevel == ISOLATION_LEVEL_READ_UNCOMMITTED) {
@@ -1199,19 +1212,75 @@ conn_set_session(connectionObject *self, int autocommit,
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
 
+    if (autocommit) {
+        /* we are in autocommit state, so no BEGIN will be issued:
+         * configure the session with the characteristics requested */
+        if (isolevel != self->isolevel) {
+            if (0 > pq_set_guc_locked(self,
+                    "default_transaction_isolation", srv_isolevels[isolevel],
+                    &pgres, &error, &_save)) {
+                goto endlock;
+            }
+        }
+        if (readonly != self->readonly) {
+            if (0 > pq_set_guc_locked(self,
+                    "default_transaction_read_only", srv_state_guc[readonly],
+                    &pgres, &error, &_save)) {
+                goto endlock;
+            }
+        }
+        if (deferrable != self->deferrable && self->server_version >= 90100) {
+            if (0 > pq_set_guc_locked(self,
+                    "default_transaction_deferrable", srv_state_guc[deferrable],
+                    &pgres, &error, &_save)) {
+                goto endlock;
+            }
+        }
+    }
+    else if (self->autocommit) {
+        /* we are moving from autocommit to not autocommit, so revert the
+         * characteristics to defaults to let BEGIN do its work */
+        if (0 > pq_set_guc_locked(self,
+                "default_transaction_isolation", "default",
+                &pgres, &error, &_save)) {
+            goto endlock;
+        }
+        if (0 > pq_set_guc_locked(self,
+                "default_transaction_read_only", "default",
+                &pgres, &error, &_save)) {
+            goto endlock;
+        }
+        if (self->server_version >= 90100) {
+            if (0 > pq_set_guc_locked(self,
+                    "default_transaction_deferrable", "default",
+                    &pgres, &error, &_save)) {
+                goto endlock;
+            }
+        }
+    }
+
+    self->autocommit = autocommit;
     self->isolevel = isolevel;
     self->readonly = readonly;
     self->deferrable = deferrable;
-    self->autocommit = autocommit;
+    rv = 0;
 
+endlock:
     pthread_mutex_unlock(&self->lock);
     Py_END_ALLOW_THREADS;
+
+    if (rv < 0) {
+        pq_complete_error(self, &pgres, &error);
+        goto exit;
+    }
 
     Dprintf(
         "conn_set_session: autocommit %d, isolevel %d, readonly %d, deferrable %d",
         autocommit, isolevel, readonly, deferrable);
 
-    return 0;
+
+exit:
+    return rv;
 }
 
 

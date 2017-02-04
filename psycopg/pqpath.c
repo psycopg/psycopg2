@@ -495,8 +495,10 @@ pq_begin_locked(connectionObject *conn, PGresult **pgres, char **error,
 
     snprintf(buf, bufsize, "BEGIN%s%s%s%s%s",
         conn->server_version < 80000 ? ";SET TRANSACTION" : "",
-        (conn->isolevel >= 1 && conn->isolevel <= 4) ? " ISOLATION LEVEL " : "",
-        srv_isolevels[conn->isolevel],
+        (conn->isolevel >= 1 && conn->isolevel <= 4)
+            ? " ISOLATION LEVEL " : "",
+        (conn->isolevel >= 1 && conn->isolevel <= 4)
+            ? srv_isolevels[conn->isolevel] : "",
         srv_readonly[conn->readonly],
         srv_deferrable[conn->deferrable]);
 
