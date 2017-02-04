@@ -488,7 +488,7 @@ class IsolationLevelsTestCase(ConnectingTestCase):
         conn = self.connect()
         self.assertEqual(
             conn.isolation_level,
-            psycopg2.extensions.ISOLATION_LEVEL_READ_COMMITTED)
+            psycopg2.extensions.ISOLATION_LEVEL_DEFAULT)
 
     def test_encoding(self):
         conn = self.connect()

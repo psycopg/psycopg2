@@ -651,6 +651,15 @@ set to one of the following constants:
 
         .. __: http://www.postgresql.org/docs/current/static/transaction-iso.html#XACT-SERIALIZABLE
 
+.. data:: ISOLATION_LEVEL_DEFAULT
+
+    Whatever is defined by the server, either via server configuration or by
+    statements executed within the session outside Pyscopg control; Psycopg
+    will not force an isolation level of its own. If you want to know what the
+    value is you can use a query such as :sql:`show transaction_isolation` or
+    :sql:`show default_transaction_isolation`.
+
+    .. versionadded:: 2.7
 
 
 .. index::
