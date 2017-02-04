@@ -676,8 +676,7 @@ commands executed will be immediately committed and no rollback is possible. A
 few commands (e.g. :sql:`CREATE DATABASE`, :sql:`VACUUM`...) require to be run
 outside any transaction: in order to be able to run these commands from
 Psycopg, the connection must be in autocommit mode: you can use the
-`~connection.autocommit` property (`~connection.set_isolation_level()` in
-older versions).
+`~connection.autocommit` property.
 
 .. warning::
 

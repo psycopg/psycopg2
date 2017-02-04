@@ -33,6 +33,10 @@ New features:
   (:ticket:`#491`).
 - Added ``async_`` as an alias for ``async`` to support Python 3.7 where
   ``async`` will become a keyword (:ticket:`#495`).
+- Unless in autocommit, do not use :sql:`default_transaction_*` settings to
+  control the session characteristics as it may create problems with external
+  connection pools such as pgbouncer; use :sql:`BEGIN` options instead
+  (:ticket:`#503`).
 
 Bug fixes:
 
@@ -44,6 +48,11 @@ Other changes:
 - Dropped support for Python 2.5.
 - Dropped support for client library older than PostgreSQL 9.1 (but older
   server versions are still supported).
+- `~connection.isolation_level` doesn't read from the database but will return
+  `~psycopg2.extensions.ISOLATION_LEVEL_DEFAULT` if no value was set on the
+  connection.
+- `~connection.set_isolation_level()` will throw an exception if executed
+  inside a transaction; previously it would have silently rolled it back.
 
 
 What's new in psycopg 2.6.3
