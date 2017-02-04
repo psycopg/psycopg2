@@ -522,7 +522,7 @@ class IsolationLevelsTestCase(ConnectingTestCase):
             got_name = curs.fetchone()[0]
 
             if name is None:
-                curs.execute('show default_transaction_isolation;')
+                curs.execute('show transaction_isolation;')
                 name = curs.fetchone()[0]
 
             self.assertEqual(name, got_name)
@@ -1042,13 +1042,13 @@ class TransactionControlTests(ConnectingTestCase):
         cur = self.conn.cursor()
         self.conn.set_session(
             psycopg2.extensions.ISOLATION_LEVEL_SERIALIZABLE)
-        cur.execute("SHOW default_transaction_isolation;")
+        cur.execute("SHOW transaction_isolation;")
         self.assertEqual(cur.fetchone()[0], 'serializable')
         self.conn.rollback()
 
         self.conn.set_session(
             psycopg2.extensions.ISOLATION_LEVEL_REPEATABLE_READ)
-        cur.execute("SHOW default_transaction_isolation;")
+        cur.execute("SHOW transaction_isolation;")
         if self.conn.server_version > 80000:
             self.assertEqual(cur.fetchone()[0], 'repeatable read')
         else:
@@ -1057,13 +1057,13 @@ class TransactionControlTests(ConnectingTestCase):
 
         self.conn.set_session(
             isolation_level=psycopg2.extensions.ISOLATION_LEVEL_READ_COMMITTED)
-        cur.execute("SHOW default_transaction_isolation;")
+        cur.execute("SHOW transaction_isolation;")
         self.assertEqual(cur.fetchone()[0], 'read committed')
         self.conn.rollback()
 
         self.conn.set_session(
             isolation_level=psycopg2.extensions.ISOLATION_LEVEL_READ_UNCOMMITTED)
-        cur.execute("SHOW default_transaction_isolation;")
+        cur.execute("SHOW transaction_isolation;")
         if self.conn.server_version > 80000:
             self.assertEqual(cur.fetchone()[0], 'read uncommitted')
         else:
@@ -1073,12 +1073,12 @@ class TransactionControlTests(ConnectingTestCase):
     def test_set_isolation_level_str(self):
         cur = self.conn.cursor()
         self.conn.set_session("serializable")
-        cur.execute("SHOW default_transaction_isolation;")
+        cur.execute("SHOW transaction_isolation;")
         self.assertEqual(cur.fetchone()[0], 'serializable')
         self.conn.rollback()
 
         self.conn.set_session("repeatable read")
-        cur.execute("SHOW default_transaction_isolation;")
+        cur.execute("SHOW transaction_isolation;")
         if self.conn.server_version > 80000:
             self.assertEqual(cur.fetchone()[0], 'repeatable read')
         else:
@@ -1086,12 +1086,12 @@ class TransactionControlTests(ConnectingTestCase):
         self.conn.rollback()
 
         self.conn.set_session("read committed")
-        cur.execute("SHOW default_transaction_isolation;")
+        cur.execute("SHOW transaction_isolation;")
         self.assertEqual(cur.fetchone()[0], 'read committed')
         self.conn.rollback()
 
         self.conn.set_session("read uncommitted")
-        cur.execute("SHOW default_transaction_isolation;")
+        cur.execute("SHOW transaction_isolation;")
         if self.conn.server_version > 80000:
             self.assertEqual(cur.fetchone()[0], 'read uncommitted')
         else:
@@ -1106,57 +1106,57 @@ class TransactionControlTests(ConnectingTestCase):
     def test_set_read_only(self):
         cur = self.conn.cursor()
         self.conn.set_session(readonly=True)
-        cur.execute("SHOW default_transaction_read_only;")
+        cur.execute("SHOW transaction_read_only;")
         self.assertEqual(cur.fetchone()[0], 'on')
         self.conn.rollback()
-        cur.execute("SHOW default_transaction_read_only;")
+        cur.execute("SHOW transaction_read_only;")
         self.assertEqual(cur.fetchone()[0], 'on')
         self.conn.rollback()
 
         cur = self.conn.cursor()
         self.conn.set_session(readonly=None)
-        cur.execute("SHOW default_transaction_read_only;")
+        cur.execute("SHOW transaction_read_only;")
         self.assertEqual(cur.fetchone()[0], 'on')
         self.conn.rollback()
 
         self.conn.set_session(readonly=False)
-        cur.execute("SHOW default_transaction_read_only;")
+        cur.execute("SHOW transaction_read_only;")
         self.assertEqual(cur.fetchone()[0], 'off')
         self.conn.rollback()
 
     def test_set_default(self):
         cur = self.conn.cursor()
-        cur.execute("SHOW default_transaction_isolation;")
-        default_isolevel = cur.fetchone()[0]
-        cur.execute("SHOW default_transaction_read_only;")
-        default_readonly = cur.fetchone()[0]
+        cur.execute("SHOW transaction_isolation;")
+        isolevel = cur.fetchone()[0]
+        cur.execute("SHOW transaction_read_only;")
+        readonly = cur.fetchone()[0]
         self.conn.rollback()
 
         self.conn.set_session(isolation_level='serializable', readonly=True)
         self.conn.set_session(isolation_level='default', readonly='default')
 
-        cur.execute("SHOW default_transaction_isolation;")
-        self.assertEqual(cur.fetchone()[0], default_isolevel)
-        cur.execute("SHOW default_transaction_read_only;")
-        self.assertEqual(cur.fetchone()[0], default_readonly)
+        cur.execute("SHOW transaction_isolation;")
+        self.assertEqual(cur.fetchone()[0], isolevel)
+        cur.execute("SHOW transaction_read_only;")
+        self.assertEqual(cur.fetchone()[0], readonly)
 
     @skip_before_postgres(9, 1)
     def test_set_deferrable(self):
         cur = self.conn.cursor()
         self.conn.set_session(readonly=True, deferrable=True)
-        cur.execute("SHOW default_transaction_read_only;")
+        cur.execute("SHOW transaction_read_only;")
         self.assertEqual(cur.fetchone()[0], 'on')
-        cur.execute("SHOW default_transaction_deferrable;")
+        cur.execute("SHOW transaction_deferrable;")
         self.assertEqual(cur.fetchone()[0], 'on')
         self.conn.rollback()
-        cur.execute("SHOW default_transaction_deferrable;")
+        cur.execute("SHOW transaction_deferrable;")
         self.assertEqual(cur.fetchone()[0], 'on')
         self.conn.rollback()
 
         self.conn.set_session(deferrable=False)
-        cur.execute("SHOW default_transaction_read_only;")
+        cur.execute("SHOW transaction_read_only;")
         self.assertEqual(cur.fetchone()[0], 'on')
-        cur.execute("SHOW default_transaction_deferrable;")
+        cur.execute("SHOW transaction_deferrable;")
         self.assertEqual(cur.fetchone()[0], 'off')
         self.conn.rollback()
 
@@ -1258,9 +1258,9 @@ class AutocommitTests(ConnectingTestCase):
         self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
         self.assertEqual(self.conn.get_transaction_status(),
             psycopg2.extensions.TRANSACTION_STATUS_IDLE)
-        cur.execute("SHOW default_transaction_isolation;")
+        cur.execute("SHOW transaction_isolation;")
         self.assertEqual(cur.fetchone()[0], 'serializable')
-        cur.execute("SHOW default_transaction_read_only;")
+        cur.execute("SHOW transaction_read_only;")
         self.assertEqual(cur.fetchone()[0], 'on')
 
 
