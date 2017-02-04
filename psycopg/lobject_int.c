@@ -383,7 +383,7 @@ lobject_seek(lobjectObject *self, Py_ssize_t pos, int whence)
     char *error = NULL;
     Py_ssize_t where;
 
-    Dprintf("lobject_seek: fd = %d, pos = %ld, whence = %d",
+    Dprintf("lobject_seek: fd = %d, pos = " FORMAT_CODE_PY_SSIZE_T ", whence = %d",
             self->fd, pos, whence);
 
     Py_BEGIN_ALLOW_THREADS;
@@ -398,7 +398,7 @@ lobject_seek(lobjectObject *self, Py_ssize_t pos, int whence)
 #else
     where = (Py_ssize_t)lo_lseek(self->conn->pgconn, self->fd, (int)pos, whence);
 #endif
-    Dprintf("lobject_seek: where = %ld", where);
+    Dprintf("lobject_seek: where = " FORMAT_CODE_PY_SSIZE_T, where);
     if (where < 0)
         collect_error(self->conn, &error);
 
@@ -433,7 +433,7 @@ lobject_tell(lobjectObject *self)
 #else
     where = (Py_ssize_t)lo_tell(self->conn->pgconn, self->fd);
 #endif
-    Dprintf("lobject_tell: where = %ld", where);
+    Dprintf("lobject_tell: where = " FORMAT_CODE_PY_SSIZE_T, where);
     if (where < 0)
         collect_error(self->conn, &error);
 
