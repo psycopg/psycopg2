@@ -153,15 +153,6 @@ microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
         return adapted;
     }
 
-    /* Check if a superclass can be adapted and use the same adapter. */
-    if (!(adapter = _get_superclass_adapter(obj, proto))) {
-        return NULL;
-    }
-    if (Py_None != adapter) {
-        adapted = PyObject_CallFunctionObjArgs(adapter, obj, NULL);
-        return adapted;
-    }
-
     /* try to have the protocol adapt this object*/
     if ((meth = PyObject_GetAttrString(proto, "__adapt__"))) {
         adapted = PyObject_CallFunctionObjArgs(meth, obj, NULL);
@@ -181,7 +172,7 @@ microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
         PyErr_Clear();
     }
 
-    /* and finally try to have the object adapt itself */
+    /* then try to have the object adapt itself */
     if ((meth = PyObject_GetAttrString(obj, "__conform__"))) {
         adapted = PyObject_CallFunctionObjArgs(meth, proto, NULL);
         Py_DECREF(meth);
@@ -198,6 +189,15 @@ microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
     else {
         /* obj.__conform__ not found. */
         PyErr_Clear();
+    }
+
+    /* Finally check if a superclass can be adapted and use the same adapter. */
+    if (!(adapter = _get_superclass_adapter(obj, proto))) {
+        return NULL;
+    }
+    if (Py_None != adapter) {
+        adapted = PyObject_CallFunctionObjArgs(adapter, obj, NULL);
+        return adapted;
     }
 
     /* else set the right exception and return NULL */
