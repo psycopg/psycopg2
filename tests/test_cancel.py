@@ -92,7 +92,7 @@ class CancelTests(ConnectingTestCase):
         self.assertRaises(psycopg2.OperationalError, async_conn.cancel)
         extras.wait_select(async_conn)
         cur = async_conn.cursor()
-        cur.execute("select pg_sleep(10000)")
+        cur.execute("select pg_sleep(2)")
         self.assertTrue(async_conn.isexecuting())
         async_conn.cancel()
         self.assertRaises(psycopg2.extensions.QueryCanceledError,
