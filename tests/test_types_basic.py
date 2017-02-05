@@ -422,6 +422,19 @@ class AdaptSubclassTest(unittest.TestCase):
         finally:
             del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
 
+    def test_conform_subclass_precedence(self):
+
+        import psycopg2.extensions as ext
+
+        class foo(tuple):
+            def __conform__(self, proto):
+                return self
+
+            def getquoted(self):
+                return 'bar'
+
+        self.assertEqual(ext.adapt(foo((1, 2, 3))).getquoted(), 'bar')
+
 
 class ByteaParserTest(unittest.TestCase):
     """Unit test for our bytea format parser."""
