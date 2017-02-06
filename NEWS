@@ -43,7 +43,7 @@ Bug fixes:
 
 Other changes:
 
-- Dropped support for Python 2.5.
+- Dropped support for Python 2.5 and 3.1.
 - Dropped support for client library older than PostgreSQL 9.1 (but older
   server versions are still supported).
 
