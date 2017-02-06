@@ -23,11 +23,13 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
+import time
+
 import psycopg2
 from psycopg2 import extras
 
 from testconfig import dsn
-from testutils import ConnectingTestCase, unittest, skip_before_postgres
+from testutils import ConnectingTestCase, unittest, skip_before_postgres, slow
 
 from test_replication import ReplicationTestCase, skip_repl_if_green
 from psycopg2.extras import LogicalReplicationConnection, StopReplication
@@ -97,13 +99,15 @@ class CancelTests(ConnectingTestCase):
             )''')
         self.conn.commit()
 
+    @slow
     @skip_before_postgres(8, 2)
     def test_async_cancel(self):
         async_conn = psycopg2.connect(dsn, async=True)
         self.assertRaises(psycopg2.OperationalError, async_conn.cancel)
         extras.wait_select(async_conn)
         cur = async_conn.cursor()
-        cur.execute("select pg_sleep(10000)")
+        cur.execute("select pg_sleep(10)")
+        time.sleep(1)
         self.assertTrue(async_conn.isexecuting())
         async_conn.cancel()
         self.assertRaises(psycopg2.extensions.QueryCanceledError,
