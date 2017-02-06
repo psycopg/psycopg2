@@ -14,10 +14,10 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-import unittest
 from datetime import date
 
-from testutils import ConnectingTestCase
+import testutils
+from testutils import unittest
 
 import psycopg2
 import psycopg2.extras
@@ -49,7 +49,7 @@ class FastExecuteTestMixin(object):
             id serial primary key, date date, val int, data text)""")
 
 
-class TestExecuteBatch(FastExecuteTestMixin, ConnectingTestCase):
+class TestExecuteBatch(FastExecuteTestMixin, testutils.ConnectingTestCase):
     def test_empty(self):
         cur = self.conn.cursor()
         psycopg2.extras.execute_batch(cur,
@@ -123,7 +123,7 @@ class TestExecuteBatch(FastExecuteTestMixin, ConnectingTestCase):
         self.assertEqual(cur.fetchone(), (3, snowman))
 
 
-class TestExecuteValuse(FastExecuteTestMixin, ConnectingTestCase):
+class TestExecuteValues(FastExecuteTestMixin, testutils.ConnectingTestCase):
     def test_empty(self):
         cur = self.conn.cursor()
         psycopg2.extras.execute_values(cur,
@@ -228,6 +228,10 @@ class TestExecuteValuse(FastExecuteTestMixin, ConnectingTestCase):
 
         cur.execute("select id, data from testfast")
         self.assertEqual(cur.fetchall(), [(1, 'hi')])
+
+
+testutils.decorate_all_tests(TestExecuteValues,
+    testutils.skip_before_postgres(8, 2))
 
 
 def test_suite():
