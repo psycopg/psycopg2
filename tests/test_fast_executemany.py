@@ -96,6 +96,7 @@ class TestExecuteBatch(FastExecuteTestMixin, testutils.ConnectingTestCase):
         cur.execute("select id, val from testfast order by id")
         self.assertEqual(cur.fetchall(), [(i, i * 10) for i in range(25)])
 
+    @testutils.skip_before_postgres(8, 0)
     def test_unicode(self):
         cur = self.conn.cursor()
         ext.register_type(ext.UNICODE, cur)
