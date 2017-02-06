@@ -27,8 +27,8 @@ import psycopg2
 from psycopg2 import extras
 
 from testconfig import dsn
-from testutils import (ConnectingTestCase, unittest, skip_before_postgres,
-    assertDsnEqual)
+from testutils import ConnectingTestCase, unittest, skip_before_postgres
+
 from test_replication import ReplicationTestCase, skip_repl_if_green
 from psycopg2.extras import LogicalReplicationConnection, StopReplication
 
@@ -143,23 +143,23 @@ class ConnectTestCase(unittest.TestCase):
             pass
 
         psycopg2.connect(database='foo', host='baz', connection_factory=f)
-        assertDsnEqual(self, self.args[0], 'dbname=foo host=baz')
+        self.assertDsnEqual(self.args[0], 'dbname=foo host=baz')
         self.assertEqual(self.args[1], f)
         self.assertEqual(self.args[2], False)
 
         psycopg2.connect("dbname=foo host=baz", connection_factory=f)
-        assertDsnEqual(self, self.args[0], 'dbname=foo host=baz')
+        self.assertDsnEqual(self.args[0], 'dbname=foo host=baz')
         self.assertEqual(self.args[1], f)
         self.assertEqual(self.args[2], False)
 
     def test_async(self):
         psycopg2.connect(database='foo', host='baz', async=1)
-        assertDsnEqual(self, self.args[0], 'dbname=foo host=baz')
+        self.assertDsnEqual(self.args[0], 'dbname=foo host=baz')
         self.assertEqual(self.args[1], None)
         self.assert_(self.args[2])
 
         psycopg2.connect("dbname=foo host=baz", async=True)
-        assertDsnEqual(self, self.args[0], 'dbname=foo host=baz')
+        self.assertDsnEqual(self.args[0], 'dbname=foo host=baz')
         self.assertEqual(self.args[1], None)
         self.assert_(self.args[2])
 

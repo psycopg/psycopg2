@@ -82,6 +82,13 @@ if (not hasattr(unittest.TestCase, 'assert_')
     unittest.TestCase.failUnlessEqual = unittest.TestCase.assertEqual
 
 
+def assertDsnEqual(self, dsn1, dsn2, msg=None):
+    """Check that two conninfo string have the same content"""
+    self.assertEqual(set(dsn1.split()), set(dsn2.split()), msg)
+
+unittest.TestCase.assertDsnEqual = assertDsnEqual
+
+
 class ConnectingTestCase(unittest.TestCase):
     """A test case providing connections for tests.
 
@@ -473,7 +480,3 @@ def slow(f):
             return self.skipTest("slow test")
         return f(self)
     return slow_
-
-
-def assertDsnEqual(testsuite, dsn1, dsn2):
-    testsuite.assertEqual(set(dsn1.split()), set(dsn2.split()))

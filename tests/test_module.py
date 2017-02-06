@@ -27,7 +27,7 @@ import sys
 from subprocess import Popen
 
 from testutils import (unittest, skip_before_python, skip_before_postgres,
-    ConnectingTestCase, skip_copy_if_green, script_to_py3, assertDsnEqual, slow)
+    ConnectingTestCase, skip_copy_if_green, script_to_py3, slow)
 
 import psycopg2
 
@@ -93,23 +93,23 @@ class ConnectTestCase(unittest.TestCase):
             pass
 
         psycopg2.connect(database='foo', host='baz', connection_factory=f)
-        assertDsnEqual(self, self.args[0], 'dbname=foo host=baz')
+        self.assertDsnEqual(self.args[0], 'dbname=foo host=baz')
         self.assertEqual(self.args[1], f)
         self.assertEqual(self.args[2], False)
 
         psycopg2.connect("dbname=foo host=baz", connection_factory=f)
-        assertDsnEqual(self, self.args[0], 'dbname=foo host=baz')
+        self.assertDsnEqual(self.args[0], 'dbname=foo host=baz')
         self.assertEqual(self.args[1], f)
         self.assertEqual(self.args[2], False)
 
     def test_async(self):
         psycopg2.connect(database='foo', host='baz', async_=1)
-        assertDsnEqual(self, self.args[0], 'dbname=foo host=baz')
+        self.assertDsnEqual(self.args[0], 'dbname=foo host=baz')
         self.assertEqual(self.args[1], None)
         self.assert_(self.args[2])
 
         psycopg2.connect("dbname=foo host=baz", async_=True)
-        assertDsnEqual(self, self.args[0], 'dbname=foo host=baz')
+        self.assertDsnEqual(self.args[0], 'dbname=foo host=baz')
         self.assertEqual(self.args[1], None)
         self.assert_(self.args[2])
 
@@ -121,7 +121,7 @@ class ConnectTestCase(unittest.TestCase):
 
     def test_empty_param(self):
         psycopg2.connect(database='sony', password='')
-        assertDsnEqual(self, self.args[0], "dbname=sony password=''")
+        self.assertDsnEqual(self.args[0], "dbname=sony password=''")
 
     def test_escape(self):
         psycopg2.connect(database='hello world')
@@ -144,7 +144,7 @@ class ConnectTestCase(unittest.TestCase):
         self.assertEqual(self.args[0], 'dbname=bar')
 
         psycopg2.connect('dbname=foo', user='postgres')
-        assertDsnEqual(self, self.args[0], 'dbname=foo user=postgres')
+        self.assertDsnEqual(self.args[0], 'dbname=foo user=postgres')
 
 
 class ExceptionsTestCase(ConnectingTestCase):
