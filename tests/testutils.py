@@ -24,10 +24,11 @@
 
 # Use unittest2 if available. Otherwise mock a skip facility with warnings.
 
+import re
 import os
-import platform
 import sys
 import select
+import platform
 from functools import wraps
 from testconfig import dsn, repl_dsn
 
@@ -106,6 +107,18 @@ class ConnectingTestCase(unittest.TestCase):
         for conn in self._conns:
             if not conn.closed:
                 conn.close()
+
+    def assertQuotedEqual(self, first, second, msg=None):
+        """Compare two quoted strings disregarding eventual E'' quotes"""
+        def f(s):
+            if isinstance(s, unicode):
+                return re.sub(r"\bE'", "'", s)
+            elif isinstance(first, bytes):
+                return re.sub(br"\bE'", b"'", s)
+            else:
+                return s
+
+        return self.assertEqual(f(first), f(second), msg)
 
     def connect(self, **kwargs):
         try:
