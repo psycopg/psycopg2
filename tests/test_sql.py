@@ -200,9 +200,7 @@ class LiteralTests(ConnectingTestCase):
     def test_repr(self):
         self.assertEqual(repr(sql.Literal("foo")), "Literal('foo')")
         self.assertEqual(str(sql.Literal("foo")), "Literal('foo')")
-        self.assertEqual(
-            sql.Literal("foo").as_string(self.conn).replace("E'", "'"),
-            "'foo'")
+        self.assertQuotedEqual(sql.Literal("foo").as_string(self.conn), "'foo'")
         self.assertEqual(sql.Literal(42).as_string(self.conn), "42")
         self.assertEqual(
             sql.Literal(dt.date(2017, 1, 1)).as_string(self.conn),
@@ -302,24 +300,24 @@ class ComposedTest(ConnectingTestCase):
         obj = sql.Composed([sql.Literal("foo"), sql.Identifier("b'ar")])
         obj = obj.join(", ")
         self.assert_(isinstance(obj, sql.Composed))
-        self.assertEqual(obj.as_string(self.conn), "'foo', \"b'ar\"")
+        self.assertQuotedEqual(obj.as_string(self.conn), "'foo', \"b'ar\"")
 
     def test_sum(self):
         obj = sql.Composed([sql.SQL("foo ")])
         obj = obj + sql.Literal("bar")
         self.assert_(isinstance(obj, sql.Composed))
-        self.assertEqual(obj.as_string(self.conn), "foo 'bar'")
+        self.assertQuotedEqual(obj.as_string(self.conn), "foo 'bar'")
 
     def test_sum_inplace(self):
         obj = sql.Composed([sql.SQL("foo ")])
         obj += sql.Literal("bar")
         self.assert_(isinstance(obj, sql.Composed))
-        self.assertEqual(obj.as_string(self.conn), "foo 'bar'")
+        self.assertQuotedEqual(obj.as_string(self.conn), "foo 'bar'")
 
         obj = sql.Composed([sql.SQL("foo ")])
         obj += sql.Composed([sql.Literal("bar")])
         self.assert_(isinstance(obj, sql.Composed))
-        self.assertEqual(obj.as_string(self.conn), "foo 'bar'")
+        self.assertQuotedEqual(obj.as_string(self.conn), "foo 'bar'")
 
     def test_iter(self):
         obj = sql.Composed([sql.SQL("foo"), sql.SQL('bar')])

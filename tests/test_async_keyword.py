@@ -23,12 +23,14 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
+import time
+
 import psycopg2
 from psycopg2 import extras
 
 from testconfig import dsn
-from testutils import (ConnectingTestCase, unittest, skip_before_postgres,
-    assertDsnEqual)
+from testutils import ConnectingTestCase, unittest, skip_before_postgres, slow
+
 from test_replication import ReplicationTestCase, skip_repl_if_green
 from psycopg2.extras import LogicalReplicationConnection, StopReplication
 
@@ -97,13 +99,15 @@ class CancelTests(ConnectingTestCase):
             )''')
         self.conn.commit()
 
+    @slow
     @skip_before_postgres(8, 2)
     def test_async_cancel(self):
         async_conn = psycopg2.connect(dsn, async=True)
         self.assertRaises(psycopg2.OperationalError, async_conn.cancel)
         extras.wait_select(async_conn)
         cur = async_conn.cursor()
-        cur.execute("select pg_sleep(10000)")
+        cur.execute("select pg_sleep(10)")
+        time.sleep(1)
         self.assertTrue(async_conn.isexecuting())
         async_conn.cancel()
         self.assertRaises(psycopg2.extensions.QueryCanceledError,
@@ -143,23 +147,23 @@ class ConnectTestCase(unittest.TestCase):
             pass
 
         psycopg2.connect(database='foo', host='baz', connection_factory=f)
-        assertDsnEqual(self, self.args[0], 'dbname=foo host=baz')
+        self.assertDsnEqual(self.args[0], 'dbname=foo host=baz')
         self.assertEqual(self.args[1], f)
         self.assertEqual(self.args[2], False)
 
         psycopg2.connect("dbname=foo host=baz", connection_factory=f)
-        assertDsnEqual(self, self.args[0], 'dbname=foo host=baz')
+        self.assertDsnEqual(self.args[0], 'dbname=foo host=baz')
         self.assertEqual(self.args[1], f)
         self.assertEqual(self.args[2], False)
 
     def test_async(self):
         psycopg2.connect(database='foo', host='baz', async=1)
-        assertDsnEqual(self, self.args[0], 'dbname=foo host=baz')
+        self.assertDsnEqual(self.args[0], 'dbname=foo host=baz')
         self.assertEqual(self.args[1], None)
         self.assert_(self.args[2])
 
         psycopg2.connect("dbname=foo host=baz", async=True)
-        assertDsnEqual(self, self.args[0], 'dbname=foo host=baz')
+        self.assertDsnEqual(self.args[0], 'dbname=foo host=baz')
         self.assertEqual(self.args[1], None)
         self.assert_(self.args[2])
 

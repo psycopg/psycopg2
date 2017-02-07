@@ -1,60 +1,131 @@
 #!/bin/bash
 
-set -e
+set -e -x
 
 # Prepare the test databases in Travis CI.
+#
 # The script should be run with sudo.
 # The script is not idempotent: it assumes the machine in a clean state
 # and is designed for a sudo-enabled Trusty environment.
+#
+# The variables TEST_PAST, TEST_FUTURE, DONT_TEST_PRESENT can be used to test
+# against unsupported Postgres versions and skip tests with supported ones.
+#
+# The variables can be set in the travis configuration
+# (https://travis-ci.org/psycopg/psycopg2/settings)
 
 set_param () {
     # Set a parameter in a postgresql.conf file
-    version=$1
-    param=$2
-    value=$3
+    param=$1
+    value=$2
 
-    sed -i "s/^\s*#\?\s*$param.*/$param = $value/" \
-        "/etc/postgresql/$version/psycopg/postgresql.conf"
+    sed -i "s/^\s*#\?\s*$param.*/$param = $value/" "$DATADIR/postgresql.conf"
 }
 
 create () {
-    version=$1
-    port=$2
-    dbname=psycopg2_test
+    export VERSION=$1
+    export PACKAGE=${2:-$VERSION}
 
-    pg_createcluster -p $port --start-conf manual $version psycopg
+    # Version as number: 9.6 -> 906
+    export VERNUM=$(( $(echo $VERSION \
+        | sed 's/\(.\+\)\.\(.\+\)/100 * \1 + \2/') ))
 
-    # for two-phase commit testing
-    set_param "$version" max_prepared_transactions 10
+    # Port number: 9.6 -> 50906
+    export PORT=$(( 50000 + $VERNUM ))
 
-    # for replication testing
-    set_param "$version" max_wal_senders 5
-    set_param "$version" max_replication_slots 5
-    if [ "$version" == "9.2" -o "$version" == "9.3" ]
-    then
-        set_param "$version" wal_level hot_standby
-    else
-        set_param "$version" wal_level logical
+    export DATADIR="/var/lib/postgresql/$PACKAGE/psycopg"
+    export PGDIR="/usr/lib/postgresql/$PACKAGE"
+    export PGBIN="$PGDIR/bin"
+
+    # install postgres versions not available on the image
+    if (( "$VERNUM" < 902 || "$VERNUM" > 906 )); then
+        wget -O - http://initd.org/psycopg/tarballs/postgresql/postgresql-${PACKAGE}.tar.bz2 \
+            | sudo tar xjf - -C /usr/lib/postgresql
     fi
 
-    echo "local replication travis trust" \
-        >> "/etc/postgresql/$version/psycopg/pg_hba.conf"
+    sudo -u postgres "$PGBIN/initdb" -D "$DATADIR"
 
+    set_param port "$PORT"
+    if (( "$VERNUM" >= 800 )); then
+        set_param listen_addresses "'*'"
+    else
+        set_param tcpip_socket true
+    fi
 
-    pg_ctlcluster "$version" psycopg start
+    # for two-phase commit testing
+    if (( "$VERNUM" >= 801 )); then set_param max_prepared_transactions 10; fi
 
-    sudo -u postgres psql -c "create user travis replication" "port=$port"
-    sudo -u postgres psql -c "create database $dbname" "port=$port"
-    sudo -u postgres psql -c "grant create on database $dbname to travis" "port=$port"
-    sudo -u postgres psql -c "create extension hstore" "port=$port dbname=$dbname"
+    # for replication testing
+    if (( "$VERNUM" >= 900 )); then set_param max_wal_senders 5; fi
+    if (( "$VERNUM" >= 904 )); then set_param max_replication_slots 5; fi
+
+    if (( "$VERNUM" >= 904 )); then
+        set_param wal_level logical
+    elif (( "$VERNUM" >= 900 )); then
+        set_param wal_level hot_standby
+    fi
+
+    if (( "$VERNUM" >= 900 )); then
+        echo "host replication travis 0.0.0.0/0 trust" >> "$DATADIR/pg_hba.conf"
+    fi
+
+    # start the server, wait for start
+    sudo -u postgres "$PGBIN/pg_ctl" -w -l /dev/null -D "$DATADIR" start
+
+    # create the test database
+    DBNAME=psycopg2_test
+    CONNINFO="user=postgres host=localhost port=$PORT dbname=template1"
+
+    if (( "$VERNUM" >= 901 )); then
+        psql -c "create user travis createdb createrole replication" "$CONNINFO"
+    elif (( "$VERNUM" >= 801 )); then
+        psql -c "create user travis createdb createrole" "$CONNINFO"
+    else
+        psql -c "create user travis createdb createuser" "$CONNINFO"
+    fi
+
+    psql -c "create database $DBNAME with owner travis" "$CONNINFO"
+
+    # configure global objects on the test database
+    CONNINFO="user=postgres host=localhost port=$PORT dbname=$DBNAME"
+
+    if (( "$VERNUM" >= 901 )); then
+        psql -c "create extension hstore" "$CONNINFO"
+    elif (( "$VERNUM" >= 803 )); then
+        psql -f "$PGDIR/share/contrib/hstore.sql" "$CONNINFO"
+    fi
+
+    if (( "$VERNUM" == 901 )); then
+        psql -c "create extension json" "$CONNINFO"
+    fi
 }
-
 
 # Would give a permission denied error in the travis build dir
 cd /
 
-create 9.6 54396
-create 9.5 54395
-create 9.4 54394
-create 9.3 54393
-create 9.2 54392
+# Postgres versions supported by Travis CI
+if [[ -z "$DONT_TEST_PRESENT" ]]; then
+    create 9.6
+    create 9.5
+    create 9.4
+    create 9.3
+    create 9.2
+fi
+
+# Unsupported postgres versions that we still support
+# Images built by https://github.com/psycopg/psycopg2-wheels/tree/build-dinosaurs
+if [[ -n "$TEST_PAST" ]]; then
+    create 7.4
+    create 8.0
+    create 8.1
+    create 8.2
+    create 8.3
+    create 8.4
+    create 9.0
+    create 9.1
+fi
+
+# Postgres built from master
+if [[ -n "$TEST_FUTURE" ]]; then
+    create 10.0 10-master
+fi

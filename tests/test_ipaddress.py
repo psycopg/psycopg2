@@ -19,7 +19,8 @@ from __future__ import unicode_literals
 import sys
 from functools import wraps
 
-from testutils import unittest, ConnectingTestCase, decorate_all_tests
+import testutils
+from testutils import unittest
 
 import psycopg2
 import psycopg2.extras
@@ -39,7 +40,7 @@ def skip_if_no_ipaddress(f):
     return skip_if_no_ipaddress_
 
 
-class NetworkingTestCase(ConnectingTestCase):
+class NetworkingTestCase(testutils.ConnectingTestCase):
     def test_inet_cast(self):
         import ipaddress as ip
         cur = self.conn.cursor()
@@ -58,6 +59,7 @@ class NetworkingTestCase(ConnectingTestCase):
         self.assert_(isinstance(obj, ip.IPv6Interface), repr(obj))
         self.assertEquals(obj, ip.ip_interface('::ffff:102:300/128'))
 
+    @testutils.skip_before_postgres(8, 2)
     def test_inet_array_cast(self):
         import ipaddress as ip
         cur = self.conn.cursor()
@@ -99,6 +101,7 @@ class NetworkingTestCase(ConnectingTestCase):
         self.assert_(isinstance(obj, ip.IPv6Network), repr(obj))
         self.assertEquals(obj, ip.ip_network('::ffff:102:300/128'))
 
+    @testutils.skip_before_postgres(8, 2)
     def test_cidr_array_cast(self):
         import ipaddress as ip
         cur = self.conn.cursor()
@@ -122,7 +125,7 @@ class NetworkingTestCase(ConnectingTestCase):
         cur.execute("select %s", [ip.ip_network('::ffff:102:300/128')])
         self.assertEquals(cur.fetchone()[0], '::ffff:102:300/128')
 
-decorate_all_tests(NetworkingTestCase, skip_if_no_ipaddress)
+testutils.decorate_all_tests(NetworkingTestCase, skip_if_no_ipaddress)
 
 
 def test_suite():

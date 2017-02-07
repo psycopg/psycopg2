@@ -24,10 +24,11 @@
 
 # Use unittest2 if available. Otherwise mock a skip facility with warnings.
 
+import re
 import os
-import platform
 import sys
 import select
+import platform
 from functools import wraps
 from testconfig import dsn, repl_dsn
 
@@ -82,6 +83,13 @@ if (not hasattr(unittest.TestCase, 'assert_')
     unittest.TestCase.failUnlessEqual = unittest.TestCase.assertEqual
 
 
+def assertDsnEqual(self, dsn1, dsn2, msg=None):
+    """Check that two conninfo string have the same content"""
+    self.assertEqual(set(dsn1.split()), set(dsn2.split()), msg)
+
+unittest.TestCase.assertDsnEqual = assertDsnEqual
+
+
 class ConnectingTestCase(unittest.TestCase):
     """A test case providing connections for tests.
 
@@ -99,6 +107,18 @@ class ConnectingTestCase(unittest.TestCase):
         for conn in self._conns:
             if not conn.closed:
                 conn.close()
+
+    def assertQuotedEqual(self, first, second, msg=None):
+        """Compare two quoted strings disregarding eventual E'' quotes"""
+        def f(s):
+            if isinstance(s, unicode):
+                return re.sub(r"\bE'", "'", s)
+            elif isinstance(first, bytes):
+                return re.sub(br"\bE'", b"'", s)
+            else:
+                return s
+
+        return self.assertEqual(f(first), f(second), msg)
 
     def connect(self, **kwargs):
         try:
@@ -473,7 +493,3 @@ def slow(f):
             return self.skipTest("slow test")
         return f(self)
     return slow_
-
-
-def assertDsnEqual(testsuite, dsn1, dsn2):
-    testsuite.assertEqual(set(dsn1.split()), set(dsn2.split()))
