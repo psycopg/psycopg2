@@ -38,6 +38,12 @@ extern "C" {
 #define ISOLATION_LEVEL_READ_COMMITTED      1
 #define ISOLATION_LEVEL_REPEATABLE_READ     2
 #define ISOLATION_LEVEL_SERIALIZABLE        3
+#define ISOLATION_LEVEL_DEFAULT             5
+
+/* 3-state values on/off/default */
+#define STATE_OFF               0
+#define STATE_ON                1
+#define STATE_DEFAULT           2
 
 /* connection status */
 #define CONN_STATUS_SETUP       0
@@ -129,6 +135,11 @@ struct connectionObject {
      * codecs.getdecoder('utf8') */
     PyObject *pyencoder;        /* python codec encoding function */
     PyObject *pydecoder;        /* python codec decoding function */
+
+    /* Values for the transactions characteristics */
+    int isolevel;
+    int readonly;
+    int deferrable;
 };
 
 /* map isolation level values into a numeric const */
@@ -155,11 +166,8 @@ HIDDEN void conn_close(connectionObject *self);
 HIDDEN void conn_close_locked(connectionObject *self);
 RAISES_NEG HIDDEN int  conn_commit(connectionObject *self);
 RAISES_NEG HIDDEN int  conn_rollback(connectionObject *self);
-RAISES_NEG HIDDEN int  conn_set_session(connectionObject *self, const char *isolevel,
-                                 const char *readonly, const char *deferrable,
-                                 int autocommit);
-HIDDEN int  conn_set_autocommit(connectionObject *self, int value);
-RAISES_NEG HIDDEN int  conn_switch_isolation_level(connectionObject *self, int level);
+RAISES_NEG HIDDEN int conn_set_session(connectionObject *self, int autocommit,
+        int isolevel, int readonly, int deferrable);
 RAISES_NEG HIDDEN int  conn_set_client_encoding(connectionObject *self, const char *enc);
 HIDDEN int  conn_poll(connectionObject *self);
 RAISES_NEG HIDDEN int  conn_tpc_begin(connectionObject *self, xidObject *xid);

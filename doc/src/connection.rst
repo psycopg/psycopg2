@@ -400,6 +400,32 @@ The ``connection`` class
 
         .. versionadded:: 2.4.2
 
+        .. versionchanged:: 2.7
+            Before this version, the function would have set
+            :sql:`default_transaction_*` attribute in the current session;
+            this implementation has the problem of not playing well with
+            external connection pooling working at transaction level and not
+            resetting the state of the session: changing the default
+            transaction would pollute the connections in the pool and create
+            problems to other applications using the same pool.
+
+            Starting from 2.7, if the connection is not autocommit, the
+            transaction characteristics are issued together with :sql:`BEGIN`
+            and will leave the :sql:`default_transaction_*` settings untouched.
+            For example::
+
+                conn.set_session(readonly=True)
+
+            will not change :sql:`default_transaction_read_only`, but
+            following transaction will start with a :sql:`BEGIN READ ONLY`.
+            Conversely, using::
+
+                conn.set_session(readonly=True, autocommit=True)
+
+            will set :sql:`default_transaction_read_only` to :sql:`on` and
+            rely on the server to apply the read only state to whatever
+            transaction, implicit or explicit, is executed in the connection.
+
 
     .. attribute:: autocommit
 
@@ -428,31 +454,53 @@ The ``connection`` class
         .. versionadded:: 2.4.2
 
 
-    .. attribute:: isolation_level
     .. method:: set_isolation_level(level)
 
         .. note::
 
-            From version 2.4.2, `set_session()` and `autocommit`, offer
+            From version 2.4.2, `set_session()` and `autocommit` offer
             finer control on the transaction characteristics.
 
-        Read or set the `transaction isolation level`_ for the current session.
+        Set the `transaction isolation level`_ for the current session.
         The level defines the different phenomena that can happen in the
         database between concurrent transactions.
 
-        The value set or read is an integer: symbolic constants are defined in
+        The value set is an integer: symbolic constants are defined in
         the module `psycopg2.extensions`: see
         :ref:`isolation-level-constants` for the available values.
 
-        The default level is :sql:`READ COMMITTED`: at this level a
-        transaction is automatically started the first time a database command
-        is executed.  If you want an *autocommit* mode, switch to
-        `~psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT` before
+        The default level is `~psycopg2.extensions.ISOLATION_LEVEL_DEFAULT`:
+        at this level a transaction is automatically started the first time a
+        database command is executed.  If you want an *autocommit* mode,
+        switch to `~psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT` before
         executing any command::
 
             >>> conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
         See also :ref:`transactions-control`.
+
+        .. versionchanged:: 2.7
+
+            the function must be called outside a transaction; previously it
+            would have executed an implicit :sql:`ROLLBACK`; it will now raise
+            an exception.
+
+
+    .. attribute:: isolation_level
+
+        Read the `transaction isolation level`_ for the current session.  The
+        value is one of the :ref:`isolation-level-constants` defined in the
+        `psycopg2.extensions` module.
+
+        .. versionchanged:: 2.7
+
+            the default value for `!isolation_level` is
+            `~psycopg2.extensions.ISOLATION_LEVEL_DEFAULT`; previously the
+            property would have queried the server and returned the real value
+            applied. To know this value you can run a query such as :sql:`show
+            transaction_isolation`. Usually the default value is `READ
+            COMMITTED`, but this may be changed in the server configuration.
+
 
     .. index::
         pair: Client; Encoding

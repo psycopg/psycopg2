@@ -567,15 +567,16 @@ Isolation level constants
 -------------------------
 
 Psycopg2 `connection` objects hold informations about the PostgreSQL
-`transaction isolation level`_.  The current transaction level can be read
-from the `~connection.isolation_level` attribute.  The default isolation
-level is :sql:`READ COMMITTED`.  A different isolation level con be set
-through the `~connection.set_isolation_level()` method.  The level can be
-set to one of the following constants:
+`transaction isolation level`_.  By default Psycopg doesn't change the default
+configuration of the server (`ISOLATION_LEVEL_DEFAULT`); the default for
+PostgreSQL servers is typically :sql:`READ COMMITTED`, but this may be changed
+in the server configuration files.  A different isolation level can be set
+through the `~connection.set_isolation_level()` or `~connection.set_session()`
+methods.  The level can be set to one of the following constants:
 
 .. data:: ISOLATION_LEVEL_AUTOCOMMIT
 
-    No transaction is started when command are issued and no
+    No transaction is started when commands are executed and no
     `~connection.commit()` or `~connection.rollback()` is required.
     Some PostgreSQL command such as :sql:`CREATE DATABASE` or :sql:`VACUUM`
     can't run into a transaction: to run such command use::
@@ -651,6 +652,16 @@ set to one of the following constants:
 
         .. __: http://www.postgresql.org/docs/current/static/transaction-iso.html#XACT-SERIALIZABLE
 
+.. data:: ISOLATION_LEVEL_DEFAULT
+
+    A new transaction is started at the first `~cursor.execute()` command, but
+    the isolation level is not explicitly selected by Psycopg: the server will
+    use whatever level is defined in its configuration or by statements
+    executed within the session outside Pyscopg control.  If you want to know
+    what the value is you can use a query such as :sql:`show
+    transaction_isolation`.
+
+    .. versionadded:: 2.7
 
 
 .. index::
