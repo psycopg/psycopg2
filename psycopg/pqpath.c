@@ -493,14 +493,22 @@ pq_begin_locked(connectionObject *conn, PGresult **pgres, char **error,
         return 0;
     }
 
-    snprintf(buf, bufsize, "BEGIN%s%s%s%s%s",
-        conn->server_version < 80000 ? ";SET TRANSACTION" : "",
-        (conn->isolevel >= 1 && conn->isolevel <= 4)
-            ? " ISOLATION LEVEL " : "",
-        (conn->isolevel >= 1 && conn->isolevel <= 4)
-            ? srv_isolevels[conn->isolevel] : "",
-        srv_readonly[conn->readonly],
-        srv_deferrable[conn->deferrable]);
+    if (conn->isolevel == ISOLATION_LEVEL_DEFAULT
+            && conn->readonly == STATE_DEFAULT
+            && conn->deferrable == STATE_DEFAULT) {
+        strcpy(buf, "BEGIN");
+    }
+    else {
+        snprintf(buf, bufsize,
+            conn->server_version >= 80000 ?
+                "BEGIN%s%s%s%s" : "BEGIN;SET TRANSACTION%s%s%s%s",
+            (conn->isolevel >= 1 && conn->isolevel <= 4)
+                ? " ISOLATION LEVEL " : "",
+            (conn->isolevel >= 1 && conn->isolevel <= 4)
+                ? srv_isolevels[conn->isolevel] : "",
+            srv_readonly[conn->readonly],
+            srv_deferrable[conn->deferrable]);
+    }
 
     result = pq_execute_command_locked(conn, buf, pgres, error, tstate);
     if (result == 0)
