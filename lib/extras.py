@@ -1163,7 +1163,7 @@ def _paginate(seq, page_size):
 
 
 def execute_batch(cur, sql, argslist, page_size=100):
-    """Execute groups of statements in fewer server roundtrips.
+    r"""Execute groups of statements in fewer server roundtrips.
 
     Execute *sql* several times, against all parameters set (sequences or
     mappings) found in *argslist*.
