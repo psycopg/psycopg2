@@ -166,12 +166,14 @@ class TypesBasicTests(ConnectingTestCase):
         curs.execute("select col from array_test where id = 2")
         self.assertEqual(curs.fetchone()[0], [])
 
-    def testEmptyArray(self):
+    def testEmptyArrayNoCast(self):
         s = self.execute("SELECT '{}' AS foo")
-        self.failUnlessEqual(s, [])
-        s = self.execute("SELECT '{}'::text[] AS foo")
-        self.failUnlessEqual(s, [])
+        self.assertEqual(s, '{}')
         s = self.execute("SELECT %s AS foo", ([],))
+        self.assertEqual(s, '{}')
+
+    def testEmptyArray(self):
+        s = self.execute("SELECT '{}'::text[] AS foo")
         self.failUnlessEqual(s, [])
         s = self.execute("SELECT 1 != ALL(%s)", ([],))
         self.failUnlessEqual(s, True)

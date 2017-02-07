@@ -191,14 +191,6 @@ typecast_UNKNOWN_cast(const char *str, Py_ssize_t len, PyObject *curs)
     Dprintf("typecast_UNKNOWN_cast: str = '%s',"
             " len = " FORMAT_CODE_PY_SSIZE_T, str, len);
 
-    // PostgreSQL returns {} for empty array without explicit type. We convert
-    // that to list in order to handle empty lists.
-    if (len == 2 && str[0] == '{' && str[1] == '}') {
-        return PyList_New(0);
-    }
-
-    Dprintf("typecast_UNKNOWN_cast: fallback to default cast");
-
     return typecast_default.cast(str, len, curs);
 }
 
