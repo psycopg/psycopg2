@@ -452,7 +452,7 @@ class ByteaParserTest(unittest.TestCase):
         expected.
         """
         import ctypes
-        lib = ctypes.cdll.LoadLibrary(psycopg2._psycopg.__file__)
+        lib = ctypes.pydll.LoadLibrary(psycopg2._psycopg.__file__)
         cast = lib.typecast_BINARY_cast
         cast.argtypes = [ctypes.c_char_p, ctypes.c_size_t, ctypes.py_object]
         cast.restype = ctypes.py_object
