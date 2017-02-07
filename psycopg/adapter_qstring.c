@@ -77,7 +77,7 @@ qstring_quote(qstringObject *self)
         goto exit;
     }
 
-    if (qlen > (size_t) PY_SSIZE_T_MAX) {
+    if (qlen > PY_SSIZE_T_MAX) {
         PyErr_SetString(PyExc_IndexError,
             "PG buffer too large to fit in Python buffer.");
         goto exit;

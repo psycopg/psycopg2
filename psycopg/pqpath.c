@@ -713,7 +713,7 @@ pq_get_guc_locked(
     Dprintf("pq_get_guc_locked: reading %s", param);
 
     size = PyOS_snprintf(query, sizeof(query), "SHOW %s", param);
-    if (size >= sizeof(query)) {
+    if (size < 0 || (size_t)size >= sizeof(query)) {
         *error = strdup("SHOW: query too large");
         goto cleanup;
     }
@@ -778,7 +778,7 @@ pq_set_guc_locked(
         size = PyOS_snprintf(query, sizeof(query),
             "SET %s TO '%s'", param, value);
     }
-    if (size >= sizeof(query)) {
+    if (size < 0 || (size_t)size >= sizeof(query)) {
         *error = strdup("SET: query too large");
     }
 
