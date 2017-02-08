@@ -171,9 +171,9 @@ The ``cursor`` class
     .. rubric:: Commands execution methods
 
 
-    .. method:: execute(operation [, parameters])
+    .. method:: execute(query, vars=None)
 
-        Prepare and execute a database operation (query or command).
+        Execute a database operation (query or command).
 
         Parameters may be provided as sequence or mapping and will be bound to
         variables in the operation.  Variables are specified either with
@@ -184,11 +184,10 @@ The ``cursor`` class
         values can be retrieved using |fetch*|_ methods.
 
 
-    .. method:: executemany(operation, seq_of_parameters)
+    .. method:: executemany(query, vars_list)
 
-        Prepare a database operation (query or command) and then execute it
-        against all parameter tuples or mappings found in the sequence
-        `seq_of_parameters`.
+        Execute a database operation (query or command) against all parameter
+        tuples or mappings found in the sequence `seq_of_parameters`.
 
         The function is mostly useful for commands that update the database:
         any result set returned by the query is discarded.
