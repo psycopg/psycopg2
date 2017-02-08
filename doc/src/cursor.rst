@@ -187,7 +187,7 @@ The ``cursor`` class
     .. method:: executemany(query, vars_list)
 
         Execute a database operation (query or command) against all parameter
-        tuples or mappings found in the sequence `seq_of_parameters`.
+        tuples or mappings found in the sequence *vars_list*.
 
         The function is mostly useful for commands that update the database:
         any result set returned by the query is discarded.
