@@ -39,7 +39,7 @@ create () {
 
     # install postgres versions not available on the image
     if (( "$VERNUM" < 902 || "$VERNUM" > 906 )); then
-        wget -O - http://initd.org/psycopg/tarballs/postgresql/postgresql-${PACKAGE}.tar.bz2 \
+        wget -O - http://initd.org/psycopg/upload/postgresql/postgresql-${PACKAGE}.tar.bz2 \
             | sudo tar xjf - -C /usr/lib/postgresql
     fi
 
