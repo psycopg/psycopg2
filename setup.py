@@ -609,7 +609,8 @@ ext.append(Extension("psycopg2._psycopg", sources,
 # using these pretty metadata. But that's their problem, not ours.
 download_url = (
     "http://initd.org/psycopg/tarballs/PSYCOPG-%s/psycopg2-%s.tar.gz"
-    % ('-'.join(PSYCOPG_VERSION.split('.')[:2]), PSYCOPG_VERSION))
+    % (re.sub(r'^(\d+)\.(\d+).*', r'\1-\2', PSYCOPG_VERSION),
+        PSYCOPG_VERSION))
 
 try:
     f = open("README.rst")
