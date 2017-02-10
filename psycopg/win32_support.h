@@ -23,18 +23,26 @@
  * License for more details.
  */
 #ifndef PSYCOPG_WIN32_SUPPORT_H
-#define PSYCOPG_WIN32_SUPPORT_H 1
+#define PSYCOPG_WIN32_SUPPORT_H
 
 #include "psycopg/config.h"
 
+#ifdef _WIN32
+#include <time.h>
+#endif
+#ifdef __MINGW32__
 #include <sys/time.h>
+#endif
+
 
 #ifdef _WIN32
 #ifndef __MINGW32__
-HIDDEN int gettimeofday(struct timeval * tp, struct timezone * tzp);
+extern HIDDEN int gettimeofday(struct timeval * tp, void * tzp);
+extern HIDDEN void timeradd(struct timeval *a, struct timeval *b, struct timeval *c);
+#elif
 #endif
 
-HIDDEN void timersub(struct timeval *a, struct timeval *b, struct timeval *c);
+extern HIDDEN void timersub(struct timeval *a, struct timeval *b, struct timeval *c);
 #endif
 
 #endif /* !defined(PSYCOPG_WIN32_SUPPORT_H) */

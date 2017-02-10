@@ -140,6 +140,8 @@ static int pthread_mutex_init(pthread_mutex_t *mutex, void* fake)
 #endif
 #define strcasecmp(x, y) lstrcmpi(x, y)
 #endif
+
+#include "win32_support.h"
 #endif
 
 /* what's this, we have no round function either? */

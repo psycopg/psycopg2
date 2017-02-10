@@ -35,7 +35,7 @@
    src/port/gettimeofday.c in PostgreSQL core */
 
 /* FILETIME of Jan 1 1970 00:00:00. */
-static const unsigned __int64 epoch = 116444736000000000ULL;
+static const unsigned __int64 epoch = ((unsigned __int64) 116444736000000000ULL);
 
 /*
  * timezone information is stored outside the kernel so tzp isn't used anymore.
@@ -44,7 +44,7 @@ static const unsigned __int64 epoch = 116444736000000000ULL;
  * elapsed_time().
  */
 int
-gettimeofday(struct timeval * tp, struct timezone * tzp)
+gettimeofday(struct timeval * tp, void * tzp)
 {
     FILETIME	file_time;
     SYSTEMTIME	system_time;
@@ -60,17 +60,30 @@ gettimeofday(struct timeval * tp, struct timezone * tzp)
 
     return 0;
 }
+
+/* timeradd missing on MS VC */
+void
+timeradd(struct timeval *a, struct timeval *b, struct timeval *c)
+{
+  c->tv_sec = a->tv_sec + b->tv_sec;
+  c->tv_usec = a->tv_usec + b->tv_usec;
+  if(c->tv_usec >= 1000000L) {
+    c->tv_usec -= 1000000L;
+    c->tv_sec += 1;
+  }
+}
 #endif /* !defined(__MINGW32__) */
 
-/* timersub is missing on mingw */
+/* timersub is missing on mingw & MS VC */
 void
 timersub(struct timeval *a, struct timeval *b, struct timeval *c)
 {
     c->tv_sec  = a->tv_sec  - b->tv_sec;
     c->tv_usec = a->tv_usec - b->tv_usec;
-    if (tv_usec < 0) {
+    if (c->tv_usec < 0) {
         c->tv_usec += 1000000;
         c->tv_sec  -= 1;
     }
 }
+
 #endif /* defined(_WIN32) */
