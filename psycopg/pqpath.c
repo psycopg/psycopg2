@@ -482,7 +482,7 @@ pq_begin_locked(connectionObject *conn, PGresult **pgres, char **error,
                 PyThreadState **tstate)
 {
     const size_t bufsize = 256;
-    char buf[bufsize];
+    char buf[256];  /* buf size must be same as bufsize */
     int result;
 
     Dprintf("pq_begin_locked: pgconn = %p, autocommit = %d, status = %d",
@@ -1786,7 +1786,7 @@ pq_copy_both(replicationCursorObject *repl, PyObject *consume, double keepalive_
     CLEARPGRES(curs->pgres);
 
     keep_intr.tv_sec  = (int)keepalive_interval;
-    keep_intr.tv_usec = (keepalive_interval - keep_intr.tv_sec)*1.0e6;
+    keep_intr.tv_usec = (long)((keepalive_interval - keep_intr.tv_sec)*1.0e6);
 
     while (1) {
         if (pq_read_replication_message(repl, &msg) < 0) {
