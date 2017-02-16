@@ -1,0 +1,15 @@
+This file is a simple placeholder for forcing the appveyor build cache
+to invalidate itself since appveyor.yml changes more frequently then
+the cache needs updating.  Note, the versions list here can be
+different than what is indicated in appveyor.yml.
+
+To invalidate the cache, update this file and check it into git.
+
+
+Currently used modules built in the cache:
+
+OpenSSL
+        Version: 1.0.2k
+
+PostgreSQL
+        Version: 9.6.2
