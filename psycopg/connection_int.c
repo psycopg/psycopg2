@@ -1237,17 +1237,21 @@ conn_set_session(connectionObject *self, int autocommit,
     else if (self->autocommit) {
         /* we are moving from autocommit to not autocommit, so revert the
          * characteristics to defaults to let BEGIN do its work */
-        if (0 > pq_set_guc_locked(self,
-                "default_transaction_isolation", "default",
-                &pgres, &error, &_save)) {
-            goto endlock;
+        if (self->isolevel != ISOLATION_LEVEL_DEFAULT) {
+            if (0 > pq_set_guc_locked(self,
+                    "default_transaction_isolation", "default",
+                    &pgres, &error, &_save)) {
+                goto endlock;
+            }
         }
-        if (0 > pq_set_guc_locked(self,
-                "default_transaction_read_only", "default",
-                &pgres, &error, &_save)) {
-            goto endlock;
+        if (self->readonly != STATE_DEFAULT) {
+            if (0 > pq_set_guc_locked(self,
+                    "default_transaction_read_only", "default",
+                    &pgres, &error, &_save)) {
+                goto endlock;
+            }
         }
-        if (self->server_version >= 90100) {
+        if (self->deferrable != STATE_DEFAULT) {
             if (0 > pq_set_guc_locked(self,
                     "default_transaction_deferrable", "default",
                     &pgres, &error, &_save)) {
