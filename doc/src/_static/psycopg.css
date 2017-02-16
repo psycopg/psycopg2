@@ -20,6 +20,11 @@ tt.sql {
     background-color: transparent;
 }
 
+a > code.sql,
+a > tt.sql {
+    font-weight: normal;
+}
+
 a > code.sql:hover,
 a > tt.sql:hover {
     text-decoration: underline;
