@@ -29,8 +29,14 @@ Documentation is included in the 'doc' directory and is `available online`__.
 Installation
 ------------
 
-If all the dependencies are met (i.e. you have the Python and libpq
-development packages installed in your system) the standard::
+If your ``pip`` version supports wheel_ packages it should be possible to
+install a binary version of Psycopg including all the dependencies. Just run::
+
+    pip install psycopg2
+
+If you want to build Psycopg from source you will need some prerequisite (a C
+compiler, Python and libpq development packages). If you have what you need
+the standard::
 
     python setup.py build
     sudo python setup.py install
@@ -38,7 +44,8 @@ development packages installed in your system) the standard::
 should work no problem.  In case you have any problem check the 'install' and
 the 'faq' documents in the docs or online__.
 
-.. __: http://initd.org/psycopg/docs/install.html
+.. _wheel: http://pythonwheels.com/
+.. __: http://initd.org/psycopg/docs/install.html#install-from-source
 
 For any other resource (source code repository, bug tracker, mailing list)
 please check the `project homepage`__.
