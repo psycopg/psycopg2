@@ -59,8 +59,8 @@ class AsyncTests(ConnectingTestCase):
         self.assert_(self.conn.async)
         self.assert_(not self.sync_conn.async)
 
-        # the async connection should be in isolevel 0
-        self.assertEquals(self.conn.isolation_level, 0)
+        # the async connection should be autocommit
+        self.assert_(self.conn.autocommit)
 
         # check other properties to be found on the connection
         self.assert_(self.conn.server_version)

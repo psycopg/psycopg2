@@ -154,7 +154,6 @@ HIDDEN PyObject *conn_encode(connectionObject *self, PyObject *b);
 HIDDEN PyObject *conn_decode(connectionObject *self, const char *str, Py_ssize_t len);
 HIDDEN int  conn_get_standard_conforming_strings(PGconn *pgconn);
 HIDDEN PyObject *conn_pgenc_to_pyenc(const char *encoding, char **clean_encoding);
-RAISES_NEG HIDDEN int  conn_get_isolation_level(connectionObject *self);
 HIDDEN int  conn_get_protocol_version(PGconn *pgconn);
 HIDDEN int  conn_get_server_version(PGconn *pgconn);
 HIDDEN void conn_notice_process(connectionObject *self);

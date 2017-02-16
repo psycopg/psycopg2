@@ -386,12 +386,6 @@ The ``connection`` class
 
         The function must be invoked with no transaction in progress.
 
-        .. note::
-
-            There is currently no builtin method to read the current value for
-            the parameters: use :sql:`SHOW default_transaction_...` to read
-            the values from the backend.
-
         .. seealso:: |SET TRANSACTION|_ for further details about the behaviour
             of the transaction parameters in the server.
 
@@ -454,12 +448,64 @@ The ``connection`` class
         .. versionadded:: 2.4.2
 
 
+    .. attribute:: isolation_level
+
+        Return or set the `transaction isolation level`_ for the current
+        session.  The value is one of the :ref:`isolation-level-constants`
+        defined in the `psycopg2.extensions` module.  On set it is also
+        possible to use one of the literal values ``READ UNCOMMITTED``, ``READ
+        COMMITTED``, ``REPEATABLE READ``, ``SERIALIZABLE``, ``DEFAULT``.
+
+        .. versionchanged:: 2.7
+
+            the property is writable.
+
+        .. versionchanged:: 2.7
+
+            the default value for `!isolation_level` is
+            `~psycopg2.extensions.ISOLATION_LEVEL_DEFAULT`; previously the
+            property would have queried the server and returned the real value
+            applied. To know this value you can run a query such as :sql:`show
+            transaction_isolation`. Usually the default value is `READ
+            COMMITTED`, but this may be changed in the server configuration.
+
+            This value is now entirely separate from the `autocommit`
+            property: in previous version, if `!autocommit` was set to `!True`
+            this property would have returned
+            `~psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT`; it will now
+            return the server isolation level.
+
+
+    .. attribute:: readonly
+
+        Return or set the read-only status for the current session. Available
+        values are `!True` (new transactions will be in read-only mode),
+        `!False` (new transactions will be writable), `!None` (use the default
+        configured for the server by :sql:`default_transaction_read_only`).
+
+        .. versionadded:: 2.7
+
+
+    .. attribute:: deferrable
+
+        Return or set the `deferrable status`__ for the current session.
+        Available values are `!True` (new transactions will be in deferrable
+        mode), `!False` (new transactions will be in non deferrable mode),
+        `!None` (use the default configured for the server by
+        :sql:`default_transaction_deferrable`).
+
+        .. __: `SET TRANSACTION`_
+
+        .. versionadded:: 2.7
+
+
     .. method:: set_isolation_level(level)
 
         .. note::
 
-            From version 2.4.2, `set_session()` and `autocommit` offer
-            finer control on the transaction characteristics.
+            This is a legacy method mixing `~conn.isolation_level` and
+            `~conn.autocommit`. Using the respective properties is a better
+            option.
 
         Set the `transaction isolation level`_ for the current session.
         The level defines the different phenomena that can happen in the
@@ -478,28 +524,6 @@ The ``connection`` class
             >>> conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
         See also :ref:`transactions-control`.
-
-        .. versionchanged:: 2.7
-
-            the function must be called outside a transaction; previously it
-            would have executed an implicit :sql:`ROLLBACK`; it will now raise
-            an exception.
-
-
-    .. attribute:: isolation_level
-
-        Read the `transaction isolation level`_ for the current session.  The
-        value is one of the :ref:`isolation-level-constants` defined in the
-        `psycopg2.extensions` module.
-
-        .. versionchanged:: 2.7
-
-            the default value for `!isolation_level` is
-            `~psycopg2.extensions.ISOLATION_LEVEL_DEFAULT`; previously the
-            property would have queried the server and returned the real value
-            applied. To know this value you can run a query such as :sql:`show
-            transaction_isolation`. Usually the default value is `READ
-            COMMITTED`, but this may be changed in the server configuration.
 
 
     .. index::

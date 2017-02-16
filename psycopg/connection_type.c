@@ -455,8 +455,14 @@ _psyco_conn_parse_isolevel(PyObject *pyval)
 
     Py_INCREF(pyval);   /* for ensure_bytes */
 
+    /* None is default. This is only used when setting the property, because
+     * set_session() has None used as "don't change" */
+    if (pyval == Py_None) {
+        rv = ISOLATION_LEVEL_DEFAULT;
+    }
+
     /* parse from one of the level constants */
-    if (PyInt_Check(pyval)) {
+    else if (PyInt_Check(pyval)) {
         level = PyInt_AsLong(pyval);
         if (level == -1 && PyErr_Occurred()) { goto exit; }
         if (level < 1 || level > 4) {
@@ -469,7 +475,6 @@ _psyco_conn_parse_isolevel(PyObject *pyval)
     }
 
     /* parse from the string -- this includes "default" */
-
     else {
         if (!(pyval = psycopg_ensure_bytes(pyval))) {
             goto exit;
@@ -505,7 +510,10 @@ _psyco_conn_parse_onoff(PyObject *pyval)
 
     Py_INCREF(pyval);   /* for ensure_bytes */
 
-    if (PyUnicode_CheckExact(pyval) || Bytes_CheckExact(pyval)) {
+    if (pyval == Py_None) {
+        rv = STATE_DEFAULT;
+    }
+    else if (PyUnicode_CheckExact(pyval) || Bytes_CheckExact(pyval)) {
         if (!(pyval = psycopg_ensure_bytes(pyval))) {
             goto exit;
         }
@@ -580,13 +588,7 @@ psyco_conn_set_session(connectionObject *self, PyObject *args, PyObject *kwargs)
         }
     }
     if (Py_None != deferrable) {
-        if (self->server_version < 90100) {
-            PyErr_SetString(ProgrammingError,
-                "the 'deferrable' setting is only available"
-                " from PostgreSQL 9.1");
-            return NULL;
-        }
-        if (0 > (c_deferrable = _psyco_conn_parse_onoff(readonly))) {
+        if (0 > (c_deferrable = _psyco_conn_parse_onoff(deferrable))) {
             return NULL;
         }
     }
@@ -604,6 +606,8 @@ psyco_conn_set_session(connectionObject *self, PyObject *args, PyObject *kwargs)
 }
 
 
+/* autocommit - return or set the current autocommit status */
+
 #define psyco_conn_autocommit_doc \
 "Set or return the autocommit status."
 
@@ -617,11 +621,11 @@ psyco_conn_autocommit_get(connectionObject *self)
 }
 
 BORROWED static PyObject *
-_psyco_conn_autocommit_set_checks(connectionObject *self)
+_psyco_set_session_check_setter_wrapper(connectionObject *self)
 {
     /* wrapper to use the EXC_IF macros.
      * return NULL in case of error, else whatever */
-    _set_session_checks(self, autocommit);
+    _set_session_checks(self, set_session);
     return Py_None;     /* borrowed */
 }
 
@@ -630,7 +634,7 @@ psyco_conn_autocommit_set(connectionObject *self, PyObject *pyvalue)
 {
     int value;
 
-    if (!_psyco_conn_autocommit_set_checks(self)) { return -1; }
+    if (!_psyco_set_session_check_setter_wrapper(self)) { return -1; }
     if (-1 == (value = PyObject_IsTrue(pyvalue))) { return -1; }
     if (0 > conn_set_session(self, value,
                 self->isolevel, self->readonly, self->deferrable)) {
@@ -641,19 +645,35 @@ psyco_conn_autocommit_set(connectionObject *self, PyObject *pyvalue)
 }
 
 
-/* isolation_level - return the current isolation level */
+/* isolation_level - return or set the current isolation level */
+
+#define psyco_conn_isolation_level_doc \
+"Set or return the connection transaction isolation level."
 
 static PyObject *
 psyco_conn_isolation_level_get(connectionObject *self)
 {
-    int rv;
+    if (self->isolevel == ISOLATION_LEVEL_DEFAULT) {
+        Py_RETURN_NONE;
+    } else {
+        return PyInt_FromLong((long)self->isolevel);
+    }
+}
 
-    EXC_IF_CONN_CLOSED(self);
-    EXC_IF_TPC_PREPARED(self, set_isolation_level);
 
-    rv = conn_get_isolation_level(self);
-    if (-1 == rv) { return NULL; }
-    return PyInt_FromLong((long)rv);
+static int
+psyco_conn_isolation_level_set(connectionObject *self, PyObject *pyvalue)
+{
+    int value;
+
+    if (!_psyco_set_session_check_setter_wrapper(self)) { return -1; }
+    if (0 > (value = _psyco_conn_parse_isolevel(pyvalue))) { return -1; }
+    if (0 > conn_set_session(self, self->autocommit,
+                value, self->readonly, self->deferrable)) {
+        return -1;
+    }
+
+    return 0;
 }
 
 
@@ -666,20 +686,36 @@ static PyObject *
 psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
 {
     int level = 1;
+    PyObject *pyval = NULL;
 
-    _set_session_checks(self, set_isolation_level);
+    EXC_IF_CONN_CLOSED(self);
+    EXC_IF_CONN_ASYNC(self, "isolation_level");
+    EXC_IF_TPC_PREPARED(self, "isolation_level");
 
-    if (!PyArg_ParseTuple(args, "i", &level)) return NULL;
+    if (!PyArg_ParseTuple(args, "O", &pyval)) return NULL;
 
-    if (level < 0 || level > 5) {
-        PyErr_SetString(PyExc_ValueError,
-            "isolation level must be between 0 and 4");
+    if (pyval == Py_None) {
+        level = ISOLATION_LEVEL_DEFAULT;
+    }
+
+    /* parse from one of the level constants */
+    else if (PyInt_Check(pyval)) {
+        level = PyInt_AsLong(pyval);
+
+        if (level < 0 || level > 4) {
+            PyErr_SetString(PyExc_ValueError,
+                "isolation level must be between 0 and 4");
+            return NULL;
+        }
+    }
+
+    if (0 > conn_rollback(self)) {
         return NULL;
     }
 
     if (level == 0) {
         if (0 > conn_set_session(self, 1,
-                ISOLATION_LEVEL_DEFAULT, self->readonly, self->deferrable)) {
+                self->isolevel, self->readonly, self->deferrable)) {
             return NULL;
         }
     }
@@ -692,6 +728,99 @@ psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
 
     Py_RETURN_NONE;
 }
+
+
+/* readonly - return or set the current read-only status */
+
+#define psyco_conn_readonly_doc \
+"Set or return the connection read-only status."
+
+static PyObject *
+psyco_conn_readonly_get(connectionObject *self)
+{
+    PyObject *rv = NULL;
+
+    switch (self->readonly) {
+        case STATE_OFF:
+            rv = Py_False;
+            break;
+        case STATE_ON:
+            rv = Py_True;
+            break;
+        case STATE_DEFAULT:
+            rv = Py_None;
+            break;
+        default:
+            PyErr_Format(InternalError,
+                "bad internal value for readonly: %d", self->readonly);
+            break;
+    }
+
+    return rv;
+}
+
+
+static int
+psyco_conn_readonly_set(connectionObject *self, PyObject *pyvalue)
+{
+    int value;
+
+    if (!_psyco_set_session_check_setter_wrapper(self)) { return -1; }
+    if (0 > (value = _psyco_conn_parse_onoff(pyvalue))) { return -1; }
+    if (0 > conn_set_session(self, self->autocommit,
+                self->isolevel, value, self->deferrable)) {
+        return -1;
+    }
+
+    return 0;
+}
+
+
+/* deferrable - return or set the current deferrable status */
+
+#define psyco_conn_deferrable_doc \
+"Set or return the connection deferrable status."
+
+static PyObject *
+psyco_conn_deferrable_get(connectionObject *self)
+{
+    PyObject *rv = NULL;
+
+    switch (self->deferrable) {
+        case STATE_OFF:
+            rv = Py_False;
+            break;
+        case STATE_ON:
+            rv = Py_True;
+            break;
+        case STATE_DEFAULT:
+            rv = Py_None;
+            break;
+        default:
+            PyErr_Format(InternalError,
+                "bad internal value for deferrable: %d", self->deferrable);
+            break;
+    }
+
+    return rv;
+}
+
+
+static int
+psyco_conn_deferrable_set(connectionObject *self, PyObject *pyvalue)
+{
+    int value;
+
+    if (!_psyco_set_session_check_setter_wrapper(self)) { return -1; }
+    if (0 > (value = _psyco_conn_parse_onoff(pyvalue))) { return -1; }
+    if (0 > conn_set_session(self, self->autocommit,
+                self->isolevel, self->readonly, value)) {
+        return -1;
+    }
+
+    return 0;
+}
+
 
 /* set_client_encoding method - set client encoding */
 
@@ -1103,8 +1232,16 @@ static struct PyGetSetDef connectionObject_getsets[] = {
         psyco_conn_autocommit_doc },
     { "isolation_level",
         (getter)psyco_conn_isolation_level_get,
-        (setter)NULL,
-        "The current isolation level." },
+        (setter)psyco_conn_isolation_level_set,
+        psyco_conn_isolation_level_doc },
+    { "readonly",
+        (getter)psyco_conn_readonly_get,
+        (setter)psyco_conn_readonly_set,
+        psyco_conn_readonly_doc },
+    { "deferrable",
+        (getter)psyco_conn_deferrable_get,
+        (setter)psyco_conn_deferrable_set,
+        psyco_conn_deferrable_doc },
     {NULL}
 };
 #undef EXCEPTION_GETTER

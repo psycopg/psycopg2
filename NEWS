@@ -39,6 +39,9 @@ New features:
   control the session characteristics as it may create problems with external
   connection pools such as pgbouncer; use :sql:`BEGIN` options instead
   (:ticket:`#503`).
+- `~connection.isolation_level` is now writable and entirely separated from
+  `~connection.autocommit`; added `~connection.readonly`,
+  `connection.deferrable` writable attributes.
 
 Bug fixes:
 
@@ -53,8 +56,6 @@ Other changes:
 - `~connection.isolation_level` doesn't read from the database but will return
   `~psycopg2.extensions.ISOLATION_LEVEL_DEFAULT` if no value was set on the
   connection.
-- `~connection.set_isolation_level()` will throw an exception if executed
-  inside a transaction; previously it would have silently rolled it back.
 - Empty arrays no more converted into lists if they don't have a type attached
   (:ticket:`#506`)
 

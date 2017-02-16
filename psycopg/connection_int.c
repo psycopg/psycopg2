@@ -568,19 +568,6 @@ exit:
 }
 
 
-RAISES_NEG int
-conn_get_isolation_level(connectionObject *self)
-{
-    /* this may get called by async connections too: here's your result */
-    if (self->autocommit) {
-        return ISOLATION_LEVEL_AUTOCOMMIT;
-    }
-    else {
-        return self->isolevel;
-    }
-}
-
-
 int
 conn_get_protocol_version(PGconn *pgconn)
 {
@@ -697,6 +684,9 @@ conn_setup(connectionObject *self, PGconn *pgconn)
 
     /* for reset */
     self->autocommit = 0;
+    self->isolevel = ISOLATION_LEVEL_DEFAULT;
+    self->readonly = STATE_DEFAULT;
+    self->deferrable = STATE_DEFAULT;
 
     /* success */
     rv = 0;
@@ -1199,6 +1189,13 @@ conn_set_session(connectionObject *self, int autocommit,
     PGresult *pgres = NULL;
     char *error = NULL;
 
+    if (deferrable != self->deferrable && self->server_version < 90100) {
+        PyErr_SetString(ProgrammingError,
+            "the 'deferrable' setting is only available"
+            " from PostgreSQL 9.1");
+        goto exit;
+    }
+
     /* Promote an isolation level to one of the levels supported by the server */
     if (self->server_version < 80000) {
         if (isolevel == ISOLATION_LEVEL_READ_UNCOMMITTED) {
@@ -1229,7 +1226,7 @@ conn_set_session(connectionObject *self, int autocommit,
                 goto endlock;
             }
         }
-        if (deferrable != self->deferrable && self->server_version >= 90100) {
+        if (deferrable != self->deferrable) {
             if (0 > pq_set_guc_locked(self,
                     "default_transaction_deferrable", srv_state_guc[deferrable],
                     &pgres, &error, &_save)) {
@@ -1240,17 +1237,21 @@ conn_set_session(connectionObject *self, int autocommit,
     else if (self->autocommit) {
         /* we are moving from autocommit to not autocommit, so revert the
          * characteristics to defaults to let BEGIN do its work */
-        if (0 > pq_set_guc_locked(self,
-                "default_transaction_isolation", "default",
-                &pgres, &error, &_save)) {
-            goto endlock;
+        if (self->isolevel != ISOLATION_LEVEL_DEFAULT) {
+            if (0 > pq_set_guc_locked(self,
+                    "default_transaction_isolation", "default",
+                    &pgres, &error, &_save)) {
+                goto endlock;
+            }
         }
-        if (0 > pq_set_guc_locked(self,
-                "default_transaction_read_only", "default",
-                &pgres, &error, &_save)) {
-            goto endlock;
+        if (self->readonly != STATE_DEFAULT) {
+            if (0 > pq_set_guc_locked(self,
+                    "default_transaction_read_only", "default",
+                    &pgres, &error, &_save)) {
+                goto endlock;
+            }
         }
-        if (self->server_version >= 90100) {
+        if (self->deferrable != STATE_DEFAULT) {
             if (0 > pq_set_guc_locked(self,
                     "default_transaction_deferrable", "default",
                     &pgres, &error, &_save)) {
