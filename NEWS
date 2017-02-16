@@ -41,7 +41,7 @@ New features:
   (:ticket:`#503`).
 - `~connection.isolation_level` is now writable and entirely separated from
   `~connection.autocommit`; added `~connection.readonly`,
-  `connection.deferrable` writable attributes.
+  `~connection.deferrable` writable attributes.
 
 Bug fixes:
 
