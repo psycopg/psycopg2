@@ -106,7 +106,7 @@ init:
     # Note: repository not cloned at this point, so need to fetch
     # file another way
     - ECHO Fixing VS2010 Express and 64bit builds
-    - curl -fsSL -o "C:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\bin\\amd64\\vcvars64.bat" https://raw.githubusercontent.com/psycopg/psycopg2-wheels/master/scripts/vcvars64-vs2010.bat
+    - curl -fsSL -o "C:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\bin\\amd64\\vcvars64.bat" https://raw.githubusercontent.com/psycopg/psycopg2/master/scripts/vcvars64-vs2010.bat
 
     # Setup the compiler based upon version and architecture
     - ECHO Configuring Compiler
