@@ -154,8 +154,8 @@ install:
         }
     # Download OpenSSL source
     - CD C:\Others
-    - IF NOT EXIST OpenSSL_1_0_2k.tar.gz (
-        curl -fsSL -o OpenSSL_1_0_2k.tar.gz https://github.com/openssl/openssl/archive/OpenSSL_1_0_2k.tar.gz
+    - IF NOT EXIST OpenSSL_1_0_2k.zip (
+        curl -fsSL -o OpenSSL_1_0_2k.zip https://github.com/openssl/openssl/archive/OpenSSL_1_0_2k.zip
       )
 
     # To use OpenSSL >= 1.1.0, both libpq and psycopg build environments have
@@ -167,7 +167,7 @@ install:
     #    - nmake build_libs install_dev
     - IF NOT EXIST %OPENSSLTOP%\lib\ssleay32.lib (
         CD %BUILD_DIR% &&
-        7z x C:\Others\OpenSSL_1_0_2k.tar.gz -so | 7z x -si -ttar > nul &&
+        7z x C:\Others\OpenSSL_1_0_2k.zip &&
         CD openssl-OpenSSL_1_0_2k &&
         perl Configure %TARGET% no-asm no-shared no-zlib --prefix=%OPENSSLTOP% --openssldir=%OPENSSLTOP% &&
         CALL ms\%DO% &&
@@ -187,19 +187,19 @@ install:
     - IF NOT EXIST %PGTOP%\lib MKDIR %PGTOP%\lib
     # Download PostgreSQL source
     - CD C:\Others
-    - IF NOT EXIST postgresql-9.6.2.tar.gz (
-        curl -fsSL -o postgresql-9.6.2.tar.gz https://github.com/postgres/postgres/archive/REL9_6_2.tar.gz
+    - IF NOT EXIST postgres-REL9_6_2.zip (
+        curl -fsSL -o postgres-REL9_6_2.zip https://github.com/postgres/postgres/archive/REL9_6_2.zip
       )
 
     # Setup build config file (config.pl)
     # Build libpgport first
     # Build libpq
     # NOTE: Cannot set and use the same variable inside an IF
-    - SET PGBUILD=%BUILD_DIR%\postgresql-9.6.2
+    - SET PGBUILD=%BUILD_DIR%\postgres-REL9_6_2
     - IF NOT EXIST %PGTOP%\lib\libpq.lib (
         CD %BUILD_DIR% &&
-        7z x C:\Others\postgresql-9.6.2.tar.gz -so | 7z x -si -ttar > nul &&
-        CD postgresql-9.6.2\src\tools\msvc &&
+        7z x C:\Others\postgres-REL9_6_2.zip &&
+        CD postgres-REL9_6_2\src\tools\msvc &&
         ECHO $config-^>{ldap} = 0; > config.pl &&
         ECHO $config-^>{openssl} = "%OPENSSLTOP:\=\\%"; >> config.pl &&
         ECHO.>> config.pl &&
