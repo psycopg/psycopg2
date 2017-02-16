@@ -1189,6 +1189,13 @@ conn_set_session(connectionObject *self, int autocommit,
     PGresult *pgres = NULL;
     char *error = NULL;
 
+    if (deferrable != self->deferrable && self->server_version < 90100) {
+        PyErr_SetString(ProgrammingError,
+            "the 'deferrable' setting is only available"
+            " from PostgreSQL 9.1");
+        goto exit;
+    }
+
     /* Promote an isolation level to one of the levels supported by the server */
     if (self->server_version < 80000) {
         if (isolevel == ISOLATION_LEVEL_READ_UNCOMMITTED) {
@@ -1219,7 +1226,7 @@ conn_set_session(connectionObject *self, int autocommit,
                 goto endlock;
             }
         }
-        if (deferrable != self->deferrable && self->server_version >= 90100) {
+        if (deferrable != self->deferrable) {
             if (0 > pq_set_guc_locked(self,
                     "default_transaction_deferrable", srv_state_guc[deferrable],
                     &pgres, &error, &_save)) {

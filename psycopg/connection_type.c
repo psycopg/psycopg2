@@ -588,12 +588,6 @@ psyco_conn_set_session(connectionObject *self, PyObject *args, PyObject *kwargs)
         }
     }
     if (Py_None != deferrable) {
-        if (self->server_version < 90100) {
-            PyErr_SetString(ProgrammingError,
-                "the 'deferrable' setting is only available"
-                " from PostgreSQL 9.1");
-            return NULL;
-        }
         if (0 > (c_deferrable = _psyco_conn_parse_onoff(deferrable))) {
             return NULL;
         }
