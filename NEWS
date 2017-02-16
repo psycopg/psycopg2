@@ -39,7 +39,9 @@ New features:
   control the session characteristics as it may create problems with external
   connection pools such as pgbouncer; use :sql:`BEGIN` options instead
   (:ticket:`#503`).
-- `~connection.isolation_level` is now writable.
+- `~connection.isolation_level` is now writable and entirely separated from
+  `~connection.autocommit`; added `~connection.readonly`,
+  `connection.deferrable` writable attributes.
 
 Bug fixes:
 

@@ -89,13 +89,26 @@ class ConnectionTests(ConnectingTestCase):
 
     def test_reset(self):
         conn = self.conn
-        # switch isolation level, then reset
-        level = conn.isolation_level
-        conn.set_isolation_level(0)
-        self.assertEqual(conn.isolation_level, 0)
+        # switch session characteristics
+        conn.autocommit = True
+        conn.isolation_level = 'serializable'
+        conn.readonly = True
+        if self.conn.server_version >= 90100:
+            conn.deferrable = False
+
+        self.assert_(conn.autocommit)
+        self.assertEqual(conn.isolation_level, ext.ISOLATION_LEVEL_SERIALIZABLE)
+        self.assert_(conn.readonly is True)
+        if self.conn.server_version >= 90100:
+            self.assert_(conn.deferrable is False)
+
         conn.reset()
-        # now the isolation level should be equal to saved one
-        self.assertEqual(conn.isolation_level, level)
+        # now the session characteristics should be reverted
+        self.assert_(not conn.autocommit)
+        self.assertEqual(conn.isolation_level, ext.ISOLATION_LEVEL_DEFAULT)
+        self.assert_(conn.readonly is None)
+        if self.conn.server_version >= 90100:
+            self.assert_(conn.deferrable is None)
 
     def test_notices(self):
         conn = self.conn
@@ -499,7 +512,6 @@ class IsolationLevelsTestCase(ConnectingTestCase):
         curs = conn.cursor()
 
         levels = [
-            (None, ext.ISOLATION_LEVEL_AUTOCOMMIT),
             ('read uncommitted',
                 ext.ISOLATION_LEVEL_READ_UNCOMMITTED),
             ('read committed', ext.ISOLATION_LEVEL_READ_COMMITTED),
@@ -521,15 +533,26 @@ class IsolationLevelsTestCase(ConnectingTestCase):
             curs.execute('show transaction_isolation;')
             got_name = curs.fetchone()[0]
 
-            if name is None:
-                curs.execute('show transaction_isolation;')
-                name = curs.fetchone()[0]
-
             self.assertEqual(name, got_name)
             conn.commit()
 
         self.assertRaises(ValueError, conn.set_isolation_level, -1)
         self.assertRaises(ValueError, conn.set_isolation_level, 5)
+
+    def test_set_isolation_level_autocommit(self):
+        conn = self.connect()
+        curs = conn.cursor()
+
+        conn.set_isolation_level(ext.ISOLATION_LEVEL_AUTOCOMMIT)
+        self.assertEqual(conn.isolation_level, ext.ISOLATION_LEVEL_DEFAULT)
+        self.assert_(conn.autocommit)
+
+        conn.isolation_level = 'serializable'
+        self.assertEqual(conn.isolation_level, ext.ISOLATION_LEVEL_SERIALIZABLE)
+        self.assert_(conn.autocommit)
+
+        curs.execute('show transaction_isolation;')
+        self.assertEqual(curs.fetchone()[0], 'serializable')
 
     def test_set_isolation_level_default(self):
         conn = self.connect()
@@ -663,8 +686,6 @@ class IsolationLevelsTestCase(ConnectingTestCase):
     def test_isolation_level_closed(self):
         cnn = self.connect()
         cnn.close()
-        self.assertRaises(psycopg2.InterfaceError, getattr,
-            cnn, 'isolation_level')
         self.assertRaises(psycopg2.InterfaceError,
             cnn.set_isolation_level, 0)
         self.assertRaises(psycopg2.InterfaceError,
@@ -1226,22 +1247,47 @@ class TransactionControlTests(ConnectingTestCase):
         self.assertRaises(ValueError, self.conn.set_session, 'whatever')
 
     def test_set_read_only(self):
-        cur = self.conn.cursor()
-        self.conn.set_session(readonly=True)
-        cur.execute("SHOW transaction_read_only;")
-        self.assertEqual(cur.fetchone()[0], 'on')
-        self.conn.rollback()
-        cur.execute("SHOW transaction_read_only;")
-        self.assertEqual(cur.fetchone()[0], 'on')
-        self.conn.rollback()
+        self.assert_(self.conn.readonly is None)
 
         cur = self.conn.cursor()
-        self.conn.set_session(readonly=None)
+        self.conn.set_session(readonly=True)
+        self.assert_(self.conn.readonly is True)
+        cur.execute("SHOW transaction_read_only;")
+        self.assertEqual(cur.fetchone()[0], 'on')
+        self.conn.rollback()
         cur.execute("SHOW transaction_read_only;")
         self.assertEqual(cur.fetchone()[0], 'on')
         self.conn.rollback()
 
         self.conn.set_session(readonly=False)
+        self.assert_(self.conn.readonly is False)
+        cur.execute("SHOW transaction_read_only;")
+        self.assertEqual(cur.fetchone()[0], 'off')
+        self.conn.rollback()
+
+    def test_setattr_read_only(self):
+        cur = self.conn.cursor()
+        self.conn.readonly = True
+        self.assert_(self.conn.readonly is True)
+        cur.execute("SHOW transaction_read_only;")
+        self.assertEqual(cur.fetchone()[0], 'on')
+        self.assertRaises(self.conn.ProgrammingError,
+            setattr, self.conn, 'readonly', False)
+        self.assert_(self.conn.readonly is True)
+        self.conn.rollback()
+        cur.execute("SHOW transaction_read_only;")
+        self.assertEqual(cur.fetchone()[0], 'on')
+        self.conn.rollback()
+
+        cur = self.conn.cursor()
+        self.conn.readonly = None
+        self.assert_(self.conn.readonly is None)
+        cur.execute("SHOW transaction_read_only;")
+        self.assertEqual(cur.fetchone()[0], 'off')  # assume defined by server
+        self.conn.rollback()
+
+        self.conn.readonly = False
+        self.assert_(self.conn.readonly is False)
         cur.execute("SHOW transaction_read_only;")
         self.assertEqual(cur.fetchone()[0], 'off')
         self.conn.rollback()
@@ -1264,8 +1310,10 @@ class TransactionControlTests(ConnectingTestCase):
 
     @skip_before_postgres(9, 1)
     def test_set_deferrable(self):
+        self.assert_(self.conn.deferrable is None)
         cur = self.conn.cursor()
         self.conn.set_session(readonly=True, deferrable=True)
+        self.assert_(self.conn.deferrable is True)
         cur.execute("SHOW transaction_read_only;")
         self.assertEqual(cur.fetchone()[0], 'on')
         cur.execute("SHOW transaction_deferrable;")
@@ -1276,6 +1324,7 @@ class TransactionControlTests(ConnectingTestCase):
         self.conn.rollback()
 
         self.conn.set_session(deferrable=False)
+        self.assert_(self.conn.deferrable is False)
         cur.execute("SHOW transaction_read_only;")
         self.assertEqual(cur.fetchone()[0], 'on')
         cur.execute("SHOW transaction_deferrable;")
@@ -1286,6 +1335,54 @@ class TransactionControlTests(ConnectingTestCase):
     def test_set_deferrable_error(self):
         self.assertRaises(psycopg2.ProgrammingError,
             self.conn.set_session, readonly=True, deferrable=True)
+        self.assertRaises(psycopg2.ProgrammingError,
+            setattr, self.conn, 'deferrable', True)
+
+    @skip_before_postgres(9, 1)
+    def test_setattr_deferrable(self):
+        cur = self.conn.cursor()
+        self.conn.deferrable = True
+        self.assert_(self.conn.deferrable is True)
+        cur.execute("SHOW transaction_deferrable;")
+        self.assertEqual(cur.fetchone()[0], 'on')
+        self.assertRaises(self.conn.ProgrammingError,
+            setattr, self.conn, 'deferrable', False)
+        self.assert_(self.conn.deferrable is True)
+        self.conn.rollback()
+        cur.execute("SHOW transaction_deferrable;")
+        self.assertEqual(cur.fetchone()[0], 'on')
+        self.conn.rollback()
+
+        cur = self.conn.cursor()
+        self.conn.deferrable = None
+        self.assert_(self.conn.deferrable is None)
+        cur.execute("SHOW transaction_deferrable;")
+        self.assertEqual(cur.fetchone()[0], 'off')  # assume defined by server
+        self.conn.rollback()
+
+        self.conn.deferrable = False
+        self.assert_(self.conn.deferrable is False)
+        cur.execute("SHOW transaction_deferrable;")
+        self.assertEqual(cur.fetchone()[0], 'off')
+        self.conn.rollback()
+
+    def test_mixing_session_attribs(self):
+        cur = self.conn.cursor()
+        self.conn.autocommit = True
+        self.conn.readonly = True
+
+        cur.execute("SHOW transaction_read_only;")
+        self.assertEqual(cur.fetchone()[0], 'on')
+
+        cur.execute("SHOW default_transaction_read_only;")
+        self.assertEqual(cur.fetchone()[0], 'on')
+
+        self.conn.autocommit = False
+        cur.execute("SHOW transaction_read_only;")
+        self.assertEqual(cur.fetchone()[0], 'on')
+
+        cur.execute("SHOW default_transaction_read_only;")
+        self.assertEqual(cur.fetchone()[0], 'off')
 
 
 class AutocommitTests(ConnectingTestCase):

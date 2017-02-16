@@ -568,19 +568,6 @@ exit:
 }
 
 
-RAISES_NEG int
-conn_get_isolation_level(connectionObject *self)
-{
-    /* this may get called by async connections too: here's your result */
-    if (self->autocommit) {
-        return ISOLATION_LEVEL_AUTOCOMMIT;
-    }
-    else {
-        return self->isolevel;
-    }
-}
-
-
 int
 conn_get_protocol_version(PGconn *pgconn)
 {
@@ -697,6 +684,9 @@ conn_setup(connectionObject *self, PGconn *pgconn)
 
     /* for reset */
     self->autocommit = 0;
+    self->isolevel = ISOLATION_LEVEL_DEFAULT;
+    self->readonly = STATE_DEFAULT;
+    self->deferrable = STATE_DEFAULT;
 
     /* success */
     rv = 0;

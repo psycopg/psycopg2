@@ -386,12 +386,6 @@ The ``connection`` class
 
         The function must be invoked with no transaction in progress.
 
-        .. note::
-
-            There is currently no builtin method to read the current value for
-            the parameters: use :sql:`SHOW default_transaction_...` to read
-            the values from the backend.
-
         .. seealso:: |SET TRANSACTION|_ for further details about the behaviour
             of the transaction parameters in the server.
 
@@ -474,6 +468,35 @@ The ``connection`` class
             applied. To know this value you can run a query such as :sql:`show
             transaction_isolation`. Usually the default value is `READ
             COMMITTED`, but this may be changed in the server configuration.
+
+            This value is now entirely separate from the `autocommit`
+            property: in previous version, if `!autocommit` was set to `!True`
+            this property would have returned
+            `~psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT`; it will now
+            return the server isolation level.
+
+
+    .. attribute:: readonly
+
+        Return or set the read-only status for the current session. Available
+        values are `!True` (new transactions will be in read-only mode),
+        `!False` (new transactions will be writable), `!None` (use the default
+        configured for the server by :sql:`default_transaction_read_only`).
+
+        .. versionadded:: 2.7
+
+
+    .. attribute:: deferrable
+
+        Return or set the `deferrable status`__ for the current session.
+        Available values are `!True` (new transactions will be in deferrable
+        mode), `!False` (new transactions will be in non deferrable mode),
+        `!None` (use the default configured for the server by
+        :sql:`default_transaction_deferrable`).
+
+        .. __: `SET TRANSACTION`_
+
+        .. versionadded:: 2.7
 
 
     .. method:: set_isolation_level(level)

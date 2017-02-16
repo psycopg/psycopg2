@@ -510,7 +510,10 @@ _psyco_conn_parse_onoff(PyObject *pyval)
 
     Py_INCREF(pyval);   /* for ensure_bytes */
 
-    if (PyUnicode_CheckExact(pyval) || Bytes_CheckExact(pyval)) {
+    if (pyval == Py_None) {
+        rv = STATE_DEFAULT;
+    }
+    else if (PyUnicode_CheckExact(pyval) || Bytes_CheckExact(pyval)) {
         if (!(pyval = psycopg_ensure_bytes(pyval))) {
             goto exit;
         }
@@ -591,7 +594,7 @@ psyco_conn_set_session(connectionObject *self, PyObject *args, PyObject *kwargs)
                 " from PostgreSQL 9.1");
             return NULL;
         }
-        if (0 > (c_deferrable = _psyco_conn_parse_onoff(readonly))) {
+        if (0 > (c_deferrable = _psyco_conn_parse_onoff(deferrable))) {
             return NULL;
         }
     }
@@ -608,6 +611,8 @@ psyco_conn_set_session(connectionObject *self, PyObject *args, PyObject *kwargs)
     Py_RETURN_NONE;
 }
 
+
+/* autocommit - return or set the current autocommit status */
 
 #define psyco_conn_autocommit_doc \
 "Set or return the autocommit status."
@@ -646,7 +651,7 @@ psyco_conn_autocommit_set(connectionObject *self, PyObject *pyvalue)
 }
 
 
-/* isolation_level - return the current isolation level */
+/* isolation_level - return or set the current isolation level */
 
 #define psyco_conn_isolation_level_doc \
 "Set or return the connection transaction isolation level."
@@ -654,22 +659,13 @@ psyco_conn_autocommit_set(connectionObject *self, PyObject *pyvalue)
 static PyObject *
 psyco_conn_isolation_level_get(connectionObject *self)
 {
-    int rv;
-
-    EXC_IF_CONN_CLOSED(self);
-    EXC_IF_TPC_PREPARED(self, set_isolation_level);
-
-    rv = conn_get_isolation_level(self);
-    if (-1 == rv) { return NULL; }
-    if (ISOLATION_LEVEL_DEFAULT == rv) {
+    if (self->isolevel == ISOLATION_LEVEL_DEFAULT) {
         Py_RETURN_NONE;
     } else {
-        return PyInt_FromLong((long)rv);
+        return PyInt_FromLong((long)self->isolevel);
     }
 }
 
-
-/* isolation_level - set a new isolation level */
 
 static int
 psyco_conn_isolation_level_set(connectionObject *self, PyObject *pyvalue)
@@ -725,7 +721,7 @@ psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
 
     if (level == 0) {
         if (0 > conn_set_session(self, 1,
-                ISOLATION_LEVEL_DEFAULT, self->readonly, self->deferrable)) {
+                self->isolevel, self->readonly, self->deferrable)) {
             return NULL;
         }
     }
@@ -738,6 +734,99 @@ psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
 
     Py_RETURN_NONE;
 }
+
+
+/* readonly - return or set the current read-only status */
+
+#define psyco_conn_readonly_doc \
+"Set or return the connection read-only status."
+
+static PyObject *
+psyco_conn_readonly_get(connectionObject *self)
+{
+    PyObject *rv = NULL;
+
+    switch (self->readonly) {
+        case STATE_OFF:
+            rv = Py_False;
+            break;
+        case STATE_ON:
+            rv = Py_True;
+            break;
+        case STATE_DEFAULT:
+            rv = Py_None;
+            break;
+        default:
+            PyErr_Format(InternalError,
+                "bad internal value for readonly: %d", self->readonly);
+            break;
+    }
+
+    return rv;
+}
+
+
+static int
+psyco_conn_readonly_set(connectionObject *self, PyObject *pyvalue)
+{
+    int value;
+
+    if (!_psyco_set_session_check_setter_wrapper(self)) { return -1; }
+    if (0 > (value = _psyco_conn_parse_onoff(pyvalue))) { return -1; }
+    if (0 > conn_set_session(self, self->autocommit,
+                self->isolevel, value, self->deferrable)) {
+        return -1;
+    }
+
+    return 0;
+}
+
+
+/* deferrable - return or set the current deferrable status */
+
+#define psyco_conn_deferrable_doc \
+"Set or return the connection deferrable status."
+
+static PyObject *
+psyco_conn_deferrable_get(connectionObject *self)
+{
+    PyObject *rv = NULL;
+
+    switch (self->deferrable) {
+        case STATE_OFF:
+            rv = Py_False;
+            break;
+        case STATE_ON:
+            rv = Py_True;
+            break;
+        case STATE_DEFAULT:
+            rv = Py_None;
+            break;
+        default:
+            PyErr_Format(InternalError,
+                "bad internal value for deferrable: %d", self->deferrable);
+            break;
+    }
+
+    return rv;
+}
+
+
+static int
+psyco_conn_deferrable_set(connectionObject *self, PyObject *pyvalue)
+{
+    int value;
+
+    if (!_psyco_set_session_check_setter_wrapper(self)) { return -1; }
+    if (0 > (value = _psyco_conn_parse_onoff(pyvalue))) { return -1; }
+    if (0 > conn_set_session(self, self->autocommit,
+                self->isolevel, self->readonly, value)) {
+        return -1;
+    }
+
+    return 0;
+}
+
 
 /* set_client_encoding method - set client encoding */
 
@@ -1151,6 +1240,14 @@ static struct PyGetSetDef connectionObject_getsets[] = {
         (getter)psyco_conn_isolation_level_get,
         (setter)psyco_conn_isolation_level_set,
         psyco_conn_isolation_level_doc },
+    { "readonly",
+        (getter)psyco_conn_readonly_get,
+        (setter)psyco_conn_readonly_set,
+        psyco_conn_readonly_doc },
+    { "deferrable",
+        (getter)psyco_conn_deferrable_get,
+        (setter)psyco_conn_deferrable_set,
+        psyco_conn_deferrable_doc },
     {NULL}
 };
 #undef EXCEPTION_GETTER
