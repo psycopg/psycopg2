@@ -698,7 +698,9 @@ psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
     int level = 1;
     PyObject *pyval = NULL;
 
-    _set_session_checks(self, set_isolation_level);
+    EXC_IF_CONN_CLOSED(self);
+    EXC_IF_CONN_ASYNC(self, "isolation_level");
+    EXC_IF_TPC_PREPARED(self, "isolation_level");
 
     if (!PyArg_ParseTuple(args, "O", &pyval)) return NULL;
 
@@ -715,6 +717,10 @@ psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
                 "isolation level must be between 0 and 4");
             return NULL;
         }
+    }
+
+    if (0 > conn_rollback(self)) {
+        return NULL;
     }
 
     if (level == 0) {

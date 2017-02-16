@@ -54,8 +54,6 @@ Other changes:
 - `~connection.isolation_level` doesn't read from the database but will return
   `~psycopg2.extensions.ISOLATION_LEVEL_DEFAULT` if no value was set on the
   connection.
-- `~connection.set_isolation_level()` will throw an exception if executed
-  inside a transaction; previously it would have silently rolled it back.
 - Empty arrays no more converted into lists if they don't have a type attached
   (:ticket:`#506`)
 

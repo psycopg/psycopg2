@@ -480,8 +480,9 @@ The ``connection`` class
 
         .. note::
 
-            From version 2.4.2, `set_session()` and `autocommit` offer
-            finer control on the transaction characteristics.
+            This is a legacy method mixing `~conn.isolation_level` and
+            `~conn.autocommit`. Using the respective properties is a better
+            option.
 
         Set the `transaction isolation level`_ for the current session.
         The level defines the different phenomena that can happen in the
@@ -500,12 +501,6 @@ The ``connection`` class
             >>> conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
         See also :ref:`transactions-control`.
-
-        .. versionchanged:: 2.7
-
-            the function must be called outside a transaction; previously it
-            would have executed an implicit :sql:`ROLLBACK`; it will now raise
-            an exception.
 
 
     .. index::

@@ -560,14 +560,34 @@ class IsolationLevelsTestCase(ConnectingTestCase):
         self.assertEqual(ext.TRANSACTION_STATUS_INTRANS,
             conn.get_transaction_status())
 
-        # changed in psycopg 2.7
-        self.assertRaises(psycopg2.ProgrammingError,
-            conn.set_isolation_level,
-            ext.ISOLATION_LEVEL_SERIALIZABLE)
-        self.assertEqual(ext.TRANSACTION_STATUS_INTRANS,
+        conn.set_isolation_level(
+            psycopg2.extensions.ISOLATION_LEVEL_SERIALIZABLE)
+        self.assertEqual(psycopg2.extensions.TRANSACTION_STATUS_IDLE,
             conn.get_transaction_status())
+        cur.execute("select count(*) from isolevel;")
+        self.assertEqual(0, cur.fetchone()[0])
+
+        cur.execute("insert into isolevel values (10);")
+        self.assertEqual(psycopg2.extensions.TRANSACTION_STATUS_INTRANS,
+            conn.get_transaction_status())
+        conn.set_isolation_level(
+            psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+        self.assertEqual(psycopg2.extensions.TRANSACTION_STATUS_IDLE,
+            conn.get_transaction_status())
+        cur.execute("select count(*) from isolevel;")
+        self.assertEqual(0, cur.fetchone()[0])
+
+        cur.execute("insert into isolevel values (10);")
+        self.assertEqual(psycopg2.extensions.TRANSACTION_STATUS_IDLE,
+            conn.get_transaction_status())
+        conn.set_isolation_level(
+            psycopg2.extensions.ISOLATION_LEVEL_READ_COMMITTED)
+        self.assertEqual(psycopg2.extensions.TRANSACTION_STATUS_IDLE,
+            conn.get_transaction_status())
+        cur.execute("select count(*) from isolevel;")
+        self.assertEqual(1, cur.fetchone()[0])
         self.assertEqual(conn.isolation_level,
-            ext.ISOLATION_LEVEL_DEFAULT)
+            psycopg2.extensions.ISOLATION_LEVEL_READ_COMMITTED)
 
     def test_isolation_level_autocommit(self):
         cnn1 = self.connect()
