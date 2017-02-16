@@ -1,0 +1,239 @@
+version : 2.x.{build}
+
+clone_folder: C:\Project
+
+environment:
+    global:
+        # MSVC Express 2008's setenv.cmd failes if /E:ON and /V:ON are not
+        # enabled in the batch script interpreter
+        #
+        #      WITH_COMPILER: "cmd /E:ON /V:ON /C .\\appveyor\\run_with_compiler.cmd"
+        CMD_IN_ENV: cmd /E:ON /V:ON /C .\appveyor\run_with_env.cmd
+
+    matrix:
+        # For Python versions available on Appveyor, see
+        # http://www.appveyor.com/docs/installed-software#python
+
+        # Py 2.7 = VS Ver. 9.0  (VS 2008)
+        # Py 3.3, 3.4 = VS Ver. 10.0 (VS 2010)
+        # Py 3.5, 3.6 = VS Ver. 14.0 (VS 2015)
+
+        - PYTHON: C:\Python27-x64
+          PYTHON_ARCH: 64
+          VS_VER: 9.0
+
+        - PYTHON: C:\Python27
+          PYTHON_ARCH: 32
+          VS_VER: 9.0
+
+        - PYTHON: C:\Python36-x64
+          PYTHON_ARCH: 64
+          VS_VER: 14.0
+
+        - PYTHON: C:\Python36
+          PYTHON_ARCH: 32
+          VS_VER: 14.0
+
+        - PYTHON: C:\Python35-x64
+          PYTHON_ARCH: 64
+          VS_VER: 14.0
+
+        - PYTHON: C:\Python35
+          PYTHON_ARCH: 32
+          VS_VER: 14.0
+
+        - PYTHON: C:\Python34-x64
+          DISTUTILS_USE_SDK: '1'
+          PYTHON_ARCH: 64
+          VS_VER: 10.0
+
+        - PYTHON: C:\Python34
+          PYTHON_ARCH: 32
+          VS_VER: 10.0
+
+        - PYTHON: C:\Python33-x64
+          DISTUTILS_USE_SDK: '1'
+          PYTHON_ARCH: 64
+          VS_VER: 10.0
+
+        - PYTHON: C:\Python33
+          PYTHON_ARCH: 32
+          VS_VER: 10.0
+
+    PSYCOPG2_TESTDB: psycopg2_test
+    PSYCOPG2_TESTDB_USER: postgres
+    PSYCOPG2_TESTDB_PASSWORD: Password12!
+    PSYCOPG2_TESTDB_HOST: localhost
+    PSYCOPG2_TESTDB_PORT: 5432
+
+    PGUSER: postgres
+    PGPASSWORD: Password12!
+
+matrix:
+    fast_finish: false
+
+services:
+    - postgresql95
+
+cache:
+  # Rebuild cache if following file changes
+  - C:\Others -> scripts\appveyor.cache_rebuild
+
+# Script called before repo cloning
+init:
+    # Uncomment next line to get RDP access during the build.
+    #- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+    #
+    # Set Python to the path
+    - SET PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
+
+    # Verify Python version and architecture
+    - ECHO *******************************************************************
+    - ECHO Python Information
+    - ECHO *******************************************************************
+    - "%PYTHON%\\python --version"
+    - "%PYTHON%\\python -c \"import sys; print('64bit: ' + str(sys.maxsize > 2**32))\""
+
+    # Get & Install NASM
+    #- curl -L -o nasminst.exe http://www.nasm.us/pub/nasm/releasebuilds/2.12.02/win64/nasm-2.12.02-installer-x64.exe && start /wait nasminst.exe /S
+    #- SET PATH="C:\Program Files (x86)\nasm;%PATH%"
+
+    # Fix problem with VS2008 Express and 64bit builds
+    - ECHO Fixing VS2008 Express and 64bit builds
+    - COPY "C:\\Program Files (x86)\\Microsoft Visual Studio 9.0\\VC\\bin\\vcvars64.bat" "C:\\Program Files (x86)\\Microsoft Visual Studio 9.0\\VC\\bin\\amd64\\vcvarsamd64.bat"
+
+    # Fix problem with VS2010 Express 64bit missing vcvars64.bat
+    # Note: repository not cloned at this point, so need to fetch
+    # file another way
+    - ECHO Fixing VS2010 Express and 64bit builds
+    - curl -fsSL -o "C:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\bin\\amd64\\vcvars64.bat" https://raw.githubusercontent.com/psycopg/psycopg2-wheels/master/scripts/vcvars64-vs2010.bat
+
+    # Setup the compiler based upon version and architecture
+    - ECHO Configuring Compiler
+    - IF "%PYTHON_ARCH%"=="32" (CALL "C:\\Program Files (x86)\\Microsoft Visual Studio %VS_VER%\\VC\\vcvarsall.bat" x86)
+    - IF "%PYTHON_ARCH%"=="64" (CALL "C:\\Program Files (x86)\\Microsoft Visual Studio %VS_VER%\\VC\\vcvarsall.bat" amd64)
+
+    # Change PostgreSQL config before service starts to allow > 1 prepared
+    #   transactions for test cases
+    - ECHO max_prepared_transactions = 10 >> "C:\\Program Files\\PostgreSQL\\9.5\\data\\postgresql.conf"
+
+
+# Repository gets cloned, Cache is restored
+install:
+    # We start off CD'ed to cloned folder
+    - SET BASE_DIR=C:\Others\%PYTHON_ARCH%\%VS_VER%
+    - SET BUILD_DIR=%BASE_DIR%\Builds
+    - IF NOT EXIST %BUILD_DIR% MKDIR %BUILD_DIR%
+
+    - ECHO *******************************************************************
+    - ECHO Initialized variables specific for this build
+    - ECHO *******************************************************************
+    - ECHO %BASE_DIR%
+    - ECHO %BUILD_DIR%
+    - ECHO *******************************************************************
+
+    # Setup directories for building OpenSSL libraries
+    - ECHO *******************************************************************
+    - ECHO Preparing for building OpenSSL
+    - ECHO *******************************************************************
+    - SET OPENSSLTOP=%BASE_DIR%\openssl
+    - IF NOT EXIST %OPENSSLTOP%\include\openssl MKDIR %OPENSSLTOP%\include\openssl
+    - IF NOT EXIST %OPENSSLTOP%\lib MKDIR %OPENSSLTOP%\lib
+
+    # Setup OpenSSL Environment Variables based on processor architecture
+    - ps: >-
+        If ($env:PYTHON_ARCH -Match "32" ) {
+            $env:VCVARS_PLATFORM="x86"
+            $env:TARGET="VC-WIN32"
+            $env:DO="do_ms"
+        } Else {
+            $env:VCVARS_PLATFORM="amd64"
+            $env:TARGET="VC-WIN64A"
+            $env:DO="do_win64a"
+            $env:CPU="AMD64"
+        }
+    # Download OpenSSL source
+    - CD C:\Others
+    - IF NOT EXIST OpenSSL_1_0_2k.zip (
+        curl -fsSL -o OpenSSL_1_0_2k.zip https://github.com/openssl/openssl/archive/OpenSSL_1_0_2k.zip
+      )
+
+    # To use OpenSSL >= 1.1.0, both libpq and psycopg build environments have
+    #   to support the new library names.  Below are commands to build OpenSSL
+    #   1.1.0:
+    #    - mkdir _build
+    #    - cd _build
+    #    - perl ..\Configure %TARGET% no-asm no-shared --prefix=%BASE_DIR%\openssl --openssldir=%BASE_DIR%\openssl
+    #    - nmake build_libs install_dev
+    - IF NOT EXIST %OPENSSLTOP%\lib\ssleay32.lib (
+        CD %BUILD_DIR% &&
+        7z x C:\Others\OpenSSL_1_0_2k.zip &&
+        CD openssl-OpenSSL_1_0_2k &&
+        perl Configure %TARGET% no-asm no-shared no-zlib --prefix=%OPENSSLTOP% --openssldir=%OPENSSLTOP% &&
+        CALL ms\%DO% &&
+        nmake -f ms\nt.mak init headers lib &&
+        COPY inc32\openssl\*.h %OPENSSLTOP%\include\openssl &&
+        COPY out32\*.lib %OPENSSLTOP%\lib &&
+        CD %BASE_DIR% &&
+        RMDIR /S /Q %BUILD_DIR%\openssl-OpenSSL_1_0_2k
+      )
+
+    # Setup directories for building PostgreSQL librarires
+    - ECHO *******************************************************************
+    - ECHO Preparing for building PostgreSQL libraries
+    - ECHO *******************************************************************
+    - SET PGTOP=%BASE_DIR%\postgresql
+    - IF NOT EXIST %PGTOP%\include MKDIR %PGTOP%\include
+    - IF NOT EXIST %PGTOP%\lib MKDIR %PGTOP%\lib
+    # Download PostgreSQL source
+    - CD C:\Others
+    - IF NOT EXIST postgres-REL9_6_2.zip (
+        curl -fsSL -o postgres-REL9_6_2.zip https://github.com/postgres/postgres/archive/REL9_6_2.zip
+      )
+
+    # Setup build config file (config.pl)
+    # Build libpgport first
+    # Build libpq
+    # NOTE: Cannot set and use the same variable inside an IF
+    - SET PGBUILD=%BUILD_DIR%\postgres-REL9_6_2
+    - IF NOT EXIST %PGTOP%\lib\libpq.lib (
+        CD %BUILD_DIR% &&
+        7z x C:\Others\postgres-REL9_6_2.zip &&
+        CD postgres-REL9_6_2\src\tools\msvc &&
+        ECHO $config-^>{ldap} = 0; > config.pl &&
+        ECHO $config-^>{openssl} = "%OPENSSLTOP:\=\\%"; >> config.pl &&
+        ECHO.>> config.pl &&
+        ECHO 1;>> config.pl &&
+        build libpgport &&
+        XCOPY /E ..\..\include %PGTOP%\include &&
+        COPY %PGBUILD%\Release\libpgport\libpgport.lib %PGTOP%\lib &&
+        CD ..\..\interfaces\libpq &&
+        nmake -f win32.mak USE_OPENSSL=1 ENABLE_THREAD_SAFETY=1 SSL_INC=%OPENSSLTOP%\include  SSL_LIB_PATH=%OPENSSLTOP%\lib config .\Release\libpq.lib &&
+        COPY *.h %PGTOP%\include &&
+        COPY Release\libpq.lib %PGTOP%\lib &&
+        CD %BASE_DIR% &&
+        RMDIR /S /Q %PGBUILD%
+      )
+
+build: off
+
+#before_build:
+
+build_script:
+    # Add PostgreSQL binaries to the path
+    - PATH=C:\Program Files\PostgreSQL\9.5\bin\;%PATH%
+    - CD C:\Project
+    - "%PYTHON%\\python.exe setup.py build_ext --have-ssl -l libpgcommon -L %OPENSSLTOP%\\lib;%PGTOP%\\lib -I %OPENSSLTOP%\\include;%PGTOP%\\include"
+    - "%PYTHON%\\python.exe setup.py build"
+    - "%PYTHON%\\python.exe setup.py install"
+
+#after_build:
+
+before_test:
+    # Create and setup PostgreSQL database for the tests
+    - createdb %PSYCOPG2_TESTDB%
+    - psql -d %PSYCOPG2_TESTDB% -c "CREATE EXTENSION HSTORE;"
+
+test_script:
+    - "%PYTHON%\\python.exe -c \"import psycopg2; print(psycopg2.__version__)\""
+    - "%PYTHON%\\python.exe -c \"from psycopg2 import tests; tests.unittest.main(defaultTest='tests.test_suite')\" --verbose"
