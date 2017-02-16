@@ -14,52 +14,52 @@ environment:
         # For Python versions available on Appveyor, see
         # http://www.appveyor.com/docs/installed-software#python
 
-        - PYTHON: C:\Python27
-          PYTHON_ARCH: 32
-          # VS 2008
-          VS_VER: 9.0
-        - PYTHON: C:\Python33
-          PYTHON_ARCH: 32
-          # VS 2010
-          VS_VER: 10.0
-        - PYTHON: C:\Python34
-          PYTHON_ARCH: 32
-          # VS 2010
-          VS_VER: 10.0
-        - PYTHON: C:\Python35
-          PYTHON_ARCH: 32
-          # VS 2015
-          VS_VER: 14.0
-        - PYTHON: C:\Python36
-          PYTHON_ARCH: 32
-          # VS 2015
-          VS_VER: 14.0
+        # Py 2.7 = VS Ver. 9.0  (VS 2008)
+        # Py 3.3, 3.4 = VS Ver. 10.0 (VS 2010)
+        # Py 3.5, 3.6 = VS Ver. 14.0 (VS 2015)
+
         - PYTHON: C:\Python27-x64
           PYTHON_ARCH: 64
-          # VS 2008
           VS_VER: 9.0
-        - PYTHON: C:\Python33-x64
-          DISTUTILS_USE_SDK: '1'
+
+        - PYTHON: C:\Python27
+          PYTHON_ARCH: 32
+          VS_VER: 9.0
+
+        - PYTHON: C:\Python36-x64
           PYTHON_ARCH: 64
-          # VS 2010
-          VS_VER: 10.0
+          VS_VER: 14.0
+
+        - PYTHON: C:\Python36
+          PYTHON_ARCH: 32
+          VS_VER: 14.0
+
+        - PYTHON: C:\Python35-x64
+          PYTHON_ARCH: 64
+          VS_VER: 14.0
+
+        - PYTHON: C:\Python35
+          PYTHON_ARCH: 32
+          VS_VER: 14.0
+
         - PYTHON: C:\Python34-x64
           DISTUTILS_USE_SDK: '1'
           PYTHON_ARCH: 64
-          # VS 2010
           VS_VER: 10.0
-        - PYTHON: C:\Python35-x64
-          PYTHON_ARCH: 64
-          # VS 2015
-          VS_VER: 14.0
-        - PYTHON: C:\Python36-x64
-          PYTHON_ARCH: 64
-          # VS 2015
-          VS_VER: 14.0
 
-        #Py27 = 9.0  (VS 2008)
-        #Py 3.3,3.4 = 10.0 (VS 2010)
-        #Py 3.5,3.6 = 14.0 (VS 2015)
+        - PYTHON: C:\Python34
+          PYTHON_ARCH: 32
+          VS_VER: 10.0
+
+        - PYTHON: C:\Python33-x64
+          DISTUTILS_USE_SDK: '1'
+          PYTHON_ARCH: 64
+          VS_VER: 10.0
+
+        - PYTHON: C:\Python33
+          PYTHON_ARCH: 32
+          VS_VER: 10.0
+
     PSYCOPG2_TESTDB: psycopg2_test
     PSYCOPG2_TESTDB_USER: postgres
     PSYCOPG2_TESTDB_PASSWORD: Password12!
@@ -168,9 +168,6 @@ install:
     - IF NOT EXIST %OPENSSLTOP%\lib\ssleay32.lib (
         CD %BUILD_DIR% &&
         7z x C:\Others\OpenSSL_1_0_2k.tar.gz -so | 7z x -si -ttar > nul &&
-        ECHO Build Directory Contents &&
-        ECHO ************************************************************* &&
-        DIR &&
         CD openssl-OpenSSL_1_0_2k &&
         perl Configure %TARGET% no-asm no-shared no-zlib --prefix=%OPENSSLTOP% --openssldir=%OPENSSLTOP% &&
         CALL ms\%DO% &&
@@ -202,9 +199,6 @@ install:
     - IF NOT EXIST %PGTOP%\lib\libpq.lib (
         CD %BUILD_DIR% &&
         7z x C:\Others\postgresql-9.6.2.tar.gz -so | 7z x -si -ttar > nul &&
-        ECHO Build Directory Contents &&
-        ECHO ************************************************************* &&
-        DIR &&
         CD postgresql-9.6.2\src\tools\msvc &&
         ECHO $config-^>{ldap} = 0; > config.pl &&
         ECHO $config-^>{openssl} = "%OPENSSLTOP:\=\\%"; >> config.pl &&
@@ -212,7 +206,6 @@ install:
         ECHO 1;>> config.pl &&
         build libpgport &&
         XCOPY /E ..\..\include %PGTOP%\include &&
-        DIR %PGBUILD% &&
         COPY %PGBUILD%\Release\libpgport\libpgport.lib %PGTOP%\lib &&
         CD ..\..\interfaces\libpq &&
         nmake -f win32.mak USE_OPENSSL=1 ENABLE_THREAD_SAFETY=1 SSL_INC=%OPENSSLTOP%\include  SSL_LIB_PATH=%OPENSSLTOP%\lib config .\Release\libpq.lib &&
@@ -229,7 +222,7 @@ build: off
 build_script:
     # Add PostgreSQL binaries to the path
     - PATH=C:\Program Files\PostgreSQL\9.5\bin\;%PATH%
-    - CD C:\project
+    - CD C:\Project
     - "%PYTHON%\\python.exe setup.py build_ext --have-ssl -l libpgcommon -L %OPENSSLTOP%\\lib;%PGTOP%\\lib -I %OPENSSLTOP%\\include;%PGTOP%\\include"
     - "%PYTHON%\\python.exe setup.py build"
     - "%PYTHON%\\python.exe setup.py install"
@@ -239,6 +232,7 @@ build_script:
 before_test:
     # Create and setup PostgreSQL database for the tests
     - createdb %PSYCOPG2_TESTDB%
+    - psql -d %PSYCOPG2_TESTDB% -c "CREATE EXTENSION HSTORE;"
 
 test_script:
     - "%PYTHON%\\python.exe -c \"import psycopg2; print(psycopg2.__version__)\""

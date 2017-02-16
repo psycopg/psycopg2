@@ -46,6 +46,13 @@ please check the `project homepage`__.
 .. __: http://initd.org/psycopg/
 
 
-.. image:: https://travis-ci.org/psycopg/psycopg2.svg?branch=master
+:Linux/OSX: |travis|
+:Windows: |appveyor|
+
+.. |travis| image:: https://travis-ci.org/psycopg/psycopg2.svg?branch=master
     :target: https://travis-ci.org/psycopg/psycopg2
-    :alt: Build Status
+    :alt: Linux and OSX build status
+
+.. |appveyor| image:: https://ci.appveyor.com/api/projects/status/github/psycopg/psycopg2?svg=true
+    :target: https://ci.appveyor.com/project/psycopg/psycopg2
+    :alt: Windows build status
