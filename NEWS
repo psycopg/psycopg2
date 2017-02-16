@@ -39,6 +39,7 @@ New features:
   control the session characteristics as it may create problems with external
   connection pools such as pgbouncer; use :sql:`BEGIN` options instead
   (:ticket:`#503`).
+- `~connection.isolation_level` is now writable.
 
 Bug fixes:
 
