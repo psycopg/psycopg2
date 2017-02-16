@@ -155,7 +155,7 @@ install:
     # Download OpenSSL source
     - CD C:\Others
     - IF NOT EXIST OpenSSL_1_0_2k.tar.gz (
-        appveyor DownloadFile https://github.com/openssl/openssl/archive/OpenSSL_1_0_2k.tar.gz
+        curl -fsSL -o OpenSSL_1_0_2k.tar.gz https://github.com/openssl/openssl/archive/OpenSSL_1_0_2k.tar.gz
       )
 
     # To use OpenSSL >= 1.1.0, both libpq and psycopg build environments have
@@ -188,7 +188,7 @@ install:
     # Download PostgreSQL source
     - CD C:\Others
     - IF NOT EXIST postgresql-9.6.2.tar.gz (
-        appveyor DownloadFile https://ftp.postgresql.org/pub/source/v9.6.2/postgresql-9.6.2.tar.gz
+        curl -fsSL -o postgresql-9.6.2.tar.gz https://github.com/postgres/postgres/archive/REL9_6_2.tar.gz
       )
 
     # Setup build config file (config.pl)
