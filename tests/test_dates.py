@@ -28,6 +28,11 @@ from psycopg2.tz import FixedOffsetTimezone, ZERO
 from testutils import unittest, ConnectingTestCase, skip_before_postgres
 
 
+def total_seconds(d):
+    """Return total number of seconds of a timedelta as a float."""
+    return d.days * 24 * 60 * 60 + d.seconds + d.microseconds / 1000000.0
+
+
 class CommonDatetimeTestsMixin:
 
     def execute(self, *args):
@@ -334,10 +339,6 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         self.assertEqual(t, time(0, 0, tzinfo=FixedOffsetTimezone(330)))
 
     def test_large_interval(self):
-        def total_seconds(d):
-            """Return total number of seconds of a timedelta as a float."""
-            return d.days * 24 * 60 * 60 + d.seconds + d.microseconds / 1000000.0
-
         t = self.execute("select '999999:00:00'::interval")
         self.assertEqual(total_seconds(t), 999999 * 60 * 60)
 
@@ -355,6 +356,22 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
 
         t = self.execute("select '-999999:00:00.9'::interval")
         self.assertEqual(total_seconds(t), -999999 * 60 * 60 - 0.9)
+
+    def test_micros_rounding(self):
+        t = self.execute("select '0.1'::interval")
+        self.assertEqual(total_seconds(t), 0.1)
+
+        t = self.execute("select '0.01'::interval")
+        self.assertEqual(total_seconds(t), 0.01)
+
+        t = self.execute("select '0.000001'::interval")
+        self.assertEqual(total_seconds(t), 1e-6)
+
+        t = self.execute("select '0.0000004'::interval")
+        self.assertEqual(total_seconds(t), 0)
+
+        t = self.execute("select '0.0000006'::interval")
+        self.assertEqual(total_seconds(t), 1e-6)
 
 
 # Only run the datetime tests if psycopg was compiled with support.

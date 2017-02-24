@@ -220,11 +220,10 @@ typecast_PYTIME_cast(const char *str, Py_ssize_t len, PyObject *curs)
 static PyObject *
 typecast_PYINTERVAL_cast(const char *str, Py_ssize_t len, PyObject *curs)
 {
-    long years = 0, months = 0, days = 0, lsec;
-    double hours = 0.0, minutes = 0.0, seconds = 0.0, hundredths = 0.0;
-    double v = 0.0, sign = 1.0, denominator = 1.0;
+    long years = 0, months = 0, days = 0;
+    long hours = 0, minutes = 0, seconds = 0, micros = 0;
+    long v = 0, sign = 1, denom = 1;
     int part = 0;
-    double micro;
 
     if (str == NULL) { Py_RETURN_NONE; }
 
@@ -234,56 +233,56 @@ typecast_PYINTERVAL_cast(const char *str, Py_ssize_t len, PyObject *curs)
         switch (*str) {
 
         case '-':
-            sign = -1.0;
+            sign = -1;
             break;
 
         case '0': case '1': case '2': case '3': case '4':
         case '5': case '6': case '7': case '8': case '9':
-            v = v * 10.0 + (double)(*str - '0');
+            v = v * 10 + (*str - '0');
             if (part == 6){
-                denominator *= 10;
+                denom *= 10;
             }
             break;
 
         case 'y':
             if (part == 0) {
-                years = (long)(v*sign);
+                years = v * sign;
+                v = 0; sign = 1; part = 1;
                 str = skip_until_space2(str, &len);
-                v = 0.0; sign = 1.0; part = 1;
             }
             break;
 
         case 'm':
             if (part <= 1) {
-                months = (long)(v*sign);
+                months = v * sign;
+                v = 0; sign = 1; part = 2;
                 str = skip_until_space2(str, &len);
-                v = 0.0; sign = 1.0; part = 2;
             }
             break;
 
         case 'd':
             if (part <= 2) {
-                days = (long)(v*sign);
+                days = v * sign;
+                v = 0; sign = 1; part = 3;
                 str = skip_until_space2(str, &len);
-                v = 0.0; sign = 1.0; part = 3;
             }
             break;
 
         case ':':
             if (part <= 3) {
                 hours = v;
-                v = 0.0; part = 4;
+                v = 0; part = 4;
             }
             else if (part == 4) {
                 minutes = v;
-                v = 0.0; part = 5;
+                v = 0; part = 5;
             }
             break;
 
         case '.':
             if (part == 5) {
                 seconds = v;
-                v = 0.0; part = 6;
+                v = 0; part = 6;
             }
             break;
 
@@ -294,7 +293,7 @@ typecast_PYINTERVAL_cast(const char *str, Py_ssize_t len, PyObject *curs)
         str++;
     }
 
-    /* manage last value, be it minutes or seconds or hundredths of a second */
+    /* manage last value, be it minutes or seconds or microseconds */
     if (part == 4) {
         minutes = v;
     }
@@ -302,25 +301,31 @@ typecast_PYINTERVAL_cast(const char *str, Py_ssize_t len, PyObject *curs)
         seconds = v;
     }
     else if (part == 6) {
-        hundredths = v;
-        hundredths = hundredths/denominator;
+        micros = v;
+        if (denom < 1000000L) {
+            do {
+                micros *= 10;
+                denom *= 10;
+            } while (denom < 1000000L);
+        }
+        else if (denom > 1000000L) {
+            micros = (long)((double)micros * 1000000.0 / denom);
+        }
     }
 
-    /* calculates seconds */
-    if (sign < 0.0) {
-        seconds = - (hundredths + seconds + minutes*60 + hours*3600);
-    }
-    else {
-        seconds += hundredths + minutes*60 + hours*3600;
+    /* add hour, minutes, seconds, and include the sign */
+    seconds += 60 * minutes + 3600 * hours;
+
+    if (sign < 0) {
+        seconds = -seconds;
+        micros = -micros;
     }
 
-    /* calculates days */
-    days += years*365 + months*30;
+    /* add the days - these items already included their own sign */
+    seconds += (3600 * 24) * (days + 30 * months + 365 * years);
 
-    lsec = (long)seconds;
-    micro = (seconds - (double)lsec) * 1000000.0;
-    return PyObject_CallFunction((PyObject*)PyDateTimeAPI->DeltaType, "lli",
-                                 days, lsec, (int)round(micro));
+    return PyObject_CallFunction((PyObject*)PyDateTimeAPI->DeltaType, "lll",
+                                 0L, seconds, micros);
 }
 
 /* psycopg defaults to using python datetime types */
