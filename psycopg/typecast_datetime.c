@@ -237,7 +237,19 @@ typecast_PYINTERVAL_cast(const char *str, Py_ssize_t len, PyObject *curs)
 
         case '0': case '1': case '2': case '3': case '4':
         case '5': case '6': case '7': case '8': case '9':
-            v = v * 10 + (*str - '0');
+            {
+                long v1;
+                v1 = v * 10 + (*str - '0');
+                /* detect either a rollover, happening if v is really too short,
+                 * or too big value. On Win where long == int the 2nd check
+                 * is useless. */
+                if (v1 < v || v1 > (long)INT_MAX) {
+                    PyErr_SetString(
+                        PyExc_OverflowError, "interval component too big");
+                    return NULL;
+                }
+                v = v1;
+            }
             if (part == 6) {
                 denom *= 10;
             }
@@ -308,7 +320,7 @@ typecast_PYINTERVAL_cast(const char *str, Py_ssize_t len, PyObject *curs)
             } while (denom < 1000000L);
         }
         else if (denom > 1000000L) {
-            micros = (long)((double)micros * 1000000.0 / denom);
+            micros = (long)round((double)micros / denom * 1000000.0);
         }
     }
 

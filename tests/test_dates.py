@@ -373,6 +373,24 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         t = self.execute("select '0.0000006'::interval")
         self.assertEqual(total_seconds(t), 1e-6)
 
+    def test_interval_overflow(self):
+        cur = self.conn.cursor()
+        # hack a cursor to receive values too extreme to be represented
+        # but still I want an error, not a random number
+        psycopg2.extensions.register_type(
+            psycopg2.extensions.new_type(
+                psycopg2.STRING.values, 'WAT', psycopg2.extensions.INTERVAL),
+            cur)
+
+        def f(val):
+            cur.execute("select '%s'::text" % val)
+            return cur.fetchone()[0]
+
+        self.assertRaises(OverflowError, f, '100000000000000000:00:00')
+        self.assertRaises(OverflowError, f, '00:100000000000000000:00:00')
+        self.assertRaises(OverflowError, f, '00:00:100000000000000000:00')
+        self.assertRaises(OverflowError, f, '00:00:00.100000000000000000')
+
 
 # Only run the datetime tests if psycopg was compiled with support.
 if not hasattr(psycopg2.extensions, 'PYDATETIME'):
