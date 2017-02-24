@@ -776,8 +776,8 @@ you may decrease this value if you are dealing with huge records.
 
 Named cursors are usually created :sql:`WITHOUT HOLD`, meaning they live only
 as long as the current transaction. Trying to fetch from a named cursor after
-a `~connection.commit()` or to create a named cursor when the `connection`
-transaction isolation level is set to `AUTOCOMMIT` will result in an exception.
+a `~connection.commit()` or to create a named cursor when the connection
+is in `~connection.autocommit` mode will result in an exception.
 It is possible to create a :sql:`WITH HOLD` cursor by specifying a `!True`
 value for the `withhold` parameter to `~connection.cursor()` or by setting the
 `~cursor.withhold` attribute to `!True` before calling `~cursor.execute()` on
