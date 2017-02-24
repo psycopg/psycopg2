@@ -220,7 +220,7 @@ typecast_PYTIME_cast(const char *str, Py_ssize_t len, PyObject *curs)
 static PyObject *
 typecast_PYINTERVAL_cast(const char *str, Py_ssize_t len, PyObject *curs)
 {
-    long years = 0, months = 0, days = 0, sec;
+    long years = 0, months = 0, days = 0, lsec;
     double hours = 0.0, minutes = 0.0, seconds = 0.0, hundredths = 0.0;
     double v = 0.0, sign = 1.0, denominator = 1.0;
     int part = 0;
@@ -317,10 +317,10 @@ typecast_PYINTERVAL_cast(const char *str, Py_ssize_t len, PyObject *curs)
     /* calculates days */
     days += years*365 + months*30;
 
-    micro = (seconds - floor(seconds)) * 1000000.0;
-    sec = (long)floor(seconds);
+    lsec = (long)seconds;
+    micro = (seconds - (double)lsec) * 1000000.0;
     return PyObject_CallFunction((PyObject*)PyDateTimeAPI->DeltaType, "lli",
-                                 days, sec, (int)round(micro));
+                                 days, lsec, (int)round(micro));
 }
 
 /* psycopg defaults to using python datetime types */

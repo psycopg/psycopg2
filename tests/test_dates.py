@@ -334,8 +334,27 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         self.assertEqual(t, time(0, 0, tzinfo=FixedOffsetTimezone(330)))
 
     def test_large_interval(self):
+        def total_seconds(d):
+            """Return total number of seconds of a timedelta as a float."""
+            return d.days * 24 * 60 * 60 + d.seconds + d.microseconds / 1000000.0
+
         t = self.execute("select '999999:00:00'::interval")
-        self.assertEqual(t.days * 24 + t.seconds / 60.0 / 60, 999999)
+        self.assertEqual(total_seconds(t), 999999 * 60 * 60)
+
+        t = self.execute("select '-999999:00:00'::interval")
+        self.assertEqual(total_seconds(t), -999999 * 60 * 60)
+
+        t = self.execute("select '999999:00:00.1'::interval")
+        self.assertEqual(total_seconds(t), 999999 * 60 * 60 + 0.1)
+
+        t = self.execute("select '999999:00:00.9'::interval")
+        self.assertEqual(total_seconds(t), 999999 * 60 * 60 + 0.9)
+
+        t = self.execute("select '-999999:00:00.1'::interval")
+        self.assertEqual(total_seconds(t), -999999 * 60 * 60 - 0.1)
+
+        t = self.execute("select '-999999:00:00.9'::interval")
+        self.assertEqual(total_seconds(t), -999999 * 60 * 60 - 0.9)
 
 
 # Only run the datetime tests if psycopg was compiled with support.
