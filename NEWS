@@ -47,6 +47,7 @@ Bug fixes:
 
 - Fixed error caused by missing decoding `~psycopg2.extras.LoggingConnection`
   (:ticket:`#483`).
+- Fixed integer overflow in :sql:`interval` seconds (:ticket:`#512`).
 
 Other changes:
 
