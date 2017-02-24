@@ -220,10 +220,9 @@ typecast_PYTIME_cast(const char *str, Py_ssize_t len, PyObject *curs)
 static PyObject *
 typecast_PYINTERVAL_cast(const char *str, Py_ssize_t len, PyObject *curs)
 {
-    long years = 0, months = 0, days = 0;
-    long hours = 0, minutes = 0, seconds = 0, micros = 0;
-    long v = 0, sign = 1, denom = 1;
-    int part = 0;
+    long v = 0, years = 0, months = 0, hours = 0, minutes = 0, micros = 0;
+    PY_LONG_LONG days = 0, seconds = 0;
+    int sign = 1, denom = 1, part = 0;
 
     if (str == NULL) { Py_RETURN_NONE; }
 
@@ -239,7 +238,7 @@ typecast_PYINTERVAL_cast(const char *str, Py_ssize_t len, PyObject *curs)
         case '0': case '1': case '2': case '3': case '4':
         case '5': case '6': case '7': case '8': case '9':
             v = v * 10 + (*str - '0');
-            if (part == 6){
+            if (part == 6) {
                 denom *= 10;
             }
             break;
@@ -313,19 +312,18 @@ typecast_PYINTERVAL_cast(const char *str, Py_ssize_t len, PyObject *curs)
         }
     }
 
-    /* add hour, minutes, seconds, and include the sign */
-    seconds += 60 * minutes + 3600 * hours;
-
+    /* add hour, minutes, seconds together and include the sign */
+    seconds += 60 * (PY_LONG_LONG)minutes + 3600 * (PY_LONG_LONG)hours;
     if (sign < 0) {
         seconds = -seconds;
         micros = -micros;
     }
 
-    /* add the days - these items already included their own sign */
-    seconds += (3600 * 24) * (days + 30 * months + 365 * years);
+    /* add the days, months years together - they already include a sign */
+    days += 30 * (PY_LONG_LONG)months + 365 * (PY_LONG_LONG)years;
 
-    return PyObject_CallFunction((PyObject*)PyDateTimeAPI->DeltaType, "lll",
-                                 0L, seconds, micros);
+    return PyObject_CallFunction((PyObject*)PyDateTimeAPI->DeltaType, "LLl",
+                                 days, seconds, micros);
 }
 
 /* psycopg defaults to using python datetime types */
