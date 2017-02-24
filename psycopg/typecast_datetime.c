@@ -220,10 +220,10 @@ typecast_PYTIME_cast(const char *str, Py_ssize_t len, PyObject *curs)
 static PyObject *
 typecast_PYINTERVAL_cast(const char *str, Py_ssize_t len, PyObject *curs)
 {
-    long years = 0, months = 0, days = 0;
+    long years = 0, months = 0, days = 0, sec;
     double hours = 0.0, minutes = 0.0, seconds = 0.0, hundredths = 0.0;
     double v = 0.0, sign = 1.0, denominator = 1.0;
-    int part = 0, sec;
+    int part = 0;
     double micro;
 
     if (str == NULL) { Py_RETURN_NONE; }
@@ -318,8 +318,8 @@ typecast_PYINTERVAL_cast(const char *str, Py_ssize_t len, PyObject *curs)
     days += years*365 + months*30;
 
     micro = (seconds - floor(seconds)) * 1000000.0;
-    sec = (int)floor(seconds);
-    return PyObject_CallFunction((PyObject*)PyDateTimeAPI->DeltaType, "iii",
+    sec = (long)floor(seconds);
+    return PyObject_CallFunction((PyObject*)PyDateTimeAPI->DeltaType, "lli",
                                  days, sec, (int)round(micro));
 }
 

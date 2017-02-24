@@ -333,6 +333,10 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         t = self.execute("select '24:00+05:30'::timetz;")
         self.assertEqual(t, time(0, 0, tzinfo=FixedOffsetTimezone(330)))
 
+    def test_large_interval(self):
+        t = self.execute("select '999999:00:00'::interval")
+        self.assertEqual(t.days * 24 + t.seconds / 60.0 / 60, 999999)
+
 
 # Only run the datetime tests if psycopg was compiled with support.
 if not hasattr(psycopg2.extensions, 'PYDATETIME'):
