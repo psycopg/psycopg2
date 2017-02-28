@@ -28,7 +28,7 @@ The module interface respects the standard defined in the |DBAPI|_.
 
     or using a set of keyword arguments::
 
-        conn = psycopg2.connect(dbname"test", user="postgres", password="secret")
+        conn = psycopg2.connect(dbname="test", user="postgres", password="secret")
 
     or using a mix of both: if the same parameter name is specified in both
     sources, the *kwargs* value will have precedence over the *dsn* value.
