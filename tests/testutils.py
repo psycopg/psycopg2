@@ -22,22 +22,15 @@
 # License for more details.
 
 
-# Use unittest2 if available. Otherwise mock a skip facility with warnings.
-
 import re
 import os
 import sys
 import select
 import platform
+import unittest
 from functools import wraps
 from testconfig import dsn, repl_dsn
 
-try:
-    import unittest2
-    unittest = unittest2
-except ImportError:
-    import unittest
-    unittest2 = None
 
 if hasattr(unittest, 'skipIf'):
     skip = unittest.skip
