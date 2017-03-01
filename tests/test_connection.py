@@ -459,6 +459,10 @@ class MakeDsnTestCase(ConnectingTestCase):
         dsn = ext.make_dsn(dsnin)
         self.assertEqual(dsn, dsnin)
 
+    def test_null_args(self):
+        dsn = ext.make_dsn("dbname=foo", user="bar", password=None)
+        self.assertDsnEqual(dsn, "dbname=foo user=bar")
+
     @skip_before_libpq(9, 2)
     def test_url_is_cool(self):
         url = 'postgresql://tester:secret@/test?application_name=wat'
