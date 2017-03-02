@@ -162,6 +162,9 @@ def make_dsn(dsn=None, **kwargs):
                 "you can't specify both 'database' and 'dbname' arguments")
         kwargs['dbname'] = kwargs.pop('database')
 
+    # Drop the None arguments
+    kwargs = dict((k, v) for (k, v) in kwargs.iteritems() if v is not None)
+
     if dsn is not None:
         tmp = parse_dsn(dsn)
         tmp.update(kwargs)
