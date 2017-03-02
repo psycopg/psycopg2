@@ -28,7 +28,7 @@
 #include "psycopg/config.h"
 
 /* type and constant definitions from internal postgres include */
-typedef unsigned PG_INT64_TYPE XLogRecPtr;
+typedef uint64_t XLogRecPtr;
 
 /* have to use lowercase %x, as PyString_FromFormat can't do %X */
 #define XLOGFMTSTR "%x/%x"

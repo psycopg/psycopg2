@@ -313,7 +313,7 @@ def libpq_version():
     import psycopg2
     v = psycopg2.__libpq_version__
     if v >= 90100:
-        v = psycopg2.extensions.libpq_version()
+        v = min(v, psycopg2.extensions.libpq_version())
     return v
 
 
