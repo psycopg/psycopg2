@@ -6,6 +6,7 @@ What's new in psycopg 2.7.1
 
 - Ignore `!None` arguments passed to `~psycopg2.connect()` and
   `~psycopg2.extensions.make_dsn()` (:ticket:`#517`).
+- Fixed build with libpq versions < 9.3 (:ticket:`#520`).
 
 
 What's new in psycopg 2.7
