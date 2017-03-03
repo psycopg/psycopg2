@@ -40,9 +40,11 @@ Binary install from PyPI
 `!psycopg2` is `available on PyPI`__ in the form of wheel_ packages for the
 most common platform (Linux, OSX, Windows): this should make you able to
 install a binary version of the module including all the dependencies simply
-using::
+using:
 
-    pip install psycopg2
+.. code-block:: console
+
+    $ pip install psycopg2
 
 Make sure to use an up-to-date version of :program:`pip` (you can upgrade it
 using something like ``pip install -U pip``)
@@ -50,6 +52,28 @@ using something like ``pip install -U pip``)
 .. __: PyPI_
 .. _PyPI: https://pypi.python.org/pypi/psycopg2/
 .. _wheel: http://pythonwheels.com/
+
+Note that the packaged version comes with its own versions of some C
+libraries, among which libpq and libssl, which will be used regardless of
+other libraries available on the client. The version currently shipped (as of
+psycopg2 2.7) are libpq 5.8 (from PostgreSQL 9.5.6) and libssl 0.9.8e; newer
+versions may be used once the image used to build wheel packages will support
+them. If you prefer to use the system libraries installed on your client you
+can use the ``--no-binary`` option in :command:`pip`:
+
+.. code-block:: console
+
+    $ pip install --no-binary psycopg2
+
+which can be specified in your :file:`requirements.txt` files too, e.g. use:
+
+.. code-block:: none
+
+    psycopg2>=2.7,<2.8 --no-binary :all:
+
+to use the last bugfix release of the `!psycopg2` 2.7 package, specifying to
+always compile it from source. Of course in this case you will have to meet
+the :ref:`build prerequisites <build-prerequisites>`.
 
 
 
@@ -97,7 +121,9 @@ from sources you will need:
   running ``pg_config --version``: if it returns an error or an unexpected
   version number then locate the directory containing the :program:`pg_config`
   shipped with the right libpq version (usually
-  ``/usr/lib/postgresql/X.Y/bin/``) and add it to the :envvar:`PATH`::
+  ``/usr/lib/postgresql/X.Y/bin/``) and add it to the :envvar:`PATH`:
+
+  .. code-block:: console
 
     $ export PATH=/usr/lib/postgresql/X.Y/bin/:$PATH
 
@@ -152,7 +178,9 @@ then take a look at the ``setup.cfg`` file.
 
 Some of the options available in ``setup.cfg`` are also available as command
 line arguments of the ``build_ext`` sub-command. For instance you can specify
-an alternate :program:`pg_config` location using::
+an alternate :program:`pg_config` location using:
+
+.. code-block:: console
 
     $ python setup.py build_ext --pg-config /path/to/pg_config build
 
@@ -180,7 +208,9 @@ order to create a debug package:
 
 - :ref:`Compile and install <source-package>` the package.
 
-- Set the :envvar:`PSYCOPG_DEBUG` environment variable::
+- Set the :envvar:`PSYCOPG_DEBUG` environment variable:
+
+.. code-block:: console
 
     $ export PSYCOPG_DEBUG=1
 
@@ -201,9 +231,11 @@ Running the test suite
 ----------------------
 
 Once `!psycopg2` is installed you can run the test suite to verify it is
-working correctly. You can run::
+working correctly. You can run:
 
-    python -c "from psycopg2 import tests; tests.unittest.main(defaultTest='tests.test_suite')" --verbose
+.. code-block:: console
+
+    $ python -c "from psycopg2 import tests; tests.unittest.main(defaultTest='tests.test_suite')" --verbose
 
 The tests run against a database called ``psycopg2_test`` on UNIX socket and
 the standard port. You can configure a different database to run the test by
