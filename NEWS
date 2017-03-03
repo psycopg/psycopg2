@@ -2,7 +2,7 @@ Current release
 ---------------
 
 What's new in psycopg 2.7.1
----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Ignore `!None` arguments passed to `~psycopg2.connect()` and
   `~psycopg2.extensions.make_dsn()` (:ticket:`#517`).
