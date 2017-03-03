@@ -951,7 +951,7 @@ converted into lists of strings.
 .. autofunction:: register_inet
 
     .. deprecated:: 2.7
-        this function will not receive further development and disappear in
+        this function will not receive further development and may disappear in
         future versions.
 
 .. doctest::
