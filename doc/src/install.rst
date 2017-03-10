@@ -53,13 +53,16 @@ using something like ``pip install -U pip``)
 .. _PyPI: https://pypi.python.org/pypi/psycopg2/
 .. _wheel: http://pythonwheels.com/
 
-Note that the packaged version comes with its own versions of some C
-libraries, among which libpq and libssl, which will be used regardless of
-other libraries available on the client. The version currently shipped (as of
-psycopg2 2.7) are libpq 5.8 (from PostgreSQL 9.5.6) and libssl 0.9.8e; newer
-versions may be used once the image used to build wheel packages will support
-them. If you prefer to use the system libraries installed on your client you
-can use the ``--no-binary`` option in :command:`pip`:
+.. note::
+
+    The binary packages come with their own versions of a few C libraries,
+    among which libpq and libssl, which will be used regardless of other
+    libraries available on the client: upgrading the system libraries will not
+    upgrade the libraries used by `!psycopg2`. Please build `!psycopg2` from
+    source if you want to maintain binary upgradeability.
+
+If you prefer to use the system libraries available on your client you can use
+the :command:`pip` ``--no-binary`` option:
 
 .. code-block:: console
 
@@ -270,4 +273,4 @@ Try the following. *In order:*
   ever and about the quality time you have wasted figuring out the correct
   :envvar:`ARCHFLAGS`. Especially useful from the Starbucks near you.
 
-.. __: http://mail.postgresql.org/mj/mj_wwwusr/domain=postgresql.org?func=lists-long-full&extra=psycopg
+.. __: https://lists.postgresql.org/mj/mj_wwwusr?func=lists-long-full&extra=psycopg

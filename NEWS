@@ -6,6 +6,8 @@ What's new in psycopg 2.7.1
 
 - Ignore `!None` arguments passed to `~psycopg2.connect()` and
   `~psycopg2.extensions.make_dsn()` (:ticket:`#517`).
+- OpenSSL upgraded from major version 0.9.8 to 1.0.2 in the Linux wheel
+  packages (:ticket:`#518`).
 - Fixed build with libpq versions < 9.3 (:ticket:`#520`).
 
 
