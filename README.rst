@@ -21,7 +21,7 @@ Psycopg 2 is both Unicode and Python 3 friendly.
 Documentation
 -------------
 
-Documentation is included in the 'doc' directory and is `available online`__.
+Documentation is included in the ``doc`` directory and is `available online`__.
 
 .. __: http://initd.org/psycopg/docs/
 
@@ -30,22 +30,20 @@ Installation
 ------------
 
 If your ``pip`` version supports wheel_ packages it should be possible to
-install a binary version of Psycopg including all the dependencies. Just run::
+install a binary version of Psycopg including all the dependencies from PyPI_.
+Just run::
 
-    pip install psycopg2
+    $ pip install -U pip      # make sure your pip is up-to-date
+    $ pip install psycopg2
 
-If you want to build Psycopg from source you will need some prerequisite (a C
-compiler, Python and libpq development packages). If you have what you need
-the standard::
-
-    python setup.py build
-    sudo python setup.py install
-
-should work no problem.  In case you have any problem check the 'install' and
-the 'faq' documents in the docs or online__.
+If you want to build Psycopg from source you will need some prerequisites (a C
+compiler, development packages): please check the install_ and the faq_
+documents in the ``doc`` dir for the details.
 
 .. _wheel: http://pythonwheels.com/
-.. __: http://initd.org/psycopg/docs/install.html#install-from-source
+.. _PyPI: https://pypi.python.org/pypi/psycopg2
+.. _install: http://initd.org/psycopg/docs/install.html#install-from-source
+.. _faq: http://initd.org/psycopg/docs/faq.html#faq-compile
 
 For any other resource (source code repository, bug tracker, mailing list)
 please check the `project homepage`__.

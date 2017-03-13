@@ -133,6 +133,13 @@ from sources you will need:
   You only need :program:`pg_config` to compile `!psycopg2`, not for its
   regular usage.
 
+Once everything is in place it's just a matter of running the standard:
+
+.. code-block:: console
+
+    $ python setup.py build
+    $ python setup.py install
+
 
 Runtime requirements
 ^^^^^^^^^^^^^^^^^^^^
