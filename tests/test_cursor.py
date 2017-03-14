@@ -27,7 +27,10 @@ import pickle
 import psycopg2
 import psycopg2.extensions
 from testutils import (unittest, ConnectingTestCase, skip_before_postgres,
-    skip_if_no_namedtuple, skip_if_no_getrefcount, slow)
+    skip_if_no_namedtuple, skip_if_no_getrefcount, slow, skip_if_no_superuser,
+    skip_if_windows)
+
+import psycopg2.extras
 
 
 class CursorTests(ConnectingTestCase):
@@ -518,28 +521,76 @@ class CursorTests(ConnectingTestCase):
             RETURNS INT AS
                 'SELECT $1 * $1'
             LANGUAGE SQL
-        ''' % (procname, escaped_paramname));
+        ''' % (procname, escaped_paramname))
 
         # Make sure callproc works right
-        cur.callproc(procname, { paramname: 2 })
+        cur.callproc(procname, {paramname: 2})
         self.assertEquals(cur.fetchone()[0], 4)
 
         # Make sure callproc fails right
         failing_cases = [
-            ({ paramname: 2, 'foo': 'bar' }, psycopg2.ProgrammingError),
-            ({ paramname: '2' },             psycopg2.ProgrammingError),
-            ({ paramname: 'two' },           psycopg2.ProgrammingError),
-            ({ u'bj\xc3rn': 2 },             psycopg2.ProgrammingError),
-            ({ 3: 2 },                       TypeError),
-            ({ self: 2 },                    TypeError),
+            ({paramname: 2, 'foo': 'bar'}, psycopg2.ProgrammingError),
+            ({paramname: '2'}, psycopg2.ProgrammingError),
+            ({paramname: 'two'}, psycopg2.ProgrammingError),
+            ({u'bj\xc3rn': 2}, psycopg2.ProgrammingError),
+            ({3: 2}, TypeError),
+            ({self: 2}, TypeError),
         ]
         for parameter_sequence, exception in failing_cases:
             self.assertRaises(exception, cur.callproc, procname, parameter_sequence)
             self.conn.rollback()
 
-    def test_callproc_badparam(self):
-        cur = self.conn.cursor()
-        self.assertRaises(TypeError, cur.callproc, 'lower', 42)
+    @skip_if_no_superuser
+    @skip_if_windows
+    @skip_before_postgres(8, 4)
+    def test_external_close_sync(self):
+        # If a "victim" connection is closed by a "control" connection
+        # behind psycopg2's back, psycopg2 always handles it correctly:
+        # raise OperationalError, set conn.closed to 2. This reproduces
+        # issue #443, a race between control_conn closing victim_conn and
+        # psycopg2 noticing.
+        control_conn = self.conn
+        connect_func = self.connect
+        wait_func = lambda conn: None
+        self._test_external_close(control_conn, connect_func, wait_func)
+
+    @skip_if_no_superuser
+    @skip_if_windows
+    @skip_before_postgres(8, 4)
+    def test_external_close_async(self):
+        # Issue #443 is in the async code too. Since the fix is duplicated,
+        # so is the test.
+        control_conn = self.conn
+        connect_func = lambda: self.connect(async=True)
+        wait_func = psycopg2.extras.wait_select
+        self._test_external_close(control_conn, connect_func, wait_func)
+
+    def _test_external_close(self, control_conn, connect_func, wait_func):
+        # The short sleep before using victim_conn the second time makes it
+        # much more likely to lose the race and see the bug. Repeating the
+        # test several times makes it even more likely.
+        for i in range(10):
+            victim_conn = connect_func()
+            wait_func(victim_conn)
+
+            with victim_conn.cursor() as cur:
+                cur.execute('select pg_backend_pid()')
+                wait_func(victim_conn)
+                pid1 = cur.fetchall()[0][0]
+
+            with control_conn.cursor() as cur:
+                cur.execute('select pg_terminate_backend(%s)', (pid1,))
+
+            time.sleep(0.001)
+
+            def f():
+                with victim_conn.cursor() as cur:
+                    cur.execute('select 1')
+                    wait_func(victim_conn)
+
+            self.assertRaises(psycopg2.OperationalError, f)
+
+            self.assertEqual(victim_conn.closed, 2)
 
 
 def test_suite():
