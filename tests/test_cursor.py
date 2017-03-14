@@ -518,28 +518,24 @@ class CursorTests(ConnectingTestCase):
             RETURNS INT AS
                 'SELECT $1 * $1'
             LANGUAGE SQL
-        ''' % (procname, escaped_paramname));
+        ''' % (procname, escaped_paramname))
 
         # Make sure callproc works right
-        cur.callproc(procname, { paramname: 2 })
+        cur.callproc(procname, {paramname: 2})
         self.assertEquals(cur.fetchone()[0], 4)
 
         # Make sure callproc fails right
         failing_cases = [
-            ({ paramname: 2, 'foo': 'bar' }, psycopg2.ProgrammingError),
-            ({ paramname: '2' },             psycopg2.ProgrammingError),
-            ({ paramname: 'two' },           psycopg2.ProgrammingError),
-            ({ u'bj\xc3rn': 2 },             psycopg2.ProgrammingError),
-            ({ 3: 2 },                       TypeError),
-            ({ self: 2 },                    TypeError),
+            ({paramname: 2, 'foo': 'bar'}, psycopg2.ProgrammingError),
+            ({paramname: '2'}, psycopg2.ProgrammingError),
+            ({paramname: 'two'}, psycopg2.ProgrammingError),
+            ({u'bj\xc3rn': 2}, psycopg2.ProgrammingError),
+            ({3: 2}, TypeError),
+            ({self: 2}, TypeError),
         ]
         for parameter_sequence, exception in failing_cases:
             self.assertRaises(exception, cur.callproc, procname, parameter_sequence)
             self.conn.rollback()
-
-    def test_callproc_badparam(self):
-        cur = self.conn.cursor()
-        self.assertRaises(TypeError, cur.callproc, 'lower', 42)
 
 
 def test_suite():
