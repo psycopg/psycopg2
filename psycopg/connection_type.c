@@ -1248,10 +1248,25 @@ static struct PyGetSetDef connectionObject_getsets[] = {
 
 /* initialization and finalization methods */
 
+static void
+obscure_password(connectionObject *conn)
+{
+    char *pos;
+
+    if (!conn || !conn->dsn) {
+        return;
+    }
+
+    pos = strstr(conn->dsn, "password");
+    if (pos != NULL) {
+        for (pos = pos+9 ; *pos != '\0' && *pos != ' '; pos++)
+            *pos = 'x';
+    }
+}
+
 static int
 connection_setup(connectionObject *self, const char *dsn, long int async)
 {
-    char *pos;
     int res = -1;
 
     Dprintf("connection_setup: init connection object at %p, "
@@ -1288,14 +1303,10 @@ connection_setup(connectionObject *self, const char *dsn, long int async)
 
 exit:
     /* here we obfuscate the password even if there was a connection error */
-    pos = strstr(self->dsn, "password");
-    if (pos != NULL) {
-        for (pos = pos+9 ; *pos != '\0' && *pos != ' '; pos++)
-            *pos = 'x';
-    }
-
+    obscure_password(self);
     return res;
 }
+
 
 static int
 connection_clear(connectionObject *self)
