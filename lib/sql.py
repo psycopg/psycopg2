@@ -1,7 +1,7 @@
 """SQL composition utility module
 """
 
-# psycopg/sql.py - Implementation of the JSON adaptation objects
+# psycopg/sql.py - SQL composition utility module
 #
 # Copyright (C) 2016 Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 #
