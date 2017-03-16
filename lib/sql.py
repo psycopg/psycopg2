@@ -85,11 +85,11 @@ class Composable(object):
 
 class Composed(Composable):
     """
-    A `Composable` object made of a sequence of `Composable`.
+    A `Composable` object made of a sequence of `!Composable`.
 
-    The object is usually created using `Composable` operators and methods.
+    The object is usually created using `!Composable` operators and methods.
     However it is possible to create a `!Composed` directly specifying a
-    sequence of `Composable` as arguments.
+    sequence of `!Composable` as arguments.
 
     Example::
 
@@ -291,9 +291,9 @@ class Identifier(Composable):
     """
     A `Composable` representing an SQL identifer.
 
-    Identifiers usually represent names of database objects, such as tables
-    or fields. They follow `different rules`__ than SQL string literals for
-    escaping (e.g. they use double quotes).
+    Identifiers usually represent names of database objects, such as tables or
+    fields. PostgreSQL identifiers follow `different rules`__ than SQL string
+    literals for escaping (e.g. they use double quotes instead of single).
 
     .. __: https://www.postgresql.org/docs/current/static/sql-syntax-lexical.html# \
         SQL-SYNTAX-IDENTIFIERS
