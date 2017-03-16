@@ -1504,19 +1504,16 @@ class PasswordLeakTestCase(ConnectingTestCase):
     def test_leak(self):
         self.assertRaises(psycopg2.DatabaseError,
             self.GrassingConnection, "dbname=nosuch password=whateva")
+        self.assertDsnEqual(self.dsn, "dbname=nosuch password=xxx")
 
-        self.assert_('nosuch' in self.dsn)
-        self.assert_('password' in self.dsn)
-        self.assert_('whateva' not in self.dsn)
-
+    @skip_before_libpq(9, 2)
     def test_url_leak(self):
         self.assertRaises(psycopg2.DatabaseError,
             self.GrassingConnection,
             "postgres://someone:whateva@localhost/nosuch")
 
-        self.assert_('nosuch' in self.dsn)
-        self.assert_('someone' in self.dsn)
-        self.assert_('whateva' not in self.dsn)
+        self.assertDsnEqual(self.dsn,
+            "user=someone password=xxx host=localhost dbname=nosuch")
 
 
 def test_suite():

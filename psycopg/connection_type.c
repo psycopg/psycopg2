@@ -1248,20 +1248,53 @@ static struct PyGetSetDef connectionObject_getsets[] = {
 
 /* initialization and finalization methods */
 
-static void
+RAISES_NEG static int
 obscure_password(connectionObject *conn)
 {
-    char *pos;
+    PQconninfoOption *options;
+    PyObject *d = NULL, *v = NULL, *dsn = NULL;
+    char *tmp;
+    int rv = -1;
 
     if (!conn || !conn->dsn) {
-        return;
+        return 0;
     }
 
-    pos = strstr(conn->dsn, "password");
-    if (pos != NULL) {
-        for (pos = pos+9 ; *pos != '\0' && *pos != ' '; pos++)
-            *pos = 'x';
+    if (!(options = PQconninfoParse(conn->dsn, NULL))) {
+        /* unlikely: the dsn was already tested valid */
+        return 0;
     }
+
+    if (!(d = psycopg_dict_from_conninfo_options(
+            options, /* include_password = */ 1))) {
+        goto exit;
+    }
+    if (NULL == PyDict_GetItemString(d, "password")) {
+        /* the dsn doesn't have a password */
+        rv = 0;
+        goto exit;
+    }
+
+    /* scrub the password and put back the connection string together */
+    if (!(v = Text_FromUTF8("xxx"))) { goto exit; }
+    if (0 > PyDict_SetItemString(d, "password", v)) { goto exit; }
+    if (!(dsn = psycopg_make_dsn(Py_None, d))) { goto exit; }
+    if (!(dsn = psycopg_ensure_bytes(dsn))) { goto exit; }
+
+    /* Replace the connection string on the connection object */
+    tmp = conn->dsn;
+    psycopg_strdup(&conn->dsn, Bytes_AS_STRING(dsn), -1);
+    PyMem_Free(tmp);
+
+    rv = 0;
+
+exit:
+    PQconninfoFree(options);
+    Py_XDECREF(v);
+    Py_XDECREF(d);
+    Py_XDECREF(dsn);
+
+    return rv;
 }
 
 static int
@@ -1303,7 +1336,12 @@ connection_setup(connectionObject *self, const char *dsn, long int async)
 
 exit:
     /* here we obfuscate the password even if there was a connection error */
-    obscure_password(self);
+    {
+        PyObject *ptype = NULL, *pvalue = NULL, *ptb = NULL;
+        PyErr_Fetch(&ptype, &pvalue, &ptb);
+        obscure_password(self);
+        PyErr_Restore(ptype, pvalue, ptb);
+    }
     return res;
 }
 
