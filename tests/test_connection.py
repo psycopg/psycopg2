@@ -1479,6 +1479,43 @@ class AutocommitTests(ConnectingTestCase):
         self.assertEqual(cur.fetchone()[0], 'on')
 
 
+class PasswordLeakTestCase(ConnectingTestCase):
+    def setUp(self):
+        super(PasswordLeakTestCase, self).setUp()
+        PasswordLeakTestCase.dsn = None
+
+    class GrassingConnection(ext.connection):
+        """A connection snitching the dsn away.
+
+        This connection passes the dsn to the test case class even if init
+        fails (e.g. connection error). Test that we mangle the dsn ok anyway.
+        """
+
+        def __init__(self, *args, **kwargs):
+            try:
+                super(PasswordLeakTestCase.GrassingConnection, self).__init__(
+                    *args, **kwargs)
+            finally:
+                # The connection is not initialized entirely, however the C
+                # code should have set the dsn, and it should have scrubbed
+                # the password away
+                PasswordLeakTestCase.dsn = self.dsn
+
+    def test_leak(self):
+        self.assertRaises(psycopg2.DatabaseError,
+            self.GrassingConnection, "dbname=nosuch password=whateva")
+        self.assertDsnEqual(self.dsn, "dbname=nosuch password=xxx")
+
+    @skip_before_libpq(9, 2)
+    def test_url_leak(self):
+        self.assertRaises(psycopg2.DatabaseError,
+            self.GrassingConnection,
+            "postgres://someone:whateva@localhost/nosuch")
+
+        self.assertDsnEqual(self.dsn,
+            "user=someone password=xxx host=localhost dbname=nosuch")
+
+
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

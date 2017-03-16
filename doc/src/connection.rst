@@ -343,6 +343,9 @@ The ``connection`` class
         Read-only string containing the connection string used by the
         connection.
 
+        If a password was specified in the connection string it will be
+        obscured.
+
 
     .. index::
         pair: Transaction; Autocommit

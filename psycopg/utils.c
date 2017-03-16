@@ -280,6 +280,30 @@ exit:
 }
 
 
+/* Make a connection string out of a string and a dictionary of arguments.
+ *
+ * Helper to call psycopg2.extensions.make_dns()
+ */
+PyObject *
+psycopg_make_dsn(PyObject *dsn, PyObject *kwargs)
+{
+    PyObject *ext = NULL, *make_dsn = NULL;
+    PyObject *args = NULL, *rv = NULL;
+
+    if (!(ext = PyImport_ImportModule("psycopg2.extensions"))) { goto exit; }
+    if (!(make_dsn = PyObject_GetAttrString(ext, "make_dsn"))) { goto exit; }
+
+    if (!(args = PyTuple_Pack(1, dsn))) { goto exit; }
+    rv = PyObject_Call(make_dsn, args, kwargs);
+
+exit:
+    Py_XDECREF(args);
+    Py_XDECREF(make_dsn);
+    Py_XDECREF(ext);
+
+    return rv;
+}
+
 /* Convert a C string into Python Text using a specified codec.
  *
  * The codec is the python function codec.getdecoder(enc). It is only used on
