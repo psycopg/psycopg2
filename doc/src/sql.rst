@@ -55,6 +55,11 @@ from the query parameters::
             .format(sql.Identifier('my_table')),
         [10, 20])
 
+The objects exposed by the `!sql` module can be used to compose a query as a
+Python string (using the `~Composable.as_string()` method) or passed directly
+to cursor methods such as `~cursor.execute()`, `~cursor.executemany()`,
+`~cursor.copy_expert()`.
+
 
 .. autoclass:: Composable
 

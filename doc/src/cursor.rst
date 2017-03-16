@@ -601,7 +601,10 @@ The ``cursor`` class
         The *sql* statement should be in the form :samp:`COPY {table} TO
         STDOUT` to export :samp:`{table}` to the *file* object passed as
         argument or :samp:`COPY {table} FROM STDIN` to import the content of
-        the *file* object into :samp:`{table}`.
+        the *file* object into :samp:`{table}`. If you need to compose a
+        :sql:`COPY` statement dynamically (because table, fields, or query
+        parameters are in Python variables) you may use the objects provided
+        by the `psycopg2.sql` module.
 
         *file* must be a readable file-like object (as required by
         `~cursor.copy_from()`) for *sql* statement :sql:`COPY ... FROM STDIN`
