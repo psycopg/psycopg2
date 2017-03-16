@@ -60,35 +60,28 @@ psyco_repl_conn_get_type(replicationConnectionObject *self)
 
 
 static int
-replicationConnection_init(PyObject *obj, PyObject *args, PyObject *kwargs)
+replicationConnection_init(replicationConnectionObject *self,
+    PyObject *args, PyObject *kwargs)
 {
-    replicationConnectionObject *self = (replicationConnectionObject *)obj;
-    PyObject *dsn = NULL, *replication_type = NULL,
-        *item = NULL, *ext = NULL, *make_dsn = NULL,
-        *extras = NULL, *cursor = NULL;
-    int async = 0;
+    PyObject *dsn = NULL, *async = Py_False, *replication_type = NULL,
+        *item = NULL, *extras = NULL, *cursor = NULL,
+        *newdsn = NULL, *newargs = NULL, *dsnopts = NULL;
     int ret = -1;
 
     /* 'replication_type' is not actually optional, but there's no
        good way to put it before 'async' in the list */
     static char *kwlist[] = {"dsn", "async", "replication_type", NULL};
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|iO", kwlist,
-                                     &dsn, &async, &replication_type)) { return ret; }
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OO", kwlist,
+                                     &dsn, &async, &replication_type)) {
+        return ret;
+    }
 
     /*
       We have to call make_dsn() to add replication-specific
       connection parameters, because the DSN might be an URI (if there
       were no keyword arguments to connect() it is passed unchanged).
     */
-    /* we reuse args and kwargs to call make_dsn() and parent type's tp_init() */
-    if (!(kwargs = PyDict_New())) { return ret; }
-    Py_INCREF(args);
-
-    /* we also reuse the dsn to hold the result of the make_dsn() call */
-    Py_INCREF(dsn);
-
-    if (!(ext = PyImport_ImportModule("psycopg2.extensions"))) { goto exit; }
-    if (!(make_dsn = PyObject_GetAttrString(ext, "make_dsn"))) { goto exit; }
+    if (!(dsnopts = PyDict_New())) { return ret; }
 
     /* all the nice stuff is located in python-level ReplicationCursor class */
     if (!(extras = PyImport_ImportModule("psycopg2.extras"))) { goto exit; }
@@ -101,7 +94,7 @@ replicationConnection_init(PyObject *obj, PyObject *args, PyObject *kwargs)
 
 #define SET_ITEM(k, v) \
         if (!(item = Text_FromUTF8(#v))) { goto exit; } \
-        if (PyDict_SetItemString(kwargs, #k, item) != 0) { goto exit; } \
+        if (PyDict_SetItemString(dsnopts, #k, item) != 0) { goto exit; } \
         Py_DECREF(item); \
         item = NULL;
 
@@ -118,30 +111,25 @@ replicationConnection_init(PyObject *obj, PyObject *args, PyObject *kwargs)
         goto exit;
     }
 
-    Py_DECREF(args);
-    if (!(args = PyTuple_Pack(1, dsn))) { goto exit; }
-
-    Py_DECREF(dsn);
-    if (!(dsn = PyObject_Call(make_dsn, args, kwargs))) { goto exit; }
-
-    Py_DECREF(args);
-    if (!(args = Py_BuildValue("(Oi)", dsn, async))) { goto exit; }
+    if (!(newdsn = psycopg_make_dsn(dsn, dsnopts))) { goto exit; }
+    if (!(newargs = PyTuple_Pack(2, newdsn, async))) { goto exit; }
 
     /* only attempt the connection once we've handled all possible errors */
-    if ((ret = connectionType.tp_init(obj, args, NULL)) < 0) { goto exit; }
+    if ((ret = connectionType.tp_init((PyObject *)self, newargs, NULL)) < 0) {
+        goto exit;
+    }
 
     self->conn.autocommit = 1;
-    Py_INCREF(self->conn.cursor_factory = cursor);
+    Py_INCREF(cursor);
+    self->conn.cursor_factory = cursor;
 
 exit:
     Py_XDECREF(item);
-    Py_XDECREF(ext);
-    Py_XDECREF(make_dsn);
     Py_XDECREF(extras);
     Py_XDECREF(cursor);
-    Py_XDECREF(dsn);
-    Py_XDECREF(args);
-    Py_XDECREF(kwargs);
+    Py_XDECREF(newdsn);
+    Py_XDECREF(newargs);
+    Py_XDECREF(dsnopts);
 
     return ret;
 }
@@ -212,7 +200,7 @@ PyTypeObject replicationConnectionType = {
     0,          /*tp_descr_get*/
     0,          /*tp_descr_set*/
     0,          /*tp_dictoffset*/
-    replicationConnection_init, /*tp_init*/
+    (initproc)replicationConnection_init, /*tp_init*/
     0,          /*tp_alloc*/
     0,          /*tp_new*/
 };
