@@ -548,8 +548,6 @@ Other functions
     The *scope* must be a `connection` or a `cursor`, the underlying
     connection encoding is used for any necessary character conversion.
 
-    Requires libpq >= 9.0.
-
     .. versionadded:: 2.7
 
     .. seealso:: libpq docs for `PQescapeIdentifier()`__
