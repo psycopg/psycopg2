@@ -392,6 +392,25 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         self.assertRaises(OverflowError, f, '00:00:100000000000000000:00')
         self.assertRaises(OverflowError, f, '00:00:00.100000000000000000')
 
+    def test_adapt_infinity_tz(self):
+        from datetime import datetime
+
+        t = self.execute("select 'infinity'::timestamp")
+        self.assert_(t.tzinfo is None)
+        self.assert_(t > datetime(4000, 1, 1))
+
+        t = self.execute("select '-infinity'::timestamp")
+        self.assert_(t.tzinfo is None)
+        self.assert_(t < datetime(1000, 1, 1))
+
+        t = self.execute("select 'infinity'::timestamptz")
+        self.assert_(t.tzinfo is not None)
+        self.assert_(t > datetime(4000, 1, 1, tzinfo=FixedOffsetTimezone()))
+
+        t = self.execute("select '-infinity'::timestamptz")
+        self.assert_(t.tzinfo is not None)
+        self.assert_(t < datetime(1000, 1, 1, tzinfo=FixedOffsetTimezone()))
+
 
 # Only run the datetime tests if psycopg was compiled with support.
 if not hasattr(psycopg2.extensions, 'PYDATETIME'):

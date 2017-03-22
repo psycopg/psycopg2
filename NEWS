@@ -9,6 +9,8 @@ What's new in psycopg 2.7.2
   2.7 by mistake.
 - Don't display the password in `connection.dsn` when the connection
   string is specified as an URI (:ticket:`#528`).
+- Return objects with timezone parsing "infinity" :sql:`timestamptz`
+  (:ticket:`#536`).
 
 
 What's new in psycopg 2.7.1
