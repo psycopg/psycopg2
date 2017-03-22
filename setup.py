@@ -528,9 +528,10 @@ have_mxdatetime = False
 use_pydatetime = int(parser.get('build_ext', 'use_pydatetime'))
 
 # check for mx package
+mxincludedir = ''
 if parser.has_option('build_ext', 'mx_include_dir'):
     mxincludedir = parser.get('build_ext', 'mx_include_dir')
-else:
+if not mxincludedir:
     mxincludedir = os.path.join(get_python_inc(plat_specific=1), "mx")
 if mxincludedir.strip() and os.path.exists(mxincludedir):
     # Build the support for mx: we will check at runtime if it can be imported

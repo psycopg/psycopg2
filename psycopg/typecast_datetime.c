@@ -80,91 +80,152 @@ typecast_PYDATE_cast(const char *str, Py_ssize_t len, PyObject *curs)
     return obj;
 }
 
-/** DATETIME - cast a timestamp into a datetime python object **/
+/* convert the strings -infinity and infinity into a datetime with timezone */
+static PyObject *
+_parse_inftz(const char *str, PyObject *curs)
+{
+    PyObject *rv = NULL;
+    PyObject *m = NULL;
+    PyObject *tzinfo_factory = NULL;
+    PyObject *tzinfo = NULL;
+    PyObject *args = NULL;
+    PyObject *kwargs = NULL;
+    PyObject *replace = NULL;
+
+    if (!(m = PyObject_GetAttrString(
+            (PyObject*)PyDateTimeAPI->DateTimeType,
+            (str[0] == '-' ? "min" : "max")))) {
+        goto exit;
+    }
+
+    tzinfo_factory = ((cursorObject *)curs)->tzinfo_factory;
+    if (tzinfo_factory == Py_None) {
+        rv = m;
+        m = NULL;
+        goto exit;
+    }
+
+    if (!(tzinfo = PyObject_CallFunction(tzinfo_factory, "i", 0))) {
+        goto exit;
+    }
+
+    /* m.replace(tzinfo=tzinfo) */
+    if (!(args = PyTuple_New(0))) { goto exit; }
+    if (!(kwargs = PyDict_New())) { goto exit; }
+    if (0 != PyDict_SetItemString(kwargs, "tzinfo", tzinfo)) { goto exit; }
+    if (!(replace = PyObject_GetAttrString(m, "replace"))) { goto exit; }
+    rv = PyObject_Call(replace, args, kwargs);
+
+exit:
+    Py_XDECREF(replace);
+    Py_XDECREF(args);
+    Py_XDECREF(kwargs);
+    Py_XDECREF(tzinfo);
+    Py_XDECREF(m);
+
+    return rv;
+}
 
 static PyObject *
-typecast_PYDATETIME_cast(const char *str, Py_ssize_t len, PyObject *curs)
+_parse_noninftz(const char *str, Py_ssize_t len, PyObject *curs)
 {
-    PyObject* obj = NULL;
+    PyObject* rv = NULL;
     PyObject *tzinfo = NULL;
     PyObject *tzinfo_factory;
     int n, y=0, m=0, d=0;
     int hh=0, mm=0, ss=0, us=0, tz=0;
     const char *tp = NULL;
 
+    Dprintf("typecast_PYDATETIMETZ_cast: s = %s", str);
+    n = typecast_parse_date(str, &tp, &len, &y, &m, &d);
+    Dprintf("typecast_PYDATE_cast: tp = %p "
+            "n = %d, len = " FORMAT_CODE_PY_SSIZE_T ","
+            " y = %d, m = %d, d = %d",
+             tp, n, len, y, m, d);
+    if (n != 3) {
+        PyErr_SetString(DataError, "unable to parse date");
+        goto exit;
+    }
+
+    if (len > 0) {
+        n = typecast_parse_time(tp, NULL, &len, &hh, &mm, &ss, &us, &tz);
+        Dprintf("typecast_PYDATETIMETZ_cast: n = %d,"
+            " len = " FORMAT_CODE_PY_SSIZE_T ","
+            " hh = %d, mm = %d, ss = %d, us = %d, tz = %d",
+            n, len, hh, mm, ss, us, tz);
+        if (n < 3 || n > 6) {
+            PyErr_SetString(DataError, "unable to parse time");
+            goto exit;
+        }
+    }
+
+    if (ss > 59) {
+        mm += 1;
+        ss -= 60;
+    }
+    if (y > 9999)
+        y = 9999;
+
+    tzinfo_factory = ((cursorObject *)curs)->tzinfo_factory;
+    if (n >= 5 && tzinfo_factory != Py_None) {
+        /* we have a time zone, calculate minutes and create
+           appropriate tzinfo object calling the factory */
+        Dprintf("typecast_PYDATETIMETZ_cast: UTC offset = %ds", tz);
+
+        /* The datetime module requires that time zone offsets be
+           a whole number of minutes, so truncate the seconds to the
+           closest minute. */
+        // printf("%d %d %d\n", tz, tzmin, round(tz / 60.0));
+        if (!(tzinfo = PyObject_CallFunction(tzinfo_factory, "i",
+                (int)round(tz / 60.0)))) {
+            goto exit;
+        }
+    } else {
+        Py_INCREF(Py_None);
+        tzinfo = Py_None;
+    }
+
+    Dprintf("typecast_PYDATETIMETZ_cast: tzinfo: %p, refcnt = "
+        FORMAT_CODE_PY_SSIZE_T,
+        tzinfo, Py_REFCNT(tzinfo));
+    rv = PyObject_CallFunction(
+        (PyObject*)PyDateTimeAPI->DateTimeType, "iiiiiiiO",
+        y, m, d, hh, mm, ss, us, tzinfo);
+
+exit:
+    Py_XDECREF(tzinfo);
+    return rv;
+}
+
+/** DATETIME - cast a timestamp into a datetime python object **/
+
+static PyObject *
+typecast_PYDATETIME_cast(const char *str, Py_ssize_t len, PyObject *curs)
+{
     if (str == NULL) { Py_RETURN_NONE; }
 
     /* check for infinity */
     if (!strcmp(str, "infinity") || !strcmp(str, "-infinity")) {
-        if (str[0] == '-') {
-            obj = PyObject_GetAttrString(
-                (PyObject*)PyDateTimeAPI->DateTimeType, "min");
-        }
-        else {
-            obj = PyObject_GetAttrString(
-                (PyObject*)PyDateTimeAPI->DateTimeType, "max");
-        }
+        return PyObject_GetAttrString(
+            (PyObject*)PyDateTimeAPI->DateTimeType,
+            (str[0] == '-' ? "min" : "max"));
     }
 
-    else {
-        Dprintf("typecast_PYDATETIME_cast: s = %s", str);
-        n = typecast_parse_date(str, &tp, &len, &y, &m, &d);
-        Dprintf("typecast_PYDATE_cast: tp = %p "
-                "n = %d, len = " FORMAT_CODE_PY_SSIZE_T ","
-                " y = %d, m = %d, d = %d",
-                 tp, n, len, y, m, d);
-        if (n != 3) {
-            PyErr_SetString(DataError, "unable to parse date");
-            return NULL;
-        }
+    return _parse_noninftz(str, len, curs);
+}
 
-        if (len > 0) {
-            n = typecast_parse_time(tp, NULL, &len, &hh, &mm, &ss, &us, &tz);
-            Dprintf("typecast_PYDATETIME_cast: n = %d,"
-                " len = " FORMAT_CODE_PY_SSIZE_T ","
-                " hh = %d, mm = %d, ss = %d, us = %d, tz = %d",
-                n, len, hh, mm, ss, us, tz);
-            if (n < 3 || n > 6) {
-                PyErr_SetString(DataError, "unable to parse time");
-                return NULL;
-            }
-        }
+/** DATETIMETZ - cast a timestamptz into a datetime python object **/
 
-        if (ss > 59) {
-            mm += 1;
-            ss -= 60;
-        }
-        if (y > 9999)
-            y = 9999;
+static PyObject *
+typecast_PYDATETIMETZ_cast(const char *str, Py_ssize_t len, PyObject *curs)
+{
+    if (str == NULL) { Py_RETURN_NONE; }
 
-        tzinfo_factory = ((cursorObject *)curs)->tzinfo_factory;
-        if (n >= 5 && tzinfo_factory != Py_None) {
-            /* we have a time zone, calculate minutes and create
-               appropriate tzinfo object calling the factory */
-            Dprintf("typecast_PYDATETIME_cast: UTC offset = %ds", tz);
-
-            /* The datetime module requires that time zone offsets be
-               a whole number of minutes, so truncate the seconds to the
-               closest minute. */
-            // printf("%d %d %d\n", tz, tzmin, round(tz / 60.0));
-            tzinfo = PyObject_CallFunction(tzinfo_factory, "i",
-                (int)round(tz / 60.0));
-        } else {
-            Py_INCREF(Py_None);
-            tzinfo = Py_None;
-        }
-        if (tzinfo != NULL) {
-            obj = PyObject_CallFunction(
-                (PyObject*)PyDateTimeAPI->DateTimeType, "iiiiiiiO",
-                y, m, d, hh, mm, ss, us, tzinfo);
-            Dprintf("typecast_PYDATETIME_cast: tzinfo: %p, refcnt = "
-                FORMAT_CODE_PY_SSIZE_T,
-                tzinfo, Py_REFCNT(tzinfo)
-              );
-            Py_DECREF(tzinfo);
-        }
+    if (!strcmp(str, "infinity") || !strcmp(str, "-infinity")) {
+        return _parse_inftz(str, curs);
     }
-    return obj;
+
+    return _parse_noninftz(str, len, curs);
 }
 
 /** TIME - parse time into a time object **/
@@ -345,4 +406,5 @@ typecast_PYINTERVAL_cast(const char *str, Py_ssize_t len, PyObject *curs)
 #define typecast_TIME_cast typecast_PYTIME_cast
 #define typecast_INTERVAL_cast typecast_PYINTERVAL_cast
 #define typecast_DATETIME_cast typecast_PYDATETIME_cast
+#define typecast_DATETIMETZ_cast typecast_PYDATETIMETZ_cast
 #endif

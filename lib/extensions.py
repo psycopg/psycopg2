@@ -43,16 +43,16 @@ from psycopg2._psycopg import (                             # noqa
 
 try:
     from psycopg2._psycopg import (                         # noqa
-        MXDATE, MXDATETIME, MXINTERVAL, MXTIME,
-        MXDATEARRAY, MXDATETIMEARRAY, MXINTERVALARRAY, MXTIMEARRAY,
+        MXDATE, MXDATETIME, MXDATETIMETZ, MXINTERVAL, MXTIME, MXDATEARRAY,
+        MXDATETIMEARRAY, MXDATETIMETZARRAY, MXINTERVALARRAY, MXTIMEARRAY,
         DateFromMx, TimeFromMx, TimestampFromMx, IntervalFromMx, )
 except ImportError:
     pass
 
 try:
     from psycopg2._psycopg import (                         # noqa
-        PYDATE, PYDATETIME, PYINTERVAL, PYTIME,
-        PYDATEARRAY, PYDATETIMEARRAY, PYINTERVALARRAY, PYTIMEARRAY,
+        PYDATE, PYDATETIME, PYDATETIMETZ, PYINTERVAL, PYTIME, PYDATEARRAY,
+        PYDATETIMEARRAY, PYDATETIMETZARRAY, PYINTERVALARRAY, PYTIMEARRAY,
         DateFromPy, TimeFromPy, TimestampFromPy, IntervalFromPy, )
 except ImportError:
     pass
