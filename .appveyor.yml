@@ -85,7 +85,7 @@ init:
     #- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
     #
     # Set Python to the path
-    - SET PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
+    - SET PATH=%PYTHON%;%PYTHON%\Scripts;C:\Program Files\Git\mingw64\bin;%PATH%
 
     # Verify Python version and architecture
     - ECHO *******************************************************************
