@@ -823,10 +823,12 @@ from the database.  See :ref:`unicode-handling` for details.
 
 .. data:: PYDATE
           PYDATETIME
+          PYDATETIMETZ
           PYINTERVAL
           PYTIME
           PYDATEARRAY
           PYDATETIMEARRAY
+          PYDATETIMETZARRAY
           PYINTERVALARRAY
           PYTIMEARRAY
 
@@ -835,10 +837,12 @@ from the database.  See :ref:`unicode-handling` for details.
 
 .. data:: MXDATE
           MXDATETIME
+          MXDATETIMETZ
           MXINTERVAL
           MXTIME
           MXDATEARRAY
           MXDATETIMEARRAY
+          MXDATETIMETZARRAY
           MXINTERVALARRAY
           MXTIMEARRAY
 
@@ -851,3 +855,5 @@ from the database.  See :ref:`unicode-handling` for details.
         module. In older versions they can be imported from the implementation
         module `!psycopg2._psycopg`.
 
+.. versionchanged:: 2.7.2
+        added `!*DATETIMETZ*` objects.
