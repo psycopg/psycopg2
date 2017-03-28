@@ -1178,6 +1178,9 @@ def execute_batch(cur, sql, argslist, page_size=100):
     fewer multi-statement commands, each one containing at most *page_size*
     statements, resulting in a reduced number of server roundtrips.
 
+    After the execution of the functtion the `cursor.rowcount` property will
+    **not** contain a total result.
+
     """
     for page in _paginate(argslist, page_size=page_size):
         sqls = [cur.mogrify(sql, args) for args in page]
@@ -1211,6 +1214,9 @@ def execute_values(cur, sql, argslist, template=None, page_size=100):
         one statement.
 
     .. __: https://www.postgresql.org/docs/current/static/queries-values.html
+
+    After the execution of the functtion the `cursor.rowcount` property will
+    **not** contain a total result.
 
     While :sql:`INSERT` is an obvious candidate for this function it is
     possible to use it with other statements, for example::
