@@ -179,6 +179,23 @@ class CallbackErrorTestCase(ConnectingTestCase):
 
         self.fail("you should have had a success or an error by now")
 
+    def test_errors_named_cursor(self):
+        for i in range(100):
+            self.to_error = None
+            cnn = self.connect()
+            cur = cnn.cursor('foo')
+            self.to_error = i
+            try:
+                cur.execute("select 1")
+                cur.fetchone()
+            except ZeroDivisionError:
+                pass
+            else:
+                # The query completed
+                return
+
+        self.fail("you should have had a success or an error by now")
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
