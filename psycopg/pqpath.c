@@ -451,6 +451,10 @@ pq_complete_error(connectionObject *conn, PGresult **pgres, char **error)
     else {
         if (*error != NULL) {
             PyErr_SetString(OperationalError, *error);
+        } else if (PyErr_Occurred()) {
+            /* There was a Python error (e.g. in the callback). Don't clobber
+             * it with an unknown exception. (see #410) */
+            Dprintf("pq_complete_error: forwarding Python exception");
         } else {
             PyErr_SetString(OperationalError, "unknown error");
         }
