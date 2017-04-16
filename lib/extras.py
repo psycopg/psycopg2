@@ -820,7 +820,7 @@ class HstoreAdapter(object):
 
         k = _ext.adapt(self.wrapped.keys())
         k.prepare(self.conn)
-        v = _ext.adapt(self.wrapped.values())
+        v = _ext.adapt([unicode(x) if x is not None else None for x in self.wrapped.values()])
         v.prepare(self.conn)
         return b"hstore(" + k.getquoted() + b", " + v.getquoted() + b")"
 
