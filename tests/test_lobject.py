@@ -110,6 +110,13 @@ class LargeObjectTests(LargeObjectTestCase):
         self.assertEqual(lo2.oid, lo.oid)
         self.assertEqual(lo2.closed, True)
 
+    def test_mode_defaults(self):
+        lo = self.conn.lobject()
+        lo2 = self.conn.lobject(mode=None)
+        lo3 = self.conn.lobject(mode="")
+        self.assertEqual(lo.mode, lo2.mode)
+        self.assertEqual(lo.mode, lo3.mode)
+
     def test_close_connection_gone(self):
         lo = self.conn.lobject()
         self.conn.close()
