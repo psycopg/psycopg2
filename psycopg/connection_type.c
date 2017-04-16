@@ -938,7 +938,7 @@ psyco_conn_lobject(connectionObject *self, PyObject *args, PyObject *keywds)
     PyObject *obj;
 
     static char *kwlist[] = {"oid", "mode", "new_oid", "new_file",
-                             "cursor_factory", NULL};
+                             "lobject_factory", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds, "|IzIzO", kwlist,
                                      &oid, &smode, &new_oid, &new_file,
