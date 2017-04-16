@@ -387,7 +387,7 @@ class LargeObjectTests(LargeObjectTestCase):
             pass
 
         lo = self.conn.lobject(lobject_factory=lobject_subclass)
-        self.assertIsInstance(lo, lobject_subclass)
+        self.assert_(isinstance(lo, lobject_subclass))
 
 decorate_all_tests(LargeObjectTests, skip_if_no_lo, skip_lo_if_green)
 
