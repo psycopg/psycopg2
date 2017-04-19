@@ -398,7 +398,7 @@ static int
 lobject_init(PyObject *obj, PyObject *args, PyObject *kwds)
 {
     Oid oid = InvalidOid, new_oid = InvalidOid;
-    const char *smode = "";
+    const char *smode = NULL;
     const char *new_file = NULL;
     PyObject *conn = NULL;
 
@@ -406,6 +406,9 @@ lobject_init(PyObject *obj, PyObject *args, PyObject *kwds)
          &connectionType, &conn,
          &oid, &smode, &new_oid, &new_file))
         return -1;
+
+    if (!smode)
+        smode = "";
 
     return lobject_setup((lobjectObject *)obj,
         (connectionObject *)conn, oid, smode, new_oid, new_file);
