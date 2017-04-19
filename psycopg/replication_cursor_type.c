@@ -85,7 +85,7 @@ psyco_repl_curs_consume_stream(replicationCursorObject *self,
     double keepalive_interval = 10;
     static char *kwlist[] = {"consume", "keepalive_interval", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|id", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|d", kwlist,
                                      &consume, &keepalive_interval)) {
         return NULL;
     }
