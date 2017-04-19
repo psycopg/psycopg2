@@ -136,6 +136,11 @@ Logging cursor
 .. autoclass:: LoggingCursor
 
 
+.. note::
+
+    Queries that are executed with `cursor.executemany()` are not logged.
+
+
 .. autoclass:: MinTimeLoggingConnection
     :members: initialize,filter
 
