@@ -159,6 +159,29 @@ class ReplicationTest(ReplicationTestCase):
         # try with correct command
         cur.start_replication(slot_name=self.slot)
 
+    @skip_before_postgres(9, 4)  # slots require 9.4
+    @skip_repl_if_green
+    def test_keepalive(self):
+        conn = self.repl_connect(connection_factory=LogicalReplicationConnection)
+        if conn is None:
+            return
+
+        cur = conn.cursor()
+
+        self.create_replication_slot(cur, output_plugin='test_decoding')
+
+        self.make_replication_events()
+
+        cur.start_replication(self.slot)
+
+        def consume(msg):
+            raise StopReplication()
+
+        self.assertRaises(StopReplication,
+            cur.consume_stream, consume, keepalive_interval=2)
+
+        conn.close()
+
     @skip_before_postgres(9, 4)     # slots require 9.4
     @skip_repl_if_green
     def test_stop_replication(self):
