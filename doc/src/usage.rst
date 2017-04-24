@@ -870,7 +870,7 @@ PostgreSQL |COPY|__ command to move data from files to tables and back.
 
 Currently no adaptation is provided between Python and PostgreSQL types on
 |COPY|: the file can be any Python file-like object but its format must be in
-the format accepted by `PostgreSQL COPY command`__ (data fromat, escaped
+the format accepted by `PostgreSQL COPY command`__ (data format, escaped
 characters, etc).
 
 .. __: COPY_
