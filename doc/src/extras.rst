@@ -337,7 +337,7 @@ The individual messages in the replication stream are represented by
         *This parameter should not be set with physical replication or with
         logical replication plugins that produce binary output.*
 
-        This function constructs a ``START_REPLICATION`` command and calls
+        This function constructs a |START_REPLICATION|_ command and calls
         `start_replication_expert()` internally.
 
         After starting the replication, to actually consume the incoming
@@ -345,10 +345,13 @@ The individual messages in the replication stream are represented by
         `read_message()` in case of :ref:`asynchronous connection
         <async-support>`.
 
+        .. |START_REPLICATION| replace:: :sql:`START_REPLICATION`
+        .. _START_REPLICATION: https://www.postgresql.org/docs/current/static/protocol-replication.html
+
     .. method:: start_replication_expert(command, decode=False)
 
         Start replication on the connection using provided
-        ``START_REPLICATION`` command.  See `start_replication()` for
+        |START_REPLICATION|_ command.  See `start_replication()` for
         description of *decode* parameter.
 
     .. method:: consume_stream(consume, keepalive_interval=10)
