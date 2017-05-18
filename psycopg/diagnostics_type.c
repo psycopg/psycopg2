@@ -132,10 +132,23 @@ diagnostics_init(diagnosticsObject *self, PyObject *args, PyObject *kwds)
     return 0;
 }
 
+static int
+diagnostics_traverse(diagnosticsObject *self, visitproc visit, void *arg)
+{
+    Py_VISIT(self->err);
+    return 0;
+}
+
+static int
+diagnostics_clear(diagnosticsObject *self)
+{
+    Py_CLEAR(self->err);
+    return 0;
+}
+
 static void
 diagnostics_dealloc(diagnosticsObject* self)
 {
-    Py_CLEAR(self->err);
     Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
@@ -175,10 +188,10 @@ PyTypeObject diagnosticsType = {
     0,          /*tp_getattro*/
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /*tp_flags*/
+    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
     diagnosticsType_doc, /*tp_doc*/
-    0,          /*tp_traverse*/
-    0,          /*tp_clear*/
+    (traverseproc)diagnostics_traverse, /*tp_traverse*/
+    (inquiry)diagnostics_clear, /*tp_clear*/
     0,          /*tp_richcompare*/
     0,          /*tp_weaklistoffset*/
     0,          /*tp_iter*/
