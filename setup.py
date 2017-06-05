@@ -602,6 +602,7 @@ ext.append(Extension("psycopg2._psycopg", sources,
                      define_macros=define_macros,
                      include_dirs=include_dirs,
                      depends=depends,
+                     libraries=['m'],
                      undef_macros=[]))
 
 # Compute the direct download url.
