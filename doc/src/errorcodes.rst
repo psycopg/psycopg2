@@ -50,7 +50,7 @@ An example of the available constants defined in the module:
     '42P01'
 
 Constants representing all the error values defined by PostgreSQL versions
-between 8.1 and 9.4 are included in the module.
+between 8.1 and 10 beta 1 are included in the module.
 
 
 .. autofunction:: lookup(code)
