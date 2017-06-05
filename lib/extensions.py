@@ -144,6 +144,9 @@ class NoneAdapter(object):
     def getquoted(self, _null=b"NULL"):
         return _null
 
+    def __str__(self):
+        return str(self.getquoted())
+
 
 def make_dsn(dsn=None, **kwargs):
     """Convert a set of keywords into a connection strings."""
