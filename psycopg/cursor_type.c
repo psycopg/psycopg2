@@ -1439,7 +1439,7 @@ exit:
 /* extension: copy_from - implements COPY FROM */
 
 #define psyco_curs_copy_from_doc \
-"copy_from(file, table, sep='\\t', null='\\\\N', size=8192, columns=None) -- Copy table from file."
+"copy_from(file, table, sep='\\t', null='\\\\N', size=8192, columns=None, quote='\"', format='TXT') -- Copy table from file."
 
 STEALS(1) static int
 _psyco_curs_has_read_check(PyObject *o, PyObject **var)
@@ -1466,30 +1466,35 @@ static PyObject *
 psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
     static char *kwlist[] = {
-            "file", "table", "sep", "null", "size", "columns", NULL};
+            "file", "table", "sep", "null", "size", "columns", "quote", "format", NULL};
 
     const char *sep = "\t";
     const char *null = "\\N";
-    const char *command =
-        "COPY %s%s FROM stdin WITH DELIMITER AS %s NULL AS %s";
+    const char *quote = "\"";
+    const char *format = "TXT";
+
 
     Py_ssize_t query_size;
     char *query = NULL;
     char *columnlist = NULL;
     char *quoted_delimiter = NULL;
     char *quoted_null = NULL;
+    char *quoted_quote = NULL;
 
     const char *table_name;
+    const char *command;
+
     Py_ssize_t bufsize = DEFAULT_COPYBUFF;
     PyObject *file, *columns = NULL, *res = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,
-        "O&s|ssnO", kwlist,
+        "O&s|ssnOss", kwlist,
         _psyco_curs_has_read_check, &file, &table_name, &sep, &null, &bufsize,
-        &columns))
+        &columns, &quote, &format))
     {
         return NULL;
     }
+    
 
     EXC_IF_CURS_CLOSED(self);
     EXC_IF_CURS_ASYNC(self, copy_from);
@@ -1508,19 +1513,45 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
             self->conn, null, -1, NULL, NULL))) {
         goto exit;
     }
-
-    query_size = strlen(command) + strlen(table_name) + strlen(columnlist)
-        + strlen(quoted_delimiter) + strlen(quoted_null) + 1;
-    if (!(query = PyMem_New(char, query_size))) {
-        PyErr_NoMemory();
+    
+    if (!(quoted_quote = psycopg_escape_string(
+            self->conn, quote, 0, NULL, NULL))) {
         goto exit;
     }
 
-    PyOS_snprintf(query, query_size, command,
-        table_name, columnlist, quoted_delimiter, quoted_null);
+   
+    if(strcmp("TXT", format) == 0){
+        // Load by default TXT file type
+        command =
+                "COPY %s%s FROM stdin WITH DELIMITER AS %s NULL AS %s";
+        query_size = strlen(command) + strlen(table_name) + strlen(columnlist)
+            + strlen(quoted_delimiter) + strlen(quoted_null) + 1;
+
+        if (!(query = PyMem_New(char, query_size))) {
+            PyErr_NoMemory();
+            goto exit;
+        }
+
+        PyOS_snprintf(query, query_size, command,
+            table_name, columnlist, quoted_delimiter, quoted_null);
+    }else{
+        // Load from .CSV
+        command = 
+            "COPY %s%s FROM stdin WITH DELIMITER AS %s NULL AS %s QUOTE AS %s %s";
+        query_size = strlen(command) + strlen(table_name) + strlen(columnlist)
+            + strlen(quoted_delimiter) + strlen(quoted_null) + strlen(quoted_quote)
+            + strlen(format) + 1;
+        
+        if (!(query = PyMem_New(char, query_size))) {
+            PyErr_NoMemory();
+            goto exit;
+        }
+
+        PyOS_snprintf(query, query_size, command,
+            table_name, columnlist, quoted_delimiter, quoted_null, quoted_quote, format);
+    }
 
     Dprintf("psyco_curs_copy_from: query = %s", query);
-
     self->copysize = bufsize;
     Py_INCREF(file);
     self->copyfile = file;
@@ -1536,6 +1567,7 @@ exit:
     PyMem_Free(columnlist);
     PyMem_Free(quoted_delimiter);
     PyMem_Free(quoted_null);
+    PyMem_Free(quoted_quote);
     PyMem_Free(query);
 
     return res;

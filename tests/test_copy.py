@@ -225,6 +225,29 @@ class CopyTests(ConnectingTestCase):
         curs.execute("select data from tcopy;")
         self.assertEqual(curs.fetchone()[0], abin)
 
+    def _copy_from_csv(self, curs, nrecs, srec, copykw, mock_columns_enclosed_by):
+
+        f = StringIO()
+        for i, c in izip(xrange(nrecs), cycle(string.ascii_letters)):
+            l = c * srec
+            # Enclose '{1}' and '{2}' in the quote char '{0}' (Defaults to '"')
+            f.write("%s,%s%s%s\n" % (i,mock_columns_enclosed_by,l,mock_columns_enclosed_by))
+
+        f.seek(0)
+        copykw['format'] = 'CSV'  
+        
+        copykw['sep'] = ","
+        curs.copy_from(MinimalRead(f), "tcopy", **copykw)
+
+        curs.execute("select count(*) from tcopy")
+        self.assertEqual(nrecs, curs.fetchone()[0])
+
+        curs.execute("select data from tcopy where id < %s order by id",
+                (len(string.ascii_letters),))
+        for i, (l,) in enumerate(curs):
+            self.assertEqual(l, string.ascii_letters[i] * srec)
+
+
     def _copy_from(self, curs, nrecs, srec, copykw):
         f = StringIO()
         for i, c in izip(xrange(nrecs), cycle(string.ascii_letters)):
@@ -376,7 +399,29 @@ conn.close()
         curs.execute("insert into tcopy values (10, 'hi')")
         self.assertRaises(ZeroDivisionError,
             curs.copy_to, BrokenWrite(), "tcopy")
-
+    def test_copy_from_csv(self):
+        curs = self.conn.cursor()
+        try:
+            # 'Quote' should default to '"'
+            self._copy_from_csv(curs, nrecs=1024, srec=10*1024, copykw={}, mock_columns_enclosed_by='"')
+        finally:
+            curs.close()
+    def test_copy_from_csv_specify_column_enclosure(self):
+        curs = self.conn.cursor()
+        try:
+            self._copy_from_csv(curs, nrecs=1024, srec=10*1024, copykw={'quote': "'"}, mock_columns_enclosed_by="'")
+        finally:
+            curs.close()
+    def test_copy_txt_and_set_quote(self):
+        # this shouldn't return an error...
+        # b/c format = 'TXT' by default, and we do not
+        # override this default here, quote does not get included
+        # in the COPY ... FROM ... command.
+        curs = self.conn.cursor()
+        try:
+            self._copy_from(curs, nrecs=1024, srec=10*1024, copykw={'quote': "'"})
+        finally:
+            curs.close()
 
 decorate_all_tests(CopyTests, skip_copy_if_green)
 
