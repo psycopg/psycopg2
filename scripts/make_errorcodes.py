@@ -34,7 +34,8 @@ def main():
     file_start = read_base_file(filename)
     # If you add a version to the list fix the docs (errorcodes.rst, err.rst)
     classes, errors = fetch_errors(
-        ['8.1', '8.2', '8.3', '8.4', '9.0', '9.1', '9.2', '9.3', '9.4', '9.5'])
+        ['8.1', '8.2', '8.3', '8.4', '9.0', '9.1', '9.2', '9.3', '9.4', '9.5',
+         '9.6', '10 b1'])
 
     f = open(filename, "w")
     for line in file_start:
@@ -132,7 +133,7 @@ errors_sgml_url = \
 
 errors_txt_url = \
     "http://git.postgresql.org/gitweb/?p=postgresql.git;a=blob_plain;" \
-    "f=src/backend/utils/errcodes.txt;hb=REL%s_STABLE"
+    "f=src/backend/utils/errcodes.txt;hb=%s"
 
 
 def fetch_errors(versions):
@@ -141,12 +142,16 @@ def fetch_errors(versions):
 
     for version in versions:
         print >> sys.stderr, version
-        tver = tuple(map(int, version.split('.')))
+        tver = tuple(map(int, version.split()[0].split('.')))
         if tver < (9, 1):
             c1, e1 = parse_errors_sgml(errors_sgml_url % version)
         else:
-            c1, e1 = parse_errors_txt(
-                errors_txt_url % version.replace('.', '_'))
+            # TODO: move to 10 stable when released.
+            if version == '10 b1':
+                tag = 'REL_10_BETA1'
+            else:
+                tag = 'REL%s_STABLE' % version.replace('.', '_')
+            c1, e1 = parse_errors_txt(errors_txt_url % tag)
         classes.update(c1)
         for c, cerrs in e1.iteritems():
             errors[c].update(cerrs)
