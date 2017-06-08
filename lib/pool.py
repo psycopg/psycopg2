@@ -298,6 +298,7 @@ class CachingConnectionPool(AbstractConnectionPool):
 
     def _prune(self):
         """Remove any expired connections from the connection pool."""
+        from datetime import datetime, timedelta
         junk_expirations = []
         for obj_id, exp_time in self._expirations.items():
             # _expirations is an ordered dict, so results should be in chronological order
