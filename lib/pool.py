@@ -243,24 +243,24 @@ class PersistentConnectionPool(AbstractConnectionPool):
 class CachingConnectionPool(AbstractConnectionPool):
     """A connection pool that works with the threading module and caches connections"""
 
-    # A dictionary to hold connection ID's and when they should be removed from the pool
-    # Keys are id(connection) and vlaues are expiration time
-    # Storing the expiration time on the connection itself might be preferable, if possible.
-    from collections import OrderedDict
-    _expirations = OrderedDict()
-
     def __init__(self, minconn, maxconn, lifetime = 3600, *args, **kwargs):
         """Initialize the threading lock."""
         import threading
-        from datetime import datetime, timedelta
         AbstractConnectionPool.__init__(
             self, minconn, maxconn, *args, **kwargs)
         self._lock = threading.Lock()
         self._lifetime = lifetime
 
+        # A dictionary to hold connection ID's and when they should be removed from the pool
+        # Keys are id(connection) and vlaues are expiration time
+        # Storing the expiration time on the connection itself might be preferable, if possible.
+        from collections import OrderedDict
+        self._expirations = OrderedDict()
+
     def _connect(self, key=None):
         """Create a new connection, assign it to 'key' if not None,
         And assign an expiration time"""
+        from datetime import datetime, timedelta
         conn = psycopg2.connect(*self._args, **self._kwargs)
         if key is not None:
             self._used[key] = conn
