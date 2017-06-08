@@ -59,5 +59,5 @@ please check the `project homepage`__.
     :alt: Linux and OSX build status
 
 .. |appveyor| image:: https://ci.appveyor.com/api/projects/status/github/psycopg/psycopg2?branch=master&svg=true
-    :target: https://ci.appveyor.com/project/psycopg/psycopg2
+    :target: https://ci.appveyor.com/project/psycopg/psycopg2/branch/master
     :alt: Windows build status
