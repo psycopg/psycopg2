@@ -58,3 +58,7 @@ be used.
 .. autoclass:: ThreadedConnectionPool
 
     .. note:: This pool class can be safely used in multi-threaded applications.
+
+.. autoclass:: CachingConnectionPool
+
+    .. note:: Expired connections are cleaned up on any call to putconn.
