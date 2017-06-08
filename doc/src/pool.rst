@@ -62,3 +62,6 @@ be used.
         This pool class is mostly designed to interact with Zope and probably
         not useful in generic applications.
 
+.. autoclass:: CachingConnectionPool
+
+    .. note:: Expired connections are cleaned up on any call to putconn.
