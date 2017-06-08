@@ -26,9 +26,9 @@ create () {
     export VERSION=$1
     export PACKAGE=${2:-$VERSION}
 
-    # Version as number: 9.6 -> 906
-    export VERNUM=$(( $(echo $VERSION \
-        | sed 's/\(.\+\)\.\(.\+\)/100 * \1 + \2/') ))
+    # Version as number: 9.6 -> 906; 11 -> 1100
+    export VERNUM=$(echo $VERSION \
+        | sed 's/\([0-9]\+\)\(\.\([0-9]\+\)\)\?/100 * \1 + 0\3/' | bc)
 
     # Port number: 9.6 -> 50906
     export PORT=$(( 50000 + $VERNUM ))
@@ -127,5 +127,5 @@ fi
 
 # Postgres built from master
 if [[ -n "$TEST_FUTURE" ]]; then
-    create 10.0 10-master
+    create 10 10beta1
 fi

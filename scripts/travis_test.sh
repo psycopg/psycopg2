@@ -23,8 +23,8 @@ run_test () {
     fi
 
     # Port number: 9.6 -> 50906
-    port=$(( 50000 + $(echo $VERSION \
-        | sed 's/\(.\+\)\.\(.\+\)/100 * \1 + \2/') ))
+    port=$(echo $VERSION \
+        | sed 's/\([0-9]\+\)\(\.\([0-9]\+\)\)\?/50000 + 100 * \1 + 0\3/' | bc)
 
     printf "\n\nRunning tests against PostgreSQL $VERSION (port $port)\n\n"
     export PSYCOPG2_TESTDB=$DBNAME
@@ -68,5 +68,5 @@ fi
 
 # Postgres built from master
 if [[ -n "$TEST_FUTURE" ]]; then
-    run_test 10.0
+    run_test 10
 fi
