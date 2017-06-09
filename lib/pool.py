@@ -189,36 +189,28 @@ class ThreadedConnectionPool(AbstractConnectionPool):
 class CachingConnectionPool(AbstractConnectionPool):
     """A connection pool that works with the threading module and caches connections"""
 
+    #---------------------------------------------------------------------------
     def __init__(self, minconn, maxconn, lifetime = 3600, *args, **kwargs):
         """Initialize the threading lock."""
         import threading
+        from datetime import datetime, timedelta
+
         AbstractConnectionPool.__init__(
             self, minconn, maxconn, *args, **kwargs)
         self._lock = threading.Lock()
         self._lifetime = lifetime
 
+        #Initalize function to get expiration time.
+        self._expiration_time = lambda: datetime.now() + timedelta(seconds = lifetime)
+
         # A dictionary to hold connection ID's and when they should be removed from the pool
         # Keys are id(connection) and vlaues are expiration time
-        # Storing the expiration time on the connection itself might be preferable, if possible.
-        from collections import OrderedDict
-        self._expirations = OrderedDict()
-
-    def _connect(self, key=None):
-        """Create a new connection, assign it to 'key' if not None,
-        And assign an expiration time"""
-        from datetime import datetime, timedelta
-        conn = psycopg2.connect(*self._args, **self._kwargs)
-        if key is not None:
-            self._used[key] = conn
-            self._rused[id(conn)] = key
-        else:
-            self._pool.append(conn)
-
-        #Add expiration time
-        self._expirations[id(conn)] = datetime.now() + timedelta(seconds = self._lifetime)
-        return conn
+        # Storing the expiration time on the connection object itself might be
+        # preferable, if possible.
+        self._expirations = {}
 
     # Override the _putconn function to put the connection back into the pool even if we are over minconn, and to run the _prune command.
+    #---------------------------------------------------------------------------
     def _putconn(self, conn, key=None, close=False):
         """Put away a connection."""
         if self.closed:
@@ -271,15 +263,19 @@ class CachingConnectionPool(AbstractConnectionPool):
         # remove any expired connections from the pool
         self._prune()
 
-
+    #---------------------------------------------------------------------------
     def getconn(self, key=None):
         """Get a free connection and assign it to 'key' if not None."""
         self._lock.acquire()
         try:
-            return self._getconn(key)
+            conn = self._getconn(key)
+            #Add expiration time
+            self._expirations[id(conn)] = self._expiration_time()
+            return conn
         finally:
             self._lock.release()
 
+    #---------------------------------------------------------------------------
     def putconn(self, conn=None, key=None, close=False):
         """Put away an unused connection."""
         self._lock.acquire()
@@ -288,6 +284,7 @@ class CachingConnectionPool(AbstractConnectionPool):
         finally:
             self._lock.release()
 
+    #---------------------------------------------------------------------------
     def closeall(self):
         """Close all connections (even the one currently in use.)"""
         self._lock.acquire()
@@ -296,14 +293,14 @@ class CachingConnectionPool(AbstractConnectionPool):
         finally:
             self._lock.release()
 
+    #---------------------------------------------------------------------------
     def _prune(self):
         """Remove any expired connections from the connection pool."""
-        from datetime import datetime, timedelta
+        from datetime import datetime
         junk_expirations = []
         for obj_id, exp_time in self._expirations.items():
-            # _expirations is an ordered dict, so results should be in chronological order
-            if exp_time > datetime.now():
-                break;
+            if exp_time > datetime.now():  # Not expired, move on.
+                continue;
 
             del_idx = None
             #find index of connection in _pool. May not be there if connection is in use
@@ -330,7 +327,6 @@ class CachingConnectionPool(AbstractConnectionPool):
             # Delete connection from pool if expired
             if del_idx is not None:
                 del self._pool[del_idx]
-
 
         # Remove any junk expirations
         for item in junk_expirations:
