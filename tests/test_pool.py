@@ -23,6 +23,8 @@
 from datetime import datetime, timedelta
 import psycopg2
 import psycopg2.pool as psycopg_pool
+import psycopg2.extensions as _ext
+
 from testutils import (unittest, ConnectingTestCase, skip_before_postgres,
     skip_if_no_namedtuple, skip_if_no_getrefcount, slow, skip_if_no_superuser,
     skip_if_windows)
@@ -119,7 +121,41 @@ class PoolTests(ConnectingTestCase):
         self.assertFalse(new_conn.closed)
         self.assertTrue(id(new_conn) in pool._expirations)
 
-    def test_caching_pool_putconn(self):
+    def test_caching_pool_prune_missing_connection(self):
+        pool = psycopg_pool.CachingConnectionPool(0, 1, 30, dsn)
+        conn = pool.getconn(key = "test")
+
+        self.assertTrue("test" in pool._used)
+
+        #connection got lost somehow.
+        del pool._used["test"]
+
+        #expire this connection
+        old_expire = datetime.now() - timedelta(minutes = 1)
+
+        pool._expirations[id(conn)] = old_expire
+
+        # and prune
+        pool._prune()
+
+    def test_caching_pool_prune_below_min(self):
+        pool = psycopg_pool.CachingConnectionPool(1, 1, 30, dsn)
+        conn = pool.getconn()
+        self.assertFalse(conn in pool._pool)
+
+        #nothing in pool, since we only allow one connection here
+        self.assertEqual(len(pool._pool), 0)
+
+        pool.putconn(conn, close= True)
+
+        # This connection should *not* be in the pool, since we said close
+        self.assertFalse(conn in pool._pool)
+
+        # But we should still have *a* connection available
+        self.assertEqual(len(pool._pool), 1)
+
+
+    def test_caching_pool_putconn_normal(self):
         pool = psycopg_pool.CachingConnectionPool(0, 1, 30, dsn)
         conn = pool.getconn()
         self.assertFalse(conn in pool._pool)
@@ -127,16 +163,116 @@ class PoolTests(ConnectingTestCase):
         pool.putconn(conn)
         self.assertTrue(conn in pool._pool)
 
-        conn2 = pool.getconn()
+    def test_caching_pool_putconn_closecon(self):
+        pool = psycopg_pool.CachingConnectionPool(0, 1, 30, dsn)
+        conn = pool.getconn()
+        self.assertFalse(conn in pool._pool)
+
+        pool.putconn(conn, close = True)
+        self.assertFalse(conn in pool._pool)
+        self.assertFalse(id(conn) in pool._expirations)
+
+    def test_caching_pool_putconn_closecon_noexp(self):
+        pool = psycopg_pool.CachingConnectionPool(0, 1, 30, dsn)
+        conn = pool.getconn()
+        self.assertFalse(conn in pool._pool)
+
+        # Something went haywire with the prune, and the expiration information
+        # for this connection got lost.
+        del pool._expirations[id(conn)]
+        self.assertFalse(id(conn) in pool._expirations)
+
+        # Should still work without error
+        pool.putconn(conn, close = True)
+        self.assertFalse(conn in pool._pool)
+
+    def test_caching_pool_putconn_expired(self):
+        pool = psycopg_pool.CachingConnectionPool(0, 1, 30, dsn)
+        conn = pool.getconn()
 
         #expire the connection
-        pool._expirations[id(conn2)] = datetime.now() - timedelta(minutes = 1)
-        pool.putconn(conn2)
+        pool._expirations[id(conn)] = datetime.now() - timedelta(minutes = 1)
+        pool.putconn(conn)
 
         #connection should be discarded
-        self.assertFalse(conn2 in pool._pool)
-        self.assertFalse(id(conn2) in pool._expirations)
-        self.assertTrue(conn2.closed)
+        self.assertFalse(conn in pool._pool)
+        self.assertFalse(id(conn) in pool._expirations)
+        self.assertTrue(conn.closed)
+
+    def test_caching_pool_putconn_unkeyed(self):
+        pool = psycopg_pool.CachingConnectionPool(0, 1, 30, dsn)
+
+        #Test put with empty key
+        conn = pool.getconn()
+        self.assertRaises(psycopg_pool.PoolError, pool.putconn, conn, '')
+
+    def test_caching_pool_putconn_errorState(self):
+        pool = psycopg_pool.CachingConnectionPool(0, 1, 30, dsn)
+        conn = pool.getconn()
+
+        #Get connection into transaction state
+        cursor = conn.cursor()
+        try:
+            cursor.execute("INSERT INTO test (id) VALUES (1)")  #table does not exist, error
+        except:
+            pass
+
+        self.assertNotEqual(conn.get_transaction_status(),
+                            _ext.TRANSACTION_STATUS_IDLE)
+
+        pool.putconn(conn)
+
+        # make sure we got back into the pool and are now showing idle
+        self.assertEqual(conn.get_transaction_status(),
+                         _ext.TRANSACTION_STATUS_IDLE)
+        self.assertTrue(conn in pool._pool)
+
+    def test_caching_pool_putconn_closed(self):
+        pool = psycopg_pool.CachingConnectionPool(0, 1, 30, dsn)
+        conn = pool.getconn()
+
+        #Open connection with expiration
+        self.assertFalse(conn.closed)
+        self.assertTrue(id(conn) in pool._expirations)
+
+        conn.close()
+
+        # Now should be closed, but still have expiration entry
+        self.assertTrue(conn.closed)
+        self.assertTrue(id(conn) in pool._expirations)
+
+        pool.putconn(conn)
+
+        # we should not have an expiration any more
+        self.assertFalse(id(conn) in pool._expirations)
+
+        # and the connection should have been discarded
+        self.assertFalse(conn in pool._pool)
+
+    def test_caching_pool_putconn_closed_noexp(self):
+        pool = psycopg_pool.CachingConnectionPool(0, 1, 30, dsn)
+        conn = pool.getconn()
+
+        #Open connection with expiration
+        self.assertFalse(conn.closed)
+        self.assertTrue(id(conn) in pool._expirations)
+
+        conn.close()
+
+        # Now should be closed, but still have expiration entry
+        self.assertTrue(conn.closed)
+        self.assertTrue(id(conn) in pool._expirations)
+
+        # Delete the expiration entry to simulate confusion
+        del pool._expirations[id(conn)]
+
+        # we should not have an expiration any more
+        self.assertFalse(id(conn) in pool._expirations)
+
+        pool.putconn(conn)
+
+        # and the connection should have been discarded, without error
+        self.assertFalse(conn in pool._pool)
 
     def test_caching_pool_caching(self):
         pool = psycopg_pool.CachingConnectionPool(0, 10, 30, dsn)
@@ -214,3 +350,6 @@ class PoolTests(ConnectingTestCase):
 
         # To maintain consistancy with existing code, closeall doesn't mess with the _expirations dict either
         # self.assertEqual(len(pool._expirations), 0)
+
+        #We should get an error if we try to put conn1 back now
+        self.assertRaises(psycopg2.pool.PoolError, pool.putconn, conn1)

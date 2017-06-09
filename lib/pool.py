@@ -370,13 +370,13 @@ class CachingConnectionPool(AbstractConnectionPool):
                 for conn in self._used.values():
                     if id(conn) == obj_id:
                         break  #found it, so just move on. Don't expire the
-                    # connection till we are done with it.
-                    else:
-                        # This connection doesn't exist any more, so get rid
-                        # of the reference to the expiration.
-                        # Can't delete here because we'd be changing the item
-                        # we are itterating over.
-                        junk_expirations.append(obj_id)
+                                # connection till we are done with it.
+                else:
+                    # This connection doesn't exist any more, so get rid
+                    # of the reference to the expiration.
+                    # Can't delete here because we'd be changing the item
+                    # we are itterating over.
+                    junk_expirations.append(obj_id)
 
             # Delete connection from pool if expired
             if del_idx is not None:
@@ -384,10 +384,8 @@ class CachingConnectionPool(AbstractConnectionPool):
 
         # Remove any junk expirations
         for item in junk_expirations:
-            try:
-                del self._expirations[item]
-            except KeyError:
-                pass  #expiration doesn't exist??
+            # Should be safe enough, since it existed in the loop above
+            del self._expirations[item]
 
         # Make sure we still have at least minconn connections
         # Connections may be available or used
