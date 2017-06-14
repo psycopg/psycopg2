@@ -56,10 +56,19 @@ using something like ``pip install -U pip``)
 .. note::
 
     The binary packages come with their own versions of a few C libraries,
-    among which libpq and libssl, which will be used regardless of other
+    among which ``libpq`` and ``libssl``, which will be used regardless of other
     libraries available on the client: upgrading the system libraries will not
     upgrade the libraries used by `!psycopg2`. Please build `!psycopg2` from
     source if you want to maintain binary upgradeability.
+
+.. warning::
+
+    Because the `!psycopg` wheel package uses its own ``libssl`` binary, it is
+    incompatible with other extension modules binding with ``libssl`` as well,
+    for instance the Python `ssl` module: the result will likely be a
+    segfault. If you need using both `!psycopg2` and other libraries using
+    ``libssl`` please :ref:`install psycopg from source
+    <install-from-source>`.
 
 If you prefer to use the system libraries available on your client you can use
 the :command:`pip` ``--no-binary`` option:
@@ -105,8 +114,8 @@ Build prerequisites
 These notes illustrate how to compile Psycopg on Linux. If you want to compile
 Psycopg on other platforms you may have to adjust some details accordingly.
 
-Psycopg is a C wrapper to the libpq PostgreSQL client library. To install it
-from sources you will need:
+Psycopg is a C wrapper around the libpq_ PostgreSQL client library. To install
+it from sources you will need:
 
 - A C compiler.
 
