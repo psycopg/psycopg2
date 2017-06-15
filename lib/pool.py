@@ -25,7 +25,7 @@ This module implements thread-safe (and not) connection pools.
 # License for more details.
 
 import psycopg2
-import psycopg2.extensions as _ext
+from psycopg2 import extensions as _ext
 
 
 class PoolError(psycopg2.Error):
