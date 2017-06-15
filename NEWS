@@ -18,6 +18,7 @@ What's new in psycopg 2.7.2
   (:ticket:`#545`).
 - Fixed `~psycopg2.extras.ReplicationCursor.consume_stream()`
   *keepalive_interval* argument (:ticket:`#547`).
+- Fixed random `!SystemError` upon receiving abort signal (:ticket:`#551`).
 - `~psycopg2.errorcodes` map updated to PostgreSQL 10 beta 1.
 
 

@@ -1893,8 +1893,12 @@ pq_fetch(cursorObject *curs, int no_result)
     Dprintf("pq_fetch: pgstatus = %s", PQresStatus(pgstatus));
 
     /* backend status message */
-    Py_XDECREF(curs->pgstatus);
-    curs->pgstatus = conn_text_from_chars(curs->conn, PQcmdStatus(curs->pgres));
+    Py_CLEAR(curs->pgstatus);
+    if (!(curs->pgstatus = conn_text_from_chars(
+            curs->conn, PQcmdStatus(curs->pgres)))) {
+        ex = -1;
+        return ex;
+    }
 
     switch(pgstatus) {
 
