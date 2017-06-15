@@ -12,6 +12,8 @@ What's new in psycopg 2.7.2
   string is specified as an URI (:ticket:`#528`).
 - Return objects with timezone parsing "infinity" :sql:`timestamptz`
   (:ticket:`#536`).
+- Dropped dependency on VC9 runtime on Windows binary packages
+  (:ticket:`#541`).
 - Fixed segfault in `~connection.lobject()` when *mode*\=\ `!None`
   (:ticket:`#544`).
 - Fixed `~connection.lobject()` keyword argument *lobject_factory*
