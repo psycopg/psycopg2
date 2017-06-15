@@ -1568,7 +1568,7 @@ while True:
         proc = sp.Popen([sys.executable, '-c', script_to_py3(script)],
             stdout=sp.PIPE, stderr=sp.PIPE)
         (out, err) = proc.communicate()
-        self.assertEqual(1, proc.returncode)
+        self.assertNotEqual(proc.returncode, 0)
         self.assert_(not err, err)
 
 
