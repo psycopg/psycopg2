@@ -422,7 +422,9 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         from datetime import timedelta
         for s, v in [
             ('0', timedelta(0)),
-            ('1000000', timedelta(seconds=1)),      # Is this a thing?
+            ('1', timedelta(microseconds=1)),
+            ('-1', timedelta(microseconds=-1)),
+            ('1000000', timedelta(seconds=1)),
             ('86400000000', timedelta(days=1)),
             ('-86400000000', timedelta(days=-1)),
         ]:
