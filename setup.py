@@ -64,7 +64,7 @@ except ImportError:
 # Take a look at http://www.python.org/dev/peps/pep-0440/
 # for a consistent versioning pattern.
 
-PSYCOPG_VERSION = '2.7.2.dev0'
+PSYCOPG_VERSION = '2.7.2.dev1'
 
 
 # note: if you are changing the list of supported Python version please fix
@@ -295,7 +295,7 @@ class psycopg_build_ext(build_ext):
 
         # For Python versions that use MSVC compiler 2008, re-insert the
         # manifest into the resulting .pyd file.
-        if self.compiler_is_msvc() and sysVer not in ((2, 4), (2, 5)):
+        if self.compiler_is_msvc() and sysVer in ((2, 6), (2, 7), (3, 0), (3, 1), (3, 2)):
             platform = get_platform()
             # Default to the x86 manifest
             manifest = '_psycopg.vc9.x86.manifest'

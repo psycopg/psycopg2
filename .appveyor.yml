@@ -73,7 +73,7 @@ matrix:
     fast_finish: false
 
 services:
-    - postgresql95
+    - postgresql96
 
 cache:
   # Rebuild cache if following file changes
@@ -115,7 +115,7 @@ init:
 
     # Change PostgreSQL config before service starts to allow > 1 prepared
     #   transactions for test cases
-    - ECHO max_prepared_transactions = 10 >> "C:\\Program Files\\PostgreSQL\\9.5\\data\\postgresql.conf"
+    - ECHO max_prepared_transactions = 10 >> "C:\\Program Files\\PostgreSQL\\9.6\\data\\postgresql.conf"
 
 
 # Repository gets cloned, Cache is restored
@@ -154,8 +154,8 @@ install:
         }
     # Download OpenSSL source
     - CD C:\Others
-    - IF NOT EXIST OpenSSL_1_0_2k.zip (
-        curl -fsSL -o OpenSSL_1_0_2k.zip https://github.com/openssl/openssl/archive/OpenSSL_1_0_2k.zip
+    - IF NOT EXIST OpenSSL_1_0_2l.zip (
+        curl -fsSL -o OpenSSL_1_0_2l.zip https://github.com/openssl/openssl/archive/OpenSSL_1_0_2l.zip
       )
 
     # To use OpenSSL >= 1.1.0, both libpq and psycopg build environments have
@@ -167,15 +167,15 @@ install:
     #    - nmake build_libs install_dev
     - IF NOT EXIST %OPENSSLTOP%\lib\ssleay32.lib (
         CD %BUILD_DIR% &&
-        7z x C:\Others\OpenSSL_1_0_2k.zip &&
-        CD openssl-OpenSSL_1_0_2k &&
+        7z x C:\Others\OpenSSL_1_0_2l.zip &&
+        CD openssl-OpenSSL_1_0_2l &&
         perl Configure %TARGET% no-asm no-shared no-zlib --prefix=%OPENSSLTOP% --openssldir=%OPENSSLTOP% &&
         CALL ms\%DO% &&
         nmake -f ms\nt.mak init headers lib &&
         COPY inc32\openssl\*.h %OPENSSLTOP%\include\openssl &&
         COPY out32\*.lib %OPENSSLTOP%\lib &&
         CD %BASE_DIR% &&
-        RMDIR /S /Q %BUILD_DIR%\openssl-OpenSSL_1_0_2k
+        RMDIR /S /Q %BUILD_DIR%\openssl-OpenSSL_1_0_2l
       )
 
     # Setup directories for building PostgreSQL librarires
@@ -187,19 +187,19 @@ install:
     - IF NOT EXIST %PGTOP%\lib MKDIR %PGTOP%\lib
     # Download PostgreSQL source
     - CD C:\Others
-    - IF NOT EXIST postgres-REL9_6_2.zip (
-        curl -fsSL -o postgres-REL9_6_2.zip https://github.com/postgres/postgres/archive/REL9_6_2.zip
+    - IF NOT EXIST postgres-REL9_6_3.zip (
+        curl -fsSL -o postgres-REL9_6_3.zip https://github.com/postgres/postgres/archive/REL9_6_3.zip
       )
 
     # Setup build config file (config.pl)
     # Build libpgport first
     # Build libpq
     # NOTE: Cannot set and use the same variable inside an IF
-    - SET PGBUILD=%BUILD_DIR%\postgres-REL9_6_2
+    - SET PGBUILD=%BUILD_DIR%\postgres-REL9_6_3
     - IF NOT EXIST %PGTOP%\lib\libpq.lib (
         CD %BUILD_DIR% &&
-        7z x C:\Others\postgres-REL9_6_2.zip &&
-        CD postgres-REL9_6_2\src\tools\msvc &&
+        7z x C:\Others\postgres-REL9_6_3.zip &&
+        CD postgres-REL9_6_3\src\tools\msvc &&
         ECHO $config-^>{ldap} = 0; > config.pl &&
         ECHO $config-^>{openssl} = "%OPENSSLTOP:\=\\%"; >> config.pl &&
         ECHO.>> config.pl &&
@@ -221,7 +221,7 @@ build: off
 
 build_script:
     # Add PostgreSQL binaries to the path
-    - PATH=C:\Program Files\PostgreSQL\9.5\bin\;%PATH%
+    - PATH=C:\Program Files\PostgreSQL\9.6\bin\;%PATH%
     - CD C:\Project
     - "%PYTHON%\\python.exe setup.py build_ext --have-ssl -l libpgcommon -L %OPENSSLTOP%\\lib;%PGTOP%\\lib -I %OPENSSLTOP%\\include;%PGTOP%\\include"
     - "%PYTHON%\\python.exe setup.py build"
