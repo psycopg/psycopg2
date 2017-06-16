@@ -276,6 +276,44 @@ typecast_PYTIME_cast(const char *str, Py_ssize_t len, PyObject *curs)
     return obj;
 }
 
+
+/* Attempt parsing a number as microseconds
+ * Redshift is reported returning this stuff, see #558
+ *
+ * Return a new `timedelta()` object in case of success or NULL and set an error
+ */
+static PyObject *
+interval_from_usecs(const char *str)
+{
+    PyObject *us = NULL;
+    char *pend;
+    PyObject *rv = NULL;
+
+    Dprintf("interval_from_usecs: %s", str);
+
+    if (!(us = PyLong_FromString((char *)str, &pend, 0))) {
+        Dprintf("interval_from_usecs: parsing long failed");
+        goto exit;
+    }
+
+    if (*pend != '\0') {
+        /* there are trailing chars, it's not just micros. Barf. */
+        Dprintf("interval_from_usecs: spurious chars %s", pend);
+        PyErr_Format(PyExc_ValueError,
+            "expected number of microseconds, got %s", str);
+        goto exit;
+    }
+
+    rv = PyObject_CallFunction(
+        (PyObject*)PyDateTimeAPI->DeltaType, "LLO",
+        0L, 0L, us);
+
+exit:
+    Py_XDECREF(us);
+    return rv;
+}
+
+
 /** INTERVAL - parse an interval into a timedelta object **/
 
 static PyObject *
@@ -284,6 +322,7 @@ typecast_PYINTERVAL_cast(const char *str, Py_ssize_t len, PyObject *curs)
     long v = 0, years = 0, months = 0, hours = 0, minutes = 0, micros = 0;
     PY_LONG_LONG days = 0, seconds = 0;
     int sign = 1, denom = 1, part = 0;
+    const char *orig = str;
 
     if (str == NULL) { Py_RETURN_NONE; }
 
@@ -305,6 +344,16 @@ typecast_PYINTERVAL_cast(const char *str, Py_ssize_t len, PyObject *curs)
                  * or too big value. On Win where long == int the 2nd check
                  * is useless. */
                 if (v1 < v || v1 > (long)INT_MAX) {
+                    /* uhm, oops... but before giving up, maybe it's redshift
+                     * returning microseconds? See #558 */
+                    PyObject *rv;
+                    if ((rv = interval_from_usecs(orig))) {
+                        return rv;
+                    }
+                    else {
+                        PyErr_Clear();
+                    }
+
                     PyErr_SetString(
                         PyExc_OverflowError, "interval component too big");
                     return NULL;
@@ -383,6 +432,10 @@ typecast_PYINTERVAL_cast(const char *str, Py_ssize_t len, PyObject *curs)
         else if (denom > 1000000L) {
             micros = (long)round((double)micros / denom * 1000000.0);
         }
+    }
+    else if (part == 0) {
+        /* Parsing failed, maybe it's just an integer? Assume usecs */
+        return interval_from_usecs(orig);
     }
 
     /* add hour, minutes, seconds together and include the sign */

@@ -411,6 +411,27 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         self.assert_(t.tzinfo is not None)
         self.assert_(t < datetime(1000, 1, 1, tzinfo=FixedOffsetTimezone()))
 
+    def test_redshift_day(self):
+        # Redshift is reported returning 1 day interval as microsec (bug #558)
+        cur = self.conn.cursor()
+        psycopg2.extensions.register_type(
+            psycopg2.extensions.new_type(
+                psycopg2.STRING.values, 'WAT', psycopg2.extensions.INTERVAL),
+            cur)
+
+        from datetime import timedelta
+        for s, v in [
+            ('0', timedelta(0)),
+            ('1', timedelta(microseconds=1)),
+            ('-1', timedelta(microseconds=-1)),
+            ('1000000', timedelta(seconds=1)),
+            ('86400000000', timedelta(days=1)),
+            ('-86400000000', timedelta(days=-1)),
+        ]:
+            cur.execute("select %s::text", (s,))
+            r = cur.fetchone()[0]
+            self.assertEqual(r, v, "%s -> %s != %s" % (s, r, v))
+
 
 # Only run the datetime tests if psycopg was compiled with support.
 if not hasattr(psycopg2.extensions, 'PYDATETIME'):
