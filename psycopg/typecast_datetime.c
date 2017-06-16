@@ -448,6 +448,9 @@ typecast_PYINTERVAL_cast(const char *str, Py_ssize_t len, PyObject *curs)
     /* add the days, months years together - they already include a sign */
     days += 30 * (PY_LONG_LONG)months + 365 * (PY_LONG_LONG)years;
 
+    /* Postgres adds 6 hours for each year, or for each 12 months */
+    seconds += 6 * 60 * 60 * (PY_LONG_LONG)(years + (months / 12));
+
     return PyObject_CallFunction((PyObject*)PyDateTimeAPI->DeltaType, "LLl",
                                  days, seconds, micros);
 }

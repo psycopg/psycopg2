@@ -24,6 +24,10 @@ What's new in psycopg 2.7.2
 - Parse intervals returned as microseconds from Redshift (:ticket:`#558`).
 - Added `~psycopg2.extras.Json` `!prepare()` method to consider connection
   params when adapting (:ticket:`#562`).
+- Convert PostgreSQL :sql:`interval` containing years and months into
+  Python `~datetime.timedelta` with `!total_seconds()` matching the
+  :sql:`interval` epoch, i.e. add 6 hours every year or 12 months
+  (:ticket:`#570`).
 - `~psycopg2.errorcodes` map updated to PostgreSQL 10 beta 1.
 
 

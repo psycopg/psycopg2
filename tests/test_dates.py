@@ -223,6 +223,32 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
     def test_parse_negative_interval(self):
         self._check_interval('-42 days -12:34:56.123456')
 
+    def test_parse_mixied_signs_interval(self):
+        # Intervals in postgres have 4 blocks
+        # -1 year -2 mons +3 days -04:05:06
+        # each can be missing, present with no sign, positive, negative
+        # test all the combos
+        def cases(s):
+            return ['', s, '-' + s, '+' + s]
+
+        from itertools import product
+        for parts in product(
+                cases('1 year'), cases('2 months'),
+                cases('3 days'), cases('04:05:06')):
+            s = ' '.join(parts)
+            if s.isspace():
+                continue
+            self._check_interval(s)
+
+    def test_parse_interval_element(self):
+        for i in range(-1000, 1100, 100):
+            self._check_interval('%s years' % i)
+            self._check_interval('%s months' % i)
+            self._check_interval('%s days' % i)
+            self._check_interval('%s hours' % i)
+            self._check_interval('%s minutes' % i)
+            self._check_interval('%s seconds' % i)
+
     def test_parse_infinity(self):
         value = self.DATETIME('-infinity', self.curs)
         self.assertEqual(str(value), '0001-01-01 00:00:00')
