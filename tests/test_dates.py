@@ -205,19 +205,23 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         self.assertEqual(
             self.DATETIME("2007-01-01 13:30:29.123456", self.curs).tzinfo, None)
 
+    def _check_interval(self, s, want_secs=None):
+        self.curs.execute(
+            "select %s::interval, extract('epoch' from %s::interval)",
+            (s, s))
+        td, secs = self.curs.fetchone()
+        if want_secs is not None:
+            secs = want_secs
+
+        self.assertEqual(total_seconds(td), secs,
+            "'%s'::interval -> '%s' = %s sec instead of %s"
+            % (s, td, total_seconds(td), secs))
+
     def test_parse_interval(self):
-        value = self.INTERVAL('42 days 12:34:56.123456', self.curs)
-        self.assertNotEqual(value, None)
-        self.assertEqual(value.days, 42)
-        self.assertEqual(value.seconds, 45296)
-        self.assertEqual(value.microseconds, 123456)
+        self._check_interval('42 days 12:34:56.123456')
 
     def test_parse_negative_interval(self):
-        value = self.INTERVAL('-42 days -12:34:56.123456', self.curs)
-        self.assertNotEqual(value, None)
-        self.assertEqual(value.days, -43)
-        self.assertEqual(value.seconds, 41103)
-        self.assertEqual(value.microseconds, 876544)
+        self._check_interval('-42 days -12:34:56.123456')
 
     def test_parse_infinity(self):
         value = self.DATETIME('-infinity', self.curs)
@@ -340,39 +344,19 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
 
     @skip_before_postgres(8, 1)
     def test_large_interval(self):
-        t = self.execute("select '999999:00:00'::interval")
-        self.assertEqual(total_seconds(t), 999999 * 60 * 60)
-
-        t = self.execute("select '-999999:00:00'::interval")
-        self.assertEqual(total_seconds(t), -999999 * 60 * 60)
-
-        t = self.execute("select '999999:00:00.1'::interval")
-        self.assertEqual(total_seconds(t), 999999 * 60 * 60 + 0.1)
-
-        t = self.execute("select '999999:00:00.9'::interval")
-        self.assertEqual(total_seconds(t), 999999 * 60 * 60 + 0.9)
-
-        t = self.execute("select '-999999:00:00.1'::interval")
-        self.assertEqual(total_seconds(t), -999999 * 60 * 60 - 0.1)
-
-        t = self.execute("select '-999999:00:00.9'::interval")
-        self.assertEqual(total_seconds(t), -999999 * 60 * 60 - 0.9)
+        self._check_interval('999999:00:00')
+        self._check_interval('-999999:00:00')
+        self._check_interval('999999:00:00.1')
+        self._check_interval('999999:00:00.9')
+        self._check_interval('-999999:00:00.1')
+        self._check_interval('-999999:00:00.9')
 
     def test_micros_rounding(self):
-        t = self.execute("select '0.1'::interval")
-        self.assertEqual(total_seconds(t), 0.1)
-
-        t = self.execute("select '0.01'::interval")
-        self.assertEqual(total_seconds(t), 0.01)
-
-        t = self.execute("select '0.000001'::interval")
-        self.assertEqual(total_seconds(t), 1e-6)
-
-        t = self.execute("select '0.0000004'::interval")
-        self.assertEqual(total_seconds(t), 0)
-
-        t = self.execute("select '0.0000006'::interval")
-        self.assertEqual(total_seconds(t), 1e-6)
+        self._check_interval('0.1')
+        self._check_interval('0.01')
+        self._check_interval('0.000001')
+        self._check_interval('0.0000004', 0)
+        self._check_interval('0.0000006', 1e-6)
 
     def test_interval_overflow(self):
         cur = self.conn.cursor()
