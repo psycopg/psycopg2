@@ -66,6 +66,7 @@ class Json(object):
     """
     def __init__(self, adapted, dumps=None):
         self.adapted = adapted
+        self._conn = None
 
         if dumps is not None:
             self._dumps = dumps
@@ -93,9 +94,15 @@ class Json(object):
                 "json module not available: "
                 "you should provide a dumps function")
 
+    def prepare(self, conn):
+        self._conn = conn
+
     def getquoted(self):
         s = self.dumps(self.adapted)
-        return QuotedString(s).getquoted()
+        qs = QuotedString(s)
+        if self._conn is not None:
+            qs.prepare(self._conn)
+        return qs.getquoted()
 
     if sys.version_info < (3,):
         def __str__(self):

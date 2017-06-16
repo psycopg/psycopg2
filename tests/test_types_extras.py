@@ -1084,6 +1084,24 @@ class JsonTestCase(ConnectingTestCase):
         self.assert_(s.startswith("'"))
         self.assert_(s.endswith("'"))
 
+    @skip_if_no_json_module
+    def test_scs(self):
+        cnn_on = self.connect(options="-c standard_conforming_strings=on")
+        cur_on = cnn_on.cursor()
+        self.assertEqual(
+            cur_on.mogrify("%s", [psycopg2.extras.Json({'a': '"'})]),
+            b'\'{"a": "\\""}\'')
+
+        cnn_off = self.connect(options="-c standard_conforming_strings=off")
+        cur_off = cnn_off.cursor()
+        self.assertEqual(
+            cur_off.mogrify("%s", [psycopg2.extras.Json({'a': '"'})]),
+            b'E\'{"a": "\\\\""}\'')
+
+        self.assertEqual(
+            cur_on.mogrify("%s", [psycopg2.extras.Json({'a': '"'})]),
+            b'\'{"a": "\\""}\'')
+
 
 def skip_if_no_jsonb_type(f):
     return skip_before_postgres(9, 4)(f)
