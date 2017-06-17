@@ -23,6 +23,9 @@ What's new in psycopg 2.7.2
 - Maybe fixed random import error on Python 3.6 in multiprocess
   environment (:ticket:`#550`).
 - Fixed random `!SystemError` upon receiving abort signal (:ticket:`#551`).
+- Accept `~psycopg2.sql.Composable` objects in
+  `~psycopg2.extras.ReplicationCursor.start_replication_expert()`
+  (:ticket:`554`).
 - Parse intervals returned as microseconds from Redshift (:ticket:`#558`).
 - Added `~psycopg2.extras.Json` `!prepare()` method to consider connection
   params when adapting (:ticket:`#562`).

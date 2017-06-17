@@ -48,11 +48,11 @@ psyco_repl_curs_start_replication_expert(replicationCursorObject *self,
     cursorObject *curs = &self->cur;
     connectionObject *conn = self->cur.conn;
     PyObject *res = NULL;
-    char *command;
+    PyObject *command = NULL;
     long int decode = 0;
     static char *kwlist[] = {"command", "decode", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s|l", kwlist, &command, &decode)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|l", kwlist, &command, &decode)) {
         return NULL;
     }
 
@@ -60,9 +60,16 @@ psyco_repl_curs_start_replication_expert(replicationCursorObject *self,
     EXC_IF_GREEN(start_replication_expert);
     EXC_IF_TPC_PREPARED(conn, start_replication_expert);
 
-    Dprintf("psyco_repl_curs_start_replication_expert: '%s'; decode: %ld", command, decode);
+    if (!(command = psyco_curs_validate_sql_basic(
+            (cursorObject *)self, command))) {
+        goto exit;
+    }
 
-    if (pq_execute(curs, command, conn->async, 1 /* no_result */, 1 /* no_begin */) >= 0) {
+    Dprintf("psyco_repl_curs_start_replication_expert: '%s'; decode: %ld",
+        Bytes_AS_STRING(command), decode);
+
+    if (pq_execute(curs, Bytes_AS_STRING(command), conn->async,
+            1 /* no_result */, 1 /* no_begin */) >= 0) {
         res = Py_None;
         Py_INCREF(res);
 
@@ -70,6 +77,8 @@ psyco_repl_curs_start_replication_expert(replicationCursorObject *self,
         gettimeofday(&self->last_io, NULL);
     }
 
+exit:
+    Py_XDECREF(command);
     return res;
 }
 

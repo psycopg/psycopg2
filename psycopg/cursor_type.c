@@ -267,85 +267,6 @@ _mogrify(PyObject *var, PyObject *fmt, cursorObject *curs, PyObject **new)
     return 0;
 }
 
-/* Return 1 if `obj` is a `psycopg2.sql.Composable` instance, else 0
- * Set an exception and return -1 in case of error.
- */
-RAISES_NEG static int
-_curs_is_composible(PyObject *obj)
-{
-    int rv = -1;
-    PyObject *m = NULL;
-    PyObject *comp = NULL;
-
-    if (!(m = PyImport_ImportModule("psycopg2.sql"))) { goto exit; }
-    if (!(comp = PyObject_GetAttrString(m, "Composable"))) { goto exit; }
-    rv = PyObject_IsInstance(obj, comp);
-
-exit:
-    Py_XDECREF(comp);
-    Py_XDECREF(m);
-    return rv;
-
-}
-
-static PyObject *_psyco_curs_validate_sql_basic(
-    cursorObject *self, PyObject *sql
-  )
-{
-    PyObject *rv = NULL;
-    PyObject *comp = NULL;
-    int iscomp;
-
-    /* Performs very basic validation on an incoming SQL string.
-       Returns a new reference to a str instance on success; NULL on failure,
-       after having set an exception. */
-
-    if (!sql || !PyObject_IsTrue(sql)) {
-        psyco_set_error(ProgrammingError, self,
-                         "can't execute an empty query");
-        goto exit;
-    }
-
-    if (Bytes_Check(sql)) {
-        /* Necessary for ref-count symmetry with the unicode case: */
-        Py_INCREF(sql);
-        rv = sql;
-    }
-    else if (PyUnicode_Check(sql)) {
-        if (!(rv = conn_encode(self->conn, sql))) { goto exit; }
-    }
-    else if (0 != (iscomp = _curs_is_composible(sql))) {
-        if (iscomp < 0) { goto exit; }
-        if (!(comp = PyObject_CallMethod(sql, "as_string", "O", self->conn))) {
-            goto exit;
-        }
-
-        if (Bytes_Check(comp)) {
-            rv = comp;
-            comp = NULL;
-        }
-        else if (PyUnicode_Check(comp)) {
-            if (!(rv = conn_encode(self->conn, comp))) { goto exit; }
-        }
-        else {
-            PyErr_Format(PyExc_TypeError,
-                "as_string() should return a string: got %s instead",
-                Py_TYPE(comp)->tp_name);
-            goto exit;
-        }
-    }
-    else {
-        /* the  is not unicode or string, raise an error */
-        PyErr_Format(PyExc_TypeError,
-            "argument 1 must be a string or unicode object: got %s instead",
-            Py_TYPE(sql)->tp_name);
-        goto exit;
-    }
-
-exit:
-    Py_XDECREF(comp);
-    return rv;
-}
 
 /* Merge together a query string and its arguments.
  *
@@ -425,7 +346,7 @@ _psyco_curs_execute(cursorObject *self,
     PyObject *fquery, *cvt = NULL;
     const char *scroll;
 
-    operation = _psyco_curs_validate_sql_basic(self, operation);
+    operation = psyco_curs_validate_sql_basic(self, operation);
 
     /* Any failure from here forward should 'goto fail' rather than 'return 0'
        directly. */
@@ -622,7 +543,7 @@ _psyco_curs_mogrify(cursorObject *self,
 {
     PyObject *fquery = NULL, *cvt = NULL;
 
-    operation = _psyco_curs_validate_sql_basic(self, operation);
+    operation = psyco_curs_validate_sql_basic(self, operation);
     if (operation == NULL) { goto cleanup; }
 
     Dprintf("psyco_curs_mogrify: starting mogrify");
@@ -1665,7 +1586,7 @@ psyco_curs_copy_expert(cursorObject *self, PyObject *args, PyObject *kwargs)
     EXC_IF_GREEN(copy_expert);
     EXC_IF_TPC_PREPARED(self->conn, copy_expert);
 
-    sql = _psyco_curs_validate_sql_basic(self, sql);
+    sql = psyco_curs_validate_sql_basic(self, sql);
 
     /* Any failure from here forward should 'goto exit' rather than
        'return NULL' directly. */
