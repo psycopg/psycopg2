@@ -65,7 +65,7 @@ from psycopg2 import tz                             # noqa
 
 # Register default adapters.
 
-import psycopg2.extensions as _ext
+from psycopg2 import extensions as _ext
 _ext.register_adapter(tuple, _ext.SQL_IN)
 _ext.register_adapter(type(None), _ext.NoneAdapter)
 

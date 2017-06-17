@@ -28,12 +28,12 @@ old code while porting to psycopg 2. Import it as follows::
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-import psycopg2._psycopg as _2psycopg   # noqa
+from psycopg2 import _psycopg as _2psycopg   # noqa
 from psycopg2.extensions import cursor as _2cursor
 from psycopg2.extensions import connection as _2connection
 
 from psycopg2 import *      # noqa
-import psycopg2.extensions as _ext
+from psycopg2 import extensions as _ext
 _2connect = connect
 
 
