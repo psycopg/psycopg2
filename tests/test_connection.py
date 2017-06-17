@@ -22,6 +22,7 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
+import re
 import os
 import sys
 import time
@@ -1569,6 +1570,8 @@ while True:
             stdout=sp.PIPE, stderr=sp.PIPE)
         (out, err) = proc.communicate()
         self.assertNotEqual(proc.returncode, 0)
+        # Strip [NNN refs] from output
+        err = re.sub(br'\[[^\]]+\]', b'', err).strip()
         self.assert_(not err, err)
 
 
