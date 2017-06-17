@@ -139,6 +139,20 @@ class ReplicationTest(ReplicationTestCase):
 
     @skip_before_postgres(9, 4)  # slots require 9.4
     @skip_repl_if_green
+    def test_start_replication_expert_sql(self):
+        from psycopg2 import sql
+        conn = self.repl_connect(connection_factory=LogicalReplicationConnection)
+        if conn is None:
+            return
+        cur = conn.cursor()
+
+        self.create_replication_slot(cur, output_plugin='test_decoding')
+        cur.start_replication_expert(
+            sql.SQL("START_REPLICATION SLOT {slot} LOGICAL 0/00000000").format(
+                slot=sql.Identifier(self.slot)))
+
+    @skip_before_postgres(9, 4)  # slots require 9.4
+    @skip_repl_if_green
     def test_start_and_recover_from_error(self):
         conn = self.repl_connect(connection_factory=LogicalReplicationConnection)
         if conn is None:

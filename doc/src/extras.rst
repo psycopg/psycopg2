@@ -356,8 +356,13 @@ The individual messages in the replication stream are represented by
     .. method:: start_replication_expert(command, decode=False)
 
         Start replication on the connection using provided
-        |START_REPLICATION|_ command.  See `start_replication()` for
-        description of *decode* parameter.
+        |START_REPLICATION|_ command.
+
+        :param command: The full replication command. It can be a string or a
+            `~psycopg2.sql.Composable` instance for dynamic generation.
+        :param decode: a flag indicating that unicode conversion should be
+            performed on messages received from the server.
+
 
     .. method:: consume_stream(consume, keepalive_interval=10)
 
