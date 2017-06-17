@@ -305,8 +305,7 @@ interval_from_usecs(const char *str)
     }
 
     rv = PyObject_CallFunction(
-        (PyObject*)PyDateTimeAPI->DeltaType, "LLO",
-        0L, 0L, us);
+        (PyObject*)PyDateTimeAPI->DeltaType, "iiO", 0, 0, us);
 
 exit:
     Py_XDECREF(us);
