@@ -1404,7 +1404,7 @@ class TransactionControlTests(ConnectingTestCase):
                 )
             else:
                 self.assertRaises(
-                    psycopg2.ProgrammingError,
+                    psycopg2.NotSupportedError,
                     self.conn.encrypt_password, 'psycopg2', 'ashesh'
                 )
         else:
