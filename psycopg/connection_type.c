@@ -575,8 +575,8 @@ psyco_encrypt_password(connectionObject *self, PyObject *args, PyObject *kwargs)
 
         if (encrypted != NULL)
         {
-            res = PyString_FromString(encrypted);
-            free(encrypted);
+            res = Text_FromUTF8(encrypted);
+            PQfreemem(encrypted);
         }
         return res;
     }
@@ -600,10 +600,11 @@ psyco_encrypt_password(connectionObject *self, PyObject *args, PyObject *kwargs)
         }
         else
         {
-            res = PyString_FromString(encrypted);
+            res = Text_FromUTF8(encrypted);
+            PQfreemem(encrypted);
         }
-
         return res;
+
 #else
         PyErr_SetString(
             NotSupportedError,
