@@ -1397,16 +1397,10 @@ class TransactionControlTests(ConnectingTestCase):
         )
 
         if libpq_version() < 100000:
-            if server_encryption_algorithm == 'md5':
-                self.assertEqual(
-                    self.conn.encrypt_password('psycopg2', 'ashesh'),
-                    'md594839d658c28a357126f105b9cb14cfc'
-                )
-            else:
-                self.assertRaises(
-                    psycopg2.NotSupportedError,
-                    self.conn.encrypt_password, 'psycopg2', 'ashesh'
-                )
+            self.assertRaises(
+                psycopg2.NotSupportedError,
+                self.conn.encrypt_password, 'psycopg2', 'ashesh'
+            )
         else:
             enc_password = self.conn.encrypt_password('psycopg2', 'ashesh')
             if server_encryption_algorithm == 'md5':
