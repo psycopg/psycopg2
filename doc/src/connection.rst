@@ -681,6 +681,33 @@ The ``connection`` class
             .. __: http://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQTRANSACTIONSTATUS
 
 
+    .. method:: encrypt_password(password, user, [algorithm])
+
+        Returns the encrypted form of a PostgreSQL password based on the
+        current password encryption algorithm.
+
+        Raises `~psycopg2.NotSupportedError` if the ``psycopg2`` module was
+        compiled with a ``libpq`` version lesser than 10 (which can be detected
+        by the `~psycopg2.__libpq_version__` constant), when encryption
+        algorithm other than 'md5' is specified for the server version greater
+        than, or equal to 10.
+
+        Ignores the encrytion algorithm for servers version less than 10, and
+        always uses 'md5' as encryption algorithm.
+
+        .. seealso:: libpq docs for `PQencryptPasswordConn()`__ for details.
+
+            .. __: https://www.postgresql.org/docs/devel/static/libpq-misc.html#libpq-pqencryptpasswordconn
+
+        .. seealso:: libpq docs for `PQencryptPassword()`__ for details.
+
+            .. __: https://www.postgresql.org/docs/devel/static/libpq-misc.html#libpq-pqencryptpassword
+
+        .. seealso:: libpq docs for `password_encryption`__ for details.
+
+            .. __: https://www.postgresql.org/docs/devel/static/runtime-config-connection.html#guc-password-encryption
+
+
     .. index::
         pair: Protocol; Version
 

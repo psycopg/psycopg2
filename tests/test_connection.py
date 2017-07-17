@@ -37,7 +37,9 @@ from psycopg2 import extensions as ext
 from testutils import (
     script_to_py3, unittest, decorate_all_tests, skip_if_no_superuser,
     skip_before_postgres, skip_after_postgres, skip_before_libpq,
-    ConnectingTestCase, skip_if_tpc_disabled, skip_if_windows, slow)
+    ConnectingTestCase, skip_if_tpc_disabled, skip_if_windows, slow,
+    libpq_version
+)
 
 from testconfig import dsn, dbname
 
@@ -1381,6 +1383,58 @@ class TransactionControlTests(ConnectingTestCase):
 
         cur.execute("SHOW default_transaction_read_only;")
         self.assertEqual(cur.fetchone()[0], 'off')
+
+    @skip_before_postgres(10)
+    def test_encrypt_password_post_9_6(self):
+        cur = self.conn.cursor()
+        cur.execute("SHOW password_encryption;")
+        server_encryption_algorithm = cur.fetchone()[0]
+
+        # MD5 algorithm
+        self.assertEqual(
+            self.conn.encrypt_password('psycopg2', 'ashesh', 'md5'),
+            'md594839d658c28a357126f105b9cb14cfc'
+        )
+
+        if libpq_version() < 100000:
+            if server_encryption_algorithm == 'md5':
+                self.assertEqual(
+                    self.conn.encrypt_password('psycopg2', 'ashesh'),
+                    'md594839d658c28a357126f105b9cb14cfc'
+                )
+            else:
+                self.assertRaises(
+                    psycopg2.ProgrammingError,
+                    self.conn.encrypt_password, 'psycopg2', 'ashesh'
+                )
+        else:
+            enc_password = self.conn.encrypt_password('psycopg2', 'ashesh')
+            if server_encryption_algorithm == 'md5':
+                self.assertEqual(
+                    enc_password, 'md594839d658c28a357126f105b9cb14cfc'
+                )
+            elif server_encryption_algorithm == 'scram-sha-256':
+                self.assertEqual(enc_password[:14], 'SCRAM-SHA-256$')
+
+            self.assertEqual(
+                self.conn.encrypt_password(
+                    'psycopg2', 'ashesh', 'scram-sha-256'
+                )[:14], 'SCRAM-SHA-256$'
+            )
+
+    @skip_after_postgres(10)
+    def test_encrypt_password_pre_10(self):
+        self.assertEqual(
+            self.conn.encrypt_password('psycopg2', 'ashesh'),
+            'md594839d658c28a357126f105b9cb14cfc'
+        )
+
+        # Encryption algorithm will be ignored for postgres version < 10, it
+        # will always use MD5.
+        self.assertEqual(
+            self.conn.encrypt_password('psycopg2', 'ashesh', 'abc'),
+            'md594839d658c28a357126f105b9cb14cfc'
+        )
 
 
 class AutocommitTests(ConnectingTestCase):
