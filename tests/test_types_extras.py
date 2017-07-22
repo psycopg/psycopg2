@@ -886,7 +886,7 @@ class JsonTestCase(ConnectingTestCase):
 
         curs = self.conn.cursor()
         for obj in enumerate(objs):
-            self.assertEqual(curs.mogrify("%s", (Json(obj),)),
+            self.assertQuotedEqual(curs.mogrify("%s", (Json(obj),)),
                 psycopg2.extensions.QuotedString(json.dumps(obj)).getquoted())
 
     @skip_if_no_json_module
@@ -904,7 +904,7 @@ class JsonTestCase(ConnectingTestCase):
 
         def dumps(obj):
             return json.dumps(obj, cls=DecimalEncoder)
-        self.assertEqual(curs.mogrify("%s", (Json(obj, dumps=dumps),)),
+        self.assertQuotedEqual(curs.mogrify("%s", (Json(obj, dumps=dumps),)),
             b"'123.45'")
 
     @skip_if_no_json_module
@@ -923,7 +923,7 @@ class JsonTestCase(ConnectingTestCase):
 
         curs = self.conn.cursor()
         obj = Decimal('123.45')
-        self.assertEqual(curs.mogrify("%s", (MyJson(obj),)), b"'123.45'")
+        self.assertQuotedEqual(curs.mogrify("%s", (MyJson(obj),)), b"'123.45'")
 
     @skip_if_no_json_module
     def test_register_on_dict(self):
@@ -933,7 +933,8 @@ class JsonTestCase(ConnectingTestCase):
         try:
             curs = self.conn.cursor()
             obj = {'a': 123}
-            self.assertEqual(curs.mogrify("%s", (obj,)), b"""'{"a": 123}'""")
+            self.assertQuotedEqual(
+                curs.mogrify("%s", (obj,)), b"""'{"a": 123}'""")
         finally:
             del psycopg2.extensions.adapters[dict, ext.ISQLQuote]
 
