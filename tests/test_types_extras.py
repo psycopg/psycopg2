@@ -1085,6 +1085,7 @@ class JsonTestCase(ConnectingTestCase):
         self.assert_(s.endswith("'"))
 
     @skip_if_no_json_module
+    @skip_before_postgres(8, 2)
     def test_scs(self):
         cnn_on = self.connect(options="-c standard_conforming_strings=on")
         cur_on = cnn_on.cursor()
