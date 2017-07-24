@@ -1,6 +1,13 @@
 Current release
 ---------------
 
+What's new in psycopg 2.7.3
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Restored default :sql:`timestamptz[]` typecasting to Python `!datetime`.
+  Regression introduced in Psycopg 2.7.2 (:ticket:`#578`).
+
+
 What's new in psycopg 2.7.2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
