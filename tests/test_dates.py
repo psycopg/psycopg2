@@ -317,6 +317,11 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         from datetime import datetime
         self._test_type_roundtrip_array(datetime(2010, 5, 3, 10, 20, 30))
 
+    def test_type_roundtrip_datetimetz_array(self):
+        from datetime import datetime
+        self._test_type_roundtrip_array(
+            datetime(2010, 5, 3, 10, 20, 30, tzinfo=FixedOffsetTimezone(0)))
+
     def test_type_roundtrip_time_array(self):
         from datetime import time
         self._test_type_roundtrip_array(time(10, 20, 30))

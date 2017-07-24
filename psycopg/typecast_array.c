@@ -288,6 +288,7 @@ typecast_GENERIC_ARRAY_cast(const char *str, Py_ssize_t len, PyObject *curs)
 #define typecast_UNICODEARRAY_cast typecast_GENERIC_ARRAY_cast
 #define typecast_BOOLEANARRAY_cast typecast_GENERIC_ARRAY_cast
 #define typecast_DATETIMEARRAY_cast typecast_GENERIC_ARRAY_cast
+#define typecast_DATETIMETZARRAY_cast typecast_GENERIC_ARRAY_cast
 #define typecast_DATEARRAY_cast typecast_GENERIC_ARRAY_cast
 #define typecast_TIMEARRAY_cast typecast_GENERIC_ARRAY_cast
 #define typecast_INTERVALARRAY_cast typecast_GENERIC_ARRAY_cast

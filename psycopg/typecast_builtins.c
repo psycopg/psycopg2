@@ -57,6 +57,7 @@ static typecastObject_initlist typecast_builtins[] = {
   {"STRINGARRAY", typecast_STRINGARRAY_types, typecast_STRINGARRAY_cast, "STRING"},
   {"BOOLEANARRAY", typecast_BOOLEANARRAY_types, typecast_BOOLEANARRAY_cast, "BOOLEAN"},
   {"DATETIMEARRAY", typecast_DATETIMEARRAY_types, typecast_DATETIMEARRAY_cast, "DATETIME"},
+  {"DATETIMETZARRAY", typecast_DATETIMETZARRAY_types, typecast_DATETIMETZARRAY_cast, "DATETIMETZ"},
   {"TIMEARRAY", typecast_TIMEARRAY_types, typecast_TIMEARRAY_cast, "TIME"},
   {"DATEARRAY", typecast_DATEARRAY_types, typecast_DATEARRAY_cast, "DATE"},
   {"INTERVALARRAY", typecast_INTERVALARRAY_types, typecast_INTERVALARRAY_cast, "INTERVAL"},
