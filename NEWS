@@ -1,6 +1,13 @@
 Current release
 ---------------
 
+What's new in psycopg 2.7.3.1
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Dropped libresolv from wheel package to avoid incompatibility with
+  glibc 2.26 (wheels ticket #2)
+
+
 What's new in psycopg 2.7.3
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
