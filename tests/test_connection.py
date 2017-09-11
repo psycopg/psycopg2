@@ -1568,6 +1568,7 @@ class PasswordLeakTestCase(ConnectingTestCase):
 
 class SignalTestCase(ConnectingTestCase):
     @slow
+    @skip_before_postgres(8, 2)
     def test_bug_551_returning(self):
         # Raise an exception trying to decode 'id'
         self._test_bug_551(query="""

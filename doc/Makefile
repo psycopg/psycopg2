@@ -30,7 +30,7 @@ upload:
 	# this command requires ssh configured to the proper target
 	tar czf - -C html . | ssh psycoweb tar xzvf - -C docs/current
 	# this command requires a .pypirc with the right privileges
-	python src/tools/pypi_docs_upload.py psycopg2 $$(pwd)/html
+	# python src/tools/pypi_docs_upload.py psycopg2 $$(pwd)/html
 
 clean:
 	$(MAKE) $(SPHOPTS) -C src $@

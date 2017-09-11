@@ -1178,7 +1178,7 @@ def execute_batch(cur, sql, argslist, page_size=100):
     fewer multi-statement commands, each one containing at most *page_size*
     statements, resulting in a reduced number of server roundtrips.
 
-    After the execution of the functtion the `cursor.rowcount` property will
+    After the execution of the function the `cursor.rowcount` property will
     **not** contain a total result.
 
     """
@@ -1201,10 +1201,15 @@ def execute_values(cur, sql, argslist, template=None, page_size=100):
         *template*.
 
     :param template: the snippet to merge to every item in *argslist* to
-        compose the query. If *argslist* items are sequences it should contain
-        positional placeholders (e.g. ``"(%s, %s, %s)"``, or ``"(%s, %s, 42)``"
-        if there are constants value...); If *argslist* is items are mapping
-        it should contain named placeholders (e.g. ``"(%(id)s, %(f1)s, 42)"``).
+        compose the query.
+
+        - If the *argslist* items are sequences it should contain positional
+          placeholders (e.g. ``"(%s, %s, %s)"``, or ``"(%s, %s, 42)``" if there
+          are constants value...).
+
+        - If the *argslist* items are mappings it should contain named
+          placeholders (e.g. ``"(%(id)s, %(f1)s, 42)"``).
+
         If not specified, assume the arguments are sequence and use a simple
         positional template (i.e.  ``(%s, %s, ...)``), with the number of
         placeholders sniffed by the first element in *argslist*.
@@ -1215,7 +1220,7 @@ def execute_values(cur, sql, argslist, template=None, page_size=100):
 
     .. __: https://www.postgresql.org/docs/current/static/queries-values.html
 
-    After the execution of the functtion the `cursor.rowcount` property will
+    After the execution of the function the `cursor.rowcount` property will
     **not** contain a total result.
 
     While :sql:`INSERT` is an obvious candidate for this function it is
