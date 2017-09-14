@@ -547,74 +547,6 @@ do { \
     EXC_IF_TPC_PREPARED(self, what); \
 } while(0)
 
-/* encrypt_password - Prepare the encrypted password form */
-#define psyco_encrypt_password_doc \
-"encrypt_password('password', 'user', ...) -- Prepares the encrypted form of a PostgreSQL password.\n\n" \
-"Accepted arguments are 'algorithm'."
-
-static PyObject *
-psyco_encrypt_password(connectionObject *self, PyObject *args, PyObject *kwargs)
-{
-    const char *password = NULL,
-               *user = NULL,
-               *algorithm = NULL;
-    char *encrypted = NULL;
-
-    PyObject *res = Py_None;
-
-    static char *kwlist[] = {"password", "user", "algorithm", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ss|s", kwlist, &password, &user, &algorithm)) {
-        return NULL;
-    }
-
-    if (self->server_version < 100000 ||
-        (algorithm && strcmp(algorithm, "md5") == 0)
-    ) {
-        encrypted = PQencryptPassword(password, user);
-
-        if (encrypted != NULL)
-        {
-            res = Text_FromUTF8(encrypted);
-            PQfreemem(encrypted);
-        }
-        return res;
-    }
-    else
-    {
-#if PG_VERSION_NUM >= 100000
-        encrypted = PQencryptPasswordConn(self->pgconn, password, user, algorithm);
-
-        if (!encrypted)
-        {
-            const char *msg;
-            msg = PQerrorMessage(self->pgconn);
-            if (msg && *msg) {
-                PyErr_Format(
-                    ProgrammingError,
-                    "Error encrypting the password!\n%s",
-                    msg
-                );
-                return NULL;
-            }
-        }
-        else
-        {
-            res = Text_FromUTF8(encrypted);
-            PQfreemem(encrypted);
-        }
-        return res;
-
-#else
-        PyErr_SetString(
-            NotSupportedError,
-            "Password encryption (other than 'md5' algorithm) is not supported for the server version >= 10 in libpq < 10"
-        );
-#endif
-    }
-    return NULL;
-}
-
 /* set_session - set default transaction characteristics */
 
 #define psyco_conn_set_session_doc \
@@ -1244,8 +1176,6 @@ static struct PyMethodDef connectionObject_methods[] = {
      METH_NOARGS, psyco_conn_isexecuting_doc},
     {"cancel", (PyCFunction)psyco_conn_cancel,
      METH_NOARGS, psyco_conn_cancel_doc},
-    {"encrypt_password", (PyCFunction)psyco_encrypt_password,
-     METH_VARARGS|METH_KEYWORDS, psyco_encrypt_password_doc},
     {NULL}
 };
 

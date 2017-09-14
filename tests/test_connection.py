@@ -1392,17 +1392,20 @@ class TransactionControlTests(ConnectingTestCase):
 
         # MD5 algorithm
         self.assertEqual(
-            self.conn.encrypt_password('psycopg2', 'ashesh', 'md5'),
+            ext.encrypt_password('psycopg2', 'ashesh', self.conn, 'md5'),
             'md594839d658c28a357126f105b9cb14cfc'
         )
 
         if libpq_version() < 100000:
             self.assertRaises(
                 psycopg2.NotSupportedError,
-                self.conn.encrypt_password, 'psycopg2', 'ashesh'
+                ext.encrypt_password, 'psycopg2', 'ashesh', self.conn,
+                'scram-sha-256'
             )
         else:
-            enc_password = self.conn.encrypt_password('psycopg2', 'ashesh')
+            enc_password = ext.encrypt_password(
+                'psycopg2', 'ashesh', self.conn
+            )
             if server_encryption_algorithm == 'md5':
                 self.assertEqual(
                     enc_password, 'md594839d658c28a357126f105b9cb14cfc'
@@ -1411,22 +1414,22 @@ class TransactionControlTests(ConnectingTestCase):
                 self.assertEqual(enc_password[:14], 'SCRAM-SHA-256$')
 
             self.assertEqual(
-                self.conn.encrypt_password(
-                    'psycopg2', 'ashesh', 'scram-sha-256'
+                ext.encrypt_password(
+                    'psycopg2', 'ashesh', self.conn, 'scram-sha-256'
                 )[:14], 'SCRAM-SHA-256$'
             )
 
     @skip_after_postgres(10)
     def test_encrypt_password_pre_10(self):
         self.assertEqual(
-            self.conn.encrypt_password('psycopg2', 'ashesh'),
+            ext.encrypt_password('psycopg2', 'ashesh', self.conn),
             'md594839d658c28a357126f105b9cb14cfc'
         )
 
         # Encryption algorithm will be ignored for postgres version < 10, it
         # will always use MD5.
         self.assertEqual(
-            self.conn.encrypt_password('psycopg2', 'ashesh', 'abc'),
+            ext.encrypt_password('psycopg2', 'ashesh', self.conn, 'abc'),
             'md594839d658c28a357126f105b9cb14cfc'
         )
 

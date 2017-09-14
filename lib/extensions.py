@@ -63,7 +63,7 @@ from psycopg2._psycopg import (                             # noqa
     string_types, binary_types, new_type, new_array_type, register_type,
     ISQLQuote, Notify, Diagnostics, Column,
     QueryCanceledError, TransactionRollbackError,
-    set_wait_callback, get_wait_callback, )
+    set_wait_callback, get_wait_callback, encrypt_password, )
 
 
 """Isolation level values."""
