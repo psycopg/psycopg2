@@ -551,7 +551,7 @@ The ``connection`` class
         the session.
 
         .. doctest::
-            :options: NORMALIZE_WHITESPACE
+            :options: +NORMALIZE_WHITESPACE
 
             >>> cur.execute("CREATE TABLE foo (id serial PRIMARY KEY);")
             >>> pprint(conn.notices)
