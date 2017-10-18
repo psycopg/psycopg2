@@ -12,7 +12,7 @@
 from docutils import nodes
 
 from sphinx.locale import _
-from sphinx.util.compat import Directive, make_admonition
+from docutils.parsers.rst import Directive
 
 class extension_node(nodes.Admonition, nodes.Element): pass
 
@@ -29,12 +29,11 @@ class Extension(Directive):
     option_spec = {}
 
     def run(self):
-        nodes = make_admonition(extension_node,
-                self.name, [_('DB API extension')], self.options,
-                self.content, self.lineno, self.content_offset,
-                self.block_text, self.state, self.state_machine)
-        nodes[0]['classes'].append('dbapi-extension')
-        return nodes
+        node = extension_node('\n'.join(self.content))
+        node += nodes.title(_('DB API extension'), _('DB API extension'))
+        self.state.nested_parse(self.content, self.content_offset, node)
+        node['classes'].append('dbapi-extension')
+        return [node]
 
 
 def visit_extension_node(self, node):
