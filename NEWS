@@ -1,6 +1,13 @@
 Current release
 ---------------
 
+What's new in psycopg 2.7.3.2
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Wheel package compiled against PostgreSQL 10.0 libpq and OpenSSL 1.0.2l
+  (:tickets:`#601, #602`)
+
+
 What's new in psycopg 2.7.3.1
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
