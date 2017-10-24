@@ -73,10 +73,13 @@ matrix:
     fast_finish: false
 
 services:
+    # Note: if you change this service also change the paths to match
+    # (see where Program Files\Postgres\9.6 is used)
     - postgresql96
 
 cache:
   # Rebuild cache if following file changes
+  # (See the file to zap the cache manually)
   - C:\Others -> scripts\appveyor.cache_rebuild
 
 # Script called before repo cloning
@@ -112,6 +115,11 @@ init:
     - ECHO Configuring Compiler
     - IF "%PYTHON_ARCH%"=="32" (CALL "C:\\Program Files (x86)\\Microsoft Visual Studio %VS_VER%\\VC\\vcvarsall.bat" x86)
     - IF "%PYTHON_ARCH%"=="64" (CALL "C:\\Program Files (x86)\\Microsoft Visual Studio %VS_VER%\\VC\\vcvarsall.bat" amd64)
+
+    # The program rc.exe on 64bit with some versions look in the wrong path
+    #   location when building postgresql.   This cheats by copying the x64 bit
+    #   files to that location.
+    - IF "%PYTHON_ARCH%"=="64" (COPY /Y "C:\\Program Files\\Microsoft SDKs\\Windows\\v7.0\\Bin\\x64\\rc*" "C:\\Program Files (x86)\\Microsoft SDKs\\Windows\\v7.0A\\Bin")
 
     # Change PostgreSQL config before service starts to allow > 1 prepared
     #   transactions for test cases
@@ -185,32 +193,45 @@ install:
     - SET PGTOP=%BASE_DIR%\postgresql
     - IF NOT EXIST %PGTOP%\include MKDIR %PGTOP%\include
     - IF NOT EXIST %PGTOP%\lib MKDIR %PGTOP%\lib
+    - IF NOT EXIST %PGTOP%\bin MKDIR %PGTOP%\bin
+
     # Download PostgreSQL source
     - CD C:\Others
-    - IF NOT EXIST postgres-REL9_6_3.zip (
-        curl -fsSL -o postgres-REL9_6_3.zip https://github.com/postgres/postgres/archive/REL9_6_3.zip
+    - IF NOT EXIST postgres-REL_10_0.zip (
+        curl -fsSL -o postgres-REL_10_0.zip https://github.com/postgres/postgres/archive/REL_10_0.zip
       )
 
     # Setup build config file (config.pl)
-    # Build libpgport first
-    # Build libpq
+    # Hack the Mkvcbuild.pm file so we build the lib version of libpq
+    # Build libpgport, libpgcommon, libpq
+    # Install includes
+    # Copy over built libraries
+    # Prepare local include directory for building from
+    # Build pg_config in place
     # NOTE: Cannot set and use the same variable inside an IF
-    - SET PGBUILD=%BUILD_DIR%\postgres-REL9_6_3
+    - SET PGBUILD=%BUILD_DIR%\postgres-REL_10_0
     - IF NOT EXIST %PGTOP%\lib\libpq.lib (
         CD %BUILD_DIR% &&
-        7z x C:\Others\postgres-REL9_6_3.zip &&
-        CD postgres-REL9_6_3\src\tools\msvc &&
+        7z x C:\Others\postgres-REL_10_0.zip &&
+        CD postgres-REL_10_0\src\tools\msvc &&
         ECHO $config-^>{ldap} = 0; > config.pl &&
         ECHO $config-^>{openssl} = "%OPENSSLTOP:\=\\%"; >> config.pl &&
         ECHO.>> config.pl &&
         ECHO 1;>> config.pl &&
+        perl -pi.bak -e "s/'libpq', 'dll'/'libpq', 'lib'/g" Mkvcbuild.pm &&
         build libpgport &&
-        XCOPY /E ..\..\include %PGTOP%\include &&
+        build libpgcommon &&
+        build libpq &&
+        ECHO "" > %PGBUILD%\src\backend\parser\gram.h &&
+        perl -pi.bak -e "s/qw\(Install\)/qw\(Install CopyIncludeFiles\)/g" Install.pm &&
+        perl -MInstall=CopyIncludeFiles -e"chdir('../../..'); CopyIncludeFiles('%PGTOP%')" &&
         COPY %PGBUILD%\Release\libpgport\libpgport.lib %PGTOP%\lib &&
-        CD ..\..\interfaces\libpq &&
-        nmake -f win32.mak USE_OPENSSL=1 ENABLE_THREAD_SAFETY=1 SSL_INC=%OPENSSLTOP%\include  SSL_LIB_PATH=%OPENSSLTOP%\lib config .\Release\libpq.lib &&
-        COPY *.h %PGTOP%\include &&
-        COPY Release\libpq.lib %PGTOP%\lib &&
+        COPY %PGBUILD%\Release\libpgcommon\libpgcommon.lib %PGTOP%\lib &&
+        COPY %PGBUILD%\Release\libpq\libpq.lib %PGTOP%\lib &&
+        XCOPY /Y /S %PGBUILD%\src\include\port\win32\* %PGBUILD%\src\include &&
+        XCOPY /Y /S %PGBUILD%\src\include\port\win32_msvc\* %PGBUILD%\src\include &&
+        CD %PGBUILD%\src\bin\pg_config &&
+        cl pg_config.c /MT /nologo /I%PGBUILD%\src\include /link /LIBPATH:%PGTOP%\lib libpgcommon.lib libpgport.lib advapi32.lib /NODEFAULTLIB:libcmt.lib /OUT:%PGTOP%\bin\pg_config.exe &&
         CD %BASE_DIR% &&
         RMDIR /S /Q %PGBUILD%
       )
@@ -223,7 +244,7 @@ build_script:
     # Add PostgreSQL binaries to the path
     - PATH=C:\Program Files\PostgreSQL\9.6\bin\;%PATH%
     - CD C:\Project
-    - "%PYTHON%\\python.exe setup.py build_ext --have-ssl -l libpgcommon -L %OPENSSLTOP%\\lib;%PGTOP%\\lib -I %OPENSSLTOP%\\include;%PGTOP%\\include"
+    - "%PYTHON%\\python.exe setup.py build_ext --have-ssl --pg-config %PGTOP%\\bin\\pg_config.exe -l libpgcommon -l libpgport -L %OPENSSLTOP%\\lib -I %OPENSSLTOP%\\include"
     - "%PYTHON%\\python.exe setup.py build"
     - "%PYTHON%\\python.exe setup.py install"
 
@@ -235,5 +256,8 @@ before_test:
     - psql -d %PSYCOPG2_TESTDB% -c "CREATE EXTENSION HSTORE;"
 
 test_script:
+    # Print psycopg and libpq versions
     - "%PYTHON%\\python.exe -c \"import psycopg2; print(psycopg2.__version__)\""
+    - "%PYTHON%\\python.exe -c \"import psycopg2; print(psycopg2.__libpq_version__)\""
+    - "%PYTHON%\\python.exe -c \"import psycopg2; print(psycopg2.extensions.libpq_version())\""
     - "%PYTHON%\\python.exe -c \"from psycopg2 import tests; tests.unittest.main(defaultTest='tests.test_suite')\" --verbose"

@@ -12,4 +12,11 @@ OpenSSL
         Version: 1.0.2l
 
 PostgreSQL
-        Version: 9.6.3
+        Version: 10.0
+
+
+NOTE: to zap the cache manually you can also use:
+
+	curl -X DELETE -H "Authorization: Bearer $APPVEYOR_TOKEN" -H "Content-Type: application/json" https://ci.appveyor.com/api/projects/psycopg/psycopg2/buildcache
+
+with the token from https://ci.appveyor.com/api-token
