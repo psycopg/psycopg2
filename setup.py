@@ -480,7 +480,7 @@ data_files = []
 sources = [
     'psycopgmodule.c',
     'green.c', 'pqpath.c', 'utils.c', 'bytes_format.c',
-    'libpq_support.c', 'win32_support.c',
+    'libpq_support.c', 'win32_support.c', 'solaris_support.c',
 
     'connection_int.c', 'connection_type.c',
     'cursor_int.c', 'cursor_type.c',
