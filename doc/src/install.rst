@@ -33,6 +33,8 @@ The current `!psycopg2` implementation supports:
 
 .. index::
     single: Install; from PyPI
+    single: Install; wheel
+    single: Wheel
 
 Binary install from PyPI
 ------------------------
@@ -67,21 +69,36 @@ using something like ``pip install -U pip``)
     incompatible with other extension modules binding with ``libssl`` as well,
     for instance the Python `ssl` module: the result will likely be a
     segfault. If you need using both `!psycopg2` and other libraries using
-    ``libssl`` please :ref:`install psycopg from source
-    <install-from-source>`.
+    ``libssl`` please :ref:`disable the use of wheel packages for Psycopg
+    <disable-wheel>`.
 
-If you prefer to use the system libraries available on your client you can use
-the :command:`pip` ``--no-binary`` option:
+
+
+.. index::
+    single: Install; disable wheel
+    single: Wheel; disable
+
+.. _disable-wheel:
+
+Disabling wheel packages
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you want to disable the use of wheel binary packages and use the system
+system libraries available on your client you can use the :command:`pip`
+|--no-binary option|__:
 
 .. code-block:: console
 
     $ pip install --no-binary psycopg2
 
+.. |--no-binary option| replace:: ``--no-binary`` option
+.. __: https://pip.pypa.io/en/stable/reference/pip_install/#install-no-binary
+
 which can be specified in your :file:`requirements.txt` files too, e.g. use:
 
 .. code-block:: none
 
-    psycopg2>=2.7,<2.8 --no-binary :all:
+    psycopg2>=2.7,<2.8 --no-binary psycopg2
 
 to use the last bugfix release of the `!psycopg2` 2.7 package, specifying to
 always compile it from source. Of course in this case you will have to meet
