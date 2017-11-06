@@ -92,51 +92,68 @@ is converted into the SQL command::
 
 Named arguments are supported too using :samp:`%({name})s` placeholders.
 Using named arguments the values can be passed to the query in any order and
-many placeholders can use the same values::
+several placeholders can use the same value::
 
     >>> cur.execute(
     ...     """INSERT INTO some_table (an_int, a_date, another_date, a_string)
     ...         VALUES (%(int)s, %(date)s, %(date)s, %(str)s);""",
     ...     {'int': 10, 'str': "O'Reilly", 'date': datetime.date(2005, 11, 18)})
 
+Using characters ``%``, ``(``, ``)`` in the argument names is not supported.
+
 When parameters are used, in order to include a literal ``%`` in the query you
-can use the ``%%`` string. Using characters ``%``, ``(``, ``)`` in the
-argument names is not supported.
+can use the ``%%`` string::
+
+    >>> cur.execute("SELECT (%s % 2) = 0 AS even", (10,))       # WRONG
+    >>> cur.execute("SELECT (%s %% 2) = 0 AS even", (10,))      # correct
 
 While the mechanism resembles regular Python strings manipulation, there are a
 few subtle differences you should care about when passing parameters to a
-query:
+query.
 
-- The Python string operator ``%`` is not used: the `~cursor.execute()`
+- The Python string operator ``%`` *must not be used*: the `~cursor.execute()`
   method accepts a tuple or dictionary of values as second parameter.
-  |sql-warn|__.
+  |sql-warn|__:
 
   .. |sql-warn| replace:: **Never** use ``%`` or ``+`` to merge values
       into queries
 
   .. __: sql-injection_
 
-- The variables placeholder must *always be a* ``%s``, even if a different
-  placeholder (such as a ``%d`` for integers or ``%f`` for floats) may look
-  more appropriate::
-
-    >>> cur.execute("INSERT INTO numbers VALUES (%d)", (42,)) # WRONG
-    >>> cur.execute("INSERT INTO numbers VALUES (%s)", (42,)) # correct
+    >>> cur.execute("INSERT INTO numbers VALUES (%s, %s)" % (10, 20)) # WRONG
+    >>> cur.execute("INSERT INTO numbers VALUES (%s, %s)", (10, 20))  # correct
 
 - For positional variables binding, *the second argument must always be a
-  sequence*, even if it contains a single variable.  And remember that Python
-  requires a comma to create a single element tuple::
+  sequence*, even if it contains a single variable (remember that Python
+  requires a comma to create a single element tuple)::
 
     >>> cur.execute("INSERT INTO foo VALUES (%s)", "bar")    # WRONG
     >>> cur.execute("INSERT INTO foo VALUES (%s)", ("bar"))  # WRONG
     >>> cur.execute("INSERT INTO foo VALUES (%s)", ("bar",)) # correct
     >>> cur.execute("INSERT INTO foo VALUES (%s)", ["bar"])  # correct
 
-- Only query values should be bound via this method: it shouldn't be used to
-  merge table or field names to the query. If you need to generate dynamically
-  an SQL query (for instance choosing dynamically a table name) you can use
-  the facilities provided by the `psycopg2.sql` module.
+- The placeholder *must not be quoted*. Psycopg will add quotes where needed::
 
+    >>> cur.execute("INSERT INTO numbers VALUES ('%s')", (10,)) # WRONG
+    >>> cur.execute("INSERT INTO numbers VALUES (%s)", (10,))   # correct
+
+- The variables placeholder *must always be a* ``%s``, even if a different
+  placeholder (such as a ``%d`` for integers or ``%f`` for floats) may look
+  more appropriate::
+
+    >>> cur.execute("INSERT INTO numbers VALUES (%d)", (10,))   # WRONG
+    >>> cur.execute("INSERT INTO numbers VALUES (%s)", (10,))   # correct
+
+- Only query values should be bound via this method: it shouldn't be used to
+  merge table or field names to the query (Psycopg will try quoting the table
+  name as a string value, generating invalid SQL). If you need to generate
+  dynamically SQL queries (for instance choosing dynamically a table name)
+  you can use the facilities provided by the `psycopg2.sql` module::
+
+    >>> cur.execute("INSERT INTO %s VALUES (%s)", ('numbers', 10))  # WRONG
+    >>> cur.execute(                                                # correct
+    ...     SQL("INSERT INTO {} VALUES (%s)").format(Identifier('numbers')),
+    ...     (10,))
 
 
 .. index:: Security, SQL injection
