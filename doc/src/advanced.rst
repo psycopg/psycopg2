@@ -295,7 +295,9 @@ something to read::
                 print "Got NOTIFY:", notify.pid, notify.channel, notify.payload
 
 Running the script and executing a command such as :sql:`NOTIFY test, 'hello'`
-in a separate :program:`psql` shell, the output may look similar to::
+in a separate :program:`psql` shell, the output may look similar to:
+
+.. code-block:: none
 
     Waiting for notifications on channel 'test'
     Timeout

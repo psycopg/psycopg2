@@ -403,7 +403,7 @@ The individual messages in the replication stream are represented by
 
             class LogicalStreamConsumer(object):
 
-                ...
+                # ...
 
                 def __call__(self, msg):
                     self.process_message(msg.payload)
@@ -501,7 +501,7 @@ The individual messages in the replication stream are represented by
       from datetime import datetime
 
       def consume(msg):
-          ...
+          # ...
 
       keepalive_interval = 10.0
       while True:

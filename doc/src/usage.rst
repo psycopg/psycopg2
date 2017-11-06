@@ -48,7 +48,7 @@ The main entry points of Psycopg are:
 
 - The class `connection` encapsulates a database session. It allows to:
 
-  - create new `cursor`\s using the `~connection.cursor()` method to
+  - create new `cursor` instances using the `~connection.cursor()` method to
     execute database commands and queries,
 
   - terminate transactions using the methods `~connection.commit()` or
@@ -73,30 +73,40 @@ The main entry points of Psycopg are:
 Passing parameters to SQL queries
 ---------------------------------
 
-Psycopg casts Python variables to SQL literals by type.  Many standard Python types
-are already `adapted to the correct SQL representation`__.
+Psycopg converts Python variables to SQL values using their types: the Python
+type determines the function used to convert the object into a string
+representation suitable for PostgreSQL.  Many standard Python types are
+already `adapted to the correct SQL representation`__.
 
 .. __: python-types-adaptation_
 
-Example: the Python function call::
+Passing parameters to an SQL statement happens in functions such as
+`cursor.execute()` by using ``%s`` placeholders in the SQL statement, and
+passing a sequence of values as the second argument of the function. For
+example the Python function call::
 
-    >>> cur.execute(
-    ...     """INSERT INTO some_table (an_int, a_date, a_string)
-    ...         VALUES (%s, %s, %s);""",
+    >>> cur.execute("""
+    ...     INSERT INTO some_table (an_int, a_date, a_string)
+    ...     VALUES (%s, %s, %s);
+    ...     """,
     ...     (10, datetime.date(2005, 11, 18), "O'Reilly"))
 
-is converted into the SQL command::
+is converted into a SQL command similar to:
+
+.. code-block:: sql
 
     INSERT INTO some_table (an_int, a_date, a_string)
-     VALUES (10, '2005-11-18', 'O''Reilly');
+    VALUES (10, '2005-11-18', 'O''Reilly');
 
-Named arguments are supported too using :samp:`%({name})s` placeholders.
-Using named arguments the values can be passed to the query in any order and
-several placeholders can use the same value::
+Named arguments are supported too using :samp:`%({name})s` placeholders in the
+query and specifying the values into a mapping.  Using named arguments allows
+to specify the values in any order and to repeat the same value in several
+places in the query::
 
-    >>> cur.execute(
-    ...     """INSERT INTO some_table (an_int, a_date, another_date, a_string)
-    ...         VALUES (%(int)s, %(date)s, %(date)s, %(str)s);""",
+    >>> cur.execute("""
+    ...     INSERT INTO some_table (an_int, a_date, another_date, a_string)
+    ...     VALUES (%(int)s, %(date)s, %(date)s, %(str)s);
+    ...     """,
     ...     {'int': 10, 'str': "O'Reilly", 'date': datetime.date(2005, 11, 18)})
 
 Using characters ``%``, ``(``, ``)`` in the argument names is not supported.
@@ -809,7 +819,9 @@ lifetime extends well after `~connection.commit()`, calling
     It is also possible to use a named cursor to consume a cursor created
     in some other way than using the |DECLARE| executed by
     `~cursor.execute()`. For example, you may have a PL/pgSQL function
-    returning a cursor::
+    returning a cursor:
+
+    .. code-block:: postgres
 
         CREATE FUNCTION reffunc(refcursor) RETURNS refcursor AS $$
         BEGIN

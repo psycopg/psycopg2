@@ -101,6 +101,10 @@ default_role = 'obj'
 # output. They are ignored by default.
 #show_authors = False
 
+# Using 'python' instead of the default gives warnings if parsing an example
+# fails, instead of defaulting to none
+highlight_language = 'python'
+
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
