@@ -1,18 +1,24 @@
 Current release
 ---------------
 
+What's new in psycopg 2.7.4
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Fixed parsing of array of points as floats (:ticket:`#613`).
+
+
 What's new in psycopg 2.7.3.2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Wheel package compiled against PostgreSQL 10.0 libpq and OpenSSL 1.0.2l
-  (:tickets:`#601, #602`)
+  (:tickets:`#601, #602`).
 
 
 What's new in psycopg 2.7.3.1
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Dropped libresolv from wheel package to avoid incompatibility with
-  glibc 2.26 (wheels ticket #2)
+  glibc 2.26 (wheels ticket #2).
 
 
 What's new in psycopg 2.7.3
