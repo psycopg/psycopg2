@@ -364,7 +364,7 @@ conn.close()
         #     curs.copy_from, BrokenRead(), "tcopy")
         try:
             curs.copy_from(BrokenRead(), "tcopy")
-        except Exception, e:
+        except Exception as e:
             self.assert_('ZeroDivisionError' in str(e))
 
     def test_copy_to_propagate_error(self):

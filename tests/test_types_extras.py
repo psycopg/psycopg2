@@ -113,7 +113,7 @@ class TypesExtrasTests(ConnectingTestCase):
             psycopg2.extensions.adapt, Foo(), ext.ISQLQuote, None)
         try:
             psycopg2.extensions.adapt(Foo(), ext.ISQLQuote, None)
-        except psycopg2.ProgrammingError, err:
+        except psycopg2.ProgrammingError as err:
             self.failUnless(str(err) == "can't adapt type 'Foo'")
 
     def test_point_array(self):

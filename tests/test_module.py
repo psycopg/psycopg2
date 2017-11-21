@@ -152,7 +152,7 @@ class ExceptionsTestCase(ConnectingTestCase):
         cur = self.conn.cursor()
         try:
             cur.execute("select * from nonexist")
-        except psycopg2.Error, exc:
+        except psycopg2.Error as exc:
             e = exc
 
         self.assertEqual(e.pgcode, '42P01')
@@ -163,7 +163,7 @@ class ExceptionsTestCase(ConnectingTestCase):
         cur = self.conn.cursor()
         try:
             cur.execute("select * from nonexist")
-        except psycopg2.Error, exc:
+        except psycopg2.Error as exc:
             e = exc
 
         diag = e.diag
@@ -182,7 +182,7 @@ class ExceptionsTestCase(ConnectingTestCase):
         cur = self.conn.cursor()
         try:
             cur.execute("select * from nonexist")
-        except psycopg2.Error, exc:
+        except psycopg2.Error as exc:
             e = exc
 
         self.assertEqual(e.diag.sqlstate, '42P01')
@@ -196,7 +196,7 @@ class ExceptionsTestCase(ConnectingTestCase):
             cur = self.conn.cursor()
             try:
                 cur.execute("select * from nonexist")
-            except psycopg2.Error, exc:
+            except psycopg2.Error as exc:
                 return cur, exc
 
         cur, e = tmp()
@@ -221,7 +221,7 @@ class ExceptionsTestCase(ConnectingTestCase):
         cur = self.conn.cursor()
         try:
             cur.copy_to(f, 'nonexist')
-        except psycopg2.Error, exc:
+        except psycopg2.Error as exc:
             diag = exc.diag
 
         self.assertEqual(diag.sqlstate, '42P01')
@@ -230,14 +230,14 @@ class ExceptionsTestCase(ConnectingTestCase):
         cur = self.conn.cursor()
         try:
             cur.execute("l'acqua e' poca e 'a papera nun galleggia")
-        except Exception, exc:
+        except Exception as exc:
             diag1 = exc.diag
 
         self.conn.rollback()
 
         try:
             cur.execute("select level from water where ducks > 1")
-        except psycopg2.Error, exc:
+        except psycopg2.Error as exc:
             diag2 = exc.diag
 
         self.assertEqual(diag1.sqlstate, '42601')
@@ -254,7 +254,7 @@ class ExceptionsTestCase(ConnectingTestCase):
         cur.execute("insert into test_deferred values (1,2)")
         try:
             self.conn.commit()
-        except psycopg2.Error, exc:
+        except psycopg2.Error as exc:
             e = exc
         self.assertEqual(e.diag.sqlstate, '23503')
 
@@ -267,7 +267,7 @@ class ExceptionsTestCase(ConnectingTestCase):
             )""")
         try:
             cur.execute("insert into test_exc values(2)")
-        except psycopg2.Error, exc:
+        except psycopg2.Error as exc:
             e = exc
         self.assertEqual(e.pgcode, '23514')
         self.assertEqual(e.diag.schema_name[:7], "pg_temp")
@@ -282,7 +282,7 @@ class ExceptionsTestCase(ConnectingTestCase):
         cur = self.conn.cursor()
         try:
             cur.execute("select * from nonexist")
-        except psycopg2.Error, exc:
+        except psycopg2.Error as exc:
             e = exc
 
         e1 = pickle.loads(pickle.dumps(e))
@@ -297,7 +297,7 @@ class ExceptionsTestCase(ConnectingTestCase):
         import pickle
         try:
             psycopg2.connect('dbname=nosuchdatabasemate')
-        except psycopg2.Error, exc:
+        except psycopg2.Error as exc:
             e = exc
 
         e1 = pickle.loads(pickle.dumps(e))
