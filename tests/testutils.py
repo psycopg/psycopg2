@@ -116,7 +116,7 @@ class ConnectingTestCase(unittest.TestCase):
     def connect(self, **kwargs):
         try:
             self._conns
-        except AttributeError, e:
+        except AttributeError as e:
             raise AttributeError(
                 "%s (did you forget to call ConnectingTestCase.setUp()?)"
                 % e)
@@ -149,7 +149,7 @@ class ConnectingTestCase(unittest.TestCase):
             conn = self.connect(**kwargs)
             if conn.async_ == 1:
                 self.wait(conn)
-        except psycopg2.OperationalError, e:
+        except psycopg2.OperationalError as e:
             # If pgcode is not set it is a genuine connection error
             # Otherwise we tried to run some bad operation in the connection
             # (e.g. bug #482) and we'd rather know that.
@@ -388,7 +388,7 @@ def skip_if_no_superuser(f):
         from psycopg2 import ProgrammingError
         try:
             return f(self)
-        except ProgrammingError, e:
+        except ProgrammingError as e:
             import psycopg2.errorcodes
             if e.pgcode == psycopg2.errorcodes.INSUFFICIENT_PRIVILEGE:
                 self.skipTest("skipped because not superuser")

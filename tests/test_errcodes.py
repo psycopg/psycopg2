@@ -48,7 +48,7 @@ class ErrocodeTests(ConnectingTestCase):
         def f(pg_code='40001'):
             try:
                 errorcodes.lookup(pg_code)
-            except Exception, e:
+            except Exception as e:
                 errs.append(e)
 
         for __ in xrange(MAX_CYCLES):

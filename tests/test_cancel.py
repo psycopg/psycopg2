@@ -63,7 +63,7 @@ class CancelTests(ConnectingTestCase):
                 conn.rollback()
                 cur.execute("select 1")
                 self.assertEqual(cur.fetchall(), [(1, )])
-            except Exception, e:
+            except Exception as e:
                 errors.append(e)
                 raise
 
@@ -71,7 +71,7 @@ class CancelTests(ConnectingTestCase):
             cur = conn.cursor()
             try:
                 conn.cancel()
-            except Exception, e:
+            except Exception as e:
                 errors.append(e)
                 raise
             del cur

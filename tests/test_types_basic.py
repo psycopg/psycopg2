@@ -443,7 +443,7 @@ class ByteaParserTest(unittest.TestCase):
     def setUp(self):
         try:
             self._cast = self._import_cast()
-        except Exception, e:
+        except Exception as e:
             self._cast = None
             self._exc = e
 

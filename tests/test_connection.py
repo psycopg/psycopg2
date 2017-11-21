@@ -358,7 +358,7 @@ class ParseDsnTestCase(ConnectingTestCase):
         try:
             # unterminated quote after dbname:
             ext.parse_dsn("dbname='test 2 user=tester password=secret")
-        except ProgrammingError, e:
+        except ProgrammingError as e:
             raised = True
             self.assertTrue(str(e).find('secret') < 0,
                             "DSN was not exposed in error message")
@@ -376,7 +376,7 @@ class ParseDsnTestCase(ConnectingTestCase):
         try:
             # extra '=' after port value
             ext.parse_dsn(dsn='postgresql://tester:secret@/test?port=1111=x')
-        except psycopg2.ProgrammingError, e:
+        except psycopg2.ProgrammingError as e:
             raised = True
             self.assertTrue(str(e).find('secret') < 0,
                             "URI was not exposed in error message")
