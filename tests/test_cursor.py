@@ -39,7 +39,7 @@ class CursorTests(ConnectingTestCase):
         cur = self.conn.cursor()
         cur.close()
         cur.close()
-        self.assert_(cur.closed)
+        self.assertTrue(cur.closed)
 
     def test_empty_query(self):
         cur = self.conn.cursor()
@@ -171,7 +171,7 @@ class CursorTests(ConnectingTestCase):
         del curs
         import gc
         gc.collect()
-        self.assert_(w() is None)
+        self.assertTrue(w() is None)
 
     def test_null_name(self):
         curs = self.conn.cursor(None)
@@ -345,7 +345,7 @@ class CursorTests(ConnectingTestCase):
         t1 = (i.next())[0]  # the brackets work around a 2to3 bug
         time.sleep(0.2)
         t2 = (i.next())[0]
-        self.assert_((t2 - t1).microseconds * 1e-6 < 0.1,
+        self.assertTrue((t2 - t1).microseconds * 1e-6 < 0.1,
             "named cursor records fetched in 2 roundtrips (delta: %s)"
             % (t2 - t1))
 
@@ -390,26 +390,26 @@ class CursorTests(ConnectingTestCase):
             self.assertEqual(len(c), 7)  # DBAPI happy
             for a in ('name', 'type_code', 'display_size', 'internal_size',
                     'precision', 'scale', 'null_ok'):
-                self.assert_(hasattr(c, a), a)
+                self.assertTrue(hasattr(c, a), a)
 
         c = curs.description[0]
         self.assertEqual(c.name, 'pi')
-        self.assert_(c.type_code in psycopg2.extensions.DECIMAL.values)
-        self.assert_(c.internal_size > 0)
+        self.assertTrue(c.type_code in psycopg2.extensions.DECIMAL.values)
+        self.assertTrue(c.internal_size > 0)
         self.assertEqual(c.precision, 10)
         self.assertEqual(c.scale, 2)
 
         c = curs.description[1]
         self.assertEqual(c.name, 'hi')
-        self.assert_(c.type_code in psycopg2.STRING.values)
-        self.assert_(c.internal_size < 0)
+        self.assertTrue(c.type_code in psycopg2.STRING.values)
+        self.assertTrue(c.internal_size < 0)
         self.assertEqual(c.precision, None)
         self.assertEqual(c.scale, None)
 
         c = curs.description[2]
         self.assertEqual(c.name, 'now')
-        self.assert_(c.type_code in psycopg2.extensions.DATE.values)
-        self.assert_(c.internal_size > 0)
+        self.assertTrue(c.type_code in psycopg2.extensions.DATE.values)
+        self.assertTrue(c.internal_size > 0)
         self.assertEqual(c.precision, None)
         self.assertEqual(c.scale, None)
 
@@ -525,7 +525,7 @@ class CursorTests(ConnectingTestCase):
 
         # Make sure callproc works right
         cur.callproc(procname, {paramname: 2})
-        self.assertEquals(cur.fetchone()[0], 4)
+        self.assertEqual(cur.fetchone()[0], 4)
 
         # Make sure callproc fails right
         failing_cases = [

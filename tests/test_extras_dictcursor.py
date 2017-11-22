@@ -36,13 +36,13 @@ class ExtrasDictCursorTests(ConnectingTestCase):
         self.conn.close()
         self.conn = self.connect(connection_factory=psycopg2.extras.DictConnection)
         cur = self.conn.cursor()
-        self.assert_(isinstance(cur, psycopg2.extras.DictCursor))
+        self.assertTrue(isinstance(cur, psycopg2.extras.DictCursor))
         self.assertEqual(cur.name, None)
         # overridable
         cur = self.conn.cursor('foo',
             cursor_factory=psycopg2.extras.NamedTupleCursor)
         self.assertEqual(cur.name, 'foo')
-        self.assert_(isinstance(cur, psycopg2.extras.NamedTupleCursor))
+        self.assertTrue(isinstance(cur, psycopg2.extras.NamedTupleCursor))
 
     def testDictCursorWithPlainCursorFetchOne(self):
         self._testWithPlainCursor(lambda curs: curs.fetchone())
@@ -65,8 +65,8 @@ class ExtrasDictCursorTests(ConnectingTestCase):
     def testUpdateRow(self):
         row = self._testWithPlainCursor(lambda curs: curs.fetchone())
         row['foo'] = 'qux'
-        self.failUnless(row['foo'] == 'qux')
-        self.failUnless(row[0] == 'qux')
+        self.assertTrue(row['foo'] == 'qux')
+        self.assertTrue(row[0] == 'qux')
 
     @skip_before_postgres(8, 0)
     def testDictCursorWithPlainCursorIterRowNumber(self):
@@ -77,8 +77,8 @@ class ExtrasDictCursorTests(ConnectingTestCase):
         curs = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         curs.execute("SELECT * FROM ExtrasDictCursorTests")
         row = getter(curs)
-        self.failUnless(row['foo'] == 'bar')
-        self.failUnless(row[0] == 'bar')
+        self.assertTrue(row['foo'] == 'bar')
+        self.assertTrue(row[0] == 'bar')
         return row
 
     def testDictCursorWithPlainCursorRealFetchOne(self):
@@ -108,7 +108,7 @@ class ExtrasDictCursorTests(ConnectingTestCase):
         curs = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         curs.execute("SELECT * FROM ExtrasDictCursorTests")
         row = getter(curs)
-        self.failUnless(row['foo'] == 'bar')
+        self.assertTrue(row['foo'] == 'bar')
 
     def testDictCursorWithNamedCursorFetchOne(self):
         self._testWithNamedCursor(lambda curs: curs.fetchone())
@@ -142,8 +142,8 @@ class ExtrasDictCursorTests(ConnectingTestCase):
         curs = self.conn.cursor('aname', cursor_factory=psycopg2.extras.DictCursor)
         curs.execute("SELECT * FROM ExtrasDictCursorTests")
         row = getter(curs)
-        self.failUnless(row['foo'] == 'bar')
-        self.failUnless(row[0] == 'bar')
+        self.assertTrue(row['foo'] == 'bar')
+        self.assertTrue(row[0] == 'bar')
 
     def testDictCursorRealWithNamedCursorFetchOne(self):
         self._testWithNamedCursorReal(lambda curs: curs.fetchone())
@@ -178,7 +178,7 @@ class ExtrasDictCursorTests(ConnectingTestCase):
             cursor_factory=psycopg2.extras.RealDictCursor)
         curs.execute("SELECT * FROM ExtrasDictCursorTests")
         row = getter(curs)
-        self.failUnless(row['foo'] == 'bar')
+        self.assertTrue(row['foo'] == 'bar')
 
     def _testNamedCursorNotGreedy(self, curs):
         curs.itersize = 2
@@ -189,8 +189,8 @@ class ExtrasDictCursorTests(ConnectingTestCase):
             recs.append(t)
 
         # check that the dataset was not fetched in a single gulp
-        self.assert_(recs[1]['ts'] - recs[0]['ts'] < timedelta(seconds=0.005))
-        self.assert_(recs[2]['ts'] - recs[1]['ts'] > timedelta(seconds=0.0099))
+        self.assertTrue(recs[1]['ts'] - recs[0]['ts'] < timedelta(seconds=0.005))
+        self.assertTrue(recs[2]['ts'] - recs[1]['ts'] > timedelta(seconds=0.0099))
 
     def _testIterRowNumber(self, curs):
         # Only checking for dataset < itersize:
@@ -249,7 +249,7 @@ class NamedTupleCursorTest(ConnectingTestCase):
     def test_cursor_args(self):
         cur = self.conn.cursor('foo', cursor_factory=psycopg2.extras.DictCursor)
         self.assertEqual(cur.name, 'foo')
-        self.assert_(isinstance(cur, psycopg2.extras.DictCursor))
+        self.assertTrue(isinstance(cur, psycopg2.extras.DictCursor))
 
     @skip_if_no_namedtuple
     def test_fetchone(self):
@@ -460,8 +460,8 @@ class NamedTupleCursorTest(ConnectingTestCase):
             recs.append(t)
 
         # check that the dataset was not fetched in a single gulp
-        self.assert_(recs[1].ts - recs[0].ts < timedelta(seconds=0.005))
-        self.assert_(recs[2].ts - recs[1].ts > timedelta(seconds=0.0099))
+        self.assertTrue(recs[1].ts - recs[0].ts < timedelta(seconds=0.005))
+        self.assertTrue(recs[2].ts - recs[1].ts > timedelta(seconds=0.0099))
 
     @skip_if_no_namedtuple
     @skip_before_postgres(8, 0)

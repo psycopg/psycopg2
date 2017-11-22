@@ -64,17 +64,6 @@ else:
 
     unittest.TestCase.skipTest = skipTest
 
-# Silence warnings caused by the stubbornness of the Python unittest
-# maintainers
-# http://bugs.python.org/issue9424
-if (not hasattr(unittest.TestCase, 'assert_')
-        or unittest.TestCase.assert_ is not unittest.TestCase.assertTrue):
-    # mavaff...
-    unittest.TestCase.assert_ = unittest.TestCase.assertTrue
-    unittest.TestCase.failUnless = unittest.TestCase.assertTrue
-    unittest.TestCase.assertEquals = unittest.TestCase.assertEqual
-    unittest.TestCase.failUnlessEqual = unittest.TestCase.assertEqual
-
 
 def assertDsnEqual(self, dsn1, dsn2, msg=None):
     """Check that two conninfo string have the same content"""

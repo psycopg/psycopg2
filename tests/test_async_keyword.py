@@ -56,16 +56,16 @@ class AsyncTests(ConnectingTestCase):
         sync_cur = self.sync_conn.cursor()
         del cur, sync_cur
 
-        self.assert_(self.conn.async)
-        self.assert_(not self.sync_conn.async)
+        self.assertTrue(self.conn.async)
+        self.assertTrue(not self.sync_conn.async)
 
         # the async connection should be autocommit
-        self.assert_(self.conn.autocommit)
+        self.assertTrue(self.conn.autocommit)
 
         # check other properties to be found on the connection
-        self.assert_(self.conn.server_version)
-        self.assert_(self.conn.protocol_version in (2, 3))
-        self.assert_(self.conn.encoding in psycopg2.extensions.encodings)
+        self.assertTrue(self.conn.server_version)
+        self.assertTrue(self.conn.protocol_version in (2, 3))
+        self.assertTrue(self.conn.encoding in psycopg2.extensions.encodings)
 
     def test_async_subclass(self):
         class MyConn(psycopg2.extensions.connection):
@@ -73,8 +73,8 @@ class AsyncTests(ConnectingTestCase):
                 psycopg2.extensions.connection.__init__(self, dsn, async=async)
 
         conn = self.connect(connection_factory=MyConn, async=True)
-        self.assert_(isinstance(conn, MyConn))
-        self.assert_(conn.async)
+        self.assertTrue(isinstance(conn, MyConn))
+        self.assertTrue(conn.async)
         conn.close()
 
     def test_async_connection_error_message(self):
@@ -160,12 +160,12 @@ class ConnectTestCase(unittest.TestCase):
         psycopg2.connect(database='foo', host='baz', async=1)
         self.assertDsnEqual(self.args[0], 'dbname=foo host=baz')
         self.assertEqual(self.args[1], None)
-        self.assert_(self.args[2])
+        self.assertTrue(self.args[2])
 
         psycopg2.connect("dbname=foo host=baz", async=True)
         self.assertDsnEqual(self.args[0], 'dbname=foo host=baz')
         self.assertEqual(self.args[1], None)
-        self.assert_(self.args[2])
+        self.assertTrue(self.args[2])
 
 
 class AsyncReplicationTest(ReplicationTestCase):
