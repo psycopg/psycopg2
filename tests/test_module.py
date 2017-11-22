@@ -78,10 +78,10 @@ class ConnectTestCase(unittest.TestCase):
 
         psycopg2.connect(database='foo',
             user='postgres', password='secret', port=5432)
-        self.assert_('dbname=foo' in self.args[0])
-        self.assert_('user=postgres' in self.args[0])
-        self.assert_('password=secret' in self.args[0])
-        self.assert_('port=5432' in self.args[0])
+        self.assertTrue('dbname=foo' in self.args[0])
+        self.assertTrue('user=postgres' in self.args[0])
+        self.assertTrue('password=secret' in self.args[0])
+        self.assertTrue('port=5432' in self.args[0])
         self.assertEqual(len(self.args[0].split()), 4)
 
     def test_generic_keywords(self):
@@ -106,18 +106,18 @@ class ConnectTestCase(unittest.TestCase):
         psycopg2.connect(database='foo', host='baz', async_=1)
         self.assertDsnEqual(self.args[0], 'dbname=foo host=baz')
         self.assertEqual(self.args[1], None)
-        self.assert_(self.args[2])
+        self.assertTrue(self.args[2])
 
         psycopg2.connect("dbname=foo host=baz", async_=True)
         self.assertDsnEqual(self.args[0], 'dbname=foo host=baz')
         self.assertEqual(self.args[1], None)
-        self.assert_(self.args[2])
+        self.assertTrue(self.args[2])
 
     def test_int_port_param(self):
         psycopg2.connect(database='sony', port=6543)
         dsn = " %s " % self.args[0]
-        self.assert_(" dbname=sony " in dsn, dsn)
-        self.assert_(" port=6543 " in dsn, dsn)
+        self.assertTrue(" dbname=sony " in dsn, dsn)
+        self.assertTrue(" port=6543 " in dsn, dsn)
 
     def test_empty_param(self):
         psycopg2.connect(database='sony', password='')
@@ -156,8 +156,8 @@ class ExceptionsTestCase(ConnectingTestCase):
             e = exc
 
         self.assertEqual(e.pgcode, '42P01')
-        self.assert_(e.pgerror)
-        self.assert_(e.cursor is cur)
+        self.assertTrue(e.pgerror)
+        self.assertTrue(e.cursor is cur)
 
     def test_diagnostics_attributes(self):
         cur = self.conn.cursor()
@@ -167,7 +167,7 @@ class ExceptionsTestCase(ConnectingTestCase):
             e = exc
 
         diag = e.diag
-        self.assert_(isinstance(diag, psycopg2.extensions.Diagnostics))
+        self.assertTrue(isinstance(diag, psycopg2.extensions.Diagnostics))
         for attr in [
                 'column_name', 'constraint_name', 'context', 'datatype_name',
                 'internal_position', 'internal_query', 'message_detail',
@@ -176,7 +176,7 @@ class ExceptionsTestCase(ConnectingTestCase):
                 'statement_position', 'table_name', ]:
             v = getattr(diag, attr)
             if v is not None:
-                self.assert_(isinstance(v, str))
+                self.assertTrue(isinstance(v, str))
 
     def test_diagnostics_values(self):
         cur = self.conn.cursor()
@@ -289,7 +289,7 @@ class ExceptionsTestCase(ConnectingTestCase):
 
         self.assertEqual(e.pgerror, e1.pgerror)
         self.assertEqual(e.pgcode, e1.pgcode)
-        self.assert_(e1.cursor is None)
+        self.assertTrue(e1.cursor is None)
 
     @skip_before_python(2, 5)
     def test_pickle_connection_error(self):
@@ -304,7 +304,7 @@ class ExceptionsTestCase(ConnectingTestCase):
 
         self.assertEqual(e.pgerror, e1.pgerror)
         self.assertEqual(e.pgcode, e1.pgcode)
-        self.assert_(e1.cursor is None)
+        self.assertTrue(e1.cursor is None)
 
 
 class TestExtensionModule(unittest.TestCase):
@@ -316,7 +316,7 @@ class TestExtensionModule(unittest.TestCase):
         # required in ticket #201.
         pkgdir = os.path.dirname(psycopg2.__file__)
         pardir = os.path.dirname(pkgdir)
-        self.assert_(pardir in sys.path)
+        self.assertTrue(pardir in sys.path)
         script = ("""
 import sys
 sys.path.remove(%r)

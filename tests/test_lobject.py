@@ -137,7 +137,7 @@ class LargeObjectTests(LargeObjectTestCase):
 
         self.assertRaises(psycopg2.OperationalError,
                           self.conn.lobject, 0, "w", lo.oid)
-        self.assert_(not self.conn.closed)
+        self.assertTrue(not self.conn.closed)
 
     def test_import(self):
         self.tmpdir = tempfile.mkdtemp()
@@ -209,7 +209,7 @@ class LargeObjectTests(LargeObjectTestCase):
         self.assertEqual(lo.read(4), "some")
         data1 = lo.read()
         # avoid dumping megacraps in the console in case of error
-        self.assert_(data == data1,
+        self.assertTrue(data == data1,
             "%r... != %r..." % (data[:100], data1[:100]))
 
     def test_seek_tell(self):
@@ -240,7 +240,7 @@ class LargeObjectTests(LargeObjectTestCase):
         # the object doesn't exist now, so we can't reopen it.
         self.assertRaises(psycopg2.OperationalError, self.conn.lobject, lo.oid)
         # And the object has been closed.
-        self.assertEquals(lo.closed, True)
+        self.assertEqual(lo.closed, True)
 
     def test_export(self):
         lo = self.conn.lobject()
@@ -394,7 +394,7 @@ class LargeObjectTests(LargeObjectTestCase):
             pass
 
         lo = self.conn.lobject(lobject_factory=lobject_subclass)
-        self.assert_(isinstance(lo, lobject_subclass))
+        self.assertTrue(isinstance(lo, lobject_subclass))
 
 decorate_all_tests(LargeObjectTests, skip_if_no_lo, skip_lo_if_green)
 

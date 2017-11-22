@@ -48,14 +48,14 @@ class WithTestCase(ConnectingTestCase):
 class WithConnectionTestCase(WithTestCase):
     def test_with_ok(self):
         with self.conn as conn:
-            self.assert_(self.conn is conn)
+            self.assertTrue(self.conn is conn)
             self.assertEqual(conn.status, ext.STATUS_READY)
             curs = conn.cursor()
             curs.execute("insert into test_with values (1)")
             self.assertEqual(conn.status, ext.STATUS_BEGIN)
 
         self.assertEqual(self.conn.status, ext.STATUS_READY)
-        self.assert_(not self.conn.closed)
+        self.assertTrue(not self.conn.closed)
 
         curs = self.conn.cursor()
         curs.execute("select * from test_with")
@@ -69,7 +69,7 @@ class WithConnectionTestCase(WithTestCase):
             self.assertEqual(conn.status, ext.STATUS_BEGIN)
 
         self.assertEqual(self.conn.status, ext.STATUS_READY)
-        self.assert_(not self.conn.closed)
+        self.assertTrue(not self.conn.closed)
 
         curs = self.conn.cursor()
         curs.execute("select * from test_with")
@@ -83,7 +83,7 @@ class WithConnectionTestCase(WithTestCase):
 
         self.assertRaises(psycopg2.DataError, f)
         self.assertEqual(self.conn.status, ext.STATUS_READY)
-        self.assert_(not self.conn.closed)
+        self.assertTrue(not self.conn.closed)
 
         curs = self.conn.cursor()
         curs.execute("select * from test_with")
@@ -98,7 +98,7 @@ class WithConnectionTestCase(WithTestCase):
 
         self.assertRaises(ZeroDivisionError, f)
         self.assertEqual(self.conn.status, ext.STATUS_READY)
-        self.assert_(not self.conn.closed)
+        self.assertTrue(not self.conn.closed)
 
         curs = self.conn.cursor()
         curs.execute("select * from test_with")
@@ -125,7 +125,7 @@ class WithConnectionTestCase(WithTestCase):
             curs.execute("insert into test_with values (10)")
 
         self.assertEqual(conn.status, ext.STATUS_READY)
-        self.assert_(commits)
+        self.assertTrue(commits)
 
         curs = self.conn.cursor()
         curs.execute("select * from test_with")
@@ -147,10 +147,10 @@ class WithConnectionTestCase(WithTestCase):
         except ZeroDivisionError:
             pass
         else:
-            self.assert_("exception not raised")
+            self.assertTrue("exception not raised")
 
         self.assertEqual(conn.status, ext.STATUS_READY)
-        self.assert_(rollbacks)
+        self.assertTrue(rollbacks)
 
         curs = conn.cursor()
         curs.execute("select * from test_with")
@@ -162,12 +162,12 @@ class WithCursorTestCase(WithTestCase):
         with self.conn as conn:
             with conn.cursor() as curs:
                 curs.execute("insert into test_with values (4)")
-                self.assert_(not curs.closed)
+                self.assertTrue(not curs.closed)
             self.assertEqual(self.conn.status, ext.STATUS_BEGIN)
-            self.assert_(curs.closed)
+            self.assertTrue(curs.closed)
 
         self.assertEqual(self.conn.status, ext.STATUS_READY)
-        self.assert_(not self.conn.closed)
+        self.assertTrue(not self.conn.closed)
 
         curs = self.conn.cursor()
         curs.execute("select * from test_with")
@@ -183,8 +183,8 @@ class WithCursorTestCase(WithTestCase):
             pass
 
         self.assertEqual(self.conn.status, ext.STATUS_READY)
-        self.assert_(not self.conn.closed)
-        self.assert_(curs.closed)
+        self.assertTrue(not self.conn.closed)
+        self.assertTrue(curs.closed)
 
         curs = self.conn.cursor()
         curs.execute("select * from test_with")
@@ -199,10 +199,10 @@ class WithCursorTestCase(WithTestCase):
                 super(MyCurs, self).close()
 
         with self.conn.cursor(cursor_factory=MyCurs) as curs:
-            self.assert_(isinstance(curs, MyCurs))
+            self.assertTrue(isinstance(curs, MyCurs))
 
-        self.assert_(curs.closed)
-        self.assert_(closes)
+        self.assertTrue(curs.closed)
+        self.assertTrue(closes)
 
     def test_exception_swallow(self):
         # bug #262: __exit__ calls cur.close() that hides the exception

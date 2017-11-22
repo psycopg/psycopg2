@@ -224,8 +224,8 @@ class TestExecuteValues(FastExecuteTestMixin, testutils.ConnectingTestCase):
         psycopg2.extras.execute_values(cur,
             "insert into testfast (id, data) values %s -- a%%b",
             [(1, 'hi')])
-        self.assert_(b'a%%b' not in cur.query)
-        self.assert_(b'a%b' in cur.query)
+        self.assertTrue(b'a%%b' not in cur.query)
+        self.assertTrue(b'a%b' in cur.query)
 
         cur.execute("select id, data from testfast")
         self.assertEqual(cur.fetchall(), [(1, 'hi')])
