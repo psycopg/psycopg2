@@ -261,20 +261,6 @@ def skip_if_no_namedtuple(f):
     return skip_if_no_namedtuple_
 
 
-def skip_if_no_iobase(f):
-    """Skip a test if io.TextIOBase is not available."""
-    @wraps(f)
-    def skip_if_no_iobase_(self):
-        try:
-            from io import TextIOBase                       # noqa
-        except ImportError:
-            return self.skipTest("io.TextIOBase not found.")
-        else:
-            return f(self)
-
-    return skip_if_no_iobase_
-
-
 def skip_before_postgres(*ver):
     """Skip a test on PostgreSQL before a certain version."""
     ver = ver + (0,) * (3 - len(ver))
