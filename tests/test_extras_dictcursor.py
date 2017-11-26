@@ -19,7 +19,6 @@ from datetime import timedelta
 import psycopg2
 import psycopg2.extras
 from testutils import unittest, ConnectingTestCase, skip_before_postgres
-from testutils import skip_if_no_namedtuple
 
 
 class ExtrasDictCursorTests(ConnectingTestCase):
@@ -232,11 +231,6 @@ class NamedTupleCursorTest(ConnectingTestCase):
         ConnectingTestCase.setUp(self)
         from psycopg2.extras import NamedTupleConnection
 
-        try:
-            from collections import namedtuple      # noqa
-        except ImportError:
-            return
-
         self.conn = self.connect(connection_factory=NamedTupleConnection)
         curs = self.conn.cursor()
         curs.execute("CREATE TEMPORARY TABLE nttest (i int, s text)")
@@ -245,13 +239,11 @@ class NamedTupleCursorTest(ConnectingTestCase):
         curs.execute("INSERT INTO nttest VALUES (3, 'baz')")
         self.conn.commit()
 
-    @skip_if_no_namedtuple
     def test_cursor_args(self):
         cur = self.conn.cursor('foo', cursor_factory=psycopg2.extras.DictCursor)
         self.assertEqual(cur.name, 'foo')
         self.assert_(isinstance(cur, psycopg2.extras.DictCursor))
 
-    @skip_if_no_namedtuple
     def test_fetchone(self):
         curs = self.conn.cursor()
         curs.execute("select * from nttest order by 1")
@@ -263,7 +255,6 @@ class NamedTupleCursorTest(ConnectingTestCase):
         self.assertEqual(curs.rownumber, 1)
         self.assertEqual(curs.rowcount, 3)
 
-    @skip_if_no_namedtuple
     def test_fetchmany_noarg(self):
         curs = self.conn.cursor()
         curs.arraysize = 2
@@ -277,7 +268,6 @@ class NamedTupleCursorTest(ConnectingTestCase):
         self.assertEqual(curs.rownumber, 2)
         self.assertEqual(curs.rowcount, 3)
 
-    @skip_if_no_namedtuple
     def test_fetchmany(self):
         curs = self.conn.cursor()
         curs.execute("select * from nttest order by 1")
@@ -290,7 +280,6 @@ class NamedTupleCursorTest(ConnectingTestCase):
         self.assertEqual(curs.rownumber, 2)
         self.assertEqual(curs.rowcount, 3)
 
-    @skip_if_no_namedtuple
     def test_fetchall(self):
         curs = self.conn.cursor()
         curs.execute("select * from nttest order by 1")
@@ -305,7 +294,6 @@ class NamedTupleCursorTest(ConnectingTestCase):
         self.assertEqual(curs.rownumber, 3)
         self.assertEqual(curs.rowcount, 3)
 
-    @skip_if_no_namedtuple
     def test_executemany(self):
         curs = self.conn.cursor()
         curs.executemany("delete from nttest where i = %s",
@@ -316,7 +304,6 @@ class NamedTupleCursorTest(ConnectingTestCase):
         self.assertEqual(res[0].i, 3)
         self.assertEqual(res[0].s, 'baz')
 
-    @skip_if_no_namedtuple
     def test_iter(self):
         curs = self.conn.cursor()
         curs.execute("select * from nttest order by 1")
@@ -342,26 +329,6 @@ class NamedTupleCursorTest(ConnectingTestCase):
         self.assertEqual(curs.rownumber, 3)
         self.assertEqual(curs.rowcount, 3)
 
-    def test_error_message(self):
-        try:
-            from collections import namedtuple          # noqa
-        except ImportError:
-            # an import error somewhere
-            from psycopg2.extras import NamedTupleConnection
-            try:
-                self.conn = self.connect(
-                    connection_factory=NamedTupleConnection)
-                curs = self.conn.cursor()
-                curs.execute("select 1")
-                curs.fetchone()
-            except ImportError:
-                pass
-            else:
-                self.fail("expecting ImportError")
-        else:
-            return self.skipTest("namedtuple available")
-
-    @skip_if_no_namedtuple
     def test_record_updated(self):
         curs = self.conn.cursor()
         curs.execute("select 1 as foo;")
@@ -373,7 +340,6 @@ class NamedTupleCursorTest(ConnectingTestCase):
         self.assertEqual(r.bar, 2)
         self.assertRaises(AttributeError, getattr, r, 'foo')
 
-    @skip_if_no_namedtuple
     def test_no_result_no_surprise(self):
         curs = self.conn.cursor()
         curs.execute("update nttest set s = s")
@@ -382,7 +348,6 @@ class NamedTupleCursorTest(ConnectingTestCase):
         curs.execute("update nttest set s = s")
         self.assertRaises(psycopg2.ProgrammingError, curs.fetchall)
 
-    @skip_if_no_namedtuple
     def test_minimal_generation(self):
         # Instrument the class to verify it gets called the minimum number of times.
         from psycopg2.extras import NamedTupleCursor
@@ -416,7 +381,6 @@ class NamedTupleCursorTest(ConnectingTestCase):
         finally:
             NamedTupleCursor._make_nt = f_orig
 
-    @skip_if_no_namedtuple
     @skip_before_postgres(8, 0)
     def test_named(self):
         curs = self.conn.cursor('tmp')
@@ -427,28 +391,24 @@ class NamedTupleCursorTest(ConnectingTestCase):
         recs.extend(curs.fetchall())
         self.assertEqual(range(10), [t.i for t in recs])
 
-    @skip_if_no_namedtuple
     def test_named_fetchone(self):
         curs = self.conn.cursor('tmp')
         curs.execute("""select 42 as i""")
         t = curs.fetchone()
         self.assertEqual(t.i, 42)
 
-    @skip_if_no_namedtuple
     def test_named_fetchmany(self):
         curs = self.conn.cursor('tmp')
         curs.execute("""select 42 as i""")
         recs = curs.fetchmany(10)
         self.assertEqual(recs[0].i, 42)
 
-    @skip_if_no_namedtuple
     def test_named_fetchall(self):
         curs = self.conn.cursor('tmp')
         curs.execute("""select 42 as i""")
         recs = curs.fetchall()
         self.assertEqual(recs[0].i, 42)
 
-    @skip_if_no_namedtuple
     @skip_before_postgres(8, 2)
     def test_not_greedy(self):
         curs = self.conn.cursor('tmp')
@@ -463,7 +423,6 @@ class NamedTupleCursorTest(ConnectingTestCase):
         self.assert_(recs[1].ts - recs[0].ts < timedelta(seconds=0.005))
         self.assert_(recs[2].ts - recs[1].ts > timedelta(seconds=0.0099))
 
-    @skip_if_no_namedtuple
     @skip_before_postgres(8, 0)
     def test_named_rownumber(self):
         curs = self.conn.cursor('tmp')

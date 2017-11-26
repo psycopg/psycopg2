@@ -541,16 +541,10 @@ class AdaptTypeTestCase(ConnectingTestCase):
         self.assertEqual(v[0], 10)
         self.assertEqual(v[1], "hello")
         self.assertEqual(v[2], date(2011, 1, 2))
-
-        try:
-            from collections import namedtuple          # noqa
-        except ImportError:
-            pass
-        else:
-            self.assert_(t.type is not tuple)
-            self.assertEqual(v.anint, 10)
-            self.assertEqual(v.astring, "hello")
-            self.assertEqual(v.adate, date(2011, 1, 2))
+        self.assert_(t.type is not tuple)
+        self.assertEqual(v.anint, 10)
+        self.assertEqual(v.astring, "hello")
+        self.assertEqual(v.adate, date(2011, 1, 2))
 
     @skip_if_no_composite
     def test_empty_string(self):
@@ -591,13 +585,7 @@ class AdaptTypeTestCase(ConnectingTestCase):
         v = curs.fetchone()[0]
 
         self.assertEqual(r, v)
-
-        try:
-            from collections import namedtuple              # noqa
-        except ImportError:
-            pass
-        else:
-            self.assertEqual(v.anotherpair.apair.astring, "hello")
+        self.assertEqual(v.anotherpair.apair.astring, "hello")
 
     @skip_if_no_composite
     def test_register_on_cursor(self):
