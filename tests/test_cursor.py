@@ -98,11 +98,7 @@ class CursorTests(ConnectingTestCase):
             cur.mogrify(u"SELECT %s;", (snowman,)))
 
     def test_mogrify_decimal_explodes(self):
-        # issue #7: explodes on windows with python 2.5 and psycopg 2.2.2
-        try:
-            from decimal import Decimal
-        except:
-            return
+        from decimal import Decimal
 
         conn = self.conn
         cur = conn.cursor()
@@ -138,12 +134,8 @@ class CursorTests(ConnectingTestCase):
         self.assertEqual(42, curs.cast(20, '42'))
         self.assertAlmostEqual(3.14, curs.cast(700, '3.14'))
 
-        try:
-            from decimal import Decimal
-        except ImportError:
-            self.assertAlmostEqual(123.45, curs.cast(1700, '123.45'))
-        else:
-            self.assertEqual(Decimal('123.45'), curs.cast(1700, '123.45'))
+        from decimal import Decimal
+        self.assertEqual(Decimal('123.45'), curs.cast(1700, '123.45'))
 
         from datetime import date
         self.assertEqual(date(2011, 1, 2), curs.cast(1082, '2011-01-02'))
