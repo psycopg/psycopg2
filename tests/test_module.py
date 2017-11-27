@@ -26,7 +26,7 @@ import os
 import sys
 from subprocess import Popen
 
-from testutils import (unittest, skip_before_python, skip_before_postgres,
+from testutils import (unittest, skip_before_postgres,
     ConnectingTestCase, skip_copy_if_green, script_to_py3, slow)
 
 import psycopg2
@@ -276,7 +276,6 @@ class ExceptionsTestCase(ConnectingTestCase):
         self.assertEqual(e.diag.constraint_name, "chk_eq1")
         self.assertEqual(e.diag.datatype_name, None)
 
-    @skip_before_python(2, 5)
     def test_pickle(self):
         import pickle
         cur = self.conn.cursor()
@@ -291,7 +290,6 @@ class ExceptionsTestCase(ConnectingTestCase):
         self.assertEqual(e.pgcode, e1.pgcode)
         self.assert_(e1.cursor is None)
 
-    @skip_before_python(2, 5)
     def test_pickle_connection_error(self):
         # segfaults on psycopg 2.5.1 - see ticket #170
         import pickle
