@@ -25,7 +25,7 @@
 import sys
 import string
 from testutils import (unittest, ConnectingTestCase, decorate_all_tests,
-    skip_if_no_iobase, skip_before_postgres, slow)
+    skip_before_postgres, slow)
 from cStringIO import StringIO
 from itertools import cycle, izip
 from subprocess import Popen, PIPE
@@ -131,7 +131,6 @@ class CopyTests(ConnectingTestCase):
         finally:
             curs.close()
 
-    @skip_if_no_iobase
     def test_copy_text(self):
         self.conn.set_client_encoding('latin1')
         self._create_temp_table()  # the above call closed the xn
@@ -154,7 +153,6 @@ class CopyTests(ConnectingTestCase):
         f.seek(0)
         self.assertEqual(f.readline().rstrip(), about)
 
-    @skip_if_no_iobase
     def test_copy_bytes(self):
         self.conn.set_client_encoding('latin1')
         self._create_temp_table()  # the above call closed the xn
@@ -176,7 +174,6 @@ class CopyTests(ConnectingTestCase):
         f.seek(0)
         self.assertEqual(f.readline().rstrip(), about)
 
-    @skip_if_no_iobase
     def test_copy_expert_textiobase(self):
         self.conn.set_client_encoding('latin1')
         self._create_temp_table()  # the above call closed the xn
