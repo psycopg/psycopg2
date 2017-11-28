@@ -194,7 +194,7 @@ def _get_json_oids(conn_or_curs, name='json'):
     r = curs.fetchone()
 
     # revert the status of the connection as before the command
-    if (conn_status != STATUS_IN_TRANSACTION and not conn.autocommit):
+    if conn_status != STATUS_IN_TRANSACTION and not conn.autocommit:
         conn.rollback()
 
     if not r:

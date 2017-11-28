@@ -264,7 +264,7 @@ class RealDictCursor(DictCursorBase):
 class RealDictRow(dict):
     """A `!dict` subclass representing a data record."""
 
-    __slots__ = ('_column_mapping')
+    __slots__ = ('_column_mapping',)
 
     def __init__(self, cursor):
         dict.__init__(self)
@@ -280,7 +280,7 @@ class RealDictRow(dict):
         return dict.__setitem__(self, name, value)
 
     def __getstate__(self):
-        return (self.copy(), self._column_mapping[:])
+        return self.copy(), self._column_mapping[:]
 
     def __setstate__(self, data):
         self.update(data[0])

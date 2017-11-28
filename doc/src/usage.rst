@@ -457,14 +457,12 @@ the connection or globally: see the function
 Binary adaptation
 ^^^^^^^^^^^^^^^^^
 
-Python types representing binary objects are converted into
-PostgreSQL binary string syntax, suitable for :sql:`bytea` fields.   Such
-types are `buffer` (only available in Python 2), `memoryview` (available
-from Python 2.7), `bytearray` (available from Python 2.6) and `bytes`
-(only from Python 3: the name is available from Python 2.6 but it's only an
-alias for the type `!str`). Any object implementing the `Revised Buffer
-Protocol`__ should be usable as binary type where the protocol is supported
-(i.e. from Python 2.6). Received data is returned as `!buffer` (in Python 2)
+Python types representing binary objects are converted into PostgreSQL binary
+string syntax, suitable for :sql:`bytea` fields.   Such types are `buffer`
+(only available in Python 2), `memoryview`, `bytearray`, and `bytes` (only in
+Python 3: the name is available in Python 2 but it's only an alias for the
+type `!str`). Any object implementing the `Revised Buffer Protocol`__ should
+be usable as binary type. Received data is returned as `!buffer` (in Python 2)
 or `!memoryview` (in Python 3).
 
 .. __: http://www.python.org/dev/peps/pep-3118/

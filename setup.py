@@ -76,11 +76,8 @@ License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)
 License :: OSI Approved :: Zope Public License
 Programming Language :: Python
 Programming Language :: Python :: 2
-Programming Language :: Python :: 2.6
 Programming Language :: Python :: 2.7
 Programming Language :: Python :: 3
-Programming Language :: Python :: 3.2
-Programming Language :: Python :: 3.3
 Programming Language :: Python :: 3.4
 Programming Language :: Python :: 3.5
 Programming Language :: Python :: 3.6
@@ -215,8 +212,7 @@ or with the pg_config option in 'setup.cfg'.
 
         # Support unicode paths, if this version of Python provides the
         # necessary infrastructure:
-        if sys.version_info[0] < 3 \
-                and hasattr(sys, 'getfilesystemencoding'):
+        if sys.version_info[0] < 3:
             pg_config_path = pg_config_path.encode(
                 sys.getfilesystemencoding())
 
@@ -297,7 +293,7 @@ class psycopg_build_ext(build_ext):
 
         # For Python versions that use MSVC compiler 2008, re-insert the
         # manifest into the resulting .pyd file.
-        if self.compiler_is_msvc() and sysVer in ((2, 6), (2, 7), (3, 0), (3, 1), (3, 2)):
+        if self.compiler_is_msvc() and sysVer == (2, 7):
             platform = get_platform()
             # Default to the x86 manifest
             manifest = '_psycopg.vc9.x86.manifest'
@@ -319,7 +315,6 @@ class psycopg_build_ext(build_ext):
 
     def finalize_win32(self):
         """Finalize build system configuration on win32 platform."""
-        sysVer = sys.version_info[:2]
 
         # Add compiler-specific arguments:
         extra_compiler_args = []
@@ -334,17 +329,6 @@ class psycopg_build_ext(build_ext):
             # avoid large numbers of warnings for perfectly idiomatic Python C
             # API code.
             extra_compiler_args.append('-fno-strict-aliasing')
-
-            # Force correct C runtime library linkage:
-            if sysVer <= (2, 3):
-                # Yes:  'msvcr60', rather than 'msvcrt', is the correct value
-                # on the line below:
-                self.libraries.append('msvcr60')
-            elif sysVer in ((2, 4), (2, 5)):
-                self.libraries.append('msvcr71')
-            # Beyond Python 2.5, we take our chances on the default C runtime
-            # library, because we don't know what compiler those future
-            # versions of Python will use.
 
         for extension in ext:  # ext is a global list of Extension objects
             extension.extra_compile_args.extend(extra_compiler_args)
@@ -414,7 +398,7 @@ class psycopg_build_ext(build_ext):
                 # *at least* PostgreSQL 7.4 is available (this is the only
                 # 7.x series supported by psycopg 2)
                 pgversion = pg_config_helper.query("version").split()[1]
-            except:
+            except Exception:
                 pgversion = "7.4.0"
 
             verre = re.compile(
@@ -619,7 +603,7 @@ try:
     f = open("README.rst")
     readme = f.read()
     f.close()
-except:
+except Exception:
     print("failed to read readme: ignoring...")
     readme = __doc__
 
@@ -633,6 +617,7 @@ setup(name="psycopg2",
       download_url=download_url,
       license="LGPL with exceptions or ZPL",
       platforms=["any"],
+      python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*',
       description=readme.split("\n")[0],
       long_description="\n".join(readme.split("\n")[2:]).lstrip(),
       classifiers=[x for x in classifiers.split("\n") if x],
