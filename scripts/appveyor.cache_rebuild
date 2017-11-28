@@ -9,10 +9,10 @@ To invalidate the cache, update this file and check it into git.
 Currently used modules built in the cache:
 
 OpenSSL
-        Version: 1.0.2l
+        Version: 1.0.2m
 
 PostgreSQL
-        Version: 10.0
+        Version: 10.1
 
 
 NOTE: to zap the cache manually you can also use:

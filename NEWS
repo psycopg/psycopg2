@@ -9,6 +9,7 @@ What's new in psycopg 2.7.4
 - Fixed parsing of array of points as floats (:ticket:`#613`).
 - Fixed `~psycopg2.__libpq_version__` building with libpq >= 10.1
   (:ticket:`632`).
+- Wheel packages compiled against PostgreSQL 10.1 libpq and OpenSSL 1.0.2m.
 
 
 What's new in psycopg 2.7.3.2
