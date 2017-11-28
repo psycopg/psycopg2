@@ -15,7 +15,7 @@ environment:
         # http://www.appveyor.com/docs/installed-software#python
 
         # Py 2.7 = VS Ver. 9.0  (VS 2008)
-        # Py 3.3, 3.4 = VS Ver. 10.0 (VS 2010)
+        # Py 3.4 = VS Ver. 10.0 (VS 2010)
         # Py 3.5, 3.6 = VS Ver. 14.0 (VS 2015)
 
         - PYTHON: C:\Python27-x64
@@ -48,15 +48,6 @@ environment:
           VS_VER: 10.0
 
         - PYTHON: C:\Python34
-          PYTHON_ARCH: 32
-          VS_VER: 10.0
-
-        - PYTHON: C:\Python33-x64
-          DISTUTILS_USE_SDK: '1'
-          PYTHON_ARCH: 64
-          VS_VER: 10.0
-
-        - PYTHON: C:\Python33
           PYTHON_ARCH: 32
           VS_VER: 10.0
 

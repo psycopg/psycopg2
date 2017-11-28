@@ -78,8 +78,6 @@ Programming Language :: Python
 Programming Language :: Python :: 2
 Programming Language :: Python :: 2.7
 Programming Language :: Python :: 3
-Programming Language :: Python :: 3.2
-Programming Language :: Python :: 3.3
 Programming Language :: Python :: 3.4
 Programming Language :: Python :: 3.5
 Programming Language :: Python :: 3.6
@@ -295,7 +293,7 @@ class psycopg_build_ext(build_ext):
 
         # For Python versions that use MSVC compiler 2008, re-insert the
         # manifest into the resulting .pyd file.
-        if self.compiler_is_msvc() and sysVer in ((2, 7), (3, 0), (3, 1), (3, 2)):
+        if self.compiler_is_msvc() and sysVer == (2, 7):
             platform = get_platform()
             # Default to the x86 manifest
             manifest = '_psycopg.vc9.x86.manifest'
@@ -619,7 +617,7 @@ setup(name="psycopg2",
       download_url=download_url,
       license="LGPL with exceptions or ZPL",
       platforms=["any"],
-      python_requires='>=2.7,!=3.0.*,!=3.1.*',
+      python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*',
       description=readme.split("\n")[0],
       long_description="\n".join(readme.split("\n")[2:]).lstrip(),
       classifiers=[x for x in classifiers.split("\n") if x],
