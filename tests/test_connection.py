@@ -340,7 +340,7 @@ class ParseDsnTestCase(ConnectingTestCase):
 
         self.assertEqual(
             ext.parse_dsn('dbname=test user=tester password=secret'),
-            dict(user='tester', password='secret', dbname='test'),
+            {'user': 'tester', 'password': 'secret', 'dbname': 'test'},
             "simple DSN parsed")
 
         self.assertRaises(ProgrammingError, ext.parse_dsn,
@@ -348,7 +348,7 @@ class ParseDsnTestCase(ConnectingTestCase):
 
         self.assertEqual(
             ext.parse_dsn("dbname='test 2' user=tester password=secret"),
-            dict(user='tester', password='secret', dbname='test 2'),
+            {'user': 'tester', 'password': 'secret', 'dbname': 'test 2'},
             "DSN with quoting parsed")
 
         # Can't really use assertRaisesRegexp() here since we need to
@@ -369,7 +369,7 @@ class ParseDsnTestCase(ConnectingTestCase):
     @skip_before_libpq(9, 2)
     def test_parse_dsn_uri(self):
         self.assertEqual(ext.parse_dsn('postgresql://tester:secret@/test'),
-                         dict(user='tester', password='secret', dbname='test'),
+                         {'user': 'tester', 'password': 'secret', 'dbname': 'test'},
                          "valid URI dsn parsed")
 
         raised = False
