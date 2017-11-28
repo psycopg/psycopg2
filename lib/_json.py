@@ -27,20 +27,11 @@ extensions importing register_json from extras.
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
+import json
 import sys
 
 from psycopg2._psycopg import ISQLQuote, QuotedString
 from psycopg2._psycopg import new_type, new_array_type, register_type
-
-
-# import the best json implementation available
-if sys.version_info[:2] >= (2, 6):
-    import json
-else:
-    try:
-        import simplejson as json
-    except ImportError:
-        json = None
 
 
 # oids from PostgreSQL 9.2
@@ -67,13 +58,7 @@ class Json(object):
     def __init__(self, adapted, dumps=None):
         self.adapted = adapted
         self._conn = None
-
-        if dumps is not None:
-            self._dumps = dumps
-        elif json is not None:
-            self._dumps = json.dumps
-        else:
-            self._dumps = None
+        self._dumps = dumps or json.dumps
 
     def __conform__(self, proto):
         if proto is ISQLQuote:
@@ -86,13 +71,7 @@ class Json(object):
         provided in the constructor. You can override this method to create a
         customized JSON wrapper.
         """
-        dumps = self._dumps
-        if dumps is not None:
-            return dumps(obj)
-        else:
-            raise ImportError(
-                "json module not available: "
-                "you should provide a dumps function")
+        return self._dumps(obj)
 
     def prepare(self, conn):
         self._conn = conn
@@ -181,10 +160,7 @@ def register_default_jsonb(conn_or_curs=None, globally=False, loads=None):
 def _create_json_typecasters(oid, array_oid, loads=None, name='JSON'):
     """Create typecasters for json data type."""
     if loads is None:
-        if json is None:
-            raise ImportError("no json module available")
-        else:
-            loads = json.loads
+        loads = json.loads
 
     def typecast_json(s, cur):
         if s is None:
