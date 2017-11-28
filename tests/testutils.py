@@ -32,38 +32,6 @@ from functools import wraps
 from testconfig import dsn, repl_dsn
 
 
-if hasattr(unittest, 'skipIf'):
-    skip = unittest.skip
-    skipIf = unittest.skipIf
-
-else:
-    import warnings
-
-    def skipIf(cond, msg):
-        def skipIf_(f):
-            @wraps(f)
-            def skipIf__(self):
-                if cond:
-                    with warnings.catch_warnings():
-                        warnings.simplefilter('always', UserWarning)
-                        warnings.warn(msg)
-                    return
-                else:
-                    return f(self)
-            return skipIf__
-        return skipIf_
-
-    def skip(msg):
-        return skipIf(True, msg)
-
-    def skipTest(self, msg):
-        with warnings.catch_warnings():
-            warnings.simplefilter('always', UserWarning)
-            warnings.warn(msg)
-        return
-
-    unittest.TestCase.skipTest = skipTest
-
 # Silence warnings caused by the stubbornness of the Python unittest
 # maintainers
 # http://bugs.python.org/issue9424

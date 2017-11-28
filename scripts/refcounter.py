@@ -43,7 +43,7 @@ def main():
         dump(i, opt)
 
     f1 = open('debug-%02d.txt' % (opt.nruns - 1)).readlines()
-    f2 = open('debug-%02d.txt' % (opt.nruns)).readlines()
+    f2 = open('debug-%02d.txt' % opt.nruns).readlines()
     for line in difflib.unified_diff(f1, f2,
             "run %d" % (opt.nruns - 1), "run %d" % opt.nruns):
         sys.stdout.write(line)
@@ -52,7 +52,7 @@ def main():
 
     if opt.objs:
         f1 = open('objs-%02d.txt' % (opt.nruns - 1)).readlines()
-        f2 = open('objs-%02d.txt' % (opt.nruns)).readlines()
+        f2 = open('objs-%02d.txt' % opt.nruns).readlines()
         for line in difflib.unified_diff(f1, f2,
                 "run %d" % (opt.nruns - 1), "run %d" % opt.nruns):
             sys.stdout.write(line)

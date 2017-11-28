@@ -11,6 +11,7 @@ doc/html/*
 doc/psycopg2.txt
 scripts/pypi_docs_upload.py
 env
+.idea
 .tox
 /rel
 /wheels

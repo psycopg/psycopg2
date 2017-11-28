@@ -352,8 +352,7 @@ class ParseDsnTestCase(ConnectingTestCase):
             "DSN with quoting parsed")
 
         # Can't really use assertRaisesRegexp() here since we need to
-        # make sure that secret is *not* exposed in the error messgage
-        # (and it also requires python >= 2.7).
+        # make sure that secret is *not* exposed in the error message.
         raised = False
         try:
             # unterminated quote after dbname:

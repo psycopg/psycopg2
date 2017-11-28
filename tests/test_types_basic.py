@@ -295,7 +295,6 @@ class TypesBasicTests(ConnectingTestCase):
         else:
             self.assertEqual(memoryview, type(o2))
 
-    @testutils.skip_before_python(2, 7)
     def testAdaptMemoryview(self):
         o1 = memoryview(bytearray(range(256)))
         o2 = self.execute("select %s;", (o1,))
