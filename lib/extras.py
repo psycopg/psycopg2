@@ -450,6 +450,8 @@ class MinTimeLoggingConnection(LoggingConnection):
     def filter(self, msg, curs):
         t = (_time.time() - curs.timestamp) * 1000
         if t > self._mintime:
+            if _sys.version_info[0] >= 3 and isinstance(msg, bytes):
+                msg = msg.decode(_ext.encodings[self.encoding], 'replace')
             return msg + _os.linesep + "  (execution time: %d ms)" % t
 
     def cursor(self, *args, **kwargs):
