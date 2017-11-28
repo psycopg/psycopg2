@@ -350,6 +350,16 @@ def skip_if_green(reason):
 skip_copy_if_green = skip_if_green("copy in async mode currently not supported")
 
 
+def skip_if_no_getrefcount(f):
+    @wraps(f)
+    def skip_if_no_getrefcount_(self):
+        if not hasattr(sys, 'getrefcount'):
+            return self.skipTest('skipped, no sys.getrefcount()')
+        else:
+            return f(self)
+    return skip_if_no_getrefcount_
+
+
 def skip_if_windows(f):
     """Skip a test if run on windows"""
     @wraps(f)
