@@ -52,6 +52,10 @@
 #include "win32_support.h"
 #endif
 
+#if defined(__sun) && defined(__SVR4)
+#include "solaris_support.h"
+#endif
+
 extern HIDDEN PyObject *psyco_DescriptionType;
 extern HIDDEN const char *srv_isolevels[];
 extern HIDDEN const char *srv_readonly[];

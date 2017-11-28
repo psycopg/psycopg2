@@ -4,6 +4,7 @@ Current release
 What's new in psycopg 2.7.4
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+- Fixed Solaris 10 support (:ticket:`#532`).
 - Fixed parsing of array of points as floats (:ticket:`#613`).
 
 
