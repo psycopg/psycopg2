@@ -539,17 +539,13 @@ fields to JSON) you can use the `register_json()` function.
 
 .. __: http://people.planetpostgresql.org/andrew/index.php?/archives/255-JSON-for-PG-9.2-...-and-now-for-9.1!.html
 
-The Python library used by default to convert Python objects to JSON and to
-parse data from the database depends on the language version: with Python 2.6
-and following the :py:mod:`json` module from the standard library is used;
-with previous versions the `simplejson`_ module is used if available. Note
-that the last `!simplejson` version supporting Python 2.4 is the 2.0.9.
+The Python :py:mod:`json` module is used by default to convert Python objects
+to JSON and to parse data from the database.
 
 .. _JSON: http://www.json.org/
 .. |pgjson| replace:: :sql:`json`
 .. |jsonb| replace:: :sql:`jsonb`
 .. _pgjson: http://www.postgresql.org/docs/current/static/datatype-json.html
-.. _simplejson: http://pypi.python.org/pypi/simplejson/
 
 In order to pass a Python object to the database as query argument you can use
 the `Json` adapter::

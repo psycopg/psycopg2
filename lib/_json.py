@@ -49,10 +49,8 @@ class Json(object):
     :sql:`json` data type.
 
     `!Json` can be used to wrap any object supported by the provided *dumps*
-    function.  If none is provided, the standard :py:func:`json.dumps()` is
-    used (`!simplejson` for Python < 2.6;
-    `~psycopg2.extensions.ISQLQuote.getquoted()` will raise `!ImportError` if
-    the module is not available).
+    function. If none is provided, the standard :py:func:`json.dumps()` is
+    used.
 
     """
     def __init__(self, adapted, dumps=None):
