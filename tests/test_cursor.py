@@ -27,7 +27,7 @@ import pickle
 import psycopg2
 import psycopg2.extensions
 from testutils import (unittest, ConnectingTestCase, skip_before_postgres,
-    skip_if_no_namedtuple, skip_if_no_getrefcount, slow, skip_if_no_superuser,
+    skip_if_no_getrefcount, slow, skip_if_no_superuser,
     skip_if_windows)
 
 import psycopg2.extras
@@ -377,7 +377,6 @@ class CursorTests(ConnectingTestCase):
         for i, rec in enumerate(curs):
             self.assertEqual(i + 1, curs.rownumber)
 
-    @skip_if_no_namedtuple
     def test_namedtuple_description(self):
         curs = self.conn.cursor()
         curs.execute("""select

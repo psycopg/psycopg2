@@ -248,19 +248,6 @@ def skip_if_tpc_disabled(f):
     return skip_if_tpc_disabled_
 
 
-def skip_if_no_namedtuple(f):
-    @wraps(f)
-    def skip_if_no_namedtuple_(self):
-        try:
-            from collections import namedtuple              # noqa
-        except ImportError:
-            return self.skipTest("collections.namedtuple not available")
-        else:
-            return f(self)
-
-    return skip_if_no_namedtuple_
-
-
 def skip_if_no_iobase(f):
     """Skip a test if io.TextIOBase is not available."""
     @wraps(f)

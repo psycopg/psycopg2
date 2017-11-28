@@ -29,6 +29,7 @@ import os as _os
 import sys as _sys
 import time as _time
 import re as _re
+from collections import namedtuple
 
 try:
     import logging as _logging
@@ -361,14 +362,8 @@ class NamedTupleCursor(_cursor):
         except StopIteration:
             return
 
-    try:
-        from collections import namedtuple
-    except ImportError as _exc:
-        def _make_nt(self):
-            raise self._exc
-    else:
-        def _make_nt(self, namedtuple=namedtuple):
-            return namedtuple("Record", [d[0] for d in self.description or ()])
+    def _make_nt(self):
+        return namedtuple("Record", [d[0] for d in self.description or ()])
 
 
 class LoggingConnection(_connection):
@@ -1055,14 +1050,8 @@ class CompositeCaster(object):
         return rv
 
     def _create_type(self, name, attnames):
-        try:
-            from collections import namedtuple
-        except ImportError:
-            self.type = tuple
-            self._ctor = self.type
-        else:
-            self.type = namedtuple(name, attnames)
-            self._ctor = self.type._make
+        self.type = namedtuple(name, attnames)
+        self._ctor = self.type._make
 
     @classmethod
     def _from_db(self, name, conn_or_curs):
