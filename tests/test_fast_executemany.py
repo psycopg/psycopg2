@@ -154,7 +154,7 @@ class TestExecuteValues(FastExecuteTestMixin, testutils.ConnectingTestCase):
         cur = self.conn.cursor()
         psycopg2.extras.execute_values(cur,
             "insert into testfast (id, date, val) values %s",
-            (dict(id=i, date=date(2017, 1, i + 1), val=i * 10, foo="bar")
+            ({'id': i, 'date': date(2017, 1, i + 1), 'val': i * 10, 'foo': "bar"}
                 for i in range(10)),
             template='(%(id)s, %(date)s, %(val)s)')
         cur.execute("select id, date, val from testfast order by id")
