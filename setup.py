@@ -64,7 +64,7 @@ except ImportError:
 # Take a look at http://www.python.org/dev/peps/pep-0440/
 # for a consistent versioning pattern.
 
-PSYCOPG_VERSION = '2.7.4.dev0'
+PSYCOPG_VERSION = '2.7.4.dev1'
 
 
 # note: if you are changing the list of supported Python version please fix
@@ -197,8 +197,7 @@ or with the pg_config option in 'setup.cfg'.
                 return None
 
             pg_first_inst_key = winreg.OpenKey(reg,
-                'SOFTWARE\\PostgreSQL\\Installations\\'
-                + first_sub_key_name)
+                'SOFTWARE\\PostgreSQL\\Installations\\' + first_sub_key_name)
             try:
                 pg_inst_base_dir = winreg.QueryValueEx(
                     pg_first_inst_key, 'Base Directory')[0]
@@ -422,11 +421,14 @@ class psycopg_build_ext(build_ext):
             m = verre.match(pgversion)
             if m:
                 pgmajor, pgminor, pgpatch = m.group(1, 2, 3)
+                # Postgres >= 10 doesn't have pgminor anymore.
+                pgmajor = int(pgmajor)
+                if pgmajor >= 10:
+                    pgminor, pgpatch = None, pgminor
                 if pgminor is None or not pgminor.isdigit():
                     pgminor = 0
                 if pgpatch is None or not pgpatch.isdigit():
                     pgpatch = 0
-                pgmajor = int(pgmajor)
                 pgminor = int(pgminor)
                 pgpatch = int(pgpatch)
             else:
