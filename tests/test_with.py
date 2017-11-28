@@ -22,9 +22,6 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-
-from __future__ import with_statement
-
 import psycopg2
 import psycopg2.extensions as ext
 
