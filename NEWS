@@ -1,6 +1,14 @@
 Current release
 ---------------
 
+What's new in psycopg 2.8
+-------------------------
+
+Other changes:
+
+- Dropped support for Python 2.6, 3.2, 3.3.
+
+
 What's new in psycopg 2.7.4
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
