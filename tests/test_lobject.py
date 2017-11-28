@@ -463,9 +463,9 @@ def _has_lo64(conn):
                 % conn.server_version)
 
     if 'lo64' not in psycopg2.__version__:
-        return (False, "this psycopg build doesn't support the lo64 API")
+        return False, "this psycopg build doesn't support the lo64 API"
 
-    return (True, "this server and build support the lo64 API")
+    return True, "this server and build support the lo64 API"
 
 
 def skip_if_no_lo64(f):

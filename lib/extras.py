@@ -280,7 +280,7 @@ class RealDictRow(dict):
         return dict.__setitem__(self, name, value)
 
     def __getstate__(self):
-        return (self.copy(), self._column_mapping[:])
+        return self.copy(), self._column_mapping[:]
 
     def __setstate__(self, data):
         self.update(data[0])
