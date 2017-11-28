@@ -204,11 +204,6 @@ def skip_if_no_uuid(f):
     @wraps(f)
     def skip_if_no_uuid_(self):
         try:
-            import uuid             # noqa
-        except ImportError:
-            return self.skipTest("uuid not available in this Python version")
-
-        try:
             cur = self.conn.cursor()
             cur.execute("select typname from pg_type where typname = 'uuid'")
             has = cur.fetchone()
