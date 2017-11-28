@@ -365,9 +365,7 @@ class HstoreTestCase(ConnectingTestCase):
         from psycopg2.extras import register_hstore
         register_hstore(self.conn)
 
-        ds = []
-        ds.append({})
-        ds.append({'a': 'b', 'c': None})
+        ds = [{}, {'a': 'b', 'c': None}]
 
         ab = map(chr, range(32, 128))
         ds.append(dict(zip(ab, ab)))
