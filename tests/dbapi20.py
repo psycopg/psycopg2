@@ -762,7 +762,7 @@ class DatabaseAPI20Test(unittest.TestCase):
                 names=cur.fetchall()
                 assert len(names) == len(self.samples)
                 s=cur.nextset()
-                assert s == None,'No more return sets, should return None'
+                assert s is None, 'No more return sets, should return None'
             finally:
                 self.help_nextset_tearDown(cur)
 

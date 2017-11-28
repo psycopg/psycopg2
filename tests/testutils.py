@@ -32,37 +32,8 @@ from functools import wraps
 from testconfig import dsn, repl_dsn
 
 
-if hasattr(unittest, 'skipIf'):
-    skip = unittest.skip
-    skipIf = unittest.skipIf
-
-else:
-    import warnings
-
-    def skipIf(cond, msg):
-        def skipIf_(f):
-            @wraps(f)
-            def skipIf__(self):
-                if cond:
-                    with warnings.catch_warnings():
-                        warnings.simplefilter('always', UserWarning)
-                        warnings.warn(msg)
-                    return
-                else:
-                    return f(self)
-            return skipIf__
-        return skipIf_
-
-    def skip(msg):
-        return skipIf(True, msg)
-
-    def skipTest(self, msg):
-        with warnings.catch_warnings():
-            warnings.simplefilter('always', UserWarning)
-            warnings.warn(msg)
-        return
-
-    unittest.TestCase.skipTest = skipTest
+skip = unittest.skip
+skipIf = unittest.skipIf
 
 # Silence warnings caused by the stubbornness of the Python unittest
 # maintainers
@@ -380,16 +351,6 @@ def skip_if_green(reason):
     return skip_if_green_
 
 skip_copy_if_green = skip_if_green("copy in async mode currently not supported")
-
-
-def skip_if_no_getrefcount(f):
-    @wraps(f)
-    def skip_if_no_getrefcount_(self):
-        if not hasattr(sys, 'getrefcount'):
-            return self.skipTest('skipped, no sys.getrefcount()')
-        else:
-            return f(self)
-    return skip_if_no_getrefcount_
 
 
 def skip_if_windows(f):

@@ -172,7 +172,7 @@ class SQL(Composable):
 
     Example::
 
-        >>> query = sql.SQL("select {0} from {1}").format(
+        >>> query = sql.SQL("select {} from {}").format(
         ...    sql.SQL(', ').join([sql.Identifier('foo'), sql.Identifier('bar')]),
         ...    sql.Identifier('table'))
         >>> print(query.as_string(conn))

@@ -25,9 +25,9 @@ import psycopg2.extensions
 if len(sys.argv) > 1:
     DSN = sys.argv[1]
 
-print "Opening connection using dsn:", DSN
+print("Opening connection using dsn:", DSN)
 conn = psycopg2.connect(DSN)
-print "Encoding for this connection is", conn.encoding
+print("Encoding for this connection is", conn.encoding)
 
 
 class NoDataError(psycopg2.ProgrammingError):
@@ -52,12 +52,12 @@ class Cursor(psycopg2.extensions.cursor):
     
 curs = conn.cursor(cursor_factory=Cursor)
 curs.execute("SELECT 1 AS foo")
-print "Result of fetchone():", curs.fetchone()
+print("Result of fetchone():", curs.fetchone())
 
 # now let's raise the exception
 try:
     curs.fetchone()
-except NoDataError, err:
-    print "Exception caught:", err  
+except NoDataError as err:
+    print("Exception caught:", err)
 
 conn.rollback()

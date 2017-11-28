@@ -59,7 +59,7 @@ between 8.1 and 10 are included in the module.
 
         >>> try:
         ...     cur.execute("SELECT ouch FROM aargh;")
-        ... except Exception, e:
+        ... except Exception as e:
         ...     pass
         ...
         >>> errorcodes.lookup(e.pgcode[:2])
