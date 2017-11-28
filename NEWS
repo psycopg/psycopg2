@@ -1,6 +1,12 @@
 Current release
 ---------------
 
+What's new in psycopg 2.7.4
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Fixed Solaris 10 support (:ticket:`#532`).
+
+
 What's new in psycopg 2.7.3.2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
