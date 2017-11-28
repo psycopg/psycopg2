@@ -1,6 +1,12 @@
 Current release
 ---------------
 
+What's new in psycopg 2.7.4
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Fixed `MinTimeLoggingCursor` on Python 3 (:ticket:`#609`).
+
+
 What's new in psycopg 2.7.3.2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
