@@ -40,7 +40,7 @@ class SqlFormatTests(ConnectingTestCase):
         self.assertEqual(s1, 'select "field" from "table"')
 
     def test_pos_spec(self):
-        s = sql.SQL("select {} from {}").format(
+        s = sql.SQL("select {0} from {1}").format(
             sql.Identifier('field'), sql.Identifier('table'))
         s1 = s.as_string(self.conn)
         self.assert_(isinstance(s1, str))
@@ -60,14 +60,14 @@ class SqlFormatTests(ConnectingTestCase):
         self.assertEqual(s1, 'select "field" from "table"')
 
     def test_unicode(self):
-        s = sql.SQL(u"select {} from {}").format(
+        s = sql.SQL(u"select {0} from {1}").format(
             sql.Identifier(u'field'), sql.Identifier('table'))
         s1 = s.as_string(self.conn)
         self.assert_(isinstance(s1, unicode))
         self.assertEqual(s1, u'select "field" from "table"')
 
     def test_compose_literal(self):
-        s = sql.SQL("select {};").format(sql.Literal(dt.date(2016, 12, 31)))
+        s = sql.SQL("select {0};").format(sql.Literal(dt.date(2016, 12, 31)))
         s1 = s.as_string(self.conn)
         self.assertEqual(s1, "select '2016-12-31'::date;")
 
@@ -77,18 +77,18 @@ class SqlFormatTests(ConnectingTestCase):
         self.assertEqual(s1, "select foo;")
 
     def test_percent_escape(self):
-        s = sql.SQL("42 % {}").format(sql.Literal(7))
+        s = sql.SQL("42 % {0}").format(sql.Literal(7))
         s1 = s.as_string(self.conn)
         self.assertEqual(s1, "42 % 7")
 
     def test_braces_escape(self):
-        s = sql.SQL("{{{}}}").format(sql.Literal(7))
+        s = sql.SQL("{{{0}}}").format(sql.Literal(7))
         self.assertEqual(s.as_string(self.conn), "{7}")
         s = sql.SQL("{{1,{0}}}").format(sql.Literal(7))
         self.assertEqual(s.as_string(self.conn), "{1,7}")
 
     def test_compose_badnargs(self):
-        self.assertRaises(IndexError, sql.SQL("select {};").format)
+        self.assertRaises(IndexError, sql.SQL("select {0};").format)
 
     def test_compose_badnargs_auto(self):
         self.assertRaises(IndexError, sql.SQL("select {};").format)
