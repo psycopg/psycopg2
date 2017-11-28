@@ -272,7 +272,6 @@ class TypesBasicTests(ConnectingTestCase):
         o2 = self.execute("select %s;", (o1,))
         self.assertEqual(memoryview, type(o2[0]))
 
-    @testutils.skip_before_python(2, 6)
     def testAdaptBytearray(self):
         o1 = bytearray(range(256))
         o2 = self.execute("select %s;", (o1,))
