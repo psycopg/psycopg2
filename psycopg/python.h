@@ -31,8 +31,8 @@
 #include <stringobject.h>
 #endif
 
-#if PY_VERSION_HEX < 0x02060000
-#  error "psycopg requires Python >= 2.6"
+#if PY_VERSION_HEX < 0x02070000
+#  error "psycopg requires Python >= 2.7"
 #endif
 
 /* hash() return size changed around version 3.2a4 on 64bit platforms.  Before
@@ -42,14 +42,6 @@
 #if PY_VERSION_HEX < 0x030200A4
 typedef long Py_hash_t;
 typedef unsigned long Py_uhash_t;
-#endif
-
-/* Macros defined in Python 2.6 */
-#ifndef Py_REFCNT
-#define Py_REFCNT(ob)           (((PyObject*)(ob))->ob_refcnt)
-#define Py_TYPE(ob)             (((PyObject*)(ob))->ob_type)
-#define Py_SIZE(ob)             (((PyVarObject*)(ob))->ob_size)
-#define PyVarObject_HEAD_INIT(x,n) PyObject_HEAD_INIT(x) n,
 #endif
 
 /* FORMAT_CODE_PY_SSIZE_T is for Py_ssize_t: */
