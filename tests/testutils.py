@@ -32,9 +32,6 @@ from functools import wraps
 from testconfig import dsn, repl_dsn
 
 
-skip = unittest.skip
-skipIf = unittest.skipIf
-
 # Silence warnings caused by the stubbornness of the Python unittest
 # maintainers
 # http://bugs.python.org/issue9424
