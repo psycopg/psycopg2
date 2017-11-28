@@ -84,7 +84,7 @@ def insert_func(conn_or_pool, rows):
         try:
             c.execute("INSERT INTO test_threads VALUES (%s, %s, %s)",
                       (str(i), i, float(i)))
-        except psycopg2.ProgrammingError, err:
+        except psycopg2.ProgrammingError as err:
             print name, ": an error occurred; skipping this insert"
             print err
     conn.commit()
@@ -112,10 +112,10 @@ def select_func(conn_or_pool, z):
                 if MODE == 1:
                     conn_or_pool.putconn(conn)
                 s = name + ": number of rows fetched: " + str(len(l))
-                print s
-            except psycopg2.ProgrammingError, err:
-                print name, ": an error occurred; skipping this select"
-                print err
+                print(s)
+            except psycopg2.ProgrammingError as err:
+                print(name, ": an error occurred; skipping this select")
+                print(err)
 
 ## create the connection pool or the connections
 if MODE == 0:
@@ -129,14 +129,14 @@ else:
 ## create the threads
 threads = []
 
-print "Creating INSERT threads:"
+print("Creating INSERT threads:")
 for name in INSERT_THREADS:
     t = threading.Thread(None, insert_func, 'Thread-'+name,
                          (conn_insert, ROWS))
     t.setDaemon(0)
     threads.append(t)
 
-print "Creating SELECT threads:"
+print("Creating SELECT threads:")
 for name in SELECT_THREADS:
     t = threading.Thread(None, select_func, 'Thread-'+name,
                          (conn_select, SELECT_DIV))
@@ -150,12 +150,12 @@ for t in threads:
 # and wait for them to finish
 for t in threads:
     t.join()
-    print t.getName(), "exited OK"
+    print(t.getName(), "exited OK")
 
 
 conn.commit()
 curs.execute("SELECT count(name) FROM test_threads")
-print "Inserted", curs.fetchone()[0], "rows."
+print("Inserted", curs.fetchone()[0], "rows.")
 
 curs.execute("DROP TABLE test_threads")
 conn.commit()
