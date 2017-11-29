@@ -1952,8 +1952,9 @@ pq_fetch(cursorObject *curs, int no_result)
         }
         else {
             Dprintf("pq_fetch: got tuples, discarding them");
+            /* TODO: is there any case in which PQntuples == PQcmdTuples? */
+            _read_rowcount(curs);
             CLEARPGRES(curs->pgres);
-            curs->rowcount = -1;
             ex = 0;
         }
         break;

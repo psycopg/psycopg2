@@ -592,6 +592,20 @@ class CursorTests(ConnectingTestCase):
 
             self.assertEqual(victim_conn.closed, 2)
 
+    @skip_before_postgres(8, 2)
+    def test_rowcount_on_executemany_returning(self):
+        cur = self.conn.cursor()
+        cur.execute("create table execmany(id serial primary key, data int)")
+        cur.executemany(
+            "insert into execmany (data) values (%s)",
+            [(i,) for i in range(4)])
+        self.assertEqual(cur.rowcount, 4)
+
+        cur.executemany(
+            "insert into execmany (data) values (%s) returning data",
+            [(i,) for i in range(5)])
+        self.assertEqual(cur.rowcount, 5)
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
