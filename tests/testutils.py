@@ -371,34 +371,6 @@ def skip_if_windows(f):
     return skip_if_windows_
 
 
-def script_to_py3(script):
-    """Convert a script to Python3 syntax if required."""
-    if sys.version_info[0] < 3:
-        return script
-
-    import tempfile
-    f = tempfile.NamedTemporaryFile(suffix=".py", delete=False)
-    f.write(script.encode())
-    f.flush()
-    filename = f.name
-    f.close()
-
-    # 2to3 is way too chatty
-    import logging
-    logging.basicConfig(filename=os.devnull)
-
-    from lib2to3.main import main
-    if main("lib2to3.fixes", ['--no-diffs', '-w', '-n', filename]):
-        raise Exception('py3 conversion failed')
-
-    f2 = open(filename)
-    try:
-        return f2.read()
-    finally:
-        f2.close()
-        os.remove(filename)
-
-
 class py3_raises_typeerror(object):
     def __enter__(self):
         pass

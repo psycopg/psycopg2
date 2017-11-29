@@ -32,7 +32,7 @@ from subprocess import Popen, PIPE
 
 import psycopg2
 import psycopg2.extensions
-from testutils import skip_copy_if_green, script_to_py3
+from testutils import skip_copy_if_green
 from testconfig import dsn
 
 
@@ -324,7 +324,7 @@ except psycopg2.ProgrammingError:
 conn.close()
 """ % {'dsn': dsn})
 
-        proc = Popen([sys.executable, '-c', script_to_py3(script)])
+        proc = Popen([sys.executable, '-c', script])
         proc.communicate()
         self.assertEqual(0, proc.returncode)
 
@@ -343,7 +343,7 @@ except psycopg2.ProgrammingError:
 conn.close()
 """ % {'dsn': dsn})
 
-        proc = Popen([sys.executable, '-c', script_to_py3(script)], stdout=PIPE)
+        proc = Popen([sys.executable, '-c', script], stdout=PIPE)
         proc.communicate()
         self.assertEqual(0, proc.returncode)
 
