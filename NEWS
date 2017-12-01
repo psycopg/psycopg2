@@ -120,9 +120,13 @@ New features:
 
 Bug fixes:
 
+- Throw an exception trying to pass ``NULL`` chars as parameters
+  (:ticket:`#420`).
 - Fixed error caused by missing decoding `~psycopg2.extras.LoggingConnection`
   (:ticket:`#483`).
 - Fixed integer overflow in :sql:`interval` seconds (:ticket:`#512`).
+- Make `~psycopg2.extras.Range` objects picklable (:ticket:`#462`).
+- Fixed version parsing and building with PostgreSQL 10 (:ticket:`#489`).
 
 Other changes:
 
@@ -134,14 +138,6 @@ Other changes:
   connection.
 - Empty arrays no more converted into lists if they don't have a type attached
   (:ticket:`#506`)
-
-
-What's new in psycopg 2.6.3
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-- Throw an exception trying to pass ``NULL`` chars as parameters
-  (:ticket:`#420`).
-- Make `~psycopg2.extras.Range` objects picklable (:ticket:`#462`).
 
 
 What's new in psycopg 2.6.2
