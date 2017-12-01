@@ -7,6 +7,8 @@ What's new in psycopg 2.6.3
 - Throw an exception trying to pass ``NULL`` chars as parameters
   (:ticket:`#420`).
 - Make `~psycopg2.extras.Range` objects picklable (:ticket:`#462`).
+- Fixed version parsing and building of PostgreSQL 10.
+  Fix backport for :tickets:`#489, #632`.
 
 
 What's new in psycopg 2.6.2
