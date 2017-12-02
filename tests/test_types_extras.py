@@ -1563,7 +1563,7 @@ class RangeCasterTestCase(ConnectingTestCase):
         from psycopg2.tz import FixedOffsetTimezone
         cur = self.conn.cursor()
 
-        d1 = date(2012, 01, 01)
+        d1 = date(2012, 1, 1)
         d2 = date(2012, 12, 31)
         r = DateRange(d1, d2)
         cur.execute("select %s", (r,))
