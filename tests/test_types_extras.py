@@ -812,30 +812,6 @@ class AdaptTypeTestCase(ConnectingTestCase):
         return oid
 
 
-def skip_if_json_module(f):
-    """Skip a test if a Python json module *is* available"""
-    @wraps(f)
-    def skip_if_json_module_(self):
-        if psycopg2.extras.json is not None:
-            return self.skipTest("json module is available")
-
-        return f(self)
-
-    return skip_if_json_module_
-
-
-def skip_if_no_json_module(f):
-    """Skip a test if no Python json module is available"""
-    @wraps(f)
-    def skip_if_no_json_module_(self):
-        if psycopg2.extras.json is None:
-            return self.skipTest("json module not available")
-
-        return f(self)
-
-    return skip_if_no_json_module_
-
-
 def skip_if_no_json_type(f):
     """Skip a test if PostgreSQL json type is not available"""
     @wraps(f)
@@ -851,23 +827,6 @@ def skip_if_no_json_type(f):
 
 
 class JsonTestCase(ConnectingTestCase):
-    @skip_if_json_module
-    def test_module_not_available(self):
-        from psycopg2.extras import Json
-        self.assertRaises(ImportError, Json(None).getquoted)
-
-    @skip_if_json_module
-    def test_customizable_with_module_not_available(self):
-        from psycopg2.extras import Json
-
-        class MyJson(Json):
-            def dumps(self, obj):
-                assert obj is None
-                return "hi"
-
-        self.assertEqual(MyJson(None).getquoted(), "'hi'")
-
-    @skip_if_no_json_module
     def test_adapt(self):
         from psycopg2.extras import json, Json
 
@@ -879,7 +838,6 @@ class JsonTestCase(ConnectingTestCase):
             self.assertQuotedEqual(curs.mogrify("%s", (Json(obj),)),
                 psycopg2.extensions.QuotedString(json.dumps(obj)).getquoted())
 
-    @skip_if_no_json_module
     def test_adapt_dumps(self):
         from psycopg2.extras import json, Json
 
@@ -897,7 +855,6 @@ class JsonTestCase(ConnectingTestCase):
         self.assertQuotedEqual(curs.mogrify("%s", (Json(obj, dumps=dumps),)),
             b"'123.45'")
 
-    @skip_if_no_json_module
     def test_adapt_subclass(self):
         from psycopg2.extras import json, Json
 
@@ -915,7 +872,6 @@ class JsonTestCase(ConnectingTestCase):
         obj = Decimal('123.45')
         self.assertQuotedEqual(curs.mogrify("%s", (MyJson(obj),)), b"'123.45'")
 
-    @skip_if_no_json_module
     def test_register_on_dict(self):
         from psycopg2.extras import Json
         psycopg2.extensions.register_adapter(dict, Json)
@@ -937,7 +893,6 @@ class JsonTestCase(ConnectingTestCase):
         self.assertRaises(psycopg2.ProgrammingError,
             psycopg2.extras.register_json, self.conn)
 
-    @skip_if_no_json_module
     @skip_before_postgres(9, 2)
     def test_default_cast(self):
         curs = self.conn.cursor()
@@ -948,7 +903,6 @@ class JsonTestCase(ConnectingTestCase):
         curs.execute("""select array['{"a": 100.0, "b": null}']::json[]""")
         self.assertEqual(curs.fetchone()[0], [{'a': 100.0, 'b': None}])
 
-    @skip_if_no_json_module
     @skip_if_no_json_type
     def test_register_on_connection(self):
         psycopg2.extras.register_json(self.conn)
@@ -956,7 +910,6 @@ class JsonTestCase(ConnectingTestCase):
         curs.execute("""select '{"a": 100.0, "b": null}'::json""")
         self.assertEqual(curs.fetchone()[0], {'a': 100.0, 'b': None})
 
-    @skip_if_no_json_module
     @skip_if_no_json_type
     def test_register_on_cursor(self):
         curs = self.conn.cursor()
@@ -964,7 +917,6 @@ class JsonTestCase(ConnectingTestCase):
         curs.execute("""select '{"a": 100.0, "b": null}'::json""")
         self.assertEqual(curs.fetchone()[0], {'a': 100.0, 'b': None})
 
-    @skip_if_no_json_module
     @skip_if_no_json_type
     def test_register_globally(self):
         old = psycopg2.extensions.string_types.get(114)
@@ -982,7 +934,6 @@ class JsonTestCase(ConnectingTestCase):
             if olda:
                 psycopg2.extensions.register_type(olda)
 
-    @skip_if_no_json_module
     @skip_if_no_json_type
     def test_loads(self):
         json = psycopg2.extras.json
@@ -996,7 +947,6 @@ class JsonTestCase(ConnectingTestCase):
         self.assert_(isinstance(data['a'], Decimal))
         self.assertEqual(data['a'], Decimal('100.0'))
 
-    @skip_if_no_json_module
     @skip_if_no_json_type
     def test_no_conn_curs(self):
         from psycopg2._json import _get_json_oids
@@ -1023,7 +973,6 @@ class JsonTestCase(ConnectingTestCase):
             if olda:
                 psycopg2.extensions.register_type(olda)
 
-    @skip_if_no_json_module
     @skip_before_postgres(9, 2)
     def test_register_default(self):
         curs = self.conn.cursor()
@@ -1042,7 +991,6 @@ class JsonTestCase(ConnectingTestCase):
         self.assert_(isinstance(data[0]['a'], Decimal))
         self.assertEqual(data[0]['a'], Decimal('100.0'))
 
-    @skip_if_no_json_module
     @skip_if_no_json_type
     def test_null(self):
         psycopg2.extras.register_json(self.conn)
@@ -1052,7 +1000,6 @@ class JsonTestCase(ConnectingTestCase):
         curs.execute("""select NULL::json[]""")
         self.assertEqual(curs.fetchone()[0], None)
 
-    @skip_if_no_json_module
     def test_no_array_oid(self):
         curs = self.conn.cursor()
         t1, t2 = psycopg2.extras.register_json(curs, oid=25)
@@ -1064,7 +1011,6 @@ class JsonTestCase(ConnectingTestCase):
         self.assertEqual(data['a'], 100)
         self.assertEqual(data['b'], None)
 
-    @skip_if_no_json_module
     def test_str(self):
         snowman = u"\u2603"
         obj = {'a': [1, 2, snowman]}
@@ -1075,7 +1021,6 @@ class JsonTestCase(ConnectingTestCase):
         self.assert_(s.startswith("'"))
         self.assert_(s.endswith("'"))
 
-    @skip_if_no_json_module
     @skip_before_postgres(8, 2)
     def test_scs(self):
         cnn_on = self.connect(options="-c standard_conforming_strings=on")
@@ -1188,7 +1133,6 @@ class JsonbTestCase(ConnectingTestCase):
         curs.execute("""select NULL::jsonb[]""")
         self.assertEqual(curs.fetchone()[0], None)
 
-decorate_all_tests(JsonbTestCase, skip_if_no_json_module)
 decorate_all_tests(JsonbTestCase, skip_if_no_jsonb_type)
 
 
