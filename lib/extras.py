@@ -110,16 +110,16 @@ class DictCursorBase(_cursor):
         try:
             if self._prefetch:
                 res = super(DictCursorBase, self).__iter__()
-                first = res.next()
+                first = next(res)
             if self._query_executed:
                 self._build_index()
             if not self._prefetch:
                 res = super(DictCursorBase, self).__iter__()
-                first = res.next()
+                first = next(res)
 
             yield first
             while 1:
-                yield res.next()
+                yield next(res)
         except StopIteration:
             return
 
@@ -349,7 +349,7 @@ class NamedTupleCursor(_cursor):
     def __iter__(self):
         try:
             it = super(NamedTupleCursor, self).__iter__()
-            t = it.next()
+            t = next(it)
 
             nt = self.Record
             if nt is None:
@@ -358,7 +358,7 @@ class NamedTupleCursor(_cursor):
             yield nt._make(t)
 
             while 1:
-                yield nt._make(it.next())
+                yield nt._make(next(it))
         except StopIteration:
             return
 
@@ -1144,7 +1144,7 @@ def _paginate(seq, page_size):
     while 1:
         try:
             for i in xrange(page_size):
-                page.append(it.next())
+                page.append(next(it))
             yield page
             page = []
         except StopIteration:
