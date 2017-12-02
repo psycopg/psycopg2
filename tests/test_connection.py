@@ -35,7 +35,7 @@ import psycopg2.errorcodes
 from psycopg2 import extensions as ext
 
 from testutils import (
-    script_to_py3, unittest, decorate_all_tests, skip_if_no_superuser,
+    unittest, decorate_all_tests, skip_if_no_superuser,
     skip_before_postgres, skip_after_postgres, skip_before_libpq,
     ConnectingTestCase, skip_if_tpc_disabled, skip_if_windows, slow)
 
@@ -1566,7 +1566,7 @@ while True:
     cur.execute(%(query)r, ("Hello, world!",))
 """ % {'dsn': dsn, 'query': query})
 
-        proc = sp.Popen([sys.executable, '-c', script_to_py3(script)],
+        proc = sp.Popen([sys.executable, '-c', script],
             stdout=sp.PIPE, stderr=sp.PIPE)
         (out, err) = proc.communicate()
         self.assertNotEqual(proc.returncode, 0)
