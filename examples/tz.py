@@ -60,10 +60,10 @@ print "Time zone:", d.tzinfo.tzname(d), "offset:", d.tzinfo.utcoffset(d)
 curs.execute("SELECT * FROM test_tz")
 for d in curs:
     u = d[0].utcoffset() or ZERO
-    print "UTC time:  ", d[0] - u 
+    print "UTC time:  ", d[0] - u
     print "Local time:", d[0]
     print "Time zone:", d[0].tzinfo.tzname(d[0]), d[0].tzinfo.utcoffset(d[0])
-    
+
 
 curs.execute("DROP TABLE test_tz")
 conn.commit()

@@ -71,5 +71,3 @@ done = 1
 
 cur.close()
 conn.close()
-
-

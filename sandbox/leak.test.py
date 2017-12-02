@@ -14,7 +14,7 @@ two functions:
 # leak() will cause increasingly more RAM to be used by the script.
 $ python <script_nam> leak
 
-# noleak() does not have the RAM usage problem. The only difference 
+# noleak() does not have the RAM usage problem. The only difference
 # between it and leak() is that 'rows' is created once, before the loop.
 $ python <script_name> noleak
 
@@ -80,4 +80,3 @@ except IndexError:
 
 # Run leak() or noleak(), whichever was indicated on the command line
 run_function()
-

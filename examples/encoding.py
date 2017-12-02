@@ -38,7 +38,7 @@ encs.sort()
 for a, b in encs:
     print " ", a, "<->", b
 
-print "Using STRING typecaster"    
+print "Using STRING typecaster"
 print "Setting backend encoding to LATIN1 and executing queries:"
 conn.set_client_encoding('LATIN1')
 curs = conn.cursor()

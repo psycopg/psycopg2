@@ -6,7 +6,7 @@ For the win32 port:
   Jason Erickson <jerickso@indian.com>
 
 Additional Help:
-  
+
   Peter Fein contributed a logging connection/cursor class that even if it
   was not used directly heavily influenced the implementation currently in
   psycopg2.extras.

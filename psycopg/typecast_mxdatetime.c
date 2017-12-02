@@ -250,4 +250,3 @@ typecast_MXINTERVAL_cast(const char *str, Py_ssize_t len, PyObject *curs)
 #define typecast_DATETIME_cast typecast_MXDATE_cast
 #define typecast_DATETIMETZ_cast typecast_MXDATE_cast
 #endif
-

@@ -10,4 +10,3 @@ class B(object):
             return 'It is True'
         else:
             return 'It is False'
-        

@@ -49,4 +49,3 @@ def setup(app):
                  text=(visit_extension_node, depart_extension_node))
 
     app.add_directive('extension', Extension)
-

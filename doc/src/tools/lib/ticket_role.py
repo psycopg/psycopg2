@@ -56,4 +56,3 @@ def setup(app):
     app.add_config_value('ticket_remap_offset', None, 'env')
     app.add_role('ticket', ticket_role)
     app.add_role('tickets', ticket_role)
-

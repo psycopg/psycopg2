@@ -63,5 +63,3 @@ print "Some text from cursor with typecaster:", curs.fetchone()[0]
 curs = conn.cursor()
 curs.execute("SELECT 'some text.'::text AS foo")
 print "Some text from connection with typecaster again:", curs.fetchone()[0]
-
-

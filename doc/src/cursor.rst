@@ -34,10 +34,10 @@ The ``cursor`` class
     many cursors from the same connection and should use each cursor from
     a single thread. See :ref:`thread-safety` for details.
 
- 
-    .. attribute:: description 
 
-        This read-only attribute is a sequence of 7-item sequences.  
+    .. attribute:: description
+
+        This read-only attribute is a sequence of 7-item sequences.
 
         Each of these sequences is a named tuple (a regular tuple if
         :func:`collections.namedtuple` is not available) containing information
@@ -65,7 +65,7 @@ The ``cursor`` class
         This attribute will be `!None` for operations that do not return rows
         or if the cursor has not had an operation invoked via the
         |execute*|_ methods yet.
-        
+
         .. |pg_type| replace:: :sql:`pg_type`
         .. _pg_type: http://www.postgresql.org/docs/current/static/catalog-pg-type.html
         .. _PQgetlength: http://www.postgresql.org/docs/current/static/libpq-exec.html#LIBPQ-PQGETLENGTH
@@ -78,7 +78,7 @@ The ``cursor`` class
             regular tuples.
 
     .. method:: close()
-          
+
         Close the cursor now (rather than whenever `del` is executed).
         The cursor will be unusable from this point forward; an
         `~psycopg2.InterfaceError` will be raised if any operation is
@@ -88,7 +88,7 @@ The ``cursor`` class
             the method is automatically called at the end of the ``with``
             block.
 
-            
+
     .. attribute:: closed
 
         Read-only boolean attribute: specifies if the cursor is closed
@@ -235,7 +235,7 @@ The ``cursor`` class
             The `mogrify()` method is a Psycopg extension to the |DBAPI|.
 
     .. method:: setinputsizes(sizes)
-      
+
         This method is exposed in compliance with the |DBAPI|. It currently
         does nothing but it is safe to call it.
 
@@ -281,17 +281,17 @@ The ``cursor`` class
             >>> cur.execute("SELECT * FROM test WHERE id = %s", (3,))
             >>> cur.fetchone()
             (3, 42, 'bar')
-        
+
         A `~psycopg2.ProgrammingError` is raised if the previous call
         to |execute*|_ did not produce any result set or no call was issued
         yet.
 
 
     .. method:: fetchmany([size=cursor.arraysize])
-      
+
         Fetch the next set of rows of a query result, returning a list of
         tuples. An empty list is returned when no more rows are available.
-        
+
         The number of rows to fetch per call is specified by the parameter.
         If it is not given, the cursor's `~cursor.arraysize` determines
         the number of rows to be fetched. The method should try to fetch as
@@ -309,7 +309,7 @@ The ``cursor`` class
 
         A `~psycopg2.ProgrammingError` is raised if the previous call to
         |execute*|_ did not produce any result set or no call was issued yet.
-        
+
         Note there are performance considerations involved with the size
         parameter.  For optimal performance, it is usually best to use the
         `~cursor.arraysize` attribute.  If the size parameter is used,
@@ -344,7 +344,7 @@ The ``cursor`` class
         `~psycopg2.ProgrammingError` is raised and the cursor position is
         not changed.
 
-        .. note:: 
+        .. note::
 
             According to the |DBAPI|_, the exception raised for a cursor out
             of bound should have been `!IndexError`.  The best option is
@@ -364,7 +364,7 @@ The ``cursor`` class
 
 
     .. attribute:: arraysize
-          
+
         This read/write attribute specifies the number of rows to fetch at a
         time with `~cursor.fetchmany()`. It defaults to 1 meaning to fetch
         a single row at a time.
@@ -378,20 +378,20 @@ The ``cursor`` class
         default is 2000.
 
         .. versionadded:: 2.4
-        
+
         .. extension::
 
             The `itersize` attribute is a Psycopg extension to the |DBAPI|.
 
 
-    .. attribute:: rowcount 
-          
+    .. attribute:: rowcount
+
         This read-only attribute specifies the number of rows that the last
         |execute*|_ produced (for :abbr:`DQL (Data Query Language)` statements
-        like :sql:`SELECT`) or affected (for 
+        like :sql:`SELECT`) or affected (for
         :abbr:`DML (Data Manipulation Language)` statements like :sql:`UPDATE`
         or :sql:`INSERT`).
-        
+
         The attribute is -1 in case no |execute*| has been performed on
         the cursor or the row count of the last operation if it can't be
         determined by the interface.
@@ -400,7 +400,7 @@ The ``cursor`` class
             The |DBAPI|_ interface reserves to redefine the latter case to
             have the object return `!None` instead of -1 in future versions
             of the specification.
-        
+
 
     .. attribute:: rownumber
 
@@ -457,7 +457,7 @@ The ``cursor`` class
         command:
 
             >>> cur.execute("INSERT INTO test (num, data) VALUES (%s, %s)", (42, 'bar'))
-            >>> cur.statusmessage 
+            >>> cur.statusmessage
             'INSERT 0 1'
 
         .. extension::
@@ -490,13 +490,13 @@ The ``cursor`` class
 
 
     .. method:: nextset()
-    
+
         This method is not supported (PostgreSQL does not have multiple data
         sets) and will raise a `~psycopg2.NotSupportedError` exception.
 
 
     .. method:: setoutputsize(size [, column])
-      
+
         This method is exposed in compliance with the |DBAPI|. It currently
         does nothing but it is safe to call it.
 

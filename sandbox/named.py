@@ -5,7 +5,7 @@ class Portal(psycopg2.extensions.cursor):
     def __init__(self, name, curs):
         psycopg2.extensions.cursor.__init__(
             self, curs.connection, '"'+name+'"')
-        
+
 CURSOR = psycopg2.extensions.new_type((1790,), "CURSOR", Portal)
 psycopg2.extensions.register_type(CURSOR)
 

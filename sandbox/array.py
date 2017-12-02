@@ -28,4 +28,3 @@ curs = conn.cursor()
 
 curs.execute("SELECT %s", ([1,2,None],))
 print curs.fetchone()
-

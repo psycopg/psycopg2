@@ -1,4 +1,4 @@
-# copy_to.py -- example about copy_to 
+# copy_to.py -- example about copy_to
 #
 # Copyright (C) 2002 Tom Jenkins <tjenkins@devis.com>
 # Copyright (C) 2005 Federico Di Gregorio <fog@initd.org>

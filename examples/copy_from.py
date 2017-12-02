@@ -1,4 +1,4 @@
-# copy_from.py -- example about copy_from 
+# copy_from.py -- example about copy_from
 #
 # Copyright (C) 2002 Tom Jenkins <tjenkins@devis.com>
 # Copyright (C) 2005 Federico Di Gregorio <fog@initd.org>
@@ -172,6 +172,3 @@ conn.rollback()
 curs.execute("DROP TABLE test_copy")
 os.unlink('copy_from.txt')
 conn.commit()
-
-
-

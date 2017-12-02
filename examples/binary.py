@@ -62,7 +62,7 @@ for row in curs.fetchall():
     open(new_name, 'wb').write(row[2])
     print "done"
     print "  python type of image data is", type(row[2])
-    
+
 # extract exactly the same data but using a binary cursor
 
 print "Extracting the images using a binary cursor:"
@@ -78,7 +78,7 @@ for row in curs.fetchall():
     open(new_name, 'wb').write(row[0])
     print "done"
     print "  python type of image data is", type(row[0])
-    
+
 # this rollback is required because we can't drop a table with a binary cursor
 # declared and still open
 conn.rollback()

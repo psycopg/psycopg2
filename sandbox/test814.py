@@ -6,4 +6,3 @@ curs = conn.cursor()
 curs.execute("SELECT true AS foo WHERE 'a' in %s", (("aa", "bb"),))
 print curs.fetchall()
 print curs.query
-

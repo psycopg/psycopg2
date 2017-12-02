@@ -1017,4 +1017,3 @@ For further details see the documentation for the above methods.
 
 .. __: http://www.opengroup.org/bookstore/catalog/c193.htm
 .. __: http://jdbc.postgresql.org/
-

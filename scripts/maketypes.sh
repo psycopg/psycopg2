@@ -28,7 +28,7 @@ PGMINOR="`echo $PGVERSION | cut -d. -f2`"
 
 echo checking for postgresql major: $PGMAJOR
 echo checking for postgresql minor: $PGMINOR
-    
+
 echo -n generating pgtypes.h ...
 awk '/#define .+OID/ {print "#define " $2 " " $3}' "$PGTYPE" \
     > $SRCDIR/pgtypes.h
@@ -37,5 +37,3 @@ echo -n generating typecast_builtins.c ...
 awk '/#define .+OID/ {print $2 " " $3}' "$PGTYPE" | \
     python $SCRIPTSDIR/buildtypes.py >$SRCDIR/typecast_builtins.c
 echo " done"
-
-

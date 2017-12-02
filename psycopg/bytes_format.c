@@ -295,4 +295,3 @@ Bytes_Format(PyObject *format, PyObject *args)
     }
     return NULL;
 }
-

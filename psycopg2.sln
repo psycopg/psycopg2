@@ -1,5 +1,4 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
+﻿Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
 Project("{2857B73E-F847-4B02-9238-064979017E93}") = "psycopg2", "psycopg2.cproj", "{CFD80D18-3EE5-49ED-992A-E6D433BC7641}"
 EndProject
@@ -26,7 +25,7 @@ Global
 		$2.DirectoryNamespaceAssociation = None
 		$2.ResourceNamePolicy = FileName
 		$0.StandardHeader = $3
-		$3.Text = 
+		$3.Text =
 		$3.IncludeInNewFiles = False
 		$0.TextStylePolicy = $4
 		$4.FileWidth = 72

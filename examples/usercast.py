@@ -58,7 +58,7 @@ class Rect(object):
     and eventually as a type-caster for the data extracted from the database
     (that's why __init__ takes the curs argument.)
     """
-    
+
     def __init__(self, s=None, curs=None):
         """Init the rectangle from the optional string s."""
         self.x = self.y = self.width = self.height = 0.0
@@ -68,7 +68,7 @@ class Rect(object):
         """This is a terrible hack, just ignore proto and return self."""
         if proto == psycopg2.extensions.ISQLQuote:
             return self
-    
+
     def from_points(self, x0, y0, x1, y1):
         """Init the rectangle from points."""
         if x0 > x1: (x0, x1) = (x1, x0)
@@ -94,7 +94,7 @@ class Rect(object):
         s = "X: %d\tY: %d\tWidth: %d\tHeight: %d" % (
             self.x, self.y, self.width, self.height)
         return s
-    
+
 # here we select from the empty table, just to grab the description
 curs.execute("SELECT b FROM test_cast WHERE 0=1")
 boxoid = curs.description[0][1]

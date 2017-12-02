@@ -334,4 +334,3 @@ Psycopg raises *ImportError: cannot import name tz* on import in mod_wsgi / ASP,
     .. _egg: http://peak.telecommunity.com/DevCenter/PythonEggs
     .. __: http://stackoverflow.com/questions/2192323/what-is-the-python-egg-cache-python-egg-cache
     .. __: http://code.google.com/p/modwsgi/wiki/ConfigurationDirectives#WSGIPythonEggs
-

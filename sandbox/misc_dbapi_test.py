@@ -28,8 +28,8 @@ import psycopg2 as dbapi
 
 
 conn = dbapi.connect(database='test')
-                    
-                   
+
+
 
 cursor = conn.cursor()
 cursor.execute("""
@@ -41,5 +41,3 @@ cursor.execute("""
 
 for row in cursor:
     print row
-
-

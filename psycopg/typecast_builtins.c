@@ -69,4 +69,3 @@ static typecastObject_initlist typecast_builtins[] = {
   {"MACADDRARRAY", typecast_MACADDRARRAY_types, typecast_STRINGARRAY_cast, "STRING"},
     {NULL, NULL, NULL, NULL}
 };
-

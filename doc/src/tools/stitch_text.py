@@ -57,7 +57,6 @@ def emit(basename, txt_dir):
     # some space between sections
     sys.stdout.write("\n\n")
 
-    
+
 if __name__ == '__main__':
     sys.exit(main())
-

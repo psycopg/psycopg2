@@ -44,7 +44,7 @@ if len(sys.argv) > 1:
     DSN = sys.argv[1]
 if len(sys.argv) > 2:
     MODE = int(sys.argv[2])
-    
+
 print "Opening connection using dsn:", DSN
 conn = psycopg2.connect(DSN)
 curs = conn.cursor()
@@ -70,7 +70,7 @@ def insert_func(conn_or_pool, rows):
         conn = conn_or_pool
     else:
         conn = conn_or_pool.getconn()
-        
+
     for i in range(rows):
         if divmod(i, COMMIT_STEP)[1] == 0:
             conn.commit()
@@ -91,14 +91,14 @@ def insert_func(conn_or_pool, rows):
 
 ## a nice select function that prints the current number of rows in the
 ## database (and transfer them, putting some pressure on the network)
-    
+
 def select_func(conn_or_pool, z):
     name = threading.currentThread().getName()
 
     if MODE == 0:
         conn = conn_or_pool
         conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-    
+
     for i in range(SELECT_SIZE):
         if divmod(i, SELECT_STEP)[1] == 0:
             try:
@@ -125,7 +125,7 @@ else:
     m = len(INSERT_THREADS) + len(SELECT_THREADS)
     n = m/2
     conn_insert = conn_select = ThreadedConnectionPool(n, m, DSN)
-    
+
 ## create the threads
 threads = []
 

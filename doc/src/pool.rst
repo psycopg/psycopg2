@@ -57,8 +57,7 @@ be used.
 
 .. autoclass:: PersistentConnectionPool
 
-    .. note:: 
+    .. note::
 
         This pool class is mostly designed to interact with Zope and probably
         not useful in generic applications.
-

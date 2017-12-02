@@ -31,7 +31,7 @@ def sleep(curs):
     while not curs.isready():
         print "."
         time.sleep(.1)
- 
+
 #curs.execute("""
 #    DECLARE zz INSENSITIVE SCROLL CURSOR WITH HOLD FOR
 #    SELECT now();
@@ -47,4 +47,3 @@ def sleep(curs):
 
 #curs.execute("SELECT now() AS bar");
 #sleep(curs)
-

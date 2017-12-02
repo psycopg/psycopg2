@@ -49,7 +49,7 @@ class Cursor(psycopg2.extensions.cursor):
         if d is None:
 	    raise NoDataError("no more data")
         return d
-    
+
 curs = conn.cursor(cursor_factory=Cursor)
 curs.execute("SELECT 1 AS foo")
 print("Result of fetchone():", curs.fetchone())

@@ -29,7 +29,7 @@ print "Opening connection using dsn:", DSN
 conn = psycopg2.connect(DSN)
 print "Encoding for this connection is", conn.encoding
 
-    
+
 curs = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 curs.execute("SELECT 1 AS foo, 'cip' AS bar, date(now()) as zot")
 print "Cursor's row factory is", curs.row_factory

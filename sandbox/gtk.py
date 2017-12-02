@@ -16,4 +16,3 @@ sql()
 import gtk
 print "AFTER"
 sql()
-
