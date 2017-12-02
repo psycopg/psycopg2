@@ -22,7 +22,8 @@ from datetime import date, datetime
 from functools import wraps
 from pickle import dumps, loads
 
-from testutils import (unittest, skip_if_no_uuid, skip_before_postgres,
+import unittest
+from testutils import (skip_if_no_uuid, skip_before_postgres,
     ConnectingTestCase, decorate_all_tests, py3_raises_typeerror, slow)
 
 import psycopg2

@@ -26,7 +26,8 @@ import time
 import pickle
 import psycopg2
 import psycopg2.extensions
-from testutils import (unittest, ConnectingTestCase, skip_before_postgres,
+import unittest
+from testutils import (ConnectingTestCase, skip_before_postgres,
     skip_if_no_getrefcount, slow, skip_if_no_superuser,
     skip_if_windows)
 

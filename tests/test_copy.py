@@ -24,7 +24,8 @@
 
 import sys
 import string
-from testutils import (unittest, ConnectingTestCase, decorate_all_tests,
+import unittest
+from testutils import (ConnectingTestCase, decorate_all_tests,
     skip_before_postgres, slow)
 from cStringIO import StringIO
 from itertools import cycle, izip

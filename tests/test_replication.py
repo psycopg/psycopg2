@@ -27,7 +27,8 @@ from psycopg2.extras import (
     PhysicalReplicationConnection, LogicalReplicationConnection, StopReplication)
 
 import testconfig
-from testutils import unittest, ConnectingTestCase
+import unittest
+from testutils import ConnectingTestCase
 from testutils import skip_before_postgres, skip_if_green
 
 skip_repl_if_green = skip_if_green("replication not supported in green mode")

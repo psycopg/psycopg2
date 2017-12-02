@@ -29,7 +29,8 @@ import psycopg2
 from psycopg2 import extras
 
 from testconfig import dsn
-from testutils import ConnectingTestCase, unittest, skip_before_postgres, slow
+import unittest
+from testutils import ConnectingTestCase, skip_before_postgres, slow
 
 from test_replication import ReplicationTestCase, skip_repl_if_green
 from psycopg2.extras import LogicalReplicationConnection, StopReplication

@@ -18,7 +18,8 @@ import time
 from datetime import timedelta
 import psycopg2
 import psycopg2.extras
-from testutils import unittest, ConnectingTestCase, skip_before_postgres
+import unittest
+from testutils import ConnectingTestCase, skip_before_postgres
 
 
 class ExtrasDictCursorTests(ConnectingTestCase):
