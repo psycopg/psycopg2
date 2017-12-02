@@ -19,10 +19,7 @@ def main():
 
 def iter_file_base(fn):
     f = open(fn)
-    if sys.version_info[0] >= 3:
-        have_line = iter(f).__next__
-    else:
-        have_line = iter(f).next
+    have_line = iter(f).__next__
 
     while not have_line().startswith('.. toctree'):
         pass

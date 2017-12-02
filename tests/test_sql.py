@@ -344,11 +344,11 @@ class ComposedTest(ConnectingTestCase):
     def test_iter(self):
         obj = sql.Composed([sql.SQL("foo"), sql.SQL('bar')])
         it = iter(obj)
-        i = it.next()
+        i = next(it)
         self.assertEqual(i, sql.SQL('foo'))
-        i = it.next()
+        i = next(it)
         self.assertEqual(i, sql.SQL('bar'))
-        self.assertRaises(StopIteration, it.next)
+        self.assertRaises(StopIteration, next, it)
 
 
 class PlaceholderTest(ConnectingTestCase):

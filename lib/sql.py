@@ -276,7 +276,7 @@ class SQL(Composable):
         rv = []
         it = iter(seq)
         try:
-            rv.append(it.next())
+            rv.append(next(it))
         except StopIteration:
             pass
         else:
