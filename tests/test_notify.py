@@ -22,7 +22,7 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-from testutils import unittest
+import unittest
 
 import psycopg2
 from psycopg2 import extensions

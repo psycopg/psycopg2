@@ -22,7 +22,8 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-from testutils import unittest, ConnectingTestCase, slow
+import unittest
+from testutils import ConnectingTestCase, slow
 
 try:
     reload

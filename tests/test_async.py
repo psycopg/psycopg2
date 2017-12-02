@@ -23,7 +23,8 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-from testutils import unittest, skip_before_postgres, slow
+import unittest
+from testutils import skip_before_postgres, slow
 
 import psycopg2
 from psycopg2 import extensions as ext

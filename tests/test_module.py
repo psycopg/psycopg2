@@ -26,7 +26,8 @@ import os
 import sys
 from subprocess import Popen
 
-from testutils import (unittest, skip_before_postgres,
+import unittest
+from testutils import (skip_before_postgres,
     ConnectingTestCase, skip_copy_if_green, slow)
 
 import psycopg2

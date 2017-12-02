@@ -27,7 +27,8 @@ import decimal
 import sys
 from functools import wraps
 import testutils
-from testutils import unittest, ConnectingTestCase, decorate_all_tests
+import unittest
+from testutils import ConnectingTestCase, decorate_all_tests
 
 import psycopg2
 

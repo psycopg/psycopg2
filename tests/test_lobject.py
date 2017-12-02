@@ -29,7 +29,8 @@ from functools import wraps
 
 import psycopg2
 import psycopg2.extensions
-from testutils import (unittest, decorate_all_tests, skip_if_tpc_disabled,
+import unittest
+from testutils import (decorate_all_tests, skip_if_tpc_disabled,
     ConnectingTestCase, skip_if_green, slow)
 
 
