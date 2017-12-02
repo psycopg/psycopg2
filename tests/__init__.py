@@ -29,7 +29,7 @@ warnings.simplefilter('error')  # noqa
 
 import sys
 from testconfig import dsn
-from testutils import unittest
+import unittest
 
 import test_async
 import test_bugX000

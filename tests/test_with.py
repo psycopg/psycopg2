@@ -25,7 +25,8 @@
 import psycopg2
 import psycopg2.extensions as ext
 
-from testutils import unittest, ConnectingTestCase
+import unittest
+from testutils import ConnectingTestCase
 
 
 class WithTestCase(ConnectingTestCase):

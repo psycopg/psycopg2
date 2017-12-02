@@ -17,13 +17,6 @@ from datetime import datetime
 import psycopg2
 from psycopg2.extensions import adapt, register_adapter
 
-try:
-    sorted()
-except:
-    def sorted(seq):
-        seq.sort()
-        return seq
-
 # Here is the adapter for every object that we may ever need to
 # insert in the database. It receives the original object and does
 # its job on that instance

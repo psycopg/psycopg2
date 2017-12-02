@@ -24,7 +24,8 @@
 
 import datetime as dt
 from cStringIO import StringIO
-from testutils import (unittest, ConnectingTestCase,
+import unittest
+from testutils import (ConnectingTestCase,
     skip_before_postgres, skip_before_python, skip_copy_if_green)
 
 import psycopg2
@@ -344,11 +345,11 @@ class ComposedTest(ConnectingTestCase):
     def test_iter(self):
         obj = sql.Composed([sql.SQL("foo"), sql.SQL('bar')])
         it = iter(obj)
-        i = it.next()
+        i = next(it)
         self.assertEqual(i, sql.SQL('foo'))
-        i = it.next()
+        i = next(it)
         self.assertEqual(i, sql.SQL('bar'))
-        self.assertRaises(StopIteration, it.next)
+        self.assertRaises(StopIteration, next, it)
 
 
 class PlaceholderTest(ConnectingTestCase):

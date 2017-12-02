@@ -26,7 +26,8 @@ import time
 import pickle
 import psycopg2
 import psycopg2.extensions
-from testutils import (unittest, ConnectingTestCase, skip_before_postgres,
+import unittest
+from testutils import (ConnectingTestCase, skip_before_postgres,
     skip_if_no_getrefcount, slow, skip_if_no_superuser,
     skip_if_windows)
 
@@ -334,9 +335,9 @@ class CursorTests(ConnectingTestCase):
         # timestamp will not be influenced by the pause in Python world.
         curs.execute("""select clock_timestamp() from generate_series(1,2)""")
         i = iter(curs)
-        t1 = (i.next())[0]  # the brackets work around a 2to3 bug
+        t1 = next(i)[0]
         time.sleep(0.2)
-        t2 = (i.next())[0]
+        t2 = next(i)[0]
         self.assert_((t2 - t1).microseconds * 1e-6 < 0.1,
             "named cursor records fetched in 2 roundtrips (delta: %s)"
             % (t2 - t1))

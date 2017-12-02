@@ -4,6 +4,7 @@ MANIFEST
 *.pidb
 *.pyc
 *.sw[po]
+*.egg-info/
 dist/*
 build/*
 doc/src/_build/*

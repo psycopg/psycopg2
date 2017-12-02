@@ -26,8 +26,9 @@ import os
 import sys
 from subprocess import Popen
 
-from testutils import (unittest, skip_before_postgres,
-    ConnectingTestCase, skip_copy_if_green, script_to_py3, slow)
+import unittest
+from testutils import (skip_before_postgres,
+    ConnectingTestCase, skip_copy_if_green, slow)
 
 import psycopg2
 
@@ -322,7 +323,7 @@ sys.path.insert(0, %r)
 import _psycopg
 """ % (pardir, pkgdir))
 
-        proc = Popen([sys.executable, '-c', script_to_py3(script)])
+        proc = Popen([sys.executable, '-c', script])
         proc.communicate()
         self.assertEqual(0, proc.returncode)
 
