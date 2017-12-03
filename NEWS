@@ -7,7 +7,8 @@ What's new in psycopg 2.8
 Other changes:
 
 - Dropped support for Python 2.6, 3.2, 3.3.
-
+- Importing psycopg2.psycopg1 is now deprecated. Use psycopg2 instead. The
+  psycopg1 module will be removed in a future version.
 
 What's new in psycopg 2.7.4
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^

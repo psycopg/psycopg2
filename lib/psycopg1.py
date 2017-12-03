@@ -27,6 +27,7 @@ old code while porting to psycopg 2. Import it as follows::
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
+import warnings
 
 from psycopg2 import _psycopg as _2psycopg   # noqa
 from psycopg2.extensions import cursor as _2cursor
@@ -35,6 +36,12 @@ from psycopg2.extensions import connection as _2connection
 from psycopg2 import *      # noqa
 from psycopg2 import extensions as _ext
 _2connect = connect
+
+warnings.warn(
+    'Importing psycopg1 is deprecated. Use psycopg2 module instead. The '
+    'psycopg1 module will be removed in a future version.',
+    DeprecationWarning,
+)
 
 
 def connect(*args, **kwargs):
