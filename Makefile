@@ -18,8 +18,9 @@
 #   make check  # this requires setting up a test database with the correct user
 
 PYTHON := python$(PYTHON_VERSION)
-PYTHON_VERSION ?= $(shell $(PYTHON) -c 'import sys; print ("%d.%d" % sys.version_info[:2])')
-BUILD_DIR = $(shell pwd)/build/lib.$(PYTHON_VERSION)
+PYTHON_PLATFORM := $(shell $(PYTHON) -c 'import sysconfig; print(sysconfig.get_platform())')
+PYTHON_VERSION ?= $(shell $(PYTHON) -c 'import sys; print("%d.%d" % sys.version_info[:2])')
+BUILD_DIR = $(shell pwd)/build/lib.$(PYTHON_PLATFORM)-$(PYTHON_VERSION)
 
 SOURCE_C := $(wildcard psycopg/*.c psycopg/*.h)
 SOURCE_PY := $(wildcard lib/*.py)
