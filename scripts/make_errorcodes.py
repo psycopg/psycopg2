@@ -15,6 +15,7 @@ The script can be run at a new PostgreSQL release to refresh the module.
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
+from __future__ import print_function
 
 import re
 import sys
@@ -26,7 +27,7 @@ from BeautifulSoup import BeautifulSoup as BS
 
 def main():
     if len(sys.argv) != 2:
-        print >>sys.stderr, "usage: %s /path/to/errorcodes.py" % sys.argv[0]
+        print("usage: %s /path/to/errorcodes.py" % sys.argv[0], file=sys.stderr)
         return 2
 
     filename = sys.argv[1]
@@ -39,9 +40,9 @@ def main():
 
     f = open(filename, "w")
     for line in file_start:
-        print >>f, line
+        print(line, file=f)
     for line in generate_module_data(classes, errors):
-        print >>f, line
+        print(line, file=f)
 
 
 def read_base_file(filename):
@@ -141,7 +142,7 @@ def fetch_errors(versions):
     errors = defaultdict(dict)
 
     for version in versions:
-        print >> sys.stderr, version
+        print(version, file=sys.stderr)
         tver = tuple(map(int, version.split()[0].split('.')))
         if tver < (9, 1):
             c1, e1 = parse_errors_sgml(errors_sgml_url % version)

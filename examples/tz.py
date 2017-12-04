@@ -28,7 +28,7 @@ from psycopg2.tz import ZERO, LOCAL, FixedOffsetTimezone
 if len(sys.argv) > 1:
     DSN = sys.argv[1]
 
-print "Opening connection using dsn:", DSN
+print("Opening connection using dsn:", DSN)
 conn = psycopg2.connect(DSN)
 curs = conn.cursor()
 
@@ -42,27 +42,27 @@ conn.commit()
 
 d = datetime.datetime(1971, 10, 19, 22, 30, 0, tzinfo=LOCAL)
 curs.execute("INSERT INTO test_tz VALUES (%s)", (d,))
-print "Inserted timestamp with timezone:", d
-print "Time zone:", d.tzinfo.tzname(d), "offset:", d.tzinfo.utcoffset(d)
+print("Inserted timestamp with timezone:", d)
+print("Time zone:", d.tzinfo.tzname(d), "offset:", d.tzinfo.utcoffset(d))
 
 tz = FixedOffsetTimezone(-5*60, "EST")
 d = datetime.datetime(1971, 10, 19, 22, 30, 0, tzinfo=tz)
 curs.execute("INSERT INTO test_tz VALUES (%s)", (d,))
-print "Inserted timestamp with timezone:", d
-print "Time zone:", d.tzinfo.tzname(d), "offset:", d.tzinfo.utcoffset(d)
+print("Inserted timestamp with timezone:", d)
+print("Time zone:", d.tzinfo.tzname(d), "offset:", d.tzinfo.utcoffset(d))
 
 curs.execute("SELECT * FROM test_tz")
 d = curs.fetchone()[0]
 curs.execute("INSERT INTO test_tz VALUES (%s)", (d,))
-print "Inserted SELECTed timestamp:", d
-print "Time zone:", d.tzinfo.tzname(d), "offset:", d.tzinfo.utcoffset(d)
+print("Inserted SELECTed timestamp:", d)
+print("Time zone:", d.tzinfo.tzname(d), "offset:", d.tzinfo.utcoffset(d))
 
 curs.execute("SELECT * FROM test_tz")
 for d in curs:
     u = d[0].utcoffset() or ZERO
-    print "UTC time:  ", d[0] - u
-    print "Local time:", d[0]
-    print "Time zone:", d[0].tzinfo.tzname(d[0]), d[0].tzinfo.utcoffset(d[0])
+    print("UTC time:  ", d[0] - u)
+    print("Local time:", d[0])
+    print("Time zone:", d[0].tzinfo.tzname(d[0]), d[0].tzinfo.utcoffset(d[0]))
 
 
 curs.execute("DROP TABLE test_tz")

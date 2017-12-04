@@ -18,6 +18,7 @@
 DSN = 'dbname=test'
 
 ## don't modify anything below this line (except for experimenting)
+from __future__ import print_function
 
 import sys
 import os
@@ -27,9 +28,9 @@ import psycopg2
 if len(sys.argv) > 1:
     DSN = sys.argv[1]
 
-print "Opening connection using dsn:", DSN
+print("Opening connection using dsn:", DSN)
 conn = psycopg2.connect(DSN)
-print "Encoding for this connection is", conn.encoding
+print("Encoding for this connection is", conn.encoding)
 
 curs = conn.cursor()
 try:
@@ -51,52 +52,52 @@ conn.commit()
 # copy_to using defaults
 io = open('copy_to.txt', 'w')
 curs.copy_to(io, 'test_copy')
-print "1) Copy %d records into file object using defaults: " % len (data) + \
-      "sep = \\t and null = \\N"
+print("1) Copy %d records into file object using defaults: " % len (data) + \
+      "sep = \\t and null = \\N")
 io.close()
 
 rows = open('copy_to.txt', 'r').readlines()
-print "   File has %d rows:" % len(rows)
+print("   File has %d rows:" % len(rows))
 
 for r in rows:
-    print "   ", r,
+    print("   ", r, end=' ')
 
 # copy_to using custom separator
 io = open('copy_to.txt', 'w')
 curs.copy_to(io, 'test_copy', ':')
-print "2) Copy %d records into file object using sep = :" % len(data)
+print("2) Copy %d records into file object using sep = :" % len(data))
 io.close()
 
 rows = open('copy_to.txt', 'r').readlines()
-print "   File has %d rows:" % len(rows)
+print("   File has %d rows:" % len(rows))
 
 for r in rows:
-    print "   ", r,
+    print("   ", r, end=' ')
 
 # copy_to using custom null identifier
 io = open('copy_to.txt', 'w')
 curs.copy_to(io, 'test_copy', null='NULL')
-print "3) Copy %d records into file object using null = NULL" % len(data)
+print("3) Copy %d records into file object using null = NULL" % len(data))
 io.close()
 
 rows = open('copy_to.txt', 'r').readlines()
-print "   File has %d rows:" % len(rows)
+print("   File has %d rows:" % len(rows))
 
 for r in rows:
-    print "   ", r,
+    print("   ", r, end=' ')
 
 # copy_to using custom separator and null identifier
 io = open('copy_to.txt', 'w')
 curs.copy_to(io, 'test_copy', ':', 'NULL')
-print "4) Copy %d records into file object using sep = : and null ) NULL" % \
-      len(data)
+print("4) Copy %d records into file object using sep = : and null ) NULL" % \
+      len(data))
 io.close()
 
 rows = open('copy_to.txt', 'r').readlines()
-print "   File has %d rows:" % len(rows)
+print("   File has %d rows:" % len(rows))
 
 for r in rows:
-    print "   ", r,
+    print("   ", r, end=' ')
 
 curs.execute("DROP TABLE test_copy")
 os.unlink('copy_to.txt')

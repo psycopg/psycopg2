@@ -57,7 +57,7 @@ try:
     release = psycopg2.__version__.split()[0]
     version = '.'.join(release.split('.')[:2])
 except ImportError:
-    print "WARNING: couldn't import psycopg to read version."
+    print("WARNING: couldn't import psycopg to read version.")
     release = version
 
 intersphinx_mapping = {

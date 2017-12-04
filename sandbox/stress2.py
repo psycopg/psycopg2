@@ -33,7 +33,7 @@ def g():
         line = datafile.readlines(2)[1].strip()
         datafile.close()
         n = 30
-        print str(k*n) + '\t' + line
+        print(str(k*n) + '\t' + line)
         k += 1
 
     while threading.activeCount()>1:

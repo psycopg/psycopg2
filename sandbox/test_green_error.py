@@ -52,7 +52,7 @@ signal.signal(signal.SIGHUP, handler)
 
 def worker():
     while 1:
-        print "I'm working"
+        print("I'm working")
         sleep(1)
 
 eventlet.spawn(worker)
@@ -61,21 +61,21 @@ eventlet.spawn(worker)
 # You can unplug the network cable etc. here.
 # Kill -HUP will raise an exception in the callback.
 
-print "PID", os.getpid()
+print("PID", os.getpid())
 conn = psycopg2.connect(DSN)
 curs = conn.cursor()
 try:
     for i in range(1000):
         curs.execute("select %s, pg_sleep(1)", (i,))
         r = curs.fetchone()
-        print "selected", r
+        print("selected", r)
 
 except BaseException, e:
-    print "got exception:", e.__class__.__name__, e
+    print("got exception:", e.__class__.__name__, e)
 
 if conn.closed:
-    print "the connection is closed"
+    print("the connection is closed")
 else:
     conn.rollback()
     curs.execute("select 1")
-    print curs.fetchone()
+    print(curs.fetchone())

@@ -45,7 +45,7 @@ if len(sys.argv) > 1:
 if len(sys.argv) > 2:
     MODE = int(sys.argv[2])
 
-print "Opening connection using dsn:", DSN
+print("Opening connection using dsn:", DSN)
 conn = psycopg2.connect(DSN)
 curs = conn.cursor()
 
@@ -77,7 +77,7 @@ def insert_func(conn_or_pool, rows):
             if MODE == 1:
                 conn_or_pool.putconn(conn)
             s = name + ": COMMIT STEP " + str(i)
-            print s
+            print(s)
             if MODE == 1:
                 conn = conn_or_pool.getconn()
         c = conn.cursor()
@@ -85,8 +85,8 @@ def insert_func(conn_or_pool, rows):
             c.execute("INSERT INTO test_threads VALUES (%s, %s, %s)",
                       (str(i), i, float(i)))
         except psycopg2.ProgrammingError as err:
-            print name, ": an error occurred; skipping this insert"
-            print err
+            print(name, ": an error occurred; skipping this insert")
+            print(err)
     conn.commit()
 
 ## a nice select function that prints the current number of rows in the

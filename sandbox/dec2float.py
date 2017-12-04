@@ -12,4 +12,4 @@ o = psycopg2.connect("dbname=test")
 c = o.cursor()
 c.execute("SELECT NULL::decimal(10,2)")
 n = c.fetchone()[0]
-print n, type(n)
+print(n, type(n))

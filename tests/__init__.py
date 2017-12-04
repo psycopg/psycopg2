@@ -66,8 +66,8 @@ def test_suite():
     try:
         cnn = psycopg2.connect(dsn)
     except Exception as e:
-        print "Failed connection to test db:", e.__class__.__name__, e
-        print "Please set env vars 'PSYCOPG2_TESTDB*' to valid values."
+        print("Failed connection to test db:", e.__class__.__name__, e)
+        print("Please set env vars 'PSYCOPG2_TESTDB*' to valid values.")
         sys.exit(1)
     else:
         cnn.close()
