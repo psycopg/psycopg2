@@ -34,13 +34,13 @@ run_test () {
     export PSYCOPG2_TEST_REPL_DSN=
     unset PSYCOPG2_TEST_GREEN
     python -c \
-        "from psycopg2 import tests; tests.unittest.main(defaultTest='tests.test_suite')" \
+        "import tests; tests.unittest.main(defaultTest='tests.test_suite')" \
         $VERBOSE
 
     printf "\n\nRunning tests against PostgreSQL $VERSION (green mode)\n\n"
     export PSYCOPG2_TEST_GREEN=1
     python -c \
-        "from psycopg2 import tests; tests.unittest.main(defaultTest='tests.test_suite')" \
+        "import tests; tests.unittest.main(defaultTest='tests.test_suite')" \
         $VERBOSE
 }
 

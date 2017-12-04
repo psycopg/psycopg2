@@ -30,8 +30,8 @@ from collections import defaultdict
 def main():
     opt = parse_args()
 
-    import psycopg2.tests
-    test = psycopg2.tests
+    import tests
+    test = tests
     if opt.suite:
         test = getattr(test, opt.suite)
 

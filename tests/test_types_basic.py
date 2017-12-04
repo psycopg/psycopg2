@@ -28,7 +28,7 @@ import sys
 from functools import wraps
 from . import testutils
 import unittest
-from .testutils import ConnectingTestCase, decorate_all_tests
+from .testutils import ConnectingTestCase, decorate_all_tests, long
 
 import psycopg2
 
@@ -54,8 +54,8 @@ class TypesBasicTests(ConnectingTestCase):
     def testNumber(self):
         s = self.execute("SELECT %s AS foo", (1971,))
         self.failUnless(s == 1971, "wrong integer quoting: " + str(s))
-        s = self.execute("SELECT %s AS foo", (1971L,))
-        self.failUnless(s == 1971L, "wrong integer quoting: " + str(s))
+        s = self.execute("SELECT %s AS foo", (long(1971),))
+        self.failUnless(s == long(1971), "wrong integer quoting: " + str(s))
 
     def testBoolean(self):
         x = self.execute("SELECT %s as foo", (False,))

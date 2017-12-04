@@ -29,7 +29,7 @@ import psycopg2.extensions
 import unittest
 from .testutils import (ConnectingTestCase, skip_before_postgres,
     skip_if_no_getrefcount, slow, skip_if_no_superuser,
-    skip_if_windows)
+    skip_if_windows, unicode)
 
 import psycopg2.extras
 

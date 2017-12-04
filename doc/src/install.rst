@@ -267,11 +267,11 @@ Running the test suite
 ----------------------
 
 Once `!psycopg2` is installed you can run the test suite to verify it is
-working correctly. You can run:
+working correctly. From the source directory, you can run:
 
 .. code-block:: console
 
-    $ python -c "from psycopg2 import tests; tests.unittest.main(defaultTest='tests.test_suite')" --verbose
+    $ python -c "import tests; tests.unittest.main(defaultTest='tests.test_suite')" --verbose
 
 The tests run against a database called ``psycopg2_test`` on UNIX socket and
 the standard port. You can configure a different database to run the test by

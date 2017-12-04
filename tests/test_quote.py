@@ -25,7 +25,7 @@
 import sys
 from . import testutils
 import unittest
-from .testutils import ConnectingTestCase
+from .testutils import ConnectingTestCase, unichr
 
 import psycopg2
 import psycopg2.extensions

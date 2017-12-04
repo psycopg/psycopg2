@@ -26,9 +26,8 @@ import sys
 import string
 import unittest
 from .testutils import (ConnectingTestCase, decorate_all_tests,
-    skip_before_postgres, slow)
-from cStringIO import StringIO
-from itertools import cycle, izip
+    skip_before_postgres, slow, StringIO)
+from itertools import cycle
 from subprocess import Popen, PIPE
 
 import psycopg2

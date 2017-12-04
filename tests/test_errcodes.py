@@ -23,7 +23,7 @@
 # License for more details.
 
 import unittest
-from .testutils import ConnectingTestCase, slow
+from .testutils import ConnectingTestCase, slow, reload
 
 try:
     reload
@@ -52,7 +52,7 @@ class ErrocodeTests(ConnectingTestCase):
             except Exception as e:
                 errs.append(e)
 
-        for __ in xrange(MAX_CYCLES):
+        for __ in range(MAX_CYCLES):
             reload(errorcodes)
             (t1, t2) = (Thread(target=f), Thread(target=f))
             (t1.start(), t2.start())
