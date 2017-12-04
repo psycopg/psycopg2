@@ -24,7 +24,8 @@ from pickle import dumps, loads
 
 import unittest
 from .testutils import (skip_if_no_uuid, skip_before_postgres,
-    ConnectingTestCase, decorate_all_tests, py3_raises_typeerror, slow)
+    ConnectingTestCase, decorate_all_tests, py3_raises_typeerror, slow,
+    skip_from_python)
 
 import psycopg2
 import psycopg2.extras
@@ -250,6 +251,7 @@ class HstoreTestCase(ConnectingTestCase):
         self.assertEqual(t[2], {'a': 'b'})
 
     @skip_if_no_hstore
+    @skip_from_python(3)
     def test_register_unicode(self):
         from psycopg2.extras import register_hstore
 
@@ -318,6 +320,7 @@ class HstoreTestCase(ConnectingTestCase):
         ok(dict(zip(ab, ab)))
 
     @skip_if_no_hstore
+    @skip_from_python(3)
     def test_roundtrip_unicode(self):
         from psycopg2.extras import register_hstore
         register_hstore(self.conn, unicode=True)
