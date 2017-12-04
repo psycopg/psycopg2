@@ -23,7 +23,7 @@
 # License for more details.
 
 import unittest
-from testutils import ConnectingTestCase, slow
+from .testutils import ConnectingTestCase, slow
 
 try:
     reload

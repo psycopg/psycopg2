@@ -29,7 +29,7 @@ import select
 import platform
 import unittest
 from functools import wraps
-from testconfig import dsn, repl_dsn
+from .testconfig import dsn, repl_dsn
 
 
 # Silence warnings caused by the stubbornness of the Python unittest
@@ -338,7 +338,7 @@ def skip_if_green(reason):
     def skip_if_green_(f):
         @wraps(f)
         def skip_if_green__(self):
-            from testconfig import green
+            from .testconfig import green
             if green:
                 return self.skipTest(reason)
             else:

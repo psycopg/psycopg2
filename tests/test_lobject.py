@@ -30,7 +30,7 @@ from functools import wraps
 import psycopg2
 import psycopg2.extensions
 import unittest
-from testutils import (decorate_all_tests, skip_if_tpc_disabled,
+from .testutils import (decorate_all_tests, skip_if_tpc_disabled,
     ConnectingTestCase, skip_if_green, slow)
 
 

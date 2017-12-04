@@ -24,7 +24,7 @@
 # License for more details.
 
 import unittest
-from testutils import skip_before_postgres, slow
+from .testutils import skip_before_postgres, slow
 
 import psycopg2
 from psycopg2 import extensions as ext
@@ -32,7 +32,7 @@ from psycopg2 import extensions as ext
 import time
 import StringIO
 
-from testutils import ConnectingTestCase
+from .testutils import ConnectingTestCase
 
 
 class PollableStub(object):

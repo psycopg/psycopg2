@@ -25,7 +25,7 @@
 import datetime as dt
 from cStringIO import StringIO
 import unittest
-from testutils import (ConnectingTestCase,
+from .testutils import (ConnectingTestCase,
     skip_before_postgres, skip_before_python, skip_copy_if_green)
 
 import psycopg2

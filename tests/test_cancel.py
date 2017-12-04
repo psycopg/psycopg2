@@ -30,9 +30,9 @@ import psycopg2
 import psycopg2.extensions
 from psycopg2 import extras
 
-from testconfig import dsn
+from .testconfig import dsn
 import unittest
-from testutils import ConnectingTestCase, skip_before_postgres, slow
+from .testutils import ConnectingTestCase, skip_before_postgres, slow
 
 
 class CancelTests(ConnectingTestCase):

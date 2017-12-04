@@ -23,7 +23,7 @@ from functools import wraps
 from pickle import dumps, loads
 
 import unittest
-from testutils import (skip_if_no_uuid, skip_before_postgres,
+from .testutils import (skip_if_no_uuid, skip_before_postgres,
     ConnectingTestCase, decorate_all_tests, py3_raises_typeerror, slow)
 
 import psycopg2

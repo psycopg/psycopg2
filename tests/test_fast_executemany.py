@@ -16,7 +16,7 @@
 
 from datetime import date
 
-import testutils
+from . import testutils
 import unittest
 
 import psycopg2

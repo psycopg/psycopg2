@@ -27,7 +27,7 @@ import psycopg2.extensions
 import unittest
 import gc
 
-from testutils import ConnectingTestCase, skip_if_no_uuid
+from .testutils import ConnectingTestCase, skip_if_no_uuid
 
 
 class StolenReferenceTestCase(ConnectingTestCase):

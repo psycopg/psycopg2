@@ -90,12 +90,12 @@ class DatabaseAPI20Test(unittest.TestCase):
         self.driver, connect_args and connect_kw_args. Class specification
         should be as follows:
 
-        import dbapi20
+        from . import dbapi20
         class mytest(dbapi20.DatabaseAPI20Test):
            [...]
 
-        Don't 'import DatabaseAPI20Test from dbapi20', or you will
-        confuse the unit tester - just 'import dbapi20'.
+        Don't 'from .dbapi20 import DatabaseAPI20Test', or you will
+        confuse the unit tester - just 'from . import dbapi20'.
     '''
 
     # The self.driver module. This should be the module where the 'connect'

@@ -26,9 +26,9 @@ import decimal
 
 import sys
 from functools import wraps
-import testutils
+from . import testutils
 import unittest
-from testutils import ConnectingTestCase, decorate_all_tests
+from .testutils import ConnectingTestCase, decorate_all_tests
 
 import psycopg2
 
@@ -326,7 +326,7 @@ class TypesBasicTests(ConnectingTestCase):
         self.assertEqual(1, f1)
         i1 = self.execute("select -%s;", (-1,))
         self.assertEqual(1, i1)
-        l1 = self.execute("select -%s;", (-1L,))
+        l1 = self.execute("select -%s;", (long(-1),))
         self.assertEqual(1, l1)
 
     def testGenericArray(self):
