@@ -6,6 +6,5 @@ include doc/README.rst doc/SUCCESS doc/COPYING.LESSER doc/pep-0249.txt
 include doc/Makefile doc/requirements.txt
 recursive-include doc/src *.rst *.py *.css Makefile
 recursive-include scripts *.py *.sh
-include scripts/maketypes.sh scripts/buildtypes.py
 include AUTHORS README.rst INSTALL LICENSE NEWS
 include MANIFEST.in setup.py setup.cfg Makefile
