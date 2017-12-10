@@ -719,18 +719,6 @@ def register_inet(oid=None, conn_or_curs=None):
     return _ext.INET
 
 
-def register_tstz_w_secs(oids=None, conn_or_curs=None):
-    """The function used to register an alternate type caster for
-    :sql:`TIMESTAMP WITH TIME ZONE` to deal with historical time zones with
-    seconds in the UTC offset.
-
-    These are now correctly handled by the default type caster, so currently
-    the function doesn't do anything.
-    """
-    import warnings
-    warnings.warn("deprecated", DeprecationWarning)
-
-
 def wait_select(conn):
     """Wait until a connection or cursor has data available.
 

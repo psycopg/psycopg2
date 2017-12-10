@@ -1025,20 +1025,6 @@ parameters.  By reducing the number of server roundtrips the performance can be
     .. versionadded:: 2.7
 
 
-
-.. index::
-    single: Time zones; Fractional
-
-Fractional time zones
----------------------
-
-.. autofunction:: register_tstz_w_secs
-
-    .. versionadded:: 2.0.9
-
-    .. versionchanged:: 2.2.2
-        function is no-op: see :ref:`tz-handling`.
-
 .. index::
    pair: Example; Coroutine;
 

@@ -8,6 +8,7 @@ Other changes:
 
 - Dropped support for Python 2.6, 3.2, 3.3.
 - Dropped `psycopg1` module.
+- Dropped deprecated ``register_tstz_w_secs()`` (was previously a no-op).
 
 
 What's new in psycopg 2.7.4
