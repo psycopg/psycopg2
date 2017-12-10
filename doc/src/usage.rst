@@ -560,8 +560,7 @@ rounded to the nearest minute, with an error of up to 30 seconds.
 
 .. versionchanged:: 2.2.2
     timezones with seconds are supported (with rounding). Previously such
-    timezones raised an error.  In order to deal with them in previous
-    versions use `psycopg2.extras.register_tstz_w_secs()`.
+    timezones raised an error.
 
 
 .. index::
