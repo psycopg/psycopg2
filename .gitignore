@@ -12,6 +12,7 @@ doc/html/*
 doc/psycopg2.txt
 scripts/pypi_docs_upload.py
 env
+env?
 .idea
 .tox
 /rel
