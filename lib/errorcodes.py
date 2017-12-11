@@ -40,7 +40,7 @@ def lookup(code, _cache={}):
 
     # Generate the lookup map at first usage.
     tmp = {}
-    for k, v in globals().iteritems():
+    for k, v in globals().items():
         if isinstance(v, str) and len(v) in (2, 5):
             tmp[v] = k
 

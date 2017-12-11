@@ -209,8 +209,8 @@ class PersistentConnectionPool(AbstractConnectionPool):
 
         # we we'll need the thread module, to determine thread ids, so we
         # import it here and copy it in an instance variable
-        import thread as _thread  # work around for 2to3 bug - see ticket #348
-        self.__thread = _thread
+        import thread
+        self.__thread = thread
 
     def getconn(self):
         """Generate thread id and return a connection."""

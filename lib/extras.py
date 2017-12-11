@@ -318,14 +318,14 @@ class NamedTupleCursor(_cursor):
         nt = self.Record
         if nt is None:
             nt = self.Record = self._make_nt()
-        return map(nt._make, ts)
+        return list(map(nt._make, ts))
 
     def fetchall(self):
         ts = super(NamedTupleCursor, self).fetchall()
         nt = self.Record
         if nt is None:
             nt = self.Record = self._make_nt()
-        return map(nt._make, ts)
+        return list(map(nt._make, ts))
 
     def __iter__(self):
         try:
@@ -566,7 +566,7 @@ class ReplicationCursor(_replicationCursor):
                     "cannot specify output plugin options for physical replication")
 
             command += " ("
-            for k, v in options.iteritems():
+            for k, v in options.items():
                 if not command.endswith('('):
                     command += ", "
                 command += "%s %s" % (quote_ident(k, self), _A(str(v)))
@@ -762,7 +762,7 @@ class HstoreAdapter(object):
 
         adapt = _ext.adapt
         rv = []
-        for k, v in self.wrapped.iteritems():
+        for k, v in self.wrapped.items():
             k = adapt(k)
             k.prepare(self.conn)
             k = k.getquoted()
@@ -784,9 +784,9 @@ class HstoreAdapter(object):
         if not self.wrapped:
             return b"''::hstore"
 
-        k = _ext.adapt(self.wrapped.keys())
+        k = _ext.adapt(list(self.wrapped.keys()))
         k.prepare(self.conn)
-        v = _ext.adapt(self.wrapped.values())
+        v = _ext.adapt(list(self.wrapped.values()))
         v.prepare(self.conn)
         return b"hstore(" + k.getquoted() + b", " + v.getquoted() + b")"
 
@@ -1112,7 +1112,7 @@ def _paginate(seq, page_size):
     it = iter(seq)
     while 1:
         try:
-            for i in xrange(page_size):
+            for i in range(page_size):
                 page.append(next(it))
             yield page
             page = []

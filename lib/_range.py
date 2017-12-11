@@ -29,6 +29,7 @@ import re
 from psycopg2._psycopg import ProgrammingError, InterfaceError
 from psycopg2.extensions import ISQLQuote, adapt, register_adapter
 from psycopg2.extensions import new_type, new_array_type, register_type
+from psycopg2.compat import string_types
 
 
 class Range(object):
@@ -126,8 +127,12 @@ class Range(object):
 
         return True
 
-    def __nonzero__(self):
+    def __bool__(self):
         return self._bounds is not None
+
+    def __nonzero__(self):
+        # Python 2 compatibility
+        return type(self).__bool__(self)
 
     def __eq__(self, other):
         if not isinstance(other, Range):
@@ -296,7 +301,7 @@ class RangeCaster(object):
         # an implementation detail and is not documented. It is currently used
         # for the numeric ranges.
         self.adapter = None
-        if isinstance(pgrange, basestring):
+        if isinstance(pgrange, string_types):
             self.adapter = type(pgrange, (RangeAdapter,), {})
             self.adapter.name = pgrange
         else:
@@ -313,7 +318,7 @@ class RangeCaster(object):
 
         self.range = None
         try:
-            if isinstance(pyrange, basestring):
+            if isinstance(pyrange, string_types):
                 self.range = type(pyrange, (Range,), {})
             if issubclass(pyrange, Range) and pyrange is not Range:
                 self.range = pyrange

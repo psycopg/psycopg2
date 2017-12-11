@@ -25,6 +25,7 @@
 
 from psycopg2.extensions import (
     new_type, new_array_type, register_type, register_adapter, QuotedString)
+from psycopg2.compat import text_type
 
 # The module is imported on register_ipaddress
 ipaddress = None
@@ -76,13 +77,13 @@ def cast_interface(s, cur=None):
     if s is None:
         return None
     # Py2 version force the use of unicode. meh.
-    return ipaddress.ip_interface(unicode(s))
+    return ipaddress.ip_interface(text_type(s))
 
 
 def cast_network(s, cur=None):
     if s is None:
         return None
-    return ipaddress.ip_network(unicode(s))
+    return ipaddress.ip_network(text_type(s))
 
 
 def adapt_ipaddress(obj):

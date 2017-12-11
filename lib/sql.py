@@ -27,6 +27,7 @@ import sys
 import string
 
 from psycopg2 import extensions as ext
+from psycopg2.compat import string_types
 
 
 _formatter = string.Formatter()
@@ -147,7 +148,7 @@ class Composed(Composable):
             "foo", "bar"
 
         """
-        if isinstance(joiner, basestring):
+        if isinstance(joiner, string_types):
             joiner = SQL(joiner)
         elif not isinstance(joiner, SQL):
             raise TypeError(
@@ -179,7 +180,7 @@ class SQL(Composable):
         select "foo", "bar" from "table"
     """
     def __init__(self, string):
-        if not isinstance(string, basestring):
+        if not isinstance(string, string_types):
             raise TypeError("SQL values must be strings")
         super(SQL, self).__init__(string)
 
@@ -308,7 +309,7 @@ class Identifier(Composable):
 
     """
     def __init__(self, string):
-        if not isinstance(string, basestring):
+        if not isinstance(string, string_types):
             raise TypeError("SQL identifiers must be strings")
 
         super(Identifier, self).__init__(string)
@@ -395,7 +396,7 @@ class Placeholder(Composable):
     """
 
     def __init__(self, name=None):
-        if isinstance(name, basestring):
+        if isinstance(name, string_types):
             if ')' in name:
                 raise ValueError("invalid name: %r" % name)
 
