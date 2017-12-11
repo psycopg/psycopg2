@@ -65,7 +65,7 @@ env:
 	$(MAKE) -C doc $@
 
 check:
-	PYTHONPATH=$(BUILD_DIR):$(PYTHONPATH) $(PYTHON) -c "import tests; tests.unittest.main(defaultTest='tests.test_suite')" --verbose
+	PYTHONPATH=$(BUILD_DIR) $(PYTHON) -c "import tests; tests.unittest.main(defaultTest='tests.test_suite')" --verbose
 
 testdb:
 	@echo "* Creating $(TESTDB)"
