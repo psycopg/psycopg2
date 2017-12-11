@@ -238,6 +238,7 @@ build_script:
     - "%PYTHON%\\python.exe setup.py build_ext --have-ssl --pg-config %PGTOP%\\bin\\pg_config.exe -l libpgcommon -l libpgport -L %OPENSSLTOP%\\lib -I %OPENSSLTOP%\\include"
     - "%PYTHON%\\python.exe setup.py build"
     - "%PYTHON%\\python.exe setup.py install"
+    - RD /S /Q psycopg2.egg-info
 
 #after_build:
 
@@ -251,4 +252,4 @@ test_script:
     - "%PYTHON%\\python.exe -c \"import psycopg2; print(psycopg2.__version__)\""
     - "%PYTHON%\\python.exe -c \"import psycopg2; print(psycopg2.__libpq_version__)\""
     - "%PYTHON%\\python.exe -c \"import psycopg2; print(psycopg2.extensions.libpq_version())\""
-    - "%PYTHON%\\python.exe -c \"from psycopg2 import tests; tests.unittest.main(defaultTest='tests.test_suite')\" --verbose"
+    - "%PYTHON%\\python.exe -c \"import tests; tests.unittest.main(defaultTest='tests.test_suite')\" --verbose"

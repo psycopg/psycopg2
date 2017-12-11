@@ -10,26 +10,26 @@ conn = psycopg2.connect("dbname=test")
 #conn.set_client_encoding("xxx")
 curs = conn.cursor()
 curs.execute("SELECT '2005-2-12'::date AS foo")
-print curs.fetchall()
+print(curs.fetchall())
 curs.execute("SELECT '10:23:60'::time AS foo")
-print curs.fetchall()
+print(curs.fetchall())
 curs.execute("SELECT '10:23:59.895342'::time AS foo")
-print curs.fetchall()
+print(curs.fetchall())
 curs.execute("SELECT '0:0:12.31423'::time with time zone AS foo")
-print curs.fetchall()
+print(curs.fetchall())
 curs.execute("SELECT '0:0:12+01:30'::time with time zone AS foo")
-print curs.fetchall()
+print(curs.fetchall())
 curs.execute("SELECT '2005-2-12 10:23:59.895342'::timestamp AS foo")
-print curs.fetchall()
+print(curs.fetchall())
 curs.execute("SELECT '2005-2-12 10:23:59.895342'::timestamp with time zone AS foo")
-print curs.fetchall()
+print(curs.fetchall())
 
 #print curs.fetchmany(2)
 #print curs.fetchall()
 
 def sleep(curs):
     while not curs.isready():
-        print "."
+        print(".")
         time.sleep(.1)
 
 #curs.execute("""

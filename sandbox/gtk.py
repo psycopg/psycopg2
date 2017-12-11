@@ -5,14 +5,14 @@ c = o.cursor()
 
 def sql():
     c.execute("SELECT 1.23 AS foo")
-    print 1, c.fetchone()
+    print(1, c.fetchone())
     #print c.description
     c.execute("SELECT 1.23::float AS foo")
-    print 2, c.fetchone()
+    print(2, c.fetchone())
     #print c.description
 
-print "BEFORE"
+print("BEFORE")
 sql()
 import gtk
-print "AFTER"
+print("AFTER")
 sql()

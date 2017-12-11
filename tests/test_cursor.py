@@ -27,9 +27,9 @@ import pickle
 import psycopg2
 import psycopg2.extensions
 import unittest
-from testutils import (ConnectingTestCase, skip_before_postgres,
+from .testutils import (ConnectingTestCase, skip_before_postgres,
     skip_if_no_getrefcount, slow, skip_if_no_superuser,
-    skip_if_windows)
+    skip_if_windows, unicode)
 
 import psycopg2.extras
 
@@ -553,7 +553,7 @@ class CursorTests(ConnectingTestCase):
         # Issue #443 is in the async code too. Since the fix is duplicated,
         # so is the test.
         control_conn = self.conn
-        connect_func = lambda: self.connect(async=True)
+        connect_func = lambda: self.connect(async_=True)
         wait_func = psycopg2.extras.wait_select
         self._test_external_close(control_conn, connect_func, wait_func)
 

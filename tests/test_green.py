@@ -27,7 +27,7 @@ import psycopg2
 import psycopg2.extensions
 import psycopg2.extras
 
-from testutils import ConnectingTestCase, slow
+from .testutils import ConnectingTestCase, slow
 
 
 class ConnectionStub(object):

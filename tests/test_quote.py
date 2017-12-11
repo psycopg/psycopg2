@@ -23,9 +23,9 @@
 # License for more details.
 
 import sys
-import testutils
+from . import testutils
 import unittest
-from testutils import ConnectingTestCase
+from .testutils import ConnectingTestCase, unichr
 
 import psycopg2
 import psycopg2.extensions
@@ -81,7 +81,7 @@ class QuotingTestCase(ConnectingTestCase):
         if sys.version_info[0] < 3:
             data += "".join(map(chr, range(256)))
         else:
-            data += bytes(range(256))
+            data += bytes(list(range(256)))
 
         curs = self.conn.cursor()
         curs.execute("SELECT %s::bytea;", (psycopg2.Binary(data),))
@@ -126,7 +126,7 @@ class QuotingTestCase(ConnectingTestCase):
         if sys.version_info[0] < 3:
             data = ''.join(map(chr, range(32, 127) + range(160, 256)))
         else:
-            data = bytes(range(32, 127) + range(160, 256)).decode('latin1')
+            data = bytes(list(range(32, 127)) + list(range(160, 256))).decode('latin1')
 
         # as string
         curs.execute("SELECT %s::text;", (data,))
@@ -150,7 +150,7 @@ class QuotingTestCase(ConnectingTestCase):
         if sys.version_info[0] < 3:
             data = ''.join(map(chr, range(32, 127) + range(128, 256)))
         else:
-            data = bytes(range(32, 127) + range(128, 256)).decode('koi8_r')
+            data = bytes(list(range(32, 127)) + list(range(128, 256))).decode('koi8_r')
 
         # as string
         curs.execute("SELECT %s::text;", (data,))

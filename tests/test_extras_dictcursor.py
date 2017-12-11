@@ -19,7 +19,7 @@ from datetime import timedelta
 import psycopg2
 import psycopg2.extras
 import unittest
-from testutils import ConnectingTestCase, skip_before_postgres
+from .testutils import ConnectingTestCase, skip_before_postgres
 
 
 class ExtrasDictCursorTests(ConnectingTestCase):
@@ -390,7 +390,7 @@ class NamedTupleCursorTest(ConnectingTestCase):
         recs.extend(curs.fetchmany(5))
         recs.append(curs.fetchone())
         recs.extend(curs.fetchall())
-        self.assertEqual(range(10), [t.i for t in recs])
+        self.assertEqual(list(range(10)), [t.i for t in recs])
 
     def test_named_fetchone(self):
         curs = self.conn.cursor('tmp')

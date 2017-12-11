@@ -15,10 +15,10 @@ curs = conn.cursor()
 curs.execute("SELECT reffunc2()")
 
 portal = curs.fetchone()[0]
-print portal.fetchone()
-print portal.fetchmany(2)
+print(portal.fetchone())
+print(portal.fetchmany(2))
 portal.scroll(0, 'absolute')
-print portal.fetchall()
+print(portal.fetchall())
 
 
 #print curs.rowcount

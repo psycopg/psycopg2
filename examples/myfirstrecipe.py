@@ -122,5 +122,5 @@ register_adapter(int, AsIs)
 # the SQL_IN class by calling psycopg's adapt() directly:
 
 if __name__ == '__main__':
-    print "Note how the string will be SQL-quoted, but the number will not:"
-    print psycoadapt(("this is an 'sql quoted' str\\ing", 1, 2.0))
+    print("Note how the string will be SQL-quoted, but the number will not:")
+    print(psycoadapt(("this is an 'sql quoted' str\\ing", 1, 2.0)))

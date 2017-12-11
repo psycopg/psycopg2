@@ -34,12 +34,12 @@ import psycopg2
 import psycopg2.errorcodes
 from psycopg2 import extensions as ext
 
-from testutils import (
+from .testutils import (
     unittest, decorate_all_tests, skip_if_no_superuser,
     skip_before_postgres, skip_after_postgres, skip_before_libpq,
     ConnectingTestCase, skip_if_tpc_disabled, skip_if_windows, slow)
 
-from testconfig import dsn, dbname
+from .testconfig import dsn, dbname
 
 
 class ConnectionTests(ConnectingTestCase):

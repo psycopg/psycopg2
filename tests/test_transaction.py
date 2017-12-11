@@ -24,7 +24,7 @@
 
 import threading
 import unittest
-from testutils import ConnectingTestCase, skip_before_postgres, slow
+from .testutils import ConnectingTestCase, skip_before_postgres, slow
 
 import psycopg2
 from psycopg2.extensions import (

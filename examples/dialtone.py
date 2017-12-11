@@ -86,12 +86,12 @@ persistent_fields = {'Album': ['album_id', 'creation_time', 'binary_data'],
                               'Order':  ['order_id', 'items', 'price']
                             }
 
-print adapt(Album()).generateInsert()
-print adapt(Album()).generateInsert()
-print adapt(Album()).generateInsert()
-print adapt(Order()).generateInsert()
-print adapt(Order()).generateInsert()
-print adapt(Order()).generateInsert()
+print(adapt(Album()).generateInsert())
+print(adapt(Album()).generateInsert())
+print(adapt(Album()).generateInsert())
+print(adapt(Order()).generateInsert())
+print(adapt(Order()).generateInsert())
+print(adapt(Order()).generateInsert())
 
 """
 - Discussion

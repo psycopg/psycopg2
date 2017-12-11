@@ -26,8 +26,8 @@ import unittest
 
 import psycopg2
 from psycopg2 import extensions
-from testutils import ConnectingTestCase, slow
-from testconfig import dsn
+from .testutils import ConnectingTestCase, slow
+from .testconfig import dsn
 
 import sys
 import time

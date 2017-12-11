@@ -23,7 +23,7 @@ import sys, psycopg2
 if len(sys.argv) > 1:
     DSN = sys.argv[1]
 
-print "Opening connection using dsn:", DSN
+print("Opening connection using dsn:", DSN)
 conn = psycopg2.connect(DSN)
 curs = conn.cursor()
 
@@ -42,18 +42,18 @@ curs.execute("""INSERT INTO test_oid
                 VALUES (%(name)s, %(surname)s)""", data[0])
 
 foid = curs.lastrowid
-print "Oid for %(name)s %(surname)s" % data[0], "is", foid
+print("Oid for %(name)s %(surname)s" % data[0], "is", foid)
 
 curs.execute("""INSERT INTO test_oid
                 VALUES (%(name)s, %(surname)s)""", data[1])
 moid = curs.lastrowid
-print "Oid for %(name)s %(surname)s" % data[1], "is", moid
+print("Oid for %(name)s %(surname)s" % data[1], "is", moid)
 
 curs.execute("SELECT * FROM test_oid WHERE oid = %s", (foid,))
-print "Oid", foid, "selected %s %s" % curs.fetchone()
+print("Oid", foid, "selected %s %s" % curs.fetchone())
 
 curs.execute("SELECT * FROM test_oid WHERE oid = %s", (moid,))
-print "Oid", moid, "selected %s %s" % curs.fetchone()
+print("Oid", moid, "selected %s %s" % curs.fetchone())
 
 curs.execute("DROP TABLE test_oid")
 conn.commit()

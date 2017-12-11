@@ -17,6 +17,7 @@ script exits with error 1.
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
+from __future__ import print_function
 
 import gc
 import sys
@@ -29,8 +30,8 @@ from collections import defaultdict
 def main():
     opt = parse_args()
 
-    import psycopg2.tests
-    test = psycopg2.tests
+    import tests
+    test = tests
     if opt.suite:
         test = getattr(test, opt.suite)
 

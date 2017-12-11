@@ -27,8 +27,8 @@ import sys
 from subprocess import Popen
 
 import unittest
-from testutils import (skip_before_postgres,
-    ConnectingTestCase, skip_copy_if_green, slow)
+from .testutils import (skip_before_postgres,
+    ConnectingTestCase, skip_copy_if_green, slow, StringIO)
 
 import psycopg2
 
@@ -217,7 +217,6 @@ class ExceptionsTestCase(ConnectingTestCase):
 
     @skip_copy_if_green
     def test_diagnostics_copy(self):
-        from StringIO import StringIO
         f = StringIO()
         cur = self.conn.cursor()
         try:

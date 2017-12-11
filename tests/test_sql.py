@@ -23,10 +23,10 @@
 # License for more details.
 
 import datetime as dt
-from cStringIO import StringIO
 import unittest
-from testutils import (ConnectingTestCase,
-    skip_before_postgres, skip_before_python, skip_copy_if_green)
+from .testutils import (ConnectingTestCase,
+    skip_before_postgres, skip_before_python, skip_copy_if_green,
+    unicode, StringIO)
 
 import psycopg2
 from psycopg2 import sql

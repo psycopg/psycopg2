@@ -29,8 +29,7 @@ SOURCE := $(SOURCE_C) $(SOURCE_PY) $(SOURCE_TESTS) $(SOURCE_DOC)
 
 PACKAGE := $(BUILD_DIR)/psycopg2
 PLATLIB := $(PACKAGE)/_psycopg.so
-PURELIB := $(patsubst lib/%,$(PACKAGE)/%,$(SOURCE_PY)) \
-           $(patsubst tests/%,$(PACKAGE)/tests/%,$(SOURCE_TESTS))
+PURELIB := $(patsubst lib/%,$(PACKAGE)/%,$(SOURCE_PY))
 
 BUILD_OPT := --build-lib=$(BUILD_DIR)
 BUILD_EXT_OPT := --build-lib=$(BUILD_DIR)
@@ -66,7 +65,7 @@ env:
 	$(MAKE) -C doc $@
 
 check:
-	PYTHONPATH=$(BUILD_DIR):$(PYTHONPATH) $(PYTHON) -c "from psycopg2 import tests; tests.unittest.main(defaultTest='tests.test_suite')" --verbose
+	PYTHONPATH=$(BUILD_DIR):$(PYTHONPATH) $(PYTHON) -c "import tests; tests.unittest.main(defaultTest='tests.test_suite')" --verbose
 
 testdb:
 	@echo "* Creating $(TESTDB)"

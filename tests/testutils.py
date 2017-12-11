@@ -29,7 +29,24 @@ import select
 import platform
 import unittest
 from functools import wraps
-from testconfig import dsn, repl_dsn
+from .testconfig import dsn, repl_dsn
+
+# Python 2/3 compatibility
+
+if sys.version_info[0] == 2:
+    # Python 2
+    from StringIO import StringIO
+    long = long
+    reload = reload
+    unichr = unichr
+    unicode = unicode
+else:
+    # Python 3
+    from io import StringIO
+    from importlib import reload
+    long = int
+    unichr = chr
+    unicode = str
 
 
 # Silence warnings caused by the stubbornness of the Python unittest
@@ -338,7 +355,7 @@ def skip_if_green(reason):
     def skip_if_green_(f):
         @wraps(f)
         def skip_if_green__(self):
-            from testconfig import green
+            from .testconfig import green
             if green:
                 return self.skipTest(reason)
             else:

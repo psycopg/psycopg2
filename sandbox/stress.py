@@ -8,4 +8,4 @@ for i in range(20000):
         datafile = os.popen('ps -p %s -o rss' % os.getpid())
         line = datafile.readlines(2)[1].strip()
         datafile.close()
-        print str(i) + '\t' + line
+        print(str(i) + '\t' + line)

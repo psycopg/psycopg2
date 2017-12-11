@@ -23,8 +23,9 @@ from functools import wraps
 from pickle import dumps, loads
 
 import unittest
-from testutils import (skip_if_no_uuid, skip_before_postgres,
-    ConnectingTestCase, decorate_all_tests, py3_raises_typeerror, slow)
+from .testutils import (skip_if_no_uuid, skip_before_postgres,
+    ConnectingTestCase, decorate_all_tests, py3_raises_typeerror, slow,
+    skip_from_python)
 
 import psycopg2
 import psycopg2.extras
@@ -180,7 +181,7 @@ class HstoreTestCase(ConnectingTestCase):
 
         kk = m.group(1).split(b", ")
         vv = m.group(2).split(b", ")
-        ii = zip(kk, vv)
+        ii = list(zip(kk, vv))
         ii.sort()
 
         self.assertEqual(len(ii), len(o))
@@ -250,6 +251,7 @@ class HstoreTestCase(ConnectingTestCase):
         self.assertEqual(t[2], {'a': 'b'})
 
     @skip_if_no_hstore
+    @skip_from_python(3)
     def test_register_unicode(self):
         from psycopg2.extras import register_hstore
 
@@ -304,7 +306,7 @@ class HstoreTestCase(ConnectingTestCase):
         ok({})
         ok({'a': 'b', 'c': None})
 
-        ab = map(chr, range(32, 128))
+        ab = list(map(chr, range(32, 128)))
         ok(dict(zip(ab, ab)))
         ok({''.join(ab): ''.join(ab)})
 
@@ -312,12 +314,13 @@ class HstoreTestCase(ConnectingTestCase):
         if sys.version_info[0] < 3:
             ab = map(chr, range(32, 127) + range(160, 255))
         else:
-            ab = bytes(range(32, 127) + range(160, 255)).decode('latin1')
+            ab = bytes(list(range(32, 127)) + list(range(160, 255))).decode('latin1')
 
         ok({''.join(ab): ''.join(ab)})
         ok(dict(zip(ab, ab)))
 
     @skip_if_no_hstore
+    @skip_from_python(3)
     def test_roundtrip_unicode(self):
         from psycopg2.extras import register_hstore
         register_hstore(self.conn, unicode=True)
@@ -368,7 +371,7 @@ class HstoreTestCase(ConnectingTestCase):
 
         ds = [{}, {'a': 'b', 'c': None}]
 
-        ab = map(chr, range(32, 128))
+        ab = list(map(chr, range(32, 128)))
         ds.append(dict(zip(ab, ab)))
         ds.append({''.join(ab): ''.join(ab)})
 
@@ -376,7 +379,7 @@ class HstoreTestCase(ConnectingTestCase):
         if sys.version_info[0] < 3:
             ab = map(chr, range(32, 127) + range(160, 255))
         else:
-            ab = bytes(range(32, 127) + range(160, 255)).decode('latin1')
+            ab = bytes(list(range(32, 127)) + list(range(160, 255))).decode('latin1')
 
         ds.append({''.join(ab): ''.join(ab)})
         ds.append(dict(zip(ab, ab)))
@@ -511,7 +514,7 @@ class AdaptTypeTestCase(ConnectingTestCase):
            '@,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,[,"\\\\",],'
            '^,_,`,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,{,|,},'
            '~,\x7f)',
-           map(chr, range(1, 128)))
+           list(map(chr, range(1, 128))))
         ok('(,"\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f'
            '\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f !'
            '""#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\\\]'
@@ -1638,8 +1641,8 @@ class RangeCasterTestCase(ConnectingTestCase):
         bounds = ['[)', '(]', '()', '[]']
         ranges = [TextRange(low, up, bounds[i % 4])
             for i, (low, up) in enumerate(zip(
-                [None] + map(chr, range(1, 128)),
-                map(chr, range(1, 128)) + [None],
+                [None] + list(map(chr, range(1, 128))),
+                list(map(chr, range(1, 128))) + [None],
             ))]
         ranges.append(TextRange())
         ranges.append(TextRange(empty=True))

@@ -28,36 +28,36 @@ import warnings
 warnings.simplefilter('error')  # noqa
 
 import sys
-from testconfig import dsn
+from .testconfig import dsn
 import unittest
 
-import test_async
-import test_bugX000
-import test_bug_gc
-import test_cancel
-import test_connection
-import test_copy
-import test_cursor
-import test_dates
-import test_errcodes
-import test_extras_dictcursor
-import test_fast_executemany
-import test_green
-import test_ipaddress
-import test_lobject
-import test_module
-import test_notify
-import test_psycopg2_dbapi20
-import test_quote
-import test_replication
-import test_sql
-import test_transaction
-import test_types_basic
-import test_types_extras
-import test_with
+from . import test_async
+from . import test_bugX000
+from . import test_bug_gc
+from . import test_cancel
+from . import test_connection
+from . import test_copy
+from . import test_cursor
+from . import test_dates
+from . import test_errcodes
+from . import test_extras_dictcursor
+from . import test_fast_executemany
+from . import test_green
+from . import test_ipaddress
+from . import test_lobject
+from . import test_module
+from . import test_notify
+from . import test_psycopg2_dbapi20
+from . import test_quote
+from . import test_replication
+from . import test_sql
+from . import test_transaction
+from . import test_types_basic
+from . import test_types_extras
+from . import test_with
 
 if sys.version_info[:2] < (3, 6):
-    import test_async_keyword
+    from . import test_async_keyword
 
 
 def test_suite():
@@ -66,8 +66,8 @@ def test_suite():
     try:
         cnn = psycopg2.connect(dsn)
     except Exception as e:
-        print "Failed connection to test db:", e.__class__.__name__, e
-        print "Please set env vars 'PSYCOPG2_TESTDB*' to valid values."
+        print("Failed connection to test db:", e.__class__.__name__, e)
+        print("Please set env vars 'PSYCOPG2_TESTDB*' to valid values.")
         sys.exit(1)
     else:
         cnn.close()
