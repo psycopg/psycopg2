@@ -168,12 +168,12 @@ class DictRow(list):
     def __getitem__(self, x):
         if not isinstance(x, (int, slice)):
             x = self._index[x]
-        return list.__getitem__(self, x)
+        return super(DictRow, self).__getitem__(x)
 
     def __setitem__(self, x, v):
         if not isinstance(x, (int, slice)):
             x = self._index[x]
-        list.__setitem__(self, x, v)
+        super(DictRow, self).__setitem__(x, v)
 
     def items(self):
         return list(self.iteritems())
@@ -195,13 +195,13 @@ class DictRow(list):
 
     def iteritems(self):
         for n, v in self._index.iteritems():
-            yield n, list.__getitem__(self, v)
+            yield n, super(DictRow, self).__getitem__(v)
 
     def iterkeys(self):
         return self._index.iterkeys()
 
     def itervalues(self):
-        return list.__iter__(self)
+        return super(DictRow, self).__iter__()
 
     def copy(self):
         return dict(self.iteritems())
