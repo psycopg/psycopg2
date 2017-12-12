@@ -176,32 +176,20 @@ class DictRow(list):
         super(DictRow, self).__setitem__(x, v)
 
     def items(self):
-        return list(self.iteritems())
+        for n, v in self._index.iteritems():
+            yield n, super(DictRow, self).__getitem__(v)
 
     def keys(self):
         return self._index.keys()
 
     def values(self):
-        return tuple(self[:])
-
-    def has_key(self, x):
-        return x in self._index
+        return super(DictRow, self).__iter__()
 
     def get(self, x, default=None):
         try:
             return self[x]
         except:
             return default
-
-    def iteritems(self):
-        for n, v in self._index.iteritems():
-            yield n, super(DictRow, self).__getitem__(v)
-
-    def iterkeys(self):
-        return self._index.iterkeys()
-
-    def itervalues(self):
-        return super(DictRow, self).__iter__()
 
     def copy(self):
         return dict(self.iteritems())
@@ -215,13 +203,6 @@ class DictRow(list):
     def __setstate__(self, data):
         self[:] = data[0]
         self._index = data[1]
-
-    # drop the crusty Py2 methods
-    if _sys.version_info[0] > 2:
-        items = iteritems               # noqa
-        keys = iterkeys                 # noqa
-        values = itervalues             # noqa
-        del iteritems, iterkeys, itervalues, has_key
 
 
 class RealDictConnection(_connection):
