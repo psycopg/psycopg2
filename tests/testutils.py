@@ -30,6 +30,7 @@ import platform
 import unittest
 from functools import wraps
 from .testconfig import dsn, repl_dsn
+from psycopg2.compat import text_type
 
 # Python 2/3 compatibility
 
@@ -39,14 +40,12 @@ if sys.version_info[0] == 2:
     long = long
     reload = reload
     unichr = unichr
-    unicode = unicode
 else:
     # Python 3
     from io import StringIO
     from importlib import reload
     long = int
     unichr = chr
-    unicode = str
 
 
 # Silence warnings caused by the stubbornness of the Python unittest
@@ -89,7 +88,7 @@ class ConnectingTestCase(unittest.TestCase):
     def assertQuotedEqual(self, first, second, msg=None):
         """Compare two quoted strings disregarding eventual E'' quotes"""
         def f(s):
-            if isinstance(s, unicode):
+            if isinstance(s, text_type):
                 return re.sub(r"\bE'", "'", s)
             elif isinstance(first, bytes):
                 return re.sub(br"\bE'", b"'", s)

@@ -26,10 +26,11 @@ import datetime as dt
 import unittest
 from .testutils import (ConnectingTestCase,
     skip_before_postgres, skip_before_python, skip_copy_if_green,
-    unicode, StringIO)
+    StringIO)
 
 import psycopg2
 from psycopg2 import sql
+from psycopg2.compat import text_type
 
 
 class SqlFormatTests(ConnectingTestCase):
@@ -64,7 +65,7 @@ class SqlFormatTests(ConnectingTestCase):
         s = sql.SQL(u"select {0} from {1}").format(
             sql.Identifier(u'field'), sql.Identifier('table'))
         s1 = s.as_string(self.conn)
-        self.assert_(isinstance(s1, unicode))
+        self.assert_(isinstance(s1, text_type))
         self.assertEqual(s1, u'select "field" from "table"')
 
     def test_compose_literal(self):
