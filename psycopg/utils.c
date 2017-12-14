@@ -282,7 +282,7 @@ exit:
 
 /* Make a connection string out of a string and a dictionary of arguments.
  *
- * Helper to call psycopg2.extensions.make_dns()
+ * Helper to call psycopg2.extensions.make_dsn()
  */
 PyObject *
 psycopg_make_dsn(PyObject *dsn, PyObject *kwargs)
