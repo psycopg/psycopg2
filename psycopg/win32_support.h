@@ -36,11 +36,8 @@
 
 
 #ifdef _WIN32
-#ifndef __MINGW32__
 extern HIDDEN int gettimeofday(struct timeval * tp, void * tzp);
 extern HIDDEN void timeradd(struct timeval *a, struct timeval *b, struct timeval *c);
-#elif
-#endif
 
 extern HIDDEN void timersub(struct timeval *a, struct timeval *b, struct timeval *c);
 #endif
