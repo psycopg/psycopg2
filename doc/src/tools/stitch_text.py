@@ -5,6 +5,7 @@
 import os
 import sys
 
+
 def main():
     if len(sys.argv) != 3:
         sys.stderr.write("usage: %s index.rst text-dir\n")
@@ -17,20 +18,20 @@ def main():
 
     return 0
 
+
 def iter_file_base(fn):
     f = open(fn)
-    have_line = iter(f).__next__
 
-    while not have_line().startswith('.. toctree'):
+    while not next(f).startswith('.. toctree'):
         pass
-    while have_line().strip().startswith(':'):
+    while next(f).strip().startswith(':'):
         pass
 
     yield os.path.splitext(os.path.basename(fn))[0]
 
     n = 0
     while True:
-        line = have_line()
+        line = next(f)
         if line.isspace():
             continue
         if line.startswith(".."):
@@ -43,6 +44,7 @@ def iter_file_base(fn):
     if n < 5:
         # maybe format changed?
         raise Exception("Not enough files found. Format change in index.rst?")
+
 
 def emit(basename, txt_dir):
     f = open(os.path.join(txt_dir, basename + ".txt"))
