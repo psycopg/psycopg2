@@ -93,12 +93,6 @@ error:
     return rv;
 }
 
-#ifndef PyDateTime_DELTA_GET_DAYS
-#define PyDateTime_DELTA_GET_DAYS(o) (o->days)
-#define PyDateTime_DELTA_GET_SECONDS(o) (o->seconds)
-#define PyDateTime_DELTA_GET_MICROSECONDS(o) (o->microseconds)
-#endif
-
 static PyObject *
 _pydatetime_string_delta(pydatetimeObject *self)
 {
