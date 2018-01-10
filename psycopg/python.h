@@ -111,10 +111,6 @@ typedef unsigned long Py_uhash_t;
 #define Bytes_ConcatAndDel PyString_ConcatAndDel
 #define _Bytes_Resize _PyString_Resize
 
-#define PyDateTime_DELTA_GET_DAYS(o)         (((PyDateTime_Delta*)o)->days)
-#define PyDateTime_DELTA_GET_SECONDS(o)      (((PyDateTime_Delta*)o)->seconds)
-#define PyDateTime_DELTA_GET_MICROSECONDS(o) (((PyDateTime_Delta*)o)->microseconds)
-
 #else
 
 #define Bytes_Type PyBytes_Type
@@ -131,6 +127,12 @@ typedef unsigned long Py_uhash_t;
 #define Bytes_ConcatAndDel PyBytes_ConcatAndDel
 #define _Bytes_Resize _PyBytes_Resize
 
+#endif
+
+#ifndef PyDateTime_DELTA_GET_DAYS
+#define PyDateTime_DELTA_GET_DAYS(o)         (((PyDateTime_Delta*)o)->days)
+#define PyDateTime_DELTA_GET_SECONDS(o)      (((PyDateTime_Delta*)o)->seconds)
+#define PyDateTime_DELTA_GET_MICROSECONDS(o) (((PyDateTime_Delta*)o)->microseconds)
 #endif
 
 HIDDEN PyObject *Bytes_Format(PyObject *format, PyObject *args);
