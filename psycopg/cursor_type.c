@@ -592,8 +592,6 @@ psyco_curs_mogrify(cursorObject *self, PyObject *args, PyObject *kwargs)
         return NULL;
     }
 
-    EXC_IF_CURS_CLOSED(self);
-
     return _psyco_curs_mogrify(self, operation, vars);
 }
 
