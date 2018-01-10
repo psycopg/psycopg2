@@ -639,7 +639,8 @@ class FromTicksTestCase(unittest.TestCase):
     def test_date_value_error_sec_59_99(self):
         from datetime import date
         s = psycopg2.DateFromTicks(1273173119.99992)
-        self.assertEqual(s.adapted, date(2010, 5, 6))
+        # The returned date is local
+        self.assert_(s.adapted in [date(2010, 5, 6), date(2010, 5, 7)])
 
     def test_time_value_error_sec_59_99(self):
         from datetime import time
