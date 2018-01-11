@@ -1382,6 +1382,16 @@ class TransactionControlTests(ConnectingTestCase):
         cur.execute("SHOW default_transaction_read_only;")
         self.assertEqual(cur.fetchone()[0], 'off')
 
+    def test_idempotence_check(self):
+        self.conn.autocommit = False
+        self.conn.readonly = True
+        self.conn.autocommit = True
+        self.conn.readonly = True
+
+        cur = self.conn.cursor()
+        cur.execute("SHOW transaction_read_only")
+        self.assertEqual(cur.fetchone()[0], 'on')
+
 
 class AutocommitTests(ConnectingTestCase):
     def test_closed(self):
