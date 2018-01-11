@@ -118,6 +118,12 @@ class CursorTests(ConnectingTestCase):
         nref2 = sys.getrefcount(foo)
         self.assertEqual(nref1, nref2)
 
+    def test_modify_closed(self):
+        cur = self.conn.cursor()
+        cur.close()
+        sql = cur.mogrify("select %s", (10,))
+        self.assertEqual(sql, b"select 10")
+
     def test_bad_placeholder(self):
         cur = self.conn.cursor()
         self.assertRaises(psycopg2.ProgrammingError,
