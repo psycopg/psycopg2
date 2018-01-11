@@ -24,13 +24,18 @@ directly in the client application.
 
     .. method:: getconn(key=None)
 
-        Get a free connection and assign it to *key* if not `!None`.
+        Get a free connection from the pool.
+
+        The *key* parameter is optional: if used, the connection will be
+        associated to the key and calling `!getconn()` with the same key again
+        will return the same connection.
 
     .. method:: putconn(conn, key=None, close=False)
 
         Put away a connection.
 
         If *close* is `!True`, discard the connection from the pool.
+        *key* should be used consistently with `getconn()`.
 
     .. method:: closeall
 
