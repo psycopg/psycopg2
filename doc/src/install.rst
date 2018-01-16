@@ -12,16 +12,6 @@ to use Psycopg on a different Python implementation (PyPy, Jython, IronPython)
 there is an experimental `porting of Psycopg for Ctypes`__, but it is not as
 mature as the C implementation yet.
 
-The current `!psycopg2` implementation supports:
-
-..
-    NOTE: keep consistent with setup.py and the /features/ page.
-
-- Python 2 versions from 2.6 to 2.7
-- Python 3 versions from 3.2 to 3.6
-- PostgreSQL server versions from 7.4 to 10
-- PostgreSQL client library version from 9.1
-
 .. _PostgreSQL: http://www.postgresql.org/
 .. _Python: http://www.python.org/
 .. _libpq: http://www.postgresql.org/docs/current/static/libpq.html
@@ -32,94 +22,20 @@ The current `!psycopg2` implementation supports:
 
 
 .. index::
-    single: Install; from PyPI
-    single: Install; wheel
-    single: Wheel
+    single: Prerequisites
 
-Binary install from PyPI
-------------------------
+Prerequisites
+-------------
 
-`!psycopg2` is `available on PyPI`__ in the form of wheel_ packages for the
-most common platform (Linux, OSX, Windows): this should make you able to
-install a binary version of the module including all the dependencies simply
-using:
+The current `!psycopg2` implementation supports:
 
-.. code-block:: console
+..
+    NOTE: keep consistent with setup.py and the /features/ page.
 
-    $ pip install psycopg2
-
-Make sure to use an up-to-date version of :program:`pip` (you can upgrade it
-using something like ``pip install -U pip``)
-
-.. __: PyPI_
-.. _PyPI: https://pypi.python.org/pypi/psycopg2/
-.. _wheel: http://pythonwheels.com/
-
-.. note::
-
-    The binary packages come with their own versions of a few C libraries,
-    among which ``libpq`` and ``libssl``, which will be used regardless of other
-    libraries available on the client: upgrading the system libraries will not
-    upgrade the libraries used by `!psycopg2`. Please build `!psycopg2` from
-    source if you want to maintain binary upgradeability.
-
-.. warning::
-
-    Because the `!psycopg` wheel package uses its own ``libssl`` binary, it is
-    incompatible with other extension modules binding with ``libssl`` as well,
-    for instance the Python `ssl` module: the result will likely be a
-    segfault. If you need using both `!psycopg2` and other libraries using
-    ``libssl`` please :ref:`disable the use of wheel packages for Psycopg
-    <disable-wheel>`.
-
-
-
-.. index::
-    single: Install; disable wheel
-    single: Wheel; disable
-
-.. _disable-wheel:
-
-Disabling wheel packages
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-If you want to disable the use of wheel binary packages and use the system
-system libraries available on your client you can use the :command:`pip`
-|--no-binary option|__:
-
-.. code-block:: console
-
-    $ pip install --no-binary psycopg2
-
-.. |--no-binary option| replace:: ``--no-binary`` option
-.. __: https://pip.pypa.io/en/stable/reference/pip_install/#install-no-binary
-
-which can be specified in your :file:`requirements.txt` files too, e.g. use:
-
-.. code-block:: none
-
-    psycopg2>=2.7,<2.8 --no-binary psycopg2
-
-to use the last bugfix release of the `!psycopg2` 2.7 package, specifying to
-always compile it from source. Of course in this case you will have to meet
-the :ref:`build prerequisites <build-prerequisites>`.
-
-
-
-.. index::
-    single: Install; from source
-
-.. _install-from-source:
-
-Install from source
--------------------
-
-.. _source-package:
-
-You can download a copy of Psycopg source files from the `Psycopg download
-page`__ or from PyPI_.
-
-.. __: http://initd.org/psycopg/download/
+- Python 2 versions from 2.6 to 2.7
+- Python 3 versions from 3.2 to 3.6
+- PostgreSQL server versions from 7.4 to 10
+- PostgreSQL client library version from 9.1
 
 
 
@@ -128,8 +44,8 @@ page`__ or from PyPI_.
 Build prerequisites
 ^^^^^^^^^^^^^^^^^^^
 
-These notes illustrate how to compile Psycopg on Linux. If you want to compile
-Psycopg on other platforms you may have to adjust some details accordingly.
+The build prerequisites are to be met in order to install Psycopg from source
+code, either from a source distribution package or from PyPI.
 
 Psycopg is a C wrapper around the libpq_ PostgreSQL client library. To install
 it from sources you will need:
@@ -160,6 +76,12 @@ it from sources you will need:
   regular usage.
 
 Once everything is in place it's just a matter of running the standard:
+
+.. code-block:: console
+
+    $ pip install psycopg2
+
+or, from the directory containing the source code:
 
 .. code-block:: console
 
@@ -198,11 +120,91 @@ which is OS-dependent (for instance setting a suitable
 
 
 .. index::
+    single: Install; from PyPI
+    single: Install; wheel
+    single: Wheel
+
+Binary install from PyPI
+------------------------
+
+`!psycopg2` is also `available on PyPI`__ in the form of wheel_ packages for
+the most common platform (Linux, OSX, Windows): this should make you able to
+install a binary version of the module, not requiring the above build or
+runtime prerequisites, simply using:
+
+.. code-block:: console
+
+    $ pip install psycopg2-binary
+
+Make sure to use an up-to-date version of :program:`pip` (you can upgrade it
+using something like ``pip install -U pip``)
+
+.. __: PyPI-binary_
+.. _PyPI-binary: https://pypi.python.org/pypi/psycopg2-binary/
+.. _wheel: http://pythonwheels.com/
+
+.. note::
+
+    The binary packages come with their own versions of a few C libraries,
+    among which ``libpq`` and ``libssl``, which will be used regardless of other
+    libraries available on the client: upgrading the system libraries will not
+    upgrade the libraries used by `!psycopg2`. Please build `!psycopg2` from
+    source if you want to maintain binary upgradeability.
+
+.. warning::
+
+    The `!psycopg2` wheel package comes packaged, among the others, with its
+    own ``libssl`` binary. This may create conflicts with other extension
+    modules binding with ``libssl`` as well, for instance with the Python
+    `ssl` module: in some cases, under concurrency, the interaction between
+    the two libraries may result in a segfault. In case of doubts you are
+    advised to use a package built from source.
+
+
+
+.. index::
+    single: Install; disable wheel
+    single: Wheel; disable
+
+.. _disable-wheel:
+
+Disabling wheel packages for Psycopg 2.7
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In version 2.7.x, `pip install psycopg2` would have tried to install the wheel
+binary package of Psycopg. Because of the problems the wheel package have
+displayed, `psycopg2-binary` has become a separate package, and from 2.8 it
+has become the only way to install the binary package.
+
+If you are using psycopg 2.7 and you want to disable the use of wheel binary
+packages, relying on the system system libraries available on your client, you
+can use the :command:`pip` |--no-binary option|__:
+
+.. code-block:: console
+
+    $ pip install --no-binary psycopg2
+
+.. |--no-binary option| replace:: ``--no-binary`` option
+.. __: https://pip.pypa.io/en/stable/reference/pip_install/#install-no-binary
+
+which can be specified in your :file:`requirements.txt` files too, e.g. use:
+
+.. code-block:: none
+
+    psycopg2>=2.7,<2.8 --no-binary psycopg2
+
+to use the last bugfix release of the `!psycopg2` 2.7 package, specifying to
+always compile it from source. Of course in this case you will have to meet
+the :ref:`build prerequisites <build-prerequisites>`.
+
+
+
+.. index::
     single: setup.py
     single: setup.cfg
 
 Non-standard builds
-^^^^^^^^^^^^^^^^^^^
+-------------------
 
 If you have less standard requirements such as:
 
@@ -242,7 +244,7 @@ order to create a debug package:
 - Edit the ``setup.cfg`` file adding the ``PSYCOPG_DEBUG`` flag to the
   ``define`` option.
 
-- :ref:`Compile and install <source-package>` the package.
+- :ref:`Compile and install <build-prerequisites>` the package.
 
 - Set the :envvar:`PSYCOPG_DEBUG` environment variable:
 
