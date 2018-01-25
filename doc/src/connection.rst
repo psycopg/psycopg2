@@ -41,11 +41,6 @@ The ``connection`` class
             previously only valid PostgreSQL identifiers were accepted as
             cursor name.
 
-        .. warning::
-            It is unsafe to expose the *name* to an untrusted source, for
-            instance you shouldn't allow *name* to be read from a HTML form.
-            Consider it as part of the query, not as a query parameter.
-
         The *cursor_factory* argument can be used to create non-standard
         cursors. The class returned must be a subclass of
         `psycopg2.extensions.cursor`. See :ref:`subclassing-cursor` for
