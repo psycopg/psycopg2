@@ -47,7 +47,7 @@ or using ``setup.py`` if you have downloaded the source package locally::
     $ sudo python setup.py install
 
 You can also obtain a stand-alone package, not requiring a compiler or
-external libraries, by installing the ``psycopg2-binary`` package from PyPI::
+external libraries, by installing the `psycopg2-binary`_ package from PyPI::
 
     $ pip install psycopg2-binary
 
@@ -55,6 +55,7 @@ The binary package is a practical choice for development and testing but in
 production it is advised to use the package built from sources.
 
 .. _PyPI: https://pypi.python.org/pypi/psycopg2
+.. _psycopg2-binary: https://pypi.python.org/pypi/psycopg2-binary
 .. _install: http://initd.org/psycopg/docs/install.html#install-from-source
 .. _faq: http://initd.org/psycopg/docs/faq.html#faq-compile
 
