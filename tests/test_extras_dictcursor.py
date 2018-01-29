@@ -383,6 +383,15 @@ class NamedTupleCursorTest(ConnectingTestCase):
         self.assertRaises(psycopg2.ProgrammingError, curs.fetchall)
 
     @skip_if_no_namedtuple
+    def test_bad_col_names(self):
+        curs = self.conn.cursor()
+        curs.execute('select 1 as "foo.bar_baz", 2 as "?column?", 3 as "3"')
+        rv = curs.fetchone()
+        self.assertEqual(rv.foo_bar_baz, 1)
+        self.assertEqual(rv.f_column_, 2)
+        self.assertEqual(rv.f3, 3)
+
+    @skip_if_no_namedtuple
     def test_minimal_generation(self):
         # Instrument the class to verify it gets called the minimum number of times.
         from psycopg2.extras import NamedTupleCursor
