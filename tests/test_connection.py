@@ -1549,9 +1549,13 @@ import os
 import sys
 import time
 import signal
+import warnings
 import threading
 
-import psycopg2
+# ignore wheel deprecation warning
+with warnings.catch_warnings():
+    warnings.simplefilter('ignore')
+    import psycopg2
 
 def handle_sigabort(sig, frame):
     sys.exit(1)
