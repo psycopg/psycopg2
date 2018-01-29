@@ -34,6 +34,8 @@ What's new in psycopg 2.7.4
   statements (:ticket:`633`).
 - Fixed compatibility problem with pypy3 (:ticket:`#649`).
 - Wheel packages compiled against PostgreSQL 10.1 libpq and OpenSSL 1.0.2n.
+- Wheel packages for Python 2.6 no more available (support dropped from
+  wheel building infrastructure).
 
 
 What's new in psycopg 2.7.3.2
