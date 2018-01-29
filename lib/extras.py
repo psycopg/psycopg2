@@ -363,7 +363,17 @@ class NamedTupleCursor(_cursor):
             return
 
     def _make_nt(self):
-        return namedtuple("Record", [d[0] for d in self.description or ()])
+        def f(s):
+            # NOTE: Python 3 actually allows unicode chars in fields
+            s = _re.sub('[^a-zA-Z0-9_]', '_', s)
+            # Python identifier cannot start with numbers, namedtuple fields
+            # cannot start with underscore. So...
+            if _re.match('^[0-9_]', s):
+                s = 'f' + s
+
+            return s
+
+        return namedtuple("Record", [f(d[0]) for d in self.description or ()])
 
 
 class LoggingConnection(_connection):
