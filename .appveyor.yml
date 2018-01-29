@@ -24,7 +24,7 @@ environment:
       - {PYVER: "36", PYTHON_ARCH: "32"}
       - {PYVER: "36", PYTHON_ARCH: "64"}
 
-    OPENSSL_VERSION: "1_0_2m"
+    OPENSSL_VERSION: "1_0_2n"
     POSTGRES_VERSION: "10_1"
 
     PSYCOPG2_TESTDB: psycopg2_test

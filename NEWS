@@ -18,7 +18,7 @@ What's new in psycopg 2.7.4
 - Fixed `~cursor.rowcount` after `~cursor.executemany()` with :sql:`RETURNING`
   statements (:ticket:`633`).
 - Fixed compatibility problem with pypy3 (:ticket:`#649`).
-- Wheel packages compiled against PostgreSQL 10.1 libpq and OpenSSL 1.0.2m.
+- Wheel packages compiled against PostgreSQL 10.1 libpq and OpenSSL 1.0.2n.
 
 
 What's new in psycopg 2.7.3.2
