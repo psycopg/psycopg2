@@ -13,43 +13,14 @@ environment:
     matrix:
         # For Python versions available on Appveyor, see
         # http://www.appveyor.com/docs/installed-software#python
-
-        # Py 2.7 = VS Ver. 9.0  (VS 2008)
-        # Py 3.4 = VS Ver. 10.0 (VS 2010)
-        # Py 3.5, 3.6 = VS Ver. 14.0 (VS 2015)
-
-        - PYTHON: C:\Python27-x64
-          PYTHON_ARCH: 64
-          VS_VER: 9.0
-
-        - PYTHON: C:\Python27
-          PYTHON_ARCH: 32
-          VS_VER: 9.0
-
-        - PYTHON: C:\Python36-x64
-          PYTHON_ARCH: 64
-          VS_VER: 14.0
-
-        - PYTHON: C:\Python36
-          PYTHON_ARCH: 32
-          VS_VER: 14.0
-
-        - PYTHON: C:\Python35-x64
-          PYTHON_ARCH: 64
-          VS_VER: 14.0
-
-        - PYTHON: C:\Python35
-          PYTHON_ARCH: 32
-          VS_VER: 14.0
-
-        - PYTHON: C:\Python34-x64
-          DISTUTILS_USE_SDK: '1'
-          PYTHON_ARCH: 64
-          VS_VER: 10.0
-
-        - PYTHON: C:\Python34
-          PYTHON_ARCH: 32
-          VS_VER: 10.0
+      - {PYVER: "27", PYTHON_ARCH: "32"}
+      - {PYVER: "27", PYTHON_ARCH: "64"}
+      - {PYVER: "34", PYTHON_ARCH: "32"}
+      - {PYVER: "34", PYTHON_ARCH: "64"}
+      - {PYVER: "35", PYTHON_ARCH: "32"}
+      - {PYVER: "35", PYTHON_ARCH: "64"}
+      - {PYVER: "36", PYTHON_ARCH: "32"}
+      - {PYVER: "36", PYTHON_ARCH: "64"}
 
     PSYCOPG2_TESTDB: psycopg2_test
     PSYCOPG2_TESTDB_USER: postgres
@@ -77,7 +48,22 @@ cache:
 init:
     # Uncomment next line to get RDP access during the build.
     #- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-    #
+
+    # Set env variable according to the build environment
+    - SET PYTHON=C:\Python%PYVER%
+    - IF "%PYTHON_ARCH%"=="64" SET PYTHON=%PYTHON%-x64
+
+      # Py 2.7 = VS Ver. 9.0  (VS 2008)
+      # Py 3.3, 3.4 = VS Ver. 10.0 (VS 2010)
+      # Py 3.5, 3.6 = VS Ver. 14.0 (VS 2015)
+    - IF "%PYVER%"=="27" SET VS_VER=9.0
+    - IF "%PYVER%"=="33" SET VS_VER=10.0
+    - IF "%PYVER%"=="34" SET VS_VER=10.0
+    - IF "%PYVER%"=="35" SET VS_VER=14.0
+    - IF "%PYVER%"=="36" SET VS_VER=14.0
+
+    - IF "%VS_VER%"=="10.0" IF "%PYTHON_ARCH%"=="64" SET DISTUTILS_USE_SDK=1
+
     # Set Python to the path
     - SET PATH=%PYTHON%;%PYTHON%\Scripts;C:\Program Files\Git\mingw64\bin;%PATH%
 
