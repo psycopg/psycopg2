@@ -39,6 +39,7 @@ except ImportError:
 from distutils.command.build_ext import build_ext
 from distutils.sysconfig import get_python_inc
 from distutils.ccompiler import get_default_compiler
+from distutils.errors import CompileError
 from distutils.util import get_platform
 
 try:
@@ -104,15 +105,23 @@ class PostgresConfig:
         if not self.pg_config_exe:
             self.pg_config_exe = self.autodetect_pg_config_path()
         if self.pg_config_exe is None:
-            sys.stderr.write("""\
+            sys.stderr.write("""
 Error: pg_config executable not found.
 
-Please add the directory containing pg_config to the PATH
-or specify the full executable path with the option:
+pg_config is required to build psycopg2 from source.  Please add the directory
+containing pg_config to the $PATH or specify the full executable path with the
+option:
 
     python setup.py build_ext --pg-config /path/to/pg_config build ...
 
 or with the pg_config option in 'setup.cfg'.
+
+If you prefer to avoid building psycopg2 from source, please install the PyPI
+'psycopg2-binary' package instead.
+
+For further information please check the 'doc/src/install.rst' file (also at
+<http://initd.org/psycopg/docs/install.html>).
+
 """)
             sys.exit(1)
 
@@ -286,8 +295,37 @@ class psycopg_build_ext(build_ext):
         else:
             return build_ext.get_export_symbols(self, extension)
 
+    built_files = 0
+
     def build_extension(self, extension):
-        build_ext.build_extension(self, extension)
+        # Count files compiled to print the binary blurb only if the first fails
+        compile_orig = getattr(self.compiler, '_compile', None)
+        if compile_orig is not None:
+            def _compile(*args, **kwargs):
+                rv = compile_orig(*args, **kwargs)
+                psycopg_build_ext.built_files += 1
+                return rv
+
+            self.compiler._compile = _compile
+
+        try:
+            build_ext.build_extension(self, extension)
+            psycopg_build_ext.built_files += 1
+        except CompileError:
+            if self.built_files == 0:
+                sys.stderr.write("""
+It appears you are missing some prerequisite to build the package from source.
+
+You may install a binary package by installing 'psycopg2-binary' from PyPI.
+If you want to install psycopg2 from source, please install the packages
+required for the build and try again.
+
+For further information please check the 'doc/src/install.rst' file (also at
+<http://initd.org/psycopg/docs/install.html>).
+
+""")
+            raise
+
         sysVer = sys.version_info[:2]
 
         # For Python versions that use MSVC compiler 2008, re-insert the
