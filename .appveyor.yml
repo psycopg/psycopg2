@@ -13,52 +13,19 @@ environment:
     matrix:
         # For Python versions available on Appveyor, see
         # http://www.appveyor.com/docs/installed-software#python
+      - {PYVER: "27", PYTHON_ARCH: "32"}
+      - {PYVER: "27", PYTHON_ARCH: "64"}
+      - {PYVER: "33", PYTHON_ARCH: "32"}
+      - {PYVER: "33", PYTHON_ARCH: "64"}
+      - {PYVER: "34", PYTHON_ARCH: "32"}
+      - {PYVER: "34", PYTHON_ARCH: "64"}
+      - {PYVER: "35", PYTHON_ARCH: "32"}
+      - {PYVER: "35", PYTHON_ARCH: "64"}
+      - {PYVER: "36", PYTHON_ARCH: "32"}
+      - {PYVER: "36", PYTHON_ARCH: "64"}
 
-        # Py 2.7 = VS Ver. 9.0  (VS 2008)
-        # Py 3.3, 3.4 = VS Ver. 10.0 (VS 2010)
-        # Py 3.5, 3.6 = VS Ver. 14.0 (VS 2015)
-
-        - PYTHON: C:\Python27-x64
-          PYTHON_ARCH: 64
-          VS_VER: 9.0
-
-        - PYTHON: C:\Python27
-          PYTHON_ARCH: 32
-          VS_VER: 9.0
-
-        - PYTHON: C:\Python36-x64
-          PYTHON_ARCH: 64
-          VS_VER: 14.0
-
-        - PYTHON: C:\Python36
-          PYTHON_ARCH: 32
-          VS_VER: 14.0
-
-        - PYTHON: C:\Python35-x64
-          PYTHON_ARCH: 64
-          VS_VER: 14.0
-
-        - PYTHON: C:\Python35
-          PYTHON_ARCH: 32
-          VS_VER: 14.0
-
-        - PYTHON: C:\Python34-x64
-          DISTUTILS_USE_SDK: '1'
-          PYTHON_ARCH: 64
-          VS_VER: 10.0
-
-        - PYTHON: C:\Python34
-          PYTHON_ARCH: 32
-          VS_VER: 10.0
-
-        - PYTHON: C:\Python33-x64
-          DISTUTILS_USE_SDK: '1'
-          PYTHON_ARCH: 64
-          VS_VER: 10.0
-
-        - PYTHON: C:\Python33
-          PYTHON_ARCH: 32
-          VS_VER: 10.0
+    OPENSSL_VERSION: "1_0_2n"
+    POSTGRES_VERSION: "10_1"
 
     PSYCOPG2_TESTDB: psycopg2_test
     PSYCOPG2_TESTDB_USER: postgres
@@ -86,7 +53,22 @@ cache:
 init:
     # Uncomment next line to get RDP access during the build.
     #- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-    #
+
+    # Set env variable according to the build environment
+    - SET PYTHON=C:\Python%PYVER%
+    - IF "%PYTHON_ARCH%"=="64" SET PYTHON=%PYTHON%-x64
+
+      # Py 2.7 = VS Ver. 9.0  (VS 2008)
+      # Py 3.3, 3.4 = VS Ver. 10.0 (VS 2010)
+      # Py 3.5, 3.6 = VS Ver. 14.0 (VS 2015)
+    - IF "%PYVER%"=="27" SET VS_VER=9.0
+    - IF "%PYVER%"=="33" SET VS_VER=10.0
+    - IF "%PYVER%"=="34" SET VS_VER=10.0
+    - IF "%PYVER%"=="35" SET VS_VER=14.0
+    - IF "%PYVER%"=="36" SET VS_VER=14.0
+
+    - IF "%VS_VER%"=="10.0" IF "%PYTHON_ARCH%"=="64" SET DISTUTILS_USE_SDK=1
+
     # Set Python to the path
     - SET PATH=%PYTHON%;%PYTHON%\Scripts;C:\Program Files\Git\mingw64\bin;%PATH%
 
@@ -162,8 +144,8 @@ install:
         }
     # Download OpenSSL source
     - CD C:\Others
-    - IF NOT EXIST OpenSSL_1_0_2m.zip (
-        curl -fsSL -o OpenSSL_1_0_2m.zip https://github.com/openssl/openssl/archive/OpenSSL_1_0_2m.zip
+    - IF NOT EXIST OpenSSL_%OPENSSL_VERSION%.zip (
+        curl -fsSL -o OpenSSL_%OPENSSL_VERSION%.zip https://github.com/openssl/openssl/archive/OpenSSL_%OPENSSL_VERSION%.zip
       )
 
     # To use OpenSSL >= 1.1.0, both libpq and psycopg build environments have
@@ -175,15 +157,15 @@ install:
     #    - nmake build_libs install_dev
     - IF NOT EXIST %OPENSSLTOP%\lib\ssleay32.lib (
         CD %BUILD_DIR% &&
-        7z x C:\Others\OpenSSL_1_0_2m.zip &&
-        CD openssl-OpenSSL_1_0_2m &&
+        7z x C:\Others\OpenSSL_%OPENSSL_VERSION%.zip &&
+        CD openssl-OpenSSL_%OPENSSL_VERSION% &&
         perl Configure %TARGET% no-asm no-shared no-zlib --prefix=%OPENSSLTOP% --openssldir=%OPENSSLTOP% &&
         CALL ms\%DO% &&
         nmake -f ms\nt.mak init headers lib &&
         COPY inc32\openssl\*.h %OPENSSLTOP%\include\openssl &&
         COPY out32\*.lib %OPENSSLTOP%\lib &&
         CD %BASE_DIR% &&
-        RMDIR /S /Q %BUILD_DIR%\openssl-OpenSSL_1_0_2m
+        RMDIR /S /Q %BUILD_DIR%\openssl-OpenSSL_%OPENSSL_VERSION%
       )
 
     # Setup directories for building PostgreSQL librarires
@@ -197,8 +179,8 @@ install:
 
     # Download PostgreSQL source
     - CD C:\Others
-    - IF NOT EXIST postgres-REL_10_1.zip (
-        curl -fsSL -o postgres-REL_10_1.zip https://github.com/postgres/postgres/archive/REL_10_1.zip
+    - IF NOT EXIST postgres-REL_%POSTGRES_VERSION%.zip (
+        curl -fsSL -o postgres-REL_%POSTGRES_VERSION%.zip https://github.com/postgres/postgres/archive/REL_%POSTGRES_VERSION%.zip
       )
 
     # Setup build config file (config.pl)
@@ -209,11 +191,11 @@ install:
     # Prepare local include directory for building from
     # Build pg_config in place
     # NOTE: Cannot set and use the same variable inside an IF
-    - SET PGBUILD=%BUILD_DIR%\postgres-REL_10_1
+    - SET PGBUILD=%BUILD_DIR%\postgres-REL_%POSTGRES_VERSION%
     - IF NOT EXIST %PGTOP%\lib\libpq.lib (
         CD %BUILD_DIR% &&
-        7z x C:\Others\postgres-REL_10_1.zip &&
-        CD postgres-REL_10_1\src\tools\msvc &&
+        7z x C:\Others\postgres-REL_%POSTGRES_VERSION%.zip &&
+        CD postgres-REL_%POSTGRES_VERSION%\src\tools\msvc &&
         ECHO $config-^>{ldap} = 0; > config.pl &&
         ECHO $config-^>{openssl} = "%OPENSSLTOP:\=\\%"; >> config.pl &&
         ECHO.>> config.pl &&
