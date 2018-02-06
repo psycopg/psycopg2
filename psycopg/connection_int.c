@@ -1194,7 +1194,7 @@ conn_set_session(connectionObject *self, int autocommit,
     int want_autocommit = autocommit == SRV_STATE_UNCHANGED ?
         self->autocommit : autocommit;
 
-    if (deferrable != self->deferrable && self->server_version < 90100) {
+    if (deferrable != SRV_STATE_UNCHANGED && self->server_version < 90100) {
         PyErr_SetString(ProgrammingError,
             "the 'deferrable' setting is only available"
             " from PostgreSQL 9.1");
@@ -1256,7 +1256,7 @@ conn_set_session(connectionObject *self, int autocommit,
                 goto endlock;
             }
         }
-        if (self->deferrable != STATE_DEFAULT) {
+        if (self->server_version >= 90100 && self->deferrable != STATE_DEFAULT) {
             if (0 > pq_set_guc_locked(self,
                     "default_transaction_deferrable", "default",
                     &pgres, &error, &_save)) {
