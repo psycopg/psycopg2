@@ -72,6 +72,10 @@ HIDDEN PyObject *psyco_null = NULL;
 /* The type of the cursor.description items */
 HIDDEN PyObject *psyco_DescriptionType = NULL;
 
+/* macro trick to stringify a macro expansion */
+#define xstr(s) str(s)
+#define str(s) #s
+
 /** connect module-level function **/
 #define psyco_connect_doc \
 "_connect(dsn, [connection_factory], [async]) -- New database connection.\n\n"
@@ -885,7 +889,7 @@ INIT_MODULE(_psycopg)(void)
         psycopg_debug_enabled = 1;
 #endif
 
-    Dprintf("initpsycopg: initializing psycopg %s", PSYCOPG_VERSION);
+    Dprintf("initpsycopg: initializing psycopg %s", xstr(PSYCOPG_VERSION));
 
     /* initialize all the new types and then the module */
     Py_TYPE(&connectionType) = &PyType_Type;
@@ -1017,7 +1021,7 @@ INIT_MODULE(_psycopg)(void)
     if (!(psyco_DescriptionType = psyco_make_description_type())) { goto exit; }
 
     /* set some module's parameters */
-    PyModule_AddStringConstant(module, "__version__", PSYCOPG_VERSION);
+    PyModule_AddStringConstant(module, "__version__", xstr(PSYCOPG_VERSION));
     PyModule_AddStringConstant(module, "__doc__", "psycopg PostgreSQL driver");
     PyModule_AddIntConstant(module, "__libpq_version__", PG_VERSION_NUM);
     PyModule_AddIntMacro(module, REPLICATION_PHYSICAL);

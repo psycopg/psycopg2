@@ -612,10 +612,7 @@ if version_flags:
 else:
     PSYCOPG_VERSION_EX = PSYCOPG_VERSION
 
-if not PLATFORM_IS_WINDOWS:
-    define_macros.append(('PSYCOPG_VERSION', '"' + PSYCOPG_VERSION_EX + '"'))
-else:
-    define_macros.append(('PSYCOPG_VERSION', '\\"' + PSYCOPG_VERSION_EX + '\\"'))
+define_macros.append(('PSYCOPG_VERSION', PSYCOPG_VERSION_EX))
 
 if parser.has_option('build_ext', 'have_ssl'):
     have_ssl = int(parser.get('build_ext', 'have_ssl'))
