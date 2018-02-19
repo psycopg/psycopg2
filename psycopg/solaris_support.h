@@ -1,6 +1,7 @@
 /* solaris_support.h - definitions for solaris_support.c
  *
  * Copyright (C) 2017 My Karlsson <mk@acc.umu.se>
+ * Copyright (c) 2018, Joyent, Inc.
  *
  * This file is part of psycopg.
  *
@@ -30,8 +31,10 @@
 #if defined(__sun) && defined(__SVR4)
 #include <sys/time.h>
 
+#ifndef timeradd
 extern HIDDEN void timeradd(struct timeval *a, struct timeval *b, struct timeval *c);
 extern HIDDEN void timersub(struct timeval *a, struct timeval *b, struct timeval *c);
+#endif
 #endif
 
 #endif /* !defined(PSYCOPG_SOLARIS_SUPPORT_H) */
