@@ -14,6 +14,13 @@ Other changes:
   without using 2to3.
 
 
+What's new in psycopg 2.7.5
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Fixed building on Solaris 11 and derivatives such as SmartOS and illumos
+  (:ticket:`#677`)
+
+
 What's new in psycopg 2.7.4
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
