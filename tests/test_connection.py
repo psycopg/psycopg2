@@ -246,6 +246,13 @@ class ConnectionTests(ConnectingTestCase):
             else:
                 del os.environ['PGCLIENTENCODING']
 
+    def test_connect_no_string(self):
+        class MyString(str):
+            pass
+
+        conn = psycopg2.connect(MyString(dsn))
+        conn.close()
+
     def test_weakref(self):
         from weakref import ref
         import gc
@@ -400,6 +407,13 @@ class ParseDsnTestCase(ConnectingTestCase):
     def test_bad_param(self):
         self.assertRaises(TypeError, ext.parse_dsn, None)
         self.assertRaises(TypeError, ext.parse_dsn, 42)
+
+    def test_str_subclass(self):
+        class MyString(str):
+            pass
+
+        res = ext.parse_dsn(MyString("dbname=test"))
+        self.assertEqual(res, {'dbname': 'test'})
 
 
 class MakeDsnTestCase(ConnectingTestCase):

@@ -168,11 +168,11 @@ psycopg_ensure_bytes(PyObject *obj)
     PyObject *rv = NULL;
     if (!obj) { return NULL; }
 
-    if (PyUnicode_CheckExact(obj)) {
+    if (PyUnicode_Check(obj)) {
         rv = PyUnicode_AsUTF8String(obj);
         Py_DECREF(obj);
     }
-    else if (Bytes_CheckExact(obj)) {
+    else if (Bytes_Check(obj)) {
         rv = obj;
     }
     else {
