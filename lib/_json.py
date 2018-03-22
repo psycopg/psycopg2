@@ -62,14 +62,14 @@ class Json(object):
         if proto is ISQLQuote:
             return self
 
-    def dumps(self, obj):
+    def dumps(self, obj, **kwargs):
         """Serialize *obj* in JSON format.
 
         The default is to call `!json.dumps()` or the *dumps* function
         provided in the constructor. You can override this method to create a
         customized JSON wrapper.
         """
-        return self._dumps(obj)
+        return self._dumps(obj, **kwargs)
 
     def prepare(self, conn):
         self._conn = conn
