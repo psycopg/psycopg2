@@ -549,7 +549,7 @@ that the last `!simplejson` version supporting Python 2.4 is the 2.0.9.
 .. |pgjson| replace:: :sql:`json`
 .. |jsonb| replace:: :sql:`jsonb`
 .. _pgjson: http://www.postgresql.org/docs/current/static/datatype-json.html
-.. _simplejson: http://pypi.python.org/pypi/simplejson/
+.. _simplejson: https://pypi.org/project/simplejson/
 
 In order to pass a Python object to the database as query argument you can use
 the `Json` adapter::

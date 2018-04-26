@@ -142,7 +142,7 @@ Make sure to use an up-to-date version of :program:`pip` (you can upgrade it
 using something like ``pip install -U pip``)
 
 .. __: PyPI-binary_
-.. _PyPI-binary: https://pypi.python.org/pypi/psycopg2-binary/
+.. _PyPI-binary: https://pypi.org/project/psycopg2-binary/
 .. _wheel: http://pythonwheels.com/
 
 .. note::
