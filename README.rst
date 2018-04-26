@@ -54,8 +54,8 @@ external libraries, by installing the `psycopg2-binary`_ package from PyPI::
 The binary package is a practical choice for development and testing but in
 production it is advised to use the package built from sources.
 
-.. _PyPI: https://pypi.python.org/pypi/psycopg2
-.. _psycopg2-binary: https://pypi.python.org/pypi/psycopg2-binary
+.. _PyPI: https://pypi.org/project/psycopg2/
+.. _psycopg2-binary: https://pypi.org/project/psycopg2-binary/
 .. _install: http://initd.org/psycopg/docs/install.html#install-from-source
 .. _faq: http://initd.org/psycopg/docs/faq.html#faq-compile
 

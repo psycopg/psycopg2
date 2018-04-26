@@ -100,5 +100,5 @@ Test packages may be uploaded on the `PyPI testing site`__ using::
 
 assuming `proper configuration`__ of ``~/.pypirc``.
 
-.. __: https://testpypi.python.org/pypi/psycopg2
+.. __: https://test.pypi.org/project/psycopg2/
 .. __: https://wiki.python.org/moin/TestPyPI
