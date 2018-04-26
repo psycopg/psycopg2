@@ -485,7 +485,7 @@ details. You can check the `psycogreen`_ project for further informations and
 resources about the topic.
 
 .. _coroutine: http://en.wikipedia.org/wiki/Coroutine
-.. _greenlet: http://pypi.python.org/pypi/greenlet
+.. _greenlet: https://pypi.org/project/greenlet/
 .. _green threads: http://en.wikipedia.org/wiki/Green_threads
 .. _Eventlet: http://eventlet.net/
 .. _gevent: http://www.gevent.org/
