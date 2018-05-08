@@ -424,8 +424,6 @@ psyco_encrypt_password(PyObject *self, PyObject *args)
 
     connectionObject *conn = NULL;
 
-    static char *kwlist[] = {"password", "user", "scope", "algorithm", NULL};
-
     if (!PyArg_ParseTuple(args, "OO|OO",
             &password, &user, &obj, &algorithm)) {
         return NULL;
@@ -482,7 +480,7 @@ psyco_encrypt_password(PyObject *self, PyObject *args)
     if (!encrypted) {
         const char *msg = PQerrorMessage(conn->pgconn);
         if (msg && *msg) {
-            PyErr_Format(ProgrammingError, msg);
+            PyErr_Format(ProgrammingError, "%s", msg);
             res = NULL;
             goto exit;
         }
