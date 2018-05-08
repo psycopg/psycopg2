@@ -25,28 +25,39 @@ Documentation is included in the ``doc`` directory and is `available online`__.
 
 .. __: http://initd.org/psycopg/docs/
 
+For any other resource (source code repository, bug tracker, mailing list)
+please check the `project homepage`__.
+
 
 Installation
 ------------
 
-If your ``pip`` version supports wheel_ packages it should be possible to
-install a binary version of Psycopg including all the dependencies from PyPI_.
-Just run::
+Building Psycopg requires a few prerequisites (a C compiler, some development
+packages): please check the install_ and the faq_ documents in the ``doc`` dir
+or online for the details.
 
-    $ pip install -U pip      # make sure your pip is up-to-date
+If prerequisites are met, you can install psycopg like any other Python
+package, using ``pip`` to download it from PyPI_::
+
     $ pip install psycopg2
 
-If you want to build Psycopg from source you will need some prerequisites (a C
-compiler, development packages): please check the install_ and the faq_
-documents in the ``doc`` dir for the details.
+or using ``setup.py`` if you have downloaded the source package locally::
 
-.. _wheel: http://pythonwheels.com/
+    $ python setup.py build
+    $ sudo python setup.py install
+
+You can also obtain a stand-alone package, not requiring a compiler or
+external libraries, by installing the `psycopg2-binary`_ package from PyPI::
+
+    $ pip install psycopg2-binary
+
+The binary package is a practical choice for development and testing but in
+production it is advised to use the package built from sources.
+
 .. _PyPI: https://pypi.python.org/pypi/psycopg2
+.. _psycopg2-binary: https://pypi.python.org/pypi/psycopg2-binary
 .. _install: http://initd.org/psycopg/docs/install.html#install-from-source
 .. _faq: http://initd.org/psycopg/docs/faq.html#faq-compile
-
-For any other resource (source code repository, bug tracker, mailing list)
-please check the `project homepage`__.
 
 .. __: http://initd.org/psycopg/
 

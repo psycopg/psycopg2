@@ -105,11 +105,11 @@ cd /
 
 # Postgres versions supported by Travis CI
 if [[ -z "$DONT_TEST_PRESENT" ]]; then
+    create 10
     create 9.6
     create 9.5
     create 9.4
     create 9.3
-    create 9.2
 fi
 
 # Unsupported postgres versions that we still support
@@ -123,9 +123,10 @@ if [[ -n "$TEST_PAST" ]]; then
     create 8.4
     create 9.0
     create 9.1
+    create 9.2
 fi
 
 # Postgres built from master
 if [[ -n "$TEST_FUTURE" ]]; then
-    create 10 10beta1
+    create 11 11-master
 fi

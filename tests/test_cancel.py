@@ -30,8 +30,9 @@ import psycopg2
 import psycopg2.extensions
 from psycopg2 import extras
 
-from testconfig import dsn
-from testutils import unittest, ConnectingTestCase, skip_before_postgres, slow
+from .testconfig import dsn
+import unittest
+from .testutils import ConnectingTestCase, skip_before_postgres, slow
 
 
 class CancelTests(ConnectingTestCase):
@@ -63,7 +64,7 @@ class CancelTests(ConnectingTestCase):
                 conn.rollback()
                 cur.execute("select 1")
                 self.assertEqual(cur.fetchall(), [(1, )])
-            except Exception, e:
+            except Exception as e:
                 errors.append(e)
                 raise
 
@@ -71,7 +72,7 @@ class CancelTests(ConnectingTestCase):
             cur = conn.cursor()
             try:
                 conn.cancel()
-            except Exception, e:
+            except Exception as e:
                 errors.append(e)
                 raise
             del cur

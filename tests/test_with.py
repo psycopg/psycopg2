@@ -22,13 +22,11 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-
-from __future__ import with_statement
-
 import psycopg2
 import psycopg2.extensions as ext
 
-from testutils import unittest, ConnectingTestCase
+import unittest
+from .testutils import ConnectingTestCase
 
 
 class WithTestCase(ConnectingTestCase):
@@ -212,7 +210,7 @@ class WithCursorTestCase(WithTestCase):
                 with conn.cursor('named') as cur:
                     cur.execute("select 1/0")
                     cur.fetchone()
-        except psycopg2.DataError, e:
+        except psycopg2.DataError as e:
             self.assertEqual(e.pgcode, '22012')
         else:
             self.fail("where is my exception?")

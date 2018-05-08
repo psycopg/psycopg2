@@ -26,8 +26,9 @@ import os
 import sys
 from subprocess import Popen
 
-from testutils import (unittest, skip_before_python, skip_before_postgres,
-    ConnectingTestCase, skip_copy_if_green, script_to_py3, slow)
+import unittest
+from .testutils import (skip_before_postgres,
+    ConnectingTestCase, skip_copy_if_green, slow, StringIO)
 
 import psycopg2
 
@@ -152,7 +153,7 @@ class ExceptionsTestCase(ConnectingTestCase):
         cur = self.conn.cursor()
         try:
             cur.execute("select * from nonexist")
-        except psycopg2.Error, exc:
+        except psycopg2.Error as exc:
             e = exc
 
         self.assertEqual(e.pgcode, '42P01')
@@ -163,7 +164,7 @@ class ExceptionsTestCase(ConnectingTestCase):
         cur = self.conn.cursor()
         try:
             cur.execute("select * from nonexist")
-        except psycopg2.Error, exc:
+        except psycopg2.Error as exc:
             e = exc
 
         diag = e.diag
@@ -182,7 +183,7 @@ class ExceptionsTestCase(ConnectingTestCase):
         cur = self.conn.cursor()
         try:
             cur.execute("select * from nonexist")
-        except psycopg2.Error, exc:
+        except psycopg2.Error as exc:
             e = exc
 
         self.assertEqual(e.diag.sqlstate, '42P01')
@@ -196,7 +197,7 @@ class ExceptionsTestCase(ConnectingTestCase):
             cur = self.conn.cursor()
             try:
                 cur.execute("select * from nonexist")
-            except psycopg2.Error, exc:
+            except psycopg2.Error as exc:
                 return cur, exc
 
         cur, e = tmp()
@@ -216,12 +217,11 @@ class ExceptionsTestCase(ConnectingTestCase):
 
     @skip_copy_if_green
     def test_diagnostics_copy(self):
-        from StringIO import StringIO
         f = StringIO()
         cur = self.conn.cursor()
         try:
             cur.copy_to(f, 'nonexist')
-        except psycopg2.Error, exc:
+        except psycopg2.Error as exc:
             diag = exc.diag
 
         self.assertEqual(diag.sqlstate, '42P01')
@@ -230,14 +230,14 @@ class ExceptionsTestCase(ConnectingTestCase):
         cur = self.conn.cursor()
         try:
             cur.execute("l'acqua e' poca e 'a papera nun galleggia")
-        except Exception, exc:
+        except Exception as exc:
             diag1 = exc.diag
 
         self.conn.rollback()
 
         try:
             cur.execute("select level from water where ducks > 1")
-        except psycopg2.Error, exc:
+        except psycopg2.Error as exc:
             diag2 = exc.diag
 
         self.assertEqual(diag1.sqlstate, '42601')
@@ -254,7 +254,7 @@ class ExceptionsTestCase(ConnectingTestCase):
         cur.execute("insert into test_deferred values (1,2)")
         try:
             self.conn.commit()
-        except psycopg2.Error, exc:
+        except psycopg2.Error as exc:
             e = exc
         self.assertEqual(e.diag.sqlstate, '23503')
 
@@ -267,7 +267,7 @@ class ExceptionsTestCase(ConnectingTestCase):
             )""")
         try:
             cur.execute("insert into test_exc values(2)")
-        except psycopg2.Error, exc:
+        except psycopg2.Error as exc:
             e = exc
         self.assertEqual(e.pgcode, '23514')
         self.assertEqual(e.diag.schema_name[:7], "pg_temp")
@@ -276,13 +276,12 @@ class ExceptionsTestCase(ConnectingTestCase):
         self.assertEqual(e.diag.constraint_name, "chk_eq1")
         self.assertEqual(e.diag.datatype_name, None)
 
-    @skip_before_python(2, 5)
     def test_pickle(self):
         import pickle
         cur = self.conn.cursor()
         try:
             cur.execute("select * from nonexist")
-        except psycopg2.Error, exc:
+        except psycopg2.Error as exc:
             e = exc
 
         e1 = pickle.loads(pickle.dumps(e))
@@ -291,13 +290,12 @@ class ExceptionsTestCase(ConnectingTestCase):
         self.assertEqual(e.pgcode, e1.pgcode)
         self.assert_(e1.cursor is None)
 
-    @skip_before_python(2, 5)
     def test_pickle_connection_error(self):
         # segfaults on psycopg 2.5.1 - see ticket #170
         import pickle
         try:
             psycopg2.connect('dbname=nosuchdatabasemate')
-        except psycopg2.Error, exc:
+        except psycopg2.Error as exc:
             e = exc
 
         e1 = pickle.loads(pickle.dumps(e))
@@ -324,7 +322,7 @@ sys.path.insert(0, %r)
 import _psycopg
 """ % (pardir, pkgdir))
 
-        proc = Popen([sys.executable, '-c', script_to_py3(script)])
+        proc = Popen([sys.executable, '-c', script])
         proc.communicate()
         self.assertEqual(0, proc.returncode)
 

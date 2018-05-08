@@ -22,7 +22,8 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-from testutils import unittest, ConnectingTestCase, slow
+import unittest
+from .testutils import ConnectingTestCase, slow, reload
 
 try:
     reload
@@ -48,10 +49,10 @@ class ErrocodeTests(ConnectingTestCase):
         def f(pg_code='40001'):
             try:
                 errorcodes.lookup(pg_code)
-            except Exception, e:
+            except Exception as e:
                 errs.append(e)
 
-        for __ in xrange(MAX_CYCLES):
+        for __ in range(MAX_CYCLES):
             reload(errorcodes)
             (t1, t2) = (Thread(target=f), Thread(target=f))
             (t1.start(), t2.start())

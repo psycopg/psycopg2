@@ -13,52 +13,17 @@ environment:
     matrix:
         # For Python versions available on Appveyor, see
         # http://www.appveyor.com/docs/installed-software#python
+      - {PYVER: "27", PYTHON_ARCH: "32"}
+      - {PYVER: "27", PYTHON_ARCH: "64"}
+      - {PYVER: "34", PYTHON_ARCH: "32"}
+      - {PYVER: "34", PYTHON_ARCH: "64"}
+      - {PYVER: "35", PYTHON_ARCH: "32"}
+      - {PYVER: "35", PYTHON_ARCH: "64"}
+      - {PYVER: "36", PYTHON_ARCH: "32"}
+      - {PYVER: "36", PYTHON_ARCH: "64"}
 
-        # Py 2.7 = VS Ver. 9.0  (VS 2008)
-        # Py 3.3, 3.4 = VS Ver. 10.0 (VS 2010)
-        # Py 3.5, 3.6 = VS Ver. 14.0 (VS 2015)
-
-        - PYTHON: C:\Python27-x64
-          PYTHON_ARCH: 64
-          VS_VER: 9.0
-
-        - PYTHON: C:\Python27
-          PYTHON_ARCH: 32
-          VS_VER: 9.0
-
-        - PYTHON: C:\Python36-x64
-          PYTHON_ARCH: 64
-          VS_VER: 14.0
-
-        - PYTHON: C:\Python36
-          PYTHON_ARCH: 32
-          VS_VER: 14.0
-
-        - PYTHON: C:\Python35-x64
-          PYTHON_ARCH: 64
-          VS_VER: 14.0
-
-        - PYTHON: C:\Python35
-          PYTHON_ARCH: 32
-          VS_VER: 14.0
-
-        - PYTHON: C:\Python34-x64
-          DISTUTILS_USE_SDK: '1'
-          PYTHON_ARCH: 64
-          VS_VER: 10.0
-
-        - PYTHON: C:\Python34
-          PYTHON_ARCH: 32
-          VS_VER: 10.0
-
-        - PYTHON: C:\Python33-x64
-          DISTUTILS_USE_SDK: '1'
-          PYTHON_ARCH: 64
-          VS_VER: 10.0
-
-        - PYTHON: C:\Python33
-          PYTHON_ARCH: 32
-          VS_VER: 10.0
+    OPENSSL_VERSION: "1_0_2n"
+    POSTGRES_VERSION: "10_1"
 
     PSYCOPG2_TESTDB: psycopg2_test
     PSYCOPG2_TESTDB_USER: postgres
@@ -73,17 +38,35 @@ matrix:
     fast_finish: false
 
 services:
+    # Note: if you change this service also change the paths to match
+    # (see where Program Files\Postgres\9.6 is used)
     - postgresql96
 
 cache:
   # Rebuild cache if following file changes
+  # (See the file to zap the cache manually)
   - C:\Others -> scripts\appveyor.cache_rebuild
 
 # Script called before repo cloning
 init:
     # Uncomment next line to get RDP access during the build.
     #- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-    #
+
+    # Set env variable according to the build environment
+    - SET PYTHON=C:\Python%PYVER%
+    - IF "%PYTHON_ARCH%"=="64" SET PYTHON=%PYTHON%-x64
+
+      # Py 2.7 = VS Ver. 9.0  (VS 2008)
+      # Py 3.3, 3.4 = VS Ver. 10.0 (VS 2010)
+      # Py 3.5, 3.6 = VS Ver. 14.0 (VS 2015)
+    - IF "%PYVER%"=="27" SET VS_VER=9.0
+    - IF "%PYVER%"=="33" SET VS_VER=10.0
+    - IF "%PYVER%"=="34" SET VS_VER=10.0
+    - IF "%PYVER%"=="35" SET VS_VER=14.0
+    - IF "%PYVER%"=="36" SET VS_VER=14.0
+
+    - IF "%VS_VER%"=="10.0" IF "%PYTHON_ARCH%"=="64" SET DISTUTILS_USE_SDK=1
+
     # Set Python to the path
     - SET PATH=%PYTHON%;%PYTHON%\Scripts;C:\Program Files\Git\mingw64\bin;%PATH%
 
@@ -112,6 +95,11 @@ init:
     - ECHO Configuring Compiler
     - IF "%PYTHON_ARCH%"=="32" (CALL "C:\\Program Files (x86)\\Microsoft Visual Studio %VS_VER%\\VC\\vcvarsall.bat" x86)
     - IF "%PYTHON_ARCH%"=="64" (CALL "C:\\Program Files (x86)\\Microsoft Visual Studio %VS_VER%\\VC\\vcvarsall.bat" amd64)
+
+    # The program rc.exe on 64bit with some versions look in the wrong path
+    #   location when building postgresql.   This cheats by copying the x64 bit
+    #   files to that location.
+    - IF "%PYTHON_ARCH%"=="64" (COPY /Y "C:\\Program Files\\Microsoft SDKs\\Windows\\v7.0\\Bin\\x64\\rc*" "C:\\Program Files (x86)\\Microsoft SDKs\\Windows\\v7.0A\\Bin")
 
     # Change PostgreSQL config before service starts to allow > 1 prepared
     #   transactions for test cases
@@ -154,8 +142,8 @@ install:
         }
     # Download OpenSSL source
     - CD C:\Others
-    - IF NOT EXIST OpenSSL_1_0_2l.zip (
-        curl -fsSL -o OpenSSL_1_0_2l.zip https://github.com/openssl/openssl/archive/OpenSSL_1_0_2l.zip
+    - IF NOT EXIST OpenSSL_%OPENSSL_VERSION%.zip (
+        curl -fsSL -o OpenSSL_%OPENSSL_VERSION%.zip https://github.com/openssl/openssl/archive/OpenSSL_%OPENSSL_VERSION%.zip
       )
 
     # To use OpenSSL >= 1.1.0, both libpq and psycopg build environments have
@@ -167,15 +155,15 @@ install:
     #    - nmake build_libs install_dev
     - IF NOT EXIST %OPENSSLTOP%\lib\ssleay32.lib (
         CD %BUILD_DIR% &&
-        7z x C:\Others\OpenSSL_1_0_2l.zip &&
-        CD openssl-OpenSSL_1_0_2l &&
+        7z x C:\Others\OpenSSL_%OPENSSL_VERSION%.zip &&
+        CD openssl-OpenSSL_%OPENSSL_VERSION% &&
         perl Configure %TARGET% no-asm no-shared no-zlib --prefix=%OPENSSLTOP% --openssldir=%OPENSSLTOP% &&
         CALL ms\%DO% &&
         nmake -f ms\nt.mak init headers lib &&
         COPY inc32\openssl\*.h %OPENSSLTOP%\include\openssl &&
         COPY out32\*.lib %OPENSSLTOP%\lib &&
         CD %BASE_DIR% &&
-        RMDIR /S /Q %BUILD_DIR%\openssl-OpenSSL_1_0_2l
+        RMDIR /S /Q %BUILD_DIR%\openssl-OpenSSL_%OPENSSL_VERSION%
       )
 
     # Setup directories for building PostgreSQL librarires
@@ -185,32 +173,45 @@ install:
     - SET PGTOP=%BASE_DIR%\postgresql
     - IF NOT EXIST %PGTOP%\include MKDIR %PGTOP%\include
     - IF NOT EXIST %PGTOP%\lib MKDIR %PGTOP%\lib
+    - IF NOT EXIST %PGTOP%\bin MKDIR %PGTOP%\bin
+
     # Download PostgreSQL source
     - CD C:\Others
-    - IF NOT EXIST postgres-REL9_6_3.zip (
-        curl -fsSL -o postgres-REL9_6_3.zip https://github.com/postgres/postgres/archive/REL9_6_3.zip
+    - IF NOT EXIST postgres-REL_%POSTGRES_VERSION%.zip (
+        curl -fsSL -o postgres-REL_%POSTGRES_VERSION%.zip https://github.com/postgres/postgres/archive/REL_%POSTGRES_VERSION%.zip
       )
 
     # Setup build config file (config.pl)
-    # Build libpgport first
-    # Build libpq
+    # Hack the Mkvcbuild.pm file so we build the lib version of libpq
+    # Build libpgport, libpgcommon, libpq
+    # Install includes
+    # Copy over built libraries
+    # Prepare local include directory for building from
+    # Build pg_config in place
     # NOTE: Cannot set and use the same variable inside an IF
-    - SET PGBUILD=%BUILD_DIR%\postgres-REL9_6_3
+    - SET PGBUILD=%BUILD_DIR%\postgres-REL_%POSTGRES_VERSION%
     - IF NOT EXIST %PGTOP%\lib\libpq.lib (
         CD %BUILD_DIR% &&
-        7z x C:\Others\postgres-REL9_6_3.zip &&
-        CD postgres-REL9_6_3\src\tools\msvc &&
+        7z x C:\Others\postgres-REL_%POSTGRES_VERSION%.zip &&
+        CD postgres-REL_%POSTGRES_VERSION%\src\tools\msvc &&
         ECHO $config-^>{ldap} = 0; > config.pl &&
         ECHO $config-^>{openssl} = "%OPENSSLTOP:\=\\%"; >> config.pl &&
         ECHO.>> config.pl &&
         ECHO 1;>> config.pl &&
+        perl -pi.bak -e "s/'libpq', 'dll'/'libpq', 'lib'/g" Mkvcbuild.pm &&
         build libpgport &&
-        XCOPY /E ..\..\include %PGTOP%\include &&
+        build libpgcommon &&
+        build libpq &&
+        ECHO "" > %PGBUILD%\src\backend\parser\gram.h &&
+        perl -pi.bak -e "s/qw\(Install\)/qw\(Install CopyIncludeFiles\)/g" Install.pm &&
+        perl -MInstall=CopyIncludeFiles -e"chdir('../../..'); CopyIncludeFiles('%PGTOP%')" &&
         COPY %PGBUILD%\Release\libpgport\libpgport.lib %PGTOP%\lib &&
-        CD ..\..\interfaces\libpq &&
-        nmake -f win32.mak USE_OPENSSL=1 ENABLE_THREAD_SAFETY=1 SSL_INC=%OPENSSLTOP%\include  SSL_LIB_PATH=%OPENSSLTOP%\lib config .\Release\libpq.lib &&
-        COPY *.h %PGTOP%\include &&
-        COPY Release\libpq.lib %PGTOP%\lib &&
+        COPY %PGBUILD%\Release\libpgcommon\libpgcommon.lib %PGTOP%\lib &&
+        COPY %PGBUILD%\Release\libpq\libpq.lib %PGTOP%\lib &&
+        XCOPY /Y /S %PGBUILD%\src\include\port\win32\* %PGBUILD%\src\include &&
+        XCOPY /Y /S %PGBUILD%\src\include\port\win32_msvc\* %PGBUILD%\src\include &&
+        CD %PGBUILD%\src\bin\pg_config &&
+        cl pg_config.c /MT /nologo /I%PGBUILD%\src\include /link /LIBPATH:%PGTOP%\lib libpgcommon.lib libpgport.lib advapi32.lib /NODEFAULTLIB:libcmt.lib /OUT:%PGTOP%\bin\pg_config.exe &&
         CD %BASE_DIR% &&
         RMDIR /S /Q %PGBUILD%
       )
@@ -223,9 +224,10 @@ build_script:
     # Add PostgreSQL binaries to the path
     - PATH=C:\Program Files\PostgreSQL\9.6\bin\;%PATH%
     - CD C:\Project
-    - "%PYTHON%\\python.exe setup.py build_ext --have-ssl -l libpgcommon -L %OPENSSLTOP%\\lib;%PGTOP%\\lib -I %OPENSSLTOP%\\include;%PGTOP%\\include"
+    - "%PYTHON%\\python.exe setup.py build_ext --have-ssl --pg-config %PGTOP%\\bin\\pg_config.exe -l libpgcommon -l libpgport -L %OPENSSLTOP%\\lib -I %OPENSSLTOP%\\include"
     - "%PYTHON%\\python.exe setup.py build"
     - "%PYTHON%\\python.exe setup.py install"
+    - RD /S /Q psycopg2.egg-info
 
 #after_build:
 
@@ -235,5 +237,8 @@ before_test:
     - psql -d %PSYCOPG2_TESTDB% -c "CREATE EXTENSION HSTORE;"
 
 test_script:
+    # Print psycopg and libpq versions
     - "%PYTHON%\\python.exe -c \"import psycopg2; print(psycopg2.__version__)\""
-    - "%PYTHON%\\python.exe -c \"from psycopg2 import tests; tests.unittest.main(defaultTest='tests.test_suite')\" --verbose"
+    - "%PYTHON%\\python.exe -c \"import psycopg2; print(psycopg2.__libpq_version__)\""
+    - "%PYTHON%\\python.exe -c \"import psycopg2; print(psycopg2.extensions.libpq_version())\""
+    - "%PYTHON%\\python.exe -c \"import tests; tests.unittest.main(defaultTest='tests.test_suite')\" --verbose"

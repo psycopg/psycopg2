@@ -17,6 +17,7 @@ script exits with error 1.
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
+from __future__ import print_function
 
 import gc
 import sys
@@ -29,8 +30,8 @@ from collections import defaultdict
 def main():
     opt = parse_args()
 
-    import psycopg2.tests
-    test = psycopg2.tests
+    import tests
+    test = tests
     if opt.suite:
         test = getattr(test, opt.suite)
 
@@ -43,7 +44,7 @@ def main():
         dump(i, opt)
 
     f1 = open('debug-%02d.txt' % (opt.nruns - 1)).readlines()
-    f2 = open('debug-%02d.txt' % (opt.nruns)).readlines()
+    f2 = open('debug-%02d.txt' % opt.nruns).readlines()
     for line in difflib.unified_diff(f1, f2,
             "run %d" % (opt.nruns - 1), "run %d" % opt.nruns):
         sys.stdout.write(line)
@@ -52,7 +53,7 @@ def main():
 
     if opt.objs:
         f1 = open('objs-%02d.txt' % (opt.nruns - 1)).readlines()
-        f2 = open('objs-%02d.txt' % (opt.nruns)).readlines()
+        f2 = open('objs-%02d.txt' % opt.nruns).readlines()
         for line in difflib.unified_diff(f1, f2,
                 "run %d" % (opt.nruns - 1), "run %d" % opt.nruns):
             sys.stdout.write(line)

@@ -306,7 +306,9 @@ I can't compile `!psycopg2`: the compiler says *error: libpq-fe.h: No such file 
     API support (*i.e.* the libpq used at compile time was at least 9.3) but
     at runtime an older libpq dynamic library is found.
 
-    You can use::
+    You can use:
+
+    .. code-block:: shell
 
         $ ldd /path/to/packages/psycopg2/_psycopg.so | grep libpq
 
@@ -332,4 +334,3 @@ Psycopg raises *ImportError: cannot import name tz* on import in mod_wsgi / ASP,
     .. _egg: http://peak.telecommunity.com/DevCenter/PythonEggs
     .. __: http://stackoverflow.com/questions/2192323/what-is-the-python-egg-cache-python-egg-cache
     .. __: http://code.google.com/p/modwsgi/wiki/ConfigurationDirectives#WSGIPythonEggs
-

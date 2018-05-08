@@ -34,7 +34,7 @@ a not-yet well defined protocol that we can call ISQLQuote:
 
         def getbinary(self):
            "Returns a binary quoted string representing the bound variable."
-    
+
         def getbuffer(self):
             "Returns the wrapped object itself."
 
@@ -86,10 +86,10 @@ class AsIs(object):
         self.__obj = obj
     def getquoted(self):
         return self.__obj
-    
+
 class SQL_IN(object):
     """Adapt a tuple to an SQL quotable object."""
-    
+
     def __init__(self, seq):
 	self._seq = seq
 
@@ -103,10 +103,10 @@ class SQL_IN(object):
 	qobjs = [str(psycoadapt(o).getquoted()) for o in self._seq]
 
 	return '(' + ', '.join(qobjs) + ')'
-	
+
     __str__ = getquoted
 
-    
+
 # add our new adapter class to psycopg list of adapters
 register_adapter(tuple, SQL_IN)
 register_adapter(float, AsIs)
@@ -117,10 +117,10 @@ register_adapter(int, AsIs)
 #     conn = psycopg.connect("...")
 #     curs = conn.cursor()
 #     curs.execute("SELECT ...", (("this", "is", "the", "tuple"),))
-#     
+#
 # but we have no connection to a database right now, so we just check
 # the SQL_IN class by calling psycopg's adapt() directly:
 
 if __name__ == '__main__':
-    print "Note how the string will be SQL-quoted, but the number will not:"
-    print psycoadapt(("this is an 'sql quoted' str\\ing", 1, 2.0))
+    print("Note how the string will be SQL-quoted, but the number will not:")
+    print(psycoadapt(("this is an 'sql quoted' str\\ing", 1, 2.0)))

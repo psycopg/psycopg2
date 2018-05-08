@@ -14,7 +14,7 @@ two functions:
 # leak() will cause increasingly more RAM to be used by the script.
 $ python <script_nam> leak
 
-# noleak() does not have the RAM usage problem. The only difference 
+# noleak() does not have the RAM usage problem. The only difference
 # between it and leak() is that 'rows' is created once, before the loop.
 $ python <script_name> noleak
 
@@ -43,7 +43,7 @@ def leak():
                 row = {'foo': i}
                 rows.append(row)
             count += 1
-            print "loop count:", count
+            print("loop count:", count)
             cursor.executemany(insert, rows)
             connection.commit()
         except psycopg2.IntegrityError:
@@ -59,7 +59,7 @@ def noleak():
     while 1:
         try:
             count += 1
-            print "loop count:", count
+            print("loop count:", count)
             cursor.executemany(insert, rows)
             connection.commit()
         except psycopg2.IntegrityError:
@@ -72,12 +72,11 @@ try:
     elif 'noleak' == sys.argv[1]:
         run_function = noleak
     else:
-        print usage
+        print(usage)
         sys.exit()
 except IndexError:
-    print usage
+    print(usage)
     sys.exit()
 
 # Run leak() or noleak(), whichever was indicated on the command line
 run_function()
-

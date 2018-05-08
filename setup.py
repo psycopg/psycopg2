@@ -39,6 +39,7 @@ except ImportError:
 from distutils.command.build_ext import build_ext
 from distutils.sysconfig import get_python_inc
 from distutils.ccompiler import get_default_compiler
+from distutils.errors import CompileError
 from distutils.util import get_platform
 
 try:
@@ -64,7 +65,7 @@ except ImportError:
 # Take a look at http://www.python.org/dev/peps/pep-0440/
 # for a consistent versioning pattern.
 
-PSYCOPG_VERSION = '2.7.4.dev0'
+PSYCOPG_VERSION = '2.8.dev0'
 
 
 # note: if you are changing the list of supported Python version please fix
@@ -75,14 +76,13 @@ Intended Audience :: Developers
 License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)
 License :: OSI Approved :: Zope Public License
 Programming Language :: Python
-Programming Language :: Python :: 2.6
+Programming Language :: Python :: 2
 Programming Language :: Python :: 2.7
 Programming Language :: Python :: 3
-Programming Language :: Python :: 3.2
-Programming Language :: Python :: 3.3
 Programming Language :: Python :: 3.4
 Programming Language :: Python :: 3.5
 Programming Language :: Python :: 3.6
+Programming Language :: Python :: Implementation :: CPython
 Programming Language :: C
 Programming Language :: SQL
 Topic :: Database
@@ -105,15 +105,23 @@ class PostgresConfig:
         if not self.pg_config_exe:
             self.pg_config_exe = self.autodetect_pg_config_path()
         if self.pg_config_exe is None:
-            sys.stderr.write("""\
+            sys.stderr.write("""
 Error: pg_config executable not found.
 
-Please add the directory containing pg_config to the PATH
-or specify the full executable path with the option:
+pg_config is required to build psycopg2 from source.  Please add the directory
+containing pg_config to the $PATH or specify the full executable path with the
+option:
 
     python setup.py build_ext --pg-config /path/to/pg_config build ...
 
 or with the pg_config option in 'setup.cfg'.
+
+If you prefer to avoid building psycopg2 from source, please install the PyPI
+'psycopg2-binary' package instead.
+
+For further information please check the 'doc/src/install.rst' file (also at
+<http://initd.org/psycopg/docs/install.html>).
+
 """)
             sys.exit(1)
 
@@ -195,8 +203,7 @@ or with the pg_config option in 'setup.cfg'.
                 return None
 
             pg_first_inst_key = winreg.OpenKey(reg,
-                'SOFTWARE\\PostgreSQL\\Installations\\'
-                + first_sub_key_name)
+                'SOFTWARE\\PostgreSQL\\Installations\\' + first_sub_key_name)
             try:
                 pg_inst_base_dir = winreg.QueryValueEx(
                     pg_first_inst_key, 'Base Directory')[0]
@@ -213,8 +220,7 @@ or with the pg_config option in 'setup.cfg'.
 
         # Support unicode paths, if this version of Python provides the
         # necessary infrastructure:
-        if sys.version_info[0] < 3 \
-                and hasattr(sys, 'getfilesystemencoding'):
+        if sys.version_info[0] < 3:
             pg_config_path = pg_config_path.encode(
                 sys.getfilesystemencoding())
 
@@ -289,13 +295,42 @@ class psycopg_build_ext(build_ext):
         else:
             return build_ext.get_export_symbols(self, extension)
 
+    built_files = 0
+
     def build_extension(self, extension):
-        build_ext.build_extension(self, extension)
+        # Count files compiled to print the binary blurb only if the first fails
+        compile_orig = getattr(self.compiler, '_compile', None)
+        if compile_orig is not None:
+            def _compile(*args, **kwargs):
+                rv = compile_orig(*args, **kwargs)
+                psycopg_build_ext.built_files += 1
+                return rv
+
+            self.compiler._compile = _compile
+
+        try:
+            build_ext.build_extension(self, extension)
+            psycopg_build_ext.built_files += 1
+        except CompileError:
+            if self.built_files == 0:
+                sys.stderr.write("""
+It appears you are missing some prerequisite to build the package from source.
+
+You may install a binary package by installing 'psycopg2-binary' from PyPI.
+If you want to install psycopg2 from source, please install the packages
+required for the build and try again.
+
+For further information please check the 'doc/src/install.rst' file (also at
+<http://initd.org/psycopg/docs/install.html>).
+
+""")
+            raise
+
         sysVer = sys.version_info[:2]
 
         # For Python versions that use MSVC compiler 2008, re-insert the
         # manifest into the resulting .pyd file.
-        if self.compiler_is_msvc() and sysVer in ((2, 6), (2, 7), (3, 0), (3, 1), (3, 2)):
+        if self.compiler_is_msvc() and sysVer == (2, 7):
             platform = get_platform()
             # Default to the x86 manifest
             manifest = '_psycopg.vc9.x86.manifest'
@@ -317,7 +352,6 @@ class psycopg_build_ext(build_ext):
 
     def finalize_win32(self):
         """Finalize build system configuration on win32 platform."""
-        sysVer = sys.version_info[:2]
 
         # Add compiler-specific arguments:
         extra_compiler_args = []
@@ -332,17 +366,6 @@ class psycopg_build_ext(build_ext):
             # avoid large numbers of warnings for perfectly idiomatic Python C
             # API code.
             extra_compiler_args.append('-fno-strict-aliasing')
-
-            # Force correct C runtime library linkage:
-            if sysVer <= (2, 3):
-                # Yes:  'msvcr60', rather than 'msvcrt', is the correct value
-                # on the line below:
-                self.libraries.append('msvcr60')
-            elif sysVer in ((2, 4), (2, 5)):
-                self.libraries.append('msvcr71')
-            # Beyond Python 2.5, we take our chances on the default C runtime
-            # library, because we don't know what compiler those future
-            # versions of Python will use.
 
         for extension in ext:  # ext is a global list of Extension objects
             extension.extra_compile_args.extend(extra_compiler_args)
@@ -412,7 +435,7 @@ class psycopg_build_ext(build_ext):
                 # *at least* PostgreSQL 7.4 is available (this is the only
                 # 7.x series supported by psycopg 2)
                 pgversion = pg_config_helper.query("version").split()[1]
-            except:
+            except Exception:
                 pgversion = "7.4.0"
 
             verre = re.compile(
@@ -420,11 +443,14 @@ class psycopg_build_ext(build_ext):
             m = verre.match(pgversion)
             if m:
                 pgmajor, pgminor, pgpatch = m.group(1, 2, 3)
+                # Postgres >= 10 doesn't have pgminor anymore.
+                pgmajor = int(pgmajor)
+                if pgmajor >= 10:
+                    pgminor, pgpatch = None, pgminor
                 if pgminor is None or not pgminor.isdigit():
                     pgminor = 0
                 if pgpatch is None or not pgpatch.isdigit():
                     pgpatch = 0
-                pgmajor = int(pgmajor)
                 pgminor = int(pgminor)
                 pgpatch = int(pgpatch)
             else:
@@ -480,7 +506,7 @@ data_files = []
 sources = [
     'psycopgmodule.c',
     'green.c', 'pqpath.c', 'utils.c', 'bytes_format.c',
-    'libpq_support.c', 'win32_support.c',
+    'libpq_support.c', 'win32_support.c', 'solaris_support.c',
 
     'connection_int.c', 'connection_type.c',
     'cursor_int.c', 'cursor_type.c',
@@ -570,10 +596,7 @@ if version_flags:
 else:
     PSYCOPG_VERSION_EX = PSYCOPG_VERSION
 
-if not PLATFORM_IS_WINDOWS:
-    define_macros.append(('PSYCOPG_VERSION', '"' + PSYCOPG_VERSION_EX + '"'))
-else:
-    define_macros.append(('PSYCOPG_VERSION', '\\"' + PSYCOPG_VERSION_EX + '\\"'))
+define_macros.append(('PSYCOPG_VERSION', PSYCOPG_VERSION_EX))
 
 if parser.has_option('build_ext', 'have_ssl'):
     have_ssl = int(parser.get('build_ext', 'have_ssl'))
@@ -617,7 +640,7 @@ try:
     f = open("README.rst")
     readme = f.read()
     f.close()
-except:
+except Exception:
     print("failed to read readme: ignoring...")
     readme = __doc__
 
@@ -631,12 +654,13 @@ setup(name="psycopg2",
       download_url=download_url,
       license="LGPL with exceptions or ZPL",
       platforms=["any"],
+      python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*',
       description=readme.split("\n")[0],
       long_description="\n".join(readme.split("\n")[2:]).lstrip(),
       classifiers=[x for x in classifiers.split("\n") if x],
       data_files=data_files,
-      package_dir={'psycopg2': 'lib', 'psycopg2.tests': 'tests'},
-      packages=['psycopg2', 'psycopg2.tests'],
+      package_dir={'psycopg2': 'lib'},
+      packages=['psycopg2'],
       cmdclass={
           'build_ext': psycopg_build_ext,
           'build_py': build_py, },

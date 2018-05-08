@@ -75,7 +75,7 @@ class FixedOffsetTimezone(datetime.tzinfo):
 
     def __getinitargs__(self):
         offset_mins = self._offset.seconds // 60 + self._offset.days * 24 * 60
-        return (offset_mins, self._name)
+        return offset_mins, self._name
 
     def utcoffset(self, dt):
         return self._offset

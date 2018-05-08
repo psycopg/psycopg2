@@ -33,9 +33,9 @@ import psycopg2.extras
 if len(sys.argv) > 1:
     DSN = sys.argv[1]
 
-print "Opening connection using dsn:", DSN
+print("Opening connection using dsn:", DSN)
 conn = psycopg2.connect(DSN)
-print "Initial encoding for this connection is", conn.encoding
+print("Initial encoding for this connection is", conn.encoding)
 
 curs = conn.cursor()
 try:
@@ -58,7 +58,7 @@ class Rect(object):
     and eventually as a type-caster for the data extracted from the database
     (that's why __init__ takes the curs argument.)
     """
-    
+
     def __init__(self, s=None, curs=None):
         """Init the rectangle from the optional string s."""
         self.x = self.y = self.width = self.height = 0.0
@@ -68,7 +68,7 @@ class Rect(object):
         """This is a terrible hack, just ignore proto and return self."""
         if proto == psycopg2.extensions.ISQLQuote:
             return self
-    
+
     def from_points(self, x0, y0, x1, y1):
         """Init the rectangle from points."""
         if x0 > x1: (x0, x1) = (x1, x0)
@@ -94,11 +94,11 @@ class Rect(object):
         s = "X: %d\tY: %d\tWidth: %d\tHeight: %d" % (
             self.x, self.y, self.width, self.height)
         return s
-    
+
 # here we select from the empty table, just to grab the description
 curs.execute("SELECT b FROM test_cast WHERE 0=1")
 boxoid = curs.description[0][1]
-print "Oid for the box datatype is", boxoid
+print("Oid for the box datatype is", boxoid)
 
 # and build the user cast object
 BOX = psycopg2.extensions.new_type((boxoid,), "BOX", Rect)
@@ -113,14 +113,14 @@ for i in range(100):
                   whrandom.randint(0,100), whrandom.randint(0,100))
     curs.execute("INSERT INTO test_cast VALUES ('%(p1)s', '%(p2)s', %(box)s)",
                  {'box':b, 'p1':p1, 'p2':p2})
-print "Added 100 boxed to the database"
+print("Added 100 boxed to the database")
 
 # select and print all boxes with at least one point inside
 curs.execute("SELECT b FROM test_cast WHERE p1 @ b OR p2 @ b")
 boxes = curs.fetchall()
-print "Found %d boxes with at least a point inside:" % len(boxes)
+print("Found %d boxes with at least a point inside:" % len(boxes))
 for box in boxes:
-    print " ", box[0].show()
+    print(" ", box[0].show())
 
 curs.execute("DROP TABLE test_cast")
 conn.commit()

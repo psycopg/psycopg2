@@ -19,8 +19,8 @@ from __future__ import unicode_literals
 import sys
 from functools import wraps
 
-import testutils
-from testutils import unittest
+from . import testutils
+import unittest
 
 import psycopg2
 import psycopg2.extras

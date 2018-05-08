@@ -99,20 +99,6 @@ Real dictionary cursor
 
 .. versionadded:: 2.3
 
-These objects require :py:func:`collections.namedtuple` to be found, so it is
-available out-of-the-box only from Python 2.6. Anyway, the namedtuple
-implementation is compatible with previous Python versions, so all you
-have to do is to `download it`__ and make it available where we
-expect it to be... ::
-
-    from somewhere import namedtuple
-    import collections
-    collections.namedtuple = namedtuple
-    from psycopg.extras import NamedTupleConnection
-    # ...
-
-.. __: http://code.activestate.com/recipes/500261-named-tuples/
-
 .. autoclass:: NamedTupleCursor
 
 .. autoclass:: NamedTupleConnection
@@ -403,7 +389,7 @@ The individual messages in the replication stream are represented by
 
             class LogicalStreamConsumer(object):
 
-                ...
+                # ...
 
                 def __call__(self, msg):
                     self.process_message(msg.payload)
@@ -501,7 +487,7 @@ The individual messages in the replication stream are represented by
       from datetime import datetime
 
       def consume(msg):
-          ...
+          # ...
 
       keepalive_interval = 10.0
       while True:
@@ -553,17 +539,13 @@ fields to JSON) you can use the `register_json()` function.
 
 .. __: http://people.planetpostgresql.org/andrew/index.php?/archives/255-JSON-for-PG-9.2-...-and-now-for-9.1!.html
 
-The Python library used by default to convert Python objects to JSON and to
-parse data from the database depends on the language version: with Python 2.6
-and following the :py:mod:`json` module from the standard library is used;
-with previous versions the `simplejson`_ module is used if available. Note
-that the last `!simplejson` version supporting Python 2.4 is the 2.0.9.
+The Python :py:mod:`json` module is used by default to convert Python objects
+to JSON and to parse data from the database.
 
 .. _JSON: http://www.json.org/
 .. |pgjson| replace:: :sql:`json`
 .. |jsonb| replace:: :sql:`jsonb`
 .. _pgjson: http://www.postgresql.org/docs/current/static/datatype-json.html
-.. _simplejson: http://pypi.python.org/pypi/simplejson/
 
 In order to pass a Python object to the database as query argument you can use
 the `Json` adapter::
@@ -1042,20 +1024,6 @@ parameters.  By reducing the number of server roundtrips the performance can be
 
     .. versionadded:: 2.7
 
-
-
-.. index::
-    single: Time zones; Fractional
-
-Fractional time zones
----------------------
-
-.. autofunction:: register_tstz_w_secs
-
-    .. versionadded:: 2.0.9
-
-    .. versionchanged:: 2.2.2
-        function is no-op: see :ref:`tz-handling`.
 
 .. index::
    pair: Example; Coroutine;

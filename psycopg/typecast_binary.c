@@ -312,4 +312,3 @@ psycopg_parse_escape(const char *bufin, Py_ssize_t sizein, Py_ssize_t *sizeout)
 exit:
     return ret;
 }
-

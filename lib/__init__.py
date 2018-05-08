@@ -72,14 +72,10 @@ _ext.register_adapter(type(None), _ext.NoneAdapter)
 # Register the Decimal adapter here instead of in the C layer.
 # This way a new class is registered for each sub-interpreter.
 # See ticket #52
-try:
-    from decimal import Decimal
-except ImportError:
-    pass
-else:
-    from psycopg2._psycopg import Decimal as Adapter
-    _ext.register_adapter(Decimal, Adapter)
-    del Decimal, Adapter
+from decimal import Decimal
+from psycopg2._psycopg import Decimal as Adapter
+_ext.register_adapter(Decimal, Adapter)
+del Decimal, Adapter
 
 
 def connect(dsn=None, connection_factory=None, cursor_factory=None, **kwargs):

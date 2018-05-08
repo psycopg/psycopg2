@@ -29,40 +29,25 @@ import select
 import platform
 import unittest
 from functools import wraps
-from testconfig import dsn, repl_dsn
+from .testconfig import dsn, repl_dsn
 
+# Python 2/3 compatibility
 
-if hasattr(unittest, 'skipIf'):
-    skip = unittest.skip
-    skipIf = unittest.skipIf
-
+if sys.version_info[0] == 2:
+    # Python 2
+    from StringIO import StringIO
+    long = long
+    reload = reload
+    unichr = unichr
+    unicode = unicode
 else:
-    import warnings
+    # Python 3
+    from io import StringIO
+    from importlib import reload
+    long = int
+    unichr = chr
+    unicode = str
 
-    def skipIf(cond, msg):
-        def skipIf_(f):
-            @wraps(f)
-            def skipIf__(self):
-                if cond:
-                    with warnings.catch_warnings():
-                        warnings.simplefilter('always', UserWarning)
-                        warnings.warn(msg)
-                    return
-                else:
-                    return f(self)
-            return skipIf__
-        return skipIf_
-
-    def skip(msg):
-        return skipIf(True, msg)
-
-    def skipTest(self, msg):
-        with warnings.catch_warnings():
-            warnings.simplefilter('always', UserWarning)
-            warnings.warn(msg)
-        return
-
-    unittest.TestCase.skipTest = skipTest
 
 # Silence warnings caused by the stubbornness of the Python unittest
 # maintainers
@@ -116,7 +101,7 @@ class ConnectingTestCase(unittest.TestCase):
     def connect(self, **kwargs):
         try:
             self._conns
-        except AttributeError, e:
+        except AttributeError as e:
             raise AttributeError(
                 "%s (did you forget to call ConnectingTestCase.setUp()?)"
                 % e)
@@ -149,7 +134,7 @@ class ConnectingTestCase(unittest.TestCase):
             conn = self.connect(**kwargs)
             if conn.async_ == 1:
                 self.wait(conn)
-        except psycopg2.OperationalError, e:
+        except psycopg2.OperationalError as e:
             # If pgcode is not set it is a genuine connection error
             # Otherwise we tried to run some bad operation in the connection
             # (e.g. bug #482) and we'd rather know that.
@@ -204,11 +189,6 @@ def skip_if_no_uuid(f):
     @wraps(f)
     def skip_if_no_uuid_(self):
         try:
-            import uuid             # noqa
-        except ImportError:
-            return self.skipTest("uuid not available in this Python version")
-
-        try:
             cur = self.conn.cursor()
             cur.execute("select typname from pg_type where typname = 'uuid'")
             has = cur.fetchone()
@@ -246,33 +226,6 @@ def skip_if_tpc_disabled(f):
         return f(self)
 
     return skip_if_tpc_disabled_
-
-
-def skip_if_no_namedtuple(f):
-    @wraps(f)
-    def skip_if_no_namedtuple_(self):
-        try:
-            from collections import namedtuple              # noqa
-        except ImportError:
-            return self.skipTest("collections.namedtuple not available")
-        else:
-            return f(self)
-
-    return skip_if_no_namedtuple_
-
-
-def skip_if_no_iobase(f):
-    """Skip a test if io.TextIOBase is not available."""
-    @wraps(f)
-    def skip_if_no_iobase_(self):
-        try:
-            from io import TextIOBase                       # noqa
-        except ImportError:
-            return self.skipTest("io.TextIOBase not found.")
-        else:
-            return f(self)
-
-    return skip_if_no_iobase_
 
 
 def skip_before_postgres(*ver):
@@ -388,7 +341,7 @@ def skip_if_no_superuser(f):
         from psycopg2 import ProgrammingError
         try:
             return f(self)
-        except ProgrammingError, e:
+        except ProgrammingError as e:
             import psycopg2.errorcodes
             if e.pgcode == psycopg2.errorcodes.INSUFFICIENT_PRIVILEGE:
                 self.skipTest("skipped because not superuser")
@@ -402,7 +355,7 @@ def skip_if_green(reason):
     def skip_if_green_(f):
         @wraps(f)
         def skip_if_green__(self):
-            from testconfig import green
+            from .testconfig import green
             if green:
                 return self.skipTest(reason)
             else:
@@ -433,34 +386,6 @@ def skip_if_windows(f):
         else:
             return f(self)
     return skip_if_windows_
-
-
-def script_to_py3(script):
-    """Convert a script to Python3 syntax if required."""
-    if sys.version_info[0] < 3:
-        return script
-
-    import tempfile
-    f = tempfile.NamedTemporaryFile(suffix=".py", delete=False)
-    f.write(script.encode())
-    f.flush()
-    filename = f.name
-    f.close()
-
-    # 2to3 is way too chatty
-    import logging
-    logging.basicConfig(filename=os.devnull)
-
-    from lib2to3.main import main
-    if main("lib2to3.fixes", ['--no-diffs', '-w', '-n', filename]):
-        raise Exception('py3 conversion failed')
-
-    f2 = open(filename)
-    try:
-        return f2.read()
-    finally:
-        f2.close()
-        os.remove(filename)
 
 
 class py3_raises_typeerror(object):

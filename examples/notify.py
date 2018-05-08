@@ -26,20 +26,20 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 if len(sys.argv) > 1:
     DSN = sys.argv[1]
 
-print "Opening connection using dsn:", DSN
+print("Opening connection using dsn:", DSN)
 conn = psycopg2.connect(DSN)
-print "Encoding for this connection is", conn.encoding
+print("Encoding for this connection is", conn.encoding)
 
 conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
 curs = conn.cursor()
 
 curs.execute("listen test")
 
-print "Waiting for 'NOTIFY test'"
+print("Waiting for 'NOTIFY test'")
 while 1:
     if select.select([conn],[],[],5)==([],[],[]):
-        print "Timeout"
+        print("Timeout")
     else:
         conn.poll()
         while conn.notifies:
-            print "Got NOTIFY:", conn.notifies.pop()
+            print("Got NOTIFY:", conn.notifies.pop())

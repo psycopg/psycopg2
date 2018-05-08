@@ -17,7 +17,7 @@ def query_worker(dsn):
                 break
 
 if len(sys.argv) != 2:
-    print 'usage: %s DSN' % sys.argv[0]
+    print('usage: %s DSN' % sys.argv[0])
     sys.exit(1)
 th = threading.Thread(target=query_worker, args=(sys.argv[1],))
 th.setDaemon(True)

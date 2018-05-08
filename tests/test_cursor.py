@@ -26,9 +26,10 @@ import time
 import pickle
 import psycopg2
 import psycopg2.extensions
-from testutils import (unittest, ConnectingTestCase, skip_before_postgres,
-    skip_if_no_namedtuple, skip_if_no_getrefcount, slow, skip_if_no_superuser,
-    skip_if_windows)
+import unittest
+from .testutils import (ConnectingTestCase, skip_before_postgres,
+    skip_if_no_getrefcount, slow, skip_if_no_superuser,
+    skip_if_windows, unicode)
 
 import psycopg2.extras
 
@@ -98,11 +99,7 @@ class CursorTests(ConnectingTestCase):
             cur.mogrify(u"SELECT %s;", (snowman,)))
 
     def test_mogrify_decimal_explodes(self):
-        # issue #7: explodes on windows with python 2.5 and psycopg 2.2.2
-        try:
-            from decimal import Decimal
-        except:
-            return
+        from decimal import Decimal
 
         conn = self.conn
         cur = conn.cursor()
@@ -121,6 +118,12 @@ class CursorTests(ConnectingTestCase):
         nref2 = sys.getrefcount(foo)
         self.assertEqual(nref1, nref2)
 
+    def test_modify_closed(self):
+        cur = self.conn.cursor()
+        cur.close()
+        sql = cur.mogrify("select %s", (10,))
+        self.assertEqual(sql, b"select 10")
+
     def test_bad_placeholder(self):
         cur = self.conn.cursor()
         self.assertRaises(psycopg2.ProgrammingError,
@@ -138,12 +141,8 @@ class CursorTests(ConnectingTestCase):
         self.assertEqual(42, curs.cast(20, '42'))
         self.assertAlmostEqual(3.14, curs.cast(700, '3.14'))
 
-        try:
-            from decimal import Decimal
-        except ImportError:
-            self.assertAlmostEqual(123.45, curs.cast(1700, '123.45'))
-        else:
-            self.assertEqual(Decimal('123.45'), curs.cast(1700, '123.45'))
+        from decimal import Decimal
+        self.assertEqual(Decimal('123.45'), curs.cast(1700, '123.45'))
 
         from datetime import date
         self.assertEqual(date(2011, 1, 2), curs.cast(1082, '2011-01-02'))
@@ -342,9 +341,9 @@ class CursorTests(ConnectingTestCase):
         # timestamp will not be influenced by the pause in Python world.
         curs.execute("""select clock_timestamp() from generate_series(1,2)""")
         i = iter(curs)
-        t1 = (i.next())[0]  # the brackets work around a 2to3 bug
+        t1 = next(i)[0]
         time.sleep(0.2)
-        t2 = (i.next())[0]
+        t2 = next(i)[0]
         self.assert_((t2 - t1).microseconds * 1e-6 < 0.1,
             "named cursor records fetched in 2 roundtrips (delta: %s)"
             % (t2 - t1))
@@ -377,7 +376,6 @@ class CursorTests(ConnectingTestCase):
         for i, rec in enumerate(curs):
             self.assertEqual(i + 1, curs.rownumber)
 
-    @skip_if_no_namedtuple
     def test_namedtuple_description(self):
         curs = self.conn.cursor()
         curs.execute("""select
@@ -561,7 +559,7 @@ class CursorTests(ConnectingTestCase):
         # Issue #443 is in the async code too. Since the fix is duplicated,
         # so is the test.
         control_conn = self.conn
-        connect_func = lambda: self.connect(async=True)
+        connect_func = lambda: self.connect(async_=True)
         wait_func = psycopg2.extras.wait_select
         self._test_external_close(control_conn, connect_func, wait_func)
 
@@ -591,6 +589,20 @@ class CursorTests(ConnectingTestCase):
             self.assertRaises(psycopg2.OperationalError, f)
 
             self.assertEqual(victim_conn.closed, 2)
+
+    @skip_before_postgres(8, 2)
+    def test_rowcount_on_executemany_returning(self):
+        cur = self.conn.cursor()
+        cur.execute("create table execmany(id serial primary key, data int)")
+        cur.executemany(
+            "insert into execmany (data) values (%s)",
+            [(i,) for i in range(4)])
+        self.assertEqual(cur.rowcount, 4)
+
+        cur.executemany(
+            "insert into execmany (data) values (%s) returning data",
+            [(i,) for i in range(5)])
+        self.assertEqual(cur.rowcount, 5)
 
 
 def test_suite():

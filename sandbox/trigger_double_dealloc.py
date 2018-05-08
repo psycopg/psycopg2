@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import psycopg2, psycopg2.extensions
 import threading
 import gc
@@ -20,9 +22,9 @@ class db_user(threading.Thread):
         # the conn2 desctructor will block indefinitely
         # on the completion of the query
         # (and it will not be holding the GIL during that time)
-        print >> sys.stderr, "begin conn2 del"
+        print("begin conn2 del", file=sys.stderr)
         del cursor, conn2
-        print >> sys.stderr, "end conn2 del"
+        print("end conn2 del", file=sys.stderr)
 
 def main():
     # lock out a db row
@@ -43,7 +45,7 @@ def main():
     # as it will avoid conn_close()
     for i in range(10):
         if gc.collect():
-            print >> sys.stderr, "garbage collection done"
+            print("garbage collection done", file=sys.stderr)
             break
         time.sleep(1)
 
@@ -52,9 +54,9 @@ def main():
     # concurrent thread destructor of conn2 to
     # continue and it will end up trying to free
     # self->dsn a second time.
-    print >> sys.stderr, "begin conn1 del"
+    print("begin conn1 del", file=sys.stderr)
     del cursor, conn1
-    print >> sys.stderr, "end conn1 del"
+    print("end conn1 del", file=sys.stderr)
 
 
 if __name__ == '__main__':

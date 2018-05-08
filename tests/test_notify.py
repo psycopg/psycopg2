@@ -22,12 +22,12 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-from testutils import unittest
+import unittest
 
 import psycopg2
 from psycopg2 import extensions
-from testutils import ConnectingTestCase, script_to_py3, slow
-from testconfig import dsn
+from .testutils import ConnectingTestCase, slow
+from .testconfig import dsn
 
 import sys
 import time
@@ -61,7 +61,7 @@ import %(module)s as psycopg2
 import %(module)s.extensions as ext
 conn = psycopg2.connect(%(dsn)r)
 conn.set_isolation_level(ext.ISOLATION_LEVEL_AUTOCOMMIT)
-print conn.get_backend_pid()
+print(conn.get_backend_pid())
 curs = conn.cursor()
 curs.execute("NOTIFY " %(name)r %(payload)r)
 curs.close()
@@ -70,7 +70,7 @@ conn.close()
             'module': psycopg2.__name__,
             'dsn': dsn, 'sec': sec, 'name': name, 'payload': payload})
 
-        return Popen([sys.executable, '-c', script_to_py3(script)], stdout=PIPE)
+        return Popen([sys.executable, '-c', script], stdout=PIPE)
 
     @slow
     def test_notifies_received_on_poll(self):

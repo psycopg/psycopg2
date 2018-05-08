@@ -34,23 +34,23 @@ run_test () {
     export PSYCOPG2_TEST_REPL_DSN=
     unset PSYCOPG2_TEST_GREEN
     python -c \
-        "from psycopg2 import tests; tests.unittest.main(defaultTest='tests.test_suite')" \
+        "import tests; tests.unittest.main(defaultTest='tests.test_suite')" \
         $VERBOSE
 
     printf "\n\nRunning tests against PostgreSQL $VERSION (green mode)\n\n"
     export PSYCOPG2_TEST_GREEN=1
     python -c \
-        "from psycopg2 import tests; tests.unittest.main(defaultTest='tests.test_suite')" \
+        "import tests; tests.unittest.main(defaultTest='tests.test_suite')" \
         $VERBOSE
 }
 
 # Postgres versions supported by Travis CI
 if [[ -z "$DONT_TEST_PRESENT" ]]; then
+    run_test 10
     run_test 9.6
     run_test 9.5
     run_test 9.4
     run_test 9.3
-    run_test 9.2
 fi
 
 # Unsupported postgres versions that we still support
@@ -64,9 +64,10 @@ if [[ -n "$TEST_PAST" ]]; then
     run_test 8.4
     run_test 9.0
     run_test 9.1
+    run_test 9.2
 fi
 
 # Postgres built from master
 if [[ -n "$TEST_FUTURE" ]]; then
-    run_test 10
+    run_test 11
 fi

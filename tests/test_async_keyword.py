@@ -28,10 +28,11 @@ import time
 import psycopg2
 from psycopg2 import extras
 
-from testconfig import dsn
-from testutils import ConnectingTestCase, unittest, skip_before_postgres, slow
+from .testconfig import dsn
+import unittest
+from .testutils import ConnectingTestCase, skip_before_postgres, slow
 
-from test_replication import ReplicationTestCase, skip_repl_if_green
+from .test_replication import ReplicationTestCase, skip_repl_if_green
 from psycopg2.extras import LogicalReplicationConnection, StopReplication
 
 
@@ -81,7 +82,7 @@ class AsyncTests(ConnectingTestCase):
         try:
             cnn = psycopg2.connect('dbname=thisdatabasedoesntexist', async=True)
             self.wait(cnn)
-        except psycopg2.Error, e:
+        except psycopg2.Error as e:
             self.assertNotEqual(str(e), "asynchronous connection failed",
                 "connection error reason lost")
         else:

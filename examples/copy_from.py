@@ -1,4 +1,4 @@
-# copy_from.py -- example about copy_from 
+# copy_from.py -- example about copy_from
 #
 # Copyright (C) 2002 Tom Jenkins <tjenkins@devis.com>
 # Copyright (C) 2005 Federico Di Gregorio <fog@initd.org>
@@ -27,9 +27,9 @@ import psycopg2
 if len(sys.argv) > 1:
     DSN = sys.argv[1]
 
-print "Opening connection using dsn:", DSN
+print("Opening connection using dsn:", DSN)
 conn = psycopg2.connect(DSN)
-print "Encoding for this connection is", conn.encoding
+print("Encoding for this connection is", conn.encoding)
 
 curs = conn.cursor()
 try:
@@ -51,16 +51,16 @@ io.close()
 
 io = open('copy_from.txt', 'r')
 curs.copy_from(io, 'test_copy')
-print "1) Copy %d records from file object " % len(data) + \
-      "using defaults (sep: \\t and null = \\N)"
+print("1) Copy %d records from file object " % len(data) +
+      "using defaults (sep: \\t and null = \\N)")
 io.close()
 
 curs.execute("SELECT * FROM test_copy")
 rows = curs.fetchall()
-print "   Select returned %d rows" % len(rows)
+print("   Select returned %d rows" % len(rows))
 
 for r in rows:
-    print "    %s %s\t%s" % (r[0], r[1], r[2])
+    print("    %s %s\t%s" % (r[0], r[1], r[2]))
 curs.execute("delete from test_copy")
 conn.commit()
 
@@ -75,15 +75,15 @@ io.close()
 
 io = open('copy_from.txt', 'r')
 curs.copy_from(io, 'test_copy', ':')
-print "2) Copy %d records from file object using sep = :" % len(data)
+print("2) Copy %d records from file object using sep = :" % len(data))
 io.close()
 
 curs.execute("SELECT * FROM test_copy")
 rows = curs.fetchall()
-print "   Select returned %d rows" % len(rows)
+print("   Select returned %d rows" % len(rows))
 
 for r in rows:
-    print "    %s %s\t%s" % (r[0], r[1], r[2])
+    print("    %s %s\t%s" % (r[0], r[1], r[2]))
 curs.execute("delete from test_copy")
 conn.commit()
 
@@ -98,15 +98,15 @@ io.close()
 
 io = open('copy_from.txt', 'r')
 curs.copy_from(io, 'test_copy', null='NULL')
-print "3) Copy %d records from file object using null = NULL" % len(data)
+print("3) Copy %d records from file object using null = NULL" % len(data))
 io.close()
 
 curs.execute("SELECT * FROM test_copy")
 rows = curs.fetchall()
-print "   Select using cursor returned %d rows" % len(rows)
+print("   Select using cursor returned %d rows" % len(rows))
 
 for r in rows:
-    print "    %s %s\t%s" % (r[0], r[1], r[2])
+    print("    %s %s\t%s" % (r[0], r[1], r[2]))
 curs.execute("delete from test_copy")
 conn.commit()
 
@@ -119,16 +119,16 @@ io.close()
 
 io = open('copy_from.txt', 'r')
 curs.copy_from(io, 'test_copy', ':', 'NULL')
-print "4) Copy %d records from file object " % len(data) + \
-      "using sep = : and null = NULL"
+print("4) Copy %d records from file object " % len(data) +
+      "using sep = : and null = NULL")
 io.close()
 
 curs.execute("SELECT * FROM test_copy")
 rows = curs.fetchall()
-print "   Select using cursor returned %d rows" % len(rows)
+print("   Select using cursor returned %d rows" % len(rows))
 
 for r in rows:
-    print "    %s %s\t%s" % (r[0], r[1], r[2])
+    print("    %s %s\t%s" % (r[0], r[1], r[2]))
 curs.execute("delete from test_copy")
 conn.commit()
 
@@ -141,20 +141,20 @@ data.write('\n'.join(['Tom\tJenkins\t37',
 data.seek(0)
 
 curs.copy_from(data, 'test_copy')
-print "5) Copy 3 records from StringIO object using defaults"
+print("5) Copy 3 records from StringIO object using defaults")
 
 curs.execute("SELECT * FROM test_copy")
 rows = curs.fetchall()
-print "   Select using cursor returned %d rows" % len(rows)
+print("   Select using cursor returned %d rows" % len(rows))
 
 for r in rows:
-    print "    %s %s\t%s" % (r[0], r[1], r[2])
+    print("    %s %s\t%s" % (r[0], r[1], r[2]))
 curs.execute("delete from test_copy")
 conn.commit()
 
 # simple error test
 
-print "6) About to raise an error"
+print("6) About to raise an error")
 data = StringIO.StringIO()
 data.write('\n'.join(['Tom\tJenkins\t37',
                       'Madonna\t\N\t45',
@@ -163,15 +163,12 @@ data.seek(0)
 
 try:
     curs.copy_from(data, 'test_copy')
-except StandardError, err:
+except StandardError as err:
     conn.rollback()
-    print "   Caught error (as expected):\n", err
+    print("   Caught error (as expected):\n", err)
 
 conn.rollback()
 
 curs.execute("DROP TABLE test_copy")
 os.unlink('copy_from.txt')
 conn.commit()
-
-
-

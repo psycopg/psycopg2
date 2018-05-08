@@ -65,4 +65,3 @@ Psycopg 2 is both Unicode and Python 3 friendly.
         **To Do items in the documentation**
 
         .. todolist::
-

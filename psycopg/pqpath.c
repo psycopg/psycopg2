@@ -52,6 +52,10 @@
 #include "win32_support.h"
 #endif
 
+#if defined(__sun) && defined(__SVR4)
+#include "solaris_support.h"
+#endif
+
 extern HIDDEN PyObject *psyco_DescriptionType;
 extern HIDDEN const char *srv_isolevels[];
 extern HIDDEN const char *srv_readonly[];
@@ -1948,8 +1952,9 @@ pq_fetch(cursorObject *curs, int no_result)
         }
         else {
             Dprintf("pq_fetch: got tuples, discarding them");
+            /* TODO: is there any case in which PQntuples == PQcmdTuples? */
+            _read_rowcount(curs);
             CLEARPGRES(curs->pgres);
-            curs->rowcount = -1;
             ex = 0;
         }
         break;

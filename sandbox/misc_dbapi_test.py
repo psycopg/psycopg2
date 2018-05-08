@@ -18,8 +18,8 @@ class O(object):
 
 o = O('R%', second='S%')
 
-print o[0]
-print o['second']
+print(o[0])
+print(o['second'])
 
 
 #-------------------------------------------------------------------------------
@@ -28,8 +28,8 @@ import psycopg2 as dbapi
 
 
 conn = dbapi.connect(database='test')
-                    
-                   
+
+
 
 cursor = conn.cursor()
 cursor.execute("""
@@ -40,6 +40,4 @@ cursor.execute("""
   """, (o,))
 
 for row in cursor:
-    print row
-
-
+    print(row)

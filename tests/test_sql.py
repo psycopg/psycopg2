@@ -23,16 +23,16 @@
 # License for more details.
 
 import datetime as dt
-from cStringIO import StringIO
-from testutils import (unittest, ConnectingTestCase,
-    skip_before_postgres, skip_before_python, skip_copy_if_green)
+import unittest
+from .testutils import (ConnectingTestCase,
+    skip_before_postgres, skip_before_python, skip_copy_if_green,
+    unicode, StringIO)
 
 import psycopg2
 from psycopg2 import sql
 
 
 class SqlFormatTests(ConnectingTestCase):
-    @skip_before_python(2, 7)
     def test_pos(self):
         s = sql.SQL("select {} from {}").format(
             sql.Identifier('field'), sql.Identifier('table'))
@@ -91,7 +91,6 @@ class SqlFormatTests(ConnectingTestCase):
     def test_compose_badnargs(self):
         self.assertRaises(IndexError, sql.SQL("select {0};").format)
 
-    @skip_before_python(2, 7)
     def test_compose_badnargs_auto(self):
         self.assertRaises(IndexError, sql.SQL("select {};").format)
         self.assertRaises(ValueError, sql.SQL("select {} {1};").format, 10, 20)
@@ -346,11 +345,11 @@ class ComposedTest(ConnectingTestCase):
     def test_iter(self):
         obj = sql.Composed([sql.SQL("foo"), sql.SQL('bar')])
         it = iter(obj)
-        i = it.next()
+        i = next(it)
         self.assertEqual(i, sql.SQL('foo'))
-        i = it.next()
+        i = next(it)
         self.assertEqual(i, sql.SQL('bar'))
-        self.assertRaises(StopIteration, it.next)
+        self.assertRaises(StopIteration, next, it)
 
 
 class PlaceholderTest(ConnectingTestCase):

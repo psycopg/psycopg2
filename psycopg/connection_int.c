@@ -67,6 +67,9 @@ const char *srv_state_guc[] = {
 };
 
 
+const int SRV_STATE_UNCHANGED = -1;
+
+
 /* Return a new "string" from a char* from the database.
  *
  * On Py2 just get a string, on Py3 decode it in the connection codec.
@@ -1188,8 +1191,10 @@ conn_set_session(connectionObject *self, int autocommit,
     int rv = -1;
     PGresult *pgres = NULL;
     char *error = NULL;
+    int want_autocommit = autocommit == SRV_STATE_UNCHANGED ?
+        self->autocommit : autocommit;
 
-    if (deferrable != self->deferrable && self->server_version < 90100) {
+    if (deferrable != SRV_STATE_UNCHANGED && self->server_version < 90100) {
         PyErr_SetString(ProgrammingError,
             "the 'deferrable' setting is only available"
             " from PostgreSQL 9.1");
@@ -1209,24 +1214,24 @@ conn_set_session(connectionObject *self, int autocommit,
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
 
-    if (autocommit) {
-        /* we are in autocommit state, so no BEGIN will be issued:
+    if (want_autocommit) {
+        /* we are or are going in autocommit state, so no BEGIN will be issued:
          * configure the session with the characteristics requested */
-        if (isolevel != self->isolevel) {
+        if (isolevel != SRV_STATE_UNCHANGED) {
             if (0 > pq_set_guc_locked(self,
                     "default_transaction_isolation", srv_isolevels[isolevel],
                     &pgres, &error, &_save)) {
                 goto endlock;
             }
         }
-        if (readonly != self->readonly) {
+        if (readonly != SRV_STATE_UNCHANGED) {
             if (0 > pq_set_guc_locked(self,
                     "default_transaction_read_only", srv_state_guc[readonly],
                     &pgres, &error, &_save)) {
                 goto endlock;
             }
         }
-        if (deferrable != self->deferrable) {
+        if (deferrable != SRV_STATE_UNCHANGED) {
             if (0 > pq_set_guc_locked(self,
                     "default_transaction_deferrable", srv_state_guc[deferrable],
                     &pgres, &error, &_save)) {
@@ -1251,7 +1256,7 @@ conn_set_session(connectionObject *self, int autocommit,
                 goto endlock;
             }
         }
-        if (self->deferrable != STATE_DEFAULT) {
+        if (self->server_version >= 90100 && self->deferrable != STATE_DEFAULT) {
             if (0 > pq_set_guc_locked(self,
                     "default_transaction_deferrable", "default",
                     &pgres, &error, &_save)) {
@@ -1260,10 +1265,18 @@ conn_set_session(connectionObject *self, int autocommit,
         }
     }
 
-    self->autocommit = autocommit;
-    self->isolevel = isolevel;
-    self->readonly = readonly;
-    self->deferrable = deferrable;
+    if (autocommit != SRV_STATE_UNCHANGED) {
+        self->autocommit = autocommit;
+    }
+    if (isolevel != SRV_STATE_UNCHANGED) {
+        self->isolevel = isolevel;
+    }
+    if (readonly != SRV_STATE_UNCHANGED) {
+        self->readonly = readonly;
+    }
+    if (deferrable != SRV_STATE_UNCHANGED) {
+        self->deferrable = deferrable;
+    }
     rv = 0;
 
 endlock:

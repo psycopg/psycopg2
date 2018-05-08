@@ -50,7 +50,7 @@ An example of the available constants defined in the module:
     '42P01'
 
 Constants representing all the error values defined by PostgreSQL versions
-between 8.1 and 10 beta 1 are included in the module.
+between 8.1 and 10 are included in the module.
 
 
 .. autofunction:: lookup(code)
@@ -59,7 +59,7 @@ between 8.1 and 10 beta 1 are included in the module.
 
         >>> try:
         ...     cur.execute("SELECT ouch FROM aargh;")
-        ... except Exception, e:
+        ... except Exception as e:
         ...     pass
         ...
         >>> errorcodes.lookup(e.pgcode[:2])

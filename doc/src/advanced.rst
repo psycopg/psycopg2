@@ -188,7 +188,7 @@ representation into the previously defined `!Point` class:
     ...        return Point(float(m.group(1)), float(m.group(2)))
     ...    else:
     ...        raise InterfaceError("bad point representation: %r" % value)
-                
+
 
 In order to create a mapping from a PostgreSQL type (either standard or
 user-defined), its OID must be known. It can be retrieved either by the second
@@ -295,7 +295,9 @@ something to read::
                 print "Got NOTIFY:", notify.pid, notify.channel, notify.payload
 
 Running the script and executing a command such as :sql:`NOTIFY test, 'hello'`
-in a separate :program:`psql` shell, the output may look similar to::
+in a separate :program:`psql` shell, the output may look similar to:
+
+.. code-block:: none
 
     Waiting for notifications on channel 'test'
     Timeout

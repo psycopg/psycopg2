@@ -28,7 +28,7 @@ from psycopg2.extensions import adapt
 if len(sys.argv) > 1:
     DSN = sys.argv[1]
 
-print "Opening connection using dsn:", DSN
+print("Opening connection using dsn:", DSN)
 conn = psycopg2.connect(DSN)
 curs = conn.cursor()
 
@@ -52,9 +52,9 @@ mx1 = (
 
 from psycopg2.extensions import adapt
 import psycopg2.extras
-print adapt(mx1)
+print(adapt(mx1))
 
-print "Inserting mx.DateTime values..."
+print("Inserting mx.DateTime values...")
 curs.execute("INSERT INTO test_dt VALUES (%s, %s, %s, %s, %s)", mx1)
 
 # build and insert some values using the datetime adapters
@@ -65,11 +65,11 @@ dt1 = (
     datetime.datetime(2004, 10, 19, 0, 11, 17, 500000),
     datetime.timedelta(13, 15*3600+17*60+59, 900000))
 
-print "Inserting Python datetime values..."
+print("Inserting Python datetime values...")
 curs.execute("INSERT INTO test_dt VALUES (%s, %s, %s, %s, %s)", dt1)
 
 # now extract the row from database and print them
-print "Extracting values inserted with mx.DateTime wrappers:"
+print("Extracting values inserted with mx.DateTime wrappers:")
 curs.execute("SELECT d, t, dt, z FROM test_dt WHERE k = 1")
 for n, x in zip(mx1[1:], curs.fetchone()):
     try:
@@ -80,10 +80,10 @@ for n, x in zip(mx1[1:], curs.fetchone()):
     except:
         s = repr(n) + "\n -> " + str(adapt(n))  + \
             "\n -> " + repr(x) + "\n -> " + str(x)
-    print s
-print
+    print(s)
+print()
 
-print "Extracting values inserted with Python datetime wrappers:"
+print("Extracting values inserted with Python datetime wrappers:")
 curs.execute("SELECT d, t, dt, z FROM test_dt WHERE k = 2")
 for n, x in zip(dt1[1:], curs.fetchone()):
     try:
@@ -92,8 +92,8 @@ for n, x in zip(dt1[1:], curs.fetchone()):
         s = repr(n) + "\n -> " +  repr(x) + "\n -> " + x.isoformat()
     except:
         s = repr(n) + "\n -> " +  repr(x) + "\n -> " + str(x)
-    print s
-print
+    print(s)
+print()
 
 curs.execute("DROP TABLE test_dt")
 conn.commit()

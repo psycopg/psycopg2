@@ -29,14 +29,14 @@ import psycopg2.extensions
 if len(sys.argv) > 1:
     DSN = sys.argv[1]
 
-print "Opening connection using dsn:", DSN
+print("Opening connection using dsn:", DSN)
 conn = psycopg2.connect(DSN)
-print "Encoding for this connection is", conn.encoding
+print("Encoding for this connection is", conn.encoding)
 
 curs = conn.cursor()
 curs.execute("SELECT 'text'::text AS foo")
 textoid = curs.description[0][1]
-print "Oid for the text datatype is", textoid
+print("Oid for the text datatype is", textoid)
 
 def castA(s, curs):
     if s is not None: return "(A) " + s
@@ -48,20 +48,18 @@ TYPEB = psycopg2.extensions.new_type((textoid,), "TYPEB", castB)
 
 curs = conn.cursor()
 curs.execute("SELECT 'some text.'::text AS foo")
-print "Some text from plain connection:", curs.fetchone()[0]
+print("Some text from plain connection:", curs.fetchone()[0])
 
 psycopg2.extensions.register_type(TYPEA, conn)
 curs = conn.cursor()
 curs.execute("SELECT 'some text.'::text AS foo")
-print "Some text from connection with typecaster:", curs.fetchone()[0]
+print("Some text from connection with typecaster:", curs.fetchone()[0])
 
 curs = conn.cursor()
 psycopg2.extensions.register_type(TYPEB, curs)
 curs.execute("SELECT 'some text.'::text AS foo")
-print "Some text from cursor with typecaster:", curs.fetchone()[0]
+print("Some text from cursor with typecaster:", curs.fetchone()[0])
 
 curs = conn.cursor()
 curs.execute("SELECT 'some text.'::text AS foo")
-print "Some text from connection with typecaster again:", curs.fetchone()[0]
-
-
+print("Some text from connection with typecaster again:", curs.fetchone()[0])

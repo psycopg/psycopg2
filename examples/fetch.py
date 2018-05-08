@@ -24,9 +24,9 @@ import psycopg2
 if len(sys.argv) > 1:
     DSN = sys.argv[1]
 
-print "Opening connection using dsn:", DSN
+print("Opening connection using dsn:", DSN)
 conn = psycopg2.connect(DSN)
-print "Encoding for this connection is", conn.encoding
+print("Encoding for this connection is", conn.encoding)
 
 curs = conn.cursor()
 try:
@@ -68,12 +68,12 @@ conn.commit()
 
 ncurs = conn.cursor("crs")
 ncurs.execute("SELECT * FROM test_fetch")
-print "First 10 rows:", flatten(ncurs.fetchmany(10))
+print("First 10 rows:", flatten(ncurs.fetchmany(10)))
 ncurs.scroll(-5)
-print "Moved back cursor by 5 rows (to row 5.)"
-print "Another 10 rows:", flatten(ncurs.fetchmany(10))
-print "Another one:", list(ncurs.fetchone())
-print "The remaining rows:", flatten(ncurs.fetchall())
+print("Moved back cursor by 5 rows (to row 5.)")
+print("Another 10 rows:", flatten(ncurs.fetchmany(10)))
+print("Another one:", list(ncurs.fetchone()))
+print("The remaining rows:", flatten(ncurs.fetchall()))
 conn.rollback()
 
 curs.execute("DROP TABLE test_fetch")

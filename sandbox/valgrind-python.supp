@@ -335,7 +335,7 @@
 
 {
    Debian unstable with libc-i686 suppressions
-   Memcheck:Cond	 
+   Memcheck:Cond
    obj:/lib/ld-2.3.5.so
    obj:/lib/ld-2.3.5.so
    obj:/lib/tls/i686/cmov/libc-2.3.5.so
@@ -348,10 +348,10 @@
    fun:_PyImport_GetDynLoadFunc
    fun:_PyImport_LoadDynamicModule
 }
-					  
+
 {
    Debian unstable with libc-i686 suppressions
-   Memcheck:Cond	 
+   Memcheck:Cond
    obj:/lib/ld-2.3.5.so
    obj:/lib/ld-2.3.5.so
    obj:/lib/ld-2.3.5.so
@@ -365,7 +365,7 @@
    fun:_PyImport_GetDynLoadFunc
    fun:_PyImport_LoadDynamicModule
 }
-					  
+
 {
    Debian unstable with libc-i686 suppressions
    Memcheck:Addr4
@@ -471,7 +471,7 @@
 {
    Debian unstable with libc-i686 suppressions
    Memcheck:Cond
-   obj:/lib/ld-2.3.5.so	
+   obj:/lib/ld-2.3.5.so
    obj:/lib/tls/i686/cmov/libc-2.3.5.so
    obj:/lib/ld-2.3.5.so
    fun:_dl_open

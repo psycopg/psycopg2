@@ -24,16 +24,16 @@
 
 import sys
 import string
-from testutils import (unittest, ConnectingTestCase, decorate_all_tests,
-    skip_if_no_iobase, skip_before_postgres, slow)
-from cStringIO import StringIO
-from itertools import cycle, izip
+import unittest
+from .testutils import (ConnectingTestCase, decorate_all_tests,
+    skip_before_postgres, slow, StringIO)
+from itertools import cycle
 from subprocess import Popen, PIPE
 
 import psycopg2
 import psycopg2.extensions
-from testutils import skip_copy_if_green, script_to_py3
-from testconfig import dsn
+from .testutils import skip_copy_if_green
+from .testconfig import dsn
 
 
 if sys.version_info[0] < 3:
@@ -98,7 +98,7 @@ class CopyTests(ConnectingTestCase):
     def test_copy_from_cols(self):
         curs = self.conn.cursor()
         f = StringIO()
-        for i in xrange(10):
+        for i in range(10):
             f.write("%s\n" % (i,))
 
         f.seek(0)
@@ -110,7 +110,7 @@ class CopyTests(ConnectingTestCase):
     def test_copy_from_cols_err(self):
         curs = self.conn.cursor()
         f = StringIO()
-        for i in xrange(10):
+        for i in range(10):
             f.write("%s\n" % (i,))
 
         f.seek(0)
@@ -131,7 +131,6 @@ class CopyTests(ConnectingTestCase):
         finally:
             curs.close()
 
-    @skip_if_no_iobase
     def test_copy_text(self):
         self.conn.set_client_encoding('latin1')
         self._create_temp_table()  # the above call closed the xn
@@ -141,7 +140,7 @@ class CopyTests(ConnectingTestCase):
             about = abin.decode('latin1').replace('\\', '\\\\')
 
         else:
-            abin = bytes(range(32, 127) + range(160, 256)).decode('latin1')
+            abin = bytes(list(range(32, 127)) + list(range(160, 256))).decode('latin1')
             about = abin.replace('\\', '\\\\')
 
         curs = self.conn.cursor()
@@ -154,7 +153,6 @@ class CopyTests(ConnectingTestCase):
         f.seek(0)
         self.assertEqual(f.readline().rstrip(), about)
 
-    @skip_if_no_iobase
     def test_copy_bytes(self):
         self.conn.set_client_encoding('latin1')
         self._create_temp_table()  # the above call closed the xn
@@ -163,7 +161,7 @@ class CopyTests(ConnectingTestCase):
             abin = ''.join(map(chr, range(32, 127) + range(160, 255)))
             about = abin.replace('\\', '\\\\')
         else:
-            abin = bytes(range(32, 127) + range(160, 255)).decode('latin1')
+            abin = bytes(list(range(32, 127)) + list(range(160, 255))).decode('latin1')
             about = abin.replace('\\', '\\\\').encode('latin1')
 
         curs = self.conn.cursor()
@@ -176,7 +174,6 @@ class CopyTests(ConnectingTestCase):
         f.seek(0)
         self.assertEqual(f.readline().rstrip(), about)
 
-    @skip_if_no_iobase
     def test_copy_expert_textiobase(self):
         self.conn.set_client_encoding('latin1')
         self._create_temp_table()  # the above call closed the xn
@@ -187,7 +184,7 @@ class CopyTests(ConnectingTestCase):
             about = abin.replace('\\', '\\\\')
 
         else:
-            abin = bytes(range(32, 127) + range(160, 256)).decode('latin1')
+            abin = bytes(list(range(32, 127)) + list(range(160, 256))).decode('latin1')
             about = abin.replace('\\', '\\\\')
 
         import io
@@ -227,7 +224,7 @@ class CopyTests(ConnectingTestCase):
 
     def _copy_from(self, curs, nrecs, srec, copykw):
         f = StringIO()
-        for i, c in izip(xrange(nrecs), cycle(string.ascii_letters)):
+        for i, c in zip(range(nrecs), cycle(string.ascii_letters)):
             l = c * srec
             f.write("%s\t%s\n" % (i, l))
 
@@ -327,7 +324,7 @@ except psycopg2.ProgrammingError:
 conn.close()
 """ % {'dsn': dsn})
 
-        proc = Popen([sys.executable, '-c', script_to_py3(script)])
+        proc = Popen([sys.executable, '-c', script])
         proc.communicate()
         self.assertEqual(0, proc.returncode)
 
@@ -346,7 +343,7 @@ except psycopg2.ProgrammingError:
 conn.close()
 """ % {'dsn': dsn})
 
-        proc = Popen([sys.executable, '-c', script_to_py3(script)], stdout=PIPE)
+        proc = Popen([sys.executable, '-c', script], stdout=PIPE)
         proc.communicate()
         self.assertEqual(0, proc.returncode)
 
@@ -364,7 +361,7 @@ conn.close()
         #     curs.copy_from, BrokenRead(), "tcopy")
         try:
             curs.copy_from(BrokenRead(), "tcopy")
-        except Exception, e:
+        except Exception as e:
             self.assert_('ZeroDivisionError' in str(e))
 
     def test_copy_to_propagate_error(self):

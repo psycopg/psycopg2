@@ -39,6 +39,7 @@
 extern HIDDEN const char *srv_isolevels[];
 extern HIDDEN const char *srv_readonly[];
 extern HIDDEN const char *srv_deferrable[];
+extern HIDDEN const int SRV_STATE_UNCHANGED;
 
 /** DBAPI methods **/
 
@@ -561,10 +562,10 @@ psyco_conn_set_session(connectionObject *self, PyObject *args, PyObject *kwargs)
     PyObject *deferrable = Py_None;
     PyObject *autocommit = Py_None;
 
-    int c_isolevel = self->isolevel;
-    int c_readonly = self->readonly;
-    int c_deferrable = self->deferrable;
-    int c_autocommit = self->autocommit;
+    int c_isolevel = SRV_STATE_UNCHANGED;
+    int c_readonly = SRV_STATE_UNCHANGED;
+    int c_deferrable = SRV_STATE_UNCHANGED;
+    int c_autocommit = SRV_STATE_UNCHANGED;
 
     static char *kwlist[] =
         {"isolation_level", "readonly", "deferrable", "autocommit", NULL};
@@ -637,7 +638,7 @@ psyco_conn_autocommit_set(connectionObject *self, PyObject *pyvalue)
     if (!_psyco_set_session_check_setter_wrapper(self)) { return -1; }
     if (-1 == (value = PyObject_IsTrue(pyvalue))) { return -1; }
     if (0 > conn_set_session(self, value,
-                self->isolevel, self->readonly, self->deferrable)) {
+                SRV_STATE_UNCHANGED, SRV_STATE_UNCHANGED, SRV_STATE_UNCHANGED)) {
         return -1;
     }
 
@@ -668,8 +669,8 @@ psyco_conn_isolation_level_set(connectionObject *self, PyObject *pyvalue)
 
     if (!_psyco_set_session_check_setter_wrapper(self)) { return -1; }
     if (0 > (value = _psyco_conn_parse_isolevel(pyvalue))) { return -1; }
-    if (0 > conn_set_session(self, self->autocommit,
-                value, self->readonly, self->deferrable)) {
+    if (0 > conn_set_session(self, SRV_STATE_UNCHANGED,
+                value, SRV_STATE_UNCHANGED, SRV_STATE_UNCHANGED)) {
         return -1;
     }
 
@@ -715,13 +716,13 @@ psyco_conn_set_isolation_level(connectionObject *self, PyObject *args)
 
     if (level == 0) {
         if (0 > conn_set_session(self, 1,
-                self->isolevel, self->readonly, self->deferrable)) {
+                SRV_STATE_UNCHANGED, SRV_STATE_UNCHANGED, SRV_STATE_UNCHANGED)) {
             return NULL;
         }
     }
     else {
         if (0 > conn_set_session(self, 0,
-                level, self->readonly, self->deferrable)) {
+                level, SRV_STATE_UNCHANGED, SRV_STATE_UNCHANGED)) {
             return NULL;
         }
     }
@@ -767,8 +768,8 @@ psyco_conn_readonly_set(connectionObject *self, PyObject *pyvalue)
 
     if (!_psyco_set_session_check_setter_wrapper(self)) { return -1; }
     if (0 > (value = _psyco_conn_parse_onoff(pyvalue))) { return -1; }
-    if (0 > conn_set_session(self, self->autocommit,
-                self->isolevel, value, self->deferrable)) {
+    if (0 > conn_set_session(self, SRV_STATE_UNCHANGED,
+                SRV_STATE_UNCHANGED, value, SRV_STATE_UNCHANGED)) {
         return -1;
     }
 
@@ -813,8 +814,8 @@ psyco_conn_deferrable_set(connectionObject *self, PyObject *pyvalue)
 
     if (!_psyco_set_session_check_setter_wrapper(self)) { return -1; }
     if (0 > (value = _psyco_conn_parse_onoff(pyvalue))) { return -1; }
-    if (0 > conn_set_session(self, self->autocommit,
-                self->isolevel, self->readonly, value)) {
+    if (0 > conn_set_session(self, SRV_STATE_UNCHANGED,
+                SRV_STATE_UNCHANGED, SRV_STATE_UNCHANGED, value)) {
         return -1;
     }
 

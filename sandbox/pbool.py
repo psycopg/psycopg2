@@ -3,11 +3,10 @@ class B(object):
         if x: self._o = True
         else: self._o = False
     def __getattribute__(self, attr):
-        print "ga called", attr
+        print("ga called", attr)
         return object.__getattribute__(self, attr)
     def _sqlquote(self):
-        if self._o == True:
+        if self._o:
             return 'It is True'
         else:
             return 'It is False'
-        

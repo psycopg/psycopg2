@@ -73,7 +73,6 @@
     <None Include="lib\extras.py" />
     <None Include="lib\__init__.py" />
     <None Include="lib\pool.py" />
-    <None Include="lib\psycopg1.py" />
     <None Include="lib\tz.py" />
     <None Include="psycopg\adapter_asis.h" />
     <None Include="psycopg\adapter_binary.h" />
@@ -98,8 +97,6 @@
     <None Include="psycopg\typecast.h" />
     <None Include="psycopg\typecast_binary.h" />
     <None Include="psycopg\win32_support.h" />
-    <None Include="scripts\buildtypes.py" />
-    <None Include="scripts\maketypes.sh" />
     <None Include="ZPsycopgDA\dtml\add.dtml" />
     <None Include="ZPsycopgDA\dtml\browse.dtml" />
     <None Include="ZPsycopgDA\dtml\edit.dtml" />

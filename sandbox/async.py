@@ -15,22 +15,21 @@ curs = conn.cursor()
 
 def sleep(curs):
     while not curs.isready():
-        print "."
+        print(".")
         time.sleep(.1)
-        
+
 #curs.execute("""
 #    DECLARE zz INSENSITIVE SCROLL CURSOR WITH HOLD FOR
 #    SELECT now();
 #    FOR READ ONLY;""", async = 1)
-curs.execute("SELECT now() AS foo", async=1);
+curs.execute("SELECT now() AS foo", async=1)
 sleep(curs)
-print curs.fetchall()
+print(curs.fetchall())
 
 #curs.execute("""
 #    FETCH FORWARD 1 FROM zz;""", async = 1)
-curs.execute("SELECT now() AS bar", async=1);
-print curs.fetchall()
+curs.execute("SELECT now() AS bar", async=1)
+print(curs.fetchall())
 
-curs.execute("SELECT now() AS bar");
+curs.execute("SELECT now() AS bar")
 sleep(curs)
-

@@ -29,6 +29,7 @@ import os as _os
 import sys as _sys
 import time as _time
 import re as _re
+from collections import namedtuple
 
 try:
     import logging as _logging
@@ -109,16 +110,16 @@ class DictCursorBase(_cursor):
         try:
             if self._prefetch:
                 res = super(DictCursorBase, self).__iter__()
-                first = res.next()
+                first = next(res)
             if self._query_executed:
                 self._build_index()
             if not self._prefetch:
                 res = super(DictCursorBase, self).__iter__()
-                first = res.next()
+                first = next(res)
 
             yield first
             while 1:
-                yield res.next()
+                yield next(res)
         except StopIteration:
             return
 
@@ -263,7 +264,7 @@ class RealDictCursor(DictCursorBase):
 class RealDictRow(dict):
     """A `!dict` subclass representing a data record."""
 
-    __slots__ = ('_column_mapping')
+    __slots__ = ('_column_mapping',)
 
     def __init__(self, cursor):
         dict.__init__(self)
@@ -279,7 +280,7 @@ class RealDictRow(dict):
         return dict.__setitem__(self, name, value)
 
     def __getstate__(self):
-        return (self.copy(), self._column_mapping[:])
+        return self.copy(), self._column_mapping[:]
 
     def __setstate__(self, data):
         self.update(data[0])
@@ -348,7 +349,7 @@ class NamedTupleCursor(_cursor):
     def __iter__(self):
         try:
             it = super(NamedTupleCursor, self).__iter__()
-            t = it.next()
+            t = next(it)
 
             nt = self.Record
             if nt is None:
@@ -357,18 +358,22 @@ class NamedTupleCursor(_cursor):
             yield nt._make(t)
 
             while 1:
-                yield nt._make(it.next())
+                yield nt._make(next(it))
         except StopIteration:
             return
 
-    try:
-        from collections import namedtuple
-    except ImportError, _exc:
-        def _make_nt(self):
-            raise self._exc
-    else:
-        def _make_nt(self, namedtuple=namedtuple):
-            return namedtuple("Record", [d[0] for d in self.description or ()])
+    def _make_nt(self):
+        def f(s):
+            # NOTE: Python 3 actually allows unicode chars in fields
+            s = _re.sub('[^a-zA-Z0-9_]', '_', s)
+            # Python identifier cannot start with numbers, namedtuple fields
+            # cannot start with underscore. So...
+            if _re.match('^[0-9_]', s):
+                s = 'f' + s
+
+            return s
+
+        return namedtuple("Record", [f(d[0]) for d in self.description or ()])
 
 
 class LoggingConnection(_connection):
@@ -455,6 +460,8 @@ class MinTimeLoggingConnection(LoggingConnection):
     def filter(self, msg, curs):
         t = (_time.time() - curs.timestamp) * 1000
         if t > self._mintime:
+            if _sys.version_info[0] >= 3 and isinstance(msg, bytes):
+                msg = msg.decode(_ext.encodings[self.encoding], 'replace')
             return msg + _os.linesep + "  (execution time: %d ms)" % t
 
     def cursor(self, *args, **kwargs):
@@ -720,18 +727,6 @@ def register_inet(oid=None, conn_or_curs=None):
     _ext.register_type(_ext.INETARRAY, conn_or_curs)
 
     return _ext.INET
-
-
-def register_tstz_w_secs(oids=None, conn_or_curs=None):
-    """The function used to register an alternate type caster for
-    :sql:`TIMESTAMP WITH TIME ZONE` to deal with historical time zones with
-    seconds in the UTC offset.
-
-    These are now correctly handled by the default type caster, so currently
-    the function doesn't do anything.
-    """
-    import warnings
-    warnings.warn("deprecated", DeprecationWarning)
 
 
 def wait_select(conn):
@@ -1055,14 +1050,8 @@ class CompositeCaster(object):
         return rv
 
     def _create_type(self, name, attnames):
-        try:
-            from collections import namedtuple
-        except ImportError:
-            self.type = tuple
-            self._ctor = self.type
-        else:
-            self.type = namedtuple(name, attnames)
-            self._ctor = self.type._make
+        self.type = namedtuple(name, attnames)
+        self._ctor = self.type._make
 
     @classmethod
     def _from_db(self, name, conn_or_curs):
@@ -1153,7 +1142,7 @@ def _paginate(seq, page_size):
     while 1:
         try:
             for i in xrange(page_size):
-                page.append(it.next())
+                page.append(next(it))
             yield page
             page = []
         except StopIteration:

@@ -34,14 +34,14 @@ import psycopg2
 import psycopg2.errorcodes
 from psycopg2 import extensions as ext
 
-from testutils import (
-    script_to_py3, unittest, decorate_all_tests, skip_if_no_superuser,
+from .testutils import (
+    unittest, decorate_all_tests, skip_if_no_superuser,
     skip_before_postgres, skip_after_postgres, skip_before_libpq,
     ConnectingTestCase, skip_if_tpc_disabled, skip_if_windows, slow,
     libpq_version
 )
 
-from testconfig import dsn, dbname
+from .testconfig import dsn, dbname
 
 
 class ConnectionTests(ConnectingTestCase):
@@ -248,6 +248,13 @@ class ConnectionTests(ConnectingTestCase):
             else:
                 del os.environ['PGCLIENTENCODING']
 
+    def test_connect_no_string(self):
+        class MyString(str):
+            pass
+
+        conn = psycopg2.connect(MyString(dsn))
+        conn.close()
+
     def test_weakref(self):
         from weakref import ref
         import gc
@@ -354,13 +361,12 @@ class ParseDsnTestCase(ConnectingTestCase):
             "DSN with quoting parsed")
 
         # Can't really use assertRaisesRegexp() here since we need to
-        # make sure that secret is *not* exposed in the error messgage
-        # (and it also requires python >= 2.7).
+        # make sure that secret is *not* exposed in the error message.
         raised = False
         try:
             # unterminated quote after dbname:
             ext.parse_dsn("dbname='test 2 user=tester password=secret")
-        except ProgrammingError, e:
+        except ProgrammingError as e:
             raised = True
             self.assertTrue(str(e).find('secret') < 0,
                             "DSN was not exposed in error message")
@@ -378,7 +384,7 @@ class ParseDsnTestCase(ConnectingTestCase):
         try:
             # extra '=' after port value
             ext.parse_dsn(dsn='postgresql://tester:secret@/test?port=1111=x')
-        except psycopg2.ProgrammingError, e:
+        except psycopg2.ProgrammingError as e:
             raised = True
             self.assertTrue(str(e).find('secret') < 0,
                             "URI was not exposed in error message")
@@ -402,6 +408,13 @@ class ParseDsnTestCase(ConnectingTestCase):
     def test_bad_param(self):
         self.assertRaises(TypeError, ext.parse_dsn, None)
         self.assertRaises(TypeError, ext.parse_dsn, 42)
+
+    def test_str_subclass(self):
+        class MyString(str):
+            pass
+
+        res = ext.parse_dsn(MyString("dbname=test"))
+        self.assertEqual(res, {'dbname': 'test'})
 
 
 class MakeDsnTestCase(ConnectingTestCase):
@@ -1433,6 +1446,16 @@ class TransactionControlTests(ConnectingTestCase):
             'md594839d658c28a357126f105b9cb14cfc'
         )
 
+    def test_idempotence_check(self):
+        self.conn.autocommit = False
+        self.conn.readonly = True
+        self.conn.autocommit = True
+        self.conn.readonly = True
+
+        cur = self.conn.cursor()
+        cur.execute("SHOW transaction_read_only")
+        self.assertEqual(cur.fetchone()[0], 'on')
+
 
 class AutocommitTests(ConnectingTestCase):
     def test_closed(self):
@@ -1591,9 +1614,13 @@ import os
 import sys
 import time
 import signal
+import warnings
 import threading
 
-import psycopg2
+# ignore wheel deprecation warning
+with warnings.catch_warnings():
+    warnings.simplefilter('ignore')
+    import psycopg2
 
 def handle_sigabort(sig, frame):
     sys.exit(1)
@@ -1618,7 +1645,7 @@ while True:
     cur.execute(%(query)r, ("Hello, world!",))
 """ % {'dsn': dsn, 'query': query})
 
-        proc = sp.Popen([sys.executable, '-c', script_to_py3(script)],
+        proc = sp.Popen([sys.executable, '-c', script],
             stdout=sp.PIPE, stderr=sp.PIPE)
         (out, err) = proc.communicate()
         self.assertNotEqual(proc.returncode, 0)

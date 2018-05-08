@@ -48,7 +48,7 @@ The main entry points of Psycopg are:
 
 - The class `connection` encapsulates a database session. It allows to:
 
-  - create new `cursor`\s using the `~connection.cursor()` method to
+  - create new `cursor` instances using the `~connection.cursor()` method to
     execute database commands and queries,
 
   - terminate transactions using the methods `~connection.commit()` or
@@ -73,70 +73,97 @@ The main entry points of Psycopg are:
 Passing parameters to SQL queries
 ---------------------------------
 
-Psycopg casts Python variables to SQL literals by type.  Many standard Python types
-are already `adapted to the correct SQL representation`__.
+Psycopg converts Python variables to SQL values using their types: the Python
+type determines the function used to convert the object into a string
+representation suitable for PostgreSQL.  Many standard Python types are
+already `adapted to the correct SQL representation`__.
 
 .. __: python-types-adaptation_
 
-Example: the Python function call::
+Passing parameters to an SQL statement happens in functions such as
+`cursor.execute()` by using ``%s`` placeholders in the SQL statement, and
+passing a sequence of values as the second argument of the function. For
+example the Python function call::
 
-    >>> cur.execute(
-    ...     """INSERT INTO some_table (an_int, a_date, a_string)
-    ...         VALUES (%s, %s, %s);""",
+    >>> cur.execute("""
+    ...     INSERT INTO some_table (an_int, a_date, a_string)
+    ...     VALUES (%s, %s, %s);
+    ...     """,
     ...     (10, datetime.date(2005, 11, 18), "O'Reilly"))
 
-is converted into the SQL command::
+is converted into a SQL command similar to:
+
+.. code-block:: sql
 
     INSERT INTO some_table (an_int, a_date, a_string)
-     VALUES (10, '2005-11-18', 'O''Reilly');
+    VALUES (10, '2005-11-18', 'O''Reilly');
 
-Named arguments are supported too using :samp:`%({name})s` placeholders.
-Using named arguments the values can be passed to the query in any order and
-many placeholders can use the same values::
+Named arguments are supported too using :samp:`%({name})s` placeholders in the
+query and specifying the values into a mapping.  Using named arguments allows
+to specify the values in any order and to repeat the same value in several
+places in the query::
 
-    >>> cur.execute(
-    ...     """INSERT INTO some_table (an_int, a_date, another_date, a_string)
-    ...         VALUES (%(int)s, %(date)s, %(date)s, %(str)s);""",
+    >>> cur.execute("""
+    ...     INSERT INTO some_table (an_int, a_date, another_date, a_string)
+    ...     VALUES (%(int)s, %(date)s, %(date)s, %(str)s);
+    ...     """,
     ...     {'int': 10, 'str': "O'Reilly", 'date': datetime.date(2005, 11, 18)})
 
+Using characters ``%``, ``(``, ``)`` in the argument names is not supported.
+
 When parameters are used, in order to include a literal ``%`` in the query you
-can use the ``%%`` string. Using characters ``%``, ``(``, ``)`` in the
-argument names is not supported.
+can use the ``%%`` string::
+
+    >>> cur.execute("SELECT (%s % 2) = 0 AS even", (10,))       # WRONG
+    >>> cur.execute("SELECT (%s %% 2) = 0 AS even", (10,))      # correct
 
 While the mechanism resembles regular Python strings manipulation, there are a
 few subtle differences you should care about when passing parameters to a
-query:
+query.
 
-- The Python string operator ``%`` is not used: the `~cursor.execute()`
+- The Python string operator ``%`` *must not be used*: the `~cursor.execute()`
   method accepts a tuple or dictionary of values as second parameter.
-  |sql-warn|__.
+  |sql-warn|__:
 
   .. |sql-warn| replace:: **Never** use ``%`` or ``+`` to merge values
       into queries
 
   .. __: sql-injection_
 
-- The variables placeholder must *always be a* ``%s``, even if a different
-  placeholder (such as a ``%d`` for integers or ``%f`` for floats) may look
-  more appropriate::
-
-    >>> cur.execute("INSERT INTO numbers VALUES (%d)", (42,)) # WRONG
-    >>> cur.execute("INSERT INTO numbers VALUES (%s)", (42,)) # correct
+    >>> cur.execute("INSERT INTO numbers VALUES (%s, %s)" % (10, 20)) # WRONG
+    >>> cur.execute("INSERT INTO numbers VALUES (%s, %s)", (10, 20))  # correct
 
 - For positional variables binding, *the second argument must always be a
-  sequence*, even if it contains a single variable.  And remember that Python
-  requires a comma to create a single element tuple::
+  sequence*, even if it contains a single variable (remember that Python
+  requires a comma to create a single element tuple)::
 
     >>> cur.execute("INSERT INTO foo VALUES (%s)", "bar")    # WRONG
     >>> cur.execute("INSERT INTO foo VALUES (%s)", ("bar"))  # WRONG
     >>> cur.execute("INSERT INTO foo VALUES (%s)", ("bar",)) # correct
     >>> cur.execute("INSERT INTO foo VALUES (%s)", ["bar"])  # correct
 
-- Only query values should be bound via this method: it shouldn't be used to
-  merge table or field names to the query. If you need to generate dynamically
-  an SQL query (for instance choosing dynamically a table name) you can use
-  the facilities provided by the `psycopg2.sql` module.
+- The placeholder *must not be quoted*. Psycopg will add quotes where needed::
 
+    >>> cur.execute("INSERT INTO numbers VALUES ('%s')", (10,)) # WRONG
+    >>> cur.execute("INSERT INTO numbers VALUES (%s)", (10,))   # correct
+
+- The variables placeholder *must always be a* ``%s``, even if a different
+  placeholder (such as a ``%d`` for integers or ``%f`` for floats) may look
+  more appropriate::
+
+    >>> cur.execute("INSERT INTO numbers VALUES (%d)", (10,))   # WRONG
+    >>> cur.execute("INSERT INTO numbers VALUES (%s)", (10,))   # correct
+
+- Only query values should be bound via this method: it shouldn't be used to
+  merge table or field names to the query (Psycopg will try quoting the table
+  name as a string value, generating invalid SQL). If you need to generate
+  dynamically SQL queries (for instance choosing dynamically a table name)
+  you can use the facilities provided by the `psycopg2.sql` module::
+
+    >>> cur.execute("INSERT INTO %s VALUES (%s)", ('numbers', 10))  # WRONG
+    >>> cur.execute(                                                # correct
+    ...     SQL("INSERT INTO {} VALUES (%s)").format(Identifier('numbers')),
+    ...     (10,))
 
 
 .. index:: Security, SQL injection
@@ -430,14 +457,12 @@ the connection or globally: see the function
 Binary adaptation
 ^^^^^^^^^^^^^^^^^
 
-Python types representing binary objects are converted into
-PostgreSQL binary string syntax, suitable for :sql:`bytea` fields.   Such
-types are `buffer` (only available in Python 2), `memoryview` (available
-from Python 2.7), `bytearray` (available from Python 2.6) and `bytes`
-(only from Python 3: the name is available from Python 2.6 but it's only an
-alias for the type `!str`). Any object implementing the `Revised Buffer
-Protocol`__ should be usable as binary type where the protocol is supported
-(i.e. from Python 2.6). Received data is returned as `!buffer` (in Python 2)
+Python types representing binary objects are converted into PostgreSQL binary
+string syntax, suitable for :sql:`bytea` fields.   Such types are `buffer`
+(only available in Python 2), `memoryview`, `bytearray`, and `bytes` (only in
+Python 3: the name is available in Python 2 but it's only an alias for the
+type `!str`). Any object implementing the `Revised Buffer Protocol`__ should
+be usable as binary type. Received data is returned as `!buffer` (in Python 2)
 or `!memoryview` (in Python 3).
 
 .. __: http://www.python.org/dev/peps/pep-3118/
@@ -535,8 +560,7 @@ rounded to the nearest minute, with an error of up to 30 seconds.
 
 .. versionchanged:: 2.2.2
     timezones with seconds are supported (with rounding). Previously such
-    timezones raised an error.  In order to deal with them in previous
-    versions use `psycopg2.extras.register_tstz_w_secs()`.
+    timezones raised an error.
 
 
 .. index::
@@ -792,7 +816,9 @@ lifetime extends well after `~connection.commit()`, calling
     It is also possible to use a named cursor to consume a cursor created
     in some other way than using the |DECLARE| executed by
     `~cursor.execute()`. For example, you may have a PL/pgSQL function
-    returning a cursor::
+    returning a cursor:
+
+    .. code-block:: postgres
 
         CREATE FUNCTION reffunc(refcursor) RETURNS refcursor AS $$
         BEGIN
@@ -990,4 +1016,3 @@ For further details see the documentation for the above methods.
 
 .. __: http://www.opengroup.org/bookstore/catalog/c193.htm
 .. __: http://jdbc.postgresql.org/
-

@@ -30,17 +30,17 @@ import psycopg2
 if len(sys.argv) > 1:
     DSN = sys.argv[1]
 
-print "Opening connection using dsn:", DSN
+print("Opening connection using dsn:", DSN)
 conn = psycopg2.connect(DSN)
-print "Encoding for this connection is", conn.encoding
+print("Encoding for this connection is", conn.encoding)
 
 curs = conn.cursor()
 curs.execute("SELECT 1 AS foo")
-print curs.fetchone()
+print(curs.fetchone())
 curs.execute("SELECT 1 AS foo")
-print curs.fetchmany()
+print(curs.fetchmany())
 curs.execute("SELECT 1 AS foo")
-print curs.fetchall()
+print(curs.fetchall())
 
 conn.rollback()
 

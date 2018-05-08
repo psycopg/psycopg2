@@ -17,6 +17,7 @@
 DSN = 'dbname=test'
 
 ## don't modify anything below this line (except for experimenting)
+from __future__ import print_function
 
 import sys
 import psycopg2
@@ -24,9 +25,9 @@ import psycopg2
 if len(sys.argv) > 1:
     DSN = sys.argv[1]
 
-print "Opening connection using dsn:", DSN
+print("Opening connection using dsn:", DSN)
 conn = psycopg2.connect(DSN)
-print "Encoding for this connection is", conn.encoding
+print("Encoding for this connection is", conn.encoding)
 
 curs = conn.cursor()
 try:
@@ -52,20 +53,20 @@ curs.execute("""INSERT INTO test_binary
 
 # now we try to extract the images as simple text strings
 
-print "Extracting the images as strings..."
+print("Extracting the images as strings...")
 curs.execute("SELECT * FROM test_binary")
 
 for row in curs.fetchall():
     name, ext = row[1].split('.')
     new_name = name + '_S.' + ext
-    print "  writing %s to %s ..." % (name+'.'+ext, new_name),
+    print("  writing %s to %s ..." % (name+'.'+ext, new_name), end=' ')
     open(new_name, 'wb').write(row[2])
-    print "done"
-    print "  python type of image data is", type(row[2])
-    
+    print("done")
+    print("  python type of image data is", type(row[2]))
+
 # extract exactly the same data but using a binary cursor
 
-print "Extracting the images using a binary cursor:"
+print("Extracting the images using a binary cursor:")
 
 curs.execute("""DECLARE zot CURSOR FOR
                   SELECT img, name FROM test_binary FOR READ ONLY""")
@@ -74,11 +75,11 @@ curs.execute("""FETCH ALL FROM zot""")
 for row in curs.fetchall():
     name, ext = row[1].split('.')
     new_name = name + '_B.' + ext
-    print "  writing %s to %s ..." % (name+'.'+ext, new_name),
+    print("  writing %s to %s ..." % (name+'.'+ext, new_name), end=' ')
     open(new_name, 'wb').write(row[0])
-    print "done"
-    print "  python type of image data is", type(row[0])
-    
+    print("done")
+    print("  python type of image data is", type(row[0]))
+
 # this rollback is required because we can't drop a table with a binary cursor
 # declared and still open
 conn.rollback()
@@ -86,4 +87,4 @@ conn.rollback()
 curs.execute("DROP TABLE test_binary")
 conn.commit()
 
-print "\nNow try to load the new images, to check it worked!"
+print("\nNow try to load the new images, to check it worked!")

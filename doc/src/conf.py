@@ -57,7 +57,7 @@ try:
     release = psycopg2.__version__.split()[0]
     version = '.'.join(release.split('.')[:2])
 except ImportError:
-    print "WARNING: couldn't import psycopg to read version."
+    print("WARNING: couldn't import psycopg to read version.")
     release = version
 
 intersphinx_mapping = {
@@ -100,6 +100,10 @@ default_role = 'obj'
 # If true, sectionauthor and moduleauthor directives will be shown in the
 # output. They are ignored by default.
 #show_authors = False
+
+# Using 'python' instead of the default gives warnings if parsing an example
+# fails, instead of defaulting to none
+highlight_language = 'python'
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'

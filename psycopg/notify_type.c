@@ -295,5 +295,3 @@ PyTypeObject notifyType = {
     0,          /*tp_alloc*/
     notify_new, /*tp_new*/
 };
-
-

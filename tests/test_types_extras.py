@@ -13,7 +13,6 @@
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
-from __future__ import with_statement
 
 import re
 import sys
@@ -23,8 +22,10 @@ from datetime import date, datetime
 from functools import wraps
 from pickle import dumps, loads
 
-from testutils import (unittest, skip_if_no_uuid, skip_before_postgres,
-    ConnectingTestCase, decorate_all_tests, py3_raises_typeerror, slow)
+import unittest
+from .testutils import (skip_if_no_uuid, skip_before_postgres,
+    ConnectingTestCase, decorate_all_tests, py3_raises_typeerror, slow,
+    skip_from_python)
 
 import psycopg2
 import psycopg2.extras
@@ -113,9 +114,14 @@ class TypesExtrasTests(ConnectingTestCase):
             psycopg2.extensions.adapt, Foo(), ext.ISQLQuote, None)
         try:
             psycopg2.extensions.adapt(Foo(), ext.ISQLQuote, None)
-        except psycopg2.ProgrammingError, err:
+        except psycopg2.ProgrammingError as err:
             self.failUnless(str(err) == "can't adapt type 'Foo'")
 
+    def test_point_array(self):
+        # make sure a point array is never casted to a float array,
+        # see https://github.com/psycopg/psycopg2/issues/613
+        s = self.execute("""SELECT '{"(1,2)","(3,4)"}' AS foo""")
+        self.failUnless(s == """{"(1,2)","(3,4)"}""")
 
 def skip_if_no_hstore(f):
     @wraps(f)
@@ -175,7 +181,7 @@ class HstoreTestCase(ConnectingTestCase):
 
         kk = m.group(1).split(b", ")
         vv = m.group(2).split(b", ")
-        ii = zip(kk, vv)
+        ii = list(zip(kk, vv))
         ii.sort()
 
         self.assertEqual(len(ii), len(o))
@@ -245,6 +251,7 @@ class HstoreTestCase(ConnectingTestCase):
         self.assertEqual(t[2], {'a': 'b'})
 
     @skip_if_no_hstore
+    @skip_from_python(3)
     def test_register_unicode(self):
         from psycopg2.extras import register_hstore
 
@@ -299,7 +306,7 @@ class HstoreTestCase(ConnectingTestCase):
         ok({})
         ok({'a': 'b', 'c': None})
 
-        ab = map(chr, range(32, 128))
+        ab = list(map(chr, range(32, 128)))
         ok(dict(zip(ab, ab)))
         ok({''.join(ab): ''.join(ab)})
 
@@ -307,12 +314,13 @@ class HstoreTestCase(ConnectingTestCase):
         if sys.version_info[0] < 3:
             ab = map(chr, range(32, 127) + range(160, 255))
         else:
-            ab = bytes(range(32, 127) + range(160, 255)).decode('latin1')
+            ab = bytes(list(range(32, 127)) + list(range(160, 255))).decode('latin1')
 
         ok({''.join(ab): ''.join(ab)})
         ok(dict(zip(ab, ab)))
 
     @skip_if_no_hstore
+    @skip_from_python(3)
     def test_roundtrip_unicode(self):
         from psycopg2.extras import register_hstore
         register_hstore(self.conn, unicode=True)
@@ -361,11 +369,9 @@ class HstoreTestCase(ConnectingTestCase):
         from psycopg2.extras import register_hstore
         register_hstore(self.conn)
 
-        ds = []
-        ds.append({})
-        ds.append({'a': 'b', 'c': None})
+        ds = [{}, {'a': 'b', 'c': None}]
 
-        ab = map(chr, range(32, 128))
+        ab = list(map(chr, range(32, 128)))
         ds.append(dict(zip(ab, ab)))
         ds.append({''.join(ab): ''.join(ab)})
 
@@ -373,7 +379,7 @@ class HstoreTestCase(ConnectingTestCase):
         if sys.version_info[0] < 3:
             ab = map(chr, range(32, 127) + range(160, 255))
         else:
-            ab = bytes(range(32, 127) + range(160, 255)).decode('latin1')
+            ab = bytes(list(range(32, 127)) + list(range(160, 255))).decode('latin1')
 
         ds.append({''.join(ab): ''.join(ab)})
         ds.append(dict(zip(ab, ab)))
@@ -508,7 +514,7 @@ class AdaptTypeTestCase(ConnectingTestCase):
            '@,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,[,"\\\\",],'
            '^,_,`,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,{,|,},'
            '~,\x7f)',
-           map(chr, range(1, 128)))
+           list(map(chr, range(1, 128))))
         ok('(,"\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f'
            '\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f !'
            '""#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\\\]'
@@ -536,16 +542,10 @@ class AdaptTypeTestCase(ConnectingTestCase):
         self.assertEqual(v[0], 10)
         self.assertEqual(v[1], "hello")
         self.assertEqual(v[2], date(2011, 1, 2))
-
-        try:
-            from collections import namedtuple          # noqa
-        except ImportError:
-            pass
-        else:
-            self.assert_(t.type is not tuple)
-            self.assertEqual(v.anint, 10)
-            self.assertEqual(v.astring, "hello")
-            self.assertEqual(v.adate, date(2011, 1, 2))
+        self.assert_(t.type is not tuple)
+        self.assertEqual(v.anint, 10)
+        self.assertEqual(v.astring, "hello")
+        self.assertEqual(v.adate, date(2011, 1, 2))
 
     @skip_if_no_composite
     def test_empty_string(self):
@@ -586,13 +586,7 @@ class AdaptTypeTestCase(ConnectingTestCase):
         v = curs.fetchone()[0]
 
         self.assertEqual(r, v)
-
-        try:
-            from collections import namedtuple              # noqa
-        except ImportError:
-            pass
-        else:
-            self.assertEqual(v.anotherpair.apair.astring, "hello")
+        self.assertEqual(v.anotherpair.apair.astring, "hello")
 
     @skip_if_no_composite
     def test_register_on_cursor(self):
@@ -822,30 +816,6 @@ class AdaptTypeTestCase(ConnectingTestCase):
         return oid
 
 
-def skip_if_json_module(f):
-    """Skip a test if a Python json module *is* available"""
-    @wraps(f)
-    def skip_if_json_module_(self):
-        if psycopg2.extras.json is not None:
-            return self.skipTest("json module is available")
-
-        return f(self)
-
-    return skip_if_json_module_
-
-
-def skip_if_no_json_module(f):
-    """Skip a test if no Python json module is available"""
-    @wraps(f)
-    def skip_if_no_json_module_(self):
-        if psycopg2.extras.json is None:
-            return self.skipTest("json module not available")
-
-        return f(self)
-
-    return skip_if_no_json_module_
-
-
 def skip_if_no_json_type(f):
     """Skip a test if PostgreSQL json type is not available"""
     @wraps(f)
@@ -861,23 +831,6 @@ def skip_if_no_json_type(f):
 
 
 class JsonTestCase(ConnectingTestCase):
-    @skip_if_json_module
-    def test_module_not_available(self):
-        from psycopg2.extras import Json
-        self.assertRaises(ImportError, Json(None).getquoted)
-
-    @skip_if_json_module
-    def test_customizable_with_module_not_available(self):
-        from psycopg2.extras import Json
-
-        class MyJson(Json):
-            def dumps(self, obj):
-                assert obj is None
-                return "hi"
-
-        self.assertEqual(MyJson(None).getquoted(), "'hi'")
-
-    @skip_if_no_json_module
     def test_adapt(self):
         from psycopg2.extras import json, Json
 
@@ -889,7 +842,6 @@ class JsonTestCase(ConnectingTestCase):
             self.assertQuotedEqual(curs.mogrify("%s", (Json(obj),)),
                 psycopg2.extensions.QuotedString(json.dumps(obj)).getquoted())
 
-    @skip_if_no_json_module
     def test_adapt_dumps(self):
         from psycopg2.extras import json, Json
 
@@ -907,7 +859,6 @@ class JsonTestCase(ConnectingTestCase):
         self.assertQuotedEqual(curs.mogrify("%s", (Json(obj, dumps=dumps),)),
             b"'123.45'")
 
-    @skip_if_no_json_module
     def test_adapt_subclass(self):
         from psycopg2.extras import json, Json
 
@@ -925,7 +876,6 @@ class JsonTestCase(ConnectingTestCase):
         obj = Decimal('123.45')
         self.assertQuotedEqual(curs.mogrify("%s", (MyJson(obj),)), b"'123.45'")
 
-    @skip_if_no_json_module
     def test_register_on_dict(self):
         from psycopg2.extras import Json
         psycopg2.extensions.register_adapter(dict, Json)
@@ -947,7 +897,6 @@ class JsonTestCase(ConnectingTestCase):
         self.assertRaises(psycopg2.ProgrammingError,
             psycopg2.extras.register_json, self.conn)
 
-    @skip_if_no_json_module
     @skip_before_postgres(9, 2)
     def test_default_cast(self):
         curs = self.conn.cursor()
@@ -958,7 +907,6 @@ class JsonTestCase(ConnectingTestCase):
         curs.execute("""select array['{"a": 100.0, "b": null}']::json[]""")
         self.assertEqual(curs.fetchone()[0], [{'a': 100.0, 'b': None}])
 
-    @skip_if_no_json_module
     @skip_if_no_json_type
     def test_register_on_connection(self):
         psycopg2.extras.register_json(self.conn)
@@ -966,7 +914,6 @@ class JsonTestCase(ConnectingTestCase):
         curs.execute("""select '{"a": 100.0, "b": null}'::json""")
         self.assertEqual(curs.fetchone()[0], {'a': 100.0, 'b': None})
 
-    @skip_if_no_json_module
     @skip_if_no_json_type
     def test_register_on_cursor(self):
         curs = self.conn.cursor()
@@ -974,7 +921,6 @@ class JsonTestCase(ConnectingTestCase):
         curs.execute("""select '{"a": 100.0, "b": null}'::json""")
         self.assertEqual(curs.fetchone()[0], {'a': 100.0, 'b': None})
 
-    @skip_if_no_json_module
     @skip_if_no_json_type
     def test_register_globally(self):
         old = psycopg2.extensions.string_types.get(114)
@@ -992,7 +938,6 @@ class JsonTestCase(ConnectingTestCase):
             if olda:
                 psycopg2.extensions.register_type(olda)
 
-    @skip_if_no_json_module
     @skip_if_no_json_type
     def test_loads(self):
         json = psycopg2.extras.json
@@ -1006,7 +951,6 @@ class JsonTestCase(ConnectingTestCase):
         self.assert_(isinstance(data['a'], Decimal))
         self.assertEqual(data['a'], Decimal('100.0'))
 
-    @skip_if_no_json_module
     @skip_if_no_json_type
     def test_no_conn_curs(self):
         from psycopg2._json import _get_json_oids
@@ -1033,7 +977,6 @@ class JsonTestCase(ConnectingTestCase):
             if olda:
                 psycopg2.extensions.register_type(olda)
 
-    @skip_if_no_json_module
     @skip_before_postgres(9, 2)
     def test_register_default(self):
         curs = self.conn.cursor()
@@ -1052,7 +995,6 @@ class JsonTestCase(ConnectingTestCase):
         self.assert_(isinstance(data[0]['a'], Decimal))
         self.assertEqual(data[0]['a'], Decimal('100.0'))
 
-    @skip_if_no_json_module
     @skip_if_no_json_type
     def test_null(self):
         psycopg2.extras.register_json(self.conn)
@@ -1062,7 +1004,6 @@ class JsonTestCase(ConnectingTestCase):
         curs.execute("""select NULL::json[]""")
         self.assertEqual(curs.fetchone()[0], None)
 
-    @skip_if_no_json_module
     def test_no_array_oid(self):
         curs = self.conn.cursor()
         t1, t2 = psycopg2.extras.register_json(curs, oid=25)
@@ -1074,7 +1015,6 @@ class JsonTestCase(ConnectingTestCase):
         self.assertEqual(data['a'], 100)
         self.assertEqual(data['b'], None)
 
-    @skip_if_no_json_module
     def test_str(self):
         snowman = u"\u2603"
         obj = {'a': [1, 2, snowman]}
@@ -1085,7 +1025,6 @@ class JsonTestCase(ConnectingTestCase):
         self.assert_(s.startswith("'"))
         self.assert_(s.endswith("'"))
 
-    @skip_if_no_json_module
     @skip_before_postgres(8, 2)
     def test_scs(self):
         cnn_on = self.connect(options="-c standard_conforming_strings=on")
@@ -1198,7 +1137,6 @@ class JsonbTestCase(ConnectingTestCase):
         curs.execute("""select NULL::jsonb[]""")
         self.assertEqual(curs.fetchone()[0], None)
 
-decorate_all_tests(JsonbTestCase, skip_if_no_json_module)
 decorate_all_tests(JsonbTestCase, skip_if_no_jsonb_type)
 
 
@@ -1629,7 +1567,7 @@ class RangeCasterTestCase(ConnectingTestCase):
         from psycopg2.tz import FixedOffsetTimezone
         cur = self.conn.cursor()
 
-        d1 = date(2012, 01, 01)
+        d1 = date(2012, 1, 1)
         d2 = date(2012, 12, 31)
         r = DateRange(d1, d2)
         cur.execute("select %s", (r,))
@@ -1703,8 +1641,8 @@ class RangeCasterTestCase(ConnectingTestCase):
         bounds = ['[)', '(]', '()', '[]']
         ranges = [TextRange(low, up, bounds[i % 4])
             for i, (low, up) in enumerate(zip(
-                [None] + map(chr, range(1, 128)),
-                map(chr, range(1, 128)) + [None],
+                [None] + list(map(chr, range(1, 128))),
+                list(map(chr, range(1, 128))) + [None],
             ))]
         ranges.append(TextRange())
         ranges.append(TextRange(empty=True))
