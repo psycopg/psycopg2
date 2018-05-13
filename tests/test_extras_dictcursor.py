@@ -19,7 +19,7 @@ from datetime import timedelta
 import psycopg2
 import psycopg2.extras
 import unittest
-from .testutils import ConnectingTestCase, skip_before_postgres
+from .testutils import ConnectingTestCase, skip_before_postgres, skip_before_python
 
 
 class ExtrasDictCursorTests(ConnectingTestCase):
@@ -356,6 +356,13 @@ class NamedTupleCursorTest(ConnectingTestCase):
         self.assertEqual(rv.foo_bar_baz, 1)
         self.assertEqual(rv.f_column_, 2)
         self.assertEqual(rv.f3, 3)
+
+    @skip_before_python(3)
+    def test_nonascii_name(self):
+        curs = self.conn.cursor()
+        curs.execute('select 1 as \xe5h\xe9')
+        rv = curs.fetchone()
+        self.assertEqual(getattr(rv, '\xe5h\xe9'), 1)
 
     def test_minimal_generation(self):
         # Instrument the class to verify it gets called the minimum number of times.
