@@ -368,12 +368,15 @@ class NamedTupleCursor(_cursor):
             raise self._exc
     else:
         def _make_nt(self, namedtuple=namedtuple):
+            # ascii except alnum and underscore
+            nochars = ' !"#$%&\'()*+,-./:;<=>?@[\\]^`{|}~'
+            re_clean = _re.compile('[' + _re.escape(nochars) + ']')
+
             def f(s):
-                # NOTE: Python 3 actually allows unicode chars in fields
-                s = _re.sub('[^a-zA-Z0-9_]', '_', s)
+                s = re_clean.sub('_', s)
                 # Python identifier cannot start with numbers, namedtuple fields
                 # cannot start with underscore. So...
-                if _re.match('^[0-9_]', s):
+                if s[0] == '_' or '0' <= s[0] <= '9':
                     s = 'f' + s
 
                 return s
