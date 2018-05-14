@@ -4,6 +4,7 @@ Current release
 What's new in psycopg 2.7.5
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+- Fixed adaptation of arrays of arrays of nulls (:ticket:`#325`).
 - Fixed building on Solaris 11 and derivatives such as SmartOS and illumos
   (:ticket:`#677`).
 - Maybe fixed building on MSYS2 (as reported in :ticket:`#658`).

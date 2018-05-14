@@ -223,16 +223,31 @@ class TypesBasicTests(ConnectingTestCase):
         curs.execute("insert into na (boola) values (%s)", ([True, None],))
         curs.execute("insert into na (boola) values (%s)", ([None, None],))
 
-        # TODO: array of array of nulls are not supported yet
-        # curs.execute("insert into na (textaa) values (%s)", ([[None]],))
+        curs.execute("insert into na (textaa) values (%s)", ([[None]],))
         curs.execute("insert into na (textaa) values (%s)", ([['a', None]],))
-        # curs.execute("insert into na (textaa) values (%s)", ([[None, None]],))
-        # curs.execute("insert into na (intaa) values (%s)",  ([[None]],))
+        curs.execute("insert into na (textaa) values (%s)", ([[None, None]],))
+
+        curs.execute("insert into na (intaa) values (%s)",  ([[None]],))
         curs.execute("insert into na (intaa) values (%s)", ([[42, None]],))
-        # curs.execute("insert into na (intaa) values (%s)",  ([[None, None]],))
-        # curs.execute("insert into na (boolaa) values (%s)", ([[None]],))
+        curs.execute("insert into na (intaa) values (%s)",  ([[None, None]],))
+
+        curs.execute("insert into na (boolaa) values (%s)", ([[None]],))
         curs.execute("insert into na (boolaa) values (%s)", ([[True, None]],))
-        # curs.execute("insert into na (boolaa) values (%s)", ([[None, None]],))
+        curs.execute("insert into na (boolaa) values (%s)", ([[None, None]],))
+
+    @testutils.skip_before_postgres(8, 2)
+    def testNestedArrays(self):
+        curs = self.conn.cursor()
+        for a in [
+            [[1]],
+            [[None]],
+            [[None, None, None]],
+            [[None, None], [1, None]],
+            [[None, None], [None, None]],
+            [[[None, None], [None, None]]],
+        ]:
+            curs.execute("select %s::int[]", (a,))
+            self.assertEqual(curs.fetchone()[0], a)
 
     @testutils.skip_from_python(3)
     def testTypeRoundtripBuffer(self):
