@@ -358,6 +358,7 @@ class NamedTupleCursorTest(ConnectingTestCase):
         self.assertEqual(rv.f3, 3)
 
     @skip_before_python(3)
+    @skip_before_postgres(8)
     def test_nonascii_name(self):
         curs = self.conn.cursor()
         curs.execute('select 1 as \xe5h\xe9')
