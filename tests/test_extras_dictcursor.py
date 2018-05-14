@@ -392,6 +392,7 @@ class NamedTupleCursorTest(ConnectingTestCase):
         self.assertEqual(rv.f3, 3)
 
     @skip_before_python(3)
+    @skip_before_postgres(8)
     @skip_if_no_namedtuple
     def test_nonascii_name(self):
         curs = self.conn.cursor()
