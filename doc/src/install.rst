@@ -24,6 +24,16 @@ mature as the C implementation yet.
 .. index::
     single: Prerequisites
 
+License & Warranty 
+------------------
+Psycopg is psycopg2 is free software, distributed under the terms of the GNU Lesser 
+General Public License with a run time linking exception or under the the ZPL license
+- see the LICENCE file in the source code distribution for details.
+
+psycopg2 is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.
+
 Prerequisites
 -------------
 
@@ -45,7 +55,9 @@ Build prerequisites
 ^^^^^^^^^^^^^^^^^^^
 
 The build prerequisites are to be met in order to install Psycopg from source
-code, either from a source distribution package or from PyPI.
+code, from a source distribution package, GitHub_ or from PyPI.
+
+.. _GitHub: https://github.com/psycopg/psycopg2
 
 Psycopg is a C wrapper around the libpq_ PostgreSQL client library. To install
 it from sources you will need:
@@ -304,8 +316,11 @@ Try the following. *In order:*
 
 - Write to the `Mailing List`__.
 
+- If you think that you have discovered a bug, test failure or missing feature please raise a ticket in the bug tracker_.
+
 - Complain on your blog or on Twitter that `!psycopg2` is the worst package
   ever and about the quality time you have wasted figuring out the correct
   :envvar:`ARCHFLAGS`. Especially useful from the Starbucks near you.
 
 .. __: https://lists.postgresql.org/mj/mj_wwwusr?func=lists-long-full&extra=psycopg
+.. _tracker: https://github.com/psycopg/psycopg2/issues
