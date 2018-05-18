@@ -19,7 +19,7 @@ from datetime import timedelta
 import psycopg2
 import psycopg2.extras
 from testutils import unittest, ConnectingTestCase, skip_before_postgres
-from testutils import skip_if_no_namedtuple
+from testutils import skip_before_python, skip_if_no_namedtuple
 
 
 class ExtrasDictCursorTests(ConnectingTestCase):
@@ -390,6 +390,15 @@ class NamedTupleCursorTest(ConnectingTestCase):
         self.assertEqual(rv.foo_bar_baz, 1)
         self.assertEqual(rv.f_column_, 2)
         self.assertEqual(rv.f3, 3)
+
+    @skip_before_python(3)
+    @skip_before_postgres(8)
+    @skip_if_no_namedtuple
+    def test_nonascii_name(self):
+        curs = self.conn.cursor()
+        curs.execute('select 1 as \xe5h\xe9')
+        rv = curs.fetchone()
+        self.assertEqual(getattr(rv, '\xe5h\xe9'), 1)
 
     @skip_if_no_namedtuple
     def test_minimal_generation(self):
