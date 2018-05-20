@@ -38,13 +38,14 @@ list_quote(listObject *self)
 {
     /*  adapt the list by calling adapt() recursively and then wrapping
         everything into "ARRAY[]" */
-    PyObject *tmp = NULL, *str = NULL, *joined = NULL, *res = NULL;
+    PyObject *res = NULL;
+    PyObject **qs = NULL;
+    Py_ssize_t bufsize = 0;
+    char *buf = NULL, *ptr;
 
     /*  list consisting of only NULL don't work with the ARRAY[] construct
-     *  so we use the {NULL,...} syntax. Note however that list of lists where
-     *  some element is a list of only null still fails: for that we should use
-     *  the '{...}' syntax uniformly but we cannot do it in the current
-     *  infrastructure. TODO in psycopg3 */
+     *  so we use the {NULL,...} syntax. The same syntax is also necessary
+     *  to convert array of arrays containing only nulls. */
     int all_nulls = 1;
 
     Py_ssize_t i, len;
@@ -53,47 +54,95 @@ list_quote(listObject *self)
 
     /* empty arrays are converted to NULLs (still searching for a way to
        insert an empty array in postgresql */
-    if (len == 0) return Bytes_FromString("'{}'");
+    if (len == 0) {
+        res = Bytes_FromString("'{}'");
+        goto exit;
+    }
 
-    tmp = PyTuple_New(len);
+    if (!(qs = PyMem_New(PyObject *, len))) {
+        PyErr_NoMemory();
+        goto exit;
+    }
+    memset(qs, 0, len * sizeof(PyObject *));
 
-    for (i=0; i<len; i++) {
-        PyObject *quoted;
+    for (i = 0; i < len; i++) {
         PyObject *wrapped = PyList_GET_ITEM(self->wrapped, i);
         if (wrapped == Py_None) {
             Py_INCREF(psyco_null);
-            quoted = psyco_null;
+            qs[i] = psyco_null;
         }
         else {
-            quoted = microprotocol_getquoted(wrapped,
-                                       (connectionObject*)self->connection);
-            if (quoted == NULL) goto error;
-            all_nulls = 0;
+            if (!(qs[i] = microprotocol_getquoted(
+                    wrapped, (connectionObject*)self->connection))) {
+                goto exit;
+            }
+
+            /* Lists of arrays containing only nulls are also not supported
+             * by the ARRAY construct so we should do some special casing */
+            if (!PyList_Check(wrapped) || Bytes_AS_STRING(qs[i])[0] == 'A') {
+                all_nulls = 0;
+            }
         }
-
-        /* here we don't loose a refcnt: SET_ITEM does not change the
-           reference count and we are just transferring ownership of the tmp
-           object to the tuple */
-        PyTuple_SET_ITEM(tmp, i, quoted);
+        bufsize += Bytes_GET_SIZE(qs[i]) + 1;      /* this, and a comma */
     }
 
-    /* now that we have a tuple of adapted objects we just need to join them
-       and put "ARRAY[] around the result */
-    str = Bytes_FromString(", ");
-    joined = PyObject_CallMethod(str, "join", "(O)", tmp);
-    if (joined == NULL) goto error;
+    /* Create an array literal, usually ARRAY[...] but if the contents are
+     * all NULL or array of NULL we must use the '{...}' syntax
+     */
+    if (!(ptr = buf = PyMem_Malloc(bufsize + 8))) {
+        PyErr_NoMemory();
+        goto exit;
+    }
 
-    /* PG doesn't like ARRAY[NULL..] */
     if (!all_nulls) {
-        res = Bytes_FromFormat("ARRAY[%s]", Bytes_AsString(joined));
-    } else {
-        res = Bytes_FromFormat("'{%s}'", Bytes_AsString(joined));
+        strcpy(ptr, "ARRAY[");
+        ptr += 6;
+        for (i = 0; i < len; i++) {
+            Py_ssize_t sl;
+            sl = Bytes_GET_SIZE(qs[i]);
+            memcpy(ptr, Bytes_AS_STRING(qs[i]), sl);
+            ptr += sl;
+            *ptr++ = ',';
+        }
+        *(ptr - 1) = ']';
+    }
+    else {
+        *ptr++ = '\'';
+        *ptr++ = '{';
+        for (i = 0; i < len; i++) {
+            /* in case all the adapted things are nulls (or array of nulls),
+             * the quoted string is either NULL or an array of the form
+             * '{NULL,...}', in which case we have to strip the extra quotes */
+            char *s;
+            Py_ssize_t sl;
+            s = Bytes_AS_STRING(qs[i]);
+            sl = Bytes_GET_SIZE(qs[i]);
+            if (s[0] != '\'') {
+                memcpy(ptr, s, sl);
+                ptr += sl;
+            }
+            else {
+                memcpy(ptr, s + 1, sl - 2);
+                ptr += sl - 2;
+            }
+            *ptr++ = ',';
+        }
+        *(ptr - 1) = '}';
+        *ptr++ = '\'';
     }
 
- error:
-    Py_XDECREF(tmp);
-    Py_XDECREF(str);
-    Py_XDECREF(joined);
+    res = Bytes_FromStringAndSize(buf, ptr - buf);
+
+exit:
+    if (qs) {
+        for (i = 0; i < len; i++) {
+            PyObject *q = qs[i];
+            Py_XDECREF(q);
+        }
+        PyMem_Free(qs);
+    }
+    PyMem_Free(buf);
+
     return res;
 }
 

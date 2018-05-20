@@ -45,7 +45,9 @@ Build prerequisites
 ^^^^^^^^^^^^^^^^^^^
 
 The build prerequisites are to be met in order to install Psycopg from source
-code, either from a source distribution package or from PyPI.
+code, from a source distribution package, GitHub_ or from PyPI.
+
+.. _GitHub: https://github.com/psycopg/psycopg2
 
 Psycopg is a C wrapper around the libpq_ PostgreSQL client library. To install
 it from sources you will need:
@@ -140,7 +142,7 @@ Make sure to use an up-to-date version of :program:`pip` (you can upgrade it
 using something like ``pip install -U pip``)
 
 .. __: PyPI-binary_
-.. _PyPI-binary: https://pypi.python.org/pypi/psycopg2-binary/
+.. _PyPI-binary: https://pypi.org/project/psycopg2-binary/
 .. _wheel: http://pythonwheels.com/
 
 .. note::
@@ -302,10 +304,14 @@ Try the following. *In order:*
 - Google for `!psycopg2` *your error message*. Especially useful the week
   after the release of a new OS X version.
 
-- Write to the `Mailing List`__.
+- Write to the `Mailing List`_.
+
+- If you think that you have discovered a bug, test failure or missing feature
+  please raise a ticket in the `bug tracker`_.
 
 - Complain on your blog or on Twitter that `!psycopg2` is the worst package
   ever and about the quality time you have wasted figuring out the correct
   :envvar:`ARCHFLAGS`. Especially useful from the Starbucks near you.
 
-.. __: https://lists.postgresql.org/mj/mj_wwwusr?func=lists-long-full&extra=psycopg
+.. _mailing list: https://lists.postgresql.org/mj/mj_wwwusr?func=lists-long-full&extra=psycopg
+.. _bug tracker: https://github.com/psycopg/psycopg2/issues
