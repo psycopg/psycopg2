@@ -406,6 +406,11 @@ typecast_PYINTERVAL_cast(const char *str, Py_ssize_t len, PyObject *curs)
             }
             break;
 
+        case 'P':
+            PyErr_SetString(NotSupportedError,
+                "iso_8601 intervalstyle currently not supported");
+            return NULL;
+
         default:
             break;
         }
