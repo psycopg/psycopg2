@@ -48,6 +48,7 @@ Psycopg 2 is both Unicode and Python 3 friendly.
    errorcodes
    faq
    news
+   license
 
 
 .. ifconfig:: builder != 'text'
