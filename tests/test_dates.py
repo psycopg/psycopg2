@@ -437,6 +437,14 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
             r = cur.fetchone()[0]
             self.assertEqual(r, v, "%s -> %s != %s" % (s, r, v))
 
+    @skip_before_postgres(8, 4)
+    def test_interval_iso_8601_not_supported(self):
+        # We may end up supporting, but no pressure for it
+        cur = self.conn.cursor()
+        cur.execute("set local intervalstyle to iso_8601")
+        cur.execute("select '1 day 2 hours'::interval")
+        self.assertRaises(psycopg2.NotSupportedError, cur.fetchone)
+
 
 # Only run the datetime tests if psycopg was compiled with support.
 if not hasattr(psycopg2.extensions, 'PYDATETIME'):
