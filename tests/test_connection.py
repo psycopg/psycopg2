@@ -37,7 +37,9 @@ from psycopg2 import extensions as ext
 from .testutils import (
     unittest, decorate_all_tests, skip_if_no_superuser,
     skip_before_postgres, skip_after_postgres, skip_before_libpq,
-    ConnectingTestCase, skip_if_tpc_disabled, skip_if_windows, slow)
+    ConnectingTestCase, skip_if_tpc_disabled, skip_if_windows, slow,
+    libpq_version
+)
 
 from .testconfig import dsn, dbname
 
@@ -246,6 +248,13 @@ class ConnectionTests(ConnectingTestCase):
             else:
                 del os.environ['PGCLIENTENCODING']
 
+    def test_connect_no_string(self):
+        class MyString(str):
+            pass
+
+        conn = psycopg2.connect(MyString(dsn))
+        conn.close()
+
     def test_weakref(self):
         from weakref import ref
         import gc
@@ -399,6 +408,13 @@ class ParseDsnTestCase(ConnectingTestCase):
     def test_bad_param(self):
         self.assertRaises(TypeError, ext.parse_dsn, None)
         self.assertRaises(TypeError, ext.parse_dsn, 42)
+
+    def test_str_subclass(self):
+        class MyString(str):
+            pass
+
+        res = ext.parse_dsn(MyString("dbname=test"))
+        self.assertEqual(res, {'dbname': 'test'})
 
 
 class MakeDsnTestCase(ConnectingTestCase):
@@ -1381,6 +1397,102 @@ class TransactionControlTests(ConnectingTestCase):
         cur.execute("SHOW default_transaction_read_only;")
         self.assertEqual(cur.fetchone()[0], 'off')
 
+    def test_idempotence_check(self):
+        self.conn.autocommit = False
+        self.conn.readonly = True
+        self.conn.autocommit = True
+        self.conn.readonly = True
+
+        cur = self.conn.cursor()
+        cur.execute("SHOW transaction_read_only")
+        self.assertEqual(cur.fetchone()[0], 'on')
+
+
+class TestEncryptPassword(ConnectingTestCase):
+    @skip_before_postgres(10)
+    def test_encrypt_password_post_9_6(self):
+        cur = self.conn.cursor()
+        cur.execute("SHOW password_encryption;")
+        server_encryption_algorithm = cur.fetchone()[0]
+
+        # MD5 algorithm
+        self.assertEqual(
+            ext.encrypt_password('psycopg2', 'ashesh', self.conn, 'md5'),
+            'md594839d658c28a357126f105b9cb14cfc'
+        )
+
+        # keywords
+        self.assertEqual(
+            ext.encrypt_password(
+                password='psycopg2', user='ashesh',
+                scope=self.conn, algorithm='md5'),
+            'md594839d658c28a357126f105b9cb14cfc'
+        )
+        if libpq_version() < 100000:
+            self.assertRaises(
+                psycopg2.NotSupportedError,
+                ext.encrypt_password, 'psycopg2', 'ashesh', self.conn,
+                'scram-sha-256'
+            )
+        else:
+            enc_password = ext.encrypt_password(
+                'psycopg2', 'ashesh', self.conn
+            )
+            if server_encryption_algorithm == 'md5':
+                self.assertEqual(
+                    enc_password, 'md594839d658c28a357126f105b9cb14cfc'
+                )
+            elif server_encryption_algorithm == 'scram-sha-256':
+                self.assertEqual(enc_password[:14], 'SCRAM-SHA-256$')
+
+            self.assertEqual(
+                ext.encrypt_password(
+                    'psycopg2', 'ashesh', self.conn, 'scram-sha-256'
+                )[:14], 'SCRAM-SHA-256$'
+            )
+
+        self.assertRaises(psycopg2.ProgrammingError,
+            ext.encrypt_password, 'psycopg2', 'ashesh', self.conn, 'abc')
+
+    @skip_after_postgres(10)
+    def test_encrypt_password_pre_10(self):
+        self.assertEqual(
+            ext.encrypt_password('psycopg2', 'ashesh', self.conn),
+            'md594839d658c28a357126f105b9cb14cfc'
+        )
+
+        self.assertRaises(psycopg2.ProgrammingError,
+            ext.encrypt_password, 'psycopg2', 'ashesh', self.conn, 'abc')
+
+    def test_encrypt_md5(self):
+        self.assertEqual(
+            ext.encrypt_password('psycopg2', 'ashesh', algorithm='md5'),
+            'md594839d658c28a357126f105b9cb14cfc'
+        )
+
+    def test_encrypt_scram(self):
+        if libpq_version() >= 100000:
+            self.assert_(
+                ext.encrypt_password(
+                    'psycopg2', 'ashesh', self.conn, 'scram-sha-256')
+                .startswith('SCRAM-SHA-256$'))
+        else:
+            self.assertRaises(psycopg2.NotSupportedError,
+                ext.encrypt_password,
+                password='psycopg2', user='ashesh',
+                scope=self.conn, algorithm='scram-sha-256')
+
+    def test_bad_types(self):
+        self.assertRaises(TypeError, ext.encrypt_password)
+        self.assertRaises(TypeError, ext.encrypt_password,
+            'password', 42, self.conn, 'md5')
+        self.assertRaises(TypeError, ext.encrypt_password,
+            42, 'user', self.conn, 'md5')
+        self.assertRaises(TypeError, ext.encrypt_password,
+            42, 'user', 'wat', 'abc')
+        self.assertRaises(TypeError, ext.encrypt_password,
+            'password', 'user', 'wat', 42)
+
 
 class AutocommitTests(ConnectingTestCase):
     def test_closed(self):
@@ -1539,9 +1651,13 @@ import os
 import sys
 import time
 import signal
+import warnings
 import threading
 
-import psycopg2
+# ignore wheel deprecation warning
+with warnings.catch_warnings():
+    warnings.simplefilter('ignore')
+    import psycopg2
 
 def handle_sigabort(sig, frame):
     sys.exit(1)

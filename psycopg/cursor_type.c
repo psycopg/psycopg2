@@ -59,6 +59,11 @@ psyco_curs_close(cursorObject *self)
         char buffer[128];
         PGTransactionStatusType status;
 
+        if (!self->query) {
+            Dprintf("skipping named cursor close because unused");
+            goto close;
+        }
+
         if (self->conn) {
             status = PQtransactionStatus(self->conn->pgconn);
         }
@@ -66,17 +71,18 @@ psyco_curs_close(cursorObject *self)
             status = PQTRANS_UNKNOWN;
         }
 
-        if (!(status == PQTRANS_UNKNOWN || status == PQTRANS_INERROR)) {
-            EXC_IF_NO_MARK(self);
-            PyOS_snprintf(buffer, 127, "CLOSE %s", self->qname);
-            if (pq_execute(self, buffer, 0, 0, 1) == -1) return NULL;
-        }
-        else {
+        if (status == PQTRANS_UNKNOWN || status == PQTRANS_INERROR) {
             Dprintf("skipping named curs close because tx status %d",
                 (int)status);
+            goto close;
         }
+
+        EXC_IF_NO_MARK(self);
+        PyOS_snprintf(buffer, 127, "CLOSE %s", self->qname);
+        if (pq_execute(self, buffer, 0, 0, 1) == -1) return NULL;
     }
 
+close:
     self->closed = 1;
     Dprintf("psyco_curs_close: cursor at %p closed", self);
 
@@ -591,8 +597,6 @@ psyco_curs_mogrify(cursorObject *self, PyObject *args, PyObject *kwargs)
                                      &operation, &vars)) {
         return NULL;
     }
-
-    EXC_IF_CURS_CLOSED(self);
 
     return _psyco_curs_mogrify(self, operation, vars);
 }

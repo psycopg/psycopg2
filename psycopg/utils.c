@@ -168,11 +168,11 @@ psycopg_ensure_bytes(PyObject *obj)
     PyObject *rv = NULL;
     if (!obj) { return NULL; }
 
-    if (PyUnicode_CheckExact(obj)) {
+    if (PyUnicode_Check(obj)) {
         rv = PyUnicode_AsUTF8String(obj);
         Py_DECREF(obj);
     }
-    else if (Bytes_CheckExact(obj)) {
+    else if (Bytes_Check(obj)) {
         rv = obj;
     }
     else {
@@ -282,7 +282,7 @@ exit:
 
 /* Make a connection string out of a string and a dictionary of arguments.
  *
- * Helper to call psycopg2.extensions.make_dns()
+ * Helper to call psycopg2.extensions.make_dsn()
  */
 PyObject *
 psycopg_make_dsn(PyObject *dsn, PyObject *kwargs)

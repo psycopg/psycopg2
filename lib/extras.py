@@ -344,7 +344,20 @@ class NamedTupleCursor(_cursor):
             return
 
     def _make_nt(self):
-        return namedtuple("Record", [d[0] for d in self.description or ()])
+        # ascii except alnum and underscore
+        nochars = ' !"#$%&\'()*+,-./:;<=>?@[\\]^`{|}~'
+        re_clean = _re.compile('[' + _re.escape(nochars) + ']')
+
+        def f(s):
+            s = re_clean.sub('_', s)
+            # Python identifier cannot start with numbers, namedtuple fields
+            # cannot start with underscore. So...
+            if s[0] == '_' or '0' <= s[0] <= '9':
+                s = 'f' + s
+
+            return s
+
+        return namedtuple("Record", [f(d[0]) for d in self.description or ()])
 
 
 class LoggingConnection(_connection):

@@ -87,6 +87,7 @@ typedef unsigned long Py_uhash_t;
 #ifndef PyNumber_Int
 #define PyNumber_Int           PyNumber_Long
 #endif
+
 #endif  /* PY_MAJOR_VERSION > 2 */
 
 #if PY_MAJOR_VERSION < 3
@@ -103,6 +104,10 @@ typedef unsigned long Py_uhash_t;
 #define Bytes_FromFormat PyString_FromFormat
 #define Bytes_ConcatAndDel PyString_ConcatAndDel
 #define _Bytes_Resize _PyString_Resize
+
+#define PyDateTime_DELTA_GET_DAYS(o)         (((PyDateTime_Delta*)o)->days)
+#define PyDateTime_DELTA_GET_SECONDS(o)      (((PyDateTime_Delta*)o)->seconds)
+#define PyDateTime_DELTA_GET_MICROSECONDS(o) (((PyDateTime_Delta*)o)->microseconds)
 
 #else
 

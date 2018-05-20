@@ -179,8 +179,8 @@ class HstoreTestCase(ConnectingTestCase):
         m = re.match(br'hstore\(ARRAY\[([^\]]+)\], ARRAY\[([^\]]+)\]\)', q)
         self.assert_(m, repr(q))
 
-        kk = m.group(1).split(b", ")
-        vv = m.group(2).split(b", ")
+        kk = m.group(1).split(b",")
+        vv = m.group(2).split(b",")
         ii = list(zip(kk, vv))
         ii.sort()
 

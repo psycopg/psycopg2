@@ -119,6 +119,12 @@ class CursorTests(ConnectingTestCase):
         nref2 = sys.getrefcount(foo)
         self.assertEqual(nref1, nref2)
 
+    def test_modify_closed(self):
+        cur = self.conn.cursor()
+        cur.close()
+        sql = cur.mogrify("select %s", (10,))
+        self.assertEqual(sql, b"select 10")
+
     def test_bad_placeholder(self):
         cur = self.conn.cursor()
         self.assertRaises(psycopg2.ProgrammingError,
@@ -429,6 +435,11 @@ class CursorTests(ConnectingTestCase):
         self.assertEqual((1,), cur2.fetchone())
         self.assertEqual([(2,), (3,), (4,)], cur2.fetchmany(3))
         self.assertEqual([(5,), (6,), (7,)], cur2.fetchall())
+
+    @skip_before_postgres(8, 0)
+    def test_named_noop_close(self):
+        cur = self.conn.cursor('test')
+        cur.close()
 
     @skip_before_postgres(8, 0)
     def test_scroll(self):

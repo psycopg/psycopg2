@@ -1,6 +1,7 @@
 /* solaris_support.c - emulate functions missing on Solaris
  *
  * Copyright (C) 2017 My Karlsson <mk@acc.umu.se>
+ * Copyright (c) 2018, Joyent, Inc.
  *
  * This file is part of psycopg.
  *
@@ -28,7 +29,8 @@
 #include "psycopg/solaris_support.h"
 
 #if defined(__sun) && defined(__SVR4)
-/* timeradd is missing on Solaris */
+/* timeradd is missing on Solaris 10 */
+#ifndef timeradd
 void
 timeradd(struct timeval *a, struct timeval *b, struct timeval *c)
 {
@@ -51,4 +53,5 @@ timersub(struct timeval *a, struct timeval *b, struct timeval *c)
         c->tv_sec -= 1;
     }
 }
+#endif /* timeradd */
 #endif /* defined(__sun) && defined(__SVR4) */
