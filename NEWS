@@ -24,6 +24,7 @@ What's new in psycopg 2.7.5
   (:ticket:`#677`).
 - Maybe fixed building on MSYS2 (as reported in :ticket:`#658`).
 - Allow string subclasses in connection and other places (:ticket:`#679`).
+- Don't raise an exception closing an unused named cursor (:ticket:`#716`).
 
 
 What's new in psycopg 2.7.4
