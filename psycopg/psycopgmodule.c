@@ -409,100 +409,99 @@ psyco_libpq_version(PyObject *self)
 
 /* encrypt_password - Prepare the encrypted password form */
 #define psyco_encrypt_password_doc \
-"encrypt_password(password, user, [conn_or_curs], [algorithm]) -- Prepares the encrypted form of a PostgreSQL password.\n\n"
+"encrypt_password(password, user, [scope], [algorithm]) -- Prepares the encrypted form of a PostgreSQL password.\n\n"
 
 static PyObject *
-psyco_encrypt_password(PyObject *self, PyObject *args)
+psyco_encrypt_password(PyObject *self, PyObject *args, PyObject *kwargs)
 {
     char *encrypted = NULL;
+    PyObject *password = NULL, *user = NULL;
+    PyObject *scope = Py_None, *algorithm = Py_None;
+    PyObject *res = NULL;
 
-    PyObject *obj = NULL,
-             *res = Py_None,
-             *password = NULL,
-             *user = NULL,
-             *algorithm = NULL;
+    static char *kwlist[] = {"password", "user", "scope", "algorithm", NULL};
 
     connectionObject *conn = NULL;
 
-    if (!PyArg_ParseTuple(args, "OO|OO",
-            &password, &user, &obj, &algorithm)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO|OO", kwlist,
+            &password, &user, &scope, &algorithm)) {
         return NULL;
     }
 
-    if (obj != NULL && obj != Py_None) {
-        if (PyObject_TypeCheck(obj, &cursorType)) {
-            conn = ((cursorObject*)obj)->conn;
+    if (scope != Py_None) {
+        if (PyObject_TypeCheck(scope, &cursorType)) {
+            conn = ((cursorObject*)scope)->conn;
         }
-        else if (PyObject_TypeCheck(obj, &connectionType)) {
-            conn = (connectionObject*)obj;
+        else if (PyObject_TypeCheck(scope, &connectionType)) {
+            conn = (connectionObject*)scope;
         }
         else {
             PyErr_SetString(PyExc_TypeError,
-                    "argument 3 must be a connection or a cursor");
-            return NULL;
+                    "the scope must be a connection or a cursor");
+            goto exit;
         }
     }
 
     /* for ensure_bytes */
     Py_INCREF(user);
     Py_INCREF(password);
-    if (algorithm) {
-        Py_INCREF(algorithm);
-    }
+    Py_INCREF(algorithm);
 
     if (!(user = psycopg_ensure_bytes(user))) { goto exit; }
     if (!(password = psycopg_ensure_bytes(password))) { goto exit; }
-    if (algorithm && !(algorithm = psycopg_ensure_bytes(algorithm))) {
-        goto exit;
-    }
-
-    /* Use the libpq API 'PQencryptPassword', when no connection object is
-       available, or the algorithm is set to as 'md5', or the database server
-       version < 10 */
-    if (conn == NULL || conn->server_version < 100000 ||
-            (algorithm != NULL && algorithm != Py_None &&
-             strcmp(Bytes_AS_STRING(algorithm), "md5") == 0)) {
-        encrypted = PQencryptPassword(Bytes_AS_STRING(password),
-            Bytes_AS_STRING(user));
-
-        if (encrypted != NULL) {
-            res = Text_FromUTF8(encrypted);
-            PQfreemem(encrypted);
-        }
-        goto exit;
-    }
-
-#if PG_VERSION_NUM >= 100000
-    encrypted = PQencryptPasswordConn(conn->pgconn, Bytes_AS_STRING(password),
-            Bytes_AS_STRING(user),
-            algorithm ?  Bytes_AS_STRING(algorithm) : NULL);
-
-    if (!encrypted) {
-        const char *msg = PQerrorMessage(conn->pgconn);
-        if (msg && *msg) {
-            PyErr_Format(ProgrammingError, "%s", msg);
-            res = NULL;
+    if (algorithm != Py_None) {
+        if (!(algorithm = psycopg_ensure_bytes(algorithm))) {
             goto exit;
         }
     }
-    else {
-        res = Text_FromUTF8(encrypted);
-        PQfreemem(encrypted);
+
+    /* If we have to encrypt md5 we can use the libpq < 10 API */
+    if (algorithm != Py_None &&
+            strcmp(Bytes_AS_STRING(algorithm), "md5") == 0) {
+        encrypted = PQencryptPassword(
+            Bytes_AS_STRING(password), Bytes_AS_STRING(user));
     }
+
+    /* If the algorithm is not md5 we have to use the API available from
+     * libpq 10. */
+    else {
+#if PG_VERSION_NUM >= 100000
+        if (!conn) {
+            PyErr_SetString(ProgrammingError,
+                "password encryption (other than 'md5' algorithm)"
+                " requires a connection or cursor");
+            goto exit;
+        }
+
+        /* TODO: algo = will block: forbid on async/green conn? */
+        encrypted = PQencryptPasswordConn(conn->pgconn,
+            Bytes_AS_STRING(password), Bytes_AS_STRING(user),
+            algorithm != Py_None ? Bytes_AS_STRING(algorithm) : NULL);
 #else
-    PyErr_SetString(
-            NotSupportedError,
-            "Password encryption (other than 'md5' algorithm) is not supported for the server version >= 10 in libpq < 10"
-            );
-    res = NULL;
+        PyErr_SetString(NotSupportedError,
+            "password encryption (other than 'md5' algorithm)"
+            " requires libpq 10");
+        goto exit;
 #endif
+    }
+
+    if (encrypted) {
+        res = Text_FromUTF8(encrypted);
+    }
+    else {
+        const char *msg = PQerrorMessage(conn->pgconn);
+        PyErr_Format(ProgrammingError,
+            "password encryption failed: %s", msg ? msg : "no reason given");
+        goto exit;
+    }
 
 exit:
+    if (encrypted) {
+        PQfreemem(encrypted);
+    }
     Py_XDECREF(user);
     Py_XDECREF(password);
-    if (algorithm) {
-        Py_XDECREF(algorithm);
-    }
+    Py_XDECREF(algorithm);
 
     return res;
 }

@@ -1397,6 +1397,18 @@ class TransactionControlTests(ConnectingTestCase):
         cur.execute("SHOW default_transaction_read_only;")
         self.assertEqual(cur.fetchone()[0], 'off')
 
+    def test_idempotence_check(self):
+        self.conn.autocommit = False
+        self.conn.readonly = True
+        self.conn.autocommit = True
+        self.conn.readonly = True
+
+        cur = self.conn.cursor()
+        cur.execute("SHOW transaction_read_only")
+        self.assertEqual(cur.fetchone()[0], 'on')
+
+
+class TestEncryptPassword(ConnectingTestCase):
     @skip_before_postgres(10)
     def test_encrypt_password_post_9_6(self):
         cur = self.conn.cursor()
@@ -1441,20 +1453,8 @@ class TransactionControlTests(ConnectingTestCase):
 
         # Encryption algorithm will be ignored for postgres version < 10, it
         # will always use MD5.
-        self.assertEqual(
-            ext.encrypt_password('psycopg2', 'ashesh', self.conn, 'abc'),
-            'md594839d658c28a357126f105b9cb14cfc'
-        )
-
-    def test_idempotence_check(self):
-        self.conn.autocommit = False
-        self.conn.readonly = True
-        self.conn.autocommit = True
-        self.conn.readonly = True
-
-        cur = self.conn.cursor()
-        cur.execute("SHOW transaction_read_only")
-        self.assertEqual(cur.fetchone()[0], 'on')
+        self.assertRaises(psycopg2.ProgrammingError,
+            ext.encrypt_password, 'psycopg2', 'ashesh', self.conn, 'abc')
 
 
 class AutocommitTests(ConnectingTestCase):
