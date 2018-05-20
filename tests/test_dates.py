@@ -437,6 +437,7 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
             r = cur.fetchone()[0]
             self.assertEqual(r, v, "%s -> %s != %s" % (s, r, v))
 
+    @skip_before_postgres(8, 4)
     def test_interval_iso_8601_not_supported(self):
         # We may end up supporting, but no pressure for it
         cur = self.conn.cursor()
