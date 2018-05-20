@@ -26,7 +26,7 @@ import psycopg2
 import psycopg2.extensions as ext
 
 import unittest
-from .testutils import ConnectingTestCase
+from .testutils import ConnectingTestCase, skip_before_postgres
 
 
 class WithTestCase(ConnectingTestCase):
@@ -214,6 +214,11 @@ class WithCursorTestCase(WithTestCase):
             self.assertEqual(e.pgcode, '22012')
         else:
             self.fail("where is my exception?")
+
+    @skip_before_postgres(8, 0)
+    def test_named_with_noop(self):
+        with self.conn.cursor('named') as cur:
+            pass
 
 
 def test_suite():
