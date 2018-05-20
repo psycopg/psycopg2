@@ -1482,6 +1482,17 @@ class TestEncryptPassword(ConnectingTestCase):
                 password='psycopg2', user='ashesh',
                 scope=self.conn, algorithm='scram-sha-256')
 
+    def test_bad_types(self):
+        self.assertRaises(TypeError, ext.encrypt_password)
+        self.assertRaises(TypeError, ext.encrypt_password,
+            'password', 42, self.conn, 'md5')
+        self.assertRaises(TypeError, ext.encrypt_password,
+            42, 'user', self.conn, 'md5')
+        self.assertRaises(TypeError, ext.encrypt_password,
+            42, 'user', 'wat', 'abc')
+        self.assertRaises(TypeError, ext.encrypt_password,
+            'password', 'user', 'wat', 42)
+
 
 class AutocommitTests(ConnectingTestCase):
     def test_closed(self):

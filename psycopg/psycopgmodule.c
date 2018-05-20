@@ -418,15 +418,19 @@ psyco_encrypt_password(PyObject *self, PyObject *args, PyObject *kwargs)
     PyObject *password = NULL, *user = NULL;
     PyObject *scope = Py_None, *algorithm = Py_None;
     PyObject *res = NULL;
+    connectionObject *conn = NULL;
 
     static char *kwlist[] = {"password", "user", "scope", "algorithm", NULL};
-
-    connectionObject *conn = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO|OO", kwlist,
             &password, &user, &scope, &algorithm)) {
         return NULL;
     }
+
+    /* for ensure_bytes */
+    Py_INCREF(user);
+    Py_INCREF(password);
+    Py_INCREF(algorithm);
 
     if (scope != Py_None) {
         if (PyObject_TypeCheck(scope, &cursorType)) {
@@ -437,15 +441,10 @@ psyco_encrypt_password(PyObject *self, PyObject *args, PyObject *kwargs)
         }
         else {
             PyErr_SetString(PyExc_TypeError,
-                    "the scope must be a connection or a cursor");
+                "the scope must be a connection or a cursor");
             goto exit;
         }
     }
-
-    /* for ensure_bytes */
-    Py_INCREF(user);
-    Py_INCREF(password);
-    Py_INCREF(algorithm);
 
     if (!(user = psycopg_ensure_bytes(user))) { goto exit; }
     if (!(password = psycopg_ensure_bytes(password))) { goto exit; }
@@ -473,7 +472,7 @@ psyco_encrypt_password(PyObject *self, PyObject *args, PyObject *kwargs)
             goto exit;
         }
 
-        /* TODO: algo = will block: forbid on async/green conn? */
+        /* TODO: algo = None will block: forbid on async/green conn? */
         encrypted = PQencryptPasswordConn(conn->pgconn,
             Bytes_AS_STRING(password), Bytes_AS_STRING(user),
             algorithm != Py_None ? Bytes_AS_STRING(algorithm) : NULL);
