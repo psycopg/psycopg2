@@ -957,7 +957,7 @@ static PyMethodDef psycopgMethods[] = {
     {"get_wait_callback",  (PyCFunction)psyco_get_wait_callback,
      METH_NOARGS, psyco_get_wait_callback_doc},
     {"encrypt_password", (PyCFunction)psyco_encrypt_password,
-     METH_VARARGS, psyco_encrypt_password_doc},
+     METH_VARARGS|METH_KEYWORDS, psyco_encrypt_password_doc},
 
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
