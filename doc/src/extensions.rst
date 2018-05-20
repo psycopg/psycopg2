@@ -555,6 +555,38 @@ Other functions
         .. __: http://www.postgresql.org/docs/current/static/libpq-exec.html#LIBPQ-PQESCAPEIDENTIFIER
 
 
+.. method:: encrypt_password(password, user, scope=None, algorithm=None)
+
+    Return the encrypted form of a PostgreSQL password.
+
+    :param password: the cleartext password to encrypt
+    :param user: the name of the user to use the password for
+    :param scope: the scope to encrypt the password into; if *algorithm* is
+        ``md5`` it can be `!None`
+    :type scope: `connection` or `cursor`
+    :param algorithm: the password encryption algorithm to use
+
+    The *algorithm* ``md5`` is always supported. Other algorithms are only
+    supported if the client libpq version is at least 10 and may require a
+    compatible server version: check the `PostgreSQL encryption
+    documentation`__ to know the algorithms supported by your server.
+
+    .. __: https://www.postgresql.org/docs/current/static/encryption-options.html
+
+    Using `!None` as *algorithm* will result in querying the server to know the
+    current server password encryption setting, which is a blocking operation:
+    query the server separately and specify a value for *algorithm* if you
+    want to maintain a non-blocking behaviour.
+
+    .. versionadded:: 2.8
+
+    .. seealso:: PostgreSQL docs for the `password_encryption`__ setting, libpq `PQencryptPasswordConn()`__, `PQencryptPassword()`__ functions.
+
+        .. __: https://www.postgresql.org/docs/current/static/runtime-config-connection.html#GUC-PASSWORD-ENCRYPTION
+        .. __: https://www.postgresql.org/docs/current/static/libpq-misc.html#LIBPQ-PQENCRYPTPASSWORDCONN
+        .. __: https://www.postgresql.org/docs/current/static/libpq-misc.html#LIBPQ-PQENCRYPTPASSWORD
+
+
 
 .. index::
     pair: Isolation level; Constants
