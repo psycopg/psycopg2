@@ -19,7 +19,8 @@ from datetime import timedelta
 import psycopg2
 import psycopg2.extras
 import unittest
-from .testutils import ConnectingTestCase, skip_before_postgres, skip_before_python
+from .testutils import ConnectingTestCase, skip_before_postgres, \
+    skip_before_python, skip_from_python
 
 
 class _DictCursorBase(ConnectingTestCase):
@@ -152,6 +153,37 @@ class ExtrasDictCursorTests(_DictCursorBase):
         self.assertEqual(r['b'], r1['b'])
         self.assertEqual(r._index, r1._index)
 
+    @skip_from_python(3)
+    def test_iter_methods_2(self):
+        curs = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        curs.execute("select 10 as a, 20 as b")
+        r = curs.fetchone()
+        self.assert_(isinstance(r.keys(), list))
+        self.assertEqual(len(r.keys()), 2)
+        self.assert_(isinstance(r.values(), tuple))     # sic?
+        self.assertEqual(len(r.values()), 2)
+        self.assert_(isinstance(r.items(), list))
+        self.assertEqual(len(r.items()), 2)
+
+        self.assert_(not isinstance(r.iterkeys(), list))
+        self.assertEqual(len(list(r.iterkeys())), 2)
+        self.assert_(not isinstance(r.itervalues(), list))
+        self.assertEqual(len(list(r.itervalues())), 2)
+        self.assert_(not isinstance(r.iteritems(), list))
+        self.assertEqual(len(list(r.iteritems())), 2)
+
+    @skip_before_python(3)
+    def test_iter_methods_3(self):
+        curs = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        curs.execute("select 10 as a, 20 as b")
+        r = curs.fetchone()
+        self.assert_(not isinstance(r.keys(), list))
+        self.assertEqual(len(list(r.keys())), 2)
+        self.assert_(not isinstance(r.values(), list))
+        self.assertEqual(len(list(r.values())), 2)
+        self.assert_(not isinstance(r.items(), list))
+        self.assertEqual(len(list(r.items())), 2)
+
 
 class ExtrasDictCursorRealTests(_DictCursorBase):
     def testDictCursorWithPlainCursorRealFetchOne(self):
@@ -229,6 +261,37 @@ class ExtrasDictCursorRealTests(_DictCursorBase):
         curs.execute("SELECT * FROM ExtrasDictCursorTests")
         row = getter(curs)
         self.failUnless(row['foo'] == 'bar')
+
+    @skip_from_python(3)
+    def test_iter_methods_2(self):
+        curs = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        curs.execute("select 10 as a, 20 as b")
+        r = curs.fetchone()
+        self.assert_(isinstance(r.keys(), list))
+        self.assertEqual(len(r.keys()), 2)
+        self.assert_(isinstance(r.values(), list))
+        self.assertEqual(len(r.values()), 2)
+        self.assert_(isinstance(r.items(), list))
+        self.assertEqual(len(r.items()), 2)
+
+        self.assert_(not isinstance(r.iterkeys(), list))
+        self.assertEqual(len(list(r.iterkeys())), 2)
+        self.assert_(not isinstance(r.itervalues(), list))
+        self.assertEqual(len(list(r.itervalues())), 2)
+        self.assert_(not isinstance(r.iteritems(), list))
+        self.assertEqual(len(list(r.iteritems())), 2)
+
+    @skip_before_python(3)
+    def test_iter_methods_3(self):
+        curs = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        curs.execute("select 10 as a, 20 as b")
+        r = curs.fetchone()
+        self.assert_(not isinstance(r.keys(), list))
+        self.assertEqual(len(list(r.keys())), 2)
+        self.assert_(not isinstance(r.values(), list))
+        self.assertEqual(len(list(r.values())), 2)
+        self.assert_(not isinstance(r.items(), list))
+        self.assertEqual(len(list(r.items())), 2)
 
 
 class NamedTupleCursorTest(ConnectingTestCase):
