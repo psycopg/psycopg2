@@ -29,9 +29,10 @@ import psycopg2.extensions
 import unittest
 from .testutils import (ConnectingTestCase, skip_before_postgres,
     skip_if_no_getrefcount, slow, skip_if_no_superuser,
-    skip_if_windows, unicode)
+    skip_if_windows)
 
 import psycopg2.extras
+from psycopg2.compat import text_type
 
 
 class CursorTests(ConnectingTestCase):
@@ -75,7 +76,7 @@ class CursorTests(ConnectingTestCase):
         snowman = u"\u2603"
 
         def b(s):
-            if isinstance(s, unicode):
+            if isinstance(s, text_type):
                 return s.encode('utf8')
             else:
                 return s

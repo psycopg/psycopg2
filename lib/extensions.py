@@ -163,7 +163,7 @@ def make_dsn(dsn=None, **kwargs):
         kwargs['dbname'] = kwargs.pop('database')
 
     # Drop the None arguments
-    kwargs = {k: v for (k, v) in kwargs.iteritems() if v is not None}
+    kwargs = {k: v for (k, v) in kwargs.items() if v is not None}
 
     if dsn is not None:
         tmp = parse_dsn(dsn)
@@ -171,7 +171,7 @@ def make_dsn(dsn=None, **kwargs):
         kwargs = tmp
 
     dsn = " ".join(["%s=%s" % (k, _param_escape(str(v)))
-        for (k, v) in kwargs.iteritems()])
+        for (k, v) in kwargs.items()])
 
     # verify that the returned dsn is valid
     parse_dsn(dsn)
@@ -216,7 +216,7 @@ del Range
 # When the encoding is set its name is cleaned up from - and _ and turned
 # uppercase, so an encoding not respecting these rules wouldn't be found in the
 # encodings keys and would raise an exception with the unicode typecaster
-for k, v in encodings.items():
+for k, v in list(encodings.items()):
     k = k.replace('_', '').replace('-', '').upper()
     encodings[k] = v
 

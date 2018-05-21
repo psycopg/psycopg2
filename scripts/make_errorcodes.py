@@ -159,7 +159,7 @@ def fetch_errors(versions):
         # https://github.com/postgres/postgres/commit/28e0727076
         errors['55']['55P04'] = 'UNSAFE_NEW_ENUM_VALUE_USAGE'
 
-        for c, cerrs in e1.iteritems():
+        for c, cerrs in e1.items():
             errors[c].update(cerrs)
 
     return classes, errors

@@ -43,21 +43,6 @@ from distutils.errors import CompileError
 from distutils.util import get_platform
 
 try:
-    from distutils.command.build_py import build_py_2to3
-except ImportError:
-    from distutils.command.build_py import build_py
-else:
-    class build_py(build_py_2to3):
-        # workaround subclass for ticket #153
-        pass
-
-    # Configure distutils to run our custom 2to3 fixers as well
-    from lib2to3.refactor import get_fixers_from_package
-    build_py.fixer_names = [f for f in get_fixers_from_package('lib2to3.fixes')
-        # creates a pending deprecation warning on py 3.4
-        if not f.endswith('.fix_reload')]
-
-try:
     import configparser
 except ImportError:
     import ConfigParser as configparser
@@ -661,7 +646,5 @@ setup(name="psycopg2",
       data_files=data_files,
       package_dir={'psycopg2': 'lib'},
       packages=['psycopg2'],
-      cmdclass={
-          'build_ext': psycopg_build_ext,
-          'build_py': build_py, },
+      cmdclass={'build_ext': psycopg_build_ext},
       ext_modules=ext)

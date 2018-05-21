@@ -15,6 +15,7 @@
 # License for more details.
 
 import time
+import pickle
 from datetime import timedelta
 import psycopg2
 import psycopg2.extras
@@ -140,7 +141,6 @@ class ExtrasDictCursorTests(_DictCursorBase):
         self.failUnless(row[0] == 'bar')
 
     def testPickleDictRow(self):
-        import pickle
         curs = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         curs.execute("select 10 as a, 20 as b")
         r = curs.fetchone()
@@ -184,6 +184,37 @@ class ExtrasDictCursorTests(_DictCursorBase):
         self.assert_(not isinstance(r.items(), list))
         self.assertEqual(len(list(r.items())), 2)
 
+    def test_order(self):
+        curs = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        curs.execute("select 5 as foo, 4 as bar, 33 as baz, 2 as qux")
+        r = curs.fetchone()
+        self.assertEqual(list(r), [5, 4, 33, 2])
+        self.assertEqual(list(r.keys()), ['foo', 'bar', 'baz', 'qux'])
+        self.assertEqual(list(r.values()), [5, 4, 33, 2])
+        self.assertEqual(list(r.items()),
+            [('foo', 5), ('bar', 4), ('baz', 33), ('qux', 2)])
+
+        r1 = pickle.loads(pickle.dumps(r))
+        self.assertEqual(list(r1), list(r))
+        self.assertEqual(list(r1.keys()), list(r.keys()))
+        self.assertEqual(list(r1.values()), list(r.values()))
+        self.assertEqual(list(r1.items()), list(r.items()))
+
+    @skip_from_python(3)
+    def test_order_iter(self):
+        curs = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        curs.execute("select 5 as foo, 4 as bar, 33 as baz, 2 as qux")
+        r = curs.fetchone()
+        self.assertEqual(list(r.iterkeys()), ['foo', 'bar', 'baz', 'qux'])
+        self.assertEqual(list(r.itervalues()), [5, 4, 33, 2])
+        self.assertEqual(list(r.iteritems()),
+            [('foo', 5), ('bar', 4), ('baz', 33), ('qux', 2)])
+
+        r1 = pickle.loads(pickle.dumps(r))
+        self.assertEqual(list(r1.iterkeys()), list(r.iterkeys()))
+        self.assertEqual(list(r1.itervalues()), list(r.itervalues()))
+        self.assertEqual(list(r1.iteritems()), list(r.iteritems()))
+
 
 class ExtrasDictCursorRealTests(_DictCursorBase):
     def testDictCursorWithPlainCursorRealFetchOne(self):
@@ -216,7 +247,6 @@ class ExtrasDictCursorRealTests(_DictCursorBase):
         self.failUnless(row['foo'] == 'bar')
 
     def testPickleRealDictRow(self):
-        import pickle
         curs = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         curs.execute("select 10 as a, 20 as b")
         r = curs.fetchone()
@@ -292,6 +322,37 @@ class ExtrasDictCursorRealTests(_DictCursorBase):
         self.assertEqual(len(list(r.values())), 2)
         self.assert_(not isinstance(r.items(), list))
         self.assertEqual(len(list(r.items())), 2)
+
+    def test_order(self):
+        curs = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        curs.execute("select 5 as foo, 4 as bar, 33 as baz, 2 as qux")
+        r = curs.fetchone()
+        self.assertEqual(list(r), ['foo', 'bar', 'baz', 'qux'])
+        self.assertEqual(list(r.keys()), ['foo', 'bar', 'baz', 'qux'])
+        self.assertEqual(list(r.values()), [5, 4, 33, 2])
+        self.assertEqual(list(r.items()),
+            [('foo', 5), ('bar', 4), ('baz', 33), ('qux', 2)])
+
+        r1 = pickle.loads(pickle.dumps(r))
+        self.assertEqual(list(r1), list(r))
+        self.assertEqual(list(r1.keys()), list(r.keys()))
+        self.assertEqual(list(r1.values()), list(r.values()))
+        self.assertEqual(list(r1.items()), list(r.items()))
+
+    @skip_from_python(3)
+    def test_order_iter(self):
+        curs = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        curs.execute("select 5 as foo, 4 as bar, 33 as baz, 2 as qux")
+        r = curs.fetchone()
+        self.assertEqual(list(r.iterkeys()), ['foo', 'bar', 'baz', 'qux'])
+        self.assertEqual(list(r.itervalues()), [5, 4, 33, 2])
+        self.assertEqual(list(r.iteritems()),
+            [('foo', 5), ('bar', 4), ('baz', 33), ('qux', 2)])
+
+        r1 = pickle.loads(pickle.dumps(r))
+        self.assertEqual(list(r1.iterkeys()), list(r.iterkeys()))
+        self.assertEqual(list(r1.itervalues()), list(r.itervalues()))
+        self.assertEqual(list(r1.iteritems()), list(r.iteritems()))
 
 
 class NamedTupleCursorTest(ConnectingTestCase):

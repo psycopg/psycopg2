@@ -29,7 +29,7 @@ import os as _os
 import sys as _sys
 import time as _time
 import re as _re
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 
 try:
     import logging as _logging
@@ -140,12 +140,12 @@ class DictCursor(DictCursorBase):
         self._prefetch = 1
 
     def execute(self, query, vars=None):
-        self.index = {}
+        self.index = OrderedDict()
         self._query_executed = 1
         return super(DictCursor, self).execute(query, vars)
 
     def callproc(self, procname, vars=None):
-        self.index = {}
+        self.index = OrderedDict()
         self._query_executed = 1
         return super(DictCursor, self).callproc(procname, vars)
 
@@ -168,24 +168,23 @@ class DictRow(list):
     def __getitem__(self, x):
         if not isinstance(x, (int, slice)):
             x = self._index[x]
-        return list.__getitem__(self, x)
+        return super(DictRow, self).__getitem__(x)
 
     def __setitem__(self, x, v):
         if not isinstance(x, (int, slice)):
             x = self._index[x]
-        list.__setitem__(self, x, v)
+        super(DictRow, self).__setitem__(x, v)
 
     def items(self):
-        return list(self.iteritems())
+        g = super(DictRow, self).__getitem__
+        return ((n, g(self._index[n])) for n in self._index)
 
     def keys(self):
-        return self._index.keys()
+        return iter(self._index)
 
     def values(self):
-        return tuple(self[:])
-
-    def has_key(self, x):
-        return x in self._index
+        g = super(DictRow, self).__getitem__
+        return (g(self._index[n]) for n in self._index)
 
     def get(self, x, default=None):
         try:
@@ -193,18 +192,8 @@ class DictRow(list):
         except:
             return default
 
-    def iteritems(self):
-        for n, v in self._index.iteritems():
-            yield n, list.__getitem__(self, v)
-
-    def iterkeys(self):
-        return self._index.iterkeys()
-
-    def itervalues(self):
-        return list.__iter__(self)
-
     def copy(self):
-        return dict(self.iteritems())
+        return OrderedDict(self.items())
 
     def __contains__(self, x):
         return x in self._index
@@ -216,12 +205,20 @@ class DictRow(list):
         self[:] = data[0]
         self._index = data[1]
 
-    # drop the crusty Py2 methods
-    if _sys.version_info[0] > 2:
-        items = iteritems               # noqa
-        keys = iterkeys                 # noqa
-        values = itervalues             # noqa
-        del iteritems, iterkeys, itervalues, has_key
+    if _sys.version_info[0] < 3:
+        iterkeys = keys
+        itervalues = values
+        iteritems = items
+        has_key = __contains__
+
+        def keys(self):
+            return list(self.iterkeys())
+
+        def values(self):
+            return tuple(self.itervalues())
+
+        def items(self):
+            return list(self.iteritems())
 
 
 class RealDictConnection(_connection):
@@ -256,8 +253,7 @@ class RealDictCursor(DictCursorBase):
 
     def _build_index(self):
         if self._query_executed == 1 and self.description:
-            for i in range(len(self.description)):
-                self.column_mapping.append(self.description[i][0])
+            self.column_mapping = [d[0] for d in self.description]
             self._query_executed = 0
 
 
@@ -267,7 +263,7 @@ class RealDictRow(dict):
     __slots__ = ('_column_mapping',)
 
     def __init__(self, cursor):
-        dict.__init__(self)
+        super(RealDictRow, self).__init__()
         # Required for named cursors
         if cursor.description and not cursor.column_mapping:
             cursor._build_index()
@@ -277,7 +273,7 @@ class RealDictRow(dict):
     def __setitem__(self, name, value):
         if type(name) == int:
             name = self._column_mapping[name]
-        return dict.__setitem__(self, name, value)
+        super(RealDictRow, self).__setitem__(name, value)
 
     def __getstate__(self):
         return self.copy(), self._column_mapping[:]
@@ -285,6 +281,32 @@ class RealDictRow(dict):
     def __setstate__(self, data):
         self.update(data[0])
         self._column_mapping = data[1]
+
+    def __iter__(self):
+        return iter(self._column_mapping)
+
+    def keys(self):
+        return iter(self._column_mapping)
+
+    def values(self):
+        return (self[k] for k in self._column_mapping)
+
+    def items(self):
+        return ((k, self[k]) for k in self._column_mapping)
+
+    if _sys.version_info[0] < 3:
+        iterkeys = keys
+        itervalues = values
+        iteritems = items
+
+        def keys(self):
+            return list(self.iterkeys())
+
+        def values(self):
+            return list(self.itervalues())
+
+        def items(self):
+            return list(self.iteritems())
 
 
 class NamedTupleConnection(_connection):
@@ -337,14 +359,14 @@ class NamedTupleCursor(_cursor):
         nt = self.Record
         if nt is None:
             nt = self.Record = self._make_nt()
-        return map(nt._make, ts)
+        return list(map(nt._make, ts))
 
     def fetchall(self):
         ts = super(NamedTupleCursor, self).fetchall()
         nt = self.Record
         if nt is None:
             nt = self.Record = self._make_nt()
-        return map(nt._make, ts)
+        return list(map(nt._make, ts))
 
     def __iter__(self):
         try:
@@ -598,7 +620,7 @@ class ReplicationCursor(_replicationCursor):
                     "cannot specify output plugin options for physical replication")
 
             command += " ("
-            for k, v in options.iteritems():
+            for k, v in options.items():
                 if not command.endswith('('):
                     command += ", "
                 command += "%s %s" % (quote_ident(k, self), _A(str(v)))
@@ -794,7 +816,7 @@ class HstoreAdapter(object):
 
         adapt = _ext.adapt
         rv = []
-        for k, v in self.wrapped.iteritems():
+        for k, v in self.wrapped.items():
             k = adapt(k)
             k.prepare(self.conn)
             k = k.getquoted()
@@ -816,9 +838,9 @@ class HstoreAdapter(object):
         if not self.wrapped:
             return b"''::hstore"
 
-        k = _ext.adapt(self.wrapped.keys())
+        k = _ext.adapt(list(self.wrapped.keys()))
         k.prepare(self.conn)
-        v = _ext.adapt(self.wrapped.values())
+        v = _ext.adapt(list(self.wrapped.values()))
         v.prepare(self.conn)
         return b"hstore(" + k.getquoted() + b", " + v.getquoted() + b")"
 
@@ -1144,7 +1166,7 @@ def _paginate(seq, page_size):
     it = iter(seq)
     while 1:
         try:
-            for i in xrange(page_size):
+            for i in range(page_size):
                 page.append(next(it))
             yield page
             page = []
