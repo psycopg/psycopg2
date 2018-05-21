@@ -29,7 +29,7 @@ import os as _os
 import sys as _sys
 import time as _time
 import re as _re
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 
 try:
     import logging as _logging
@@ -140,12 +140,12 @@ class DictCursor(DictCursorBase):
         self._prefetch = 1
 
     def execute(self, query, vars=None):
-        self.index = {}
+        self.index = OrderedDict()
         self._query_executed = 1
         return super(DictCursor, self).execute(query, vars)
 
     def callproc(self, procname, vars=None):
-        self.index = {}
+        self.index = OrderedDict()
         self._query_executed = 1
         return super(DictCursor, self).callproc(procname, vars)
 
@@ -193,7 +193,7 @@ class DictRow(list):
             return default
 
     def copy(self):
-        return dict(self.items())
+        return OrderedDict(self.items())
 
     def __contains__(self, x):
         return x in self._index
@@ -281,6 +281,32 @@ class RealDictRow(dict):
     def __setstate__(self, data):
         self.update(data[0])
         self._column_mapping = data[1]
+
+    def __iter__(self):
+        return iter(self._column_mapping)
+
+    def keys(self):
+        return iter(self._column_mapping)
+
+    def values(self):
+        return (self[k] for k in self._column_mapping)
+
+    def items(self):
+        return ((k, self[k]) for k in self._column_mapping)
+
+    if _sys.version_info[0] < 3:
+        iterkeys = keys
+        itervalues = values
+        iteritems = items
+
+        def keys(self):
+            return list(self.iterkeys())
+
+        def values(self):
+            return list(self.itervalues())
+
+        def items(self):
+            return list(self.iteritems())
 
 
 class NamedTupleConnection(_connection):
