@@ -176,14 +176,15 @@ class DictRow(list):
         super(DictRow, self).__setitem__(x, v)
 
     def items(self):
-        for n, v in self._index.iteritems():
-            yield n, super(DictRow, self).__getitem__(v)
+        g = super(DictRow, self).__getitem__
+        return ((n, g(self._index[n])) for n in self._index)
 
     def keys(self):
-        return self._index.keys()
+        return iter(self._index)
 
     def values(self):
-        return super(DictRow, self).__iter__()
+        g = super(DictRow, self).__getitem__
+        return (g(self._index[n]) for n in self._index)
 
     def get(self, x, default=None):
         try:
@@ -192,7 +193,7 @@ class DictRow(list):
             return default
 
     def copy(self):
-        return dict(self.iteritems())
+        return dict(self.items())
 
     def __contains__(self, x):
         return x in self._index
@@ -203,6 +204,21 @@ class DictRow(list):
     def __setstate__(self, data):
         self[:] = data[0]
         self._index = data[1]
+
+    if _sys.version_info[0] < 3:
+        iterkeys = keys
+        itervalues = values
+        iteritems = items
+        has_key = __contains__
+
+        def keys(self):
+            return list(self.iterkeys())
+
+        def values(self):
+            return tuple(self.itervalues())
+
+        def items(self):
+            return list(self.iteritems())
 
 
 class RealDictConnection(_connection):
@@ -237,8 +253,7 @@ class RealDictCursor(DictCursorBase):
 
     def _build_index(self):
         if self._query_executed == 1 and self.description:
-            for i in range(len(self.description)):
-                self.column_mapping.append(self.description[i][0])
+            self.column_mapping = [d[0] for d in self.description]
             self._query_executed = 0
 
 
@@ -248,7 +263,7 @@ class RealDictRow(dict):
     __slots__ = ('_column_mapping',)
 
     def __init__(self, cursor):
-        dict.__init__(self)
+        super(RealDictRow, self).__init__()
         # Required for named cursors
         if cursor.description and not cursor.column_mapping:
             cursor._build_index()
@@ -258,7 +273,7 @@ class RealDictRow(dict):
     def __setitem__(self, name, value):
         if type(name) == int:
             name = self._column_mapping[name]
-        return dict.__setitem__(self, name, value)
+        super(RealDictRow, self).__setitem__(name, value)
 
     def __getstate__(self):
         return self.copy(), self._column_mapping[:]
