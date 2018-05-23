@@ -31,13 +31,8 @@ If not, see <http://www.gnu.org/licenses/>.
 Alternative licenses
 --------------------
 
-If you prefer you can use the Zope Database Adapter ZPsycopgDA (i.e.,
-every file inside the ZPsycopgDA directory) using the ZPL license as
-published on the Zope web site, http://www.zope.org/Resources/ZPL.
-
-Also, the following BSD-like license applies (at your option) to the
-files following the pattern ``psycopg/adapter*.{h,c}`` and
-``psycopg/microprotocol*.{h,c}``:
+The following BSD-like license applies (at your option) to the files following
+the pattern ``psycopg/adapter*.{h,c}`` and ``psycopg/microprotocol*.{h,c}``:
 
  Permission is granted to anyone to use this software for any purpose,
  including commercial applications, and to alter it and redistribute it
