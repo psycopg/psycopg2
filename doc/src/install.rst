@@ -132,14 +132,23 @@ Binary install from PyPI
 `!psycopg2` is also `available on PyPI`__ in the form of wheel_ packages for
 the most common platform (Linux, OSX, Windows): this should make you able to
 install a binary version of the module, not requiring the above build or
-runtime prerequisites, simply using:
+runtime prerequisites.
+
+.. note::
+
+    The ``-binary`` package is meant for beginners to start playing with
+    Python and PostgreSQL without the need to meet the build requirements.
+    If you are the maintainer of a publish package depending on `!psycopg2`
+    you shouldn't use ``psycopg2-binary`` as a module dependency. For
+    production use you are advised to use the source distribution.
+
+
+Make sure to use an up-to-date version of :program:`pip` (you can upgrade it
+using something like ``pip install -U pip``), then you can run:
 
 .. code-block:: console
 
     $ pip install psycopg2-binary
-
-Make sure to use an up-to-date version of :program:`pip` (you can upgrade it
-using something like ``pip install -U pip``)
 
 .. __: PyPI-binary_
 .. _PyPI-binary: https://pypi.org/project/psycopg2-binary/
