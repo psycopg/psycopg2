@@ -175,6 +175,9 @@ class DictRow(list):
             x = self._index[x]
         super(DictRow, self).__setitem__(x, v)
 
+    def __repr__(self):
+        return repr(dict(self))
+
     def items(self):
         g = super(DictRow, self).__getitem__
         return ((n, g(self._index[n])) for n in self._index)

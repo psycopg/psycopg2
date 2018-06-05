@@ -215,6 +215,11 @@ class ExtrasDictCursorTests(_DictCursorBase):
         self.assertEqual(list(r1.itervalues()), list(r.itervalues()))
         self.assertEqual(list(r1.iteritems()), list(r.iteritems()))
 
+    def testDictCursorRepresentation(self):
+        curs = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        curs.execute("select 5 as foo, 4 as bar, 33 as baz, 2 as qux")
+        r = curs.fetchone()
+        self.assertEqual(repr(r), repr({'foo': 5, 'bar': 4, 'baz': 33, 'qux': 2}))
 
 class ExtrasDictCursorRealTests(_DictCursorBase):
     def testDictCursorWithPlainCursorRealFetchOne(self):
@@ -353,6 +358,12 @@ class ExtrasDictCursorRealTests(_DictCursorBase):
         self.assertEqual(list(r1.iterkeys()), list(r.iterkeys()))
         self.assertEqual(list(r1.itervalues()), list(r.itervalues()))
         self.assertEqual(list(r1.iteritems()), list(r.iteritems()))
+
+    def testRealDictCursorRepresentation(self):
+        curs = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        curs.execute("select 5 as foo, 4 as bar, 33 as baz, 2 as qux")
+        r = curs.fetchone()
+        self.assertEqual(repr(r), repr({'foo': 5, 'bar': 4, 'baz': 33, 'qux': 2}))
 
 
 class NamedTupleCursorTest(ConnectingTestCase):
