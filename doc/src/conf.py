@@ -61,9 +61,8 @@ except ImportError:
     release = version
 
 intersphinx_mapping = {
-    'py': ('https://docs.python.org/2', None),
-    'py3': ('https://docs.python.org/3', None),
-    }
+    'py': ('https://docs.python.org/3', None),
+}
 
 # Pattern to generate links to the bug tracker
 ticket_url = 'https://github.com/psycopg/psycopg2/issues/%s'
