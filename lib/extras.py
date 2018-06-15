@@ -755,8 +755,8 @@ def wait_select(conn):
 
     The function is an example of a wait callback to be registered with
     `~psycopg2.extensions.set_wait_callback()`. This function uses
-    :py:func:`~select.select()` to wait for data available.
-
+    :py:func:`~select.select()` to wait for data to become available, and
+    therefore is able to handle/receive SIGINT/KeyboardInterrupt.
     """
     import select
     from psycopg2.extensions import POLL_OK, POLL_READ, POLL_WRITE
