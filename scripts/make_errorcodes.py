@@ -22,8 +22,6 @@ import sys
 import urllib2
 from collections import defaultdict
 
-from BeautifulSoup import BeautifulSoup as BS
-
 
 def main():
     if len(sys.argv) != 2:
@@ -35,8 +33,7 @@ def main():
     file_start = read_base_file(filename)
     # If you add a version to the list fix the docs (in errorcodes.rst)
     classes, errors = fetch_errors(
-        ['8.1', '8.2', '8.3', '8.4', '9.0', '9.1', '9.2', '9.3', '9.4', '9.5',
-         '9.6', '10'])
+        ['9.1', '9.2', '9.3', '9.4', '9.5', '9.6', '10'])
 
     f = open(filename, "w")
     for line in file_start:
@@ -90,48 +87,6 @@ def parse_errors_txt(url):
     return classes, errors
 
 
-def parse_errors_sgml(url):
-    page = BS(urllib2.urlopen(url))
-    table = page('table')[1]('tbody')[0]
-
-    classes = {}
-    errors = defaultdict(dict)
-
-    for tr in table('tr'):
-        if tr.td.get('colspan'):    # it's a class
-            label = ' '.join(' '.join(tr(text=True)).split()) \
-                .replace(u'\u2014', '-').encode('ascii')
-            assert label.startswith('Class')
-            class_ = label.split()[1]
-            assert len(class_) == 2
-            classes[class_] = label
-
-        else:   # it's an error
-            errcode = tr.tt.string.encode("ascii")
-            assert len(errcode) == 5
-
-            tds = tr('td')
-            if len(tds) == 3:
-                errlabel = '_'.join(tds[1].string.split()).encode('ascii')
-
-                # double check the columns are equal
-                cond_name = tds[2].string.strip().upper().encode("ascii")
-                assert errlabel == cond_name, tr
-
-            elif len(tds) == 2:
-                # found in PG 9.1 docs
-                errlabel = tds[1].tt.string.upper().encode("ascii")
-
-            else:
-                assert False, tr
-
-            errors[class_][errcode] = errlabel
-
-    return classes, errors
-
-errors_sgml_url = \
-    "http://www.postgresql.org/docs/%s/static/errcodes-appendix.html"
-
 errors_txt_url = \
     "http://git.postgresql.org/gitweb/?p=postgresql.git;a=blob_plain;" \
     "f=src/backend/utils/errcodes.txt;hb=%s"
@@ -144,14 +99,15 @@ def fetch_errors(versions):
     for version in versions:
         print(version, file=sys.stderr)
         tver = tuple(map(int, version.split()[0].split('.')))
-        if tver < (9, 1):
-            c1, e1 = parse_errors_sgml(errors_sgml_url % version)
-        else:
-            tag = '%s%s_STABLE' % (
-                (tver[0] >= 10 and 'REL_' or 'REL'),
-                version.replace('.', '_'))
-            c1, e1 = parse_errors_txt(errors_txt_url % tag)
+        tag = '%s%s_STABLE' % (
+            (tver[0] >= 10 and 'REL_' or 'REL'),
+            version.replace('.', '_'))
+        c1, e1 = parse_errors_txt(errors_txt_url % tag)
         classes.update(c1)
+
+        # This error was in old server versions but probably never used
+        # https://github.com/postgres/postgres/commit/12f87b2c82
+        errors['22']['22020'] = 'INVALID_LIMIT_VALUE'
 
         # TODO: this error was added in PG 10 beta 1 but dropped in the
         # final release. It doesn't harm leaving it in the file. Check if it
