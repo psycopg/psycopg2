@@ -38,7 +38,7 @@ create () {
     export PGBIN="$PGDIR/bin"
 
     # install postgres versions not available on the image
-    if (( "$VERNUM" < 902 || "$VERNUM" > 906 )); then
+    if [[ ! -d "${PGDIR}" ]]; then
         wget -O - http://initd.org/psycopg/upload/postgresql/postgresql-${PACKAGE}.tar.bz2 \
             | sudo tar xjf - -C /usr/lib/postgresql
     fi
@@ -109,7 +109,6 @@ if [[ -z "$DONT_TEST_PRESENT" ]]; then
     create 9.6
     create 9.5
     create 9.4
-    create 9.3
 fi
 
 # Unsupported postgres versions that we still support
@@ -124,6 +123,7 @@ if [[ -n "$TEST_PAST" ]]; then
     create 9.0
     create 9.1
     create 9.2
+    create 9.3
 fi
 
 # Postgres built from master
