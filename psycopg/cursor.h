@@ -124,7 +124,7 @@ while (0)
 
 #define EXC_IF_CURS_ASYNC(self, cmd) \
 do \
-    if ((self)->conn->async == 1) { \
+    if ((self)->conn->async_ == 1) { \
         PyErr_SetString(ProgrammingError, \
             #cmd " cannot be used in asynchronous mode"); \
         return NULL; } \

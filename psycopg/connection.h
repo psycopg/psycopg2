@@ -96,7 +96,7 @@ struct connectionObject {
     int status;               /* status of the connection */
     xidObject *tpc_xid;       /* Transaction ID in two-phase commit */
 
-    long int async;           /* 1 means the connection is async */
+    long int async_;           /* 1 means the connection is async */
     int protocol;             /* protocol version */
     int server_version;       /* server version */
 
@@ -160,7 +160,7 @@ HIDDEN void conn_notice_process(connectionObject *self);
 HIDDEN void conn_notice_clean(connectionObject *self);
 HIDDEN void conn_notifies_process(connectionObject *self);
 RAISES_NEG HIDDEN int  conn_setup(connectionObject *self, PGconn *pgconn);
-HIDDEN int  conn_connect(connectionObject *self, long int async);
+HIDDEN int  conn_connect(connectionObject *self, long int async_);
 HIDDEN void conn_close(connectionObject *self);
 HIDDEN void conn_close_locked(connectionObject *self);
 RAISES_NEG HIDDEN int  conn_commit(connectionObject *self);
@@ -179,7 +179,7 @@ HIDDEN PyObject *conn_tpc_recover(connectionObject *self);
     PyErr_SetString(InterfaceError, "connection already closed"); \
     return NULL; }
 
-#define EXC_IF_CONN_ASYNC(self, cmd) if ((self)->async == 1) { \
+#define EXC_IF_CONN_ASYNC(self, cmd) if ((self)->async_ == 1) { \
     PyErr_SetString(ProgrammingError, #cmd " cannot be used "  \
     "in asynchronous mode");                                   \
     return NULL; }

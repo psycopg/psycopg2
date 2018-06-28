@@ -91,7 +91,7 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *kwargs)
         goto exit;
     }
 
-    if (name != Py_None && self->async == 1) {
+    if (name != Py_None && self->async_ == 1) {
         PyErr_SetString(ProgrammingError,
                         "asynchronous connections "
                         "cannot produce named cursors");
@@ -1069,7 +1069,7 @@ static PyObject *
 psyco_conn_isexecuting(connectionObject *self)
 {
     /* synchronous connections will always return False */
-    if (self->async == 0) {
+    if (self->async_ == 0) {
         Py_INCREF(Py_False);
         return Py_False;
     }
@@ -1191,9 +1191,7 @@ static struct PyMemberDef connectionObject_members[] = {
     {"notifies", T_OBJECT, offsetof(connectionObject, notifies), 0},
     {"dsn", T_STRING, offsetof(connectionObject, dsn), READONLY,
         "The current connection string."},
-    {"async", T_LONG, offsetof(connectionObject, async), READONLY,
-        "True if the connection is asynchronous."},
-    {"async_", T_LONG, offsetof(connectionObject, async), READONLY,
+    {"async_", T_LONG, offsetof(connectionObject, async_), READONLY,
         "True if the connection is asynchronous."},
     {"status", T_INT,
         offsetof(connectionObject, status), READONLY,
@@ -1299,19 +1297,19 @@ exit:
 }
 
 static int
-connection_setup(connectionObject *self, const char *dsn, long int async)
+connection_setup(connectionObject *self, const char *dsn, long int async_)
 {
     int res = -1;
 
     Dprintf("connection_setup: init connection object at %p, "
 	    "async %ld, refcnt = " FORMAT_CODE_PY_SSIZE_T,
-            self, async, Py_REFCNT(self)
+            self, async_, Py_REFCNT(self)
       );
 
     if (0 > psycopg_strdup(&self->dsn, dsn, -1)) { goto exit; }
     if (!(self->notice_list = PyList_New(0))) { goto exit; }
     if (!(self->notifies = PyList_New(0))) { goto exit; }
-    self->async = async;
+    self->async_ = async_;
     self->status = CONN_STATUS_SETUP;
     self->async_status = ASYNC_DONE;
     if (!(self->string_types = PyDict_New())) { goto exit; }
@@ -1323,7 +1321,7 @@ connection_setup(connectionObject *self, const char *dsn, long int async)
 
     pthread_mutex_init(&(self->lock), NULL);
 
-    if (conn_connect(self, async) != 0) {
+    if (conn_connect(self, async_) != 0) {
         Dprintf("connection_init: FAILED");
         goto exit;
     }
@@ -1401,15 +1399,15 @@ static int
 connection_init(PyObject *obj, PyObject *args, PyObject *kwds)
 {
     const char *dsn;
-    long int async = 0, async_ = 0;
-    static char *kwlist[] = {"dsn", "async", "async_", NULL};
+    long int async_ = 0, async__ = 0;
+    static char *kwlist[] = {"dsn", "async_", "async__", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|ll", kwlist,
-            &dsn, &async, &async_))
+            &dsn, &async_, &async__))
         return -1;
 
-    if (async_) { async = async_; }
-    return connection_setup((connectionObject *)obj, dsn, async);
+    if (async__) { async_ = async__; }
+    return connection_setup((connectionObject *)obj, dsn, async_);
 }
 
 static PyObject *
