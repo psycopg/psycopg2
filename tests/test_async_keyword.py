@@ -41,7 +41,7 @@ class AsyncTests(ConnectingTestCase):
         ConnectingTestCase.setUp(self)
 
         self.sync_conn = self.conn
-        self.conn = self.connect(async=True)
+        self.conn = self.connect(client_handler=True)
 
         self.wait(self.conn)
 
@@ -57,8 +57,8 @@ class AsyncTests(ConnectingTestCase):
         sync_cur = self.sync_conn.cursor()
         del cur, sync_cur
 
-        self.assert_(self.conn.async)
-        self.assert_(not self.sync_conn.async)
+        self.assert_(self.conn.async_)
+        self.assert_(not self.sync_conn.async_)
 
         # the async connection should be autocommit
         self.assert_(self.conn.autocommit)
@@ -70,17 +70,17 @@ class AsyncTests(ConnectingTestCase):
 
     def test_async_subclass(self):
         class MyConn(psycopg2.extensions.connection):
-            def __init__(self, dsn, async=0):
-                psycopg2.extensions.connection.__init__(self, dsn, async=async)
+            def __init__(self, dsn, client_handler=0):
+                psycopg2.extensions.connection.__init__(self, dsn, async_=client_handler)
 
-        conn = self.connect(connection_factory=MyConn, async=True)
+        conn = self.connect(connection_factory=MyConn, client_handler=True)
         self.assert_(isinstance(conn, MyConn))
-        self.assert_(conn.async)
+        self.assert_(conn.async_)
         conn.close()
 
     def test_async_connection_error_message(self):
         try:
-            cnn = psycopg2.connect('dbname=thisdatabasedoesntexist', async=True)
+            cnn = psycopg2.connect('dbname=thisdatabasedoesntexist', client_handler=True)
             self.wait(cnn)
         except psycopg2.Error as e:
             self.assertNotEqual(str(e), "asynchronous connection failed",
@@ -103,7 +103,7 @@ class CancelTests(ConnectingTestCase):
     @slow
     @skip_before_postgres(8, 2)
     def test_async_cancel(self):
-        async_conn = psycopg2.connect(dsn, async=True)
+        async_conn = psycopg2.connect(dsn, client_handler=True)
         self.assertRaises(psycopg2.OperationalError, async_conn.cancel)
         extras.wait_select(async_conn)
         cur = async_conn.cursor()
@@ -118,7 +118,7 @@ class CancelTests(ConnectingTestCase):
         self.assertEqual(cur.fetchall(), [(1, )])
 
     def test_async_connection_cancel(self):
-        async_conn = psycopg2.connect(dsn, async=True)
+        async_conn = psycopg2.connect(dsn, client_handler=True)
         async_conn.close()
         self.assertTrue(async_conn.closed)
 
@@ -127,8 +127,8 @@ class ConnectTestCase(unittest.TestCase):
     def setUp(self):
         self.args = None
 
-        def connect_stub(dsn, connection_factory=None, async=False):
-            self.args = (dsn, connection_factory, async)
+        def connect_stub(dsn, connection_factory=None, client_handler=True):
+            self.args = (dsn, connection_factory, client_handler)
 
         self._connect_orig = psycopg2._connect
         psycopg2._connect = connect_stub
@@ -139,12 +139,12 @@ class ConnectTestCase(unittest.TestCase):
     def test_there_has_to_be_something(self):
         self.assertRaises(TypeError, psycopg2.connect)
         self.assertRaises(TypeError, psycopg2.connect,
-            connection_factory=lambda dsn, async=False: None)
+            connection_factory=lambda dsn, client_handler=False: None)
         self.assertRaises(TypeError, psycopg2.connect,
-            async=True)
+            client_handler=True)
 
     def test_factory(self):
-        def f(dsn, async=False):
+        def f(dsn, client_handler=False):
             pass
 
         psycopg2.connect(database='foo', host='baz', connection_factory=f)
@@ -158,12 +158,12 @@ class ConnectTestCase(unittest.TestCase):
         self.assertEqual(self.args[2], False)
 
     def test_async(self):
-        psycopg2.connect(database='foo', host='baz', async=1)
+        psycopg2.connect(database='foo', host='baz', client_handler=1)
         self.assertDsnEqual(self.args[0], 'dbname=foo host=baz')
         self.assertEqual(self.args[1], None)
         self.assert_(self.args[2])
 
-        psycopg2.connect("dbname=foo host=baz", async=True)
+        psycopg2.connect("dbname=foo host=baz", client_handler=True)
         self.assertDsnEqual(self.args[0], 'dbname=foo host=baz')
         self.assertEqual(self.args[1], None)
         self.assert_(self.args[2])
@@ -174,7 +174,7 @@ class AsyncReplicationTest(ReplicationTestCase):
     @skip_repl_if_green
     def test_async_replication(self):
         conn = self.repl_connect(
-            connection_factory=LogicalReplicationConnection, async=1)
+            connection_factory=LogicalReplicationConnection, client_handler=1)
         if conn is None:
             return
 

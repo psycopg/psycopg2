@@ -802,11 +802,11 @@ _conn_async_connect(connectionObject *self)
 }
 
 int
-conn_connect(connectionObject *self, long int async)
+conn_connect(connectionObject *self, long int async_)
 {
     int rv;
 
-    if (async == 1) {
+    if (async_ == 1) {
       Dprintf("con_connect: connecting in ASYNC mode");
       rv = _conn_async_connect(self);
     }
@@ -934,7 +934,7 @@ _conn_poll_query(connectionObject *self)
 
     case ASYNC_READ:
         Dprintf("conn_poll: async_status = ASYNC_READ");
-        if (self->async) {
+        if (self->async_) {
             res = _conn_poll_advance_read(self, pq_is_busy(self));
         }
         else {
@@ -1061,7 +1061,7 @@ conn_poll(connectionObject *self)
 
     case CONN_STATUS_CONNECTING:
         res = _conn_poll_connecting(self);
-        if (res == PSYCO_POLL_OK && self->async) {
+        if (res == PSYCO_POLL_OK && self->async_) {
             res = _conn_poll_setup_async(self);
         }
         break;
@@ -1075,7 +1075,7 @@ conn_poll(connectionObject *self)
     case CONN_STATUS_PREPARED:
         res = _conn_poll_query(self);
 
-        if (res == PSYCO_POLL_OK && self->async && self->async_cursor) {
+        if (res == PSYCO_POLL_OK && self->async_ && self->async_cursor) {
             /* An async query has just finished: parse the tuple in the
              * target cursor. */
             cursorObject *curs;

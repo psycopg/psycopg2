@@ -345,7 +345,7 @@ _psyco_curs_merge_query_args(cursorObject *self,
 RAISES_NEG static int
 _psyco_curs_execute(cursorObject *self,
                     PyObject *operation, PyObject *vars,
-                    long int async, int no_result)
+                    long int async_, int no_result)
 {
     int res = -1;
     int tmp;
@@ -425,7 +425,7 @@ _psyco_curs_execute(cursorObject *self,
 
     /* At this point, the SQL statement must be str, not unicode */
 
-    tmp = pq_execute(self, Bytes_AS_STRING(self->query), async, no_result, 0);
+    tmp = pq_execute(self, Bytes_AS_STRING(self->query), async_, no_result, 0);
     Dprintf("psyco_curs_execute: res = %d, pgres = %p", tmp, self->pgres);
     if (tmp < 0) { goto exit; }
 
@@ -471,7 +471,7 @@ psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
     EXC_IF_ASYNC_IN_PROGRESS(self, execute);
     EXC_IF_TPC_PREPARED(self->conn, execute);
 
-    if (0 > _psyco_curs_execute(self, operation, vars, self->conn->async, 0)) {
+    if (0 > _psyco_curs_execute(self, operation, vars, self->conn->async_, 0)) {
         return NULL;
     }
 
@@ -1097,7 +1097,7 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
     }
 
     if (0 <= _psyco_curs_execute(
-            self, operation, pvals, self->conn->async, 0)) {
+            self, operation, pvals, self->conn->async_, 0)) {
         /* The dict case is outside DBAPI scope anyway, so simply return None */
         if (using_dict) {
             res = Py_None;

@@ -68,7 +68,7 @@ psyco_repl_curs_start_replication_expert(replicationCursorObject *self,
     Dprintf("psyco_repl_curs_start_replication_expert: '%s'; decode: %ld",
         Bytes_AS_STRING(command), decode);
 
-    if (pq_execute(curs, Bytes_AS_STRING(command), conn->async,
+    if (pq_execute(curs, Bytes_AS_STRING(command), conn->async_,
             1 /* no_result */, 1 /* no_begin */) >= 0) {
         res = Py_None;
         Py_INCREF(res);
