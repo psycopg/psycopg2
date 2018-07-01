@@ -56,8 +56,7 @@ from . import test_types_basic
 from . import test_types_extras
 from . import test_with
 
-if sys.version_info[:2] < (3, 6):
-    from . import test_async_keyword
+from . import test_async_keyword
 
 
 def test_suite():
@@ -74,8 +73,7 @@ def test_suite():
 
     suite = unittest.TestSuite()
     suite.addTest(test_async.test_suite())
-    if sys.version_info[:2] < (3, 6):
-        suite.addTest(test_async_keyword.test_suite())
+    suite.addTest(test_async_keyword.test_suite())
     suite.addTest(test_bugX000.test_suite())
     suite.addTest(test_bug_gc.test_suite())
     suite.addTest(test_cancel.test_suite())
