@@ -416,13 +416,7 @@ For further information please check the 'doc/src/install.rst' file (also at
             self.library_dirs.append(pg_config_helper.query("libdir"))
             self.include_dirs.append(pg_config_helper.query("includedir"))
             self.include_dirs.append(pg_config_helper.query("includedir-server"))
-            try:
-                # Here we take a conservative approach: we suppose that
-                # *at least* PostgreSQL 7.4 is available (this is the only
-                # 7.x series supported by psycopg 2)
-                pgversion = pg_config_helper.query("version").split()[1]
-            except Exception:
-                pgversion = "7.4.0"
+            pgversion = pg_config_helper.query("version").split()[1]
 
             verre = re.compile(
                 r"(\d+)(?:\.(\d+))?(?:(?:\.(\d+))|(devel|(?:alpha|beta|rc)\d+))?")
