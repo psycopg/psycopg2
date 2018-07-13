@@ -50,12 +50,12 @@ if [[ -z "$DONT_TEST_PRESENT" ]]; then
     run_test 9.6
     run_test 9.5
     run_test 9.4
-    run_test 9.3
 fi
 
 # Unsupported postgres versions that we still support
 # Images built by https://github.com/psycopg/psycopg2-wheels/tree/build-dinosaurs
 if [[ -n "$TEST_PAST" ]]; then
+    run_test 9.3
     run_test 9.2
     run_test 9.1
     run_test 9.0
