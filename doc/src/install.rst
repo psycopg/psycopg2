@@ -188,7 +188,7 @@ displayed, `psycopg2-binary` has become a separate package, and from 2.8 it
 has become the only way to install the binary package.
 
 If you are using psycopg 2.7 and you want to disable the use of wheel binary
-packages, relying on the system system libraries available on your client, you
+packages, relying on the system libraries available on your client, you
 can use the :command:`pip` |--no-binary option|__, e.g.:
 
 .. code-block:: console
