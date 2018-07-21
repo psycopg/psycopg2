@@ -49,20 +49,21 @@
 static PyObject *
 psyco_curs_close(cursorObject *self)
 {
+    PyObject *rv = NULL;
+    char *lname = NULL;
+
     EXC_IF_ASYNC_IN_PROGRESS(self, close);
 
     if (self->closed) {
+        rv = Py_None;
+        Py_INCREF(rv);
         goto exit;
     }
 
     if (self->qname != NULL) {
-        char buffer[128];
+        const int bufsize = 255;
+        char buffer[bufsize + 1];
         PGTransactionStatusType status;
-
-        if (!self->query) {
-            Dprintf("skipping named cursor close because unused");
-            goto close;
-        }
 
         if (self->conn) {
             status = PQtransactionStatus(self->conn->pgconn);
@@ -77,17 +78,45 @@ psyco_curs_close(cursorObject *self)
             goto close;
         }
 
+        /* We should close a server-side cursor only if exists, or we get an
+         * error (#716). If we execute()d the cursor should exist alright, but
+         * if we didn't there is still the expectation that the cursor is
+         * closed (#746).
+         *
+         * So if we didn't execute() check for the cursor existence before
+         * closing it (the view exists since PG 8.2 according to docs).
+         */
+        if (!self->query && self->conn->server_version >= 80200) {
+            if (!(lname = psycopg_escape_string(
+                    self->conn, self->name, -1, NULL, NULL))) {
+                goto exit;
+            }
+            PyOS_snprintf(buffer, bufsize,
+                "SELECT 1 FROM pg_catalog.pg_cursors where name = %s",
+                lname);
+            if (pq_execute(self, buffer, 0, 0, 1) == -1) { goto exit; }
+
+            if (self->rowcount == 0) {
+                Dprintf("skipping named cursor close because not existing");
+                goto close;
+            }
+        }
+
         EXC_IF_NO_MARK(self);
-        PyOS_snprintf(buffer, 127, "CLOSE %s", self->qname);
-        if (pq_execute(self, buffer, 0, 0, 1) == -1) return NULL;
+        PyOS_snprintf(buffer, bufsize, "CLOSE %s", self->qname);
+        if (pq_execute(self, buffer, 0, 0, 1) == -1) { goto exit; }
     }
 
 close:
     self->closed = 1;
     Dprintf("psyco_curs_close: cursor at %p closed", self);
 
+    rv = Py_None;
+    Py_INCREF(rv);
+
 exit:
-    Py_RETURN_NONE;
+    PyMem_Free(lname);
+    return rv;
 }
 
 
