@@ -65,7 +65,7 @@ except ImportError:
 # Take a look at http://www.python.org/dev/peps/pep-0440/
 # for a consistent versioning pattern.
 
-PSYCOPG_VERSION = '2.7.5'
+PSYCOPG_VERSION = '2.7.6.dev0'
 
 
 # note: if you are changing the list of supported Python version please fix
