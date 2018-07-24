@@ -217,7 +217,7 @@ class WithCursorTestCase(WithTestCase):
         else:
             self.fail("where is my exception?")
 
-    @skip_before_postgres(8, 0)
+    @skip_before_postgres(8, 2)
     def test_named_with_noop(self):
         with self.conn.cursor('named') as cur:
             pass

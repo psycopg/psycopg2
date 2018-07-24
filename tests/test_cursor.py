@@ -443,10 +443,23 @@ class CursorTests(ConnectingTestCase):
         self.assertEqual([(2,), (3,), (4,)], cur2.fetchmany(3))
         self.assertEqual([(5,), (6,), (7,)], cur2.fetchall())
 
-    @skip_before_postgres(8, 0)
+    @skip_before_postgres(8, 2)
     def test_named_noop_close(self):
         cur = self.conn.cursor('test')
         cur.close()
+
+    @skip_before_postgres(8, 2)
+    def test_stolen_named_cursor_close(self):
+        cur1 = self.conn.cursor()
+        cur1.execute("DECLARE test CURSOR WITHOUT HOLD "
+            " FOR SELECT generate_series(1,7)")
+        cur2 = self.conn.cursor('test')
+        cur2.close()
+
+        cur1.execute("DECLARE test CURSOR WITHOUT HOLD "
+            " FOR SELECT generate_series(1,7)")
+        cur2 = self.conn.cursor('test')
+        cur2.close()
 
     @skip_before_postgres(8, 0)
     def test_scroll(self):
