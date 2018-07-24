@@ -61,8 +61,7 @@ psyco_curs_close(cursorObject *self)
     }
 
     if (self->qname != NULL) {
-        const int bufsize = 255;
-        char buffer[bufsize + 1];
+        char buffer[256];
         PGTransactionStatusType status;
 
         if (self->conn) {
@@ -91,7 +90,7 @@ psyco_curs_close(cursorObject *self)
                     self->conn, self->name, -1, NULL, NULL))) {
                 goto exit;
             }
-            PyOS_snprintf(buffer, bufsize,
+            PyOS_snprintf(buffer, sizeof(buffer),
                 "SELECT 1 FROM pg_catalog.pg_cursors where name = %s",
                 lname);
             if (pq_execute(self, buffer, 0, 0, 1) == -1) { goto exit; }
@@ -103,7 +102,7 @@ psyco_curs_close(cursorObject *self)
         }
 
         EXC_IF_NO_MARK(self);
-        PyOS_snprintf(buffer, bufsize, "CLOSE %s", self->qname);
+        PyOS_snprintf(buffer, sizeof(buffer), "CLOSE %s", self->qname);
         if (pq_execute(self, buffer, 0, 0, 1) == -1) { goto exit; }
     }
 
@@ -771,7 +770,7 @@ psyco_curs_fetchone(cursorObject *self)
         EXC_IF_NO_MARK(self);
         EXC_IF_ASYNC_IN_PROGRESS(self, fetchone);
         EXC_IF_TPC_PREPARED(self->conn, fetchone);
-        PyOS_snprintf(buffer, 127, "FETCH FORWARD 1 FROM %s", self->qname);
+        PyOS_snprintf(buffer, sizeof(buffer), "FETCH FORWARD 1 FROM %s", self->qname);
         if (pq_execute(self, buffer, 0, 0, self->withhold) == -1) return NULL;
         if (_psyco_curs_prefetch(self) < 0) return NULL;
     }
@@ -820,7 +819,7 @@ psyco_curs_next_named(cursorObject *self)
     if (self->row >= self->rowcount) {
         char buffer[128];
 
-        PyOS_snprintf(buffer, 127, "FETCH FORWARD %ld FROM %s",
+        PyOS_snprintf(buffer, sizeof(buffer), "FETCH FORWARD %ld FROM %s",
             self->itersize, self->qname);
         if (pq_execute(self, buffer, 0, 0, self->withhold) == -1) return NULL;
         if (_psyco_curs_prefetch(self) < 0) return NULL;
@@ -889,7 +888,7 @@ psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
         EXC_IF_NO_MARK(self);
         EXC_IF_ASYNC_IN_PROGRESS(self, fetchmany);
         EXC_IF_TPC_PREPARED(self->conn, fetchone);
-        PyOS_snprintf(buffer, 127, "FETCH FORWARD %d FROM %s",
+        PyOS_snprintf(buffer, sizeof(buffer), "FETCH FORWARD %d FROM %s",
             (int)size, self->qname);
         if (pq_execute(self, buffer, 0, 0, self->withhold) == -1) { goto exit; }
         if (_psyco_curs_prefetch(self) < 0) { goto exit; }
@@ -965,7 +964,7 @@ psyco_curs_fetchall(cursorObject *self)
         EXC_IF_NO_MARK(self);
         EXC_IF_ASYNC_IN_PROGRESS(self, fetchall);
         EXC_IF_TPC_PREPARED(self->conn, fetchall);
-        PyOS_snprintf(buffer, 127, "FETCH FORWARD ALL FROM %s", self->qname);
+        PyOS_snprintf(buffer, sizeof(buffer), "FETCH FORWARD ALL FROM %s", self->qname);
         if (pq_execute(self, buffer, 0, 0, self->withhold) == -1) { goto exit; }
         if (_psyco_curs_prefetch(self) < 0) { goto exit; }
     }
@@ -1262,11 +1261,11 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
         EXC_IF_TPC_PREPARED(self->conn, scroll);
 
         if (strcmp(mode, "absolute") == 0) {
-            PyOS_snprintf(buffer, 127, "MOVE ABSOLUTE %d FROM %s",
+            PyOS_snprintf(buffer, sizeof(buffer), "MOVE ABSOLUTE %d FROM %s",
                 value, self->qname);
         }
         else {
-            PyOS_snprintf(buffer, 127, "MOVE %d FROM %s", value, self->qname);
+            PyOS_snprintf(buffer, sizeof(buffer), "MOVE %d FROM %s", value, self->qname);
         }
         if (pq_execute(self, buffer, 0, 0, self->withhold) == -1) return NULL;
         if (_psyco_curs_prefetch(self) < 0) return NULL;
