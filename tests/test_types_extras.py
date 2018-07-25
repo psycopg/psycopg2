@@ -1386,6 +1386,20 @@ class RangeTestCase(unittest.TestCase):
         r = Range(0, 4)
         self.assertEqual(loads(dumps(r)), r)
 
+    def test_getitem(self):
+        from psycopg2.extras import Range
+        r = Range(0, 4)
+        self.assertEqual(tuple(r), (0, 4))
+        self.assertEqual(list(r), [0, 4])
+        lower, upper = r
+        self.assertEqual(lower, 0)
+        self.assertEqual(upper, 4)
+        self.assertEqual(r[0], 0)
+        self.assertEqual(r[1], 4)
+        # String indexes are not allowed.
+        with self.assertRaises(TypeError):
+            r['abc']
+
 
 def skip_if_no_range(f):
     @wraps(f)
