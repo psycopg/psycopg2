@@ -21,6 +21,13 @@ Other changes:
   install``.
 
 
+What's new in psycopg 2.7.6
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Close named cursors if exist, even if `~cursor.execute()` wasn't called
+  (:ticket:`#746`).
+
+
 What's new in psycopg 2.7.5
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
