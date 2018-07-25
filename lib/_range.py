@@ -105,6 +105,10 @@ class Range(object):
             return False
         return self._bounds[1] == ']'
 
+    def __getitem__(self, key):
+        t = self._lower, self._upper
+        return t[key]
+
     def __contains__(self, x):
         if self._bounds is None:
             return False
