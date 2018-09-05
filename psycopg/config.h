@@ -153,6 +153,11 @@ typedef unsigned __int64    uint64_t;
 #include "win32_support.h"
 #endif
 
+/* Use params.h for __FreeBSD_version (only needed from a certain version on) */
+#if defined(__FreeBSD__) && !defined(__FreeBSD_version)
+#include <sys/param.h>
+#endif
+
 /* what's this, we have no round function either? */
 #if (defined(__FreeBSD__) && __FreeBSD_version < 503000) \
     || (defined(_WIN32) && !defined(__GNUC__)) \
