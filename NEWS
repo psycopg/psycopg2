@@ -26,6 +26,7 @@ What's new in psycopg 2.7.6
 
 - Close named cursors if exist, even if `~cursor.execute()` wasn't called
   (:ticket:`#746`).
+- Fixed building on modern FreeBSD versions with Python 3.7 (:ticket:`#755`)
 
 
 What's new in psycopg 2.7.5
