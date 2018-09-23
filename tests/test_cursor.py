@@ -504,7 +504,7 @@ class CursorTests(ConnectingTestCase):
     def test_bad_subclass(self):
         # check that we get an error message instead of a segfault
         # for badly written subclasses.
-        # see http://stackoverflow.com/questions/22019341/
+        # see https://stackoverflow.com/questions/22019341/
         class StupidCursor(psycopg2.extensions.cursor):
             def __init__(self, *args, **kwargs):
                 # I am stupid so not calling superclass init

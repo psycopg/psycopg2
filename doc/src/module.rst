@@ -50,11 +50,11 @@ The module interface respects the standard defined in the |DBAPI|_.
     using `environment variables`__.
 
     .. __:
-    .. _connstring: http://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-CONNSTRING
+    .. _connstring: https://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-CONNSTRING
     .. __:
-    .. _connparams: http://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-PARAMKEYWORDS
+    .. _connparams: https://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-PARAMKEYWORDS
     .. __:
-    .. _connenvvars: http://www.postgresql.org/docs/current/static/libpq-envars.html
+    .. _connenvvars: https://www.postgresql.org/docs/current/static/libpq-envars.html
 
     Using the *connection_factory* parameter a different class or
     connections factory can be specified. It should be a callable object

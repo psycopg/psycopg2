@@ -47,7 +47,7 @@ try:
 except ImportError:
     import ConfigParser as configparser
 
-# Take a look at http://www.python.org/dev/peps/pep-0440/
+# Take a look at https://www.python.org/dev/peps/pep-0440/
 # for a consistent versioning pattern.
 
 PSYCOPG_VERSION = '2.8.dev0'

@@ -12,7 +12,7 @@ environment:
 
     matrix:
         # For Python versions available on Appveyor, see
-        # http://www.appveyor.com/docs/installed-software#python
+        # https://www.appveyor.com/docs/build-environment/
       - {PYVER: "27", PYTHON_ARCH: "32"}
       - {PYVER: "27", PYTHON_ARCH: "64"}
       - {PYVER: "34", PYTHON_ARCH: "32"}
@@ -82,7 +82,7 @@ init:
     - "%PYTHON%\\python -c \"import sys; print('64bit: ' + str(sys.maxsize > 2**32))\""
 
     # Get & Install NASM
-    #- curl -L -o nasminst.exe http://www.nasm.us/pub/nasm/releasebuilds/2.12.02/win64/nasm-2.12.02-installer-x64.exe && start /wait nasminst.exe /S
+    #- curl -L -o nasminst.exe https://www.nasm.us/pub/nasm/releasebuilds/2.12.02/win64/nasm-2.12.02-installer-x64.exe && start /wait nasminst.exe /S
     #- SET PATH="C:\Program Files (x86)\nasm;%PATH%"
 
     # Fix problem with VS2008 Express and 64bit builds

@@ -542,10 +542,10 @@ fields to JSON) you can use the `register_json()` function.
 The Python :py:mod:`json` module is used by default to convert Python objects
 to JSON and to parse data from the database.
 
-.. _JSON: http://www.json.org/
+.. _JSON: https://www.json.org/
 .. |pgjson| replace:: :sql:`json`
 .. |jsonb| replace:: :sql:`jsonb`
-.. _pgjson: http://www.postgresql.org/docs/current/static/datatype-json.html
+.. _pgjson: https://www.postgresql.org/docs/current/static/datatype-json.html
 
 In order to pass a Python object to the database as query argument you can use
 the `Json` adapter::
@@ -664,7 +664,7 @@ can be enabled using the `register_hstore()` function.
 
 
 .. |hstore| replace:: :sql:`hstore`
-.. _hstore: http://www.postgresql.org/docs/current/static/hstore.html
+.. _hstore: https://www.postgresql.org/docs/current/static/hstore.html
 
 
 
@@ -686,7 +686,7 @@ after a table row type) into a Python named tuple, or into a regular tuple if
 :py:func:`collections.namedtuple` is not found.
 
 .. |CREATE TYPE| replace:: :sql:`CREATE TYPE`
-.. _CREATE TYPE: http://www.postgresql.org/docs/current/static/sql-createtype.html
+.. _CREATE TYPE: https://www.postgresql.org/docs/current/static/sql-createtype.html
 
 .. doctest::
 
@@ -800,7 +800,7 @@ PostgreSQL |range|_ types. Builtin |range| types are supported out-of-the-box;
 user-defined |range| types can be adapted using `register_range()`.
 
 .. |range| replace:: :sql:`range`
-.. _range: http://www.postgresql.org/docs/current/static/rangetypes.html
+.. _range: https://www.postgresql.org/docs/current/static/rangetypes.html
 
 .. autoclass:: Range
 
@@ -809,7 +809,7 @@ user-defined |range| types can be adapted using `register_range()`.
     features: it doesn't perform normalization and doesn't implement all the
     operators__ supported by the database.
 
-    .. __: http://www.postgresql.org/docs/current/static/functions-range.html#RANGE-OPERATORS-TABLE
+    .. __: https://www.postgresql.org/docs/current/static/functions-range.html#RANGE-OPERATORS-TABLE
 
     `!Range` objects are immutable, hashable, and support the ``in`` operator
     (checking if an element is within the range). They can be tested for

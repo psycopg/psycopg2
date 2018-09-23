@@ -152,7 +152,7 @@ static const char diagnosticsType_doc[] =
     "Please refer to the `PostgreSQL documentation`__ for the meaning of all"
         " the attributes.\n\n"
     ".. |PQresultErrorField| replace:: `!PQresultErrorField()`\n"
-    ".. _PQresultErrorField: http://www.postgresql.org/docs/current/static/"
+    ".. _PQresultErrorField: https://www.postgresql.org/docs/current/static/"
         "libpq-exec.html#LIBPQ-PQRESULTERRORFIELD\n"
     ".. __: PQresultErrorField_\n";
 

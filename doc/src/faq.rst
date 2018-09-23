@@ -40,7 +40,7 @@ I receive the error *current transaction is aborted, commands ignored until end 
     PostgreSQL supports nested transactions using the |SAVEPOINT|_ command).
 
     .. |SAVEPOINT| replace:: :sql:`SAVEPOINT`
-    .. _SAVEPOINT: http://www.postgresql.org/docs/current/static/sql-savepoint.html
+    .. _SAVEPOINT: https://www.postgresql.org/docs/current/static/sql-savepoint.html
 
 
 .. _faq-transaction-aborted-multiprocess:
@@ -184,8 +184,8 @@ Transferring binary data from PostgreSQL 9.0 doesn't work.
       session before reading binary data;
     - upgrade the libpq library on the client to at least 9.0.
 
-    .. __: http://www.postgresql.org/docs/current/static/datatype-binary.html
-    .. __: http://www.postgresql.org/docs/current/static/runtime-config-client.html#GUC-BYTEA-OUTPUT
+    .. __: https://www.postgresql.org/docs/current/static/datatype-binary.html
+    .. __: https://www.postgresql.org/docs/current/static/runtime-config-client.html#GUC-BYTEA-OUTPUT
 
 
 .. _faq-array:
@@ -318,7 +318,7 @@ I can't compile `!psycopg2`: the compiler says *error: libpq-fe.h: No such file 
     :program:`pg_config` at install time and the libpq at runtime.
 
     .. |lo_truncate| replace:: `!lo_truncate()`
-    .. _lo_truncate: http://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-TRUNCATE
+    .. _lo_truncate: https://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-TRUNCATE
 
 
 .. _faq-import-mod_wsgi:
@@ -332,5 +332,5 @@ Psycopg raises *ImportError: cannot import name tz* on import in mod_wsgi / ASP,
     use the WSGIPythonEggs__ directive.
 
     .. _egg: http://peak.telecommunity.com/DevCenter/PythonEggs
-    .. __: http://stackoverflow.com/questions/2192323/what-is-the-python-egg-cache-python-egg-cache
-    .. __: http://code.google.com/p/modwsgi/wiki/ConfigurationDirectives#WSGIPythonEggs
+    .. __: https://stackoverflow.com/questions/2192323/what-is-the-python-egg-cache-python-egg-cache
+    .. __: https://modwsgi.readthedocs.io/en/develop/configuration-directives/WSGIPythonEggs.html

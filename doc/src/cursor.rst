@@ -67,10 +67,10 @@ The ``cursor`` class
         |execute*|_ methods yet.
 
         .. |pg_type| replace:: :sql:`pg_type`
-        .. _pg_type: http://www.postgresql.org/docs/current/static/catalog-pg-type.html
-        .. _PQgetlength: http://www.postgresql.org/docs/current/static/libpq-exec.html#LIBPQ-PQGETLENGTH
-        .. _PQfsize: http://www.postgresql.org/docs/current/static/libpq-exec.html#LIBPQ-PQFSIZE
-        .. _NUMERIC: http://www.postgresql.org/docs/current/static/datatype-numeric.html#DATATYPE-NUMERIC-DECIMAL
+        .. _pg_type: https://www.postgresql.org/docs/current/static/catalog-pg-type.html
+        .. _PQgetlength: https://www.postgresql.org/docs/current/static/libpq-exec.html#LIBPQ-PQGETLENGTH
+        .. _PQfsize: https://www.postgresql.org/docs/current/static/libpq-exec.html#LIBPQ-PQFSIZE
+        .. _NUMERIC: https://www.postgresql.org/docs/current/static/datatype-numeric.html#DATATYPE-NUMERIC-DECIMAL
         .. |NUMERIC| replace:: :sql:`NUMERIC`
 
         .. versionchanged:: 2.4
@@ -129,7 +129,7 @@ The ``cursor`` class
         backward scroll (see the |declare-notes|__).
 
         .. |declare-notes| replace:: :sql:`DECLARE` notes
-        .. __: http://www.postgresql.org/docs/current/static/sql-declare.html#SQL-DECLARE-NOTES
+        .. __: https://www.postgresql.org/docs/current/static/sql-declare.html#SQL-DECLARE-NOTES
 
         .. note::
 
@@ -430,10 +430,10 @@ The ``cursor`` class
             more flexibility.
 
         .. |CREATE-TABLE| replace:: :sql:`CREATE TABLE`
-        .. __: http://www.postgresql.org/docs/current/static/sql-createtable.html
+        .. __: https://www.postgresql.org/docs/current/static/sql-createtable.html
 
         .. |INSERT-RETURNING| replace:: :sql:`INSERT ... RETURNING`
-        .. __: http://www.postgresql.org/docs/current/static/sql-insert.html
+        .. __: https://www.postgresql.org/docs/current/static/sql-insert.html
 
 
     .. attribute:: query
@@ -620,7 +620,7 @@ The ``cursor`` class
             ...
 
         .. |COPY| replace:: :sql:`COPY`
-        .. __: http://www.postgresql.org/docs/current/static/sql-copy.html
+        .. __: https://www.postgresql.org/docs/current/static/sql-copy.html
 
         .. versionadded:: 2.0.6
 

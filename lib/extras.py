@@ -404,7 +404,7 @@ class NamedTupleCursor(_cursor):
 class LoggingConnection(_connection):
     """A connection that logs all queries to a file or logger__ object.
 
-    .. __: http://docs.python.org/library/logging.html
+    .. __: https://docs.python.org/library/logging.html
     """
 
     def initialize(self, logobj):
@@ -638,8 +638,8 @@ class ReplicationCursor(_replicationCursor):
 class UUID_adapter(object):
     """Adapt Python's uuid.UUID__ type to PostgreSQL's uuid__.
 
-    .. __: http://docs.python.org/library/uuid.html
-    .. __: http://www.postgresql.org/docs/current/static/datatype-uuid.html
+    .. __: https://docs.python.org/library/uuid.html
+    .. __: https://www.postgresql.org/docs/current/static/datatype-uuid.html
     """
 
     def __init__(self, uuid):

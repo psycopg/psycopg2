@@ -44,7 +44,7 @@ class FixedOffsetTimezone(datetime.tzinfo):
     offset and name that instance will be returned. This saves memory and
     improves comparability.
 
-    .. __: http://docs.python.org/library/datetime.html#datetime-tzinfo
+    .. __: https://docs.python.org/library/datetime.html
     """
     _name = None
     _offset = ZERO
