@@ -822,6 +822,19 @@ psyco_conn_deferrable_set(connectionObject *self, PyObject *pyvalue)
     return 0;
 }
 
+/* _raw_pgconn - expose PGconn* as a Python capsule */
+
+#define psyco_conn__raw_pgconn_doc \
+"Return the internal PGconn* as a Python Capsule."
+
+static PyObject *
+psyco_conn__raw_pgconn_get(connectionObject *self)
+{
+    EXC_IF_CONN_CLOSED(self);
+
+    return PyCapsule_New(self->pgconn, "psycopg2.connection._raw_pgconn", NULL);
+}
+
 
 /* set_client_encoding method - set client encoding */
 
@@ -1243,6 +1256,10 @@ static struct PyGetSetDef connectionObject_getsets[] = {
         (getter)psyco_conn_deferrable_get,
         (setter)psyco_conn_deferrable_set,
         psyco_conn_deferrable_doc },
+    { "_raw_pgconn",
+        (getter)psyco_conn__raw_pgconn_get,
+        NULL,
+        psyco_conn__raw_pgconn_doc },
     {NULL}
 };
 #undef EXCEPTION_GETTER
