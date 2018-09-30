@@ -62,6 +62,19 @@ class Range(object):
             return "%s(%r, %r, %r)" % (self.__class__.__name__,
                 self._lower, self._upper, self._bounds)
 
+    def __str__(self):
+        if (self._lower, self._upper, self._bounds) == (None, None, None):
+            return 'empty'
+
+        items = [
+            self._bounds[0],
+            str(self._lower),
+            ', ',
+            str(self._upper),
+            self._bounds[1]
+        ]
+        return ''.join(items)
+
     @property
     def lower(self):
         """The lower bound of the range. `!None` if empty or unbound."""

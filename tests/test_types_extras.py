@@ -1386,6 +1386,52 @@ class RangeTestCase(unittest.TestCase):
         r = Range(0, 4)
         self.assertEqual(loads(dumps(r)), r)
 
+    def test_str(self):
+        '''
+        Range types should have a short and readable ``str`` implementation.
+
+        Using ``repr`` for all string conversions can be very unreadable for
+        longer types like ``DateTimeTZRange``.
+        '''
+        from psycopg2.extras import Range
+
+        # Using the "u" prefix to make sure we have the proper return types in
+        # Python2
+        expected = [
+            u'(0, 4)',
+            u'[0, 4]',
+            u'(0, 4]',
+            u'[0, 4)',
+            u'empty',
+        ]
+        results = []
+
+        converter = unicode if sys.version_info < (3, 0) else str
+
+        for bounds in ('()', '[]', '(]', '[)'):
+            r = Range(0, 4, bounds=bounds)
+            results.append(converter(r))
+
+        r = Range(empty=True)
+        results.append(converter(r))
+        self.assertEqual(results, expected)
+
+    def test_str_datetime(self):
+        '''
+        Date-Time ranges should return a human-readable string as well on
+        string conversion.
+        '''
+        from psycopg2.extras import DateTimeTZRange
+        from datetime import datetime
+        from psycopg2.tz import FixedOffsetTimezone
+        converter = unicode if sys.version_info < (3, 0) else str
+        tz = FixedOffsetTimezone(-5*60, "EST")
+        r = DateTimeTZRange(datetime(2010, 1, 1, tzinfo=tz),
+                            datetime(2011, 1, 1, tzinfo=tz))
+        expected = u'[2010-01-01 00:00:00-05:00, 2011-01-01 00:00:00-05:00)'
+        result = converter(r)
+        self.assertEqual(result, expected)
+
 
 def skip_if_no_range(f):
     @wraps(f)
