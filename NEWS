@@ -7,6 +7,8 @@ What's new in psycopg 2.8
 New features:
 
 - Added `~psycopg2.extensions.encrypt_password()` function (:ticket:`#576`).
+- `!str()` on `~psycopg2.extras.Range` produces a human-readable representation
+  (:ticket:`#773`).
 - `~psycopg2.extras.DictCursor` and `~psycopg2.extras.RealDictCursor` rows
   maintain columns order (:ticket:`#177`).
 
