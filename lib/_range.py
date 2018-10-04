@@ -63,7 +63,7 @@ class Range(object):
                 self._lower, self._upper, self._bounds)
 
     def __str__(self):
-        if (self._lower, self._upper, self._bounds) == (None, None, None):
+        if self._bounds is None:
             return 'empty'
 
         items = [
