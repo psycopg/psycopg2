@@ -290,7 +290,7 @@ class SQL(Composable):
 
 class Identifier(Composable):
     """
-    A `Composable` representing an SQL identifer.
+    A `Composable` representing an SQL identifer or a dot-separated sequence.
 
     Identifiers usually represent names of database objects, such as tables or
     fields. PostgreSQL identifiers follow `different rules`__ than SQL string
@@ -307,20 +307,50 @@ class Identifier(Composable):
         >>> print(sql.SQL(', ').join([t1, t2, t3]).as_string(conn))
         "foo", "ba'r", "ba""z"
 
-    """
-    def __init__(self, string):
-        if not isinstance(string, string_types):
-            raise TypeError("SQL identifiers must be strings")
+    Multiple strings can be passed to the object to represent a qualified name,
+    i.e. a dot-separated sequence of identifiers.
 
-        super(Identifier, self).__init__(string)
+    Example::
+
+        >>> query = sql.SQL("select {} from {}").format(
+        ...     sql.Identifier("table", "field"),
+        ...     sql.Identifier("schema", "table"))
+        >>> print(query.as_string(conn))
+        select "table"."field" from "schema"."table"
+
+    """
+    def __init__(self, *strings):
+        if not strings:
+            raise TypeError("Identifier cannot be empty")
+
+        for s in strings:
+            if not isinstance(s, string_types):
+                raise TypeError("SQL identifier parts must be strings")
+
+        super(Identifier, self).__init__(strings)
+
+    @property
+    def strings(self):
+        """A tuple with the strings wrapped by the `Identifier`."""
+        return self._wrapped
 
     @property
     def string(self):
-        """The string wrapped by the `Identifier`."""
-        return self._wrapped
+        """The string wrapped by the `Identifier`.
+        """
+        if len(self._wrapped) == 1:
+            return self._wrapped[0]
+        else:
+            raise AttributeError(
+                "the Identifier wraps more than one than one string")
+
+    def __repr__(self):
+        return "%s(%s)" % (
+            self.__class__.__name__,
+            ', '.join(map(repr, self._wrapped)))
 
     def as_string(self, context):
-        return ext.quote_ident(self._wrapped, context)
+        return '.'.join(ext.quote_ident(s, context) for s in self._wrapped)
 
 
 class Literal(Composable):

@@ -24,9 +24,8 @@
 
 import datetime as dt
 import unittest
-from .testutils import (ConnectingTestCase,
-    skip_before_postgres, skip_before_python, skip_copy_if_green,
-    StringIO)
+from .testutils import (
+    ConnectingTestCase, skip_before_postgres, skip_copy_if_green, StringIO)
 
 import psycopg2
 from psycopg2 import sql
@@ -181,26 +180,43 @@ class IdentifierTests(ConnectingTestCase):
     def test_init(self):
         self.assert_(isinstance(sql.Identifier('foo'), sql.Identifier))
         self.assert_(isinstance(sql.Identifier(u'foo'), sql.Identifier))
+        self.assert_(isinstance(sql.Identifier('foo', 'bar', 'baz'), sql.Identifier))
+        self.assertRaises(TypeError, sql.Identifier)
         self.assertRaises(TypeError, sql.Identifier, 10)
         self.assertRaises(TypeError, sql.Identifier, dt.date(2016, 12, 31))
 
-    def test_string(self):
+    def test_strings(self):
+        self.assertEqual(sql.Identifier('foo').strings, ('foo',))
+        self.assertEqual(sql.Identifier('foo', 'bar').strings, ('foo', 'bar'))
+
+        # Legacy method
         self.assertEqual(sql.Identifier('foo').string, 'foo')
+        self.assertRaises(AttributeError,
+            getattr, sql.Identifier('foo', 'bar'), 'string')
 
     def test_repr(self):
         obj = sql.Identifier("fo'o")
         self.assertEqual(repr(obj), 'Identifier("fo\'o")')
         self.assertEqual(repr(obj), str(obj))
 
+        obj = sql.Identifier("fo'o", 'ba"r')
+        self.assertEqual(repr(obj), 'Identifier("fo\'o", \'ba"r\')')
+        self.assertEqual(repr(obj), str(obj))
+
     def test_eq(self):
         self.assert_(sql.Identifier('foo') == sql.Identifier('foo'))
+        self.assert_(sql.Identifier('foo', 'bar') == sql.Identifier('foo', 'bar'))
         self.assert_(sql.Identifier('foo') != sql.Identifier('bar'))
         self.assert_(sql.Identifier('foo') != 'foo')
         self.assert_(sql.Identifier('foo') != sql.SQL('foo'))
 
     def test_as_str(self):
-        self.assertEqual(sql.Identifier('foo').as_string(self.conn), '"foo"')
-        self.assertEqual(sql.Identifier("fo'o").as_string(self.conn), '"fo\'o"')
+        self.assertEqual(
+            sql.Identifier('foo').as_string(self.conn), '"foo"')
+        self.assertEqual(
+            sql.Identifier('foo', 'bar').as_string(self.conn), '"foo"."bar"')
+        self.assertEqual(
+            sql.Identifier("fo'o", 'ba"r').as_string(self.conn), '"fo\'o"."ba""r"')
 
     def test_join(self):
         self.assert_(not hasattr(sql.Identifier('foo'), 'join'))
