@@ -13,6 +13,7 @@ New features:
   (:ticket:`#773`).
 - `~psycopg2.extras.DictCursor` and `~psycopg2.extras.RealDictCursor` rows
   maintain columns order (:ticket:`#177`).
+- Added `connection.host` property (:ticket:`#726`).
 
 Other changes:
 

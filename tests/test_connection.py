@@ -39,7 +39,7 @@ from .testutils import (
     skip_after_postgres, skip_before_libpq, skip_after_libpq,
     ConnectingTestCase, skip_if_tpc_disabled, skip_if_windows, slow)
 
-from .testconfig import dsn, dbname
+from .testconfig import dbhost, dsn, dbname
 
 
 class ConnectionTests(ConnectingTestCase):
@@ -1680,6 +1680,19 @@ while True:
         # Strip [NNN refs] from output
         err = re.sub(br'\[[^\]]+\]', b'', err).strip()
         self.assert_(not err, err)
+
+
+class TestConnectionProps(ConnectingTestCase):
+    def test_host(self):
+        self.assertFalse(self.conn.closed)
+        expected = dbhost if dbhost else "/"
+        self.assertIn(expected, self.conn.host)
+
+    def test_host_readonly(self):
+        self.assertFalse(self.conn.closed)
+        with self.assertRaises(AttributeError):
+            self.conn.host = 'override'
+
 
 
 def test_suite():
