@@ -822,17 +822,17 @@ psyco_conn_deferrable_set(connectionObject *self, PyObject *pyvalue)
     return 0;
 }
 
-/* _raw_pgconn - expose PGconn* as a Python capsule */
+/* psyco_get_native_connection - expose PGconn* as a Python capsule */
 
-#define psyco_conn__raw_pgconn_doc \
-"Return the internal PGconn* as a Python Capsule."
+#define psyco_get_native_connection_doc \
+"get_native_connection() -- Return the internal PGconn* as a Python Capsule."
 
 static PyObject *
-psyco_conn__raw_pgconn_get(connectionObject *self)
+psyco_get_native_connection(connectionObject *self)
 {
     EXC_IF_CONN_CLOSED(self);
 
-    return PyCapsule_New(self->pgconn, "psycopg2.connection._raw_pgconn", NULL);
+    return PyCapsule_New(self->pgconn, "psycopg2.connection.native_connection", NULL);
 }
 
 
@@ -1190,6 +1190,8 @@ static struct PyMethodDef connectionObject_methods[] = {
      METH_NOARGS, psyco_conn_isexecuting_doc},
     {"cancel", (PyCFunction)psyco_conn_cancel,
      METH_NOARGS, psyco_conn_cancel_doc},
+    {"get_native_connection", (PyCFunction)psyco_get_native_connection,
+     METH_NOARGS, psyco_get_native_connection_doc},
     {NULL}
 };
 
@@ -1256,10 +1258,6 @@ static struct PyGetSetDef connectionObject_getsets[] = {
         (getter)psyco_conn_deferrable_get,
         (setter)psyco_conn_deferrable_set,
         psyco_conn_deferrable_doc },
-    { "_raw_pgconn",
-        (getter)psyco_conn__raw_pgconn_get,
-        NULL,
-        psyco_conn__raw_pgconn_doc },
     {NULL}
 };
 #undef EXCEPTION_GETTER

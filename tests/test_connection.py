@@ -340,6 +340,11 @@ class ConnectionTests(ConnectingTestCase):
         self.assert_(c.closed, "connection failed so it must be closed")
         self.assert_('foobar' not in c.dsn, "password was not obscured")
 
+    def test_get_native_connection(self):
+        conn = self.connect()
+        capsule = conn.get_native_connection()
+        # we can't do anything else in Python
+        self.assertIsNotNone(capsule)
 
 class ParseDsnTestCase(ConnectingTestCase):
     def test_parse_dsn(self):
