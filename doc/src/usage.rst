@@ -224,7 +224,7 @@ argument of the `~cursor.execute()` method::
 Values containing backslashes and LIKE
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Unlike in Python, the **backslash** (`\`) is not used as an escape
+Unlike in Python, the backslash (`\\`) is not used as an escape
 character *except* in patterns used with `LIKE` and `ILIKE` where they
 are needed to escape the `%` and `_` characters.
 
