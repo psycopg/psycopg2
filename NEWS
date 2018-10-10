@@ -7,6 +7,7 @@ What's new in psycopg 2.8
 New features:
 
 - Added `~psycopg2.extensions.encrypt_password()` function (:ticket:`#576`).
+- Added `connection.host` property (:ticket:`#726`).
 - `~psycopg2.sql.Identifier` can represent qualified names in SQL composition
   (:ticket:`#732`).
 - `!str()` on `~psycopg2.extras.Range` produces a human-readable representation
