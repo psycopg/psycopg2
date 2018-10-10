@@ -221,7 +221,28 @@ argument of the `~cursor.execute()` method::
     >>> cur.execute(SQL, data) # Note: no % operator
 
 
+Values containing backslashes and LIKE
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Unlike in Python, the backslash (`\\`) is not used as an escape
+character *except* in patterns used with `LIKE` and `ILIKE` where they
+are needed to escape the `%` and `_` characters.
+
+This can lead to confusing situations::
+
+   >>> path = r'C:\Users\Bobby.Tables'
+   >>> cur.execute('INSERT INTO mytable(path) VALUES (%s)', (path,))
+   >>> cur.execute('SELECT * FROM mytable WHERE path LIKE %s', (path,))
+   >>> cur.fetchall()
+   []
+
+The solution is to specify an `ESCAPE` character of `''` (empty string)
+in your `LIKE` query::
+
+   >>> cur.execute("SELECT * FROM mytable WHERE path LIKE %s ESCAPE ''", (path,))
+
+
+  
 .. index::
     single: Adaptation
     pair: Objects; Adaptation

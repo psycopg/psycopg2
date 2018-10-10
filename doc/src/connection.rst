@@ -600,6 +600,24 @@ The ``connection`` class
 
 
     .. index::
+        pair: Backend; Host
+
+    .. attribute:: host
+
+        The server host name of the active connection.
+
+        This can be a host name, an IP address, or a directory path if the
+        connection is via Unix socket. (The path case can be distinguished
+        because it will always be an absolute path, beginning with ``/``.)
+
+        .. seealso:: libpq docs for `PQhost()`__ for details.
+
+            .. __: http://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQHOST
+
+        .. versionadded:: 2.8.0
+
+
+    .. index::
         pair: Backend; PID
 
     .. method:: get_backend_pid()

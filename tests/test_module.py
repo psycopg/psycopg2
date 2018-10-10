@@ -173,8 +173,8 @@ class ExceptionsTestCase(ConnectingTestCase):
                 'column_name', 'constraint_name', 'context', 'datatype_name',
                 'internal_position', 'internal_query', 'message_detail',
                 'message_hint', 'message_primary', 'schema_name', 'severity',
-                'source_file', 'source_function', 'source_line', 'sqlstate',
-                'statement_position', 'table_name', ]:
+                'severity_nonlocalized', 'source_file', 'source_function',
+                'source_line', 'sqlstate', 'statement_position', 'table_name', ]:
             v = getattr(diag, attr)
             if v is not None:
                 self.assert_(isinstance(v, str))
@@ -275,6 +275,15 @@ class ExceptionsTestCase(ConnectingTestCase):
         self.assertEqual(e.diag.column_name, None)
         self.assertEqual(e.diag.constraint_name, "chk_eq1")
         self.assertEqual(e.diag.datatype_name, None)
+
+    @skip_before_postgres(9, 6)
+    def test_9_6_diagnostics(self):
+        cur = self.conn.cursor()
+        try:
+            cur.execute("select 1 from nosuchtable")
+        except psycopg2.Error as exc:
+            e = exc
+        self.assertEqual(e.diag.severity_nonlocalized, 'ERROR')
 
     def test_pickle(self):
         import pickle

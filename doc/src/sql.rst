@@ -77,15 +77,25 @@ to cursor methods such as `~cursor.execute()`, `~cursor.executemany()`,
 
 .. autoclass:: Identifier
 
-    .. autoattribute:: string
+    .. versionchanged:: 2.8
+        added support for multiple strings.
+
+    .. autoattribute:: strings
+
+        .. versionadded:: 2.8
+            previous verions only had a `!string` attribute. The attribute
+            still exists but is deprecate and will only work if the
+            `!Identifier` wraps a single string.
 
 .. autoclass:: Literal
 
     .. autoattribute:: wrapped
 
+
 .. autoclass:: Placeholder
 
     .. autoattribute:: name
+
 
 .. autoclass:: Composed
 
