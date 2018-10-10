@@ -450,6 +450,12 @@ class AsyncTests(ConnectingTestCase):
         else:
             self.fail("no exception raised")
 
+    @skip_before_postgres(8, 2)
+    def test_copy_no_hang(self):
+        cur = self.conn.cursor()
+        cur.execute("copy (select 1) to stdout")
+        self.assertRaises(psycopg2.ProgrammingError, self.wait, self.conn)
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

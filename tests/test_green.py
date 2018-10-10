@@ -27,7 +27,7 @@ import psycopg2
 import psycopg2.extensions
 import psycopg2.extras
 
-from .testutils import ConnectingTestCase, slow
+from .testutils import ConnectingTestCase, skip_before_postgres, slow
 
 
 class ConnectionStub(object):
@@ -110,6 +110,12 @@ class GreenTestCase(ConnectingTestCase):
         conn.rollback()
         curs.execute("select 1")
         self.assertEqual(curs.fetchone()[0], 1)
+
+    @skip_before_postgres(8, 2)
+    def test_copy_no_hang(self):
+        cur = self.conn.cursor()
+        self.assertRaises(psycopg2.ProgrammingError,
+            cur.execute, "copy (select 1) to stdout")
 
 
 class CallbackErrorTestCase(ConnectingTestCase):
