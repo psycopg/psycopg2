@@ -19,6 +19,7 @@ script exits with error 1.
 # License for more details.
 from __future__ import print_function
 
+import argparse
 import gc
 import sys
 import difflib
@@ -62,19 +63,16 @@ def main():
 
 
 def parse_args():
-    import optparse
-
-    parser = optparse.OptionParser(description=__doc__)
-    parser.add_option('--nruns', type='int', metavar="N", default=3,
-        help="number of test suite runs [default: %default]")
-    parser.add_option('--suite', metavar="NAME",
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--nruns', type=int, metavar="N", default=3,
+        help="number of test suite runs [default: %(default)d]")
+    parser.add_argument('--suite', metavar="NAME",
         help="the test suite to run (e.g. 'test_cursor'). [default: all]")
-    parser.add_option('--objs', metavar="TYPE",
+    parser.add_argument('--objs', metavar="TYPE",
         help="in case of leaks, print a report of object TYPE "
             "(support still incomplete)")
 
-    opt, args = parser.parse_args()
-    return opt
+    return parser.parse_args()
 
 
 def dump(i, opt):
