@@ -169,7 +169,7 @@ class TypesBasicTests(ConnectingTestCase):
 
         # issue #788
         curs.execute("select null = any(%s)", ([[]], ))
-        self.assertEqual(curs.fetchone(), None)
+        self.assertFalse(curs.fetchone()[0])
 
     def testEmptyArrayNoCast(self):
         s = self.execute("SELECT '{}' AS foo")
