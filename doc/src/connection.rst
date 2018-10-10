@@ -604,11 +604,11 @@ The ``connection`` class
 
     .. attribute:: host
 
-        Returns the server host name of the active connection.
+        The server host name of the active connection.
 
         This can be a host name, an IP address, or a directory path if the
         connection is via Unix socket. (The path case can be distinguished
-        because it will always be an absolute path, beginning with /.)
+        because it will always be an absolute path, beginning with ``/``.)
 
         .. seealso:: libpq docs for `PQhost()`__ for details.
 
