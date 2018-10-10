@@ -612,7 +612,7 @@ The ``connection`` class
 
         .. seealso:: libpq docs for `PQhost()`__ for details.
 
-            .. __: http://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQHOST
+            .. __: https://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQHOST
 
         .. versionadded:: 2.8.0
 
