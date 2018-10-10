@@ -39,7 +39,7 @@ From PostgreSQL documentation:
 
 .. seealso:: `PostgreSQL Error Codes table`__
 
-    .. __: http://www.postgresql.org/docs/current/static/errcodes-appendix.html#ERRCODES-TABLE
+    .. __: https://www.postgresql.org/docs/current/static/errcodes-appendix.html#ERRCODES-TABLE
 
 
 An example of the available constants defined in the module:

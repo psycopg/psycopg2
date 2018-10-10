@@ -26,7 +26,7 @@ This module contains symbolic names for all PostgreSQL error codes.
 #
 # Based on:
 #
-#   http://www.postgresql.org/docs/current/static/errcodes-appendix.html
+#   https://www.postgresql.org/docs/current/static/errcodes-appendix.html
 #
 
 

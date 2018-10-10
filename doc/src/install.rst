@@ -12,11 +12,11 @@ to use Psycopg on a different Python implementation (PyPy, Jython, IronPython)
 there is an experimental `porting of Psycopg for Ctypes`__, but it is not as
 mature as the C implementation yet.
 
-.. _PostgreSQL: http://www.postgresql.org/
-.. _Python: http://www.python.org/
-.. _libpq: http://www.postgresql.org/docs/current/static/libpq.html
-.. _CPython: http://en.wikipedia.org/wiki/CPython
-.. _Ctypes: http://docs.python.org/library/ctypes.html
+.. _PostgreSQL: https://www.postgresql.org/
+.. _Python: https://www.python.org/
+.. _libpq: https://www.postgresql.org/docs/current/static/libpq.html
+.. _CPython: https://en.wikipedia.org/wiki/CPython
+.. _Ctypes: https://docs.python.org/library/ctypes.html
 .. __: https://github.com/mvantellingen/psycopg2-ctypes
 
 
@@ -152,7 +152,7 @@ using something like ``pip install -U pip``), then you can run:
 
 .. __: PyPI-binary_
 .. _PyPI-binary: https://pypi.org/project/psycopg2-binary/
-.. _wheel: http://pythonwheels.com/
+.. _wheel: https://pythonwheels.com/
 
 .. note::
 

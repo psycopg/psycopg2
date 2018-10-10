@@ -130,7 +130,7 @@ def parse_errors_sgml(url):
     return classes, errors
 
 errors_sgml_url = \
-    "http://www.postgresql.org/docs/%s/static/errcodes-appendix.html"
+    "https://www.postgresql.org/docs/%s/static/errcodes-appendix.html"
 
 errors_txt_url = \
     "http://git.postgresql.org/gitweb/?p=postgresql.git;a=blob_plain;" \

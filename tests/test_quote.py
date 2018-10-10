@@ -46,8 +46,8 @@ class QuotingTestCase(ConnectingTestCase):
     The tests also check that no warning is raised ('escape_string_warning'
     should be on).
 
-    http://www.postgresql.org/docs/current/static/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS
-    http://www.postgresql.org/docs/current/static/runtime-config-compatible.html
+    https://www.postgresql.org/docs/current/static/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS
+    https://www.postgresql.org/docs/current/static/runtime-config-compatible.html
     """
     def test_string(self):
         data = """some data with \t chars

@@ -79,7 +79,7 @@ strip_severity(const char *msg)
 /* Returns the Python exception corresponding to an SQLSTATE error
    code.  A list of error codes can be found at:
 
-   http://www.postgresql.org/docs/current/static/errcodes-appendix.html */
+   https://www.postgresql.org/docs/current/static/errcodes-appendix.html */
 BORROWED static PyObject *
 exception_from_sqlstate(const char *sqlstate)
 {

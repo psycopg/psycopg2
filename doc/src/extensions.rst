@@ -94,7 +94,7 @@ introspection etc.
         The method uses the efficient |lo_export|_ libpq function.
 
         .. |lo_export| replace:: `!lo_export()`
-        .. _lo_export: http://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-EXPORT
+        .. _lo_export: https://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-EXPORT
 
 
     .. method:: seek(offset, whence=0)
@@ -125,7 +125,7 @@ introspection etc.
         libpq function.
 
         .. |lo_truncate| replace:: `!lo_truncate()`
-        .. _lo_truncate: http://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-TRUNCATE
+        .. _lo_truncate: https://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-TRUNCATE
 
         .. versionadded:: 2.2.0
 
@@ -427,8 +427,8 @@ details.
     Used by Psycopg when adapting or casting unicode strings. See
     :ref:`unicode-handling`.
 
-    .. __: http://www.postgresql.org/docs/current/static/multibyte.html
-    .. __: http://docs.python.org/library/codecs.html#standard-encodings
+    .. __: https://www.postgresql.org/docs/current/static/multibyte.html
+    .. __: https://docs.python.org/library/codecs.html#standard-encodings
 
 
 
@@ -494,7 +494,7 @@ Other functions
 
     .. seealso:: libpq docs for `PQlibVersion()`__.
 
-        .. __: http://www.postgresql.org/docs/current/static/libpq-misc.html#LIBPQ-PQLIBVERSION
+        .. __: https://www.postgresql.org/docs/current/static/libpq-misc.html#LIBPQ-PQLIBVERSION
 
 
 .. function:: make_dsn(dsn=None, \*\*kwargs)
@@ -528,7 +528,7 @@ Other functions
     `connection URIs`__ are only supported from libpq 9.2).  Raise
     `~psycopg2.ProgrammingError` if the *dsn* is not valid.
 
-    .. __: http://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-CONNSTRING
+    .. __: https://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-CONNSTRING
 
     Example::
 
@@ -542,7 +542,7 @@ Other functions
 
     .. seealso:: libpq docs for `PQconninfoParse()`__.
 
-        .. __: http://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-PQCONNINFOPARSE
+        .. __: https://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-PQCONNINFOPARSE
 
 
 .. function:: quote_ident(str, scope)
@@ -556,7 +556,7 @@ Other functions
 
     .. seealso:: libpq docs for `PQescapeIdentifier()`__
 
-        .. __: http://www.postgresql.org/docs/current/static/libpq-exec.html#LIBPQ-PQESCAPEIDENTIFIER
+        .. __: https://www.postgresql.org/docs/current/static/libpq-exec.html#LIBPQ-PQESCAPEIDENTIFIER
 
 
 .. method:: encrypt_password(password, user, scope=None, algorithm=None)
@@ -641,7 +641,7 @@ methods.  The level can be set to one of the following constants:
     .. seealso:: `Read Committed Isolation Level`__ in PostgreSQL
         documentation.
 
-        .. __: http://www.postgresql.org/docs/current/static/transaction-iso.html#XACT-READ-COMMITTED
+        .. __: https://www.postgresql.org/docs/current/static/transaction-iso.html#XACT-READ-COMMITTED
 
 .. data:: ISOLATION_LEVEL_REPEATABLE_READ
 
@@ -665,7 +665,7 @@ methods.  The level can be set to one of the following constants:
     .. seealso:: `Repeatable Read Isolation Level`__ in PostgreSQL
         documentation.
 
-        .. __: http://www.postgresql.org/docs/current/static/transaction-iso.html#XACT-REPEATABLE-READ
+        .. __: https://www.postgresql.org/docs/current/static/transaction-iso.html#XACT-REPEATABLE-READ
 
 .. data:: ISOLATION_LEVEL_SERIALIZABLE
 
@@ -684,7 +684,7 @@ methods.  The level can be set to one of the following constants:
 
     .. seealso:: `Serializable Isolation Level`__ in PostgreSQL documentation.
 
-        .. __: http://www.postgresql.org/docs/current/static/transaction-iso.html#XACT-SERIALIZABLE
+        .. __: https://www.postgresql.org/docs/current/static/transaction-iso.html#XACT-SERIALIZABLE
 
 .. data:: ISOLATION_LEVEL_DEFAULT
 
