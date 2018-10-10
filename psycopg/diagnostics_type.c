@@ -29,8 +29,11 @@
 #include "psycopg/diagnostics.h"
 #include "psycopg/error.h"
 
-/* These are new in PostgreSQL 9.3. Defining them here so that psycopg2 can
- * use them with a 9.3+ server even if compiled against pre-9.3 headers. */
+
+/* These constants are defined in src/include/postgres_ext.h but some may not
+ * be available with the libpq we currently support at compile time. */
+
+/* Available from PG 9.3 */
 #ifndef PG_DIAG_SCHEMA_NAME
 #define PG_DIAG_SCHEMA_NAME     's'
 #endif
@@ -45,6 +48,11 @@
 #endif
 #ifndef PG_DIAG_CONSTRAINT_NAME
 #define PG_DIAG_CONSTRAINT_NAME 'n'
+#endif
+
+/* Available from PG 9.6 */
+#ifndef PG_DIAG_SEVERITY_NONLOCALIZED
+#define PG_DIAG_SEVERITY_NONLOCALIZED 'V'
 #endif
 
 
@@ -70,6 +78,8 @@ psyco_diagnostics_get_field(diagnosticsObject *self, void *closure)
 static struct PyGetSetDef diagnosticsObject_getsets[] = {
     { "severity", (getter)psyco_diagnostics_get_field, NULL,
       NULL, (void*) PG_DIAG_SEVERITY },
+    { "severity_nonlocalized", (getter)psyco_diagnostics_get_field, NULL,
+      NULL, (void*) PG_DIAG_SEVERITY_NONLOCALIZED },
     { "sqlstate", (getter)psyco_diagnostics_get_field, NULL,
       NULL, (void*) PG_DIAG_SQLSTATE },
     { "message_primary", (getter)psyco_diagnostics_get_field, NULL,

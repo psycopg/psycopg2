@@ -186,6 +186,7 @@ introspection etc.
         message_primary
         schema_name
         severity
+        severity_nonlocalized
         source_file
         source_function
         source_line
@@ -197,6 +198,9 @@ introspection etc.
         The attribute value is available only if the error sent by the server:
         not all the fields are available for all the errors and for all the
         server versions.
+
+        .. versionadded:: 2.8
+            The `!severity_nonlocalized` attribute.
 
 
 
