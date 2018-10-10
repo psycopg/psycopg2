@@ -1106,12 +1106,13 @@ pq_send_query(connectionObject *conn, const char *query)
  * The function will block only if a command is active and the
  * necessary response data has not yet been read by PQconsumeInput.
  *
- * The result should be disposed using PQclear()
+ * The result should be disposed of using PQclear()
  */
 PGresult *
 pq_get_last_result(connectionObject *conn)
 {
     PGresult *result = NULL, *res;
+    ExecStatusType status;
 
     /* Read until PQgetResult gives a NULL */
     while (NULL != (res = PQgetResult(conn->pgconn))) {
@@ -1124,11 +1125,15 @@ pq_get_last_result(connectionObject *conn)
             PQclear(result);
         }
         result = res;
+        status = PQresultStatus(result);
+        Dprintf("pq_get_last_result: got result %s", PQresStatus(status));
 
-        /* After entering copy both mode, libpq will make a phony
+        /* After entering copy mode, libpq will make a phony
          * PGresult for us every time we query for it, so we need to
          * break out of this endless loop. */
-        if (PQresultStatus(result) == PGRES_COPY_BOTH) {
+        if (status == PGRES_COPY_BOTH
+                || status == PGRES_COPY_OUT
+                || status == PGRES_COPY_IN) {
             break;
         }
     }
