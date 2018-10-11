@@ -1207,6 +1207,8 @@ _pq_fetch_tuples(cursorObject *curs)
         Oid ftype = PQftype(curs->pgres, i);
         int fsize = PQfsize(curs->pgres, i);
         int fmod =  PQfmod(curs->pgres, i);
+        Oid ftable = PQftable(curs->pgres, i);
+        int ftablecol = PQftablecol(curs->pgres, i);
 
         columnObject *column = NULL;
         PyObject *type = NULL;
@@ -1299,7 +1301,18 @@ _pq_fetch_tuples(cursorObject *curs)
             column->scale = tmp;
         }
 
-        /* 6/ FIXME: null_ok??? */
+        /* table_oid, table_column */
+        if (ftable != InvalidOid) {
+            PyObject *tmp;
+            if (!(tmp = PyInt_FromLong((long)ftable))) { goto err_for; }
+            column->table_oid = tmp;
+        }
+
+        if (ftablecol > 0) {
+            PyObject *tmp;
+            if (!(tmp = PyInt_FromLong((long)ftablecol))) { goto err_for; }
+            column->table_column = tmp;
+        }
 
         PyTuple_SET_ITEM(description, i, (PyObject *)column);
         column = NULL;

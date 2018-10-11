@@ -62,7 +62,15 @@ static const char scale_doc[] =
     "None for other types.";
 
 static const char null_ok_doc[] =
-    "Always none.\n\n";
+    "Always none.";
+
+static const char table_oid_doc[] =
+    "The OID of the table from which the column was fetched.\n\n"
+    "None if not available";
+
+static const char table_column_doc[] =
+    "The number (within its table) of the column making up the result\n\n"
+    "None if not available. Note that PostgreSQL column numbers start at 1";
 
 
 static PyMemberDef column_members[] = {
@@ -73,6 +81,8 @@ static PyMemberDef column_members[] = {
     { "precision", T_OBJECT, offsetof(columnObject, precision), READONLY, (char *)precision_doc },
     { "scale", T_OBJECT, offsetof(columnObject, scale), READONLY, (char *)scale_doc },
     { "null_ok", T_OBJECT, offsetof(columnObject, null_ok), READONLY, (char *)null_ok_doc },
+    { "table_oid", T_OBJECT, offsetof(columnObject, table_oid), READONLY, (char *)table_oid_doc },
+    { "table_column", T_OBJECT, offsetof(columnObject, table_column), READONLY, (char *)table_column_doc },
     { NULL }
 };
 
@@ -89,12 +99,12 @@ column_init(columnObject *self, PyObject *args, PyObject *kwargs)
 {
     static char *kwlist[] = {
         "name", "type_code", "display_size", "internal_size",
-        "precision", "scale", "null_ok", NULL};
+        "precision", "scale", "null_ok", "table_oid", "table_column", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|OOOOOOO", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|OOOOOOOOO", kwlist,
             &self->name, &self->type_code, &self->display_size,
             &self->internal_size, &self->precision, &self->scale,
-            &self->null_ok)) {
+            &self->null_ok, &self->table_oid, &self->table_column)) {
         return -1;
     }
 
@@ -112,6 +122,8 @@ column_dealloc(columnObject *self)
     Py_CLEAR(self->precision);
     Py_CLEAR(self->scale);
     Py_CLEAR(self->null_ok);
+    Py_CLEAR(self->table_oid);
+    Py_CLEAR(self->table_column);
 
     Py_TYPE(self)->tp_free((PyObject *)self);
 }
@@ -293,6 +305,16 @@ column_setstate(columnObject *self, PyObject *state)
         Py_CLEAR(self->null_ok);
         self->null_ok = PyTuple_GET_ITEM(state, 6);
         Py_INCREF(self->null_ok);
+    }
+    if (size > 7) {
+        Py_CLEAR(self->table_oid);
+        self->table_oid = PyTuple_GET_ITEM(state, 7);
+        Py_INCREF(self->table_oid);
+    }
+    if (size > 8) {
+        Py_CLEAR(self->table_column);
+        self->table_column = PyTuple_GET_ITEM(state, 8);
+        Py_INCREF(self->table_column);
     }
 
 exit:

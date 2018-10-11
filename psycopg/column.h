@@ -39,6 +39,10 @@ typedef struct {
   PyObject *scale;
   PyObject *null_ok;
 
+  /* Extensions to the DBAPI */
+  PyObject *table_oid;
+  PyObject *table_column;
+
 } columnObject;
 
 #endif /* PSYCOPG_COLUMN_H */
