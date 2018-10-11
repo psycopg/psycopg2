@@ -154,6 +154,80 @@ introspection etc.
         Close the object and remove it from the database.
 
 
+.. class:: Column
+
+    Description of one result column, exposed as items of the
+    `cursor.description` sequence.
+
+    .. versionadded:: 2.8
+
+        in previous version the `!description` attribute was a sequence of
+        simple tuples or namedtuples.
+
+    .. attribute:: name
+
+        The name of the column returned.
+
+    .. attribute:: type_code
+
+        The PostgreSQL OID of the column. You can use the |pg_type|_ system
+        table to get more informations about the type.  This is the value used
+        by Psycopg to decide what Python type use to represent the value.  See
+        also :ref:`type-casting-from-sql-to-python`.
+
+    .. attribute:: display_size
+
+        The actual length of the column in bytes.  Obtaining this value is
+        computationally intensive, so it is always `!None` unless the
+        :envvar:`PSYCOPG_DISPLAY_SIZE` parameter is set at compile time. See
+        also PQgetlength_.
+
+    .. attribute:: internal_size
+
+        The size in bytes of the column associated to this column on the
+        server. Set to a negative value for variable-size types See also
+        PQfsize_.
+
+    .. attribute:: precision
+
+        Total number of significant digits in columns of type |NUMERIC|_.
+        `!None` for other types.
+
+    .. attribute:: scale
+
+        Count of decimal digits in the fractional part in columns of type
+        |NUMERIC|. `!None` for other types.
+
+    .. attribute:: null_ok
+
+        Always `!None` as not easy to retrieve from the libpq.
+
+    .. attribute:: table_oid
+
+        The oid of the table from which the column was fetched (matching
+        :sql:`pg_class.oid`). `!None` if the column is not a simple reference
+        to a table column. See also PQftable_.
+
+        .. versionadded:: 2.8
+
+    .. attribute:: table_column
+
+        The number of the column (within its table) making up the result
+        (matching :sql:`pg_attribute.attnum`, so it will start from 1).
+        `!None` if the column is not a simple reference to a table column. See
+        also PQftablecol_.
+
+        .. versionadded:: 2.8
+
+    .. |pg_type| replace:: :sql:`pg_type`
+    .. _pg_type: https://www.postgresql.org/docs/current/static/catalog-pg-type.html
+    .. _PQgetlength: https://www.postgresql.org/docs/current/static/libpq-exec.html#LIBPQ-PQGETLENGTH
+    .. _PQfsize: https://www.postgresql.org/docs/current/static/libpq-exec.html#LIBPQ-PQFSIZE
+    .. _PQftable: https://www.postgresql.org/docs/current/static/libpq-exec.html#LIBPQ-PQFTABLE
+    .. _PQftablecol: https://www.postgresql.org/docs/current/static/libpq-exec.html#LIBPQ-PQFTABLECOL
+    .. _NUMERIC: https://www.postgresql.org/docs/current/static/datatype-numeric.html#DATATYPE-NUMERIC-DECIMAL
+    .. |NUMERIC| replace:: :sql:`NUMERIC`
+
 .. autoclass:: Notify(pid, channel, payload='')
     :members: pid, channel, payload
 

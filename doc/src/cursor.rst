@@ -37,45 +37,48 @@ The ``cursor`` class
 
     .. attribute:: description
 
-        This read-only attribute is a sequence of 7-item sequences.
+        Read-only attribute describing the result of a query.  It is a
+        sequence of `~psycopg2.extensions.Column` instances, each one
+        describing one result column in order. The attribute is `!None` for
+        operations that do not return rows or if the cursor has not had an
+        operation invoked via the |execute*|_ methods yet.
 
-        Each of these sequences is a named tuple (a regular tuple if
-        :func:`collections.namedtuple` is not available) containing information
-        describing one result column:
+        For compatibility with the DB-API, every object can be unpacked as a
+        7-items sequence: the attributes retuned this way are the following.
+        For further details and other attributes available check the
+        `~psycopg2.extensions.Column` documentation.
 
-        0.  `!name`: the name of the column returned.
-        1.  `!type_code`: the PostgreSQL OID of the column. You can use the
-            |pg_type|_ system table to get more informations about the type.
-            This is the value used by Psycopg to decide what Python type use
-            to represent the value.  See also
-            :ref:`type-casting-from-sql-to-python`.
-        2.  `!display_size`: the actual length of the column in bytes.
-            Obtaining this value is computationally intensive, so it is
-            always `!None` unless the :envvar:`PSYCOPG_DISPLAY_SIZE` parameter
-            is set at compile time. See also PQgetlength_.
-        3.  `!internal_size`: the size in bytes of the column associated to
-            this column on the server. Set to a negative value for
-            variable-size types See also PQfsize_.
-        4.  `!precision`: total number of significant digits in columns of
-            type |NUMERIC|_. `!None` for other types.
-        5.  `!scale`: count of decimal digits in the fractional part in
-            columns of type |NUMERIC|. `!None` for other types.
-        6.  `!null_ok`: always `!None` as not easy to retrieve from the libpq.
+        0.  `~psycopg2.extensions.Column.name`: the name of the column returned.
 
-        This attribute will be `!None` for operations that do not return rows
-        or if the cursor has not had an operation invoked via the
-        |execute*|_ methods yet.
+        1.  `~psycopg2.extensions.Column.type_code`: the PostgreSQL OID of the
+            column.
 
-        .. |pg_type| replace:: :sql:`pg_type`
-        .. _pg_type: https://www.postgresql.org/docs/current/static/catalog-pg-type.html
-        .. _PQgetlength: https://www.postgresql.org/docs/current/static/libpq-exec.html#LIBPQ-PQGETLENGTH
-        .. _PQfsize: https://www.postgresql.org/docs/current/static/libpq-exec.html#LIBPQ-PQFSIZE
-        .. _NUMERIC: https://www.postgresql.org/docs/current/static/datatype-numeric.html#DATATYPE-NUMERIC-DECIMAL
-        .. |NUMERIC| replace:: :sql:`NUMERIC`
+        2.  `~psycopg2.extensions.Column.display_size`: the actual length of
+            the column in bytes.
+
+        3.  `~psycopg2.extensions.Column.internal_size`: the size in bytes of
+            the column associated to this column on the server.
+
+        4.  `~psycopg2.extensions.Column.precision`: total number of
+            significant digits in columns of type |NUMERIC|. `!None`
+            for other types.
+
+        5.  `~psycopg2.extensions.Column.scale`: count of decimal digits in
+            the fractional part in columns of type |NUMERIC|. `!None`
+            for other types.
+
+        6.  `~psycopg2.extensions.Column.null_ok`: always `!None` as not easy
+            to retrieve from the libpq.
 
         .. versionchanged:: 2.4
             if possible, columns descriptions are named tuple instead of
             regular tuples.
+
+        .. versionchanged:: 2.8
+            columns descriptions are instances of `!Column`, exposing extra
+            attributes.
+
+        .. |NUMERIC| replace:: :sql:`NUMERIC`
 
     .. method:: close()
 
