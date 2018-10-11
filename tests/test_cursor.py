@@ -377,7 +377,7 @@ class CursorTests(ConnectingTestCase):
         for i, rec in enumerate(curs):
             self.assertEqual(i + 1, curs.rownumber)
 
-    def test_namedtuple_description(self):
+    def test_description_attribs(self):
         curs = self.conn.cursor()
         curs.execute("""select
             3.14::decimal(10,2) as pi,
@@ -411,6 +411,27 @@ class CursorTests(ConnectingTestCase):
         self.assert_(c.internal_size > 0)
         self.assertEqual(c.precision, None)
         self.assertEqual(c.scale, None)
+
+    def test_description_extra_attribs(self):
+        curs = self.conn.cursor()
+        curs.execute("""
+            create table testcol (
+                pi decimal(10,2),
+                hi text)
+            """)
+        curs.execute("select oid from pg_class where relname = %s", ('testcol',))
+        oid = curs.fetchone()[0]
+
+        curs.execute("insert into testcol values (3.14, 'hello')")
+        curs.execute("select hi, pi, 42 from testcol")
+        self.assertEqual(curs.description[0].table_oid, oid)
+        self.assertEqual(curs.description[0].table_column, 2)
+
+        self.assertEqual(curs.description[1].table_oid, oid)
+        self.assertEqual(curs.description[1].table_column, 1)
+
+        self.assertEqual(curs.description[2].table_oid, None)
+        self.assertEqual(curs.description[2].table_column, None)
 
     def test_pickle_description(self):
         curs = self.conn.cursor()

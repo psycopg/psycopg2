@@ -486,7 +486,7 @@ sources = [
     'libpq_support.c', 'win32_support.c', 'solaris_support.c',
 
     'connection_int.c', 'connection_type.c',
-    'cursor_int.c', 'cursor_type.c',
+    'cursor_int.c', 'cursor_type.c', 'column_type.c',
     'replication_connection_type.c',
     'replication_cursor_type.c',
     'replication_message_type.c',
@@ -508,7 +508,7 @@ depends = [
     'replication_connection.h',
     'replication_cursor.h',
     'replication_message.h',
-    'notify.h', 'pqpath.h', 'xid.h',
+    'notify.h', 'pqpath.h', 'xid.h', 'column.h',
     'libpq_support.h', 'win32_support.h',
 
     'adapter_asis.h', 'adapter_binary.h', 'adapter_datetime.h',
