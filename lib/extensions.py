@@ -61,7 +61,7 @@ from psycopg2._psycopg import (                             # noqa
     adapt, adapters, encodings, connection, cursor,
     lobject, Xid, libpq_version, parse_dsn, quote_ident,
     string_types, binary_types, new_type, new_array_type, register_type,
-    ISQLQuote, Notify, Diagnostics, Column,
+    ISQLQuote, Notify, Diagnostics, Column, ConnectionInfo,
     QueryCanceledError, TransactionRollbackError,
     set_wait_callback, get_wait_callback, encrypt_password, )
 

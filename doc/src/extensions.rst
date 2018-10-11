@@ -154,6 +154,15 @@ introspection etc.
         Close the object and remove it from the database.
 
 
+
+.. autoclass:: ConnectionInfo
+
+    .. versionadded:: 2.8
+
+    .. autoattribute:: host
+
+
+
 .. class:: Column
 
     Description of one result column, exposed as items of the

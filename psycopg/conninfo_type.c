@@ -30,7 +30,15 @@
 
 
 static const char host_doc[] =
-    "The server host name of the active connection.";
+"The server host name of the connection.\n"
+"\n"
+"This can be a host name, an IP address, or a directory path if the\n"
+"connection is via Unix socket. (The path case can be distinguished\n"
+"because it will always be an absolute path, beginning with ``/``.)\n"
+"\n"
+".. seealso:: libpq docs for `PQhost()`__ for details.\n"
+".. __: https://www.postgresql.org/docs/current/static/libpq-status.html"
+    "#LIBPQ-PQHOST";
 
 static PyObject *
 host_get(connInfoObject *self)
@@ -88,7 +96,14 @@ conninfo_dealloc(connInfoObject* self)
 /* object type */
 
 static const char connInfoType_doc[] =
-    "Details of a database connection.";
+"Details about the native PostgreSQL database connection.\n"
+"\n"
+"This class exposes several `informative functions`__ about the status\n"
+"of the libpq connection.\n"
+"\n"
+"Objects of this class are exposed as the `connection.info` attribute.\n"
+"\n"
+".. __: https://www.postgresql.org/docs/current/static/libpq-status.html";
 
 PyTypeObject connInfoType = {
     PyVarObject_HEAD_INIT(NULL, 0)
