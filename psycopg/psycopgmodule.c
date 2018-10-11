@@ -32,6 +32,7 @@
 #include "psycopg/replication_cursor.h"
 #include "psycopg/replication_message.h"
 #include "psycopg/green.h"
+#include "psycopg/column.h"
 #include "psycopg/lobject.h"
 #include "psycopg/notify.h"
 #include "psycopg/xid.h"
@@ -68,9 +69,6 @@ HIDDEN int psycopg_debug_enabled = 0;
 
 /* Python representation of SQL NULL */
 HIDDEN PyObject *psyco_null = NULL;
-
-/* The type of the cursor.description items */
-HIDDEN PyObject *psyco_DescriptionType = NULL;
 
 /* macro trick to stringify a macro expansion */
 #define xstr(s) str(s)
@@ -839,63 +837,6 @@ psyco_GetDecimalType(void)
 }
 
 
-/* Create a namedtuple for cursor.description items
- *
- * Return None in case of expected errors (e.g. namedtuples not available)
- * NULL in case of errors to propagate.
- */
-static PyObject *
-psyco_make_description_type(void)
-{
-    PyObject *coll = NULL;
-    PyObject *nt = NULL;
-    PyTypeObject *t = NULL;
-    PyObject *s = NULL;
-    PyObject *rv = NULL;
-
-    /* Try to import collections.namedtuple */
-    if (!(coll = PyImport_ImportModule("collections"))) {
-        Dprintf("psyco_make_description_type: collections import failed");
-        goto error;
-    }
-    if (!(nt = PyObject_GetAttrString(coll, "namedtuple"))) {
-        Dprintf("psyco_make_description_type: no collections.namedtuple");
-        goto error;
-    }
-
-    /* Build the namedtuple */
-    if(!(t = (PyTypeObject *)PyObject_CallFunction(nt, "ss", "Column",
-        "name type_code display_size internal_size precision scale null_ok"))) {
-        goto exit;
-    }
-
-    /* Export the tuple on the extensions module
-     * Required to guarantee picklability on Py > 3.3 (see Python issue 21374)
-     * for previous Py version the module is psycopg2 anyway but for consistency
-     * we'd rather expose it from the extensions module. */
-    if (!(s = Text_FromUTF8("psycopg2.extensions"))) { goto exit; }
-    if (0 > PyDict_SetItemString(t->tp_dict, "__module__", s)) { goto exit; }
-
-    rv = (PyObject *)t;
-    t = NULL;
-
-exit:
-    Py_XDECREF(coll);
-    Py_XDECREF(nt);
-    Py_XDECREF((PyObject *)t);
-    Py_XDECREF(s);
-
-    return rv;
-
-error:
-    /* controlled error: we will fall back to regular tuples. Return None. */
-    PyErr_Clear();
-    rv = Py_None;
-    Py_INCREF(rv);
-    goto exit;
-}
-
-
 /** method table and module initialization **/
 
 static PyMethodDef psycopgMethods[] = {
@@ -1041,6 +982,9 @@ INIT_MODULE(_psycopg)(void)
     Py_TYPE(&chunkType) = &PyType_Type;
     if (PyType_Ready(&chunkType) == -1) goto exit;
 
+    Py_TYPE(&columnType) = &PyType_Type;
+    if (PyType_Ready(&columnType) == -1) goto exit;
+
     Py_TYPE(&notifyType) = &PyType_Type;
     if (PyType_Ready(&notifyType) == -1) goto exit;
 
@@ -1119,7 +1063,6 @@ INIT_MODULE(_psycopg)(void)
     if (!(psycoEncodings = PyDict_New())) { goto exit; }
     if (0 != psyco_encodings_fill(psycoEncodings)) { goto exit; }
     psyco_null = Bytes_FromString("NULL");
-    if (!(psyco_DescriptionType = psyco_make_description_type())) { goto exit; }
 
     /* set some module's parameters */
     PyModule_AddStringConstant(module, "__version__", xstr(PSYCOPG_VERSION));
@@ -1138,6 +1081,7 @@ INIT_MODULE(_psycopg)(void)
     PyModule_AddObject(module, "ReplicationCursor", (PyObject*)&replicationCursorType);
     PyModule_AddObject(module, "ReplicationMessage", (PyObject*)&replicationMessageType);
     PyModule_AddObject(module, "ISQLQuote", (PyObject*)&isqlquoteType);
+    PyModule_AddObject(module, "Column", (PyObject*)&columnType);
     PyModule_AddObject(module, "Notify", (PyObject*)&notifyType);
     PyModule_AddObject(module, "Xid", (PyObject*)&xidType);
     PyModule_AddObject(module, "Diagnostics", (PyObject*)&diagnosticsType);
@@ -1150,7 +1094,6 @@ INIT_MODULE(_psycopg)(void)
     PyModule_AddObject(module, "List", (PyObject*)&listType);
     PyModule_AddObject(module, "QuotedString", (PyObject*)&qstringType);
     PyModule_AddObject(module, "lobject", (PyObject*)&lobjectType);
-    PyModule_AddObject(module, "Column", psyco_DescriptionType);
 
     /* encodings dictionary in module dictionary */
     PyModule_AddObject(module, "encodings", psycoEncodings);
