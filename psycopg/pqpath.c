@@ -1294,7 +1294,7 @@ _pq_fetch_tuples(cursorObject *curs)
             PyTuple_SET_ITEM(dtitem, 4, tmp);
 
             if (!(tmp = PyInt_FromLong(fmod & 0xFFFF))) {
-                PyTuple_SET_ITEM(dtitem, 5, tmp);
+                goto err_for;
             }
             PyTuple_SET_ITEM(dtitem, 5, tmp);
         }
