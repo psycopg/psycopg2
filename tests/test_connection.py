@@ -1682,17 +1682,14 @@ while True:
         self.assert_(not err, err)
 
 
-class TestConnectionProps(ConnectingTestCase):
+class TestConnectionInfo(ConnectingTestCase):
     def test_host(self):
-        self.assertFalse(self.conn.closed)
         expected = dbhost if dbhost else "/"
-        self.assertIn(expected, self.conn.host)
+        self.assertIn(expected, self.conn.info.host)
 
     def test_host_readonly(self):
-        self.assertFalse(self.conn.closed)
         with self.assertRaises(AttributeError):
-            self.conn.host = 'override'
-
+            self.conn.info.host = 'override'
 
 
 def test_suite():

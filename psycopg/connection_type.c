@@ -29,6 +29,7 @@
 #include "psycopg/connection.h"
 #include "psycopg/cursor.h"
 #include "psycopg/pqpath.h"
+#include "psycopg/conninfo.h"
 #include "psycopg/lobject.h"
 #include "psycopg/green.h"
 #include "psycopg/xid.h"
@@ -992,24 +993,19 @@ psyco_conn_get_backend_pid(connectionObject *self)
     return PyInt_FromLong((long)PQbackendPID(self->pgconn));
 }
 
-/* get the current host */
 
-#define psyco_conn_host_get_doc \
-"host -- Get the host name."
+/* get info about the connection */
+
+#define psyco_conn_info_get_doc \
+"info -- Get connection info."
 
 static PyObject *
-psyco_conn_host_get(connectionObject *self)
+psyco_conn_info_get(connectionObject *self)
 {
-    const char *val = NULL;
-
-    EXC_IF_CONN_CLOSED(self);
-
-    val = PQhost(self->pgconn);
-    if (!val) {
-        Py_RETURN_NONE;
-    }
-    return conn_text_from_chars(self, val);
+    return PyObject_CallFunctionObjArgs(
+        (PyObject *)&connInfoType, (PyObject *)self, NULL);
 }
+
 
 /* reset the currect connection */
 
@@ -1262,9 +1258,9 @@ static struct PyGetSetDef connectionObject_getsets[] = {
         (getter)psyco_conn_deferrable_get,
         (setter)psyco_conn_deferrable_set,
         psyco_conn_deferrable_doc },
-    { "host",
-        (getter)psyco_conn_host_get, NULL,
-        psyco_conn_host_get_doc },
+    { "info",
+        (getter)psyco_conn_info_get, NULL,
+        psyco_conn_info_get_doc },
     {NULL}
 };
 #undef EXCEPTION_GETTER

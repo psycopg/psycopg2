@@ -490,7 +490,7 @@ sources = [
     'replication_connection_type.c',
     'replication_cursor_type.c',
     'replication_message_type.c',
-    'diagnostics_type.c', 'error_type.c',
+    'diagnostics_type.c', 'error_type.c', 'conninfo_type.c',
     'lobject_int.c', 'lobject_type.c',
     'notify_type.c', 'xid_type.c',
 
@@ -508,7 +508,7 @@ depends = [
     'replication_connection.h',
     'replication_cursor.h',
     'replication_message.h',
-    'notify.h', 'pqpath.h', 'xid.h', 'column.h',
+    'notify.h', 'pqpath.h', 'xid.h', 'column.h', 'conninfo.h',
     'libpq_support.h', 'win32_support.h',
 
     'adapter_asis.h', 'adapter_binary.h', 'adapter_datetime.h',
