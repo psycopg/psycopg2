@@ -804,6 +804,14 @@ class IsolationLevelsTestCase(ConnectingTestCase):
         self.assertRaises(ValueError, setattr, self.conn, 'isolation_level', 5)
         self.assertRaises(ValueError, setattr, self.conn, 'isolation_level', 'bah')
 
+    def test_attribs_segfault(self):
+        # bug #790
+        for i in range(10000):
+            self.conn.autocommit
+            self.conn.readonly
+            self.conn.deferrable
+            self.conn.isolation_level
+
 
 class ConnectionTwoPhaseTests(ConnectingTestCase):
     def setUp(self):
