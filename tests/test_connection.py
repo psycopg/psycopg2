@@ -1752,6 +1752,18 @@ class TestConnectionInfo(ConnectingTestCase):
 
         self.assertEqual(self.bconn.info.server_version, 0)
 
+    def test_error_message(self):
+        self.assertIsNone(self.conn.info.error_message)
+        self.assertIsNotNone(self.bconn.info.error_message)
+
+        cur = self.conn.cursor()
+        try:
+            cur.execute("select 1 from nosuchtable")
+        except psycopg2.DatabaseError:
+            pass
+
+        self.assert_('nosuchtable' in self.conn.info.error_message)
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

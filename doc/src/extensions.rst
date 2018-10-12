@@ -182,6 +182,7 @@ introspection etc.
         of digits is always ``00``. For example, version 9.3.5 will be
         returned as ``90305``, version 10.2 as ``100002``.
 
+    .. autoattribute:: error_message
 
 
 .. class:: Column
