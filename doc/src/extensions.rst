@@ -155,7 +155,7 @@ introspection etc.
 
 
 
-.. autoclass:: ConnectionInfo
+.. autoclass:: ConnectionInfo(connection)
 
     .. versionadded:: 2.8
 
@@ -185,7 +185,7 @@ introspection etc.
     .. autoattribute:: error_message
 
 
-.. class:: Column
+.. class:: Column(\*args, \*\*kwargs)
 
     Description of one result column, exposed as items of the
     `cursor.description` sequence.
