@@ -167,7 +167,7 @@ options_get(connInfoObject *self)
 
 
 static const char status_doc[] =
-"Return the status of the connection.\n"
+"The status of the connection.\n"
 "\n"
 ".. seealso:: libpq docs for `PQstatus()`__ for details.\n"
 ".. __: https://www.postgresql.org/docs/current/static/libpq-status.html"
@@ -183,6 +183,61 @@ status_get(connInfoObject *self)
 }
 
 
+static const char transaction_status_doc[] =
+"The current in-transaction status of the connection.\n"
+"\n"
+"Symbolic constants for the values are defined in the module\n"
+"`psycopg2.extensions`: see :ref:`transaction-status-constants` for the\n"
+"available values.\n"
+"\n"
+".. seealso:: libpq docs for `PQtransactionStatus()`__ for details.\n"
+".. __: https://www.postgresql.org/docs/current/static/libpq-status.html"
+    "#LIBPQ-PQTRANSACTIONSTATUS";
+
+static PyObject *
+transaction_status_get(connInfoObject *self)
+{
+    PGTransactionStatusType val;
+
+    val = PQtransactionStatus(self->conn->pgconn);
+    return PyInt_FromLong((long)val);
+}
+
+
+static const char protocol_version_doc[] =
+"The frontend/backend protocol being used.\n"
+"\n"
+".. seealso:: libpq docs for `PQprotocolVersion()`__ for details.\n"
+".. __: https://www.postgresql.org/docs/current/static/libpq-status.html"
+    "#LIBPQ-PQPROTOCOLVERSION";
+
+static PyObject *
+protocol_version_get(connInfoObject *self)
+{
+    int val;
+
+    val = PQprotocolVersion(self->conn->pgconn);
+    return PyInt_FromLong((long)val);
+}
+
+
+static const char server_version_doc[] =
+"Returns an integer representing the server version.\n"
+"\n"
+".. seealso:: libpq docs for `PQserverVersion()`__ for details.\n"
+".. __: https://www.postgresql.org/docs/current/static/libpq-status.html"
+    "#LIBPQ-PQSERVERVERSION";
+
+static PyObject *
+server_version_get(connInfoObject *self)
+{
+    int val;
+
+    val = PQserverVersion(self->conn->pgconn);
+    return PyInt_FromLong((long)val);
+}
+
+
 static struct PyGetSetDef connInfoObject_getsets[] = {
     { "dbname", (getter)dbname_get, NULL, (char *)dbname_doc },
     { "user", (getter)user_get, NULL, (char *)user_doc },
@@ -191,6 +246,12 @@ static struct PyGetSetDef connInfoObject_getsets[] = {
     { "port", (getter)port_get, NULL, (char *)port_doc },
     { "options", (getter)options_get, NULL, (char *)options_doc },
     { "status", (getter)status_get, NULL, (char *)status_doc },
+    { "transaction_status", (getter)transaction_status_get, NULL,
+        (char *)transaction_status_doc },
+    { "protocol_version", (getter)protocol_version_get, NULL,
+        (char *)protocol_version_doc },
+    { "server_version", (getter)server_version_get, NULL,
+        (char *)server_version_doc },
     {NULL}
 };
 

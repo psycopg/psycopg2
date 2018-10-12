@@ -342,6 +342,9 @@ The ``connection`` class
         obscured.
 
 
+
+    .. rubric:: Transaction control methods and attributes.
+
     .. index::
         pair: Transaction; Autocommit
         pair: Transaction; Isolation level
@@ -673,56 +676,6 @@ The ``connection`` class
 
 
     .. index::
-        pair: Transaction; Status
-
-    .. method:: get_transaction_status()
-
-        Return the current session transaction status as an integer.  Symbolic
-        constants for the values are defined in the module
-        `psycopg2.extensions`: see :ref:`transaction-status-constants`
-        for the available values.
-
-        .. seealso:: libpq docs for `PQtransactionStatus()`__ for details.
-
-            .. __: https://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQTRANSACTIONSTATUS
-
-
-    .. index::
-        pair: Protocol; Version
-
-    .. attribute:: protocol_version
-
-        A read-only integer representing frontend/backend protocol being used.
-        Currently Psycopg supports only protocol 3, which allows connection
-        to PostgreSQL server from version 7.4. Psycopg versions previous than
-        2.3 support both protocols 2 and 3.
-
-        .. seealso:: libpq docs for `PQprotocolVersion()`__ for details.
-
-            .. __: https://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQPROTOCOLVERSION
-
-        .. versionadded:: 2.0.12
-
-
-    .. index::
-        pair: Server; Version
-
-    .. attribute:: server_version
-
-        A read-only integer representing the backend version.
-
-        The number is formed by converting the major, minor, and revision
-        numbers into two-decimal-digit numbers and appending them together.
-        For example, version 8.1.5 will be returned as ``80105``.
-
-        .. seealso:: libpq docs for `PQserverVersion()`__ for details.
-
-            .. __: https://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQSERVERVERSION
-
-        .. versionadded:: 2.0.12
-
-
-    .. index::
         pair: Connection; Status
 
     .. attribute:: status
@@ -779,6 +732,7 @@ The ``connection`` class
             support.
 
 
+
     .. rubric:: Methods related to asynchronous support.
 
     .. versionadded:: 2.2.0
@@ -823,6 +777,74 @@ The ``connection`` class
     .. method:: isexecuting()
 
         Return `!True` if the connection is executing an asynchronous operation.
+
+
+
+    .. rubric:: informative methods of the native connection
+
+    .. note:: 
+
+        These methods are better accessed using the `~connection.info`
+        attributes and may be dropped in future versions.
+
+
+    .. index::
+        pair: Transaction; Status
+
+    .. method:: get_transaction_status()
+
+        Also available as `~connection.info`\ `!.`\
+        `~psycopg2.extensions.ConnectionInfo.transaction_status`.
+
+        Return the current session transaction status as an integer.  Symbolic
+        constants for the values are defined in the module
+        `psycopg2.extensions`: see :ref:`transaction-status-constants`
+        for the available values.
+
+        .. seealso:: libpq docs for `PQtransactionStatus()`__ for details.
+
+            .. __: https://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQTRANSACTIONSTATUS
+
+
+    .. index::
+        pair: Protocol; Version
+
+    .. attribute:: protocol_version
+
+        Also available as `~connection.info`\ `!.`\
+        `~psycopg2.extensions.ConnectionInfo.protocol_version`.
+
+        A read-only integer representing frontend/backend protocol being used.
+        Currently Psycopg supports only protocol 3, which allows connection
+        to PostgreSQL server from version 7.4. Psycopg versions previous than
+        2.3 support both protocols 2 and 3.
+
+        .. seealso:: libpq docs for `PQprotocolVersion()`__ for details.
+
+            .. __: https://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQPROTOCOLVERSION
+
+        .. versionadded:: 2.0.12
+
+
+    .. index::
+        pair: Server; Version
+
+    .. attribute:: server_version
+
+        Also available as `~connection.info`\ `!.`\
+        `~psycopg2.extensions.ConnectionInfo.server_version`.
+
+        A read-only integer representing the backend version.
+
+        The number is formed by converting the major, minor, and revision
+        numbers into two-decimal-digit numbers and appending them together.
+        For example, version 8.1.5 will be returned as ``80105``.
+
+        .. seealso:: libpq docs for `PQserverVersion()`__ for details.
+
+            .. __: https://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQSERVERVERSION
+
+        .. versionadded:: 2.0.12
 
 
 .. testcode::

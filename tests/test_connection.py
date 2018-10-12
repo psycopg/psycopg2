@@ -1699,7 +1699,9 @@ class TestConnectionInfo(ConnectingTestCase):
         self.assert_(self.bconn.info.dbname is None)
 
     def test_user(self):
-        self.assert_(isinstance(self.conn.info.user, str))
+        cur = self.conn.cursor()
+        cur.execute("select user")
+        self.assertEqual(self.conn.info.user, cur.fetchone()[0])
         self.assert_(self.bconn.info.user is None)
 
     def test_password(self):
@@ -1726,6 +1728,29 @@ class TestConnectionInfo(ConnectingTestCase):
     def test_status(self):
         self.assertEqual(self.conn.info.status, 0)
         self.assertEqual(self.bconn.info.status, 1)
+
+    def test_transaction_status(self):
+        self.assertEqual(self.conn.info.transaction_status, 0)
+        cur = self.conn.cursor()
+        cur.execute("select 1")
+        self.assertEqual(self.conn.info.transaction_status, 2)
+        self.assertEqual(self.bconn.info.transaction_status, 4)
+
+    def test_protocol_version(self):
+        self.assertEqual(self.conn.info.protocol_version, 3)
+        self.assertEqual(self.bconn.info.protocol_version, 0)
+
+    def test_server_version(self):
+        cur = self.conn.cursor()
+        try:
+            cur.execute("show server_version_num")
+        except psycopg2.DatabaseError:
+            self.assert_(isinstance(self.conn.info.server_version, int))
+        else:
+            self.assertEqual(
+                self.conn.info.server_version, int(cur.fetchone()[0]))
+
+        self.assertEqual(self.bconn.info.server_version, 0)
 
 
 def test_suite():

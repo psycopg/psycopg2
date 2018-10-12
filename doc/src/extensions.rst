@@ -166,6 +166,21 @@ introspection etc.
     .. autoattribute:: port
     .. autoattribute:: options
     .. autoattribute:: status
+    .. autoattribute:: transaction_status
+
+    .. autoattribute:: protocol_version
+
+        Currently Psycopg supports only protocol 3, which allows connection
+        to PostgreSQL server from version 7.4. Psycopg versions previous than
+        2.3 support both protocols 2 and 3.
+
+    .. autoattribute:: server_version
+
+        The number is formed by converting the major, minor, and revision
+        numbers into two-decimal-digit numbers and appending them together.
+        After PostgreSQL 10 the minor version was dropped, so the second group
+        of digits is always ``00``. For example, version 9.3.5 will be
+        returned as ``90305``, version 10.2 as ``100002``.
 
 
 
