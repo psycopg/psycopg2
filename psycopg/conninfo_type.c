@@ -29,6 +29,79 @@
 #include "psycopg/conninfo.h"
 
 
+static const char connInfoType_doc[] =
+"Details about the native PostgreSQL database connection.\n"
+"\n"
+"This class exposes several `informative functions`__ about the status\n"
+"of the libpq connection.\n"
+"\n"
+"Objects of this class are exposed as the `connection.info` attribute.\n"
+"\n"
+".. __: https://www.postgresql.org/docs/current/static/libpq-status.html";
+
+
+static const char dbname_doc[] =
+"The database name of the connection.\n"
+"\n"
+"Wrapper for the `PQdb()`__ function.\n"
+"\n"
+".. __: https://www.postgresql.org/docs/current/static/libpq-status.html"
+    "#LIBPQ-PQDB";
+
+static PyObject *
+dbname_get(connInfoObject *self)
+{
+    const char *val;
+
+    val = PQdb(self->conn->pgconn);
+    if (!val) {
+        Py_RETURN_NONE;
+    }
+    return conn_text_from_chars(self->conn, val);
+}
+
+
+static const char user_doc[] =
+"The user name of the connection.\n"
+"\n"
+"Wrapper for the `PQuser()`__ function.\n"
+"\n"
+".. __: https://www.postgresql.org/docs/current/static/libpq-status.html"
+    "#LIBPQ-PQUSER";
+
+static PyObject *
+user_get(connInfoObject *self)
+{
+    const char *val;
+
+    val = PQuser(self->conn->pgconn);
+    if (!val) {
+        Py_RETURN_NONE;
+    }
+    return conn_text_from_chars(self->conn, val);
+}
+
+
+static const char password_doc[] =
+"The password of the connection.\n"
+"\n"
+".. seealso:: libpq docs for `PQpass()`__ for details.\n"
+".. __: https://www.postgresql.org/docs/current/static/libpq-status.html"
+    "#LIBPQ-PQPASS";
+
+static PyObject *
+password_get(connInfoObject *self)
+{
+    const char *val;
+
+    val = PQpass(self->conn->pgconn);
+    if (!val) {
+        Py_RETURN_NONE;
+    }
+    return conn_text_from_chars(self->conn, val);
+}
+
+
 static const char host_doc[] =
 "The server host name of the connection.\n"
 "\n"
@@ -53,8 +126,71 @@ host_get(connInfoObject *self)
 }
 
 
+static const char port_doc[] =
+"The port of the connection.\n"
+"\n"
+".. seealso:: libpq docs for `PQport()`__ for details.\n"
+".. __: https://www.postgresql.org/docs/current/static/libpq-status.html"
+    "#LIBPQ-PQPORT";
+
+static PyObject *
+port_get(connInfoObject *self)
+{
+    const char *val;
+
+    val = PQport(self->conn->pgconn);
+    if (!val || !val[0]) {
+        Py_RETURN_NONE;
+    }
+    return PyInt_FromString((char *)val, NULL, 10);
+}
+
+
+static const char options_doc[] =
+"The command-line options passed in the the connection request.\n"
+"\n"
+".. seealso:: libpq docs for `PQoptions()`__ for details.\n"
+".. __: https://www.postgresql.org/docs/current/static/libpq-status.html"
+    "#LIBPQ-PQOPTIONS";
+
+static PyObject *
+options_get(connInfoObject *self)
+{
+    const char *val;
+
+    val = PQoptions(self->conn->pgconn);
+    if (!val) {
+        Py_RETURN_NONE;
+    }
+    return conn_text_from_chars(self->conn, val);
+}
+
+
+static const char status_doc[] =
+"Return the status of the connection.\n"
+"\n"
+".. seealso:: libpq docs for `PQstatus()`__ for details.\n"
+".. __: https://www.postgresql.org/docs/current/static/libpq-status.html"
+    "#LIBPQ-PQSTATUS";
+
+static PyObject *
+status_get(connInfoObject *self)
+{
+    ConnStatusType val;
+
+    val = PQstatus(self->conn->pgconn);
+    return PyInt_FromLong((long)val);
+}
+
+
 static struct PyGetSetDef connInfoObject_getsets[] = {
+    { "dbname", (getter)dbname_get, NULL, (char *)dbname_doc },
+    { "user", (getter)user_get, NULL, (char *)user_doc },
+    { "password", (getter)password_get, NULL, (char *)password_doc },
     { "host", (getter)host_get, NULL, (char *)host_doc },
+    { "port", (getter)port_get, NULL, (char *)port_doc },
+    { "options", (getter)options_get, NULL, (char *)options_doc },
+    { "status", (getter)status_get, NULL, (char *)status_doc },
     {NULL}
 };
 
@@ -94,16 +230,6 @@ conninfo_dealloc(connInfoObject* self)
 
 
 /* object type */
-
-static const char connInfoType_doc[] =
-"Details about the native PostgreSQL database connection.\n"
-"\n"
-"This class exposes several `informative functions`__ about the status\n"
-"of the libpq connection.\n"
-"\n"
-"Objects of this class are exposed as the `connection.info` attribute.\n"
-"\n"
-".. __: https://www.postgresql.org/docs/current/static/libpq-status.html";
 
 PyTypeObject connInfoType = {
     PyVarObject_HEAD_INIT(NULL, 0)

@@ -1683,13 +1683,49 @@ while True:
 
 
 class TestConnectionInfo(ConnectingTestCase):
+    def setUp(self):
+        ConnectingTestCase.setUp(self)
+
+        class BrokenConn(psycopg2.extensions.connection):
+            def __init__(self, *args, **kwargs):
+                # don't call superclass
+                pass
+
+        # A "broken" connection
+        self.bconn = self.connect(connection_factory=BrokenConn)
+
+    def test_dbname(self):
+        self.assert_(isinstance(self.conn.info.dbname, str))
+        self.assert_(self.bconn.info.dbname is None)
+
+    def test_user(self):
+        self.assert_(isinstance(self.conn.info.user, str))
+        self.assert_(self.bconn.info.user is None)
+
+    def test_password(self):
+        self.assert_(isinstance(self.conn.info.password, str))
+        self.assert_(self.bconn.info.password is None)
+
     def test_host(self):
         expected = dbhost if dbhost else "/"
         self.assertIn(expected, self.conn.info.host)
+        self.assert_(self.bconn.info.host is None)
 
     def test_host_readonly(self):
         with self.assertRaises(AttributeError):
             self.conn.info.host = 'override'
+
+    def test_port(self):
+        self.assert_(isinstance(self.conn.info.port, int))
+        self.assert_(self.bconn.info.port is None)
+
+    def test_options(self):
+        self.assert_(isinstance(self.conn.info.options, str))
+        self.assert_(self.bconn.info.options is None)
+
+    def test_status(self):
+        self.assertEqual(self.conn.info.status, 0)
+        self.assertEqual(self.bconn.info.status, 1)
 
 
 def test_suite():

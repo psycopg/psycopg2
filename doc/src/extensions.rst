@@ -159,7 +159,13 @@ introspection etc.
 
     .. versionadded:: 2.8
 
+    .. autoattribute:: dbname
+    .. autoattribute:: user
+    .. autoattribute:: password
     .. autoattribute:: host
+    .. autoattribute:: port
+    .. autoattribute:: options
+    .. autoattribute:: status
 
 
 
