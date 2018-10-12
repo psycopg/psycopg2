@@ -757,6 +757,7 @@ psyco_conn_readonly_get(connectionObject *self)
             break;
     }
 
+    Py_XINCREF(rv);
     return rv;
 }
 
@@ -803,6 +804,7 @@ psyco_conn_deferrable_get(connectionObject *self)
             break;
     }
 
+    Py_XINCREF(rv);
     return rv;
 }
 
