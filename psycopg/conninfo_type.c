@@ -43,8 +43,7 @@ static const char connInfoType_doc[] =
 static const char dbname_doc[] =
 "The database name of the connection.\n"
 "\n"
-"Wrapper for the `PQdb()`__ function.\n"
-"\n"
+".. seealso:: libpq docs for `PQdb()`__ for details.\n"
 ".. __: https://www.postgresql.org/docs/current/static/libpq-status.html"
     "#LIBPQ-PQDB";
 
@@ -64,8 +63,7 @@ dbname_get(connInfoObject *self)
 static const char user_doc[] =
 "The user name of the connection.\n"
 "\n"
-"Wrapper for the `PQuser()`__ function.\n"
-"\n"
+".. seealso:: libpq docs for `PQuser()`__ for details.\n"
 ".. __: https://www.postgresql.org/docs/current/static/libpq-status.html"
     "#LIBPQ-PQUSER";
 
@@ -129,6 +127,8 @@ host_get(connInfoObject *self)
 static const char port_doc[] =
 "The port of the connection.\n"
 "\n"
+":type: `!int`\n"
+"\n"
 ".. seealso:: libpq docs for `PQport()`__ for details.\n"
 ".. __: https://www.postgresql.org/docs/current/static/libpq-status.html"
     "#LIBPQ-PQPORT";
@@ -169,6 +169,8 @@ options_get(connInfoObject *self)
 static const char status_doc[] =
 "The status of the connection.\n"
 "\n"
+":type: `!int`\n"
+"\n"
 ".. seealso:: libpq docs for `PQstatus()`__ for details.\n"
 ".. __: https://www.postgresql.org/docs/current/static/libpq-status.html"
     "#LIBPQ-PQSTATUS";
@@ -190,6 +192,8 @@ static const char transaction_status_doc[] =
 "`psycopg2.extensions`: see :ref:`transaction-status-constants` for the\n"
 "available values.\n"
 "\n"
+":type: `!int`\n"
+"\n"
 ".. seealso:: libpq docs for `PQtransactionStatus()`__ for details.\n"
 ".. __: https://www.postgresql.org/docs/current/static/libpq-status.html"
     "#LIBPQ-PQTRANSACTIONSTATUS";
@@ -207,6 +211,8 @@ transaction_status_get(connInfoObject *self)
 static const char protocol_version_doc[] =
 "The frontend/backend protocol being used.\n"
 "\n"
+":type: `!int`\n"
+"\n"
 ".. seealso:: libpq docs for `PQprotocolVersion()`__ for details.\n"
 ".. __: https://www.postgresql.org/docs/current/static/libpq-status.html"
     "#LIBPQ-PQPROTOCOLVERSION";
@@ -223,6 +229,8 @@ protocol_version_get(connInfoObject *self)
 
 static const char server_version_doc[] =
 "Returns an integer representing the server version.\n"
+"\n"
+":type: `!int`\n"
 "\n"
 ".. seealso:: libpq docs for `PQserverVersion()`__ for details.\n"
 ".. __: https://www.postgresql.org/docs/current/static/libpq-status.html"
@@ -260,6 +268,104 @@ error_message_get(connInfoObject *self)
 }
 
 
+static const char socket_doc[] =
+"The file descriptor number of the connection socket to the server.\n"
+"\n"
+":type: `!int`\n"
+"\n"
+".. seealso:: libpq docs for `PQsocket()`__ for details.\n"
+".. __: https://www.postgresql.org/docs/current/static/libpq-status.html"
+    "#LIBPQ-PQSOCKET";
+
+static PyObject *
+socket_get(connInfoObject *self)
+{
+    int val;
+
+    val = PQsocket(self->conn->pgconn);
+    return PyInt_FromLong((long)val);
+}
+
+
+static const char backend_pid_doc[] =
+"The process ID (PID) of the backend process handling this connection.\n"
+"\n"
+":type: `!int`\n"
+"\n"
+".. seealso:: libpq docs for `PQbackendPID()`__ for details.\n"
+".. __: https://www.postgresql.org/docs/current/static/libpq-status.html"
+    "#LIBPQ-PQBACKENDPID";
+
+static PyObject *
+backend_pid_get(connInfoObject *self)
+{
+    int val;
+
+    val = PQbackendPID(self->conn->pgconn);
+    return PyInt_FromLong((long)val);
+}
+
+
+static const char needs_password_doc[] =
+"The connection authentication method required a password, but none was available.\n"
+"\n"
+":type: `!bool`\n"
+"\n"
+".. seealso:: libpq docs for `PQconnectionNeedsPassword()`__ for details.\n"
+".. __: https://www.postgresql.org/docs/current/static/libpq-status.html"
+    "#LIBPQ-PQCONNECTIONNEEDSPASSWORD";
+
+static PyObject *
+needs_password_get(connInfoObject *self)
+{
+    PyObject *rv;
+
+    rv = PQconnectionNeedsPassword(self->conn->pgconn) ? Py_True : Py_False;
+    Py_INCREF(rv);
+    return rv;
+}
+
+
+static const char used_password_doc[] =
+"The connection authentication method used a password.\n"
+"\n"
+":type: `!bool`\n"
+"\n"
+".. seealso:: libpq docs for `PQconnectionUsedPassword()`__ for details.\n"
+".. __: https://www.postgresql.org/docs/current/static/libpq-status.html"
+    "#LIBPQ-PQCONNECTIONUSEDPASSWORD";
+
+static PyObject *
+used_password_get(connInfoObject *self)
+{
+    PyObject *rv;
+
+    rv = PQconnectionUsedPassword(self->conn->pgconn) ? Py_True : Py_False;
+    Py_INCREF(rv);
+    return rv;
+}
+
+
+static const char ssl_in_use_doc[] =
+"`!True` if the connection uses SSL, `!False` if not.\n"
+"\n"
+":type: `!bool`\n"
+"\n"
+".. seealso:: libpq docs for `PQsslInUse()`__ for details.\n"
+".. __: https://www.postgresql.org/docs/current/static/libpq-status.html"
+    "#LIBPQ-PQSSLINUSE";
+
+static PyObject *
+ssl_in_use_get(connInfoObject *self)
+{
+    PyObject *rv;
+
+    rv = PQsslInUse(self->conn->pgconn) ? Py_True : Py_False;
+    Py_INCREF(rv);
+    return rv;
+}
+
+
 static struct PyGetSetDef connInfoObject_getsets[] = {
     { "dbname", (getter)dbname_get, NULL, (char *)dbname_doc },
     { "user", (getter)user_get, NULL, (char *)user_doc },
@@ -276,6 +382,14 @@ static struct PyGetSetDef connInfoObject_getsets[] = {
         (char *)server_version_doc },
     { "error_message", (getter)error_message_get, NULL,
         (char *)error_message_doc },
+    { "socket", (getter)socket_get, NULL, (char *)socket_doc },
+    { "backend_pid", (getter)backend_pid_get, NULL, (char *)backend_pid_doc },
+    { "used_password", (getter)used_password_get, NULL,
+        (char *)used_password_doc },
+    { "needs_password", (getter)needs_password_get, NULL,
+        (char *)needs_password_doc },
+    { "ssl_in_use", (getter)ssl_in_use_get, NULL,
+        (char *)ssl_in_use_doc },
     {NULL}
 };
 

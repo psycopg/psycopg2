@@ -1764,6 +1764,34 @@ class TestConnectionInfo(ConnectingTestCase):
 
         self.assert_('nosuchtable' in self.conn.info.error_message)
 
+    def test_socket(self):
+        self.assert_(self.conn.info.socket >= 0)
+        self.assert_(self.bconn.info.socket < 0)
+
+    def test_backend_pid(self):
+        cur = self.conn.cursor()
+        try:
+            cur.execute("select pg_backend_pid()")
+        except psycopg2.DatabaseError:
+            self.assert_(self.conn.info.backend_pid > 0)
+        else:
+            self.assertEqual(
+                self.conn.info.backend_pid, int(cur.fetchone()[0]))
+
+        self.assert_(self.bconn.info.backend_pid == 0)
+
+    def test_needs_password(self):
+        self.assertIs(self.conn.info.needs_password, False)
+        self.assertIs(self.bconn.info.needs_password, False)
+
+    def test_used_password(self):
+        self.assertIsInstance(self.conn.info.used_password, bool)
+        self.assertIs(self.bconn.info.used_password, False)
+
+    def test_ssl_in_use(self):
+        self.assertIsInstance(self.conn.info.ssl_in_use, bool)
+        self.assertIs(self.bconn.info.ssl_in_use, False)
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

@@ -183,6 +183,11 @@ introspection etc.
         returned as ``90305``, version 10.2 as ``100002``.
 
     .. autoattribute:: error_message
+    .. autoattribute:: socket
+    .. autoattribute:: backend_pid
+    .. autoattribute:: needs_password
+    .. autoattribute:: used_password
+    .. autoattribute:: ssl_in_use
 
 
 .. class:: Column(\*args, \*\*kwargs)
