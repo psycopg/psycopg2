@@ -167,6 +167,7 @@ introspection etc.
     .. autoattribute:: options
     .. autoattribute:: status
     .. autoattribute:: transaction_status
+    .. automethod:: parameter_status(name)
 
     .. autoattribute:: protocol_version
 

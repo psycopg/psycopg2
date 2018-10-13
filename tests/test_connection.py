@@ -1736,6 +1736,21 @@ class TestConnectionInfo(ConnectingTestCase):
         self.assertEqual(self.conn.info.transaction_status, 2)
         self.assertEqual(self.bconn.info.transaction_status, 4)
 
+    def test_parameter_status(self):
+        cur = self.conn.cursor()
+        try:
+            cur.execute("show server_version")
+        except psycopg2.DatabaseError:
+            self.assertIsInstance(
+                self.conn.info.parameter_status('server_version'), str)
+        else:
+            self.assertEqual(
+                self.conn.info.parameter_status('server_version'),
+                cur.fetchone()[0])
+
+        self.assertIsNone(self.conn.info.parameter_status('wat'))
+        self.assertIsNone(self.bconn.info.parameter_status('server_version'))
+
     def test_protocol_version(self):
         self.assertEqual(self.conn.info.protocol_version, 3)
         self.assertEqual(self.bconn.info.protocol_version, 0)

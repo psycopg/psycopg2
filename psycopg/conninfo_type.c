@@ -208,6 +208,40 @@ transaction_status_get(connInfoObject *self)
 }
 
 
+static const char parameter_status_doc[] =
+"Looks up a current parameter setting of the server.\n"
+"\n"
+":param name: The name of the parameter to return.\n"
+":type name: `!str`\n"
+":return: The parameter value, `!None` if the parameter is unknown.\n"
+":rtype: `!str`\n"
+"\n"
+".. seealso:: libpq docs for `PQparameterStatus()`__ for details.\n"
+".. __: https://www.postgresql.org/docs/current/static/libpq-status.html"
+    "#LIBPQ-PQPARAMETERSTATUS";
+
+static PyObject *
+parameter_status(connInfoObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = {"name", NULL};
+    const char *name;
+    const char *val;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s", kwlist, &name)) {
+        return NULL;
+    }
+
+    val = PQparameterStatus(self->conn->pgconn, name);
+
+    if (!val) {
+        Py_RETURN_NONE;
+    }
+    else {
+        return conn_text_from_chars(self->conn, val);
+    }
+}
+
+
 static const char protocol_version_doc[] =
 "The frontend/backend protocol being used.\n"
 "\n"
@@ -468,6 +502,8 @@ static struct PyGetSetDef connInfoObject_getsets[] = {
 static struct PyMethodDef connInfoObject_methods[] = {
     {"ssl_attribute", (PyCFunction)ssl_attribute,
      METH_VARARGS|METH_KEYWORDS, ssl_attribute_doc},
+    {"parameter_status", (PyCFunction)parameter_status,
+     METH_VARARGS|METH_KEYWORDS, parameter_status_doc},
     {NULL}
 };
 

@@ -614,45 +614,6 @@ The ``connection`` class
 
 
     .. index::
-        pair: Backend; PID
-
-    .. method:: get_backend_pid()
-
-        Returns the process ID (PID) of the backend server process handling
-        this connection.
-
-        Note that the PID belongs to a process executing on the database
-        server host, not the local host!
-
-        .. seealso:: libpq docs for `PQbackendPID()`__ for details.
-
-            .. __: https://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQBACKENDPID
-
-        .. versionadded:: 2.0.8
-
-
-    .. index::
-        pair: Server; Parameters
-
-    .. method:: get_parameter_status(parameter)
-
-        Look up a current parameter setting of the server.
-
-        Potential values for ``parameter`` are: ``server_version``,
-        ``server_encoding``, ``client_encoding``, ``is_superuser``,
-        ``session_authorization``, ``DateStyle``, ``TimeZone``,
-        ``integer_datetimes``, and ``standard_conforming_strings``.
-
-        If server did not report requested parameter, return `!None`.
-
-        .. seealso:: libpq docs for `PQparameterStatus()`__ for details.
-
-            .. __: https://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQPARAMETERSTATUS
-
-        .. versionadded:: 2.0.12
-
-
-    .. index::
         pair: Connection; Parameters
 
     .. method:: get_dsn_parameters()
@@ -843,6 +804,51 @@ The ``connection`` class
         .. seealso:: libpq docs for `PQserverVersion()`__ for details.
 
             .. __: https://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQSERVERVERSION
+
+        .. versionadded:: 2.0.12
+
+
+    .. index::
+        pair: Backend; PID
+
+    .. method:: get_backend_pid()
+
+        Also available as `~connection.info`\ `!.`\
+        `~psycopg2.extensions.ConnectionInfo.backend_pid`.
+
+        Returns the process ID (PID) of the backend server process handling
+        this connection.
+
+        Note that the PID belongs to a process executing on the database
+        server host, not the local host!
+
+        .. seealso:: libpq docs for `PQbackendPID()`__ for details.
+
+            .. __: https://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQBACKENDPID
+
+        .. versionadded:: 2.0.8
+
+
+    .. index::
+        pair: Server; Parameters
+
+    .. method:: get_parameter_status(parameter)
+
+        Also available as `~connection.info`\ `!.`\
+        `~psycopg2.extensions.ConnectionInfo.parameter_status()`.
+
+        Look up a current parameter setting of the server.
+
+        Potential values for ``parameter`` are: ``server_version``,
+        ``server_encoding``, ``client_encoding``, ``is_superuser``,
+        ``session_authorization``, ``DateStyle``, ``TimeZone``,
+        ``integer_datetimes``, and ``standard_conforming_strings``.
+
+        If server did not report requested parameter, return `!None`.
+
+        .. seealso:: libpq docs for `PQparameterStatus()`__ for details.
+
+            .. __: https://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQPARAMETERSTATUS
 
         .. versionadded:: 2.0.12
 
