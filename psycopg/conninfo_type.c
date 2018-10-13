@@ -383,6 +383,9 @@ used_password_get(connInfoObject *self)
 static const char ssl_in_use_doc[] =
 "`!True` if the connection uses SSL, `!False` if not.\n"
 "\n"
+"Only available if psycopg was built with libpq >= 9.5; raise\n"
+"`~psycopg2.NotSupportedError` otherwise.\n"
+"\n"
 ":type: `!bool`\n"
 "\n"
 ".. seealso:: libpq docs for `PQsslInUse()`__ for details.\n"
@@ -392,10 +395,15 @@ static const char ssl_in_use_doc[] =
 static PyObject *
 ssl_in_use_get(connInfoObject *self)
 {
-    PyObject *rv;
+    PyObject *rv = NULL;
 
+#if PG_VERSION_NUM >= 90500
     rv = PQsslInUse(self->conn->pgconn) ? Py_True : Py_False;
     Py_INCREF(rv);
+#else
+    PyErr_SetString(NotSupportedError,
+        "'ssl_in_use' not available in libpq < 9.5");
+#endif
     return rv;
 }
 
@@ -408,6 +416,9 @@ static const char ssl_attribute_doc[] =
 ":return: The attribute value, `!None` if unknown.\n"
 ":rtype: `!str`\n"
 "\n"
+"Only available if psycopg was built with libpq >= 9.5; raise\n"
+"`~psycopg2.NotSupportedError` otherwise.\n"
+"\n"
 "Valid names are available in `ssl_attribute_names`.\n"
 "\n"
 ".. seealso:: libpq docs for `PQsslAttribute()`__ for details.\n"
@@ -419,26 +430,38 @@ ssl_attribute(connInfoObject *self, PyObject *args, PyObject *kwargs)
 {
     static char *kwlist[] = {"name", NULL};
     const char *name;
-    const char *val;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s", kwlist, &name)) {
         return NULL;
     }
 
-    val = PQsslAttribute(self->conn->pgconn, name);
+#if PG_VERSION_NUM >= 90500
+    {
+        const char *val;
 
-    if (!val) {
-        Py_RETURN_NONE;
+        val = PQsslAttribute(self->conn->pgconn, name);
+
+        if (!val) {
+            Py_RETURN_NONE;
+        }
+        else {
+            return conn_text_from_chars(self->conn, val);
+        }
     }
-    else {
-        return conn_text_from_chars(self->conn, val);
-    }
+#else
+    PyErr_SetString(NotSupportedError,
+        "'ssl_attribute()' not available in libpq < 9.5");
+    return NULL;
+#endif
 }
 
 static const char ssl_attribute_names_doc[] =
 "The list of the SSL attribute names available.\n"
 "\n"
 ":type: `!list` of `!str`\n"
+"\n"
+"Only available if psycopg was built with libpq >= 9.5; raise\n"
+"`~psycopg2.NotSupportedError` otherwise.\n"
 "\n"
 ".. seealso:: libpq docs for `PQsslAttributeNames()`__ for details.\n"
 ".. __: https://www.postgresql.org/docs/current/static/libpq-status.html"
@@ -447,6 +470,7 @@ static const char ssl_attribute_names_doc[] =
 static PyObject *
 ssl_attribute_names_get(connInfoObject *self)
 {
+#if PG_VERSION_NUM >= 90500
     const char* const* names;
     int i;
     PyObject *l = NULL, *s = NULL, *rv = NULL;
@@ -467,6 +491,11 @@ exit:
     Py_XDECREF(l);
     Py_XDECREF(s);
     return rv;
+#else
+    PyErr_SetString(NotSupportedError,
+        "'ssl_attribute_names not available in libpq < 9.5");
+    return NULL;
+#endif
 }
 
 

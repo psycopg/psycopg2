@@ -1803,10 +1803,21 @@ class TestConnectionInfo(ConnectingTestCase):
         self.assertIsInstance(self.conn.info.used_password, bool)
         self.assertIs(self.bconn.info.used_password, False)
 
+    @skip_before_libpq(9, 5)
     def test_ssl_in_use(self):
         self.assertIsInstance(self.conn.info.ssl_in_use, bool)
         self.assertIs(self.bconn.info.ssl_in_use, False)
 
+    @skip_after_libpq(9, 5)
+    def test_ssl_not_supported(self):
+        with self.assertRaises(psycopg2.NotSupportedError):
+            self.conn.info.ssl_in_use
+        with self.assertRaises(psycopg2.NotSupportedError):
+            self.conn.info.ssl_attribute_names
+        with self.assertRaises(psycopg2.NotSupportedError):
+            self.conn.info.ssl_attribute('wat')
+
+    @skip_before_libpq(9, 5)
     def test_ssl_attribute(self):
         attribs = self.conn.info.ssl_attribute_names
         self.assert_(attribs)
