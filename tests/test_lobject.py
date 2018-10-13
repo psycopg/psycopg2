@@ -37,7 +37,7 @@ from .testutils import (decorate_all_tests, skip_if_tpc_disabled,
 def skip_if_no_lo(f):
     @wraps(f)
     def skip_if_no_lo_(self):
-        if self.conn.server_version < 80100:
+        if self.conn.info.server_version < 80100:
             return self.skipTest("large objects only supported from PG 8.1")
         else:
             return f(self)
@@ -403,7 +403,7 @@ decorate_all_tests(LargeObjectTests, skip_if_no_lo, skip_lo_if_green)
 def skip_if_no_truncate(f):
     @wraps(f)
     def skip_if_no_truncate_(self):
-        if self.conn.server_version < 80300:
+        if self.conn.info.server_version < 80300:
             return self.skipTest(
                 "the server doesn't support large object truncate")
 
@@ -459,9 +459,9 @@ decorate_all_tests(LargeObjectTruncateTests,
 
 def _has_lo64(conn):
     """Return (bool, msg) about the lo64 support"""
-    if conn.server_version < 90300:
+    if conn.info.server_version < 90300:
         return (False, "server version %s doesn't support the lo64 API"
-                % conn.server_version)
+                % conn.info.server_version)
 
     if 'lo64' not in psycopg2.__version__:
         return False, "this psycopg build doesn't support the lo64 API"

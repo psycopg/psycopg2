@@ -820,7 +820,7 @@ Transaction status constants
 ----------------------------
 
 These values represent the possible status of a transaction: the current value
-can be read using the `connection.get_transaction_status()` method.
+can be read using the `connection.info.transaction_status` property.
 
 .. data:: TRANSACTION_STATUS_IDLE
 

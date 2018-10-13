@@ -806,7 +806,7 @@ class HstoreAdapter(object):
         self.conn = conn
 
         # use an old-style getquoted implementation if required
-        if conn.server_version < 90000:
+        if conn.info.server_version < 90000:
             self.getquoted = self._getquoted_8
 
     def _getquoted_8(self):
@@ -911,7 +911,7 @@ class HstoreAdapter(object):
         conn_status = conn.status
 
         # column typarray not available before PG 8.3
-        typarray = conn.server_version >= 80300 and "typarray" or "NULL"
+        typarray = conn.info.server_version >= 80300 and "typarray" or "NULL"
 
         rv0, rv1 = [], []
 
@@ -1097,7 +1097,7 @@ class CompositeCaster(object):
             schema = 'public'
 
         # column typarray not available before PG 8.3
-        typarray = conn.server_version >= 80300 and "typarray" or "NULL"
+        typarray = conn.info.server_version >= 80300 and "typarray" or "NULL"
 
         # get the type oid and attributes
         curs.execute("""\

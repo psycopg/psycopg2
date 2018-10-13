@@ -229,22 +229,22 @@ class CursorTests(ConnectingTestCase):
         curs.execute("select data from withhold order by data")
         self.assertEqual(curs.fetchone(), (10,))
         self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_BEGIN)
-        self.assertEqual(self.conn.get_transaction_status(),
+        self.assertEqual(self.conn.info.transaction_status,
                          psycopg2.extensions.TRANSACTION_STATUS_INTRANS)
 
         self.conn.commit()
         self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
-        self.assertEqual(self.conn.get_transaction_status(),
+        self.assertEqual(self.conn.info.transaction_status,
                          psycopg2.extensions.TRANSACTION_STATUS_IDLE)
 
         self.assertEqual(curs.fetchone(), (20,))
         self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
-        self.assertEqual(self.conn.get_transaction_status(),
+        self.assertEqual(self.conn.info.transaction_status,
                          psycopg2.extensions.TRANSACTION_STATUS_IDLE)
 
         curs.close()
         self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
-        self.assertEqual(self.conn.get_transaction_status(),
+        self.assertEqual(self.conn.info.transaction_status,
                          psycopg2.extensions.TRANSACTION_STATUS_IDLE)
 
     def test_withhold_autocommit(self):
@@ -256,17 +256,17 @@ class CursorTests(ConnectingTestCase):
 
         self.assertEqual(curs.fetchone(), (10,))
         self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
-        self.assertEqual(self.conn.get_transaction_status(),
+        self.assertEqual(self.conn.info.transaction_status,
                          psycopg2.extensions.TRANSACTION_STATUS_IDLE)
 
         self.conn.commit()
         self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
-        self.assertEqual(self.conn.get_transaction_status(),
+        self.assertEqual(self.conn.info.transaction_status,
                          psycopg2.extensions.TRANSACTION_STATUS_IDLE)
 
         curs.close()
         self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
-        self.assertEqual(self.conn.get_transaction_status(),
+        self.assertEqual(self.conn.info.transaction_status,
                          psycopg2.extensions.TRANSACTION_STATUS_IDLE)
 
     def test_scrollable(self):

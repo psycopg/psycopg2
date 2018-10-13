@@ -87,13 +87,13 @@ class ConnectionTests(ConnectingTestCase):
         conn.autocommit = True
         conn.isolation_level = 'serializable'
         conn.readonly = True
-        if self.conn.server_version >= 90100:
+        if self.conn.info.server_version >= 90100:
             conn.deferrable = False
 
         self.assert_(conn.autocommit)
         self.assertEqual(conn.isolation_level, ext.ISOLATION_LEVEL_SERIALIZABLE)
         self.assert_(conn.readonly is True)
-        if self.conn.server_version >= 90100:
+        if self.conn.info.server_version >= 90100:
             self.assert_(conn.deferrable is False)
 
         conn.reset()
@@ -101,13 +101,13 @@ class ConnectionTests(ConnectingTestCase):
         self.assert_(not conn.autocommit)
         self.assertEqual(conn.isolation_level, ext.ISOLATION_LEVEL_DEFAULT)
         self.assert_(conn.readonly is None)
-        if self.conn.server_version >= 90100:
+        if self.conn.info.server_version >= 90100:
             self.assert_(conn.deferrable is None)
 
     def test_notices(self):
         conn = self.conn
         cur = conn.cursor()
-        if self.conn.server_version >= 90300:
+        if self.conn.info.server_version >= 90300:
             cur.execute("set client_min_messages=debug1")
         cur.execute("create temp table chatty (id serial primary key);")
         self.assertEqual("CREATE TABLE", cur.statusmessage)
@@ -116,7 +116,7 @@ class ConnectionTests(ConnectingTestCase):
     def test_notices_consistent_order(self):
         conn = self.conn
         cur = conn.cursor()
-        if self.conn.server_version >= 90300:
+        if self.conn.info.server_version >= 90300:
             cur.execute("set client_min_messages=debug1")
         cur.execute("""
             create temp table table1 (id serial);
@@ -136,7 +136,7 @@ class ConnectionTests(ConnectingTestCase):
     def test_notices_limited(self):
         conn = self.conn
         cur = conn.cursor()
-        if self.conn.server_version >= 90300:
+        if self.conn.info.server_version >= 90300:
             cur.execute("set client_min_messages=debug1")
         for i in range(0, 100, 10):
             sql = " ".join(["create temp table table%d (id serial);" % j
@@ -153,7 +153,7 @@ class ConnectionTests(ConnectingTestCase):
         conn = self.conn
         self.conn.notices = deque()
         cur = conn.cursor()
-        if self.conn.server_version >= 90300:
+        if self.conn.info.server_version >= 90300:
             cur.execute("set client_min_messages=debug1")
 
         cur.execute("""
@@ -183,7 +183,7 @@ class ConnectionTests(ConnectingTestCase):
         conn = self.conn
         self.conn.notices = None    # will make an error swallowes ok
         cur = conn.cursor()
-        if self.conn.server_version >= 90300:
+        if self.conn.info.server_version >= 90300:
             cur.execute("set client_min_messages=debug1")
 
         cur.execute("create temp table table1 (id serial);")
@@ -199,7 +199,7 @@ class ConnectionTests(ConnectingTestCase):
 
     def test_tpc_unsupported(self):
         cnn = self.conn
-        if cnn.server_version >= 80100:
+        if cnn.info.server_version >= 80100:
             return self.skipTest("tpc is supported")
 
         self.assertRaises(psycopg2.NotSupportedError,
@@ -533,7 +533,7 @@ class IsolationLevelsTestCase(ConnectingTestCase):
             conn.set_isolation_level(level)
 
             # the only values available on prehistoric PG versions
-            if conn.server_version < 80000:
+            if conn.info.server_version < 80000:
                 if level in (
                         ext.ISOLATION_LEVEL_READ_UNCOMMITTED,
                         ext.ISOLATION_LEVEL_REPEATABLE_READ):
@@ -589,35 +589,35 @@ class IsolationLevelsTestCase(ConnectingTestCase):
         cur = conn.cursor()
 
         self.assertEqual(ext.TRANSACTION_STATUS_IDLE,
-            conn.get_transaction_status())
+            conn.info.transaction_status)
         cur.execute("insert into isolevel values (10);")
         self.assertEqual(ext.TRANSACTION_STATUS_INTRANS,
-            conn.get_transaction_status())
+            conn.info.transaction_status)
 
         conn.set_isolation_level(
             psycopg2.extensions.ISOLATION_LEVEL_SERIALIZABLE)
         self.assertEqual(psycopg2.extensions.TRANSACTION_STATUS_IDLE,
-            conn.get_transaction_status())
+            conn.info.transaction_status)
         cur.execute("select count(*) from isolevel;")
         self.assertEqual(0, cur.fetchone()[0])
 
         cur.execute("insert into isolevel values (10);")
         self.assertEqual(psycopg2.extensions.TRANSACTION_STATUS_INTRANS,
-            conn.get_transaction_status())
+            conn.info.transaction_status)
         conn.set_isolation_level(
             psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
         self.assertEqual(psycopg2.extensions.TRANSACTION_STATUS_IDLE,
-            conn.get_transaction_status())
+            conn.info.transaction_status)
         cur.execute("select count(*) from isolevel;")
         self.assertEqual(0, cur.fetchone()[0])
 
         cur.execute("insert into isolevel values (10);")
         self.assertEqual(psycopg2.extensions.TRANSACTION_STATUS_IDLE,
-            conn.get_transaction_status())
+            conn.info.transaction_status)
         conn.set_isolation_level(
             psycopg2.extensions.ISOLATION_LEVEL_READ_COMMITTED)
         self.assertEqual(psycopg2.extensions.TRANSACTION_STATUS_IDLE,
-            conn.get_transaction_status())
+            conn.info.transaction_status)
         cur.execute("select count(*) from isolevel;")
         self.assertEqual(1, cur.fetchone()[0])
         self.assertEqual(conn.isolation_level,
@@ -713,7 +713,7 @@ class IsolationLevelsTestCase(ConnectingTestCase):
 
         self.conn.isolation_level = ext.ISOLATION_LEVEL_REPEATABLE_READ
         cur.execute("SHOW transaction_isolation;")
-        if self.conn.server_version > 80000:
+        if self.conn.info.server_version > 80000:
             self.assertEqual(self.conn.isolation_level,
                 ext.ISOLATION_LEVEL_REPEATABLE_READ)
             self.assertEqual(cur.fetchone()[0], 'repeatable read')
@@ -732,7 +732,7 @@ class IsolationLevelsTestCase(ConnectingTestCase):
 
         self.conn.isolation_level = ext.ISOLATION_LEVEL_READ_UNCOMMITTED
         cur.execute("SHOW transaction_isolation;")
-        if self.conn.server_version > 80000:
+        if self.conn.info.server_version > 80000:
             self.assertEqual(self.conn.isolation_level,
                 ext.ISOLATION_LEVEL_READ_UNCOMMITTED)
             self.assertEqual(cur.fetchone()[0], 'read uncommitted')
@@ -761,7 +761,7 @@ class IsolationLevelsTestCase(ConnectingTestCase):
 
         self.conn.isolation_level = "repeatable read"
         cur.execute("SHOW transaction_isolation;")
-        if self.conn.server_version > 80000:
+        if self.conn.info.server_version > 80000:
             self.assertEqual(self.conn.isolation_level,
                 ext.ISOLATION_LEVEL_REPEATABLE_READ)
             self.assertEqual(cur.fetchone()[0], 'repeatable read')
@@ -780,7 +780,7 @@ class IsolationLevelsTestCase(ConnectingTestCase):
 
         self.conn.isolation_level = "read uncommitted"
         cur.execute("SHOW transaction_isolation;")
-        if self.conn.server_version > 80000:
+        if self.conn.info.server_version > 80000:
             self.assertEqual(self.conn.isolation_level,
                 ext.ISOLATION_LEVEL_READ_UNCOMMITTED)
             self.assertEqual(cur.fetchone()[0], 'read uncommitted')
@@ -1203,7 +1203,7 @@ class TransactionControlTests(ConnectingTestCase):
         self.conn.set_session(
             ext.ISOLATION_LEVEL_REPEATABLE_READ)
         cur.execute("SHOW transaction_isolation;")
-        if self.conn.server_version > 80000:
+        if self.conn.info.server_version > 80000:
             self.assertEqual(cur.fetchone()[0], 'repeatable read')
         else:
             self.assertEqual(cur.fetchone()[0], 'serializable')
@@ -1218,7 +1218,7 @@ class TransactionControlTests(ConnectingTestCase):
         self.conn.set_session(
             isolation_level=ext.ISOLATION_LEVEL_READ_UNCOMMITTED)
         cur.execute("SHOW transaction_isolation;")
-        if self.conn.server_version > 80000:
+        if self.conn.info.server_version > 80000:
             self.assertEqual(cur.fetchone()[0], 'read uncommitted')
         else:
             self.assertEqual(cur.fetchone()[0], 'read committed')
@@ -1233,7 +1233,7 @@ class TransactionControlTests(ConnectingTestCase):
 
         self.conn.set_session("repeatable read")
         cur.execute("SHOW transaction_isolation;")
-        if self.conn.server_version > 80000:
+        if self.conn.info.server_version > 80000:
             self.assertEqual(cur.fetchone()[0], 'repeatable read')
         else:
             self.assertEqual(cur.fetchone()[0], 'serializable')
@@ -1246,7 +1246,7 @@ class TransactionControlTests(ConnectingTestCase):
 
         self.conn.set_session("read uncommitted")
         cur.execute("SHOW transaction_isolation;")
-        if self.conn.server_version > 80000:
+        if self.conn.info.server_version > 80000:
             self.assertEqual(cur.fetchone()[0], 'read uncommitted')
         else:
             self.assertEqual(cur.fetchone()[0], 'read committed')
@@ -1502,42 +1502,42 @@ class AutocommitTests(ConnectingTestCase):
     def test_default_no_autocommit(self):
         self.assert_(not self.conn.autocommit)
         self.assertEqual(self.conn.status, ext.STATUS_READY)
-        self.assertEqual(self.conn.get_transaction_status(),
+        self.assertEqual(self.conn.info.transaction_status,
             ext.TRANSACTION_STATUS_IDLE)
 
         cur = self.conn.cursor()
         cur.execute('select 1;')
         self.assertEqual(self.conn.status, ext.STATUS_BEGIN)
-        self.assertEqual(self.conn.get_transaction_status(),
+        self.assertEqual(self.conn.info.transaction_status,
             ext.TRANSACTION_STATUS_INTRANS)
 
         self.conn.rollback()
         self.assertEqual(self.conn.status, ext.STATUS_READY)
-        self.assertEqual(self.conn.get_transaction_status(),
+        self.assertEqual(self.conn.info.transaction_status,
             ext.TRANSACTION_STATUS_IDLE)
 
     def test_set_autocommit(self):
         self.conn.autocommit = True
         self.assert_(self.conn.autocommit)
         self.assertEqual(self.conn.status, ext.STATUS_READY)
-        self.assertEqual(self.conn.get_transaction_status(),
+        self.assertEqual(self.conn.info.transaction_status,
             ext.TRANSACTION_STATUS_IDLE)
 
         cur = self.conn.cursor()
         cur.execute('select 1;')
         self.assertEqual(self.conn.status, ext.STATUS_READY)
-        self.assertEqual(self.conn.get_transaction_status(),
+        self.assertEqual(self.conn.info.transaction_status,
             ext.TRANSACTION_STATUS_IDLE)
 
         self.conn.autocommit = False
         self.assert_(not self.conn.autocommit)
         self.assertEqual(self.conn.status, ext.STATUS_READY)
-        self.assertEqual(self.conn.get_transaction_status(),
+        self.assertEqual(self.conn.info.transaction_status,
             ext.TRANSACTION_STATUS_IDLE)
 
         cur.execute('select 1;')
         self.assertEqual(self.conn.status, ext.STATUS_BEGIN)
-        self.assertEqual(self.conn.get_transaction_status(),
+        self.assertEqual(self.conn.info.transaction_status,
             ext.TRANSACTION_STATUS_INTRANS)
 
     def test_set_intrans_error(self):
@@ -1550,24 +1550,24 @@ class AutocommitTests(ConnectingTestCase):
         self.conn.set_session(autocommit=True)
         self.assert_(self.conn.autocommit)
         self.assertEqual(self.conn.status, ext.STATUS_READY)
-        self.assertEqual(self.conn.get_transaction_status(),
+        self.assertEqual(self.conn.info.transaction_status,
             ext.TRANSACTION_STATUS_IDLE)
 
         cur = self.conn.cursor()
         cur.execute('select 1;')
         self.assertEqual(self.conn.status, ext.STATUS_READY)
-        self.assertEqual(self.conn.get_transaction_status(),
+        self.assertEqual(self.conn.info.transaction_status,
             ext.TRANSACTION_STATUS_IDLE)
 
         self.conn.set_session(autocommit=False)
         self.assert_(not self.conn.autocommit)
         self.assertEqual(self.conn.status, ext.STATUS_READY)
-        self.assertEqual(self.conn.get_transaction_status(),
+        self.assertEqual(self.conn.info.transaction_status,
             ext.TRANSACTION_STATUS_IDLE)
 
         cur.execute('select 1;')
         self.assertEqual(self.conn.status, ext.STATUS_BEGIN)
-        self.assertEqual(self.conn.get_transaction_status(),
+        self.assertEqual(self.conn.info.transaction_status,
             ext.TRANSACTION_STATUS_INTRANS)
         self.conn.rollback()
 
@@ -1575,7 +1575,7 @@ class AutocommitTests(ConnectingTestCase):
         self.assert_(self.conn.autocommit)
         cur.execute('select 1;')
         self.assertEqual(self.conn.status, ext.STATUS_READY)
-        self.assertEqual(self.conn.get_transaction_status(),
+        self.assertEqual(self.conn.info.transaction_status,
             ext.TRANSACTION_STATUS_IDLE)
         cur.execute("SHOW transaction_isolation;")
         self.assertEqual(cur.fetchone()[0], 'serializable')
