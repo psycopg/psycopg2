@@ -366,6 +366,76 @@ ssl_in_use_get(connInfoObject *self)
 }
 
 
+static const char ssl_attribute_doc[] =
+"Returns SSL-related information about the connection.\n"
+"\n"
+":param name: The name of the attribute to return.\n"
+":type name: `!str`\n"
+":return: The attribute value, `!None` if unknown.\n"
+":rtype: `!str`\n"
+"\n"
+"Valid names are available in `ssl_attribute_names`.\n"
+"\n"
+".. seealso:: libpq docs for `PQsslAttribute()`__ for details.\n"
+".. __: https://www.postgresql.org/docs/current/static/libpq-status.html"
+    "#LIBPQ-PQSSLATTRIBUTE";
+
+static PyObject *
+ssl_attribute(connInfoObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = {"name", NULL};
+    const char *name;
+    const char *val;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s", kwlist, &name)) {
+        return NULL;
+    }
+
+    val = PQsslAttribute(self->conn->pgconn, name);
+
+    if (!val) {
+        Py_RETURN_NONE;
+    }
+    else {
+        return conn_text_from_chars(self->conn, val);
+    }
+}
+
+static const char ssl_attribute_names_doc[] =
+"The list of the SSL attribute names available.\n"
+"\n"
+":type: `!list` of `!str`\n"
+"\n"
+".. seealso:: libpq docs for `PQsslAttributeNames()`__ for details.\n"
+".. __: https://www.postgresql.org/docs/current/static/libpq-status.html"
+    "#LIBPQ-PQSSLATTRIBUTENAMES";
+
+static PyObject *
+ssl_attribute_names_get(connInfoObject *self)
+{
+    const char* const* names;
+    int i;
+    PyObject *l = NULL, *s = NULL, *rv = NULL;
+
+    names = PQsslAttributeNames(self->conn->pgconn);
+    if (!(l = PyList_New(0))) { goto exit; }
+
+    for (i = 0; names[i]; i++) {
+        if (!(s = conn_text_from_chars(self->conn, names[i]))) { goto exit; }
+        if (0 != PyList_Append(l, s)) { goto exit; }
+        Py_CLEAR(s);
+    }
+
+    rv = l;
+    l = NULL;
+
+exit:
+    Py_XDECREF(l);
+    Py_XDECREF(s);
+    return rv;
+}
+
+
 static struct PyGetSetDef connInfoObject_getsets[] = {
     { "dbname", (getter)dbname_get, NULL, (char *)dbname_doc },
     { "user", (getter)user_get, NULL, (char *)user_doc },
@@ -390,6 +460,14 @@ static struct PyGetSetDef connInfoObject_getsets[] = {
         (char *)needs_password_doc },
     { "ssl_in_use", (getter)ssl_in_use_get, NULL,
         (char *)ssl_in_use_doc },
+    { "ssl_attribute_names", (getter)ssl_attribute_names_get, NULL,
+        (char *)ssl_attribute_names_doc },
+    {NULL}
+};
+
+static struct PyMethodDef connInfoObject_methods[] = {
+    {"ssl_attribute", (PyCFunction)ssl_attribute,
+     METH_VARARGS|METH_KEYWORDS, ssl_attribute_doc},
     {NULL}
 };
 
@@ -457,7 +535,7 @@ PyTypeObject connInfoType = {
     0,          /*tp_weaklistoffset*/
     0,          /*tp_iter*/
     0,          /*tp_iternext*/
-    0,          /*tp_methods*/
+    connInfoObject_methods, /*tp_methods*/
     0,          /*tp_members*/
     connInfoObject_getsets, /*tp_getset*/
     0,          /*tp_base*/

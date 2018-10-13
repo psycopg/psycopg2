@@ -188,6 +188,8 @@ introspection etc.
     .. autoattribute:: needs_password
     .. autoattribute:: used_password
     .. autoattribute:: ssl_in_use
+    .. automethod:: ssl_attribute(name)
+    .. autoattribute:: ssl_attribute_names
 
 
 .. class:: Column(\*args, \*\*kwargs)

@@ -1792,6 +1792,21 @@ class TestConnectionInfo(ConnectingTestCase):
         self.assertIsInstance(self.conn.info.ssl_in_use, bool)
         self.assertIs(self.bconn.info.ssl_in_use, False)
 
+    def test_ssl_attribute(self):
+        attribs = self.conn.info.ssl_attribute_names
+        self.assert_(attribs)
+        if self.conn.info.ssl_in_use:
+            for attrib in attribs:
+                self.assertIsInstance(self.conn.info.ssl_attribute(attrib), str)
+        else:
+            for attrib in attribs:
+                self.assertIsNone(self.conn.info.ssl_attribute(attrib))
+
+        self.assertIsNone(self.conn.info.ssl_attribute('wat'))
+
+        for attrib in attribs:
+            self.assertIsNone(self.bconn.info.ssl_attribute(attrib))
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
