@@ -431,11 +431,18 @@ details.
 .. index::
     single: Exceptions; Additional
 
+.. _extension-exceptions:
+
 Additional exceptions
 ---------------------
 
 The module exports a few exceptions in addition to the :ref:`standard ones
 <dbapi-exceptions>` defined by the |DBAPI|_.
+
+.. note::
+    From psycopg 2.8 these error classes are also exposed by the
+    `psycopg2.errors` module.
+
 
 .. exception:: QueryCanceledError
 

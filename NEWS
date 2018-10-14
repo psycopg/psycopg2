@@ -6,6 +6,8 @@ What's new in psycopg 2.8
 
 New features:
 
+- Added `~psycopg2.errors` module. Every PostgreSQL error is converted into
+  a specific exception class (:ticket:`#682`).
 - Added `~psycopg2.extensions.encrypt_password()` function (:ticket:`#576`).
 - `~psycopg2.extras.DictCursor` and `~psycopg2.extras.RealDictCursor` rows
   maintain columns order (:ticket:`#177`).

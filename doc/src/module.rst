@@ -250,13 +250,14 @@ available through the following exceptions:
 
 .. extension::
 
-    Psycopg may raise a few other, more specialized, exceptions: currently
-    `~psycopg2.extensions.QueryCanceledError` and
-    `~psycopg2.extensions.TransactionRollbackError` are defined. These
-    exceptions are not exposed by the main `!psycopg2` module but are
-    made available by the `~psycopg2.extensions` module.  All the
-    additional exceptions are subclasses of standard |DBAPI| exceptions, so
-    trapping them specifically is not required.
+    Psycopg actually raises a different exception for each :sql:`SQLSTATE`
+    error returned by the database: the classes are available in the
+    `psycopg2.errors` module.  Every exception class is a subclass of one of
+    the exception classes defined here though, so they don't need to be
+    trapped specifically: trapping `!Error` or `!DatabaseError` is usually
+    what needed to write a generic error handler; trapping a specific error
+    such as `!NotNullViolation` can be useful to write specific exception
+    handlers.
 
 
 This is the exception inheritance layout:
@@ -270,8 +271,6 @@ This is the exception inheritance layout:
         \|__ `DatabaseError`
             \|__ `DataError`
             \|__ `OperationalError`
-            \|   \|__ `psycopg2.extensions.QueryCanceledError`
-            \|   \|__ `psycopg2.extensions.TransactionRollbackError`
             \|__ `IntegrityError`
             \|__ `InternalError`
             \|__ `ProgrammingError`
