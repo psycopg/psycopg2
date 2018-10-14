@@ -9,8 +9,18 @@ New features:
 - Added `~psycopg2.errors` module. Every PostgreSQL error is converted into
   a specific exception class (:ticket:`#682`).
 - Added `~psycopg2.extensions.encrypt_password()` function (:ticket:`#576`).
+- Added `~psycopg2.extensions.Column.table_oid` and
+  `~psycopg2.extensions.Column.table_column` attributes on `cursor.description`
+  items (:ticket:`#661`).
+- Added `connection.host` property (:ticket:`#726`).
+- `~psycopg2.sql.Identifier` can represent qualified names in SQL composition
+  (:ticket:`#732`).
+- `!str()` on `~psycopg2.extras.Range` produces a human-readable representation
+  (:ticket:`#773`).
 - `~psycopg2.extras.DictCursor` and `~psycopg2.extras.RealDictCursor` rows
   maintain columns order (:ticket:`#177`).
+- Added `!severity_nonlocalized` attribute on the
+  `~psycopg2.extensions.Diagnostics` object (:ticket:`#783`).
 
 Other changes:
 
@@ -21,6 +31,18 @@ Other changes:
   source files are now compatible with Python 2 & 3 as is.
 - The ``psycopg2.test`` package is no longer installed by ``python setup.py
   install``.
+
+
+What's new in psycopg 2.7.6
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Close named cursors if exist, even if `~cursor.execute()` wasn't called
+  (:ticket:`#746`).
+- Fixed building on modern FreeBSD versions with Python 3.7 (:ticket:`#755`).
+- Fixed hang trying to :sql:`COPY` via `~cursor.execute()` (:ticket:`#781`).
+- Fixed segfault accessing the `connection.readonly` and
+  `connection.deferrable` repeatedly (:ticket:`#790`).
+- `~psycopg2.errorcodes` map updated to PostgreSQL 11.
 
 
 What's new in psycopg 2.7.5
@@ -351,7 +373,7 @@ Other changes:
 - Dropped support for Python 2.4. Please use Psycopg 2.4.x if you need it.
 - `~psycopg2.errorcodes` map updated to PostgreSQL 9.2.
 - Dropped Zope adapter from source repository. ZPsycopgDA now has its own
-  project at <http://github.com/psycopg/ZPsycopgDA>.
+  project at <https://github.com/psycopg/ZPsycopgDA>.
 
 
 What's new in psycopg 2.4.6

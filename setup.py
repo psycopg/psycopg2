@@ -32,10 +32,7 @@ import os
 import sys
 import re
 import subprocess
-try:
-    from setuptools import setup, Extension
-except ImportError:
-    from distutils.core import setup, Extension
+from setuptools import setup, Extension
 from distutils.command.build_ext import build_ext
 from distutils.sysconfig import get_python_inc
 from distutils.ccompiler import get_default_compiler
@@ -47,7 +44,7 @@ try:
 except ImportError:
     import ConfigParser as configparser
 
-# Take a look at http://www.python.org/dev/peps/pep-0440/
+# Take a look at https://www.python.org/dev/peps/pep-0440/
 # for a consistent versioning pattern.
 
 PSYCOPG_VERSION = '2.8.dev0'
@@ -67,6 +64,7 @@ Programming Language :: Python :: 3
 Programming Language :: Python :: 3.4
 Programming Language :: Python :: 3.5
 Programming Language :: Python :: 3.6
+Programming Language :: Python :: 3.7
 Programming Language :: Python :: Implementation :: CPython
 Programming Language :: C
 Programming Language :: SQL
@@ -415,13 +413,7 @@ For further information please check the 'doc/src/install.rst' file (also at
             self.library_dirs.append(pg_config_helper.query("libdir"))
             self.include_dirs.append(pg_config_helper.query("includedir"))
             self.include_dirs.append(pg_config_helper.query("includedir-server"))
-            try:
-                # Here we take a conservative approach: we suppose that
-                # *at least* PostgreSQL 7.4 is available (this is the only
-                # 7.x series supported by psycopg 2)
-                pgversion = pg_config_helper.query("version").split()[1]
-            except Exception:
-                pgversion = "7.4.0"
+            pgversion = pg_config_helper.query("version").split()[1]
 
             verre = re.compile(
                 r"(\d+)(?:\.(\d+))?(?:(?:\.(\d+))|(devel|(?:alpha|beta|rc)\d+))?")
@@ -494,7 +486,7 @@ sources = [
     'libpq_support.c', 'win32_support.c', 'solaris_support.c',
 
     'connection_int.c', 'connection_type.c',
-    'cursor_int.c', 'cursor_type.c',
+    'cursor_int.c', 'cursor_type.c', 'column_type.c',
     'replication_connection_type.c',
     'replication_cursor_type.c',
     'replication_message_type.c',
@@ -516,7 +508,7 @@ depends = [
     'replication_connection.h',
     'replication_cursor.h',
     'replication_message.h',
-    'notify.h', 'pqpath.h', 'xid.h',
+    'notify.h', 'pqpath.h', 'xid.h', 'column.h',
     'libpq_support.h', 'win32_support.h',
 
     'adapter_asis.h', 'adapter_binary.h', 'adapter_datetime.h',

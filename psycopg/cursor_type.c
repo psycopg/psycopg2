@@ -49,20 +49,20 @@
 static PyObject *
 psyco_curs_close(cursorObject *self)
 {
+    PyObject *rv = NULL;
+    char *lname = NULL;
+
     EXC_IF_ASYNC_IN_PROGRESS(self, close);
 
     if (self->closed) {
+        rv = Py_None;
+        Py_INCREF(rv);
         goto exit;
     }
 
     if (self->qname != NULL) {
-        char buffer[128];
+        char buffer[256];
         PGTransactionStatusType status;
-
-        if (!self->query) {
-            Dprintf("skipping named cursor close because unused");
-            goto close;
-        }
 
         if (self->conn) {
             status = PQtransactionStatus(self->conn->pgconn);
@@ -77,17 +77,45 @@ psyco_curs_close(cursorObject *self)
             goto close;
         }
 
+        /* We should close a server-side cursor only if exists, or we get an
+         * error (#716). If we execute()d the cursor should exist alright, but
+         * if we didn't there is still the expectation that the cursor is
+         * closed (#746).
+         *
+         * So if we didn't execute() check for the cursor existence before
+         * closing it (the view exists since PG 8.2 according to docs).
+         */
+        if (!self->query && self->conn->server_version >= 80200) {
+            if (!(lname = psycopg_escape_string(
+                    self->conn, self->name, -1, NULL, NULL))) {
+                goto exit;
+            }
+            PyOS_snprintf(buffer, sizeof(buffer),
+                "SELECT 1 FROM pg_catalog.pg_cursors where name = %s",
+                lname);
+            if (pq_execute(self, buffer, 0, 0, 1) == -1) { goto exit; }
+
+            if (self->rowcount == 0) {
+                Dprintf("skipping named cursor close because not existing");
+                goto close;
+            }
+        }
+
         EXC_IF_NO_MARK(self);
-        PyOS_snprintf(buffer, 127, "CLOSE %s", self->qname);
-        if (pq_execute(self, buffer, 0, 0, 1) == -1) return NULL;
+        PyOS_snprintf(buffer, sizeof(buffer), "CLOSE %s", self->qname);
+        if (pq_execute(self, buffer, 0, 0, 1) == -1) { goto exit; }
     }
 
 close:
     self->closed = 1;
     Dprintf("psyco_curs_close: cursor at %p closed", self);
 
+    rv = Py_None;
+    Py_INCREF(rv);
+
 exit:
-    Py_RETURN_NONE;
+    PyMem_Free(lname);
+    return rv;
 }
 
 
@@ -742,7 +770,7 @@ psyco_curs_fetchone(cursorObject *self)
         EXC_IF_NO_MARK(self);
         EXC_IF_ASYNC_IN_PROGRESS(self, fetchone);
         EXC_IF_TPC_PREPARED(self->conn, fetchone);
-        PyOS_snprintf(buffer, 127, "FETCH FORWARD 1 FROM %s", self->qname);
+        PyOS_snprintf(buffer, sizeof(buffer), "FETCH FORWARD 1 FROM %s", self->qname);
         if (pq_execute(self, buffer, 0, 0, self->withhold) == -1) return NULL;
         if (_psyco_curs_prefetch(self) < 0) return NULL;
     }
@@ -791,7 +819,7 @@ psyco_curs_next_named(cursorObject *self)
     if (self->row >= self->rowcount) {
         char buffer[128];
 
-        PyOS_snprintf(buffer, 127, "FETCH FORWARD %ld FROM %s",
+        PyOS_snprintf(buffer, sizeof(buffer), "FETCH FORWARD %ld FROM %s",
             self->itersize, self->qname);
         if (pq_execute(self, buffer, 0, 0, self->withhold) == -1) return NULL;
         if (_psyco_curs_prefetch(self) < 0) return NULL;
@@ -860,7 +888,7 @@ psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
         EXC_IF_NO_MARK(self);
         EXC_IF_ASYNC_IN_PROGRESS(self, fetchmany);
         EXC_IF_TPC_PREPARED(self->conn, fetchone);
-        PyOS_snprintf(buffer, 127, "FETCH FORWARD %d FROM %s",
+        PyOS_snprintf(buffer, sizeof(buffer), "FETCH FORWARD %d FROM %s",
             (int)size, self->qname);
         if (pq_execute(self, buffer, 0, 0, self->withhold) == -1) { goto exit; }
         if (_psyco_curs_prefetch(self) < 0) { goto exit; }
@@ -936,7 +964,7 @@ psyco_curs_fetchall(cursorObject *self)
         EXC_IF_NO_MARK(self);
         EXC_IF_ASYNC_IN_PROGRESS(self, fetchall);
         EXC_IF_TPC_PREPARED(self->conn, fetchall);
-        PyOS_snprintf(buffer, 127, "FETCH FORWARD ALL FROM %s", self->qname);
+        PyOS_snprintf(buffer, sizeof(buffer), "FETCH FORWARD ALL FROM %s", self->qname);
         if (pq_execute(self, buffer, 0, 0, self->withhold) == -1) { goto exit; }
         if (_psyco_curs_prefetch(self) < 0) { goto exit; }
     }
@@ -1233,11 +1261,11 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
         EXC_IF_TPC_PREPARED(self->conn, scroll);
 
         if (strcmp(mode, "absolute") == 0) {
-            PyOS_snprintf(buffer, 127, "MOVE ABSOLUTE %d FROM %s",
+            PyOS_snprintf(buffer, sizeof(buffer), "MOVE ABSOLUTE %d FROM %s",
                 value, self->qname);
         }
         else {
-            PyOS_snprintf(buffer, 127, "MOVE %d FROM %s", value, self->qname);
+            PyOS_snprintf(buffer, sizeof(buffer), "MOVE %d FROM %s", value, self->qname);
         }
         if (pq_execute(self, buffer, 0, 0, self->withhold) == -1) return NULL;
         if (_psyco_curs_prefetch(self) < 0) return NULL;

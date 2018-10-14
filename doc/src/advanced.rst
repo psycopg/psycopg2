@@ -156,7 +156,7 @@ geometric type:
 
 
 .. |point| replace:: :sql:`point`
-.. _point: http://www.postgresql.org/docs/current/static/datatype-geometric.html#DATATYPE-GEOMETRIC
+.. _point: https://www.postgresql.org/docs/current/static/datatype-geometric.html#DATATYPE-GEOMETRIC
 
 The above function call results in the SQL command::
 
@@ -259,9 +259,9 @@ documentation), you should keep the connection in `~connection.autocommit`
 mode if you wish to receive or send notifications in a timely manner.
 
 .. |LISTEN| replace:: :sql:`LISTEN`
-.. _LISTEN: http://www.postgresql.org/docs/current/static/sql-listen.html
+.. _LISTEN: https://www.postgresql.org/docs/current/static/sql-listen.html
 .. |NOTIFY| replace:: :sql:`NOTIFY`
-.. _NOTIFY: http://www.postgresql.org/docs/current/static/sql-notify.html
+.. _NOTIFY: https://www.postgresql.org/docs/current/static/sql-notify.html
 
 Notifications are received after every query execution. If the user is
 interested in receiving notifications but not in performing any query, the
@@ -375,7 +375,7 @@ completely non-blocking connection attempt: see the libpq documentation for
 |PQconnectStart|_.
 
 .. |PQconnectStart| replace:: `!PQconnectStart()`
-.. _PQconnectStart: http://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-PQCONNECTSTARTPARAMS
+.. _PQconnectStart: https://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-PQCONNECTSTARTPARAMS
 
 The same loop should be also used to perform nonblocking queries: after
 sending a query via `~cursor.execute()` or `~cursor.callproc()`, call
@@ -484,14 +484,14 @@ psycopg2 scope, as the callback can be tied to the libraries' implementation
 details. You can check the `psycogreen`_ project for further informations and
 resources about the topic.
 
-.. _coroutine: http://en.wikipedia.org/wiki/Coroutine
+.. _coroutine: https://en.wikipedia.org/wiki/Coroutine
 .. _greenlet: https://pypi.org/project/greenlet/
-.. _green threads: http://en.wikipedia.org/wiki/Green_threads
-.. _Eventlet: http://eventlet.net/
+.. _green threads: https://en.wikipedia.org/wiki/Green_threads
+.. _Eventlet: https://eventlet.net/
 .. _gevent: http://www.gevent.org/
-.. _SQLAlchemy: http://www.sqlalchemy.org/
+.. _SQLAlchemy: https://www.sqlalchemy.org/
 .. _psycogreen: http://bitbucket.org/dvarrazzo/psycogreen/
-.. __: http://www.postgresql.org/docs/current/static/libpq-async.html
+.. __: https://www.postgresql.org/docs/current/static/libpq-async.html
 
 .. warning::
 
@@ -536,7 +536,7 @@ Server version 9.4 adds a new feature called *Logical Replication*.
 
    - PostgreSQL `Streaming Replication Protocol`__
 
-   .. __: http://www.postgresql.org/docs/current/static/protocol-replication.html
+   .. __: https://www.postgresql.org/docs/current/static/protocol-replication.html
 
 
 Logical replication Quick-Start

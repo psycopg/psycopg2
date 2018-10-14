@@ -8,8 +8,8 @@ small and fast, and stable as a rock.
 
 Homepage: http://initd.org/projects/psycopg2
 
-.. _PostgreSQL: http://www.postgresql.org/
-.. _Python: http://www.python.org/
+.. _PostgreSQL: https://www.postgresql.org/
+.. _Python: https://www.python.org/
 
 :Groups:
   * `Connections creation`: connect
@@ -43,7 +43,7 @@ Homepage: http://initd.org/projects/psycopg2
 
 # Note: the first internal import should be _psycopg, otherwise the real cause
 # of a failed loading of the C module may get hidden, see
-# http://archives.postgresql.org/psycopg/2011-02/msg00044.php
+# https://archives.postgresql.org/psycopg/2011-02/msg00044.php
 
 # Import the DBAPI-2.0 stuff into top-level module.
 

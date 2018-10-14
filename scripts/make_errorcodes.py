@@ -33,7 +33,7 @@ def main():
     file_start = read_base_file(filename)
     # If you add a version to the list fix the docs (in errorcodes.rst)
     classes, errors = fetch_errors(
-        ['9.1', '9.2', '9.3', '9.4', '9.5', '9.6', '10'])
+        ['9.1', '9.2', '9.3', '9.4', '9.5', '9.6', '10', '11'])
 
     f = open(filename, "w")
     for line in file_start:
@@ -111,7 +111,7 @@ def fetch_errors(versions):
 
         # TODO: this error was added in PG 10 beta 1 but dropped in the
         # final release. It doesn't harm leaving it in the file. Check if it
-        # will be added back in PG 11.
+        # will be added back in PG 12.
         # https://github.com/postgres/postgres/commit/28e0727076
         errors['55']['55P04'] = 'UNSAFE_NEW_ENUM_VALUE_USAGE'
 

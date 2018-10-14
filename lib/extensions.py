@@ -8,7 +8,7 @@ This module holds all the extensions to the DBAPI-2.0 provided by psycopg.
 - `adapt()` -- exposes the PEP-246_ compatible adapting mechanism used
   by psycopg to adapt Python types to PostgreSQL ones
 
-.. _PEP-246: http://www.python.org/peps/pep-0246.html
+.. _PEP-246: https://www.python.org/dev/peps/pep-0246/
 """
 # psycopg/extensions.py - DBAPI-2.0 extensions specific to psycopg
 #

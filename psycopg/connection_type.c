@@ -757,6 +757,7 @@ psyco_conn_readonly_get(connectionObject *self)
             break;
     }
 
+    Py_XINCREF(rv);
     return rv;
 }
 
@@ -803,6 +804,7 @@ psyco_conn_deferrable_get(connectionObject *self)
             break;
     }
 
+    Py_XINCREF(rv);
     return rv;
 }
 
@@ -990,6 +992,25 @@ psyco_conn_get_backend_pid(connectionObject *self)
     EXC_IF_CONN_CLOSED(self);
 
     return PyInt_FromLong((long)PQbackendPID(self->pgconn));
+}
+
+/* get the current host */
+
+#define psyco_conn_host_get_doc \
+"host -- Get the host name."
+
+static PyObject *
+psyco_conn_host_get(connectionObject *self)
+{
+    const char *val = NULL;
+
+    EXC_IF_CONN_CLOSED(self);
+
+    val = PQhost(self->pgconn);
+    if (!val) {
+        Py_RETURN_NONE;
+    }
+    return conn_text_from_chars(self, val);
 }
 
 /* reset the currect connection */
@@ -1243,6 +1264,9 @@ static struct PyGetSetDef connectionObject_getsets[] = {
         (getter)psyco_conn_deferrable_get,
         (setter)psyco_conn_deferrable_set,
         psyco_conn_deferrable_doc },
+    { "host",
+        (getter)psyco_conn_host_get, NULL,
+        psyco_conn_host_get_doc },
     {NULL}
 };
 #undef EXCEPTION_GETTER

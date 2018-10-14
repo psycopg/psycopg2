@@ -94,7 +94,7 @@ introspection etc.
         The method uses the efficient |lo_export|_ libpq function.
 
         .. |lo_export| replace:: `!lo_export()`
-        .. _lo_export: http://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-EXPORT
+        .. _lo_export: https://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-EXPORT
 
 
     .. method:: seek(offset, whence=0)
@@ -125,7 +125,7 @@ introspection etc.
         libpq function.
 
         .. |lo_truncate| replace:: `!lo_truncate()`
-        .. _lo_truncate: http://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-TRUNCATE
+        .. _lo_truncate: https://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-TRUNCATE
 
         .. versionadded:: 2.2.0
 
@@ -153,6 +153,80 @@ introspection etc.
 
         Close the object and remove it from the database.
 
+
+.. class:: Column
+
+    Description of one result column, exposed as items of the
+    `cursor.description` sequence.
+
+    .. versionadded:: 2.8
+
+        in previous version the `!description` attribute was a sequence of
+        simple tuples or namedtuples.
+
+    .. attribute:: name
+
+        The name of the column returned.
+
+    .. attribute:: type_code
+
+        The PostgreSQL OID of the column. You can use the |pg_type|_ system
+        table to get more informations about the type.  This is the value used
+        by Psycopg to decide what Python type use to represent the value.  See
+        also :ref:`type-casting-from-sql-to-python`.
+
+    .. attribute:: display_size
+
+        The actual length of the column in bytes.  Obtaining this value is
+        computationally intensive, so it is always `!None` unless the
+        :envvar:`PSYCOPG_DISPLAY_SIZE` parameter is set at compile time. See
+        also PQgetlength_.
+
+    .. attribute:: internal_size
+
+        The size in bytes of the column associated to this column on the
+        server. Set to a negative value for variable-size types See also
+        PQfsize_.
+
+    .. attribute:: precision
+
+        Total number of significant digits in columns of type |NUMERIC|_.
+        `!None` for other types.
+
+    .. attribute:: scale
+
+        Count of decimal digits in the fractional part in columns of type
+        |NUMERIC|. `!None` for other types.
+
+    .. attribute:: null_ok
+
+        Always `!None` as not easy to retrieve from the libpq.
+
+    .. attribute:: table_oid
+
+        The oid of the table from which the column was fetched (matching
+        :sql:`pg_class.oid`). `!None` if the column is not a simple reference
+        to a table column. See also PQftable_.
+
+        .. versionadded:: 2.8
+
+    .. attribute:: table_column
+
+        The number of the column (within its table) making up the result
+        (matching :sql:`pg_attribute.attnum`, so it will start from 1).
+        `!None` if the column is not a simple reference to a table column. See
+        also PQftablecol_.
+
+        .. versionadded:: 2.8
+
+    .. |pg_type| replace:: :sql:`pg_type`
+    .. _pg_type: https://www.postgresql.org/docs/current/static/catalog-pg-type.html
+    .. _PQgetlength: https://www.postgresql.org/docs/current/static/libpq-exec.html#LIBPQ-PQGETLENGTH
+    .. _PQfsize: https://www.postgresql.org/docs/current/static/libpq-exec.html#LIBPQ-PQFSIZE
+    .. _PQftable: https://www.postgresql.org/docs/current/static/libpq-exec.html#LIBPQ-PQFTABLE
+    .. _PQftablecol: https://www.postgresql.org/docs/current/static/libpq-exec.html#LIBPQ-PQFTABLECOL
+    .. _NUMERIC: https://www.postgresql.org/docs/current/static/datatype-numeric.html#DATATYPE-NUMERIC-DECIMAL
+    .. |NUMERIC| replace:: :sql:`NUMERIC`
 
 .. autoclass:: Notify(pid, channel, payload='')
     :members: pid, channel, payload
@@ -186,6 +260,7 @@ introspection etc.
         message_primary
         schema_name
         severity
+        severity_nonlocalized
         source_file
         source_function
         source_line
@@ -197,6 +272,9 @@ introspection etc.
         The attribute value is available only if the error sent by the server:
         not all the fields are available for all the errors and for all the
         server versions.
+
+        .. versionadded:: 2.8
+            The `!severity_nonlocalized` attribute.
 
 
 
@@ -423,8 +501,8 @@ details.
     Used by Psycopg when adapting or casting unicode strings. See
     :ref:`unicode-handling`.
 
-    .. __: http://www.postgresql.org/docs/current/static/multibyte.html
-    .. __: http://docs.python.org/library/codecs.html#standard-encodings
+    .. __: https://www.postgresql.org/docs/current/static/multibyte.html
+    .. __: https://docs.python.org/library/codecs.html#standard-encodings
 
 
 
@@ -497,7 +575,7 @@ Other functions
 
     .. seealso:: libpq docs for `PQlibVersion()`__.
 
-        .. __: http://www.postgresql.org/docs/current/static/libpq-misc.html#LIBPQ-PQLIBVERSION
+        .. __: https://www.postgresql.org/docs/current/static/libpq-misc.html#LIBPQ-PQLIBVERSION
 
 
 .. function:: make_dsn(dsn=None, \*\*kwargs)
@@ -531,7 +609,7 @@ Other functions
     `connection URIs`__ are only supported from libpq 9.2).  Raise
     `~psycopg2.ProgrammingError` if the *dsn* is not valid.
 
-    .. __: http://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-CONNSTRING
+    .. __: https://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-CONNSTRING
 
     Example::
 
@@ -545,7 +623,7 @@ Other functions
 
     .. seealso:: libpq docs for `PQconninfoParse()`__.
 
-        .. __: http://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-PQCONNINFOPARSE
+        .. __: https://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-PQCONNINFOPARSE
 
 
 .. function:: quote_ident(str, scope)
@@ -559,7 +637,7 @@ Other functions
 
     .. seealso:: libpq docs for `PQescapeIdentifier()`__
 
-        .. __: http://www.postgresql.org/docs/current/static/libpq-exec.html#LIBPQ-PQESCAPEIDENTIFIER
+        .. __: https://www.postgresql.org/docs/current/static/libpq-exec.html#LIBPQ-PQESCAPEIDENTIFIER
 
 
 .. method:: encrypt_password(password, user, scope=None, algorithm=None)
@@ -644,7 +722,7 @@ methods.  The level can be set to one of the following constants:
     .. seealso:: `Read Committed Isolation Level`__ in PostgreSQL
         documentation.
 
-        .. __: http://www.postgresql.org/docs/current/static/transaction-iso.html#XACT-READ-COMMITTED
+        .. __: https://www.postgresql.org/docs/current/static/transaction-iso.html#XACT-READ-COMMITTED
 
 .. data:: ISOLATION_LEVEL_REPEATABLE_READ
 
@@ -668,7 +746,7 @@ methods.  The level can be set to one of the following constants:
     .. seealso:: `Repeatable Read Isolation Level`__ in PostgreSQL
         documentation.
 
-        .. __: http://www.postgresql.org/docs/current/static/transaction-iso.html#XACT-REPEATABLE-READ
+        .. __: https://www.postgresql.org/docs/current/static/transaction-iso.html#XACT-REPEATABLE-READ
 
 .. data:: ISOLATION_LEVEL_SERIALIZABLE
 
@@ -687,7 +765,7 @@ methods.  The level can be set to one of the following constants:
 
     .. seealso:: `Serializable Isolation Level`__ in PostgreSQL documentation.
 
-        .. __: http://www.postgresql.org/docs/current/static/transaction-iso.html#XACT-SERIALIZABLE
+        .. __: https://www.postgresql.org/docs/current/static/transaction-iso.html#XACT-SERIALIZABLE
 
 .. data:: ISOLATION_LEVEL_DEFAULT
 

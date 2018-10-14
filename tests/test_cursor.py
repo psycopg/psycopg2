@@ -377,7 +377,7 @@ class CursorTests(ConnectingTestCase):
         for i, rec in enumerate(curs):
             self.assertEqual(i + 1, curs.rownumber)
 
-    def test_namedtuple_description(self):
+    def test_description_attribs(self):
         curs = self.conn.cursor()
         curs.execute("""select
             3.14::decimal(10,2) as pi,
@@ -412,6 +412,27 @@ class CursorTests(ConnectingTestCase):
         self.assertEqual(c.precision, None)
         self.assertEqual(c.scale, None)
 
+    def test_description_extra_attribs(self):
+        curs = self.conn.cursor()
+        curs.execute("""
+            create table testcol (
+                pi decimal(10,2),
+                hi text)
+            """)
+        curs.execute("select oid from pg_class where relname = %s", ('testcol',))
+        oid = curs.fetchone()[0]
+
+        curs.execute("insert into testcol values (3.14, 'hello')")
+        curs.execute("select hi, pi, 42 from testcol")
+        self.assertEqual(curs.description[0].table_oid, oid)
+        self.assertEqual(curs.description[0].table_column, 2)
+
+        self.assertEqual(curs.description[1].table_oid, oid)
+        self.assertEqual(curs.description[1].table_column, 1)
+
+        self.assertEqual(curs.description[2].table_oid, None)
+        self.assertEqual(curs.description[2].table_column, None)
+
     def test_pickle_description(self):
         curs = self.conn.cursor()
         curs.execute('SELECT 1 AS foo')
@@ -436,10 +457,23 @@ class CursorTests(ConnectingTestCase):
         self.assertEqual([(2,), (3,), (4,)], cur2.fetchmany(3))
         self.assertEqual([(5,), (6,), (7,)], cur2.fetchall())
 
-    @skip_before_postgres(8, 0)
+    @skip_before_postgres(8, 2)
     def test_named_noop_close(self):
         cur = self.conn.cursor('test')
         cur.close()
+
+    @skip_before_postgres(8, 2)
+    def test_stolen_named_cursor_close(self):
+        cur1 = self.conn.cursor()
+        cur1.execute("DECLARE test CURSOR WITHOUT HOLD "
+            " FOR SELECT generate_series(1,7)")
+        cur2 = self.conn.cursor('test')
+        cur2.close()
+
+        cur1.execute("DECLARE test CURSOR WITHOUT HOLD "
+            " FOR SELECT generate_series(1,7)")
+        cur2 = self.conn.cursor('test')
+        cur2.close()
 
     @skip_before_postgres(8, 0)
     def test_scroll(self):
@@ -491,7 +525,7 @@ class CursorTests(ConnectingTestCase):
     def test_bad_subclass(self):
         # check that we get an error message instead of a segfault
         # for badly written subclasses.
-        # see http://stackoverflow.com/questions/22019341/
+        # see https://stackoverflow.com/questions/22019341/
         class StupidCursor(psycopg2.extensions.cursor):
             def __init__(self, *args, **kwargs):
                 # I am stupid so not calling superclass init

@@ -12,11 +12,11 @@ to use Psycopg on a different Python implementation (PyPy, Jython, IronPython)
 there is an experimental `porting of Psycopg for Ctypes`__, but it is not as
 mature as the C implementation yet.
 
-.. _PostgreSQL: http://www.postgresql.org/
-.. _Python: http://www.python.org/
-.. _libpq: http://www.postgresql.org/docs/current/static/libpq.html
-.. _CPython: http://en.wikipedia.org/wiki/CPython
-.. _Ctypes: http://docs.python.org/library/ctypes.html
+.. _PostgreSQL: https://www.postgresql.org/
+.. _Python: https://www.python.org/
+.. _libpq: https://www.postgresql.org/docs/current/static/libpq.html
+.. _CPython: https://en.wikipedia.org/wiki/CPython
+.. _Ctypes: https://docs.python.org/library/ctypes.html
 .. __: https://github.com/mvantellingen/psycopg2-ctypes
 
 
@@ -33,7 +33,7 @@ The current `!psycopg2` implementation supports:
     NOTE: keep consistent with setup.py and the /features/ page.
 
 - Python version 2.7
-- Python 3 versions from 3.4 to 3.6
+- Python 3 versions from 3.4 to 3.7
 - PostgreSQL server versions from 7.4 to 10
 - PostgreSQL client library version from 9.1
 
@@ -152,7 +152,7 @@ using something like ``pip install -U pip``), then you can run:
 
 .. __: PyPI-binary_
 .. _PyPI-binary: https://pypi.org/project/psycopg2-binary/
-.. _wheel: http://pythonwheels.com/
+.. _wheel: https://pythonwheels.com/
 
 .. note::
 
@@ -188,7 +188,7 @@ displayed, `psycopg2-binary` has become a separate package, and from 2.8 it
 has become the only way to install the binary package.
 
 If you are using psycopg 2.7 and you want to disable the use of wheel binary
-packages, relying on the system system libraries available on your client, you
+packages, relying on the system libraries available on your client, you
 can use the :command:`pip` |--no-binary option|__, e.g.:
 
 .. code-block:: console

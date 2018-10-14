@@ -39,7 +39,7 @@ From PostgreSQL documentation:
 
 .. seealso:: `PostgreSQL Error Codes table`__
 
-    .. __: http://www.postgresql.org/docs/current/static/errcodes-appendix.html#ERRCODES-TABLE
+    .. __: https://www.postgresql.org/docs/current/static/errcodes-appendix.html#ERRCODES-TABLE
 
 
 An example of the available constants defined in the module:
@@ -50,7 +50,7 @@ An example of the available constants defined in the module:
     '42P01'
 
 Constants representing all the error values defined by PostgreSQL versions
-between 8.1 and 10 are included in the module.
+between 8.1 and 11 are included in the module.
 
 
 .. autofunction:: lookup(code)

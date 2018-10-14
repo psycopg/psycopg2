@@ -12,7 +12,7 @@ environment:
 
     matrix:
         # For Python versions available on Appveyor, see
-        # http://www.appveyor.com/docs/installed-software#python
+        # https://www.appveyor.com/docs/build-environment/
       - {PYVER: "27", PYTHON_ARCH: "32"}
       - {PYVER: "27", PYTHON_ARCH: "64"}
       - {PYVER: "34", PYTHON_ARCH: "32"}
@@ -21,6 +21,9 @@ environment:
       - {PYVER: "35", PYTHON_ARCH: "64"}
       - {PYVER: "36", PYTHON_ARCH: "32"}
       - {PYVER: "36", PYTHON_ARCH: "64"}
+      - {PYVER: "37", PYTHON_ARCH: "32"}
+      - {PYVER: "37", PYTHON_ARCH: "64"}
+
 
     OPENSSL_VERSION: "1_0_2n"
     POSTGRES_VERSION: "10_1"
@@ -64,6 +67,7 @@ init:
     - IF "%PYVER%"=="34" SET VS_VER=10.0
     - IF "%PYVER%"=="35" SET VS_VER=14.0
     - IF "%PYVER%"=="36" SET VS_VER=14.0
+    - IF "%PYVER%"=="37" SET VS_VER=14.0
 
     - IF "%VS_VER%"=="10.0" IF "%PYTHON_ARCH%"=="64" SET DISTUTILS_USE_SDK=1
 
@@ -78,7 +82,7 @@ init:
     - "%PYTHON%\\python -c \"import sys; print('64bit: ' + str(sys.maxsize > 2**32))\""
 
     # Get & Install NASM
-    #- curl -L -o nasminst.exe http://www.nasm.us/pub/nasm/releasebuilds/2.12.02/win64/nasm-2.12.02-installer-x64.exe && start /wait nasminst.exe /S
+    #- curl -L -o nasminst.exe https://www.nasm.us/pub/nasm/releasebuilds/2.12.02/win64/nasm-2.12.02-installer-x64.exe && start /wait nasminst.exe /S
     #- SET PATH="C:\Program Files (x86)\nasm;%PATH%"
 
     # Fix problem with VS2008 Express and 64bit builds

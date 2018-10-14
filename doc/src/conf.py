@@ -61,9 +61,8 @@ except ImportError:
     release = version
 
 intersphinx_mapping = {
-    'py': ('https://docs.python.org/2', None),
-    'py3': ('https://docs.python.org/3', None),
-    }
+    'py': ('https://docs.python.org/3', None),
+}
 
 # Pattern to generate links to the bug tracker
 ticket_url = 'https://github.com/psycopg/psycopg2/issues/%s'
@@ -117,12 +116,12 @@ todo_include_todos = False
 rst_epilog = """
 .. |DBAPI| replace:: DB API 2.0
 
-.. _DBAPI: http://www.python.org/dev/peps/pep-0249/
+.. _DBAPI: https://www.python.org/dev/peps/pep-0249/
 
 .. _transaction isolation level:
-    http://www.postgresql.org/docs/current/static/transaction-iso.html
+    https://www.postgresql.org/docs/current/static/transaction-iso.html
 
-.. _mx.DateTime: http://www.egenix.com/products/python/mxBase/mxDateTime/
+.. _mx.DateTime: https://www.egenix.com/products/python/mxBase/mxDateTime/
 
 .. |MVCC| replace:: :abbr:`MVCC (Multiversion concurrency control)`
 """
