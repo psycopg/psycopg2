@@ -325,6 +325,12 @@ class DivisionByZero(DataError):
 _by_sqlstate['22012'] = DivisionByZero
 
 
+class InvalidPrecedingOrFollowingSize(DataError):
+    pass
+
+_by_sqlstate['22013'] = InvalidPrecedingOrFollowingSize
+
+
 class InvalidArgumentForNtileFunction(DataError):
     pass
 
