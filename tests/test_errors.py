@@ -54,6 +54,14 @@ class ErrorsTests(ConnectingTestCase):
 
         self.assertEqual(type(e), self.conn.ProgrammingError)
 
+    def test_lookup(self):
+        from psycopg2 import errors
+
+        self.assertIs(errors.lookup('42P01'), errors.UndefinedTable)
+
+        with self.assertRaises(KeyError):
+            errors.lookup('XXXXX')
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

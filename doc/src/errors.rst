@@ -56,3 +56,5 @@ idiomatic error handler:
 For completeness, the module also exposes all the DB-API-defined classes and
 :ref:`a few psycopg-specific exceptions <extension-exceptions>` previously
 exposed by the `!extensions` module.  One stop shop for all your mistakes...
+
+.. autofunction:: lookup

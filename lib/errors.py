@@ -10,6 +10,14 @@ from psycopg2._psycopg import (
     QueryCanceledError, TransactionRollbackError)
 
 
+def lookup(code):
+    """Lookup an error code and return its exception class.
+
+    Raise `!KeyError` if the code is not found.
+    """
+    return _by_sqlstate[code]
+
+
 _by_sqlstate = {}
 
 
