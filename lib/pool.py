@@ -105,7 +105,7 @@ class AbstractConnectionPool(object):
             # Return the connection into a consistent state before putting
             # it back into the pool
             if not conn.closed:
-                status = conn.get_transaction_status()
+                status = conn.info.transaction_status
                 if status == _ext.TRANSACTION_STATUS_UNKNOWN:
                     # server connection lost
                     conn.close()

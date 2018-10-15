@@ -342,6 +342,9 @@ The ``connection`` class
         obscured.
 
 
+
+    .. rubric:: Transaction control methods and attributes.
+
     .. index::
         pair: Transaction; Autocommit
         pair: Transaction; Isolation level
@@ -600,60 +603,14 @@ The ``connection`` class
 
 
     .. index::
-        pair: Backend; Host
+        pair: Connection; Info
 
-    .. attribute:: host
+    .. attribute:: info
 
-        The server host name of the active connection.
-
-        This can be a host name, an IP address, or a directory path if the
-        connection is via Unix socket. (The path case can be distinguished
-        because it will always be an absolute path, beginning with ``/``.)
-
-        .. seealso:: libpq docs for `PQhost()`__ for details.
-
-            .. __: https://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQHOST
+        A `~psycopg2.extensions.ConnectionInfo` object exposing information
+        about the native libpq connection.
 
         .. versionadded:: 2.8.0
-
-
-    .. index::
-        pair: Backend; PID
-
-    .. method:: get_backend_pid()
-
-        Returns the process ID (PID) of the backend server process handling
-        this connection.
-
-        Note that the PID belongs to a process executing on the database
-        server host, not the local host!
-
-        .. seealso:: libpq docs for `PQbackendPID()`__ for details.
-
-            .. __: https://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQBACKENDPID
-
-        .. versionadded:: 2.0.8
-
-
-    .. index::
-        pair: Server; Parameters
-
-    .. method:: get_parameter_status(parameter)
-
-        Look up a current parameter setting of the server.
-
-        Potential values for ``parameter`` are: ``server_version``,
-        ``server_encoding``, ``client_encoding``, ``is_superuser``,
-        ``session_authorization``, ``DateStyle``, ``TimeZone``,
-        ``integer_datetimes``, and ``standard_conforming_strings``.
-
-        If server did not report requested parameter, return `!None`.
-
-        .. seealso:: libpq docs for `PQparameterStatus()`__ for details.
-
-            .. __: https://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQPARAMETERSTATUS
-
-        .. versionadded:: 2.0.12
 
 
     .. index::
@@ -677,56 +634,6 @@ The ``connection`` class
             .. __: https://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-PQCONNINFO
 
         .. versionadded:: 2.7
-
-
-    .. index::
-        pair: Transaction; Status
-
-    .. method:: get_transaction_status()
-
-        Return the current session transaction status as an integer.  Symbolic
-        constants for the values are defined in the module
-        `psycopg2.extensions`: see :ref:`transaction-status-constants`
-        for the available values.
-
-        .. seealso:: libpq docs for `PQtransactionStatus()`__ for details.
-
-            .. __: https://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQTRANSACTIONSTATUS
-
-
-    .. index::
-        pair: Protocol; Version
-
-    .. attribute:: protocol_version
-
-        A read-only integer representing frontend/backend protocol being used.
-        Currently Psycopg supports only protocol 3, which allows connection
-        to PostgreSQL server from version 7.4. Psycopg versions previous than
-        2.3 support both protocols 2 and 3.
-
-        .. seealso:: libpq docs for `PQprotocolVersion()`__ for details.
-
-            .. __: https://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQPROTOCOLVERSION
-
-        .. versionadded:: 2.0.12
-
-
-    .. index::
-        pair: Server; Version
-
-    .. attribute:: server_version
-
-        A read-only integer representing the backend version.
-
-        The number is formed by converting the major, minor, and revision
-        numbers into two-decimal-digit numbers and appending them together.
-        For example, version 8.1.5 will be returned as ``80105``.
-
-        .. seealso:: libpq docs for `PQserverVersion()`__ for details.
-
-            .. __: https://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQSERVERVERSION
-
-        .. versionadded:: 2.0.12
 
 
     .. index::
@@ -786,6 +693,7 @@ The ``connection`` class
             support.
 
 
+
     .. rubric:: Methods related to asynchronous support.
 
     .. versionadded:: 2.2.0
@@ -830,6 +738,119 @@ The ``connection`` class
     .. method:: isexecuting()
 
         Return `!True` if the connection is executing an asynchronous operation.
+
+
+
+    .. rubric:: informative methods of the native connection
+
+    .. note:: 
+
+        These methods are better accessed using the `~connection.info`
+        attributes and may be dropped in future versions.
+
+
+    .. index::
+        pair: Transaction; Status
+
+    .. method:: get_transaction_status()
+
+        Also available as `~connection.info`\ `!.`\
+        `~psycopg2.extensions.ConnectionInfo.transaction_status`.
+
+        Return the current session transaction status as an integer.  Symbolic
+        constants for the values are defined in the module
+        `psycopg2.extensions`: see :ref:`transaction-status-constants`
+        for the available values.
+
+        .. seealso:: libpq docs for `PQtransactionStatus()`__ for details.
+
+            .. __: https://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQTRANSACTIONSTATUS
+
+
+    .. index::
+        pair: Protocol; Version
+
+    .. attribute:: protocol_version
+
+        Also available as `~connection.info`\ `!.`\
+        `~psycopg2.extensions.ConnectionInfo.protocol_version`.
+
+        A read-only integer representing frontend/backend protocol being used.
+        Currently Psycopg supports only protocol 3, which allows connection
+        to PostgreSQL server from version 7.4. Psycopg versions previous than
+        2.3 support both protocols 2 and 3.
+
+        .. seealso:: libpq docs for `PQprotocolVersion()`__ for details.
+
+            .. __: https://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQPROTOCOLVERSION
+
+        .. versionadded:: 2.0.12
+
+
+    .. index::
+        pair: Server; Version
+
+    .. attribute:: server_version
+
+        Also available as `~connection.info`\ `!.`\
+        `~psycopg2.extensions.ConnectionInfo.server_version`.
+
+        A read-only integer representing the backend version.
+
+        The number is formed by converting the major, minor, and revision
+        numbers into two-decimal-digit numbers and appending them together.
+        For example, version 8.1.5 will be returned as ``80105``.
+
+        .. seealso:: libpq docs for `PQserverVersion()`__ for details.
+
+            .. __: https://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQSERVERVERSION
+
+        .. versionadded:: 2.0.12
+
+
+    .. index::
+        pair: Backend; PID
+
+    .. method:: get_backend_pid()
+
+        Also available as `~connection.info`\ `!.`\
+        `~psycopg2.extensions.ConnectionInfo.backend_pid`.
+
+        Returns the process ID (PID) of the backend server process handling
+        this connection.
+
+        Note that the PID belongs to a process executing on the database
+        server host, not the local host!
+
+        .. seealso:: libpq docs for `PQbackendPID()`__ for details.
+
+            .. __: https://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQBACKENDPID
+
+        .. versionadded:: 2.0.8
+
+
+    .. index::
+        pair: Server; Parameters
+
+    .. method:: get_parameter_status(parameter)
+
+        Also available as `~connection.info`\ `!.`\
+        `~psycopg2.extensions.ConnectionInfo.parameter_status()`.
+
+        Look up a current parameter setting of the server.
+
+        Potential values for ``parameter`` are: ``server_version``,
+        ``server_encoding``, ``client_encoding``, ``is_superuser``,
+        ``session_authorization``, ``DateStyle``, ``TimeZone``,
+        ``integer_datetimes``, and ``standard_conforming_strings``.
+
+        If server did not report requested parameter, return `!None`.
+
+        .. seealso:: libpq docs for `PQparameterStatus()`__ for details.
+
+            .. __: https://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQPARAMETERSTATUS
+
+        .. versionadded:: 2.0.12
 
 
 .. testcode::

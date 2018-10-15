@@ -40,6 +40,7 @@
 #include "psycopg/microprotocols.h"
 #include "psycopg/microprotocols_proto.h"
 #include "psycopg/error.h"
+#include "psycopg/conninfo.h"
 #include "psycopg/diagnostics.h"
 
 #include "psycopg/adapter_qstring.h"
@@ -995,6 +996,9 @@ INIT_MODULE(_psycopg)(void)
     errorType.tp_base = (PyTypeObject *)PyExc_StandardError;
     if (PyType_Ready(&errorType) == -1) goto exit;
 
+    Py_TYPE(&connInfoType) = &PyType_Type;
+    if (PyType_Ready(&connInfoType) == -1) goto exit;
+
     Py_TYPE(&diagnosticsType) = &PyType_Type;
     if (PyType_Ready(&diagnosticsType) == -1) goto exit;
 
@@ -1084,6 +1088,7 @@ INIT_MODULE(_psycopg)(void)
     PyModule_AddObject(module, "Column", (PyObject*)&columnType);
     PyModule_AddObject(module, "Notify", (PyObject*)&notifyType);
     PyModule_AddObject(module, "Xid", (PyObject*)&xidType);
+    PyModule_AddObject(module, "ConnectionInfo", (PyObject*)&connInfoType);
     PyModule_AddObject(module, "Diagnostics", (PyObject*)&diagnosticsType);
     PyModule_AddObject(module, "AsIs", (PyObject*)&asisType);
     PyModule_AddObject(module, "Binary", (PyObject*)&binaryType);

@@ -12,7 +12,8 @@ New features:
 - Added `~psycopg2.extensions.Column.table_oid` and
   `~psycopg2.extensions.Column.table_column` attributes on `cursor.description`
   items (:ticket:`#661`).
-- Added `connection.host` property (:ticket:`#726`).
+- Added `connection.info` object to retrieve various PostgreSQL connection
+  information (:ticket:`#726`).
 - `~psycopg2.sql.Identifier` can represent qualified names in SQL composition
   (:ticket:`#732`).
 - `!str()` on `~psycopg2.extras.Range` produces a human-readable representation

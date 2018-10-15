@@ -352,9 +352,9 @@ class RangeCaster(object):
         from psycopg2.extras import _solve_conn_curs
         conn, curs = _solve_conn_curs(conn_or_curs)
 
-        if conn.server_version < 90200:
+        if conn.info.server_version < 90200:
             raise ProgrammingError("range types not available in version %s"
-                % conn.server_version)
+                % conn.info.server_version)
 
         # Store the transaction status of the connection to revert it after use
         conn_status = conn.status

@@ -234,9 +234,9 @@ def skip_before_postgres(*ver):
     def skip_before_postgres_(f):
         @wraps(f)
         def skip_before_postgres__(self):
-            if self.conn.server_version < int("%d%02d%02d" % ver):
+            if self.conn.info.server_version < int("%d%02d%02d" % ver):
                 return self.skipTest("skipped because PostgreSQL %s"
-                    % self.conn.server_version)
+                    % self.conn.info.server_version)
             else:
                 return f(self)
 
@@ -251,9 +251,9 @@ def skip_after_postgres(*ver):
     def skip_after_postgres_(f):
         @wraps(f)
         def skip_after_postgres__(self):
-            if self.conn.server_version >= int("%d%02d%02d" % ver):
+            if self.conn.info.server_version >= int("%d%02d%02d" % ver):
                 return self.skipTest("skipped because PostgreSQL %s"
-                    % self.conn.server_version)
+                    % self.conn.info.server_version)
             else:
                 return f(self)
 

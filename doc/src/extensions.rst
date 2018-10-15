@@ -154,7 +154,46 @@ introspection etc.
         Close the object and remove it from the database.
 
 
-.. class:: Column
+
+.. autoclass:: ConnectionInfo(connection)
+
+    .. versionadded:: 2.8
+
+    .. autoattribute:: dbname
+    .. autoattribute:: user
+    .. autoattribute:: password
+    .. autoattribute:: host
+    .. autoattribute:: port
+    .. autoattribute:: options
+    .. autoattribute:: status
+    .. autoattribute:: transaction_status
+    .. automethod:: parameter_status(name)
+
+    .. autoattribute:: protocol_version
+
+        Currently Psycopg supports only protocol 3, which allows connection
+        to PostgreSQL server from version 7.4. Psycopg versions previous than
+        2.3 support both protocols 2 and 3.
+
+    .. autoattribute:: server_version
+
+        The number is formed by converting the major, minor, and revision
+        numbers into two-decimal-digit numbers and appending them together.
+        After PostgreSQL 10 the minor version was dropped, so the second group
+        of digits is always ``00``. For example, version 9.3.5 will be
+        returned as ``90305``, version 10.2 as ``100002``.
+
+    .. autoattribute:: error_message
+    .. autoattribute:: socket
+    .. autoattribute:: backend_pid
+    .. autoattribute:: needs_password
+    .. autoattribute:: used_password
+    .. autoattribute:: ssl_in_use
+    .. automethod:: ssl_attribute(name)
+    .. autoattribute:: ssl_attribute_names
+
+
+.. class:: Column(\*args, \*\*kwargs)
 
     Description of one result column, exposed as items of the
     `cursor.description` sequence.
@@ -788,7 +827,7 @@ Transaction status constants
 ----------------------------
 
 These values represent the possible status of a transaction: the current value
-can be read using the `connection.get_transaction_status()` method.
+can be read using the `connection.info.transaction_status` property.
 
 .. data:: TRANSACTION_STATUS_IDLE
 

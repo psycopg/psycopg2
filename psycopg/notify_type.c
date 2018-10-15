@@ -40,7 +40,7 @@ static const char notify_doc[] =
 static const char pid_doc[] =
     "The ID of the backend process that sent the notification.\n\n"
     "Note: if the sending session was handled by Psycopg, you can use\n"
-    "`~connection.get_backend_pid()` to know its PID.";
+    "`~connection.info.backend_pid` to know its PID.";
 
 static const char channel_doc[] =
     "The name of the channel to which the notification was sent.";

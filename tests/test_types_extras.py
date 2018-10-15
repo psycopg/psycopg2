@@ -137,7 +137,7 @@ def skip_if_no_hstore(f):
 
 class HstoreTestCase(ConnectingTestCase):
     def test_adapt_8(self):
-        if self.conn.server_version >= 90000:
+        if self.conn.info.server_version >= 90000:
             return self.skipTest("skipping dict adaptation with PG pre-9 syntax")
 
         from psycopg2.extras import HstoreAdapter
@@ -163,7 +163,7 @@ class HstoreTestCase(ConnectingTestCase):
             self.assertQuotedEqual(ii[3], b"('d' => '" + encc + b"')")
 
     def test_adapt_9(self):
-        if self.conn.server_version < 90000:
+        if self.conn.info.server_version < 90000:
             return self.skipTest("skipping dict adaptation with PG 9 syntax")
 
         from psycopg2.extras import HstoreAdapter
@@ -448,10 +448,10 @@ class HstoreTestCase(ConnectingTestCase):
 def skip_if_no_composite(f):
     @wraps(f)
     def skip_if_no_composite_(self):
-        if self.conn.server_version < 80000:
+        if self.conn.info.server_version < 80000:
             return self.skipTest(
                 "server version %s doesn't support composite types"
-                % self.conn.server_version)
+                % self.conn.info.server_version)
 
         return f(self)
 
@@ -1436,10 +1436,10 @@ class RangeTestCase(unittest.TestCase):
 def skip_if_no_range(f):
     @wraps(f)
     def skip_if_no_range_(self):
-        if self.conn.server_version < 90200:
+        if self.conn.info.server_version < 90200:
             return self.skipTest(
                 "server version %s doesn't support range types"
-                % self.conn.server_version)
+                % self.conn.info.server_version)
 
         return f(self)
 
