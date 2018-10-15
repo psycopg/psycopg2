@@ -27,10 +27,10 @@ Other changes:
 
 - Dropped support for Python 2.6, 3.2, 3.3.
 - Dropped `psycopg1` module.
-- Dropped deprecated ``register_tstz_w_secs()`` (was previously a no-op).
+- Dropped deprecated `!register_tstz_w_secs()` (was previously a no-op).
 - No longer use 2to3 during installation for Python 2 & 3 compatability. All
   source files are now compatible with Python 2 & 3 as is.
-- The ``psycopg2.test`` package is no longer installed by ``python setup.py
+- The `!psycopg2.test` package is no longer installed by ``python setup.py
   install``.
 
 
