@@ -114,11 +114,24 @@ def fetch_errors(versions):
 def generate_module_data(classes, errors):
     tmpl = """
 
+@for_sqlstate(%(errcode)r)
 class %(cls)s(%(base)s):
-    pass
-
-_by_sqlstate[%(errcode)r] = %(cls)s\
+    pass\
 """
+    specific = {
+        '38002': 'ModifyingSqlDataNotPermittedExt',
+        '38003': 'ProhibitedSqlStatementAttemptedExt',
+        '38004': 'ReadingSqlDataNotPermittedExt',
+        '39004': 'NullValueNotAllowedExt',
+        'XX000': 'InternalError_',
+    }
+
+    seen = set("""
+        Error Warning InterfaceError DataError DatabaseError ProgrammingError
+        IntegrityError InternalError NotSupportedError OperationalError
+        QueryCanceledError TransactionRollbackError
+        """.split())
+
     for clscode, clslabel in sorted(classes.items()):
         if clscode in ('00', '01'):
             # success and warning - never raised
@@ -127,7 +140,14 @@ _by_sqlstate[%(errcode)r] = %(cls)s\
         yield "\n\n# %s" % clslabel
 
         for errcode, errlabel in sorted(errors[clscode].items()):
-            clsname = errlabel.title().replace('_', '')
+            if errcode in specific:
+                clsname = specific[errcode]
+            else:
+                clsname = errlabel.title().replace('_', '')
+            if clsname in seen:
+                raise Exception("class already existing: %s" % clsname)
+            seen.add(clsname)
+
             yield tmpl % {
                 'cls': clsname,
                 'base': get_base_class_name(errcode),
