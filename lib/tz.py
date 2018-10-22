@@ -132,6 +132,7 @@ class LocalTimezone(datetime.tzinfo):
         tt = time.localtime(stamp)
         return tt.tm_isdst > 0
 
+
 LOCAL = LocalTimezone()
 
 # TODO: pre-generate some interesting time zones?

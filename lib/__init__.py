@@ -72,8 +72,8 @@ _ext.register_adapter(type(None), _ext.NoneAdapter)
 # Register the Decimal adapter here instead of in the C layer.
 # This way a new class is registered for each sub-interpreter.
 # See ticket #52
-from decimal import Decimal
-from psycopg2._psycopg import Decimal as Adapter
+from decimal import Decimal                         # noqa
+from psycopg2._psycopg import Decimal as Adapter    # noqa
 _ext.register_adapter(Decimal, Adapter)
 del Decimal, Adapter
 

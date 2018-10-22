@@ -589,7 +589,10 @@ class CursorTests(ConnectingTestCase):
         # psycopg2 noticing.
         control_conn = self.conn
         connect_func = self.connect
-        wait_func = lambda conn: None
+
+        def wait_func(conn):
+            pass
+
         self._test_external_close(control_conn, connect_func, wait_func)
 
     @skip_if_no_superuser
@@ -599,7 +602,10 @@ class CursorTests(ConnectingTestCase):
         # Issue #443 is in the async code too. Since the fix is duplicated,
         # so is the test.
         control_conn = self.conn
-        connect_func = lambda: self.connect(async_=True)
+
+        def connect_func():
+            return self.connect(async_=True)
+
         wait_func = psycopg2.extras.wait_select
         self._test_external_close(control_conn, connect_func, wait_func)
 
@@ -647,6 +653,7 @@ class CursorTests(ConnectingTestCase):
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == "__main__":
     unittest.main()

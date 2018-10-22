@@ -168,8 +168,8 @@ class TypesBasicTests(ConnectingTestCase):
         self.assertEqual(curs.fetchone()[0], [])
 
         # issue #788 (test commented out until issue fixed)
-        #curs.execute("select null = any(%s)", ([[]], ))
-        #self.assertFalse(curs.fetchone()[0])
+        # curs.execute("select null = any(%s)", ([[]], ))
+        # self.assertFalse(curs.fetchone()[0])
 
     def testEmptyArrayNoCast(self):
         s = self.execute("SELECT '{}' AS foo")
@@ -232,9 +232,9 @@ class TypesBasicTests(ConnectingTestCase):
         curs.execute("insert into na (textaa) values (%s)", ([['a', None]],))
         curs.execute("insert into na (textaa) values (%s)", ([[None, None]],))
 
-        curs.execute("insert into na (intaa) values (%s)",  ([[None]],))
+        curs.execute("insert into na (intaa) values (%s)", ([[None]],))
         curs.execute("insert into na (intaa) values (%s)", ([[42, None]],))
-        curs.execute("insert into na (intaa) values (%s)",  ([[None, None]],))
+        curs.execute("insert into na (intaa) values (%s)", ([[None, None]],))
 
         curs.execute("insert into na (boolaa) values (%s)", ([[None]],))
         curs.execute("insert into na (boolaa) values (%s)", ([[True, None]],))
@@ -554,11 +554,13 @@ def skip_if_cant_cast(f):
 
     return skip_if_cant_cast_
 
+
 decorate_all_tests(ByteaParserTest, skip_if_cant_cast)
 
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == "__main__":
     unittest.main()

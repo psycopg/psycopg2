@@ -138,7 +138,7 @@ class AbstractConnectionPool(object):
         for conn in self._pool + list(self._used.values()):
             try:
                 conn.close()
-            except:
+            except Exception:
                 pass
         self.closed = True
 

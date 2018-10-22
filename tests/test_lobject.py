@@ -44,6 +44,7 @@ def skip_if_no_lo(f):
 
     return skip_if_no_lo_
 
+
 skip_lo_if_green = skip_if_green("libpq doesn't support LO in async mode")
 
 
@@ -397,6 +398,7 @@ class LargeObjectTests(LargeObjectTestCase):
         lo = self.conn.lobject(lobject_factory=lobject_subclass)
         self.assert_(isinstance(lo, lobject_subclass))
 
+
 decorate_all_tests(LargeObjectTests, skip_if_no_lo, skip_lo_if_green)
 
 
@@ -453,6 +455,7 @@ class LargeObjectTruncateTests(LargeObjectTestCase):
 
         self.assertRaises(psycopg2.ProgrammingError, lo.truncate)
 
+
 decorate_all_tests(LargeObjectTruncateTests,
     skip_if_no_lo, skip_lo_if_green, skip_if_no_truncate)
 
@@ -491,6 +494,7 @@ class LargeObject64Tests(LargeObjectTestCase):
         self.assertEqual(lo.seek(length, 0), length)
         self.assertEqual(lo.tell(), length)
 
+
 decorate_all_tests(LargeObject64Tests,
     skip_if_no_lo, skip_lo_if_green, skip_if_no_truncate, skip_if_no_lo64)
 
@@ -522,12 +526,14 @@ class LargeObjectNot64Tests(LargeObjectTestCase):
             (OverflowError, psycopg2.InterfaceError, psycopg2.NotSupportedError),
             lo.truncate, length)
 
+
 decorate_all_tests(LargeObjectNot64Tests,
     skip_if_no_lo, skip_lo_if_green, skip_if_no_truncate, skip_if_lo64)
 
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == "__main__":
     unittest.main()

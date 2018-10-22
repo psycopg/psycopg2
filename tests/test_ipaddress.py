@@ -125,6 +125,7 @@ class NetworkingTestCase(testutils.ConnectingTestCase):
         cur.execute("select %s", [ip.ip_network('::ffff:102:300/128')])
         self.assertEquals(cur.fetchone()[0], '::ffff:102:300/128')
 
+
 testutils.decorate_all_tests(NetworkingTestCase, skip_if_no_ipaddress)
 
 

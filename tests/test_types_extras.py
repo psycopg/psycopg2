@@ -123,6 +123,7 @@ class TypesExtrasTests(ConnectingTestCase):
         s = self.execute("""SELECT '{"(1,2)","(3,4)"}' AS foo""")
         self.failUnless(s == """{"(1,2)","(3,4)"}""")
 
+
 def skip_if_no_hstore(f):
     @wraps(f)
     def skip_if_no_hstore_(self):
@@ -1137,6 +1138,7 @@ class JsonbTestCase(ConnectingTestCase):
         curs.execute("""select NULL::jsonb[]""")
         self.assertEqual(curs.fetchone()[0], None)
 
+
 decorate_all_tests(JsonbTestCase, skip_if_no_jsonb_type)
 
 
@@ -1425,7 +1427,7 @@ class RangeTestCase(unittest.TestCase):
         from datetime import datetime
         from psycopg2.tz import FixedOffsetTimezone
         converter = unicode if sys.version_info < (3, 0) else str
-        tz = FixedOffsetTimezone(-5*60, "EST")
+        tz = FixedOffsetTimezone(-5 * 60, "EST")
         r = DateTimeTZRange(datetime(2010, 1, 1, tzinfo=tz),
                             datetime(2011, 1, 1, tzinfo=tz))
         expected = u'[2010-01-01 00:00:00-05:00, 2011-01-01 00:00:00-05:00)'
@@ -1762,6 +1764,7 @@ class RangeCasterTestCase(ConnectingTestCase):
         # clear the adapters to allow precise count by scripts/refcounter.py
         for r in [ra1, ra2, rars2, rars3]:
             del ext.adapters[r.range, ext.ISQLQuote]
+
 
 decorate_all_tests(RangeCasterTestCase, skip_if_no_range)
 

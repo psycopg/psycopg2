@@ -217,12 +217,13 @@ class WithCursorTestCase(WithTestCase):
 
     @skip_before_postgres(8, 2)
     def test_named_with_noop(self):
-        with self.conn.cursor('named') as cur:
+        with self.conn.cursor('named'):
             pass
 
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == "__main__":
     unittest.main()

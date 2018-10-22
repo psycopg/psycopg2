@@ -42,8 +42,8 @@ if sys.version_info[0] == 2:
     unichr = unichr
 else:
     # Python 3
-    from io import StringIO
-    from importlib import reload
+    from io import StringIO         # noqa
+    from importlib import reload    # noqa
     long = int
     unichr = chr
 
@@ -63,6 +63,7 @@ if (not hasattr(unittest.TestCase, 'assert_')
 def assertDsnEqual(self, dsn1, dsn2, msg=None):
     """Check that two conninfo string have the same content"""
     self.assertEqual(set(dsn1.split()), set(dsn2.split()), msg)
+
 
 unittest.TestCase.assertDsnEqual = assertDsnEqual
 
@@ -362,6 +363,7 @@ def skip_if_green(reason):
 
         return skip_if_green__
     return skip_if_green_
+
 
 skip_copy_if_green = skip_if_green("copy in async mode currently not supported")
 

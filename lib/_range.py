@@ -506,9 +506,9 @@ class NumberRangeAdapter(RangeAdapter):
         return ("'%s%s,%s%s'" % (
             r._bounds[0], lower, upper, r._bounds[1])).encode('ascii')
 
+
 # TODO: probably won't work with infs, nans and other tricky cases.
 register_adapter(NumericRange, NumberRangeAdapter)
-
 
 # Register globally typecasters and adapters for builtin range types.
 

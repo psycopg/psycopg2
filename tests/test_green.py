@@ -206,5 +206,6 @@ class CallbackErrorTestCase(ConnectingTestCase):
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
+
 if __name__ == "__main__":
     unittest.main()
