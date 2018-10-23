@@ -1259,6 +1259,10 @@ def execute_values(cur, sql, argslist, template=None, page_size=100):
         [(1, 20, 3), (4, 50, 6), (7, 8, 9)])
 
     '''
+    from psycopg2.sql import Composable
+    if isinstance(sql, Composable):
+        sql = sql.as_string(cur)
+
     # we can't just use sql % vals because vals is bytes: if sql is bytes
     # there will be some decoding error because of stupid codec used, and Py3
     # doesn't implement % on bytes.
