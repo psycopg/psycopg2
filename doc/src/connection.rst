@@ -740,6 +740,20 @@ The ``connection`` class
         Return `!True` if the connection is executing an asynchronous operation.
 
 
+    .. rubric:: Interoperation with other C API modules
+
+    .. method:: get_native_connection()
+
+        Return the internal `PGconn*` wrapped in a PyCapsule object. This is
+        only useful for passing the `libpq` raw connection associated to this
+        connection object to other C-level modules that may have a use for it.
+
+        .. seealso:: Python C API `Capsules`__  docs.
+
+            .. __: https://docs.python.org/3.1/c-api/capsule.html
+
+        .. versionadded:: 2.8
+
 
     .. rubric:: informative methods of the native connection
 

@@ -826,6 +826,20 @@ psyco_conn_deferrable_set(connectionObject *self, PyObject *pyvalue)
 }
 
 
+/* psyco_get_native_connection - expose PGconn* as a Python capsule */
+
+#define psyco_get_native_connection_doc \
+"_get_native_connection() -- Return the internal PGconn* as a Python Capsule."
+
+static PyObject *
+psyco_get_native_connection(connectionObject *self)
+{
+    EXC_IF_CONN_CLOSED(self);
+
+    return PyCapsule_New(self->pgconn, "psycopg2.connection.native_connection", NULL);
+}
+
+
 /* set_client_encoding method - set client encoding */
 
 #define psyco_conn_set_client_encoding_doc \
@@ -1194,6 +1208,8 @@ static struct PyMethodDef connectionObject_methods[] = {
      METH_NOARGS, psyco_conn_isexecuting_doc},
     {"cancel", (PyCFunction)psyco_conn_cancel,
      METH_NOARGS, psyco_conn_cancel_doc},
+    {"_get_native_connection", (PyCFunction)psyco_get_native_connection,
+     METH_NOARGS, psyco_get_native_connection_doc},
     {NULL}
 };
 
