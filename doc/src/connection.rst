@@ -742,7 +742,7 @@ The ``connection`` class
 
     .. rubric:: Interoperation with other C API modules
 
-    .. method:: get_native_connection()
+    .. method:: _get_native_connection()
 
         Return the internal `PGconn*` wrapped in a PyCapsule object. This is
         only useful for passing the `libpq` raw connection associated to this
