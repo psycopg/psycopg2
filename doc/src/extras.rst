@@ -481,6 +481,12 @@ The individual messages in the replication stream are represented by
         communication with the server (a data or keepalive message in either
         direction).
 
+    .. attribute:: wal_end
+
+       LSN position of the current end of WAL on the server at the
+       moment of last data or keepalive message received from the
+       server.
+
     An actual example of asynchronous operation might look like this::
 
       from select import select
@@ -500,7 +506,7 @@ The individual messages in the replication stream are represented by
               try:
                   sel = select([cur], [], [], max(0, timeout))
                   if not any(sel):
-                      cur.send_feedback()  # timed out, send keepalive message
+                      cur.send_feedback(flush_lsn=cur.wal_end)  # timed out, send keepalive message
               except InterruptedError:
                   pass  # recalculate timeout and continue
 

@@ -44,6 +44,8 @@ typedef struct replicationCursorObject {
     struct timeval last_io;       /* timestamp of the last exchange with the server */
     struct timeval keepalive_interval;   /* interval for keepalive messages in replication mode */
 
+    XLogRecPtr  wal_end;          /* WAL end pointer from the last exchange with the server */
+
     XLogRecPtr  write_lsn;        /* LSNs for replication feedback messages */
     XLogRecPtr  flush_lsn;
     XLogRecPtr  apply_lsn;
