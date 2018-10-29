@@ -1721,6 +1721,10 @@ retry:
             goto exit;
         }
 
+        wal_end = fe_recvint64(buffer + 1);
+        Dprintf("pq_read_replication_message: wal_end="XLOGFMTSTR, XLOGFMTARGS(wal_end));
+        repl->wal_end = wal_end;
+
         reply = buffer[hdr];
         if (reply && pq_send_replication_feedback(repl, 0) < 0) {
             goto exit;
@@ -1735,6 +1739,7 @@ retry:
         goto exit;
     }
 
+    repl->wal_end = wal_end;
     ret = 0;
 
 exit:
