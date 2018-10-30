@@ -506,9 +506,22 @@ The individual messages in the replication stream are represented by
               try:
                   sel = select([cur], [], [], max(0, timeout))
                   if not any(sel):
-                      cur.send_feedback(flush_lsn=cur.wal_end)  # timed out, send keepalive message
+                      cur.send_feedback()  # timed out, send keepalive message
               except InterruptedError:
                   pass  # recalculate timeout and continue
+
+      .. warning::
+
+         The ``consume({msg})`` function will only be called when
+         there are new database writes on the server e.g. any DML or
+         DDL statement. Depending on your Postgres cluster
+         configuration this might cause the server to run out of disk
+         space if the writes are far apart. To prevent this from
+         happening you can use `~ReplicationCursor.wal_end` value to
+         periodically send feedback to the server to notify that your
+         replication client has received and processed all the
+         messages.
+
 
 .. index::
     pair: Cursor; Replication
