@@ -166,6 +166,13 @@ class TypesBasicTests(ConnectingTestCase):
         curs.execute("select col from array_test where id = 2")
         self.assertEqual(curs.fetchone()[0], [])
 
+    @testutils.skip_before_postgres(8, 4)
+    def testNestedEmptyArray(self):
+        # issue #788
+        curs = self.conn.cursor()
+        curs.execute("select 10 = any(%s::int[])", ([[]], ))
+        self.assertFalse(curs.fetchone()[0])
+
     def testEmptyArrayNoCast(self):
         s = self.execute("SELECT '{}' AS foo")
         self.assertEqual(s, '{}')

@@ -55,6 +55,8 @@ list_quote(listObject *self)
     /* empty arrays are converted to NULLs (still searching for a way to
        insert an empty array in postgresql */
     if (len == 0) {
+        /* it cannot be ARRAY[] because it would make empty lists unusable
+         * in any() without a cast. But we may convert it into ARRAY[] below */
         res = Bytes_FromString("'{}'");
         goto exit;
     }
@@ -79,7 +81,19 @@ list_quote(listObject *self)
 
             /* Lists of arrays containing only nulls are also not supported
              * by the ARRAY construct so we should do some special casing */
-            if (!PyList_Check(wrapped) || Bytes_AS_STRING(qs[i])[0] == 'A') {
+            if (PyList_Check(wrapped)) {
+                if (Bytes_AS_STRING(qs[i])[0] == 'A') {
+                    all_nulls = 0;
+                }
+                else if (0 == strcmp(Bytes_AS_STRING(qs[i]), "'{}'")) {
+                    /* case of issue #788: '{{}}' is not supported but
+                     * array[array[]] is */
+                    all_nulls = 0;
+                    Py_CLEAR(qs[i]);
+                    qs[i] = Bytes_FromString("ARRAY[]");
+                }
+            }
+            else {
                 all_nulls = 0;
             }
         }
