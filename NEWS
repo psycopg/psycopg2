@@ -41,6 +41,7 @@ What's new in psycopg 2.7.6
   (:ticket:`#746`).
 - Fixed building on modern FreeBSD versions with Python 3.7 (:ticket:`#755`).
 - Fixed hang trying to :sql:`COPY` via `~cursor.execute()` (:ticket:`#781`).
+- Fixed adaptation of arrays of empty arrays (:ticket:`#788`).
 - Fixed segfault accessing the `connection.readonly` and
   `connection.deferrable` repeatedly (:ticket:`#790`).
 - `~psycopg2.extras.execute_values()` accepts `~psycopg2.sql.Composable`
