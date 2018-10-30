@@ -35,7 +35,7 @@ import psycopg2.errorcodes
 from psycopg2 import extensions as ext
 
 from .testutils import (
-    unittest, decorate_all_tests, skip_if_no_superuser, skip_before_postgres,
+    unittest, skip_if_no_superuser, skip_before_postgres,
     skip_after_postgres, skip_before_libpq, skip_after_libpq,
     ConnectingTestCase, skip_if_tpc_disabled, skip_if_windows, slow)
 
@@ -812,6 +812,7 @@ class IsolationLevelsTestCase(ConnectingTestCase):
             self.conn.isolation_level
 
 
+@skip_if_tpc_disabled
 class ConnectionTwoPhaseTests(ConnectingTestCase):
     def setUp(self):
         ConnectingTestCase.setUp(self)
@@ -1181,9 +1182,6 @@ class ConnectionTwoPhaseTests(ConnectingTestCase):
         self.assertEqual(None, xid.format_id)
         self.assertEqual('dict-connection', xid.gtrid)
         self.assertEqual(None, xid.bqual)
-
-
-decorate_all_tests(ConnectionTwoPhaseTests, skip_if_tpc_disabled)
 
 
 class TransactionControlTests(ConnectingTestCase):

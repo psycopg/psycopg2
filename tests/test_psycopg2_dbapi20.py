@@ -26,7 +26,6 @@ from . import dbapi20
 from . import dbapi20_tpc
 from .testutils import skip_if_tpc_disabled
 import unittest
-from .testutils import decorate_all_tests
 import psycopg2
 
 from .testconfig import dsn
@@ -70,14 +69,12 @@ class Psycopg2Tests(dbapi20.DatabaseAPI20Test):
         pass
 
 
+@skip_if_tpc_disabled
 class Psycopg2TPCTests(dbapi20_tpc.TwoPhaseCommitTests, unittest.TestCase):
     driver = psycopg2
 
     def connect(self):
         return psycopg2.connect(dsn=dsn)
-
-
-decorate_all_tests(Psycopg2TPCTests, skip_if_tpc_disabled)
 
 
 def test_suite():

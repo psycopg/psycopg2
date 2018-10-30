@@ -26,6 +26,7 @@ import psycopg2
 import psycopg2.extras
 
 
+@testutils.decorate_all_tests
 def skip_if_no_ipaddress(f):
     @wraps(f)
     def skip_if_no_ipaddress_(self):
@@ -40,6 +41,7 @@ def skip_if_no_ipaddress(f):
     return skip_if_no_ipaddress_
 
 
+@skip_if_no_ipaddress
 class NetworkingTestCase(testutils.ConnectingTestCase):
     def test_inet_cast(self):
         import ipaddress as ip
@@ -124,9 +126,6 @@ class NetworkingTestCase(testutils.ConnectingTestCase):
 
         cur.execute("select %s", [ip.ip_network('::ffff:102:300/128')])
         self.assertEquals(cur.fetchone()[0], '::ffff:102:300/128')
-
-
-testutils.decorate_all_tests(NetworkingTestCase, skip_if_no_ipaddress)
 
 
 def test_suite():

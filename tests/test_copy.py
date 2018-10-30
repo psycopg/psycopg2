@@ -25,8 +25,7 @@
 import sys
 import string
 import unittest
-from .testutils import (ConnectingTestCase, decorate_all_tests,
-    skip_before_postgres, slow, StringIO)
+from .testutils import (ConnectingTestCase, skip_before_postgres, slow, StringIO)
 from itertools import cycle
 from subprocess import Popen, PIPE
 
@@ -63,6 +62,7 @@ class MinimalWrite(_base):
         return self.f.write(data)
 
 
+@skip_copy_if_green
 class CopyTests(ConnectingTestCase):
 
     def setUp(self):
@@ -376,9 +376,6 @@ conn.close()
         curs.execute("insert into tcopy values (10, 'hi')")
         self.assertRaises(ZeroDivisionError,
             curs.copy_to, BrokenWrite(), "tcopy")
-
-
-decorate_all_tests(CopyTests, skip_copy_if_green)
 
 
 def test_suite():

@@ -134,6 +134,7 @@ class TestExecuteBatch(FastExecuteTestMixin, testutils.ConnectingTestCase):
         self.assertEqual(cur.fetchone(), (3, snowman))
 
 
+@testutils.skip_before_postgres(8, 2)
 class TestExecuteValues(FastExecuteTestMixin, testutils.ConnectingTestCase):
     def test_empty(self):
         cur = self.conn.cursor()
@@ -249,10 +250,6 @@ class TestExecuteValues(FastExecuteTestMixin, testutils.ConnectingTestCase):
 
         cur.execute("select id, data from testfast")
         self.assertEqual(cur.fetchall(), [(1, 'hi')])
-
-
-testutils.decorate_all_tests(TestExecuteValues,
-    testutils.skip_before_postgres(8, 2))
 
 
 def test_suite():

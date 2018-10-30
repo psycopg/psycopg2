@@ -24,8 +24,7 @@ from pickle import dumps, loads
 
 import unittest
 from .testutils import (skip_if_no_uuid, skip_before_postgres,
-    ConnectingTestCase, decorate_all_tests, py3_raises_typeerror, slow,
-    skip_from_python)
+    ConnectingTestCase, py3_raises_typeerror, slow, skip_from_python)
 
 import psycopg2
 import psycopg2.extras
@@ -1049,6 +1048,7 @@ def skip_if_no_jsonb_type(f):
     return skip_before_postgres(9, 4)(f)
 
 
+@skip_if_no_jsonb_type
 class JsonbTestCase(ConnectingTestCase):
     @staticmethod
     def myloads(s):
@@ -1137,9 +1137,6 @@ class JsonbTestCase(ConnectingTestCase):
         self.assertEqual(curs.fetchone()[0], None)
         curs.execute("""select NULL::jsonb[]""")
         self.assertEqual(curs.fetchone()[0], None)
-
-
-decorate_all_tests(JsonbTestCase, skip_if_no_jsonb_type)
 
 
 class RangeTestCase(unittest.TestCase):
@@ -1435,19 +1432,7 @@ class RangeTestCase(unittest.TestCase):
         self.assertEqual(result, expected)
 
 
-def skip_if_no_range(f):
-    @wraps(f)
-    def skip_if_no_range_(self):
-        if self.conn.info.server_version < 90200:
-            return self.skipTest(
-                "server version %s doesn't support range types"
-                % self.conn.info.server_version)
-
-        return f(self)
-
-    return skip_if_no_range_
-
-
+@skip_before_postgres(9, 2, "range not supported before postgres 9.2")
 class RangeCasterTestCase(ConnectingTestCase):
 
     builtin_ranges = ('int4range', 'int8range', 'numrange',
@@ -1764,9 +1749,6 @@ class RangeCasterTestCase(ConnectingTestCase):
         # clear the adapters to allow precise count by scripts/refcounter.py
         for r in [ra1, ra2, rars2, rars3]:
             del ext.adapters[r.range, ext.ISQLQuote]
-
-
-decorate_all_tests(RangeCasterTestCase, skip_if_no_range)
 
 
 def test_suite():

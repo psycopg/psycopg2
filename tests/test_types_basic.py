@@ -456,6 +456,20 @@ class AdaptSubclassTest(unittest.TestCase):
         self.assertEqual(ext.adapt(foo((1, 2, 3))).getquoted(), 'bar')
 
 
+@decorate_all_tests
+def skip_if_cant_cast(f):
+    @wraps(f)
+    def skip_if_cant_cast_(self, *args, **kwargs):
+        if self._cast is None:
+            return self.skipTest("can't test bytea parser: %s - %s"
+                % (self._exc.__class__.__name__, self._exc))
+
+        return f(self, *args, **kwargs)
+
+    return skip_if_cant_cast_
+
+
+@skip_if_cant_cast
 class ByteaParserTest(unittest.TestCase):
     """Unit test for our bytea format parser."""
     def setUp(self):
@@ -541,21 +555,6 @@ class ByteaParserTest(unittest.TestCase):
                 (string.ascii_letters * 2 + '\\').encode('ascii')
 
         self.assertEqual(rv, tgt)
-
-
-def skip_if_cant_cast(f):
-    @wraps(f)
-    def skip_if_cant_cast_(self, *args, **kwargs):
-        if self._cast is None:
-            return self.skipTest("can't test bytea parser: %s - %s"
-                % (self._exc.__class__.__name__, self._exc))
-
-        return f(self, *args, **kwargs)
-
-    return skip_if_cant_cast_
-
-
-decorate_all_tests(ByteaParserTest, skip_if_cant_cast)
 
 
 def test_suite():

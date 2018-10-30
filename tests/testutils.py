@@ -25,6 +25,7 @@
 import re
 import os
 import sys
+import types
 import select
 import platform
 import unittest
@@ -174,16 +175,31 @@ class ConnectingTestCase(unittest.TestCase):
                 raise Exception("Unexpected result from poll: %r", state)
 
 
-def decorate_all_tests(cls, *decorators):
+def decorate_all_tests(obj, *decorators):
     """
-    Apply all the *decorators* to all the tests defined in the TestCase *cls*.
+    Apply all the *decorators* to all the tests defined in the TestCase *obj*.
+
+    The decorator can also be applied to a decorator: if *obj* is a function,
+    return a new decorator which can be applied either to a method or to a
+    class, in which case it will decorate all the tests.
     """
-    for n in dir(cls):
+    if isinstance(obj, types.FunctionType):
+        def decorator(func_or_cls):
+            if isinstance(func_or_cls, types.FunctionType):
+                return obj(func_or_cls)
+            else:
+                decorate_all_tests(func_or_cls, obj)
+                return func_or_cls
+
+        return decorator
+
+    for n in dir(obj):
         if n.startswith('test'):
             for d in decorators:
-                setattr(cls, n, d(getattr(cls, n)))
+                setattr(obj, n, d(getattr(obj, n)))
 
 
+@decorate_all_tests
 def skip_if_no_uuid(f):
     """Decorator to skip a test if uuid is not supported by Py/PG."""
     @wraps(f)
@@ -203,6 +219,7 @@ def skip_if_no_uuid(f):
     return skip_if_no_uuid_
 
 
+@decorate_all_tests
 def skip_if_tpc_disabled(f):
     """Skip a test if the server has tpc support disabled."""
     @wraps(f)
@@ -230,13 +247,19 @@ def skip_if_tpc_disabled(f):
 
 def skip_before_postgres(*ver):
     """Skip a test on PostgreSQL before a certain version."""
+    reason = None
+    if isinstance(ver[-1], str):
+        ver, reason = ver[:-1], ver[-1]
+
     ver = ver + (0,) * (3 - len(ver))
 
+    @decorate_all_tests
     def skip_before_postgres_(f):
         @wraps(f)
         def skip_before_postgres__(self):
             if self.conn.info.server_version < int("%d%02d%02d" % ver):
-                return self.skipTest("skipped because PostgreSQL %s"
+                return self.skipTest(
+                    reason or "skipped because PostgreSQL %s"
                     % self.conn.info.server_version)
             else:
                 return f(self)
@@ -249,6 +272,7 @@ def skip_after_postgres(*ver):
     """Skip a test on PostgreSQL after (including) a certain version."""
     ver = ver + (0,) * (3 - len(ver))
 
+    @decorate_all_tests
     def skip_after_postgres_(f):
         @wraps(f)
         def skip_after_postgres__(self):
@@ -274,6 +298,7 @@ def skip_before_libpq(*ver):
     """Skip a test if libpq we're linked to is older than a certain version."""
     ver = ver + (0,) * (3 - len(ver))
 
+    @decorate_all_tests
     def skip_before_libpq_(f):
         @wraps(f)
         def skip_before_libpq__(self):
@@ -291,6 +316,7 @@ def skip_after_libpq(*ver):
     """Skip a test if libpq we're linked to is newer than a certain version."""
     ver = ver + (0,) * (3 - len(ver))
 
+    @decorate_all_tests
     def skip_after_libpq_(f):
         @wraps(f)
         def skip_after_libpq__(self):
@@ -306,6 +332,7 @@ def skip_after_libpq(*ver):
 
 def skip_before_python(*ver):
     """Skip a test on Python before a certain version."""
+    @decorate_all_tests
     def skip_before_python_(f):
         @wraps(f)
         def skip_before_python__(self):
@@ -321,6 +348,7 @@ def skip_before_python(*ver):
 
 def skip_from_python(*ver):
     """Skip a test on Python after (including) a certain version."""
+    @decorate_all_tests
     def skip_from_python_(f):
         @wraps(f)
         def skip_from_python__(self):
@@ -334,6 +362,7 @@ def skip_from_python(*ver):
     return skip_from_python_
 
 
+@decorate_all_tests
 def skip_if_no_superuser(f):
     """Skip a test if the database user running the test is not a superuser"""
     @wraps(f)
@@ -352,6 +381,7 @@ def skip_if_no_superuser(f):
 
 
 def skip_if_green(reason):
+    @decorate_all_tests
     def skip_if_green_(f):
         @wraps(f)
         def skip_if_green__(self):
@@ -368,6 +398,7 @@ def skip_if_green(reason):
 skip_copy_if_green = skip_if_green("copy in async mode currently not supported")
 
 
+@decorate_all_tests
 def skip_if_no_getrefcount(f):
     @wraps(f)
     def skip_if_no_getrefcount_(self):
@@ -378,6 +409,7 @@ def skip_if_no_getrefcount(f):
     return skip_if_no_getrefcount_
 
 
+@decorate_all_tests
 def skip_if_windows(f):
     """Skip a test if run on windows"""
     @wraps(f)
