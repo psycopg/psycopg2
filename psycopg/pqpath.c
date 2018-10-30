@@ -1550,6 +1550,8 @@ retry:
         (*msg)->data_start = data_start;
         (*msg)->wal_end    = wal_end;
         (*msg)->send_time  = send_time;
+
+        repl->wal_end = wal_end;
     }
     else if (buffer[0] == 'k') {
         /* Primary keepalive message: msgtype(1), walEnd(8), sendTime(8), reply(1) */
@@ -1577,7 +1579,6 @@ retry:
         goto exit;
     }
 
-    repl->wal_end = wal_end;
     ret = 0;
 
 exit:
