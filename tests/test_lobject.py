@@ -31,18 +31,11 @@ import psycopg2
 import psycopg2.extensions
 import unittest
 from .testutils import (decorate_all_tests, skip_if_tpc_disabled,
-    ConnectingTestCase, skip_if_green, slow)
+    skip_before_postgres, ConnectingTestCase, skip_if_green, slow)
 
 
-def skip_if_no_lo(f):
-    @wraps(f)
-    def skip_if_no_lo_(self):
-        if self.conn.server_version < 80100:
-            return self.skipTest("large objects only supported from PG 8.1")
-        else:
-            return f(self)
-
-    return skip_if_no_lo_
+skip_if_no_lo = skip_before_postgres(8, 1,
+    "large objects only supported from PG 8.1")
 
 skip_lo_if_green = skip_if_green("libpq doesn't support LO in async mode")
 
@@ -72,6 +65,8 @@ class LargeObjectTestCase(ConnectingTestCase):
         ConnectingTestCase.tearDown(self)
 
 
+@skip_if_no_lo
+@skip_lo_if_green
 class LargeObjectTests(LargeObjectTestCase):
     def test_create(self):
         lo = self.conn.lobject()
@@ -397,13 +392,12 @@ class LargeObjectTests(LargeObjectTestCase):
         lo = self.conn.lobject(lobject_factory=lobject_subclass)
         self.assert_(isinstance(lo, lobject_subclass))
 
-decorate_all_tests(LargeObjectTests, skip_if_no_lo, skip_lo_if_green)
 
-
+@decorate_all_tests
 def skip_if_no_truncate(f):
     @wraps(f)
     def skip_if_no_truncate_(self):
-        if self.conn.server_version < 80300:
+        if self.conn.info.server_version < 80300:
             return self.skipTest(
                 "the server doesn't support large object truncate")
 
@@ -417,6 +411,9 @@ def skip_if_no_truncate(f):
     return skip_if_no_truncate_
 
 
+@skip_if_no_lo
+@skip_lo_if_green
+@skip_if_no_truncate
 class LargeObjectTruncateTests(LargeObjectTestCase):
     def test_truncate(self):
         lo = self.conn.lobject()
@@ -453,15 +450,12 @@ class LargeObjectTruncateTests(LargeObjectTestCase):
 
         self.assertRaises(psycopg2.ProgrammingError, lo.truncate)
 
-decorate_all_tests(LargeObjectTruncateTests,
-    skip_if_no_lo, skip_lo_if_green, skip_if_no_truncate)
-
 
 def _has_lo64(conn):
     """Return (bool, msg) about the lo64 support"""
-    if conn.server_version < 90300:
+    if conn.info.server_version < 90300:
         return (False, "server version %s doesn't support the lo64 API"
-                % conn.server_version)
+                % conn.info.server_version)
 
     if 'lo64' not in psycopg2.__version__:
         return False, "this psycopg build doesn't support the lo64 API"
@@ -469,6 +463,7 @@ def _has_lo64(conn):
     return True, "this server and build support the lo64 API"
 
 
+@decorate_all_tests
 def skip_if_no_lo64(f):
     @wraps(f)
     def skip_if_no_lo64_(self):
@@ -481,6 +476,10 @@ def skip_if_no_lo64(f):
     return skip_if_no_lo64_
 
 
+@skip_if_no_lo
+@skip_lo_if_green
+@skip_if_no_truncate
+@skip_if_no_lo64
 class LargeObject64Tests(LargeObjectTestCase):
     def test_seek_tell_truncate_greater_than_2gb(self):
         lo = self.conn.lobject()
@@ -491,10 +490,8 @@ class LargeObject64Tests(LargeObjectTestCase):
         self.assertEqual(lo.seek(length, 0), length)
         self.assertEqual(lo.tell(), length)
 
-decorate_all_tests(LargeObject64Tests,
-    skip_if_no_lo, skip_lo_if_green, skip_if_no_truncate, skip_if_no_lo64)
 
-
+@decorate_all_tests
 def skip_if_lo64(f):
     @wraps(f)
     def skip_if_lo64_(self):
@@ -507,6 +504,10 @@ def skip_if_lo64(f):
     return skip_if_lo64_
 
 
+@skip_if_no_lo
+@skip_lo_if_green
+@skip_if_no_truncate
+@skip_if_lo64
 class LargeObjectNot64Tests(LargeObjectTestCase):
     def test_seek_larger_than_2gb(self):
         lo = self.conn.lobject()
@@ -522,12 +523,10 @@ class LargeObjectNot64Tests(LargeObjectTestCase):
             (OverflowError, psycopg2.InterfaceError, psycopg2.NotSupportedError),
             lo.truncate, length)
 
-decorate_all_tests(LargeObjectNot64Tests,
-    skip_if_no_lo, skip_lo_if_green, skip_if_no_truncate, skip_if_lo64)
-
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == "__main__":
     unittest.main()

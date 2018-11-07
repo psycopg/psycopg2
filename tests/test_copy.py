@@ -25,8 +25,7 @@
 import sys
 import string
 import unittest
-from .testutils import (ConnectingTestCase, decorate_all_tests,
-    skip_before_postgres, slow, StringIO)
+from .testutils import (ConnectingTestCase, skip_before_postgres, slow, StringIO)
 from itertools import cycle
 from subprocess import Popen, PIPE
 
@@ -63,6 +62,7 @@ class MinimalWrite(_base):
         return self.f.write(data)
 
 
+@skip_copy_if_green
 class CopyTests(ConnectingTestCase):
 
     def setUp(self):
@@ -140,7 +140,8 @@ class CopyTests(ConnectingTestCase):
             about = abin.decode('latin1').replace('\\', '\\\\')
 
         else:
-            abin = bytes(list(range(32, 127)) + list(range(160, 256))).decode('latin1')
+            abin = bytes(list(range(32, 127))
+                + list(range(160, 256))).decode('latin1')
             about = abin.replace('\\', '\\\\')
 
         curs = self.conn.cursor()
@@ -161,7 +162,8 @@ class CopyTests(ConnectingTestCase):
             abin = ''.join(map(chr, range(32, 127) + range(160, 255)))
             about = abin.replace('\\', '\\\\')
         else:
-            abin = bytes(list(range(32, 127)) + list(range(160, 255))).decode('latin1')
+            abin = bytes(list(range(32, 127))
+                + list(range(160, 255))).decode('latin1')
             about = abin.replace('\\', '\\\\').encode('latin1')
 
         curs = self.conn.cursor()
@@ -184,7 +186,8 @@ class CopyTests(ConnectingTestCase):
             about = abin.replace('\\', '\\\\')
 
         else:
-            abin = bytes(list(range(32, 127)) + list(range(160, 256))).decode('latin1')
+            abin = bytes(list(range(32, 127))
+                + list(range(160, 256))).decode('latin1')
             about = abin.replace('\\', '\\\\')
 
         import io
@@ -375,11 +378,9 @@ conn.close()
             curs.copy_to, BrokenWrite(), "tcopy")
 
 
-decorate_all_tests(CopyTests, skip_copy_if_green)
-
-
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == "__main__":
     unittest.main()

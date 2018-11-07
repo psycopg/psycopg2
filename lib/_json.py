@@ -185,7 +185,7 @@ def _get_json_oids(conn_or_curs, name='json'):
     conn_status = conn.status
 
     # column typarray not available before PG 8.3
-    typarray = conn.server_version >= 80300 and "typarray" or "NULL"
+    typarray = conn.info.server_version >= 80300 and "typarray" or "NULL"
 
     # get the oid for the hstore
     curs.execute(

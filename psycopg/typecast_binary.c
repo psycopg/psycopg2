@@ -212,7 +212,7 @@ static const char hex_lut[128] = {
 /* Parse a bytea output buffer encoded in 'hex' format.
  *
  * the format is described in
- * http://www.postgresql.org/docs/current/static/datatype-binary.html
+ * https://www.postgresql.org/docs/current/static/datatype-binary.html
  *
  * Parse the buffer in 'bufin', whose length is 'sizein'.
  * Return a new buffer allocated by PyMem_Malloc and set 'sizeout' to its size.
@@ -262,7 +262,7 @@ exit:
 /* Parse a bytea output buffer encoded in 'escape' format.
  *
  * the format is described in
- * http://www.postgresql.org/docs/current/static/datatype-binary.html
+ * https://www.postgresql.org/docs/current/static/datatype-binary.html
  *
  * Parse the buffer in 'bufin', whose length is 'sizein'.
  * Return a new buffer allocated by PyMem_Malloc and set 'sizeout' to its size.

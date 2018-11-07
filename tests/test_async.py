@@ -192,7 +192,7 @@ class AsyncTests(ConnectingTestCase):
         self.assertTrue(self.conn.isexecuting())
 
         # getting transaction status works
-        self.assertEquals(self.conn.get_transaction_status(),
+        self.assertEquals(self.conn.info.transaction_status,
                           ext.TRANSACTION_STATUS_ACTIVE)
         self.assertTrue(self.conn.isexecuting())
 
@@ -359,7 +359,7 @@ class AsyncTests(ConnectingTestCase):
 
         self.assertEquals(self.sync_conn.notifies, [])
 
-        pid = self.conn.get_backend_pid()
+        pid = self.conn.info.backend_pid
         for _ in range(5):
             self.wait(self.sync_conn)
             if not self.sync_conn.notifies:
@@ -418,7 +418,7 @@ class AsyncTests(ConnectingTestCase):
     def test_notices(self):
         del self.conn.notices[:]
         cur = self.conn.cursor()
-        if self.conn.server_version >= 90300:
+        if self.conn.info.server_version >= 90300:
             cur.execute("set client_min_messages=debug1")
             self.wait(cur)
         cur.execute("create temp table chatty (id serial primary key);")
@@ -450,9 +450,16 @@ class AsyncTests(ConnectingTestCase):
         else:
             self.fail("no exception raised")
 
+    @skip_before_postgres(8, 2)
+    def test_copy_no_hang(self):
+        cur = self.conn.cursor()
+        cur.execute("copy (select 1) to stdout")
+        self.assertRaises(psycopg2.ProgrammingError, self.wait, self.conn)
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == "__main__":
     unittest.main()

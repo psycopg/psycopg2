@@ -32,10 +32,7 @@ import os
 import sys
 import re
 import subprocess
-try:
-    from setuptools import setup, Extension
-except ImportError:
-    from distutils.core import setup, Extension
+from setuptools import setup, Extension
 from distutils.command.build_ext import build_ext
 from distutils.sysconfig import get_python_inc
 from distutils.ccompiler import get_default_compiler
@@ -47,7 +44,7 @@ try:
 except ImportError:
     import ConfigParser as configparser
 
-# Take a look at http://www.python.org/dev/peps/pep-0440/
+# Take a look at https://www.python.org/dev/peps/pep-0440/
 # for a consistent versioning pattern.
 
 PSYCOPG_VERSION = '2.8.dev0'
@@ -489,11 +486,11 @@ sources = [
     'libpq_support.c', 'win32_support.c', 'solaris_support.c',
 
     'connection_int.c', 'connection_type.c',
-    'cursor_int.c', 'cursor_type.c',
+    'cursor_int.c', 'cursor_type.c', 'column_type.c',
     'replication_connection_type.c',
     'replication_cursor_type.c',
     'replication_message_type.c',
-    'diagnostics_type.c', 'error_type.c',
+    'diagnostics_type.c', 'error_type.c', 'conninfo_type.c',
     'lobject_int.c', 'lobject_type.c',
     'notify_type.c', 'xid_type.c',
 
@@ -511,7 +508,7 @@ depends = [
     'replication_connection.h',
     'replication_cursor.h',
     'replication_message.h',
-    'notify.h', 'pqpath.h', 'xid.h',
+    'notify.h', 'pqpath.h', 'xid.h', 'column.h', 'conninfo.h',
     'libpq_support.h', 'win32_support.h',
 
     'adapter_asis.h', 'adapter_binary.h', 'adapter_datetime.h',

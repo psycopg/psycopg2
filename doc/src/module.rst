@@ -50,11 +50,11 @@ The module interface respects the standard defined in the |DBAPI|_.
     using `environment variables`__.
 
     .. __:
-    .. _connstring: http://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-CONNSTRING
+    .. _connstring: https://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-CONNSTRING
     .. __:
-    .. _connparams: http://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-PARAMKEYWORDS
+    .. _connparams: https://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-PARAMKEYWORDS
     .. __:
-    .. _connenvvars: http://www.postgresql.org/docs/current/static/libpq-envars.html
+    .. _connenvvars: https://www.postgresql.org/docs/current/static/libpq-envars.html
 
     Using the *connection_factory* parameter a different class or
     connections factory can be specified. It should be a callable object
@@ -117,9 +117,10 @@ The module interface respects the standard defined in the |DBAPI|_.
 
    Integer constant reporting the version of the ``libpq`` library this
    ``psycopg2`` module was compiled with (in the same format of
-   `~connection.server_version`).  If this value is greater or equal than
-   ``90100`` then you may query the version of the actually loaded library
-   using the `~psycopg2.extensions.libpq_version()` function.
+   `~psycopg2.extensions.ConnectionInfo.server_version`).  If this value is
+   greater or equal than ``90100`` then you may query the version of the
+   actually loaded library using the `~psycopg2.extensions.libpq_version()`
+   function.
 
 
 .. index::
@@ -250,13 +251,14 @@ available through the following exceptions:
 
 .. extension::
 
-    Psycopg may raise a few other, more specialized, exceptions: currently
-    `~psycopg2.extensions.QueryCanceledError` and
-    `~psycopg2.extensions.TransactionRollbackError` are defined. These
-    exceptions are not exposed by the main `!psycopg2` module but are
-    made available by the `~psycopg2.extensions` module.  All the
-    additional exceptions are subclasses of standard |DBAPI| exceptions, so
-    trapping them specifically is not required.
+    Psycopg actually raises a different exception for each :sql:`SQLSTATE`
+    error returned by the database: the classes are available in the
+    `psycopg2.errors` module.  Every exception class is a subclass of one of
+    the exception classes defined here though, so they don't need to be
+    trapped specifically: trapping `!Error` or `!DatabaseError` is usually
+    what needed to write a generic error handler; trapping a specific error
+    such as `!NotNullViolation` can be useful to write specific exception
+    handlers.
 
 
 This is the exception inheritance layout:
@@ -270,8 +272,6 @@ This is the exception inheritance layout:
         \|__ `DatabaseError`
             \|__ `DataError`
             \|__ `OperationalError`
-            \|   \|__ `psycopg2.extensions.QueryCanceledError`
-            \|   \|__ `psycopg2.extensions.TransactionRollbackError`
             \|__ `IntegrityError`
             \|__ `InternalError`
             \|__ `ProgrammingError`

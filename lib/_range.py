@@ -62,6 +62,19 @@ class Range(object):
             return "%s(%r, %r, %r)" % (self.__class__.__name__,
                 self._lower, self._upper, self._bounds)
 
+    def __str__(self):
+        if self._bounds is None:
+            return 'empty'
+
+        items = [
+            self._bounds[0],
+            str(self._lower),
+            ', ',
+            str(self._upper),
+            self._bounds[1]
+        ]
+        return ''.join(items)
+
     @property
     def lower(self):
         """The lower bound of the range. `!None` if empty or unbound."""
@@ -339,9 +352,9 @@ class RangeCaster(object):
         from psycopg2.extras import _solve_conn_curs
         conn, curs = _solve_conn_curs(conn_or_curs)
 
-        if conn.server_version < 90200:
+        if conn.info.server_version < 90200:
             raise ProgrammingError("range types not available in version %s"
-                % conn.server_version)
+                % conn.info.server_version)
 
         # Store the transaction status of the connection to revert it after use
         conn_status = conn.status
@@ -493,9 +506,9 @@ class NumberRangeAdapter(RangeAdapter):
         return ("'%s%s,%s%s'" % (
             r._bounds[0], lower, upper, r._bounds[1])).encode('ascii')
 
+
 # TODO: probably won't work with infs, nans and other tricky cases.
 register_adapter(NumericRange, NumberRangeAdapter)
-
 
 # Register globally typecasters and adapters for builtin range types.
 

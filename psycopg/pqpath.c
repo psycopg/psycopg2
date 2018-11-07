@@ -41,6 +41,7 @@
 #include "psycopg/typecast.h"
 #include "psycopg/pgtypes.h"
 #include "psycopg/error.h"
+#include "psycopg/column.h"
 
 #include "psycopg/libpq_support.h"
 #include "libpq-fe.h"
@@ -76,13 +77,57 @@ strip_severity(const char *msg)
         return msg;
 }
 
+/* Return a Python exception from a SQLSTATE from psycopg2.errors */
+BORROWED static PyObject *
+exception_from_module(const char *sqlstate)
+{
+    PyObject *rv = NULL;
+    PyObject *m = NULL;
+    PyObject *map = NULL;
+
+    if (!(m = PyImport_ImportModule("psycopg2.errors"))) { goto exit; }
+    if (!(map = PyObject_GetAttrString(m, "_by_sqlstate"))) { goto exit; }
+    if (!PyDict_Check(map)) {
+        Dprintf("'psycopg2.errors._by_sqlstate' is not a dict!");
+        goto exit;
+    }
+
+    /* get the sqlstate class (borrowed reference), or fail trying. */
+    rv = PyDict_GetItemString(map, sqlstate);
+
+exit:
+    /* We exit with a borrowed object, or a NULL but no error
+     * If an error did happen in this function, we don't want to clobber the
+     * database error. So better reporting it, albeit with the wrong class. */
+    PyErr_Clear();
+
+    Py_XDECREF(map);
+    Py_XDECREF(m);
+    return rv;
+}
+
 /* Returns the Python exception corresponding to an SQLSTATE error
    code.  A list of error codes can be found at:
 
-   http://www.postgresql.org/docs/current/static/errcodes-appendix.html */
+   https://www.postgresql.org/docs/current/static/errcodes-appendix.html */
 BORROWED static PyObject *
 exception_from_sqlstate(const char *sqlstate)
 {
+    PyObject *exc;
+
+    /* First look up an exception of the proper class from the Python module */
+    exc = exception_from_module(sqlstate);
+    if (exc) {
+        return exc;
+    }
+    else {
+        PyErr_Clear();
+    }
+
+    /*
+     * IMPORTANT: if you change anything in this function you should change
+     * make_errors.py accordingly.
+     */
     switch (sqlstate[0]) {
     case '0':
         switch (sqlstate[1]) {
@@ -1106,12 +1151,13 @@ pq_send_query(connectionObject *conn, const char *query)
  * The function will block only if a command is active and the
  * necessary response data has not yet been read by PQconsumeInput.
  *
- * The result should be disposed using PQclear()
+ * The result should be disposed of using PQclear()
  */
 PGresult *
 pq_get_last_result(connectionObject *conn)
 {
     PGresult *result = NULL, *res;
+    ExecStatusType status;
 
     /* Read until PQgetResult gives a NULL */
     while (NULL != (res = PQgetResult(conn->pgconn))) {
@@ -1124,11 +1170,15 @@ pq_get_last_result(connectionObject *conn)
             PQclear(result);
         }
         result = res;
+        status = PQresultStatus(result);
+        Dprintf("pq_get_last_result: got result %s", PQresStatus(status));
 
-        /* After entering copy both mode, libpq will make a phony
+        /* After entering copy mode, libpq will make a phony
          * PGresult for us every time we query for it, so we need to
          * break out of this endless loop. */
-        if (PQresultStatus(result) == PGRES_COPY_BOTH) {
+        if (status == PGRES_COPY_BOTH
+                || status == PGRES_COPY_OUT
+                || status == PGRES_COPY_IN) {
             break;
         }
     }
@@ -1201,12 +1251,17 @@ _pq_fetch_tuples(cursorObject *curs)
         Oid ftype = PQftype(curs->pgres, i);
         int fsize = PQfsize(curs->pgres, i);
         int fmod =  PQfmod(curs->pgres, i);
+        Oid ftable = PQftable(curs->pgres, i);
+        int ftablecol = PQftablecol(curs->pgres, i);
 
-        PyObject *dtitem = NULL;
+        columnObject *column = NULL;
         PyObject *type = NULL;
         PyObject *cast = NULL;
 
-        if (!(dtitem = PyTuple_New(7))) { goto exit; }
+        if (!(column = (columnObject *)PyObject_CallObject(
+                (PyObject *)&columnType, NULL))) {
+            goto exit;
+        }
 
         /* fill the right cast function by accessing three different dictionaries:
            - the per-cursor dictionary, if available (can be NULL or None)
@@ -1243,20 +1298,16 @@ _pq_fetch_tuples(cursorObject *curs)
                     curs->conn, PQfname(curs->pgres, i)))) {
                 goto err_for;
             }
-            PyTuple_SET_ITEM(dtitem, 0, tmp);
+            column->name = tmp;
         }
-        PyTuple_SET_ITEM(dtitem, 1, type);
+        column->type_code = type;
         type = NULL;
 
         /* 2/ display size is the maximum size of this field result tuples. */
         if (dsize && dsize[i] >= 0) {
             PyObject *tmp;
             if (!(tmp = PyInt_FromLong(dsize[i]))) { goto err_for; }
-            PyTuple_SET_ITEM(dtitem, 2, tmp);
-        }
-        else {
-            Py_INCREF(Py_None);
-            PyTuple_SET_ITEM(dtitem, 2, Py_None);
+            column->display_size = tmp;
         }
 
         /* 3/ size on the backend */
@@ -1265,18 +1316,18 @@ _pq_fetch_tuples(cursorObject *curs)
             if (ftype == NUMERICOID) {
                 PyObject *tmp;
                 if (!(tmp = PyInt_FromLong((fmod >> 16)))) { goto err_for; }
-                PyTuple_SET_ITEM(dtitem, 3, tmp);
+                column->internal_size = tmp;
             }
             else { /* If variable length record, return maximum size */
                 PyObject *tmp;
                 if (!(tmp = PyInt_FromLong(fmod))) { goto err_for; }
-                PyTuple_SET_ITEM(dtitem, 3, tmp);
+                column->internal_size = tmp;
             }
         }
         else {
             PyObject *tmp;
             if (!(tmp = PyInt_FromLong(fsize))) { goto err_for; }
-            PyTuple_SET_ITEM(dtitem, 3, tmp);
+            column->internal_size = tmp;
         }
 
         /* 4,5/ scale and precision */
@@ -1286,40 +1337,35 @@ _pq_fetch_tuples(cursorObject *curs)
             if (!(tmp = PyInt_FromLong((fmod >> 16) & 0xFFFF))) {
                 goto err_for;
             }
-            PyTuple_SET_ITEM(dtitem, 4, tmp);
+            column->precision = tmp;
 
             if (!(tmp = PyInt_FromLong(fmod & 0xFFFF))) {
-                PyTuple_SET_ITEM(dtitem, 5, tmp);
+                goto err_for;
             }
-            PyTuple_SET_ITEM(dtitem, 5, tmp);
-        }
-        else {
-            Py_INCREF(Py_None);
-            PyTuple_SET_ITEM(dtitem, 4, Py_None);
-            Py_INCREF(Py_None);
-            PyTuple_SET_ITEM(dtitem, 5, Py_None);
+            column->scale = tmp;
         }
 
-        /* 6/ FIXME: null_ok??? */
-        Py_INCREF(Py_None);
-        PyTuple_SET_ITEM(dtitem, 6, Py_None);
-
-        /* Convert into a namedtuple if available */
-        if (Py_None != psyco_DescriptionType) {
-            PyObject *tmp = dtitem;
-            dtitem = PyObject_CallObject(psyco_DescriptionType, tmp);
-            Py_DECREF(tmp);
-            if (NULL == dtitem) { goto err_for; }
+        /* table_oid, table_column */
+        if (ftable != InvalidOid) {
+            PyObject *tmp;
+            if (!(tmp = PyInt_FromLong((long)ftable))) { goto err_for; }
+            column->table_oid = tmp;
         }
 
-        PyTuple_SET_ITEM(description, i, dtitem);
-        dtitem = NULL;
+        if (ftablecol > 0) {
+            PyObject *tmp;
+            if (!(tmp = PyInt_FromLong((long)ftablecol))) { goto err_for; }
+            column->table_column = tmp;
+        }
+
+        PyTuple_SET_ITEM(description, i, (PyObject *)column);
+        column = NULL;
 
         continue;
 
 err_for:
         Py_XDECREF(type);
-        Py_XDECREF(dtitem);
+        Py_XDECREF(column);
         goto exit;
     }
 

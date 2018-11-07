@@ -26,7 +26,6 @@ from . import dbapi20
 from . import dbapi20_tpc
 from .testutils import skip_if_tpc_disabled
 import unittest
-from .testutils import decorate_all_tests
 import psycopg2
 
 from .testconfig import dsn
@@ -37,7 +36,7 @@ class Psycopg2Tests(dbapi20.DatabaseAPI20Test):
     connect_args = ()
     connect_kw_args = {'dsn': dsn}
 
-    lower_func = 'lower' # For stored procedure test
+    lower_func = 'lower'    # For stored procedure test
 
     def test_callproc(self):
         # Until DBAPI 2.0 compliance, callproc should return None or it's just
@@ -50,16 +49,14 @@ class Psycopg2Tests(dbapi20.DatabaseAPI20Test):
         con = self._connect()
         try:
             cur = con.cursor()
-            if self.lower_func and hasattr(cur,'callproc'):
-                cur.callproc(self.lower_func,('FOO',))
+            if self.lower_func and hasattr(cur, 'callproc'):
+                cur.callproc(self.lower_func, ('FOO',))
                 r = cur.fetchall()
-                self.assertEqual(len(r),1,'callproc produced no result set')
-                self.assertEqual(len(r[0]),1,
-                    'callproc produced invalid result set'
-                    )
-                self.assertEqual(r[0][0],'foo',
-                    'callproc produced invalid results'
-                    )
+                self.assertEqual(len(r), 1, 'callproc produced no result set')
+                self.assertEqual(len(r[0]), 1,
+                    'callproc produced invalid result set')
+                self.assertEqual(r[0][0], 'foo',
+                    'callproc produced invalid results')
         finally:
             con.close()
 
@@ -72,17 +69,17 @@ class Psycopg2Tests(dbapi20.DatabaseAPI20Test):
         pass
 
 
+@skip_if_tpc_disabled
 class Psycopg2TPCTests(dbapi20_tpc.TwoPhaseCommitTests, unittest.TestCase):
     driver = psycopg2
 
     def connect(self):
         return psycopg2.connect(dsn=dsn)
 
-decorate_all_tests(Psycopg2TPCTests, skip_if_tpc_disabled)
-
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == '__main__':
     unittest.main()

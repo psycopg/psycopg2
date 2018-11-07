@@ -198,8 +198,8 @@ called `SQL injection`_ and is known to be one of the most widespread forms of
 attack to database servers. Before continuing, please print `this page`__ as a
 memo and hang it onto your desk.
 
-.. _SQL injection: http://en.wikipedia.org/wiki/SQL_injection
-.. __: http://xkcd.com/327/
+.. _SQL injection: https://en.wikipedia.org/wiki/SQL_injection
+.. __: https://xkcd.com/327/
 
 Psycopg can `automatically convert Python objects to and from SQL
 literals`__: using this feature your code will be more robust and
@@ -221,7 +221,28 @@ argument of the `~cursor.execute()` method::
     >>> cur.execute(SQL, data) # Note: no % operator
 
 
+Values containing backslashes and LIKE
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Unlike in Python, the backslash (`\\`) is not used as an escape
+character *except* in patterns used with `LIKE` and `ILIKE` where they
+are needed to escape the `%` and `_` characters.
+
+This can lead to confusing situations::
+
+   >>> path = r'C:\Users\Bobby.Tables'
+   >>> cur.execute('INSERT INTO mytable(path) VALUES (%s)', (path,))
+   >>> cur.execute('SELECT * FROM mytable WHERE path LIKE %s', (path,))
+   >>> cur.fetchall()
+   []
+
+The solution is to specify an `ESCAPE` character of `''` (empty string)
+in your `LIKE` query::
+
+   >>> cur.execute("SELECT * FROM mytable WHERE path LIKE %s ESCAPE ''", (path,))
+
+
+  
 .. index::
     single: Adaptation
     pair: Objects; Adaptation
@@ -351,7 +372,7 @@ converted into `!Decimal`.
     This of course may imply a loss of precision.
 
 .. seealso:: `PostgreSQL numeric types
-    <http://www.postgresql.org/docs/current/static/datatype-numeric.html>`__
+    <https://www.postgresql.org/docs/current/static/datatype-numeric.html>`__
 
 
 .. index::
@@ -391,8 +412,8 @@ defined on the database connection (the `PostgreSQL encoding`__, available in
 
     >>> cur.execute("INSERT INTO test (num, data) VALUES (%s,%s);", (74, u))
 
-.. __: http://www.postgresql.org/docs/current/static/multibyte.html
-.. __: http://docs.python.org/library/codecs.html#standard-encodings
+.. __: https://www.postgresql.org/docs/current/static/multibyte.html
+.. __: https://docs.python.org/library/codecs.html
 
 When reading data from the database, in Python 2 the strings returned are
 usually 8 bit `!str` objects encoded in the database client encoding::
@@ -465,7 +486,7 @@ type `!str`). Any object implementing the `Revised Buffer Protocol`__ should
 be usable as binary type. Received data is returned as `!buffer` (in Python 2)
 or `!memoryview` (in Python 3).
 
-.. __: http://www.python.org/dev/peps/pep-3118/
+.. __: https://www.python.org/dev/peps/pep-3118/
 
 .. versionchanged:: 2.4
    only strings were supported before.
@@ -494,8 +515,8 @@ or `!memoryview` (in Python 3).
    server configuration file or in the client session (using a query such as
    ``SET bytea_output TO escape;``) before receiving binary data.
 
-   .. __: http://www.postgresql.org/docs/current/static/datatype-binary.html
-   .. __: http://www.postgresql.org/docs/current/static/runtime-config-client.html#GUC-BYTEA-OUTPUT
+   .. __: https://www.postgresql.org/docs/current/static/datatype-binary.html
+   .. __: https://www.postgresql.org/docs/current/static/runtime-config-client.html#GUC-BYTEA-OUTPUT
 
 
 .. index::
@@ -527,7 +548,7 @@ the same way::
     "SELECT '38 days 6027.425337 seconds';"
 
 .. seealso:: `PostgreSQL date/time types
-    <http://www.postgresql.org/docs/current/static/datatype-datetime.html>`__
+    <https://www.postgresql.org/docs/current/static/datatype-datetime.html>`__
 
 
 .. index::
@@ -622,7 +643,7 @@ Python lists are converted into PostgreSQL :sql:`ARRAY`\ s::
     Furthermore :sql:`ANY` can also work with empty lists, whereas :sql:`IN ()`
     is a SQL syntax error.
 
-    .. __: http://www.postgresql.org/docs/current/static/functions-subquery.html#FUNCTIONS-SUBQUERY-ANY-SOME
+    .. __: https://www.postgresql.org/docs/current/static/functions-subquery.html#FUNCTIONS-SUBQUERY-ANY-SOME
 
 .. note::
 
@@ -846,7 +867,7 @@ lifetime extends well after `~connection.commit()`, calling
 
 
 .. |DECLARE| replace:: :sql:`DECLARE`
-.. _DECLARE: http://www.postgresql.org/docs/current/static/sql-declare.html
+.. _DECLARE: https://www.postgresql.org/docs/current/static/sql-declare.html
 
 
 
@@ -876,7 +897,7 @@ forked processes`__, so when using a module such as `multiprocessing` or a
 forking web deploy method such as FastCGI make sure to create the connections
 *after* the fork.
 
-.. __: http://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-CONNECT
+.. __: https://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-CONNECT
 
 Connections shouldn't be shared either by different green threads: see
 :ref:`green-support` for further details.
@@ -920,7 +941,7 @@ Please refer to the documentation of the single methods for details and
 examples.
 
 .. |COPY| replace:: :sql:`COPY`
-.. __: http://www.postgresql.org/docs/current/static/sql-copy.html
+.. __: https://www.postgresql.org/docs/current/static/sql-copy.html
 
 
 
@@ -937,7 +958,7 @@ access to user data that is stored in a special large-object structure. They
 are useful with data values too large to be manipulated conveniently as a
 whole.
 
-.. __: http://www.postgresql.org/docs/current/static/largeobjects.html
+.. __: https://www.postgresql.org/docs/current/static/largeobjects.html
 
 Psycopg allows access to the large object using the
 `~psycopg2.extensions.lobject` class. Objects are generated using the
@@ -948,9 +969,9 @@ Psycopg large object support efficient import/export with file system files
 using the |lo_import|_ and |lo_export|_ libpq functions.
 
 .. |lo_import| replace:: `!lo_import()`
-.. _lo_import: http://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-IMPORT
+.. _lo_import: https://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-IMPORT
 .. |lo_export| replace:: `!lo_export()`
-.. _lo_export: http://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-EXPORT
+.. _lo_export: https://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-EXPORT
 
 .. versionchanged:: 2.6
     added support for large objects greated than 2GB. Note that the support is
@@ -1014,5 +1035,5 @@ transactions produced by a Java program.
 
 For further details see the documentation for the above methods.
 
-.. __: http://www.opengroup.org/bookstore/catalog/c193.htm
-.. __: http://jdbc.postgresql.org/
+.. __: https://publications.opengroup.org/c193
+.. __: https://jdbc.postgresql.org/

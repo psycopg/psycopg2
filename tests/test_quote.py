@@ -46,8 +46,8 @@ class QuotingTestCase(ConnectingTestCase):
     The tests also check that no warning is raised ('escape_string_warning'
     should be on).
 
-    http://www.postgresql.org/docs/current/static/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS
-    http://www.postgresql.org/docs/current/static/runtime-config-compatible.html
+    https://www.postgresql.org/docs/current/static/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS
+    https://www.postgresql.org/docs/current/static/runtime-config-compatible.html
     """
     def test_string(self):
         data = """some data with \t chars
@@ -90,7 +90,7 @@ class QuotingTestCase(ConnectingTestCase):
         else:
             res = curs.fetchone()[0].tobytes()
 
-        if res[0] in (b'x', ord(b'x')) and self.conn.server_version >= 90000:
+        if res[0] in (b'x', ord(b'x')) and self.conn.info.server_version >= 90000:
             return self.skipTest(
                 "bytea broken with server >= 9.0, libpq < 9")
 
@@ -126,7 +126,8 @@ class QuotingTestCase(ConnectingTestCase):
         if sys.version_info[0] < 3:
             data = ''.join(map(chr, range(32, 127) + range(160, 256)))
         else:
-            data = bytes(list(range(32, 127)) + list(range(160, 256))).decode('latin1')
+            data = bytes(list(range(32, 127))
+                + list(range(160, 256))).decode('latin1')
 
         # as string
         curs.execute("SELECT %s::text;", (data,))
@@ -150,7 +151,8 @@ class QuotingTestCase(ConnectingTestCase):
         if sys.version_info[0] < 3:
             data = ''.join(map(chr, range(32, 127) + range(128, 256)))
         else:
-            data = bytes(list(range(32, 127)) + list(range(128, 256))).decode('koi8_r')
+            data = bytes(list(range(32, 127))
+                + list(range(128, 256))).decode('koi8_r')
 
         # as string
         curs.execute("SELECT %s::text;", (data,))
@@ -251,6 +253,7 @@ class TestStringAdapter(ConnectingTestCase):
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == "__main__":
     unittest.main()

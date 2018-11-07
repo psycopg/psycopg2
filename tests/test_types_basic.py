@@ -167,6 +167,13 @@ class TypesBasicTests(ConnectingTestCase):
         curs.execute("select col from array_test where id = 2")
         self.assertEqual(curs.fetchone()[0], [])
 
+    @testutils.skip_before_postgres(8, 4)
+    def testNestedEmptyArray(self):
+        # issue #788
+        curs = self.conn.cursor()
+        curs.execute("select 10 = any(%s::int[])", ([[]], ))
+        self.assertFalse(curs.fetchone()[0])
+
     def testEmptyArrayNoCast(self):
         s = self.execute("SELECT '{}' AS foo")
         self.assertEqual(s, '{}')
@@ -228,9 +235,9 @@ class TypesBasicTests(ConnectingTestCase):
         curs.execute("insert into na (textaa) values (%s)", ([['a', None]],))
         curs.execute("insert into na (textaa) values (%s)", ([[None, None]],))
 
-        curs.execute("insert into na (intaa) values (%s)",  ([[None]],))
+        curs.execute("insert into na (intaa) values (%s)", ([[None]],))
         curs.execute("insert into na (intaa) values (%s)", ([[42, None]],))
-        curs.execute("insert into na (intaa) values (%s)",  ([[None, None]],))
+        curs.execute("insert into na (intaa) values (%s)", ([[None, None]],))
 
         curs.execute("insert into na (boolaa) values (%s)", ([[None]],))
         curs.execute("insert into na (boolaa) values (%s)", ([[True, None]],))
@@ -452,6 +459,20 @@ class AdaptSubclassTest(unittest.TestCase):
         self.assertEqual(ext.adapt(foo((1, 2, 3))).getquoted(), 'bar')
 
 
+@decorate_all_tests
+def skip_if_cant_cast(f):
+    @wraps(f)
+    def skip_if_cant_cast_(self, *args, **kwargs):
+        if self._cast is None:
+            return self.skipTest("can't test bytea parser: %s - %s"
+                % (self._exc.__class__.__name__, self._exc))
+
+        return f(self, *args, **kwargs)
+
+    return skip_if_cant_cast_
+
+
+@skip_if_cant_cast
 class ByteaParserTest(unittest.TestCase):
     """Unit test for our bytea format parser."""
     def setUp(self):
@@ -539,22 +560,9 @@ class ByteaParserTest(unittest.TestCase):
         self.assertEqual(rv, tgt)
 
 
-def skip_if_cant_cast(f):
-    @wraps(f)
-    def skip_if_cant_cast_(self, *args, **kwargs):
-        if self._cast is None:
-            return self.skipTest("can't test bytea parser: %s - %s"
-                % (self._exc.__class__.__name__, self._exc))
-
-        return f(self, *args, **kwargs)
-
-    return skip_if_cant_cast_
-
-decorate_all_tests(ByteaParserTest, skip_if_cant_cast)
-
-
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == "__main__":
     unittest.main()

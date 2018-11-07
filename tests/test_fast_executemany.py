@@ -83,6 +83,16 @@ class TestExecuteBatch(FastExecuteTestMixin, testutils.ConnectingTestCase):
         cur.execute("select id, val from testfast order by id")
         self.assertEqual(cur.fetchall(), [(i, i * 10) for i in range(1000)])
 
+    def test_composed(self):
+        from psycopg2 import sql
+        cur = self.conn.cursor()
+        psycopg2.extras.execute_batch(cur,
+            sql.SQL("insert into {0} (id, val) values (%s, %s)")
+                .format(sql.Identifier('testfast')),
+            ((i, i * 10) for i in range(1000)))
+        cur.execute("select id, val from testfast order by id")
+        self.assertEqual(cur.fetchall(), [(i, i * 10) for i in range(1000)])
+
     def test_pages(self):
         cur = self.conn.cursor()
         psycopg2.extras.execute_batch(cur,
@@ -124,6 +134,7 @@ class TestExecuteBatch(FastExecuteTestMixin, testutils.ConnectingTestCase):
         self.assertEqual(cur.fetchone(), (3, snowman))
 
 
+@testutils.skip_before_postgres(8, 2)
 class TestExecuteValues(FastExecuteTestMixin, testutils.ConnectingTestCase):
     def test_empty(self):
         cur = self.conn.cursor()
@@ -165,6 +176,16 @@ class TestExecuteValues(FastExecuteTestMixin, testutils.ConnectingTestCase):
         cur = self.conn.cursor()
         psycopg2.extras.execute_values(cur,
             "insert into testfast (id, val) values %s",
+            ((i, i * 10) for i in range(1000)))
+        cur.execute("select id, val from testfast order by id")
+        self.assertEqual(cur.fetchall(), [(i, i * 10) for i in range(1000)])
+
+    def test_composed(self):
+        from psycopg2 import sql
+        cur = self.conn.cursor()
+        psycopg2.extras.execute_values(cur,
+            sql.SQL("insert into {0} (id, val) values %s")
+                .format(sql.Identifier('testfast')),
             ((i, i * 10) for i in range(1000)))
         cur.execute("select id, val from testfast order by id")
         self.assertEqual(cur.fetchall(), [(i, i * 10) for i in range(1000)])
@@ -231,12 +252,9 @@ class TestExecuteValues(FastExecuteTestMixin, testutils.ConnectingTestCase):
         self.assertEqual(cur.fetchall(), [(1, 'hi')])
 
 
-testutils.decorate_all_tests(TestExecuteValues,
-    testutils.skip_before_postgres(8, 2))
-
-
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == "__main__":
     unittest.main()

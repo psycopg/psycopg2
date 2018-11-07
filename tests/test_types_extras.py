@@ -24,8 +24,7 @@ from pickle import dumps, loads
 
 import unittest
 from .testutils import (skip_if_no_uuid, skip_before_postgres,
-    ConnectingTestCase, decorate_all_tests, py3_raises_typeerror, slow,
-    skip_from_python)
+    ConnectingTestCase, py3_raises_typeerror, slow, skip_from_python)
 
 import psycopg2
 import psycopg2.extras
@@ -123,6 +122,7 @@ class TypesExtrasTests(ConnectingTestCase):
         s = self.execute("""SELECT '{"(1,2)","(3,4)"}' AS foo""")
         self.failUnless(s == """{"(1,2)","(3,4)"}""")
 
+
 def skip_if_no_hstore(f):
     @wraps(f)
     def skip_if_no_hstore_(self):
@@ -137,7 +137,7 @@ def skip_if_no_hstore(f):
 
 class HstoreTestCase(ConnectingTestCase):
     def test_adapt_8(self):
-        if self.conn.server_version >= 90000:
+        if self.conn.info.server_version >= 90000:
             return self.skipTest("skipping dict adaptation with PG pre-9 syntax")
 
         from psycopg2.extras import HstoreAdapter
@@ -163,7 +163,7 @@ class HstoreTestCase(ConnectingTestCase):
             self.assertQuotedEqual(ii[3], b"('d' => '" + encc + b"')")
 
     def test_adapt_9(self):
-        if self.conn.server_version < 90000:
+        if self.conn.info.server_version < 90000:
             return self.skipTest("skipping dict adaptation with PG 9 syntax")
 
         from psycopg2.extras import HstoreAdapter
@@ -448,10 +448,10 @@ class HstoreTestCase(ConnectingTestCase):
 def skip_if_no_composite(f):
     @wraps(f)
     def skip_if_no_composite_(self):
-        if self.conn.server_version < 80000:
+        if self.conn.info.server_version < 80000:
             return self.skipTest(
                 "server version %s doesn't support composite types"
-                % self.conn.server_version)
+                % self.conn.info.server_version)
 
         return f(self)
 
@@ -1048,6 +1048,7 @@ def skip_if_no_jsonb_type(f):
     return skip_before_postgres(9, 4)(f)
 
 
+@skip_if_no_jsonb_type
 class JsonbTestCase(ConnectingTestCase):
     @staticmethod
     def myloads(s):
@@ -1136,8 +1137,6 @@ class JsonbTestCase(ConnectingTestCase):
         self.assertEqual(curs.fetchone()[0], None)
         curs.execute("""select NULL::jsonb[]""")
         self.assertEqual(curs.fetchone()[0], None)
-
-decorate_all_tests(JsonbTestCase, skip_if_no_jsonb_type)
 
 
 class RangeTestCase(unittest.TestCase):
@@ -1386,20 +1385,54 @@ class RangeTestCase(unittest.TestCase):
         r = Range(0, 4)
         self.assertEqual(loads(dumps(r)), r)
 
+    def test_str(self):
+        '''
+        Range types should have a short and readable ``str`` implementation.
 
-def skip_if_no_range(f):
-    @wraps(f)
-    def skip_if_no_range_(self):
-        if self.conn.server_version < 90200:
-            return self.skipTest(
-                "server version %s doesn't support range types"
-                % self.conn.server_version)
+        Using ``repr`` for all string conversions can be very unreadable for
+        longer types like ``DateTimeTZRange``.
+        '''
+        from psycopg2.extras import Range
 
-        return f(self)
+        # Using the "u" prefix to make sure we have the proper return types in
+        # Python2
+        expected = [
+            u'(0, 4)',
+            u'[0, 4]',
+            u'(0, 4]',
+            u'[0, 4)',
+            u'empty',
+        ]
+        results = []
 
-    return skip_if_no_range_
+        converter = unicode if sys.version_info < (3, 0) else str
+
+        for bounds in ('()', '[]', '(]', '[)'):
+            r = Range(0, 4, bounds=bounds)
+            results.append(converter(r))
+
+        r = Range(empty=True)
+        results.append(converter(r))
+        self.assertEqual(results, expected)
+
+    def test_str_datetime(self):
+        '''
+        Date-Time ranges should return a human-readable string as well on
+        string conversion.
+        '''
+        from psycopg2.extras import DateTimeTZRange
+        from datetime import datetime
+        from psycopg2.tz import FixedOffsetTimezone
+        converter = unicode if sys.version_info < (3, 0) else str
+        tz = FixedOffsetTimezone(-5 * 60, "EST")
+        r = DateTimeTZRange(datetime(2010, 1, 1, tzinfo=tz),
+                            datetime(2011, 1, 1, tzinfo=tz))
+        expected = u'[2010-01-01 00:00:00-05:00, 2011-01-01 00:00:00-05:00)'
+        result = converter(r)
+        self.assertEqual(result, expected)
 
 
+@skip_before_postgres(9, 2, "range not supported before postgres 9.2")
 class RangeCasterTestCase(ConnectingTestCase):
 
     builtin_ranges = ('int4range', 'int8range', 'numrange',
@@ -1716,8 +1749,6 @@ class RangeCasterTestCase(ConnectingTestCase):
         # clear the adapters to allow precise count by scripts/refcounter.py
         for r in [ra1, ra2, rars2, rars3]:
             del ext.adapters[r.range, ext.ISQLQuote]
-
-decorate_all_tests(RangeCasterTestCase, skip_if_no_range)
 
 
 def test_suite():

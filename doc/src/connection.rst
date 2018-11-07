@@ -198,7 +198,7 @@ The ``connection`` class
         .. seealso:: the |PREPARE TRANSACTION|_ PostgreSQL command.
 
         .. |PREPARE TRANSACTION| replace:: :sql:`PREPARE TRANSACTION`
-        .. _PREPARE TRANSACTION: http://www.postgresql.org/docs/current/static/sql-prepare-transaction.html
+        .. _PREPARE TRANSACTION: https://www.postgresql.org/docs/current/static/sql-prepare-transaction.html
 
 
     .. index::
@@ -224,7 +224,7 @@ The ``connection`` class
         .. seealso:: the |COMMIT PREPARED|_ PostgreSQL command.
 
         .. |COMMIT PREPARED| replace:: :sql:`COMMIT PREPARED`
-        .. _COMMIT PREPARED: http://www.postgresql.org/docs/current/static/sql-commit-prepared.html
+        .. _COMMIT PREPARED: https://www.postgresql.org/docs/current/static/sql-commit-prepared.html
 
 
     .. index::
@@ -246,7 +246,7 @@ The ``connection`` class
         .. seealso:: the |ROLLBACK PREPARED|_ PostgreSQL command.
 
         .. |ROLLBACK PREPARED| replace:: :sql:`ROLLBACK PREPARED`
-        .. _ROLLBACK PREPARED: http://www.postgresql.org/docs/current/static/sql-rollback-prepared.html
+        .. _ROLLBACK PREPARED: https://www.postgresql.org/docs/current/static/sql-rollback-prepared.html
 
 
     .. index::
@@ -267,7 +267,7 @@ The ``connection`` class
         transactions initiated by a program using such driver should be
         unpacked correctly.
 
-        .. __: http://jdbc.postgresql.org/
+        .. __: https://jdbc.postgresql.org/
 
         Xids returned by `!tpc_recover()` also have extra attributes
         `~psycopg2.extensions.Xid.prepared`, `~psycopg2.extensions.Xid.owner`,
@@ -277,7 +277,7 @@ The ``connection`` class
         .. seealso:: the |pg_prepared_xacts|_ system view.
 
         .. |pg_prepared_xacts| replace:: `pg_prepared_xacts`
-        .. _pg_prepared_xacts: http://www.postgresql.org/docs/current/static/view-pg-prepared-xacts.html
+        .. _pg_prepared_xacts: https://www.postgresql.org/docs/current/static/view-pg-prepared-xacts.html
 
 
 
@@ -309,7 +309,7 @@ The ``connection`` class
         |PQcancel|_.
 
         .. |PQcancel| replace:: `!PQcancel()`
-        .. _PQcancel: http://www.postgresql.org/docs/current/static/libpq-cancel.html#LIBPQ-PQCANCEL
+        .. _PQcancel: https://www.postgresql.org/docs/current/static/libpq-cancel.html#LIBPQ-PQCANCEL
 
         .. versionadded:: 2.3
 
@@ -325,10 +325,10 @@ The ``connection`` class
         available for recover.
 
         .. |RESET| replace:: :sql:`RESET`
-        .. _RESET: http://www.postgresql.org/docs/current/static/sql-reset.html
+        .. _RESET: https://www.postgresql.org/docs/current/static/sql-reset.html
 
         .. |SET SESSION AUTHORIZATION| replace:: :sql:`SET SESSION AUTHORIZATION`
-        .. __: http://www.postgresql.org/docs/current/static/sql-set-session-authorization.html
+        .. __: https://www.postgresql.org/docs/current/static/sql-set-session-authorization.html
 
         .. versionadded:: 2.0.12
 
@@ -341,6 +341,9 @@ The ``connection`` class
         If a password was specified in the connection string it will be
         obscured.
 
+
+
+    .. rubric:: Transaction control methods and attributes.
 
     .. index::
         pair: Transaction; Autocommit
@@ -366,7 +369,7 @@ The ``connection`` class
             `autocommit` attribute.
 
         .. _isolation level:
-            http://www.postgresql.org/docs/current/static/transaction-iso.html
+            https://www.postgresql.org/docs/current/static/transaction-iso.html
 
         Arguments set to `!None` (the default for all) will not be changed.
         The parameters *isolation_level*, *readonly* and *deferrable* also
@@ -376,11 +379,11 @@ The ``connection`` class
         |default_transaction_read_only|__, |default_transaction_deferrable|__.
 
         .. |default_transaction_isolation| replace:: :sql:`default_transaction_isolation`
-        .. __: http://www.postgresql.org/docs/current/static/runtime-config-client.html#GUC-DEFAULT-TRANSACTION-ISOLATION
+        .. __: https://www.postgresql.org/docs/current/static/runtime-config-client.html#GUC-DEFAULT-TRANSACTION-ISOLATION
         .. |default_transaction_read_only| replace:: :sql:`default_transaction_read_only`
-        .. __: http://www.postgresql.org/docs/current/static/runtime-config-client.html#GUC-DEFAULT-TRANSACTION-READ-ONLY
+        .. __: https://www.postgresql.org/docs/current/static/runtime-config-client.html#GUC-DEFAULT-TRANSACTION-READ-ONLY
         .. |default_transaction_deferrable| replace:: :sql:`default_transaction_deferrable`
-        .. __: http://www.postgresql.org/docs/current/static/runtime-config-client.html#GUC-DEFAULT-TRANSACTION-DEFERRABLE
+        .. __: https://www.postgresql.org/docs/current/static/runtime-config-client.html#GUC-DEFAULT-TRANSACTION-DEFERRABLE
 
         The function must be invoked with no transaction in progress.
 
@@ -388,7 +391,7 @@ The ``connection`` class
             of the transaction parameters in the server.
 
             .. |SET TRANSACTION| replace:: :sql:`SET TRANSACTION`
-            .. _SET TRANSACTION: http://www.postgresql.org/docs/current/static/sql-set-transaction.html
+            .. _SET TRANSACTION: https://www.postgresql.org/docs/current/static/sql-set-transaction.html
 
         .. versionadded:: 2.4.2
 
@@ -534,7 +537,7 @@ The ``connection`` class
         is the encoding defined by the database. It should be one of the
         `characters set supported by PostgreSQL`__
 
-        .. __: http://www.postgresql.org/docs/current/static/multibyte.html
+        .. __: https://www.postgresql.org/docs/current/static/multibyte.html
 
 
     .. index::
@@ -568,7 +571,7 @@ The ``connection`` class
         configuration parameters`__ such as ``log_statement``,
         ``client_min_messages``, ``log_min_duration_statement`` etc.
 
-        .. __: http://www.postgresql.org/docs/current/static/runtime-config-logging.html
+        .. __: https://www.postgresql.org/docs/current/static/runtime-config-logging.html
 
 
     .. attribute:: notifies
@@ -600,42 +603,14 @@ The ``connection`` class
 
 
     .. index::
-        pair: Backend; PID
+        pair: Connection; Info
 
-    .. method:: get_backend_pid()
+    .. attribute:: info
 
-        Returns the process ID (PID) of the backend server process handling
-        this connection.
+        A `~psycopg2.extensions.ConnectionInfo` object exposing information
+        about the native libpq connection.
 
-        Note that the PID belongs to a process executing on the database
-        server host, not the local host!
-
-        .. seealso:: libpq docs for `PQbackendPID()`__ for details.
-
-            .. __: http://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQBACKENDPID
-
-        .. versionadded:: 2.0.8
-
-
-    .. index::
-        pair: Server; Parameters
-
-    .. method:: get_parameter_status(parameter)
-
-        Look up a current parameter setting of the server.
-
-        Potential values for ``parameter`` are: ``server_version``,
-        ``server_encoding``, ``client_encoding``, ``is_superuser``,
-        ``session_authorization``, ``DateStyle``, ``TimeZone``,
-        ``integer_datetimes``, and ``standard_conforming_strings``.
-
-        If server did not report requested parameter, return `!None`.
-
-        .. seealso:: libpq docs for `PQparameterStatus()`__ for details.
-
-            .. __: http://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQPARAMETERSTATUS
-
-        .. versionadded:: 2.0.12
+        .. versionadded:: 2.8.0
 
 
     .. index::
@@ -656,59 +631,9 @@ The ``connection`` class
 
         .. seealso:: libpq docs for `PQconninfo()`__ for details.
 
-            .. __: http://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-PQCONNINFO
+            .. __: https://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-PQCONNINFO
 
         .. versionadded:: 2.7
-
-
-    .. index::
-        pair: Transaction; Status
-
-    .. method:: get_transaction_status()
-
-        Return the current session transaction status as an integer.  Symbolic
-        constants for the values are defined in the module
-        `psycopg2.extensions`: see :ref:`transaction-status-constants`
-        for the available values.
-
-        .. seealso:: libpq docs for `PQtransactionStatus()`__ for details.
-
-            .. __: http://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQTRANSACTIONSTATUS
-
-
-    .. index::
-        pair: Protocol; Version
-
-    .. attribute:: protocol_version
-
-        A read-only integer representing frontend/backend protocol being used.
-        Currently Psycopg supports only protocol 3, which allows connection
-        to PostgreSQL server from version 7.4. Psycopg versions previous than
-        2.3 support both protocols 2 and 3.
-
-        .. seealso:: libpq docs for `PQprotocolVersion()`__ for details.
-
-            .. __: http://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQPROTOCOLVERSION
-
-        .. versionadded:: 2.0.12
-
-
-    .. index::
-        pair: Server; Version
-
-    .. attribute:: server_version
-
-        A read-only integer representing the backend version.
-
-        The number is formed by converting the major, minor, and revision
-        numbers into two-decimal-digit numbers and appending them together.
-        For example, version 8.1.5 will be returned as ``80105``.
-
-        .. seealso:: libpq docs for `PQserverVersion()`__ for details.
-
-            .. __: http://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQSERVERVERSION
-
-        .. versionadded:: 2.0.12
 
 
     .. index::
@@ -743,7 +668,7 @@ The ``connection`` class
             `~psycopg2.extensions.lobject` to be instantiated.
 
         .. |lo_import| replace:: `!lo_import()`
-        .. _lo_import: http://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-IMPORT
+        .. _lo_import: https://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-IMPORT
 
         Available values for *mode* are:
 
@@ -826,6 +751,119 @@ The ``connection`` class
             .. __: https://docs.python.org/3.1/c-api/capsule.html
 
         .. versionadded:: 2.8
+
+
+
+    .. rubric:: informative methods of the native connection
+
+    .. note:: 
+
+        These methods are better accessed using the `~connection.info`
+        attributes and may be dropped in future versions.
+
+
+    .. index::
+        pair: Transaction; Status
+
+    .. method:: get_transaction_status()
+
+        Also available as `~connection.info`\ `!.`\
+        `~psycopg2.extensions.ConnectionInfo.transaction_status`.
+
+        Return the current session transaction status as an integer.  Symbolic
+        constants for the values are defined in the module
+        `psycopg2.extensions`: see :ref:`transaction-status-constants`
+        for the available values.
+
+        .. seealso:: libpq docs for `PQtransactionStatus()`__ for details.
+
+            .. __: https://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQTRANSACTIONSTATUS
+
+
+    .. index::
+        pair: Protocol; Version
+
+    .. attribute:: protocol_version
+
+        Also available as `~connection.info`\ `!.`\
+        `~psycopg2.extensions.ConnectionInfo.protocol_version`.
+
+        A read-only integer representing frontend/backend protocol being used.
+        Currently Psycopg supports only protocol 3, which allows connection
+        to PostgreSQL server from version 7.4. Psycopg versions previous than
+        2.3 support both protocols 2 and 3.
+
+        .. seealso:: libpq docs for `PQprotocolVersion()`__ for details.
+
+            .. __: https://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQPROTOCOLVERSION
+
+        .. versionadded:: 2.0.12
+
+
+    .. index::
+        pair: Server; Version
+
+    .. attribute:: server_version
+
+        Also available as `~connection.info`\ `!.`\
+        `~psycopg2.extensions.ConnectionInfo.server_version`.
+
+        A read-only integer representing the backend version.
+
+        The number is formed by converting the major, minor, and revision
+        numbers into two-decimal-digit numbers and appending them together.
+        For example, version 8.1.5 will be returned as ``80105``.
+
+        .. seealso:: libpq docs for `PQserverVersion()`__ for details.
+
+            .. __: https://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQSERVERVERSION
+
+        .. versionadded:: 2.0.12
+
+
+    .. index::
+        pair: Backend; PID
+
+    .. method:: get_backend_pid()
+
+        Also available as `~connection.info`\ `!.`\
+        `~psycopg2.extensions.ConnectionInfo.backend_pid`.
+
+        Returns the process ID (PID) of the backend server process handling
+        this connection.
+
+        Note that the PID belongs to a process executing on the database
+        server host, not the local host!
+
+        .. seealso:: libpq docs for `PQbackendPID()`__ for details.
+
+            .. __: https://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQBACKENDPID
+
+        .. versionadded:: 2.0.8
+
+
+    .. index::
+        pair: Server; Parameters
+
+    .. method:: get_parameter_status(parameter)
+
+        Also available as `~connection.info`\ `!.`\
+        `~psycopg2.extensions.ConnectionInfo.parameter_status()`.
+
+        Look up a current parameter setting of the server.
+
+        Potential values for ``parameter`` are: ``server_version``,
+        ``server_encoding``, ``client_encoding``, ``is_superuser``,
+        ``session_authorization``, ``DateStyle``, ``TimeZone``,
+        ``integer_datetimes``, and ``standard_conforming_strings``.
+
+        If server did not report requested parameter, return `!None`.
+
+        .. seealso:: libpq docs for `PQparameterStatus()`__ for details.
+
+            .. __: https://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQPARAMETERSTATUS
+
+        .. versionadded:: 2.0.12
 
 
 .. testcode::

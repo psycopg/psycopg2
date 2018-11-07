@@ -31,10 +31,7 @@ import time as _time
 import re as _re
 from collections import namedtuple, OrderedDict
 
-try:
-    import logging as _logging
-except:
-    _logging = None
+import logging as _logging
 
 import psycopg2
 from psycopg2 import extensions as _ext
@@ -189,7 +186,7 @@ class DictRow(list):
     def get(self, x, default=None):
         try:
             return self[x]
-        except:
+        except Exception:
             return default
 
     def copy(self):
@@ -404,7 +401,7 @@ class NamedTupleCursor(_cursor):
 class LoggingConnection(_connection):
     """A connection that logs all queries to a file or logger__ object.
 
-    .. __: http://docs.python.org/library/logging.html
+    .. __: https://docs.python.org/library/logging.html
     """
 
     def initialize(self, logobj):
@@ -638,8 +635,8 @@ class ReplicationCursor(_replicationCursor):
 class UUID_adapter(object):
     """Adapt Python's uuid.UUID__ type to PostgreSQL's uuid__.
 
-    .. __: http://docs.python.org/library/uuid.html
-    .. __: http://www.postgresql.org/docs/current/static/datatype-uuid.html
+    .. __: https://docs.python.org/library/uuid.html
+    .. __: https://www.postgresql.org/docs/current/static/datatype-uuid.html
     """
 
     def __init__(self, uuid):
@@ -806,7 +803,7 @@ class HstoreAdapter(object):
         self.conn = conn
 
         # use an old-style getquoted implementation if required
-        if conn.server_version < 90000:
+        if conn.info.server_version < 90000:
             self.getquoted = self._getquoted_8
 
     def _getquoted_8(self):
@@ -911,7 +908,7 @@ class HstoreAdapter(object):
         conn_status = conn.status
 
         # column typarray not available before PG 8.3
-        typarray = conn.server_version >= 80300 and "typarray" or "NULL"
+        typarray = conn.info.server_version >= 80300 and "typarray" or "NULL"
 
         rv0, rv1 = [], []
 
@@ -1097,7 +1094,7 @@ class CompositeCaster(object):
             schema = 'public'
 
         # column typarray not available before PG 8.3
-        typarray = conn.server_version >= 80300 and "typarray" or "NULL"
+        typarray = conn.info.server_version >= 80300 and "typarray" or "NULL"
 
         # get the type oid and attributes
         curs.execute("""\
@@ -1257,6 +1254,10 @@ def execute_values(cur, sql, argslist, template=None, page_size=100):
         [(1, 20, 3), (4, 50, 6), (7, 8, 9)])
 
     '''
+    from psycopg2.sql import Composable
+    if isinstance(sql, Composable):
+        sql = sql.as_string(cur)
+
     # we can't just use sql % vals because vals is bytes: if sql is bytes
     # there will be some decoding error because of stupid codec used, and Py3
     # doesn't implement % on bytes.

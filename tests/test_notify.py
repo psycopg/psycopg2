@@ -61,7 +61,7 @@ import %(module)s as psycopg2
 import %(module)s.extensions as ext
 conn = psycopg2.connect(%(dsn)r)
 conn.set_isolation_level(ext.ISOLATION_LEVEL_AUTOCOMMIT)
-print(conn.get_backend_pid())
+print(conn.info.backend_pid)
 curs = conn.cursor()
 curs.execute("NOTIFY " %(name)r %(payload)r)
 curs.close()
@@ -147,9 +147,9 @@ conn.close()
 
     @slow
     def test_notify_payload(self):
-        if self.conn.server_version < 90000:
+        if self.conn.info.server_version < 90000:
             return self.skipTest("server version %s doesn't support notify payload"
-                % self.conn.server_version)
+                % self.conn.info.server_version)
         self.autocommit(self.conn)
         self.listen('foo')
         pid = int(self.notify('foo', payload="Hello, world!").communicate()[0])

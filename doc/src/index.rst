@@ -24,9 +24,9 @@ Psycopg 2 is both Unicode and Python 3 friendly.
 
 
 .. _Psycopg: http://initd.org/psycopg/
-.. _PostgreSQL: http://www.postgresql.org/
-.. _Python: http://www.python.org/
-.. _libpq: http://www.postgresql.org/docs/current/static/libpq.html
+.. _PostgreSQL: https://www.postgresql.org/
+.. _Python: https://www.python.org/
+.. _libpq: https://www.postgresql.org/docs/current/static/libpq.html
 
 
 .. rubric:: Contents
@@ -42,6 +42,7 @@ Psycopg 2 is both Unicode and Python 3 friendly.
    advanced
    extensions
    extras
+   errors
    sql
    tz
    pool

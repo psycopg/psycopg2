@@ -29,6 +29,7 @@
 #include "psycopg/connection.h"
 #include "psycopg/cursor.h"
 #include "psycopg/pqpath.h"
+#include "psycopg/conninfo.h"
 #include "psycopg/lobject.h"
 #include "psycopg/green.h"
 #include "psycopg/xid.h"
@@ -757,6 +758,7 @@ psyco_conn_readonly_get(connectionObject *self)
             break;
     }
 
+    Py_XINCREF(rv);
     return rv;
 }
 
@@ -803,6 +805,7 @@ psyco_conn_deferrable_get(connectionObject *self)
             break;
     }
 
+    Py_XINCREF(rv);
     return rv;
 }
 
@@ -1004,6 +1007,20 @@ psyco_conn_get_backend_pid(connectionObject *self)
 
     return PyInt_FromLong((long)PQbackendPID(self->pgconn));
 }
+
+
+/* get info about the connection */
+
+#define psyco_conn_info_get_doc \
+"info -- Get connection info."
+
+static PyObject *
+psyco_conn_info_get(connectionObject *self)
+{
+    return PyObject_CallFunctionObjArgs(
+        (PyObject *)&connInfoType, (PyObject *)self, NULL);
+}
+
 
 /* reset the currect connection */
 
@@ -1258,6 +1275,9 @@ static struct PyGetSetDef connectionObject_getsets[] = {
         (getter)psyco_conn_deferrable_get,
         (setter)psyco_conn_deferrable_set,
         psyco_conn_deferrable_doc },
+    { "info",
+        (getter)psyco_conn_info_get, NULL,
+        psyco_conn_info_get_doc },
     {NULL}
 };
 #undef EXCEPTION_GETTER

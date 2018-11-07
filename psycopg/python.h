@@ -78,6 +78,7 @@ typedef unsigned long Py_uhash_t;
 #define PyInt_Check            PyLong_Check
 #define PyInt_AsLong           PyLong_AsLong
 #define PyInt_FromLong         PyLong_FromLong
+#define PyInt_FromString       PyLong_FromString
 #define PyInt_FromSsize_t      PyLong_FromSsize_t
 #define PyExc_StandardError    PyExc_Exception
 #define PyString_FromFormat    PyUnicode_FromFormat

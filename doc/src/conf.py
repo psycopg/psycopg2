@@ -116,12 +116,12 @@ todo_include_todos = False
 rst_epilog = """
 .. |DBAPI| replace:: DB API 2.0
 
-.. _DBAPI: http://www.python.org/dev/peps/pep-0249/
+.. _DBAPI: https://www.python.org/dev/peps/pep-0249/
 
 .. _transaction isolation level:
-    http://www.postgresql.org/docs/current/static/transaction-iso.html
+    https://www.postgresql.org/docs/current/static/transaction-iso.html
 
-.. _mx.DateTime: http://www.egenix.com/products/python/mxBase/mxDateTime/
+.. _mx.DateTime: https://www.egenix.com/products/python/mxBase/mxDateTime/
 
 .. |MVCC| replace:: :abbr:`MVCC (Multiversion concurrency control)`
 """

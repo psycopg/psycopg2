@@ -48,7 +48,7 @@ extern "C" {
 "See `~psycopg2.extras.wait_select()` for an example of a wait callback\n" \
 "implementation.\n" \
 "\n" \
-".. _Eventlet: http://eventlet.net/\n" \
+".. _Eventlet: https://eventlet.net/\n" \
 ".. _gevent: http://www.gevent.org/\n"
 HIDDEN PyObject *psyco_set_wait_callback(PyObject *self, PyObject *obj);
 

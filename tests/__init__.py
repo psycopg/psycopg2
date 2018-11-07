@@ -40,6 +40,7 @@ from . import test_copy
 from . import test_cursor
 from . import test_dates
 from . import test_errcodes
+from . import test_errors
 from . import test_extras_dictcursor
 from . import test_fast_executemany
 from . import test_green
@@ -84,6 +85,7 @@ def test_suite():
     suite.addTest(test_cursor.test_suite())
     suite.addTest(test_dates.test_suite())
     suite.addTest(test_errcodes.test_suite())
+    suite.addTest(test_errors.test_suite())
     suite.addTest(test_extras_dictcursor.test_suite())
     suite.addTest(test_fast_executemany.test_suite())
     suite.addTest(test_green.test_suite())

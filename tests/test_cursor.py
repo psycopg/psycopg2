@@ -229,22 +229,22 @@ class CursorTests(ConnectingTestCase):
         curs.execute("select data from withhold order by data")
         self.assertEqual(curs.fetchone(), (10,))
         self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_BEGIN)
-        self.assertEqual(self.conn.get_transaction_status(),
+        self.assertEqual(self.conn.info.transaction_status,
                          psycopg2.extensions.TRANSACTION_STATUS_INTRANS)
 
         self.conn.commit()
         self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
-        self.assertEqual(self.conn.get_transaction_status(),
+        self.assertEqual(self.conn.info.transaction_status,
                          psycopg2.extensions.TRANSACTION_STATUS_IDLE)
 
         self.assertEqual(curs.fetchone(), (20,))
         self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
-        self.assertEqual(self.conn.get_transaction_status(),
+        self.assertEqual(self.conn.info.transaction_status,
                          psycopg2.extensions.TRANSACTION_STATUS_IDLE)
 
         curs.close()
         self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
-        self.assertEqual(self.conn.get_transaction_status(),
+        self.assertEqual(self.conn.info.transaction_status,
                          psycopg2.extensions.TRANSACTION_STATUS_IDLE)
 
     def test_withhold_autocommit(self):
@@ -256,17 +256,17 @@ class CursorTests(ConnectingTestCase):
 
         self.assertEqual(curs.fetchone(), (10,))
         self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
-        self.assertEqual(self.conn.get_transaction_status(),
+        self.assertEqual(self.conn.info.transaction_status,
                          psycopg2.extensions.TRANSACTION_STATUS_IDLE)
 
         self.conn.commit()
         self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
-        self.assertEqual(self.conn.get_transaction_status(),
+        self.assertEqual(self.conn.info.transaction_status,
                          psycopg2.extensions.TRANSACTION_STATUS_IDLE)
 
         curs.close()
         self.assertEqual(self.conn.status, psycopg2.extensions.STATUS_READY)
-        self.assertEqual(self.conn.get_transaction_status(),
+        self.assertEqual(self.conn.info.transaction_status,
                          psycopg2.extensions.TRANSACTION_STATUS_IDLE)
 
     def test_scrollable(self):
@@ -377,7 +377,7 @@ class CursorTests(ConnectingTestCase):
         for i, rec in enumerate(curs):
             self.assertEqual(i + 1, curs.rownumber)
 
-    def test_namedtuple_description(self):
+    def test_description_attribs(self):
         curs = self.conn.cursor()
         curs.execute("""select
             3.14::decimal(10,2) as pi,
@@ -411,6 +411,27 @@ class CursorTests(ConnectingTestCase):
         self.assert_(c.internal_size > 0)
         self.assertEqual(c.precision, None)
         self.assertEqual(c.scale, None)
+
+    def test_description_extra_attribs(self):
+        curs = self.conn.cursor()
+        curs.execute("""
+            create table testcol (
+                pi decimal(10,2),
+                hi text)
+            """)
+        curs.execute("select oid from pg_class where relname = %s", ('testcol',))
+        oid = curs.fetchone()[0]
+
+        curs.execute("insert into testcol values (3.14, 'hello')")
+        curs.execute("select hi, pi, 42 from testcol")
+        self.assertEqual(curs.description[0].table_oid, oid)
+        self.assertEqual(curs.description[0].table_column, 2)
+
+        self.assertEqual(curs.description[1].table_oid, oid)
+        self.assertEqual(curs.description[1].table_column, 1)
+
+        self.assertEqual(curs.description[2].table_oid, None)
+        self.assertEqual(curs.description[2].table_column, None)
 
     def test_pickle_description(self):
         curs = self.conn.cursor()
@@ -504,7 +525,7 @@ class CursorTests(ConnectingTestCase):
     def test_bad_subclass(self):
         # check that we get an error message instead of a segfault
         # for badly written subclasses.
-        # see http://stackoverflow.com/questions/22019341/
+        # see https://stackoverflow.com/questions/22019341/
         class StupidCursor(psycopg2.extensions.cursor):
             def __init__(self, *args, **kwargs):
                 # I am stupid so not calling superclass init
@@ -568,7 +589,10 @@ class CursorTests(ConnectingTestCase):
         # psycopg2 noticing.
         control_conn = self.conn
         connect_func = self.connect
-        wait_func = lambda conn: None
+
+        def wait_func(conn):
+            pass
+
         self._test_external_close(control_conn, connect_func, wait_func)
 
     @skip_if_no_superuser
@@ -578,7 +602,10 @@ class CursorTests(ConnectingTestCase):
         # Issue #443 is in the async code too. Since the fix is duplicated,
         # so is the test.
         control_conn = self.conn
-        connect_func = lambda: self.connect(async_=True)
+
+        def connect_func():
+            return self.connect(async_=True)
+
         wait_func = psycopg2.extras.wait_select
         self._test_external_close(control_conn, connect_func, wait_func)
 
@@ -626,6 +653,7 @@ class CursorTests(ConnectingTestCase):
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == "__main__":
     unittest.main()
