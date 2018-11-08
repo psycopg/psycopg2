@@ -30,10 +30,7 @@ import sys as _sys
 import time as _time
 import re as _re
 
-try:
-    import logging as _logging
-except:
-    _logging = None
+import logging as _logging
 
 import psycopg2
 from psycopg2 import extensions as _ext
@@ -189,7 +186,7 @@ class DictRow(list):
     def get(self, x, default=None):
         try:
             return self[x]
-        except:
+        except Exception:
             return default
 
     def iteritems(self):
