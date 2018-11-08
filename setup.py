@@ -85,6 +85,7 @@ Programming Language :: Python :: 3.3
 Programming Language :: Python :: 3.4
 Programming Language :: Python :: 3.5
 Programming Language :: Python :: 3.6
+Programming Language :: Python :: 3.7
 Programming Language :: Python :: Implementation :: CPython
 Programming Language :: C
 Programming Language :: SQL
@@ -334,7 +335,8 @@ For further information please check the 'doc/src/install.rst' file (also at
 
         # For Python versions that use MSVC compiler 2008, re-insert the
         # manifest into the resulting .pyd file.
-        if self.compiler_is_msvc() and sysVer in ((2, 6), (2, 7), (3, 0), (3, 1), (3, 2)):
+        if self.compiler_is_msvc() and sysVer in (
+                (2, 6), (2, 7), (3, 0), (3, 1), (3, 2)):
             platform = get_platform()
             # Default to the x86 manifest
             manifest = '_psycopg.vc9.x86.manifest'
@@ -451,7 +453,7 @@ For further information please check the 'doc/src/install.rst' file (also at
                 # *at least* PostgreSQL 7.4 is available (this is the only
                 # 7.x series supported by psycopg 2)
                 pgversion = pg_config_helper.query("version").split()[1]
-            except:
+            except Exception:
                 pgversion = "7.4.0"
 
             verre = re.compile(
@@ -656,7 +658,7 @@ try:
     f = open("README.rst")
     readme = f.read()
     f.close()
-except:
+except Exception:
     print("failed to read readme: ignoring...")
     readme = __doc__
 
