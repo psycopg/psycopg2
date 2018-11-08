@@ -157,8 +157,7 @@ class ThreadedConnectionPool(AbstractConnectionPool):
     def __init__(self, minconn, maxconn, *args, **kwargs):
         """Initialize the threading lock."""
         import threading
-        AbstractConnectionPool.__init__(
-            self, minconn, maxconn, *args, **kwargs)
+        AbstractConnectionPool.__init__(self, minconn, maxconn, *args, **kwargs)
         self._lock = threading.Lock()
 
     def getconn(self, key=None):
