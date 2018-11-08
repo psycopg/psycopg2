@@ -10,7 +10,8 @@ check: doctest
 PYTHON := python$(PYTHON_VERSION)
 PYTHON_VERSION ?= $(shell $(PYTHON) -c 'import sys; print ("%d.%d" % sys.version_info[:2])')
 
-SPHOPTS=PYTHONPATH=$$(pwd)/../build/lib.$(PYTHON_VERSION)/ SPHINXBUILD=$$(pwd)/env/bin/sphinx-build
+SPHINXBUILD ?= $$(pwd)/env/bin/sphinx-build
+SPHOPTS = PYTHONPATH=$$(pwd)/../build/lib.$(PYTHON_VERSION)/ SPHINXBUILD=$(SPHINXBUILD)
 
 html:
 	$(MAKE) PYTHON=$(PYTHON) -C .. package
