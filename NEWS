@@ -14,6 +14,8 @@ New features:
   items (:ticket:`#661`).
 - Added `connection.info` object to retrieve various PostgreSQL connection
   information (:ticket:`#726`).
+- Added `~connection.get_native_connection()` to expose the raw ``PGconn``
+  structure (:ticket:`#782`).
 - `~psycopg2.sql.Identifier` can represent qualified names in SQL composition
   (:ticket:`#732`).
 - `!str()` on `~psycopg2.extras.Range` produces a human-readable representation
