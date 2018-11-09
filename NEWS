@@ -40,13 +40,15 @@ What's new in psycopg 2.7.6
 - Close named cursors if exist, even if `~cursor.execute()` wasn't called
   (:ticket:`#746`).
 - Fixed building on modern FreeBSD versions with Python 3.7 (:ticket:`#755`).
-- Fixed hang trying to :sql:`COPY` via `~cursor.execute()` (:ticket:`#781`).
+- Fixed hang trying to :sql:`COPY` via `~cursor.execute()` in asynchronous
+  connections (:ticket:`#781`).
 - Fixed adaptation of arrays of empty arrays (:ticket:`#788`).
-- Fixed segfault accessing the `connection.readonly` and
-  `connection.deferrable` repeatedly (:ticket:`#790`).
+- Fixed segfault accessing the connection's `~connection.readonly` and
+  `~connection.deferrable` attributes repeatedly (:ticket:`#790`).
 - `~psycopg2.extras.execute_values()` accepts `~psycopg2.sql.Composable`
-  objects (#794).
+  objects (:ticket:`#794`).
 - `~psycopg2.errorcodes` map updated to PostgreSQL 11.
+- Wheel package compiled against PostgreSQL 10.5 libpq and OpenSSL 1.0.2p.
 
 
 What's new in psycopg 2.7.5
