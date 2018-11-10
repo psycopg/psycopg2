@@ -1,6 +1,13 @@
 Current release
 ---------------
 
+What's new in psycopg 2.7.6.1
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Fixed binary package broken on OS X 10.12 (:ticket:`#807`).
+- Wheel package compiled against PostgreSQL 11.1 libpq.
+
+
 What's new in psycopg 2.7.6
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
