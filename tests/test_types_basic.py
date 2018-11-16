@@ -382,6 +382,18 @@ class TypesBasicTests(ConnectingTestCase):
         a = self.execute("select '{10:20:30:40:50:60}'::macaddr[]")
         self.assertEqual(a, ['10:20:30:40:50:60'])
 
+    @testutils.skip_before_python(3, 4)
+    def testIntEnum(self):
+        from enum import IntEnum
+
+        class Color(IntEnum):
+            RED = 1
+            GREEN = 2
+            BLUE = 4
+
+        a = self.execute("select %s", (Color.GREEN,))
+        self.assertEqual(a, Color.GREEN)
+
 
 class AdaptSubclassTest(unittest.TestCase):
     def test_adapt_subtype(self):

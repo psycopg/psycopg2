@@ -18,6 +18,7 @@ New features:
   structure (:ticket:`#782`).
 - `~psycopg2.sql.Identifier` can represent qualified names in SQL composition
   (:ticket:`#732`).
+- Fixed adaptation of numeric subclasses such as `IntEnum` (:ticket:`591`).
 - `!str()` on `~psycopg2.extras.Range` produces a human-readable representation
   (:ticket:`#773`).
 - `~psycopg2.extras.DictCursor` and `~psycopg2.extras.RealDictCursor` rows
