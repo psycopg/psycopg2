@@ -35,8 +35,27 @@
 static PyObject *
 pint_getquoted(pintObject *self, PyObject *args)
 {
-    PyObject *res;
-    if (!(res = PyObject_Str(self->wrapped))) {
+    PyObject *res = NULL;
+
+    /* Convert subclass to int to handle IntEnum and other subclasses
+     * whose str() is not the number. */
+    if (PyLong_CheckExact(self->wrapped)
+#if PY_MAJOR_VERSION < 2
+        || PyInt_CheckExact(self->wrapped)
+#endif
+       ) {
+        res = PyObject_Str(self->wrapped);
+    } else {
+        PyObject *tmp;
+        if (!(tmp = PyObject_CallFunctionObjArgs(
+                (PyObject *)&PyLong_Type, self->wrapped, NULL))) {
+            goto exit;
+        }
+        res = PyObject_Str(tmp);
+        Py_DECREF(tmp);
+    }
+
+    if (!res) {
         goto exit;
     }
 
