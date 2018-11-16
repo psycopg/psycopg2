@@ -1012,7 +1012,7 @@ What's new in psycopg 2.0 beta 7
 What's new in psycopg 2.0 beta 6
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* Support for named cursors (see examples/fetch.py).
+* Support for named cursors.
 
 * Safer parsing of time intervals.
 
@@ -1042,7 +1042,7 @@ What's new in psycopg 2.0 beta 5
 * All classes have been renamed to exist in the psycopg2._psycopg module,
   to fix problems with automatic documentation generators like epydoc.
 
-* NOTIFY is correctly trapped (see examples/notify.py for example code.)
+* NOTIFY is correctly trapped.
 
 What's new in psycopg 2.0 beta 4
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1159,8 +1159,7 @@ What's new in psycopg 1.99.10
 What's new in psycopg 1.99.9
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* Added simple pooling code (psycopg.pool module); see the reworked
-  examples/threads.py for example code.
+* Added simple pooling code (psycopg.pool module).
 
 * Added DECIMAL typecaster to convert postgresql DECIMAL and NUMERIC
   types (i.e, all types with an OID of NUMERICOID.) Note that the
