@@ -1198,7 +1198,7 @@ def execute_batch(cur, sql, argslist, page_size=100):
         cur.execute(b";".join(sqls))
 
 
-def execute_values(cur, sql, argslist, template=None, page_size=100):
+def execute_values(cur, sql, argslist, template=None, page_size=100, fetch_result=False):
     '''Execute a statement using :sql:`VALUES` with a sequence of parameters.
 
     :param cur: the cursor to use to execute the query.
@@ -1228,6 +1228,9 @@ def execute_values(cur, sql, argslist, template=None, page_size=100):
     :param page_size: maximum number of *argslist* items to include in every
         statement. If there are more items the function will execute more than
         one statement.
+
+    :param fetch_result: flag indicating that results of query execution should
+        be returned. Useful for queries with `RETURNING` clause
 
     .. __: https://www.postgresql.org/docs/current/static/queries-values.html
 
@@ -1265,6 +1268,7 @@ def execute_values(cur, sql, argslist, template=None, page_size=100):
         sql = sql.encode(_ext.encodings[cur.connection.encoding])
     pre, post = _split_sql(sql)
 
+    result = []
     for page in _paginate(argslist, page_size=page_size):
         if template is None:
             template = b'(' + b','.join([b'%s'] * len(page[0])) + b')'
@@ -1274,6 +1278,11 @@ def execute_values(cur, sql, argslist, template=None, page_size=100):
             parts.append(b',')
         parts[-1:] = post
         cur.execute(b''.join(parts))
+        if fetch_result:
+            result.extend(cur.fetchall())
+
+    if fetch_result:
+        return result
 
 
 def _split_sql(sql):
