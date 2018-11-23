@@ -234,7 +234,7 @@ class TestExecuteValues(FastExecuteTestMixin, testutils.ConnectingTestCase):
         result = psycopg2.extras.execute_values(cur,
             "insert into testfast (id, val) values %s returning id",
             ((i, i * 10) for i in range(25)),
-            page_size=10, fetch_many=True)
+            page_size=10, fetch=True)
         # result contains all returned pages
         self.assertEqual([r[0] for r in result], list(range(25)))
 
