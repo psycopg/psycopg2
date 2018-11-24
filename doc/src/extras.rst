@@ -1023,6 +1023,8 @@ parameters.  By reducing the number of server roundtrips the performance can be
 .. autofunction:: execute_values
 
     .. versionadded:: 2.7
+    .. versionchanged:: 2.8
+        added the *fetch* parameter
 
 
 .. index::
