@@ -398,12 +398,7 @@ exit:
 static PyObject*
 psyco_libpq_version(PyObject *self)
 {
-#if PG_VERSION_NUM >= 90100
     return PyInt_FromLong(PQlibVersion());
-#else
-    PyErr_SetString(NotSupportedError, "version discovery is not supported in libpq < 9.1");
-    return NULL;
-#endif
 }
 
 /* encrypt_password - Prepare the encrypted password form */

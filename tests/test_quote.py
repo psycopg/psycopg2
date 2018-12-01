@@ -182,14 +182,12 @@ class TestQuotedString(ConnectingTestCase):
 
 
 class TestQuotedIdentifier(ConnectingTestCase):
-    @testutils.skip_before_libpq(9, 0)
     def test_identifier(self):
         from psycopg2.extensions import quote_ident
         self.assertEqual(quote_ident('blah-blah', self.conn), '"blah-blah"')
         self.assertEqual(quote_ident('quote"inside', self.conn), '"quote""inside"')
 
     @testutils.skip_before_postgres(8, 0)
-    @testutils.skip_before_libpq(9, 0)
     def test_unicode_ident(self):
         from psycopg2.extensions import quote_ident
         snowman = u"\u2603"
