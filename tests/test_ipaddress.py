@@ -25,23 +25,14 @@ import unittest
 import psycopg2
 import psycopg2.extras
 
-
-@testutils.decorate_all_tests
-def skip_if_no_ipaddress(f):
-    @wraps(f)
-    def skip_if_no_ipaddress_(self):
-        if sys.version_info[:2] < (3, 3):
-            try:
-                import ipaddress            # noqa
-            except ImportError:
-                return self.skipTest("'ipaddress' module not available")
-
-        return f(self)
-
-    return skip_if_no_ipaddress_
+try:
+    import ipaddress
+except ImportError:
+    # Python 2
+    ipaddress = None
 
 
-@skip_if_no_ipaddress
+@unittest.skipIf(ipaddress is None, "'ipaddress' module not available")
 class NetworkingTestCase(testutils.ConnectingTestCase):
     def test_inet_cast(self):
         import ipaddress as ip

@@ -298,17 +298,13 @@ def skip_before_libpq(*ver):
     """Skip a test if libpq we're linked to is older than a certain version."""
     ver = ver + (0,) * (3 - len(ver))
 
-    @decorate_all_tests
-    def skip_before_libpq_(f):
-        @wraps(f)
-        def skip_before_libpq__(self):
-            v = libpq_version()
-            if v < int("%d%02d%02d" % ver):
-                return self.skipTest("skipped because libpq %d" % v)
-            else:
-                return f(self)
-
-        return skip_before_libpq__
+    def skip_before_libpq_(cls):
+        v = libpq_version()
+        decorator = unittest.skipIf(
+            v < int("%d%02d%02d" % ver),
+            "skipped because libpq %d" % v,
+        )
+        return decorator(cls)
     return skip_before_libpq_
 
 
@@ -316,49 +312,37 @@ def skip_after_libpq(*ver):
     """Skip a test if libpq we're linked to is newer than a certain version."""
     ver = ver + (0,) * (3 - len(ver))
 
-    @decorate_all_tests
-    def skip_after_libpq_(f):
-        @wraps(f)
-        def skip_after_libpq__(self):
-            v = libpq_version()
-            if v >= int("%d%02d%02d" % ver):
-                return self.skipTest("skipped because libpq %s" % v)
-            else:
-                return f(self)
-
-        return skip_after_libpq__
+    def skip_after_libpq_(cls):
+        v = libpq_version()
+        decorator = unittest.skipIf(
+            v >= int("%d%02d%02d" % ver),
+            "skipped because libpq %s" % v,
+        )
+        return decorator(cls)
     return skip_after_libpq_
 
 
 def skip_before_python(*ver):
     """Skip a test on Python before a certain version."""
-    @decorate_all_tests
-    def skip_before_python_(f):
-        @wraps(f)
-        def skip_before_python__(self):
-            if sys.version_info[:len(ver)] < ver:
-                return self.skipTest("skipped because Python %s"
-                    % ".".join(map(str, sys.version_info[:len(ver)])))
-            else:
-                return f(self)
-
-        return skip_before_python__
+    def skip_before_python_(cls):
+        decorator = unittest.skipIf(
+            sys.version_info[:len(ver)] < ver,
+            "skipped because Python %s"
+            % ".".join(map(str, sys.version_info[:len(ver)])),
+        )
+        return decorator(cls)
     return skip_before_python_
 
 
 def skip_from_python(*ver):
     """Skip a test on Python after (including) a certain version."""
-    @decorate_all_tests
-    def skip_from_python_(f):
-        @wraps(f)
-        def skip_from_python__(self):
-            if sys.version_info[:len(ver)] >= ver:
-                return self.skipTest("skipped because Python %s"
-                    % ".".join(map(str, sys.version_info[:len(ver)])))
-            else:
-                return f(self)
-
-        return skip_from_python__
+    def skip_from_python_(cls):
+        decorator = unittest.skipIf(
+            sys.version_info[:len(ver)] >= ver,
+            "skipped because Python %s"
+            % ".".join(map(str, sys.version_info[:len(ver)])),
+        )
+        return decorator(cls)
     return skip_from_python_
 
 
@@ -381,44 +365,31 @@ def skip_if_no_superuser(f):
 
 
 def skip_if_green(reason):
-    @decorate_all_tests
-    def skip_if_green_(f):
-        @wraps(f)
-        def skip_if_green__(self):
-            from .testconfig import green
-            if green:
-                return self.skipTest(reason)
-            else:
-                return f(self)
-
-        return skip_if_green__
+    def skip_if_green_(cls):
+        from .testconfig import green
+        decorator = unittest.skipIf(green, reason)
+        return decorator(cls)
     return skip_if_green_
 
 
 skip_copy_if_green = skip_if_green("copy in async mode currently not supported")
 
 
-@decorate_all_tests
-def skip_if_no_getrefcount(f):
-    @wraps(f)
-    def skip_if_no_getrefcount_(self):
-        if not hasattr(sys, 'getrefcount'):
-            return self.skipTest('skipped, no sys.getrefcount()')
-        else:
-            return f(self)
-    return skip_if_no_getrefcount_
+def skip_if_no_getrefcount(cls):
+    decorator = unittest.skipUnless(
+        hasattr(sys, 'getrefcount'),
+        'no sys.getrefcount()',
+    )
+    return decorator(cls)
 
 
-@decorate_all_tests
-def skip_if_windows(f):
+def skip_if_windows(cls):
     """Skip a test if run on windows"""
-    @wraps(f)
-    def skip_if_windows_(self):
-        if platform.system() == 'Windows':
-            return self.skipTest("Not supported on Windows")
-        else:
-            return f(self)
-    return skip_if_windows_
+    decorator = unittest.skipIf(
+        platform.system() == 'Windows',
+        "Not supported on Windows",
+    )
+    return decorator(cls)
 
 
 class py3_raises_typeerror(object):
