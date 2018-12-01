@@ -1667,12 +1667,7 @@ exit:
 static PyObject *
 psyco_curs_get_closed(cursorObject *self, void *closure)
 {
-    PyObject *closed;
-
-    closed = (self->closed || (self->conn && self->conn->closed)) ?
-        Py_True : Py_False;
-    Py_INCREF(closed);
-    return closed;
+    return PyBool_FromLong(self->closed || (self->conn && self->conn->closed));
 }
 
 /* extension: withhold - get or set "WITH HOLD" for named cursors */
@@ -1683,10 +1678,7 @@ psyco_curs_get_closed(cursorObject *self, void *closure)
 static PyObject *
 psyco_curs_withhold_get(cursorObject *self)
 {
-    PyObject *ret;
-    ret = self->withhold ? Py_True : Py_False;
-    Py_INCREF(ret);
-    return ret;
+    return PyBool_FromLong(self->withhold);
 }
 
 int

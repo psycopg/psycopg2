@@ -352,11 +352,7 @@ static const char needs_password_doc[] =
 static PyObject *
 needs_password_get(connInfoObject *self)
 {
-    PyObject *rv;
-
-    rv = PQconnectionNeedsPassword(self->conn->pgconn) ? Py_True : Py_False;
-    Py_INCREF(rv);
-    return rv;
+    return PyBool_FromLong(PQconnectionNeedsPassword(self->conn->pgconn));
 }
 
 
@@ -372,11 +368,7 @@ static const char used_password_doc[] =
 static PyObject *
 used_password_get(connInfoObject *self)
 {
-    PyObject *rv;
-
-    rv = PQconnectionUsedPassword(self->conn->pgconn) ? Py_True : Py_False;
-    Py_INCREF(rv);
-    return rv;
+    return PyBool_FromLong(PQconnectionUsedPassword(self->conn->pgconn));
 }
 
 
@@ -398,8 +390,7 @@ ssl_in_use_get(connInfoObject *self)
     PyObject *rv = NULL;
 
 #if PG_VERSION_NUM >= 90500
-    rv = PQsslInUse(self->conn->pgconn) ? Py_True : Py_False;
-    Py_INCREF(rv);
+    rv = PyBool_FromLong(PQsslInUse(self->conn->pgconn));
 #else
     PyErr_SetString(NotSupportedError,
         "'ssl_in_use' not available in libpq < 9.5");

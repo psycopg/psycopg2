@@ -616,10 +616,7 @@ psyco_conn_set_session(connectionObject *self, PyObject *args, PyObject *kwargs)
 static PyObject *
 psyco_conn_autocommit_get(connectionObject *self)
 {
-    PyObject *ret;
-    ret = self->autocommit ? Py_True : Py_False;
-    Py_INCREF(ret);
-    return ret;
+    return PyBool_FromLong(self->autocommit);
 }
 
 BORROWED static PyObject *
@@ -1100,25 +1097,21 @@ psyco_conn_isexecuting(connectionObject *self)
 {
     /* synchronous connections will always return False */
     if (self->async == 0) {
-        Py_INCREF(Py_False);
-        return Py_False;
+        Py_RETURN_FALSE;
     }
 
     /* check if the connection is still being built */
     if (self->status != CONN_STATUS_READY) {
-        Py_INCREF(Py_True);
-        return Py_True;
+        Py_RETURN_TRUE;
     }
 
     /* check if there is a query being executed */
     if (self->async_cursor != NULL) {
-        Py_INCREF(Py_True);
-        return Py_True;
+        Py_RETURN_TRUE;
     }
 
     /* otherwise it's not executing */
-    Py_INCREF(Py_False);
-    return Py_False;
+    Py_RETURN_FALSE;
 }
 
 

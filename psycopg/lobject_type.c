@@ -257,11 +257,7 @@ psyco_lobj_export(lobjectObject *self, PyObject *args)
 static PyObject *
 psyco_lobj_get_closed(lobjectObject *self, void *closure)
 {
-    PyObject *closed;
-
-    closed = lobject_is_closed(self) ? Py_True : Py_False;
-    Py_INCREF(closed);
-    return closed;
+    return PyBool_FromLong(lobject_is_closed(self));
 }
 
 #define psyco_lobj_truncate_doc \
