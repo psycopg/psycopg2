@@ -58,11 +58,3 @@ be used.
 .. autoclass:: ThreadedConnectionPool
 
     .. note:: This pool class can be safely used in multi-threaded applications.
-
-
-.. autoclass:: PersistentConnectionPool
-
-    .. note::
-
-        This pool class is mostly designed to interact with Zope and probably
-        not useful in generic applications.
