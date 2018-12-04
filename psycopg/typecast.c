@@ -395,18 +395,11 @@ typecast_cmp(PyObject *obj1, PyObject* obj2)
 static PyObject*
 typecast_richcompare(PyObject *obj1, PyObject* obj2, int opid)
 {
-    PyObject *result = NULL;
     int res = typecast_cmp(obj1, obj2);
 
     if (PyErr_Occurred()) return NULL;
 
-    if ((opid == Py_EQ && res == 0) || (opid != Py_EQ && res != 0))
-        result = Py_True;
-    else
-        result = Py_False;
-
-    Py_INCREF(result);
-    return result;
+    return PyBool_FromLong((opid == Py_EQ && res == 0) || (opid != Py_EQ && res != 0));
 }
 
 static struct PyMemberDef typecastObject_members[] = {
