@@ -22,13 +22,14 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
+import ctypes
 import decimal
+import platform
 
 import sys
-from functools import wraps
 from . import testutils
 import unittest
-from .testutils import ConnectingTestCase, decorate_all_tests, long
+from .testutils import ConnectingTestCase, long
 
 import psycopg2
 
@@ -471,36 +472,16 @@ class AdaptSubclassTest(unittest.TestCase):
         self.assertEqual(ext.adapt(foo((1, 2, 3))).getquoted(), 'bar')
 
 
-@decorate_all_tests
-def skip_if_cant_cast(f):
-    @wraps(f)
-    def skip_if_cant_cast_(self, *args, **kwargs):
-        if self._cast is None:
-            return self.skipTest("can't test bytea parser: %s - %s"
-                % (self._exc.__class__.__name__, self._exc))
-
-        return f(self, *args, **kwargs)
-
-    return skip_if_cant_cast_
-
-
-@skip_if_cant_cast
+@unittest.skipIf(
+    platform.system() == 'Windows',
+    "Not testing because we are useless with ctypes on Windows")
 class ByteaParserTest(unittest.TestCase):
     """Unit test for our bytea format parser."""
     def setUp(self):
-        try:
-            self._cast = self._import_cast()
-        except Exception as e:
-            self._cast = None
-            self._exc = e
+        self._cast = self._import_cast()
 
     def _import_cast(self):
-        """Use ctypes to access the C function.
-
-        Raise any sort of error: we just support this where ctypes works as
-        expected.
-        """
-        import ctypes
+        """Use ctypes to access the C function."""
         lib = ctypes.pydll.LoadLibrary(psycopg2._psycopg.__file__)
         cast = lib.typecast_BINARY_cast
         cast.argtypes = [ctypes.c_char_p, ctypes.c_size_t, ctypes.py_object]
