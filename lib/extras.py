@@ -1229,8 +1229,9 @@ def execute_values(cur, sql, argslist, template=None, page_size=100, fetch=False
         statement. If there are more items the function will execute more than
         one statement.
 
-    :param fetch: flag indicating that results of query execution should
-        be returned. Useful for queries with `RETURNING` clause
+    :param fetch: if `!True` return the query results into a list (like in a
+        `~cursor.fetchall()`).  Useful for queries with :sql:`RETURNING`
+        clause.
 
     .. __: https://www.postgresql.org/docs/current/static/queries-values.html
 
