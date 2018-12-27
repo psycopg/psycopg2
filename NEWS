@@ -20,13 +20,14 @@ New features:
   (:ticket:`#732`).
 - Added *fetch* parameter to `~psycopg2.extras.execute_values()` function
   (:ticket:`#813`).
-- Fixed adaptation of numeric subclasses such as `IntEnum` (:ticket:`#591`).
+- Fixed adaptation of numeric subclasses such as `~enum.IntEnum`
+  (:ticket:`#591`).
 - `!str()` on `~psycopg2.extras.Range` produces a human-readable representation
   (:ticket:`#773`).
 - `~psycopg2.extras.DictCursor` and `~psycopg2.extras.RealDictCursor` rows
   maintain columns order (:ticket:`#177`).
-- Added `!severity_nonlocalized` attribute on the
-  `~psycopg2.extensions.Diagnostics` object (:ticket:`#783`).
+- Added `~psycopg2.extensions.Diagnostics.severity_nonlocalized` attribute on
+  the `~psycopg2.extensions.Diagnostics` object (:ticket:`#783`).
 
 Other changes:
 
