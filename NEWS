@@ -19,8 +19,8 @@ New features:
 - `~psycopg2.sql.Identifier` can represent qualified names in SQL composition
   (:ticket:`#732`).
 - Added *fetch* parameter to `~psycopg2.extras.execute_values()` function
-  (:ticket:`813`).
-- Fixed adaptation of numeric subclasses such as `IntEnum` (:ticket:`591`).
+  (:ticket:`#813`).
+- Fixed adaptation of numeric subclasses such as `IntEnum` (:ticket:`#591`).
 - `!str()` on `~psycopg2.extras.Range` produces a human-readable representation
   (:ticket:`#773`).
 - `~psycopg2.extras.DictCursor` and `~psycopg2.extras.RealDictCursor` rows
@@ -94,9 +94,9 @@ What's new in psycopg 2.7.4
 - Fixed `~psycopg2.extras.MinTimeLoggingCursor` on Python 3 (:ticket:`#609`).
 - Fixed parsing of array of points as floats (:ticket:`#613`).
 - Fixed `~psycopg2.__libpq_version__` building with libpq >= 10.1
-  (:ticket:`632`).
+  (:ticket:`#632`).
 - Fixed `~cursor.rowcount` after `~cursor.executemany()` with :sql:`RETURNING`
-  statements (:ticket:`633`).
+  statements (:ticket:`#633`).
 - Fixed compatibility problem with pypy3 (:ticket:`#649`).
 - Wheel packages compiled against PostgreSQL 10.1 libpq and OpenSSL 1.0.2n.
 - Wheel packages for Python 2.6 no more available (support dropped from
@@ -148,7 +148,7 @@ What's new in psycopg 2.7.2
 - Fixed random `!SystemError` upon receiving abort signal (:ticket:`#551`).
 - Accept `~psycopg2.sql.Composable` objects in
   `~psycopg2.extras.ReplicationCursor.start_replication_expert()`
-  (:ticket:`554`).
+  (:ticket:`#554`).
 - Parse intervals returned as microseconds from Redshift (:ticket:`#558`).
 - Added `~psycopg2.extras.Json` `!prepare()` method to consider connection
   params when adapting (:ticket:`#562`).
