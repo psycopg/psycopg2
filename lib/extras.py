@@ -1268,7 +1268,7 @@ def execute_values(cur, sql, argslist, template=None, page_size=100, fetch=False
         sql = sql.encode(_ext.encodings[cur.connection.encoding])
     pre, post = _split_sql(sql)
 
-    result = []
+    result = [] if fetch else None
     for page in _paginate(argslist, page_size=page_size):
         if template is None:
             template = b'(' + b','.join([b'%s'] * len(page[0])) + b')'
@@ -1281,8 +1281,7 @@ def execute_values(cur, sql, argslist, template=None, page_size=100, fetch=False
         if fetch:
             result.extend(cur.fetchall())
 
-    if fetch:
-        return result
+    return result
 
 
 def _split_sql(sql):
