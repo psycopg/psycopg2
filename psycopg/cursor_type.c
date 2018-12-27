@@ -47,7 +47,7 @@
 "close() -- Close the cursor."
 
 static PyObject *
-psyco_curs_close(cursorObject *self)
+psyco_curs_close(cursorObject *self, PyObject *dummy)
 {
     PyObject *rv = NULL;
     char *lname = NULL;
@@ -756,7 +756,7 @@ exit:
 }
 
 static PyObject *
-psyco_curs_fetchone(cursorObject *self)
+psyco_curs_fetchone(cursorObject *self, PyObject *dummy)
 {
     PyObject *res;
 
@@ -947,7 +947,7 @@ exit:
 "Return `!None` when no more data is available.\n"
 
 static PyObject *
-psyco_curs_fetchall(cursorObject *self)
+psyco_curs_fetchall(cursorObject *self, PyObject *dummy)
 {
     int i, size;
     PyObject *list = NULL;
@@ -1162,7 +1162,7 @@ exit:
 "sets) and will raise a NotSupportedError exception."
 
 static PyObject *
-psyco_curs_nextset(cursorObject *self)
+psyco_curs_nextset(cursorObject *self, PyObject *dummy)
 {
     EXC_IF_CURS_CLOSED(self);
 
@@ -1279,7 +1279,7 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
 "__enter__ -> self"
 
 static PyObject *
-psyco_curs_enter(cursorObject *self)
+psyco_curs_enter(cursorObject *self, PyObject *dummy)
 {
     Py_INCREF(self);
     return (PyObject *)self;
@@ -1768,7 +1768,7 @@ cursor_next(PyObject *self)
 
     if (NULL == ((cursorObject*)self)->name) {
         /* we don't parse arguments: psyco_curs_fetchone will do that for us */
-        res = psyco_curs_fetchone((cursorObject*)self);
+        res = psyco_curs_fetchone((cursorObject*)self, NULL);
 
         /* convert a None to NULL to signal the end of iteration */
         if (res && res == Py_None) {

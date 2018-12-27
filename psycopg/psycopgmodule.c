@@ -396,7 +396,7 @@ exit:
 #define psyco_libpq_version_doc "Query actual libpq version loaded."
 
 static PyObject*
-psyco_libpq_version(PyObject *self)
+psyco_libpq_version(PyObject *self, PyObject *dummy)
 {
     return PyInt_FromLong(PQlibVersion());
 }

@@ -131,7 +131,7 @@ static struct PyGetSetDef error_getsets[] = {
  * would require implementing __getstate__, and as of 2012 it's a little
  * bit too late to care. */
 static PyObject *
-psyco_error_reduce(errorObject *self)
+psyco_error_reduce(errorObject *self, PyObject *dummy)
 {
     PyObject *meth = NULL;
     PyObject *tuple = NULL;

@@ -140,7 +140,7 @@ psyco_repl_curs_consume_stream(replicationCursorObject *self,
 "read_message() -- Try reading a replication message from the server (non-blocking)."
 
 static PyObject *
-psyco_repl_curs_read_message(replicationCursorObject *self)
+psyco_repl_curs_read_message(replicationCursorObject *self, PyObject *dummy)
 {
     cursorObject *curs = &self->cur;
     replicationMessageObject *msg = NULL;

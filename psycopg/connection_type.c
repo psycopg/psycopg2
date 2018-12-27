@@ -138,7 +138,7 @@ exit:
 #define psyco_conn_close_doc "close() -- Close the connection."
 
 static PyObject *
-psyco_conn_close(connectionObject *self)
+psyco_conn_close(connectionObject *self, PyObject *dummy)
 {
     Dprintf("psyco_conn_close: closing connection at %p", self);
     conn_close(self);
@@ -153,7 +153,7 @@ psyco_conn_close(connectionObject *self)
 #define psyco_conn_commit_doc "commit() -- Commit all changes to database."
 
 static PyObject *
-psyco_conn_commit(connectionObject *self)
+psyco_conn_commit(connectionObject *self, PyObject *dummy)
 {
     EXC_IF_CONN_CLOSED(self);
     EXC_IF_CONN_ASYNC(self, commit);
@@ -172,7 +172,7 @@ psyco_conn_commit(connectionObject *self)
 "rollback() -- Roll back all changes done to database."
 
 static PyObject *
-psyco_conn_rollback(connectionObject *self)
+psyco_conn_rollback(connectionObject *self, PyObject *dummy)
 {
     EXC_IF_CONN_CLOSED(self);
     EXC_IF_CONN_ASYNC(self, rollback);
@@ -245,7 +245,7 @@ exit:
 "tpc_prepare() -- perform the first phase of a two-phase transaction."
 
 static PyObject *
-psyco_conn_tpc_prepare(connectionObject *self)
+psyco_conn_tpc_prepare(connectionObject *self, PyObject *dummy)
 {
     EXC_IF_CONN_CLOSED(self);
     EXC_IF_CONN_ASYNC(self, tpc_prepare);
@@ -388,7 +388,7 @@ psyco_conn_tpc_rollback(connectionObject *self, PyObject *args)
 "tpc_recover() -- returns a list of pending transaction IDs."
 
 static PyObject *
-psyco_conn_tpc_recover(connectionObject *self)
+psyco_conn_tpc_recover(connectionObject *self, PyObject *dummy)
 {
     EXC_IF_CONN_CLOSED(self);
     EXC_IF_CONN_ASYNC(self, tpc_recover);
@@ -403,7 +403,7 @@ psyco_conn_tpc_recover(connectionObject *self)
 "__enter__ -> self"
 
 static PyObject *
-psyco_conn_enter(connectionObject *self)
+psyco_conn_enter(connectionObject *self, PyObject *dummy)
 {
     EXC_IF_CONN_CLOSED(self);
 
@@ -828,7 +828,7 @@ psyco_conn_deferrable_set(connectionObject *self, PyObject *pyvalue)
 "get_native_connection() -- Return the internal PGconn* as a Python Capsule."
 
 static PyObject *
-psyco_get_native_connection(connectionObject *self)
+psyco_get_native_connection(connectionObject *self, PyObject *dummy)
 {
     EXC_IF_CONN_CLOSED(self);
 
@@ -866,7 +866,7 @@ psyco_conn_set_client_encoding(connectionObject *self, PyObject *args)
 "get_transaction_status() -- Get backend transaction status."
 
 static PyObject *
-psyco_conn_get_transaction_status(connectionObject *self)
+psyco_conn_get_transaction_status(connectionObject *self, PyObject *dummy)
 {
     return PyInt_FromLong((long)PQtransactionStatus(self->pgconn));
 }
@@ -905,7 +905,7 @@ psyco_conn_get_parameter_status(connectionObject *self, PyObject *args)
 "get_dsn_parameters() -- Get effective connection parameters.\n\n"
 
 static PyObject *
-psyco_conn_get_dsn_parameters(connectionObject *self)
+psyco_conn_get_dsn_parameters(connectionObject *self, PyObject *dummy)
 {
 #if PG_VERSION_NUM >= 90300
     PyObject *res = NULL;
@@ -998,7 +998,7 @@ psyco_conn_lobject(connectionObject *self, PyObject *args, PyObject *keywds)
 "get_backend_pid() -- Get backend process id."
 
 static PyObject *
-psyco_conn_get_backend_pid(connectionObject *self)
+psyco_conn_get_backend_pid(connectionObject *self, PyObject *dummy)
 {
     EXC_IF_CONN_CLOSED(self);
 
@@ -1025,7 +1025,7 @@ psyco_conn_info_get(connectionObject *self)
 "reset() -- Reset current connection to defaults."
 
 static PyObject *
-psyco_conn_reset(connectionObject *self)
+psyco_conn_reset(connectionObject *self, PyObject *dummy)
 {
     int res;
 
@@ -1056,7 +1056,7 @@ psyco_conn_get_exception(PyObject *self, void *closure)
 "poll() -> int -- Advance the connection or query process without blocking."
 
 static PyObject *
-psyco_conn_poll(connectionObject *self)
+psyco_conn_poll(connectionObject *self, PyObject *dummy)
 {
     int res;
 
@@ -1076,7 +1076,7 @@ psyco_conn_poll(connectionObject *self)
 "fileno() -> int -- Return file descriptor associated to database connection."
 
 static PyObject *
-psyco_conn_fileno(connectionObject *self)
+psyco_conn_fileno(connectionObject *self, PyObject *dummy)
 {
     long int socket;
 
@@ -1093,7 +1093,7 @@ psyco_conn_fileno(connectionObject *self)
  "executing an asynchronous operation."
 
 static PyObject *
-psyco_conn_isexecuting(connectionObject *self)
+psyco_conn_isexecuting(connectionObject *self, PyObject *dummy)
 {
     /* synchronous connections will always return False */
     if (self->async == 0) {
@@ -1119,7 +1119,7 @@ psyco_conn_isexecuting(connectionObject *self)
 "cancel() -- cancel the current operation"
 
 static PyObject *
-psyco_conn_cancel(connectionObject *self)
+psyco_conn_cancel(connectionObject *self, PyObject *dummy)
 {
     char errbuf[256];
 
