@@ -229,6 +229,15 @@ class TestExecuteValues(FastExecuteTestMixin, testutils.ConnectingTestCase):
         cur.execute("select id, data from testfast where id = 3")
         self.assertEqual(cur.fetchone(), (3, snowman))
 
+    def test_returning(self):
+        cur = self.conn.cursor()
+        result = psycopg2.extras.execute_values(cur,
+            "insert into testfast (id, val) values %s returning id",
+            ((i, i * 10) for i in range(25)),
+            page_size=10, fetch=True)
+        # result contains all returned pages
+        self.assertEqual([r[0] for r in result], list(range(25)))
+
     def test_invalid_sql(self):
         cur = self.conn.cursor()
         self.assertRaises(ValueError, psycopg2.extras.execute_values, cur,
