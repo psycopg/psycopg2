@@ -58,12 +58,17 @@ replmsg_repr(replicationMessageObject *self)
 static int
 replmsg_init(PyObject *obj, PyObject *args, PyObject *kwargs)
 {
-    replicationMessageObject *self = (replicationMessageObject*) obj;
+    PyObject *cur = NULL;
+    replicationMessageObject *self = (replicationMessageObject *)obj;
 
-    if (!PyArg_ParseTuple(args, "O!O", &cursorType, &self->cursor, &self->payload))
+    if (!PyArg_ParseTuple(
+            args, "O!O", &cursorType, &cur, &self->payload)) {
         return -1;
-    Py_XINCREF(self->cursor);
-    Py_XINCREF(self->payload);
+    }
+
+    Py_INCREF(cur);
+    self->cursor = (cursorObject *)cur;
+    Py_INCREF(self->payload);
 
     self->data_size = 0;
     self->data_start = 0;
@@ -76,7 +81,7 @@ replmsg_init(PyObject *obj, PyObject *args, PyObject *kwargs)
 static int
 replmsg_traverse(replicationMessageObject *self, visitproc visit, void *arg)
 {
-    Py_VISIT((PyObject* )self->cursor);
+    Py_VISIT((PyObject *)self->cursor);
     Py_VISIT(self->payload);
     return 0;
 }

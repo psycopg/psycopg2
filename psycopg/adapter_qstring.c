@@ -113,14 +113,14 @@ qstring_str(qstringObject *self)
 static PyObject *
 qstring_prepare(qstringObject *self, PyObject *args)
 {
-    connectionObject *conn;
+    PyObject *conn;
 
     if (!PyArg_ParseTuple(args, "O!", &connectionType, &conn))
         return NULL;
 
     Py_CLEAR(self->conn);
     Py_INCREF(conn);
-    self->conn = conn;
+    self->conn = (connectionObject *)conn;
 
     Py_RETURN_NONE;
 }
