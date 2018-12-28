@@ -435,6 +435,7 @@ conn_set_fast_codec(connectionObject *self)
  *
  * Optionally return the clean version of the postgres encoding too
  */
+IGNORE_REFCOUNT /* bug davidmalcolm/gcc-python-plugin#155 */
 PyObject *
 conn_pgenc_to_pyenc(const char *encoding, char **clean_encoding)
 {
