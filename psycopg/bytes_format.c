@@ -79,10 +79,7 @@
 
 #define PSYCOPG_MODULE
 #include "psycopg/psycopg.h"
-
-#ifndef Py_LOCAL_INLINE
-#define Py_LOCAL_INLINE(type) static type
-#endif
+#include "pyport.h"
 
 /* Helpers for formatstring */
 
