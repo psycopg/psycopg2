@@ -55,9 +55,9 @@ psycopg_escape_string(connectionObject *conn, const char *from, Py_ssize_t len,
     if (len < 0) {
         len = strlen(from);
     } else if (strchr(from, '\0') != from + len) {
-        PyErr_Format(PyExc_ValueError, "A string literal cannot contain NUL (0x00) characters.");
-
-	return NULL;
+        PyErr_Format(PyExc_ValueError,
+            "A string literal cannot contain NUL (0x00) characters.");
+        return NULL;
     }
 
     if (to == NULL) {
@@ -69,11 +69,11 @@ psycopg_escape_string(connectionObject *conn, const char *from, Py_ssize_t len,
     }
 
     {
-            int err;
-            if (conn && conn->pgconn)
-                ql = PQescapeStringConn(conn->pgconn, to+eq+1, from, len, &err);
-            else
-                ql = PQescapeString(to+eq+1, from, len);
+        int err;
+        if (conn && conn->pgconn)
+            ql = PQescapeStringConn(conn->pgconn, to+eq+1, from, len, &err);
+        else
+            ql = PQescapeString(to+eq+1, from, len);
     }
 
     if (eq) {
