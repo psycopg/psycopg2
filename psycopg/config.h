@@ -202,4 +202,11 @@ static double round(double num)
 #define RAISES
 #endif
 
+#if defined(WITH_CPYCHECKER_IGNORE_REFCOUNT_ATTRIBUTE)
+#define IGNORE_REFCOUNT \
+    __attribute__((cpychecker_ignore_refcount))
+#else
+#define IGNORE_REFCOUNT
+#endif
+
 #endif /* !defined(PSYCOPG_CONFIG_H) */

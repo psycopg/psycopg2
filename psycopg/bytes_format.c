@@ -101,6 +101,7 @@ getnextarg(PyObject *args, Py_ssize_t arglen, Py_ssize_t *p_argidx)
 
 /* wrapper around _Bytes_Resize offering normal Python call semantics */
 
+IGNORE_REFCOUNT
 STEALS(1)
 Py_LOCAL_INLINE(PyObject *)
 resize_bytes(PyObject *b, Py_ssize_t newsize) {
