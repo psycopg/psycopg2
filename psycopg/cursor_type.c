@@ -1681,7 +1681,7 @@ psyco_curs_withhold_get(cursorObject *self)
     return PyBool_FromLong(self->withhold);
 }
 
-int
+RAISES_NEG int
 psyco_curs_withhold_set(cursorObject *self, PyObject *pyvalue)
 {
     int value;
@@ -1726,7 +1726,7 @@ psyco_curs_scrollable_get(cursorObject *self)
     return ret;
 }
 
-int
+RAISES_NEG int
 psyco_curs_scrollable_set(cursorObject *self, PyObject *pyvalue)
 {
     int value;

@@ -112,10 +112,10 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *kwargs)
         goto exit;
     }
 
-    if (0 != psyco_curs_withhold_set((cursorObject *)obj, withhold)) {
+    if (0 > psyco_curs_withhold_set((cursorObject *)obj, withhold)) {
         goto exit;
     }
-    if (0 != psyco_curs_scrollable_set((cursorObject *)obj, scrollable)) {
+    if (0 > psyco_curs_scrollable_set((cursorObject *)obj, scrollable)) {
         goto exit;
     }
 
