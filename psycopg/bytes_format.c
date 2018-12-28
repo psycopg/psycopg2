@@ -123,7 +123,7 @@ Bytes_Format(PyObject *format, PyObject *args)
     result = Bytes_FromStringAndSize((char *)NULL, reslen);
     if (result == NULL)
         return NULL;
-    res = Bytes_AsString(result);
+    res = Bytes_AS_STRING(result);
     if (PyTuple_Check(args)) {
         arglen = PyTuple_GET_SIZE(args);
         argidx = 0;
@@ -238,8 +238,7 @@ Bytes_Format(PyObject *format, PyObject *args)
                   "unsupported format character '%c' (0x%x) "
                   "at index " FORMAT_CODE_PY_SSIZE_T,
                   c, c,
-                  (Py_ssize_t)(fmt - 1 -
-                               Bytes_AsString(format)));
+                  (Py_ssize_t)(fmt - 1 - Bytes_AS_STRING(format)));
                 goto error;
             }
             if (width < len)
