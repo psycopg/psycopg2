@@ -1081,7 +1081,16 @@ conn_poll(connectionObject *self)
             /* An async query has just finished: parse the tuple in the
              * target cursor. */
             cursorObject *curs;
-            PyObject *py_curs = PyWeakref_GetObject(self->async_cursor);
+            PyObject *py_curs;
+            if (!(py_curs = PyWeakref_GetObject(self->async_cursor))) {
+                /* It shouldn't happen but consider it to avoid dereferencing
+                 * a null pointer below. */
+                pq_clear_async(self);
+                PyErr_SetString(PyExc_SystemError,
+                    "got null dereferencing cursor weakref");
+                res = PSYCO_POLL_ERROR;
+                break;
+            }
             if (Py_None == py_curs) {
                 pq_clear_async(self);
                 PyErr_SetString(InterfaceError,
