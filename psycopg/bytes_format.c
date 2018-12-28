@@ -207,11 +207,6 @@ Bytes_Format(PyObject *format, PyObject *args)
                                 "incomplete format");
                 goto error;
             }
-            if (c != '%') {
-                v = getnextarg(args, arglen, &argidx);
-                if (v == NULL)
-                    goto error;
-            }
             switch (c) {
             case '%':
                 pbuf = "%";
@@ -219,6 +214,8 @@ Bytes_Format(PyObject *format, PyObject *args)
                 break;
             case 's':
                 /* only bytes! */
+                if (!(v = getnextarg(args, arglen, &argidx)))
+                    goto error;
                 if (!Bytes_CheckExact(v)) {
                     PyErr_Format(PyExc_ValueError,
                                     "only bytes values expected, got %s",
