@@ -474,6 +474,16 @@ _psyco_conn_parse_isolevel(PyObject *pyval)
         }
 
         rv = level;
+
+        /* Redundant test, checked above.
+         * Work around a cpychecker false positive.
+         * davidmalcolm/gcc-python-plugin#158
+         */
+        if (rv < 0) {
+            PyErr_SetString(PyExc_ValueError,
+                "isolation_level must be between 1 and 4");
+            goto exit;
+        }
     }
 
     /* parse from the string -- this includes "default" */
