@@ -244,10 +244,14 @@ Bytes_Format(PyObject *format, PyObject *args)
                 if (reslen < 0) {
                     Py_DECREF(result);
                     Py_XDECREF(temp);
+                    if (args_owned)
+                        Py_DECREF(args);
                     return PyErr_NoMemory();
                 }
                 if (_Bytes_Resize(&result, reslen)) {
                     Py_XDECREF(temp);
+                    if (args_owned)
+                        Py_DECREF(args);
                     return NULL;
                 }
                 res = Bytes_AS_STRING(result)
