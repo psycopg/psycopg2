@@ -1337,13 +1337,13 @@ connection_setup(connectionObject *self, const char *dsn, long int async)
       );
 
     if (0 > psycopg_strdup(&self->dsn, dsn, -1)) { goto exit; }
-    if (!(self->notice_list = PyList_New(0))) { goto exit; }
-    if (!(self->notifies = PyList_New(0))) { goto exit; }
+    if (!(self->notice_list = TO_STATE(PyList_New(0)))) { goto exit; }
+    if (!(self->notifies = TO_STATE(PyList_New(0)))) { goto exit; }
     self->async = async;
     self->status = CONN_STATUS_SETUP;
     self->async_status = ASYNC_DONE;
-    if (!(self->string_types = PyDict_New())) { goto exit; }
-    if (!(self->binary_types = PyDict_New())) { goto exit; }
+    if (!(self->string_types = TO_STATE(PyDict_New()))) { goto exit; }
+    if (!(self->binary_types = TO_STATE(PyDict_New()))) { goto exit; }
     self->isolevel = ISOLATION_LEVEL_DEFAULT;
     self->readonly = STATE_DEFAULT;
     self->deferrable = STATE_DEFAULT;

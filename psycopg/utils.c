@@ -465,3 +465,19 @@ psyco_GetDecimalType(void)
 
     return decimalType;
 }
+
+
+/* Transfer ownership of an object to another object's state.
+ *
+ * Work around what seems a bug to the cpychecker which doesn't recognise
+ * the new reference: tell it one reference is just gone.
+ *
+ * See davidmalcolm/gcc-python-plugin#109
+ */
+#ifdef WITH_CPYCHECKER_RETURNS_BORROWED_REF_ATTRIBUTE
+STEALS(1) IGNORE_REFCOUNT BORROWED PyObject *
+TO_STATE(PyObject* obj)
+{
+    return obj;
+}
+#endif

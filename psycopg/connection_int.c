@@ -1392,7 +1392,7 @@ conn_tpc_begin(connectionObject *self, xidObject *xid)
 
     /* The transaction started ok, let's store this xid. */
     Py_INCREF(xid);
-    self->tpc_xid = xid;
+    self->tpc_xid = (xidObject *)TO_STATE((PyObject *)xid);
 
     return 0;
 }

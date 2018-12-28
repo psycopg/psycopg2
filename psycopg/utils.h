@@ -58,4 +58,10 @@ HIDDEN RAISES BORROWED PyObject *psyco_set_error(
 
 HIDDEN PyObject *psyco_GetDecimalType(void);
 
+#ifdef WITH_CPYCHECKER_RETURNS_BORROWED_REF_ATTRIBUTE
+HIDDEN STEALS(1) IGNORE_REFCOUNT BORROWED PyObject *TO_STATE(PyObject* obj);
+#else
+#define TO_STATE(x) x
+#endif
+
 #endif /* !defined(UTILS_H) */
