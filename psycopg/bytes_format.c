@@ -111,7 +111,7 @@ Bytes_Format(PyObject *format, PyObject *args)
     PyObject *result;
     PyObject *dict = NULL;
     if (format == NULL || !Bytes_Check(format) || args == NULL) {
-        PyErr_BadInternalCall();
+        PyErr_SetString(PyExc_SystemError, "bad argument to internal function");
         return NULL;
     }
     fmt = Bytes_AS_STRING(format);
