@@ -99,6 +99,19 @@ getnextarg(PyObject *args, Py_ssize_t arglen, Py_ssize_t *p_argidx)
     return NULL;
 }
 
+/* wrapper around _Bytes_Resize offering normal Python call semantics */
+
+STEALS(1)
+Py_LOCAL_INLINE(PyObject *)
+resize_bytes(PyObject *b, Py_ssize_t newsize) {
+    if (0 == _Bytes_Resize(&b, newsize)) {
+        return b;
+    }
+    else {
+        return NULL;
+    }
+}
+
 /* fmt%(v1,v2,...) is roughly equivalent to sprintf(fmt, v1, v2, ...) */
 
 PyObject *
@@ -137,10 +150,10 @@ Bytes_Format(PyObject *format, PyObject *args)
             if (--rescnt < 0) {
                 rescnt = fmtcnt + 100;
                 reslen += rescnt;
-                if (_Bytes_Resize(&result, reslen))
+                if (!(result = resize_bytes(result, reslen))) {
                     return NULL;
-                res = Bytes_AS_STRING(result)
-                    + reslen - rescnt;
+                }
+                res = Bytes_AS_STRING(result) + reslen - rescnt;
                 --rescnt;
             }
             *res++ = *fmt++;
@@ -248,7 +261,7 @@ Bytes_Format(PyObject *format, PyObject *args)
                         Py_DECREF(args);
                     return PyErr_NoMemory();
                 }
-                if (_Bytes_Resize(&result, reslen)) {
+                if (!(result = resize_bytes(result, reslen))) {
                     Py_XDECREF(temp);
                     if (args_owned)
                         Py_DECREF(args);
@@ -281,8 +294,9 @@ Bytes_Format(PyObject *format, PyObject *args)
     if (args_owned) {
         Py_DECREF(args);
     }
-    if (_Bytes_Resize(&result, reslen - rescnt))
+    if (!(result = resize_bytes(result, reslen - rescnt))) {
         return NULL;
+    }
     return result;
 
  error:
