@@ -53,7 +53,7 @@ HIDDEN PyObject *psycopg_make_dsn(PyObject *dsn, PyObject *kwargs);
 HIDDEN PyObject *psycopg_text_from_chars_safe(
     const char *str, Py_ssize_t len, PyObject *decoder);
 
-RAISES HIDDEN PyObject *psyco_set_error(
+HIDDEN RAISES BORROWED PyObject *psyco_set_error(
     PyObject *exc, cursorObject *curs, const char *msg);
 
 HIDDEN PyObject *psyco_GetDecimalType(void);

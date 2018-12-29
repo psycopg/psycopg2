@@ -365,8 +365,7 @@ exit:
  * Create a new error of the given type with extra attributes.
  */
 
-/* TODO: may have been changed to BORROWED */
-RAISES PyObject *
+RAISES BORROWED PyObject *
 psyco_set_error(PyObject *exc, cursorObject *curs, const char *msg)
 {
     PyObject *pymsg;
