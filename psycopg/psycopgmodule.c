@@ -39,7 +39,6 @@
 #include "psycopg/typecast.h"
 #include "psycopg/microprotocols.h"
 #include "psycopg/microprotocols_proto.h"
-#include "psycopg/error.h"
 #include "psycopg/conninfo.h"
 #include "psycopg/diagnostics.h"
 
@@ -720,116 +719,6 @@ psyco_errors_set(PyObject *type)
 
         PyObject_SetAttrString(type, name, *exctable[i].exc);
     }
-}
-
-/* psyco_set_error
-
-   Create a new error of the given type with extra attributes. */
-
-/* TODO: may have been changed to BORROWED */
-RAISES PyObject *
-psyco_set_error(PyObject *exc, cursorObject *curs, const char *msg)
-{
-    PyObject *pymsg;
-    PyObject *err = NULL;
-    connectionObject *conn = NULL;
-
-    if (curs) {
-        conn = ((cursorObject *)curs)->conn;
-    }
-
-    if ((pymsg = conn_text_from_chars(conn, msg))) {
-        err = PyObject_CallFunctionObjArgs(exc, pymsg, NULL);
-        Py_DECREF(pymsg);
-    }
-    else {
-        /* what's better than an error in an error handler in the morning?
-         * Anyway, some error was set, refcount is ok... get outta here. */
-        return NULL;
-    }
-
-    if (err && PyObject_TypeCheck(err, &errorType)) {
-        errorObject *perr = (errorObject *)err;
-        if (curs) {
-            Py_CLEAR(perr->cursor);
-            Py_INCREF(curs);
-            perr->cursor = curs;
-        }
-    }
-
-    if (err) {
-        PyErr_SetObject(exc, err);
-        Py_DECREF(err);
-    }
-
-    return err;
-}
-
-
-/* Return nonzero if the current one is the main interpreter */
-static int
-psyco_is_main_interp(void)
-{
-    static PyInterpreterState *main_interp = NULL;  /* Cached reference */
-    PyInterpreterState *interp;
-
-    if (main_interp) {
-        return (main_interp == PyThreadState_Get()->interp);
-    }
-
-    /* No cached value: cache the proper value and try again. */
-    interp = PyInterpreterState_Head();
-    while (interp->next)
-        interp = interp->next;
-
-    main_interp = interp;
-    assert (main_interp);
-    return psyco_is_main_interp();
-}
-
-
-/* psyco_GetDecimalType
-
-   Return a new reference to the adapter for decimal type.
-
-   If decimals should be used but the module import fails, fall back on
-   the float type.
-
-    If decimals are not to be used, return NULL.
-*/
-
-PyObject *
-psyco_GetDecimalType(void)
-{
-    static PyObject *cachedType = NULL;
-    PyObject *decimalType = NULL;
-    PyObject *decimal;
-
-    /* Use the cached object if running from the main interpreter. */
-    int can_cache = psyco_is_main_interp();
-    if (can_cache && cachedType) {
-        Py_INCREF(cachedType);
-        return cachedType;
-    }
-
-    /* Get a new reference to the Decimal type. */
-    decimal = PyImport_ImportModule("decimal");
-    if (decimal) {
-        decimalType = PyObject_GetAttrString(decimal, "Decimal");
-        Py_DECREF(decimal);
-    }
-    else {
-        PyErr_Clear();
-        decimalType = NULL;
-    }
-
-    /* Store the object from future uses. */
-    if (can_cache && !cachedType && decimalType) {
-        Py_INCREF(decimalType);
-        cachedType = decimalType;
-    }
-
-    return decimalType;
 }
 
 
