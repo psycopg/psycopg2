@@ -1394,27 +1394,6 @@ exit:
 #define psyco_curs_copy_from_doc \
 "copy_from(file, table, sep='\\t', null='\\\\N', size=8192, columns=None) -- Copy table from file."
 
-STEALS(1) static int
-_psyco_curs_has_read_check(PyObject *o, PyObject **var)
-{
-    if (PyObject_HasAttrString(o, "readline")
-        && PyObject_HasAttrString(o, "read")) {
-        /* This routine stores a borrowed reference.  Although it is only held
-         * for the duration of psyco_curs_copy_from, nested invocations of
-         * Py_BEGIN_ALLOW_THREADS could surrender control to another thread,
-         * which could invoke the garbage collector.  We thus need an
-         * INCREF/DECREF pair if we store this pointer in a GC object, such as
-         * a cursorObject */
-        *var = o;
-        return 1;
-    }
-    else {
-        PyErr_SetString(PyExc_TypeError,
-            "argument 1 must have both .read() and .readline() methods");
-        return 0;
-    }
-}
-
 static PyObject *
 psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
@@ -1436,11 +1415,15 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
     Py_ssize_t bufsize = DEFAULT_COPYBUFF;
     PyObject *file, *columns = NULL, *res = NULL;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs,
-        "O&s|ssnO", kwlist,
-        _psyco_curs_has_read_check, &file, &table_name, &sep, &null, &bufsize,
-        &columns))
-    {
+    if (!PyArg_ParseTupleAndKeywords(
+            args, kwargs, "Os|ssnO", kwlist,
+            &file, &table_name, &sep, &null, &bufsize, &columns)) {
+        return NULL;
+    }
+
+    if (!PyObject_HasAttrString(file, "read")) {
+        PyErr_SetString(PyExc_TypeError,
+            "argument 1 must have a .read() method");
         return NULL;
     }
 
@@ -1474,6 +1457,12 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
 
     Dprintf("psyco_curs_copy_from: query = %s", query);
 
+    /* This routine stores a borrowed reference.  Although it is only held
+     * for the duration of psyco_curs_copy_from, nested invocations of
+     * Py_BEGIN_ALLOW_THREADS could surrender control to another thread,
+     * which could invoke the garbage collector.  We thus need an
+     * INCREF/DECREF pair if we store this pointer in a GC object, such as
+     * a cursorObject */
     self->copysize = bufsize;
     Py_INCREF(file);
     self->copyfile = file;
@@ -1499,20 +1488,6 @@ exit:
 #define psyco_curs_copy_to_doc \
 "copy_to(file, table, sep='\\t', null='\\\\N', columns=None) -- Copy table to file."
 
-STEALS(1) static int
-_psyco_curs_has_write_check(PyObject *o, PyObject **var)
-{
-    if (PyObject_HasAttrString(o, "write")) {
-        *var = o;
-        return 1;
-    }
-    else {
-        PyErr_SetString(PyExc_TypeError,
-                        "argument 1 must have a .write() method");
-        return 0;
-    }
-}
-
 static PyObject *
 psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
@@ -1530,11 +1505,17 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
     char *quoted_null = NULL;
 
     const char *table_name;
-    PyObject *file, *columns = NULL, *res = NULL;
+    PyObject *file = NULL, *columns = NULL, *res = NULL;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&s|ssO", kwlist,
-                                     _psyco_curs_has_write_check, &file,
-                                     &table_name, &sep, &null, &columns)) {
+    if (!PyArg_ParseTupleAndKeywords(
+            args, kwargs, "Os|ssO", kwlist,
+            &file, &table_name, &sep, &null, &columns)) {
+        return NULL;
+    }
+
+    if (!PyObject_HasAttrString(file, "write")) {
+        PyErr_SetString(PyExc_TypeError,
+            "argument 1 must have a .write() method");
         return NULL;
     }
 
