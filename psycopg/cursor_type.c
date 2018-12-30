@@ -1870,7 +1870,7 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
         return -1;
     } */
     Py_INCREF(conn);
-    self->conn = conn;
+    self->conn = (connectionObject *)TO_STATE((PyObject *)conn);
 
     self->mark = conn->mark;
     self->notuples = 1;
@@ -1880,14 +1880,14 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
     self->lastoid = InvalidOid;
 
     Py_INCREF(Py_None);
-    self->tuple_factory = Py_None;
+    self->tuple_factory = TO_STATE(Py_None);
 
     /* default tzinfo factory */
     {
         PyObject *m = NULL;
         if ((m = PyImport_ImportModule("psycopg2.tz"))) {
-            self->tzinfo_factory = PyObject_GetAttrString(
-                    m, "FixedOffsetTimezone");
+            self->tzinfo_factory = TO_STATE(PyObject_GetAttrString(
+                    m, "FixedOffsetTimezone"));
             Py_DECREF(m);
         }
         if (!self->tzinfo_factory) {
