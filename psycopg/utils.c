@@ -427,12 +427,10 @@ psyco_is_main_interp(void)
 
 /* psyco_GetDecimalType
 
-   Return a new reference to the adapter for decimal type.
+   Return a new reference to the decimal type.
 
-   If decimals should be used but the module import fails, fall back on
-   the float type.
-
-    If decimals are not to be used, return NULL.
+   The function returns a cached version of the object, but only in the main
+   interpreter because subinterpreters are confusing.
 */
 
 PyObject *
@@ -456,7 +454,6 @@ psyco_GetDecimalType(void)
         Py_DECREF(decimal);
     }
     else {
-        PyErr_Clear();
         decimalType = NULL;
     }
 
