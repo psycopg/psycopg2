@@ -971,6 +971,8 @@ pq_execute(cursorObject *curs, const char *query, int async, int no_result, int 
     }
     Dprintf("pq_execute: pg connection at %p OK", curs->conn->pgconn);
 
+    CLEARPGRES(curs->pgres);
+
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(curs->conn->lock));
 
@@ -982,7 +984,6 @@ pq_execute(cursorObject *curs, const char *query, int async, int no_result, int 
     }
 
     if (async == 0) {
-        CLEARPGRES(curs->pgres);
         Dprintf("pq_execute: executing SYNC query: pgconn = %p", curs->conn->pgconn);
         Dprintf("    %-.200s", query);
         if (!psyco_green()) {
@@ -1024,7 +1025,6 @@ pq_execute(cursorObject *curs, const char *query, int async, int no_result, int 
         Dprintf("pq_execute: executing ASYNC query: pgconn = %p", curs->conn->pgconn);
         Dprintf("    %-.200s", query);
 
-        CLEARPGRES(curs->pgres);
         if (PQsendQuery(curs->conn->pgconn, query) == 0) {
             if (CONNECTION_BAD == PQstatus(curs->conn->pgconn)) {
                 curs->conn->closed = 2;
