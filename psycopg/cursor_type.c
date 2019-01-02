@@ -372,20 +372,17 @@ _psyco_curs_merge_query_args(cursorObject *self,
 
 RAISES_NEG static int
 _psyco_curs_execute(cursorObject *self,
-                    PyObject *operation, PyObject *vars,
+                    PyObject *query, PyObject *vars,
                     long int async, int no_result)
 {
     int res = -1;
     int tmp;
-    PyObject *fquery, *cvt = NULL;
-    const char *scroll;
+    PyObject *fquery = NULL, *cvt = NULL;
 
-    operation = psyco_curs_validate_sql_basic(self, operation);
-
-    /* Any failure from here forward should 'goto fail' rather than 'return 0'
-       directly. */
-
-    if (operation == NULL) { goto exit; }
+    /* query becomes NULL or refcount +1, so good to XDECREF at the end */
+    if (!(query = psyco_curs_validate_sql_basic(self, query))) {
+        goto exit;
+    }
 
     CLEARPGRES(self->pgres);
     Py_CLEAR(self->query);
@@ -394,65 +391,56 @@ _psyco_curs_execute(cursorObject *self,
     /* here we are, and we have a sequence or a dictionary filled with
        objects to be substituted (bound variables). we try to be smart and do
        the right thing (i.e., what the user expects) */
-
     if (vars && vars != Py_None)
     {
-        if (0 > _mogrify(vars, operation, self, &cvt)) { goto exit; }
+        if (0 > _mogrify(vars, query, self, &cvt)) { goto exit; }
     }
 
-    switch (self->scrollable) {
-        case -1:
-            scroll = "";
-            break;
-        case 0:
-            scroll = "NO SCROLL ";
-            break;
-        case 1:
-            scroll = "SCROLL ";
-            break;
-        default:
-            PyErr_SetString(InternalError, "unexpected scrollable value");
+    /* Merge the query to the arguments if needed */
+    if (cvt) {
+        if (!(fquery = _psyco_curs_merge_query_args(self, query, cvt))) {
             goto exit;
-    }
-
-    if (vars && cvt) {
-        if (!(fquery = _psyco_curs_merge_query_args(self, operation, cvt))) {
-            goto exit;
-        }
-
-        if (self->qname != NULL) {
-            self->query = Bytes_FromFormat(
-                "DECLARE %s %sCURSOR %s HOLD FOR %s",
-                self->qname,
-                scroll,
-                self->withhold ? "WITH" : "WITHOUT",
-                Bytes_AS_STRING(fquery));
-            Py_DECREF(fquery);
-        }
-        else {
-            self->query = fquery;
         }
     }
     else {
-        if (self->qname != NULL) {
-            self->query = Bytes_FromFormat(
+        Py_INCREF(query);
+        fquery = query;
+    }
+
+    if (self->qname != NULL) {
+        const char *scroll;
+        switch (self->scrollable) {
+            case -1:
+                scroll = "";
+                break;
+            case 0:
+                scroll = "NO SCROLL ";
+                break;
+            case 1:
+                scroll = "SCROLL ";
+                break;
+            default:
+                PyErr_SetString(InternalError, "unexpected scrollable value");
+                goto exit;
+        }
+
+        if (!(self->query = Bytes_FromFormat(
                 "DECLARE %s %sCURSOR %s HOLD FOR %s",
                 self->qname,
                 scroll,
                 self->withhold ? "WITH" : "WITHOUT",
-                Bytes_AS_STRING(operation));
+                Bytes_AS_STRING(fquery)))) {
+            goto exit;
         }
-        else {
-            /* Transfer reference ownership of the str in operation to
-               self->query, clearing the local variable to prevent cleanup from
-               DECREFing it */
-            self->query = operation;
-            operation = NULL;
-        }
+        if (!self->query) { goto exit; }
+    }
+    else {
+        /* Transfer ownership */
+        Py_INCREF(fquery);
+        self->query = fquery;
     }
 
     /* At this point, the SQL statement must be str, not unicode */
-
     tmp = pq_execute(self, Bytes_AS_STRING(self->query), async, no_result, 0);
     Dprintf("psyco_curs_execute: res = %d, pgres = %p", tmp, self->pgres);
     if (tmp < 0) { goto exit; }
@@ -460,10 +448,8 @@ _psyco_curs_execute(cursorObject *self,
     res = 0; /* Success */
 
 exit:
-    /* Py_XDECREF(operation) is safe because the original reference passed
-       by the caller was overwritten with either NULL or a new
-       reference */
-    Py_XDECREF(operation);
+    Py_XDECREF(query);
+    Py_XDECREF(fquery);
     Py_XDECREF(cvt);
 
     return res;
