@@ -195,6 +195,13 @@ static double round(double num)
 #define RAISES_NEG
 #endif
 
+#if defined(WITH_CPYCHECKER_NULL_RESULT_SETS_EXCEPTION_ATTRIBUTE)
+#define RAISES_NULL \
+    __attribute__((cpychecker_null_result_sets_exception))
+#else
+#define RAISES_NULL
+#endif
+
 #if defined(WITH_CPYCHECKER_SETS_EXCEPTION_ATTRIBUTE)
 #define RAISES \
     __attribute__((cpychecker_sets_exception))

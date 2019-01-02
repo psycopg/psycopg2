@@ -31,7 +31,7 @@ typedef struct cursorObject cursorObject;
 typedef struct connectionObject connectionObject;
 typedef struct replicationMessageObject replicationMessageObject;
 
-HIDDEN char *psycopg_escape_string(
+HIDDEN RAISES_NULL char *psycopg_escape_string(
     connectionObject *conn,
     const char *from, Py_ssize_t len, char *to, Py_ssize_t *tolen);
 
@@ -58,10 +58,14 @@ HIDDEN RAISES BORROWED PyObject *psyco_set_error(
 
 HIDDEN PyObject *psyco_GetDecimalType(void);
 
+/* Using this macro arbitrarily to check if we are under cpychecker.
+ * Otherwise don't compile this function. */
 #ifdef WITH_CPYCHECKER_RETURNS_BORROWED_REF_ATTRIBUTE
 HIDDEN STEALS(1) IGNORE_REFCOUNT BORROWED PyObject *TO_STATE(PyObject* obj);
+HIDDEN RAISES HIDDEN void FAKE_RAISE(void);
 #else
 #define TO_STATE(x) x
+#define FAKE_RAISE() do {} while (0)
 #endif
 
 #endif /* !defined(UTILS_H) */

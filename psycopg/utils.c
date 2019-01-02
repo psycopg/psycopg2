@@ -47,7 +47,7 @@
  * If tolen is set, it will contain the length of the escaped string,
  * including quotes.
  */
-char *
+RAISES_NULL char *
 psycopg_escape_string(connectionObject *conn, const char *from, Py_ssize_t len,
                        char *to, Py_ssize_t *tolen)
 {
@@ -467,6 +467,8 @@ psyco_GetDecimalType(void)
 }
 
 
+#ifdef WITH_CPYCHECKER_RETURNS_BORROWED_REF_ATTRIBUTE
+
 /* Transfer ownership of an object to another object's state.
  *
  * Work around what seems a bug to the cpychecker which doesn't recognise
@@ -474,10 +476,22 @@ psyco_GetDecimalType(void)
  *
  * See davidmalcolm/gcc-python-plugin#109
  */
-#ifdef WITH_CPYCHECKER_RETURNS_BORROWED_REF_ATTRIBUTE
 STEALS(1) IGNORE_REFCOUNT BORROWED PyObject *
 TO_STATE(PyObject* obj)
 {
     return obj;
 }
+
+/* Fake a function raising an exception.
+ *
+ * Useful to play together with functions with peculiar semantics such as
+ * psycopg_escape_string() which doesn't return a PyObject*, but raises an
+ * exception on NULL. I'm trying to implement a function attribute to raise
+ * on NULL, similar to raise on negative, but haven't finished it yet.
+ */
+RAISES IGNORE_REFCOUNT void
+FAKE_RAISE()
+{
+}
+
 #endif

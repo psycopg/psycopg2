@@ -88,6 +88,7 @@ psyco_curs_close(cursorObject *self, PyObject *dummy)
         if (!self->query && self->conn->server_version >= 80200) {
             if (!(lname = psycopg_escape_string(
                     self->conn, self->name, -1, NULL, NULL))) {
+                FAKE_RAISE();
                 goto exit;
             }
             PyOS_snprintf(buffer, sizeof(buffer),
@@ -1423,11 +1424,13 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
 
     if (!(quoted_delimiter = psycopg_escape_string(
             self->conn, sep, -1, NULL, NULL))) {
+        FAKE_RAISE();
         goto exit;
     }
 
     if (!(quoted_null = psycopg_escape_string(
             self->conn, null, -1, NULL, NULL))) {
+        FAKE_RAISE();
         goto exit;
     }
 
@@ -1515,11 +1518,13 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
 
     if (!(quoted_delimiter = psycopg_escape_string(
             self->conn, sep, -1, NULL, NULL))) {
+        FAKE_RAISE();
         goto exit;
     }
 
     if (!(quoted_null = psycopg_escape_string(
             self->conn, null, -1, NULL, NULL))) {
+        FAKE_RAISE();
         goto exit;
     }
 
