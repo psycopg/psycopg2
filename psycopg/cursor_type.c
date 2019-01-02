@@ -648,6 +648,7 @@ psyco_curs_cast(cursorObject *self, PyObject *args)
 "default) or using the sequence factory previously set in the\n" \
 "`row_factory` attribute. Return `!None` when no more data is available.\n"
 
+IGNORE_REFCOUNT /* bug davidmalcolm/gcc-python-plugin#163 */
 RAISES_NEG static int
 _psyco_curs_prefetch(cursorObject *self)
 {
@@ -665,6 +666,7 @@ _psyco_curs_prefetch(cursorObject *self)
     return i;
 }
 
+IGNORE_REFCOUNT /* bug davidmalcolm/gcc-python-plugin#160 */
 RAISES_NEG static int
 _psyco_curs_buildrow_fill(cursorObject *self, PyObject *res,
                           int row, int n, int istuple)
@@ -814,6 +816,7 @@ psyco_curs_next_named(cursorObject *self)
 
     /* We exhausted the data: return NULL to stop iteration. */
     if (self->row >= self->rowcount) {
+        FAKE_RAISE();
         return NULL;
     }
 
@@ -998,6 +1001,7 @@ exit:
 #define psyco_curs_callproc_doc \
 "callproc(procname, parameters=None) -- Execute stored procedure."
 
+IGNORE_REFCOUNT /* bug davidmalcolm/gcc-python-plugin#162 */
 static PyObject *
 psyco_curs_callproc(cursorObject *self, PyObject *args)
 {
@@ -1301,6 +1305,9 @@ exit:
 /* Return a newly allocated buffer containing the list of columns to be
  * copied. On error return NULL and set an exception.
  */
+
+/* cpychecker segfault, maybe bug davidmalcolm/gcc-python-plugin#155 */
+IGNORE_REFCOUNT
 static char *_psyco_curs_copy_columns(PyObject *columns)
 {
     PyObject *col, *coliter;
@@ -1419,8 +1426,10 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
     EXC_IF_GREEN(copy_from);
     EXC_IF_TPC_PREPARED(self->conn, copy_from);
 
-    if (NULL == (columnlist = _psyco_curs_copy_columns(columns)))
+    if (NULL == (columnlist = _psyco_curs_copy_columns(columns))) {
+        FAKE_RAISE();
         goto exit;
+    }
 
     if (!(quoted_delimiter = psycopg_escape_string(
             self->conn, sep, -1, NULL, NULL))) {
@@ -1513,8 +1522,10 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
     EXC_IF_GREEN(copy_to);
     EXC_IF_TPC_PREPARED(self->conn, copy_to);
 
-    if (NULL == (columnlist = _psyco_curs_copy_columns(columns)))
+    if (NULL == (columnlist = _psyco_curs_copy_columns(columns))) {
+        FAKE_RAISE();
         goto exit;
+    }
 
     if (!(quoted_delimiter = psycopg_escape_string(
             self->conn, sep, -1, NULL, NULL))) {
@@ -1949,6 +1960,7 @@ cursor_dealloc(PyObject* obj)
     Py_TYPE(obj)->tp_free(obj);
 }
 
+IGNORE_REFCOUNT /* bug davidmalcolm/gcc-python-plugin#159 */
 static int
 cursor_init(PyObject *obj, PyObject *args, PyObject *kwargs)
 {
