@@ -200,6 +200,9 @@ The ``cursor`` class
         
             >>> nums = [[1],[5],[10]]
             >>> cur.executemany("INSERT INTO test (num) VALUES (%s)", nums)
+            
+            >>> tuples = ((123,"foo"), (42,"bar"), (23,"baz"))
+            >>> cur.executemany("INSERT INTO test (num, data) VALUES (%s, %s)", tuples)
 
         .. warning::
             In its current implementation this method is not faster than
