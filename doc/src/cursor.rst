@@ -197,6 +197,9 @@ The ``cursor`` class
 
         Parameters are bounded to the query using the same rules described in
         the `~cursor.execute()` method.
+        
+            >>> nums = [[1],[5],[10]]
+            >>> cur.executemany("INSERT INTO test (num) VALUES (%s)", nums)
 
         .. warning::
             In its current implementation this method is not faster than
