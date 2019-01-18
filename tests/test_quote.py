@@ -170,6 +170,17 @@ class QuotingTestCase(ConnectingTestCase):
             self.assertEqual(res, data)
             self.assert_(not self.conn.notices)
 
+    def test_bytes(self):
+        snowman = u"\u2603"
+        conn = self.connect()
+        conn.set_client_encoding('UNICODE')
+        psycopg2.extensions.register_type(psycopg2.extensions.BYTES, conn)
+        curs = conn.cursor()
+        curs.execute("select %s::text", (snowman,))
+        x = curs.fetchone()[0]
+        self.assert_(isinstance(x, bytes))
+        self.assertEqual(x, snowman.encode('utf8'))
+
 
 class TestQuotedString(ConnectingTestCase):
     def test_encoding_from_conn(self):
