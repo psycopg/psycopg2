@@ -3,7 +3,6 @@ static long int typecast_LONGINTEGER_types[] = {20, 0};
 static long int typecast_INTEGER_types[] = {23, 21, 0};
 static long int typecast_FLOAT_types[] = {701, 700, 0};
 static long int typecast_DECIMAL_types[] = {1700, 0};
-static long int typecast_UNICODE_types[] = {19, 18, 25, 1042, 1043, 0};
 static long int typecast_STRING_types[] = {19, 18, 25, 1042, 1043, 0};
 static long int typecast_BOOLEAN_types[] = {16, 0};
 static long int typecast_DATETIME_types[] = {1114, 0};
@@ -39,8 +38,9 @@ static typecastObject_initlist typecast_builtins[] = {
   {"INTEGER", typecast_INTEGER_types, typecast_INTEGER_cast, NULL},
   {"FLOAT", typecast_FLOAT_types, typecast_FLOAT_cast, NULL},
   {"DECIMAL", typecast_DECIMAL_types, typecast_DECIMAL_cast, NULL},
-  {"UNICODE", typecast_UNICODE_types, typecast_UNICODE_cast, NULL},
+  {"UNICODE", typecast_STRING_types, typecast_UNICODE_cast, NULL},
   {"STRING", typecast_STRING_types, typecast_STRING_cast, NULL},
+  {"BYTES", typecast_STRING_types, typecast_BYTES_cast, NULL},
   {"BOOLEAN", typecast_BOOLEAN_types, typecast_BOOLEAN_cast, NULL},
   {"DATETIME", typecast_DATETIME_types, typecast_DATETIME_cast, NULL},
   {"DATETIMETZ", typecast_DATETIMETZ_types, typecast_DATETIMETZ_cast, NULL},
