@@ -16,7 +16,6 @@ static long int typecast_LONGINTEGERARRAY_types[] = {1016, 0};
 static long int typecast_INTEGERARRAY_types[] = {1005, 1006, 1007, 0};
 static long int typecast_FLOATARRAY_types[] = {1021, 1022, 0};
 static long int typecast_DECIMALARRAY_types[] = {1231, 0};
-static long int typecast_UNICODEARRAY_types[] = {1002, 1003, 1009, 1014, 1015, 0};
 static long int typecast_STRINGARRAY_types[] = {1002, 1003, 1009, 1014, 1015, 0};
 static long int typecast_BOOLEANARRAY_types[] = {1000, 0};
 static long int typecast_DATETIMEARRAY_types[] = {1115, 0};
@@ -53,7 +52,8 @@ static typecastObject_initlist typecast_builtins[] = {
   {"INTEGERARRAY", typecast_INTEGERARRAY_types, typecast_INTEGERARRAY_cast, "INTEGER"},
   {"FLOATARRAY", typecast_FLOATARRAY_types, typecast_FLOATARRAY_cast, "FLOAT"},
   {"DECIMALARRAY", typecast_DECIMALARRAY_types, typecast_DECIMALARRAY_cast, "DECIMAL"},
-  {"UNICODEARRAY", typecast_UNICODEARRAY_types, typecast_UNICODEARRAY_cast, "UNICODE"},
+  {"UNICODEARRAY", typecast_STRINGARRAY_types, typecast_UNICODEARRAY_cast, "UNICODE"},
+  {"BYTESARRAY", typecast_STRINGARRAY_types, typecast_BYTESARRAY_cast, "BYTES"},
   {"STRINGARRAY", typecast_STRINGARRAY_types, typecast_STRINGARRAY_cast, "STRING"},
   {"BOOLEANARRAY", typecast_BOOLEANARRAY_types, typecast_BOOLEANARRAY_cast, "BOOLEAN"},
   {"DATETIMEARRAY", typecast_DATETIMEARRAY_types, typecast_DATETIMEARRAY_cast, "DATETIME"},

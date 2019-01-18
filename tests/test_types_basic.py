@@ -32,6 +32,7 @@ import unittest
 from .testutils import ConnectingTestCase, long
 
 import psycopg2
+from psycopg2.compat import text_type
 
 
 class TypesBasicTests(ConnectingTestCase):
@@ -207,6 +208,31 @@ class TypesBasicTests(ConnectingTestCase):
         for s in ss:
             self.assertRaises(psycopg2.DataError,
                 psycopg2.extensions.STRINGARRAY, s.encode('utf8'), curs)
+
+    def testTextArray(self):
+        curs = self.conn.cursor()
+        curs.execute("select '{a,b,c}'::text[]")
+        x = curs.fetchone()[0]
+        self.assert_(isinstance(x[0], str))
+        self.assertEqual(x, ['a', 'b', 'c'])
+
+    def testUnicodeArray(self):
+        psycopg2.extensions.register_type(
+            psycopg2.extensions.UNICODEARRAY, self.conn)
+        curs = self.conn.cursor()
+        curs.execute("select '{a,b,c}'::text[]")
+        x = curs.fetchone()[0]
+        self.assert_(isinstance(x[0], text_type))
+        self.assertEqual(x, [u'a', u'b', u'c'])
+
+    def testBytesArray(self):
+        psycopg2.extensions.register_type(
+            psycopg2.extensions.BYTESARRAY, self.conn)
+        curs = self.conn.cursor()
+        curs.execute("select '{a,b,c}'::text[]")
+        x = curs.fetchone()[0]
+        self.assert_(isinstance(x[0], bytes))
+        self.assertEqual(x, [b'a', b'b', b'c'])
 
     @testutils.skip_before_postgres(8, 2)
     def testArrayOfNulls(self):
