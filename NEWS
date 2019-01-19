@@ -9,6 +9,8 @@ New features:
 - Added `~psycopg2.errors` module. Every PostgreSQL error is converted into
   a specific exception class (:ticket:`#682`).
 - Added `~psycopg2.extensions.encrypt_password()` function (:ticket:`#576`).
+- Added `~psycopg2.extensions.BYTES` adapter to manage databases with mixed
+  encodings on Python 3 (:ticket:`#835`).
 - Added `~psycopg2.extensions.Column.table_oid` and
   `~psycopg2.extensions.Column.table_column` attributes on `cursor.description`
   items (:ticket:`#661`).

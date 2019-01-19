@@ -947,6 +947,7 @@ Python objects.  All the typecasters are automatically registered, except
 from the database.  See :ref:`unicode-handling` for details.
 
 .. data:: BOOLEAN
+          BYTES
           DATE
           DECIMAL
           FLOAT
@@ -963,6 +964,7 @@ from the database.  See :ref:`unicode-handling` for details.
 
 .. data:: BINARYARRAY
           BOOLEANARRAY
+          BYTESARRAY
           DATEARRAY
           DATETIMEARRAY
           DECIMALARRAY
@@ -1011,5 +1013,8 @@ from the database.  See :ref:`unicode-handling` for details.
         module. In older versions they can be imported from the implementation
         module `!psycopg2._psycopg`.
 
-.. versionchanged:: 2.7.2
-        added `!*DATETIMETZ*` objects.
+.. versionadded:: 2.7.2
+    the `!*DATETIMETZ*` objects.
+
+.. versionadded:: 2.8
+    the `!BYTES` and `BYTESARRAY` objects.

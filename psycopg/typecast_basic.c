@@ -75,18 +75,16 @@ typecast_FLOAT_cast(const char *s, Py_ssize_t len, PyObject *curs)
     return flo;
 }
 
-/** STRING - cast strings of any type to python string **/
 
-#if PY_MAJOR_VERSION < 3
+/** BYTES - cast strings of any type to python bytes **/
+
 static PyObject *
-typecast_STRING_cast(const char *s, Py_ssize_t len, PyObject *curs)
+typecast_BYTES_cast(const char *s, Py_ssize_t len, PyObject *curs)
 {
     if (s == NULL) { Py_RETURN_NONE; }
-    return PyString_FromStringAndSize(s, len);
+    return Bytes_FromStringAndSize(s, len);
 }
-#else
-#define typecast_STRING_cast typecast_UNICODE_cast
-#endif
+
 
 /** UNICODE - cast strings of any type to a python unicode object **/
 
@@ -100,6 +98,16 @@ typecast_UNICODE_cast(const char *s, Py_ssize_t len, PyObject *curs)
     conn = ((cursorObject*)curs)->conn;
     return conn_decode(conn, s, len);
 }
+
+
+/** STRING - cast strings of any type to python string **/
+
+#if PY_MAJOR_VERSION < 3
+#define typecast_STRING_cast typecast_BYTES_cast
+#else
+#define typecast_STRING_cast typecast_UNICODE_cast
+#endif
+
 
 /** BOOLEAN - cast boolean value into right python object **/
 

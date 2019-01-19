@@ -108,6 +108,19 @@ My database is Unicode, but I receive all the strings as UTF-8 `!str`. Can I rec
     See :ref:`unicode-handling` for the gory details.
 
 
+.. _faq-bytes:
+.. cssclass:: faq
+
+My database is in mixed encoding. My program was working on Python 2 but Python 3 fails decoding the strings. How do I avoid decoding?
+    From psycopg 2.8 you can use the following adapters to always return bytes
+    from strings::
+
+        psycopg2.extensions.register_type(psycopg2.extensions.BYTES)
+        psycopg2.extensions.register_type(psycopg2.extensions.BYTESARRAY)
+
+    See :ref:`unicode-handling` for an example.
+
+
 .. _faq-float:
 .. cssclass:: faq
 

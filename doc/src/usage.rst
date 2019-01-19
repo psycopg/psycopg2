@@ -457,12 +457,28 @@ the connection or globally: see the function
     Unicode, you can register the related typecasters globally as soon as
     Psycopg is imported::
 
-        import psycopg2
         import psycopg2.extensions
         psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
         psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 
     and forget about this story.
+
+.. note::
+
+    In some cases, on Python 3, you may want to receive `!bytes` instead of
+    `!str`, without undergoing to any decoding. This is especially the case if
+    the data in the database is in mixed encoding. The
+    `~psycopg2.extensions.BYTES` caster is what you neeed::
+
+        import psycopg2.extensions
+        psycopg2.extensions.register_type(psycopg2.extensions.BYTES, conn)
+        psycopg2.extensions.register_type(psycopg2.extensions.BYTESARRAY, conn)
+        cur = conn.cursor()
+        cur.execute("select %s::text", (u"€",))
+        cur.fetchone()[0]
+        b'\xe2\x82\xac'
+
+    .. versionadded: 2.8
 
 
 .. index::
