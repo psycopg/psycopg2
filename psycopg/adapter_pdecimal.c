@@ -161,7 +161,7 @@ pdecimal_setup(pdecimalObject *self, PyObject *obj)
       );
 
     Py_INCREF(obj);
-    self->wrapped = obj;
+    self->wrapped = TO_STATE(obj);
 
     Dprintf("pdecimal_setup: good pdecimal object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,

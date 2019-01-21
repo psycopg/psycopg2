@@ -74,6 +74,7 @@ qstring_quote(qstringObject *self)
     /* encode the string into buffer */
     Bytes_AsStringAndSize(str, &s, &len);
     if (!(buffer = psycopg_escape_string(self->conn, s, len, NULL, &qlen))) {
+        FAKE_RAISE();
         goto exit;
     }
 
@@ -98,7 +99,7 @@ static PyObject *
 qstring_getquoted(qstringObject *self, PyObject *args)
 {
     if (self->buffer == NULL) {
-        self->buffer = qstring_quote(self);
+        self->buffer = TO_STATE(qstring_quote(self));
     }
     Py_XINCREF(self->buffer);
     return self->buffer;
@@ -215,7 +216,7 @@ qstring_setup(qstringObject *self, PyObject *str)
       );
 
     Py_INCREF(str);
-    self->wrapped = str;
+    self->wrapped = TO_STATE(str);
 
     Dprintf("qstring_setup: good qstring object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,

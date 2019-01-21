@@ -139,7 +139,7 @@ pint_setup(pintObject *self, PyObject *obj)
       );
 
     Py_INCREF(obj);
-    self->wrapped = obj;
+    self->wrapped = TO_STATE(obj);
 
     Dprintf("pint_setup: good pint object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,

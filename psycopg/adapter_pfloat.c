@@ -35,6 +35,7 @@
 
 /** the Float object **/
 
+IGNORE_REFCOUNT /* bug davidmalcolm/gcc-python-plugin#165 */
 static PyObject *
 pfloat_getquoted(pfloatObject *self, PyObject *args)
 {
@@ -134,7 +135,7 @@ pfloat_setup(pfloatObject *self, PyObject *obj)
       );
 
     Py_INCREF(obj);
-    self->wrapped = obj;
+    self->wrapped = TO_STATE(obj);
 
     Dprintf("pfloat_setup: good pfloat object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,

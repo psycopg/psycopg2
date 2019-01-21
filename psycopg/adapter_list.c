@@ -240,7 +240,7 @@ list_setup(listObject *self, PyObject *obj)
 
     self->connection = NULL;
     Py_INCREF(obj);
-    self->wrapped = obj;
+    self->wrapped = TO_STATE(obj);
 
     Dprintf("list_setup: good list object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,

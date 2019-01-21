@@ -99,8 +99,8 @@ static struct PyMemberDef isqlquoteObject_members[] = {
 static int
 isqlquote_setup(isqlquoteObject *self, PyObject *wrapped)
 {
-    self->wrapped = wrapped;
     Py_INCREF(wrapped);
+    self->wrapped = TO_STATE(wrapped);
 
     return 0;
 }

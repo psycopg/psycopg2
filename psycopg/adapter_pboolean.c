@@ -96,7 +96,7 @@ pboolean_setup(pbooleanObject *self, PyObject *obj)
       );
 
     Py_INCREF(obj);
-    self->wrapped = obj;
+    self->wrapped = TO_STATE(obj);
 
     Dprintf("pboolean_setup: good pboolean object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,

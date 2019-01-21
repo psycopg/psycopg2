@@ -177,7 +177,7 @@ pydatetime_setup(pydatetimeObject *self, PyObject *obj, int type)
 
     self->type = type;
     Py_INCREF(obj);
-    self->wrapped = obj;
+    self->wrapped = TO_STATE(obj);
 
     Dprintf("pydatetime_setup: good pydatetime object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,

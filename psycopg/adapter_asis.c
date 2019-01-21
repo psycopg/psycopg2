@@ -108,7 +108,7 @@ asis_setup(asisObject *self, PyObject *obj)
       );
 
     Py_INCREF(obj);
-    self->wrapped = obj;
+    self->wrapped = TO_STATE(obj);
 
     Dprintf("asis_setup: good asis object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,

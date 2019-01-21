@@ -133,7 +133,7 @@ static PyObject *
 binary_getquoted(binaryObject *self, PyObject *args)
 {
     if (self->buffer == NULL) {
-        self->buffer = binary_quote(self);
+        self->buffer = TO_STATE(binary_quote(self));
     }
     Py_XINCREF(self->buffer);
     return self->buffer;
@@ -210,7 +210,7 @@ binary_setup(binaryObject *self, PyObject *str)
     self->buffer = NULL;
     self->conn = NULL;
     Py_INCREF(str);
-    self->wrapped = str;
+    self->wrapped = TO_STATE(str);
 
     Dprintf("binary_setup: good binary object at %p, refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
