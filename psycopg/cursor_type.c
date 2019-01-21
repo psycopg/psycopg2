@@ -425,12 +425,12 @@ _psyco_curs_execute(cursorObject *self,
                 goto exit;
         }
 
-        if (!(self->query = Bytes_FromFormat(
+        if (!(self->query = TO_STATE(Bytes_FromFormat(
                 "DECLARE %s %sCURSOR %s HOLD FOR %s",
                 self->qname,
                 scroll,
                 self->withhold ? "WITH" : "WITHOUT",
-                Bytes_AS_STRING(fquery)))) {
+                Bytes_AS_STRING(fquery))))) {
             goto exit;
         }
         if (!self->query) { goto exit; }
@@ -438,7 +438,7 @@ _psyco_curs_execute(cursorObject *self,
     else {
         /* Transfer ownership */
         Py_INCREF(fquery);
-        self->query = fquery;
+        self->query = TO_STATE(fquery);
     }
 
     /* At this point, the SQL statement must be str, not unicode */
