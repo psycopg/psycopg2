@@ -195,18 +195,21 @@ static double round(double num)
 #define RAISES_NEG
 #endif
 
-#if defined(WITH_CPYCHECKER_NULL_RESULT_SETS_EXCEPTION_ATTRIBUTE)
-#define RAISES_NULL \
-    __attribute__((cpychecker_null_result_sets_exception))
-#else
-#define RAISES_NULL
-#endif
-
 #if defined(WITH_CPYCHECKER_SETS_EXCEPTION_ATTRIBUTE)
 #define RAISES \
     __attribute__((cpychecker_sets_exception))
 #else
 #define RAISES
+#endif
+
+/* these attributes are available in the psycopg2 branch of the clone:
+ * https://github.com/dvarrazzo/gcc-python-plugin */
+
+#if defined(WITH_CPYCHECKER_NULL_RESULT_SETS_EXCEPTION_ATTRIBUTE)
+#define RAISES_NULL \
+    __attribute__((cpychecker_null_result_sets_exception))
+#else
+#define RAISES_NULL
 #endif
 
 #if defined(WITH_CPYCHECKER_IGNORE_REFCOUNT_ATTRIBUTE)
