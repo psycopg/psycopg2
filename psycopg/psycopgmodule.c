@@ -274,6 +274,8 @@ psyco_libcrypto_threads_init(void)
 {
     PyObject *m;
 
+    Dprintf("psycopgmodule: configuring libpq libcrypto callbacks ");
+
     /* importing the ssl module sets up Python's libcrypto callbacks */
     if ((m = PyImport_ImportModule("ssl"))) {
         /* disable libcrypto setup in libpq, so it won't stomp on the callbacks
@@ -297,6 +299,8 @@ psyco_adapters_init(PyObject *mod)
 {
     PyObject *call = NULL;
     int rv = -1;
+
+    Dprintf("psycopgmodule: configuring adapters");
 
     if (0 != microprotocols_add(&PyFloat_Type, NULL, (PyObject*)&pfloatType)) {
         goto exit;
@@ -656,6 +660,8 @@ psyco_errors_init(void)
     PyObject *str = NULL;
     int rv = -1;
 
+    Dprintf("psycopgmodule: initializing basic exceptions");
+
     /* 'Error' has been defined elsewhere: only init the other classes */
     Error = (PyObject *)&errorType;
 
@@ -725,6 +731,8 @@ RAISES_NEG
 static int
 add_module_constants(PyObject *module)
 {
+    Dprintf("psycopgmodule: initializing module constants");
+
     if (0 > PyModule_AddStringConstant(module,
         "__version__", xstr(PSYCOPG_VERSION)))
     { return -1; }
@@ -755,6 +763,55 @@ add_module_constants(PyObject *module)
     return 0;
 }
 
+
+static struct {
+    char *name;
+    PyTypeObject *type;
+} typetable[] = {
+    { "connection", &connectionType },
+    { "cursor", &cursorType },
+    { "ReplicationConnection", &replicationConnectionType },
+    { "ReplicationCursor", &replicationCursorType },
+    { "ReplicationMessage", &replicationMessageType },
+    { "ISQLQuote", &isqlquoteType },
+    { "Column", &columnType },
+    { "Notify", &notifyType },
+    { "Xid", &xidType },
+    { "ConnectionInfo", &connInfoType },
+    { "Diagnostics", &diagnosticsType },
+    { "AsIs", &asisType },
+    { "Binary", &binaryType },
+    { "Boolean", &pbooleanType },
+    { "Decimal", &pdecimalType },
+    { "Int", &pintType },
+    { "Float", &pfloatType },
+    { "List", &listType },
+    { "QuotedString", &qstringType },
+    { "lobject", &lobjectType },
+    {NULL}  /* Sentinel */
+};
+
+RAISES_NEG
+static int
+add_module_types(PyObject *module)
+{
+    int i;
+
+    Dprintf("psycopgmodule: initializing module types");
+
+    for (i = 0; typetable[i].name; i++) {
+        PyObject *type = (PyObject *)typetable[i].type;
+
+        Py_TYPE(typetable[i].type) = &PyType_Type;
+        if (0 > PyType_Ready(typetable[i].type)) { return -1; }
+
+        Py_INCREF(type);
+        if (0 > PyModule_AddObject(module, typetable[i].name, type)) {
+            return -1;
+        }
+    }
+    return 0;
+}
 
 /** method table and module initialization **/
 
@@ -850,78 +907,18 @@ INIT_MODULE(_psycopg)(void)
         psycopg_debug_enabled = 1;
 #endif
 
-    Dprintf("initpsycopg: initializing psycopg %s", xstr(PSYCOPG_VERSION));
+    Dprintf("psycopgmodule: initializing psycopg %s", xstr(PSYCOPG_VERSION));
 
-    /* initialize all the new types and then the module */
-    Py_TYPE(&connectionType) = &PyType_Type;
-    if (PyType_Ready(&connectionType) == -1) goto exit;
-
-    Py_TYPE(&cursorType) = &PyType_Type;
-    if (PyType_Ready(&cursorType) == -1) goto exit;
-
-    Py_TYPE(&replicationConnectionType) = &PyType_Type;
-    if (PyType_Ready(&replicationConnectionType) == -1) goto exit;
-
-    Py_TYPE(&replicationCursorType) = &PyType_Type;
-    if (PyType_Ready(&replicationCursorType) == -1) goto exit;
-
-    Py_TYPE(&replicationMessageType) = &PyType_Type;
-    if (PyType_Ready(&replicationMessageType) == -1) goto exit;
-
+    /* initialize the types not exposed to the module */
     Py_TYPE(&typecastType) = &PyType_Type;
     if (PyType_Ready(&typecastType) == -1) goto exit;
-
-    Py_TYPE(&qstringType) = &PyType_Type;
-    if (PyType_Ready(&qstringType) == -1) goto exit;
-
-    Py_TYPE(&binaryType) = &PyType_Type;
-    if (PyType_Ready(&binaryType) == -1) goto exit;
-
-    Py_TYPE(&isqlquoteType) = &PyType_Type;
-    if (PyType_Ready(&isqlquoteType) == -1) goto exit;
-
-    Py_TYPE(&pbooleanType) = &PyType_Type;
-    if (PyType_Ready(&pbooleanType) == -1) goto exit;
-
-    Py_TYPE(&pintType) = &PyType_Type;
-    if (PyType_Ready(&pintType) == -1) goto exit;
-
-    Py_TYPE(&pfloatType) = &PyType_Type;
-    if (PyType_Ready(&pfloatType) == -1) goto exit;
-
-    Py_TYPE(&pdecimalType) = &PyType_Type;
-    if (PyType_Ready(&pdecimalType) == -1) goto exit;
-
-    Py_TYPE(&asisType) = &PyType_Type;
-    if (PyType_Ready(&asisType) == -1) goto exit;
-
-    Py_TYPE(&listType) = &PyType_Type;
-    if (PyType_Ready(&listType) == -1) goto exit;
 
     Py_TYPE(&chunkType) = &PyType_Type;
     if (PyType_Ready(&chunkType) == -1) goto exit;
 
-    Py_TYPE(&columnType) = &PyType_Type;
-    if (PyType_Ready(&columnType) == -1) goto exit;
-
-    Py_TYPE(&notifyType) = &PyType_Type;
-    if (PyType_Ready(&notifyType) == -1) goto exit;
-
-    Py_TYPE(&xidType) = &PyType_Type;
-    if (PyType_Ready(&xidType) == -1) goto exit;
-
     Py_TYPE(&errorType) = &PyType_Type;
     errorType.tp_base = (PyTypeObject *)PyExc_StandardError;
     if (PyType_Ready(&errorType) == -1) goto exit;
-
-    Py_TYPE(&connInfoType) = &PyType_Type;
-    if (PyType_Ready(&connInfoType) == -1) goto exit;
-
-    Py_TYPE(&diagnosticsType) = &PyType_Type;
-    if (PyType_Ready(&diagnosticsType) == -1) goto exit;
-
-    Py_TYPE(&lobjectType) = &PyType_Type;
-    if (PyType_Ready(&lobjectType) == -1) goto exit;
 
     /* initialize libcrypto threading callbacks */
     psyco_libcrypto_threads_init();
@@ -946,7 +943,7 @@ INIT_MODULE(_psycopg)(void)
     /* import python builtin datetime module, if available */
     pyDateTimeModuleP = PyImport_ImportModule("datetime");
     if (pyDateTimeModuleP == NULL) {
-        Dprintf("initpsycopg: can't import datetime module");
+        Dprintf("psycopgmodule: can't import datetime module");
         PyErr_SetString(PyExc_ImportError, "can't import datetime module");
         goto exit;
     }
@@ -969,7 +966,6 @@ INIT_MODULE(_psycopg)(void)
     if (!module) { goto exit; }
 
     /* Create a CObject containing the API pointer array's address */
-    /* If anybody asks for a PyCapsule we'll deal with it. */
 #if PY_VERSION_HEX < 0x03020000
     c_api_object = PyCObject_FromVoidPtr((void *)PSYCOPG_API, NULL);
     if (c_api_object != NULL)
@@ -982,30 +978,10 @@ INIT_MODULE(_psycopg)(void)
     if (!(psyco_null = Bytes_FromString("NULL"))) { goto exit; }
 
     if (0 > add_module_constants(module)) { goto exit; }
-
-    /* put new types in module dictionary */
-    PyModule_AddObject(module, "connection", (PyObject*)&connectionType);
-    PyModule_AddObject(module, "cursor", (PyObject*)&cursorType);
-    PyModule_AddObject(module, "ReplicationConnection", (PyObject*)&replicationConnectionType);
-    PyModule_AddObject(module, "ReplicationCursor", (PyObject*)&replicationCursorType);
-    PyModule_AddObject(module, "ReplicationMessage", (PyObject*)&replicationMessageType);
-    PyModule_AddObject(module, "ISQLQuote", (PyObject*)&isqlquoteType);
-    PyModule_AddObject(module, "Column", (PyObject*)&columnType);
-    PyModule_AddObject(module, "Notify", (PyObject*)&notifyType);
-    PyModule_AddObject(module, "Xid", (PyObject*)&xidType);
-    PyModule_AddObject(module, "ConnectionInfo", (PyObject*)&connInfoType);
-    PyModule_AddObject(module, "Diagnostics", (PyObject*)&diagnosticsType);
-    PyModule_AddObject(module, "AsIs", (PyObject*)&asisType);
-    PyModule_AddObject(module, "Binary", (PyObject*)&binaryType);
-    PyModule_AddObject(module, "Boolean", (PyObject*)&pbooleanType);
-    PyModule_AddObject(module, "Decimal", (PyObject*)&pdecimalType);
-    PyModule_AddObject(module, "Int", (PyObject*)&pintType);
-    PyModule_AddObject(module, "Float", (PyObject*)&pfloatType);
-    PyModule_AddObject(module, "List", (PyObject*)&listType);
-    PyModule_AddObject(module, "QuotedString", (PyObject*)&qstringType);
-    PyModule_AddObject(module, "lobject", (PyObject*)&lobjectType);
+    if (0 > add_module_types(module)) { goto exit; }
 
     /* encodings dictionary in module dictionary */
+    Py_INCREF(psycoEncodings);
     PyModule_AddObject(module, "encodings", psycoEncodings);
 
     dict = PyModule_GetDict(module);
@@ -1031,7 +1007,7 @@ INIT_MODULE(_psycopg)(void)
     if (0 != psyco_errors_init()) { goto exit; }
     psyco_errors_fill(dict);
 
-    Dprintf("initpsycopg: module initialization complete");
+    Dprintf("psycopgmodule: module initialization complete");
 
 exit:
 #if PY_MAJOR_VERSION > 2
