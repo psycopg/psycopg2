@@ -123,6 +123,7 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
 #define psyco_parse_dsn_doc \
 "parse_dsn(dsn) -> dict -- parse a connection string into parameters"
 
+IGNORE_REFCOUNT     /* bug #davidmalcolm/gcc-python-plugin#159 */
 static PyObject *
 psyco_parse_dsn(PyObject *self, PyObject *args, PyObject *kwargs)
 {
@@ -165,6 +166,7 @@ exit:
 "  * `str`: A bytes or unicode object\n" \
 "  * `conn_or_curs`: A connection or cursor, required"
 
+IGNORE_REFCOUNT     /* bug #davidmalcolm/gcc-python-plugin#159 */
 static PyObject *
 psyco_quote_ident(PyObject *self, PyObject *args, PyObject *kwargs)
 {
@@ -421,6 +423,7 @@ psyco_libpq_version(PyObject *self, PyObject *dummy)
 #define psyco_encrypt_password_doc \
 "encrypt_password(password, user, [scope], [algorithm]) -- Prepares the encrypted form of a PostgreSQL password.\n\n"
 
+IGNORE_REFCOUNT     /* bug #davidmalcolm/gcc-python-plugin#159 */
 static PyObject *
 psyco_encrypt_password(PyObject *self, PyObject *args, PyObject *kwargs)
 {
@@ -672,6 +675,7 @@ static struct {
 };
 
 
+IGNORE_REFCOUNT     /* bug #davidmalcolm/gcc-python-plugin#159 */
 RAISES_NEG static int
 basic_errors_init(PyObject *module)
 {
@@ -910,6 +914,7 @@ static struct {
     {NULL}  /* Sentinel */
 };
 
+IGNORE_REFCOUNT     /* bug #davidmalcolm/gcc-python-plugin#159 */
 RAISES_NEG static int
 add_module_types(PyObject *module)
 {

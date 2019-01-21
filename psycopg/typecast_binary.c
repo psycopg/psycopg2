@@ -218,6 +218,7 @@ static const char hex_lut[128] = {
  * Return a new buffer allocated by PyMem_Malloc and set 'sizeout' to its size.
  * In case of error set an exception and return NULL.
  */
+IGNORE_REFCOUNT /* bug davidmalcolm/gcc-python-plugin#155 */
 static char *
 psycopg_parse_hex(const char *bufin, Py_ssize_t sizein, Py_ssize_t *sizeout)
 {
@@ -268,6 +269,7 @@ exit:
  * Return a new buffer allocated by PyMem_Malloc and set 'sizeout' to its size.
  * In case of error set an exception and return NULL.
  */
+IGNORE_REFCOUNT /* bug davidmalcolm/gcc-python-plugin#155 */
 static char *
 psycopg_parse_escape(const char *bufin, Py_ssize_t sizein, Py_ssize_t *sizeout)
 {

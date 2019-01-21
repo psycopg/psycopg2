@@ -440,6 +440,7 @@ typecast_traverse(typecastObject *self, visitproc visit, void *arg)
     return 0;
 }
 
+IGNORE_REFCOUNT /* bug davidmalcolm/gcc-python-plugin#159 */
 static PyObject *
 typecast_repr(PyObject *self)
 {
