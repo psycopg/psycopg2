@@ -107,7 +107,7 @@ replicationConnection_init(replicationConnectionObject *self,
 
     self->conn.autocommit = 1;
     Py_INCREF(cursor);
-    self->conn.cursor_factory = cursor;
+    self->conn.cursor_factory = TO_STATE(cursor);
 
 exit:
     Py_XDECREF(item);
