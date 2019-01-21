@@ -45,9 +45,6 @@ typedef struct replicationConnectionObject {
 #define REPLICATION_PHYSICAL 12345678
 #define REPLICATION_LOGICAL  87654321
 
-extern HIDDEN PyObject *replicationPhysicalConst;
-extern HIDDEN PyObject *replicationLogicalConst;
-
 #ifdef __cplusplus
 }
 #endif

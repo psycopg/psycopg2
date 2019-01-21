@@ -148,6 +148,7 @@ typecast_DECIMAL_cast(const char *s, Py_ssize_t len, PyObject *curs)
         Py_DECREF(decimalType);
     }
     else {
+        PyErr_Clear();
         res = PyObject_CallFunction((PyObject*)&PyFloat_Type, "s", buffer);
     }
     PyMem_Free(buffer);

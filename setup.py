@@ -509,7 +509,7 @@ depends = [
     'replication_cursor.h',
     'replication_message.h',
     'notify.h', 'pqpath.h', 'xid.h', 'column.h', 'conninfo.h',
-    'libpq_support.h', 'win32_support.h',
+    'libpq_support.h', 'win32_support.h', 'utils.h',
 
     'adapter_asis.h', 'adapter_binary.h', 'adapter_datetime.h',
     'adapter_list.h', 'adapter_pboolean.h', 'adapter_pdecimal.h',

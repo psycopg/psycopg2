@@ -248,7 +248,7 @@ static PySequenceMethods column_sequence = {
 
 
 static PyObject *
-column_getstate(columnObject *self)
+column_getstate(columnObject *self, PyObject *dummy)
 {
     return PyObject_CallFunctionObjArgs(
         (PyObject *)&PyTuple_Type, (PyObject *)self, NULL);

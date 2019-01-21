@@ -47,7 +47,7 @@
 "close() -- Close the cursor."
 
 static PyObject *
-psyco_curs_close(cursorObject *self)
+psyco_curs_close(cursorObject *self, PyObject *dummy)
 {
     PyObject *rv = NULL;
     char *lname = NULL;
@@ -372,20 +372,17 @@ _psyco_curs_merge_query_args(cursorObject *self,
 
 RAISES_NEG static int
 _psyco_curs_execute(cursorObject *self,
-                    PyObject *operation, PyObject *vars,
+                    PyObject *query, PyObject *vars,
                     long int async, int no_result)
 {
     int res = -1;
     int tmp;
-    PyObject *fquery, *cvt = NULL;
-    const char *scroll;
+    PyObject *fquery = NULL, *cvt = NULL;
 
-    operation = psyco_curs_validate_sql_basic(self, operation);
-
-    /* Any failure from here forward should 'goto fail' rather than 'return 0'
-       directly. */
-
-    if (operation == NULL) { goto exit; }
+    /* query becomes NULL or refcount +1, so good to XDECREF at the end */
+    if (!(query = psyco_curs_validate_sql_basic(self, query))) {
+        goto exit;
+    }
 
     CLEARPGRES(self->pgres);
     Py_CLEAR(self->query);
@@ -394,65 +391,56 @@ _psyco_curs_execute(cursorObject *self,
     /* here we are, and we have a sequence or a dictionary filled with
        objects to be substituted (bound variables). we try to be smart and do
        the right thing (i.e., what the user expects) */
-
     if (vars && vars != Py_None)
     {
-        if (0 > _mogrify(vars, operation, self, &cvt)) { goto exit; }
+        if (0 > _mogrify(vars, query, self, &cvt)) { goto exit; }
     }
 
-    switch (self->scrollable) {
-        case -1:
-            scroll = "";
-            break;
-        case 0:
-            scroll = "NO SCROLL ";
-            break;
-        case 1:
-            scroll = "SCROLL ";
-            break;
-        default:
-            PyErr_SetString(InternalError, "unexpected scrollable value");
+    /* Merge the query to the arguments if needed */
+    if (cvt) {
+        if (!(fquery = _psyco_curs_merge_query_args(self, query, cvt))) {
             goto exit;
-    }
-
-    if (vars && cvt) {
-        if (!(fquery = _psyco_curs_merge_query_args(self, operation, cvt))) {
-            goto exit;
-        }
-
-        if (self->qname != NULL) {
-            self->query = Bytes_FromFormat(
-                "DECLARE %s %sCURSOR %s HOLD FOR %s",
-                self->qname,
-                scroll,
-                self->withhold ? "WITH" : "WITHOUT",
-                Bytes_AS_STRING(fquery));
-            Py_DECREF(fquery);
-        }
-        else {
-            self->query = fquery;
         }
     }
     else {
-        if (self->qname != NULL) {
-            self->query = Bytes_FromFormat(
+        Py_INCREF(query);
+        fquery = query;
+    }
+
+    if (self->qname != NULL) {
+        const char *scroll;
+        switch (self->scrollable) {
+            case -1:
+                scroll = "";
+                break;
+            case 0:
+                scroll = "NO SCROLL ";
+                break;
+            case 1:
+                scroll = "SCROLL ";
+                break;
+            default:
+                PyErr_SetString(InternalError, "unexpected scrollable value");
+                goto exit;
+        }
+
+        if (!(self->query = Bytes_FromFormat(
                 "DECLARE %s %sCURSOR %s HOLD FOR %s",
                 self->qname,
                 scroll,
                 self->withhold ? "WITH" : "WITHOUT",
-                Bytes_AS_STRING(operation));
+                Bytes_AS_STRING(fquery)))) {
+            goto exit;
         }
-        else {
-            /* Transfer reference ownership of the str in operation to
-               self->query, clearing the local variable to prevent cleanup from
-               DECREFing it */
-            self->query = operation;
-            operation = NULL;
-        }
+        if (!self->query) { goto exit; }
+    }
+    else {
+        /* Transfer ownership */
+        Py_INCREF(fquery);
+        self->query = fquery;
     }
 
     /* At this point, the SQL statement must be str, not unicode */
-
     tmp = pq_execute(self, Bytes_AS_STRING(self->query), async, no_result, 0);
     Dprintf("psyco_curs_execute: res = %d, pgres = %p", tmp, self->pgres);
     if (tmp < 0) { goto exit; }
@@ -460,10 +448,8 @@ _psyco_curs_execute(cursorObject *self,
     res = 0; /* Success */
 
 exit:
-    /* Py_XDECREF(operation) is safe because the original reference passed
-       by the caller was overwritten with either NULL or a new
-       reference */
-    Py_XDECREF(operation);
+    Py_XDECREF(query);
+    Py_XDECREF(fquery);
     Py_XDECREF(cvt);
 
     return res;
@@ -756,7 +742,7 @@ exit:
 }
 
 static PyObject *
-psyco_curs_fetchone(cursorObject *self)
+psyco_curs_fetchone(cursorObject *self, PyObject *dummy)
 {
     PyObject *res;
 
@@ -947,7 +933,7 @@ exit:
 "Return `!None` when no more data is available.\n"
 
 static PyObject *
-psyco_curs_fetchall(cursorObject *self)
+psyco_curs_fetchall(cursorObject *self, PyObject *dummy)
 {
     int i, size;
     PyObject *list = NULL;
@@ -1162,7 +1148,7 @@ exit:
 "sets) and will raise a NotSupportedError exception."
 
 static PyObject *
-psyco_curs_nextset(cursorObject *self)
+psyco_curs_nextset(cursorObject *self, PyObject *dummy)
 {
     EXC_IF_CURS_CLOSED(self);
 
@@ -1279,7 +1265,7 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
 "__enter__ -> self"
 
 static PyObject *
-psyco_curs_enter(cursorObject *self)
+psyco_curs_enter(cursorObject *self, PyObject *dummy)
 {
     Py_INCREF(self);
     return (PyObject *)self;
@@ -1394,27 +1380,6 @@ exit:
 #define psyco_curs_copy_from_doc \
 "copy_from(file, table, sep='\\t', null='\\\\N', size=8192, columns=None) -- Copy table from file."
 
-STEALS(1) static int
-_psyco_curs_has_read_check(PyObject *o, PyObject **var)
-{
-    if (PyObject_HasAttrString(o, "readline")
-        && PyObject_HasAttrString(o, "read")) {
-        /* This routine stores a borrowed reference.  Although it is only held
-         * for the duration of psyco_curs_copy_from, nested invocations of
-         * Py_BEGIN_ALLOW_THREADS could surrender control to another thread,
-         * which could invoke the garbage collector.  We thus need an
-         * INCREF/DECREF pair if we store this pointer in a GC object, such as
-         * a cursorObject */
-        *var = o;
-        return 1;
-    }
-    else {
-        PyErr_SetString(PyExc_TypeError,
-            "argument 1 must have both .read() and .readline() methods");
-        return 0;
-    }
-}
-
 static PyObject *
 psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
@@ -1436,11 +1401,15 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
     Py_ssize_t bufsize = DEFAULT_COPYBUFF;
     PyObject *file, *columns = NULL, *res = NULL;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs,
-        "O&s|ssnO", kwlist,
-        _psyco_curs_has_read_check, &file, &table_name, &sep, &null, &bufsize,
-        &columns))
-    {
+    if (!PyArg_ParseTupleAndKeywords(
+            args, kwargs, "Os|ssnO", kwlist,
+            &file, &table_name, &sep, &null, &bufsize, &columns)) {
+        return NULL;
+    }
+
+    if (!PyObject_HasAttrString(file, "read")) {
+        PyErr_SetString(PyExc_TypeError,
+            "argument 1 must have a .read() method");
         return NULL;
     }
 
@@ -1474,6 +1443,12 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
 
     Dprintf("psyco_curs_copy_from: query = %s", query);
 
+    /* This routine stores a borrowed reference.  Although it is only held
+     * for the duration of psyco_curs_copy_from, nested invocations of
+     * Py_BEGIN_ALLOW_THREADS could surrender control to another thread,
+     * which could invoke the garbage collector.  We thus need an
+     * INCREF/DECREF pair if we store this pointer in a GC object, such as
+     * a cursorObject */
     self->copysize = bufsize;
     Py_INCREF(file);
     self->copyfile = file;
@@ -1499,20 +1474,6 @@ exit:
 #define psyco_curs_copy_to_doc \
 "copy_to(file, table, sep='\\t', null='\\\\N', columns=None) -- Copy table to file."
 
-STEALS(1) static int
-_psyco_curs_has_write_check(PyObject *o, PyObject **var)
-{
-    if (PyObject_HasAttrString(o, "write")) {
-        *var = o;
-        return 1;
-    }
-    else {
-        PyErr_SetString(PyExc_TypeError,
-                        "argument 1 must have a .write() method");
-        return 0;
-    }
-}
-
 static PyObject *
 psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
@@ -1530,11 +1491,17 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
     char *quoted_null = NULL;
 
     const char *table_name;
-    PyObject *file, *columns = NULL, *res = NULL;
+    PyObject *file = NULL, *columns = NULL, *res = NULL;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&s|ssO", kwlist,
-                                     _psyco_curs_has_write_check, &file,
-                                     &table_name, &sep, &null, &columns)) {
+    if (!PyArg_ParseTupleAndKeywords(
+            args, kwargs, "Os|ssO", kwlist,
+            &file, &table_name, &sep, &null, &columns)) {
+        return NULL;
+    }
+
+    if (!PyObject_HasAttrString(file, "write")) {
+        PyErr_SetString(PyExc_TypeError,
+            "argument 1 must have a .write() method");
         return NULL;
     }
 
@@ -1681,7 +1648,7 @@ psyco_curs_withhold_get(cursorObject *self)
     return PyBool_FromLong(self->withhold);
 }
 
-int
+RAISES_NEG int
 psyco_curs_withhold_set(cursorObject *self, PyObject *pyvalue)
 {
     int value;
@@ -1726,7 +1693,7 @@ psyco_curs_scrollable_get(cursorObject *self)
     return ret;
 }
 
-int
+RAISES_NEG int
 psyco_curs_scrollable_set(cursorObject *self, PyObject *pyvalue)
 {
     int value;
@@ -1768,7 +1735,7 @@ cursor_next(PyObject *self)
 
     if (NULL == ((cursorObject*)self)->name) {
         /* we don't parse arguments: psyco_curs_fetchone will do that for us */
-        res = psyco_curs_fetchone((cursorObject*)self);
+        res = psyco_curs_fetchone((cursorObject*)self, NULL);
 
         /* convert a None to NULL to signal the end of iteration */
         if (res && res == Py_None) {

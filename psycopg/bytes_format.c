@@ -79,10 +79,7 @@
 
 #define PSYCOPG_MODULE
 #include "psycopg/psycopg.h"
-
-#ifndef Py_LOCAL_INLINE
-#define Py_LOCAL_INLINE(type) static type
-#endif
+#include "pyport.h"
 
 /* Helpers for formatstring */
 
@@ -102,6 +99,19 @@ getnextarg(PyObject *args, Py_ssize_t arglen, Py_ssize_t *p_argidx)
     return NULL;
 }
 
+/* wrapper around _Bytes_Resize offering normal Python call semantics */
+
+STEALS(1)
+Py_LOCAL_INLINE(PyObject *)
+resize_bytes(PyObject *b, Py_ssize_t newsize) {
+    if (0 == _Bytes_Resize(&b, newsize)) {
+        return b;
+    }
+    else {
+        return NULL;
+    }
+}
+
 /* fmt%(v1,v2,...) is roughly equivalent to sprintf(fmt, v1, v2, ...) */
 
 PyObject *
@@ -114,7 +124,7 @@ Bytes_Format(PyObject *format, PyObject *args)
     PyObject *result;
     PyObject *dict = NULL;
     if (format == NULL || !Bytes_Check(format) || args == NULL) {
-        PyErr_BadInternalCall();
+        PyErr_SetString(PyExc_SystemError, "bad argument to internal function");
         return NULL;
     }
     fmt = Bytes_AS_STRING(format);
@@ -123,7 +133,7 @@ Bytes_Format(PyObject *format, PyObject *args)
     result = Bytes_FromStringAndSize((char *)NULL, reslen);
     if (result == NULL)
         return NULL;
-    res = Bytes_AsString(result);
+    res = Bytes_AS_STRING(result);
     if (PyTuple_Check(args)) {
         arglen = PyTuple_GET_SIZE(args);
         argidx = 0;
@@ -140,10 +150,10 @@ Bytes_Format(PyObject *format, PyObject *args)
             if (--rescnt < 0) {
                 rescnt = fmtcnt + 100;
                 reslen += rescnt;
-                if (_Bytes_Resize(&result, reslen))
+                if (!(result = resize_bytes(result, reslen))) {
                     return NULL;
-                res = Bytes_AS_STRING(result)
-                    + reslen - rescnt;
+                }
+                res = Bytes_AS_STRING(result) + reslen - rescnt;
                 --rescnt;
             }
             *res++ = *fmt++;
@@ -210,11 +220,6 @@ Bytes_Format(PyObject *format, PyObject *args)
                                 "incomplete format");
                 goto error;
             }
-            if (c != '%') {
-                v = getnextarg(args, arglen, &argidx);
-                if (v == NULL)
-                    goto error;
-            }
             switch (c) {
             case '%':
                 pbuf = "%";
@@ -222,6 +227,8 @@ Bytes_Format(PyObject *format, PyObject *args)
                 break;
             case 's':
                 /* only bytes! */
+                if (!(v = getnextarg(args, arglen, &argidx)))
+                    goto error;
                 if (!Bytes_CheckExact(v)) {
                     PyErr_Format(PyExc_ValueError,
                                     "only bytes values expected, got %s",
@@ -238,8 +245,7 @@ Bytes_Format(PyObject *format, PyObject *args)
                   "unsupported format character '%c' (0x%x) "
                   "at index " FORMAT_CODE_PY_SSIZE_T,
                   c, c,
-                  (Py_ssize_t)(fmt - 1 -
-                               Bytes_AsString(format)));
+                  (Py_ssize_t)(fmt - 1 - Bytes_AS_STRING(format)));
                 goto error;
             }
             if (width < len)
@@ -251,10 +257,14 @@ Bytes_Format(PyObject *format, PyObject *args)
                 if (reslen < 0) {
                     Py_DECREF(result);
                     Py_XDECREF(temp);
+                    if (args_owned)
+                        Py_DECREF(args);
                     return PyErr_NoMemory();
                 }
-                if (_Bytes_Resize(&result, reslen)) {
+                if (!(result = resize_bytes(result, reslen))) {
                     Py_XDECREF(temp);
+                    if (args_owned)
+                        Py_DECREF(args);
                     return NULL;
                 }
                 res = Bytes_AS_STRING(result)
@@ -284,8 +294,9 @@ Bytes_Format(PyObject *format, PyObject *args)
     if (args_owned) {
         Py_DECREF(args);
     }
-    if (_Bytes_Resize(&result, reslen - rescnt))
+    if (!(result = resize_bytes(result, reslen - rescnt))) {
         return NULL;
+    }
     return result;
 
  error:

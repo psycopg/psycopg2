@@ -121,10 +121,6 @@ exit:
 PyObject *
 conn_decode(connectionObject *self, const char *str, Py_ssize_t len)
 {
-    PyObject *b = NULL;
-    PyObject *t = NULL;
-    PyObject *rv = NULL;
-
     if (len < 0) { len = strlen(str); }
 
     if (self) {
@@ -132,22 +128,28 @@ conn_decode(connectionObject *self, const char *str, Py_ssize_t len)
             return self->cdecoder(str, len, NULL);
         }
         else if (self->pydecoder) {
-            if (!(b = Bytes_FromStringAndSize(str, len))) { goto exit; }
+            PyObject *b = NULL;
+            PyObject *t = NULL;
+            PyObject *rv = NULL;
+
+            if (!(b = Bytes_FromStringAndSize(str, len))) { goto error; }
             if (!(t = PyObject_CallFunctionObjArgs(self->pydecoder, b, NULL))) {
-                goto exit;
+                goto error;
             }
-            rv = PyTuple_GetItem(t, 0);
-            Py_XINCREF(rv);
+            if (!(rv = PyTuple_GetItem(t, 0))) { goto error; }
+            Py_INCREF(rv);      /* PyTuple_GetItem gives a borrowes one */
+error:
+            Py_XDECREF(t);
+            Py_XDECREF(b);
+            return rv;
+        }
+        else {
+            return PyUnicode_FromStringAndSize(str, len);
         }
     }
     else {
         return PyUnicode_FromStringAndSize(str, len);
     }
-
-exit:
-    Py_XDECREF(t);
-    Py_XDECREF(b);
-    return rv;
 }
 
 /* conn_notice_callback - process notices */
@@ -1079,7 +1081,16 @@ conn_poll(connectionObject *self)
             /* An async query has just finished: parse the tuple in the
              * target cursor. */
             cursorObject *curs;
-            PyObject *py_curs = PyWeakref_GetObject(self->async_cursor);
+            PyObject *py_curs;
+            if (!(py_curs = PyWeakref_GetObject(self->async_cursor))) {
+                /* It shouldn't happen but consider it to avoid dereferencing
+                 * a null pointer below. */
+                pq_clear_async(self);
+                PyErr_SetString(PyExc_SystemError,
+                    "got null dereferencing cursor weakref");
+                res = PSYCO_POLL_ERROR;
+                break;
+            }
             if (Py_None == py_curs) {
                 pq_clear_async(self);
                 PyErr_SetString(InterfaceError,
