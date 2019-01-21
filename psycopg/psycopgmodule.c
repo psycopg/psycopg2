@@ -721,6 +721,40 @@ psyco_errors_set(PyObject *type)
     }
 }
 
+RAISES_NEG
+static int
+add_module_constants(PyObject *module)
+{
+    if (0 > PyModule_AddStringConstant(module,
+        "__version__", xstr(PSYCOPG_VERSION)))
+    { return -1; }
+
+    if (0 > PyModule_AddStringConstant(module,
+        "__doc__", "psycopg2 PostgreSQL driver"))
+    { return -1; }
+
+    if (0 > PyModule_AddIntConstant(module,
+        "__libpq_version__", PG_VERSION_NUM))
+    { return -1; }
+
+    if (0 > PyModule_AddObject(module,
+        "apilevel", Text_FromUTF8(APILEVEL)))
+    { return -1; }
+
+    if (0 > PyModule_AddObject(module,
+        "threadsafety", PyInt_FromLong(THREADSAFETY)))
+    { return -1; }
+
+    if (0 > PyModule_AddObject(module,
+        "paramstyle", Text_FromUTF8(PARAMSTYLE)))
+    { return -1; }
+
+    if (0 > PyModule_AddIntMacro(module, REPLICATION_PHYSICAL)) { return -1; }
+    if (0 > PyModule_AddIntMacro(module, REPLICATION_LOGICAL)) { return -1; }
+
+    return 0;
+}
+
 
 /** method table and module initialization **/
 
@@ -934,11 +968,6 @@ INIT_MODULE(_psycopg)(void)
 #endif
     if (!module) { goto exit; }
 
-    dict = PyModule_GetDict(module);
-
-    /* initialize all the module's exported functions */
-    /* PyBoxer_API[PyBoxer_Fake_NUM] = (void *)PyBoxer_Fake; */
-
     /* Create a CObject containing the API pointer array's address */
     /* If anybody asks for a PyCapsule we'll deal with it. */
 #if PY_VERSION_HEX < 0x03020000
@@ -950,17 +979,9 @@ INIT_MODULE(_psycopg)(void)
     /* other mixed initializations of module-level variables */
     if (!(psycoEncodings = PyDict_New())) { goto exit; }
     if (0 != psyco_encodings_fill(psycoEncodings)) { goto exit; }
-    psyco_null = Bytes_FromString("NULL");
+    if (!(psyco_null = Bytes_FromString("NULL"))) { goto exit; }
 
-    /* set some module's parameters */
-    PyModule_AddStringConstant(module, "__version__", xstr(PSYCOPG_VERSION));
-    PyModule_AddStringConstant(module, "__doc__", "psycopg PostgreSQL driver");
-    PyModule_AddIntConstant(module, "__libpq_version__", PG_VERSION_NUM);
-    PyModule_AddIntMacro(module, REPLICATION_PHYSICAL);
-    PyModule_AddIntMacro(module, REPLICATION_LOGICAL);
-    PyModule_AddObject(module, "apilevel", Text_FromUTF8(APILEVEL));
-    PyModule_AddObject(module, "threadsafety", PyInt_FromLong(THREADSAFETY));
-    PyModule_AddObject(module, "paramstyle", Text_FromUTF8(PARAMSTYLE));
+    if (0 > add_module_constants(module)) { goto exit; }
 
     /* put new types in module dictionary */
     PyModule_AddObject(module, "connection", (PyObject*)&connectionType);
@@ -986,6 +1007,8 @@ INIT_MODULE(_psycopg)(void)
 
     /* encodings dictionary in module dictionary */
     PyModule_AddObject(module, "encodings", psycoEncodings);
+
+    dict = PyModule_GetDict(module);
 
 #ifdef HAVE_MXDATETIME
     /* If we can't find mx.DateTime objects at runtime,
