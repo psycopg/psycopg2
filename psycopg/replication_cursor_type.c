@@ -130,6 +130,9 @@ psyco_repl_curs_consume_stream(replicationCursorObject *self,
         res = Py_None;
         Py_INCREF(res);
     }
+    else {
+        FAKE_RAISE();
+    }
 
     self->consuming = 0;
 
@@ -150,6 +153,7 @@ psyco_repl_curs_read_message(replicationCursorObject *self, PyObject *dummy)
     EXC_IF_TPC_PREPARED(self->cur.conn, read_message);
 
     if (pq_read_replication_message(self, &msg) < 0) {
+        FAKE_RAISE();
         return NULL;
     }
     if (msg) {
@@ -188,6 +192,7 @@ psyco_repl_curs_send_feedback(replicationCursorObject *self,
         self->apply_lsn = apply_lsn;
 
     if (pq_send_replication_feedback(self, reply) < 0) {
+        FAKE_RAISE();
         return NULL;
     }
 
