@@ -90,7 +90,9 @@ list_quote(listObject *self)
                      * array[array[]] is */
                     all_nulls = 0;
                     Py_CLEAR(qs[i]);
-                    qs[i] = Bytes_FromString("ARRAY[]");
+                    if (!(qs[i] = Bytes_FromString("ARRAY[]"))) {
+                        goto exit;
+                    }
                 }
             }
             else {
