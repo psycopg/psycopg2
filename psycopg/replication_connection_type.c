@@ -41,21 +41,7 @@
 static PyObject *
 psyco_repl_conn_get_type(replicationConnectionObject *self)
 {
-    connectionObject *conn = &self->conn;
-    PyObject *res = NULL;
-
-    EXC_IF_CONN_CLOSED(conn);
-
-    if (self->type == REPLICATION_PHYSICAL) {
-        res = replicationPhysicalConst;
-    } else if (self->type == REPLICATION_LOGICAL) {
-        res = replicationLogicalConst;
-    } else {
-        PyErr_Format(PyExc_TypeError, "unknown replication type constant: %ld", self->type);
-    }
-
-    Py_XINCREF(res);
-    return res;
+    return PyInt_FromLong(self->type);
 }
 
 
@@ -63,15 +49,16 @@ static int
 replicationConnection_init(replicationConnectionObject *self,
     PyObject *args, PyObject *kwargs)
 {
-    PyObject *dsn = NULL, *async = Py_False, *replication_type = NULL,
+    PyObject *dsn = NULL, *async = Py_False,
         *item = NULL, *extras = NULL, *cursor = NULL,
         *newdsn = NULL, *newargs = NULL, *dsnopts = NULL;
     int ret = -1;
+    long int replication_type;
 
     /* 'replication_type' is not actually optional, but there's no
        good way to put it before 'async' in the list */
     static char *kwlist[] = {"dsn", "async", "replication_type", NULL};
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OO", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|Ol", kwlist,
                                      &dsn, &async, &replication_type)) {
         return ret;
     }
@@ -87,9 +74,7 @@ replicationConnection_init(replicationConnectionObject *self,
     if (!(extras = PyImport_ImportModule("psycopg2.extras"))) { goto exit; }
     if (!(cursor = PyObject_GetAttrString(extras, "ReplicationCursor"))) { goto exit; }
 
-    /* checking the object reference helps to avoid recognizing
-       unrelated integer constants as valid input values */
-    if (replication_type == replicationPhysicalConst) {
+    if (replication_type == REPLICATION_PHYSICAL) {
         self->type = REPLICATION_PHYSICAL;
 
 #define SET_ITEM(k, v) \
@@ -100,14 +85,15 @@ replicationConnection_init(replicationConnectionObject *self,
 
         SET_ITEM(replication, true);
         SET_ITEM(dbname, replication);  /* required for .pgpass lookup */
-    } else if (replication_type == replicationLogicalConst) {
+    } else if (replication_type == REPLICATION_LOGICAL) {
         self->type = REPLICATION_LOGICAL;
 
         SET_ITEM(replication, database);
 #undef SET_ITEM
     } else {
         PyErr_SetString(PyExc_TypeError,
-                        "replication_type must be either REPLICATION_PHYSICAL or REPLICATION_LOGICAL");
+            "replication_type must be either "
+            "REPLICATION_PHYSICAL or REPLICATION_LOGICAL");
         goto exit;
     }
 
@@ -204,6 +190,3 @@ PyTypeObject replicationConnectionType = {
     0,          /*tp_alloc*/
     0,          /*tp_new*/
 };
-
-PyObject *replicationPhysicalConst;
-PyObject *replicationLogicalConst;

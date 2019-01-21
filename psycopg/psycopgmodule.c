@@ -1008,9 +1008,6 @@ INIT_MODULE(_psycopg)(void)
     if (0 != psyco_errors_init()) { goto exit; }
     psyco_errors_fill(dict);
 
-    replicationPhysicalConst = PyDict_GetItemString(dict, "REPLICATION_PHYSICAL");
-    replicationLogicalConst  = PyDict_GetItemString(dict, "REPLICATION_LOGICAL");
-
     Dprintf("initpsycopg: module initialization complete");
 
 exit:
