@@ -503,11 +503,11 @@ exit:
 }
 
 
-/* psyco_encodings_fill
-
-   Fill the module's postgresql<->python encoding table */
-
-static encodingPair encodings[] = {
+/* Fill the module's postgresql<->python encoding table */
+static struct {
+    char *pgenc;
+    char *pyenc;
+} enctable[] = {
     {"ABC",          "cp1258"},
     {"ALT",          "cp866"},
     {"BIG5",         "big5"},
@@ -589,15 +589,25 @@ static encodingPair encodings[] = {
  *
  * Return 0 on success, else -1 and set an exception.
  */
-static int psyco_encodings_fill(PyObject *dict)
+RAISES_NEG static int
+encodings_init(PyObject *module)
 {
     PyObject *value = NULL;
-    encodingPair *enc;
+    int i;
     int rv = -1;
 
-    for (enc = encodings; enc->pgenc != NULL; enc++) {
-        if (!(value = Text_FromUTF8(enc->pyenc))) { goto exit; }
-        if (0 != PyDict_SetItemString(dict, enc->pgenc, value)) { goto exit; }
+    Dprintf("psycopgmodule: initializing encodings table");
+
+    if (!(psycoEncodings = PyDict_New())) { goto exit; }
+    Py_INCREF(psycoEncodings);
+    PyModule_AddObject(module, "encodings", psycoEncodings);
+
+    for (i = 0; enctable[i].pgenc != NULL; i++) {
+        if (!(value = Text_FromUTF8(enctable[i].pyenc))) { goto exit; }
+        if (0 > PyDict_SetItemString(
+                psycoEncodings, enctable[i].pgenc, value)) {
+            goto exit;
+        }
         Py_CLEAR(value);
     }
     rv = 0;
@@ -945,16 +955,13 @@ INIT_MODULE(_psycopg)(void)
     if (!module) { goto exit; }
 
     /* other mixed initializations of module-level variables */
-    if (!(psycoEncodings = PyDict_New())) { goto exit; }
-    if (0 != psyco_encodings_fill(psycoEncodings)) { goto exit; }
     if (!(psyco_null = Bytes_FromString("NULL"))) { goto exit; }
 
     if (0 > add_module_constants(module)) { goto exit; }
     if (0 > add_module_types(module)) { goto exit; }
 
     /* encodings dictionary in module dictionary */
-    Py_INCREF(psycoEncodings);
-    PyModule_AddObject(module, "encodings", psycoEncodings);
+    if (0 > encodings_init(module)) { goto exit; }
 
     dict = PyModule_GetDict(module);
 

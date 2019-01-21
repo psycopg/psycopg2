@@ -59,11 +59,6 @@ extern HIDDEN PyObject *psycoEncodings;
 /* SQL NULL */
 extern HIDDEN PyObject *psyco_null;
 
-typedef struct {
-    char *pgenc;
-    char *pyenc;
-} encodingPair;
-
 /* Exceptions docstrings */
 #define Error_doc \
 "Base class for error exceptions."
