@@ -657,7 +657,7 @@ static struct {
 
 
 static int
-psyco_errors_init(void)
+psyco_errors_init(PyObject *module)
 {
     /* the names of the exceptions here reflect the organization of the
        psycopg2 module and not the fact the the original error objects
@@ -678,7 +678,7 @@ psyco_errors_init(void)
 
         if (exctable[i].docstr) {
             if (!(str = Text_FromUTF8(exctable[i].docstr))) { goto exit; }
-            if (0 != PyDict_SetItemString(dict, "__doc__", str)) { goto exit; }
+            if (0 > PyDict_SetItemString(dict, "__doc__", str)) { goto exit; }
             Py_CLEAR(str);
         }
 
@@ -693,6 +693,20 @@ psyco_errors_init(void)
         Py_CLEAR(dict);
     }
 
+    for (i = 0; exctable[i].name; i++) {
+        char *name;
+        if (NULL == exctable[i].exc) { continue; }
+
+        /* the name is the part after the last dot */
+        name = strrchr(exctable[i].name, '.');
+        name = name ? name + 1 : exctable[i].name;
+
+        Py_INCREF(*exctable[i].exc);
+        if (0 > PyModule_AddObject(module, name, *exctable[i].exc)) {
+            goto exit;
+        }
+    }
+
     rv = 0;
 
 exit:
@@ -701,22 +715,6 @@ exit:
     return rv;
 }
 
-void
-psyco_errors_fill(PyObject *dict)
-{
-    int i;
-    char *name;
-
-    for (i = 0; exctable[i].name; i++) {
-        if (NULL == exctable[i].exc) { continue; }
-
-        /* the name is the part after the last dot */
-        name = strrchr(exctable[i].name, '.');
-        name = name ? name + 1 : exctable[i].name;
-
-        PyDict_SetItemString(dict, name, *exctable[i].exc);
-    }
-}
 
 RAISES_NEG
 static int
@@ -983,8 +981,7 @@ INIT_MODULE(_psycopg)(void)
     if (0 != psyco_adapters_init(dict)) { goto exit; }
 
     /* create a standard set of exceptions and add them to the module's dict */
-    if (0 != psyco_errors_init()) { goto exit; }
-    psyco_errors_fill(dict);
+    if (0 != psyco_errors_init(module)) { goto exit; }
 
     Dprintf("psycopgmodule: module initialization complete");
 
