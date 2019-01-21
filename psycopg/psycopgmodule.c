@@ -608,9 +608,7 @@ exit:
     return rv;
 }
 
-/* psyco_errors_init, psyco_errors_fill (callable from C)
-
-   Initialize the module's exceptions and after that a dictionary with a full
+/* Initialize the module's exceptions and after that a dictionary with a full
    set of exceptions. */
 
 PyObject *Error, *Warning, *InterfaceError, *DatabaseError,
@@ -707,23 +705,6 @@ psyco_errors_fill(PyObject *dict)
         name = name ? name + 1 : exctable[i].name;
 
         PyDict_SetItemString(dict, name, *exctable[i].exc);
-    }
-}
-
-void
-psyco_errors_set(PyObject *type)
-{
-    int i;
-    char *name;
-
-    for (i = 0; exctable[i].name; i++) {
-        if (NULL == exctable[i].exc) { continue; }
-
-        /* the name is the part after the last dot */
-        name = strrchr(exctable[i].name, '.');
-        name = name ? name + 1 : exctable[i].name;
-
-        PyObject_SetAttrString(type, name, *exctable[i].exc);
     }
 }
 
@@ -892,14 +873,12 @@ static struct PyModuleDef psycopgmodule = {
 };
 #endif
 
+#ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
+#define PyMODINIT_FUNC void
+#endif
 PyMODINIT_FUNC
 INIT_MODULE(_psycopg)(void)
 {
-#if PY_VERSION_HEX < 0x03020000
-    static void *PSYCOPG_API[PSYCOPG_API_pointers];
-    PyObject *c_api_object;
-#endif
-
     PyObject *module = NULL, *dict;
 
 #ifdef PSYCOPG_DEBUG
@@ -964,13 +943,6 @@ INIT_MODULE(_psycopg)(void)
     module = PyModule_Create(&psycopgmodule);
 #endif
     if (!module) { goto exit; }
-
-    /* Create a CObject containing the API pointer array's address */
-#if PY_VERSION_HEX < 0x03020000
-    c_api_object = PyCObject_FromVoidPtr((void *)PSYCOPG_API, NULL);
-    if (c_api_object != NULL)
-        PyModule_AddObject(module, "_C_API", c_api_object);
-#endif
 
     /* other mixed initializations of module-level variables */
     if (!(psycoEncodings = PyDict_New())) { goto exit; }
