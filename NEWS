@@ -6,6 +6,7 @@ What's new in psycopg 2.7.7
 
 - Cleanup of the cursor results assignment code, which might have solved
   double free and inconsistencies in concurrent usage (:tickets:`#346, #384`).
+- Wheel package compiled against OpenSSL 1.0.2q.
 
 
 What's new in psycopg 2.7.6.1
