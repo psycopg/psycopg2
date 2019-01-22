@@ -236,7 +236,7 @@ lobject_open(lobjectObject *self, connectionObject *conn,
 
 /* lobject_close - close an existing lo */
 
-RAISES_NEG static int
+static int
 lobject_close_locked(lobjectObject *self, char **error)
 {
     int retvalue;

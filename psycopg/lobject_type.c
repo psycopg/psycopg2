@@ -96,6 +96,7 @@ psyco_lobj_write(lobjectObject *self, PyObject *args)
     }
 
     if (-1 == Bytes_AsStringAndSize(data, &buffer, &len)) {
+        FAKE_RAISE();   /* issue davidmalcolm/gcc-python-plugin#75 */
         goto exit;
     }
 
@@ -357,7 +358,7 @@ lobject_setup(lobjectObject *self, connectionObject *conn,
     }
 
     Py_INCREF((PyObject*)conn);
-    self->conn = conn;
+    self->conn = (connectionObject *)TO_STATE((PyObject *)conn);
     self->mark = conn->mark;
 
     self->fd = -1;
