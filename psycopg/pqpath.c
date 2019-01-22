@@ -1016,16 +1016,16 @@ _pq_execute_sync(cursorObject *curs, const char *query, int no_result, int no_be
     Dprintf("pq_execute: executing SYNC query: pgconn = %p", curs->conn->pgconn);
     Dprintf("    %-.200s", query);
     if (!psyco_green()) {
-        curs->pgres = PQexec(curs->conn->pgconn, query);
+        pgres = PQexec(curs->conn->pgconn, query);
     }
     else {
         Py_BLOCK_THREADS;
-        curs->pgres = psyco_exec_green(curs->conn, query);
+        pgres = psyco_exec_green(curs->conn, query);
         Py_UNBLOCK_THREADS;
     }
 
     /* don't let pgres = NULL go to pq_fetch() */
-    if (curs->pgres == NULL) {
+    if (pgres == NULL) {
         if (CONNECTION_BAD == PQstatus(curs->conn->pgconn)) {
             curs->conn->closed = 2;
         }
@@ -1038,11 +1038,16 @@ _pq_execute_sync(cursorObject *curs, const char *query, int no_result, int no_be
         return -1;
     }
 
+    Py_BLOCK_THREADS;
+
+    /* assign the result back to the cursor now that we have the GIL */
+    curs->pgres = pgres;
+    pgres = NULL;
+
     /* Process notifies here instead of when fetching the tuple as we are
      * into the same critical section that received the data. Without this
      * care, reading notifies may disrupt other thread communications.
      * (as in ticket #55). */
-    Py_BLOCK_THREADS;
     conn_notifies_process(curs->conn);
     conn_notice_process(curs->conn);
     Py_UNBLOCK_THREADS;
