@@ -1281,10 +1281,10 @@ _pq_fetch_tuples(cursorObject *curs)
         PyTuple_SET_ITEM(casts, i, cast);
     }
 
-    curs->description = description;
+    curs->description = TO_STATE(description);
     description = NULL;
 
-    curs->casts = casts;
+    curs->casts = TO_STATE(casts);
     casts = NULL;
 
     rv = 0;
@@ -1744,6 +1744,7 @@ pq_send_replication_feedback(replicationCursorObject *repl, int reply_requested)
    When no message is available, blocks on the connection socket, but
    manages to send keepalive messages to the server as needed.
 */
+IGNORE_REFCOUNT     /* cpychecker bug TODO report */
 int
 pq_copy_both(replicationCursorObject *repl, PyObject *consume, double keepalive_interval)
 {
@@ -1860,8 +1861,8 @@ pq_fetch(cursorObject *curs, int no_result)
 
     /* backend status message */
     Py_CLEAR(curs->pgstatus);
-    if (!(curs->pgstatus = conn_text_from_chars(
-            curs->conn, PQcmdStatus(curs->pgres)))) {
+    if (!(curs->pgstatus = TO_STATE(conn_text_from_chars(
+            curs->conn, PQcmdStatus(curs->pgres))))) {
         ex = -1;
         return ex;
     }
