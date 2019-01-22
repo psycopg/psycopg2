@@ -305,12 +305,20 @@ psyco_error_setstate(errorObject *self, PyObject *state)
 
     /* load the dict content in the structure */
     Py_CLEAR(self->pgerror);
-    self->pgerror = PyDict_GetItemString(state, "pgerror");
-    Py_XINCREF(self->pgerror);
+    {
+        PyObject *tmp;
+        tmp = PyDict_GetItemString(state, "pgerror");
+        Py_XINCREF(tmp);
+        self->pgerror = TO_STATE(tmp);
+    }
 
     Py_CLEAR(self->pgcode);
-    self->pgcode = PyDict_GetItemString(state, "pgcode");
-    Py_XINCREF(self->pgcode);
+    {
+        PyObject *tmp;
+        tmp = PyDict_GetItemString(state, "pgcode");
+        Py_XINCREF(tmp);
+        self->pgcode = TO_STATE(tmp);
+    }
 
     Py_CLEAR(self->cursor);
     /* We never expect a cursor in the state as it's not picklable.
