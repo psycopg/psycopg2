@@ -719,6 +719,7 @@ RAISES_NEG
 static int
 add_module_constants(PyObject *module)
 {
+    PyObject *tmp;
     Dprintf("psycopgmodule: initializing module constants");
 
     if (0 > PyModule_AddStringConstant(module,
@@ -734,16 +735,25 @@ add_module_constants(PyObject *module)
     { return -1; }
 
     if (0 > PyModule_AddObject(module,
-        "apilevel", Text_FromUTF8(APILEVEL)))
-    { return -1; }
+        "apilevel", tmp = Text_FromUTF8(APILEVEL)))
+    {
+        Py_XDECREF(tmp);
+        return -1;
+    }
 
     if (0 > PyModule_AddObject(module,
-        "threadsafety", PyInt_FromLong(THREADSAFETY)))
-    { return -1; }
+        "threadsafety", tmp = PyInt_FromLong(THREADSAFETY)))
+    {
+        Py_XDECREF(tmp);
+        return -1;
+    }
 
     if (0 > PyModule_AddObject(module,
-        "paramstyle", Text_FromUTF8(PARAMSTYLE)))
-    { return -1; }
+        "paramstyle", tmp = Text_FromUTF8(PARAMSTYLE)))
+    {
+        Py_XDECREF(tmp);
+        return -1;
+    }
 
     if (0 > PyModule_AddIntMacro(module, REPLICATION_PHYSICAL)) { return -1; }
     if (0 > PyModule_AddIntMacro(module, REPLICATION_LOGICAL)) { return -1; }
