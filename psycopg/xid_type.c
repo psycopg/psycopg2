@@ -131,12 +131,12 @@ xid_init(xidObject *self, PyObject *args, PyObject *kwargs)
         }
     }
 
-    if (!(self->format_id = PyInt_FromLong(format_id))) { return -1; }
-    if (!(self->gtrid = Text_FromUTF8(gtrid))) { return -1; }
-    if (!(self->bqual = Text_FromUTF8(bqual))) { return -1; }
-    Py_INCREF(Py_None); self->prepared = Py_None;
-    Py_INCREF(Py_None); self->owner = Py_None;
-    Py_INCREF(Py_None); self->database = Py_None;
+    if (!(self->format_id = TO_STATE(PyInt_FromLong(format_id)))) { return -1; }
+    if (!(self->gtrid = TO_STATE(Text_FromUTF8(gtrid)))) { return -1; }
+    if (!(self->bqual = TO_STATE(Text_FromUTF8(bqual)))) { return -1; }
+    Py_INCREF(Py_None); self->prepared = TO_STATE(Py_None);
+    Py_INCREF(Py_None); self->owner = TO_STATE(Py_None);
+    Py_INCREF(Py_None); self->database = TO_STATE(Py_None);
 
     return 0;
 }

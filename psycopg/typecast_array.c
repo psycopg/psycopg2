@@ -56,7 +56,7 @@ typecast_array_cleanup(const char **str, Py_ssize_t *len)
 #define ASCAN_TOKEN  3
 #define ASCAN_QUOTED 4
 
-static int
+RAISES_NEG static int
 typecast_array_tokenize(const char *str, Py_ssize_t strlength,
                         Py_ssize_t *pos, char** token,
                         Py_ssize_t *length, int *quotes)
@@ -202,7 +202,8 @@ typecast_array_scan(const char *str, Py_ssize_t strlength,
             if (obj == NULL) return -1;
 
             PyList_Append(array, obj);
-            Py_DECREF(obj);
+            TO_STATE(obj);
+            Py_CLEAR(obj);
         }
 
         else if (state == ASCAN_BEGIN) {

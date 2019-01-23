@@ -155,6 +155,7 @@ typecast_BINARY_cast(const char *s, Py_ssize_t l, PyObject *curs)
          * an easy format.
          */
         if (NULL == (buffer = psycopg_parse_hex(s, l, &len))) {
+            FAKE_RAISE();   /* issue davidmalcolm/gcc-python-plugin#75 */
             goto exit;
         }
     }
@@ -170,6 +171,7 @@ typecast_BINARY_cast(const char *s, Py_ssize_t l, PyObject *curs)
          * story.
          */
         if (NULL == (buffer = psycopg_parse_escape(s, l, &len))) {
+            FAKE_RAISE();   /* issue davidmalcolm/gcc-python-plugin#75 */
             goto exit;
         }
     }
