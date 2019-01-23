@@ -38,15 +38,19 @@ PyObject *psyco_adapters;
 
 /* microprotocols_init - initialize the adapters dictionary */
 
-int
-microprotocols_init(PyObject *dict)
+RAISES_NEG int
+microprotocols_init(PyObject *module)
 {
     /* create adapters dictionary and put it in module namespace */
-    if ((psyco_adapters = PyDict_New()) == NULL) {
+    if (!(psyco_adapters = PyDict_New())) {
         return -1;
     }
 
-    PyDict_SetItemString(dict, "adapters", psyco_adapters);
+    Py_INCREF(psyco_adapters);
+    if (0 > PyModule_AddObject(module, "adapters", psyco_adapters)) {
+        Py_DECREF(psyco_adapters);
+        return -1;
+    }
 
     return 0;
 }
@@ -56,7 +60,7 @@ microprotocols_init(PyObject *dict)
  *
  * Return 0 on success, else -1 and set an exception.
  */
-int
+RAISES_NEG int
 microprotocols_add(PyTypeObject *type, PyObject *proto, PyObject *cast)
 {
     PyObject *key = NULL;

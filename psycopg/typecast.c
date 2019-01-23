@@ -252,11 +252,14 @@ PyObject *psyco_default_binary_cast;
 /* typecast_init - initialize the dictionary and create default types */
 
 RAISES_NEG int
-typecast_init(PyObject *dict)
+typecast_init(PyObject *module)
 {
     int i;
     int rv = -1;
     typecastObject *t = NULL;
+    PyObject *dict = NULL;
+
+    if (!(dict = PyModule_GetDict(module))) { goto exit; }
 
     /* create type dictionary and put it in module namespace */
     if (!(psyco_types = PyDict_New())) { goto exit; }
@@ -278,13 +281,14 @@ typecast_init(PyObject *dict)
 
         /* export binary object */
         if (typecast_builtins[i].values == typecast_BINARY_types) {
+            Py_INCREF((PyObject *)t);
             psyco_default_binary_cast = (PyObject *)t;
         }
         Py_DECREF((PyObject *)t);
         t = NULL;
     }
 
-    /* create and save a default cast object (but does not register it) */
+    /* create and save a default cast object (but do not register it) */
     psyco_default_cast = typecast_from_c(&typecast_default, dict);
 
     /* register the date/time typecasters with their original names */

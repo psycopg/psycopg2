@@ -46,8 +46,8 @@ extern HIDDEN PyObject *psyco_adapters;
 /** exported functions **/
 
 /* used by module.c to init the microprotocols system */
-HIDDEN int microprotocols_init(PyObject *dict);
-HIDDEN int microprotocols_add(
+HIDDEN RAISES_NEG int microprotocols_init(PyObject *dict);
+HIDDEN RAISES_NEG int microprotocols_add(
     PyTypeObject *type, PyObject *proto, PyObject *cast);
 
 HIDDEN PyObject *microprotocols_adapt(

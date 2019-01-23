@@ -47,74 +47,17 @@ extern "C" {
 #define THREADSAFETY 2
 #define PARAMSTYLE "pyformat"
 
-/* C API functions */
-#define psyco_errors_fill_NUM 0
-#define psyco_errors_fill_RETURN void
-#define psyco_errors_fill_PROTO (PyObject *dict)
-#define psyco_errors_set_NUM 1
-#define psyco_errors_set_RETURN void
-#define psyco_errors_set_PROTO (PyObject *type)
-
-/* Total number of C API pointers */
-#define PSYCOPG_API_pointers 2
-
-#ifdef PSYCOPG_MODULE
-
-    /** This section is used when compiling psycopgmodule.c & co. **/
-HIDDEN psyco_errors_fill_RETURN psyco_errors_fill psyco_errors_fill_PROTO;
-HIDDEN psyco_errors_set_RETURN psyco_errors_set psyco_errors_set_PROTO;
-
 /* global exceptions */
 extern HIDDEN PyObject *Error, *Warning, *InterfaceError, *DatabaseError,
     *InternalError, *OperationalError, *ProgrammingError,
     *IntegrityError, *DataError, *NotSupportedError;
 extern HIDDEN PyObject *QueryCanceledError, *TransactionRollbackError;
 
-/* python versions and compatibility stuff */
-#ifndef PyMODINIT_FUNC
-#define PyMODINIT_FUNC void
-#endif
-
-#else
-    /** This section is used in modules that use psycopg's C API **/
-
-static void **PSYCOPG_API;
-
-#define psyco_errors_fill \
- (*(psyco_errors_fill_RETURN (*)psyco_errors_fill_PROTO) \
-  PSYCOPG_API[psyco_errors_fill_NUM])
-#define psyco_errors_set \
- (*(psyco_errors_set_RETURN (*)psyco_errors_set_PROTO) \
-  PSYCOPG_API[psyco_errors_set_NUM])
-
-/* Return -1 and set exception on error, 0 on success. */
-static int
-import_psycopg(void)
-{
-    PyObject *module = PyImport_ImportModule("psycopg");
-
-    if (module != NULL) {
-        PyObject *c_api_object = PyObject_GetAttrString(module, "_C_API");
-        if (c_api_object == NULL) return -1;
-        if (PyCObject_Check(c_api_object))
-            PSYCOPG_API = (void **)PyCObject_AsVoidPtr(c_api_object);
-        Py_DECREF(c_api_object);
-    }
-    return 0;
-}
-
-#endif
-
 /* postgresql<->python encoding map */
 extern HIDDEN PyObject *psycoEncodings;
 
 /* SQL NULL */
 extern HIDDEN PyObject *psyco_null;
-
-typedef struct {
-    char *pgenc;
-    char *pyenc;
-} encodingPair;
 
 /* Exceptions docstrings */
 #define Error_doc \

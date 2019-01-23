@@ -48,7 +48,7 @@ struct replicationMessageObject {
     int64_t     send_time;
 };
 
-RAISES_NEG int psyco_replmsg_datetime_init(void);
+RAISES_NEG HIDDEN int psyco_replmsg_datetime_init(void);
 
 #ifdef __cplusplus
 }

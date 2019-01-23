@@ -60,7 +60,6 @@
 /* some module-level variables, like the datetime module */
 #include <datetime.h>
 #include "psycopg/adapter_datetime.h"
-HIDDEN PyObject *pyDateTimeModuleP = NULL;
 
 HIDDEN PyObject *psycoEncodings = NULL;
 #ifdef PSYCOPG_DEBUG
@@ -274,6 +273,8 @@ psyco_libcrypto_threads_init(void)
 {
     PyObject *m;
 
+    Dprintf("psycopgmodule: configuring libpq libcrypto callbacks ");
+
     /* importing the ssl module sets up Python's libcrypto callbacks */
     if ((m = PyImport_ImportModule("ssl"))) {
         /* disable libcrypto setup in libpq, so it won't stomp on the callbacks
@@ -292,94 +293,108 @@ psyco_libcrypto_threads_init(void)
  *
  * Return 0 on success, else -1 and set an exception.
  */
-static int
-psyco_adapters_init(PyObject *mod)
+RAISES_NEG static int
+adapters_init(PyObject *module)
 {
-    PyObject *call = NULL;
+    PyObject *dict = NULL, *obj = NULL;
     int rv = -1;
 
-    if (0 != microprotocols_add(&PyFloat_Type, NULL, (PyObject*)&pfloatType)) {
+    if (0 > microprotocols_init(module)) { goto exit; }
+
+    Dprintf("psycopgmodule: configuring adapters");
+
+    if (0 > microprotocols_add(&PyFloat_Type, NULL, (PyObject*)&pfloatType)) {
         goto exit;
     }
 #if PY_MAJOR_VERSION < 3
-    if (0 != microprotocols_add(&PyInt_Type, NULL, (PyObject*)&pintType)) {
+    if (0 > microprotocols_add(&PyInt_Type, NULL, (PyObject*)&pintType)) {
         goto exit;
     }
 #endif
-    if (0 != microprotocols_add(&PyLong_Type, NULL, (PyObject*)&pintType)) {
+    if (0 > microprotocols_add(&PyLong_Type, NULL, (PyObject*)&pintType)) {
         goto exit;
     }
-    if (0 != microprotocols_add(&PyBool_Type, NULL, (PyObject*)&pbooleanType)) {
+    if (0 > microprotocols_add(&PyBool_Type, NULL, (PyObject*)&pbooleanType)) {
         goto exit;
     }
 
     /* strings */
 #if PY_MAJOR_VERSION < 3
-    if (0 != microprotocols_add(&PyString_Type, NULL, (PyObject*)&qstringType)) {
+    if (0 > microprotocols_add(&PyString_Type, NULL, (PyObject*)&qstringType)) {
         goto exit;
     }
 #endif
-    if (0 != microprotocols_add(&PyUnicode_Type, NULL, (PyObject*)&qstringType)) {
+    if (0 > microprotocols_add(&PyUnicode_Type, NULL, (PyObject*)&qstringType)) {
         goto exit;
     }
 
     /* binary */
 #if PY_MAJOR_VERSION < 3
-    if (0 != microprotocols_add(&PyBuffer_Type, NULL, (PyObject*)&binaryType)) {
+    if (0 > microprotocols_add(&PyBuffer_Type, NULL, (PyObject*)&binaryType)) {
         goto exit;
     }
 #else
-    if (0 != microprotocols_add(&PyBytes_Type, NULL, (PyObject*)&binaryType)) {
+    if (0 > microprotocols_add(&PyBytes_Type, NULL, (PyObject*)&binaryType)) {
         goto exit;
     }
 #endif
 
 #if PY_MAJOR_VERSION >= 3 || PY_MINOR_VERSION >= 6
-    if (0 != microprotocols_add(&PyByteArray_Type, NULL, (PyObject*)&binaryType)) {
+    if (0 > microprotocols_add(&PyByteArray_Type, NULL, (PyObject*)&binaryType)) {
         goto exit;
     }
 #endif
 #if PY_MAJOR_VERSION >= 3 || PY_MINOR_VERSION >= 7
-    if (0 != microprotocols_add(&PyMemoryView_Type, NULL, (PyObject*)&binaryType)) {
+    if (0 > microprotocols_add(&PyMemoryView_Type, NULL, (PyObject*)&binaryType)) {
         goto exit;
     }
 #endif
 
-    if (0 != microprotocols_add(&PyList_Type, NULL, (PyObject*)&listType)) {
+    if (0 > microprotocols_add(&PyList_Type, NULL, (PyObject*)&listType)) {
         goto exit;
     }
 
     /* the module has already been initialized, so we can obtain the callable
        objects directly from its dictionary :) */
-    if (!(call = PyMapping_GetItemString(mod, "DateFromPy"))) { goto exit; }
-    if (0 != microprotocols_add(PyDateTimeAPI->DateType, NULL, call)) { goto exit; }
-    Py_CLEAR(call);
+    if (!(dict = PyModule_GetDict(module))) { goto exit; }
 
-    if (!(call = PyMapping_GetItemString(mod, "TimeFromPy"))) { goto exit; }
-    if (0 != microprotocols_add(PyDateTimeAPI->TimeType, NULL, call)) { goto exit; }
-    Py_CLEAR(call);
+    if (!(obj = PyMapping_GetItemString(dict, "DateFromPy"))) { goto exit; }
+    if (0 > microprotocols_add(PyDateTimeAPI->DateType, NULL, obj)) { goto exit; }
+    Py_CLEAR(obj);
 
-    if (!(call = PyMapping_GetItemString(mod, "TimestampFromPy"))) { goto exit; }
-    if (0 != microprotocols_add(PyDateTimeAPI->DateTimeType, NULL, call)) { goto exit; }
-    Py_CLEAR(call);
+    if (!(obj = PyMapping_GetItemString(dict, "TimeFromPy"))) { goto exit; }
+    if (0 > microprotocols_add(PyDateTimeAPI->TimeType, NULL, obj)) { goto exit; }
+    Py_CLEAR(obj);
 
-    if (!(call = PyMapping_GetItemString(mod, "IntervalFromPy"))) { goto exit; }
-    if (0 != microprotocols_add(PyDateTimeAPI->DeltaType, NULL, call)) { goto exit; }
-    Py_CLEAR(call);
+    if (!(obj = PyMapping_GetItemString(dict, "TimestampFromPy"))) { goto exit; }
+    if (0 > microprotocols_add(PyDateTimeAPI->DateTimeType, NULL, obj)) { goto exit; }
+    Py_CLEAR(obj);
+
+    if (!(obj = PyMapping_GetItemString(dict, "IntervalFromPy"))) { goto exit; }
+    if (0 > microprotocols_add(PyDateTimeAPI->DeltaType, NULL, obj)) { goto exit; }
+    Py_CLEAR(obj);
 
 #ifdef HAVE_MXDATETIME
-    /* as above, we use the callable objects from the psycopg module */
-    if (NULL != (call = PyMapping_GetItemString(mod, "TimestampFromMx"))) {
-        if (0 != microprotocols_add(mxDateTime.DateTime_Type, NULL, call)) { goto exit; }
-        Py_CLEAR(call);
+    /* As above, we use the callable objects from the psycopg module.
+       These object are not be available at runtime if mx.DateTime import
+       failed (e.g. it was available at build time but not at runtime). */
+    if (PyMapping_HasKeyString(dict, "TimestampFromMx")) {
+        if (!(obj = PyMapping_GetItemString(dict, "TimestampFromMx"))) {
+            goto exit;
+        }
+        if (0 > microprotocols_add(mxDateTime.DateTime_Type, NULL, obj)) {
+            goto exit;
+        }
+        Py_CLEAR(obj);
 
         /* if we found the above, we have this too. */
-        if (!(call = PyMapping_GetItemString(mod, "TimeFromMx"))) { goto exit; }
-        if (0 != microprotocols_add(mxDateTime.DateTimeDelta_Type, NULL, call)) { goto exit; }
-        Py_CLEAR(call);
-    }
-    else {
-        PyErr_Clear();
+        if (!(obj = PyMapping_GetItemString(dict, "TimeFromMx"))) {
+            goto exit;
+        }
+        if (0 > microprotocols_add(mxDateTime.DateTimeDelta_Type, NULL, obj)) {
+            goto exit;
+        }
+        Py_CLEAR(obj);
     }
 #endif
 
@@ -387,7 +402,7 @@ psyco_adapters_init(PyObject *mod)
     rv = 0;
 
 exit:
-    Py_XDECREF(call);
+    Py_XDECREF(obj);
 
     return rv;
 }
@@ -499,11 +514,11 @@ exit:
 }
 
 
-/* psyco_encodings_fill
-
-   Fill the module's postgresql<->python encoding table */
-
-static encodingPair encodings[] = {
+/* Fill the module's postgresql<->python encoding table */
+static struct {
+    char *pgenc;
+    char *pyenc;
+} enctable[] = {
     {"ABC",          "cp1258"},
     {"ALT",          "cp866"},
     {"BIG5",         "big5"},
@@ -585,15 +600,28 @@ static encodingPair encodings[] = {
  *
  * Return 0 on success, else -1 and set an exception.
  */
-static int psyco_encodings_fill(PyObject *dict)
+RAISES_NEG static int
+encodings_init(PyObject *module)
 {
     PyObject *value = NULL;
-    encodingPair *enc;
+    int i;
     int rv = -1;
 
-    for (enc = encodings; enc->pgenc != NULL; enc++) {
-        if (!(value = Text_FromUTF8(enc->pyenc))) { goto exit; }
-        if (0 != PyDict_SetItemString(dict, enc->pgenc, value)) { goto exit; }
+    Dprintf("psycopgmodule: initializing encodings table");
+
+    if (!(psycoEncodings = PyDict_New())) { goto exit; }
+    Py_INCREF(psycoEncodings);
+    if (0 > PyModule_AddObject(module, "encodings", psycoEncodings)) {
+        Py_DECREF(psycoEncodings);
+        goto exit;
+    }
+
+    for (i = 0; enctable[i].pgenc != NULL; i++) {
+        if (!(value = Text_FromUTF8(enctable[i].pyenc))) { goto exit; }
+        if (0 > PyDict_SetItemString(
+                psycoEncodings, enctable[i].pgenc, value)) {
+            goto exit;
+        }
         Py_CLEAR(value);
     }
     rv = 0;
@@ -604,9 +632,7 @@ exit:
     return rv;
 }
 
-/* psyco_errors_init, psyco_errors_fill (callable from C)
-
-   Initialize the module's exceptions and after that a dictionary with a full
+/* Initialize the module's exceptions and after that a dictionary with a full
    set of exceptions. */
 
 PyObject *Error, *Warning, *InterfaceError, *DatabaseError,
@@ -644,8 +670,8 @@ static struct {
 };
 
 
-static int
-psyco_errors_init(void)
+RAISES_NEG static int
+errors_init(PyObject *module)
 {
     /* the names of the exceptions here reflect the organization of the
        psycopg2 module and not the fact the the original error objects
@@ -656,6 +682,8 @@ psyco_errors_init(void)
     PyObject *str = NULL;
     int rv = -1;
 
+    Dprintf("psycopgmodule: initializing basic exceptions");
+
     /* 'Error' has been defined elsewhere: only init the other classes */
     Error = (PyObject *)&errorType;
 
@@ -664,7 +692,7 @@ psyco_errors_init(void)
 
         if (exctable[i].docstr) {
             if (!(str = Text_FromUTF8(exctable[i].docstr))) { goto exit; }
-            if (0 != PyDict_SetItemString(dict, "__doc__", str)) { goto exit; }
+            if (0 > PyDict_SetItemString(dict, "__doc__", str)) { goto exit; }
             Py_CLEAR(str);
         }
 
@@ -679,6 +707,21 @@ psyco_errors_init(void)
         Py_CLEAR(dict);
     }
 
+    for (i = 0; exctable[i].name; i++) {
+        char *name;
+        if (NULL == exctable[i].exc) { continue; }
+
+        /* the name is the part after the last dot */
+        name = strrchr(exctable[i].name, '.');
+        name = name ? name + 1 : exctable[i].name;
+
+        Py_INCREF(*exctable[i].exc);
+        if (0 > PyModule_AddObject(module, name, *exctable[i].exc)) {
+            Py_DECREF(*exctable[i].exc);
+            goto exit;
+        }
+    }
+
     rv = 0;
 
 exit:
@@ -687,40 +730,162 @@ exit:
     return rv;
 }
 
-void
-psyco_errors_fill(PyObject *dict)
+
+RAISES_NEG static int
+add_module_constants(PyObject *module)
 {
-    int i;
-    char *name;
+    PyObject *tmp;
+    Dprintf("psycopgmodule: initializing module constants");
 
-    for (i = 0; exctable[i].name; i++) {
-        if (NULL == exctable[i].exc) { continue; }
+    if (0 > PyModule_AddStringConstant(module,
+        "__version__", xstr(PSYCOPG_VERSION)))
+    { return -1; }
 
-        /* the name is the part after the last dot */
-        name = strrchr(exctable[i].name, '.');
-        name = name ? name + 1 : exctable[i].name;
+    if (0 > PyModule_AddStringConstant(module,
+        "__doc__", "psycopg2 PostgreSQL driver"))
+    { return -1; }
 
-        PyDict_SetItemString(dict, name, *exctable[i].exc);
+    if (0 > PyModule_AddIntConstant(module,
+        "__libpq_version__", PG_VERSION_NUM))
+    { return -1; }
+
+    if (0 > PyModule_AddObject(module,
+        "apilevel", tmp = Text_FromUTF8(APILEVEL)))
+    {
+        Py_XDECREF(tmp);
+        return -1;
     }
+
+    if (0 > PyModule_AddObject(module,
+        "threadsafety", tmp = PyInt_FromLong(THREADSAFETY)))
+    {
+        Py_XDECREF(tmp);
+        return -1;
+    }
+
+    if (0 > PyModule_AddObject(module,
+        "paramstyle", tmp = Text_FromUTF8(PARAMSTYLE)))
+    {
+        Py_XDECREF(tmp);
+        return -1;
+    }
+
+    if (0 > PyModule_AddIntMacro(module, REPLICATION_PHYSICAL)) { return -1; }
+    if (0 > PyModule_AddIntMacro(module, REPLICATION_LOGICAL)) { return -1; }
+
+    return 0;
 }
 
-void
-psyco_errors_set(PyObject *type)
+
+static struct {
+    char *name;
+    PyTypeObject *type;
+} typetable[] = {
+    { "connection", &connectionType },
+    { "cursor", &cursorType },
+    { "ReplicationConnection", &replicationConnectionType },
+    { "ReplicationCursor", &replicationCursorType },
+    { "ReplicationMessage", &replicationMessageType },
+    { "ISQLQuote", &isqlquoteType },
+    { "Column", &columnType },
+    { "Notify", &notifyType },
+    { "Xid", &xidType },
+    { "ConnectionInfo", &connInfoType },
+    { "Diagnostics", &diagnosticsType },
+    { "AsIs", &asisType },
+    { "Binary", &binaryType },
+    { "Boolean", &pbooleanType },
+    { "Decimal", &pdecimalType },
+    { "Int", &pintType },
+    { "Float", &pfloatType },
+    { "List", &listType },
+    { "QuotedString", &qstringType },
+    { "lobject", &lobjectType },
+    {NULL}  /* Sentinel */
+};
+
+RAISES_NEG static int
+add_module_types(PyObject *module)
 {
     int i;
-    char *name;
 
-    for (i = 0; exctable[i].name; i++) {
-        if (NULL == exctable[i].exc) { continue; }
+    Dprintf("psycopgmodule: initializing module types");
 
-        /* the name is the part after the last dot */
-        name = strrchr(exctable[i].name, '.');
-        name = name ? name + 1 : exctable[i].name;
+    for (i = 0; typetable[i].name; i++) {
+        PyObject *type = (PyObject *)typetable[i].type;
 
-        PyObject_SetAttrString(type, name, *exctable[i].exc);
+        Py_TYPE(typetable[i].type) = &PyType_Type;
+        if (0 > PyType_Ready(typetable[i].type)) { return -1; }
+
+        Py_INCREF(type);
+        if (0 > PyModule_AddObject(module, typetable[i].name, type)) {
+            Py_DECREF(type);
+            return -1;
+        }
     }
+    return 0;
 }
 
+
+RAISES_NEG static int
+datetime_init(void)
+{
+    PyObject *dt = NULL;
+
+    Dprintf("psycopgmodule: datetime module");
+
+    /* import python builtin datetime module, if available */
+    if (!(dt = PyImport_ImportModule("datetime"))) {
+        return -1;
+    }
+    Py_DECREF(dt);
+
+    /* Initialize the PyDateTimeAPI everywhere is used */
+    PyDateTime_IMPORT;
+    if (0 > psyco_adapter_datetime_init()) { return -1; }
+    if (0 > psyco_repl_curs_datetime_init()) { return -1; }
+    if (0 > psyco_replmsg_datetime_init()) { return -1; }
+
+    Py_TYPE(&pydatetimeType) = &PyType_Type;
+    if (0 > PyType_Ready(&pydatetimeType)) { return -1; }
+
+    return 0;
+}
+
+RAISES_NEG static int
+mxdatetime_init(PyObject *module)
+{
+    Dprintf("psycopgmodule: initializing mx.DateTime module");
+
+#ifdef HAVE_MXDATETIME
+    Py_TYPE(&mxdatetimeType) = &PyType_Type;
+    if (0 > PyType_Ready(&mxdatetimeType)) { return -1; }
+
+    if (mxDateTime_ImportModuleAndAPI()) {
+        Dprintf("psycopgmodule: mx.DateTime module import failed");
+        PyErr_Clear();
+
+        /* only fail if the mx typacaster should have been the default */
+#ifdef PSYCOPG_DEFAULT_MXDATETIME
+        PyErr_SetString(PyExc_ImportError,
+            "can't import mx.DateTime module (requested as default adapter)");
+        return -1;
+#endif
+    }
+
+    /* If we can't find mx.DateTime objects at runtime,
+     * remove them from the module (and, as consequence, from the adapters). */
+    if (0 != psyco_adapter_mxdatetime_init()) {
+        PyObject *dict;
+        if (!(dict = PyModule_GetDict(module))) { return -1; }
+        if (0 > PyDict_DelItemString(dict, "DateFromMx")) { return -1; }
+        if (0 > PyDict_DelItemString(dict, "TimeFromMx")) { return -1; }
+        if (0 > PyDict_DelItemString(dict, "TimestampFromMx")) { return -1; }
+        if (0 > PyDict_DelItemString(dict, "IntervalFromMx")) { return -1; }
+    }
+#endif
+    return 0;
+}
 
 /** method table and module initialization **/
 
@@ -801,132 +966,38 @@ static struct PyModuleDef psycopgmodule = {
 };
 #endif
 
+#ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
+#define PyMODINIT_FUNC void
+#endif
 PyMODINIT_FUNC
 INIT_MODULE(_psycopg)(void)
 {
-#if PY_VERSION_HEX < 0x03020000
-    static void *PSYCOPG_API[PSYCOPG_API_pointers];
-    PyObject *c_api_object;
-#endif
-
-    PyObject *module = NULL, *dict;
+    PyObject *module = NULL;
 
 #ifdef PSYCOPG_DEBUG
     if (getenv("PSYCOPG_DEBUG"))
         psycopg_debug_enabled = 1;
 #endif
 
-    Dprintf("initpsycopg: initializing psycopg %s", xstr(PSYCOPG_VERSION));
-
-    /* initialize all the new types and then the module */
-    Py_TYPE(&connectionType) = &PyType_Type;
-    if (PyType_Ready(&connectionType) == -1) goto exit;
-
-    Py_TYPE(&cursorType) = &PyType_Type;
-    if (PyType_Ready(&cursorType) == -1) goto exit;
-
-    Py_TYPE(&replicationConnectionType) = &PyType_Type;
-    if (PyType_Ready(&replicationConnectionType) == -1) goto exit;
-
-    Py_TYPE(&replicationCursorType) = &PyType_Type;
-    if (PyType_Ready(&replicationCursorType) == -1) goto exit;
-
-    Py_TYPE(&replicationMessageType) = &PyType_Type;
-    if (PyType_Ready(&replicationMessageType) == -1) goto exit;
-
-    Py_TYPE(&typecastType) = &PyType_Type;
-    if (PyType_Ready(&typecastType) == -1) goto exit;
-
-    Py_TYPE(&qstringType) = &PyType_Type;
-    if (PyType_Ready(&qstringType) == -1) goto exit;
-
-    Py_TYPE(&binaryType) = &PyType_Type;
-    if (PyType_Ready(&binaryType) == -1) goto exit;
-
-    Py_TYPE(&isqlquoteType) = &PyType_Type;
-    if (PyType_Ready(&isqlquoteType) == -1) goto exit;
-
-    Py_TYPE(&pbooleanType) = &PyType_Type;
-    if (PyType_Ready(&pbooleanType) == -1) goto exit;
-
-    Py_TYPE(&pintType) = &PyType_Type;
-    if (PyType_Ready(&pintType) == -1) goto exit;
-
-    Py_TYPE(&pfloatType) = &PyType_Type;
-    if (PyType_Ready(&pfloatType) == -1) goto exit;
-
-    Py_TYPE(&pdecimalType) = &PyType_Type;
-    if (PyType_Ready(&pdecimalType) == -1) goto exit;
-
-    Py_TYPE(&asisType) = &PyType_Type;
-    if (PyType_Ready(&asisType) == -1) goto exit;
-
-    Py_TYPE(&listType) = &PyType_Type;
-    if (PyType_Ready(&listType) == -1) goto exit;
-
-    Py_TYPE(&chunkType) = &PyType_Type;
-    if (PyType_Ready(&chunkType) == -1) goto exit;
-
-    Py_TYPE(&columnType) = &PyType_Type;
-    if (PyType_Ready(&columnType) == -1) goto exit;
-
-    Py_TYPE(&notifyType) = &PyType_Type;
-    if (PyType_Ready(&notifyType) == -1) goto exit;
-
-    Py_TYPE(&xidType) = &PyType_Type;
-    if (PyType_Ready(&xidType) == -1) goto exit;
-
-    Py_TYPE(&errorType) = &PyType_Type;
-    errorType.tp_base = (PyTypeObject *)PyExc_StandardError;
-    if (PyType_Ready(&errorType) == -1) goto exit;
-
-    Py_TYPE(&connInfoType) = &PyType_Type;
-    if (PyType_Ready(&connInfoType) == -1) goto exit;
-
-    Py_TYPE(&diagnosticsType) = &PyType_Type;
-    if (PyType_Ready(&diagnosticsType) == -1) goto exit;
-
-    Py_TYPE(&lobjectType) = &PyType_Type;
-    if (PyType_Ready(&lobjectType) == -1) goto exit;
+    Dprintf("psycopgmodule: initializing psycopg %s", xstr(PSYCOPG_VERSION));
 
     /* initialize libcrypto threading callbacks */
     psyco_libcrypto_threads_init();
 
-    /* import mx.DateTime module, if necessary */
-#ifdef HAVE_MXDATETIME
-    Py_TYPE(&mxdatetimeType) = &PyType_Type;
-    if (PyType_Ready(&mxdatetimeType) == -1) goto exit;
+    /* initialize types and objects not exposed to the module */
+    Py_TYPE(&typecastType) = &PyType_Type;
+    if (0 > PyType_Ready(&typecastType)) { goto exit; }
 
-    if (0 != mxDateTime_ImportModuleAndAPI()) {
-        PyErr_Clear();
+    Py_TYPE(&chunkType) = &PyType_Type;
+    if (0 > PyType_Ready(&chunkType)) { goto exit; }
 
-        /* only fail if the mx typacaster should have been the default */
-#ifdef PSYCOPG_DEFAULT_MXDATETIME
-        PyErr_SetString(PyExc_ImportError,
-            "can't import mx.DateTime module (requested as default adapter)");
-        goto exit;
-#endif
-    }
-#endif
+    Py_TYPE(&errorType) = &PyType_Type;
+    errorType.tp_base = (PyTypeObject *)PyExc_StandardError;
+    if (0 > PyType_Ready(&errorType)) { goto exit; }
 
-    /* import python builtin datetime module, if available */
-    pyDateTimeModuleP = PyImport_ImportModule("datetime");
-    if (pyDateTimeModuleP == NULL) {
-        Dprintf("initpsycopg: can't import datetime module");
-        PyErr_SetString(PyExc_ImportError, "can't import datetime module");
-        goto exit;
-    }
+    if (!(psyco_null = Bytes_FromString("NULL"))) { goto exit; }
 
-    /* Initialize the PyDateTimeAPI everywhere is used */
-    PyDateTime_IMPORT;
-    if (psyco_adapter_datetime_init()) { goto exit; }
-    if (psyco_repl_curs_datetime_init()) { goto exit; }
-    if (psyco_replmsg_datetime_init()) { goto exit; }
-
-    Py_TYPE(&pydatetimeType) = &PyType_Type;
-    if (PyType_Ready(&pydatetimeType) == -1) goto exit;
-
-    /* initialize the module and grab module's dictionary */
+    /* initialize the module */
 #if PY_MAJOR_VERSION < 3
     module = Py_InitModule("_psycopg", psycopgMethods);
 #else
@@ -934,81 +1005,16 @@ INIT_MODULE(_psycopg)(void)
 #endif
     if (!module) { goto exit; }
 
-    dict = PyModule_GetDict(module);
+    if (0 > add_module_constants(module)) { goto exit; }
+    if (0 > add_module_types(module)) { goto exit; }
+    if (0 > datetime_init()) { goto exit; }
+    if (0 > mxdatetime_init(module)) { goto exit; }
+    if (0 > encodings_init(module)) { goto exit; }
+    if (0 > typecast_init(module)) { goto exit; }
+    if (0 > adapters_init(module)) { goto exit; }
+    if (0 > errors_init(module)) { goto exit; }
 
-    /* initialize all the module's exported functions */
-    /* PyBoxer_API[PyBoxer_Fake_NUM] = (void *)PyBoxer_Fake; */
-
-    /* Create a CObject containing the API pointer array's address */
-    /* If anybody asks for a PyCapsule we'll deal with it. */
-#if PY_VERSION_HEX < 0x03020000
-    c_api_object = PyCObject_FromVoidPtr((void *)PSYCOPG_API, NULL);
-    if (c_api_object != NULL)
-        PyModule_AddObject(module, "_C_API", c_api_object);
-#endif
-
-    /* other mixed initializations of module-level variables */
-    if (!(psycoEncodings = PyDict_New())) { goto exit; }
-    if (0 != psyco_encodings_fill(psycoEncodings)) { goto exit; }
-    psyco_null = Bytes_FromString("NULL");
-
-    /* set some module's parameters */
-    PyModule_AddStringConstant(module, "__version__", xstr(PSYCOPG_VERSION));
-    PyModule_AddStringConstant(module, "__doc__", "psycopg PostgreSQL driver");
-    PyModule_AddIntConstant(module, "__libpq_version__", PG_VERSION_NUM);
-    PyModule_AddIntMacro(module, REPLICATION_PHYSICAL);
-    PyModule_AddIntMacro(module, REPLICATION_LOGICAL);
-    PyModule_AddObject(module, "apilevel", Text_FromUTF8(APILEVEL));
-    PyModule_AddObject(module, "threadsafety", PyInt_FromLong(THREADSAFETY));
-    PyModule_AddObject(module, "paramstyle", Text_FromUTF8(PARAMSTYLE));
-
-    /* put new types in module dictionary */
-    PyModule_AddObject(module, "connection", (PyObject*)&connectionType);
-    PyModule_AddObject(module, "cursor", (PyObject*)&cursorType);
-    PyModule_AddObject(module, "ReplicationConnection", (PyObject*)&replicationConnectionType);
-    PyModule_AddObject(module, "ReplicationCursor", (PyObject*)&replicationCursorType);
-    PyModule_AddObject(module, "ReplicationMessage", (PyObject*)&replicationMessageType);
-    PyModule_AddObject(module, "ISQLQuote", (PyObject*)&isqlquoteType);
-    PyModule_AddObject(module, "Column", (PyObject*)&columnType);
-    PyModule_AddObject(module, "Notify", (PyObject*)&notifyType);
-    PyModule_AddObject(module, "Xid", (PyObject*)&xidType);
-    PyModule_AddObject(module, "ConnectionInfo", (PyObject*)&connInfoType);
-    PyModule_AddObject(module, "Diagnostics", (PyObject*)&diagnosticsType);
-    PyModule_AddObject(module, "AsIs", (PyObject*)&asisType);
-    PyModule_AddObject(module, "Binary", (PyObject*)&binaryType);
-    PyModule_AddObject(module, "Boolean", (PyObject*)&pbooleanType);
-    PyModule_AddObject(module, "Decimal", (PyObject*)&pdecimalType);
-    PyModule_AddObject(module, "Int", (PyObject*)&pintType);
-    PyModule_AddObject(module, "Float", (PyObject*)&pfloatType);
-    PyModule_AddObject(module, "List", (PyObject*)&listType);
-    PyModule_AddObject(module, "QuotedString", (PyObject*)&qstringType);
-    PyModule_AddObject(module, "lobject", (PyObject*)&lobjectType);
-
-    /* encodings dictionary in module dictionary */
-    PyModule_AddObject(module, "encodings", psycoEncodings);
-
-#ifdef HAVE_MXDATETIME
-    /* If we can't find mx.DateTime objects at runtime,
-     * remove them from the module (and, as consequence, from the adapters). */
-    if (0 != psyco_adapter_mxdatetime_init()) {
-        PyDict_DelItemString(dict, "DateFromMx");
-        PyDict_DelItemString(dict, "TimeFromMx");
-        PyDict_DelItemString(dict, "TimestampFromMx");
-        PyDict_DelItemString(dict, "IntervalFromMx");
-    }
-#endif
-    /* initialize default set of typecasters */
-    if (0 != typecast_init(dict)) { goto exit; }
-
-    /* initialize microprotocols layer */
-    microprotocols_init(dict);
-    if (0 != psyco_adapters_init(dict)) { goto exit; }
-
-    /* create a standard set of exceptions and add them to the module's dict */
-    if (0 != psyco_errors_init()) { goto exit; }
-    psyco_errors_fill(dict);
-
-    Dprintf("initpsycopg: module initialization complete");
+    Dprintf("psycopgmodule: module initialization complete");
 
 exit:
 #if PY_MAJOR_VERSION > 2

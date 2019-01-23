@@ -50,7 +50,7 @@ typedef struct replicationCursorObject {
 } replicationCursorObject;
 
 
-RAISES_NEG int psyco_repl_curs_datetime_init(void);
+RAISES_NEG HIDDEN int psyco_repl_curs_datetime_init(void);
 
 #ifdef __cplusplus
 }

@@ -35,7 +35,7 @@
 #include <string.h>
 
 
-int
+RAISES_NEG int
 psyco_adapter_datetime_init(void)
 {
     Dprintf("psyco_adapter_datetime_init: datetime init");
