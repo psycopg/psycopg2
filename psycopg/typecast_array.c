@@ -166,6 +166,7 @@ typecast_array_tokenize(const char *str, Py_ssize_t strlength,
     return res;
 }
 
+IGNORE_REFCOUNT /* davidmalcolm/gcc-python-plugin#109 -- can't fix with TO_STATE */
 RAISES_NEG static int
 typecast_array_scan(const char *str, Py_ssize_t strlength,
                     PyObject *curs, PyObject *base, PyObject *array)

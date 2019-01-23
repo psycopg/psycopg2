@@ -632,6 +632,7 @@ pq_reset(connectionObject *conn)
  * The result is a new string allocated with malloc.
  */
 
+IGNORE_REFCOUNT     /* segfault on higher --maxtrans */
 char *
 pq_get_guc_locked(
     connectionObject *conn, const char *param,
@@ -1144,6 +1145,7 @@ exit:
     return rv;
 }
 
+IGNORE_REFCOUNT /* davidmalcolm/gcc-python-plugin#109 -- can't fix with TO_STATE */
 static PyObject *
 _make_column(connectionObject *conn, PGresult *pgres, int i)
 {
@@ -1315,6 +1317,7 @@ _read_rowcount(cursorObject *curs)
     }
 }
 
+IGNORE_REFCOUNT     /* segfault on higher --maxtrans */
 static int
 _pq_copy_in_v3(cursorObject *curs)
 {
