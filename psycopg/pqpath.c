@@ -1229,12 +1229,147 @@ pq_get_last_result(connectionObject *conn)
       1 - result from backend (possibly data is ready)
 */
 
+static PyObject *
+_get_cast(cursorObject *curs, PGresult *pgres, int i)
+{
+    /* fill the right cast function by accessing three different dictionaries:
+       - the per-cursor dictionary, if available (can be NULL or None)
+       - the per-connection dictionary (always exists but can be null)
+       - the global dictionary (at module level)
+       if we get no defined cast use the default one */
+    PyObject *type = NULL;
+    PyObject *cast = NULL;
+    PyObject *rv = NULL;
+
+    Oid ftype = PQftype(pgres, i);
+    if (!(type = PyInt_FromLong(ftype))) { goto exit; }
+
+    Dprintf("_pq_fetch_tuples: looking for cast %d:", ftype);
+    if (!(cast = curs_get_cast(curs, type))) { goto exit; }
+
+    /* else if we got binary tuples and if we got a field that
+       is binary use the default cast
+       FIXME: what the hell am I trying to do here? This just can't work..
+    */
+    if (cast == psyco_default_binary_cast && PQbinaryTuples(pgres)) {
+        Dprintf("_pq_fetch_tuples: Binary cursor and "
+                "binary field: %i using default cast", ftype);
+        cast = psyco_default_cast;
+    }
+
+    Dprintf("_pq_fetch_tuples: using cast at %p for type %d", cast, ftype);
+
+    /* success */
+    Py_INCREF(cast);
+    rv = cast;
+
+exit:
+    Py_XDECREF(type);
+    return rv;
+}
+
+static PyObject *
+_make_column(connectionObject *conn, PGresult *pgres, int i)
+{
+    Oid ftype = PQftype(pgres, i);
+    int fsize = PQfsize(pgres, i);
+    int fmod =  PQfmod(pgres, i);
+    Oid ftable = PQftable(pgres, i);
+    int ftablecol = PQftablecol(pgres, i);
+
+    columnObject *column = NULL;
+    PyObject *rv = NULL;
+
+    if (!(column = (columnObject *)PyObject_CallObject(
+            (PyObject *)&columnType, NULL))) {
+        goto exit;
+    }
+
+    /* fill the type and name fields */
+    {
+        PyObject *tmp;
+        if (!(tmp = PyInt_FromLong(ftype))) {
+            goto exit;
+        }
+        column->type_code = tmp;
+    }
+
+    {
+        PyObject *tmp;
+        if (!(tmp = conn_text_from_chars(conn, PQfname(pgres, i)))) {
+            goto exit;
+        }
+        column->name = tmp;
+    }
+
+    /* display size is the maximum size of this field result tuples. */
+    Py_INCREF(Py_None);
+    column->display_size = Py_None;
+
+    /* size on the backend */
+    if (fmod > 0) {
+        fmod = fmod - sizeof(int);
+    }
+    if (fsize == -1) {
+        if (ftype == NUMERICOID) {
+            PyObject *tmp;
+            if (!(tmp = PyInt_FromLong((fmod >> 16)))) { goto exit; }
+            column->internal_size = tmp;
+        }
+        else { /* If variable length record, return maximum size */
+            PyObject *tmp;
+            if (!(tmp = PyInt_FromLong(fmod))) { goto exit; }
+            column->internal_size = tmp;
+        }
+    }
+    else {
+        PyObject *tmp;
+        if (!(tmp = PyInt_FromLong(fsize))) { goto exit; }
+        column->internal_size = tmp;
+    }
+
+    /* scale and precision */
+    if (ftype == NUMERICOID) {
+        PyObject *tmp;
+
+        if (!(tmp = PyInt_FromLong((fmod >> 16) & 0xFFFF))) {
+            goto exit;
+        }
+        column->precision = tmp;
+
+        if (!(tmp = PyInt_FromLong(fmod & 0xFFFF))) {
+            goto exit;
+        }
+        column->scale = tmp;
+    }
+
+    /* table_oid, table_column */
+    if (ftable != InvalidOid) {
+        PyObject *tmp;
+        if (!(tmp = PyInt_FromLong((long)ftable))) { goto exit; }
+        column->table_oid = tmp;
+    }
+
+    if (ftablecol > 0) {
+        PyObject *tmp;
+        if (!(tmp = PyInt_FromLong((long)ftablecol))) { goto exit; }
+        column->table_column = tmp;
+    }
+
+    /* success */
+    rv = (PyObject *)column;
+    column = NULL;
+
+exit:
+    Py_XDECREF(column);
+    return rv;
+}
+
 RAISES_NEG static int
 _pq_fetch_tuples(cursorObject *curs)
 {
-    int i, *dsize = NULL;
+    int i;
     int pgnfields;
-    int pgbintuples;
     int rv = -1;
     PyObject *description = NULL;
     PyObject *casts = NULL;
@@ -1244,7 +1379,6 @@ _pq_fetch_tuples(cursorObject *curs)
     Py_END_ALLOW_THREADS;
 
     pgnfields = PQnfields(curs->pgres);
-    pgbintuples = PQbinaryTuples(curs->pgres);
 
     curs->notuples = 0;
 
@@ -1255,158 +1389,31 @@ _pq_fetch_tuples(cursorObject *curs)
     if (!(casts = PyTuple_New(pgnfields))) { goto exit; }
     curs->columns = pgnfields;
 
-    /* calculate the display size for each column (cpu intensive, can be
-       switched off at configuration time) */
-#ifdef PSYCOPG_DISPLAY_SIZE
-    if (!(dsize = PyMem_New(int, pgnfields))) {
-        PyErr_NoMemory();
-        goto exit;
-    }
-    Py_BEGIN_ALLOW_THREADS;
-    if (dsize != NULL) {
-        int j, len;
-        for (i=0; i < pgnfields; i++) {
-            dsize[i] = -1;
-        }
-        for (j = 0; j < curs->rowcount; j++) {
-            for (i = 0; i < pgnfields; i++) {
-                len = PQgetlength(curs->pgres, j, i);
-                if (len > dsize[i]) dsize[i] = len;
-            }
-        }
-    }
-    Py_END_ALLOW_THREADS;
-#endif
-
-    /* calculate various parameters and typecasters */
+    /* calculate each field's parameters and typecasters */
     for (i = 0; i < pgnfields; i++) {
-        Oid ftype = PQftype(curs->pgres, i);
-        int fsize = PQfsize(curs->pgres, i);
-        int fmod =  PQfmod(curs->pgres, i);
-        Oid ftable = PQftable(curs->pgres, i);
-        int ftablecol = PQftablecol(curs->pgres, i);
-
-        columnObject *column = NULL;
-        PyObject *type = NULL;
+        PyObject *column = NULL;
         PyObject *cast = NULL;
 
-        if (!(column = (columnObject *)PyObject_CallObject(
-                (PyObject *)&columnType, NULL))) {
+        if (!(column = _make_column(curs->conn, curs->pgres, i))) {
             goto exit;
         }
-
-        /* fill the right cast function by accessing three different dictionaries:
-           - the per-cursor dictionary, if available (can be NULL or None)
-           - the per-connection dictionary (always exists but can be null)
-           - the global dictionary (at module level)
-           if we get no defined cast use the default one */
-
-        if (!(type = PyInt_FromLong(ftype))) {
-            goto err_for;
-        }
-        Dprintf("_pq_fetch_tuples: looking for cast %d:", ftype);
-        cast = curs_get_cast(curs, type);
-
-        /* else if we got binary tuples and if we got a field that
-           is binary use the default cast
-           FIXME: what the hell am I trying to do here? This just can't work..
-        */
-        if (pgbintuples && cast == psyco_default_binary_cast) {
-            Dprintf("_pq_fetch_tuples: Binary cursor and "
-                    "binary field: %i using default cast",
-                    PQftype(curs->pgres,i));
-            cast = psyco_default_cast;
-        }
-
-        Dprintf("_pq_fetch_tuples: using cast at %p for type %d",
-                cast, PQftype(curs->pgres,i));
-        Py_INCREF(cast);
-        PyTuple_SET_ITEM(casts, i, cast);
-
-        /* 1/ fill the other fields */
-        {
-            PyObject *tmp;
-            if (!(tmp = conn_text_from_chars(
-                    curs->conn, PQfname(curs->pgres, i)))) {
-                goto err_for;
-            }
-            column->name = tmp;
-        }
-        column->type_code = type;
-        type = NULL;
-
-        /* 2/ display size is the maximum size of this field result tuples. */
-        if (dsize && dsize[i] >= 0) {
-            PyObject *tmp;
-            if (!(tmp = PyInt_FromLong(dsize[i]))) { goto err_for; }
-            column->display_size = tmp;
-        }
-
-        /* 3/ size on the backend */
-        if (fmod > 0) fmod = fmod - sizeof(int);
-        if (fsize == -1) {
-            if (ftype == NUMERICOID) {
-                PyObject *tmp;
-                if (!(tmp = PyInt_FromLong((fmod >> 16)))) { goto err_for; }
-                column->internal_size = tmp;
-            }
-            else { /* If variable length record, return maximum size */
-                PyObject *tmp;
-                if (!(tmp = PyInt_FromLong(fmod))) { goto err_for; }
-                column->internal_size = tmp;
-            }
-        }
-        else {
-            PyObject *tmp;
-            if (!(tmp = PyInt_FromLong(fsize))) { goto err_for; }
-            column->internal_size = tmp;
-        }
-
-        /* 4,5/ scale and precision */
-        if (ftype == NUMERICOID) {
-            PyObject *tmp;
-
-            if (!(tmp = PyInt_FromLong((fmod >> 16) & 0xFFFF))) {
-                goto err_for;
-            }
-            column->precision = tmp;
-
-            if (!(tmp = PyInt_FromLong(fmod & 0xFFFF))) {
-                goto err_for;
-            }
-            column->scale = tmp;
-        }
-
-        /* table_oid, table_column */
-        if (ftable != InvalidOid) {
-            PyObject *tmp;
-            if (!(tmp = PyInt_FromLong((long)ftable))) { goto err_for; }
-            column->table_oid = tmp;
-        }
-
-        if (ftablecol > 0) {
-            PyObject *tmp;
-            if (!(tmp = PyInt_FromLong((long)ftablecol))) { goto err_for; }
-            column->table_column = tmp;
-        }
-
         PyTuple_SET_ITEM(description, i, (PyObject *)column);
-        column = NULL;
 
-        continue;
-
-err_for:
-        Py_XDECREF(type);
-        Py_XDECREF(column);
-        goto exit;
+        if (!(cast = _get_cast(curs, curs->pgres, i))) {
+            goto exit;
+        }
+        PyTuple_SET_ITEM(casts, i, cast);
     }
 
-    curs->description = description; description = NULL;
-    curs->casts = casts; casts = NULL;
+    curs->description = description;
+    description = NULL;
+
+    curs->casts = casts;
+    casts = NULL;
+
     rv = 0;
 
 exit:
-    PyMem_Free(dsize);
     Py_XDECREF(description);
     Py_XDECREF(casts);
 
@@ -1416,6 +1423,7 @@ exit:
 
     return rv;
 }
+
 
 void
 _read_rowcount(cursorObject *curs)
