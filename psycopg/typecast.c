@@ -278,6 +278,7 @@ typecast_init(PyObject *dict)
 
         /* export binary object */
         if (typecast_builtins[i].values == typecast_BINARY_types) {
+            Py_INCREF((PyObject *)t);
             psyco_default_binary_cast = (PyObject *)t;
         }
         Py_DECREF((PyObject *)t);
