@@ -186,6 +186,7 @@ typecast_array_scan(const char *str, Py_ssize_t strlength,
                 state, length, token);
         if (state == ASCAN_TOKEN || state == ASCAN_QUOTED) {
             PyObject *obj;
+            int result;
             if (!quotes && length == 4
                 && (token[0] == 'n' || token[0] == 'N')
                 && (token[1] == 'u' || token[1] == 'U')
@@ -201,17 +202,19 @@ typecast_array_scan(const char *str, Py_ssize_t strlength,
             if (state == ASCAN_QUOTED) PyMem_Free(token);
             if (obj == NULL) return -1;
 
-            PyList_Append(array, obj);
-            TO_STATE(obj);
+            result = PyList_Append(array, obj);
             Py_CLEAR(obj);
+            if (result < 0) { return -1; }
         }
 
         else if (state == ASCAN_BEGIN) {
-            PyObject *sub = PyList_New(0);
-            if (sub == NULL) return -1;
+            PyObject *sub;
+            int result;
+            if (!(sub = PyList_New(0))) { return -1; }
 
-            PyList_Append(array, sub);
-            Py_DECREF(sub);
+            result = PyList_Append(array, sub);
+            Py_DECREF(sub);     /* still kept alive by array, if succeeded */
+            if (result < 0) { return -1; }
 
             if (stack_index == MAX_DIMENSIONS) {
                 PyErr_SetString(DataError, "excessive array dimensions");
