@@ -246,7 +246,7 @@ pq_resolve_critical(connectionObject *conn, int close)
         PyErr_SetString(OperationalError, msg);
 
         /* we don't want to destroy this connection but just close it */
-        if (close == 1) conn_close(conn);
+        if (close) conn_close(conn);
 
         /* remember to clear the critical! */
         pq_clear_critical(conn);
@@ -1832,7 +1832,7 @@ exit:
     return ret;
 }
 
-int
+RAISES_NEG int
 pq_fetch(cursorObject *curs, int no_result)
 {
     int pgstatus, ex = -1;
@@ -1863,8 +1863,7 @@ pq_fetch(cursorObject *curs, int no_result)
     Py_CLEAR(curs->pgstatus);
     if (!(curs->pgstatus = TO_STATE(conn_text_from_chars(
             curs->conn, PQcmdStatus(curs->pgres))))) {
-        ex = -1;
-        return ex;
+        return -1;
     }
 
     switch(pgstatus) {
@@ -1910,7 +1909,7 @@ pq_fetch(cursorObject *curs, int no_result)
         if (!no_result) {
             Dprintf("pq_fetch: got tuples");
             curs->rowcount = PQntuples(curs->pgres);
-            if (0 == _pq_fetch_tuples(curs)) { ex = 0; }
+            ex = _pq_fetch_tuples(curs);
             /* don't clear curs->pgres, because it contains the results! */
         }
         else {
@@ -1956,7 +1955,7 @@ pq_fetch(cursorObject *curs, int no_result)
        raise the exception but we avoid to close the connection) */
     Dprintf("pq_fetch: fetching done; check for critical errors");
     if (curs->conn->critical) {
-        return pq_resolve_critical(curs->conn, ex == -1 ? 1 : 0);
+        ex = pq_resolve_critical(curs->conn, ex < 0);
     }
 
     return ex;

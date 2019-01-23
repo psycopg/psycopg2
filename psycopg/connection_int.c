@@ -1107,7 +1107,7 @@ conn_poll(connectionObject *self)
             /* fetch the tuples (if there are any) and build the result. We
              * don't care if pq_fetch return 0 or 1, but if there was an error,
              * we want to signal it to the caller. */
-            if (pq_fetch(curs, 0) == -1) {
+            if (0 > pq_fetch(curs, 0)) {
                res = PSYCO_POLL_ERROR;
             }
 
