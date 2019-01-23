@@ -286,7 +286,7 @@ static PyObject *
 interval_from_usecs(const char *str)
 {
     PyObject *us = NULL;
-    char *pend;
+    char *pend = NULL;
     PyObject *rv = NULL;
 
     Dprintf("interval_from_usecs: %s", str);
@@ -296,7 +296,7 @@ interval_from_usecs(const char *str)
         goto exit;
     }
 
-    if (*pend != '\0') {
+    if (pend && *pend != '\0') {
         /* there are trailing chars, it's not just micros. Barf. */
         Dprintf("interval_from_usecs: spurious chars %s", pend);
         PyErr_Format(PyExc_ValueError,
