@@ -216,10 +216,12 @@ introspection etc.
 
     .. attribute:: display_size
 
-        The actual length of the column in bytes.  Obtaining this value is
-        computationally intensive, so it is always `!None` unless the
-        :envvar:`PSYCOPG_DISPLAY_SIZE` parameter is set at compile time. See
-        also PQgetlength_.
+        Supposed to be the actual length of the column in bytes.  Obtaining
+        this value is computationally intensive, so it is always `!None`.
+
+        .. versionchanged:: 2.8
+            It was previously possible to obtain this value using a compiler
+            flag at builtin.
 
     .. attribute:: internal_size
 

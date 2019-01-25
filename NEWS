@@ -38,6 +38,7 @@ Other changes:
 - Dropped deprecated `!register_tstz_w_secs()` (was previously a no-op).
 - Dropped deprecated `!PersistentConnectionPool`. This pool class was mostly
   designed to interact with Zope. Use `!ZPsycopgDA.pool` instead.
+- Dropped `!PSYCOPG_DISPLAY_SIZE` build parameter.
 - No longer use 2to3 during installation for Python 2 & 3 compatability. All
   source files are now compatible with Python 2 & 3 as is.
 - The `!psycopg2.test` package is no longer installed by ``python setup.py

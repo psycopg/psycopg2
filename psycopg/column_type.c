@@ -46,8 +46,7 @@ static const char type_code_doc[] =
 
 static const char display_size_doc[] =
     "The actual length of the column in bytes.\n\n"
-    "Obtaining this value is computationally intensive, so it is always None\n"
-    "unless the PSYCOPG_DISPLAY_SIZE parameter is set at compile time.";
+    "Obtaining this value is computationally intensive, so it is always None";
 
 static const char internal_size_doc[] =
     "The size in bytes of the column associated to this column on the server.\n\n"
