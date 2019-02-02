@@ -35,9 +35,10 @@ import logging as _logging
 
 import psycopg2
 from psycopg2 import extensions as _ext
-from psycopg2.extensions import cursor as _cursor
-from psycopg2.extensions import connection as _connection
-from psycopg2.extensions import adapt as _A, quote_ident
+from .extensions import cursor as _cursor
+from .extensions import connection as _connection
+from .extensions import adapt as _A, quote_ident
+from .compat import lru_cache
 
 from psycopg2._psycopg import (                             # noqa
     REPLICATION_PHYSICAL, REPLICATION_LOGICAL,
@@ -386,27 +387,26 @@ class NamedTupleCursor(_cursor):
     _re_clean = _re.compile(
         '[' + _re.escape(' !"#$%&\'()*+,-./:;<=>?@[\\]^`{|}~') + ']')
 
-    _nt_cache = OrderedDict()
-
     def _make_nt(self):
-        key = tuple(d[0] for d in (self.description or ()))
-        nt = self._nt_cache.get(key)
-        if nt is not None:
-            return nt
+        key = tuple(d[0] for d in self.description) if self.description else ()
+        return self._cached_make_nt(key)
 
+    def _do_make_nt(self, key):
         fields = []
         for s in key:
             s = self._re_clean.sub('_', s)
+            # Python identifier cannot start with numbers, namedtuple fields
+            # cannot start with underscore. So...
             if s[0] == '_' or '0' <= s[0] <= '9':
                 s = 'f' + s
             fields.append(s)
 
         nt = namedtuple("Record", fields)
-        self._nt_cache[key] = nt
-        while len(self._nt_cache) > self.MAX_CACHE:
-            self._nt_cache.popitem(last=False)
-
         return nt
+
+    # Exposed for testability, and if someone wants to monkeypatch to tweak
+    # the cache size.
+    _cached_make_nt = lru_cache(512)(_do_make_nt)
 
 
 class LoggingConnection(_connection):

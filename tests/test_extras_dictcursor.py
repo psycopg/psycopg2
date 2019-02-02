@@ -592,27 +592,30 @@ class NamedTupleCursorTest(ConnectingTestCase):
 
     def test_max_cache(self):
         from psycopg2.extras import NamedTupleCursor
-        old_max_cache = NamedTupleCursor.MAX_CACHE
-        NamedTupleCursor.MAX_CACHE = 10
+        from psycopg2.compat import lru_cache
+
+        old_func = NamedTupleCursor._cached_make_nt
+        NamedTupleCursor._cached_make_nt = \
+            lru_cache(8)(NamedTupleCursor._do_make_nt)
         try:
-            NamedTupleCursor._nt_cache.clear()
+            recs = []
             curs = self.conn.cursor()
             for i in range(10):
                 curs.execute("select 1 as f%s" % i)
-                curs.fetchone()
+                recs.append(curs.fetchone())
 
-            self.assertEqual(len(NamedTupleCursor._nt_cache), 10)
-            for i in range(10):
-                self.assert_(('f%s' % i,) in NamedTupleCursor._nt_cache)
+            # Still in cache
+            curs.execute("select 1 as f9")
+            rec = curs.fetchone()
+            self.assert_(any(type(r) is type(rec) for r in recs))
 
-            curs.execute("select 1 as f10")
-            curs.fetchone()
-            self.assertEqual(len(NamedTupleCursor._nt_cache), 10)
-            self.assert_(('f10',) in NamedTupleCursor._nt_cache)
-            self.assert_(('f0',) not in NamedTupleCursor._nt_cache)
+            # Gone from cache
+            curs.execute("select 1 as f0")
+            rec = curs.fetchone()
+            self.assert_(all(type(r) is not type(rec) for r in recs))
 
         finally:
-            NamedTupleCursor.MAX_CACHE = old_max_cache
+            NamedTupleCursor._cached_make_nt = old_func
 
 
 def test_suite():
