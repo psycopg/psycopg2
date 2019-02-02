@@ -30,6 +30,7 @@ New features:
   maintain columns order (:ticket:`#177`).
 - Added `~psycopg2.extensions.Diagnostics.severity_nonlocalized` attribute on
   the `~psycopg2.extensions.Diagnostics` object (:ticket:`#783`).
+- More efficient `~psycopg2.extras.NamedTupleCursor` (:ticket:`#838`).
 
 Other changes:
 

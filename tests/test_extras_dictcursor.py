@@ -578,6 +578,42 @@ class NamedTupleCursorTest(ConnectingTestCase):
         for i, t in enumerate(curs):
             self.assertEqual(i + 1, curs.rownumber)
 
+    def test_cache(self):
+        curs = self.conn.cursor()
+        curs.execute("select 10 as a, 20 as b")
+        r1 = curs.fetchone()
+        curs.execute("select 10 as a, 20 as c")
+        r2 = curs.fetchone()
+        curs.execute("select 10 as a, 30 as b")
+        r3 = curs.fetchone()
+
+        self.assert_(type(r1) is type(r3))
+        self.assert_(type(r1) is not type(r2))
+
+    def test_max_cache(self):
+        from psycopg2.extras import NamedTupleCursor
+        old_max_cache = NamedTupleCursor.MAX_CACHE
+        NamedTupleCursor.MAX_CACHE = 10
+        try:
+            NamedTupleCursor._nt_cache.clear()
+            curs = self.conn.cursor()
+            for i in range(10):
+                curs.execute("select 1 as f%s" % i)
+                curs.fetchone()
+
+            self.assertEqual(len(NamedTupleCursor._nt_cache), 10)
+            for i in range(10):
+                self.assert_(('f%s' % i,) in NamedTupleCursor._nt_cache)
+
+            curs.execute("select 1 as f10")
+            curs.fetchone()
+            self.assertEqual(len(NamedTupleCursor._nt_cache), 10)
+            self.assert_(('f10',) in NamedTupleCursor._nt_cache)
+            self.assert_(('f0',) not in NamedTupleCursor._nt_cache)
+
+        finally:
+            NamedTupleCursor.MAX_CACHE = old_max_cache
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

@@ -330,6 +330,7 @@ class NamedTupleCursor(_cursor):
         "abc'def"
     """
     Record = None
+    MAX_CACHE = 1024
 
     def execute(self, query, vars=None):
         self.Record = None
@@ -381,21 +382,31 @@ class NamedTupleCursor(_cursor):
         except StopIteration:
             return
 
-    def _make_nt(self):
-        # ascii except alnum and underscore
-        nochars = ' !"#$%&\'()*+,-./:;<=>?@[\\]^`{|}~'
-        re_clean = _re.compile('[' + _re.escape(nochars) + ']')
+    # ascii except alnum and underscore
+    _re_clean = _re.compile(
+        '[' + _re.escape(' !"#$%&\'()*+,-./:;<=>?@[\\]^`{|}~') + ']')
 
-        def f(s):
-            s = re_clean.sub('_', s)
-            # Python identifier cannot start with numbers, namedtuple fields
-            # cannot start with underscore. So...
+    _nt_cache = OrderedDict()
+
+    def _make_nt(self):
+        key = tuple(d[0] for d in (self.description or ()))
+        nt = self._nt_cache.get(key)
+        if nt is not None:
+            return nt
+
+        fields = []
+        for s in key:
+            s = self._re_clean.sub('_', s)
             if s[0] == '_' or '0' <= s[0] <= '9':
                 s = 'f' + s
+            fields.append(s)
 
-            return s
+        nt = namedtuple("Record", fields)
+        self._nt_cache[key] = nt
+        while len(self._nt_cache) > self.MAX_CACHE:
+            self._nt_cache.popitem(last=False)
 
-        return namedtuple("Record", [f(d[0]) for d in self.description or ()])
+        return nt
 
 
 class LoggingConnection(_connection):
