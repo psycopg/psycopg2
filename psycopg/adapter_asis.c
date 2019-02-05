@@ -34,6 +34,9 @@
 
 /** the AsIs object **/
 
+#if PY_MAJOR_VERSION > 2
+IGNORE_REFCOUNT     /* bug davidmalcolm/gcc-python-plugin#171 */
+#endif
 static PyObject *
 asis_getquoted(asisObject *self, PyObject *args)
 {
