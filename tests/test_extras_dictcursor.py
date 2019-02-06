@@ -578,6 +578,45 @@ class NamedTupleCursorTest(ConnectingTestCase):
         for i, t in enumerate(curs):
             self.assertEqual(i + 1, curs.rownumber)
 
+    def test_cache(self):
+        curs = self.conn.cursor()
+        curs.execute("select 10 as a, 20 as b")
+        r1 = curs.fetchone()
+        curs.execute("select 10 as a, 20 as c")
+        r2 = curs.fetchone()
+        curs.execute("select 10 as a, 30 as b")
+        r3 = curs.fetchone()
+
+        self.assert_(type(r1) is type(r3))
+        self.assert_(type(r1) is not type(r2))
+
+    def test_max_cache(self):
+        from psycopg2.extras import NamedTupleCursor
+        from psycopg2.compat import lru_cache
+
+        old_func = NamedTupleCursor._cached_make_nt
+        NamedTupleCursor._cached_make_nt = \
+            lru_cache(8)(NamedTupleCursor._do_make_nt)
+        try:
+            recs = []
+            curs = self.conn.cursor()
+            for i in range(10):
+                curs.execute("select 1 as f%s" % i)
+                recs.append(curs.fetchone())
+
+            # Still in cache
+            curs.execute("select 1 as f9")
+            rec = curs.fetchone()
+            self.assert_(any(type(r) is type(rec) for r in recs))
+
+            # Gone from cache
+            curs.execute("select 1 as f0")
+            rec = curs.fetchone()
+            self.assert_(all(type(r) is not type(rec) for r in recs))
+
+        finally:
+            NamedTupleCursor._cached_make_nt = old_func
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

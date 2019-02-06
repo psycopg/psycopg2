@@ -35,9 +35,10 @@ import logging as _logging
 
 import psycopg2
 from psycopg2 import extensions as _ext
-from psycopg2.extensions import cursor as _cursor
-from psycopg2.extensions import connection as _connection
-from psycopg2.extensions import adapt as _A, quote_ident
+from .extensions import cursor as _cursor
+from .extensions import connection as _connection
+from .extensions import adapt as _A, quote_ident
+from .compat import lru_cache
 
 from psycopg2._psycopg import (                             # noqa
     REPLICATION_PHYSICAL, REPLICATION_LOGICAL,
@@ -330,6 +331,7 @@ class NamedTupleCursor(_cursor):
         "abc'def"
     """
     Record = None
+    MAX_CACHE = 1024
 
     def execute(self, query, vars=None):
         self.Record = None
@@ -381,21 +383,30 @@ class NamedTupleCursor(_cursor):
         except StopIteration:
             return
 
-    def _make_nt(self):
-        # ascii except alnum and underscore
-        nochars = ' !"#$%&\'()*+,-./:;<=>?@[\\]^`{|}~'
-        re_clean = _re.compile('[' + _re.escape(nochars) + ']')
+    # ascii except alnum and underscore
+    _re_clean = _re.compile(
+        '[' + _re.escape(' !"#$%&\'()*+,-./:;<=>?@[\\]^`{|}~') + ']')
 
-        def f(s):
-            s = re_clean.sub('_', s)
+    def _make_nt(self):
+        key = tuple(d[0] for d in self.description) if self.description else ()
+        return self._cached_make_nt(key)
+
+    def _do_make_nt(self, key):
+        fields = []
+        for s in key:
+            s = self._re_clean.sub('_', s)
             # Python identifier cannot start with numbers, namedtuple fields
             # cannot start with underscore. So...
             if s[0] == '_' or '0' <= s[0] <= '9':
                 s = 'f' + s
+            fields.append(s)
 
-            return s
+        nt = namedtuple("Record", fields)
+        return nt
 
-        return namedtuple("Record", [f(d[0]) for d in self.description or ()])
+    # Exposed for testability, and if someone wants to monkeypatch to tweak
+    # the cache size.
+    _cached_make_nt = lru_cache(512)(_do_make_nt)
 
 
 class LoggingConnection(_connection):
