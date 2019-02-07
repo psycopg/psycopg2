@@ -43,14 +43,14 @@ class ErrorsTests(ConnectingTestCase):
     def test_exception_class_fallback(self):
         cur = self.conn.cursor()
 
-        from psycopg2 import errors
-        x = errors._by_sqlstate.pop('42P01')
+        from psycopg2._psycopg import sqlstate_errors
+        x = sqlstate_errors.pop('42P01')
         try:
             cur.execute("select * from nonexist")
         except psycopg2.Error as exc:
             e = exc
         finally:
-            errors._by_sqlstate['42P01'] = x
+            sqlstate_errors['42P01'] = x
 
         self.assertEqual(type(e), self.conn.ProgrammingError)
 
@@ -61,6 +61,25 @@ class ErrorsTests(ConnectingTestCase):
 
         with self.assertRaises(KeyError):
             errors.lookup('XXXXX')
+
+    def test_has_base_exceptions(self):
+        import psycopg2
+        from psycopg2 import errors
+
+        excs = []
+        for n in dir(psycopg2):
+            obj = getattr(psycopg2, n)
+            if isinstance(obj, type) and issubclass(obj, StandardError):
+                excs.append(obj)
+
+        self.assert_(len(excs) > 8, str(excs))
+
+        excs.append(psycopg2.extensions.QueryCanceledError)
+        excs.append(psycopg2.extensions.TransactionRollbackError)
+
+        for exc in excs:
+            self.assert_(hasattr(errors, exc.__name__))
+            self.assert_(getattr(errors, exc.__name__) is exc)
 
 
 def test_suite():

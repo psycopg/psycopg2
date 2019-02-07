@@ -53,6 +53,9 @@ extern HIDDEN PyObject *Error, *Warning, *InterfaceError, *DatabaseError,
     *IntegrityError, *DataError, *NotSupportedError;
 extern HIDDEN PyObject *QueryCanceledError, *TransactionRollbackError;
 
+/* sqlstate -> exception map */
+extern HIDDEN PyObject *sqlstate_errors;
+
 /* postgresql<->python encoding map */
 extern HIDDEN PyObject *psycoEncodings;
 

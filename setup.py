@@ -515,7 +515,7 @@ depends = [
     'adapter_list.h', 'adapter_pboolean.h', 'adapter_pdecimal.h',
     'adapter_pint.h', 'adapter_pfloat.h', 'adapter_qstring.h',
     'microprotocols.h', 'microprotocols_proto.h',
-    'typecast.h', 'typecast_binary.h',
+    'typecast.h', 'typecast_binary.h', 'sqlstate_errors.h',
 
     # included sources
     'typecast_array.c', 'typecast_basic.c', 'typecast_binary.c',
