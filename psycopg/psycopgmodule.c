@@ -711,7 +711,8 @@ basic_errors_init(PyObject *module)
     }
 
     if (!(errmodule = PyImport_ImportModule("psycopg2.errors"))) {
-        goto exit;
+        /* don't inject the exceptions into the errors module */
+        PyErr_Clear();
     }
 
     for (i = 0; exctable[i].name; i++) {
@@ -727,10 +728,12 @@ basic_errors_init(PyObject *module)
             Py_DECREF(*exctable[i].exc);
             goto exit;
         }
-        Py_INCREF(*exctable[i].exc);
-        if (0 > PyModule_AddObject(errmodule, name, *exctable[i].exc)) {
-            Py_DECREF(*exctable[i].exc);
-            goto exit;
+        if (errmodule) {
+            Py_INCREF(*exctable[i].exc);
+            if (0 > PyModule_AddObject(errmodule, name, *exctable[i].exc)) {
+                Py_DECREF(*exctable[i].exc);
+                goto exit;
+            }
         }
     }
 
@@ -774,7 +777,8 @@ sqlstate_errors_init(PyObject *module)
         goto exit;
     }
     if (!(errmodule = PyImport_ImportModule("psycopg2.errors"))) {
-        goto exit;
+        /* don't inject the exceptions into the errors module */
+        PyErr_Clear();
     }
     if (!(sqlstate_errors = PyDict_New())) {
         goto exit;
@@ -808,10 +812,20 @@ sqlstate_errors_init(PyObject *module)
                 sqlstate_errors, sqlstate_table[i].sqlstate, exc)) {
             goto exit;
         }
-        if (0 > PyModule_AddObject(errmodule, sqlstate_table[i].name, exc)) {
-            goto exit;
+
+        /* Expose the exceptions to psycopg2.errors */
+        if (errmodule) {
+            if (0 > PyModule_AddObject(
+                    errmodule, sqlstate_table[i].name, exc)) {
+                goto exit;
+            }
+            else {
+                exc = NULL;     /* ref stolen by the module */
+            }
         }
-        exc = NULL;     /* ref stolen by the module */
+        else {
+            Py_CLEAR(exc);
+        }
     }
 
     rv = 0;
