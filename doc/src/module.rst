@@ -137,14 +137,15 @@ available through the following exceptions:
 .. exception:: Warning
 
     Exception raised for important warnings like data truncations while
-    inserting, etc. It is a subclass of the Python `~exceptions.StandardError`.
+    inserting, etc. It is a subclass of the Python `StandardError`
+    (`Exception` on Python 3).
 
 .. exception:: Error
 
     Exception that is the base class of all other error exceptions. You can
     use this to catch all errors with one single `!except` statement. Warnings
     are not considered errors and thus not use this class as base. It
-    is a subclass of the Python `!StandardError`.
+    is a subclass of the Python `StandardError` (`Exception` on Python 3).
 
     .. attribute:: pgerror
 

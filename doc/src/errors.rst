@@ -10,8 +10,9 @@
 
 .. versionadded:: 2.8
 
-This module contains the classes psycopg raises upon receiving an error from
-the database with a :sql:`SQLSTATE` value attached. The module is generated
+This module exposes the classes psycopg raises upon receiving an error from
+the database with a :sql:`SQLSTATE` value attached (available in the
+`~psycopg2.Error.pgcode` attribute). The content of the module is generated
 from the PostgreSQL source code and includes classes for every error defined
 by PostgreSQL in versions between 9.1 and 11.
 
@@ -53,8 +54,16 @@ idiomatic error handler:
     except psycopg2.errors.LockNotAvailable:
         locked = True
 
-For completeness, the module also exposes all the DB-API-defined classes and
-:ref:`a few psycopg-specific exceptions <extension-exceptions>` previously
-exposed by the `!extensions` module.  One stop shop for all your mistakes...
+For completeness, the module also exposes all the :ref:`DB-API-defined
+exceptions <dbapi-exceptions>` and :ref:`a few psycopg-specific ones
+<extension-exceptions>` exposed by the `!extensions` module.  One stop shop
+for all your mistakes...
 
 .. autofunction:: lookup
+
+    .. code-block:: python
+
+        try:
+            cur.execute("LOCK TABLE mytable IN ACCESS EXCLUSIVE MODE NOWAIT")
+        except psycopg2.errors.lookup("55P03"):
+            locked = True
