@@ -69,7 +69,7 @@ class ErrorsTests(ConnectingTestCase):
         excs = []
         for n in dir(psycopg2):
             obj = getattr(psycopg2, n)
-            if isinstance(obj, type) and issubclass(obj, StandardError):
+            if isinstance(obj, type) and issubclass(obj, Exception):
                 excs.append(obj)
 
         self.assert_(len(excs) > 8, str(excs))
