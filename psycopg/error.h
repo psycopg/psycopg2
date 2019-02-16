@@ -39,5 +39,7 @@ typedef struct {
 } errorObject;
 
 HIDDEN PyObject *error_text_from_chars(errorObject *self, const char *str);
+HIDDEN BORROWED PyObject *exception_from_sqlstate(const char *sqlstate);
+HIDDEN BORROWED PyObject *base_exception_from_sqlstate(const char *sqlstate);
 
 #endif /* PSYCOPG_ERROR_H */

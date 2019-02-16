@@ -62,6 +62,8 @@
 #include "psycopg/adapter_datetime.h"
 
 HIDDEN PyObject *psycoEncodings = NULL;
+HIDDEN PyObject *sqlstate_errors = NULL;
+
 #ifdef PSYCOPG_DEBUG
 HIDDEN int psycopg_debug_enabled = 0;
 #endif
@@ -671,7 +673,7 @@ static struct {
 
 
 RAISES_NEG static int
-errors_init(PyObject *module)
+basic_errors_init(PyObject *module)
 {
     /* the names of the exceptions here reflect the organization of the
        psycopg2 module and not the fact the the original error objects
@@ -680,6 +682,7 @@ errors_init(PyObject *module)
     int i;
     PyObject *dict = NULL;
     PyObject *str = NULL;
+    PyObject *errmodule = NULL;
     int rv = -1;
 
     Dprintf("psycopgmodule: initializing basic exceptions");
@@ -707,6 +710,11 @@ errors_init(PyObject *module)
         Py_CLEAR(dict);
     }
 
+    if (!(errmodule = PyImport_ImportModule("psycopg2.errors"))) {
+        /* don't inject the exceptions into the errors module */
+        PyErr_Clear();
+    }
+
     for (i = 0; exctable[i].name; i++) {
         char *name;
         if (NULL == exctable[i].exc) { continue; }
@@ -720,13 +728,111 @@ errors_init(PyObject *module)
             Py_DECREF(*exctable[i].exc);
             goto exit;
         }
+        if (errmodule) {
+            Py_INCREF(*exctable[i].exc);
+            if (0 > PyModule_AddObject(errmodule, name, *exctable[i].exc)) {
+                Py_DECREF(*exctable[i].exc);
+                goto exit;
+            }
+        }
     }
 
     rv = 0;
 
 exit:
+    Py_XDECREF(errmodule);
     Py_XDECREF(str);
     Py_XDECREF(dict);
+    return rv;
+}
+
+
+/* mapping between sqlstate and exception name */
+static struct {
+    char *sqlstate;
+    char *name;
+} sqlstate_table[] = {
+#include "sqlstate_errors.h"
+    {NULL}  /* Sentinel */
+};
+
+
+RAISES_NEG static int
+sqlstate_errors_init(PyObject *module)
+{
+    int i;
+    char namebuf[120];
+    char prefix[] = "psycopg2.errors.";
+    char *suffix;
+    size_t bufsize;
+    PyObject *exc = NULL;
+    PyObject *errmodule = NULL;
+    int rv = -1;
+
+    Dprintf("psycopgmodule: initializing sqlstate exceptions");
+
+    if (sqlstate_errors) {
+        PyErr_SetString(PyExc_SystemError,
+            "sqlstate_errors_init(): already called");
+        goto exit;
+    }
+    if (!(errmodule = PyImport_ImportModule("psycopg2.errors"))) {
+        /* don't inject the exceptions into the errors module */
+        PyErr_Clear();
+    }
+    if (!(sqlstate_errors = PyDict_New())) {
+        goto exit;
+    }
+    Py_INCREF(sqlstate_errors);
+    if (0 > PyModule_AddObject(module, "sqlstate_errors", sqlstate_errors)) {
+        Py_DECREF(sqlstate_errors);
+        return -1;
+    }
+
+    strcpy(namebuf, prefix);
+    suffix = namebuf + sizeof(prefix) - 1;
+    bufsize = sizeof(namebuf) - sizeof(prefix) - 1;
+    /* If this 0 gets deleted the buffer was too small. */
+    namebuf[sizeof(namebuf) - 1] = '\0';
+
+    for (i = 0; sqlstate_table[i].sqlstate; i++) {
+        PyObject *base;
+
+        base = base_exception_from_sqlstate(sqlstate_table[i].sqlstate);
+        strncpy(suffix, sqlstate_table[i].name, bufsize);
+        if (namebuf[sizeof(namebuf) - 1] != '\0') {
+            PyErr_SetString(
+                PyExc_SystemError, "sqlstate_errors_init(): buffer too small");
+            goto exit;
+        }
+        if (!(exc = PyErr_NewException(namebuf, base, NULL))) {
+            goto exit;
+        }
+        if (0 > PyDict_SetItemString(
+                sqlstate_errors, sqlstate_table[i].sqlstate, exc)) {
+            goto exit;
+        }
+
+        /* Expose the exceptions to psycopg2.errors */
+        if (errmodule) {
+            if (0 > PyModule_AddObject(
+                    errmodule, sqlstate_table[i].name, exc)) {
+                goto exit;
+            }
+            else {
+                exc = NULL;     /* ref stolen by the module */
+            }
+        }
+        else {
+            Py_CLEAR(exc);
+        }
+    }
+
+    rv = 0;
+
+exit:
+    Py_XDECREF(errmodule);
+    Py_XDECREF(exc);
     return rv;
 }
 
@@ -1012,7 +1118,8 @@ INIT_MODULE(_psycopg)(void)
     if (0 > encodings_init(module)) { goto exit; }
     if (0 > typecast_init(module)) { goto exit; }
     if (0 > adapters_init(module)) { goto exit; }
-    if (0 > errors_init(module)) { goto exit; }
+    if (0 > basic_errors_init(module)) { goto exit; }
+    if (0 > sqlstate_errors_init(module)) { goto exit; }
 
     Dprintf("psycopgmodule: module initialization complete");
 

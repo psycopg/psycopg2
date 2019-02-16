@@ -38,6 +38,104 @@ error_text_from_chars(errorObject *self, const char *str)
 }
 
 
+/* Return the Python exception corresponding to an SQLSTATE error
+ * code.  A list of error codes can be found at:
+ * https://www.postgresql.org/docs/current/static/errcodes-appendix.html
+ */
+BORROWED PyObject *
+exception_from_sqlstate(const char *sqlstate)
+{
+    PyObject *exc;
+
+    /* First look up an exception of the proper class */
+    exc = PyDict_GetItemString(sqlstate_errors, sqlstate);
+    if (exc) {
+        return exc;
+    }
+    else {
+        PyErr_Clear();
+        return base_exception_from_sqlstate(sqlstate);
+    }
+}
+
+BORROWED PyObject *
+base_exception_from_sqlstate(const char *sqlstate)
+{
+    switch (sqlstate[0]) {
+    case '0':
+        switch (sqlstate[1]) {
+        case 'A': /* Class 0A - Feature Not Supported */
+            return NotSupportedError;
+        }
+        break;
+    case '2':
+        switch (sqlstate[1]) {
+        case '0': /* Class 20 - Case Not Found */
+        case '1': /* Class 21 - Cardinality Violation */
+            return ProgrammingError;
+        case '2': /* Class 22 - Data Exception */
+            return DataError;
+        case '3': /* Class 23 - Integrity Constraint Violation */
+            return IntegrityError;
+        case '4': /* Class 24 - Invalid Cursor State */
+        case '5': /* Class 25 - Invalid Transaction State */
+            return InternalError;
+        case '6': /* Class 26 - Invalid SQL Statement Name */
+        case '7': /* Class 27 - Triggered Data Change Violation */
+        case '8': /* Class 28 - Invalid Authorization Specification */
+            return OperationalError;
+        case 'B': /* Class 2B - Dependent Privilege Descriptors Still Exist */
+        case 'D': /* Class 2D - Invalid Transaction Termination */
+        case 'F': /* Class 2F - SQL Routine Exception */
+            return InternalError;
+        }
+        break;
+    case '3':
+        switch (sqlstate[1]) {
+        case '4': /* Class 34 - Invalid Cursor Name */
+            return OperationalError;
+        case '8': /* Class 38 - External Routine Exception */
+        case '9': /* Class 39 - External Routine Invocation Exception */
+        case 'B': /* Class 3B - Savepoint Exception */
+            return InternalError;
+        case 'D': /* Class 3D - Invalid Catalog Name */
+        case 'F': /* Class 3F - Invalid Schema Name */
+            return ProgrammingError;
+        }
+        break;
+    case '4':
+        switch (sqlstate[1]) {
+        case '0': /* Class 40 - Transaction Rollback */
+            return TransactionRollbackError;
+        case '2': /* Class 42 - Syntax Error or Access Rule Violation */
+        case '4': /* Class 44 - WITH CHECK OPTION Violation */
+            return ProgrammingError;
+        }
+        break;
+    case '5':
+        /* Class 53 - Insufficient Resources
+           Class 54 - Program Limit Exceeded
+           Class 55 - Object Not In Prerequisite State
+           Class 57 - Operator Intervention
+           Class 58 - System Error (errors external to PostgreSQL itself) */
+        if (!strcmp(sqlstate, "57014"))
+            return QueryCanceledError;
+        else
+            return OperationalError;
+    case 'F': /* Class F0 - Configuration File Error */
+        return InternalError;
+    case 'H': /* Class HV - Foreign Data Wrapper Error (SQL/MED) */
+        return OperationalError;
+    case 'P': /* Class P0 - PL/pgSQL Error */
+        return InternalError;
+    case 'X': /* Class XX - Internal Error */
+        return InternalError;
+    }
+    /* return DatabaseError as a fallback */
+    return DatabaseError;
+}
+
+
 static const char pgerror_doc[] =
     "The error message returned by the backend, if available, else None";
 
