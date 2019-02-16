@@ -23,6 +23,7 @@
 # License for more details.
 
 import time
+import ctypes
 import pickle
 import psycopg2
 import psycopg2.extensions
@@ -649,6 +650,23 @@ class CursorTests(ConnectingTestCase):
             "insert into execmany (data) values (%s) returning data",
             [(i,) for i in range(5)])
         self.assertEqual(cur.rowcount, 5)
+
+    @skip_before_postgres(9)
+    def test_pgresult_ptr(self):
+        curs = self.conn.cursor()
+        self.assert_(curs.pgresult_ptr is None)
+
+        f = self.libpq.PQcmdStatus
+        f.argtypes = [ctypes.c_void_p]
+        f.restype = ctypes.c_char_p
+
+        curs.execute("select 'x'")
+        self.assert_(curs.pgresult_ptr is not None)
+        status = f(curs.pgresult_ptr)
+        self.assertEqual(status, b'SELECT 1')
+
+        curs.close()
+        self.assert_(curs.pgresult_ptr is None)
 
 
 def test_suite():

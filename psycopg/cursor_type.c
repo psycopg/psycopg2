@@ -107,6 +107,8 @@ psyco_curs_close(cursorObject *self, PyObject *dummy)
     }
 
 close:
+    CLEARPGRES(self->pgres);
+
     self->closed = 1;
     Dprintf("psyco_curs_close: cursor at %p closed", self);
 
@@ -1716,6 +1718,21 @@ psyco_curs_scrollable_set(cursorObject *self, PyObject *pyvalue)
 }
 
 
+#define psyco_curs_pgresult_ptr_doc \
+"pgresult_ptr -- Get the PGresult structure pointer."
+
+static PyObject *
+psyco_curs_pgresult_ptr_get(cursorObject *self)
+{
+    if (self->pgres) {
+        return PyLong_FromVoidPtr((void *)self->pgres);
+    }
+    else {
+        Py_RETURN_NONE;
+    }
+}
+
+
 /** the cursor object **/
 
 /* iterator protocol */
@@ -1842,6 +1859,9 @@ static struct PyGetSetDef cursorObject_getsets[] = {
       (getter)psyco_curs_scrollable_get,
       (setter)psyco_curs_scrollable_set,
       psyco_curs_scrollable_doc, NULL },
+    { "pgresult_ptr",
+      (getter)psyco_curs_pgresult_ptr_get, NULL,
+      psyco_curs_pgresult_ptr_doc, NULL },
     {NULL}
 };
 

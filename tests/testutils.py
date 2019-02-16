@@ -26,10 +26,12 @@ import re
 import os
 import sys
 import types
+import ctypes
 import select
 import platform
 import unittest
 from functools import wraps
+from ctypes.util import find_library
 from .testconfig import dsn, repl_dsn
 from psycopg2.compat import text_type
 
@@ -173,6 +175,21 @@ class ConnectingTestCase(unittest.TestCase):
                 select.select([], [pollable], [], 10)
             else:
                 raise Exception("Unexpected result from poll: %r", state)
+
+    _libpq = None
+
+    @property
+    def libpq(self):
+        """Return a ctypes wrapper for the libpq library"""
+        if ConnectingTestCase._libpq is not None:
+            return ConnectingTestCase._libpq
+
+        libname = find_library('pq')
+        if libname is None and platform.system() == 'Windows':
+            raise self.skipTest("can't import libpq on windows")
+
+        rv = ConnectingTestCase._libpq = ctypes.pydll.LoadLibrary(libname)
+        return rv
 
 
 def decorate_all_tests(obj, *decorators):

@@ -26,6 +26,7 @@ import re
 import os
 import sys
 import time
+import ctypes
 import threading
 import subprocess as sp
 from operator import attrgetter
@@ -345,6 +346,20 @@ class ConnectionTests(ConnectingTestCase):
         capsule = conn.get_native_connection()
         # we can't do anything else in Python
         self.assertIsNotNone(capsule)
+
+    def test_pgconn_ptr(self):
+        conn = self.connect()
+        self.assert_(conn.pgconn_ptr is not None)
+
+        f = self.libpq.PQserverVersion
+        f.argtypes = [ctypes.c_void_p]
+        f.restype = ctypes.c_int
+        ver = f(conn.pgconn_ptr)
+        self.assertEqual(ver, conn.server_version)
+
+        conn.close()
+        self.assert_(conn.pgconn_ptr is None)
+
 
 class ParseDsnTestCase(ConnectingTestCase):
     def test_parse_dsn(self):

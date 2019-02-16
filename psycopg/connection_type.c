@@ -1008,7 +1008,7 @@ psyco_conn_get_backend_pid(connectionObject *self, PyObject *dummy)
 
 /* get info about the connection */
 
-#define psyco_conn_info_get_doc \
+#define psyco_conn_info_doc \
 "info -- Get connection info."
 
 static PyObject *
@@ -1016,6 +1016,23 @@ psyco_conn_info_get(connectionObject *self)
 {
     return PyObject_CallFunctionObjArgs(
         (PyObject *)&connInfoType, (PyObject *)self, NULL);
+}
+
+
+/* return the pointer to the PGconn structure */
+
+#define psyco_conn_pgconn_ptr_doc \
+"pgconn_ptr -- Get the PGconn structure pointer."
+
+static PyObject *
+psyco_conn_pgconn_ptr_get(connectionObject *self)
+{
+    if (self->pgconn) {
+        return PyLong_FromVoidPtr((void *)self->pgconn);
+    }
+    else {
+        Py_RETURN_NONE;
+    }
 }
 
 
@@ -1270,7 +1287,10 @@ static struct PyGetSetDef connectionObject_getsets[] = {
         psyco_conn_deferrable_doc },
     { "info",
         (getter)psyco_conn_info_get, NULL,
-        psyco_conn_info_get_doc },
+        psyco_conn_info_doc },
+    { "pgconn_ptr",
+        (getter)psyco_conn_pgconn_ptr_get, NULL,
+        psyco_conn_pgconn_ptr_doc },
     {NULL}
 };
 #undef EXCEPTION_GETTER
