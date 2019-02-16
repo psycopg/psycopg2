@@ -17,7 +17,9 @@ New features:
 - Added `connection.info` object to retrieve various PostgreSQL connection
   information (:ticket:`#726`).
 - Added `~connection.get_native_connection()` to expose the raw ``PGconn``
-  structure (:ticket:`#782`).
+  structure to C extensions via Capsule (:ticket:`#782`).
+- Added `~connection.pgconn_ptr` and `~cursor.pgresult_ptr` to expose raw
+  C structures to Python and interact with libpq via ctypes (:ticket:`#782`).
 - `~psycopg2.sql.Identifier` can represent qualified names in SQL composition
   (:ticket:`#732`).
 - Added *fetch* parameter to `~psycopg2.extras.execute_values()` function

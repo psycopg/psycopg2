@@ -738,11 +738,27 @@ The ``connection`` class
 
         Return `!True` if the connection is executing an asynchronous operation.
 
+
     .. rubric:: Interoperation with other C API modules
+
+    .. attribute:: pgconn_ptr
+
+        Return the internal `!PGconn*` as integer. Useful to pass the libpq
+        raw connection structure to C functions, e.g. via `ctypes`::
+
+            >>> import ctypes
+            >>> libpq = ctypes.pydll.LoadLibrary(ctypes.util.find_library('pq'))
+            >>> libpq.PQserverVersion.argtypes = [ctypes.c_void_p]
+            >>> libpq.PQserverVersion.restype = ctypes.c_int
+            >>> libpq.PQserverVersion(conn.pgconn_ptr)
+            90611
+
+        .. versionadded:: 2.8
+
 
     .. method:: get_native_connection()
 
-        Return the internal `PGconn*` wrapped in a PyCapsule object. This is
+        Return the internal `!PGconn*` wrapped in a PyCapsule object. This is
         only useful for passing the `libpq` raw connection associated to this
         connection object to other C-level modules that may have a use for it.
 

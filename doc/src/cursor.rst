@@ -632,6 +632,24 @@ The ``cursor`` class
             using Unicode data instead of bytes.
 
 
+    .. rubric:: Interoperation with other C API modules
+
+    .. attribute:: pgresult_ptr
+
+        Return the cursor's internal `!PGresult*` as integer. Useful to pass
+        the libpq raw result structure to C functions, e.g. via `ctypes`::
+
+            >>> import ctypes
+            >>> libpq = ctypes.pydll.LoadLibrary(ctypes.util.find_library('pq'))
+            >>> libpq.PQcmdStatus.argtypes = [ctypes.c_void_p]
+            >>> libpq.PQcmdStatus.restype = ctypes.c_char_p
+
+            >>> curs.execute("select 'x'")
+            >>> libpq.PQcmdStatus(curs.pgresult_ptr)
+            b'SELECT 1'
+
+        .. versionadded:: 2.8
+
 .. testcode::
     :hide:
 
