@@ -185,6 +185,9 @@ class ConnectingTestCase(unittest.TestCase):
             return ConnectingTestCase._libpq
 
         libname = find_library('pq')
+        if libname is None and platform.system() == 'Windows':
+            raise self.skipTest("can't import libpq on windows")
+
         rv = ConnectingTestCase._libpq = ctypes.pydll.LoadLibrary(libname)
         return rv
 
