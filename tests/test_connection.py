@@ -1432,6 +1432,7 @@ class TestEncryptPassword(ConnectingTestCase):
                 scope=self.conn, algorithm='md5'),
             'md594839d658c28a357126f105b9cb14cfc')
 
+    @skip_before_libpq(10)
     @skip_before_postgres(10)
     def test_encrypt_server(self):
         cur = self.conn.cursor()
