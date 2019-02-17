@@ -13,15 +13,18 @@ PYTHON_VERSION ?= $(shell $(PYTHON) -c 'import sys; print ("%d.%d" % sys.version
 SPHINXBUILD ?= $$(pwd)/env/bin/sphinx-build
 SPHOPTS = PYTHONPATH=$$(pwd)/../build/lib.$(PYTHON_VERSION)/ SPHINXBUILD=$(SPHINXBUILD)
 
-html:
+html: src/sqlstate_errors.rst
 	$(MAKE) PYTHON=$(PYTHON) -C .. package
 	$(MAKE) $(SPHOPTS) -C src $@
 	cp -r src/_build/html .
 
-text:
+text: src/sqlstate_errors.rst
 	$(MAKE) PYTHON=$(PYTHON) -C .. package
 	$(MAKE) $(SPHOPTS) -C src $@
 	cd src && tools/stitch_text.py index.rst _build/text > ../psycopg2.txt
+
+src/sqlstate_errors.rst: ../psycopg/sqlstate_errors.h
+	PYTHONPATH=`pwd`/../build/lib.$(PYTHON_VERSION) $(PYTHON) src/tools/make_sqlstate_docs.py $< > $@
 
 doctest:
 	$(MAKE) PYTHON=$(PYTHON) -C .. package
@@ -33,7 +36,7 @@ upload:
 
 clean:
 	$(MAKE) $(SPHOPTS) -C src $@
-	rm -rf html psycopg2.txt
+	rm -rf html psycopg2.txt src/sqlstate_errors.rst
 
 env: requirements.txt
 	virtualenv env

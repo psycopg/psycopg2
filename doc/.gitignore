@@ -1,0 +1,5 @@
+env
+src/_build/*
+html/*
+psycopg2.txt
+src/sqlstate_errors.rst

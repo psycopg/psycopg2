@@ -54,10 +54,6 @@ idiomatic error handler:
     except psycopg2.errors.LockNotAvailable:
         locked = True
 
-For completeness, the module also exposes all the :ref:`DB-API-defined
-exceptions <dbapi-exceptions>` and :ref:`a few psycopg-specific ones
-<extension-exceptions>` exposed by the `!extensions` module.  One stop shop
-for all your mistakes...
 
 .. autofunction:: lookup
 
@@ -67,3 +63,17 @@ for all your mistakes...
             cur.execute("LOCK TABLE mytable IN ACCESS EXCLUSIVE MODE NOWAIT")
         except psycopg2.errors.lookup("55P03"):
             locked = True
+
+
+SQLSTATE exception classes
+==========================
+
+The following table contains the list of all the SQLSTATE classes exposed by
+the module.
+
+Note that, for completeness, the module also exposes all the
+:ref:`DB-API-defined exceptions <dbapi-exceptions>` and :ref:`a few
+psycopg-specific ones <extension-exceptions>` exposed by the `!extensions`
+module, which are not listed here.
+
+.. include:: sqlstate_errors.rst

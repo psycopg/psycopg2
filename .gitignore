@@ -7,10 +7,6 @@ MANIFEST
 *.egg-info/
 dist/*
 build/*
-doc/src/_build/*
-doc/html/*
-doc/psycopg2.txt
-scripts/pypi_docs_upload.py
 env
 env?
 .idea
