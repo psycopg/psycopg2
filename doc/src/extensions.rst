@@ -101,7 +101,7 @@ introspection etc.
 
         Set the lobject current position.
 
-        .. versionchanged:: 2.6.0
+        .. versionchanged:: 2.6
             added support for *offset* > 2GB.
 
 
@@ -109,9 +109,9 @@ introspection etc.
 
         Return the lobject current position.
 
-        .. versionadded:: 2.2.0
+        .. versionadded:: 2.2
 
-        .. versionchanged:: 2.6.0
+        .. versionchanged:: 2.6
             added support for return value > 2GB.
 
 
@@ -127,9 +127,9 @@ introspection etc.
         .. |lo_truncate| replace:: `!lo_truncate()`
         .. _lo_truncate: https://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-TRUNCATE
 
-        .. versionadded:: 2.2.0
+        .. versionadded:: 2.2
 
-        .. versionchanged:: 2.6.0
+        .. versionchanged:: 2.6
             added support for *len* > 2GB.
 
     .. warning::
@@ -592,7 +592,7 @@ Coroutines support functions
 These functions are used to set and retrieve the callback function for
 :ref:`cooperation with coroutine libraries <green-support>`.
 
-.. versionadded:: 2.2.0
+.. versionadded:: 2.2
 
 .. autofunction:: set_wait_callback(f)
 
@@ -900,7 +900,7 @@ internal usage and Python code should not rely on them.
 Poll constants
 --------------
 
-.. versionadded:: 2.2.0
+.. versionadded:: 2.2
 
 These values can be returned by `connection.poll()` during asynchronous
 connection and communication.  They match the values in the libpq enum
@@ -1009,7 +1009,7 @@ from the database.  See :ref:`unicode-handling` for details.
     Typecasters to convert time-related data types to `mx.DateTime`_ objects.
     Only available if Psycopg was compiled with `!mx` support.
 
-.. versionchanged:: 2.2.0
+.. versionchanged:: 2.2
         previously the `DECIMAL` typecaster and the specific time-related
         typecasters (`!PY*` and `!MX*`) were not exposed by the `extensions`
         module. In older versions they can be imported from the implementation

@@ -328,7 +328,7 @@ received from a previous version server will have the
 Asynchronous support
 --------------------
 
-.. versionadded:: 2.2.0
+.. versionadded:: 2.2
 
 Psycopg can issue asynchronous queries to a PostgreSQL database. An asynchronous
 communication style is established passing the parameter *async*\=1 to the

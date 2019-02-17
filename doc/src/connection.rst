@@ -610,7 +610,7 @@ The ``connection`` class
         A `~psycopg2.extensions.ConnectionInfo` object exposing information
         about the native libpq connection.
 
-        .. versionadded:: 2.8.0
+        .. versionadded:: 2.8
 
 
     .. index::
@@ -695,7 +695,7 @@ The ``connection`` class
 
     .. rubric:: Methods related to asynchronous support
 
-    .. versionadded:: 2.2.0
+    .. versionadded:: 2.2
 
     .. seealso:: :ref:`async-support` and :ref:`green-support`.
 
