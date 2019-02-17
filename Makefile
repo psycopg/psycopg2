@@ -50,11 +50,9 @@ all: package sdist
 
 package: $(PLATLIB) $(PURELIB)
 
-docs: docs-html docs-txt
+docs: docs-html
 
 docs-html: doc/html/genindex.html
-
-docs-txt: doc/psycopg2.txt
 
 # for PyPI documentation
 docs-zip: doc/docs.zip
@@ -97,9 +95,6 @@ $(SDIST): $(SOURCE)
 # docs depend on the build as it partly use introspection.
 doc/html/genindex.html: $(PLATLIB) $(PURELIB) $(SOURCE_DOC)
 	$(MAKE) -C doc html
-
-doc/psycopg2.txt: $(PLATLIB) $(PURELIB) $(SOURCE_DOC)
-	$(MAKE) -C doc text
 
 doc/docs.zip: doc/html/genindex.html
 	(cd doc/html && zip -r ../docs.zip *)

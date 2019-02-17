@@ -1,6 +1,6 @@
-.PHONY: env help clean html text doctest
+.PHONY: env help clean html doctest
 
-docs: html text
+docs: html
 
 check: doctest
 
@@ -18,11 +18,6 @@ html: src/sqlstate_errors.rst
 	$(MAKE) $(SPHOPTS) -C src $@
 	cp -r src/_build/html .
 
-text: src/sqlstate_errors.rst
-	$(MAKE) PYTHON=$(PYTHON) -C .. package
-	$(MAKE) $(SPHOPTS) -C src $@
-	cd src && tools/stitch_text.py index.rst _build/text > ../psycopg2.txt
-
 src/sqlstate_errors.rst: ../psycopg/sqlstate_errors.h
 	PYTHONPATH=`pwd`/../build/lib.$(PYTHON_VERSION) $(PYTHON) src/tools/make_sqlstate_docs.py $< > $@
 
@@ -36,7 +31,7 @@ upload:
 
 clean:
 	$(MAKE) $(SPHOPTS) -C src $@
-	rm -rf html psycopg2.txt src/sqlstate_errors.rst
+	rm -rf html src/sqlstate_errors.rst
 
 env: requirements.txt
 	virtualenv env

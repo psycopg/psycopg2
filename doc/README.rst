@@ -17,10 +17,4 @@ Then you can build the documentation with::
 
     make
 
-Or the single targets::
-
-    make html
-    make text
-
-You should find the rendered documentation in the ``html`` dir and the text
-file ``psycopg2.txt``.
+You should find the rendered documentation in the ``html`` directory.
