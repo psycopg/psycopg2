@@ -166,6 +166,46 @@ options_get(connInfoObject *self)
 }
 
 
+static const char dsn_parameters_doc[] =
+"The effective connection parameters.\n"
+"\n"
+":type: `!dict`\n"
+"\n"
+"The results include values which weren't explicitly set by the connection\n"
+"string, such as defaults, environment variables, etc.\n"
+"The *password* parameter is removed from the results.\n"
+"\n"
+".. seealso:: libpq docs for `PQconninfo()`__ for details.\n"
+".. __: https://www.postgresql.org/docs/current/libpq-connect.html"
+    "#LIBPQ-PQCONNINFO";
+
+static PyObject *
+dsn_parameters_get(connInfoObject *self)
+{
+#if PG_VERSION_NUM >= 90300
+    PyObject *res = NULL;
+    PQconninfoOption *options = NULL;
+
+    EXC_IF_CONN_CLOSED(self->conn);
+
+    if (!(options = PQconninfo(self->conn->pgconn))) {
+        PyErr_NoMemory();
+        goto exit;
+    }
+
+    res = psycopg_dict_from_conninfo_options(options, /* include_password = */ 0);
+
+exit:
+    PQconninfoFree(options);
+
+    return res;
+#else
+    PyErr_SetString(NotSupportedError, "PQconninfo not available in libpq < 9.3");
+    return NULL;
+#endif
+}
+
+
 static const char status_doc[] =
 "The status of the connection.\n"
 "\n"
@@ -497,6 +537,8 @@ static struct PyGetSetDef connInfoObject_getsets[] = {
     { "host", (getter)host_get, NULL, (char *)host_doc },
     { "port", (getter)port_get, NULL, (char *)port_doc },
     { "options", (getter)options_get, NULL, (char *)options_doc },
+    { "dsn_parameters", (getter)dsn_parameters_get, NULL,
+        (char *)dsn_parameters_doc },
     { "status", (getter)status_get, NULL, (char *)status_doc },
     { "transaction_status", (getter)transaction_status_get, NULL,
         (char *)transaction_status_doc },

@@ -165,6 +165,15 @@ introspection etc.
     .. autoattribute:: host
     .. autoattribute:: port
     .. autoattribute:: options
+    .. autoattribute:: dsn_parameters
+
+        Example::
+
+            >>> conn.info.dsn_parameters
+            {'dbname': 'test', 'user': 'postgres', 'port': '5432', 'sslmode': 'prefer'}
+
+        Requires libpq >= 9.3.
+
     .. autoattribute:: status
     .. autoattribute:: transaction_status
     .. automethod:: parameter_status(name)
