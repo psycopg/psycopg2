@@ -1,6 +1,6 @@
 /* lobject.h - definition for the psycopg lobject type
  *
- * Copyright (C) 2006-2010 Federico Di Gregorio <fog@debian.org>
+ * Copyright (C) 2006-2019 Federico Di Gregorio <fog@debian.org>
  *
  * This file is part of psycopg.
  *

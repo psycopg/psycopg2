@@ -1,6 +1,6 @@
 /* error.h - definition for the psycopg base Error type
  *
- * Copyright (C) 2013  Daniele Varrazzo <daniele.varrazzo@gmail.com>
+ * Copyright (C) 2013-2019  Daniele Varrazzo <daniele.varrazzo@gmail.com>
  *
  * This file is part of psycopg.
  *

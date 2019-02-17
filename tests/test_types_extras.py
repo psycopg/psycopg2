@@ -2,7 +2,7 @@
 #
 # types_extras.py - tests for extras types conversions
 #
-# Copyright (C) 2008-2010 Federico Di Gregorio  <fog@debian.org>
+# Copyright (C) 2008-2019 Federico Di Gregorio  <fog@debian.org>
 #
 # psycopg2 is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Lesser General Public License as published

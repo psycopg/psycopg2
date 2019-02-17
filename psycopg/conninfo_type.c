@@ -1,6 +1,6 @@
 /* conninfo_type.c - present information about the libpq connection
  *
- * Copyright (C) 2018  Daniele Varrazzo <daniele.varrazzo@gmail.com>
+ * Copyright (C) 2018-2019  Daniele Varrazzo <daniele.varrazzo@gmail.com>
  *
  * This file is part of psycopg.
  *

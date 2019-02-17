@@ -1,6 +1,6 @@
 /* lobject_type.c - python interface to lobject objects
  *
- * Copyright (C) 2006-2010 Federico Di Gregorio <fog@debian.org>
+ * Copyright (C) 2006-2019 Federico Di Gregorio <fog@debian.org>
  *
  * This file is part of psycopg.
  *

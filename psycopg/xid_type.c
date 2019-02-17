@@ -1,7 +1,7 @@
 /* xid_type.c - python interface to Xid objects
  *
  * Copyright (C) 2008  Canonical Ltd.
- * Copyright (C) 2010  Daniele Varrazzo <daniele.varrazzo@gmail.com>
+ * Copyright (C) 2010-2019  Daniele Varrazzo <daniele.varrazzo@gmail.com>
  *
  * This file is part of psycopg.
  *

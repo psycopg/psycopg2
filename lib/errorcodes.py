@@ -4,7 +4,7 @@ This module contains symbolic names for all PostgreSQL error codes.
 """
 # psycopg2/errorcodes.py - PostgreSQL error codes
 #
-# Copyright (C) 2006-2010 Johan Dahlin  <jdahlin@async.com.br>
+# Copyright (C) 2006-2019 Johan Dahlin  <jdahlin@async.com.br>
 #
 # psycopg2 is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Lesser General Public License as published

@@ -1,6 +1,6 @@
 /* bytes_format.c - bytes-oriented version of PyString_Format
  *
- * Copyright (C) 2010 Daniele Varrazzo <daniele.varrazzo@gmail.com>
+ * Copyright (C) 2010-2019 Daniele Varrazzo <daniele.varrazzo@gmail.com>
  *
  * This file is part of psycopg.
  *
@@ -41,7 +41,7 @@
  * analyze, test, perform and/or display publicly, prepare derivative works,
  * distribute, and otherwise use Python alone or in any derivative version,
  * provided, however, that PSF's License Agreement and PSF's notice of copyright,
- * i.e., "Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+ * i.e., "Copyright (c) 2001-2019, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
  * Python Software Foundation; All Rights Reserved" are retained in Python alone or
  * in any derivative version prepared by Licensee.
  *

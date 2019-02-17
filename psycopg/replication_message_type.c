@@ -1,6 +1,6 @@
 /* replication_message_type.c - python interface to ReplcationMessage objects
  *
- * Copyright (C) 2003-2015 Federico Di Gregorio <fog@debian.org>
+ * Copyright (C) 2003-2019 Federico Di Gregorio <fog@debian.org>
  *
  * This file is part of psycopg.
  *

@@ -2,7 +2,7 @@
 
 # test_quote.py - unit test for strings quoting
 #
-# Copyright (C) 2007-2011 Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+# Copyright (C) 2007-2019 Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 #
 # psycopg2 is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Lesser General Public License as published

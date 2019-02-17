@@ -2,7 +2,7 @@
 
 # test_ctxman.py - unit test for connection and cursor used as context manager
 #
-# Copyright (C) 2012 Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+# Copyright (C) 2012-2019 Daniele Varrazzo  <daniele.varrazzo@gmail.com>
 #
 # psycopg2 is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Lesser General Public License as published

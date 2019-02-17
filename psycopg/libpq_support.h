@@ -1,6 +1,6 @@
 /* libpq_support.h - definitions for libpq_support.c
  *
- * Copyright (C) 2003-2015 Federico Di Gregorio <fog@debian.org>
+ * Copyright (C) 2003-2019 Federico Di Gregorio <fog@debian.org>
  *
  * This file is part of psycopg.
  *

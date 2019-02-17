@@ -1,6 +1,6 @@
 /* typecast_datetime.c - date and time typecasting functions to python types
  *
- * Copyright (C) 2001-2010 Federico Di Gregorio <fog@debian.org>
+ * Copyright (C) 2001-2019 Federico Di Gregorio <fog@debian.org>
  *
  * This file is part of psycopg.
  *

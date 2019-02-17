@@ -2,7 +2,7 @@
 
 # test_dates.py - unit test for dates handling
 #
-# Copyright (C) 2008-2011 James Henstridge  <james@jamesh.id.au>
+# Copyright (C) 2008-2019 James Henstridge  <james@jamesh.id.au>
 #
 # psycopg2 is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Lesser General Public License as published

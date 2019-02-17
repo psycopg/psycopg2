@@ -1,7 +1,7 @@
 /* solaris_support.h - definitions for solaris_support.c
  *
  * Copyright (C) 2017 My Karlsson <mk@acc.umu.se>
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright (c) 2018-2019, Joyent, Inc.
  *
  * This file is part of psycopg.
  *

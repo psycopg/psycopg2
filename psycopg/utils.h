@@ -1,6 +1,6 @@
 /* utils.h - function definitions for utility file
  *
- * Copyright (C) 2018 Daniele Varrazzo <daniele.varrazzo@gmail.com>
+ * Copyright (C) 2018-2019 Daniele Varrazzo <daniele.varrazzo@gmail.com>
  *
  * This file is part of psycopg.
  *
