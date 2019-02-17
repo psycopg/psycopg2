@@ -66,7 +66,7 @@ idiomatic error handler:
 
 
 SQLSTATE exception classes
-==========================
+--------------------------
 
 The following table contains the list of all the SQLSTATE classes exposed by
 the module.
