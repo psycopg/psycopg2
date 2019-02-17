@@ -614,29 +614,6 @@ The ``connection`` class
 
 
     .. index::
-        pair: Connection; Parameters
-
-    .. method:: get_dsn_parameters()
-
-        Get the effective dsn parameters for the connection as a dictionary.
-
-        The *password* parameter is removed from the result.
-
-        Example::
-
-            >>> conn.get_dsn_parameters()
-            {'dbname': 'test', 'user': 'postgres', 'port': '5432', 'sslmode': 'prefer'}
-
-        Requires libpq >= 9.3.
-
-        .. seealso:: libpq docs for `PQconninfo()`__ for details.
-
-            .. __: https://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-PQCONNINFO
-
-        .. versionadded:: 2.7
-
-
-    .. index::
         pair: Connection; Status
 
     .. attribute:: status
@@ -880,6 +857,32 @@ The ``connection`` class
             .. __: https://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQPARAMETERSTATUS
 
         .. versionadded:: 2.0.12
+
+
+    .. index::
+        pair: Connection; Parameters
+
+    .. method:: get_dsn_parameters()
+
+        Also available as `~connection.info`\ `!.`\
+        `~psycopg2.extensions.ConnectionInfo.dsn_parameters`.
+
+        Get the effective dsn parameters for the connection as a dictionary.
+
+        The *password* parameter is removed from the result.
+
+        Example::
+
+            >>> conn.get_dsn_parameters()
+            {'dbname': 'test', 'user': 'postgres', 'port': '5432', 'sslmode': 'prefer'}
+
+        Requires libpq >= 9.3.
+
+        .. seealso:: libpq docs for `PQconninfo()`__ for details.
+
+            .. __: https://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-PQCONNINFO
+
+        .. versionadded:: 2.7
 
 
 .. testcode::

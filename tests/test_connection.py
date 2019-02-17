@@ -1752,6 +1752,13 @@ class TestConnectionInfo(ConnectingTestCase):
         self.assert_(isinstance(self.conn.info.options, str))
         self.assert_(self.bconn.info.options is None)
 
+    @skip_before_libpq(9, 3)
+    def test_dsn_parameters(self):
+        d = self.conn.info.dsn_parameters
+        self.assert_(isinstance(d, dict))
+        self.assertEqual(d['dbname'], dbname)  # the only param we can check reliably
+        self.assert_('password' not in d, d)
+
     def test_status(self):
         self.assertEqual(self.conn.info.status, 0)
         self.assertEqual(self.bconn.info.status, 1)
