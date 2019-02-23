@@ -639,4 +639,8 @@ setup(name="psycopg2",
       package_dir={'psycopg2': 'lib'},
       packages=['psycopg2'],
       cmdclass={'build_ext': psycopg_build_ext},
-      ext_modules=ext)
+      ext_modules=ext,
+      project_urls={
+          'Source': 'https://github.com/psycopg/psycopg2',
+          'Documentation': 'http://initd.org/psycopg/docs/',
+      })
