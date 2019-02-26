@@ -605,9 +605,6 @@ ext.append(Extension("psycopg2._psycopg", sources,
                      undef_macros=[]))
 
 # Compute the direct download url.
-# Note that the current package installation programs are stupidly intelligent
-# and will try to install a beta if they find a link in the homepage instead of
-# using these pretty metadata. But that's their problem, not ours.
 download_url = (
     "http://initd.org/psycopg/tarballs/PSYCOPG-%s/psycopg2-%s.tar.gz"
     % (re.sub(r'^(\d+)\.(\d+).*', r'\1-\2', PSYCOPG_VERSION),
