@@ -290,7 +290,7 @@ class SQL(Composable):
 
 class Identifier(Composable):
     """
-    A `Composable` representing an SQL identifer or a dot-separated sequence.
+    A `Composable` representing an SQL identifier or a dot-separated sequence.
 
     Identifiers usually represent names of database objects, such as tables or
     fields. PostgreSQL identifiers follow `different rules`__ than SQL string
