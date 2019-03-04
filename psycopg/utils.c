@@ -408,6 +408,10 @@ psyco_set_error(PyObject *exc, cursorObject *curs, const char *msg)
 static int
 psyco_is_main_interp(void)
 {
+#if PY_VERSION_HEX >= 0x03080000
+    /* tested with Python 3.8.0a2 */
+    return _PyInterpreterState_Get() == PyInterpreterState_Main();
+#else
     static PyInterpreterState *main_interp = NULL;  /* Cached reference */
     PyInterpreterState *interp;
 
@@ -423,6 +427,7 @@ psyco_is_main_interp(void)
     main_interp = interp;
     assert (main_interp);
     return psyco_is_main_interp();
+#endif
 }
 
 /* psyco_GetDecimalType
