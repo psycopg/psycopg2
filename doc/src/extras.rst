@@ -531,8 +531,8 @@ JSON_ adaptation
     added |jsonb| support. In previous versions |jsonb| values are returned
     as strings. See :ref:`the FAQ <faq-jsonb-adapt>` for a workaround.
 
-Psycopg can adapt Python objects to and from the PostgreSQL |pgjson|_ and
-|jsonb| types.  With PostgreSQL 9.2 and following versions adaptation is
+Psycopg can adapt Python objects to and from the PostgreSQL |jsons|_
+types.  With PostgreSQL 9.2 and following versions adaptation is
 available out-of-the-box. To use JSON data with previous database versions
 (either with the `9.1 json extension`__, but even if you want to convert text
 fields to JSON) you can use the `register_json()` function.
@@ -543,9 +543,10 @@ The Python :py:mod:`json` module is used by default to convert Python objects
 to JSON and to parse data from the database.
 
 .. _JSON: https://www.json.org/
-.. |pgjson| replace:: :sql:`json`
+.. |json| replace:: :sql:`json`
 .. |jsonb| replace:: :sql:`jsonb`
-.. _pgjson: https://www.postgresql.org/docs/current/static/datatype-json.html
+.. |jsons| replace:: |json| and |jsonb|
+.. _jsons: https://www.postgresql.org/docs/current/static/datatype-json.html
 
 In order to pass a Python object to the database as query argument you can use
 the `Json` adapter::
@@ -553,7 +554,7 @@ the `Json` adapter::
     curs.execute("insert into mytable (jsondata) values (%s)",
         [Json({'a': 100})])
 
-Reading from the database, |pgjson| and |jsonb| values will be automatically
+Reading from the database, |json| and |jsonb| values will be automatically
 converted to Python objects.
 
 .. note::
@@ -601,7 +602,7 @@ or you can subclass it overriding the `~Json.dumps()` method::
 
 Customizing the conversion from PostgreSQL to Python can be done passing a
 custom `!loads()` function to `register_json()`.  For the builtin data types
-(|pgjson| from PostgreSQL 9.2, |jsonb| from PostgreSQL 9.4) use
+(|json| from PostgreSQL 9.2, |jsonb| from PostgreSQL 9.4) use
 `register_default_json()` and `register_default_jsonb()`.  For example, if you
 want to convert the float values from :sql:`json` into
 :py:class:`~decimal.Decimal` you can use::
