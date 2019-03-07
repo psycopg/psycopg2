@@ -940,10 +940,8 @@ _pq_execute_sync(cursorObject *curs, const char *query, int no_result, int no_be
 }
 
 RAISES_NEG int
-_pq_execute_async(cursorObject *curs, const char *query, int no_result, int no_begin)
+_pq_execute_async(cursorObject *curs, const char *query, int no_result)
 {
-    PGresult *pgres = NULL;
-    char *error = NULL;
     int async_status = ASYNC_WRITE;
     int ret;
 
@@ -951,15 +949,6 @@ _pq_execute_async(cursorObject *curs, const char *query, int no_result, int no_b
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(curs->conn->lock));
-
-    /* TODO: is this needed here? */
-    if (!no_begin && pq_begin_locked(curs->conn, &pgres, &error, &_save) < 0) {
-        pthread_mutex_unlock(&(curs->conn->lock));
-        Py_BLOCK_THREADS;
-        pq_complete_error(curs->conn, &pgres, &error);
-        return -1;
-    }
-
 
     Dprintf("pq_execute: executing ASYNC query: pgconn = %p", curs->conn->pgconn);
     Dprintf("    %-.200s", query);
@@ -1028,7 +1017,7 @@ pq_execute(cursorObject *curs, const char *query, int async, int no_result, int 
     if (!async) {
         return _pq_execute_sync(curs, query, no_result, no_begin);
     } else {
-        return _pq_execute_async(curs, query, no_result, no_begin);
+        return _pq_execute_async(curs, query, no_result);
     }
 }
 
