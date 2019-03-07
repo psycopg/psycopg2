@@ -863,11 +863,16 @@ _conn_poll_connecting(connectionObject *self)
 /* Advance to the next state after an attempt of flushing output */
 
 static int
-_conn_poll_advance_write(connectionObject *self, int flush)
+_conn_poll_advance_write(connectionObject *self)
 {
     int res;
+    int flush;
 
     Dprintf("conn_poll: poll writing");
+
+    flush = PQflush(self->pgconn);
+    Dprintf("conn_poll: PQflush() = %i", flush);
+
     switch (flush) {
     case  0:  /* success */
         /* we've finished pushing the query to the server. Let's start
@@ -893,11 +898,15 @@ _conn_poll_advance_write(connectionObject *self, int flush)
 
 /* Advance to the next state after a call to a pq_is_busy* function */
 static int
-_conn_poll_advance_read(connectionObject *self, int busy)
+_conn_poll_advance_read(connectionObject *self)
 {
     int res;
+    int busy;
 
     Dprintf("conn_poll: poll reading");
+
+    busy = pq_is_busy(self);
+
     switch (busy) {
     case 0: /* result is ready */
         res = PSYCO_POLL_OK;
@@ -931,18 +940,18 @@ _conn_poll_query(connectionObject *self)
     switch (self->async_status) {
     case ASYNC_WRITE:
         Dprintf("conn_poll: async_status = ASYNC_WRITE");
-        res = _conn_poll_advance_write(self, PQflush(self->pgconn));
+        res = _conn_poll_advance_write(self);
         break;
 
     case ASYNC_READ:
         Dprintf("conn_poll: async_status = ASYNC_READ");
-        res = _conn_poll_advance_read(self, pq_is_busy(self));
+        res = _conn_poll_advance_read(self);
         break;
 
     case ASYNC_DONE:
         Dprintf("conn_poll: async_status = ASYNC_DONE");
         /* We haven't asked anything: just check for notifications. */
-        res = _conn_poll_advance_read(self, pq_is_busy(self));
+        res = _conn_poll_advance_read(self);
         break;
 
     default:
