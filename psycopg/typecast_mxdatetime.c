@@ -31,8 +31,6 @@
 static int
 psyco_typecast_mxdatetime_init(void)
 {
-    Dprintf("psyco_typecast_mxdatetime_init: mx.DateTime init");
-
     if (mxDateTime_ImportModuleAndAPI()) {
         Dprintf("psyco_typecast_mxdatetime_init: mx.DateTime initialization failed");
         PyErr_Clear();

@@ -303,7 +303,7 @@ adapters_init(PyObject *module)
 
     if (0 > microprotocols_init(module)) { goto exit; }
 
-    Dprintf("psycopgmodule: configuring adapters");
+    Dprintf("psycopgmodule: initializing adapters");
 
     if (0 > microprotocols_add(&PyFloat_Type, NULL, (PyObject*)&pfloatType)) {
         goto exit;
@@ -935,7 +935,7 @@ datetime_init(void)
 {
     PyObject *dt = NULL;
 
-    Dprintf("psycopgmodule: datetime module");
+    Dprintf("psycopgmodule: initializing datetime module");
 
     /* import python builtin datetime module, if available */
     if (!(dt = PyImport_ImportModule("datetime"))) {

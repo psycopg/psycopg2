@@ -38,8 +38,6 @@
 int
 psyco_adapter_mxdatetime_init(void)
 {
-    Dprintf("psyco_adapter_mxdatetime_init: mx.DateTime init");
-
     if (mxDateTime_ImportModuleAndAPI()) {
         Dprintf("psyco_adapter_mxdatetime_init: mx.DateTime initialization failed");
         PyErr_Clear();
