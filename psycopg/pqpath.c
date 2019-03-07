@@ -770,57 +770,16 @@ exit:
    means that there is data available to be collected. -1 means an error, the
    exception will be set accordingly.
 
-   this function locks the connection object
-   this function call Py_*_ALLOW_THREADS macros */
-
-int
-pq_is_busy(connectionObject *conn)
-{
-    int res;
-    Dprintf("pq_is_busy: consuming input");
-
-    Py_BEGIN_ALLOW_THREADS;
-    pthread_mutex_lock(&(conn->lock));
-
-    if (PQconsumeInput(conn->pgconn) == 0) {
-        Dprintf("pq_is_busy: PQconsumeInput() failed");
-        pthread_mutex_unlock(&(conn->lock));
-        Py_BLOCK_THREADS;
-
-        /* if the libpq says pgconn is lost, close the py conn */
-        if (CONNECTION_BAD == PQstatus(conn->pgconn)) {
-            conn->closed = 2;
-        }
-
-        PyErr_SetString(OperationalError, PQerrorMessage(conn->pgconn));
-        return -1;
-    }
-
-    res = PQisBusy(conn->pgconn);
-
-    Py_BLOCK_THREADS;
-    conn_notifies_process(conn);
-    conn_notice_process(conn);
-    Py_UNBLOCK_THREADS;
-
-    pthread_mutex_unlock(&(conn->lock));
-    Py_END_ALLOW_THREADS;
-
-    return res;
-}
-
-/* pq_is_busy_locked - equivalent to pq_is_busy but we already have the lock
- *
  * The function should be called with the lock and holding the GIL.
  */
 
 int
-pq_is_busy_locked(connectionObject *conn)
+pq_is_busy(connectionObject *conn)
 {
-    Dprintf("pq_is_busy_locked: consuming input");
+    Dprintf("pq_is_busy: calling PQconsumeInput()");
 
     if (PQconsumeInput(conn->pgconn) == 0) {
-        Dprintf("pq_is_busy_locked: PQconsumeInput() failed");
+        Dprintf("pq_is_busy: PQconsumeInput() failed");
 
         /* if the libpq says pgconn is lost, close the py conn */
         if (CONNECTION_BAD == PQstatus(conn->pgconn)) {
@@ -831,8 +790,8 @@ pq_is_busy_locked(connectionObject *conn)
         return -1;
     }
 
-    /* notices and notifies will be processed at the end of the loop we are in
-     * (async reading) by pq_fetch. */
+    conn_notifies_process(conn);
+    conn_notice_process(conn);
 
     return PQisBusy(conn->pgconn);
 }

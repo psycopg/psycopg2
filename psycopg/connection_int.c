@@ -936,16 +936,7 @@ _conn_poll_query(connectionObject *self)
 
     case ASYNC_READ:
         Dprintf("conn_poll: async_status = ASYNC_READ");
-        if (self->async) {
-            res = _conn_poll_advance_read(self, pq_is_busy(self));
-        }
-        else {
-            /* we are a green connection being polled as result of a query.
-              this means that our caller has the lock and we are being called
-              from the callback. If we tried to acquire the lock now it would
-              be a deadlock. */
-            res = _conn_poll_advance_read(self, pq_is_busy_locked(self));
-        }
+        res = _conn_poll_advance_read(self, pq_is_busy(self));
         break;
 
     case ASYNC_DONE:
