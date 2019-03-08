@@ -25,6 +25,7 @@
 import select
 import unittest
 import warnings
+
 import psycopg2
 import psycopg2.extensions
 import psycopg2.extras
@@ -58,10 +59,10 @@ class GreenTestCase(ConnectingTestCase):
         ConnectingTestCase.tearDown(self)
         psycopg2.extensions.set_wait_callback(self._cb)
 
-    def set_stub_wait_callback(self, conn):
+    def set_stub_wait_callback(self, conn, cb=None):
         stub = ConnectionStub(conn)
         psycopg2.extensions.set_wait_callback(
-            lambda conn: psycopg2.extras.wait_select(stub))
+            lambda conn: (cb or psycopg2.extras.wait_select)(stub))
         return stub
 
     @slow
@@ -118,6 +119,36 @@ class GreenTestCase(ConnectingTestCase):
         cur = self.conn.cursor()
         self.assertRaises(psycopg2.ProgrammingError,
             cur.execute, "copy (select 1) to stdout")
+
+    @slow
+    @skip_before_postgres(9, 0)
+    def test_non_block_after_notification(self):
+        def wait(conn):
+            while 1:
+                state = conn.poll()
+                if state == POLL_OK:
+                    break
+                elif state == POLL_READ:
+                    select.select([conn.fileno()], [], [], 0.1)
+                elif state == POLL_WRITE:
+                    select.select([], [conn.fileno()], [], 0.1)
+                else:
+                    raise conn.OperationalError("bad state from poll: %s" % state)
+
+        stub = self.set_stub_wait_callback(self.conn, wait)
+        cur = self.conn.cursor()
+        cur.execute("""
+            select 1;
+            do $$
+                begin
+                    raise notice 'hello';
+                end
+            $$ language plpgsql;
+            select pg_sleep(1);
+            """)
+
+        polls = stub.polls.count(POLL_READ)
+        self.assert_(polls > 8, polls)
 
 
 class CallbackErrorTestCase(ConnectingTestCase):

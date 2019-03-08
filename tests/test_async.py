@@ -29,6 +29,7 @@ import unittest
 import warnings
 
 import psycopg2
+import psycopg2.errors
 from psycopg2 import extensions as ext
 
 from .testutils import ConnectingTestCase, StringIO, skip_before_postgres, slow
@@ -405,6 +406,15 @@ class AsyncTests(ConnectingTestCase):
         cur.execute("delete from table1")
         self.wait(cur)
 
+    def test_stop_on_first_error(self):
+        cur = self.conn.cursor()
+        cur.execute("select 1; select x; select 1/0; select 2")
+        self.assertRaises(psycopg2.errors.UndefinedColumn, self.wait, cur)
+
+        cur.execute("select 1")
+        self.wait(cur)
+        self.assertEqual(cur.fetchone(), (1,))
+
     def test_error_two_cursors(self):
         cur = self.conn.cursor()
         cur2 = self.conn.cursor()
@@ -453,6 +463,37 @@ class AsyncTests(ConnectingTestCase):
         cur = self.conn.cursor()
         cur.execute("copy (select 1) to stdout")
         self.assertRaises(psycopg2.ProgrammingError, self.wait, self.conn)
+
+    @slow
+    @skip_before_postgres(9, 0)
+    def test_non_block_after_notification(self):
+        from select import select
+
+        cur = self.conn.cursor()
+        cur.execute("""
+            select 1;
+            do $$
+                begin
+                    raise notice 'hello';
+                end
+            $$ language plpgsql;
+            select pg_sleep(1);
+            """)
+
+        polls = 0
+        while True:
+            state = self.conn.poll()
+            if state == psycopg2.extensions.POLL_OK:
+                break
+            elif state == psycopg2.extensions.POLL_READ:
+                select([self.conn], [], [], 0.1)
+            elif state == psycopg2.extensions.POLL_WRITE:
+                select([], [self.conn], [], 0.1)
+            else:
+                raise Exception("Unexpected result from poll: %r", state)
+            polls += 1
+
+        self.assert_(polls >= 8, polls)
 
 
 def test_suite():

@@ -896,7 +896,9 @@ _conn_poll_advance_write(connectionObject *self)
     return res;
 }
 
-/* Advance to the next state after a call to a pq_is_busy* function */
+
+/* Advance to the next state after reading results */
+
 static int
 _conn_poll_advance_read(connectionObject *self)
 {
@@ -905,13 +907,13 @@ _conn_poll_advance_read(connectionObject *self)
 
     Dprintf("conn_poll: poll reading");
 
-    busy = pq_is_busy(self);
+    busy = pq_get_result_async(self);
 
     switch (busy) {
     case 0: /* result is ready */
-        res = PSYCO_POLL_OK;
         Dprintf("conn_poll: async_status -> ASYNC_DONE");
         self->async_status = ASYNC_DONE;
+        res = PSYCO_POLL_OK;
         break;
     case 1: /* result not ready: fd would block */
         res = PSYCO_POLL_READ;
@@ -920,12 +922,14 @@ _conn_poll_advance_read(connectionObject *self)
         res = PSYCO_POLL_ERROR;
         break;
     default:
-        Dprintf("conn_poll: unexpected result from pq_is_busy: %d", busy);
+        Dprintf("conn_poll: unexpected result from pq_get_result_async: %d",
+            busy);
         res = PSYCO_POLL_ERROR;
         break;
     }
     return res;
 }
+
 
 /* Poll the connection for the send query/retrieve result phase
 
@@ -974,7 +978,6 @@ static int
 _conn_poll_setup_async(connectionObject *self)
 {
     int res = PSYCO_POLL_ERROR;
-    PGresult *pgres;
 
     switch (self->status) {
     case CONN_STATUS_CONNECTING:
@@ -1025,12 +1028,12 @@ _conn_poll_setup_async(connectionObject *self)
         res = _conn_poll_query(self);
         if (res == PSYCO_POLL_OK) {
             res = PSYCO_POLL_ERROR;
-            pgres = pq_get_last_result(self);
-            if (pgres == NULL || PQresultStatus(pgres) != PGRES_COMMAND_OK ) {
+            if (self->pgres == NULL
+                    || PQresultStatus(self->pgres) != PGRES_COMMAND_OK ) {
                 PyErr_SetString(OperationalError, "can't set datestyle to ISO");
                 break;
             }
-            CLEARPGRES(pgres);
+            CLEARPGRES(self->pgres);
 
             Dprintf("conn_poll: status -> CONN_STATUS_READY");
             self->status = CONN_STATUS_READY;
@@ -1119,8 +1122,9 @@ conn_poll(connectionObject *self)
                 break;
             }
 
-            CLEARPGRES(curs->pgres);
-            curs->pgres = pq_get_last_result(self);
+            PQclear(curs->pgres);
+            curs->pgres = self->pgres;
+            self->pgres = NULL;
 
             /* fetch the tuples (if there are any) and build the result. We
              * don't care if pq_fetch return 0 or 1, but if there was an error,

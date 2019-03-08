@@ -764,22 +764,22 @@ exit:
 }
 
 
-/* pq_is_busy - consume input and return connection status
-
-   a status of 1 means that a call to pq_fetch will block, while a status of 0
-   means that there is data available to be collected. -1 means an error, the
-   exception will be set accordingly.
-
+/* pq_get_result_async - read an available result without blocking.
+ *
+ * Return 0 if the result is ready, 1 if it will block, -1 on error.
+ * The last result will be returned in pgres.
+ *
  * The function should be called with the lock and holding the GIL.
  */
 
-int
-pq_is_busy(connectionObject *conn)
+RAISES_NEG int
+pq_get_result_async(connectionObject *conn)
 {
-    Dprintf("pq_is_busy: calling PQconsumeInput()");
+    int rv = -1;
 
+    Dprintf("pq_get_result_async: calling PQconsumeInput()");
     if (PQconsumeInput(conn->pgconn) == 0) {
-        Dprintf("pq_is_busy: PQconsumeInput() failed");
+        Dprintf("pq_get_result_async: PQconsumeInput() failed");
 
         /* if the libpq says pgconn is lost, close the py conn */
         if (CONNECTION_BAD == PQstatus(conn->pgconn)) {
@@ -787,13 +787,69 @@ pq_is_busy(connectionObject *conn)
         }
 
         PyErr_SetString(OperationalError, PQerrorMessage(conn->pgconn));
-        return -1;
+        goto exit;
     }
 
     conn_notifies_process(conn);
     conn_notice_process(conn);
 
-    return PQisBusy(conn->pgconn);
+    for (;;) {
+        int busy;
+        PGresult *res;
+        ExecStatusType status;
+
+        Dprintf("pq_get_result_async: calling PQisBusy()");
+        busy = PQisBusy(conn->pgconn);
+
+        if (busy) {
+            /* try later */
+            Dprintf("pq_get_result_async: PQisBusy() = 1");
+            rv = 1;
+            goto exit;
+        }
+
+        if (!(res = PQgetResult(conn->pgconn))) {
+            Dprintf("pq_get_result_async: got no result");
+            /* the result is ready: it was the previously read one */
+            rv = 0;
+            goto exit;
+        }
+
+        status = PQresultStatus(res);
+        Dprintf("pq_get_result_async: got result %s", PQresStatus(status));
+
+        /* Store the result outside because we want to return the last non-null
+         * one and we may have to do it across poll calls. However if there is
+         * an error in the stream of results we want to handle the *first*
+         * error. So don't clobber it with the following ones. */
+        if (conn->pgres && PQresultStatus(conn->pgres) == PGRES_FATAL_ERROR) {
+            Dprintf("previous pgres is error: discarding");
+            PQclear(res);
+        }
+        else {
+            PQclear(conn->pgres);
+            conn->pgres = res;
+        }
+
+        switch (status) {
+            case PGRES_COPY_OUT:
+            case PGRES_COPY_IN:
+            case PGRES_COPY_BOTH:
+                /* After entering copy mode, libpq will make a phony
+                 * PGresult for us every time we query for it, so we need to
+                 * break out of this endless loop. */
+                rv = 0;
+                goto exit;
+
+            default:
+                /* keep on reading to check if there are other results or
+                 * we have finished. */
+                continue;
+        }
+    }
+
+exit:
+    return rv;
 }
 
 /* pq_flush - flush output and return connection status
@@ -995,6 +1051,7 @@ pq_send_query(connectionObject *conn, const char *query)
     Dprintf("pq_send_query: sending ASYNC query:");
     Dprintf("    %-.200s", query);
 
+    CLEARPGRES(conn->pgres);
     if (0 == (rv = PQsendQuery(conn->pgconn, query))) {
         Dprintf("pq_send_query: error: %s", PQerrorMessage(conn->pgconn));
     }
@@ -1002,45 +1059,6 @@ pq_send_query(connectionObject *conn, const char *query)
     return rv;
 }
 
-/* Return the last result available on the connection.
- *
- * The function will block only if a command is active and the
- * necessary response data has not yet been read by PQconsumeInput.
- *
- * The result should be disposed of using PQclear()
- */
-PGresult *
-pq_get_last_result(connectionObject *conn)
-{
-    PGresult *result = NULL, *res;
-    ExecStatusType status;
-
-    /* Read until PQgetResult gives a NULL */
-    while (NULL != (res = PQgetResult(conn->pgconn))) {
-        if (result) {
-            /* TODO too bad: we are discarding results from all the queries
-             * except the last. We could have populated `nextset()` with it
-             * but it would be an incompatible change (apps currently issue
-             * groups of queries expecting to receive the last result: they
-             * would start receiving the first instead). */
-            PQclear(result);
-        }
-        result = res;
-        status = PQresultStatus(result);
-        Dprintf("pq_get_last_result: got result %s", PQresStatus(status));
-
-        /* After entering copy mode, libpq will make a phony
-         * PGresult for us every time we query for it, so we need to
-         * break out of this endless loop. */
-        if (status == PGRES_COPY_BOTH
-                || status == PGRES_COPY_OUT
-                || status == PGRES_COPY_IN) {
-            break;
-        }
-    }
-
-    return result;
-}
 
 /* pq_fetch - fetch data after a query
 

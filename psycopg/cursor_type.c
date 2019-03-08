@@ -52,8 +52,6 @@ psyco_curs_close(cursorObject *self, PyObject *dummy)
     PyObject *rv = NULL;
     char *lname = NULL;
 
-    EXC_IF_ASYNC_IN_PROGRESS(self, close);
-
     if (self->closed) {
         rv = Py_None;
         Py_INCREF(rv);
@@ -63,6 +61,8 @@ psyco_curs_close(cursorObject *self, PyObject *dummy)
     if (self->qname != NULL) {
         char buffer[256];
         PGTransactionStatusType status;
+
+        EXC_IF_ASYNC_IN_PROGRESS(self, close_named);
 
         if (self->conn) {
             status = PQtransactionStatus(self->conn->pgconn);

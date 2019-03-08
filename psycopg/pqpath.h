@@ -35,7 +35,6 @@
 #define CLEARPGRES(pgres)   do { PQclear(pgres); pgres = NULL; } while (0)
 
 /* exported functions */
-HIDDEN PGresult *pq_get_last_result(connectionObject *conn);
 RAISES_NEG HIDDEN int pq_fetch(cursorObject *curs, int no_result);
 RAISES_NEG HIDDEN int pq_execute(cursorObject *curs, const char *query,
                                  int async, int no_result, int no_begin);
@@ -59,7 +58,7 @@ HIDDEN int pq_tpc_command_locked(connectionObject *conn,
                                  const char *cmd, const char *tid,
                                  PGresult **pgres, char **error,
                                  PyThreadState **tstate);
-HIDDEN int pq_is_busy(connectionObject *conn);
+RAISES_NEG HIDDEN int pq_get_result_async(connectionObject *conn);
 HIDDEN int pq_flush(connectionObject *conn);
 HIDDEN void pq_clear_async(connectionObject *conn);
 RAISES_NEG HIDDEN int pq_set_non_blocking(connectionObject *conn, int arg);
