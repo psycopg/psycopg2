@@ -243,7 +243,6 @@ class psycopg_build_ext(build_ext):
         self.use_pg_dll = 1
         self.pgdir = None
         self.mx_include_dir = None
-        self.use_pydatetime = 1
         self.have_ssl = have_ssl
         self.static_libpq = static_libpq
         self.pg_config = None
