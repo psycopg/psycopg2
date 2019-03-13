@@ -116,7 +116,7 @@ class DictCursorBase(_cursor):
                 first = next(res)
 
             yield first
-            while 1:
+            while True:
                 yield next(res)
         except StopIteration:
             return
@@ -378,7 +378,7 @@ class NamedTupleCursor(_cursor):
 
             yield nt._make(t)
 
-            while 1:
+            while True:
                 yield nt._make(next(it))
         except StopIteration:
             return
@@ -773,7 +773,7 @@ def wait_select(conn):
     import select
     from psycopg2.extensions import POLL_OK, POLL_READ, POLL_WRITE
 
-    while 1:
+    while True:
         try:
             state = conn.poll()
             if state == POLL_OK:
@@ -1172,7 +1172,7 @@ def _paginate(seq, page_size):
     """
     page = []
     it = iter(seq)
-    while 1:
+    while True:
         try:
             for i in range(page_size):
                 page.append(next(it))

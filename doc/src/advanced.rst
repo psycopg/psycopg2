@@ -12,7 +12,7 @@ More advanced topics
     conn.commit()
 
     def wait(conn):
-        while 1:
+        while True:
             state = conn.poll()
             if state == psycopg2.extensions.POLL_OK:
                 break
@@ -285,7 +285,7 @@ something to read::
     curs.execute("LISTEN test;")
 
     print "Waiting for notifications on channel 'test'"
-    while 1:
+    while True:
         if select.select([conn],[],[],5) == ([],[],[]):
             print "Timeout"
         else:
@@ -347,7 +347,7 @@ together with the Python :py:func:`~select.select` function in order to carry on
 asynchronous operations with Psycopg::
 
     def wait(conn):
-        while 1:
+        while True:
             state = conn.poll()
             if state == psycopg2.extensions.POLL_OK:
                 break
@@ -468,7 +468,7 @@ example callback (using `!select()` to block) is provided as
 `psycopg2.extras.wait_select()`: it boils down to something similar to::
 
     def wait_select(conn):
-        while 1:
+        while True:
             state = conn.poll()
             if state == extensions.POLL_OK:
                 break
