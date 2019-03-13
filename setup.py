@@ -528,7 +528,7 @@ parser.read('setup.cfg')
 # Choose a datetime module
 have_pydatetime = True
 have_mxdatetime = False
-use_pydatetime = int(parser.get('build_ext', 'use_pydatetime'))
+use_pydatetime = parser.getboolean('build_ext', 'use_pydatetime')
 
 # check for mx package
 mxincludedir = ''
@@ -576,14 +576,14 @@ else:
 define_macros.append(('PSYCOPG_VERSION', PSYCOPG_VERSION_EX))
 
 if parser.has_option('build_ext', 'have_ssl'):
-    have_ssl = int(parser.get('build_ext', 'have_ssl'))
+    have_ssl = parser.getboolean('build_ext', 'have_ssl')
 else:
-    have_ssl = 0
+    have_ssl = False
 
 if parser.has_option('build_ext', 'static_libpq'):
-    static_libpq = int(parser.get('build_ext', 'static_libpq'))
+    static_libpq = parser.getboolean('build_ext', 'static_libpq')
 else:
-    static_libpq = 0
+    static_libpq = False
 
 # And now... explicitly add the defines from the .cfg files.
 # Looks like setuptools or some other cog doesn't add them to the command line

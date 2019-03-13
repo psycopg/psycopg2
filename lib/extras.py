@@ -73,8 +73,8 @@ class DictCursorBase(_cursor):
             raise NotImplementedError(
                 "DictCursorBase can't be instantiated without a row factory.")
         super(DictCursorBase, self).__init__(*args, **kwargs)
-        self._query_executed = 0
-        self._prefetch = 0
+        self._query_executed = False
+        self._prefetch = False
         self.row_factory = row_factory
 
     def fetchone(self):
@@ -135,23 +135,23 @@ class DictCursor(DictCursorBase):
     def __init__(self, *args, **kwargs):
         kwargs['row_factory'] = DictRow
         super(DictCursor, self).__init__(*args, **kwargs)
-        self._prefetch = 1
+        self._prefetch = True
 
     def execute(self, query, vars=None):
         self.index = OrderedDict()
-        self._query_executed = 1
+        self._query_executed = True
         return super(DictCursor, self).execute(query, vars)
 
     def callproc(self, procname, vars=None):
         self.index = OrderedDict()
-        self._query_executed = 1
+        self._query_executed = True
         return super(DictCursor, self).callproc(procname, vars)
 
     def _build_index(self):
-        if self._query_executed == 1 and self.description:
+        if self._query_executed and self.description:
             for i in range(len(self.description)):
                 self.index[self.description[i][0]] = i
-            self._query_executed = 0
+            self._query_executed = False
 
 
 class DictRow(list):
@@ -237,22 +237,21 @@ class RealDictCursor(DictCursorBase):
     def __init__(self, *args, **kwargs):
         kwargs['row_factory'] = RealDictRow
         super(RealDictCursor, self).__init__(*args, **kwargs)
-        self._prefetch = 0
 
     def execute(self, query, vars=None):
         self.column_mapping = []
-        self._query_executed = 1
+        self._query_executed = True
         return super(RealDictCursor, self).execute(query, vars)
 
     def callproc(self, procname, vars=None):
         self.column_mapping = []
-        self._query_executed = 1
+        self._query_executed = True
         return super(RealDictCursor, self).callproc(procname, vars)
 
     def _build_index(self):
-        if self._query_executed == 1 and self.description:
+        if self._query_executed and self.description:
             self.column_mapping = [d[0] for d in self.description]
-            self._query_executed = 0
+            self._query_executed = False
 
 
 class RealDictRow(dict):
