@@ -282,7 +282,6 @@ class ConnectionTests(ConnectingTestCase):
         cur = conn.cursor()
         t1 = threading.Thread(target=committer)
         t1.start()
-        i = 1
         for i in range(1000):
             cur.execute("select %s;", (i,))
             conn.commit()
