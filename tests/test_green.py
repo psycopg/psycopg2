@@ -134,7 +134,7 @@ class CallbackErrorTestCase(ConnectingTestCase):
         import select
         from psycopg2.extensions import POLL_OK, POLL_READ, POLL_WRITE
 
-        while 1:
+        while True:
             if self.to_error is not None:
                 self.to_error -= 1
                 if self.to_error <= 0:
