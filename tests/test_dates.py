@@ -447,11 +447,10 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         self.assertRaises(psycopg2.NotSupportedError, cur.fetchone)
 
 
-# Only run the datetime tests if psycopg was compiled with support.
-if not hasattr(psycopg2.extensions, 'PYDATETIME'):
-    del DatetimeTests
-
-
+@unittest.skipUnless(
+    hasattr(psycopg2._psycopg, 'MXDATETIME'),
+    'Requires mx.DateTime support'
+)
 class mxDateTimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
     """Tests for the mx.DateTime based date handling in psycopg2."""
 
@@ -624,14 +623,6 @@ class mxDateTimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
     def test_type_roundtrip_interval_array(self):
         from mx.DateTime import DateTimeDeltaFrom
         self._test_type_roundtrip_array(DateTimeDeltaFrom(seconds=30))
-
-
-# Only run the mx.DateTime tests if psycopg was compiled with support.
-try:
-    if not hasattr(psycopg2._psycopg, 'MXDATETIME'):
-        del mxDateTimeTests
-except AttributeError:
-    del mxDateTimeTests
 
 
 class FromTicksTestCase(unittest.TestCase):
