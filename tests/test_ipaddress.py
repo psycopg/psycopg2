@@ -16,9 +16,6 @@
 
 from __future__ import unicode_literals
 
-import sys
-from functools import wraps
-
 from . import testutils
 import unittest
 
