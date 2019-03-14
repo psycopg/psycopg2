@@ -49,13 +49,10 @@ try:
 except ImportError:
     pass
 
-try:
-    from psycopg2._psycopg import (                         # noqa
-        PYDATE, PYDATETIME, PYDATETIMETZ, PYINTERVAL, PYTIME, PYDATEARRAY,
-        PYDATETIMEARRAY, PYDATETIMETZARRAY, PYINTERVALARRAY, PYTIMEARRAY,
-        DateFromPy, TimeFromPy, TimestampFromPy, IntervalFromPy, )
-except ImportError:
-    pass
+from psycopg2._psycopg import (                         # noqa
+    PYDATE, PYDATETIME, PYDATETIMETZ, PYINTERVAL, PYTIME, PYDATEARRAY,
+    PYDATETIMEARRAY, PYDATETIMETZARRAY, PYINTERVALARRAY, PYTIMEARRAY,
+    DateFromPy, TimeFromPy, TimestampFromPy, IntervalFromPy, )
 
 from psycopg2._psycopg import (                             # noqa
     adapt, adapters, encodings, connection, cursor,
