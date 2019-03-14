@@ -265,8 +265,6 @@ PyTypeObject pydatetimeType = {
 
 /** module-level functions **/
 
-#ifdef PSYCOPG_DEFAULT_PYDATETIME
-
 PyObject *
 psyco_Date(PyObject *self, PyObject *args)
 {
@@ -457,8 +455,6 @@ exit:
     Py_XDECREF(m);
     return res;
 }
-
-#endif
 
 PyObject *
 psyco_DateFromPy(PyObject *self, PyObject *args)

@@ -49,6 +49,7 @@ Other changes:
 - The `!psycopg2.test` package is no longer installed by ``python setup.py
   install``.
 - Wheel package compiled against OpenSSL 1.0.2r and PostgreSQL 11.2 libpq.
+- Dropped support for `mxDateTime`.
 
 
 What's new in psycopg 2.7.7

@@ -241,7 +241,6 @@ class psycopg_build_ext(build_ext):
     def initialize_options(self):
         build_ext.initialize_options(self)
         self.pgdir = None
-        self.mx_include_dir = None
         self.have_ssl = have_ssl
         self.static_libpq = static_libpq
         self.pg_config = None
@@ -522,45 +521,6 @@ depends = [
 
 parser = configparser.ConfigParser()
 parser.read('setup.cfg')
-
-# Choose a datetime module
-have_pydatetime = True
-have_mxdatetime = False
-use_pydatetime = parser.getboolean('build_ext', 'use_pydatetime')
-
-# check for mx package
-mxincludedir = ''
-if parser.has_option('build_ext', 'mx_include_dir'):
-    mxincludedir = parser.get('build_ext', 'mx_include_dir')
-if not mxincludedir:
-    mxincludedir = os.path.join(get_python_inc(plat_specific=1), "mx")
-if mxincludedir.strip() and os.path.exists(mxincludedir):
-    # Build the support for mx: we will check at runtime if it can be imported
-    include_dirs.append(mxincludedir)
-    define_macros.append(('HAVE_MXDATETIME', '1'))
-    sources.append('adapter_mxdatetime.c')
-    depends.extend(['adapter_mxdatetime.h', 'typecast_mxdatetime.c'])
-    have_mxdatetime = True
-    version_flags.append('mx')
-
-# now decide which package will be the default for date/time typecasts
-if have_pydatetime and (use_pydatetime or not have_mxdatetime):
-    define_macros.append(('PSYCOPG_DEFAULT_PYDATETIME', '1'))
-elif have_mxdatetime:
-    define_macros.append(('PSYCOPG_DEFAULT_MXDATETIME', '1'))
-else:
-    error_message = """\
-psycopg requires a datetime module:
-    mx.DateTime module not found
-    python datetime module not found
-
-Note that psycopg needs the module headers and not just the module
-itself. If you installed Python or mx.DateTime from a binary package
-you probably need to install its companion -dev or -devel package."""
-
-    for line in error_message.split("\n"):
-        sys.stderr.write("error: " + line)
-    sys.exit(1)
 
 # generate a nice version string to avoid confusion when users report bugs
 version_flags.append('pq3')     # no more a choice

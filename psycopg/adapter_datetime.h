@@ -48,7 +48,6 @@ typedef struct {
 RAISES_NEG HIDDEN int psyco_adapter_datetime_init(void);
 
 /* functions exported to psycopgmodule.c */
-#ifdef PSYCOPG_DEFAULT_PYDATETIME
 
 HIDDEN PyObject *psyco_Date(PyObject *module, PyObject *args);
 #define psyco_Date_doc \
@@ -85,8 +84,6 @@ HIDDEN PyObject *psyco_TimestampFromTicks(PyObject *module, PyObject *args);
     "Build an object holding a timestamp value from the given ticks value.\n\n" \
     "Ticks are the number of seconds since the epoch; see the documentation " \
     "of the standard Python time module for details)."
-
-#endif /* PSYCOPG_DEFAULT_PYDATETIME */
 
 HIDDEN PyObject *psyco_DateFromPy(PyObject *module, PyObject *args);
 #define psyco_DateFromPy_doc \

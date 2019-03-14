@@ -52,11 +52,6 @@
 #include "psycopg/adapter_list.h"
 #include "psycopg/typecast_binary.h"
 
-#ifdef HAVE_MXDATETIME
-#include <mxDateTime.h>
-#include "psycopg/adapter_mxdatetime.h"
-#endif
-
 /* some module-level variables, like the datetime module */
 #include <datetime.h>
 #include "psycopg/adapter_datetime.h"
@@ -375,30 +370,6 @@ adapters_init(PyObject *module)
     if (!(obj = PyMapping_GetItemString(dict, "IntervalFromPy"))) { goto exit; }
     if (0 > microprotocols_add(PyDateTimeAPI->DeltaType, NULL, obj)) { goto exit; }
     Py_CLEAR(obj);
-
-#ifdef HAVE_MXDATETIME
-    /* As above, we use the callable objects from the psycopg module.
-       These object are not be available at runtime if mx.DateTime import
-       failed (e.g. it was available at build time but not at runtime). */
-    if (PyMapping_HasKeyString(dict, "TimestampFromMx")) {
-        if (!(obj = PyMapping_GetItemString(dict, "TimestampFromMx"))) {
-            goto exit;
-        }
-        if (0 > microprotocols_add(mxDateTime.DateTime_Type, NULL, obj)) {
-            goto exit;
-        }
-        Py_CLEAR(obj);
-
-        /* if we found the above, we have this too. */
-        if (!(obj = PyMapping_GetItemString(dict, "TimeFromMx"))) {
-            goto exit;
-        }
-        if (0 > microprotocols_add(mxDateTime.DateTimeDelta_Type, NULL, obj)) {
-            goto exit;
-        }
-        Py_CLEAR(obj);
-    }
-#endif
 
     /* Success! */
     rv = 0;
@@ -958,41 +929,6 @@ datetime_init(void)
     return 0;
 }
 
-RAISES_NEG static int
-mxdatetime_init(PyObject *module)
-{
-    Dprintf("psycopgmodule: initializing mx.DateTime module");
-
-#ifdef HAVE_MXDATETIME
-    Py_TYPE(&mxdatetimeType) = &PyType_Type;
-    if (0 > PyType_Ready(&mxdatetimeType)) { return -1; }
-
-    if (mxDateTime_ImportModuleAndAPI()) {
-        Dprintf("psycopgmodule: mx.DateTime module import failed");
-        PyErr_Clear();
-
-        /* only fail if the mx typacaster should have been the default */
-#ifdef PSYCOPG_DEFAULT_MXDATETIME
-        PyErr_SetString(PyExc_ImportError,
-            "can't import mx.DateTime module (requested as default adapter)");
-        return -1;
-#endif
-    }
-
-    /* If we can't find mx.DateTime objects at runtime,
-     * remove them from the module (and, as consequence, from the adapters). */
-    if (0 != psyco_adapter_mxdatetime_init()) {
-        PyObject *dict;
-        if (!(dict = PyModule_GetDict(module))) { return -1; }
-        if (0 > PyDict_DelItemString(dict, "DateFromMx")) { return -1; }
-        if (0 > PyDict_DelItemString(dict, "TimeFromMx")) { return -1; }
-        if (0 > PyDict_DelItemString(dict, "TimestampFromMx")) { return -1; }
-        if (0 > PyDict_DelItemString(dict, "IntervalFromMx")) { return -1; }
-    }
-#endif
-    return 0;
-}
-
 /** method table and module initialization **/
 
 static PyMethodDef psycopgMethods[] = {
@@ -1035,18 +971,6 @@ static PyMethodDef psycopgMethods[] = {
      METH_VARARGS, psyco_TimestampFromPy_doc},
     {"IntervalFromPy",  (PyCFunction)psyco_IntervalFromPy,
      METH_VARARGS, psyco_IntervalFromPy_doc},
-
-#ifdef HAVE_MXDATETIME
-    /* to be deleted if not found at import time */
-    {"DateFromMx",  (PyCFunction)psyco_DateFromMx,
-     METH_VARARGS, psyco_DateFromMx_doc},
-    {"TimeFromMx",  (PyCFunction)psyco_TimeFromMx,
-     METH_VARARGS, psyco_TimeFromMx_doc},
-    {"TimestampFromMx",  (PyCFunction)psyco_TimestampFromMx,
-     METH_VARARGS, psyco_TimestampFromMx_doc},
-    {"IntervalFromMx",  (PyCFunction)psyco_IntervalFromMx,
-     METH_VARARGS, psyco_IntervalFromMx_doc},
-#endif
 
     {"set_wait_callback",  (PyCFunction)psyco_set_wait_callback,
      METH_O, psyco_set_wait_callback_doc},
@@ -1114,7 +1038,6 @@ INIT_MODULE(_psycopg)(void)
     if (0 > add_module_constants(module)) { goto exit; }
     if (0 > add_module_types(module)) { goto exit; }
     if (0 > datetime_init()) { goto exit; }
-    if (0 > mxdatetime_init(module)) { goto exit; }
     if (0 > encodings_init(module)) { goto exit; }
     if (0 > typecast_init(module)) { goto exit; }
     if (0 > adapters_init(module)) { goto exit; }

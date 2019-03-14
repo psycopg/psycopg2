@@ -453,13 +453,6 @@ deal with Python objects adaptation:
 
         Specialized adapters for Python datetime objects.
 
-.. class:: DateFromMx
-           TimeFromMx
-           TimestampFromMx
-           IntervalFromMx
-
-        Specialized adapters for `mx.DateTime`_ objects.
-
 .. data:: adapters
 
     Dictionary of the currently registered object adapters.  Use
@@ -1004,25 +997,11 @@ from the database.  See :ref:`unicode-handling` for details.
     Typecasters to convert time-related data types to Python `!datetime`
     objects.
 
-.. data:: MXDATE
-          MXDATETIME
-          MXDATETIMETZ
-          MXINTERVAL
-          MXTIME
-          MXDATEARRAY
-          MXDATETIMEARRAY
-          MXDATETIMETZARRAY
-          MXINTERVALARRAY
-          MXTIMEARRAY
-
-    Typecasters to convert time-related data types to `mx.DateTime`_ objects.
-    Only available if Psycopg was compiled with `!mx` support.
-
 .. versionchanged:: 2.2
-        previously the `DECIMAL` typecaster and the specific time-related
-        typecasters (`!PY*` and `!MX*`) were not exposed by the `extensions`
-        module. In older versions they can be imported from the implementation
-        module `!psycopg2._psycopg`.
+        previously the `DECIMAL` typecaster and the time-related `!PY*`
+        typecasters were not exposed by the `extensions` module. In older
+        versions they can be imported from the implementation module
+        `!psycopg2._psycopg`.
 
 .. versionadded:: 2.7.2
     the `!*DATETIMETZ*` objects.
