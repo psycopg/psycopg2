@@ -22,18 +22,24 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-import re
-import os
-import sys
-import time
 import ctypes
-import threading
+import gc
+import os
+import re
 import subprocess as sp
+import sys
+import threading
+import time
+from collections import deque
 from operator import attrgetter
+from weakref import ref
 
 import psycopg2
 import psycopg2.errorcodes
 from psycopg2 import extensions as ext
+from psycopg2 import ProgrammingError
+from psycopg2.extensions import Xid
+from psycopg2.extras import RealDictConnection
 
 from .testutils import (
     unittest, skip_if_no_superuser, skip_before_postgres,
@@ -149,8 +155,6 @@ class ConnectionTests(ConnectingTestCase):
 
     @slow
     def test_notices_deque(self):
-        from collections import deque
-
         conn = self.conn
         self.conn.notices = deque()
         cur = conn.cursor()
@@ -255,8 +259,6 @@ class ConnectionTests(ConnectingTestCase):
         conn.close()
 
     def test_weakref(self):
-        from weakref import ref
-        import gc
         conn = psycopg2.connect(dsn)
         w = ref(conn)
         conn.close()
@@ -362,8 +364,6 @@ class ConnectionTests(ConnectingTestCase):
 
 class ParseDsnTestCase(ConnectingTestCase):
     def test_parse_dsn(self):
-        from psycopg2 import ProgrammingError
-
         self.assertEqual(
             ext.parse_dsn('dbname=test user=tester password=secret'),
             dict(user='tester', password='secret', dbname='test'),
@@ -1128,16 +1128,12 @@ class ConnectionTwoPhaseTests(ConnectingTestCase):
             cnn.tpc_rollback(xid)
 
     def test_xid_construction(self):
-        from psycopg2.extensions import Xid
-
         x1 = Xid(74, 'foo', 'bar')
         self.assertEqual(74, x1.format_id)
         self.assertEqual('foo', x1.gtrid)
         self.assertEqual('bar', x1.bqual)
 
     def test_xid_from_string(self):
-        from psycopg2.extensions import Xid
-
         x2 = Xid.from_string('42_Z3RyaWQ=_YnF1YWw=')
         self.assertEqual(42, x2.format_id)
         self.assertEqual('gtrid', x2.gtrid)
@@ -1149,8 +1145,6 @@ class ConnectionTwoPhaseTests(ConnectingTestCase):
         self.assertEqual(None, x3.bqual)
 
     def test_xid_to_string(self):
-        from psycopg2.extensions import Xid
-
         x1 = Xid.from_string('42_Z3RyaWQ=_YnF1YWw=')
         self.assertEqual(str(x1), '42_Z3RyaWQ=_YnF1YWw=')
 
@@ -1190,7 +1184,6 @@ class ConnectionTwoPhaseTests(ConnectingTestCase):
         self.assertRaises(psycopg2.ProgrammingError, cnn.cancel)
 
     def test_tpc_recover_non_dbapi_connection(self):
-        from psycopg2.extras import RealDictConnection
         cnn = self.connect(connection_factory=RealDictConnection)
         cnn.tpc_begin('dict-connection')
         cnn.tpc_prepare()

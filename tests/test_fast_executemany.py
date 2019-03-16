@@ -22,6 +22,7 @@ import unittest
 import psycopg2
 import psycopg2.extras
 import psycopg2.extensions as ext
+from psycopg2 import sql
 
 
 class TestPaginate(unittest.TestCase):
@@ -84,7 +85,6 @@ class TestExecuteBatch(FastExecuteTestMixin, testutils.ConnectingTestCase):
         self.assertEqual(cur.fetchall(), [(i, i * 10) for i in range(1000)])
 
     def test_composed(self):
-        from psycopg2 import sql
         cur = self.conn.cursor()
         psycopg2.extras.execute_batch(cur,
             sql.SQL("insert into {0} (id, val) values (%s, %s)")
@@ -181,7 +181,6 @@ class TestExecuteValues(FastExecuteTestMixin, testutils.ConnectingTestCase):
         self.assertEqual(cur.fetchall(), [(i, i * 10) for i in range(1000)])
 
     def test_composed(self):
-        from psycopg2 import sql
         cur = self.conn.cursor()
         psycopg2.extras.execute_values(cur,
             sql.SQL("insert into {0} (id, val) values %s")

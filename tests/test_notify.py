@@ -23,9 +23,11 @@
 # License for more details.
 
 import unittest
+from collections import deque
 
 import psycopg2
 from psycopg2 import extensions
+from psycopg2.extensions import Notify
 from .testutils import ConnectingTestCase, slow
 from .testconfig import dsn
 
@@ -163,7 +165,6 @@ conn.close()
 
     @slow
     def test_notify_deque(self):
-        from collections import deque
         self.autocommit(self.conn)
         self.conn.notifies = deque()
         self.listen('foo')
@@ -209,14 +210,12 @@ conn.close()
                 self.assertEqual((n1 != n2), (d1 != d2))
 
     def test_compare_tuple(self):
-        from psycopg2.extensions import Notify
         self.assertEqual((10, 'foo'), Notify(10, 'foo'))
         self.assertEqual((10, 'foo'), Notify(10, 'foo', 'bar'))
         self.assertNotEqual((10, 'foo'), Notify(20, 'foo'))
         self.assertNotEqual((10, 'foo'), Notify(10, 'bar'))
 
     def test_hash(self):
-        from psycopg2.extensions import Notify
         self.assertEqual(hash((10, 'foo')), hash(Notify(10, 'foo')))
         self.assertNotEqual(hash(Notify(10, 'foo', 'bar')),
             hash(Notify(10, 'foo')))

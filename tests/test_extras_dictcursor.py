@@ -16,10 +16,14 @@
 
 import time
 import pickle
-from datetime import timedelta
-import psycopg2
-import psycopg2.extras
 import unittest
+from datetime import timedelta
+
+import psycopg2
+from psycopg2.compat import lru_cache
+import psycopg2.extras
+from psycopg2.extras import NamedTupleConnection, NamedTupleCursor
+
 from .testutils import ConnectingTestCase, skip_before_postgres, \
     skip_before_python, skip_from_python
 
@@ -358,7 +362,6 @@ class ExtrasDictCursorRealTests(_DictCursorBase):
 class NamedTupleCursorTest(ConnectingTestCase):
     def setUp(self):
         ConnectingTestCase.setUp(self)
-        from psycopg2.extras import NamedTupleConnection
 
         self.conn = self.connect(connection_factory=NamedTupleConnection)
         curs = self.conn.cursor()
@@ -495,7 +498,6 @@ class NamedTupleCursorTest(ConnectingTestCase):
 
     def test_minimal_generation(self):
         # Instrument the class to verify it gets called the minimum number of times.
-        from psycopg2.extras import NamedTupleCursor
         f_orig = NamedTupleCursor._make_nt
         calls = [0]
 
@@ -591,9 +593,6 @@ class NamedTupleCursorTest(ConnectingTestCase):
         self.assert_(type(r1) is not type(r2))
 
     def test_max_cache(self):
-        from psycopg2.extras import NamedTupleCursor
-        from psycopg2.compat import lru_cache
-
         old_func = NamedTupleCursor._cached_make_nt
         NamedTupleCursor._cached_make_nt = \
             lru_cache(8)(NamedTupleCursor._do_make_nt)

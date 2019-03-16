@@ -23,7 +23,10 @@
 # License for more details.
 
 import math
+from datetime import date, datetime, time, timedelta
+
 import psycopg2
+import psycopg2.tz
 from psycopg2.tz import FixedOffsetTimezone, ZERO
 import unittest
 from .testutils import ConnectingTestCase, skip_before_postgres
@@ -130,7 +133,6 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         self.assertEqual(value.microsecond, 123456)
 
     def check_time_tz(self, str_offset, offset):
-        from datetime import time, timedelta
         base = time(13, 30, 29)
         base_str = '13:30:29'
 
@@ -161,7 +163,6 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         self.check_time_tz("-01:15:59", -60 * (60 + 16))
 
     def check_datetime_tz(self, str_offset, offset):
-        from datetime import datetime, timedelta
         base = datetime(2007, 1, 1, 13, 30, 29)
         base_str = '2007-01-01 13:30:29'
 
@@ -229,25 +230,21 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         self.assertEqual(str(value), '9999-12-31')
 
     def test_adapt_date(self):
-        from datetime import date
         value = self.execute('select (%s)::date::text',
                              [date(2007, 1, 1)])
         self.assertEqual(value, '2007-01-01')
 
     def test_adapt_time(self):
-        from datetime import time
         value = self.execute('select (%s)::time::text',
                              [time(13, 30, 29)])
         self.assertEqual(value, '13:30:29')
 
     def test_adapt_datetime(self):
-        from datetime import datetime
         value = self.execute('select (%s)::timestamp::text',
                              [datetime(2007, 1, 1, 13, 30, 29)])
         self.assertEqual(value, '2007-01-01 13:30:29')
 
     def test_adapt_timedelta(self):
-        from datetime import timedelta
         value = self.execute('select extract(epoch from (%s)::interval)',
                              [timedelta(days=42, seconds=45296,
                                         microseconds=123456)])
@@ -256,7 +253,6 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         self.assertEqual(int(round((value - seconds) * 1000000)), 123456)
 
     def test_adapt_negative_timedelta(self):
-        from datetime import timedelta
         value = self.execute('select extract(epoch from (%s)::interval)',
                              [timedelta(days=-42, seconds=45296,
                                         microseconds=123456)])
@@ -275,17 +271,13 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         self.assertEqual(type(o1[0]), type(o2[0]))
 
     def test_type_roundtrip_date(self):
-        from datetime import date
         self._test_type_roundtrip(date(2010, 5, 3))
 
     def test_type_roundtrip_datetime(self):
-        from datetime import datetime
         dt = self._test_type_roundtrip(datetime(2010, 5, 3, 10, 20, 30))
         self.assertEqual(None, dt.tzinfo)
 
     def test_type_roundtrip_datetimetz(self):
-        from datetime import datetime
-        import psycopg2.tz
         tz = psycopg2.tz.FixedOffsetTimezone(8 * 60)
         dt1 = datetime(2010, 5, 3, 10, 20, 30, tzinfo=tz)
         dt2 = self._test_type_roundtrip(dt1)
@@ -293,13 +285,10 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         self.assertEqual(dt1, dt2)
 
     def test_type_roundtrip_time(self):
-        from datetime import time
         tm = self._test_type_roundtrip(time(10, 20, 30))
         self.assertEqual(None, tm.tzinfo)
 
     def test_type_roundtrip_timetz(self):
-        from datetime import time
-        import psycopg2.tz
         tz = psycopg2.tz.FixedOffsetTimezone(8 * 60)
         tm1 = time(10, 20, 30, tzinfo=tz)
         tm2 = self._test_type_roundtrip(tm1)
@@ -307,34 +296,26 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         self.assertEqual(tm1, tm2)
 
     def test_type_roundtrip_interval(self):
-        from datetime import timedelta
         self._test_type_roundtrip(timedelta(seconds=30))
 
     def test_type_roundtrip_date_array(self):
-        from datetime import date
         self._test_type_roundtrip_array(date(2010, 5, 3))
 
     def test_type_roundtrip_datetime_array(self):
-        from datetime import datetime
         self._test_type_roundtrip_array(datetime(2010, 5, 3, 10, 20, 30))
 
     def test_type_roundtrip_datetimetz_array(self):
-        from datetime import datetime
         self._test_type_roundtrip_array(
             datetime(2010, 5, 3, 10, 20, 30, tzinfo=FixedOffsetTimezone(0)))
 
     def test_type_roundtrip_time_array(self):
-        from datetime import time
         self._test_type_roundtrip_array(time(10, 20, 30))
 
     def test_type_roundtrip_interval_array(self):
-        from datetime import timedelta
         self._test_type_roundtrip_array(timedelta(seconds=30))
 
     @skip_before_postgres(8, 1)
     def test_time_24(self):
-        from datetime import time
-
         t = self.execute("select '24:00'::time;")
         self.assertEqual(t, time(0, 0))
 
@@ -399,8 +380,6 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         self.assertRaises(OverflowError, f, '00:00:00.100000000000000000')
 
     def test_adapt_infinity_tz(self):
-        from datetime import datetime
-
         t = self.execute("select 'infinity'::timestamp")
         self.assert_(t.tzinfo is None)
         self.assert_(t > datetime(4000, 1, 1))
@@ -425,7 +404,6 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
                 psycopg2.STRING.values, 'WAT', psycopg2.extensions.INTERVAL),
             cur)
 
-        from datetime import timedelta
         for s, v in [
             ('0', timedelta(0)),
             ('1', timedelta(microseconds=1)),
@@ -629,20 +607,17 @@ class FromTicksTestCase(unittest.TestCase):
     # bug "TimestampFromTicks() throws ValueError (2-2.0.14)"
     # reported by Jozsef Szalay on 2010-05-06
     def test_timestamp_value_error_sec_59_99(self):
-        from datetime import datetime
         s = psycopg2.TimestampFromTicks(1273173119.99992)
         self.assertEqual(s.adapted,
             datetime(2010, 5, 6, 14, 11, 59, 999920,
                 tzinfo=FixedOffsetTimezone(-5 * 60)))
 
     def test_date_value_error_sec_59_99(self):
-        from datetime import date
         s = psycopg2.DateFromTicks(1273173119.99992)
         # The returned date is local
         self.assert_(s.adapted in [date(2010, 5, 6), date(2010, 5, 7)])
 
     def test_time_value_error_sec_59_99(self):
-        from datetime import time
         s = psycopg2.TimeFromTicks(1273173119.99992)
         self.assertEqual(s.adapted.replace(hour=0),
             time(0, 11, 59, 999920))

@@ -26,6 +26,9 @@ import unittest
 from .testutils import ConnectingTestCase
 
 import psycopg2
+from psycopg2 import errors
+from psycopg2._psycopg import sqlstate_errors
+from psycopg2.errors import UndefinedTable
 
 
 class ErrorsTests(ConnectingTestCase):
@@ -36,14 +39,12 @@ class ErrorsTests(ConnectingTestCase):
         except psycopg2.Error as exc:
             e = exc
 
-        from psycopg2.errors import UndefinedTable
         self.assert_(isinstance(e, UndefinedTable), type(e))
         self.assert_(isinstance(e, self.conn.ProgrammingError))
 
     def test_exception_class_fallback(self):
         cur = self.conn.cursor()
 
-        from psycopg2._psycopg import sqlstate_errors
         x = sqlstate_errors.pop('42P01')
         try:
             cur.execute("select * from nonexist")
@@ -55,17 +56,12 @@ class ErrorsTests(ConnectingTestCase):
         self.assertEqual(type(e), self.conn.ProgrammingError)
 
     def test_lookup(self):
-        from psycopg2 import errors
-
         self.assertIs(errors.lookup('42P01'), errors.UndefinedTable)
 
         with self.assertRaises(KeyError):
             errors.lookup('XXXXX')
 
     def test_has_base_exceptions(self):
-        import psycopg2
-        from psycopg2 import errors
-
         excs = []
         for n in dir(psycopg2):
             obj = getattr(psycopg2, n)

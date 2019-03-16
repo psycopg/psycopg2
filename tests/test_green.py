@@ -22,10 +22,12 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
+import select
 import unittest
 import psycopg2
 import psycopg2.extensions
 import psycopg2.extras
+from psycopg2.extensions import POLL_OK, POLL_READ, POLL_WRITE
 
 from .testutils import ConnectingTestCase, skip_before_postgres, slow
 
@@ -131,9 +133,6 @@ class CallbackErrorTestCase(ConnectingTestCase):
 
     def crappy_callback(self, conn):
         """green callback failing after `self.to_error` time it is called"""
-        import select
-        from psycopg2.extensions import POLL_OK, POLL_READ, POLL_WRITE
-
         while True:
             if self.to_error is not None:
                 self.to_error -= 1

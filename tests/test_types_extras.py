@@ -29,6 +29,13 @@ from .testutils import (skip_if_no_uuid, skip_before_postgres,
 import psycopg2
 import psycopg2.extras
 import psycopg2.extensions as ext
+from psycopg2._json import _get_json_oids
+from psycopg2.extras import (
+    CompositeCaster, DateRange, DateTimeRange, DateTimeTZRange, HstoreAdapter,
+    Inet, Json, NumericRange, Range, RealDictConnection, json,
+    register_composite, register_hstore, register_range,
+)
+from psycopg2.tz import FixedOffsetTimezone
 
 
 class TypesExtrasTests(ConnectingTestCase):
@@ -94,7 +101,6 @@ class TypesExtrasTests(ConnectingTestCase):
         self.failUnless(s is None)
 
     def test_inet_conform(self):
-        from psycopg2.extras import Inet
         i = Inet("192.168.1.0/24")
         a = psycopg2.extensions.adapt(i)
         a.prepare(self.conn)
@@ -126,7 +132,6 @@ class TypesExtrasTests(ConnectingTestCase):
 def skip_if_no_hstore(f):
     @wraps(f)
     def skip_if_no_hstore_(self):
-        from psycopg2.extras import HstoreAdapter
         oids = HstoreAdapter.get_oids(self.conn)
         if oids is None or not oids[0]:
             return self.skipTest("hstore not available in test database")
@@ -139,8 +144,6 @@ class HstoreTestCase(ConnectingTestCase):
     def test_adapt_8(self):
         if self.conn.info.server_version >= 90000:
             return self.skipTest("skipping dict adaptation with PG pre-9 syntax")
-
-        from psycopg2.extras import HstoreAdapter
 
         o = {'a': '1', 'b': "'", 'c': None}
         if self.conn.encoding == 'UTF8':
@@ -165,8 +168,6 @@ class HstoreTestCase(ConnectingTestCase):
     def test_adapt_9(self):
         if self.conn.info.server_version < 90000:
             return self.skipTest("skipping dict adaptation with PG 9 syntax")
-
-        from psycopg2.extras import HstoreAdapter
 
         o = {'a': '1', 'b': "'", 'c': None}
         if self.conn.encoding == 'UTF8':
@@ -197,8 +198,6 @@ class HstoreTestCase(ConnectingTestCase):
             self.assertQuotedEqual(ii[3][1], b"'" + encc + b"'")
 
     def test_parse(self):
-        from psycopg2.extras import HstoreAdapter
-
         def ok(s, d):
             self.assertEqual(HstoreAdapter.parse(s, None), d)
 
@@ -228,8 +227,6 @@ class HstoreTestCase(ConnectingTestCase):
 
     @skip_if_no_hstore
     def test_register_conn(self):
-        from psycopg2.extras import register_hstore
-
         register_hstore(self.conn)
         cur = self.conn.cursor()
         cur.execute("select null::hstore, ''::hstore, 'a => b'::hstore")
@@ -240,8 +237,6 @@ class HstoreTestCase(ConnectingTestCase):
 
     @skip_if_no_hstore
     def test_register_curs(self):
-        from psycopg2.extras import register_hstore
-
         cur = self.conn.cursor()
         register_hstore(cur)
         cur.execute("select null::hstore, ''::hstore, 'a => b'::hstore")
@@ -253,8 +248,6 @@ class HstoreTestCase(ConnectingTestCase):
     @skip_if_no_hstore
     @skip_from_python(3)
     def test_register_unicode(self):
-        from psycopg2.extras import register_hstore
-
         register_hstore(self.conn, unicode=True)
         cur = self.conn.cursor()
         cur.execute("select null::hstore, ''::hstore, 'a => b'::hstore")
@@ -267,8 +260,6 @@ class HstoreTestCase(ConnectingTestCase):
 
     @skip_if_no_hstore
     def test_register_globally(self):
-        from psycopg2.extras import register_hstore, HstoreAdapter
-
         oids = HstoreAdapter.get_oids(self.conn)
         try:
             register_hstore(self.conn, globally=True)
@@ -291,7 +282,6 @@ class HstoreTestCase(ConnectingTestCase):
 
     @skip_if_no_hstore
     def test_roundtrip(self):
-        from psycopg2.extras import register_hstore
         register_hstore(self.conn)
         cur = self.conn.cursor()
 
@@ -322,7 +312,6 @@ class HstoreTestCase(ConnectingTestCase):
     @skip_if_no_hstore
     @skip_from_python(3)
     def test_roundtrip_unicode(self):
-        from psycopg2.extras import register_hstore
         register_hstore(self.conn, unicode=True)
         cur = self.conn.cursor()
 
@@ -351,7 +340,6 @@ class HstoreTestCase(ConnectingTestCase):
 
         # Note: None as conn_or_cursor is just for testing: not public
         # interface and it may break in future.
-        from psycopg2.extras import register_hstore
         register_hstore(None, globally=True, oid=oid)
         try:
             cur.execute("select null::hstore, ''::hstore, 'a => b'::hstore")
@@ -366,7 +354,6 @@ class HstoreTestCase(ConnectingTestCase):
     @skip_if_no_hstore
     @skip_before_postgres(8, 3)
     def test_roundtrip_array(self):
-        from psycopg2.extras import register_hstore
         register_hstore(self.conn)
 
         ds = [{}, {'a': 'b', 'c': None}]
@@ -392,7 +379,6 @@ class HstoreTestCase(ConnectingTestCase):
     @skip_if_no_hstore
     @skip_before_postgres(8, 3)
     def test_array_cast(self):
-        from psycopg2.extras import register_hstore
         register_hstore(self.conn)
         cur = self.conn.cursor()
         cur.execute("select array['a=>1'::hstore, 'b=>2'::hstore];")
@@ -405,7 +391,6 @@ class HstoreTestCase(ConnectingTestCase):
         cur.execute("select 'hstore'::regtype::oid, 'hstore[]'::regtype::oid")
         oid, aoid = cur.fetchone()
 
-        from psycopg2.extras import register_hstore
         register_hstore(None, globally=True, oid=oid, array_oid=aoid)
         try:
             cur.execute("""
@@ -423,9 +408,6 @@ class HstoreTestCase(ConnectingTestCase):
 
     @skip_if_no_hstore
     def test_non_dbapi_connection(self):
-        from psycopg2.extras import RealDictConnection
-        from psycopg2.extras import register_hstore
-
         conn = self.connect(connection_factory=RealDictConnection)
         try:
             register_hstore(conn)
@@ -492,8 +474,6 @@ class AdaptTypeTestCase(ConnectingTestCase):
             ext.register_adapter(type(None), orig_adapter)
 
     def test_tokenization(self):
-        from psycopg2.extras import CompositeCaster
-
         def ok(s, v):
             self.assertEqual(CompositeCaster.tokenize(s), v)
 
@@ -690,7 +670,6 @@ class AdaptTypeTestCase(ConnectingTestCase):
     @skip_if_no_composite
     def test_wrong_schema(self):
         oid = self._create_type("type_ii", [("a", "integer"), ("b", "integer")])
-        from psycopg2.extras import CompositeCaster
         c = CompositeCaster('type_ii', oid, [('a', 23), ('b', 23), ('c', 23)])
         curs = self.conn.cursor()
         psycopg2.extensions.register_type(c.typecaster, curs)
@@ -745,8 +724,6 @@ class AdaptTypeTestCase(ConnectingTestCase):
 
     @skip_if_no_composite
     def test_non_dbapi_connection(self):
-        from psycopg2.extras import RealDictConnection
-        from psycopg2.extras import register_composite
         self._create_type("type_ii", [("a", "integer"), ("b", "integer")])
 
         conn = self.connect(connection_factory=RealDictConnection)
@@ -771,8 +748,6 @@ class AdaptTypeTestCase(ConnectingTestCase):
     def test_subclass(self):
         oid = self._create_type("type_isd",
             [('anint', 'integer'), ('astring', 'text'), ('adate', 'date')])
-
-        from psycopg2.extras import register_composite, CompositeCaster
 
         class DictComposite(CompositeCaster):
             def make(self, values):
@@ -832,8 +807,6 @@ def skip_if_no_json_type(f):
 
 class JsonTestCase(ConnectingTestCase):
     def test_adapt(self):
-        from psycopg2.extras import json, Json
-
         objs = [None, "te'xt", 123, 123.45,
             u'\xe0\u20ac', ['a', 100], {'a': 100}]
 
@@ -843,8 +816,6 @@ class JsonTestCase(ConnectingTestCase):
                 psycopg2.extensions.QuotedString(json.dumps(obj)).getquoted())
 
     def test_adapt_dumps(self):
-        from psycopg2.extras import json, Json
-
         class DecimalEncoder(json.JSONEncoder):
             def default(self, obj):
                 if isinstance(obj, Decimal):
@@ -860,8 +831,6 @@ class JsonTestCase(ConnectingTestCase):
             b"'123.45'")
 
     def test_adapt_subclass(self):
-        from psycopg2.extras import json, Json
-
         class DecimalEncoder(json.JSONEncoder):
             def default(self, obj):
                 if isinstance(obj, Decimal):
@@ -877,7 +846,6 @@ class JsonTestCase(ConnectingTestCase):
         self.assertQuotedEqual(curs.mogrify("%s", (MyJson(obj),)), b"'123.45'")
 
     def test_register_on_dict(self):
-        from psycopg2.extras import Json
         psycopg2.extensions.register_adapter(dict, Json)
 
         try:
@@ -953,7 +921,6 @@ class JsonTestCase(ConnectingTestCase):
 
     @skip_if_no_json_type
     def test_no_conn_curs(self):
-        from psycopg2._json import _get_json_oids
         oid, array_oid = _get_json_oids(self.conn)
 
         old = psycopg2.extensions.string_types.get(114)
@@ -1141,7 +1108,6 @@ class JsonbTestCase(ConnectingTestCase):
 
 class RangeTestCase(unittest.TestCase):
     def test_noparam(self):
-        from psycopg2.extras import Range
         r = Range()
 
         self.assert_(not r.isempty)
@@ -1153,7 +1119,6 @@ class RangeTestCase(unittest.TestCase):
         self.assert_(not r.upper_inc)
 
     def test_empty(self):
-        from psycopg2.extras import Range
         r = Range(empty=True)
 
         self.assert_(r.isempty)
@@ -1165,7 +1130,6 @@ class RangeTestCase(unittest.TestCase):
         self.assert_(not r.upper_inc)
 
     def test_nobounds(self):
-        from psycopg2.extras import Range
         r = Range(10, 20)
         self.assertEqual(r.lower, 10)
         self.assertEqual(r.upper, 20)
@@ -1176,7 +1140,6 @@ class RangeTestCase(unittest.TestCase):
         self.assert_(not r.upper_inc)
 
     def test_bounds(self):
-        from psycopg2.extras import Range
         for bounds, lower_inc, upper_inc in [
                 ('[)', True, False),
                 ('(]', False, True),
@@ -1192,7 +1155,6 @@ class RangeTestCase(unittest.TestCase):
             self.assertEqual(r.upper_inc, upper_inc)
 
     def test_keywords(self):
-        from psycopg2.extras import Range
         r = Range(upper=20)
         self.assertEqual(r.lower, None)
         self.assertEqual(r.upper, 20)
@@ -1212,12 +1174,10 @@ class RangeTestCase(unittest.TestCase):
         self.assert_(not r.upper_inc)
 
     def test_bad_bounds(self):
-        from psycopg2.extras import Range
         self.assertRaises(ValueError, Range, bounds='(')
         self.assertRaises(ValueError, Range, bounds='[}')
 
     def test_in(self):
-        from psycopg2.extras import Range
         r = Range(empty=True)
         self.assert_(10 not in r)
 
@@ -1269,7 +1229,6 @@ class RangeTestCase(unittest.TestCase):
         self.assert_(21 not in r)
 
     def test_nonzero(self):
-        from psycopg2.extras import Range
         self.assert_(Range())
         self.assert_(Range(10, 20))
         self.assert_(not Range(empty=True))
@@ -1279,7 +1238,6 @@ class RangeTestCase(unittest.TestCase):
             self.assert_(r1 == r2)
             self.assert_(hash(r1) == hash(r2))
 
-        from psycopg2.extras import Range
         assert_equal(Range(empty=True), Range(empty=True))
         assert_equal(Range(), Range())
         assert_equal(Range(10, None), Range(10, None))
@@ -1296,12 +1254,9 @@ class RangeTestCase(unittest.TestCase):
         assert_not_equal(Range(10, 20, '[)'), Range(10, 20, '[]'))
 
     def test_eq_wrong_type(self):
-        from psycopg2.extras import Range
         self.assertNotEqual(Range(10, 20), ())
 
     def test_eq_subclass(self):
-        from psycopg2.extras import Range, NumericRange
-
         class IntRange(NumericRange):
             pass
 
@@ -1316,7 +1271,6 @@ class RangeTestCase(unittest.TestCase):
     # and consistent.
 
     def test_lt_ordering(self):
-        from psycopg2.extras import Range
         self.assert_(Range(empty=True) < Range(0, 4))
         self.assert_(not Range(1, 2) < Range(0, 4))
         self.assert_(Range(0, 4) < Range(1, 2))
@@ -1332,7 +1286,6 @@ class RangeTestCase(unittest.TestCase):
             self.assert_(not Range(1, 2) < 1)
 
     def test_gt_ordering(self):
-        from psycopg2.extras import Range
         self.assert_(not Range(empty=True) > Range(0, 4))
         self.assert_(Range(1, 2) > Range(0, 4))
         self.assert_(not Range(0, 4) > Range(1, 2))
@@ -1348,7 +1301,6 @@ class RangeTestCase(unittest.TestCase):
             self.assert_(Range(1, 2) > 1)
 
     def test_le_ordering(self):
-        from psycopg2.extras import Range
         self.assert_(Range(empty=True) <= Range(0, 4))
         self.assert_(not Range(1, 2) <= Range(0, 4))
         self.assert_(Range(0, 4) <= Range(1, 2))
@@ -1364,7 +1316,6 @@ class RangeTestCase(unittest.TestCase):
             self.assert_(not Range(1, 2) <= 1)
 
     def test_ge_ordering(self):
-        from psycopg2.extras import Range
         self.assert_(not Range(empty=True) >= Range(0, 4))
         self.assert_(Range(1, 2) >= Range(0, 4))
         self.assert_(not Range(0, 4) >= Range(1, 2))
@@ -1380,8 +1331,6 @@ class RangeTestCase(unittest.TestCase):
             self.assert_(Range(1, 2) >= 1)
 
     def test_pickling(self):
-        from psycopg2.extras import Range
-
         r = Range(0, 4)
         self.assertEqual(loads(dumps(r)), r)
 
@@ -1392,7 +1341,6 @@ class RangeTestCase(unittest.TestCase):
         Using ``repr`` for all string conversions can be very unreadable for
         longer types like ``DateTimeTZRange``.
         '''
-        from psycopg2.extras import Range
 
         # Using the "u" prefix to make sure we have the proper return types in
         # Python2
@@ -1420,9 +1368,7 @@ class RangeTestCase(unittest.TestCase):
         Date-Time ranges should return a human-readable string as well on
         string conversion.
         '''
-        from psycopg2.extras import DateTimeTZRange
-        from datetime import datetime
-        from psycopg2.tz import FixedOffsetTimezone
+
         converter = unicode if sys.version_info < (3, 0) else str
         tz = FixedOffsetTimezone(-5 * 60, "EST")
         r = DateTimeTZRange(datetime(2010, 1, 1, tzinfo=tz),
@@ -1446,7 +1392,6 @@ class RangeCasterTestCase(ConnectingTestCase):
             self.assertEqual(r, None)
 
     def test_cast_empty(self):
-        from psycopg2.extras import Range
         cur = self.conn.cursor()
         for type in self.builtin_ranges:
             cur.execute("select 'empty'::%s" % type)
@@ -1455,7 +1400,6 @@ class RangeCasterTestCase(ConnectingTestCase):
             self.assert_(r.isempty)
 
     def test_cast_inf(self):
-        from psycopg2.extras import Range
         cur = self.conn.cursor()
         for type in self.builtin_ranges:
             cur.execute("select '(,)'::%s" % type)
@@ -1466,7 +1410,6 @@ class RangeCasterTestCase(ConnectingTestCase):
             self.assert_(r.upper_inf)
 
     def test_cast_numbers(self):
-        from psycopg2.extras import NumericRange
         cur = self.conn.cursor()
         for type in ('int4range', 'int8range'):
             cur.execute("select '(10,20)'::%s" % type)
@@ -1492,7 +1435,6 @@ class RangeCasterTestCase(ConnectingTestCase):
         self.assert_(not r.upper_inc)
 
     def test_cast_date(self):
-        from psycopg2.extras import DateRange
         cur = self.conn.cursor()
         cur.execute("select '(2000-01-01,2012-12-31)'::daterange")
         r = cur.fetchone()[0]
@@ -1506,7 +1448,6 @@ class RangeCasterTestCase(ConnectingTestCase):
         self.assert_(not r.upper_inc)
 
     def test_cast_timestamp(self):
-        from psycopg2.extras import DateTimeRange
         cur = self.conn.cursor()
         ts1 = datetime(2000, 1, 1)
         ts2 = datetime(2000, 12, 31, 23, 59, 59, 999)
@@ -1522,8 +1463,6 @@ class RangeCasterTestCase(ConnectingTestCase):
         self.assert_(not r.upper_inc)
 
     def test_cast_timestamptz(self):
-        from psycopg2.extras import DateTimeTZRange
-        from psycopg2.tz import FixedOffsetTimezone
         cur = self.conn.cursor()
         ts1 = datetime(2000, 1, 1, tzinfo=FixedOffsetTimezone(600))
         ts2 = datetime(2000, 12, 31, 23, 59, 59, 999,
@@ -1540,7 +1479,6 @@ class RangeCasterTestCase(ConnectingTestCase):
         self.assert_(r.upper_inc)
 
     def test_adapt_number_range(self):
-        from psycopg2.extras import NumericRange
         cur = self.conn.cursor()
 
         r = NumericRange(empty=True)
@@ -1568,7 +1506,6 @@ class RangeCasterTestCase(ConnectingTestCase):
         self.assert_(r1.upper_inc)
 
     def test_adapt_numeric_range(self):
-        from psycopg2.extras import NumericRange
         cur = self.conn.cursor()
 
         r = NumericRange(empty=True)
@@ -1596,8 +1533,6 @@ class RangeCasterTestCase(ConnectingTestCase):
         self.assert_(r1.upper_inc)
 
     def test_adapt_date_range(self):
-        from psycopg2.extras import DateRange, DateTimeRange, DateTimeTZRange
-        from psycopg2.tz import FixedOffsetTimezone
         cur = self.conn.cursor()
 
         d1 = date(2012, 1, 1)
@@ -1630,7 +1565,6 @@ class RangeCasterTestCase(ConnectingTestCase):
         self.assert_(r1.upper_inc)
 
     def test_register_range_adapter(self):
-        from psycopg2.extras import Range, register_range
         cur = self.conn.cursor()
         cur.execute("create type textrange as range (subtype=text)")
         rc = register_range('textrange', 'TextRange', cur)
@@ -1660,7 +1594,6 @@ class RangeCasterTestCase(ConnectingTestCase):
         del ext.adapters[rc.range, ext.ISQLQuote]
 
     def test_range_escaping(self):
-        from psycopg2.extras import register_range
         cur = self.conn.cursor()
         cur.execute("create type textrange as range (subtype=text)")
         rc = register_range('textrange', 'TextRange', cur)
@@ -1714,7 +1647,6 @@ class RangeCasterTestCase(ConnectingTestCase):
         del ext.adapters[TextRange, ext.ISQLQuote]
 
     def test_range_not_found(self):
-        from psycopg2.extras import register_range
         cur = self.conn.cursor()
         self.assertRaises(psycopg2.ProgrammingError,
             register_range, 'nosuchrange', 'FailRange', cur)
@@ -1728,7 +1660,6 @@ class RangeCasterTestCase(ConnectingTestCase):
         cur.execute("create type rs.r3 as range (subtype=text)")
         cur.execute("savepoint x")
 
-        from psycopg2.extras import register_range
         ra1 = register_range('r1', 'r1', cur)
         ra2 = register_range('r2', 'r2', cur)
         rars2 = register_range('rs.r2', 'r2', cur)
