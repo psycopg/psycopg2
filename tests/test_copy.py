@@ -22,6 +22,7 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
+import io
 import sys
 import string
 import unittest
@@ -142,7 +143,6 @@ class CopyTests(ConnectingTestCase):
         curs.execute('insert into tcopy values (%s, %s)',
             (42, abin))
 
-        import io
         f = io.StringIO()
         curs.copy_to(f, 'tcopy', columns=('data',))
         f.seek(0)
@@ -164,7 +164,6 @@ class CopyTests(ConnectingTestCase):
         curs.execute('insert into tcopy values (%s, %s)',
             (42, abin))
 
-        import io
         f = io.BytesIO()
         curs.copy_to(f, 'tcopy', columns=('data',))
         f.seek(0)
@@ -184,7 +183,6 @@ class CopyTests(ConnectingTestCase):
                 + list(range(160, 256))).decode('latin1')
             about = abin.replace('\\', '\\\\')
 
-        import io
         f = io.StringIO()
         f.write(about)
         f.seek(0)

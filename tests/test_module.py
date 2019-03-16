@@ -25,6 +25,7 @@
 import gc
 import os
 import sys
+import pickle
 from subprocess import Popen
 from weakref import ref
 
@@ -285,7 +286,6 @@ class ExceptionsTestCase(ConnectingTestCase):
         self.assertEqual(e.diag.severity_nonlocalized, 'ERROR')
 
     def test_pickle(self):
-        import pickle
         cur = self.conn.cursor()
         try:
             cur.execute("select * from nonexist")
@@ -300,7 +300,6 @@ class ExceptionsTestCase(ConnectingTestCase):
 
     def test_pickle_connection_error(self):
         # segfaults on psycopg 2.5.1 - see ticket #170
-        import pickle
         try:
             psycopg2.connect('dbname=nosuchdatabasemate')
         except psycopg2.Error as exc:

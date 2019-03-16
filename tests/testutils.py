@@ -32,11 +32,12 @@ import platform
 import unittest
 from functools import wraps
 from ctypes.util import find_library
-from .testconfig import dsn, repl_dsn
-from psycopg2 import ProgrammingError
+
+import psycopg2
+import psycopg2.extensions
 from psycopg2.compat import text_type
 
-from .testconfig import green
+from .testconfig import green, dsn, repl_dsn
 
 # Python 2/3 compatibility
 
@@ -119,7 +120,6 @@ class ConnectingTestCase(unittest.TestCase):
             conninfo = kwargs.pop('dsn')
         else:
             conninfo = dsn
-        import psycopg2
         conn = psycopg2.connect(conninfo, **kwargs)
         self._conns.append(conn)
         return conn
@@ -138,7 +138,6 @@ class ConnectingTestCase(unittest.TestCase):
 
         if 'dsn' not in kwargs:
             kwargs['dsn'] = repl_dsn
-        import psycopg2
         try:
             conn = self.connect(**kwargs)
             if conn.async_ == 1:
@@ -167,7 +166,6 @@ class ConnectingTestCase(unittest.TestCase):
 
     # for use with async connections only
     def wait(self, cur_or_conn):
-        import psycopg2.extensions
         pollable = cur_or_conn
         if not hasattr(pollable, 'poll'):
             pollable = cur_or_conn.connection
@@ -224,7 +222,7 @@ def decorate_all_tests(obj, *decorators):
 
 @decorate_all_tests
 def skip_if_no_uuid(f):
-    """Decorator to skip a test if uuid is not supported by Py/PG."""
+    """Decorator to skip a test if uuid is not supported by PG."""
     @wraps(f)
     def skip_if_no_uuid_(self):
         try:
@@ -251,7 +249,7 @@ def skip_if_tpc_disabled(f):
         cur = cnn.cursor()
         try:
             cur.execute("SHOW max_prepared_transactions;")
-        except ProgrammingError:
+        except psycopg2.ProgrammingError:
             return self.skipTest(
                 "server too old: two phase transactions not supported.")
         else:
@@ -309,7 +307,6 @@ def skip_after_postgres(*ver):
 
 
 def libpq_version():
-    import psycopg2
     v = psycopg2.__libpq_version__
     if v >= 90100:
         v = min(v, psycopg2.extensions.libpq_version())
@@ -375,7 +372,7 @@ def skip_if_no_superuser(f):
     def skip_if_no_superuser_(self):
         try:
             return f(self)
-        except ProgrammingError as e:
+        except psycopg2.ProgrammingError as e:
             import psycopg2.errorcodes
             if e.pgcode == psycopg2.errorcodes.INSUFFICIENT_PRIVILEGE:
                 self.skipTest("skipped because not superuser")

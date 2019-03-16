@@ -22,8 +22,10 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
+import string
 import ctypes
 import decimal
+import datetime
 import platform
 
 import sys
@@ -155,7 +157,6 @@ class TypesBasicTests(ConnectingTestCase):
 
     def testEmptyArrayRegression(self):
         # ticket #42
-        import datetime
         curs = self.conn.cursor()
         curs.execute(
             "create table array_test "
@@ -478,9 +479,6 @@ class AdaptSubclassTest(unittest.TestCase):
             del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
 
     def test_conform_subclass_precedence(self):
-
-        import psycopg2.extensions as ext
-
         class foo(tuple):
             def __conform__(self, proto):
                 return self
@@ -488,7 +486,7 @@ class AdaptSubclassTest(unittest.TestCase):
             def getquoted(self):
                 return 'bar'
 
-        self.assertEqual(ext.adapt(foo((1, 2, 3))).getquoted(), 'bar')
+        self.assertEqual(adapt(foo((1, 2, 3))).getquoted(), 'bar')
 
 
 @unittest.skipIf(
@@ -556,7 +554,6 @@ class ByteaParserTest(unittest.TestCase):
             self.assertEqual(rv, bytes(range(256)))
 
     def test_escaped_mixed(self):
-        import string
         buf = ''.join(("\\%03o" % i) for i in range(32))
         buf += string.ascii_letters
         buf += ''.join('\\' + c for c in string.ascii_letters)

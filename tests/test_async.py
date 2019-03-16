@@ -23,15 +23,15 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
+import gc
+import time
 import unittest
-from .testutils import skip_before_postgres, slow
+import warnings
 
 import psycopg2
 from psycopg2 import extensions as ext
 
-import time
-
-from .testutils import ConnectingTestCase, StringIO
+from .testutils import ConnectingTestCase, StringIO, skip_before_postgres, slow
 
 
 class PollableStub(object):
@@ -338,7 +338,6 @@ class AsyncTests(ConnectingTestCase):
         # on high load on linux: probably because the kernel has more
         # buffers ready. A warning may be useful during development,
         # but an error is bad during regression testing.
-        import warnings
         warnings.warn("sending a large query didn't trigger block on write.")
 
     def test_sync_poll(self):
@@ -427,7 +426,6 @@ class AsyncTests(ConnectingTestCase):
         self.assert_(self.conn.notices)
 
     def test_async_cursor_gone(self):
-        import gc
         cur = self.conn.cursor()
         cur.execute("select 42;")
         del cur

@@ -35,11 +35,8 @@ from operator import attrgetter
 from weakref import ref
 
 import psycopg2
-import psycopg2.errorcodes
+import psycopg2.extras
 from psycopg2 import extensions as ext
-from psycopg2 import ProgrammingError
-from psycopg2.extensions import Xid
-from psycopg2.extras import RealDictConnection
 
 from .testutils import (
     unittest, skip_if_no_superuser, skip_before_postgres,
@@ -296,7 +293,6 @@ class ConnectionTests(ConnectingTestCase):
         self.assert_(not notices, "%d notices raised" % len(notices))
 
     def test_connect_cursor_factory(self):
-        import psycopg2.extras
         conn = self.connect(cursor_factory=psycopg2.extras.DictCursor)
         cur = conn.cursor()
         cur.execute("select 1 as a")
@@ -369,7 +365,7 @@ class ParseDsnTestCase(ConnectingTestCase):
             dict(user='tester', password='secret', dbname='test'),
             "simple DSN parsed")
 
-        self.assertRaises(ProgrammingError, ext.parse_dsn,
+        self.assertRaises(psycopg2.ProgrammingError, ext.parse_dsn,
                           "dbname=test 2 user=tester password=secret")
 
         self.assertEqual(
@@ -383,7 +379,7 @@ class ParseDsnTestCase(ConnectingTestCase):
         try:
             # unterminated quote after dbname:
             ext.parse_dsn("dbname='test 2 user=tester password=secret")
-        except ProgrammingError as e:
+        except psycopg2.ProgrammingError as e:
             raised = True
             self.assertTrue(str(e).find('secret') < 0,
                             "DSN was not exposed in error message")
@@ -1124,27 +1120,27 @@ class ConnectionTwoPhaseTests(ConnectingTestCase):
             cnn.tpc_rollback(xid)
 
     def test_xid_construction(self):
-        x1 = Xid(74, 'foo', 'bar')
+        x1 = ext.Xid(74, 'foo', 'bar')
         self.assertEqual(74, x1.format_id)
         self.assertEqual('foo', x1.gtrid)
         self.assertEqual('bar', x1.bqual)
 
     def test_xid_from_string(self):
-        x2 = Xid.from_string('42_Z3RyaWQ=_YnF1YWw=')
+        x2 = ext.Xid.from_string('42_Z3RyaWQ=_YnF1YWw=')
         self.assertEqual(42, x2.format_id)
         self.assertEqual('gtrid', x2.gtrid)
         self.assertEqual('bqual', x2.bqual)
 
-        x3 = Xid.from_string('99_xxx_yyy')
+        x3 = ext.Xid.from_string('99_xxx_yyy')
         self.assertEqual(None, x3.format_id)
         self.assertEqual('99_xxx_yyy', x3.gtrid)
         self.assertEqual(None, x3.bqual)
 
     def test_xid_to_string(self):
-        x1 = Xid.from_string('42_Z3RyaWQ=_YnF1YWw=')
+        x1 = ext.Xid.from_string('42_Z3RyaWQ=_YnF1YWw=')
         self.assertEqual(str(x1), '42_Z3RyaWQ=_YnF1YWw=')
 
-        x2 = Xid.from_string('99_xxx_yyy')
+        x2 = ext.Xid.from_string('99_xxx_yyy')
         self.assertEqual(str(x2), '99_xxx_yyy')
 
     def test_xid_unicode(self):
@@ -1180,7 +1176,7 @@ class ConnectionTwoPhaseTests(ConnectingTestCase):
         self.assertRaises(psycopg2.ProgrammingError, cnn.cancel)
 
     def test_tpc_recover_non_dbapi_connection(self):
-        cnn = self.connect(connection_factory=RealDictConnection)
+        cnn = self.connect(connection_factory=psycopg2.extras.RealDictConnection)
         cnn.tpc_begin('dict-connection')
         cnn.tpc_prepare()
         cnn.reset()

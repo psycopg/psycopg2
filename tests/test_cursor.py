@@ -22,6 +22,8 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
+import gc
+import sys
 import time
 import ctypes
 import pickle
@@ -115,7 +117,6 @@ class CursorTests(ConnectingTestCase):
         # more than once from a dict.
         cur = self.conn.cursor()
         foo = (lambda x: x)('foo') * 10
-        import sys
         nref1 = sys.getrefcount(foo)
         cur.mogrify("select %(foo)s, %(foo)s, %(foo)s", {'foo': foo})
         nref2 = sys.getrefcount(foo)
@@ -168,7 +169,6 @@ class CursorTests(ConnectingTestCase):
         curs = self.conn.cursor()
         w = ref(curs)
         del curs
-        import gc
         gc.collect()
         self.assert_(w() is None)
 
