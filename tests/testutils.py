@@ -34,6 +34,7 @@ from functools import wraps
 from ctypes.util import find_library
 
 import psycopg2
+import psycopg2.errors
 import psycopg2.extensions
 from psycopg2.compat import text_type
 
@@ -372,12 +373,8 @@ def skip_if_no_superuser(f):
     def skip_if_no_superuser_(self):
         try:
             return f(self)
-        except psycopg2.ProgrammingError as e:
-            import psycopg2.errorcodes
-            if e.pgcode == psycopg2.errorcodes.INSUFFICIENT_PRIVILEGE:
-                self.skipTest("skipped because not superuser")
-            else:
-                raise
+        except psycopg2.errors.InsufficientPrivilege:
+            self.skipTest("skipped because not superuser")
 
     return skip_if_no_superuser_
 
