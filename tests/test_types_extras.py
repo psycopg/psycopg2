@@ -16,6 +16,8 @@
 
 import re
 import sys
+import json
+import uuid
 import warnings
 from decimal import Decimal
 from datetime import date, datetime
@@ -32,7 +34,7 @@ import psycopg2.extensions as ext
 from psycopg2._json import _get_json_oids
 from psycopg2.extras import (
     CompositeCaster, DateRange, DateTimeRange, DateTimeTZRange, HstoreAdapter,
-    Inet, Json, NumericRange, Range, RealDictConnection, json,
+    Inet, Json, NumericRange, Range, RealDictConnection,
     register_composite, register_hstore, register_range,
 )
 from psycopg2.tz import FixedOffsetTimezone
@@ -48,7 +50,6 @@ class TypesExtrasTests(ConnectingTestCase):
 
     @skip_if_no_uuid
     def testUUID(self):
-        import uuid
         psycopg2.extras.register_uuid()
         u = uuid.UUID('9c6d5a77-7256-457e-9461-347b4358e350')
         s = self.execute("SELECT %s AS foo", (u,))
@@ -59,7 +60,6 @@ class TypesExtrasTests(ConnectingTestCase):
 
     @skip_if_no_uuid
     def testUUIDARRAY(self):
-        import uuid
         psycopg2.extras.register_uuid()
         u = [uuid.UUID('9c6d5a77-7256-457e-9461-347b4358e350'),
              uuid.UUID('9c6d5a77-7256-457e-9461-347b4358e352')]
@@ -1019,7 +1019,6 @@ def skip_if_no_jsonb_type(f):
 class JsonbTestCase(ConnectingTestCase):
     @staticmethod
     def myloads(s):
-        import json
         rv = json.loads(s)
         rv['test'] = 1
         return rv

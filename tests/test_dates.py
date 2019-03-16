@@ -23,13 +23,19 @@
 # License for more details.
 
 import math
+import pickle
 from datetime import date, datetime, time, timedelta
 
 import psycopg2
-import psycopg2.tz
 from psycopg2.tz import FixedOffsetTimezone, ZERO
 import unittest
 from .testutils import ConnectingTestCase, skip_before_postgres
+
+try:
+    from mx.DateTime import Date, Time, DateTime, DateTimeDeltaFrom
+except ImportError:
+    # Tests will be skipped
+    pass
 
 
 def total_seconds(d):
@@ -278,7 +284,7 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         self.assertEqual(None, dt.tzinfo)
 
     def test_type_roundtrip_datetimetz(self):
-        tz = psycopg2.tz.FixedOffsetTimezone(8 * 60)
+        tz = FixedOffsetTimezone(8 * 60)
         dt1 = datetime(2010, 5, 3, 10, 20, 30, tzinfo=tz)
         dt2 = self._test_type_roundtrip(dt1)
         self.assertNotEqual(None, dt2.tzinfo)
@@ -289,7 +295,7 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         self.assertEqual(None, tm.tzinfo)
 
     def test_type_roundtrip_timetz(self):
-        tz = psycopg2.tz.FixedOffsetTimezone(8 * 60)
+        tz = FixedOffsetTimezone(8 * 60)
         tm1 = time(10, 20, 30, tzinfo=tz)
         tm2 = self._test_type_roundtrip(tm1)
         self.assertNotEqual(None, tm2.tzinfo)
@@ -487,7 +493,6 @@ class mxDateTimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
 
     def test_parse_time_timezone(self):
         # Time zone information is ignored.
-        from mx.DateTime import Time
         expected = Time(13, 30, 29)
         self.assertEqual(expected, self.TIME("13:30:29+01", self.curs))
         self.assertEqual(expected, self.TIME("13:30:29-01", self.curs))
@@ -498,7 +503,6 @@ class mxDateTimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
 
     def test_parse_datetime_timezone(self):
         # Time zone information is ignored.
-        from mx.DateTime import DateTime
         expected = DateTime(2007, 1, 1, 13, 30, 29)
         self.assertEqual(
             expected, self.DATETIME("2007-01-01 13:30:29+01", self.curs))
@@ -522,19 +526,16 @@ class mxDateTimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         self.assertEqual(value.second, 5)
 
     def test_adapt_time(self):
-        from mx.DateTime import Time
         value = self.execute('select (%s)::time::text',
                              [Time(13, 30, 29)])
         self.assertEqual(value, '13:30:29')
 
     def test_adapt_datetime(self):
-        from mx.DateTime import DateTime
         value = self.execute('select (%s)::timestamp::text',
                              [DateTime(2007, 1, 1, 13, 30, 29.123456)])
         self.assertEqual(value, '2007-01-01 13:30:29.123456')
 
     def test_adapt_bc_datetime(self):
-        from mx.DateTime import DateTime
         value = self.execute('select (%s)::timestamp::text',
                              [DateTime(-41, 1, 1, 13, 30, 29.123456)])
         # microsecs for BC timestamps look not available in PG < 8.4
@@ -544,7 +545,6 @@ class mxDateTimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
             '0042-01-01 13:30:29 BC'), value)
 
     def test_adapt_timedelta(self):
-        from mx.DateTime import DateTimeDeltaFrom
         value = self.execute('select extract(epoch from (%s)::interval)',
                              [DateTimeDeltaFrom(days=42,
                                                 seconds=45296.123456)])
@@ -553,7 +553,6 @@ class mxDateTimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         self.assertEqual(int(round((value - seconds) * 1000000)), 123456)
 
     def test_adapt_negative_timedelta(self):
-        from mx.DateTime import DateTimeDeltaFrom
         value = self.execute('select extract(epoch from (%s)::interval)',
                              [DateTimeDeltaFrom(days=-42,
                                                 seconds=45296.123456)])
@@ -571,35 +570,27 @@ class mxDateTimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         self.assertEqual(type(o1[0]), type(o2[0]))
 
     def test_type_roundtrip_date(self):
-        from mx.DateTime import Date
         self._test_type_roundtrip(Date(2010, 5, 3))
 
     def test_type_roundtrip_datetime(self):
-        from mx.DateTime import DateTime
         self._test_type_roundtrip(DateTime(2010, 5, 3, 10, 20, 30))
 
     def test_type_roundtrip_time(self):
-        from mx.DateTime import Time
         self._test_type_roundtrip(Time(10, 20, 30))
 
     def test_type_roundtrip_interval(self):
-        from mx.DateTime import DateTimeDeltaFrom
         self._test_type_roundtrip(DateTimeDeltaFrom(seconds=30))
 
     def test_type_roundtrip_date_array(self):
-        from mx.DateTime import Date
         self._test_type_roundtrip_array(Date(2010, 5, 3))
 
     def test_type_roundtrip_datetime_array(self):
-        from mx.DateTime import DateTime
         self._test_type_roundtrip_array(DateTime(2010, 5, 3, 10, 20, 30))
 
     def test_type_roundtrip_time_array(self):
-        from mx.DateTime import Time
         self._test_type_roundtrip_array(Time(10, 20, 30))
 
     def test_type_roundtrip_interval_array(self):
-        from mx.DateTime import DateTimeDeltaFrom
         self._test_type_roundtrip_array(DateTimeDeltaFrom(seconds=30))
 
 
@@ -659,8 +650,6 @@ class FixedOffsetTimezoneTests(unittest.TestCase):
 
     def test_pickle(self):
         # ticket #135
-        import pickle
-
         tz11 = FixedOffsetTimezone(60)
         tz12 = FixedOffsetTimezone(120)
         for proto in [-1, 0, 1, 2]:

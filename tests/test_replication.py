@@ -22,6 +22,7 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
+import time
 from select import select
 
 import psycopg2
@@ -47,7 +48,6 @@ class ReplicationTestCase(ConnectingTestCase):
         # first close all connections, as they might keep the slot(s) active
         super(ReplicationTestCase, self).tearDown()
 
-        import time
         time.sleep(0.025)  # sometimes the slot is still active, wait a little
 
         if self._slots:

@@ -23,16 +23,15 @@ import psycopg2
 import psycopg2.extras
 
 try:
-    import ipaddress
+    import ipaddress as ip
 except ImportError:
     # Python 2
-    ipaddress = None
+    ip = None
 
 
-@unittest.skipIf(ipaddress is None, "'ipaddress' module not available")
+@unittest.skipIf(ip is None, "'ipaddress' module not available")
 class NetworkingTestCase(testutils.ConnectingTestCase):
     def test_inet_cast(self):
-        import ipaddress as ip
         cur = self.conn.cursor()
         psycopg2.extras.register_ipaddress(cur)
 
@@ -51,7 +50,6 @@ class NetworkingTestCase(testutils.ConnectingTestCase):
 
     @testutils.skip_before_postgres(8, 2)
     def test_inet_array_cast(self):
-        import ipaddress as ip
         cur = self.conn.cursor()
         psycopg2.extras.register_ipaddress(cur)
         cur.execute("select '{NULL,127.0.0.1,::ffff:102:300/128}'::inet[]")
@@ -63,7 +61,6 @@ class NetworkingTestCase(testutils.ConnectingTestCase):
         self.assert_(isinstance(l[2], ip.IPv6Interface), l)
 
     def test_inet_adapt(self):
-        import ipaddress as ip
         cur = self.conn.cursor()
         psycopg2.extras.register_ipaddress(cur)
 
@@ -74,7 +71,6 @@ class NetworkingTestCase(testutils.ConnectingTestCase):
         self.assertEquals(cur.fetchone()[0], '::ffff:102:300/128')
 
     def test_cidr_cast(self):
-        import ipaddress as ip
         cur = self.conn.cursor()
         psycopg2.extras.register_ipaddress(cur)
 
@@ -93,7 +89,6 @@ class NetworkingTestCase(testutils.ConnectingTestCase):
 
     @testutils.skip_before_postgres(8, 2)
     def test_cidr_array_cast(self):
-        import ipaddress as ip
         cur = self.conn.cursor()
         psycopg2.extras.register_ipaddress(cur)
         cur.execute("select '{NULL,127.0.0.1,::ffff:102:300/128}'::cidr[]")
@@ -105,7 +100,6 @@ class NetworkingTestCase(testutils.ConnectingTestCase):
         self.assert_(isinstance(l[2], ip.IPv6Network), l)
 
     def test_cidr_adapt(self):
-        import ipaddress as ip
         cur = self.conn.cursor()
         psycopg2.extras.register_ipaddress(cur)
 
