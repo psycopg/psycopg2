@@ -43,12 +43,15 @@ from .testconfig import green
 if sys.version_info[0] == 2:
     # Python 2
     from StringIO import StringIO
+    TextIOBase = object
     long = long
     reload = reload
     unichr = unichr
+
 else:
     # Python 3
     from io import StringIO         # noqa
+    from io import TextIOBase       # noqa
     from importlib import reload    # noqa
     long = int
     unichr = chr

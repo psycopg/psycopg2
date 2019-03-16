@@ -31,17 +31,11 @@ from subprocess import Popen, PIPE
 
 import psycopg2
 import psycopg2.extensions
-from .testutils import skip_copy_if_green
+from .testutils import skip_copy_if_green, TextIOBase
 from .testconfig import dsn
 
 
-if sys.version_info[0] < 3:
-    _base = object
-else:
-    from io import TextIOBase as _base
-
-
-class MinimalRead(_base):
+class MinimalRead(TextIOBase):
     """A file wrapper exposing the minimal interface to copy from."""
     def __init__(self, f):
         self.f = f
@@ -53,7 +47,7 @@ class MinimalRead(_base):
         return self.f.readline()
 
 
-class MinimalWrite(_base):
+class MinimalWrite(TextIOBase):
     """A file wrapper exposing the minimal interface to copy to."""
     def __init__(self, f):
         self.f = f
@@ -351,7 +345,7 @@ conn.close()
         self.assertEqual(0, proc.returncode)
 
     def test_copy_from_propagate_error(self):
-        class BrokenRead(_base):
+        class BrokenRead(TextIOBase):
             def read(self, size):
                 return 1 / 0
 
@@ -368,7 +362,7 @@ conn.close()
             self.assert_('ZeroDivisionError' in str(e))
 
     def test_copy_to_propagate_error(self):
-        class BrokenWrite(_base):
+        class BrokenWrite(TextIOBase):
             def write(self, data):
                 return 1 / 0
 
