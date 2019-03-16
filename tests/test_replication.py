@@ -22,7 +22,10 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
+from select import select
+
 import psycopg2
+from psycopg2 import sql
 from psycopg2.extras import (
     PhysicalReplicationConnection, LogicalReplicationConnection, StopReplication)
 
@@ -141,7 +144,6 @@ class ReplicationTest(ReplicationTestCase):
     @skip_before_postgres(9, 4)  # slots require 9.4
     @skip_repl_if_green
     def test_start_replication_expert_sql(self):
-        from psycopg2 import sql
         conn = self.repl_connect(connection_factory=LogicalReplicationConnection)
         if conn is None:
             return
@@ -252,7 +254,6 @@ class AsyncReplicationTest(ReplicationTestCase):
         self.assertRaises(psycopg2.ProgrammingError, cur.consume_stream, consume)
 
         def process_stream():
-            from select import select
             while True:
                 msg = cur.read_message()
                 if msg:

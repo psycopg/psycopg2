@@ -28,6 +28,9 @@ import pickle
 import psycopg2
 import psycopg2.extensions
 import unittest
+from datetime import date
+from decimal import Decimal
+from weakref import ref
 from .testutils import (ConnectingTestCase, skip_before_postgres,
     skip_if_no_getrefcount, slow, skip_if_no_superuser,
     skip_if_windows)
@@ -101,8 +104,6 @@ class CursorTests(ConnectingTestCase):
             cur.mogrify(u"SELECT %s;", (snowman,)))
 
     def test_mogrify_decimal_explodes(self):
-        from decimal import Decimal
-
         conn = self.conn
         cur = conn.cursor()
         self.assertEqual(b'SELECT 10.3;',
@@ -143,10 +144,8 @@ class CursorTests(ConnectingTestCase):
         self.assertEqual(42, curs.cast(20, '42'))
         self.assertAlmostEqual(3.14, curs.cast(700, '3.14'))
 
-        from decimal import Decimal
         self.assertEqual(Decimal('123.45'), curs.cast(1700, '123.45'))
 
-        from datetime import date
         self.assertEqual(date(2011, 1, 2), curs.cast(1082, '2011-01-02'))
         self.assertEqual("who am i?", curs.cast(705, 'who am i?'))  # unknown
 
@@ -166,7 +165,6 @@ class CursorTests(ConnectingTestCase):
         self.assertEqual("foofoo", curs2.cast(705, 'foo'))
 
     def test_weakref(self):
-        from weakref import ref
         curs = self.conn.cursor()
         w = ref(curs)
         del curs

@@ -22,9 +22,11 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
+import gc
 import os
 import sys
 from subprocess import Popen
+from weakref import ref
 
 import unittest
 from .testutils import (skip_before_postgres,
@@ -190,9 +192,6 @@ class ExceptionsTestCase(ConnectingTestCase):
         self.assertEqual(e.diag.severity, 'ERROR')
 
     def test_diagnostics_life(self):
-        import gc
-        from weakref import ref
-
         def tmp():
             cur = self.conn.cursor()
             try:

@@ -24,6 +24,7 @@
 # License for more details.
 
 import time
+from select import select
 
 import psycopg2
 from psycopg2 import extras
@@ -205,7 +206,6 @@ class AsyncReplicationTest(ReplicationTestCase):
         self.assertRaises(psycopg2.ProgrammingError, cur.consume_stream, consume)
 
         def process_stream():
-            from select import select
             while True:
                 msg = cur.read_message()
                 if msg:

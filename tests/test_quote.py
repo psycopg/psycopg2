@@ -29,6 +29,7 @@ from .testutils import ConnectingTestCase, unichr
 
 import psycopg2
 import psycopg2.extensions
+from psycopg2.extensions import adapt, quote_ident
 
 
 class QuotingTestCase(ConnectingTestCase):
@@ -194,13 +195,11 @@ class TestQuotedString(ConnectingTestCase):
 
 class TestQuotedIdentifier(ConnectingTestCase):
     def test_identifier(self):
-        from psycopg2.extensions import quote_ident
         self.assertEqual(quote_ident('blah-blah', self.conn), '"blah-blah"')
         self.assertEqual(quote_ident('quote"inside', self.conn), '"quote""inside"')
 
     @testutils.skip_before_postgres(8, 0)
     def test_unicode_ident(self):
-        from psycopg2.extensions import quote_ident
         snowman = u"\u2603"
         quoted = '"' + snowman + '"'
         if sys.version_info[0] < 3:
@@ -211,7 +210,6 @@ class TestQuotedIdentifier(ConnectingTestCase):
 
 class TestStringAdapter(ConnectingTestCase):
     def test_encoding_default(self):
-        from psycopg2.extensions import adapt
         a = adapt("hello")
         self.assertEqual(a.encoding, 'latin1')
         self.assertEqual(a.getquoted(), b"'hello'")
@@ -223,7 +221,6 @@ class TestStringAdapter(ConnectingTestCase):
         # self.assertEqual(adapt(egrave).getquoted(), "'\xe8'")
 
     def test_encoding_error(self):
-        from psycopg2.extensions import adapt
         snowman = u"\u2603"
         a = adapt(snowman)
         self.assertRaises(UnicodeEncodeError, a.getquoted)
@@ -232,7 +229,6 @@ class TestStringAdapter(ConnectingTestCase):
         # Note: this works-ish mostly in case when the standard db connection
         # we test with is utf8, otherwise the encoding chosen by PQescapeString
         # may give bad results.
-        from psycopg2.extensions import adapt
         snowman = u"\u2603"
         a = adapt(snowman)
         a.encoding = 'utf8'
@@ -240,7 +236,6 @@ class TestStringAdapter(ConnectingTestCase):
         self.assertEqual(a.getquoted(), b"'\xe2\x98\x83'")
 
     def test_connection_wins_anyway(self):
-        from psycopg2.extensions import adapt
         snowman = u"\u2603"
         a = adapt(snowman)
         a.encoding = 'latin9'

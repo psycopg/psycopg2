@@ -33,6 +33,7 @@ from .testutils import ConnectingTestCase, long
 
 import psycopg2
 from psycopg2.compat import text_type
+from psycopg2.extensions import AsIs, adapt, register_adapter
 
 
 class TypesBasicTests(ConnectingTestCase):
@@ -424,8 +425,6 @@ class TypesBasicTests(ConnectingTestCase):
 
 class AdaptSubclassTest(unittest.TestCase):
     def test_adapt_subtype(self):
-        from psycopg2.extensions import adapt
-
         class Sub(str):
             pass
         s1 = "hel'lo"
@@ -433,8 +432,6 @@ class AdaptSubclassTest(unittest.TestCase):
         self.assertEqual(adapt(s1).getquoted(), adapt(s2).getquoted())
 
     def test_adapt_most_specific(self):
-        from psycopg2.extensions import adapt, register_adapter, AsIs
-
         class A(object):
             pass
 
@@ -454,8 +451,6 @@ class AdaptSubclassTest(unittest.TestCase):
 
     @testutils.skip_from_python(3)
     def test_no_mro_no_joy(self):
-        from psycopg2.extensions import adapt, register_adapter, AsIs
-
         class A:
             pass
 
@@ -470,8 +465,6 @@ class AdaptSubclassTest(unittest.TestCase):
 
     @testutils.skip_before_python(3)
     def test_adapt_subtype_3(self):
-        from psycopg2.extensions import adapt, register_adapter, AsIs
-
         class A:
             pass
 

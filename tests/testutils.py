@@ -33,7 +33,10 @@ import unittest
 from functools import wraps
 from ctypes.util import find_library
 from .testconfig import dsn, repl_dsn
+from psycopg2 import ProgrammingError
 from psycopg2.compat import text_type
+
+from .testconfig import green
 
 # Python 2/3 compatibility
 
@@ -241,7 +244,6 @@ def skip_if_tpc_disabled(f):
     """Skip a test if the server has tpc support disabled."""
     @wraps(f)
     def skip_if_tpc_disabled_(self):
-        from psycopg2 import ProgrammingError
         cnn = self.connect()
         cur = cnn.cursor()
         try:
@@ -368,7 +370,6 @@ def skip_if_no_superuser(f):
     """Skip a test if the database user running the test is not a superuser"""
     @wraps(f)
     def skip_if_no_superuser_(self):
-        from psycopg2 import ProgrammingError
         try:
             return f(self)
         except ProgrammingError as e:
@@ -383,7 +384,6 @@ def skip_if_no_superuser(f):
 
 def skip_if_green(reason):
     def skip_if_green_(cls):
-        from .testconfig import green
         decorator = unittest.skipIf(green, reason)
         return decorator(cls)
     return skip_if_green_
