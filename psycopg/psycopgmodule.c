@@ -970,13 +970,6 @@ mxdatetime_init(PyObject *module)
     if (mxDateTime_ImportModuleAndAPI()) {
         Dprintf("psycopgmodule: mx.DateTime module import failed");
         PyErr_Clear();
-
-        /* only fail if the mx typacaster should have been the default */
-#ifdef PSYCOPG_DEFAULT_MXDATETIME
-        PyErr_SetString(PyExc_ImportError,
-            "can't import mx.DateTime module (requested as default adapter)");
-        return -1;
-#endif
     }
 
     /* If we can't find mx.DateTime objects at runtime,

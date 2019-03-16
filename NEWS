@@ -44,6 +44,9 @@ Other changes:
 - Binary packages no longer installed by default. The 'psycopg2-binary'
   package must be used explicitly.
 - Dropped `!PSYCOPG_DISPLAY_SIZE` build parameter.
+- Dropped support for mxDateTime as the default date and time adapter.
+  mxDatetime support continues to be available as an alternative to Python's
+  builtin datetime.
 - No longer use 2to3 during installation for Python 2 & 3 compatibility. All
   source files are now compatible with Python 2 & 3 as is.
 - The `!psycopg2.test` package is no longer installed by ``python setup.py

@@ -240,13 +240,3 @@ typecast_MXINTERVAL_cast(const char *str, Py_ssize_t len, PyObject *curs)
             days, seconds);
     return mxDateTime.DateTimeDelta_FromDaysAndSeconds(days, seconds);
 }
-
-/* psycopg defaults to using mx types */
-
-#ifdef PSYCOPG_DEFAULT_MXDATETIME
-#define typecast_DATE_cast typecast_MXDATE_cast
-#define typecast_TIME_cast typecast_MXTIME_cast
-#define typecast_INTERVAL_cast typecast_MXINTERVAL_cast
-#define typecast_DATETIME_cast typecast_MXDATE_cast
-#define typecast_DATETIMETZ_cast typecast_MXDATE_cast
-#endif
