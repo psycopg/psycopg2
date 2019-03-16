@@ -15,7 +15,6 @@
 # License for more details.
 
 import re
-import sys
 import json
 import uuid
 import warnings
@@ -25,7 +24,7 @@ from functools import wraps
 from pickle import dumps, loads
 
 import unittest
-from .testutils import (skip_if_no_uuid, skip_before_postgres,
+from .testutils import (PY2, text_type, skip_if_no_uuid, skip_before_postgres,
     ConnectingTestCase, py3_raises_typeerror, slow, skip_from_python)
 
 import psycopg2
@@ -301,7 +300,7 @@ class HstoreTestCase(ConnectingTestCase):
         ok({''.join(ab): ''.join(ab)})
 
         self.conn.set_client_encoding('latin1')
-        if sys.version_info[0] < 3:
+        if PY2:
             ab = map(chr, range(32, 127) + range(160, 255))
         else:
             ab = bytes(list(range(32, 127)) + list(range(160, 255))).decode('latin1')
@@ -363,7 +362,7 @@ class HstoreTestCase(ConnectingTestCase):
         ds.append({''.join(ab): ''.join(ab)})
 
         self.conn.set_client_encoding('latin1')
-        if sys.version_info[0] < 3:
+        if PY2:
             ab = map(chr, range(32, 127) + range(160, 255))
         else:
             ab = bytes(list(range(32, 127)) + list(range(160, 255))).decode('latin1')
@@ -1352,14 +1351,12 @@ class RangeTestCase(unittest.TestCase):
         ]
         results = []
 
-        converter = unicode if sys.version_info < (3, 0) else str
-
         for bounds in ('()', '[]', '(]', '[)'):
             r = Range(0, 4, bounds=bounds)
-            results.append(converter(r))
+            results.append(text_type(r))
 
         r = Range(empty=True)
-        results.append(converter(r))
+        results.append(text_type(r))
         self.assertEqual(results, expected)
 
     def test_str_datetime(self):
@@ -1367,13 +1364,11 @@ class RangeTestCase(unittest.TestCase):
         Date-Time ranges should return a human-readable string as well on
         string conversion.
         '''
-
-        converter = unicode if sys.version_info < (3, 0) else str
         tz = FixedOffsetTimezone(-5 * 60, "EST")
         r = DateTimeTZRange(datetime(2010, 1, 1, tzinfo=tz),
                             datetime(2011, 1, 1, tzinfo=tz))
         expected = u'[2010-01-01 00:00:00-05:00, 2011-01-01 00:00:00-05:00)'
-        result = converter(r)
+        result = text_type(r)
         self.assertEqual(result, expected)
 
 

@@ -40,7 +40,7 @@ pint_getquoted(pintObject *self, PyObject *args)
     /* Convert subclass to int to handle IntEnum and other subclasses
      * whose str() is not the number. */
     if (PyLong_CheckExact(self->wrapped)
-#if PY_MAJOR_VERSION < 2
+#if PY_2
         || PyInt_CheckExact(self->wrapped)
 #endif
        ) {
@@ -59,7 +59,7 @@ pint_getquoted(pintObject *self, PyObject *args)
         goto exit;
     }
 
-#if PY_MAJOR_VERSION > 2
+#if PY_3
     /* unicode to bytes in Py3 */
     {
         PyObject *tmp = PyUnicode_AsUTF8String(res);

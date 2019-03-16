@@ -44,7 +44,7 @@ asis_getquoted(asisObject *self, PyObject *args)
     }
     else {
         rv = PyObject_Str(self->wrapped);
-#if PY_MAJOR_VERSION > 2
+#if PY_3
         /* unicode to bytes in Py3 */
         if (rv) {
             PyObject *tmp = PyUnicode_AsUTF8String(rv);

@@ -45,9 +45,6 @@ binary_escape(unsigned char *from, size_t from_length,
         return PQescapeBytea(from, from_length, to_length);
 }
 
-#define HAS_BUFFER (PY_MAJOR_VERSION < 3)
-#define HAS_MEMORYVIEW (PY_MAJOR_VERSION > 2 || PY_MINOR_VERSION >= 6)
-
 /* binary_quote - do the quote process on plain and unicode strings */
 
 static PyObject *
@@ -58,10 +55,8 @@ binary_quote(binaryObject *self)
     Py_ssize_t buffer_len;
     size_t len = 0;
     PyObject *rv = NULL;
-#if HAS_MEMORYVIEW
     Py_buffer view;
     int got_view = 0;
-#endif
 
     /* Allow Binary(None) to work */
     if (self->wrapped == Py_None) {
@@ -71,8 +66,6 @@ binary_quote(binaryObject *self)
     }
 
     /* if we got a plain string or a buffer we escape it and save the buffer */
-
-#if HAS_MEMORYVIEW
     if (PyObject_CheckBuffer(self->wrapped)) {
         if (0 > PyObject_GetBuffer(self->wrapped, &view, PyBUF_CONTIG_RO)) {
             goto exit;
@@ -81,9 +74,8 @@ binary_quote(binaryObject *self)
         buffer = (const char *)(view.buf);
         buffer_len = view.len;
     }
-#endif
 
-#if HAS_BUFFER
+#if PY_2
     if (!buffer && (Bytes_Check(self->wrapped) || PyBuffer_Check(self->wrapped))) {
         if (PyObject_AsReadBuffer(self->wrapped, (const void **)&buffer,
                                   &buffer_len) < 0) {
@@ -114,9 +106,7 @@ binary_quote(binaryObject *self)
 
 exit:
     if (to) { PQfreemem(to); }
-#if HAS_MEMORYVIEW
     if (got_view) { PyBuffer_Release(&view); }
-#endif
 
     /* if the wrapped object is not bytes or a buffer, this is an error */
     if (!rv && !PyErr_Occurred()) {

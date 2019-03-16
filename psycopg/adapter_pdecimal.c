@@ -80,7 +80,7 @@ pdecimal_getquoted(pdecimalObject *self, PyObject *args)
     /* res may be unicode and may suffer for issue #57 */
 output:
 
-#if PY_MAJOR_VERSION > 2
+#if PY_3
     /* unicode to bytes in Py3 */
     {
         PyObject *tmp = PyUnicode_AsUTF8String(res);
