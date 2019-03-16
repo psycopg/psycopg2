@@ -45,8 +45,6 @@ binary_escape(unsigned char *from, size_t from_length,
         return PQescapeBytea(from, from_length, to_length);
 }
 
-#define HAS_BUFFER (PY_MAJOR_VERSION < 3)
-
 /* binary_quote - do the quote process on plain and unicode strings */
 
 static PyObject *
@@ -77,7 +75,7 @@ binary_quote(binaryObject *self)
         buffer_len = view.len;
     }
 
-#if HAS_BUFFER
+#if PY_2
     if (!buffer && (Bytes_Check(self->wrapped) || PyBuffer_Check(self->wrapped))) {
         if (PyObject_AsReadBuffer(self->wrapped, (const void **)&buffer,
                                   &buffer_len) < 0) {

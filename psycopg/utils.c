@@ -197,7 +197,7 @@ psycopg_ensure_bytes(PyObject *obj)
 STEALS(1) PyObject *
 psycopg_ensure_text(PyObject *obj)
 {
-#if PY_MAJOR_VERSION < 3
+#if PY_2
     return obj;
 #else
     if (obj) {
@@ -316,7 +316,7 @@ exit:
 PyObject *
 psycopg_text_from_chars_safe(const char *str, Py_ssize_t len, PyObject *decoder)
 {
-#if PY_MAJOR_VERSION < 3
+#if PY_2
 
     if (!str) { Py_RETURN_NONE; }
 

@@ -26,15 +26,20 @@
 #ifndef PSYCOPG_PYTHON_H
 #define PSYCOPG_PYTHON_H 1
 
-#include <structmember.h>
-#if PY_MAJOR_VERSION < 3
-#include <stringobject.h>
+#define PY_2 (PY_MAJOR_VERSION == 2)
+#define PY_3 (PY_MAJOR_VERSION == 3)
+
+#if PY_2 && PY_VERSION_HEX < 0x02070000
+#error "psycopg requires Python 2.7"
 #endif
 
-#if ((PY_VERSION_HEX < 0x02070000) \
-     || ((PY_VERSION_HEX >= 0x03000000) \
-      && (PY_VERSION_HEX <  0x03040000)) )
-#  error "psycopg requires Python 2.7 or 3.4+"
+#if PY_3 && PY_VERSION_HEX < 0x03040000
+#error "psycopg requires Python 3.4"
+#endif
+
+#include <structmember.h>
+#if PY_2
+#include <stringobject.h>
 #endif
 
 /* hash() return size changed around version 3.2a4 on 64bit platforms.  Before
@@ -59,7 +64,7 @@ typedef unsigned long Py_uhash_t;
 #endif
 
 /* Abstract from text type. Only supported for ASCII and UTF-8 */
-#if PY_MAJOR_VERSION < 3
+#if PY_2
 #define Text_Type PyString_Type
 #define Text_Check(s) PyString_Check(s)
 #define Text_Format(f,a) PyString_Format(f,a)
@@ -73,7 +78,7 @@ typedef unsigned long Py_uhash_t;
 #define Text_FromUTF8AndSize(s,n) PyUnicode_FromStringAndSize(s,n)
 #endif
 
-#if PY_MAJOR_VERSION > 2
+#if PY_3
 #define PyInt_Type             PyLong_Type
 #define PyInt_Check            PyLong_Check
 #define PyInt_AsLong           PyLong_AsLong
@@ -89,9 +94,9 @@ typedef unsigned long Py_uhash_t;
 #define PyNumber_Int           PyNumber_Long
 #endif
 
-#endif  /* PY_MAJOR_VERSION > 2 */
+#endif  /* PY_3 */
 
-#if PY_MAJOR_VERSION < 3
+#if PY_2
 #define Bytes_Type PyString_Type
 #define Bytes_Check PyString_Check
 #define Bytes_CheckExact PyString_CheckExact
@@ -131,7 +136,7 @@ typedef unsigned long Py_uhash_t;
 HIDDEN PyObject *Bytes_Format(PyObject *format, PyObject *args);
 
 /* Mangle the module name into the name of the module init function */
-#if PY_MAJOR_VERSION > 2
+#if PY_3
 #define INIT_MODULE(m) PyInit_ ## m
 #else
 #define INIT_MODULE(m) init ## m

@@ -25,7 +25,7 @@
 
 /** INTEGER - cast normal integers (4 bytes) to python int **/
 
-#if PY_MAJOR_VERSION < 3
+#if PY_2
 static PyObject *
 typecast_INTEGER_cast(const char *s, Py_ssize_t len, PyObject *curs)
 {
@@ -66,7 +66,7 @@ typecast_FLOAT_cast(const char *s, Py_ssize_t len, PyObject *curs)
 
     if (s == NULL) { Py_RETURN_NONE; }
     if (!(str = Text_FromUTF8AndSize(s, len))) { return NULL; }
-#if PY_MAJOR_VERSION < 3
+#if PY_2
     flo = PyFloat_FromString(str, NULL);
 #else
     flo = PyFloat_FromString(str);
@@ -102,7 +102,7 @@ typecast_UNICODE_cast(const char *s, Py_ssize_t len, PyObject *curs)
 
 /** STRING - cast strings of any type to python string **/
 
-#if PY_MAJOR_VERSION < 3
+#if PY_2
 #define typecast_STRING_cast typecast_BYTES_cast
 #else
 #define typecast_STRING_cast typecast_UNICODE_cast

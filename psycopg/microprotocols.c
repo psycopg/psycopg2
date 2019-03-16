@@ -94,7 +94,7 @@ _get_superclass_adapter(PyObject *obj, PyObject *proto)
 
     type = Py_TYPE(obj);
     if (!(
-#if PY_MAJOR_VERSION < 3
+#if PY_2
         (Py_TPFLAGS_HAVE_CLASS & type->tp_flags) &&
 #endif
         type->tp_mro)) {

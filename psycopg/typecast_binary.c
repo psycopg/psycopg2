@@ -53,7 +53,7 @@ chunk_repr(chunkObject *self)
       );
 }
 
-#if PY_MAJOR_VERSION < 3
+#if PY_2
 
 static Py_ssize_t
 chunk_getreadbuffer(chunkObject *self, Py_ssize_t segment, void **ptr)
@@ -182,7 +182,7 @@ typecast_BINARY_cast(const char *s, Py_ssize_t l, PyObject *curs)
     buffer = NULL;
     chunk->len = (Py_ssize_t)len;
 
-#if PY_MAJOR_VERSION < 3
+#if PY_2
     if ((res = PyBuffer_FromObject((PyObject *)chunk, 0, chunk->len)) == NULL)
         goto exit;
 #else

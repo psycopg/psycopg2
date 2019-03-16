@@ -53,7 +53,7 @@ pfloat_getquoted(pfloatObject *self, PyObject *args)
             goto exit;
         }
 
-#if PY_MAJOR_VERSION > 2
+#if PY_3
         /* unicode to bytes in Py3 */
         {
             PyObject *tmp = PyUnicode_AsUTF8String(rv);

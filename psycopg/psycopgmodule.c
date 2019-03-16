@@ -308,7 +308,7 @@ adapters_init(PyObject *module)
     if (0 > microprotocols_add(&PyFloat_Type, NULL, (PyObject*)&pfloatType)) {
         goto exit;
     }
-#if PY_MAJOR_VERSION < 3
+#if PY_2
     if (0 > microprotocols_add(&PyInt_Type, NULL, (PyObject*)&pintType)) {
         goto exit;
     }
@@ -321,7 +321,7 @@ adapters_init(PyObject *module)
     }
 
     /* strings */
-#if PY_MAJOR_VERSION < 3
+#if PY_2
     if (0 > microprotocols_add(&PyString_Type, NULL, (PyObject*)&qstringType)) {
         goto exit;
     }
@@ -331,7 +331,7 @@ adapters_init(PyObject *module)
     }
 
     /* binary */
-#if PY_MAJOR_VERSION < 3
+#if PY_2
     if (0 > microprotocols_add(&PyBuffer_Type, NULL, (PyObject*)&binaryType)) {
         goto exit;
     }
@@ -1048,7 +1048,7 @@ static PyMethodDef psycopgMethods[] = {
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
-#if PY_MAJOR_VERSION > 2
+#if PY_3
 static struct PyModuleDef psycopgmodule = {
         PyModuleDef_HEAD_INIT,
         "_psycopg",
@@ -1094,7 +1094,7 @@ INIT_MODULE(_psycopg)(void)
     if (!(psyco_null = Bytes_FromString("NULL"))) { goto exit; }
 
     /* initialize the module */
-#if PY_MAJOR_VERSION < 3
+#if PY_2
     module = Py_InitModule("_psycopg", psycopgMethods);
 #else
     module = PyModule_Create(&psycopgmodule);
@@ -1114,7 +1114,7 @@ INIT_MODULE(_psycopg)(void)
     Dprintf("psycopgmodule: module initialization complete");
 
 exit:
-#if PY_MAJOR_VERSION > 2
+#if PY_3
     return module;
 #else
     return;

@@ -87,7 +87,7 @@ _lobject_parse_mode(const char *mode)
             pos += 1;
             break;
         default:
-#if PY_MAJOR_VERSION < 3
+#if PY_2
             rv |= LOBJECT_BINARY;
 #else
             rv |= LOBJECT_TEXT;
