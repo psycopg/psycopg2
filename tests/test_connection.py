@@ -387,8 +387,6 @@ class ParseDsnTestCase(ConnectingTestCase):
             raised = True
             self.assertTrue(str(e).find('secret') < 0,
                             "DSN was not exposed in error message")
-        except e:
-            self.fail("unexpected error condition: " + repr(e))
         self.assertTrue(raised, "ProgrammingError raised due to invalid DSN")
 
     @skip_before_libpq(9, 2)
@@ -405,8 +403,6 @@ class ParseDsnTestCase(ConnectingTestCase):
             raised = True
             self.assertTrue(str(e).find('secret') < 0,
                             "URI was not exposed in error message")
-        except e:
-            self.fail("unexpected error condition: " + repr(e))
         self.assertTrue(raised, "ProgrammingError raised due to invalid URI")
 
     def test_unicode_value(self):
