@@ -36,13 +36,13 @@ from ctypes.util import find_library
 import psycopg2
 import psycopg2.errors
 import psycopg2.extensions
-from psycopg2.compat import text_type
+from psycopg2.compat import PY2, PY3, text_type
 
 from .testconfig import green, dsn, repl_dsn
 
 # Python 2/3 compatibility
 
-if sys.version_info[0] == 2:
+if PY2:
     # Python 2
     from StringIO import StringIO
     TextIOBase = object
@@ -411,7 +411,7 @@ class py3_raises_typeerror(object):
         pass
 
     def __exit__(self, type, exc, tb):
-        if sys.version_info[0] >= 3:
+        if PY3:
             assert type is TypeError
             return True
 

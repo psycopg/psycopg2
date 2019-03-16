@@ -26,7 +26,6 @@ and classes until a better place in the distribution is found.
 # License for more details.
 
 import os as _os
-import sys as _sys
 import time as _time
 import re as _re
 from collections import namedtuple, OrderedDict
@@ -38,7 +37,7 @@ from psycopg2 import extensions as _ext
 from .extensions import cursor as _cursor
 from .extensions import connection as _connection
 from .extensions import adapt as _A, quote_ident
-from .compat import lru_cache
+from .compat import PY2, PY3, lru_cache
 
 from psycopg2._psycopg import (                             # noqa
     REPLICATION_PHYSICAL, REPLICATION_LOGICAL,
@@ -203,7 +202,7 @@ class DictRow(list):
         self[:] = data[0]
         self._index = data[1]
 
-    if _sys.version_info[0] < 3:
+    if PY2:
         iterkeys = keys
         itervalues = values
         iteritems = items
@@ -291,7 +290,7 @@ class RealDictRow(dict):
     def items(self):
         return ((k, self[k]) for k in self._column_mapping)
 
-    if _sys.version_info[0] < 3:
+    if PY2:
         iterkeys = keys
         itervalues = values
         iteritems = items
@@ -438,7 +437,7 @@ class LoggingConnection(_connection):
     def _logtofile(self, msg, curs):
         msg = self.filter(msg, curs)
         if msg:
-            if _sys.version_info[0] >= 3 and isinstance(msg, bytes):
+            if PY3 and isinstance(msg, bytes):
                 msg = msg.decode(_ext.encodings[self.encoding], 'replace')
             self._logobj.write(msg + _os.linesep)
 
@@ -492,7 +491,7 @@ class MinTimeLoggingConnection(LoggingConnection):
     def filter(self, msg, curs):
         t = (_time.time() - curs.timestamp) * 1000
         if t > self._mintime:
-            if _sys.version_info[0] >= 3 and isinstance(msg, bytes):
+            if PY3 and isinstance(msg, bytes):
                 msg = msg.decode(_ext.encodings[self.encoding], 'replace')
             return msg + _os.linesep + "  (execution time: %d ms)" % t
 
@@ -992,7 +991,7 @@ def register_hstore(conn_or_curs, globally=False, unicode=False,
             array_oid = tuple([x for x in array_oid if x])
 
     # create and register the typecaster
-    if _sys.version_info[0] < 3 and unicode:
+    if PY2 and unicode:
         cast = HstoreAdapter.parse_unicode
     else:
         cast = HstoreAdapter.parse

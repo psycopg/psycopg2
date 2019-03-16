@@ -28,10 +28,10 @@ extensions importing register_json from extras.
 # License for more details.
 
 import json
-import sys
 
 from psycopg2._psycopg import ISQLQuote, QuotedString
 from psycopg2._psycopg import new_type, new_array_type, register_type
+from psycopg2.compat import PY2
 
 
 # oids from PostgreSQL 9.2
@@ -81,7 +81,7 @@ class Json(object):
             qs.prepare(self._conn)
         return qs.getquoted()
 
-    if sys.version_info < (3,):
+    if PY2:
         def __str__(self):
             return self.getquoted()
     else:

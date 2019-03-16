@@ -71,10 +71,6 @@ import sys
 #   nothing
 # - Fix bugs in test_setoutputsize_basic and test_setinputsizes
 #
-def str2bytes(sval):
-    if sys.version_info < (3,0) and isinstance(sval, str):
-        sval = sval.decode("latin1")
-    return sval.encode("latin1")
 
 class DatabaseAPI20Test(unittest.TestCase):
     ''' Test a database self.driver for DB API 2.0 compatibility.
@@ -842,8 +838,8 @@ class DatabaseAPI20Test(unittest.TestCase):
         # self.assertEqual(str(t1),str(t2))
 
     def test_Binary(self):
-        b = self.driver.Binary(str2bytes('Something'))
-        b = self.driver.Binary(str2bytes(''))
+        b = self.driver.Binary(b'Something')
+        b = self.driver.Binary(b'')
 
     def test_STRING(self):
         self.failUnless(hasattr(self.driver,'STRING'),

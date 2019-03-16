@@ -23,11 +23,10 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-import sys
 import string
 
 from psycopg2 import extensions as ext
-from psycopg2.compat import string_types
+from psycopg2.compat import PY3, string_types
 
 
 _formatter = string.Formatter()
@@ -392,7 +391,7 @@ class Literal(Composable):
             a.prepare(conn)
 
         rv = a.getquoted()
-        if sys.version_info[0] >= 3 and isinstance(rv, bytes):
+        if PY3 and isinstance(rv, bytes):
             rv = rv.decode(ext.encodings[conn.encoding])
 
         return rv

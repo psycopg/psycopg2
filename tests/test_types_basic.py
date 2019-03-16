@@ -28,13 +28,11 @@ import decimal
 import datetime
 import platform
 
-import sys
 from . import testutils
 import unittest
-from .testutils import ConnectingTestCase, long
+from .testutils import PY2, long, text_type, ConnectingTestCase
 
 import psycopg2
-from psycopg2.compat import text_type
 from psycopg2.extensions import AsIs, adapt, register_adapter
 
 
@@ -110,7 +108,7 @@ class TypesBasicTests(ConnectingTestCase):
         self.failUnless(str(s) == "-inf", "wrong float quoting: " + str(s))
 
     def testBinary(self):
-        if sys.version_info[0] < 3:
+        if PY2:
             s = ''.join([chr(x) for x in range(256)])
             b = psycopg2.Binary(s)
             buf = self.execute("SELECT %s::bytea AS foo", (b,))
@@ -128,7 +126,7 @@ class TypesBasicTests(ConnectingTestCase):
 
     def testBinaryEmptyString(self):
         # test to make sure an empty Binary is converted to an empty string
-        if sys.version_info[0] < 3:
+        if PY2:
             b = psycopg2.Binary('')
             self.assertEqual(str(b), "''::bytea")
         else:
@@ -138,7 +136,7 @@ class TypesBasicTests(ConnectingTestCase):
     def testBinaryRoundTrip(self):
         # test to make sure buffers returned by psycopg2 are
         # understood by execute:
-        if sys.version_info[0] < 3:
+        if PY2:
             s = ''.join([chr(x) for x in range(256)])
             buf = self.execute("SELECT %s::bytea AS foo", (psycopg2.Binary(s),))
             buf2 = self.execute("SELECT %s::bytea AS foo", (buf,))
@@ -328,7 +326,7 @@ class TypesBasicTests(ConnectingTestCase):
         o1 = bytearray(range(256))
         o2 = self.execute("select %s;", (o1,))
 
-        if sys.version_info[0] < 3:
+        if PY2:
             self.assertEqual(buffer, type(o2))
         else:
             self.assertEqual(memoryview, type(o2))
@@ -342,7 +340,7 @@ class TypesBasicTests(ConnectingTestCase):
         o2 = self.execute("select %s;", (o1,))
 
         self.assertEqual(len(o2), 0)
-        if sys.version_info[0] < 3:
+        if PY2:
             self.assertEqual(buffer, type(o2))
         else:
             self.assertEqual(memoryview, type(o2))
@@ -350,7 +348,7 @@ class TypesBasicTests(ConnectingTestCase):
     def testAdaptMemoryview(self):
         o1 = memoryview(bytearray(range(256)))
         o2 = self.execute("select %s;", (o1,))
-        if sys.version_info[0] < 3:
+        if PY2:
             self.assertEqual(buffer, type(o2))
         else:
             self.assertEqual(memoryview, type(o2))
@@ -358,7 +356,7 @@ class TypesBasicTests(ConnectingTestCase):
         # Test with an empty buffer
         o1 = memoryview(bytearray([]))
         o2 = self.execute("select %s;", (o1,))
-        if sys.version_info[0] < 3:
+        if PY2:
             self.assertEqual(buffer, type(o2))
         else:
             self.assertEqual(memoryview, type(o2))
@@ -513,7 +511,7 @@ class ByteaParserTest(unittest.TestCase):
         if rv is None:
             return None
 
-        if sys.version_info[0] < 3:
+        if PY2:
             return str(rv)
         else:
             return rv.tobytes()
@@ -537,7 +535,7 @@ class ByteaParserTest(unittest.TestCase):
             buf = buf.upper()
         buf = '\\x' + buf
         rv = self.cast(buf.encode('utf8'))
-        if sys.version_info[0] < 3:
+        if PY2:
             self.assertEqual(rv, ''.join(map(chr, range(256))))
         else:
             self.assertEqual(rv, bytes(range(256)))
@@ -548,7 +546,7 @@ class ByteaParserTest(unittest.TestCase):
     def test_full_escaped_octal(self):
         buf = ''.join(("\\%03o" % i) for i in range(256))
         rv = self.cast(buf.encode('utf8'))
-        if sys.version_info[0] < 3:
+        if PY2:
             self.assertEqual(rv, ''.join(map(chr, range(256))))
         else:
             self.assertEqual(rv, bytes(range(256)))
@@ -559,7 +557,7 @@ class ByteaParserTest(unittest.TestCase):
         buf += ''.join('\\' + c for c in string.ascii_letters)
         buf += '\\\\'
         rv = self.cast(buf.encode('utf8'))
-        if sys.version_info[0] < 3:
+        if PY2:
             tgt = ''.join(map(chr, range(32))) \
                 + string.ascii_letters * 2 + '\\'
         else:
