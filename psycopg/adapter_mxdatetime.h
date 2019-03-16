@@ -44,35 +44,6 @@ typedef struct {
 
 } mxdatetimeObject;
 
-/* functions exported to psycopgmodule.c */
-#ifdef PSYCOPG_DEFAULT_MXDATETIME
-
-HIDDEN PyObject *psyco_Date(PyObject *module, PyObject *args);
-#define psyco_Date_doc \
-    "Date(year, month, day) -> new date"
-
-HIDDEN PyObject *psyco_Time(PyObject *module, PyObject *args);
-#define psyco_Time_doc \
-    "Time(hour, minutes, seconds) -> new time"
-
-HIDDEN PyObject *psyco_Timestamp(PyObject *module, PyObject *args);
-#define psyco_Timestamp_doc \
-    "Time(year, month, day, hour, minutes, seconds) -> new timestamp"
-
-HIDDEN PyObject *psyco_DateFromTicks(PyObject *module, PyObject *args);
-#define psyco_DateFromTicks_doc \
-    "DateFromTicks(ticks) -> new date"
-
-HIDDEN PyObject *psyco_TimeFromTicks(PyObject *module, PyObject *args);
-#define psyco_TimeFromTicks_doc \
-    "TimeFromTicks(ticks) -> new time"
-
-HIDDEN PyObject *psyco_TimestampFromTicks(PyObject *module, PyObject *args);
-#define psyco_TimestampFromTicks_doc \
-    "TimestampFromTicks(ticks) -> new timestamp"
-
-#endif /* PSYCOPG_DEFAULT_MXDATETIME */
-
 HIDDEN int psyco_adapter_mxdatetime_init(void);
 
 HIDDEN PyObject *psyco_DateFromMx(PyObject *module, PyObject *args);

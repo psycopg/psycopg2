@@ -523,12 +523,8 @@ depends = [
 parser = configparser.ConfigParser()
 parser.read('setup.cfg')
 
-# Choose a datetime module
-have_pydatetime = True
-have_mxdatetime = False
-use_pydatetime = parser.getboolean('build_ext', 'use_pydatetime')
-
 # check for mx package
+have_mxdatetime = False
 mxincludedir = ''
 if parser.has_option('build_ext', 'mx_include_dir'):
     mxincludedir = parser.get('build_ext', 'mx_include_dir')
@@ -542,25 +538,6 @@ if mxincludedir.strip() and os.path.exists(mxincludedir):
     depends.extend(['adapter_mxdatetime.h', 'typecast_mxdatetime.c'])
     have_mxdatetime = True
     version_flags.append('mx')
-
-# now decide which package will be the default for date/time typecasts
-if have_pydatetime and (use_pydatetime or not have_mxdatetime):
-    define_macros.append(('PSYCOPG_DEFAULT_PYDATETIME', '1'))
-elif have_mxdatetime:
-    define_macros.append(('PSYCOPG_DEFAULT_MXDATETIME', '1'))
-else:
-    error_message = """\
-psycopg requires a datetime module:
-    mx.DateTime module not found
-    python datetime module not found
-
-Note that psycopg needs the module headers and not just the module
-itself. If you installed Python or mx.DateTime from a binary package
-you probably need to install its companion -dev or -devel package."""
-
-    for line in error_message.split("\n"):
-        sys.stderr.write("error: " + line)
-    sys.exit(1)
 
 # generate a nice version string to avoid confusion when users report bugs
 version_flags.append('pq3')     # no more a choice

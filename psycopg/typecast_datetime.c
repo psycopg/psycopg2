@@ -458,10 +458,8 @@ typecast_PYINTERVAL_cast(const char *str, Py_ssize_t len, PyObject *curs)
 
 /* psycopg defaults to using python datetime types */
 
-#ifdef PSYCOPG_DEFAULT_PYDATETIME
 #define typecast_DATE_cast typecast_PYDATE_cast
 #define typecast_TIME_cast typecast_PYTIME_cast
 #define typecast_INTERVAL_cast typecast_PYINTERVAL_cast
 #define typecast_DATETIME_cast typecast_PYDATETIME_cast
 #define typecast_DATETIMETZ_cast typecast_PYDATETIMETZ_cast
-#endif
