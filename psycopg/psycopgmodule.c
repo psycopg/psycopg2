@@ -341,16 +341,13 @@ adapters_init(PyObject *module)
     }
 #endif
 
-#if PY_MAJOR_VERSION >= 3 || PY_MINOR_VERSION >= 6
     if (0 > microprotocols_add(&PyByteArray_Type, NULL, (PyObject*)&binaryType)) {
         goto exit;
     }
-#endif
-#if PY_MAJOR_VERSION >= 3 || PY_MINOR_VERSION >= 7
+
     if (0 > microprotocols_add(&PyMemoryView_Type, NULL, (PyObject*)&binaryType)) {
         goto exit;
     }
-#endif
 
     if (0 > microprotocols_add(&PyList_Type, NULL, (PyObject*)&listType)) {
         goto exit;
