@@ -25,14 +25,6 @@
 import unittest
 from .testutils import ConnectingTestCase, slow, reload
 
-try:
-    reload
-except NameError:
-    try:
-        from importlib import reload
-    except ImportError:
-        from imp import reload
-
 from threading import Thread
 from psycopg2 import errorcodes
 
