@@ -58,4 +58,7 @@ HIDDEN RAISES BORROWED PyObject *psyco_set_error(
 
 HIDDEN PyObject *psyco_GetDecimalType(void);
 
+HIDDEN PyObject *Bytes_Format(PyObject *format, PyObject *args);
+
+
 #endif /* !defined(UTILS_H) */

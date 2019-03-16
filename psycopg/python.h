@@ -63,40 +63,14 @@ typedef unsigned long Py_uhash_t;
   #define FORMAT_CODE_SIZE_T "%zu"
 #endif
 
-/* Abstract from text type. Only supported for ASCII and UTF-8 */
 #if PY_2
+
 #define Text_Type PyString_Type
 #define Text_Check(s) PyString_Check(s)
 #define Text_Format(f,a) PyString_Format(f,a)
 #define Text_FromUTF8(s) PyString_FromString(s)
 #define Text_FromUTF8AndSize(s,n) PyString_FromStringAndSize(s,n)
-#else
-#define Text_Type PyUnicode_Type
-#define Text_Check(s) PyUnicode_Check(s)
-#define Text_Format(f,a) PyUnicode_Format(f,a)
-#define Text_FromUTF8(s) PyUnicode_FromString(s)
-#define Text_FromUTF8AndSize(s,n) PyUnicode_FromStringAndSize(s,n)
-#endif
 
-#if PY_3
-#define PyInt_Type             PyLong_Type
-#define PyInt_Check            PyLong_Check
-#define PyInt_AsLong           PyLong_AsLong
-#define PyInt_FromLong         PyLong_FromLong
-#define PyInt_FromString       PyLong_FromString
-#define PyInt_FromSsize_t      PyLong_FromSsize_t
-#define PyExc_StandardError    PyExc_Exception
-#define PyString_FromFormat    PyUnicode_FromFormat
-#define Py_TPFLAGS_HAVE_ITER   0L
-#define Py_TPFLAGS_HAVE_RICHCOMPARE 0L
-#define Py_TPFLAGS_HAVE_WEAKREFS 0L
-#ifndef PyNumber_Int
-#define PyNumber_Int           PyNumber_Long
-#endif
-
-#endif  /* PY_3 */
-
-#if PY_2
 #define Bytes_Type PyString_Type
 #define Bytes_Check PyString_Check
 #define Bytes_CheckExact PyString_CheckExact
@@ -115,7 +89,33 @@ typedef unsigned long Py_uhash_t;
 #define PyDateTime_DELTA_GET_SECONDS(o)      (((PyDateTime_Delta*)o)->seconds)
 #define PyDateTime_DELTA_GET_MICROSECONDS(o) (((PyDateTime_Delta*)o)->microseconds)
 
-#else
+#define INIT_MODULE(m) init ## m
+
+#endif  /* PY_2 */
+
+#if PY_3
+
+#define Text_Type PyUnicode_Type
+#define Text_Check(s) PyUnicode_Check(s)
+#define Text_Format(f,a) PyUnicode_Format(f,a)
+#define Text_FromUTF8(s) PyUnicode_FromString(s)
+#define Text_FromUTF8AndSize(s,n) PyUnicode_FromStringAndSize(s,n)
+
+#define PyInt_Type             PyLong_Type
+#define PyInt_Check            PyLong_Check
+#define PyInt_AsLong           PyLong_AsLong
+#define PyInt_FromLong         PyLong_FromLong
+#define PyInt_FromString       PyLong_FromString
+#define PyInt_FromSsize_t      PyLong_FromSsize_t
+#define PyExc_StandardError    PyExc_Exception
+#define PyString_FromFormat    PyUnicode_FromFormat
+#define Py_TPFLAGS_HAVE_ITER   0L
+#define Py_TPFLAGS_HAVE_RICHCOMPARE 0L
+#define Py_TPFLAGS_HAVE_WEAKREFS 0L
+
+#ifndef PyNumber_Int
+#define PyNumber_Int           PyNumber_Long
+#endif
 
 #define Bytes_Type PyBytes_Type
 #define Bytes_Check PyBytes_Check
@@ -131,15 +131,8 @@ typedef unsigned long Py_uhash_t;
 #define Bytes_ConcatAndDel PyBytes_ConcatAndDel
 #define _Bytes_Resize _PyBytes_Resize
 
-#endif
-
-HIDDEN PyObject *Bytes_Format(PyObject *format, PyObject *args);
-
-/* Mangle the module name into the name of the module init function */
-#if PY_3
 #define INIT_MODULE(m) PyInit_ ## m
-#else
-#define INIT_MODULE(m) init ## m
-#endif
+
+#endif  /* PY_3 */
 
 #endif /* !defined(PSYCOPG_PYTHON_H) */
