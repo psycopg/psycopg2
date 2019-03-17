@@ -76,11 +76,11 @@ HIDDEN PyObject *psyco_null = NULL;
 #define str(s) #s
 
 /** connect module-level function **/
-#define connect_doc \
+#define psyco_connect_doc \
 "_connect(dsn, [connection_factory], [async]) -- New database connection.\n\n"
 
 static PyObject *
-connect(PyObject *self, PyObject *args, PyObject *keywds)
+psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
 {
     PyObject *conn = NULL;
     PyObject *factory = NULL;
@@ -96,7 +96,7 @@ connect(PyObject *self, PyObject *args, PyObject *keywds)
 
     if (async_) { async = async_; }
 
-    Dprintf("connect: dsn = '%s', async = %d", dsn, async);
+    Dprintf("psyco_connect: dsn = '%s', async = %d", dsn, async);
 
     /* allocate connection, fill with errors and return it */
     if (factory == NULL || factory == Py_None) {
@@ -986,8 +986,8 @@ mxdatetime_init(PyObject *module)
 /** method table and module initialization **/
 
 static PyMethodDef psycopgMethods[] = {
-    {"_connect",  (PyCFunction)connect,
-     METH_VARARGS|METH_KEYWORDS, connect_doc},
+    {"_connect",  (PyCFunction)psyco_connect,
+     METH_VARARGS|METH_KEYWORDS, psyco_connect_doc},
     {"parse_dsn",  (PyCFunction)parse_dsn,
      METH_VARARGS|METH_KEYWORDS, parse_dsn_doc},
     {"quote_ident", (PyCFunction)quote_ident,
