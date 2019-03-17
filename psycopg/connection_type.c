@@ -1052,7 +1052,7 @@ psyco_conn_reset(connectionObject *self, PyObject *dummy)
     if (pq_reset(self) < 0)
         return NULL;
 
-    res = conn_setup(self, self->pgconn);
+    res = conn_setup(self);
     if (res < 0)
         return NULL;
 
@@ -1430,7 +1430,7 @@ connection_dealloc(PyObject* obj)
 
     PyMem_Free(self->dsn);
     PyMem_Free(self->encoding);
-    if (self->critical) free(self->critical);
+    if (self->error) free(self->error);
     if (self->cancel) PQfreeCancel(self->cancel);
     PQclear(self->pgres);
 

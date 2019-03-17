@@ -33,12 +33,9 @@
 #include <string.h>
 
 static void
-collect_error(connectionObject *conn, char **error)
+collect_error(connectionObject *conn)
 {
-    const char *msg = PQerrorMessage(conn->pgconn);
-
-    if (msg)
-        *error = strdup(msg);
+    conn_set_error(conn, PQerrorMessage(conn->pgconn));
 }
 
 
@@ -150,8 +147,6 @@ lobject_open(lobjectObject *self, connectionObject *conn,
               Oid oid, const char *smode, Oid new_oid, const char *new_file)
 {
     int retvalue = -1;
-    PGresult *pgres = NULL;
-    char *error = NULL;
     int pgmode = 0;
     int mode;
 
@@ -162,7 +157,7 @@ lobject_open(lobjectObject *self, connectionObject *conn,
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
 
-    retvalue = pq_begin_locked(self->conn, &pgres, &error, &_save);
+    retvalue = pq_begin_locked(self->conn, &_save);
     if (retvalue < 0)
         goto end;
 
@@ -185,7 +180,7 @@ lobject_open(lobjectObject *self, connectionObject *conn,
                 self->oid);
 
         if (self->oid == InvalidOid) {
-            collect_error(self->conn, &error);
+            collect_error(self->conn);
             retvalue = -1;
             goto end;
         }
@@ -205,7 +200,7 @@ lobject_open(lobjectObject *self, connectionObject *conn,
             pgmode, self->fd);
 
         if (self->fd == -1) {
-            collect_error(self->conn, &error);
+            collect_error(self->conn);
             retvalue = -1;
             goto end;
         }
@@ -228,7 +223,7 @@ lobject_open(lobjectObject *self, connectionObject *conn,
     Py_END_ALLOW_THREADS;
 
     if (retvalue < 0)
-        pq_complete_error(self->conn, &pgres, &error);
+        pq_complete_error(self->conn);
     /* if retvalue > 0, an exception is already set */
 
     return retvalue;
@@ -237,7 +232,7 @@ lobject_open(lobjectObject *self, connectionObject *conn,
 /* lobject_close - close an existing lo */
 
 RAISES_NEG static int
-lobject_close_locked(lobjectObject *self, char **error)
+lobject_close_locked(lobjectObject *self)
 {
     int retvalue;
 
@@ -251,7 +246,7 @@ lobject_close_locked(lobjectObject *self, char **error)
         return 0;
         break;
     default:
-        *error = strdup("the connection is broken");
+        conn_set_error(self->conn, "the connection is broken");
         return -1;
         break;
     }
@@ -264,7 +259,7 @@ lobject_close_locked(lobjectObject *self, char **error)
     retvalue = lo_close(self->conn->pgconn, self->fd);
     self->fd = -1;
     if (retvalue < 0)
-        collect_error(self->conn, error);
+        collect_error(self->conn);
 
     return retvalue;
 }
@@ -272,20 +267,18 @@ lobject_close_locked(lobjectObject *self, char **error)
 RAISES_NEG int
 lobject_close(lobjectObject *self)
 {
-    PGresult *pgres = NULL;
-    char *error = NULL;
     int retvalue;
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
 
-    retvalue = lobject_close_locked(self, &error);
+    retvalue = lobject_close_locked(self);
 
     pthread_mutex_unlock(&(self->conn->lock));
     Py_END_ALLOW_THREADS;
 
     if (retvalue < 0)
-        pq_complete_error(self->conn, &pgres, &error);
+        pq_complete_error(self->conn);
     return retvalue;
 }
 
@@ -294,32 +287,30 @@ lobject_close(lobjectObject *self)
 RAISES_NEG int
 lobject_unlink(lobjectObject *self)
 {
-    PGresult *pgres = NULL;
-    char *error = NULL;
     int retvalue = -1;
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
 
-    retvalue = pq_begin_locked(self->conn, &pgres, &error, &_save);
+    retvalue = pq_begin_locked(self->conn, &_save);
     if (retvalue < 0)
         goto end;
 
     /* first we make sure the lobject is closed and then we unlink */
-    retvalue = lobject_close_locked(self, &error);
+    retvalue = lobject_close_locked(self);
     if (retvalue < 0)
         goto end;
 
     retvalue = lo_unlink(self->conn->pgconn, self->oid);
     if (retvalue < 0)
-        collect_error(self->conn, &error);
+        collect_error(self->conn);
 
  end:
     pthread_mutex_unlock(&(self->conn->lock));
     Py_END_ALLOW_THREADS;
 
     if (retvalue < 0)
-        pq_complete_error(self->conn, &pgres, &error);
+        pq_complete_error(self->conn);
     return retvalue;
 }
 
@@ -329,8 +320,6 @@ RAISES_NEG Py_ssize_t
 lobject_write(lobjectObject *self, const char *buf, size_t len)
 {
     Py_ssize_t written;
-    PGresult *pgres = NULL;
-    char *error = NULL;
 
     Dprintf("lobject_writing: fd = %d, len = " FORMAT_CODE_SIZE_T,
             self->fd, len);
@@ -340,13 +329,13 @@ lobject_write(lobjectObject *self, const char *buf, size_t len)
 
     written = lo_write(self->conn->pgconn, self->fd, buf, len);
     if (written < 0)
-        collect_error(self->conn, &error);
+        collect_error(self->conn);
 
     pthread_mutex_unlock(&(self->conn->lock));
     Py_END_ALLOW_THREADS;
 
     if (written < 0)
-        pq_complete_error(self->conn, &pgres, &error);
+        pq_complete_error(self->conn);
     return written;
 }
 
@@ -356,21 +345,19 @@ RAISES_NEG Py_ssize_t
 lobject_read(lobjectObject *self, char *buf, size_t len)
 {
     Py_ssize_t n_read;
-    PGresult *pgres = NULL;
-    char *error = NULL;
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
 
     n_read = lo_read(self->conn->pgconn, self->fd, buf, len);
     if (n_read < 0)
-        collect_error(self->conn, &error);
+        collect_error(self->conn);
 
     pthread_mutex_unlock(&(self->conn->lock));
     Py_END_ALLOW_THREADS;
 
     if (n_read < 0)
-        pq_complete_error(self->conn, &pgres, &error);
+        pq_complete_error(self->conn);
     return n_read;
 }
 
@@ -379,8 +366,6 @@ lobject_read(lobjectObject *self, char *buf, size_t len)
 RAISES_NEG Py_ssize_t
 lobject_seek(lobjectObject *self, Py_ssize_t pos, int whence)
 {
-    PGresult *pgres = NULL;
-    char *error = NULL;
     Py_ssize_t where;
 
     Dprintf("lobject_seek: fd = %d, pos = " FORMAT_CODE_PY_SSIZE_T ", whence = %d",
@@ -400,13 +385,13 @@ lobject_seek(lobjectObject *self, Py_ssize_t pos, int whence)
 #endif
     Dprintf("lobject_seek: where = " FORMAT_CODE_PY_SSIZE_T, where);
     if (where < 0)
-        collect_error(self->conn, &error);
+        collect_error(self->conn);
 
     pthread_mutex_unlock(&(self->conn->lock));
     Py_END_ALLOW_THREADS;
 
     if (where < 0)
-        pq_complete_error(self->conn, &pgres, &error);
+        pq_complete_error(self->conn);
     return where;
 }
 
@@ -415,8 +400,6 @@ lobject_seek(lobjectObject *self, Py_ssize_t pos, int whence)
 RAISES_NEG Py_ssize_t
 lobject_tell(lobjectObject *self)
 {
-    PGresult *pgres = NULL;
-    char *error = NULL;
     Py_ssize_t where;
 
     Dprintf("lobject_tell: fd = %d", self->fd);
@@ -435,13 +418,13 @@ lobject_tell(lobjectObject *self)
 #endif
     Dprintf("lobject_tell: where = " FORMAT_CODE_PY_SSIZE_T, where);
     if (where < 0)
-        collect_error(self->conn, &error);
+        collect_error(self->conn);
 
     pthread_mutex_unlock(&(self->conn->lock));
     Py_END_ALLOW_THREADS;
 
     if (where < 0)
-        pq_complete_error(self->conn, &pgres, &error);
+        pq_complete_error(self->conn);
     return where;
 }
 
@@ -450,27 +433,25 @@ lobject_tell(lobjectObject *self)
 RAISES_NEG int
 lobject_export(lobjectObject *self, const char *filename)
 {
-    PGresult *pgres = NULL;
-    char *error = NULL;
     int retvalue;
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&(self->conn->lock));
 
-    retvalue = pq_begin_locked(self->conn, &pgres, &error, &_save);
+    retvalue = pq_begin_locked(self->conn, &_save);
     if (retvalue < 0)
         goto end;
 
     retvalue = lo_export(self->conn->pgconn, self->oid, filename);
     if (retvalue < 0)
-        collect_error(self->conn, &error);
+        collect_error(self->conn);
 
  end:
     pthread_mutex_unlock(&(self->conn->lock));
     Py_END_ALLOW_THREADS;
 
     if (retvalue < 0)
-        pq_complete_error(self->conn, &pgres, &error);
+        pq_complete_error(self->conn);
     return retvalue;
 }
 
@@ -478,8 +459,6 @@ RAISES_NEG int
 lobject_truncate(lobjectObject *self, size_t len)
 {
     int retvalue;
-    PGresult *pgres = NULL;
-    char *error = NULL;
 
     Dprintf("lobject_truncate: fd = %d, len = " FORMAT_CODE_SIZE_T,
             self->fd, len);
@@ -498,13 +477,13 @@ lobject_truncate(lobjectObject *self, size_t len)
 #endif
     Dprintf("lobject_truncate: result = %d", retvalue);
     if (retvalue < 0)
-        collect_error(self->conn, &error);
+        collect_error(self->conn);
 
     pthread_mutex_unlock(&(self->conn->lock));
     Py_END_ALLOW_THREADS;
 
     if (retvalue < 0)
-        pq_complete_error(self->conn, &pgres, &error);
+        pq_complete_error(self->conn);
     return retvalue;
 
 }

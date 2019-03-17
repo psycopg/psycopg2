@@ -649,25 +649,23 @@ conn_is_datestyle_ok(PGconn *pgconn)
 /* conn_setup - setup and read basic information about the connection */
 
 RAISES_NEG int
-conn_setup(connectionObject *self, PGconn *pgconn)
+conn_setup(connectionObject *self)
 {
-    PGresult *pgres = NULL;
-    char *error = NULL;
     int rv = -1;
 
-    self->equote = conn_get_standard_conforming_strings(pgconn);
-    self->server_version = conn_get_server_version(pgconn);
+    self->equote = conn_get_standard_conforming_strings(self->pgconn);
+    self->server_version = conn_get_server_version(self->pgconn);
     self->protocol = conn_get_protocol_version(self->pgconn);
     if (3 != self->protocol) {
         PyErr_SetString(InterfaceError, "only protocol 3 supported");
         goto exit;
     }
 
-    if (0 > conn_read_encoding(self, pgconn)) {
+    if (0 > conn_read_encoding(self, self->pgconn)) {
         goto exit;
     }
 
-    if (0 > conn_setup_cancel(self, pgconn)) {
+    if (0 > conn_setup_cancel(self, self->pgconn)) {
         goto exit;
     }
 
@@ -678,11 +676,10 @@ conn_setup(connectionObject *self, PGconn *pgconn)
     if (!dsn_has_replication(self->dsn) && !conn_is_datestyle_ok(self->pgconn)) {
         int res;
         Py_UNBLOCK_THREADS;
-        res = pq_set_guc_locked(self, "datestyle", "ISO",
-            &pgres, &error, &_save);
+        res = pq_set_guc_locked(self, "datestyle", "ISO", &_save);
         Py_BLOCK_THREADS;
         if (res < 0) {
-            pq_complete_error(self, &pgres, &error);
+            pq_complete_error(self);
             goto unlock;
         }
     }
@@ -710,7 +707,6 @@ exit:
 static int
 _conn_sync_connect(connectionObject *self)
 {
-    PGconn *pgconn;
     int green;
 
     /* store this value to prevent inconsistencies due to a change
@@ -718,31 +714,31 @@ _conn_sync_connect(connectionObject *self)
     green = psyco_green();
     if (!green) {
         Py_BEGIN_ALLOW_THREADS;
-        self->pgconn = pgconn = PQconnectdb(self->dsn);
+        self->pgconn = PQconnectdb(self->dsn);
         Py_END_ALLOW_THREADS;
-        Dprintf("conn_connect: new postgresql connection at %p", pgconn);
+        Dprintf("conn_connect: new PG connection at %p", self->pgconn);
     }
     else {
         Py_BEGIN_ALLOW_THREADS;
-        self->pgconn = pgconn = PQconnectStart(self->dsn);
+        self->pgconn = PQconnectStart(self->dsn);
         Py_END_ALLOW_THREADS;
-        Dprintf("conn_connect: new green postgresql connection at %p", pgconn);
+        Dprintf("conn_connect: new green PG connection at %p", self->pgconn);
     }
 
-    if (pgconn == NULL)
+    if (!self->pgconn)
     {
         Dprintf("conn_connect: PQconnectdb(%s) FAILED", self->dsn);
         PyErr_SetString(OperationalError, "PQconnectdb() failed");
         return -1;
     }
-    else if (PQstatus(pgconn) == CONNECTION_BAD)
+    else if (PQstatus(self->pgconn) == CONNECTION_BAD)
     {
         Dprintf("conn_connect: PQconnectdb(%s) returned BAD", self->dsn);
-        PyErr_SetString(OperationalError, PQerrorMessage(pgconn));
+        PyErr_SetString(OperationalError, PQerrorMessage(self->pgconn));
         return -1;
     }
 
-    PQsetNoticeProcessor(pgconn, conn_notice_callback, (void*)self);
+    PQsetNoticeProcessor(self->pgconn, conn_notice_callback, (void*)self);
 
     /* if the connection is green, wait to finish connection */
     if (green) {
@@ -759,7 +755,7 @@ _conn_sync_connect(connectionObject *self)
      */
     self->status = CONN_STATUS_READY;
 
-    if (conn_setup(self, self->pgconn) == -1) {
+    if (conn_setup(self) == -1) {
         return -1;
     }
 
@@ -1122,8 +1118,7 @@ conn_poll(connectionObject *self)
                 break;
             }
 
-            PQclear(curs->pgres);
-            curs->pgres = self->pgres;
+            curs_set_result(curs, self->pgres);
             self->pgres = NULL;
 
             /* fetch the tuples (if there are any) and build the result. We
@@ -1225,8 +1220,6 @@ conn_set_session(connectionObject *self, int autocommit,
         int isolevel, int readonly, int deferrable)
 {
     int rv = -1;
-    PGresult *pgres = NULL;
-    char *error = NULL;
     int want_autocommit = autocommit == SRV_STATE_UNCHANGED ?
         self->autocommit : autocommit;
 
@@ -1256,21 +1249,21 @@ conn_set_session(connectionObject *self, int autocommit,
         if (isolevel != SRV_STATE_UNCHANGED) {
             if (0 > pq_set_guc_locked(self,
                     "default_transaction_isolation", srv_isolevels[isolevel],
-                    &pgres, &error, &_save)) {
+                    &_save)) {
                 goto endlock;
             }
         }
         if (readonly != SRV_STATE_UNCHANGED) {
             if (0 > pq_set_guc_locked(self,
                     "default_transaction_read_only", srv_state_guc[readonly],
-                    &pgres, &error, &_save)) {
+                    &_save)) {
                 goto endlock;
             }
         }
         if (deferrable != SRV_STATE_UNCHANGED) {
             if (0 > pq_set_guc_locked(self,
                     "default_transaction_deferrable", srv_state_guc[deferrable],
-                    &pgres, &error, &_save)) {
+                    &_save)) {
                 goto endlock;
             }
         }
@@ -1281,21 +1274,21 @@ conn_set_session(connectionObject *self, int autocommit,
         if (self->isolevel != ISOLATION_LEVEL_DEFAULT) {
             if (0 > pq_set_guc_locked(self,
                     "default_transaction_isolation", "default",
-                    &pgres, &error, &_save)) {
+                    &_save)) {
                 goto endlock;
             }
         }
         if (self->readonly != STATE_DEFAULT) {
             if (0 > pq_set_guc_locked(self,
                     "default_transaction_read_only", "default",
-                    &pgres, &error, &_save)) {
+                    &_save)) {
                 goto endlock;
             }
         }
         if (self->server_version >= 90100 && self->deferrable != STATE_DEFAULT) {
             if (0 > pq_set_guc_locked(self,
                     "default_transaction_deferrable", "default",
-                    &pgres, &error, &_save)) {
+                    &_save)) {
                 goto endlock;
             }
         }
@@ -1320,7 +1313,7 @@ endlock:
     Py_END_ALLOW_THREADS;
 
     if (rv < 0) {
-        pq_complete_error(self, &pgres, &error);
+        pq_complete_error(self);
         goto exit;
     }
 
@@ -1339,8 +1332,6 @@ exit:
 RAISES_NEG int
 conn_set_client_encoding(connectionObject *self, const char *pgenc)
 {
-    PGresult *pgres = NULL;
-    char *error = NULL;
     int res = -1;
     char *clean_enc = NULL;
 
@@ -1356,12 +1347,11 @@ conn_set_client_encoding(connectionObject *self, const char *pgenc)
 
     /* abort the current transaction, to set the encoding ouside of
        transactions */
-    if ((res = pq_abort_locked(self, &pgres, &error, &_save))) {
+    if ((res = pq_abort_locked(self, &_save))) {
         goto endlock;
     }
 
-    if ((res = pq_set_guc_locked(self, "client_encoding", clean_enc,
-            &pgres, &error, &_save))) {
+    if ((res = pq_set_guc_locked(self, "client_encoding", clean_enc, &_save))) {
         goto endlock;
     }
 
@@ -1370,7 +1360,7 @@ endlock:
     Py_END_ALLOW_THREADS;
 
     if (res < 0) {
-        pq_complete_error(self, &pgres, &error);
+        pq_complete_error(self);
         goto exit;
     }
 
@@ -1396,18 +1386,15 @@ exit:
 RAISES_NEG int
 conn_tpc_begin(connectionObject *self, xidObject *xid)
 {
-    PGresult *pgres = NULL;
-    char *error = NULL;
-
     Dprintf("conn_tpc_begin: starting transaction");
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
 
-    if (pq_begin_locked(self, &pgres, &error, &_save) < 0) {
+    if (pq_begin_locked(self, &_save) < 0) {
         pthread_mutex_unlock(&(self->lock));
         Py_BLOCK_THREADS;
-        pq_complete_error(self, &pgres, &error);
+        pq_complete_error(self);
         return -1;
     }
 
@@ -1430,8 +1417,6 @@ conn_tpc_begin(connectionObject *self, xidObject *xid)
 RAISES_NEG int
 conn_tpc_command(connectionObject *self, const char *cmd, xidObject *xid)
 {
-    PGresult *pgres = NULL;
-    char *error = NULL;
     PyObject *tid = NULL;
     const char *ctid;
     int rv = -1;
@@ -1445,11 +1430,10 @@ conn_tpc_command(connectionObject *self, const char *cmd, xidObject *xid)
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
 
-    if (0 > (rv = pq_tpc_command_locked(self, cmd, ctid,
-                                        &pgres, &error, &_save))) {
+    if (0 > (rv = pq_tpc_command_locked(self, cmd, ctid, &_save))) {
         pthread_mutex_unlock(&self->lock);
         Py_BLOCK_THREADS;
-        pq_complete_error(self, &pgres, &error);
+        pq_complete_error(self);
         goto exit;
     }
 
@@ -1493,4 +1477,25 @@ exit:
 
     return rv;
 
+}
+
+
+void
+conn_set_result(connectionObject *self, PGresult *pgres)
+{
+    PQclear(self->pgres);
+    self->pgres = pgres;
+}
+
+
+void
+conn_set_error(connectionObject *self, const char *msg)
+{
+    if (self->error) {
+        free(self->error);
+        self->error = NULL;
+    }
+    if (msg && *msg) {
+        self->error = strdup(msg);
+    }
 }

@@ -39,24 +39,19 @@ RAISES_NEG HIDDEN int pq_fetch(cursorObject *curs, int no_result);
 RAISES_NEG HIDDEN int pq_execute(cursorObject *curs, const char *query,
                                  int async, int no_result, int no_begin);
 HIDDEN int pq_send_query(connectionObject *conn, const char *query);
-HIDDEN int pq_begin_locked(connectionObject *conn, PGresult **pgres,
-                           char **error, PyThreadState **tstate);
+HIDDEN int pq_begin_locked(connectionObject *conn, PyThreadState **tstate);
 HIDDEN int pq_commit(connectionObject *conn);
-RAISES_NEG HIDDEN int pq_abort_locked(connectionObject *conn, PGresult **pgres,
-                           char **error, PyThreadState **tstate);
+RAISES_NEG HIDDEN int pq_abort_locked(connectionObject *conn,
+                           PyThreadState **tstate);
 RAISES_NEG HIDDEN int pq_abort(connectionObject *conn);
-HIDDEN int pq_reset_locked(connectionObject *conn, PGresult **pgres,
-                            char **error, PyThreadState **tstate);
+HIDDEN int pq_reset_locked(connectionObject *conn, PyThreadState **tstate);
 RAISES_NEG HIDDEN int pq_reset(connectionObject *conn);
 HIDDEN char *pq_get_guc_locked(connectionObject *conn, const char *param,
-                               PGresult **pgres,
-                               char **error, PyThreadState **tstate);
+                               PyThreadState **tstate);
 HIDDEN int pq_set_guc_locked(connectionObject *conn, const char *param,
-                             const char *value, PGresult **pgres,
-                             char **error, PyThreadState **tstate);
+                             const char *value, PyThreadState **tstate);
 HIDDEN int pq_tpc_command_locked(connectionObject *conn,
                                  const char *cmd, const char *tid,
-                                 PGresult **pgres, char **error,
                                  PyThreadState **tstate);
 RAISES_NEG HIDDEN int pq_get_result_async(connectionObject *conn);
 HIDDEN int pq_flush(connectionObject *conn);
@@ -65,12 +60,9 @@ RAISES_NEG HIDDEN int pq_set_non_blocking(connectionObject *conn, int arg);
 
 HIDDEN void pq_set_critical(connectionObject *conn, const char *msg);
 
-HIDDEN int pq_execute_command_locked(connectionObject *conn,
-                                     const char *query,
-                                     PGresult **pgres, char **error,
+HIDDEN int pq_execute_command_locked(connectionObject *conn, const char *query,
                                      PyThreadState **tstate);
-RAISES HIDDEN void pq_complete_error(connectionObject *conn, PGresult **pgres,
-                              char **error);
+RAISES HIDDEN void pq_complete_error(connectionObject *conn);
 
 /* replication protocol support */
 HIDDEN int pq_copy_both(replicationCursorObject *repl, PyObject *consumer,

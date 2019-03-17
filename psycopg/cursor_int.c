@@ -160,3 +160,11 @@ exit:
     Py_XDECREF(comp);
     return rv;
 }
+
+
+void
+curs_set_result(cursorObject *self, PGresult *pgres)
+{
+    PQclear(self->pgres);
+    self->pgres = pgres;
+}

@@ -194,68 +194,6 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult **pgres)
     Py_XDECREF(pgcode);
 }
 
-/* pq_set_critical, pq_resolve_critical - manage critical errors
-
-   this function is invoked when a PQexec() call returns NULL, meaning a
-   critical condition like out of memory or lost connection. it save the error
-   message and mark the connection as 'wanting cleanup'.
-
-   both functions do not call any Py_*_ALLOW_THREADS macros.
-   pq_resolve_critical should be called while holding the GIL. */
-
-void
-pq_set_critical(connectionObject *conn, const char *msg)
-{
-    if (msg == NULL)
-        msg = PQerrorMessage(conn->pgconn);
-    if (conn->critical) free(conn->critical);
-    Dprintf("pq_set_critical: setting %s", msg);
-    if (msg && msg[0] != '\0') conn->critical = strdup(msg);
-    else conn->critical = NULL;
-}
-
-static void
-pq_clear_critical(connectionObject *conn)
-{
-    /* sometimes we know that the notice analizer set a critical that
-       was not really as such (like when raising an error for a delayed
-       contraint violation. it would be better to analyze the notice
-       or avoid the set-error-on-notice stuff at all but given that we
-       can't, some functions at least clear the critical status after
-       operations they know would result in a wrong critical to be set */
-    Dprintf("pq_clear_critical: clearing %s", conn->critical);
-    if (conn->critical) {
-        free(conn->critical);
-        conn->critical = NULL;
-    }
-}
-
-/* return -1 if the exception is set (i.e. if conn->critical is set),
- * else 0 */
-RAISES_NEG static int
-pq_resolve_critical(connectionObject *conn, int close)
-{
-    Dprintf("pq_resolve_critical: resolving %s", conn->critical);
-
-    if (conn->critical) {
-        char *msg = &(conn->critical[6]);
-        Dprintf("pq_resolve_critical: error = %s", msg);
-        /* we can't use pq_raise because the error has already been cleared
-           from the connection, so we just raise an OperationalError with the
-           critical message */
-        PyErr_SetString(OperationalError, msg);
-
-        /* we don't want to destroy this connection but just close it */
-        if (close == 1) conn_close(conn);
-
-        /* remember to clear the critical! */
-        pq_clear_critical(conn);
-
-        return -1;
-    }
-    return 0;
-}
-
 /* pq_clear_async - clear the effects of a previous async query
 
    note that this function does block because it needs to wait for the full
@@ -273,9 +211,9 @@ pq_clear_async(connectionObject *conn)
        finalize asynchronous processing so the connection will be ready to
        accept another query */
 
-    while ((pgres = PQgetResult(conn->pgconn)) != NULL) {
+    while ((pgres = PQgetResult(conn->pgconn))) {
         Dprintf("pq_clear_async: clearing PGresult at %p", pgres);
-        CLEARPGRES(pgres);
+        PQclear(pgres);
     }
     Py_CLEAR(conn->async_cursor);
 }
@@ -305,7 +243,7 @@ pq_set_non_blocking(connectionObject *conn, int arg)
    This function should only be called on a locked connection without
    holding the global interpreter lock.
 
-   On error, -1 is returned, and the pgres argument will hold the
+   On error, -1 is returned, and the conn->pgres will hold the
    relevant result structure.
 
    The tstate parameter should be the pointer of the _save variable created by
@@ -313,36 +251,31 @@ pq_set_non_blocking(connectionObject *conn, int arg)
    again the GIL if needed, i.e. if a Python wait callback must be invoked.
  */
 int
-pq_execute_command_locked(connectionObject *conn, const char *query,
-                          PGresult **pgres, char **error,
-                          PyThreadState **tstate)
+pq_execute_command_locked(
+    connectionObject *conn, const char *query, PyThreadState **tstate)
 {
     int pgstatus, retvalue = -1;
-
     Dprintf("pq_execute_command_locked: pgconn = %p, query = %s",
             conn->pgconn, query);
-    *error = NULL;
 
     if (!psyco_green()) {
-        *pgres = PQexec(conn->pgconn, query);
+        conn_set_result(conn, PQexec(conn->pgconn, query));
     } else {
         PyEval_RestoreThread(*tstate);
-        *pgres = psyco_exec_green(conn, query);
+        conn_set_result(conn, psyco_exec_green(conn, query));
         *tstate = PyEval_SaveThread();
     }
-    if (*pgres == NULL) {
+    if (conn->pgres == NULL) {
         Dprintf("pq_execute_command_locked: PQexec returned NULL");
         PyEval_RestoreThread(*tstate);
         if (!PyErr_Occurred()) {
-            const char *msg;
-            msg = PQerrorMessage(conn->pgconn);
-            if (msg && *msg) { *error = strdup(msg); }
+            conn_set_error(conn, PQerrorMessage(conn->pgconn));
         }
         *tstate = PyEval_SaveThread();
         goto cleanup;
     }
 
-    pgstatus = PQresultStatus(*pgres);
+    pgstatus = PQresultStatus(conn->pgres);
     if (pgstatus != PGRES_COMMAND_OK ) {
         Dprintf("pq_execute_command_locked: result was not COMMAND_OK (%d)",
                 pgstatus);
@@ -350,7 +283,7 @@ pq_execute_command_locked(connectionObject *conn, const char *query,
     }
 
     retvalue = 0;
-    CLEARPGRES(*pgres);
+    CLEARPGRES(conn->pgres);
 
 cleanup:
     return retvalue;
@@ -365,17 +298,17 @@ cleanup:
    lock.
  */
 RAISES void
-pq_complete_error(connectionObject *conn, PGresult **pgres, char **error)
+pq_complete_error(connectionObject *conn)
 {
-    Dprintf("pq_complete_error: pgconn = %p, pgres = %p, error = %s",
-            conn->pgconn, *pgres, *error ? *error : "(null)");
-    if (*pgres != NULL) {
-        pq_raise(conn, NULL, pgres);
-        /* now *pgres is null */
+    Dprintf("pq_complete_error: pgconn = %p, error = %s",
+            conn->pgconn, conn->error);
+    if (conn->pgres) {
+        pq_raise(conn, NULL, &conn->pgres);
+        /* now conn->pgres is null */
     }
     else {
-        if (*error != NULL) {
-            PyErr_SetString(OperationalError, *error);
+        if (conn->error) {
+            PyErr_SetString(OperationalError, conn->error);
         } else if (PyErr_Occurred()) {
             /* There was a Python error (e.g. in the callback). Don't clobber
              * it with an unknown exception. (see #410) */
@@ -392,11 +325,7 @@ pq_complete_error(connectionObject *conn, PGresult **pgres, char **error)
             conn->closed = 2;
         }
     }
-
-    if (*error) {
-        free(*error);
-        *error = NULL;
-    }
+    conn_set_error(conn, NULL);
 }
 
 
@@ -405,12 +334,11 @@ pq_complete_error(connectionObject *conn, PGresult **pgres, char **error)
    This function should only be called on a locked connection without
    holding the global interpreter lock.
 
-   On error, -1 is returned, and the pgres argument will hold the
+   On error, -1 is returned, and the conn->pgres argument will hold the
    relevant result structure.
  */
 int
-pq_begin_locked(connectionObject *conn, PGresult **pgres, char **error,
-                PyThreadState **tstate)
+pq_begin_locked(connectionObject *conn, PyThreadState **tstate)
 {
     const size_t bufsize = 256;
     char buf[256];  /* buf size must be same as bufsize */
@@ -441,7 +369,7 @@ pq_begin_locked(connectionObject *conn, PGresult **pgres, char **error,
             srv_deferrable[conn->deferrable]);
     }
 
-    result = pq_execute_command_locked(conn, buf, pgres, error, tstate);
+    result = pq_execute_command_locked(conn, buf, tstate);
     if (result == 0)
         conn->status = CONN_STATUS_BEGIN;
 
@@ -458,8 +386,6 @@ int
 pq_commit(connectionObject *conn)
 {
     int retvalue = -1;
-    PGresult *pgres = NULL;
-    char *error = NULL;
 
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&conn->lock);
@@ -473,7 +399,7 @@ pq_commit(connectionObject *conn)
     }
     else {
         conn->mark += 1;
-        retvalue = pq_execute_command_locked(conn, "COMMIT", &pgres, &error, &_save);
+        retvalue = pq_execute_command_locked(conn, "COMMIT", &_save);
     }
 
     Py_BLOCK_THREADS;
@@ -488,14 +414,13 @@ pq_commit(connectionObject *conn)
     Py_END_ALLOW_THREADS;
 
     if (retvalue < 0)
-        pq_complete_error(conn, &pgres, &error);
+        pq_complete_error(conn);
 
     return retvalue;
 }
 
 RAISES_NEG int
-pq_abort_locked(connectionObject *conn, PGresult **pgres, char **error,
-                PyThreadState **tstate)
+pq_abort_locked(connectionObject *conn, PyThreadState **tstate)
 {
     int retvalue = -1;
 
@@ -508,7 +433,7 @@ pq_abort_locked(connectionObject *conn, PGresult **pgres, char **error,
     }
 
     conn->mark += 1;
-    retvalue = pq_execute_command_locked(conn, "ROLLBACK", pgres, error, tstate);
+    retvalue = pq_execute_command_locked(conn, "ROLLBACK", tstate);
     if (retvalue == 0)
         conn->status = CONN_STATUS_READY;
 
@@ -524,8 +449,6 @@ RAISES_NEG int
 pq_abort(connectionObject *conn)
 {
     int retvalue = -1;
-    PGresult *pgres = NULL;
-    char *error = NULL;
 
     Dprintf("pq_abort: pgconn = %p, autocommit = %d, status = %d",
             conn->pgconn, conn->autocommit, conn->status);
@@ -533,7 +456,7 @@ pq_abort(connectionObject *conn)
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&conn->lock);
 
-    retvalue = pq_abort_locked(conn, &pgres, &error, &_save);
+    retvalue = pq_abort_locked(conn, &_save);
 
     Py_BLOCK_THREADS;
     conn_notice_process(conn);
@@ -543,7 +466,7 @@ pq_abort(connectionObject *conn)
     Py_END_ALLOW_THREADS;
 
     if (retvalue < 0)
-        pq_complete_error(conn, &pgres, &error);
+        pq_complete_error(conn);
 
     return retvalue;
 }
@@ -558,8 +481,7 @@ pq_abort(connectionObject *conn)
 */
 
 RAISES_NEG int
-pq_reset_locked(connectionObject *conn, PGresult **pgres, char **error,
-                PyThreadState **tstate)
+pq_reset_locked(connectionObject *conn, PyThreadState **tstate)
 {
     int retvalue = -1;
 
@@ -569,20 +491,20 @@ pq_reset_locked(connectionObject *conn, PGresult **pgres, char **error,
     conn->mark += 1;
 
     if (!conn->autocommit && conn->status == CONN_STATUS_BEGIN) {
-        retvalue = pq_execute_command_locked(conn, "ABORT", pgres, error, tstate);
+        retvalue = pq_execute_command_locked(conn, "ABORT", tstate);
         if (retvalue != 0) return retvalue;
     }
 
     if (conn->server_version >= 80300) {
-        retvalue = pq_execute_command_locked(conn, "DISCARD ALL", pgres, error, tstate);
+        retvalue = pq_execute_command_locked(conn, "DISCARD ALL", tstate);
         if (retvalue != 0) return retvalue;
     }
     else {
-        retvalue = pq_execute_command_locked(conn, "RESET ALL", pgres, error, tstate);
+        retvalue = pq_execute_command_locked(conn, "RESET ALL", tstate);
         if (retvalue != 0) return retvalue;
 
         retvalue = pq_execute_command_locked(conn,
-            "SET SESSION AUTHORIZATION DEFAULT", pgres, error, tstate);
+            "SET SESSION AUTHORIZATION DEFAULT", tstate);
         if (retvalue != 0) return retvalue;
     }
 
@@ -596,8 +518,6 @@ int
 pq_reset(connectionObject *conn)
 {
     int retvalue = -1;
-    PGresult *pgres = NULL;
-    char *error = NULL;
 
     Dprintf("pq_reset: pgconn = %p, autocommit = %d, status = %d",
             conn->pgconn, conn->autocommit, conn->status);
@@ -605,7 +525,7 @@ pq_reset(connectionObject *conn)
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&conn->lock);
 
-    retvalue = pq_reset_locked(conn, &pgres, &error, &_save);
+    retvalue = pq_reset_locked(conn, &_save);
 
     Py_BLOCK_THREADS;
     conn_notice_process(conn);
@@ -615,7 +535,7 @@ pq_reset(connectionObject *conn)
     Py_END_ALLOW_THREADS;
 
     if (retvalue < 0) {
-        pq_complete_error(conn, &pgres, &error);
+        pq_complete_error(conn);
     }
     else {
         Py_CLEAR(conn->tpc_xid);
@@ -633,9 +553,7 @@ pq_reset(connectionObject *conn)
  */
 
 char *
-pq_get_guc_locked(
-    connectionObject *conn, const char *param,
-    PGresult **pgres, char **error, PyThreadState **tstate)
+pq_get_guc_locked(connectionObject *conn, const char *param, PyThreadState **tstate)
 {
     char query[256];
     int size;
@@ -645,40 +563,37 @@ pq_get_guc_locked(
 
     size = PyOS_snprintf(query, sizeof(query), "SHOW %s", param);
     if (size < 0 || (size_t)size >= sizeof(query)) {
-        *error = strdup("SHOW: query too large");
+        conn_set_error(conn, "SHOW: query too large");
         goto cleanup;
     }
 
     Dprintf("pq_get_guc_locked: pgconn = %p, query = %s", conn->pgconn, query);
 
-    *error = NULL;
     if (!psyco_green()) {
-        *pgres = PQexec(conn->pgconn, query);
+        conn_set_result(conn, PQexec(conn->pgconn, query));
     } else {
         PyEval_RestoreThread(*tstate);
-        *pgres = psyco_exec_green(conn, query);
+        conn_set_result(conn, psyco_exec_green(conn, query));
         *tstate = PyEval_SaveThread();
     }
 
-    if (*pgres == NULL) {
+    if (!conn->pgres) {
         Dprintf("pq_get_guc_locked: PQexec returned NULL");
         PyEval_RestoreThread(*tstate);
         if (!PyErr_Occurred()) {
-            const char *msg;
-            msg = PQerrorMessage(conn->pgconn);
-            if (msg && *msg) { *error = strdup(msg); }
+            conn_set_error(conn, PQerrorMessage(conn->pgconn));
         }
         *tstate = PyEval_SaveThread();
         goto cleanup;
     }
-    if (PQresultStatus(*pgres) != PGRES_TUPLES_OK) {
-        Dprintf("pq_get_guc_locked: result was not TUPLES_OK (%d)",
-                PQresultStatus(*pgres));
+    if (PQresultStatus(conn->pgres) != PGRES_TUPLES_OK) {
+        Dprintf("pq_get_guc_locked: result was not TUPLES_OK (%s)",
+                PQresStatus(PQresultStatus(conn->pgres)));
         goto cleanup;
     }
 
-    rv = strdup(PQgetvalue(*pgres, 0, 0));
-    CLEARPGRES(*pgres);
+    rv = strdup(PQgetvalue(conn->pgres, 0, 0));
+    CLEARPGRES(conn->pgres);
 
 cleanup:
     return rv;
@@ -693,7 +608,7 @@ cleanup:
 int
 pq_set_guc_locked(
     connectionObject *conn, const char *param, const char *value,
-    PGresult **pgres, char **error, PyThreadState **tstate)
+    PyThreadState **tstate)
 {
     char query[256];
     int size;
@@ -710,11 +625,13 @@ pq_set_guc_locked(
             "SET %s TO '%s'", param, value);
     }
     if (size < 0 || (size_t)size >= sizeof(query)) {
-        *error = strdup("SET: query too large");
+        conn_set_error(conn, "SET: query too large");
+        goto exit;
     }
 
-    rv = pq_execute_command_locked(conn, query, pgres, error, tstate);
+    rv = pq_execute_command_locked(conn, query, tstate);
 
+exit:
     return rv;
 }
 
@@ -724,8 +641,9 @@ pq_set_guc_locked(
  * holding the global interpreter lock. */
 
 int
-pq_tpc_command_locked(connectionObject *conn, const char *cmd, const char *tid,
-                  PGresult **pgres, char **error, PyThreadState **tstate)
+pq_tpc_command_locked(
+    connectionObject *conn, const char *cmd, const char *tid,
+    PyThreadState **tstate)
 {
     int rv = -1;
     char *etid = NULL, *buf = NULL;
@@ -752,7 +670,7 @@ pq_tpc_command_locked(connectionObject *conn, const char *cmd, const char *tid,
 
     /* run the command and let it handle the error cases */
     *tstate = PyEval_SaveThread();
-    rv = pq_execute_command_locked(conn, buf, pgres, error, tstate);
+    rv = pq_execute_command_locked(conn, buf, tstate);
     PyEval_RestoreThread(*tstate);
 
 exit:
@@ -767,7 +685,7 @@ exit:
 /* pq_get_result_async - read an available result without blocking.
  *
  * Return 0 if the result is ready, 1 if it will block, -1 on error.
- * The last result will be returned in pgres.
+ * The last result will be returned in conn->pgres.
  *
  * The function should be called with the lock and holding the GIL.
  */
@@ -827,8 +745,7 @@ pq_get_result_async(connectionObject *conn)
             PQclear(res);
         }
         else {
-            PQclear(conn->pgres);
-            conn->pgres = res;
+            conn_set_result(conn, res);
         }
 
         switch (status) {
@@ -889,42 +806,41 @@ pq_flush(connectionObject *conn)
 RAISES_NEG int
 _pq_execute_sync(cursorObject *curs, const char *query, int no_result, int no_begin)
 {
-    PGresult *pgres = NULL;
-    char *error = NULL;
+    connectionObject *conn = curs->conn;
 
     CLEARPGRES(curs->pgres);
 
     Py_BEGIN_ALLOW_THREADS;
-    pthread_mutex_lock(&(curs->conn->lock));
+    pthread_mutex_lock(&(conn->lock));
 
-    if (!no_begin && pq_begin_locked(curs->conn, &pgres, &error, &_save) < 0) {
-        pthread_mutex_unlock(&(curs->conn->lock));
+    if (!no_begin && pq_begin_locked(conn, &_save) < 0) {
+        pthread_mutex_unlock(&(conn->lock));
         Py_BLOCK_THREADS;
-        pq_complete_error(curs->conn, &pgres, &error);
+        pq_complete_error(conn);
         return -1;
     }
 
-    Dprintf("pq_execute: executing SYNC query: pgconn = %p", curs->conn->pgconn);
+    Dprintf("pq_execute: executing SYNC query: pgconn = %p", conn->pgconn);
     Dprintf("    %-.200s", query);
     if (!psyco_green()) {
-        pgres = PQexec(curs->conn->pgconn, query);
+        conn_set_result(conn, PQexec(conn->pgconn, query));
     }
     else {
         Py_BLOCK_THREADS;
-        pgres = psyco_exec_green(curs->conn, query);
+        conn_set_result(conn, psyco_exec_green(conn, query));
         Py_UNBLOCK_THREADS;
     }
 
     /* don't let pgres = NULL go to pq_fetch() */
-    if (pgres == NULL) {
-        if (CONNECTION_BAD == PQstatus(curs->conn->pgconn)) {
-            curs->conn->closed = 2;
+    if (!conn->pgres) {
+        if (CONNECTION_BAD == PQstatus(conn->pgconn)) {
+            conn->closed = 2;
         }
-        pthread_mutex_unlock(&(curs->conn->lock));
+        pthread_mutex_unlock(&(conn->lock));
         Py_BLOCK_THREADS;
         if (!PyErr_Occurred()) {
             PyErr_SetString(OperationalError,
-                            PQerrorMessage(curs->conn->pgconn));
+                            PQerrorMessage(conn->pgconn));
         }
         return -1;
     }
@@ -932,18 +848,18 @@ _pq_execute_sync(cursorObject *curs, const char *query, int no_result, int no_be
     Py_BLOCK_THREADS;
 
     /* assign the result back to the cursor now that we have the GIL */
-    curs->pgres = pgres;
-    pgres = NULL;
+    curs_set_result(curs, conn->pgres);
+    conn->pgres = NULL;
 
     /* Process notifies here instead of when fetching the tuple as we are
      * into the same critical section that received the data. Without this
      * care, reading notifies may disrupt other thread communications.
      * (as in ticket #55). */
-    conn_notifies_process(curs->conn);
-    conn_notice_process(curs->conn);
+    conn_notifies_process(conn);
+    conn_notice_process(conn);
     Py_UNBLOCK_THREADS;
 
-    pthread_mutex_unlock(&(curs->conn->lock));
+    pthread_mutex_unlock(&(conn->lock));
     Py_END_ALLOW_THREADS;
 
     /* if the execute was sync, we call pq_fetch() immediately,
@@ -958,29 +874,30 @@ RAISES_NEG int
 _pq_execute_async(cursorObject *curs, const char *query, int no_result)
 {
     int async_status = ASYNC_WRITE;
+    connectionObject *conn = curs->conn;
     int ret;
 
     CLEARPGRES(curs->pgres);
 
     Py_BEGIN_ALLOW_THREADS;
-    pthread_mutex_lock(&(curs->conn->lock));
+    pthread_mutex_lock(&(conn->lock));
 
-    Dprintf("pq_execute: executing ASYNC query: pgconn = %p", curs->conn->pgconn);
+    Dprintf("pq_execute: executing ASYNC query: pgconn = %p", conn->pgconn);
     Dprintf("    %-.200s", query);
 
-    if (PQsendQuery(curs->conn->pgconn, query) == 0) {
-        if (CONNECTION_BAD == PQstatus(curs->conn->pgconn)) {
-            curs->conn->closed = 2;
+    if (PQsendQuery(conn->pgconn, query) == 0) {
+        if (CONNECTION_BAD == PQstatus(conn->pgconn)) {
+            conn->closed = 2;
         }
-        pthread_mutex_unlock(&(curs->conn->lock));
+        pthread_mutex_unlock(&(conn->lock));
         Py_BLOCK_THREADS;
         PyErr_SetString(OperationalError,
-                        PQerrorMessage(curs->conn->pgconn));
+                        PQerrorMessage(conn->pgconn));
         return -1;
     }
     Dprintf("pq_execute: async query sent to backend");
 
-    ret = PQflush(curs->conn->pgconn);
+    ret = PQflush(conn->pgconn);
     if (ret == 0) {
         /* the query got fully sent to the server */
         Dprintf("pq_execute: query got flushed immediately");
@@ -993,18 +910,18 @@ _pq_execute_async(cursorObject *curs, const char *query, int no_result)
     }
     else {
         /* there was an error */
-        pthread_mutex_unlock(&(curs->conn->lock));
+        pthread_mutex_unlock(&(conn->lock));
         Py_BLOCK_THREADS;
         PyErr_SetString(OperationalError,
-                        PQerrorMessage(curs->conn->pgconn));
+                        PQerrorMessage(conn->pgconn));
         return -1;
     }
 
-    pthread_mutex_unlock(&(curs->conn->lock));
+    pthread_mutex_unlock(&(conn->lock));
     Py_END_ALLOW_THREADS;
 
-    curs->conn->async_status = async_status;
-    if (!(curs->conn->async_cursor
+    conn->async_status = async_status;
+    if (!(conn->async_cursor
             = PyWeakref_NewRef((PyObject *)curs, NULL))) {
         return -1;
     }
@@ -1015,12 +932,6 @@ _pq_execute_async(cursorObject *curs, const char *query, int no_result)
 RAISES_NEG int
 pq_execute(cursorObject *curs, const char *query, int async, int no_result, int no_begin)
 {
-    /* if the status of the connection is critical raise an exception and
-       definitely close the connection */
-    if (curs->conn->critical) {
-        return pq_resolve_critical(curs->conn, 1);
-    }
-
     /* check status of connection, raise error if not OK */
     if (PQstatus(curs->conn->pgconn) != CONNECTION_OK) {
         Dprintf("pq_execute: connection NOT OK");
@@ -1421,7 +1332,7 @@ _pq_copy_in_v3(cursorObject *curs)
         /* and finally we grab the operation result from the backend */
         for (;;) {
             Py_BEGIN_ALLOW_THREADS;
-            curs->pgres = PQgetResult(curs->conn->pgconn);
+            curs_set_result(curs, PQgetResult(curs->conn->pgconn));
             Py_END_ALLOW_THREADS;
 
             if (NULL == curs->pgres)
@@ -1502,10 +1413,9 @@ _pq_copy_out_v3(cursorObject *curs)
     }
 
     /* and finally we grab the operation result from the backend */
-    CLEARPGRES(curs->pgres);
     for (;;) {
         Py_BEGIN_ALLOW_THREADS;
-        curs->pgres = PQgetResult(curs->conn->pgconn);
+        curs_set_result(curs, PQgetResult(curs->conn->pgconn));
         Py_END_ALLOW_THREADS;
 
         if (NULL == curs->pgres)
@@ -1584,7 +1494,7 @@ retry:
     }
     if (len == -1) {
         /* EOF */
-        curs->pgres = PQgetResult(pgconn);
+        curs_set_result(curs, PQgetResult(pgconn));
 
         if (curs->pgres && PQresultStatus(curs->pgres) == PGRES_FATAL_ERROR) {
             pq_raise(conn, curs, NULL);
@@ -1805,20 +1715,6 @@ pq_fetch(cursorObject *curs, int no_result)
     /* even if we fail, we remove any information about the previous query */
     curs_reset(curs);
 
-    /* check for PGRES_FATAL_ERROR result */
-    /* FIXME: I am not sure we need to check for critical error here.
-    if (curs->pgres == NULL) {
-        Dprintf("pq_fetch: got a NULL pgres, checking for critical");
-        pq_set_critical(curs->conn);
-        if (curs->conn->critical) {
-            return pq_resolve_critical(curs->conn);
-        }
-        else {
-            return 0;
-        }
-    }
-    */
-
     if (curs->pgres == NULL) return 0;
 
     pgstatus = PQresultStatus(curs->pgres);
@@ -1914,14 +1810,6 @@ pq_fetch(cursorObject *curs, int no_result)
         CLEARPGRES(curs->pgres);
         ex = -1;
         break;
-    }
-
-    /* error checking, close the connection if necessary (some critical errors
-       are not really critical, like a COPY FROM error: if that's the case we
-       raise the exception but we avoid to close the connection) */
-    Dprintf("pq_fetch: fetching done; check for critical errors");
-    if (curs->conn->critical) {
-        return pq_resolve_critical(curs->conn, ex == -1 ? 1 : 0);
     }
 
     return ex;
