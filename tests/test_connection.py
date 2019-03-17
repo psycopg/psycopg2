@@ -357,6 +357,34 @@ class ConnectionTests(ConnectingTestCase):
         conn.close()
         self.assert_(conn.pgconn_ptr is None)
 
+    @slow
+    def test_multiprocess_close(self):
+        script = ("""\
+import time
+import threading
+import multiprocessing
+import psycopg2
+
+def thread():
+    conn = psycopg2.connect(%(dsn)r)
+    curs = conn.cursor()
+    for i in range(10):
+        curs.execute("select 1")
+        time.sleep(0.1)
+
+def process():
+    time.sleep(0.2)
+
+t = threading.Thread(target=thread, name='mythread')
+t.start()
+time.sleep(0.2)
+multiprocessing.Process(target=process, name='myprocess').start()
+t.join()
+""" % {'dsn': dsn})
+
+        out = sp.check_output([sys.executable, '-c', script], stderr=sp.STDOUT)
+        self.assertEqual(out, b'', out.decode('ascii'))
+
 
 class ParseDsnTestCase(ConnectingTestCase):
     def test_parse_dsn(self):
