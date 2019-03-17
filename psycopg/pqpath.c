@@ -711,10 +711,12 @@ pq_set_guc_locked(
     }
     if (size < 0 || (size_t)size >= sizeof(query)) {
         *error = strdup("SET: query too large");
+        goto exit;
     }
 
     rv = pq_execute_command_locked(conn, query, pgres, error, tstate);
 
+exit:
     return rv;
 }
 
