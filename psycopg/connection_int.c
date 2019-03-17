@@ -649,24 +649,24 @@ conn_is_datestyle_ok(PGconn *pgconn)
 /* conn_setup - setup and read basic information about the connection */
 
 RAISES_NEG int
-conn_setup(connectionObject *self, PGconn *pgconn)
+conn_setup(connectionObject *self)
 {
     char *error = NULL;
     int rv = -1;
 
-    self->equote = conn_get_standard_conforming_strings(pgconn);
-    self->server_version = conn_get_server_version(pgconn);
+    self->equote = conn_get_standard_conforming_strings(self->pgconn);
+    self->server_version = conn_get_server_version(self->pgconn);
     self->protocol = conn_get_protocol_version(self->pgconn);
     if (3 != self->protocol) {
         PyErr_SetString(InterfaceError, "only protocol 3 supported");
         goto exit;
     }
 
-    if (0 > conn_read_encoding(self, pgconn)) {
+    if (0 > conn_read_encoding(self, self->pgconn)) {
         goto exit;
     }
 
-    if (0 > conn_setup_cancel(self, pgconn)) {
+    if (0 > conn_setup_cancel(self, self->pgconn)) {
         goto exit;
     }
 
@@ -708,7 +708,6 @@ exit:
 static int
 _conn_sync_connect(connectionObject *self)
 {
-    PGconn *pgconn;
     int green;
 
     /* store this value to prevent inconsistencies due to a change
@@ -716,31 +715,31 @@ _conn_sync_connect(connectionObject *self)
     green = psyco_green();
     if (!green) {
         Py_BEGIN_ALLOW_THREADS;
-        self->pgconn = pgconn = PQconnectdb(self->dsn);
+        self->pgconn = PQconnectdb(self->dsn);
         Py_END_ALLOW_THREADS;
-        Dprintf("conn_connect: new postgresql connection at %p", pgconn);
+        Dprintf("conn_connect: new PG connection at %p", self->pgconn);
     }
     else {
         Py_BEGIN_ALLOW_THREADS;
-        self->pgconn = pgconn = PQconnectStart(self->dsn);
+        self->pgconn = PQconnectStart(self->dsn);
         Py_END_ALLOW_THREADS;
-        Dprintf("conn_connect: new green postgresql connection at %p", pgconn);
+        Dprintf("conn_connect: new green PG connection at %p", self->pgconn);
     }
 
-    if (pgconn == NULL)
+    if (!self->pgconn)
     {
         Dprintf("conn_connect: PQconnectdb(%s) FAILED", self->dsn);
         PyErr_SetString(OperationalError, "PQconnectdb() failed");
         return -1;
     }
-    else if (PQstatus(pgconn) == CONNECTION_BAD)
+    else if (PQstatus(self->pgconn) == CONNECTION_BAD)
     {
         Dprintf("conn_connect: PQconnectdb(%s) returned BAD", self->dsn);
-        PyErr_SetString(OperationalError, PQerrorMessage(pgconn));
+        PyErr_SetString(OperationalError, PQerrorMessage(self->pgconn));
         return -1;
     }
 
-    PQsetNoticeProcessor(pgconn, conn_notice_callback, (void*)self);
+    PQsetNoticeProcessor(self->pgconn, conn_notice_callback, (void*)self);
 
     /* if the connection is green, wait to finish connection */
     if (green) {
@@ -757,7 +756,7 @@ _conn_sync_connect(connectionObject *self)
      */
     self->status = CONN_STATUS_READY;
 
-    if (conn_setup(self, self->pgconn) == -1) {
+    if (conn_setup(self) == -1) {
         return -1;
     }
 

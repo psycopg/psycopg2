@@ -1052,7 +1052,7 @@ psyco_conn_reset(connectionObject *self, PyObject *dummy)
     if (pq_reset(self) < 0)
         return NULL;
 
-    res = conn_setup(self, self->pgconn);
+    res = conn_setup(self);
     if (res < 0)
         return NULL;
 
