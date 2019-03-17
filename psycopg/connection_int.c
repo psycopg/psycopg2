@@ -651,7 +651,6 @@ conn_is_datestyle_ok(PGconn *pgconn)
 RAISES_NEG int
 conn_setup(connectionObject *self, PGconn *pgconn)
 {
-    PGresult *pgres = NULL;
     char *error = NULL;
     int rv = -1;
 
@@ -678,11 +677,10 @@ conn_setup(connectionObject *self, PGconn *pgconn)
     if (!dsn_has_replication(self->dsn) && !conn_is_datestyle_ok(self->pgconn)) {
         int res;
         Py_UNBLOCK_THREADS;
-        res = pq_set_guc_locked(self, "datestyle", "ISO",
-            &pgres, &error, &_save);
+        res = pq_set_guc_locked(self, "datestyle", "ISO", &error, &_save);
         Py_BLOCK_THREADS;
         if (res < 0) {
-            pq_complete_error(self, &pgres, &error);
+            pq_complete_error(self, &error);
             goto unlock;
         }
     }
@@ -1225,7 +1223,6 @@ conn_set_session(connectionObject *self, int autocommit,
         int isolevel, int readonly, int deferrable)
 {
     int rv = -1;
-    PGresult *pgres = NULL;
     char *error = NULL;
     int want_autocommit = autocommit == SRV_STATE_UNCHANGED ?
         self->autocommit : autocommit;
@@ -1256,21 +1253,21 @@ conn_set_session(connectionObject *self, int autocommit,
         if (isolevel != SRV_STATE_UNCHANGED) {
             if (0 > pq_set_guc_locked(self,
                     "default_transaction_isolation", srv_isolevels[isolevel],
-                    &pgres, &error, &_save)) {
+                    &error, &_save)) {
                 goto endlock;
             }
         }
         if (readonly != SRV_STATE_UNCHANGED) {
             if (0 > pq_set_guc_locked(self,
                     "default_transaction_read_only", srv_state_guc[readonly],
-                    &pgres, &error, &_save)) {
+                    &error, &_save)) {
                 goto endlock;
             }
         }
         if (deferrable != SRV_STATE_UNCHANGED) {
             if (0 > pq_set_guc_locked(self,
                     "default_transaction_deferrable", srv_state_guc[deferrable],
-                    &pgres, &error, &_save)) {
+                    &error, &_save)) {
                 goto endlock;
             }
         }
@@ -1281,21 +1278,21 @@ conn_set_session(connectionObject *self, int autocommit,
         if (self->isolevel != ISOLATION_LEVEL_DEFAULT) {
             if (0 > pq_set_guc_locked(self,
                     "default_transaction_isolation", "default",
-                    &pgres, &error, &_save)) {
+                    &error, &_save)) {
                 goto endlock;
             }
         }
         if (self->readonly != STATE_DEFAULT) {
             if (0 > pq_set_guc_locked(self,
                     "default_transaction_read_only", "default",
-                    &pgres, &error, &_save)) {
+                    &error, &_save)) {
                 goto endlock;
             }
         }
         if (self->server_version >= 90100 && self->deferrable != STATE_DEFAULT) {
             if (0 > pq_set_guc_locked(self,
                     "default_transaction_deferrable", "default",
-                    &pgres, &error, &_save)) {
+                    &error, &_save)) {
                 goto endlock;
             }
         }
@@ -1320,7 +1317,7 @@ endlock:
     Py_END_ALLOW_THREADS;
 
     if (rv < 0) {
-        pq_complete_error(self, &pgres, &error);
+        pq_complete_error(self, &error);
         goto exit;
     }
 
@@ -1339,7 +1336,6 @@ exit:
 RAISES_NEG int
 conn_set_client_encoding(connectionObject *self, const char *pgenc)
 {
-    PGresult *pgres = NULL;
     char *error = NULL;
     int res = -1;
     char *clean_enc = NULL;
@@ -1356,12 +1352,12 @@ conn_set_client_encoding(connectionObject *self, const char *pgenc)
 
     /* abort the current transaction, to set the encoding ouside of
        transactions */
-    if ((res = pq_abort_locked(self, &pgres, &error, &_save))) {
+    if ((res = pq_abort_locked(self, &error, &_save))) {
         goto endlock;
     }
 
     if ((res = pq_set_guc_locked(self, "client_encoding", clean_enc,
-            &pgres, &error, &_save))) {
+            &error, &_save))) {
         goto endlock;
     }
 
@@ -1370,7 +1366,7 @@ endlock:
     Py_END_ALLOW_THREADS;
 
     if (res < 0) {
-        pq_complete_error(self, &pgres, &error);
+        pq_complete_error(self, &error);
         goto exit;
     }
 
@@ -1396,7 +1392,6 @@ exit:
 RAISES_NEG int
 conn_tpc_begin(connectionObject *self, xidObject *xid)
 {
-    PGresult *pgres = NULL;
     char *error = NULL;
 
     Dprintf("conn_tpc_begin: starting transaction");
@@ -1404,10 +1399,10 @@ conn_tpc_begin(connectionObject *self, xidObject *xid)
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
 
-    if (pq_begin_locked(self, &pgres, &error, &_save) < 0) {
+    if (pq_begin_locked(self, &error, &_save) < 0) {
         pthread_mutex_unlock(&(self->lock));
         Py_BLOCK_THREADS;
-        pq_complete_error(self, &pgres, &error);
+        pq_complete_error(self, &error);
         return -1;
     }
 
@@ -1430,7 +1425,6 @@ conn_tpc_begin(connectionObject *self, xidObject *xid)
 RAISES_NEG int
 conn_tpc_command(connectionObject *self, const char *cmd, xidObject *xid)
 {
-    PGresult *pgres = NULL;
     char *error = NULL;
     PyObject *tid = NULL;
     const char *ctid;
@@ -1446,10 +1440,10 @@ conn_tpc_command(connectionObject *self, const char *cmd, xidObject *xid)
     pthread_mutex_lock(&self->lock);
 
     if (0 > (rv = pq_tpc_command_locked(self, cmd, ctid,
-                                        &pgres, &error, &_save))) {
+                                        &error, &_save))) {
         pthread_mutex_unlock(&self->lock);
         Py_BLOCK_THREADS;
-        pq_complete_error(self, &pgres, &error);
+        pq_complete_error(self, &error);
         goto exit;
     }
 
