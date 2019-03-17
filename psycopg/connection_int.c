@@ -1119,8 +1119,7 @@ conn_poll(connectionObject *self)
                 break;
             }
 
-            PQclear(curs->pgres);
-            curs->pgres = self->pgres;
+            curs_set_result(curs, self->pgres);
             self->pgres = NULL;
 
             /* fetch the tuples (if there are any) and build the result. We
@@ -1486,4 +1485,12 @@ exit:
 
     return rv;
 
+}
+
+
+void
+conn_set_result(connectionObject *self, PGresult *pgres)
+{
+    PQclear(self->pgres);
+    self->pgres = pgres;
 }

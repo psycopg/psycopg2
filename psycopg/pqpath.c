@@ -273,9 +273,9 @@ pq_clear_async(connectionObject *conn)
        finalize asynchronous processing so the connection will be ready to
        accept another query */
 
-    while ((pgres = PQgetResult(conn->pgconn)) != NULL) {
+    while ((pgres = PQgetResult(conn->pgconn))) {
         Dprintf("pq_clear_async: clearing PGresult at %p", pgres);
-        CLEARPGRES(pgres);
+        PQclear(pgres);
     }
     Py_CLEAR(conn->async_cursor);
 }
@@ -321,12 +321,11 @@ pq_execute_command_locked(connectionObject *conn, const char *query,
             conn->pgconn, query);
     *error = NULL;
 
-    CLEARPGRES(conn->pgres);
     if (!psyco_green()) {
-        conn->pgres = PQexec(conn->pgconn, query);
+        conn_set_result(conn, PQexec(conn->pgconn, query));
     } else {
         PyEval_RestoreThread(*tstate);
-        conn->pgres = psyco_exec_green(conn, query);
+        conn_set_result(conn, psyco_exec_green(conn, query));
         *tstate = PyEval_SaveThread();
     }
     if (conn->pgres == NULL) {
@@ -647,13 +646,12 @@ pq_get_guc_locked(
     Dprintf("pq_get_guc_locked: pgconn = %p, query = %s", conn->pgconn, query);
 
     *error = NULL;
-    CLEARPGRES(conn->pgres);
 
     if (!psyco_green()) {
-        conn->pgres = PQexec(conn->pgconn, query);
+        conn_set_result(conn, PQexec(conn->pgconn, query));
     } else {
         PyEval_RestoreThread(*tstate);
-        conn->pgres = psyco_exec_green(conn, query);
+        conn_set_result(conn, psyco_exec_green(conn, query));
         *tstate = PyEval_SaveThread();
     }
 
@@ -826,8 +824,7 @@ pq_get_result_async(connectionObject *conn)
             PQclear(res);
         }
         else {
-            PQclear(conn->pgres);
-            conn->pgres = res;
+            conn_set_result(conn, res);
         }
 
         switch (status) {
@@ -903,15 +900,14 @@ _pq_execute_sync(cursorObject *curs, const char *query, int no_result, int no_be
         return -1;
     }
 
-    CLEARPGRES(conn->pgres);
     Dprintf("pq_execute: executing SYNC query: pgconn = %p", conn->pgconn);
     Dprintf("    %-.200s", query);
     if (!psyco_green()) {
-        conn->pgres = PQexec(conn->pgconn, query);
+        conn_set_result(conn, PQexec(conn->pgconn, query));
     }
     else {
         Py_BLOCK_THREADS;
-        conn->pgres = psyco_exec_green(conn, query);
+        conn_set_result(conn, psyco_exec_green(conn, query));
         Py_UNBLOCK_THREADS;
     }
 
@@ -932,7 +928,7 @@ _pq_execute_sync(cursorObject *curs, const char *query, int no_result, int no_be
     Py_BLOCK_THREADS;
 
     /* assign the result back to the cursor now that we have the GIL */
-    curs->pgres = conn->pgres;
+    curs_set_result(curs, conn->pgres);
     conn->pgres = NULL;
 
     /* Process notifies here instead of when fetching the tuple as we are
@@ -1422,7 +1418,7 @@ _pq_copy_in_v3(cursorObject *curs)
         /* and finally we grab the operation result from the backend */
         for (;;) {
             Py_BEGIN_ALLOW_THREADS;
-            curs->pgres = PQgetResult(curs->conn->pgconn);
+            curs_set_result(curs, PQgetResult(curs->conn->pgconn));
             Py_END_ALLOW_THREADS;
 
             if (NULL == curs->pgres)
@@ -1503,10 +1499,9 @@ _pq_copy_out_v3(cursorObject *curs)
     }
 
     /* and finally we grab the operation result from the backend */
-    CLEARPGRES(curs->pgres);
     for (;;) {
         Py_BEGIN_ALLOW_THREADS;
-        curs->pgres = PQgetResult(curs->conn->pgconn);
+        curs_set_result(curs, PQgetResult(curs->conn->pgconn));
         Py_END_ALLOW_THREADS;
 
         if (NULL == curs->pgres)
@@ -1585,7 +1580,7 @@ retry:
     }
     if (len == -1) {
         /* EOF */
-        curs->pgres = PQgetResult(pgconn);
+        curs_set_result(curs, PQgetResult(pgconn));
 
         if (curs->pgres && PQresultStatus(curs->pgres) == PGRES_FATAL_ERROR) {
             pq_raise(conn, curs, NULL);

@@ -96,6 +96,7 @@ HIDDEN void curs_reset(cursorObject *self);
 RAISES_NEG HIDDEN int psyco_curs_withhold_set(cursorObject *self, PyObject *pyvalue);
 RAISES_NEG HIDDEN int psyco_curs_scrollable_set(cursorObject *self, PyObject *pyvalue);
 HIDDEN PyObject *psyco_curs_validate_sql_basic(cursorObject *self, PyObject *sql);
+HIDDEN void curs_set_result(cursorObject *self, PGresult *pgres);
 
 /* exception-raising macros */
 #define EXC_IF_CURS_CLOSED(self) \

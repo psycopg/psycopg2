@@ -174,6 +174,7 @@ RAISES_NEG HIDDEN int  conn_tpc_begin(connectionObject *self, xidObject *xid);
 RAISES_NEG HIDDEN int  conn_tpc_command(connectionObject *self,
                              const char *cmd, xidObject *xid);
 HIDDEN PyObject *conn_tpc_recover(connectionObject *self);
+HIDDEN void conn_set_result(connectionObject *self, PGresult *pgres);
 
 /* exception-raising macros */
 #define EXC_IF_CONN_CLOSED(self) if ((self)->closed > 0) { \
