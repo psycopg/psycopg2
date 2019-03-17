@@ -194,68 +194,6 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult **pgres)
     Py_XDECREF(pgcode);
 }
 
-/* pq_set_critical, pq_resolve_critical - manage critical errors
-
-   this function is invoked when a PQexec() call returns NULL, meaning a
-   critical condition like out of memory or lost connection. it save the error
-   message and mark the connection as 'wanting cleanup'.
-
-   both functions do not call any Py_*_ALLOW_THREADS macros.
-   pq_resolve_critical should be called while holding the GIL. */
-
-void
-pq_set_critical(connectionObject *conn, const char *msg)
-{
-    if (msg == NULL)
-        msg = PQerrorMessage(conn->pgconn);
-    if (conn->critical) free(conn->critical);
-    Dprintf("pq_set_critical: setting %s", msg);
-    if (msg && msg[0] != '\0') conn->critical = strdup(msg);
-    else conn->critical = NULL;
-}
-
-static void
-pq_clear_critical(connectionObject *conn)
-{
-    /* sometimes we know that the notice analizer set a critical that
-       was not really as such (like when raising an error for a delayed
-       contraint violation. it would be better to analyze the notice
-       or avoid the set-error-on-notice stuff at all but given that we
-       can't, some functions at least clear the critical status after
-       operations they know would result in a wrong critical to be set */
-    Dprintf("pq_clear_critical: clearing %s", conn->critical);
-    if (conn->critical) {
-        free(conn->critical);
-        conn->critical = NULL;
-    }
-}
-
-/* return -1 if the exception is set (i.e. if conn->critical is set),
- * else 0 */
-RAISES_NEG static int
-pq_resolve_critical(connectionObject *conn, int close)
-{
-    Dprintf("pq_resolve_critical: resolving %s", conn->critical);
-
-    if (conn->critical) {
-        char *msg = &(conn->critical[6]);
-        Dprintf("pq_resolve_critical: error = %s", msg);
-        /* we can't use pq_raise because the error has already been cleared
-           from the connection, so we just raise an OperationalError with the
-           critical message */
-        PyErr_SetString(OperationalError, msg);
-
-        /* we don't want to destroy this connection but just close it */
-        if (close == 1) conn_close(conn);
-
-        /* remember to clear the critical! */
-        pq_clear_critical(conn);
-
-        return -1;
-    }
-    return 0;
-}
-
 /* pq_clear_async - clear the effects of a previous async query
 
    note that this function does block because it needs to wait for the full
@@ -994,12 +932,6 @@ _pq_execute_async(cursorObject *curs, const char *query, int no_result)
 RAISES_NEG int
 pq_execute(cursorObject *curs, const char *query, int async, int no_result, int no_begin)
 {
-    /* if the status of the connection is critical raise an exception and
-       definitely close the connection */
-    if (curs->conn->critical) {
-        return pq_resolve_critical(curs->conn, 1);
-    }
-
     /* check status of connection, raise error if not OK */
     if (PQstatus(curs->conn->pgconn) != CONNECTION_OK) {
         Dprintf("pq_execute: connection NOT OK");
@@ -1783,20 +1715,6 @@ pq_fetch(cursorObject *curs, int no_result)
     /* even if we fail, we remove any information about the previous query */
     curs_reset(curs);
 
-    /* check for PGRES_FATAL_ERROR result */
-    /* FIXME: I am not sure we need to check for critical error here.
-    if (curs->pgres == NULL) {
-        Dprintf("pq_fetch: got a NULL pgres, checking for critical");
-        pq_set_critical(curs->conn);
-        if (curs->conn->critical) {
-            return pq_resolve_critical(curs->conn);
-        }
-        else {
-            return 0;
-        }
-    }
-    */
-
     if (curs->pgres == NULL) return 0;
 
     pgstatus = PQresultStatus(curs->pgres);
@@ -1892,14 +1810,6 @@ pq_fetch(cursorObject *curs, int no_result)
         CLEARPGRES(curs->pgres);
         ex = -1;
         break;
-    }
-
-    /* error checking, close the connection if necessary (some critical errors
-       are not really critical, like a COPY FROM error: if that's the case we
-       raise the exception but we avoid to close the connection) */
-    Dprintf("pq_fetch: fetching done; check for critical errors");
-    if (curs->conn->critical) {
-        return pq_resolve_critical(curs->conn, ex == -1 ? 1 : 0);
     }
 
     return ex;

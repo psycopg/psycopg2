@@ -1431,7 +1431,6 @@ connection_dealloc(PyObject* obj)
     PyMem_Free(self->dsn);
     PyMem_Free(self->encoding);
     if (self->error) free(self->error);
-    if (self->critical) free(self->critical);
     if (self->cancel) PQfreeCancel(self->cancel);
     PQclear(self->pgres);
 
