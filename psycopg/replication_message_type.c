@@ -31,7 +31,7 @@
 #include "datetime.h"
 
 RAISES_NEG int
-psyco_replmsg_datetime_init(void)
+replmsg_datetime_init(void)
 {
     PyDateTime_IMPORT;
 
@@ -102,11 +102,11 @@ replmsg_dealloc(PyObject* obj)
     Py_TYPE(obj)->tp_free(obj);
 }
 
-#define psyco_replmsg_send_time_doc \
+#define replmsg_send_time_doc \
 "send_time - Timestamp of the replication message departure from the server."
 
 static PyObject *
-psyco_replmsg_get_send_time(replicationMessageObject *self)
+replmsg_get_send_time(replicationMessageObject *self)
 {
     PyObject *tval, *res = NULL;
     double t;
@@ -142,8 +142,8 @@ static struct PyMemberDef replicationMessageObject_members[] = {
 };
 
 static struct PyGetSetDef replicationMessageObject_getsets[] = {
-    { "send_time", (getter)psyco_replmsg_get_send_time, NULL,
-      psyco_replmsg_send_time_doc, NULL },
+    { "send_time", (getter)replmsg_get_send_time, NULL,
+      replmsg_send_time_doc, NULL },
     {NULL}
 };
 

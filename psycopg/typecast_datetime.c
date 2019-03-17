@@ -27,7 +27,7 @@
 #include "datetime.h"
 
 RAISES_NEG static int
-psyco_typecast_datetime_init(void)
+typecast_datetime_init(void)
 {
     PyDateTime_IMPORT;
 

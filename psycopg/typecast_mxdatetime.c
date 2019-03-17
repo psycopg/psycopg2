@@ -29,10 +29,10 @@
 /* Return 0 on success, -1 on failure, but don't set an exception */
 
 static int
-psyco_typecast_mxdatetime_init(void)
+typecast_mxdatetime_init(void)
 {
     if (mxDateTime_ImportModuleAndAPI()) {
-        Dprintf("psyco_typecast_mxdatetime_init: mx.DateTime initialization failed");
+        Dprintf("typecast_mxdatetime_init: mx.DateTime initialization failed");
         PyErr_Clear();
         return -1;
     }

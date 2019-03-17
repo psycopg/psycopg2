@@ -76,11 +76,11 @@ HIDDEN PyObject *psyco_null = NULL;
 #define str(s) #s
 
 /** connect module-level function **/
-#define psyco_connect_doc \
+#define connect_doc \
 "_connect(dsn, [connection_factory], [async]) -- New database connection.\n\n"
 
 static PyObject *
-psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
+connect(PyObject *self, PyObject *args, PyObject *keywds)
 {
     PyObject *conn = NULL;
     PyObject *factory = NULL;
@@ -96,7 +96,7 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
 
     if (async_) { async = async_; }
 
-    Dprintf("psyco_connect: dsn = '%s', async = %d", dsn, async);
+    Dprintf("connect: dsn = '%s', async = %d", dsn, async);
 
     /* allocate connection, fill with errors and return it */
     if (factory == NULL || factory == Py_None) {
@@ -120,11 +120,11 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
 }
 
 
-#define psyco_parse_dsn_doc \
+#define parse_dsn_doc \
 "parse_dsn(dsn) -> dict -- parse a connection string into parameters"
 
 static PyObject *
-psyco_parse_dsn(PyObject *self, PyObject *args, PyObject *kwargs)
+parse_dsn(PyObject *self, PyObject *args, PyObject *kwargs)
 {
     char *err = NULL;
     PQconninfoOption *options = NULL;
@@ -159,14 +159,14 @@ exit:
 }
 
 
-#define psyco_quote_ident_doc \
+#define quote_ident_doc \
 "quote_ident(str, conn_or_curs) -> str -- wrapper around PQescapeIdentifier\n\n" \
 ":Parameters:\n" \
 "  * `str`: A bytes or unicode object\n" \
 "  * `conn_or_curs`: A connection or cursor, required"
 
 static PyObject *
-psyco_quote_ident(PyObject *self, PyObject *args, PyObject *kwargs)
+quote_ident(PyObject *self, PyObject *args, PyObject *kwargs)
 {
     PyObject *ident = NULL, *obj = NULL, *result = NULL;
     connectionObject *conn;
@@ -205,7 +205,7 @@ exit:
 }
 
 /** type registration **/
-#define psyco_register_type_doc \
+#define register_type_doc \
 "register_type(obj, conn_or_curs) -> None -- register obj with psycopg type system\n\n" \
 ":Parameters:\n" \
 "  * `obj`: A type adapter created by `new_type()`\n" \
@@ -233,7 +233,7 @@ exit:
 "  * `baseobj`: Adapter to perform type conversion of a single array item."
 
 static PyObject *
-psyco_register_type(PyObject *self, PyObject *args)
+register_type(PyObject *self, PyObject *args)
 {
     PyObject *type, *obj = NULL;
 
@@ -271,7 +271,7 @@ psyco_register_type(PyObject *self, PyObject *args)
 
 /* Make sure libcrypto thread callbacks are set up. */
 static void
-psyco_libcrypto_threads_init(void)
+libcrypto_threads_init(void)
 {
     PyObject *m;
 
@@ -406,20 +406,20 @@ exit:
     return rv;
 }
 
-#define psyco_libpq_version_doc "Query actual libpq version loaded."
+#define libpq_version_doc "Query actual libpq version loaded."
 
 static PyObject*
-psyco_libpq_version(PyObject *self, PyObject *dummy)
+libpq_version(PyObject *self, PyObject *dummy)
 {
     return PyInt_FromLong(PQlibVersion());
 }
 
 /* encrypt_password - Prepare the encrypted password form */
-#define psyco_encrypt_password_doc \
+#define encrypt_password_doc \
 "encrypt_password(password, user, [scope], [algorithm]) -- Prepares the encrypted form of a PostgreSQL password.\n\n"
 
 static PyObject *
-psyco_encrypt_password(PyObject *self, PyObject *args, PyObject *kwargs)
+encrypt_password(PyObject *self, PyObject *args, PyObject *kwargs)
 {
     char *encrypted = NULL;
     PyObject *password = NULL, *user = NULL;
@@ -945,9 +945,9 @@ datetime_init(void)
 
     /* Initialize the PyDateTimeAPI everywhere is used */
     PyDateTime_IMPORT;
-    if (0 > psyco_adapter_datetime_init()) { return -1; }
-    if (0 > psyco_repl_curs_datetime_init()) { return -1; }
-    if (0 > psyco_replmsg_datetime_init()) { return -1; }
+    if (0 > adapter_datetime_init()) { return -1; }
+    if (0 > repl_curs_datetime_init()) { return -1; }
+    if (0 > replmsg_datetime_init()) { return -1; }
 
     Py_TYPE(&pydatetimeType) = &PyType_Type;
     if (0 > PyType_Ready(&pydatetimeType)) { return -1; }
@@ -986,23 +986,23 @@ mxdatetime_init(PyObject *module)
 /** method table and module initialization **/
 
 static PyMethodDef psycopgMethods[] = {
-    {"_connect",  (PyCFunction)psyco_connect,
-     METH_VARARGS|METH_KEYWORDS, psyco_connect_doc},
-    {"parse_dsn",  (PyCFunction)psyco_parse_dsn,
-     METH_VARARGS|METH_KEYWORDS, psyco_parse_dsn_doc},
-    {"quote_ident", (PyCFunction)psyco_quote_ident,
-     METH_VARARGS|METH_KEYWORDS, psyco_quote_ident_doc},
+    {"_connect",  (PyCFunction)connect,
+     METH_VARARGS|METH_KEYWORDS, connect_doc},
+    {"parse_dsn",  (PyCFunction)parse_dsn,
+     METH_VARARGS|METH_KEYWORDS, parse_dsn_doc},
+    {"quote_ident", (PyCFunction)quote_ident,
+     METH_VARARGS|METH_KEYWORDS, quote_ident_doc},
     {"adapt",  (PyCFunction)psyco_microprotocols_adapt,
      METH_VARARGS, psyco_microprotocols_adapt_doc},
 
-    {"register_type", (PyCFunction)psyco_register_type,
-     METH_VARARGS, psyco_register_type_doc},
+    {"register_type", (PyCFunction)register_type,
+     METH_VARARGS, register_type_doc},
     {"new_type", (PyCFunction)typecast_from_python,
      METH_VARARGS|METH_KEYWORDS, typecast_from_python_doc},
     {"new_array_type", (PyCFunction)typecast_array_from_python,
      METH_VARARGS|METH_KEYWORDS, typecast_array_from_python_doc},
-    {"libpq_version", (PyCFunction)psyco_libpq_version,
-     METH_NOARGS, psyco_libpq_version_doc},
+    {"libpq_version", (PyCFunction)libpq_version,
+     METH_NOARGS, libpq_version_doc},
 
     {"Date",  (PyCFunction)psyco_Date,
      METH_VARARGS, psyco_Date_doc},
@@ -1042,8 +1042,8 @@ static PyMethodDef psycopgMethods[] = {
      METH_O, psyco_set_wait_callback_doc},
     {"get_wait_callback",  (PyCFunction)psyco_get_wait_callback,
      METH_NOARGS, psyco_get_wait_callback_doc},
-    {"encrypt_password", (PyCFunction)psyco_encrypt_password,
-     METH_VARARGS|METH_KEYWORDS, psyco_encrypt_password_doc},
+    {"encrypt_password", (PyCFunction)encrypt_password,
+     METH_VARARGS|METH_KEYWORDS, encrypt_password_doc},
 
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
@@ -1078,7 +1078,7 @@ INIT_MODULE(_psycopg)(void)
     Dprintf("psycopgmodule: initializing psycopg %s", xstr(PSYCOPG_VERSION));
 
     /* initialize libcrypto threading callbacks */
-    psyco_libcrypto_threads_init();
+    libcrypto_threads_init();
 
     /* initialize types and objects not exposed to the module */
     Py_TYPE(&typecastType) = &PyType_Type;

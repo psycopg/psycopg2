@@ -229,7 +229,7 @@ static struct PyGetSetDef error_getsets[] = {
  * would require implementing __getstate__, and as of 2012 it's a little
  * bit too late to care. */
 static PyObject *
-psyco_error_reduce(errorObject *self, PyObject *dummy)
+error_reduce(errorObject *self, PyObject *dummy)
 {
     PyObject *meth = NULL;
     PyObject *tuple = NULL;
@@ -288,7 +288,7 @@ error:
 }
 
 PyObject *
-psyco_error_setstate(errorObject *self, PyObject *state)
+error_setstate(errorObject *self, PyObject *state)
 {
     PyObject *rv = NULL;
 
@@ -326,8 +326,8 @@ error:
 
 static PyMethodDef error_methods[] = {
     /* Make Error and all its subclasses picklable. */
-    {"__reduce__", (PyCFunction)psyco_error_reduce, METH_NOARGS },
-    {"__setstate__", (PyCFunction)psyco_error_setstate, METH_O },
+    {"__reduce__", (PyCFunction)error_reduce, METH_NOARGS },
+    {"__setstate__", (PyCFunction)error_setstate, METH_O },
     {NULL}
 };
 

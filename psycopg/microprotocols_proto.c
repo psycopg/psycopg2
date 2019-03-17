@@ -36,33 +36,33 @@
 
 /* getquoted - return quoted representation for object */
 
-#define psyco_isqlquote_getquoted_doc \
+#define isqlquote_getquoted_doc \
 "getquoted() -- return SQL-quoted representation of this object"
 
 static PyObject *
-psyco_isqlquote_getquoted(isqlquoteObject *self, PyObject *args)
+isqlquote_getquoted(isqlquoteObject *self, PyObject *args)
 {
     Py_RETURN_NONE;
 }
 
 /* getbinary - return quoted representation for object */
 
-#define psyco_isqlquote_getbinary_doc \
+#define isqlquote_getbinary_doc \
 "getbinary() -- return SQL-quoted binary representation of this object"
 
 static PyObject *
-psyco_isqlquote_getbinary(isqlquoteObject *self, PyObject *args)
+isqlquote_getbinary(isqlquoteObject *self, PyObject *args)
 {
     Py_RETURN_NONE;
 }
 
 /* getbuffer - return quoted representation for object */
 
-#define psyco_isqlquote_getbuffer_doc \
+#define isqlquote_getbuffer_doc \
 "getbuffer() -- return this object"
 
 static PyObject *
-psyco_isqlquote_getbuffer(isqlquoteObject *self, PyObject *args)
+isqlquote_getbuffer(isqlquoteObject *self, PyObject *args)
 {
     Py_RETURN_NONE;
 }
@@ -75,14 +75,12 @@ psyco_isqlquote_getbuffer(isqlquoteObject *self, PyObject *args)
 /* object method list */
 
 static struct PyMethodDef isqlquoteObject_methods[] = {
-    {"getquoted", (PyCFunction)psyco_isqlquote_getquoted,
-     METH_NOARGS, psyco_isqlquote_getquoted_doc},
-    {"getbinary", (PyCFunction)psyco_isqlquote_getbinary,
-     METH_NOARGS, psyco_isqlquote_getbinary_doc},
-    {"getbuffer", (PyCFunction)psyco_isqlquote_getbuffer,
-     METH_NOARGS, psyco_isqlquote_getbuffer_doc},
-    /*    {"prepare", (PyCFunction)psyco_isqlquote_prepare,
-          METH_VARARGS, psyco_isqlquote_prepare_doc}, */
+    {"getquoted", (PyCFunction)isqlquote_getquoted,
+     METH_NOARGS, isqlquote_getquoted_doc},
+    {"getbinary", (PyCFunction)isqlquote_getbinary,
+     METH_NOARGS, isqlquote_getbinary_doc},
+    {"getbuffer", (PyCFunction)isqlquote_getbuffer,
+     METH_NOARGS, isqlquote_getbuffer_doc},
     {NULL}
 };
 

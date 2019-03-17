@@ -36,7 +36,7 @@
 
 
 RAISES_NEG int
-psyco_adapter_datetime_init(void)
+adapter_datetime_init(void)
 {
     PyDateTime_IMPORT;
 

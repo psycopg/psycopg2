@@ -61,7 +61,7 @@
  * If the cursor or its result isn't available, return None.
  */
 static PyObject *
-psyco_diagnostics_get_field(diagnosticsObject *self, void *closure)
+diagnostics_get_field(diagnosticsObject *self, void *closure)
 {
     const char *errortext;
 
@@ -76,41 +76,41 @@ psyco_diagnostics_get_field(diagnosticsObject *self, void *closure)
 
 /* object calculated member list */
 static struct PyGetSetDef diagnosticsObject_getsets[] = {
-    { "severity", (getter)psyco_diagnostics_get_field, NULL,
+    { "severity", (getter)diagnostics_get_field, NULL,
       NULL, (void*) PG_DIAG_SEVERITY },
-    { "severity_nonlocalized", (getter)psyco_diagnostics_get_field, NULL,
+    { "severity_nonlocalized", (getter)diagnostics_get_field, NULL,
       NULL, (void*) PG_DIAG_SEVERITY_NONLOCALIZED },
-    { "sqlstate", (getter)psyco_diagnostics_get_field, NULL,
+    { "sqlstate", (getter)diagnostics_get_field, NULL,
       NULL, (void*) PG_DIAG_SQLSTATE },
-    { "message_primary", (getter)psyco_diagnostics_get_field, NULL,
+    { "message_primary", (getter)diagnostics_get_field, NULL,
       NULL, (void*) PG_DIAG_MESSAGE_PRIMARY },
-    { "message_detail", (getter)psyco_diagnostics_get_field, NULL,
+    { "message_detail", (getter)diagnostics_get_field, NULL,
       NULL, (void*) PG_DIAG_MESSAGE_DETAIL },
-    { "message_hint", (getter)psyco_diagnostics_get_field, NULL,
+    { "message_hint", (getter)diagnostics_get_field, NULL,
       NULL, (void*) PG_DIAG_MESSAGE_HINT },
-    { "statement_position", (getter)psyco_diagnostics_get_field, NULL,
+    { "statement_position", (getter)diagnostics_get_field, NULL,
       NULL, (void*) PG_DIAG_STATEMENT_POSITION },
-    { "internal_position", (getter)psyco_diagnostics_get_field, NULL,
+    { "internal_position", (getter)diagnostics_get_field, NULL,
       NULL, (void*) PG_DIAG_INTERNAL_POSITION },
-    { "internal_query", (getter)psyco_diagnostics_get_field, NULL,
+    { "internal_query", (getter)diagnostics_get_field, NULL,
       NULL, (void*) PG_DIAG_INTERNAL_QUERY },
-    { "context", (getter)psyco_diagnostics_get_field, NULL,
+    { "context", (getter)diagnostics_get_field, NULL,
       NULL, (void*) PG_DIAG_CONTEXT },
-    { "schema_name", (getter)psyco_diagnostics_get_field, NULL,
+    { "schema_name", (getter)diagnostics_get_field, NULL,
       NULL, (void*) PG_DIAG_SCHEMA_NAME },
-    { "table_name", (getter)psyco_diagnostics_get_field, NULL,
+    { "table_name", (getter)diagnostics_get_field, NULL,
       NULL, (void*) PG_DIAG_TABLE_NAME },
-    { "column_name", (getter)psyco_diagnostics_get_field, NULL,
+    { "column_name", (getter)diagnostics_get_field, NULL,
       NULL, (void*) PG_DIAG_COLUMN_NAME },
-    { "datatype_name", (getter)psyco_diagnostics_get_field, NULL,
+    { "datatype_name", (getter)diagnostics_get_field, NULL,
       NULL, (void*) PG_DIAG_DATATYPE_NAME },
-    { "constraint_name", (getter)psyco_diagnostics_get_field, NULL,
+    { "constraint_name", (getter)diagnostics_get_field, NULL,
       NULL, (void*) PG_DIAG_CONSTRAINT_NAME },
-    { "source_file", (getter)psyco_diagnostics_get_field, NULL,
+    { "source_file", (getter)diagnostics_get_field, NULL,
       NULL, (void*) PG_DIAG_SOURCE_FILE },
-    { "source_line", (getter)psyco_diagnostics_get_field, NULL,
+    { "source_line", (getter)diagnostics_get_field, NULL,
       NULL, (void*) PG_DIAG_SOURCE_LINE },
-    { "source_function", (getter)psyco_diagnostics_get_field, NULL,
+    { "source_function", (getter)diagnostics_get_field, NULL,
       NULL, (void*) PG_DIAG_SOURCE_FUNCTION },
     {NULL}
 };
