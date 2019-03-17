@@ -863,11 +863,16 @@ _conn_poll_connecting(connectionObject *self)
 /* Advance to the next state after an attempt of flushing output */
 
 static int
-_conn_poll_advance_write(connectionObject *self, int flush)
+_conn_poll_advance_write(connectionObject *self)
 {
     int res;
+    int flush;
 
     Dprintf("conn_poll: poll writing");
+
+    flush = PQflush(self->pgconn);
+    Dprintf("conn_poll: PQflush() = %i", flush);
+
     switch (flush) {
     case  0:  /* success */
         /* we've finished pushing the query to the server. Let's start
@@ -891,18 +896,24 @@ _conn_poll_advance_write(connectionObject *self, int flush)
     return res;
 }
 
-/* Advance to the next state after a call to a pq_is_busy* function */
+
+/* Advance to the next state after reading results */
+
 static int
-_conn_poll_advance_read(connectionObject *self, int busy)
+_conn_poll_advance_read(connectionObject *self)
 {
     int res;
+    int busy;
 
     Dprintf("conn_poll: poll reading");
+
+    busy = pq_get_result_async(self);
+
     switch (busy) {
     case 0: /* result is ready */
-        res = PSYCO_POLL_OK;
         Dprintf("conn_poll: async_status -> ASYNC_DONE");
         self->async_status = ASYNC_DONE;
+        res = PSYCO_POLL_OK;
         break;
     case 1: /* result not ready: fd would block */
         res = PSYCO_POLL_READ;
@@ -911,12 +922,14 @@ _conn_poll_advance_read(connectionObject *self, int busy)
         res = PSYCO_POLL_ERROR;
         break;
     default:
-        Dprintf("conn_poll: unexpected result from pq_is_busy: %d", busy);
+        Dprintf("conn_poll: unexpected result from pq_get_result_async: %d",
+            busy);
         res = PSYCO_POLL_ERROR;
         break;
     }
     return res;
 }
+
 
 /* Poll the connection for the send query/retrieve result phase
 
@@ -931,27 +944,18 @@ _conn_poll_query(connectionObject *self)
     switch (self->async_status) {
     case ASYNC_WRITE:
         Dprintf("conn_poll: async_status = ASYNC_WRITE");
-        res = _conn_poll_advance_write(self, PQflush(self->pgconn));
+        res = _conn_poll_advance_write(self);
         break;
 
     case ASYNC_READ:
         Dprintf("conn_poll: async_status = ASYNC_READ");
-        if (self->async) {
-            res = _conn_poll_advance_read(self, pq_is_busy(self));
-        }
-        else {
-            /* we are a green connection being polled as result of a query.
-              this means that our caller has the lock and we are being called
-              from the callback. If we tried to acquire the lock now it would
-              be a deadlock. */
-            res = _conn_poll_advance_read(self, pq_is_busy_locked(self));
-        }
+        res = _conn_poll_advance_read(self);
         break;
 
     case ASYNC_DONE:
         Dprintf("conn_poll: async_status = ASYNC_DONE");
         /* We haven't asked anything: just check for notifications. */
-        res = _conn_poll_advance_read(self, pq_is_busy(self));
+        res = _conn_poll_advance_read(self);
         break;
 
     default:
@@ -974,7 +978,6 @@ static int
 _conn_poll_setup_async(connectionObject *self)
 {
     int res = PSYCO_POLL_ERROR;
-    PGresult *pgres;
 
     switch (self->status) {
     case CONN_STATUS_CONNECTING:
@@ -1025,12 +1028,12 @@ _conn_poll_setup_async(connectionObject *self)
         res = _conn_poll_query(self);
         if (res == PSYCO_POLL_OK) {
             res = PSYCO_POLL_ERROR;
-            pgres = pq_get_last_result(self);
-            if (pgres == NULL || PQresultStatus(pgres) != PGRES_COMMAND_OK ) {
+            if (self->pgres == NULL
+                    || PQresultStatus(self->pgres) != PGRES_COMMAND_OK ) {
                 PyErr_SetString(OperationalError, "can't set datestyle to ISO");
                 break;
             }
-            CLEARPGRES(pgres);
+            CLEARPGRES(self->pgres);
 
             Dprintf("conn_poll: status -> CONN_STATUS_READY");
             self->status = CONN_STATUS_READY;
@@ -1041,6 +1044,35 @@ _conn_poll_setup_async(connectionObject *self)
     return res;
 }
 
+
+static cursorObject *
+_conn_get_async_cursor(connectionObject *self) {
+    PyObject *py_curs;
+
+    if (!(self->async_cursor)) {
+        PyErr_SetString(PyExc_SystemError,
+            "unexpectedly, there's no async cursor here");
+        goto error;
+    }
+
+    if (!(py_curs = PyWeakref_GetObject(self->async_cursor))) {
+        PyErr_SetString(PyExc_SystemError,
+            "got null dereferencing cursor weakref");
+        goto error;
+    }
+    if (Py_None == py_curs) {
+        PyErr_SetString(InterfaceError,
+            "the asynchronous cursor has disappeared");
+        goto error;
+    }
+
+    Py_INCREF(py_curs);
+    return (cursorObject *)py_curs;
+
+error:
+    pq_clear_async(self);
+    return NULL;
+}
 
 /* conn_poll - Main polling switch
  *
@@ -1056,12 +1088,13 @@ conn_poll(connectionObject *self)
 
     switch (self->status) {
     case CONN_STATUS_SETUP:
-        Dprintf("conn_poll: status -> CONN_STATUS_CONNECTING");
+        Dprintf("conn_poll: status -> CONN_STATUS_SETUP");
         self->status = CONN_STATUS_CONNECTING;
         res = PSYCO_POLL_WRITE;
         break;
 
     case CONN_STATUS_CONNECTING:
+        Dprintf("conn_poll: status -> CONN_STATUS_CONNECTING");
         res = _conn_poll_connecting(self);
         if (res == PSYCO_POLL_OK && self->async) {
             res = _conn_poll_setup_async(self);
@@ -1069,39 +1102,29 @@ conn_poll(connectionObject *self)
         break;
 
     case CONN_STATUS_DATESTYLE:
+        Dprintf("conn_poll: status -> CONN_STATUS_DATESTYLE");
         res = _conn_poll_setup_async(self);
         break;
 
     case CONN_STATUS_READY:
     case CONN_STATUS_BEGIN:
     case CONN_STATUS_PREPARED:
+        Dprintf("conn_poll: status -> CONN_STATUS_*");
         res = _conn_poll_query(self);
 
-        if (res == PSYCO_POLL_OK && self->async && self->async_cursor) {
+        if (res == PSYCO_POLL_OK && self->async) {
+            cursorObject *curs;
+
             /* An async query has just finished: parse the tuple in the
              * target cursor. */
-            cursorObject *curs;
-            PyObject *py_curs;
-            if (!(py_curs = PyWeakref_GetObject(self->async_cursor))) {
-                /* It shouldn't happen but consider it to avoid dereferencing
-                 * a null pointer below. */
-                pq_clear_async(self);
-                PyErr_SetString(PyExc_SystemError,
-                    "got null dereferencing cursor weakref");
-                res = PSYCO_POLL_ERROR;
-                break;
-            }
-            if (Py_None == py_curs) {
-                pq_clear_async(self);
-                PyErr_SetString(InterfaceError,
-                    "the asynchronous cursor has disappeared");
+            if (!(curs = _conn_get_async_cursor(self))) {
                 res = PSYCO_POLL_ERROR;
                 break;
             }
 
-            curs = (cursorObject *)py_curs;
-            CLEARPGRES(curs->pgres);
-            curs->pgres = pq_get_last_result(self);
+            PQclear(curs->pgres);
+            curs->pgres = self->pgres;
+            self->pgres = NULL;
 
             /* fetch the tuples (if there are any) and build the result. We
              * don't care if pq_fetch return 0 or 1, but if there was an error,
@@ -1111,6 +1134,7 @@ conn_poll(connectionObject *self)
             }
 
             /* We have finished with our async_cursor */
+            Py_DECREF(curs);
             Py_CLEAR(self->async_cursor);
         }
         break;
@@ -1120,6 +1144,7 @@ conn_poll(connectionObject *self)
         res = PSYCO_POLL_ERROR;
     }
 
+    Dprintf("conn_poll: returning %d", res);
     return res;
 }
 

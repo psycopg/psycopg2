@@ -108,6 +108,7 @@ struct connectionObject {
      * for a green connection. If NULL, the connection is idle. */
     PyObject *async_cursor;
     int async_status;         /* asynchronous execution status */
+    PGresult *pgres;          /* temporary result across async calls */
 
     /* notice processing */
     PyObject *notice_list;

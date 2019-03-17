@@ -177,10 +177,12 @@ psyco_exec_green(connectionObject *conn, const char *command)
         goto end;
     }
 
-    /* Now we can read the data without fear of blocking. */
-    result = pq_get_last_result(conn);
+    /* the result is now in the connection: take its ownership */
+    result = conn->pgres;
+    conn->pgres = NULL;
 
 end:
+    CLEARPGRES(conn->pgres);
     conn->async_status = ASYNC_DONE;
     Py_CLEAR(conn->async_cursor);
     return result;

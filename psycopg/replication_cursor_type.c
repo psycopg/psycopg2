@@ -198,8 +198,6 @@ psyco_repl_curs_send_feedback(replicationCursorObject *self,
 RAISES_NEG int
 psyco_repl_curs_datetime_init(void)
 {
-    Dprintf("psyco_repl_curs_datetime_init: datetime init");
-
     PyDateTime_IMPORT;
 
     if (!PyDateTimeAPI) {

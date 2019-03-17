@@ -175,9 +175,9 @@ class ConnectingTestCase(unittest.TestCase):
             if state == psycopg2.extensions.POLL_OK:
                 break
             elif state == psycopg2.extensions.POLL_READ:
-                select.select([pollable], [], [], 10)
+                select.select([pollable], [], [], 1)
             elif state == psycopg2.extensions.POLL_WRITE:
-                select.select([], [pollable], [], 10)
+                select.select([], [pollable], [], 1)
             else:
                 raise Exception("Unexpected result from poll: %r", state)
 

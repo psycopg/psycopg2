@@ -38,8 +38,6 @@
 RAISES_NEG int
 psyco_adapter_datetime_init(void)
 {
-    Dprintf("psyco_adapter_datetime_init: datetime init");
-
     PyDateTime_IMPORT;
 
     if (!PyDateTimeAPI) {

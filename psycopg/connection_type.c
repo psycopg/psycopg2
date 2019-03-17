@@ -1432,6 +1432,7 @@ connection_dealloc(PyObject* obj)
     PyMem_Free(self->encoding);
     if (self->critical) free(self->critical);
     if (self->cancel) PQfreeCancel(self->cancel);
+    PQclear(self->pgres);
 
     connection_clear(self);
 

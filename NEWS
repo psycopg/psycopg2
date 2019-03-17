@@ -33,6 +33,8 @@ New features:
 - Added `~psycopg2.extensions.Diagnostics.severity_nonlocalized` attribute on
   the `~psycopg2.extensions.Diagnostics` object (:ticket:`#783`).
 - More efficient `~psycopg2.extras.NamedTupleCursor` (:ticket:`#838`).
+- Async communication improved to fix blocking on results returned at
+  different times (:ticket:`#856`).
 
 Other changes:
 

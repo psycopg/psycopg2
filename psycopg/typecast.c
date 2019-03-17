@@ -271,8 +271,6 @@ typecast_init(PyObject *module)
     /* insert the cast types into the 'types' dictionary and register them in
        the module dictionary */
     for (i = 0; typecast_builtins[i].name != NULL; i++) {
-        Dprintf("typecast_init: initializing %s", typecast_builtins[i].name);
-
         t = (typecastObject *)typecast_from_c(&(typecast_builtins[i]), dict);
         if (t == NULL) { goto exit; }
         if (typecast_add((PyObject *)t, NULL, 0) < 0) { goto exit; }
@@ -295,7 +293,6 @@ typecast_init(PyObject *module)
 #ifdef HAVE_MXDATETIME
     if (0 == psyco_typecast_mxdatetime_init()) {
         for (i = 0; typecast_mxdatetime[i].name != NULL; i++) {
-            Dprintf("typecast_init: initializing %s", typecast_mxdatetime[i].name);
             t = (typecastObject *)typecast_from_c(&(typecast_mxdatetime[i]), dict);
             if (t == NULL) { goto exit; }
             PyDict_SetItem(dict, t->name, (PyObject *)t);
@@ -307,7 +304,6 @@ typecast_init(PyObject *module)
 
     if (0 > psyco_typecast_datetime_init()) { goto exit; }
     for (i = 0; typecast_pydatetime[i].name != NULL; i++) {
-        Dprintf("typecast_init: initializing %s", typecast_pydatetime[i].name);
         t = (typecastObject *)typecast_from_c(&(typecast_pydatetime[i]), dict);
         if (t == NULL) { goto exit; }
         PyDict_SetItem(dict, t->name, (PyObject *)t);
@@ -331,22 +327,14 @@ typecast_add(PyObject *obj, PyObject *dict, int binary)
 
     typecastObject *type = (typecastObject *)obj;
 
-    Dprintf("typecast_add: object at %p, values refcnt = "
-        FORMAT_CODE_PY_SSIZE_T,
-        obj, Py_REFCNT(type->values)
-      );
-
     if (dict == NULL)
         dict = (binary ? psyco_binary_types : psyco_types);
 
     len = PyTuple_Size(type->values);
     for (i = 0; i < len; i++) {
         val = PyTuple_GetItem(type->values, i);
-        Dprintf("typecast_add:     adding val: %ld", PyInt_AsLong(val));
         PyDict_SetItem(dict, val, obj);
     }
-
-    Dprintf("typecast_add:     base caster: %p", type->bcast);
 
     return 0;
 }
@@ -531,9 +519,6 @@ typecast_new(PyObject *name, PyObject *values, PyObject *cast, PyObject *base)
     obj = PyObject_GC_New(typecastObject, &typecastType);
     if (obj == NULL) return NULL;
 
-    Dprintf("typecast_new: new type at = %p, refcnt = " FORMAT_CODE_PY_SSIZE_T,
-      obj, Py_REFCNT(obj));
-
     Py_INCREF(values);
     obj->values = values;
 
@@ -559,8 +544,6 @@ typecast_new(PyObject *name, PyObject *values, PyObject *cast, PyObject *base)
     }
 
     PyObject_GC_Track(obj);
-
-    Dprintf("typecast_new: typecast object created at %p", obj);
 
     return (PyObject *)obj;
 }

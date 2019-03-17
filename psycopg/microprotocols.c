@@ -68,8 +68,6 @@ microprotocols_add(PyTypeObject *type, PyObject *proto, PyObject *cast)
 
     if (proto == NULL) proto = (PyObject*)&isqlquoteType;
 
-    Dprintf("microprotocols_add: cast %p for (%s, ?)", cast, type->tp_name);
-
     if (!(key = PyTuple_Pack(2, (PyObject*)type, proto))) { goto exit; }
     if (0 != PyDict_SetItem(psyco_adapters, key, cast)) { goto exit; }
 
