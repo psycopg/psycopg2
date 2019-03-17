@@ -109,6 +109,7 @@ struct connectionObject {
     PyObject *async_cursor;
     int async_status;         /* asynchronous execution status */
     PGresult *pgres;          /* temporary result across async calls */
+    char *error;              /* temporarily stored error before raising */
 
     /* notice processing */
     PyObject *notice_list;
@@ -160,7 +161,7 @@ HIDDEN int  conn_get_server_version(PGconn *pgconn);
 HIDDEN void conn_notice_process(connectionObject *self);
 HIDDEN void conn_notice_clean(connectionObject *self);
 HIDDEN void conn_notifies_process(connectionObject *self);
-RAISES_NEG HIDDEN int  conn_setup(connectionObject *self);
+RAISES_NEG HIDDEN int conn_setup(connectionObject *self);
 HIDDEN int  conn_connect(connectionObject *self, long int async);
 HIDDEN void conn_close(connectionObject *self);
 HIDDEN void conn_close_locked(connectionObject *self);
@@ -175,6 +176,7 @@ RAISES_NEG HIDDEN int  conn_tpc_command(connectionObject *self,
                              const char *cmd, xidObject *xid);
 HIDDEN PyObject *conn_tpc_recover(connectionObject *self);
 HIDDEN void conn_set_result(connectionObject *self, PGresult *pgres);
+HIDDEN void conn_set_error(connectionObject *self, const char *msg);
 
 /* exception-raising macros */
 #define EXC_IF_CONN_CLOSED(self) if ((self)->closed > 0) { \
