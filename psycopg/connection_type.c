@@ -478,7 +478,7 @@ _psyco_conn_parse_isolevel(PyObject *pyval)
 
     /* parse from the string -- this includes "default" */
     else {
-        if (!(pyval = psycopg_ensure_bytes(pyval))) {
+        if (!(pyval = psyco_ensure_bytes(pyval))) {
             goto exit;
         }
         for (level = 1; level <= 4; level++) {
@@ -516,7 +516,7 @@ _psyco_conn_parse_onoff(PyObject *pyval)
         rv = STATE_DEFAULT;
     }
     else if (PyUnicode_CheckExact(pyval) || Bytes_CheckExact(pyval)) {
-        if (!(pyval = psycopg_ensure_bytes(pyval))) {
+        if (!(pyval = psyco_ensure_bytes(pyval))) {
             goto exit;
         }
         if (0 == strcasecmp("default", Bytes_AS_STRING(pyval))) {
@@ -918,7 +918,7 @@ psyco_conn_get_dsn_parameters(connectionObject *self, PyObject *dummy)
         goto exit;
     }
 
-    res = psycopg_dict_from_conninfo_options(options, /* include_password = */ 0);
+    res = psyco_dict_from_conninfo_options(options, /* include_password = */ 0);
 
 exit:
     PQconninfoFree(options);
@@ -1314,7 +1314,7 @@ obscure_password(connectionObject *conn)
         return 0;
     }
 
-    if (!(d = psycopg_dict_from_conninfo_options(
+    if (!(d = psyco_dict_from_conninfo_options(
             options, /* include_password = */ 1))) {
         goto exit;
     }
@@ -1327,12 +1327,12 @@ obscure_password(connectionObject *conn)
     /* scrub the password and put back the connection string together */
     if (!(v = Text_FromUTF8("xxx"))) { goto exit; }
     if (0 > PyDict_SetItemString(d, "password", v)) { goto exit; }
-    if (!(dsn = psycopg_make_dsn(Py_None, d))) { goto exit; }
-    if (!(dsn = psycopg_ensure_bytes(dsn))) { goto exit; }
+    if (!(dsn = psyco_make_dsn(Py_None, d))) { goto exit; }
+    if (!(dsn = psyco_ensure_bytes(dsn))) { goto exit; }
 
     /* Replace the connection string on the connection object */
     tmp = conn->dsn;
-    psycopg_strdup(&conn->dsn, Bytes_AS_STRING(dsn), -1);
+    psyco_strdup(&conn->dsn, Bytes_AS_STRING(dsn), -1);
     PyMem_Free(tmp);
 
     rv = 0;
@@ -1356,7 +1356,7 @@ connection_setup(connectionObject *self, const char *dsn, long int async)
             self, async, Py_REFCNT(self)
       );
 
-    if (0 > psycopg_strdup(&self->dsn, dsn, -1)) { goto exit; }
+    if (0 > psyco_strdup(&self->dsn, dsn, -1)) { goto exit; }
     if (!(self->notice_list = PyList_New(0))) { goto exit; }
     if (!(self->notifies = PyList_New(0))) { goto exit; }
     self->async = async;

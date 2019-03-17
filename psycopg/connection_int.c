@@ -79,7 +79,7 @@ const int SRV_STATE_UNCHANGED = -1;
 PyObject *
 conn_text_from_chars(connectionObject *self, const char *str)
 {
-    return psycopg_text_from_chars_safe(str, -1, self ? self->pydecoder : NULL);
+    return psyco_text_from_chars_safe(str, -1, self ? self->pydecoder : NULL);
 }
 
 
@@ -478,7 +478,7 @@ conn_get_python_codec(const char *encoding,
 
     /* get the Python name of the encoding as a C string */
     if (!(encname = conn_pgenc_to_pyenc(encoding, &pgenc))) { goto exit; }
-    if (!(encname = psycopg_ensure_bytes(encname))) { goto exit; }
+    if (!(encname = psyco_ensure_bytes(encname))) { goto exit; }
 
     /* Look up the codec functions */
     if (!(enc_tmp = PyCodec_Encoder(Bytes_AS_STRING(encname)))) { goto exit; }
@@ -1424,7 +1424,7 @@ conn_tpc_command(connectionObject *self, const char *cmd, xidObject *xid)
     Dprintf("conn_tpc_command: %s", cmd);
 
     /* convert the xid into PostgreSQL transaction id while keeping the GIL */
-    if (!(tid = psycopg_ensure_bytes(xid_get_tid(xid)))) { goto exit; }
+    if (!(tid = psyco_ensure_bytes(xid_get_tid(xid)))) { goto exit; }
     if (!(ctid = Bytes_AsString(tid))) { goto exit; }
 
     Py_BEGIN_ALLOW_THREADS;

@@ -31,32 +31,32 @@ typedef struct cursorObject cursorObject;
 typedef struct connectionObject connectionObject;
 typedef struct replicationMessageObject replicationMessageObject;
 
-HIDDEN char *psycopg_escape_string(
+HIDDEN char *psyco_escape_string(
     connectionObject *conn,
     const char *from, Py_ssize_t len, char *to, Py_ssize_t *tolen);
 
-HIDDEN char *psycopg_escape_identifier(
+HIDDEN char *psyco_escape_identifier(
     connectionObject *conn, const char *str, Py_ssize_t len);
 
-HIDDEN int psycopg_strdup(char **to, const char *from, Py_ssize_t len);
+HIDDEN int psyco_strdup(char **to, const char *from, Py_ssize_t len);
 
-STEALS(1) HIDDEN PyObject * psycopg_ensure_bytes(PyObject *obj);
-STEALS(1) HIDDEN PyObject * psycopg_ensure_text(PyObject *obj);
+STEALS(1) HIDDEN PyObject * psyco_ensure_bytes(PyObject *obj);
+STEALS(1) HIDDEN PyObject * psyco_ensure_text(PyObject *obj);
 
-HIDDEN int psycopg_is_text_file(PyObject *f);
+HIDDEN int psyco_is_text_file(PyObject *f);
 
-HIDDEN PyObject *psycopg_dict_from_conninfo_options(
+HIDDEN PyObject *psyco_dict_from_conninfo_options(
     PQconninfoOption *options, int include_password);
 
-HIDDEN PyObject *psycopg_make_dsn(PyObject *dsn, PyObject *kwargs);
+HIDDEN PyObject *psyco_make_dsn(PyObject *dsn, PyObject *kwargs);
 
-HIDDEN PyObject *psycopg_text_from_chars_safe(
+HIDDEN PyObject *psyco_text_from_chars_safe(
     const char *str, Py_ssize_t len, PyObject *decoder);
 
 HIDDEN RAISES BORROWED PyObject *psyco_set_error(
     PyObject *exc, cursorObject *curs, const char *msg);
 
-HIDDEN PyObject *psyco_GetDecimalType(void);
+HIDDEN PyObject *psyco_get_decimal_type(void);
 
 HIDDEN PyObject *Bytes_Format(PyObject *format, PyObject *args);
 

@@ -76,7 +76,7 @@ _pydatetime_string_date_time(pydatetimeObject *self)
         break;
     }
 
-    if (!(iso = psycopg_ensure_bytes(
+    if (!(iso = psyco_ensure_bytes(
             PyObject_CallMethod(self->wrapped, "isoformat", NULL)))) {
         goto error;
     }
@@ -126,7 +126,7 @@ pydatetime_getquoted(pydatetimeObject *self, PyObject *args)
 static PyObject *
 pydatetime_str(pydatetimeObject *self)
 {
-    return psycopg_ensure_text(pydatetime_getquoted(self, NULL));
+    return psyco_ensure_text(pydatetime_getquoted(self, NULL));
 }
 
 static PyObject *

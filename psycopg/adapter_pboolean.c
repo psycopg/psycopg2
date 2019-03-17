@@ -48,7 +48,7 @@ pboolean_getquoted(pbooleanObject *self, PyObject *args)
 static PyObject *
 pboolean_str(pbooleanObject *self)
 {
-    return psycopg_ensure_text(pboolean_getquoted(self, NULL));
+    return psyco_ensure_text(pboolean_getquoted(self, NULL));
 }
 
 static PyObject *

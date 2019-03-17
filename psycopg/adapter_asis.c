@@ -60,7 +60,7 @@ asis_getquoted(asisObject *self, PyObject *args)
 static PyObject *
 asis_str(asisObject *self)
 {
-    return psycopg_ensure_text(asis_getquoted(self, NULL));
+    return psyco_ensure_text(asis_getquoted(self, NULL));
 }
 
 static PyObject *

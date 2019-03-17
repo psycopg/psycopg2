@@ -86,7 +86,7 @@ curs_close(cursorObject *self, PyObject *dummy)
          * closing it (the view exists since PG 8.2 according to docs).
          */
         if (!self->query && self->conn->server_version >= 80200) {
-            if (!(lname = psycopg_escape_string(
+            if (!(lname = psyco_escape_string(
                     self->conn, self->name, -1, NULL, NULL))) {
                 goto exit;
             }
@@ -1059,10 +1059,10 @@ curs_callproc(cursorObject *self, PyObject *args)
             Py_INCREF(pname);   /* was borrowed */
 
             /* this also makes a check for keys being strings */
-            if (!(pname = psycopg_ensure_bytes(pname))) { goto exit; }
+            if (!(pname = psyco_ensure_bytes(pname))) { goto exit; }
             if (!(cpname = Bytes_AsString(pname))) { goto exit; }
 
-            if (!(scpnames[i] = psycopg_escape_identifier(
+            if (!(scpnames[i] = psyco_escape_identifier(
                     self->conn, cpname, -1))) {
                 Py_CLEAR(pname);
                 goto exit;
@@ -1332,7 +1332,7 @@ static char *_psyco_curs_copy_columns(PyObject *columns)
     columnlist[0] = '(';
 
     while ((col = PyIter_Next(coliter)) != NULL) {
-        if (!(col = psycopg_ensure_bytes(col))) {
+        if (!(col = psyco_ensure_bytes(col))) {
             Py_DECREF(coliter);
             goto error;
         }
@@ -1423,12 +1423,12 @@ curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
     if (NULL == (columnlist = _psyco_curs_copy_columns(columns)))
         goto exit;
 
-    if (!(quoted_delimiter = psycopg_escape_string(
+    if (!(quoted_delimiter = psyco_escape_string(
             self->conn, sep, -1, NULL, NULL))) {
         goto exit;
     }
 
-    if (!(quoted_null = psycopg_escape_string(
+    if (!(quoted_null = psyco_escape_string(
             self->conn, null, -1, NULL, NULL))) {
         goto exit;
     }
@@ -1515,12 +1515,12 @@ curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
     if (NULL == (columnlist = _psyco_curs_copy_columns(columns)))
         goto exit;
 
-    if (!(quoted_delimiter = psycopg_escape_string(
+    if (!(quoted_delimiter = psyco_escape_string(
             self->conn, sep, -1, NULL, NULL))) {
         goto exit;
     }
 
-    if (!(quoted_null = psycopg_escape_string(
+    if (!(quoted_null = psyco_escape_string(
             self->conn, null, -1, NULL, NULL))) {
         goto exit;
     }
@@ -1874,10 +1874,10 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
     Dprintf("cursor_setup: parameters: name = %s, conn = %p", name, conn);
 
     if (name) {
-        if (0 > psycopg_strdup(&self->name, name, -1)) {
+        if (0 > psyco_strdup(&self->name, name, -1)) {
             return -1;
         }
-        if (!(self->qname = psycopg_escape_identifier(conn, name, -1))) {
+        if (!(self->qname = psyco_escape_identifier(conn, name, -1))) {
             return -1;
         }
     }
@@ -1982,7 +1982,7 @@ cursor_init(PyObject *obj, PyObject *args, PyObject *kwargs)
 
     if (name != Py_None) {
         Py_INCREF(name);   /* for ensure_bytes */
-        if (!(bname = psycopg_ensure_bytes(name))) {
+        if (!(bname = psyco_ensure_bytes(name))) {
             /* name has had a ref stolen */
             goto exit;
         }

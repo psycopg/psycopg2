@@ -48,7 +48,7 @@
  * including quotes.
  */
 char *
-psycopg_escape_string(connectionObject *conn, const char *from, Py_ssize_t len,
+psyco_escape_string(connectionObject *conn, const char *from, Py_ssize_t len,
                        char *to, Py_ssize_t *tolen)
 {
     Py_ssize_t ql;
@@ -102,7 +102,7 @@ psycopg_escape_string(connectionObject *conn, const char *from, Py_ssize_t len,
  * In case of error set a Python exception.
  */
 char *
-psycopg_escape_identifier(connectionObject *conn, const char *str, Py_ssize_t len)
+psyco_escape_identifier(connectionObject *conn, const char *str, Py_ssize_t len)
 {
     char *rv = NULL;
 
@@ -139,7 +139,7 @@ exit:
  * If from is null, store null into to.
  */
 RAISES_NEG int
-psycopg_strdup(char **to, const char *from, Py_ssize_t len)
+psyco_strdup(char **to, const char *from, Py_ssize_t len)
 {
     if (!from) {
         *to = NULL;
@@ -165,7 +165,7 @@ psycopg_strdup(char **to, const char *from, Py_ssize_t len)
  * It is safe to call the function on NULL.
  */
 STEALS(1) PyObject *
-psycopg_ensure_bytes(PyObject *obj)
+psyco_ensure_bytes(PyObject *obj)
 {
     PyObject *rv = NULL;
     if (!obj) { return NULL; }
@@ -195,7 +195,7 @@ psycopg_ensure_bytes(PyObject *obj)
  * return value.  It is safe to call it on NULL.
  */
 STEALS(1) PyObject *
-psycopg_ensure_text(PyObject *obj)
+psyco_ensure_text(PyObject *obj)
 {
 #if PY_2
     return obj;
@@ -217,7 +217,7 @@ psycopg_ensure_text(PyObject *obj)
  * Return 1 if it does, else 0, -1 on errors.
  */
 int
-psycopg_is_text_file(PyObject *f)
+psyco_is_text_file(PyObject *f)
 {
     /* NULL before any call.
      * then io.TextIOBase if exists, else None. */
@@ -226,16 +226,16 @@ psycopg_is_text_file(PyObject *f)
     /* Try to import os.TextIOBase */
     if (NULL == base) {
         PyObject *m;
-        Dprintf("psycopg_is_text_file: importing io.TextIOBase");
+        Dprintf("psyco_is_text_file: importing io.TextIOBase");
         if (!(m = PyImport_ImportModule("io"))) {
-            Dprintf("psycopg_is_text_file: io module not found");
+            Dprintf("psyco_is_text_file: io module not found");
             PyErr_Clear();
             Py_INCREF(Py_None);
             base = Py_None;
         }
         else {
             if (!(base = PyObject_GetAttrString(m, "TextIOBase"))) {
-                Dprintf("psycopg_is_text_file: io.TextIOBase not found");
+                Dprintf("psyco_is_text_file: io.TextIOBase not found");
                 PyErr_Clear();
                 Py_INCREF(Py_None);
                 base = Py_None;
@@ -253,7 +253,7 @@ psycopg_is_text_file(PyObject *f)
 
 /* Make a dict out of PQconninfoOption array */
 PyObject *
-psycopg_dict_from_conninfo_options(PQconninfoOption *options, int include_password)
+psyco_dict_from_conninfo_options(PQconninfoOption *options, int include_password)
 {
     PyObject *dict, *res = NULL;
     PQconninfoOption *o;
@@ -287,7 +287,7 @@ exit:
  * Helper to call psycopg2.extensions.make_dsn()
  */
 PyObject *
-psycopg_make_dsn(PyObject *dsn, PyObject *kwargs)
+psyco_make_dsn(PyObject *dsn, PyObject *kwargs)
 {
     PyObject *ext = NULL, *make_dsn = NULL;
     PyObject *args = NULL, *rv = NULL;
@@ -314,7 +314,7 @@ exit:
  * len is optional: use -1 to have it calculated by the function.
  */
 PyObject *
-psycopg_text_from_chars_safe(const char *str, Py_ssize_t len, PyObject *decoder)
+psyco_text_from_chars_safe(const char *str, Py_ssize_t len, PyObject *decoder)
 {
 #if PY_2
 
@@ -430,7 +430,7 @@ psyco_is_main_interp(void)
 #endif
 }
 
-/* psyco_GetDecimalType
+/* psyco_get_decimal_type
 
    Return a new reference to the decimal type.
 
@@ -439,7 +439,7 @@ psyco_is_main_interp(void)
 */
 
 PyObject *
-psyco_GetDecimalType(void)
+psyco_get_decimal_type(void)
 {
     static PyObject *cachedType = NULL;
     PyObject *decimalType = NULL;

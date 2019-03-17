@@ -193,7 +193,7 @@ dsn_parameters_get(connInfoObject *self)
         goto exit;
     }
 
-    res = psycopg_dict_from_conninfo_options(options, /* include_password = */ 0);
+    res = psyco_dict_from_conninfo_options(options, /* include_password = */ 0);
 
 exit:
     PQconninfoFree(options);

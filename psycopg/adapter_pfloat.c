@@ -86,7 +86,7 @@ exit:
 static PyObject *
 pfloat_str(pfloatObject *self)
 {
-    return psycopg_ensure_text(pfloat_getquoted(self, NULL));
+    return psyco_ensure_text(pfloat_getquoted(self, NULL));
 }
 
 static PyObject *

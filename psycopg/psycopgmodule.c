@@ -136,7 +136,7 @@ parse_dsn(PyObject *self, PyObject *args, PyObject *kwargs)
     }
 
     Py_INCREF(dsn); /* for ensure_bytes */
-    if (!(dsn = psycopg_ensure_bytes(dsn))) { goto exit; }
+    if (!(dsn = psyco_ensure_bytes(dsn))) { goto exit; }
 
     options = PQconninfoParse(Bytes_AS_STRING(dsn), &err);
     if (options == NULL) {
@@ -149,7 +149,7 @@ parse_dsn(PyObject *self, PyObject *args, PyObject *kwargs)
         goto exit;
     }
 
-    res = psycopg_dict_from_conninfo_options(options, /* include_password = */ 1);
+    res = psyco_dict_from_conninfo_options(options, /* include_password = */ 1);
 
 exit:
     PQconninfoFree(options);    /* safe on null */
@@ -190,9 +190,9 @@ quote_ident(PyObject *self, PyObject *args, PyObject *kwargs)
     }
 
     Py_INCREF(ident); /* for ensure_bytes */
-    if (!(ident = psycopg_ensure_bytes(ident))) { goto exit; }
+    if (!(ident = psyco_ensure_bytes(ident))) { goto exit; }
 
-    if (!(quoted = psycopg_escape_identifier(conn,
+    if (!(quoted = psyco_escape_identifier(conn,
         Bytes_AS_STRING(ident), Bytes_GET_SIZE(ident)))) { goto exit; }
 
     result = conn_text_from_chars(conn, quoted);
@@ -453,10 +453,10 @@ encrypt_password(PyObject *self, PyObject *args, PyObject *kwargs)
         }
     }
 
-    if (!(user = psycopg_ensure_bytes(user))) { goto exit; }
-    if (!(password = psycopg_ensure_bytes(password))) { goto exit; }
+    if (!(user = psyco_ensure_bytes(user))) { goto exit; }
+    if (!(password = psyco_ensure_bytes(password))) { goto exit; }
     if (algorithm != Py_None) {
-        if (!(algorithm = psycopg_ensure_bytes(algorithm))) {
+        if (!(algorithm = psyco_ensure_bytes(algorithm))) {
             goto exit;
         }
     }

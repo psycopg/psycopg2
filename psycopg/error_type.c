@@ -34,7 +34,7 @@
 PyObject *
 error_text_from_chars(errorObject *self, const char *str)
 {
-    return psycopg_text_from_chars_safe(str, -1, self->pydecoder);
+    return psyco_text_from_chars_safe(str, -1, self->pydecoder);
 }
 
 

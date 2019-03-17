@@ -73,7 +73,7 @@ qstring_quote(qstringObject *self)
 
     /* encode the string into buffer */
     Bytes_AsStringAndSize(str, &s, &len);
-    if (!(buffer = psycopg_escape_string(self->conn, s, len, NULL, &qlen))) {
+    if (!(buffer = psyco_escape_string(self->conn, s, len, NULL, &qlen))) {
         goto exit;
     }
 
@@ -107,7 +107,7 @@ qstring_getquoted(qstringObject *self, PyObject *args)
 static PyObject *
 qstring_str(qstringObject *self)
 {
-    return psycopg_ensure_text(qstring_getquoted(self, NULL));
+    return psyco_ensure_text(qstring_getquoted(self, NULL));
 }
 
 static PyObject *
@@ -161,9 +161,9 @@ qstring_set_encoding(qstringObject *self, PyObject *pyenc)
 
     /* get a C copy of the encoding (which may come from unicode) */
     Py_INCREF(pyenc);
-    if (!(pyenc = psycopg_ensure_bytes(pyenc))) { goto exit; }
+    if (!(pyenc = psyco_ensure_bytes(pyenc))) { goto exit; }
     if (!(tmp = Bytes_AsString(pyenc))) { goto exit; }
-    if (0 > psycopg_strdup(&cenc, tmp, -1)) { goto exit; }
+    if (0 > psyco_strdup(&cenc, tmp, -1)) { goto exit; }
 
     Dprintf("qstring_set_encoding: encoding set to %s", cenc);
     PyMem_Free((void *)self->encoding);

@@ -435,7 +435,7 @@ typecast_repr(PyObject *self)
     PyObject *rv;
 
     Py_INCREF(name);
-    if (!(name = psycopg_ensure_bytes(name))) {
+    if (!(name = psyco_ensure_bytes(name))) {
         return NULL;
     }
 
