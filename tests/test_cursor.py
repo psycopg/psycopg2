@@ -654,14 +654,18 @@ class CursorTests(ConnectingTestCase):
         curs = self.conn.cursor()
         self.assert_(curs.pgresult_ptr is None)
 
-        f = self.libpq.PQcmdStatus
-        f.argtypes = [ctypes.c_void_p]
-        f.restype = ctypes.c_char_p
-
         curs.execute("select 'x'")
         self.assert_(curs.pgresult_ptr is not None)
-        status = f(curs.pgresult_ptr)
-        self.assertEqual(status, b'SELECT 1')
+
+        try:
+            f = self.libpq.PQcmdStatus
+        except AttributeError:
+            pass
+        else:
+            f.argtypes = [ctypes.c_void_p]
+            f.restype = ctypes.c_char_p
+            status = f(curs.pgresult_ptr)
+            self.assertEqual(status, b'SELECT 1')
 
         curs.close()
         self.assert_(curs.pgresult_ptr is None)

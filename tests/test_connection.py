@@ -350,14 +350,19 @@ class ConnectionTests(ConnectingTestCase):
         conn = self.connect()
         self.assert_(conn.pgconn_ptr is not None)
 
-        f = self.libpq.PQserverVersion
-        f.argtypes = [ctypes.c_void_p]
-        f.restype = ctypes.c_int
-        ver = f(conn.pgconn_ptr)
-        if ver == 0 and sys.platform == 'darwin':
-            return self.skipTest("I don't know why this func returns 0 on OSX")
+        try:
+            f = self.libpq.PQserverVersion
+        except AttributeError:
+            pass
+        else:
+            f.argtypes = [ctypes.c_void_p]
+            f.restype = ctypes.c_int
+            ver = f(conn.pgconn_ptr)
+            if ver == 0 and sys.platform == 'darwin':
+                return self.skipTest(
+                    "I don't know why this func returns 0 on OSX")
 
-        self.assertEqual(ver, conn.server_version)
+            self.assertEqual(ver, conn.server_version)
 
         conn.close()
         self.assert_(conn.pgconn_ptr is None)
