@@ -1367,6 +1367,10 @@ connection_setup(connectionObject *self, const char *dsn, long int async)
     self->isolevel = ISOLATION_LEVEL_DEFAULT;
     self->readonly = STATE_DEFAULT;
     self->deferrable = STATE_DEFAULT;
+#ifdef CONN_CHECK_PID
+    self->procpid = getpid();
+#endif
+
     /* other fields have been zeroed by tp_alloc */
 
     pthread_mutex_init(&(self->lock), NULL);
@@ -1420,7 +1424,15 @@ connection_dealloc(PyObject* obj)
      * resulting in a double-free segfault (ticket #166). */
     PyObject_GC_UnTrack(self);
 
-    conn_close(self);
+    /* close the connection only if this is the same process it was created
+     * into, otherwise using multiprocessing we may close the connection
+     * belonging to another process. */
+#ifdef CONN_CHECK_PID
+    if (self->procpid == getpid())
+#endif
+    {
+        conn_close(self);
+    }
 
     if (self->weakreflist) {
         PyObject_ClearWeakRefs(obj);

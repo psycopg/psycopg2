@@ -141,6 +141,9 @@ struct connectionObject {
     int isolevel;
     int readonly;
     int deferrable;
+
+    /* the pid this connection was created into */
+    pid_t procpid;
 };
 
 /* map isolation level values into a numeric const */
