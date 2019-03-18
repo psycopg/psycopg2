@@ -33,6 +33,18 @@
 #  define HIDDEN
 #endif
 
+/* support for getpid() */
+#if defined( __GNUC__)
+#define CONN_CHECK_PID
+#include <sys/types.h>
+#include <unistd.h>
+#endif
+#ifdef _WIN32
+/* Windows doesn't seem affected by bug #829: just make it compile. */
+#define pid_t int
+#endif
+
+
 /* debug printf-like function */
 #ifdef PSYCOPG_DEBUG
 extern HIDDEN int psycopg_debug_enabled;
@@ -40,8 +52,6 @@ extern HIDDEN int psycopg_debug_enabled;
 
 #if defined( __GNUC__) && !defined(__APPLE__)
 #ifdef PSYCOPG_DEBUG
-#include <sys/types.h>
-#include <unistd.h>
 #define Dprintf(fmt, args...) \
     if (!psycopg_debug_enabled) ; else \
         fprintf(stderr, "[%d] " fmt "\n", (int) getpid() , ## args)
