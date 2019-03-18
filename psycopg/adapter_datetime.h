@@ -45,7 +45,7 @@ typedef struct {
 } pydatetimeObject;
 
 
-RAISES_NEG HIDDEN int psyco_adapter_datetime_init(void);
+RAISES_NEG HIDDEN int adapter_datetime_init(void);
 
 HIDDEN PyObject *psyco_Date(PyObject *module, PyObject *args);
 #define psyco_Date_doc \

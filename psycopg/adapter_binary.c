@@ -132,7 +132,7 @@ binary_getquoted(binaryObject *self, PyObject *args)
 static PyObject *
 binary_str(binaryObject *self)
 {
-    return psycopg_ensure_text(binary_getquoted(self, NULL));
+    return psyco_ensure_text(binary_getquoted(self, NULL));
 }
 
 static PyObject *

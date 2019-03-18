@@ -91,7 +91,7 @@ exit:
 static PyObject *
 pint_str(pintObject *self)
 {
-    return psycopg_ensure_text(pint_getquoted(self, NULL));
+    return psyco_ensure_text(pint_getquoted(self, NULL));
 }
 
 static PyObject *

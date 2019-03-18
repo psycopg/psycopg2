@@ -108,7 +108,7 @@ exit:
  * after having set an exception.
  */
 PyObject *
-psyco_curs_validate_sql_basic(cursorObject *self, PyObject *sql)
+curs_validate_sql_basic(cursorObject *self, PyObject *sql)
 {
     PyObject *rv = NULL;
     PyObject *comp = NULL;

@@ -43,11 +43,11 @@
 
 /* close method - close the cursor */
 
-#define psyco_curs_close_doc \
+#define curs_close_doc \
 "close() -- Close the cursor."
 
 static PyObject *
-psyco_curs_close(cursorObject *self, PyObject *dummy)
+curs_close(cursorObject *self, PyObject *dummy)
 {
     PyObject *rv = NULL;
     char *lname = NULL;
@@ -86,7 +86,7 @@ psyco_curs_close(cursorObject *self, PyObject *dummy)
          * closing it (the view exists since PG 8.2 according to docs).
          */
         if (!self->query && self->conn->server_version >= 80200) {
-            if (!(lname = psycopg_escape_string(
+            if (!(lname = psyco_escape_string(
                     self->conn, self->name, -1, NULL, NULL))) {
                 goto exit;
             }
@@ -110,7 +110,7 @@ close:
     CLEARPGRES(self->pgres);
 
     self->closed = 1;
-    Dprintf("psyco_curs_close: cursor at %p closed", self);
+    Dprintf("curs_close: cursor at %p closed", self);
 
     rv = Py_None;
     Py_INCREF(rv);
@@ -335,7 +335,7 @@ _psyco_curs_merge_query_args(cursorObject *self,
         PyErr_Fetch(&err, &arg, &trace);
 
         if (err && PyErr_GivenExceptionMatches(err, PyExc_TypeError)) {
-            Dprintf("psyco_curs_execute: TypeError exception caught");
+            Dprintf("curs_execute: TypeError exception caught");
             PyErr_NormalizeException(&err, &arg, &trace);
 
             if (PyObject_HasAttrString(arg, "args")) {
@@ -343,11 +343,11 @@ _psyco_curs_merge_query_args(cursorObject *self,
                 PyObject *str = PySequence_GetItem(args, 0);
                 const char *s = Bytes_AS_STRING(str);
 
-                Dprintf("psyco_curs_execute:     -> %s", s);
+                Dprintf("curs_execute:     -> %s", s);
 
                 if (!strcmp(s, "not enough arguments for format string")
                   || !strcmp(s, "not all arguments converted")) {
-                    Dprintf("psyco_curs_execute:     -> got a match");
+                    Dprintf("curs_execute:     -> got a match");
                     psyco_set_error(ProgrammingError, self, s);
                     pe = 1;
                 }
@@ -369,7 +369,7 @@ _psyco_curs_merge_query_args(cursorObject *self,
     return fquery;
 }
 
-#define psyco_curs_execute_doc \
+#define curs_execute_doc \
 "execute(query, vars=None) -- Execute query with bound vars."
 
 RAISES_NEG static int
@@ -382,13 +382,13 @@ _psyco_curs_execute(cursorObject *self,
     PyObject *fquery = NULL, *cvt = NULL;
 
     /* query becomes NULL or refcount +1, so good to XDECREF at the end */
-    if (!(query = psyco_curs_validate_sql_basic(self, query))) {
+    if (!(query = curs_validate_sql_basic(self, query))) {
         goto exit;
     }
 
     CLEARPGRES(self->pgres);
     Py_CLEAR(self->query);
-    Dprintf("psyco_curs_execute: starting execution of new query");
+    Dprintf("curs_execute: starting execution of new query");
 
     /* here we are, and we have a sequence or a dictionary filled with
        objects to be substituted (bound variables). we try to be smart and do
@@ -444,7 +444,7 @@ _psyco_curs_execute(cursorObject *self,
 
     /* At this point, the SQL statement must be str, not unicode */
     tmp = pq_execute(self, Bytes_AS_STRING(self->query), async, no_result, 0);
-    Dprintf("psyco_curs_execute: res = %d, pgres = %p", tmp, self->pgres);
+    Dprintf("curs_execute: res = %d, pgres = %p", tmp, self->pgres);
     if (tmp < 0) { goto exit; }
 
     res = 0; /* Success */
@@ -458,7 +458,7 @@ exit:
 }
 
 static PyObject *
-psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
+curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
     PyObject *vars = NULL, *operation = NULL;
 
@@ -495,11 +495,11 @@ psyco_curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
     Py_RETURN_NONE;
 }
 
-#define psyco_curs_executemany_doc \
+#define curs_executemany_doc \
 "executemany(query, vars_list) -- Execute many queries with bound vars."
 
 static PyObject *
-psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
+curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
     PyObject *operation = NULL, *vars = NULL;
     PyObject *v, *iter = NULL;
@@ -556,7 +556,7 @@ psyco_curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
 }
 
 
-#define psyco_curs_mogrify_doc \
+#define curs_mogrify_doc \
 "mogrify(query, vars=None) -> str -- Return query after vars binding."
 
 static PyObject *
@@ -565,10 +565,10 @@ _psyco_curs_mogrify(cursorObject *self,
 {
     PyObject *fquery = NULL, *cvt = NULL;
 
-    operation = psyco_curs_validate_sql_basic(self, operation);
+    operation = curs_validate_sql_basic(self, operation);
     if (operation == NULL) { goto cleanup; }
 
-    Dprintf("psyco_curs_mogrify: starting mogrify");
+    Dprintf("curs_mogrify: starting mogrify");
 
     /* here we are, and we have a sequence or a dictionary filled with
        objects to be substituted (bound variables). we try to be smart and do
@@ -586,7 +586,7 @@ _psyco_curs_mogrify(cursorObject *self,
             goto cleanup;
         }
 
-        Dprintf("psyco_curs_mogrify: cvt->refcnt = " FORMAT_CODE_PY_SSIZE_T
+        Dprintf("curs_mogrify: cvt->refcnt = " FORMAT_CODE_PY_SSIZE_T
             ", fquery->refcnt = " FORMAT_CODE_PY_SSIZE_T,
             Py_REFCNT(cvt), Py_REFCNT(fquery));
     }
@@ -603,7 +603,7 @@ cleanup:
 }
 
 static PyObject *
-psyco_curs_mogrify(cursorObject *self, PyObject *args, PyObject *kwargs)
+curs_mogrify(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
     PyObject *vars = NULL, *operation = NULL;
 
@@ -619,7 +619,7 @@ psyco_curs_mogrify(cursorObject *self, PyObject *args, PyObject *kwargs)
 
 
 /* cast method - convert an oid/string into a Python object */
-#define psyco_curs_cast_doc \
+#define curs_cast_doc \
 "cast(oid, s) -> value\n\n" \
 "Convert the string s to a Python object according to its oid.\n\n" \
 "Look for a typecaster first in the cursor, then in its connection," \
@@ -627,7 +627,7 @@ psyco_curs_mogrify(cursorObject *self, PyObject *args, PyObject *kwargs)
 "leave the value as a string."
 
 static PyObject *
-psyco_curs_cast(cursorObject *self, PyObject *args)
+curs_cast(cursorObject *self, PyObject *args)
 {
     PyObject *oid;
     PyObject *s;
@@ -643,7 +643,7 @@ psyco_curs_cast(cursorObject *self, PyObject *args)
 
 /* fetchone method - fetch one row of results */
 
-#define psyco_curs_fetchone_doc \
+#define curs_fetchone_doc \
 "fetchone() -> tuple or None\n\n" \
 "Return the next row of a query result set in the form of a tuple (by\n" \
 "default) or using the sequence factory previously set in the\n" \
@@ -744,7 +744,7 @@ exit:
 }
 
 static PyObject *
-psyco_curs_fetchone(cursorObject *self, PyObject *dummy)
+curs_fetchone(cursorObject *self, PyObject *dummy)
 {
     PyObject *res;
 
@@ -763,8 +763,8 @@ psyco_curs_fetchone(cursorObject *self, PyObject *dummy)
         if (_psyco_curs_prefetch(self) < 0) return NULL;
     }
 
-    Dprintf("psyco_curs_fetchone: fetching row %ld", self->row);
-    Dprintf("psyco_curs_fetchone: rowcount = %ld", self->rowcount);
+    Dprintf("curs_fetchone: fetching row %ld", self->row);
+    Dprintf("curs_fetchone: rowcount = %ld", self->rowcount);
 
     if (self->row >= self->rowcount) {
         /* we exausted available data: return None */
@@ -789,11 +789,11 @@ psyco_curs_fetchone(cursorObject *self, PyObject *dummy)
  * Fetch several records at time. Return NULL when the cursor is exhausted.
  */
 static PyObject *
-psyco_curs_next_named(cursorObject *self)
+curs_next_named(cursorObject *self)
 {
     PyObject *res;
 
-    Dprintf("psyco_curs_next_named");
+    Dprintf("curs_next_named");
     EXC_IF_CURS_CLOSED(self);
     EXC_IF_ASYNC_IN_PROGRESS(self, next);
     if (_psyco_curs_prefetch(self) < 0) return NULL;
@@ -802,8 +802,8 @@ psyco_curs_next_named(cursorObject *self)
     EXC_IF_NO_MARK(self);
     EXC_IF_TPC_PREPARED(self->conn, next);
 
-    Dprintf("psyco_curs_next_named: row %ld", self->row);
-    Dprintf("psyco_curs_next_named: rowcount = %ld", self->rowcount);
+    Dprintf("curs_next_named: row %ld", self->row);
+    Dprintf("curs_next_named: rowcount = %ld", self->rowcount);
     if (self->row >= self->rowcount) {
         char buffer[128];
 
@@ -834,7 +834,7 @@ psyco_curs_next_named(cursorObject *self)
 
 /* fetch many - fetch some results */
 
-#define psyco_curs_fetchmany_doc \
+#define curs_fetchmany_doc \
 "fetchmany(size=self.arraysize) -> list of tuple\n\n" \
 "Return the next `size` rows of a query result set in the form of a list\n" \
 "of tuples (by default) or using the sequence factory previously set in\n" \
@@ -842,7 +842,7 @@ psyco_curs_next_named(cursorObject *self)
 "Return an empty list when no more data is available.\n"
 
 static PyObject *
-psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
+curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
 {
     int i;
     PyObject *list = NULL;
@@ -887,7 +887,7 @@ psyco_curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
         size = self->rowcount - self->row;
     }
 
-    Dprintf("psyco_curs_fetchmany: size = %ld", size);
+    Dprintf("curs_fetchmany: size = %ld", size);
 
     if (size <= 0) {
         rv = PyList_New(0);
@@ -927,7 +927,7 @@ exit:
 
 /* fetch all - fetch all results */
 
-#define psyco_curs_fetchall_doc \
+#define curs_fetchall_doc \
 "fetchall() -> list of tuple\n\n" \
 "Return all the remaining rows of a query result set.\n\n" \
 "Rows are returned in the form of a list of tuples (by default) or using\n" \
@@ -935,7 +935,7 @@ exit:
 "Return `!None` when no more data is available.\n"
 
 static PyObject *
-psyco_curs_fetchall(cursorObject *self, PyObject *dummy)
+curs_fetchall(cursorObject *self, PyObject *dummy)
 {
     int i, size;
     PyObject *list = NULL;
@@ -996,11 +996,11 @@ exit:
 
 /* callproc method - execute a stored procedure */
 
-#define psyco_curs_callproc_doc \
+#define curs_callproc_doc \
 "callproc(procname, parameters=None) -- Execute stored procedure."
 
 static PyObject *
-psyco_curs_callproc(cursorObject *self, PyObject *args)
+curs_callproc(cursorObject *self, PyObject *args)
 {
     const char *procname = NULL;
     char *sql = NULL;
@@ -1059,10 +1059,10 @@ psyco_curs_callproc(cursorObject *self, PyObject *args)
             Py_INCREF(pname);   /* was borrowed */
 
             /* this also makes a check for keys being strings */
-            if (!(pname = psycopg_ensure_bytes(pname))) { goto exit; }
+            if (!(pname = psyco_ensure_bytes(pname))) { goto exit; }
             if (!(cpname = Bytes_AsString(pname))) { goto exit; }
 
-            if (!(scpnames[i] = psycopg_escape_identifier(
+            if (!(scpnames[i] = psyco_escape_identifier(
                     self->conn, cpname, -1))) {
                 Py_CLEAR(pname);
                 goto exit;
@@ -1144,13 +1144,13 @@ exit:
 
 /* nextset method - return the next set of data (not supported) */
 
-#define psyco_curs_nextset_doc \
+#define curs_nextset_doc \
 "nextset() -- Skip to next set of data.\n\n" \
 "This method is not supported (PostgreSQL does not have multiple data \n" \
 "sets) and will raise a NotSupportedError exception."
 
 static PyObject *
-psyco_curs_nextset(cursorObject *self, PyObject *dummy)
+curs_nextset(cursorObject *self, PyObject *dummy)
 {
     EXC_IF_CURS_CLOSED(self);
 
@@ -1161,12 +1161,12 @@ psyco_curs_nextset(cursorObject *self, PyObject *dummy)
 
 /* setinputsizes - predefine memory areas for execute (does nothing) */
 
-#define psyco_curs_setinputsizes_doc \
+#define curs_setinputsizes_doc \
 "setinputsizes(sizes) -- Set memory areas before execute.\n\n" \
 "This method currently does nothing but it is safe to call it."
 
 static PyObject *
-psyco_curs_setinputsizes(cursorObject *self, PyObject *args)
+curs_setinputsizes(cursorObject *self, PyObject *args)
 {
     PyObject *sizes;
 
@@ -1181,12 +1181,12 @@ psyco_curs_setinputsizes(cursorObject *self, PyObject *args)
 
 /* setoutputsize - predefine memory areas for execute (does nothing) */
 
-#define psyco_curs_setoutputsize_doc \
+#define curs_setoutputsize_doc \
 "setoutputsize(size, column=None) -- Set column buffer size.\n\n" \
 "This method currently does nothing but it is safe to call it."
 
 static PyObject *
-psyco_curs_setoutputsize(cursorObject *self, PyObject *args)
+curs_setoutputsize(cursorObject *self, PyObject *args)
 {
     long int size, column;
 
@@ -1201,11 +1201,11 @@ psyco_curs_setoutputsize(cursorObject *self, PyObject *args)
 
 /* scroll - scroll position in result list */
 
-#define psyco_curs_scroll_doc \
+#define curs_scroll_doc \
 "scroll(value, mode='relative') -- Scroll to new position according to mode."
 
 static PyObject *
-psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
+curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
     int value, newpos;
     const char *mode = "relative";
@@ -1263,21 +1263,21 @@ psyco_curs_scroll(cursorObject *self, PyObject *args, PyObject *kwargs)
 }
 
 
-#define psyco_curs_enter_doc \
+#define curs_enter_doc \
 "__enter__ -> self"
 
 static PyObject *
-psyco_curs_enter(cursorObject *self, PyObject *dummy)
+curs_enter(cursorObject *self, PyObject *dummy)
 {
     Py_INCREF(self);
     return (PyObject *)self;
 }
 
-#define psyco_curs_exit_doc \
+#define curs_exit_doc \
 "__exit__ -- close the cursor"
 
 static PyObject *
-psyco_curs_exit(cursorObject *self, PyObject *args)
+curs_exit(cursorObject *self, PyObject *args)
 {
     PyObject *tmp = NULL;
     PyObject *rv = NULL;
@@ -1332,7 +1332,7 @@ static char *_psyco_curs_copy_columns(PyObject *columns)
     columnlist[0] = '(';
 
     while ((col = PyIter_Next(coliter)) != NULL) {
-        if (!(col = psycopg_ensure_bytes(col))) {
+        if (!(col = psyco_ensure_bytes(col))) {
             Py_DECREF(coliter);
             goto error;
         }
@@ -1379,11 +1379,11 @@ exit:
 
 /* extension: copy_from - implements COPY FROM */
 
-#define psyco_curs_copy_from_doc \
+#define curs_copy_from_doc \
 "copy_from(file, table, sep='\\t', null='\\\\N', size=8192, columns=None) -- Copy table from file."
 
 static PyObject *
-psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
+curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
     static char *kwlist[] = {
             "file", "table", "sep", "null", "size", "columns", NULL};
@@ -1423,12 +1423,12 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
     if (NULL == (columnlist = _psyco_curs_copy_columns(columns)))
         goto exit;
 
-    if (!(quoted_delimiter = psycopg_escape_string(
+    if (!(quoted_delimiter = psyco_escape_string(
             self->conn, sep, -1, NULL, NULL))) {
         goto exit;
     }
 
-    if (!(quoted_null = psycopg_escape_string(
+    if (!(quoted_null = psyco_escape_string(
             self->conn, null, -1, NULL, NULL))) {
         goto exit;
     }
@@ -1443,10 +1443,10 @@ psyco_curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
     PyOS_snprintf(query, query_size, command,
         table_name, columnlist, quoted_delimiter, quoted_null);
 
-    Dprintf("psyco_curs_copy_from: query = %s", query);
+    Dprintf("curs_copy_from: query = %s", query);
 
     /* This routine stores a borrowed reference.  Although it is only held
-     * for the duration of psyco_curs_copy_from, nested invocations of
+     * for the duration of curs_copy_from, nested invocations of
      * Py_BEGIN_ALLOW_THREADS could surrender control to another thread,
      * which could invoke the garbage collector.  We thus need an
      * INCREF/DECREF pair if we store this pointer in a GC object, such as
@@ -1473,11 +1473,11 @@ exit:
 
 /* extension: copy_to - implements COPY TO */
 
-#define psyco_curs_copy_to_doc \
+#define curs_copy_to_doc \
 "copy_to(file, table, sep='\\t', null='\\\\N', columns=None) -- Copy table to file."
 
 static PyObject *
-psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
+curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
     static char *kwlist[] = {"file", "table", "sep", "null", "columns", NULL};
 
@@ -1515,12 +1515,12 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
     if (NULL == (columnlist = _psyco_curs_copy_columns(columns)))
         goto exit;
 
-    if (!(quoted_delimiter = psycopg_escape_string(
+    if (!(quoted_delimiter = psyco_escape_string(
             self->conn, sep, -1, NULL, NULL))) {
         goto exit;
     }
 
-    if (!(quoted_null = psycopg_escape_string(
+    if (!(quoted_null = psyco_escape_string(
             self->conn, null, -1, NULL, NULL))) {
         goto exit;
     }
@@ -1535,7 +1535,7 @@ psyco_curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
     PyOS_snprintf(query, query_size, command,
         table_name, columnlist, quoted_delimiter, quoted_null);
 
-    Dprintf("psyco_curs_copy_to: query = %s", query);
+    Dprintf("curs_copy_to: query = %s", query);
 
     self->copysize = 0;
     Py_INCREF(file);
@@ -1563,7 +1563,7 @@ exit:
    SQL statement, rather than composing the statement from parameters.
 */
 
-#define psyco_curs_copy_expert_doc \
+#define curs_copy_expert_doc \
 "copy_expert(sql, file, size=8192) -- Submit a user-composed COPY statement.\n" \
 "`file` must be an open, readable file for COPY FROM or an open, writable\n"   \
 "file for COPY TO. The optional `size` argument, when specified for a COPY\n"   \
@@ -1571,7 +1571,7 @@ exit:
 "buffer size."
 
 static PyObject *
-psyco_curs_copy_expert(cursorObject *self, PyObject *args, PyObject *kwargs)
+curs_copy_expert(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
     Py_ssize_t bufsize = DEFAULT_COPYBUFF;
     PyObject *sql, *file, *res = NULL;
@@ -1587,7 +1587,7 @@ psyco_curs_copy_expert(cursorObject *self, PyObject *args, PyObject *kwargs)
     EXC_IF_GREEN(copy_expert);
     EXC_IF_TPC_PREPARED(self->conn, copy_expert);
 
-    sql = psyco_curs_validate_sql_basic(self, sql);
+    sql = curs_validate_sql_basic(self, sql);
 
     /* Any failure from here forward should 'goto exit' rather than
        'return NULL' directly. */
@@ -1630,28 +1630,28 @@ exit:
 
 /* extension: closed - return true if cursor is closed */
 
-#define psyco_curs_closed_doc \
+#define curs_closed_doc \
 "True if cursor is closed, False if cursor is open"
 
 static PyObject *
-psyco_curs_get_closed(cursorObject *self, void *closure)
+curs_closed_get(cursorObject *self, void *closure)
 {
     return PyBool_FromLong(self->closed || (self->conn && self->conn->closed));
 }
 
 /* extension: withhold - get or set "WITH HOLD" for named cursors */
 
-#define psyco_curs_withhold_doc \
+#define curs_withhold_doc \
 "Set or return cursor use of WITH HOLD"
 
 static PyObject *
-psyco_curs_withhold_get(cursorObject *self)
+curs_withhold_get(cursorObject *self)
 {
     return PyBool_FromLong(self->withhold);
 }
 
 RAISES_NEG int
-psyco_curs_withhold_set(cursorObject *self, PyObject *pyvalue)
+curs_withhold_set(cursorObject *self, PyObject *pyvalue)
 {
     int value;
 
@@ -1669,11 +1669,11 @@ psyco_curs_withhold_set(cursorObject *self, PyObject *pyvalue)
     return 0;
 }
 
-#define psyco_curs_scrollable_doc \
+#define curs_scrollable_doc \
 "Set or return cursor use of SCROLL"
 
 static PyObject *
-psyco_curs_scrollable_get(cursorObject *self)
+curs_scrollable_get(cursorObject *self)
 {
     PyObject *ret = NULL;
 
@@ -1696,7 +1696,7 @@ psyco_curs_scrollable_get(cursorObject *self)
 }
 
 RAISES_NEG int
-psyco_curs_scrollable_set(cursorObject *self, PyObject *pyvalue)
+curs_scrollable_set(cursorObject *self, PyObject *pyvalue)
 {
     int value;
 
@@ -1718,11 +1718,11 @@ psyco_curs_scrollable_set(cursorObject *self, PyObject *pyvalue)
 }
 
 
-#define psyco_curs_pgresult_ptr_doc \
+#define curs_pgresult_ptr_doc \
 "pgresult_ptr -- Get the PGresult structure pointer."
 
 static PyObject *
-psyco_curs_pgresult_ptr_get(cursorObject *self)
+curs_pgresult_ptr_get(cursorObject *self)
 {
     if (self->pgres) {
         return PyLong_FromVoidPtr((void *)self->pgres);
@@ -1751,8 +1751,8 @@ cursor_next(PyObject *self)
     PyObject *res;
 
     if (NULL == ((cursorObject*)self)->name) {
-        /* we don't parse arguments: psyco_curs_fetchone will do that for us */
-        res = psyco_curs_fetchone((cursorObject*)self, NULL);
+        /* we don't parse arguments: curs_fetchone will do that for us */
+        res = curs_fetchone((cursorObject*)self, NULL);
 
         /* convert a None to NULL to signal the end of iteration */
         if (res && res == Py_None) {
@@ -1761,7 +1761,7 @@ cursor_next(PyObject *self)
         }
     }
     else {
-        res = psyco_curs_next_named((cursorObject*)self);
+        res = curs_next_named((cursorObject*)self);
     }
 
     return res;
@@ -1771,44 +1771,44 @@ cursor_next(PyObject *self)
 
 static struct PyMethodDef cursorObject_methods[] = {
     /* DBAPI-2.0 core */
-    {"close", (PyCFunction)psyco_curs_close,
-     METH_NOARGS, psyco_curs_close_doc},
-    {"execute", (PyCFunction)psyco_curs_execute,
-     METH_VARARGS|METH_KEYWORDS, psyco_curs_execute_doc},
-    {"executemany", (PyCFunction)psyco_curs_executemany,
-     METH_VARARGS|METH_KEYWORDS, psyco_curs_executemany_doc},
-    {"fetchone", (PyCFunction)psyco_curs_fetchone,
-     METH_NOARGS, psyco_curs_fetchone_doc},
-    {"fetchmany", (PyCFunction)psyco_curs_fetchmany,
-     METH_VARARGS|METH_KEYWORDS, psyco_curs_fetchmany_doc},
-    {"fetchall", (PyCFunction)psyco_curs_fetchall,
-     METH_NOARGS, psyco_curs_fetchall_doc},
-    {"callproc", (PyCFunction)psyco_curs_callproc,
-     METH_VARARGS, psyco_curs_callproc_doc},
-    {"nextset", (PyCFunction)psyco_curs_nextset,
-     METH_NOARGS, psyco_curs_nextset_doc},
-    {"setinputsizes", (PyCFunction)psyco_curs_setinputsizes,
-     METH_VARARGS, psyco_curs_setinputsizes_doc},
-    {"setoutputsize", (PyCFunction)psyco_curs_setoutputsize,
-     METH_VARARGS, psyco_curs_setoutputsize_doc},
+    {"close", (PyCFunction)curs_close,
+     METH_NOARGS, curs_close_doc},
+    {"execute", (PyCFunction)curs_execute,
+     METH_VARARGS|METH_KEYWORDS, curs_execute_doc},
+    {"executemany", (PyCFunction)curs_executemany,
+     METH_VARARGS|METH_KEYWORDS, curs_executemany_doc},
+    {"fetchone", (PyCFunction)curs_fetchone,
+     METH_NOARGS, curs_fetchone_doc},
+    {"fetchmany", (PyCFunction)curs_fetchmany,
+     METH_VARARGS|METH_KEYWORDS, curs_fetchmany_doc},
+    {"fetchall", (PyCFunction)curs_fetchall,
+     METH_NOARGS, curs_fetchall_doc},
+    {"callproc", (PyCFunction)curs_callproc,
+     METH_VARARGS, curs_callproc_doc},
+    {"nextset", (PyCFunction)curs_nextset,
+     METH_NOARGS, curs_nextset_doc},
+    {"setinputsizes", (PyCFunction)curs_setinputsizes,
+     METH_VARARGS, curs_setinputsizes_doc},
+    {"setoutputsize", (PyCFunction)curs_setoutputsize,
+     METH_VARARGS, curs_setoutputsize_doc},
     /* DBAPI-2.0 extensions */
-    {"scroll", (PyCFunction)psyco_curs_scroll,
-     METH_VARARGS|METH_KEYWORDS, psyco_curs_scroll_doc},
-    {"__enter__", (PyCFunction)psyco_curs_enter,
-     METH_NOARGS, psyco_curs_enter_doc},
-    {"__exit__", (PyCFunction)psyco_curs_exit,
-     METH_VARARGS, psyco_curs_exit_doc},
+    {"scroll", (PyCFunction)curs_scroll,
+     METH_VARARGS|METH_KEYWORDS, curs_scroll_doc},
+    {"__enter__", (PyCFunction)curs_enter,
+     METH_NOARGS, curs_enter_doc},
+    {"__exit__", (PyCFunction)curs_exit,
+     METH_VARARGS, curs_exit_doc},
     /* psycopg extensions */
-    {"cast", (PyCFunction)psyco_curs_cast,
-     METH_VARARGS, psyco_curs_cast_doc},
-    {"mogrify", (PyCFunction)psyco_curs_mogrify,
-     METH_VARARGS|METH_KEYWORDS, psyco_curs_mogrify_doc},
-    {"copy_from", (PyCFunction)psyco_curs_copy_from,
-     METH_VARARGS|METH_KEYWORDS, psyco_curs_copy_from_doc},
-    {"copy_to", (PyCFunction)psyco_curs_copy_to,
-     METH_VARARGS|METH_KEYWORDS, psyco_curs_copy_to_doc},
-    {"copy_expert", (PyCFunction)psyco_curs_copy_expert,
-     METH_VARARGS|METH_KEYWORDS, psyco_curs_copy_expert_doc},
+    {"cast", (PyCFunction)curs_cast,
+     METH_VARARGS, curs_cast_doc},
+    {"mogrify", (PyCFunction)curs_mogrify,
+     METH_VARARGS|METH_KEYWORDS, curs_mogrify_doc},
+    {"copy_from", (PyCFunction)curs_copy_from,
+     METH_VARARGS|METH_KEYWORDS, curs_copy_from_doc},
+    {"copy_to", (PyCFunction)curs_copy_to,
+     METH_VARARGS|METH_KEYWORDS, curs_copy_to_doc},
+    {"copy_expert", (PyCFunction)curs_copy_expert,
+     METH_VARARGS|METH_KEYWORDS, curs_copy_expert_doc},
     {NULL}
 };
 
@@ -1849,19 +1849,19 @@ static struct PyMemberDef cursorObject_members[] = {
 
 /* object calculated member list */
 static struct PyGetSetDef cursorObject_getsets[] = {
-    { "closed", (getter)psyco_curs_get_closed, NULL,
-      psyco_curs_closed_doc, NULL },
+    { "closed", (getter)curs_closed_get, NULL,
+      curs_closed_doc, NULL },
     { "withhold",
-      (getter)psyco_curs_withhold_get,
-      (setter)psyco_curs_withhold_set,
-      psyco_curs_withhold_doc, NULL },
+      (getter)curs_withhold_get,
+      (setter)curs_withhold_set,
+      curs_withhold_doc, NULL },
     { "scrollable",
-      (getter)psyco_curs_scrollable_get,
-      (setter)psyco_curs_scrollable_set,
-      psyco_curs_scrollable_doc, NULL },
+      (getter)curs_scrollable_get,
+      (setter)curs_scrollable_set,
+      curs_scrollable_doc, NULL },
     { "pgresult_ptr",
-      (getter)psyco_curs_pgresult_ptr_get, NULL,
-      psyco_curs_pgresult_ptr_doc, NULL },
+      (getter)curs_pgresult_ptr_get, NULL,
+      curs_pgresult_ptr_doc, NULL },
     {NULL}
 };
 
@@ -1874,10 +1874,10 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
     Dprintf("cursor_setup: parameters: name = %s, conn = %p", name, conn);
 
     if (name) {
-        if (0 > psycopg_strdup(&self->name, name, -1)) {
+        if (0 > psyco_strdup(&self->name, name, -1)) {
             return -1;
         }
-        if (!(self->qname = psycopg_escape_identifier(conn, name, -1))) {
+        if (!(self->qname = psyco_escape_identifier(conn, name, -1))) {
             return -1;
         }
     }
@@ -1982,7 +1982,7 @@ cursor_init(PyObject *obj, PyObject *args, PyObject *kwargs)
 
     if (name != Py_None) {
         Py_INCREF(name);   /* for ensure_bytes */
-        if (!(bname = psycopg_ensure_bytes(name))) {
+        if (!(bname = psyco_ensure_bytes(name))) {
             /* name has had a ref stolen */
             goto exit;
         }

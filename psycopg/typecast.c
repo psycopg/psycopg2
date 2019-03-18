@@ -291,7 +291,7 @@ typecast_init(PyObject *module)
 
     /* register the date/time typecasters with their original names */
 #ifdef HAVE_MXDATETIME
-    if (0 == psyco_typecast_mxdatetime_init()) {
+    if (0 == typecast_mxdatetime_init()) {
         for (i = 0; typecast_mxdatetime[i].name != NULL; i++) {
             t = (typecastObject *)typecast_from_c(&(typecast_mxdatetime[i]), dict);
             if (t == NULL) { goto exit; }
@@ -302,7 +302,7 @@ typecast_init(PyObject *module)
     }
 #endif
 
-    if (0 > psyco_typecast_datetime_init()) { goto exit; }
+    if (0 > typecast_datetime_init()) { goto exit; }
     for (i = 0; typecast_pydatetime[i].name != NULL; i++) {
         t = (typecastObject *)typecast_from_c(&(typecast_pydatetime[i]), dict);
         if (t == NULL) { goto exit; }
@@ -435,7 +435,7 @@ typecast_repr(PyObject *self)
     PyObject *rv;
 
     Py_INCREF(name);
-    if (!(name = psycopg_ensure_bytes(name))) {
+    if (!(name = psyco_ensure_bytes(name))) {
         return NULL;
     }
 

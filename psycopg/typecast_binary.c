@@ -132,9 +132,9 @@ PyTypeObject chunkType = {
 };
 
 
-static char *psycopg_parse_hex(
+static char *parse_hex(
         const char *bufin, Py_ssize_t sizein, Py_ssize_t *sizeout);
-static char *psycopg_parse_escape(
+static char *parse_escape(
         const char *bufin, Py_ssize_t sizein, Py_ssize_t *sizeout);
 
 /* The function is not static and not hidden as we use ctypes to test it. */
@@ -154,7 +154,7 @@ typecast_BINARY_cast(const char *s, Py_ssize_t l, PyObject *curs)
          * So the only robust option is to parse it ourselves - luckily it's
          * an easy format.
          */
-        if (NULL == (buffer = psycopg_parse_hex(s, l, &len))) {
+        if (NULL == (buffer = parse_hex(s, l, &len))) {
             goto exit;
         }
     }
@@ -169,7 +169,7 @@ typecast_BINARY_cast(const char *s, Py_ssize_t l, PyObject *curs)
          * So we'll just have our better integrated parser, let's finish this
          * story.
          */
-        if (NULL == (buffer = psycopg_parse_escape(s, l, &len))) {
+        if (NULL == (buffer = parse_escape(s, l, &len))) {
             goto exit;
         }
     }
@@ -219,7 +219,7 @@ static const char hex_lut[128] = {
  * In case of error set an exception and return NULL.
  */
 static char *
-psycopg_parse_hex(const char *bufin, Py_ssize_t sizein, Py_ssize_t *sizeout)
+parse_hex(const char *bufin, Py_ssize_t sizein, Py_ssize_t *sizeout)
 {
     char *ret = NULL;
     const char *bufend = bufin + sizein;
@@ -269,7 +269,7 @@ exit:
  * In case of error set an exception and return NULL.
  */
 static char *
-psycopg_parse_escape(const char *bufin, Py_ssize_t sizein, Py_ssize_t *sizeout)
+parse_escape(const char *bufin, Py_ssize_t sizein, Py_ssize_t *sizeout)
 {
     char *ret = NULL;
     const char *bufend = bufin + sizein;

@@ -113,7 +113,7 @@ end:
 static PyObject *
 pdecimal_str(pdecimalObject *self)
 {
-    return psycopg_ensure_text(pdecimal_getquoted(self, NULL));
+    return psyco_ensure_text(pdecimal_getquoted(self, NULL));
 }
 
 static PyObject *

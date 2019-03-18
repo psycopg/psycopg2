@@ -657,7 +657,7 @@ pq_tpc_command_locked(
     PyEval_RestoreThread(*tstate);
 
     /* convert the xid into the postgres transaction_id and quote it. */
-    if (!(etid = psycopg_escape_string(conn, tid, -1, NULL, NULL)))
+    if (!(etid = psyco_escape_string(conn, tid, -1, NULL, NULL)))
     { goto exit; }
 
     /* prepare the command to the server */
@@ -1298,7 +1298,7 @@ _pq_copy_in_v3(cursorObject *curs)
             if (ex) {
                 PyObject *str;
                 str = PyObject_Str(ex);
-                str = psycopg_ensure_bytes(str);
+                str = psyco_ensure_bytes(str);
                 if (str) {
                     PyOS_snprintf(buf, sizeof(buf),
                         "error in .read() call: %s %s",
@@ -1374,7 +1374,7 @@ _pq_copy_out_v3(cursorObject *curs)
     }
 
     /* if the file is text we must pass it unicode. */
-    if (-1 == (is_text = psycopg_is_text_file(curs->copyfile))) {
+    if (-1 == (is_text = psyco_is_text_file(curs->copyfile))) {
         goto exit;
     }
 

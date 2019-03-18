@@ -165,7 +165,7 @@ exit:
 static PyObject *
 list_str(listObject *self)
 {
-    return psycopg_ensure_text(list_quote(self));
+    return psyco_ensure_text(list_quote(self));
 }
 
 static PyObject *

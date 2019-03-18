@@ -141,7 +141,7 @@ typecast_DECIMAL_cast(const char *s, Py_ssize_t len, PyObject *curs)
     if ((buffer = PyMem_Malloc(len+1)) == NULL)
         return PyErr_NoMemory();
     strncpy(buffer, s, (size_t) len); buffer[len] = '\0';
-    decimalType = psyco_GetDecimalType();
+    decimalType = psyco_get_decimal_type();
     /* Fall back on float if decimal is not available */
     if (decimalType != NULL) {
         res = PyObject_CallFunction(decimalType, "s", buffer);

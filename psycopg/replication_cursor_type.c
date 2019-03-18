@@ -38,11 +38,11 @@
 #include "datetime.h"
 
 
-#define psyco_repl_curs_start_replication_expert_doc \
+#define start_replication_expert_doc \
 "start_replication_expert(command, decode=False) -- Start replication with a given command."
 
 static PyObject *
-psyco_repl_curs_start_replication_expert(replicationCursorObject *self,
+start_replication_expert(replicationCursorObject *self,
                                          PyObject *args, PyObject *kwargs)
 {
     cursorObject *curs = &self->cur;
@@ -60,12 +60,11 @@ psyco_repl_curs_start_replication_expert(replicationCursorObject *self,
     EXC_IF_GREEN(start_replication_expert);
     EXC_IF_TPC_PREPARED(conn, start_replication_expert);
 
-    if (!(command = psyco_curs_validate_sql_basic(
-            (cursorObject *)self, command))) {
+    if (!(command = curs_validate_sql_basic((cursorObject *)self, command))) {
         goto exit;
     }
 
-    Dprintf("psyco_repl_curs_start_replication_expert: '%s'; decode: %ld",
+    Dprintf("start_replication_expert: '%s'; decode: %ld",
         Bytes_AS_STRING(command), decode);
 
     if (pq_execute(curs, Bytes_AS_STRING(command), conn->async,
@@ -82,11 +81,11 @@ exit:
     return res;
 }
 
-#define psyco_repl_curs_consume_stream_doc \
+#define consume_stream_doc \
 "consume_stream(consumer, keepalive_interval=10) -- Consume replication stream."
 
 static PyObject *
-psyco_repl_curs_consume_stream(replicationCursorObject *self,
+consume_stream(replicationCursorObject *self,
                                PyObject *args, PyObject *kwargs)
 {
     cursorObject *curs = &self->cur;
@@ -104,7 +103,7 @@ psyco_repl_curs_consume_stream(replicationCursorObject *self,
     EXC_IF_GREEN(consume_stream);
     EXC_IF_TPC_PREPARED(self->cur.conn, consume_stream);
 
-    Dprintf("psyco_repl_curs_consume_stream");
+    Dprintf("consume_stream");
 
     if (keepalive_interval < 1.0) {
         psyco_set_error(ProgrammingError, curs, "keepalive_interval must be >= 1 (sec)");
@@ -136,11 +135,11 @@ psyco_repl_curs_consume_stream(replicationCursorObject *self,
     return res;
 }
 
-#define psyco_repl_curs_read_message_doc \
+#define read_message_doc \
 "read_message() -- Try reading a replication message from the server (non-blocking)."
 
 static PyObject *
-psyco_repl_curs_read_message(replicationCursorObject *self, PyObject *dummy)
+read_message(replicationCursorObject *self, PyObject *dummy)
 {
     cursorObject *curs = &self->cur;
     replicationMessageObject *msg = NULL;
@@ -159,11 +158,11 @@ psyco_repl_curs_read_message(replicationCursorObject *self, PyObject *dummy)
     Py_RETURN_NONE;
 }
 
-#define psyco_repl_curs_send_feedback_doc \
+#define send_feedback_doc \
 "send_feedback(write_lsn=0, flush_lsn=0, apply_lsn=0, reply=False) -- Try sending a replication feedback message to the server and optionally request a reply."
 
 static PyObject *
-psyco_repl_curs_send_feedback(replicationCursorObject *self,
+send_feedback(replicationCursorObject *self,
                               PyObject *args, PyObject *kwargs)
 {
     cursorObject *curs = &self->cur;
@@ -196,7 +195,7 @@ psyco_repl_curs_send_feedback(replicationCursorObject *self,
 
 
 RAISES_NEG int
-psyco_repl_curs_datetime_init(void)
+repl_curs_datetime_init(void)
 {
     PyDateTime_IMPORT;
 
@@ -207,11 +206,11 @@ psyco_repl_curs_datetime_init(void)
     return 0;
 }
 
-#define psyco_repl_curs_io_timestamp_doc \
+#define repl_curs_io_timestamp_doc \
 "io_timestamp -- the timestamp of latest IO with the server"
 
 static PyObject *
-psyco_repl_curs_get_io_timestamp(replicationCursorObject *self)
+repl_curs_get_io_timestamp(replicationCursorObject *self)
 {
     cursorObject *curs = &self->cur;
     PyObject *tval, *res = NULL;
@@ -232,14 +231,14 @@ psyco_repl_curs_get_io_timestamp(replicationCursorObject *self)
 /* object method list */
 
 static struct PyMethodDef replicationCursorObject_methods[] = {
-    {"start_replication_expert", (PyCFunction)psyco_repl_curs_start_replication_expert,
-     METH_VARARGS|METH_KEYWORDS, psyco_repl_curs_start_replication_expert_doc},
-    {"consume_stream", (PyCFunction)psyco_repl_curs_consume_stream,
-     METH_VARARGS|METH_KEYWORDS, psyco_repl_curs_consume_stream_doc},
-    {"read_message", (PyCFunction)psyco_repl_curs_read_message,
-     METH_NOARGS, psyco_repl_curs_read_message_doc},
-    {"send_feedback", (PyCFunction)psyco_repl_curs_send_feedback,
-     METH_VARARGS|METH_KEYWORDS, psyco_repl_curs_send_feedback_doc},
+    {"start_replication_expert", (PyCFunction)start_replication_expert,
+     METH_VARARGS|METH_KEYWORDS, start_replication_expert_doc},
+    {"consume_stream", (PyCFunction)consume_stream,
+     METH_VARARGS|METH_KEYWORDS, consume_stream_doc},
+    {"read_message", (PyCFunction)read_message,
+     METH_NOARGS, read_message_doc},
+    {"send_feedback", (PyCFunction)send_feedback,
+     METH_VARARGS|METH_KEYWORDS, send_feedback_doc},
     {NULL}
 };
 
@@ -247,8 +246,8 @@ static struct PyMethodDef replicationCursorObject_methods[] = {
 
 static struct PyGetSetDef replicationCursorObject_getsets[] = {
     { "io_timestamp",
-      (getter)psyco_repl_curs_get_io_timestamp, NULL,
-      psyco_repl_curs_io_timestamp_doc, NULL },
+      (getter)repl_curs_get_io_timestamp, NULL,
+      repl_curs_io_timestamp_doc, NULL },
     {NULL}
 };
 

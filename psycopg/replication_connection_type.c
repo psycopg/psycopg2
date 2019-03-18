@@ -97,7 +97,7 @@ replicationConnection_init(replicationConnectionObject *self,
         goto exit;
     }
 
-    if (!(newdsn = psycopg_make_dsn(dsn, dsnopts))) { goto exit; }
+    if (!(newdsn = psyco_make_dsn(dsn, dsnopts))) { goto exit; }
     if (!(newargs = PyTuple_Pack(2, newdsn, async))) { goto exit; }
 
     /* only attempt the connection once we've handled all possible errors */
