@@ -24,8 +24,6 @@ New features:
   (:ticket:`#732`).
 - Added *fetch* parameter to `~psycopg2.extras.execute_values()` function
   (:ticket:`#813`).
-- Fixed adaptation of numeric subclasses such as `~enum.IntEnum`
-  (:ticket:`#591`).
 - `!str()` on `~psycopg2.extras.Range` produces a human-readable representation
   (:ticket:`#773`).
 - `~psycopg2.extras.DictCursor` and `~psycopg2.extras.RealDictCursor` rows
@@ -33,8 +31,15 @@ New features:
 - Added `~psycopg2.extensions.Diagnostics.severity_nonlocalized` attribute on
   the `~psycopg2.extensions.Diagnostics` object (:ticket:`#783`).
 - More efficient `~psycopg2.extras.NamedTupleCursor` (:ticket:`#838`).
-- Async communication improved to fix blocking on results returned at
-  different times (:ticket:`#856`).
+
+Bug fixes:
+
+- Fixed connections occasionally broken by the unrelated use of the
+  multiprocessing module (:ticket:`#829`).
+- Fixed async communication blocking if results are returned in different
+  chunks, e.g. with notices interspersed to the results (:ticket:`#856`).
+- Fixed adaptation of numeric subclasses such as `~enum.IntEnum`
+  (:ticket:`#591`).
 
 Other changes:
 
