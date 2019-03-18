@@ -15,14 +15,14 @@ environment:
         # https://www.appveyor.com/docs/build-environment/
       - {PYVER: "27", PYTHON_ARCH: "32"}
       - {PYVER: "27", PYTHON_ARCH: "64"}
-      - {PYVER: "34", PYTHON_ARCH: "32"}
-      - {PYVER: "34", PYTHON_ARCH: "64"}
-      - {PYVER: "35", PYTHON_ARCH: "32"}
-      - {PYVER: "35", PYTHON_ARCH: "64"}
-      - {PYVER: "36", PYTHON_ARCH: "32"}
-      - {PYVER: "36", PYTHON_ARCH: "64"}
       - {PYVER: "37", PYTHON_ARCH: "32"}
       - {PYVER: "37", PYTHON_ARCH: "64"}
+      - {PYVER: "36", PYTHON_ARCH: "32"}
+      - {PYVER: "36", PYTHON_ARCH: "64"}
+      - {PYVER: "35", PYTHON_ARCH: "32"}
+      - {PYVER: "35", PYTHON_ARCH: "64"}
+      - {PYVER: "34", PYTHON_ARCH: "32"}
+      - {PYVER: "34", PYTHON_ARCH: "64"}
 
 
     OPENSSL_VERSION: "1_0_2n"
