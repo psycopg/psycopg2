@@ -634,6 +634,29 @@ Of course it will not be possible to write the value of `date.max` in the
 database anymore: :sql:`infinity` will be stored instead.
 
 
+.. _time-handling:
+
+Time handling
+'''''''''''''
+
+The PostgreSQL :sql:`time` and Python `~datetime.time` types are not
+fully bidirectional.
+
+Within PostgreSQL, the :sql:`time` type's maximum value of ``24:00:00`` is
+treated as 24-hours later than the minimum value of ``00:00:00``.
+
+    >>> cur.execute("SELECT '24:00:00'::time - '00:00:00'::time")
+    >>> cur.fetchone()[0]
+    datetime.timedelta(days=1)
+
+However, Python's `!time` only supports times until ``23:59:59``.
+Retrieving a value of ``24:00:00`` results in a `!time` of ``00:00:00``.
+
+    >>> cur.execute("SELECT '24:00:00'::time, '00:00:00'::time")
+    >>> cur.fetchone()
+    (datetime.time(0, 0), datetime.time(0, 0))
+
+
 .. _adapt-list:
 
 Lists adaptation
