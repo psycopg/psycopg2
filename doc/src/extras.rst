@@ -208,6 +208,8 @@ The individual messages in the replication stream are represented by
 
         LSN position of the current end of WAL on the server.
 
+        .. versionadded:: 2.8
+
     .. attribute:: send_time
 
         A `~datetime` object representing the server timestamp at the moment
