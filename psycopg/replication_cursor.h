@@ -47,6 +47,8 @@ typedef struct replicationCursorObject {
     XLogRecPtr  write_lsn;        /* LSNs for replication feedback messages */
     XLogRecPtr  flush_lsn;
     XLogRecPtr  apply_lsn;
+
+    XLogRecPtr  wal_end;          /* WAL end pointer from the last exchange with the server */
 } replicationCursorObject;
 
 

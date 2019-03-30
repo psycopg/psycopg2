@@ -22,6 +22,8 @@ New features:
   C structures to Python and interact with libpq via ctypes (:ticket:`#782`).
 - `~psycopg2.sql.Identifier` can represent qualified names in SQL composition
   (:ticket:`#732`).
+- Added `!ReplicationMessage`.\ `~psycopg2.extras.ReplicationMessage.wal_end`
+  attribute (:ticket:`#800`).
 - Added *fetch* parameter to `~psycopg2.extras.execute_values()` function
   (:ticket:`#813`).
 - `!str()` on `~psycopg2.extras.Range` produces a human-readable representation

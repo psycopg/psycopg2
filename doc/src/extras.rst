@@ -208,6 +208,8 @@ The individual messages in the replication stream are represented by
 
         LSN position of the current end of WAL on the server.
 
+        .. versionadded:: 2.8
+
     .. attribute:: send_time
 
         A `~datetime` object representing the server timestamp at the moment
@@ -481,6 +483,12 @@ The individual messages in the replication stream are represented by
         communication with the server (a data or keepalive message in either
         direction).
 
+    .. attribute:: wal_end
+
+       LSN position of the current end of WAL on the server at the
+       moment of last data or keepalive message received from the
+       server.
+
     An actual example of asynchronous operation might look like this::
 
       from select import select
@@ -503,6 +511,19 @@ The individual messages in the replication stream are represented by
                       cur.send_feedback()  # timed out, send keepalive message
               except InterruptedError:
                   pass  # recalculate timeout and continue
+
+      .. warning::
+
+         The ``consume({msg})`` function will only be called when
+         there are new database writes on the server e.g. any DML or
+         DDL statement. Depending on your Postgres cluster
+         configuration this might cause the server to run out of disk
+         space if the writes are far apart. To prevent this from
+         happening you can use `~ReplicationCursor.wal_end` value to
+         periodically send feedback to the server to notify that your
+         replication client has received and processed all the
+         messages.
+
 
 .. index::
     pair: Cursor; Replication

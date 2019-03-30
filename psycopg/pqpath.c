@@ -1550,6 +1550,8 @@ retry:
         (*msg)->data_start = data_start;
         (*msg)->wal_end    = wal_end;
         (*msg)->send_time  = send_time;
+
+        repl->wal_end = wal_end;
     }
     else if (buffer[0] == 'k') {
         /* Primary keepalive message: msgtype(1), walEnd(8), sendTime(8), reply(1) */
@@ -1558,6 +1560,10 @@ retry:
             psyco_set_error(OperationalError, curs, "keepalive message header too small");
             goto exit;
         }
+
+        wal_end = fe_recvint64(buffer + 1);
+        Dprintf("pq_read_replication_message: wal_end="XLOGFMTSTR, XLOGFMTARGS(wal_end));
+        repl->wal_end = wal_end;
 
         reply = buffer[hdr];
         if (reply && pq_send_replication_feedback(repl, 0) < 0) {

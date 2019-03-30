@@ -228,6 +228,17 @@ repl_curs_get_io_timestamp(replicationCursorObject *self)
     return res;
 }
 
+/* object member list */
+
+#define OFFSETOF(x) offsetof(replicationCursorObject, x)
+
+static struct PyMemberDef replicationCursorObject_members[] = {
+    {"wal_end", T_ULONGLONG, OFFSETOF(wal_end), READONLY,
+        "LSN position of the current end of WAL on the server."},
+    {NULL}
+};
+
+
 /* object method list */
 
 static struct PyMethodDef replicationCursorObject_methods[] = {
@@ -258,6 +269,8 @@ replicationCursor_init(PyObject *obj, PyObject *args, PyObject *kwargs)
 
     self->consuming = 0;
     self->decode = 0;
+
+    self->wal_end = 0;
 
     self->write_lsn = 0;
     self->flush_lsn = 0;
@@ -308,7 +321,7 @@ PyTypeObject replicationCursorType = {
     0,          /*tp_iter*/
     0,          /*tp_iternext*/
     replicationCursorObject_methods, /*tp_methods*/
-    0,          /*tp_members*/
+    replicationCursorObject_members, /*tp_members*/
     replicationCursorObject_getsets, /*tp_getset*/
     &cursorType, /*tp_base*/
     0,          /*tp_dict*/
