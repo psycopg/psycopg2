@@ -512,17 +512,15 @@ The individual messages in the replication stream are represented by
               except InterruptedError:
                   pass  # recalculate timeout and continue
 
-      .. warning::
+.. warning::
 
-         The ``consume({msg})`` function will only be called when
-         there are new database writes on the server e.g. any DML or
-         DDL statement. Depending on your Postgres cluster
-         configuration this might cause the server to run out of disk
-         space if the writes are far apart. To prevent this from
-         happening you can use `~ReplicationCursor.wal_end` value to
-         periodically send feedback to the server to notify that your
-         replication client has received and processed all the
-         messages.
+    The :samp:`consume({msg})` function will only be called when there are new
+    database writes on the server e.g. any DML or DDL statement. Depending on
+    your Postgres cluster configuration this might cause the server to run out
+    of disk space if the writes are too far apart. To prevent this from
+    happening you can use `~ReplicationCursor.wal_end` value to periodically
+    send feedback to the server to notify that your replication client has
+    received and processed all the messages.
 
 
 .. index::
