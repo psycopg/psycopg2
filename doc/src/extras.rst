@@ -136,8 +136,8 @@ Logging cursor
 
 .. _replication-objects:
 
-Replication connection and cursor classes
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Replication support objects
+---------------------------
 
 See :ref:`replication-support` for an introduction to the topic.
 
