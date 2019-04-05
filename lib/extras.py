@@ -290,6 +290,13 @@ class RealDictRow(dict):
     def items(self):
         return ((k, self[k]) for k in self._column_mapping)
 
+    def pop(self, key, *args):
+        found = key in self
+        rv = super(RealDictRow, self).pop(key, *args)
+        if found:
+            self._column_mapping.remove(key)
+        return rv
+
     if PY2:
         iterkeys = keys
         itervalues = values

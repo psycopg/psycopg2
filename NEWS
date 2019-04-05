@@ -4,6 +4,7 @@ Current release
 What's new in psycopg 2.8.1
 ---------------------------
 
+- Fixed `RealDictRow.pop()` (:ticket:`#886`).
 - Fixed "there's no async cursor" error polling a connection with no cursor
   (:ticket:`#887`).
 

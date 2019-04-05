@@ -221,6 +221,12 @@ class ExtrasDictCursorTests(_DictCursorBase):
 
 
 class ExtrasDictCursorRealTests(_DictCursorBase):
+    def testRealMeansReal(self):
+        curs = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        curs.execute("SELECT * FROM ExtrasDictCursorTests")
+        row = curs.fetchone()
+        self.assert_(isinstance(row, dict))
+
     def testDictCursorWithPlainCursorRealFetchOne(self):
         self._testWithPlainCursorReal(lambda curs: curs.fetchone())
 
@@ -357,6 +363,19 @@ class ExtrasDictCursorRealTests(_DictCursorBase):
         self.assertEqual(list(r1.iterkeys()), list(r.iterkeys()))
         self.assertEqual(list(r1.itervalues()), list(r.itervalues()))
         self.assertEqual(list(r1.iteritems()), list(r.iteritems()))
+
+    def test_pop(self):
+        curs = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        curs.execute("select 1 as a, 2 as b, 3 as c")
+        r = curs.fetchone()
+        self.assertEqual(r.pop('b'), 2)
+        self.assertEqual(list(r), ['a', 'c'])
+        self.assertEqual(list(r.keys()), ['a', 'c'])
+        self.assertEqual(list(r.values()), [1, 3])
+        self.assertEqual(list(r.items()), [('a', 1), ('c', 3)])
+
+        self.assertEqual(r.pop('b', None), None)
+        self.assertRaises(KeyError, r.pop, 'b')
 
 
 class NamedTupleCursorTest(ConnectingTestCase):
