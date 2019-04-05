@@ -495,6 +495,10 @@ class AsyncTests(ConnectingTestCase):
 
         self.assert_(polls >= 8, polls)
 
+    def test_poll_noop(self):
+        self.conn.poll()
+        self.conn.poll()
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

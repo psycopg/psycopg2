@@ -1045,12 +1045,6 @@ static cursorObject *
 _conn_get_async_cursor(connectionObject *self) {
     PyObject *py_curs;
 
-    if (!(self->async_cursor)) {
-        PyErr_SetString(PyExc_SystemError,
-            "unexpectedly, there's no async cursor here");
-        goto error;
-    }
-
     if (!(py_curs = PyWeakref_GetObject(self->async_cursor))) {
         PyErr_SetString(PyExc_SystemError,
             "got null dereferencing cursor weakref");
@@ -1108,7 +1102,7 @@ conn_poll(connectionObject *self)
         Dprintf("conn_poll: status -> CONN_STATUS_*");
         res = _conn_poll_query(self);
 
-        if (res == PSYCO_POLL_OK && self->async) {
+        if (res == PSYCO_POLL_OK && self->async && self->async_cursor) {
             cursorObject *curs;
 
             /* An async query has just finished: parse the tuple in the
