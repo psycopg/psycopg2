@@ -253,56 +253,39 @@ class RealDictCursor(DictCursorBase):
             self._query_executed = False
 
 
-class RealDictRow(dict):
+class RealDictRow(OrderedDict):
     """A `!dict` subclass representing a data record."""
 
-    __slots__ = ('_column_mapping',)
+    def __init__(self, *args, **kwargs):
+        if args and isinstance(args[0], _cursor):
+            cursor = args[0]
+            args = args[1:]
+        else:
+            cursor = None
 
-    def __init__(self, cursor):
-        super(RealDictRow, self).__init__()
-        # Required for named cursors
-        if cursor.description and not cursor.column_mapping:
-            cursor._build_index()
+        super(RealDictRow, self).__init__(*args, **kwargs)
 
-        self._column_mapping = cursor.column_mapping
+        if cursor is not None:
+            # Required for named cursors
+            if cursor.description and not cursor.column_mapping:
+                cursor._build_index()
 
-    def __setitem__(self, name, value):
-        if type(name) == int:
-            name = self._column_mapping[name]
-        super(RealDictRow, self).__setitem__(name, value)
+            # Store the cols mapping in the dict itself until the row is fully
+            # populated, so we don't need to add attributes to the class
+            # (hence keeping its maintenance, special pickle support, etc.)
+            self[RealDictRow] = cursor.column_mapping
 
-    def __getstate__(self):
-        return self.copy(), self._column_mapping[:]
+    def __setitem__(self, key, value):
+        if RealDictRow in self:
+            # We are in the row building phase
+            mapping = self[RealDictRow]
+            super(RealDictRow, self).__setitem__(mapping[key], value)
+            if len(self) == len(mapping) + 1:
+                # Row building finished
+                del self[RealDictRow]
+            return
 
-    def __setstate__(self, data):
-        self.update(data[0])
-        self._column_mapping = data[1]
-
-    def __iter__(self):
-        return iter(self._column_mapping)
-
-    def keys(self):
-        return iter(self._column_mapping)
-
-    def values(self):
-        return (self[k] for k in self._column_mapping)
-
-    def items(self):
-        return ((k, self[k]) for k in self._column_mapping)
-
-    if PY2:
-        iterkeys = keys
-        itervalues = values
-        iteritems = items
-
-        def keys(self):
-            return list(self.iterkeys())
-
-        def values(self):
-            return list(self.itervalues())
-
-        def items(self):
-            return list(self.iteritems())
+        super(RealDictRow, self).__setitem__(key, value)
 
 
 class NamedTupleConnection(_connection):

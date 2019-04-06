@@ -221,6 +221,12 @@ class ExtrasDictCursorTests(_DictCursorBase):
 
 
 class ExtrasDictCursorRealTests(_DictCursorBase):
+    def testRealMeansReal(self):
+        curs = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        curs.execute("SELECT * FROM ExtrasDictCursorTests")
+        row = curs.fetchone()
+        self.assert_(isinstance(row, dict))
+
     def testDictCursorWithPlainCursorRealFetchOne(self):
         self._testWithPlainCursorReal(lambda curs: curs.fetchone())
 
@@ -259,7 +265,6 @@ class ExtrasDictCursorRealTests(_DictCursorBase):
         self.assertEqual(r, r1)
         self.assertEqual(r['a'], r1['a'])
         self.assertEqual(r['b'], r1['b'])
-        self.assertEqual(r._column_mapping, r1._column_mapping)
 
     def testDictCursorRealWithNamedCursorFetchOne(self):
         self._testWithNamedCursorReal(lambda curs: curs.fetchone())
@@ -357,6 +362,35 @@ class ExtrasDictCursorRealTests(_DictCursorBase):
         self.assertEqual(list(r1.iterkeys()), list(r.iterkeys()))
         self.assertEqual(list(r1.itervalues()), list(r.itervalues()))
         self.assertEqual(list(r1.iteritems()), list(r.iteritems()))
+
+    def test_pop(self):
+        curs = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        curs.execute("select 1 as a, 2 as b, 3 as c")
+        r = curs.fetchone()
+        self.assertEqual(r.pop('b'), 2)
+        self.assertEqual(list(r), ['a', 'c'])
+        self.assertEqual(list(r.keys()), ['a', 'c'])
+        self.assertEqual(list(r.values()), [1, 3])
+        self.assertEqual(list(r.items()), [('a', 1), ('c', 3)])
+
+        self.assertEqual(r.pop('b', None), None)
+        self.assertRaises(KeyError, r.pop, 'b')
+
+    def test_mod(self):
+        curs = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        curs.execute("select 1 as a, 2 as b, 3 as c")
+        r = curs.fetchone()
+        r['d'] = 4
+        self.assertEqual(list(r), ['a', 'b', 'c', 'd'])
+        self.assertEqual(list(r.keys()), ['a', 'b', 'c', 'd'])
+        self.assertEqual(list(r.values()), [1, 2, 3, 4])
+        self.assertEqual(list(
+            r.items()), [('a', 1), ('b', 2), ('c', 3), ('d', 4)])
+
+        assert r['a'] == 1
+        assert r['b'] == 2
+        assert r['c'] == 3
+        assert r['d'] == 4
 
 
 class NamedTupleCursorTest(ConnectingTestCase):
