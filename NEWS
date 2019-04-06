@@ -2,7 +2,7 @@ Current release
 ---------------
 
 What's new in psycopg 2.8.1
----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Fixed `~psycopg2.extras.RealDictRow` modifiability (:ticket:`#886`).
 - Fixed "there's no async cursor" error polling a connection with no cursor
