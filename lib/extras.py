@@ -280,7 +280,7 @@ class RealDictRow(OrderedDict):
             # We are in the row building phase
             mapping = self[RealDictRow]
             super(RealDictRow, self).__setitem__(mapping[key], value)
-            if len(self) == len(mapping) + 1:
+            if key == len(mapping) - 1:
                 # Row building finished
                 del self[RealDictRow]
             return
