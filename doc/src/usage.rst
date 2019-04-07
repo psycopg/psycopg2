@@ -797,9 +797,7 @@ is rolled back.
 When a cursor exits the ``with`` block it is closed, releasing any resource
 eventually associated with it. The state of the transaction is not affected.
 
-Note that, unlike file objects or other resources, exiting the connection's
-``with`` block *doesn't close the connection* but only the transaction
-associated with it: a connection can be used in more than a ``with`` statement
+A connection can be used in more than a ``with`` statement
 and each ``with`` block is effectively wrapped in a separate transaction::
 
     conn = psycopg2.connect(DSN)
@@ -814,6 +812,18 @@ and each ``with`` block is effectively wrapped in a separate transaction::
 
     conn.close()
 
+.. warning::
+
+    Unlike file objects or other resources, exiting the connection's
+    ``with`` block **doesn't close the connection**, but only the transaction
+    associated to it. If you want to make sure the connection is closed after
+    a certain point, you should still use a try-catch block::
+
+        conn = psycopg2.connect(DSN)
+        try:
+            # connection usage
+        finally:
+            conn.close()
 
 
 .. index::
