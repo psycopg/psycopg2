@@ -366,8 +366,14 @@ For further information please check the 'doc/src/install.rst' file (also at
                     self.library_dirs.append(os.path.join(path, "ms"))
                     break
             if self.have_ssl:
-                self.libraries.append("libeay32")
-                self.libraries.append("ssleay32")
+                # OpenSSL >= 1.1.0 has different library names from 1.0.x
+                # libeay32 became libcrypto
+                # ssleay32 became libssl
+                # We require OpenSSL 1.1.x, to avoid nasty issues
+                # with threads, see:
+                # https://github.com/psycopg/psycopg2/issues/543
+                self.libraries.append("libcrypto")
+                self.libraries.append("libssl")
                 self.libraries.append("crypt32")
                 self.libraries.append("user32")
                 self.libraries.append("gdi32")
