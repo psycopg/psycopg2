@@ -1,6 +1,13 @@
 Current release
 ---------------
 
+What's new in psycopg 2.8.2
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Fixed `~psycopg2.extras.RealDictCursor` when there are repeated columns
+  (:ticket:`#884`).
+
+
 What's new in psycopg 2.8.1
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
