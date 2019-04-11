@@ -1,6 +1,13 @@
 Current release
 ---------------
 
+What's new in psycopg 2.8.2
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Window packages built with openssl 1.1.1b. Should fix concurrency problems
+  (:ticket:`#836`).
+
+
 What's new in psycopg 2.8.1
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
