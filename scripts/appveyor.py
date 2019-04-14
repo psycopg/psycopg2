@@ -44,19 +44,18 @@ def setup_env():
     """
     python_info()
 
-    os.environ['VS_VER'] = vs_ver()
+    setenv('VS_VER', vs_ver())
 
     if vs_ver() == '10.0' and opt.arch_64:
-        os.environ['DISTUTILS_USE_SDK'] = '1'
+        setenv('DISTUTILS_USE_SDK', '1')
 
-    os.environ['PATH'] = os.pathsep.join(
-        [
-            py_dir(),
-            os.path.join(py_dir(), 'Scripts'),
-            r'C:\Program Files\Git\mingw64\bin',
-            os.environ['PATH'],
-        ]
-    )
+    path = [
+        py_dir(),
+        os.path.join(py_dir(), 'Scripts'),
+        r'C:\Program Files\Git\mingw64\bin',
+        os.environ['PATH'],
+    ]
+    setenv('PATH', os.pathsep.join(path))
 
     if vs_ver() == '9.0':
         logger.info("Fixing VS2008 Express and 64bit builds")
@@ -169,8 +168,7 @@ CALL {cmdline}
         env = json.loads(out)
         for k, v in env.items():
             if os.environ.get(k) != v:
-                logger.info("setting %s=%s", k, v)
-                os.environ[k] = v
+                setenv(k, v)
     finally:
         os.remove(fn)
 
@@ -179,9 +177,7 @@ def py_dir():
     """
     Return the path to the target python binary to execute.
     """
-    dirname = ''.join(
-        [r"C:\Python", opt.pyver, '-x64' if opt.arch_64 else '']
-    )
+    dirname = ''.join([r"C:\Python", opt.pyver, '-x64' if opt.arch_64 else ''])
     return dirname
 
 
@@ -229,6 +225,11 @@ def call_command(cmdline, **kwargs):
     logger.debug("calling command: %s", cmdline)
     data = sp.check_output(cmdline, **kwargs)
     return data
+
+
+def setenv(k, v):
+    logger.info("setting %s=%s", k, v)
+    os.environ[k] = v
 
 
 def parse_cmdline():
