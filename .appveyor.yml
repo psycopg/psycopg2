@@ -6,8 +6,6 @@ environment:
     global:
         # MSVC Express 2008's setenv.cmd failes if /E:ON and /V:ON are not
         # enabled in the batch script interpreter
-        #
-        #      WITH_COMPILER: "cmd /E:ON /V:ON /C .\\appveyor\\run_with_compiler.cmd"
         CMD_IN_ENV: cmd /E:ON /V:ON /C .\appveyor\run_with_env.cmd
 
     matrix:
@@ -29,12 +27,13 @@ environment:
 
     PSYCOPG2_TESTDB: psycopg2_test
     PSYCOPG2_TESTDB_USER: postgres
-    PSYCOPG2_TESTDB_PASSWORD: Password12!
     PSYCOPG2_TESTDB_HOST: localhost
-    PSYCOPG2_TESTDB_PORT: 5432
 
     PGUSER: postgres
     PGPASSWORD: Password12!
+
+    # The python used in the build process, not the one packages are built for
+    PYEXE: C:\Python36\python.exe
 
 matrix:
     fast_finish: false
@@ -51,8 +50,12 @@ cache:
 
 # Script called before repo cloning
 init:
-    # Uncomment next line to get RDP access during the build.
-    #- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+    # TODO: move functionalities out of init to drop this fetch problem
+    - curl -fsSL -o "C:\\appveyor.py" https://raw.githubusercontent.com/psycopg/psycopg2/%APPVEYOR_REPO_COMMIT%/scripts/appveyor.py
+    - "%PYEXE% C:\\appveyor.py init"
+
+    # TODO: exporting variables below to be dropped once all the steps are
+    # moved to the appveyor.py script.
 
     # Set env variable according to the build environment
     - SET PYTHON=C:\Python%PYVER%
@@ -72,40 +75,10 @@ init:
     # Set Python to the path
     - SET PATH=%PYTHON%;%PYTHON%\Scripts;C:\Program Files\Git\mingw64\bin;%PATH%
 
-    # Verify Python version and architecture
-    - ECHO *******************************************************************
-    - ECHO Python Information
-    - ECHO *******************************************************************
-    - "%PYTHON%\\python --version"
-    - "%PYTHON%\\python -c \"import sys; print('64bit: ' + str(sys.maxsize > 2**32))\""
-
-    # Get & Install NASM
-    #- curl -L -o nasminst.exe https://www.nasm.us/pub/nasm/releasebuilds/2.12.02/win64/nasm-2.12.02-installer-x64.exe && start /wait nasminst.exe /S
-    #- SET PATH="C:\Program Files (x86)\nasm;%PATH%"
-
-    # Fix problem with VS2008 Express and 64bit builds
-    - ECHO Fixing VS2008 Express and 64bit builds
-    - COPY "C:\\Program Files (x86)\\Microsoft Visual Studio 9.0\\VC\\bin\\vcvars64.bat" "C:\\Program Files (x86)\\Microsoft Visual Studio 9.0\\VC\\bin\\amd64\\vcvarsamd64.bat"
-
-    # Fix problem with VS2010 Express 64bit missing vcvars64.bat
-    # Note: repository not cloned at this point, so need to fetch
-    # file another way
-    - ECHO Fixing VS2010 Express and 64bit builds
-    - curl -fsSL -o "C:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\bin\\amd64\\vcvars64.bat" https://raw.githubusercontent.com/psycopg/psycopg2/master/scripts/vcvars64-vs2010.bat
-
     # Setup the compiler based upon version and architecture
     - ECHO Configuring Compiler
     - IF "%PYTHON_ARCH%"=="32" (CALL "C:\\Program Files (x86)\\Microsoft Visual Studio %VS_VER%\\VC\\vcvarsall.bat" x86)
     - IF "%PYTHON_ARCH%"=="64" (CALL "C:\\Program Files (x86)\\Microsoft Visual Studio %VS_VER%\\VC\\vcvarsall.bat" amd64)
-
-    # The program rc.exe on 64bit with some versions look in the wrong path
-    #   location when building postgresql.   This cheats by copying the x64 bit
-    #   files to that location.
-    - IF "%PYTHON_ARCH%"=="64" (COPY /Y "C:\\Program Files\\Microsoft SDKs\\Windows\\v7.0\\Bin\\x64\\rc*" "C:\\Program Files (x86)\\Microsoft SDKs\\Windows\\v7.0A\\Bin")
-
-    # Change PostgreSQL config before service starts to allow > 1 prepared
-    #   transactions for test cases
-    - ECHO max_prepared_transactions = 10 >> "C:\\Program Files\\PostgreSQL\\9.6\\data\\postgresql.conf"
 
 
 # Repository gets cloned, Cache is restored
@@ -236,3 +209,6 @@ test_script:
     - "%PYTHON%\\python.exe -c \"import psycopg2; print(psycopg2.__libpq_version__)\""
     - "%PYTHON%\\python.exe -c \"import psycopg2; print(psycopg2.extensions.libpq_version())\""
     - "%PYTHON%\\python.exe -c \"import tests; tests.unittest.main(defaultTest='tests.test_suite')\" --verbose"
+
+
+# vim: set ts=4 sts=4 sw=4:
