@@ -95,15 +95,13 @@ def setup_env():
 
 def python_info():
     logger.info("Python Information")
-    out = call_command([py_exe(), '--version'], stderr=sp.STDOUT)
+    out = out_command([py_exe(), '--version'], stderr=sp.STDOUT)
     logger.info("%s", out)
 
-    cmdline = [
-        py_exe(),
-        '-c',
-        "import sys; print('64bit: %s' % (sys.maxsize > 2**32))",
-    ]
-    out = call_command(cmdline)
+    out = out_command(
+        [py_exe(), '-c']
+        + ["import sys; print('64bit: %s' % (sys.maxsize > 2**32))"]
+    )
     logger.info("%s", out)
 
 
@@ -128,12 +126,19 @@ def step_init():
 
 
 def step_install():
-    build_openssl()
+    # TODO: enable again
+    # build_openssl()
+    build_libpq()
 
 
 def build_openssl():
-    # Setup directories for building OpenSSL libraries
     top = os.path.join(base_dir(), 'openssl')
+    if os.path.exists(os.path.join(top, 'lib', 'libssl.lib')):
+        return
+
+    logger.info("Building OpenSSL")
+
+    # Setup directories for building OpenSSL libraries
     ensure_dir(os.path.join(top, 'include', 'openssl'))
     ensure_dir(os.path.join(top, 'lib'))
 
@@ -156,27 +161,16 @@ def build_openssl():
             f"https://github.com/openssl/openssl/archive/{zipname}", zipfile
         )
 
-    if os.path.exists(os.path.join(top, 'lib', 'libssl.lib')):
-        return
-
     with ZipFile(zipfile) as z:
         z.extractall(path=build_dir())
 
     os.chdir(os.path.join(build_dir(), f"openssl-OpenSSL_{ver}"))
-    cmdline = [
-        'perl',
-        'Configure',
-        target,
-        'no-asm',
-        'no-shared',
-        'no-zlib',
-        f'--prefix={top}',
-        f'--openssldir={top}',
-    ]
-    call_command(cmdline, output=False)
+    run_command(
+        ['perl', 'Configure', target, 'no-asm']
+        + ['no-shared', 'no-zlib', f'--prefix={top}', f'--openssldir={top}']
+    )
 
-    cmdline = "nmake build_libs install_dev".split()
-    call_command(cmdline, output=False)
+    run_command("nmake build_libs install_dev".split())
 
     assert os.path.exists(os.path.join(top, 'lib', 'libssl.lib'))
 
@@ -184,14 +178,152 @@ def build_openssl():
     shutil.rmtree(os.path.join(build_dir(), f"openssl-OpenSSL_{ver}"))
 
 
+def build_libpq():
+    top = os.path.join(base_dir(), 'postgresql')
+    if os.path.exists(os.path.join(top, 'lib', 'libpq.lib')):
+        return
+
+    logger.info("Building libpq")
+
+    # Setup directories for building PostgreSQL librarires
+    ensure_dir(os.path.join(top, 'include'))
+    ensure_dir(os.path.join(top, 'lib'))
+    ensure_dir(os.path.join(top, 'bin'))
+
+    ver = os.environ['POSTGRES_VERSION']
+
+    # Download PostgreSQL source
+    zipname = f'postgres-REL_{ver}.zip'
+    zipfile = os.path.join(r'C:\Others', zipname)
+    if not os.path.exists(zipfile):
+        download(
+            f"https://github.com/postgres/postgres/archive/REL_{ver}.zip",
+            zipfile,
+        )
+
+    with ZipFile(zipfile) as z:
+        z.extractall(path=build_dir())
+
+    pgbuild = os.path.join(build_dir(), f"postgres-REL_{ver}")
+    os.chdir(pgbuild)
+
+    # Patch for OpenSSL 1.1 configuration. See:
+    # https://www.postgresql-archive.org/Compile-psql-9-6-with-SSL-Version-1-1-0-td6054118.html
+    assert os.path.exists("src/include/pg_config.h.win32")
+    with open("src/include/pg_config.h.win32", 'a') as f:
+        print(
+            """
+#define HAVE_ASN1_STRING_GET0_DATA 1
+#define HAVE_BIO_GET_DATA 1
+#define HAVE_BIO_METH_NEW 1
+#define HAVE_OPENSSL_INIT_SSL 1
+""",
+            file=f,
+        )
+
+    # Setup build config file (config.pl)
+    os.chdir("src/tools/msvc")
+    with open("config.pl", 'w') as f:
+        print(
+            """\
+$config->{ldap} = 0;
+$config->{openssl} = "%s";
+
+1;
+"""
+            % os.path.join(base_dir(), 'openssl').replace('\\', '\\\\'),
+            file=f,
+        )
+
+    # Hack the Mkvcbuild.pm file so we build the lib version of libpq
+    file_replace('Mkvcbuild.pm', "'libpq', 'dll'", "'libpq', 'lib'")
+
+    # Build libpgport, libpgcommon, libpq
+    run_command([which("build"), "libpgport"])
+    run_command([which("build"), "libpgcommon"])
+    run_command([which("build"), "libpq"])
+
+    # Install includes
+    with open(os.path.join(pgbuild, "src/backend/parser/gram.h"), "w") as f:
+        print("", file=f)
+
+    # Copy over built libraries
+    file_replace("Install.pm", "qw(Install)", "qw(Install CopyIncludeFiles)")
+    run_command(
+        ["perl", "-MInstall=CopyIncludeFiles", "-e"]
+        + [f"chdir('../../..'); CopyIncludeFiles('{top}')"]
+    )
+
+    for lib in ('libpgport', 'libpgcommon', 'libpq'):
+        shutil.copy(
+            os.path.join(pgbuild, f'Release/{lib}/{lib}.lib'),
+            os.path.join(top, 'lib'),
+        )
+
+    # Prepare local include directory for building from
+    for dir in ('win32', 'win32_msvc'):
+        merge_dir(
+            os.path.join(pgbuild, f"src/include/port/{dir}"),
+            os.path.join(pgbuild, "src/include"),
+        )
+
+    # Build pg_config in place
+    os.chdir(os.path.join(pgbuild, 'src/bin/pg_config'))
+    run_command(
+        ['cl', 'pg_config.c', '/MT', '/nologo', fr'/I{pgbuild}\src\include']
+        + ['/link', fr'/LIBPATH:{top}\lib']
+        + ['libpgcommon.lib', 'libpgport.lib', 'advapi32.lib']
+        + ['/NODEFAULTLIB:libcmt.lib']
+        + [fr'/OUT:{top}\bin\pg_config.exe']
+    )
+
+    assert os.path.exists(os.path.join(top, 'lib', 'libpq.lib'))
+    assert os.path.exists(os.path.join(top, 'bin', 'pg_config.exe'))
+
+    os.chdir(base_dir())
+    shutil.rmtree(os.path.join(pgbuild))
+
+
 def download(url, fn):
     """Download a file locally"""
+    logger.info("downloading %s", url)
     with open(fn, 'wb') as fo, urlopen(url) as fi:
         while 1:
             data = fi.read(8192)
             if not data:
                 break
             fo.write(data)
+
+    logger.info("file downloaded: %s", fn)
+
+
+def file_replace(fn, s1, s2):
+    """
+    Replace all the occurrences of the string s1 into s2 in the file fn.
+    """
+    assert os.path.exists(fn)
+    with open(fn, 'r+') as f:
+        data = f.read()
+        f.seek(0)
+        f.write(data.replace(s1, s2))
+        f.truncate()
+
+
+def merge_dir(src, tgt):
+    """
+    Merge the content of the directory src into the directory tgt
+
+    Reproduce the semantic of "XCOPY /Y /S src/* tgt"
+    """
+    for dp, _dns, fns in os.walk(src):
+        logger.debug("dirpath %s", dp)
+        if not fns:
+            continue
+        assert dp.startswith(src)
+        subdir = dp[len(src) :].lstrip(os.sep)
+        tgtdir = ensure_dir(os.path.join(tgt, subdir))
+        for fn in fns:
+            shutil.copy(os.path.join(dp, fn), tgtdir)
 
 
 def bat_call(cmdline):
@@ -223,7 +355,7 @@ CALL {cmdline}
         f.write(data)
 
     try:
-        out = call_command(fn)
+        out = out_command(fn)
         # be vewwy vewwy caweful to print the env var as it might contain
         # secwet things like your pwecious pwivate key.
         # logger.debug("output of command:\n\n%s", out.decode('utf8', 'replace'))
@@ -307,18 +439,39 @@ def ensure_dir(dir):
     return dir
 
 
-def call_command(cmdline, output=True, **kwargs):
+def run_command(cmdline, **kwargs):
     logger.debug("calling command: %s", cmdline)
-    if output:
-        data = sp.check_output(cmdline, **kwargs)
-        return data
-    else:
-        sp.check_call(cmdline, **kwargs)
+    sp.check_call(cmdline, **kwargs)
+
+
+def out_command(cmdline, **kwargs):
+    logger.debug("calling command: %s", cmdline)
+    data = sp.check_output(cmdline, **kwargs)
+    return data
 
 
 def setenv(k, v):
-    logger.info("setting %s=%s", k, v)
+    logger.debug("setting %s=%s", k, v)
     os.environ[k] = v
+
+
+def which(name):
+    """
+    Return the full path of a command found on the path
+    """
+    base, ext = os.path.splitext(name)
+    if not ext:
+        exts = ('.com', '.exe', '.bat', '.cmd')
+    else:
+        exts = (ext,)
+
+    for dir in ['.'] + os.environ['PATH'].split(os.pathsep):
+        for ext in exts:
+            fn = os.path.join(dir, base + ext)
+            if os.path.isfile(fn):
+                return fn
+
+    raise Exception("couldn't find program on path: %s" % name)
 
 
 def parse_cmdline():
