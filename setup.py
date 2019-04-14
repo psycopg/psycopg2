@@ -366,8 +366,8 @@ For further information please check the 'doc/src/install.rst' file (also at
                     self.library_dirs.append(os.path.join(path, "ms"))
                     break
             if self.have_ssl:
-                self.libraries.append("libeay32")
-                self.libraries.append("ssleay32")
+                self.libraries.append("libcrypto")
+                self.libraries.append("libssl")
                 self.libraries.append("crypt32")
                 self.libraries.append("user32")
                 self.libraries.append("gdi32")
