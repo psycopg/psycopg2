@@ -126,6 +126,8 @@ which is OS-dependent (for instance setting a suitable
     single: Install; wheel
     single: Wheel
 
+.. _binary-packages:
+
 Binary install from PyPI
 ------------------------
 
@@ -136,10 +138,12 @@ runtime prerequisites.
 
 .. note::
 
-    The ``-binary`` package is meant for beginners to start playing with
-    Python and PostgreSQL without the need to meet the build requirements.
+    The ``psycopg2-binary`` package is meant for beginners to start playing
+    with Python and PostgreSQL without the need to meet the build
+    requirements.
+
     If you are the maintainer of a publish package depending on `!psycopg2`
-    you shouldn't use ``psycopg2-binary`` as a module dependency. For
+    **you shouldn't use 'psycopg2-binary' as a module dependency**. For
     production use you are advised to use the source distribution.
 
 
@@ -179,15 +183,16 @@ using something like ``pip install -U pip``), then you can run:
 
 .. _disable-wheel:
 
-Disabling wheel packages for Psycopg 2.7
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Change in binary packages between Psycopg 2.7 and 2.8
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In version 2.7.x, `pip install psycopg2` would have tried to install the wheel
-binary package of Psycopg. Because of the problems the wheel package have
-displayed, `psycopg2-binary` has become a separate package, and from 2.8 it
-has become the only way to install the binary package.
+In version 2.7.x, :command:`pip install psycopg2` would have tried to install
+automatically the binary package of Psycopg. Because of concurrency problems
+binary packages have displayed, ``psycopg2-binary`` has become a separate
+package, and from 2.8 it has become the only way to install the binary
+package.
 
-If you are using psycopg 2.7 and you want to disable the use of wheel binary
+If you are using Psycopg 2.7 and you want to disable the use of wheel binary
 packages, relying on the system libraries available on your client, you
 can use the :command:`pip` |--no-binary option|__, e.g.:
 

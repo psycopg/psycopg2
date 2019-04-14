@@ -287,8 +287,17 @@ How do I interrupt a long-running query in an interactive shell?
 
 .. _faq-compile:
 
-Problems compiling and deploying psycopg2
------------------------------------------
+Problems compiling and installing psycopg2
+------------------------------------------
+
+.. _faq-wheels:
+.. cssclass:: faq
+
+Psycopg 2.8 fails to install, Psycopg 2.7 was working fine.
+    With Psycopg 2.7 you were installing binary packages, but they have proven
+    unreliable so now you have to install them explicitly using the
+    ``psycopg2-binary`` package. See :ref:`binary-packages` for all the
+    details.
 
 .. _faq-python-h:
 .. cssclass:: faq
