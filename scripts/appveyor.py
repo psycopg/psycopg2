@@ -15,9 +15,10 @@ import shutil
 import logging
 import subprocess as sp
 from glob import glob
-from urllib.request import urlopen
+from zipfile import ZipFile
 from tempfile import NamedTemporaryFile
 from functools import lru_cache
+from urllib.request import urlopen
 
 opt = None
 STEP_PREFIX = 'step_'
@@ -126,6 +127,73 @@ def step_init():
         print("max_prepared_transactions = 10", file=f)
 
 
+def step_install():
+    build_openssl()
+
+
+def build_openssl():
+    # Setup directories for building OpenSSL libraries
+    top = os.path.join(base_dir(), 'openssl')
+    ensure_dir(os.path.join(top, 'include', 'openssl'))
+    ensure_dir(os.path.join(top, 'lib'))
+
+    # Setup OpenSSL Environment Variables based on processor architecture
+    if opt.arch_32:
+        target = 'VC-WIN32'
+        setenv('VCVARS_PLATFORM', 'x86')
+    else:
+        target = 'VC-WIN64A'
+        setenv('VCVARS_PLATFORM', 'amd64')
+        setenv('CPU', 'AMD64')
+
+    ver = os.environ['OPENSSL_VERSION']
+
+    # Download OpenSSL source
+    zipname = f'OpenSSL_{ver}.zip'
+    zipfile = os.path.join(r'C:\Others', zipname)
+    if not os.path.exists(zipfile):
+        download(
+            f"https://github.com/openssl/openssl/archive/{zipname}", zipfile
+        )
+
+    if os.path.exists(os.path.join(top, 'lib', 'libssl.lib')):
+        return
+
+    with ZipFile(zipfile) as z:
+        z.extractall(path=build_dir())
+
+    os.chdir(os.path.join(build_dir(), f"openssl-OpenSSL_{ver}"))
+    cmdline = [
+        'perl',
+        'Configure',
+        target,
+        'no-asm',
+        'no-shared',
+        'no-zlib',
+        f'--prefix={top}',
+        f'--openssldir={top}',
+    ]
+    call_command(cmdline, output=False)
+
+    cmdline = "nmake build_libs install_dev".split()
+    call_command(cmdline, output=False)
+
+    assert os.path.exists(os.path.join(top, 'lib', 'libssl.lib'))
+
+    os.chdir(base_dir())
+    shutil.rmtree(os.path.join(build_dir(), f"openssl-OpenSSL_{ver}"))
+
+
+def download(url, fn):
+    """Download a file locally"""
+    with open(fn, 'wb') as fo, urlopen(url) as fi:
+        while 1:
+            data = fi.read(8192)
+            if not data:
+                break
+            fo.write(data)
+
+
 def bat_call(cmdline):
     """
     Simulate 'CALL' from a batch file
@@ -221,10 +289,31 @@ def pg_dir():
     return r"C:\Program Files\PostgreSQL\9.6"
 
 
-def call_command(cmdline, **kwargs):
+def base_dir():
+    rv = r"C:\Others\%s\%s" % (opt.pyarch, vs_ver())
+    return ensure_dir(rv)
+
+
+def build_dir():
+    rv = os.path.join(base_dir(), 'Builds')
+    return ensure_dir(rv)
+
+
+def ensure_dir(dir):
+    if not os.path.exists(dir):
+        logger.info("creating directory %s", dir)
+        os.makedirs(dir)
+
+    return dir
+
+
+def call_command(cmdline, output=True, **kwargs):
     logger.debug("calling command: %s", cmdline)
-    data = sp.check_output(cmdline, **kwargs)
-    return data
+    if output:
+        data = sp.check_output(cmdline, **kwargs)
+        return data
+    else:
+        sp.check_call(cmdline, **kwargs)
 
 
 def setenv(k, v):

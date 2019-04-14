@@ -83,51 +83,7 @@ init:
 
 # Repository gets cloned, Cache is restored
 install:
-    # We start off CD'ed to cloned folder
-    - SET BASE_DIR=C:\Others\%PYTHON_ARCH%\%VS_VER%
-    - SET BUILD_DIR=%BASE_DIR%\Builds
-    - IF NOT EXIST %BUILD_DIR% MKDIR %BUILD_DIR%
-
-    - ECHO *******************************************************************
-    - ECHO Initialized variables specific for this build
-    - ECHO *******************************************************************
-    - ECHO %BASE_DIR%
-    - ECHO %BUILD_DIR%
-    - ECHO *******************************************************************
-
-    # Setup directories for building OpenSSL libraries
-    - ECHO *******************************************************************
-    - ECHO Preparing for building OpenSSL
-    - ECHO *******************************************************************
-    - SET OPENSSLTOP=%BASE_DIR%\openssl
-    - IF NOT EXIST %OPENSSLTOP%\include\openssl MKDIR %OPENSSLTOP%\include\openssl
-    - IF NOT EXIST %OPENSSLTOP%\lib MKDIR %OPENSSLTOP%\lib
-
-    # Setup OpenSSL Environment Variables based on processor architecture
-    - ps: >-
-        If ($env:PYTHON_ARCH -Match "32" ) {
-            $env:VCVARS_PLATFORM="x86"
-            $env:TARGET="VC-WIN32"
-        } Else {
-            $env:VCVARS_PLATFORM="amd64"
-            $env:TARGET="VC-WIN64A"
-            $env:CPU="AMD64"
-        }
-    # Download OpenSSL source
-    - CD C:\Others
-    - IF NOT EXIST OpenSSL_%OPENSSL_VERSION%.zip (
-        curl -fsSL -o OpenSSL_%OPENSSL_VERSION%.zip https://github.com/openssl/openssl/archive/OpenSSL_%OPENSSL_VERSION%.zip
-      )
-
-    - IF NOT EXIST %OPENSSLTOP%\lib\libssl.lib (
-        CD %BUILD_DIR% &&
-        7z x C:\Others\OpenSSL_%OPENSSL_VERSION%.zip &&
-        CD openssl-OpenSSL_%OPENSSL_VERSION% &&
-        perl Configure %TARGET% no-asm no-shared no-zlib --prefix=%OPENSSLTOP% --openssldir=%OPENSSLTOP% &&
-        nmake build_libs install_dev &&
-        CD %BASE_DIR% &&
-        RMDIR /S /Q %BUILD_DIR%\openssl-OpenSSL_%OPENSSL_VERSION%
-      )
+    - "%PYEXE% C:\\appveyor.py install"
 
     # Setup directories for building PostgreSQL librarires
     - ECHO *******************************************************************
