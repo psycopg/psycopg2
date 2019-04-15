@@ -95,14 +95,11 @@ def setup_env():
 
 def python_info():
     logger.info("Python Information")
-    out = out_command([py_exe(), '--version'], stderr=sp.STDOUT)
-    logger.info("%s", out)
-
-    out = out_command(
+    run_command([py_exe(), '--version'], stderr=sp.STDOUT)
+    run_command(
         [py_exe(), '-c']
         + ["import sys; print('64bit: %s' % (sys.maxsize > 2**32))"]
     )
-    logger.info("%s", out)
 
 
 def step_init():
@@ -129,6 +126,10 @@ def step_install():
     # TODO: enable again
     # build_openssl()
     build_libpq()
+
+
+def step_build_script():
+    build_psycopg()
 
 
 def build_openssl():
@@ -282,6 +283,33 @@ $config->{openssl} = "%s";
 
     os.chdir(base_dir())
     shutil.rmtree(os.path.join(pgbuild))
+
+
+def build_psycopg():
+    # Add PostgreSQL binaries to the path
+    setenv(
+        'PATH',
+        os.pathsep.join(
+            [r'C:\Program Files\PostgreSQL\9.6\bin', os.environ['PATH']]
+        ),
+    )
+    os.chdir(r"C:\Project")
+
+    # Find the pg_config just built
+    path = os.pathsep.join(
+        [os.path.join(base_dir(), r'postgresql\bin'), os.environ['PATH']]
+    )
+    setenv('PATH', path)
+
+    run_command(
+        [py_exe(), "setup.py", "build_ext", "--have-ssl"]
+        + ["-l", "libpgcommon", "-l", "libpgport"]
+        + ["-L", os.path.join(base_dir(), r'openssl\lib')]
+        + ['-I', os.path.join(base_dir(), r'openssl\include')]
+    )
+    run_command([py_exe(), "setup.py", "build_py"])
+    run_command([py_exe(), "setup.py", "install"])
+    shutil.rmtree("psycopg2.egg-info")
 
 
 def download(url, fn):

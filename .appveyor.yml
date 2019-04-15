@@ -82,23 +82,17 @@ init:
 
 
 # Repository gets cloned, Cache is restored
+
 install:
     - "%PYEXE% C:\\appveyor.py install"
 
+# PostgreSQL server starts now
+
 build: off
 
-#before_build:
-
 build_script:
-    # Add PostgreSQL binaries to the path
-    - PATH=C:\Program Files\PostgreSQL\9.6\bin\;%PATH%
-    - CD C:\Project
-    - "%PYTHON%\\python.exe setup.py build_ext --have-ssl --pg-config %PGTOP%\\bin\\pg_config.exe -l libpgcommon -l libpgport -L %OPENSSLTOP%\\lib -I %OPENSSLTOP%\\include"
-    - "%PYTHON%\\python.exe setup.py build"
-    - "%PYTHON%\\python.exe setup.py install"
-    - RD /S /Q psycopg2.egg-info
+    - "%PYEXE% C:\\appveyor.py build_script"
 
-#after_build:
 
 before_test:
     # Create and setup PostgreSQL database for the tests
