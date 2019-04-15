@@ -123,15 +123,11 @@ def step_init():
 
 
 def step_install():
-    # TODO: enable again
-    return
     build_openssl()
     build_libpq()
 
 
 def step_build_script():
-    # TODO: enable again
-    return
     build_psycopg()
 
 
@@ -325,8 +321,6 @@ def step_before_test():
 
 def step_after_build():
     # Print psycopg and libpq versions
-    # TODO: enable
-    return
 
     for expr in (
         'psycopg2.__version__',

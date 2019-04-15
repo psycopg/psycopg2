@@ -54,33 +54,6 @@ init:
     - curl -fsSL -o "C:\\appveyor.py" https://raw.githubusercontent.com/psycopg/psycopg2/%APPVEYOR_REPO_COMMIT%/scripts/appveyor.py
     - "%PYEXE% C:\\appveyor.py init"
 
-    # TODO: exporting variables below to be dropped once all the steps are
-    # moved to the appveyor.py script.
-
-    # Set env variable according to the build environment
-    - SET PYTHON=C:\Python%PYVER%
-    - IF "%PYTHON_ARCH%"=="64" SET PYTHON=%PYTHON%-x64
-
-      # Py 2.7 = VS Ver. 9.0  (VS 2008)
-      # Py 3.4 = VS Ver. 10.0 (VS 2010)
-      # Py 3.5, 3.6, 3.7 = VS Ver. 14.0 (VS 2015)
-    - IF "%PYVER%"=="27" SET VS_VER=9.0
-    - IF "%PYVER%"=="34" SET VS_VER=10.0
-    - IF "%PYVER%"=="35" SET VS_VER=14.0
-    - IF "%PYVER%"=="36" SET VS_VER=14.0
-    - IF "%PYVER%"=="37" SET VS_VER=14.0
-
-    - IF "%VS_VER%"=="10.0" IF "%PYTHON_ARCH%"=="64" SET DISTUTILS_USE_SDK=1
-
-    # Set Python to the path
-    - SET PATH=%PYTHON%;%PYTHON%\Scripts;C:\Program Files\Git\mingw64\bin;%PATH%
-
-    # Setup the compiler based upon version and architecture
-    - ECHO Configuring Compiler
-    - IF "%PYTHON_ARCH%"=="32" (CALL "C:\\Program Files (x86)\\Microsoft Visual Studio %VS_VER%\\VC\\vcvarsall.bat" x86)
-    - IF "%PYTHON_ARCH%"=="64" (CALL "C:\\Program Files (x86)\\Microsoft Visual Studio %VS_VER%\\VC\\vcvarsall.bat" amd64)
-
-
 # Repository gets cloned, Cache is restored
 
 install:
