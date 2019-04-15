@@ -49,31 +49,28 @@ cache:
   - C:\Others -> scripts\appveyor.cache_rebuild
 
 # Script called before repo cloning
-init:
-    # TODO: move functionalities out of init to drop this fetch problem
-    - curl -fsSL -o "C:\\appveyor.py" https://raw.githubusercontent.com/psycopg/psycopg2/%APPVEYOR_REPO_COMMIT%/scripts/appveyor.py
-    - "%PYEXE% C:\\appveyor.py init"
+# init:
 
 # Repository gets cloned, Cache is restored
 
 install:
-    - "%PYEXE% C:\\appveyor.py install"
+    - "%PYEXE% scripts\\appveyor.py install"
 
 # PostgreSQL server starts now
 
 build: off
 
 build_script:
-    - "%PYEXE% C:\\appveyor.py build_script"
+    - "%PYEXE% scripts\\appveyor.py build_script"
 
 after_build:
-    - "%PYEXE% C:\\appveyor.py after_build"
+    - "%PYEXE% scripts\\appveyor.py after_build"
 
 before_test:
-    - "%PYEXE% C:\\appveyor.py before_test"
+    - "%PYEXE% scripts\\appveyor.py before_test"
 
 test_script:
-    - "%PYEXE% C:\\appveyor.py test_script"
+    - "%PYEXE% scripts\\appveyor.py test_script"
 
 
 # vim: set ts=4 sts=4 sw=4:
