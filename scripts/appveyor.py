@@ -15,6 +15,7 @@ import shutil
 import logging
 import subprocess as sp
 from glob import glob
+from pathlib import Path
 from zipfile import ZipFile
 from tempfile import NamedTemporaryFile
 from functools import lru_cache
@@ -49,8 +50,8 @@ def setup_env():
         setenv('DISTUTILS_USE_SDK', '1')
 
     path = [
-        py_dir(),
-        os.path.join(py_dir(), 'Scripts'),
+        str(py_dir()),
+        str(py_dir() / 'Scripts'),
         r'C:\Program Files\Git\mingw64\bin',
         os.environ['PATH'],
     ]
@@ -59,28 +60,21 @@ def setup_env():
     if vs_ver() == '9.0':
         logger.info("Fixing VS2008 Express and 64bit builds")
         shutil.copyfile(
-            os.path.join(vc_dir(), r"bin\vcvars64.bat"),
-            os.path.join(vc_dir(), r"bin\amd64\vcvarsamd64.bat"),
+            vc_dir() / r"bin\vcvars64.bat",
+            vc_dir() / r"bin\amd64\vcvarsamd64.bat",
         )
 
     # Fix problem with VS2010 Express 64bit missing vcvars64.bat
     if vs_ver() == '10.0':
-        if not os.path.exists(
-            os.path.join(vc_dir(), r"bin\amd64\vcvars64.bat")
-        ):
+        if not (vc_dir() / r"bin\amd64\vcvars64.bat").exists():
             logger.info("Fixing VS2010 Express and 64bit builds")
-            shutil.copy(
-                os.path.join(clone_dir(), r"scripts\vcvars64-vs2010.bat"),
-                os.path.join(vc_dir(), r"bin\amd64\vcvars64.bat"),
+            copy_file(
+                clone_dir() / r"scripts\vcvars64-vs2010.bat",
+                vc_dir() / r"bin\amd64\vcvars64.bat",
             )
 
     logger.info("Configuring compiler")
-    bat_call(
-        [
-            os.path.join(vc_dir(), "vcvarsall.bat"),
-            'x86' if opt.arch_32 else 'amd64',
-        ]
-    )
+    bat_call([vc_dir() / "vcvarsall.bat", 'x86' if opt.arch_32 else 'amd64'])
 
 
 def python_info():
@@ -102,14 +96,13 @@ def step_install():
         for fn in glob(
             r'C:\Program Files\Microsoft SDKs\Windows\v7.0\Bin\x64\rc*'
         ):
-            logger.info("Copying %s to a better place" % os.path.basename(fn))
-            shutil.copy(
+            copy_file(
                 fn, r"C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\Bin"
             )
 
     # Change PostgreSQL config before service starts
     logger.info("Configuring Postgres")
-    with open(os.path.join(pg_dir(), 'data', 'postgresql.conf'), 'a') as f:
+    with (pg_dir() / 'data' / 'postgresql.conf').open('a') as f:
         # allow > 1 prepared transactions for test cases
         print("max_prepared_transactions = 10", file=f)
 
@@ -121,15 +114,15 @@ def step_build_script():
 
 
 def build_openssl():
-    top = os.path.join(base_dir(), 'openssl')
-    if os.path.exists(os.path.join(top, 'lib', 'libssl.lib')):
+    top = base_dir() / 'openssl'
+    if (top / 'lib' / 'libssl.lib').exists():
         return
 
     logger.info("Building OpenSSL")
 
     # Setup directories for building OpenSSL libraries
-    ensure_dir(os.path.join(top, 'include', 'openssl'))
-    ensure_dir(os.path.join(top, 'lib'))
+    ensure_dir(top / 'include' / 'openssl')
+    ensure_dir(top / 'lib')
 
     # Setup OpenSSL Environment Variables based on processor architecture
     if opt.arch_32:
@@ -144,8 +137,8 @@ def build_openssl():
 
     # Download OpenSSL source
     zipname = f'OpenSSL_{ver}.zip'
-    zipfile = os.path.join(r'C:\Others', zipname)
-    if not os.path.exists(zipfile):
+    zipfile = top_dir() / zipname
+    if not zipfile.exists():
         download(
             f"https://github.com/openssl/openssl/archive/{zipname}", zipfile
         )
@@ -153,7 +146,7 @@ def build_openssl():
     with ZipFile(zipfile) as z:
         z.extractall(path=build_dir())
 
-    os.chdir(os.path.join(build_dir(), f"openssl-OpenSSL_{ver}"))
+    os.chdir(build_dir() / f"openssl-OpenSSL_{ver}")
     run_command(
         ['perl', 'Configure', target, 'no-asm']
         + ['no-shared', 'no-zlib', f'--prefix={top}', f'--openssldir={top}']
@@ -161,30 +154,30 @@ def build_openssl():
 
     run_command("nmake build_libs install_dev".split())
 
-    assert os.path.exists(os.path.join(top, 'lib', 'libssl.lib'))
+    assert (top / 'lib' / 'libssl.lib').exists()
 
     os.chdir(base_dir())
-    shutil.rmtree(os.path.join(build_dir(), f"openssl-OpenSSL_{ver}"))
+    shutil.rmtree(build_dir() / f"openssl-OpenSSL_{ver}")
 
 
 def build_libpq():
-    top = os.path.join(base_dir(), 'postgresql')
-    if os.path.exists(os.path.join(top, 'lib', 'libpq.lib')):
+    top = base_dir() / 'postgresql'
+    if (top / 'lib' / 'libpq.lib').exists():
         return
 
     logger.info("Building libpq")
 
     # Setup directories for building PostgreSQL librarires
-    ensure_dir(os.path.join(top, 'include'))
-    ensure_dir(os.path.join(top, 'lib'))
-    ensure_dir(os.path.join(top, 'bin'))
+    ensure_dir(top / 'include')
+    ensure_dir(top / 'lib')
+    ensure_dir(top / 'bin')
 
     ver = os.environ['POSTGRES_VERSION']
 
     # Download PostgreSQL source
     zipname = f'postgres-REL_{ver}.zip'
-    zipfile = os.path.join(r'C:\Others', zipname)
-    if not os.path.exists(zipfile):
+    zipfile = top_dir() / zipname
+    if not zipfile.exists():
         download(
             f"https://github.com/postgres/postgres/archive/REL_{ver}.zip",
             zipfile,
@@ -193,12 +186,12 @@ def build_libpq():
     with ZipFile(zipfile) as z:
         z.extractall(path=build_dir())
 
-    pgbuild = os.path.join(build_dir(), f"postgres-REL_{ver}")
+    pgbuild = build_dir() / f"postgres-REL_{ver}"
     os.chdir(pgbuild)
 
     # Patch for OpenSSL 1.1 configuration. See:
     # https://www.postgresql-archive.org/Compile-psql-9-6-with-SSL-Version-1-1-0-td6054118.html
-    assert os.path.exists("src/include/pg_config.h.win32")
+    assert Path("src/include/pg_config.h.win32").exists()
     with open("src/include/pg_config.h.win32", 'a') as f:
         print(
             """
@@ -220,7 +213,7 @@ $config->{openssl} = "%s";
 
 1;
 """
-            % os.path.join(base_dir(), 'openssl').replace('\\', '\\\\'),
+            % str(base_dir() / 'openssl').replace('\\', '\\\\'),
             file=f,
         )
 
@@ -233,7 +226,7 @@ $config->{openssl} = "%s";
     run_command([which("build"), "libpq"])
 
     # Install includes
-    with open(os.path.join(pgbuild, "src/backend/parser/gram.h"), "w") as f:
+    with (pgbuild / "src/backend/parser/gram.h").open("w") as f:
         print("", file=f)
 
     # Copy over built libraries
@@ -244,20 +237,14 @@ $config->{openssl} = "%s";
     )
 
     for lib in ('libpgport', 'libpgcommon', 'libpq'):
-        shutil.copy(
-            os.path.join(pgbuild, f'Release/{lib}/{lib}.lib'),
-            os.path.join(top, 'lib'),
-        )
+        copy_file(pgbuild / f'Release/{lib}/{lib}.lib', top / 'lib')
 
     # Prepare local include directory for building from
     for dir in ('win32', 'win32_msvc'):
-        merge_dir(
-            os.path.join(pgbuild, f"src/include/port/{dir}"),
-            os.path.join(pgbuild, "src/include"),
-        )
+        merge_dir(pgbuild / f"src/include/port/{dir}", pgbuild / "src/include")
 
     # Build pg_config in place
-    os.chdir(os.path.join(pgbuild, 'src/bin/pg_config'))
+    os.chdir(pgbuild / 'src/bin/pg_config')
     run_command(
         ['cl', 'pg_config.c', '/MT', '/nologo', fr'/I{pgbuild}\src\include']
         + ['/link', fr'/LIBPATH:{top}\lib']
@@ -266,11 +253,11 @@ $config->{openssl} = "%s";
         + [fr'/OUT:{top}\bin\pg_config.exe']
     )
 
-    assert os.path.exists(os.path.join(top, 'lib', 'libpq.lib'))
-    assert os.path.exists(os.path.join(top, 'bin', 'pg_config.exe'))
+    assert (top / 'lib' / 'libpq.lib').exists()
+    assert (top / 'bin' / 'pg_config.exe').exists()
 
     os.chdir(base_dir())
-    shutil.rmtree(os.path.join(pgbuild))
+    shutil.rmtree(pgbuild)
 
 
 def build_psycopg():
@@ -278,15 +265,15 @@ def build_psycopg():
 
     # Find the pg_config just built
     path = os.pathsep.join(
-        [os.path.join(base_dir(), r'postgresql\bin'), os.environ['PATH']]
+        [str(base_dir() / r'postgresql\bin'), os.environ['PATH']]
     )
     setenv('PATH', path)
 
     run_command(
         [py_exe(), "setup.py", "build_ext", "--have-ssl"]
         + ["-l", "libpgcommon", "-l", "libpgport"]
-        + ["-L", os.path.join(base_dir(), r'openssl\lib')]
-        + ['-I', os.path.join(base_dir(), r'openssl\include')]
+        + ["-L", base_dir() / r'openssl\lib']
+        + ['-I', base_dir() / r'openssl\include']
     )
     run_command([py_exe(), "setup.py", "build_py"])
     run_command([py_exe(), "setup.py", "install"])
@@ -296,8 +283,7 @@ def build_psycopg():
 def step_before_test():
     # Add PostgreSQL binaries to the path
     setenv(
-        'PATH',
-        os.pathsep.join([os.path.join(pg_dir(), 'bin'), os.environ['PATH']]),
+        'PATH', os.pathsep.join([str(pg_dir() / 'bin'), os.environ['PATH']])
     )
 
     # Create and setup PostgreSQL database for the tests
@@ -359,6 +345,7 @@ def merge_dir(src, tgt):
 
     Reproduce the semantic of "XCOPY /Y /S src/* tgt"
     """
+    src = str(src)
     for dp, _dns, fns in os.walk(src):
         logger.debug("dirpath %s", dp)
         if not fns:
@@ -367,7 +354,7 @@ def merge_dir(src, tgt):
         subdir = dp[len(src) :].lstrip(os.sep)
         tgtdir = ensure_dir(os.path.join(tgt, subdir))
         for fn in fns:
-            shutil.copy(os.path.join(dp, fn), tgtdir)
+            copy_file(os.path.join(dp, fn), tgtdir)
 
 
 def bat_call(cmdline):
@@ -381,6 +368,7 @@ def bat_call(cmdline):
 
     """
     if not isinstance(cmdline, str):
+        cmdline = map(str, cmdline)
         cmdline = ' '.join(c if ' ' not in c else '"%s"' % c for c in cmdline)
 
     pyexe = py_exe()
@@ -422,14 +410,14 @@ def py_dir():
     Return the path to the target python binary to execute.
     """
     dirname = ''.join([r"C:\Python", opt.pyver, '-x64' if opt.arch_64 else ''])
-    return dirname
+    return Path(dirname)
 
 
 def py_exe():
     """
     Return the full path of the target python executable.
     """
-    return os.path.join(py_dir(), 'python.exe')
+    return py_dir() / 'python.exe'
 
 
 def vc_dir(vsver=None):
@@ -439,7 +427,9 @@ def vc_dir(vsver=None):
     if vsver is None:
         vsver = vs_ver()
 
-    return r"C:\Program Files (x86)\Microsoft Visual Studio %s\VC" % vsver
+    return Path(
+        r"C:\Program Files (x86)\Microsoft Visual Studio %s\VC" % vsver
+    )
 
 
 def vs_ver(pyver=None):
@@ -462,40 +452,56 @@ def vs_ver(pyver=None):
 
 
 def clone_dir():
-    return r"C:\Project"
+    return Path(r"C:\Project")
 
 
 def pg_dir():
-    return r"C:\Program Files\PostgreSQL\9.6"
+    return Path(r"C:\Program Files\PostgreSQL\9.6")
+
+
+def top_dir():
+    return Path(r"C:\Others")
 
 
 def base_dir():
-    rv = r"C:\Others\%s\%s" % (opt.pyarch, vs_ver())
+    rv = top_dir() / opt.pyarch / vs_ver()
     return ensure_dir(rv)
 
 
 def build_dir():
-    rv = os.path.join(base_dir(), 'Builds')
+    rv = base_dir() / 'Builds'
     return ensure_dir(rv)
 
 
 def ensure_dir(dir):
-    if not os.path.exists(dir):
+    if not isinstance(dir, Path):
+        dir = Path(dir)
+
+    if not dir.is_dir():
         logger.info("creating directory %s", dir)
-        os.makedirs(dir)
+        dir.mkdir(parents=True)
 
     return dir
 
 
 def run_command(cmdline, **kwargs):
+    if not isinstance(cmdline, str):
+        cmdline = list(map(str, cmdline))
     logger.debug("calling command: %s", cmdline)
     sp.check_call(cmdline, **kwargs)
 
 
 def out_command(cmdline, **kwargs):
+    if not isinstance(cmdline, str):
+        cmdline = list(map(str, cmdline))
     logger.debug("calling command: %s", cmdline)
     data = sp.check_output(cmdline, **kwargs)
     return data
+
+
+def copy_file(src, dst):
+    logger.info("copying file %s -> %s", src, dst)
+    shutil.copy(src, dst)
 
 
 def setenv(k, v):
