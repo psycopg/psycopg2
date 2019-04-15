@@ -93,18 +93,14 @@ build: off
 build_script:
     - "%PYEXE% C:\\appveyor.py build_script"
 
+after_build:
+    - "%PYEXE% C:\\appveyor.py after_build"
 
 before_test:
-    # Create and setup PostgreSQL database for the tests
-    - createdb %PSYCOPG2_TESTDB%
-    - psql -d %PSYCOPG2_TESTDB% -c "CREATE EXTENSION HSTORE;"
+    - "%PYEXE% C:\\appveyor.py before_test"
 
 test_script:
-    # Print psycopg and libpq versions
-    - "%PYTHON%\\python.exe -c \"import psycopg2; print(psycopg2.__version__)\""
-    - "%PYTHON%\\python.exe -c \"import psycopg2; print(psycopg2.__libpq_version__)\""
-    - "%PYTHON%\\python.exe -c \"import psycopg2; print(psycopg2.extensions.libpq_version())\""
-    - "%PYTHON%\\python.exe -c \"import tests; tests.unittest.main(defaultTest='tests.test_suite')\" --verbose"
+    - "%PYEXE% C:\\appveyor.py test_script"
 
 
 # vim: set ts=4 sts=4 sw=4:

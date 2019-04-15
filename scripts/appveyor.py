@@ -43,8 +43,6 @@ def setup_env():
     """
     Set the environment variables according to the build environment
     """
-    python_info()
-
     setenv('VS_VER', vs_ver())
 
     if vs_ver() == '10.0' and opt.arch_64:
@@ -103,6 +101,8 @@ def python_info():
 
 
 def step_init():
+    python_info()
+
     # The program rc.exe on 64bit with some versions look in the wrong path
     # location when building postgresql. This cheats by copying the x64 bit
     # files to that location.
@@ -124,11 +124,14 @@ def step_init():
 
 def step_install():
     # TODO: enable again
-    # build_openssl()
+    return
+    build_openssl()
     build_libpq()
 
 
 def step_build_script():
+    # TODO: enable again
+    return
     build_psycopg()
 
 
@@ -286,13 +289,6 @@ $config->{openssl} = "%s";
 
 
 def build_psycopg():
-    # Add PostgreSQL binaries to the path
-    setenv(
-        'PATH',
-        os.pathsep.join(
-            [r'C:\Program Files\PostgreSQL\9.6\bin', os.environ['PATH']]
-        ),
-    )
     os.chdir(r"C:\Project")
 
     # Find the pg_config just built
@@ -310,6 +306,43 @@ def build_psycopg():
     run_command([py_exe(), "setup.py", "build_py"])
     run_command([py_exe(), "setup.py", "install"])
     shutil.rmtree("psycopg2.egg-info")
+
+
+def step_before_test():
+    # Add PostgreSQL binaries to the path
+    setenv(
+        'PATH',
+        os.pathsep.join([os.path.join(pg_dir(), 'bin'), os.environ['PATH']]),
+    )
+
+    # Create and setup PostgreSQL database for the tests
+    run_command(['createdb', os.environ['PSYCOPG2_TESTDB']])
+    run_command(
+        ['psql', '-d', os.environ['PSYCOPG2_TESTDB']]
+        + ['-c', "CREATE EXTENSION hstore"]
+    )
+
+
+def step_after_build():
+    # Print psycopg and libpq versions
+    # TODO: enable
+    return
+
+    for expr in (
+        'psycopg2.__version__',
+        'psycopg2.__libpq_version__',
+        'psycopg2.extensions.libpq_version()',
+    ):
+        out = out_command([py_exe(), '-c', f"import psycopg2; print({expr})"])
+        logger.info("built %s: %s", expr, out.decode('ascii'))
+
+
+def step_test_script():
+    run_command(
+        [py_exe(), '-c']
+        + ["import tests; tests.unittest.main(defaultTest='tests.test_suite')"]
+        + ["--verbose"]
+    )
 
 
 def download(url, fn):
