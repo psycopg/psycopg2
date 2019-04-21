@@ -31,6 +31,10 @@ environment:
 
     PGUSER: postgres
     PGPASSWORD: Password12!
+    PGSSLMODE: require
+
+    # Select according to the service enabled
+    POSTGRES_DIR: C:\Program Files\PostgreSQL\9.6\
 
     # The python used in the build process, not the one packages are built for
     PYEXE: C:\Python36\python.exe
@@ -39,8 +43,7 @@ matrix:
     fast_finish: false
 
 services:
-    # Note: if you change this service also change the paths to match
-    # (see where Program Files\Postgres\9.6 is used)
+    # Note: if you change this service also change POSTGRES_DIR
     - postgresql96
 
 cache:

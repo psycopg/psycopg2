@@ -88,7 +88,11 @@ def python_info():
 
 def step_install():
     python_info()
+    configure_sdk()
+    configure_postgres()
 
+
+def configure_sdk():
     # The program rc.exe on 64bit with some versions look in the wrong path
     # location when building postgresql. This cheats by copying the x64 bit
     # files to that location.
@@ -100,11 +104,50 @@ def step_install():
                 fn, r"C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\Bin"
             )
 
+
+def configure_postgres():
     # Change PostgreSQL config before service starts
     logger.info("Configuring Postgres")
-    with (pg_dir() / 'data' / 'postgresql.conf').open('a') as f:
+    with (pg_data_dir() / 'postgresql.conf').open('a') as f:
         # allow > 1 prepared transactions for test cases
         print("max_prepared_transactions = 10", file=f)
+        print("ssl = on", file=f)
+
+    # Create openssl certificate to allow ssl connection
+    cwd = os.getcwd()
+    os.chdir(pg_data_dir())
+    run_openssl(
+        'req -new -x509 -days 365 -nodes -text '
+        '-out server.crt -keyout server.key -subj /CN=initd.org'.split()
+    )
+    run_openssl(
+        'req -new -nodes -text -out root.csr -keyout root.key '
+        '-subj /CN=initd.org'.split()
+    )
+
+    run_openssl(
+        'x509 -req -in root.csr -text -days 3650 -extensions v3_ca '
+        '-signkey root.key -out root.crt'.split()
+    )
+
+    run_openssl(
+        'req -new -nodes -text -out server.csr -keyout server.key '
+        '-subj /CN=initd.org'.split()
+    )
+
+    run_openssl(
+        'x509 -req -in server.csr -text -days 365 -CA root.crt '
+        '-CAkey root.key -CAcreateserial -out server.crt'.split()
+    )
+
+    os.chdir(cwd)
+
+
+def run_openssl(args):
+    """Run the appveyor-installed openssl"""
+    # https://www.appveyor.com/docs/windows-images-software/
+    openssl = Path(r"C:\OpenSSL-v111-Win64") / 'bin' / 'openssl'
+    return run_command([openssl] + args)
 
 
 def step_build_script():
@@ -283,9 +326,7 @@ def build_psycopg():
 
 def step_before_test():
     # Add PostgreSQL binaries to the path
-    setenv(
-        'PATH', os.pathsep.join([str(pg_dir() / 'bin'), os.environ['PATH']])
-    )
+    setenv('PATH', os.pathsep.join([str(pg_bin_dir()), os.environ['PATH']]))
 
     # Create and setup PostgreSQL database for the tests
     run_command(['createdb', os.environ['PSYCOPG2_TESTDB']])
@@ -457,7 +498,15 @@ def clone_dir():
 
 
 def pg_dir():
-    return Path(r"C:\Program Files\PostgreSQL\9.6")
+    return Path(os.environ['POSTGRES_DIR'])
+
+
+def pg_data_dir():
+    return pg_dir() / 'data'
+
+
+def pg_bin_dir():
+    return pg_dir() / 'bin'
 
 
 def top_dir():
