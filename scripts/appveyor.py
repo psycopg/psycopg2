@@ -18,7 +18,6 @@ from glob import glob
 from pathlib import Path
 from zipfile import ZipFile
 from tempfile import NamedTemporaryFile
-from functools import lru_cache
 from urllib.request import urlopen
 
 opt = None
@@ -39,8 +38,7 @@ def main():
     cmd()
 
 
-@lru_cache()
-def setup_env():
+def setup_build_env():
     """
     Set the environment variables according to the build environment
     """
@@ -69,7 +67,7 @@ def setup_env():
         if not (vc_dir() / r"bin\amd64\vcvars64.bat").exists():
             logger.info("Fixing VS2010 Express and 64bit builds")
             copy_file(
-                clone_dir() / r"scripts\vcvars64-vs2010.bat",
+                package_dir() / r"scripts\vcvars64-vs2010.bat",
                 vc_dir() / r"bin\amd64\vcvars64.bat",
             )
 
@@ -91,6 +89,17 @@ def step_install():
     configure_sdk()
     configure_postgres()
 
+    if is_wheel():
+        install_wheel_support()
+
+
+def install_wheel_support():
+    """
+    Install an up-to-date pip wheel package to build wheels.
+    """
+    run_command([py_exe()] + "-m pip install --upgrade pip".split())
+    run_command([py_exe()] + "-m pip install wheel".split())
+
 
 def configure_sdk():
     # The program rc.exe on 64bit with some versions look in the wrong path
@@ -106,7 +115,9 @@ def configure_sdk():
 
 
 def configure_postgres():
-    # Change PostgreSQL config before service starts
+    """
+    Set up PostgreSQL config before the service starts.
+    """
     logger.info("Configuring Postgres")
     with (pg_data_dir() / 'postgresql.conf').open('a') as f:
         # allow > 1 prepared transactions for test cases
@@ -144,17 +155,20 @@ def configure_postgres():
 
 
 def run_openssl(args):
-    """Run the appveyor-installed openssl"""
+    """Run the appveyor-installed openssl with some args."""
     # https://www.appveyor.com/docs/windows-images-software/
     openssl = Path(r"C:\OpenSSL-v111-Win64") / 'bin' / 'openssl'
     return run_command([openssl] + args)
 
 
 def step_build_script():
-    setup_env()
+    setup_build_env()
     build_openssl()
     build_libpq()
     build_psycopg()
+
+    if is_wheel():
+        build_binary_packages()
 
 
 def build_openssl():
@@ -305,14 +319,9 @@ $config->{openssl} = "%s";
 
 
 def build_psycopg():
-    os.chdir(clone_dir())
-
-    # Find the pg_config just built
-    path = os.pathsep.join(
-        [str(base_dir() / r'postgresql\bin'), os.environ['PATH']]
-    )
-    setenv('PATH', path)
-
+    os.chdir(package_dir())
+    patch_package_name()
+    add_pg_config_path()
     run_command(
         [py_exe(), "setup.py", "build_ext", "--have-ssl"]
         + ["-l", "libpgcommon", "-l", "libpgport"]
@@ -320,25 +329,87 @@ def build_psycopg():
         + ['-I', base_dir() / r'openssl\include']
     )
     run_command([py_exe(), "setup.py", "build_py"])
+
+
+def patch_package_name():
+    """Change the psycopg2 package name in the setup.py if required."""
+    conf = os.environ.get('CONFIGURATION', 'psycopg2')
+    if conf == 'psycopg2':
+        return
+
+    logger.info("changing package name to %s", conf)
+
+    with (package_dir() / 'setup.py').open() as f:
+        data = f.read()
+
+    # Replace the name of the package with what desired
+    rex = re.compile(r"""name=["']psycopg2["']""")
+    assert len(rex.findall(data)) == 1, rex.findall(data)
+    data = rex.sub(f'name="{conf}"', data)
+
+    with (package_dir() / 'setup.py').open('w') as f:
+        f.write(data)
+
+
+def build_binary_packages():
+    """Create wheel/exe binary packages."""
+    os.chdir(package_dir())
+
+    add_pg_config_path()
+
+    # Build .exe packages for whom still use them
+    if os.environ['CONFIGURATION'] == 'psycopg2':
+        run_command([py_exe(), 'setup.py', 'bdist_wininst', "-d", dist_dir()])
+
+    # Build .whl packages
+    run_command([py_exe(), 'setup.py', 'bdist_wheel', "-d", dist_dir()])
+
+
+def step_after_build():
+    if not is_wheel():
+        install_built_package()
+    else:
+        install_binary_package()
+
+
+def install_built_package():
+    """Install the package just built by setup build."""
+    os.chdir(package_dir())
+
+    # Install the psycopg just built
+    add_pg_config_path()
     run_command([py_exe(), "setup.py", "install"])
     shutil.rmtree("psycopg2.egg-info")
 
 
+def install_binary_package():
+    """Install the package from a packaged wheel."""
+    run_command(
+        [py_exe(), '-m', 'pip', 'install', '--no-index', '-f', dist_dir()]
+        + [os.environ['CONFIGURATION']]
+    )
+
+
+def add_pg_config_path():
+    """Allow finding in the path the pg_config just built."""
+    pg_path = str(base_dir() / r'postgresql\bin')
+    if pg_path not in os.environ['PATH'].split(os.pathsep):
+        setenv('PATH', os.pathsep.join([pg_path, os.environ['PATH']]))
+
+
 def step_before_test():
-    # Add PostgreSQL binaries to the path
-    setenv('PATH', os.pathsep.join([str(pg_bin_dir()), os.environ['PATH']]))
+    print_psycopg2_version()
 
     # Create and setup PostgreSQL database for the tests
-    run_command(['createdb', os.environ['PSYCOPG2_TESTDB']])
+    run_command([pg_bin_dir() / 'createdb', os.environ['PSYCOPG2_TESTDB']])
     run_command(
-        ['psql', '-d', os.environ['PSYCOPG2_TESTDB']]
+        [pg_bin_dir() / 'psql', '-d', os.environ['PSYCOPG2_TESTDB']]
         + ['-c', "CREATE EXTENSION hstore"]
     )
 
 
-def step_after_build():
-    # Print psycopg and libpq versions
-
+def print_psycopg2_version():
+    """Print psycopg2 and libpq versions installed."""
     for expr in (
         'psycopg2.__version__',
         'psycopg2.__libpq_version__',
@@ -349,10 +420,106 @@ def step_after_build():
 
 
 def step_test_script():
+    check_libpq_version()
+    run_test_suite()
+
+
+def check_libpq_version():
+    """
+    Fail if the package installed is not using the expected libpq version.
+    """
+    want_ver = tuple(map(int, os.environ['POSTGRES_VERSION'].split('_')))
+    want_ver = "%d%04d" % want_ver
+    got_ver = (
+        out_command(
+            [py_exe(), '-c']
+            + ["import psycopg2; print(psycopg2.extensions.libpq_version())"]
+        )
+        .decode('ascii')
+        .rstrip()
+    )
+    assert want_ver == got_ver, "libpq version mismatch: %r != %r" % (
+        want_ver,
+        got_ver,
+    )
+
+
+def run_test_suite():
+    # Remove this var, which would make badly a configured OpenSSL 1.1 work
+    os.environ.pop('OPENSSL_CONF', None)
+
+    # Run the unit test
+    os.chdir(package_dir())
     run_command(
         [py_exe(), '-c']
         + ["import tests; tests.unittest.main(defaultTest='tests.test_suite')"]
         + ["--verbose"]
+    )
+
+
+def step_on_success():
+    print_sha1_hashes()
+    if setup_ssh():
+        upload_packages()
+
+
+def print_sha1_hashes():
+    """
+    Print the packages sha1 so their integrity can be checked upon signing.
+    """
+    logger.info("artifacts SHA1 hashes:")
+
+    os.chdir(package_dir() / 'dist')
+    run_command([which('sha1sum'), '-b', f'psycopg2-*/*'])
+
+
+def setup_ssh():
+    """
+    Configure ssh to upload built packages where they can be retrieved.
+
+    Return False if can't configure and upload shoould be skipped.
+    """
+    # If we are not on the psycopg AppVeyor account, the environment variable
+    # REMOTE_KEY will not be decrypted. In that case skip uploading.
+    if os.environ['APPVEYOR_ACCOUNT_NAME'] != 'psycopg':
+        logger.warn("skipping artifact upload: you are not psycopg")
+        return False
+
+    pkey = os.environ.get('REMOTE_KEY', None)
+    if not pkey:
+        logger.warn("skipping artifact upload: no remote key")
+        return False
+
+    # Write SSH Private Key file from environment variable
+    pkey = pkey.replace(' ', '\n')
+    with (clone_dir() / 'id_rsa').open('w') as f:
+        f.write(
+            f"""\
+-----BEGIN RSA PRIVATE KEY-----
+{pkey}
+-----END RSA PRIVATE KEY-----
+"""
+        )
+
+    # Make a directory to please MinGW's version of ssh
+    ensure_dir(r"C:\MinGW\msys\1.0\home\appveyor\.ssh")
+
+    return True
+
+
+def upload_packages():
+    # Upload built artifacts
+    logger.info("uploading artifacts")
+
+    ssh_cmd = r"C:\MinGW\msys\1.0\bin\ssh -i %s -o UserKnownHostsFile=%s" % (
+        clone_dir() / "id_rsa",
+        clone_dir() / 'known_hosts',
+    )
+
+    os.chdir(package_dir())
+    run_command(
+        [r"C:\MinGW\msys\1.0\bin\rsync", "-avr"]
+        + ["-e", ssh_cmd, "dist/", "upload@initd.org:"]
     )
 
 
@@ -521,6 +688,42 @@ def base_dir():
 def build_dir():
     rv = base_dir() / 'Builds'
     return ensure_dir(rv)
+
+
+def package_dir():
+    """
+    Return the directory containing the psycopg code checkout dir
+
+    Building psycopg is clone_dir(), building the wheel packages is a submodule.
+    """
+    return clone_dir() / 'psycopg2' if is_wheel() else clone_dir()
+
+
+def is_wheel():
+    """
+    Return whether we are building the wheel packages or just the extension.
+    """
+    project_name = os.environ['APPVEYOR_PROJECT_NAME']
+    if project_name == 'psycopg2':
+        return False
+    elif project_name == 'psycopg2-wheels':
+        return True
+    else:
+        raise Exception(f"unexpected project name: {project_name}")
+
+
+def dist_dir():
+    return package_dir() / 'dist' / ('psycopg2-%s' % package_version())
+
+
+def package_version():
+    with (package_dir() / 'setup.py').open() as f:
+        data = f.read()
+
+    m = re.search(
+        r"""^PSYCOPG_VERSION\s*=\s*['"](.*)['"]""", data, re.MULTILINE
+    )
+    return m.group(1)
 
 
 def ensure_dir(dir):
