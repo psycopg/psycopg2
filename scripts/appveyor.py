@@ -26,13 +26,14 @@ STEP_PREFIX = 'step_'
 
 logger = logging.getLogger()
 logging.basicConfig(
-    level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s'
+    level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s'
 )
 
 
 def main():
     global opt
     opt = parse_cmdline()
+    logger.setLevel(opt.loglevel)
 
     setup_env()
     cmd = globals()[STEP_PREFIX + opt.step]
@@ -487,14 +488,14 @@ def ensure_dir(dir):
 def run_command(cmdline, **kwargs):
     if not isinstance(cmdline, str):
         cmdline = list(map(str, cmdline))
-    logger.debug("calling command: %s", cmdline)
+    logger.info("running command: %s", cmdline)
     sp.check_call(cmdline, **kwargs)
 
 
 def out_command(cmdline, **kwargs):
     if not isinstance(cmdline, str):
         cmdline = list(map(str, cmdline))
-    logger.debug("calling command: %s", cmdline)
+    logger.info("running command: %s", cmdline)
     data = sp.check_output(cmdline, **kwargs)
     return data
 
@@ -543,6 +544,26 @@ def parse_cmdline():
         '--pyarch',
         choices='32 64'.split(),
         help="the target python architecture. Default from PYTHON_ARCH env var",
+    )
+
+    g = parser.add_mutually_exclusive_group()
+    g.add_argument(
+        '-q',
+        '--quiet',
+        help="Talk less",
+        dest='loglevel',
+        action='store_const',
+        const=logging.WARN,
+        default=logging.INFO,
+    )
+    g.add_argument(
+        '-v',
+        '--verbose',
+        help="Talk more",
+        dest='loglevel',
+        action='store_const',
+        const=logging.DEBUG,
+        default=logging.INFO,
     )
 
     steps = [
