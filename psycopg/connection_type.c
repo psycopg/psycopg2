@@ -1349,7 +1349,7 @@ exit:
 static int
 connection_setup(connectionObject *self, const char *dsn, long int async)
 {
-    int res = -1;
+    int rv = -1;
 
     Dprintf("connection_setup: init connection object at %p, "
 	    "async %ld, refcnt = " FORMAT_CODE_PY_SSIZE_T,
@@ -1373,19 +1373,21 @@ connection_setup(connectionObject *self, const char *dsn, long int async)
 
     /* other fields have been zeroed by tp_alloc */
 
-    pthread_mutex_init(&(self->lock), NULL);
+    if (0 != pthread_mutex_init(&(self->lock), NULL)) {
+        PyErr_SetString(InternalError, "lock initialization failed");
+        goto exit;
+    }
 
     if (conn_connect(self, async) != 0) {
         Dprintf("connection_init: FAILED");
         goto exit;
     }
-    else {
-        Dprintf("connection_setup: good connection object at %p, refcnt = "
-            FORMAT_CODE_PY_SSIZE_T,
-            self, Py_REFCNT(self)
-          );
-        res = 0;
-    }
+
+    rv = 0;
+
+    Dprintf("connection_setup: good connection object at %p, refcnt = "
+        FORMAT_CODE_PY_SSIZE_T,
+        self, Py_REFCNT(self));
 
 exit:
     /* here we obfuscate the password even if there was a connection error */
@@ -1395,7 +1397,7 @@ exit:
         obscure_password(self);
         PyErr_Restore(ptype, pvalue, ptb);
     }
-    return res;
+    return rv;
 }
 
 
