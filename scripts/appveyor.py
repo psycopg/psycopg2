@@ -35,7 +35,6 @@ def main():
     opt = parse_cmdline()
     logger.setLevel(opt.loglevel)
 
-    setup_env()
     cmd = globals()[STEP_PREFIX + opt.step]
     cmd()
 
@@ -109,6 +108,7 @@ def step_install():
 
 
 def step_build_script():
+    setup_env()
     build_openssl()
     build_libpq()
     build_psycopg()
