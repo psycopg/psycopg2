@@ -11,16 +11,16 @@ environment:
     matrix:
         # For Python versions available on Appveyor, see
         # https://www.appveyor.com/docs/build-environment/
-      - {PYVER: "27", PYTHON_ARCH: "32"}
-      - {PYVER: "27", PYTHON_ARCH: "64"}
-      - {PYVER: "37", PYTHON_ARCH: "32"}
-      - {PYVER: "37", PYTHON_ARCH: "64"}
-      - {PYVER: "36", PYTHON_ARCH: "32"}
-      - {PYVER: "36", PYTHON_ARCH: "64"}
-      - {PYVER: "35", PYTHON_ARCH: "32"}
-      - {PYVER: "35", PYTHON_ARCH: "64"}
-      - {PYVER: "34", PYTHON_ARCH: "32"}
-      - {PYVER: "34", PYTHON_ARCH: "64"}
+      - {PY_VER: "27", PY_ARCH: "32"}
+      - {PY_VER: "27", PY_ARCH: "64"}
+      - {PY_VER: "37", PY_ARCH: "32"}
+      - {PY_VER: "37", PY_ARCH: "64"}
+      - {PY_VER: "36", PY_ARCH: "32"}
+      - {PY_VER: "36", PY_ARCH: "64"}
+      - {PY_VER: "35", PY_ARCH: "32"}
+      - {PY_VER: "35", PY_ARCH: "64"}
+      - {PY_VER: "34", PY_ARCH: "32"}
+      - {PY_VER: "34", PY_ARCH: "64"}
 
     OPENSSL_VERSION: "1_1_1b"
     POSTGRES_VERSION: "11_2"

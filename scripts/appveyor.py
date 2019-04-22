@@ -42,45 +42,44 @@ def setup_build_env():
     """
     Set the environment variables according to the build environment
     """
-    setenv('VS_VER', vs_ver())
+    setenv('VS_VER', opt.vs_ver)
 
-    if vs_ver() == '10.0' and opt.arch_64:
+    if opt.vs_ver == '10.0' and opt.arch_64:
         setenv('DISTUTILS_USE_SDK', '1')
 
     path = [
-        str(py_dir()),
-        str(py_dir() / 'Scripts'),
+        str(opt.py_dir),
+        str(opt.py_dir / 'Scripts'),
         r'C:\Program Files\Git\mingw64\bin',
         os.environ['PATH'],
     ]
     setenv('PATH', os.pathsep.join(path))
 
-    if vs_ver() == '9.0':
+    if opt.vs_ver == '9.0':
         logger.info("Fixing VS2008 Express and 64bit builds")
         shutil.copyfile(
-            vc_dir() / r"bin\vcvars64.bat",
-            vc_dir() / r"bin\amd64\vcvarsamd64.bat",
+            opt.vc_dir / "bin/vcvars64.bat",
+            opt.vc_dir / "bin/amd64/vcvarsamd64.bat",
         )
 
     # Fix problem with VS2010 Express 64bit missing vcvars64.bat
-    if vs_ver() == '10.0':
-        if not (vc_dir() / r"bin\amd64\vcvars64.bat").exists():
+    if opt.vs_ver == '10.0':
+        if not (opt.vc_dir / "bin/amd64/vcvars64.bat").exists():
             logger.info("Fixing VS2010 Express and 64bit builds")
             copy_file(
-                package_dir() / r"scripts\vcvars64-vs2010.bat",
-                vc_dir() / r"bin\amd64\vcvars64.bat",
+                opt.package_dir / "scripts/vcvars64-vs2010.bat",
+                opt.vc_dir / "bin/amd64/vcvars64.bat",
             )
 
     logger.info("Configuring compiler")
-    bat_call([vc_dir() / "vcvarsall.bat", 'x86' if opt.arch_32 else 'amd64'])
+    bat_call([opt.vc_dir / "vcvarsall.bat", 'x86' if opt.arch_32 else 'amd64'])
 
 
 def python_info():
     logger.info("Python Information")
-    run_command([py_exe(), '--version'], stderr=sp.STDOUT)
-    run_command(
-        [py_exe(), '-c']
-        + ["import sys; print('64bit: %s' % (sys.maxsize > 2**32))"]
+    run_python(['--version'], stderr=sp.STDOUT)
+    run_python(
+        ['-c', "import sys; print('64bit: %s' % (sys.maxsize > 2**32))"]
     )
 
 
@@ -89,7 +88,7 @@ def step_install():
     configure_sdk()
     configure_postgres()
 
-    if is_wheel():
+    if opt.is_wheel:
         install_wheel_support()
 
 
@@ -97,8 +96,8 @@ def install_wheel_support():
     """
     Install an up-to-date pip wheel package to build wheels.
     """
-    run_command([py_exe()] + "-m pip install --upgrade pip".split())
-    run_command([py_exe()] + "-m pip install wheel".split())
+    run_python("-m pip install --upgrade pip".split())
+    run_python("-m pip install wheel".split())
 
 
 def configure_sdk():
@@ -119,14 +118,14 @@ def configure_postgres():
     Set up PostgreSQL config before the service starts.
     """
     logger.info("Configuring Postgres")
-    with (pg_data_dir() / 'postgresql.conf').open('a') as f:
+    with (opt.pg_data_dir / 'postgresql.conf').open('a') as f:
         # allow > 1 prepared transactions for test cases
         print("max_prepared_transactions = 10", file=f)
         print("ssl = on", file=f)
 
     # Create openssl certificate to allow ssl connection
     cwd = os.getcwd()
-    os.chdir(pg_data_dir())
+    os.chdir(opt.pg_data_dir)
     run_openssl(
         'req -new -x509 -days 365 -nodes -text '
         '-out server.crt -keyout server.key -subj /CN=initd.org'.split()
@@ -167,12 +166,12 @@ def step_build_script():
     build_libpq()
     build_psycopg()
 
-    if is_wheel():
+    if opt.is_wheel:
         build_binary_packages()
 
 
 def build_openssl():
-    top = ssl_build_dir()
+    top = opt.ssl_build_dir
     if (top / 'lib' / 'libssl.lib').exists():
         return
 
@@ -195,16 +194,16 @@ def build_openssl():
 
     # Download OpenSSL source
     zipname = f'OpenSSL_{ver}.zip'
-    zipfile = cache_dir() / zipname
+    zipfile = opt.cache_dir / zipname
     if not zipfile.exists():
         download(
             f"https://github.com/openssl/openssl/archive/{zipname}", zipfile
         )
 
     with ZipFile(zipfile) as z:
-        z.extractall(path=build_dir())
+        z.extractall(path=opt.build_dir)
 
-    sslbuild = build_dir() / f"openssl-OpenSSL_{ver}"
+    sslbuild = opt.build_dir / f"openssl-OpenSSL_{ver}"
     os.chdir(sslbuild)
     run_command(
         ['perl', 'Configure', target, 'no-asm']
@@ -215,12 +214,12 @@ def build_openssl():
 
     assert (top / 'lib' / 'libssl.lib').exists()
 
-    os.chdir(clone_dir())
+    os.chdir(opt.clone_dir)
     shutil.rmtree(sslbuild)
 
 
 def build_libpq():
-    top = pg_build_dir()
+    top = opt.pg_build_dir
     if (top / 'lib' / 'libpq.lib').exists():
         return
 
@@ -235,7 +234,7 @@ def build_libpq():
 
     # Download PostgreSQL source
     zipname = f'postgres-REL_{ver}.zip'
-    zipfile = cache_dir() / zipname
+    zipfile = opt.cache_dir / zipname
     if not zipfile.exists():
         download(
             f"https://github.com/postgres/postgres/archive/REL_{ver}.zip",
@@ -243,9 +242,9 @@ def build_libpq():
         )
 
     with ZipFile(zipfile) as z:
-        z.extractall(path=build_dir())
+        z.extractall(path=opt.build_dir)
 
-    pgbuild = build_dir() / f"postgres-REL_{ver}"
+    pgbuild = opt.build_dir / f"postgres-REL_{ver}"
     os.chdir(pgbuild)
 
     # Patch for OpenSSL 1.1 configuration. See:
@@ -272,7 +271,7 @@ $config->{openssl} = "%s";
 
 1;
 """
-            % str(ssl_build_dir()).replace('\\', '\\\\'),
+            % str(opt.ssl_build_dir).replace('\\', '\\\\'),
             file=f,
         )
 
@@ -315,21 +314,21 @@ $config->{openssl} = "%s";
     assert (top / 'lib' / 'libpq.lib').exists()
     assert (top / 'bin' / 'pg_config.exe').exists()
 
-    os.chdir(clone_dir())
+    os.chdir(opt.clone_dir)
     shutil.rmtree(pgbuild)
 
 
 def build_psycopg():
-    os.chdir(package_dir())
+    os.chdir(opt.package_dir)
     patch_package_name()
     add_pg_config_path()
-    run_command(
-        [py_exe(), "setup.py", "build_ext", "--have-ssl"]
+    run_python(
+        ["setup.py", "build_ext", "--have-ssl"]
         + ["-l", "libpgcommon", "-l", "libpgport"]
-        + ["-L", ssl_build_dir() / 'lib']
-        + ['-I', ssl_build_dir() / 'include']
+        + ["-L", opt.ssl_build_dir / 'lib']
+        + ['-I', opt.ssl_build_dir / 'include']
     )
-    run_command([py_exe(), "setup.py", "build_py"])
+    run_python(["setup.py", "build_py"])
 
 
 def patch_package_name():
@@ -340,7 +339,7 @@ def patch_package_name():
 
     logger.info("changing package name to %s", conf)
 
-    with (package_dir() / 'setup.py').open() as f:
+    with (opt.package_dir / 'setup.py').open() as f:
         data = f.read()
 
     # Replace the name of the package with what desired
@@ -348,26 +347,26 @@ def patch_package_name():
     assert len(rex.findall(data)) == 1, rex.findall(data)
     data = rex.sub(f'name="{conf}"', data)
 
-    with (package_dir() / 'setup.py').open('w') as f:
+    with (opt.package_dir / 'setup.py').open('w') as f:
         f.write(data)
 
 
 def build_binary_packages():
     """Create wheel/exe binary packages."""
-    os.chdir(package_dir())
+    os.chdir(opt.package_dir)
 
     add_pg_config_path()
 
     # Build .exe packages for whom still use them
     if os.environ['CONFIGURATION'] == 'psycopg2':
-        run_command([py_exe(), 'setup.py', 'bdist_wininst', "-d", dist_dir()])
+        run_python(['setup.py', 'bdist_wininst', "-d", opt.dist_dir])
 
     # Build .whl packages
-    run_command([py_exe(), 'setup.py', 'bdist_wheel', "-d", dist_dir()])
+    run_python(['setup.py', 'bdist_wheel', "-d", opt.dist_dir])
 
 
 def step_after_build():
-    if not is_wheel():
+    if not opt.is_wheel:
         install_built_package()
     else:
         install_binary_package()
@@ -375,25 +374,25 @@ def step_after_build():
 
 def install_built_package():
     """Install the package just built by setup build."""
-    os.chdir(package_dir())
+    os.chdir(opt.package_dir)
 
     # Install the psycopg just built
     add_pg_config_path()
-    run_command([py_exe(), "setup.py", "install"])
+    run_python(["setup.py", "install"])
     shutil.rmtree("psycopg2.egg-info")
 
 
 def install_binary_package():
     """Install the package from a packaged wheel."""
-    run_command(
-        [py_exe(), '-m', 'pip', 'install', '--no-index', '-f', dist_dir()]
+    run_python(
+        ['-m', 'pip', 'install', '--no-index', '-f', opt.dist_dir]
         + [os.environ['CONFIGURATION']]
     )
 
 
 def add_pg_config_path():
     """Allow finding in the path the pg_config just built."""
-    pg_path = str(pg_build_dir() / 'bin')
+    pg_path = str(opt.pg_build_dir / 'bin')
     if pg_path not in os.environ['PATH'].split(os.pathsep):
         setenv('PATH', os.pathsep.join([pg_path, os.environ['PATH']]))
 
@@ -402,9 +401,9 @@ def step_before_test():
     print_psycopg2_version()
 
     # Create and setup PostgreSQL database for the tests
-    run_command([pg_bin_dir() / 'createdb', os.environ['PSYCOPG2_TESTDB']])
+    run_command([opt.pg_bin_dir / 'createdb', os.environ['PSYCOPG2_TESTDB']])
     run_command(
-        [pg_bin_dir() / 'psql', '-d', os.environ['PSYCOPG2_TESTDB']]
+        [opt.pg_bin_dir / 'psql', '-d', os.environ['PSYCOPG2_TESTDB']]
         + ['-c', "CREATE EXTENSION hstore"]
     )
 
@@ -416,7 +415,7 @@ def print_psycopg2_version():
         'psycopg2.__libpq_version__',
         'psycopg2.extensions.libpq_version()',
     ):
-        out = out_command([py_exe(), '-c', f"import psycopg2; print({expr})"])
+        out = out_python(['-c', f"import psycopg2; print({expr})"])
         logger.info("built %s: %s", expr, out.decode('ascii'))
 
 
@@ -432,8 +431,8 @@ def check_libpq_version():
     want_ver = tuple(map(int, os.environ['POSTGRES_VERSION'].split('_')))
     want_ver = "%d%04d" % want_ver
     got_ver = (
-        out_command(
-            [py_exe(), '-c']
+        out_python(
+            ['-c']
             + ["import psycopg2; print(psycopg2.extensions.libpq_version())"]
         )
         .decode('ascii')
@@ -450,19 +449,18 @@ def run_test_suite():
     os.environ.pop('OPENSSL_CONF', None)
 
     # Run the unit test
-    cmdline = [
-        py_exe(),
+    args = [
         '-c',
         "import tests; tests.unittest.main(defaultTest='tests.test_suite')",
     ]
 
-    if is_wheel():
+    if opt.is_wheel:
         os.environ['PSYCOPG2_TEST_FAST'] = '1'
     else:
-        cmdline.append('--verbose')
+        args.append('--verbose')
 
-    os.chdir(package_dir())
-    run_command(cmdline)
+    os.chdir(opt.package_dir)
+    run_python(args)
 
 
 def step_on_success():
@@ -477,7 +475,7 @@ def print_sha1_hashes():
     """
     logger.info("artifacts SHA1 hashes:")
 
-    os.chdir(package_dir() / 'dist')
+    os.chdir(opt.package_dir / 'dist')
     run_command([which('sha1sum'), '-b', f'psycopg2-*/*'])
 
 
@@ -500,7 +498,7 @@ def setup_ssh():
 
     # Write SSH Private Key file from environment variable
     pkey = pkey.replace(' ', '\n')
-    with (clone_dir() / 'id_rsa').open('w') as f:
+    with (opt.clone_dir / 'id_rsa').open('w') as f:
         f.write(
             f"""\
 -----BEGIN RSA PRIVATE KEY-----
@@ -520,11 +518,11 @@ def upload_packages():
     logger.info("uploading artifacts")
 
     ssh_cmd = r"C:\MinGW\msys\1.0\bin\ssh -i %s -o UserKnownHostsFile=%s" % (
-        clone_dir() / "id_rsa",
-        clone_dir() / 'known_hosts',
+        opt.clone_dir / "id_rsa",
+        opt.clone_dir / 'known_hosts',
     )
 
-    os.chdir(package_dir())
+    os.chdir(opt.package_dir)
     run_command(
         [r"C:\MinGW\msys\1.0\bin\rsync", "-avr"]
         + ["-e", ssh_cmd, "dist/", "upload@initd.org:"]
@@ -588,11 +586,10 @@ def bat_call(cmdline):
         cmdline = map(str, cmdline)
         cmdline = ' '.join(c if ' ' not in c else '"%s"' % c for c in cmdline)
 
-    pyexe = py_exe()
-
     data = f"""\
 CALL {cmdline}
-{pyexe} -c "import os, sys, json; json.dump(dict(os.environ), sys.stdout, indent=2)"
+{opt.py_exe} -c "import os, sys, json; \
+json.dump(dict(os.environ), sys.stdout, indent=2)"
 """
 
     logger.debug("preparing file to batcall:\n\n%s", data)
@@ -622,126 +619,6 @@ CALL {cmdline}
         os.remove(fn)
 
 
-def py_dir():
-    """
-    Return the path to the target python binary to execute.
-    """
-    dirname = ''.join([r"C:\Python", opt.pyver, '-x64' if opt.arch_64 else ''])
-    return Path(dirname)
-
-
-def py_exe():
-    """
-    Return the full path of the target python executable.
-    """
-    return py_dir() / 'python.exe'
-
-
-def vc_dir(vsver=None):
-    """
-    Return the path of the Visual C compiler.
-    """
-    if vsver is None:
-        vsver = vs_ver()
-
-    return Path(
-        r"C:\Program Files (x86)\Microsoft Visual Studio %s\VC" % vsver
-    )
-
-
-def vs_ver(pyver=None):
-    # Py 2.7 = VS Ver. 9.0 (VS 2008)
-    # Py 3.4 = VS Ver. 10.0 (VS 2010)
-    # Py 3.5, 3.6, 3.7 = VS Ver. 14.0 (VS 2015)
-    if pyver is None:
-        pyver = opt.pyver
-
-    if pyver == '27':
-        vsver = '9.0'
-    elif pyver == '34':
-        vsver = '10.0'
-    elif pyver in ('35', '36', '37'):
-        vsver = '14.0'
-    else:
-        raise Exception('unexpected python version: %r' % pyver)
-
-    return vsver
-
-
-def clone_dir():
-    return Path(r"C:\Project")
-
-
-def appveyor_pg_dir():
-    return Path(os.environ['POSTGRES_DIR'])
-
-
-def pg_data_dir():
-    return appveyor_pg_dir() / 'data'
-
-
-def pg_bin_dir():
-    return appveyor_pg_dir() / 'bin'
-
-
-def pg_build_dir():
-    return cache_arch_dir() / 'postgresql'
-
-
-def ssl_build_dir():
-    return cache_arch_dir() / 'openssl'
-
-
-def cache_arch_dir():
-    rv = cache_dir() / opt.pyarch / vs_ver()
-    return ensure_dir(rv)
-
-
-def cache_dir():
-    return Path(r"C:\Others")
-
-
-def build_dir():
-    rv = cache_arch_dir() / 'Builds'
-    return ensure_dir(rv)
-
-
-def package_dir():
-    """
-    Return the directory containing the psycopg code checkout dir
-
-    Building psycopg is clone_dir(), building the wheel packages is a submodule.
-    """
-    return clone_dir() / 'psycopg2' if is_wheel() else clone_dir()
-
-
-def is_wheel():
-    """
-    Return whether we are building the wheel packages or just the extension.
-    """
-    project_name = os.environ['APPVEYOR_PROJECT_NAME']
-    if project_name == 'psycopg2':
-        return False
-    elif project_name == 'psycopg2-wheels':
-        return True
-    else:
-        raise Exception(f"unexpected project name: {project_name}")
-
-
-def dist_dir():
-    return package_dir() / 'dist' / ('psycopg2-%s' % package_version())
-
-
-def package_version():
-    with (package_dir() / 'setup.py').open() as f:
-        data = f.read()
-
-    m = re.search(
-        r"""^PSYCOPG_VERSION\s*=\s*['"](.*)['"]""", data, re.MULTILINE
-    )
-    return m.group(1)
-
-
 def ensure_dir(dir):
     if not isinstance(dir, Path):
         dir = Path(dir)
@@ -754,6 +631,7 @@ def ensure_dir(dir):
 
 
 def run_command(cmdline, **kwargs):
+    """Run a command, raise on error."""
     if not isinstance(cmdline, str):
         cmdline = list(map(str, cmdline))
     logger.info("running command: %s", cmdline)
@@ -761,11 +639,26 @@ def run_command(cmdline, **kwargs):
 
 
 def out_command(cmdline, **kwargs):
+    """Run a command, return its output, raise on error."""
     if not isinstance(cmdline, str):
         cmdline = list(map(str, cmdline))
     logger.info("running command: %s", cmdline)
     data = sp.check_output(cmdline, **kwargs)
     return data
+
+
+def run_python(args, **kwargs):
+    """
+    Run a script in the target Python.
+    """
+    return run_command([opt.py_exe] + args, **kwargs)
+
+
+def out_python(args, **kwargs):
+    """
+    Return the output of a script run in the target Python.
+    """
+    return out_command([opt.py_exe] + args, **kwargs)
 
 
 def copy_file(src, dst):
@@ -797,22 +690,164 @@ def which(name):
     raise Exception("couldn't find program on path: %s" % name)
 
 
+class Options:
+    """
+    An object exposing the script configuration from env vars and command line.
+    """
+
+    @property
+    def py_ver(self):
+        """The Python version to build as 2 digits string."""
+        rv = os.environ['PY_VER']
+        assert rv in ('27', '34', '35', '36', '37'), rv
+        return rv
+
+    @property
+    def py_arch(self):
+        """The Python architecture to build, 32 or 64."""
+        rv = os.environ['PY_ARCH']
+        assert rv in ('32', '64'), rv
+        return int(rv)
+
+    @property
+    def arch_32(self):
+        """True if the Python architecture to build is 32 bits."""
+        return self.py_arch == 32
+
+    @property
+    def arch_64(self):
+        """True if the Python architecture to build is 64 bits."""
+        return self.py_arch == 64
+
+    @property
+    def package_version(self):
+        """The psycopg2 version number to build."""
+        with (self.package_dir / 'setup.py').open() as f:
+            data = f.read()
+
+        m = re.search(
+            r"""^PSYCOPG_VERSION\s*=\s*['"](.*)['"]""", data, re.MULTILINE
+        )
+        return m.group(1)
+
+    @property
+    def is_wheel(self):
+        """Are we building the wheel packages or just the extension?"""
+        project_name = os.environ['APPVEYOR_PROJECT_NAME']
+        if project_name == 'psycopg2':
+            return False
+        elif project_name == 'psycopg2-wheels':
+            return True
+        else:
+            raise Exception(f"unexpected project name: {project_name}")
+
+    @property
+    def py_dir(self):
+        """
+        The path to the target python binary to execute.
+        """
+        dirname = ''.join(
+            [r"C:\Python", self.py_ver, '-x64' if self.arch_64 else '']
+        )
+        return Path(dirname)
+
+    @property
+    def py_exe(self):
+        """
+        The full path of the target python executable.
+        """
+        return self.py_dir / 'python.exe'
+
+    @property
+    def vc_dir(self):
+        """
+        The path of the Visual C compiler.
+        """
+        return Path(
+            r"C:\Program Files (x86)\Microsoft Visual Studio %s\VC"
+            % self.vs_ver
+        )
+
+    @property
+    def vs_ver(self):
+        # Py 2.7 = VS Ver. 9.0 (VS 2008)
+        # Py 3.3, 3.4 = VS Ver. 10.0 (VS 2010)
+        # Py 3.5, 3.6, 3.7 = VS Ver. 14.0 (VS 2015)
+        vsvers = {
+            '27': '9.0',
+            '33': '10.0',
+            '34': '10.0',
+            '35': '14.0',
+            '36': '14.0',
+            '37': '14.0',
+        }
+        return vsvers[self.py_ver]
+
+    @property
+    def clone_dir(self):
+        """The directory where the repository is cloned."""
+        return Path(r"C:\Project")
+
+    @property
+    def appveyor_pg_dir(self):
+        """The directory of the postgres service made available by Appveyor."""
+        return Path(os.environ['POSTGRES_DIR'])
+
+    @property
+    def pg_data_dir(self):
+        """The data dir of the appveyor postgres service."""
+        return self.appveyor_pg_dir / 'data'
+
+    @property
+    def pg_bin_dir(self):
+        """The bin dir of the appveyor postgres service."""
+        return self.appveyor_pg_dir / 'bin'
+
+    @property
+    def pg_build_dir(self):
+        """The directory where to build the postgres libraries for psycopg."""
+        return self.cache_arch_dir / 'postgresql'
+
+    @property
+    def ssl_build_dir(self):
+        """The directory where to build the openssl libraries for psycopg."""
+        return self.cache_arch_dir / 'openssl'
+
+    @property
+    def cache_arch_dir(self):
+        rv = self.cache_dir / str(self.py_arch) / self.vs_ver
+        return ensure_dir(rv)
+
+    @property
+    def cache_dir(self):
+        return Path(r"C:\Others")
+
+    @property
+    def build_dir(self):
+        rv = self.cache_arch_dir / 'Builds'
+        return ensure_dir(rv)
+
+    @property
+    def package_dir(self):
+        """
+        The directory containing the psycopg code checkout dir.
+
+        Building psycopg it is clone_dir, building the wheels it is a submodule.
+        """
+        return self.clone_dir / 'psycopg2' if self.is_wheel else self.clone_dir
+
+    @property
+    def dist_dir(self):
+        """The directory where to build packages to distribute."""
+        return (
+            self.package_dir / 'dist' / ('psycopg2-%s' % self.package_version)
+        )
+
+
 def parse_cmdline():
     from argparse import ArgumentParser
 
     parser = ArgumentParser(description=__doc__)
-
-    parser.add_argument(
-        '--pyver',
-        choices='27 34 35 36 37'.split(),
-        help="the target python version. Default from PYVER env var",
-    )
-
-    parser.add_argument(
-        '--pyarch',
-        choices='32 64'.split(),
-        help="the target python architecture. Default from PYTHON_ARCH env var",
-    )
 
     g = parser.add_mutually_exclusive_group()
     g.add_argument(
@@ -844,17 +879,7 @@ def parse_cmdline():
         'step', choices=steps, help="the appveyor step to execute"
     )
 
-    opt = parser.parse_args()
-
-    # And die if they are not there.
-    if not opt.pyver:
-        opt.pyver = os.environ['PYVER']
-    if not opt.pyarch:
-        opt.pyarch = os.environ['PYTHON_ARCH']
-        assert opt.pyarch in ('32', '64')
-
-    opt.arch_32 = opt.pyarch == '32'
-    opt.arch_64 = opt.pyarch == '64'
+    opt = parser.parse_args(namespace=Options())
 
     return opt
 
