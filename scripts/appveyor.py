@@ -450,12 +450,19 @@ def run_test_suite():
     os.environ.pop('OPENSSL_CONF', None)
 
     # Run the unit test
+    cmdline = [
+        py_exe(),
+        '-c',
+        "import tests; tests.unittest.main(defaultTest='tests.test_suite')",
+    ]
+
+    if is_wheel():
+        os.environ['PSYCOPG2_TEST_FAST'] = '1'
+    else:
+        cmdline.append('--verbose')
+
     os.chdir(package_dir())
-    run_command(
-        [py_exe(), '-c']
-        + ["import tests; tests.unittest.main(defaultTest='tests.test_suite')"]
-        + ["--verbose"]
-    )
+    run_command(cmdline)
 
 
 def step_on_success():
