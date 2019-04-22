@@ -333,11 +333,10 @@ def build_psycopg():
 
 def patch_package_name():
     """Change the psycopg2 package name in the setup.py if required."""
-    conf = os.environ.get('CONFIGURATION', 'psycopg2')
-    if conf == 'psycopg2':
+    if opt.package_name == 'psycopg2':
         return
 
-    logger.info("changing package name to %s", conf)
+    logger.info("changing package name to %s", opt.package_name)
 
     with (opt.package_dir / 'setup.py').open() as f:
         data = f.read()
@@ -345,7 +344,7 @@ def patch_package_name():
     # Replace the name of the package with what desired
     rex = re.compile(r"""name=["']psycopg2["']""")
     assert len(rex.findall(data)) == 1, rex.findall(data)
-    data = rex.sub(f'name="{conf}"', data)
+    data = rex.sub(f'name="{opt.package_name}"', data)
 
     with (opt.package_dir / 'setup.py').open('w') as f:
         f.write(data)
@@ -358,7 +357,7 @@ def build_binary_packages():
     add_pg_config_path()
 
     # Build .exe packages for whom still use them
-    if os.environ['CONFIGURATION'] == 'psycopg2':
+    if opt.package_name == 'psycopg2':
         run_python(['setup.py', 'bdist_wininst', "-d", opt.dist_dir])
 
     # Build .whl packages
@@ -386,7 +385,7 @@ def install_binary_package():
     """Install the package from a packaged wheel."""
     run_python(
         ['-m', 'pip', 'install', '--no-index', '-f', opt.dist_dir]
-        + [os.environ['CONFIGURATION']]
+        + [opt.package_name]
     )
 
 
@@ -718,6 +717,10 @@ class Options:
     def arch_64(self):
         """True if the Python architecture to build is 64 bits."""
         return self.py_arch == 64
+
+    @property
+    def package_name(self):
+        return os.environ.get('CONFIGURATION', 'psycopg2')
 
     @property
     def package_version(self):
