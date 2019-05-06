@@ -360,7 +360,7 @@ The individual messages in the replication stream are represented by
         :param status_interval: time between feedback packets sent to the server
 
 
-    .. method:: consume_stream(consume, keepalive_interval=10)
+    .. method:: consume_stream(consume, keepalive_interval=None)
 
         :param consume: a callable object with signature :samp:`consume({msg})`
         :param keepalive_interval: interval (in seconds) to send keepalive
@@ -386,6 +386,9 @@ The individual messages in the replication stream are represented by
         This method also sends feedback messages to the server every
         *keepalive_interval* (in seconds). The value of this parameter must
         be set to at least 1 second, but it can have a fractional part.
+        If the *keepalive_interval* is not specified, the value of
+        *status_interval* specified in the `start_replication()` or
+        `start_replication_expert()` will be used.
 
         The client must confirm every processed message by calling
         `send_feedback()` method on the corresponding replication cursor. A

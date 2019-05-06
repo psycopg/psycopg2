@@ -96,19 +96,19 @@ exit:
 }
 
 #define consume_stream_doc \
-"consume_stream(consumer, keepalive_interval=10) -- Consume replication stream."
+"consume_stream(consumer, keepalive_interval=None) -- Consume replication stream."
 
 static PyObject *
 consume_stream(replicationCursorObject *self,
                                PyObject *args, PyObject *kwargs)
 {
     cursorObject *curs = &self->cur;
-    PyObject *consume = NULL, *res = NULL;
-    double keepalive_interval = 10;
+    PyObject *consume = NULL, *interval = NULL, *res = NULL;
+    double keepalive_interval = 0;
     static char *kwlist[] = {"consume", "keepalive_interval", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|d", kwlist,
-                                     &consume, &keepalive_interval)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|O", kwlist,
+                                     &consume, &interval)) {
         return NULL;
     }
 
@@ -119,9 +119,23 @@ consume_stream(replicationCursorObject *self,
 
     Dprintf("consume_stream");
 
-    if (keepalive_interval < 1.0) {
-        psyco_set_error(ProgrammingError, curs, "keepalive_interval must be >= 1 (sec)");
-        return NULL;
+    if (interval && interval != Py_None) {
+
+        if (PyFloat_Check(interval)) {
+            keepalive_interval = PyFloat_AsDouble(interval);
+        } else if (PyLong_Check(interval)) {
+            keepalive_interval = PyLong_AsDouble(interval);
+        } else if (PyInt_Check(interval)) {
+            keepalive_interval = PyInt_AsLong(interval);
+        } else {
+            psyco_set_error(ProgrammingError, curs, "keepalive_interval must be int or float");
+            return NULL;
+        }
+
+        if (keepalive_interval < 1.0) {
+            psyco_set_error(ProgrammingError, curs, "keepalive_interval must be >= 1 (sec)");
+            return NULL;
+        }
     }
 
     if (self->consuming) {
@@ -138,7 +152,9 @@ consume_stream(replicationCursorObject *self,
     CLEARPGRES(curs->pgres);
 
     self->consuming = 1;
-    set_status_interval(self, keepalive_interval);
+    if (keepalive_interval >= 1) {
+        set_status_interval(self, keepalive_interval);
+    }
 
     if (pq_copy_both(self, consume) >= 0) {
         res = Py_None;
