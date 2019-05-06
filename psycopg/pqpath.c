@@ -1454,11 +1454,19 @@ pq_read_replication_message(replicationCursorObject *repl, replicationMessageObj
     int64_t send_time;
     PyObject *str = NULL, *result = NULL;
     int ret = -1;
+    struct timeval curr_time, feedback_time;
 
     Dprintf("pq_read_replication_message");
 
     *msg = NULL;
     consumed = 0;
+
+    /* Is it a time to send the next feedback message? */
+    gettimeofday(&curr_time, NULL);
+    timeradd(&repl->last_feedback, &repl->status_interval, &feedback_time);
+    if (timercmp(&curr_time, &feedback_time, >=) && pq_send_replication_feedback(repl, 0) < 0) {
+        goto exit;
+    }
 
 retry:
     len = PQgetCopyData(pgconn, &buffer, 1 /* async */);
@@ -1552,6 +1560,7 @@ retry:
         (*msg)->send_time  = send_time;
 
         repl->wal_end = wal_end;
+        repl->last_msg_data_start = data_start;
     }
     else if (buffer[0] == 'k') {
         /* Primary keepalive message: msgtype(1), walEnd(8), sendTime(8), reply(1) */
@@ -1564,6 +1573,12 @@ retry:
         wal_end = fe_recvint64(buffer + 1);
         Dprintf("pq_read_replication_message: wal_end="XLOGFMTSTR, XLOGFMTARGS(wal_end));
         repl->wal_end = wal_end;
+
+        /* We can safely forward flush_lsn to the wal_end from the server keepalive message
+         * if we know that the client already processed (confirmed) the last XLogData message */
+        if (repl->flush_lsn >= repl->last_msg_data_start && wal_end > repl->flush_lsn) {
+            repl->flush_lsn = wal_end;
+        }
 
         reply = buffer[hdr];
         if (reply && pq_send_replication_feedback(repl, 0) < 0) {
@@ -1614,7 +1629,8 @@ pq_send_replication_feedback(replicationCursorObject *repl, int reply_requested)
         pq_raise(conn, curs, NULL);
         return -1;
     }
-    gettimeofday(&repl->last_io, NULL);
+    gettimeofday(&repl->last_feedback, NULL);
+    repl->last_io = repl->last_feedback;
 
     return 0;
 }
@@ -1627,7 +1643,7 @@ pq_send_replication_feedback(replicationCursorObject *repl, int reply_requested)
    manages to send keepalive messages to the server as needed.
 */
 int
-pq_copy_both(replicationCursorObject *repl, PyObject *consume, double keepalive_interval)
+pq_copy_both(replicationCursorObject *repl, PyObject *consume)
 {
     cursorObject *curs = &repl->cur;
     connectionObject *conn = curs->conn;
@@ -1636,7 +1652,7 @@ pq_copy_both(replicationCursorObject *repl, PyObject *consume, double keepalive_
     PyObject *tmp = NULL;
     int fd, sel, ret = -1;
     fd_set fds;
-    struct timeval keep_intr, curr_time, ping_time, timeout;
+    struct timeval curr_time, feedback_time, timeout;
 
     if (!PyCallable_Check(consume)) {
         Dprintf("pq_copy_both: expected callable consume object");
@@ -1644,9 +1660,6 @@ pq_copy_both(replicationCursorObject *repl, PyObject *consume, double keepalive_
     }
 
     CLEARPGRES(curs->pgres);
-
-    keep_intr.tv_sec  = (int)keepalive_interval;
-    keep_intr.tv_usec = (long)((keepalive_interval - keep_intr.tv_sec)*1.0e6);
 
     while (1) {
         if (pq_read_replication_message(repl, &msg) < 0) {
@@ -1662,38 +1675,27 @@ pq_copy_both(replicationCursorObject *repl, PyObject *consume, double keepalive_
             FD_ZERO(&fds);
             FD_SET(fd, &fds);
 
-            /* how long can we wait before we need to send a keepalive? */
+            /* how long can we wait before we need to send a feedback? */
             gettimeofday(&curr_time, NULL);
 
-            timeradd(&repl->last_io, &keep_intr, &ping_time);
-            timersub(&ping_time, &curr_time, &timeout);
+            timeradd(&repl->last_feedback, &repl->status_interval, &feedback_time);
+            timersub(&feedback_time, &curr_time, &timeout);
 
             if (timeout.tv_sec >= 0) {
                 Py_BEGIN_ALLOW_THREADS;
                 sel = select(fd + 1, &fds, NULL, NULL, &timeout);
                 Py_END_ALLOW_THREADS;
-            }
-            else {
-                sel = 0; /* we're past target time, pretend select() timed out */
-            }
 
-            if (sel < 0) {
-                if (errno != EINTR) {
-                    PyErr_SetFromErrno(PyExc_OSError);
-                    goto exit;
-                }
-                if (PyErr_CheckSignals()) {
-                    goto exit;
-                }
-                continue;
-            }
-
-            if (sel == 0) {
-                if (pq_send_replication_feedback(repl, 0) < 0) {
-                    goto exit;
+                if (sel < 0) {
+                    if (errno != EINTR) {
+                        PyErr_SetFromErrno(PyExc_OSError);
+                        goto exit;
+                    }
+                    if (PyErr_CheckSignals()) {
+                        goto exit;
+                    }
                 }
             }
-            continue;
         }
         else {
             tmp = PyObject_CallFunctionObjArgs(consume, msg, NULL);

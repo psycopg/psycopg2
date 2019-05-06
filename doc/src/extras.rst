@@ -270,7 +270,7 @@ The individual messages in the replication stream are represented by
         Replication slots are a feature of PostgreSQL server starting with
         version 9.4.
 
-    .. method:: start_replication(slot_name=None, slot_type=None, start_lsn=0, timeline=0, options=None, decode=False)
+    .. method:: start_replication(slot_name=None, slot_type=None, start_lsn=0, timeline=0, options=None, decode=False, status_interval=10)
 
         Start replication on the connection.
 
@@ -288,6 +288,7 @@ The individual messages in the replication stream are represented by
                         slot (not allowed with physical replication)
         :param decode: a flag indicating that unicode conversion should be
                        performed on messages received from the server
+        :param status_interval: time between feedback packets sent to the server
 
         If a *slot_name* is specified, the slot must exist on the server and
         its type must match the replication type used.
@@ -328,6 +329,14 @@ The individual messages in the replication stream are represented by
         *This parameter should not be set with physical replication or with
         logical replication plugins that produce binary output.*
 
+        Replication stream should periodically send feedback to the database
+        to prevent disconnect via timeout. Feedback is automatically sent when
+        `read_message()` is called or during run of the `consume_stream()`.
+        To specify the feedback interval use *status_interval* parameter.
+        The value of this parameter must be set to at least 1 second, but
+        it can have a fractional part.
+
+
         This function constructs a |START_REPLICATION|_ command and calls
         `start_replication_expert()` internally.
 
@@ -339,7 +348,7 @@ The individual messages in the replication stream are represented by
         .. |START_REPLICATION| replace:: :sql:`START_REPLICATION`
         .. _START_REPLICATION: https://www.postgresql.org/docs/current/static/protocol-replication.html
 
-    .. method:: start_replication_expert(command, decode=False)
+    .. method:: start_replication_expert(command, decode=False, status_interval=10)
 
         Start replication on the connection using provided
         |START_REPLICATION|_ command.
@@ -348,6 +357,7 @@ The individual messages in the replication stream are represented by
             `~psycopg2.sql.Composable` instance for dynamic generation.
         :param decode: a flag indicating that unicode conversion should be
             performed on messages received from the server.
+        :param status_interval: time between feedback packets sent to the server
 
 
     .. method:: consume_stream(consume, keepalive_interval=10)
@@ -373,14 +383,12 @@ The individual messages in the replication stream are represented by
         `ReplicationMessage` class.  See `read_message()` for details about
         message decoding.
 
-        This method also sends keepalive messages to the server in case there
-        were no new data from the server for the duration of
-        *keepalive_interval* (in seconds).  The value of this parameter must
+        This method also sends feedback messages to the server every
+        *keepalive_interval* (in seconds). The value of this parameter must
         be set to at least 1 second, but it can have a fractional part.
 
-        After processing certain amount of messages the client should send a
-        confirmation message to the server.  This should be done by calling
-        `send_feedback()` method on the corresponding replication cursor.  A
+        The client must confirm every processed message by calling
+        `send_feedback()` method on the corresponding replication cursor. A
         reference to the cursor is provided in the `ReplicationMessage` as an
         attribute.
 
@@ -393,9 +401,7 @@ The individual messages in the replication stream are represented by
 
                 def __call__(self, msg):
                     self.process_message(msg.payload)
-
-                    if self.should_send_feedback(msg):
-                        msg.cursor.send_feedback(flush_lsn=msg.data_start)
+                    msg.cursor.send_feedback(flush_lsn=msg.data_start)
 
             consumer = LogicalStreamConsumer()
             cur.consume_stream(consumer)
@@ -408,12 +414,7 @@ The individual messages in the replication stream are represented by
             retains all the WAL segments that might be needed to stream the
             changes via all of the currently open replication slots.
 
-            On the other hand, it is not recommended to send confirmation
-            after *every* processed message, since that will put an
-            unnecessary load on network and the server.  A possible strategy
-            is to confirm after every COMMIT message.
-
-    .. method:: send_feedback(write_lsn=0, flush_lsn=0, apply_lsn=0, reply=False)
+    .. method:: send_feedback(write_lsn=0, flush_lsn=0, apply_lsn=0, reply=False, force=False)
 
         :param write_lsn: a LSN position up to which the client has written the data locally
         :param flush_lsn: a LSN position up to which the client has processed the
@@ -423,13 +424,16 @@ The individual messages in the replication stream are represented by
                           has applied the changes (physical replication
                           master-slave protocol only)
         :param reply: request the server to send back a keepalive message immediately
+        :param force: force sending a feedback message regardless of status_interval timeout
 
         Use this method to report to the server that all messages up to a
         certain LSN position have been processed on the client and may be
         discarded on the server.
 
-        This method can also be called with all default parameters' values to
-        just send a keepalive message to the server.
+        If the *reply* or *force* parameters are not set, this method will
+        just update internal structures without sending the feedback message
+        to the server. The library sends feedback message automatically
+        when *status_interval* timeout is reached.
 
     Low-level replication cursor methods for :ref:`asynchronous connection
     <async-support>` operation.
@@ -463,9 +467,9 @@ The individual messages in the replication stream are represented by
         corresponding connection to block the process until there is more data
         from the server.
 
-        The server can send keepalive messages to the client periodically.
-        Such messages are silently consumed by this method and are never
-        reported to the caller.
+        Last, but not least, this method sends feedback messages when
+        *status_interval* timeout is reached or when keepalive message with
+        reply request arrived from the server.
 
     .. method:: fileno()
 
@@ -480,6 +484,11 @@ The individual messages in the replication stream are represented by
         A `~datetime` object representing the timestamp at the moment of last
         communication with the server (a data or keepalive message in either
         direction).
+
+    .. attribute:: feedback_timestamp
+
+        A `~datetime` object representing the timestamp at the moment when
+        the last feedback message sent to the server.
 
     .. attribute:: wal_end
 
@@ -496,32 +505,20 @@ The individual messages in the replication stream are represented by
 
       def consume(msg):
           # ...
+          msg.cursor.send_feedback(flush_lsn=msg.data_start)
 
-      keepalive_interval = 10.0
+      status_interval = 10.0
       while True:
           msg = cur.read_message()
           if msg:
               consume(msg)
           else:
               now = datetime.now()
-              timeout = keepalive_interval - (now - cur.io_timestamp).total_seconds()
+              timeout = status_interval - (now - cur.feedback_timestamp).total_seconds()
               try:
                   sel = select([cur], [], [], max(0, timeout))
-                  if not any(sel):
-                      cur.send_feedback()  # timed out, send keepalive message
               except InterruptedError:
                   pass  # recalculate timeout and continue
-
-.. warning::
-
-    The :samp:`consume({msg})` function will only be called when there are new
-    database writes on the server e.g. any DML or DDL statement. Depending on
-    your Postgres cluster configuration this might cause the server to run out
-    of disk space if the writes are too far apart. To prevent this from
-    happening you can use `~ReplicationCursor.wal_end` value to periodically
-    send feedback to the server to notify that your replication client has
-    received and processed all the messages.
-
 
 .. index::
     pair: Cursor; Replication

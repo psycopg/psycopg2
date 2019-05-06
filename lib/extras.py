@@ -561,7 +561,7 @@ class ReplicationCursor(_replicationCursor):
         self.execute(command)
 
     def start_replication(self, slot_name=None, slot_type=None, start_lsn=0,
-                          timeline=0, options=None, decode=False):
+                          timeline=0, options=None, decode=False, status_interval=10):
         """Start replication stream."""
 
         command = "START_REPLICATION "
@@ -615,7 +615,7 @@ class ReplicationCursor(_replicationCursor):
                 command += "%s %s" % (quote_ident(k, self), _A(str(v)))
             command += ")"
 
-        self.start_replication_expert(command, decode=decode)
+        self.start_replication_expert(command, decode=decode, status_interval=status_interval)
 
     # allows replication cursors to be used in select.select() directly
     def fileno(self):

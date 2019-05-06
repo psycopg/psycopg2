@@ -43,6 +43,13 @@ extern HIDDEN void timeradd(struct timeval *a, struct timeval *b, struct timeval
 #endif
 
 extern HIDDEN void timersub(struct timeval *a, struct timeval *b, struct timeval *c);
+
+#ifndef timercmp
+#define timercmp(a, b, cmp)          \
+  (((a)->tv_sec == (b)->tv_sec) ?    \
+   ((a)->tv_usec cmp (b)->tv_usec) : \
+   ((a)->tv_sec  cmp (b)->tv_sec))
+#endif
 #endif
 
 #endif /* !defined(PSYCOPG_WIN32_SUPPORT_H) */

@@ -38,8 +38,14 @@
 #include "datetime.h"
 
 
+static void set_status_interval(replicationCursorObject *self, double status_interval)
+{
+    self->status_interval.tv_sec  = (int)status_interval;
+    self->status_interval.tv_usec = (long)((status_interval - self->status_interval.tv_sec)*1.0e6);
+}
+
 #define start_replication_expert_doc \
-"start_replication_expert(command, decode=False) -- Start replication with a given command."
+"start_replication_expert(command, decode=False, status_interval=10) -- Start replication with a given command."
 
 static PyObject *
 start_replication_expert(replicationCursorObject *self,
@@ -49,10 +55,12 @@ start_replication_expert(replicationCursorObject *self,
     connectionObject *conn = self->cur.conn;
     PyObject *res = NULL;
     PyObject *command = NULL;
+    double status_interval = 10;
     long int decode = 0;
-    static char *kwlist[] = {"command", "decode", NULL};
+    static char *kwlist[] = {"command", "decode", "status_interval", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|l", kwlist, &command, &decode)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|ld", kwlist,
+                                     &command, &decode, &status_interval)) {
         return NULL;
     }
 
@@ -64,6 +72,11 @@ start_replication_expert(replicationCursorObject *self,
         goto exit;
     }
 
+    if (status_interval < 1.0) {
+        psyco_set_error(ProgrammingError, curs, "status_interval must be >= 1 (sec)");
+        return NULL;
+    }
+
     Dprintf("start_replication_expert: '%s'; decode: %ld",
         Bytes_AS_STRING(command), decode);
 
@@ -72,6 +85,7 @@ start_replication_expert(replicationCursorObject *self,
         res = Py_None;
         Py_INCREF(res);
 
+        set_status_interval(self, status_interval);
         self->decode = decode;
         gettimeofday(&self->last_io, NULL);
     }
@@ -124,8 +138,9 @@ consume_stream(replicationCursorObject *self,
     CLEARPGRES(curs->pgres);
 
     self->consuming = 1;
+    set_status_interval(self, keepalive_interval);
 
-    if (pq_copy_both(self, consume, keepalive_interval) >= 0) {
+    if (pq_copy_both(self, consume) >= 0) {
         res = Py_None;
         Py_INCREF(res);
     }
@@ -159,7 +174,7 @@ read_message(replicationCursorObject *self, PyObject *dummy)
 }
 
 #define send_feedback_doc \
-"send_feedback(write_lsn=0, flush_lsn=0, apply_lsn=0, reply=False) -- Try sending a replication feedback message to the server and optionally request a reply."
+"send_feedback(write_lsn=0, flush_lsn=0, apply_lsn=0, reply=False, force=False) -- Update a replication feedback, optionally request a reply or force sending a feedback message regardless of the timeout."
 
 static PyObject *
 send_feedback(replicationCursorObject *self,
@@ -167,13 +182,13 @@ send_feedback(replicationCursorObject *self,
 {
     cursorObject *curs = &self->cur;
     XLogRecPtr write_lsn = 0, flush_lsn = 0, apply_lsn = 0;
-    int reply = 0;
-    static char* kwlist[] = {"write_lsn", "flush_lsn", "apply_lsn", "reply", NULL};
+    int reply = 0, force = 0;
+    static char* kwlist[] = {"write_lsn", "flush_lsn", "apply_lsn", "reply", "force", NULL};
 
     EXC_IF_CURS_CLOSED(curs);
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|KKKi", kwlist,
-                                     &write_lsn, &flush_lsn, &apply_lsn, &reply)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|KKKii", kwlist,
+                                     &write_lsn, &flush_lsn, &apply_lsn, &reply, &force)) {
         return NULL;
     }
 
@@ -186,7 +201,7 @@ send_feedback(replicationCursorObject *self,
     if (apply_lsn > self->apply_lsn)
         self->apply_lsn = apply_lsn;
 
-    if (pq_send_replication_feedback(self, reply) < 0) {
+    if ((force || reply) && pq_send_replication_feedback(self, reply) < 0) {
         return NULL;
     }
 
@@ -228,6 +243,28 @@ repl_curs_get_io_timestamp(replicationCursorObject *self)
     return res;
 }
 
+#define repl_curs_feedback_timestamp_doc \
+"feedback_timestamp -- the timestamp of the latest feedback message sent to the server"
+
+static PyObject *
+repl_curs_get_feedback_timestamp(replicationCursorObject *self)
+{
+    cursorObject *curs = &self->cur;
+    PyObject *tval, *res = NULL;
+    double seconds;
+
+    EXC_IF_CURS_CLOSED(curs);
+
+    seconds = self->last_feedback.tv_sec + self->last_feedback.tv_usec / 1.0e6;
+
+    tval = Py_BuildValue("(d)", seconds);
+    if (tval) {
+        res = PyDateTime_FromTimestamp(tval);
+        Py_DECREF(tval);
+    }
+    return res;
+}
+
 /* object member list */
 
 #define OFFSETOF(x) offsetof(replicationCursorObject, x)
@@ -259,6 +296,9 @@ static struct PyGetSetDef replicationCursorObject_getsets[] = {
     { "io_timestamp",
       (getter)repl_curs_get_io_timestamp, NULL,
       repl_curs_io_timestamp_doc, NULL },
+    { "feedback_timestamp",
+      (getter)repl_curs_get_feedback_timestamp, NULL,
+      repl_curs_feedback_timestamp_doc, NULL },
     {NULL}
 };
 

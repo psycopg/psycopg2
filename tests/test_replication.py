@@ -163,18 +163,20 @@ class ReplicationTest(ReplicationTestCase):
         cur = conn.cursor()
 
         self.create_replication_slot(cur, output_plugin='test_decoding')
-
-        # try with invalid options
-        cur.start_replication(
-            slot_name=self.slot, options={'invalid_param': 'value'})
+        self.make_replication_events()
 
         def consume(msg):
-            pass
-        # we don't see the error from the server before we try to read the data
-        self.assertRaises(psycopg2.DataError, cur.consume_stream, consume)
+            raise StopReplication()
+
+        with self.assertRaises(psycopg2.DataError):
+            # try with invalid options
+            cur.start_replication(
+                slot_name=self.slot, options={'invalid_param': 'value'})
+            cur.consume_stream(consume)
 
         # try with correct command
         cur.start_replication(slot_name=self.slot)
+        self.assertRaises(StopReplication, cur.consume_stream, consume)
 
     @skip_before_postgres(9, 4)  # slots require 9.4
     @skip_repl_if_green
@@ -242,6 +244,7 @@ class AsyncReplicationTest(ReplicationTestCase):
         def consume(msg):
             # just check the methods
             "%s: %s" % (cur.io_timestamp, repr(msg))
+            "%s: %s" % (cur.feedback_timestamp, repr(msg))
             "%s: %s" % (cur.wal_end, repr(msg))
 
             self.msg_count += 1

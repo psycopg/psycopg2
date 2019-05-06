@@ -65,8 +65,7 @@ HIDDEN int pq_execute_command_locked(connectionObject *conn, const char *query,
 RAISES HIDDEN void pq_complete_error(connectionObject *conn);
 
 /* replication protocol support */
-HIDDEN int pq_copy_both(replicationCursorObject *repl, PyObject *consumer,
-                        double keepalive_interval);
+HIDDEN int pq_copy_both(replicationCursorObject *repl, PyObject *consumer);
 HIDDEN int pq_read_replication_message(replicationCursorObject *repl,
                                        replicationMessageObject **msg);
 HIDDEN int pq_send_replication_feedback(replicationCursorObject *repl, int reply_requested);
