@@ -345,6 +345,9 @@ The individual messages in the replication stream are represented by
         `read_message()` in case of :ref:`asynchronous connection
         <async-support>`.
 
+        .. versionchanged:: 2.8.3
+            added the *status_interval* parameter.
+
         .. |START_REPLICATION| replace:: :sql:`START_REPLICATION`
         .. _START_REPLICATION: https://www.postgresql.org/docs/current/static/protocol-replication.html
 
@@ -358,6 +361,9 @@ The individual messages in the replication stream are represented by
         :param decode: a flag indicating that unicode conversion should be
             performed on messages received from the server.
         :param status_interval: time between feedback packets sent to the server
+
+        .. versionchanged:: 2.8.3
+            added the *status_interval* parameter.
 
 
     .. method:: consume_stream(consume, keepalive_interval=None)
@@ -417,6 +423,9 @@ The individual messages in the replication stream are represented by
             retains all the WAL segments that might be needed to stream the
             changes via all of the currently open replication slots.
 
+        .. versionchanged:: 2.8.3
+            changed the default value of the *keepalive_interval* parameter to `!None`.
+
     .. method:: send_feedback(write_lsn=0, flush_lsn=0, apply_lsn=0, reply=False, force=False)
 
         :param write_lsn: a LSN position up to which the client has written the data locally
@@ -437,6 +446,9 @@ The individual messages in the replication stream are represented by
         just update internal structures without sending the feedback message
         to the server. The library sends feedback message automatically
         when *status_interval* timeout is reached.
+
+        .. versionchanged:: 2.8.3
+            added the *force* parameter.
 
     Low-level replication cursor methods for :ref:`asynchronous connection
     <async-support>` operation.
@@ -492,6 +504,8 @@ The individual messages in the replication stream are represented by
 
         A `~datetime` object representing the timestamp at the moment when
         the last feedback message sent to the server.
+
+        .. versionadded:: 2.8.3
 
     .. attribute:: wal_end
 
