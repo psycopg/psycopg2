@@ -152,7 +152,7 @@ consume_stream(replicationCursorObject *self,
     CLEARPGRES(curs->pgres);
 
     self->consuming = 1;
-    if (keepalive_interval >= 1) {
+    if (keepalive_interval > 0) {
         set_status_interval(self, keepalive_interval);
     }
 
