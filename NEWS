@@ -1,6 +1,15 @@
 Current release
 ---------------
 
+What's new in psycopg 2.8.3
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Added *interval_status* parameter to
+  `~psycopg2.extras.ReplicationCursor.start_replication()` method and other
+  facilities to send automatic replication keepalives at periodic intervals
+  (:ticket:`#913`).
+
+
 What's new in psycopg 2.8.2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
