@@ -42,13 +42,16 @@ typedef struct replicationCursorObject {
     int         decode:1;         /* if we should use character decoding on the messages */
 
     struct timeval last_io;       /* timestamp of the last exchange with the server */
-    struct timeval keepalive_interval;   /* interval for keepalive messages in replication mode */
+    struct timeval status_interval;   /* time between status packets sent to the server */
 
     XLogRecPtr  write_lsn;        /* LSNs for replication feedback messages */
     XLogRecPtr  flush_lsn;
     XLogRecPtr  apply_lsn;
 
     XLogRecPtr  wal_end;          /* WAL end pointer from the last exchange with the server */
+
+    XLogRecPtr  last_msg_data_start; /* WAL pointer to the last non-keepalive message from the server */
+    struct timeval last_feedback; /* timestamp of the last feedback message to the server */
 } replicationCursorObject;
 
 

@@ -552,8 +552,7 @@ value greater than zero in ``postgresql.conf`` (these changes require a server
 restart).  Create a database ``psycopg2_test``.
 
 Then run the following code to quickly try the replication support out.  This
-is not production code -- it has no error handling, it sends feedback too
-often, etc. -- and it's only intended as a simple demo of logical
+is not production code -- it's only intended as a simple demo of logical
 replication::
 
   from __future__ import print_function
