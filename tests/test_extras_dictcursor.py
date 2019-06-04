@@ -639,7 +639,7 @@ class NamedTupleCursorTest(ConnectingTestCase):
     def test_max_cache(self):
         old_func = NamedTupleCursor._cached_make_nt
         NamedTupleCursor._cached_make_nt = \
-            lru_cache(8)(NamedTupleCursor._do_make_nt)
+            lru_cache(8)(NamedTupleCursor._cached_make_nt.__wrapped__)
         try:
             recs = []
             curs = self.conn.cursor()

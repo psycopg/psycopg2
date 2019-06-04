@@ -372,10 +372,11 @@ class NamedTupleCursor(_cursor):
         key = tuple(d[0] for d in self.description) if self.description else ()
         return self._cached_make_nt(key)
 
-    def _do_make_nt(self, key):
+    @classmethod
+    def _do_make_nt(cls, key):
         fields = []
         for s in key:
-            s = self._re_clean.sub('_', s)
+            s = cls._re_clean.sub('_', s)
             # Python identifier cannot start with numbers, namedtuple fields
             # cannot start with underscore. So...
             if s[0] == '_' or '0' <= s[0] <= '9':
@@ -385,9 +386,14 @@ class NamedTupleCursor(_cursor):
         nt = namedtuple("Record", fields)
         return nt
 
-    # Exposed for testability, and if someone wants to monkeypatch to tweak
-    # the cache size.
-    _cached_make_nt = lru_cache(512)(_do_make_nt)
+
+@lru_cache(512)
+def _cached_make_nt(cls, key):
+    return cls._do_make_nt(key)
+
+# Exposed for testability, and if someone wants to monkeypatch to tweak
+# the cache size.
+NamedTupleCursor._cached_make_nt = classmethod(_cached_make_nt)
 
 
 class LoggingConnection(_connection):
