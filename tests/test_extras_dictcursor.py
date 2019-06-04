@@ -615,16 +615,26 @@ class NamedTupleCursorTest(ConnectingTestCase):
             self.assertEqual(i + 1, curs.rownumber)
 
     def test_cache(self):
+        NamedTupleCursor._cached_make_nt.cache_clear()
+
         curs = self.conn.cursor()
         curs.execute("select 10 as a, 20 as b")
         r1 = curs.fetchone()
         curs.execute("select 10 as a, 20 as c")
         r2 = curs.fetchone()
+
+        # Get a new cursor to check that the cache works across multiple ones
+        curs = self.conn.cursor()
         curs.execute("select 10 as a, 30 as b")
         r3 = curs.fetchone()
 
         self.assert_(type(r1) is type(r3))
         self.assert_(type(r1) is not type(r2))
+
+        cache_info = NamedTupleCursor._cached_make_nt.cache_info()
+        self.assertEqual(cache_info.hits, 1)
+        self.assertEqual(cache_info.misses, 2)
+        self.assertEqual(cache_info.currsize, 2)
 
     def test_max_cache(self):
         old_func = NamedTupleCursor._cached_make_nt
