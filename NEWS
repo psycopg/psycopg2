@@ -8,6 +8,7 @@ What's new in psycopg 2.8.3
   `~psycopg2.extras.ReplicationCursor.start_replication()` method and other
   facilities to send automatic replication keepalives at periodic intervals
   (:ticket:`#913`).
+- Fixed namedtuples caching introduced in 2.8 (:ticket:`#928`).
 
 
 What's new in psycopg 2.8.2
