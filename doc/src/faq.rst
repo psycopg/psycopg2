@@ -7,6 +7,30 @@ Here are a few gotchas you may encounter using `psycopg2`.  Feel free to
 suggest new entries!
 
 
+Meta
+----
+
+.. _faq-question:
+.. cssclass:: faq
+
+How do I ask a question?
+    - Have you first checked if your question is answered already in the
+      documentation?
+
+    - If your question is about installing psycopg, have you checked the
+      :ref:`install FAQ <faq-compile>` and the :ref:`install docs
+      <installation>`?
+
+    - Have you googled for your error message?
+
+    - If you haven't found an answer yet, please write to the `Mailing List`_.
+
+    - If you haven't found a bug, DO NOT write to the bug tracker to ask
+      questions. You will only get piro grumpy.
+
+    .. _mailing list: https://www.postgresql.org/list/psycopg/
+
+
 .. _faq-transactions:
 
 Problems with transactions handling

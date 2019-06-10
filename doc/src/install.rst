@@ -1,4 +1,6 @@
-Introduction
+.. _installation:
+
+Installation
 ============
 
 .. sectionauthor:: Daniele Varrazzo <daniele.varrazzo@gmail.com>
@@ -327,5 +329,5 @@ Try the following. *In order:*
   ever and about the quality time you have wasted figuring out the correct
   :envvar:`ARCHFLAGS`. Especially useful from the Starbucks near you.
 
-.. _mailing list: https://lists.postgresql.org/mj/mj_wwwusr?func=lists-long-full&extra=psycopg
+.. _mailing list: https://www.postgresql.org/list/psycopg/
 .. _bug tracker: https://github.com/psycopg/psycopg2/issues
