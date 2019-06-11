@@ -271,7 +271,7 @@ When should I save and re-use a connection as opposed to creating a new one as n
 
 What are the advantages or disadvantages of using named cursors?
     The only disadvantages is that they use up resources on the server and
-    that there is a little overhead because a at least two queries (one to
+    that there is a little overhead because at least two queries (one to
     create the cursor and one to fetch the initial result set) are issued to
     the backend. The advantage is that data is fetched one chunk at a time:
     using small `~cursor.fetchmany()` values it is possible to use very
