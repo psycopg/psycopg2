@@ -427,7 +427,7 @@ except Exception as e:
                             universal_newlines=True,
                             creationflags=sp.CREATE_NEW_PROCESS_GROUP)
             time.sleep(0.5)
-            proc.send_signal(signal.CTRL_C_EVENT)
+            proc.send_signal(signal.CTRL_BREAK_EVENT)
         else:
             proc = sp.Popen([sys.executable, '-c', script], stdout=sp.PIPE,
                             universal_newlines=True)
