@@ -45,7 +45,8 @@ from psycopg2 import extensions as ext
 from .testutils import (
     PY2, unittest, skip_if_no_superuser, skip_before_postgres,
     skip_after_postgres, skip_before_libpq, skip_after_libpq,
-    ConnectingTestCase, skip_if_tpc_disabled, skip_if_windows, slow)
+    ConnectingTestCase, skip_if_tpc_disabled, skip_if_windows, slow,
+    skip_if_green)
 
 from .testconfig import dbhost, dsn, dbname
 
@@ -411,12 +412,13 @@ t.join()
             shutil.rmtree(dir, ignore_errors=True)
 
     @slow
+    @skip_if_green
     def test_handles_keyboardinterrupt(self):
         def conn(queue):
             host = "10.255.255.1"  # will timeout
             queue.put(1)
             try:
-                self.connect(host=host, password="x", connect_timeout=1)
+                self.connect(host=host, password="x", connect_timeout=0.5)
             except KeyboardInterrupt:
                 queue.put("KeyboardInterrupt")
             except psycopg2.OperationalError:
@@ -426,7 +428,7 @@ t.join()
         process = multiprocessing.Process(target=conn, args=(queue,))
         process.start()
         queue.get()
-        time.sleep(0.9)
+        time.sleep(0.3)
         os.kill(process.pid, signal.SIGINT)
         process.join()
         self.assertEqual(queue.get(), "KeyboardInterrupt")
