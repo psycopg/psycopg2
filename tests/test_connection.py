@@ -45,8 +45,7 @@ from psycopg2 import extensions as ext
 from .testutils import (
     PY2, unittest, skip_if_no_superuser, skip_before_postgres,
     skip_after_postgres, skip_before_libpq, skip_after_libpq,
-    ConnectingTestCase, skip_if_tpc_disabled, skip_if_windows, slow,
-    skip_if_green)
+    ConnectingTestCase, skip_if_tpc_disabled, skip_if_windows, slow, green)
 
 from .testconfig import dbhost, dsn, dbname
 
@@ -412,26 +411,29 @@ t.join()
             shutil.rmtree(dir, ignore_errors=True)
 
     @slow
-    @skip_if_green
     def test_handles_keyboardinterrupt(self):
         def conn(queue):
             host = "10.255.255.1"  # will timeout
             queue.put(1)
             try:
-                self.connect(host=host, password="x", connect_timeout=0.5)
+                self.connect(host=host, password="x", connect_timeout=1)
             except KeyboardInterrupt:
                 queue.put("KeyboardInterrupt")
-            except psycopg2.OperationalError:
-                queue.put("OperationalError")
+            except Exception as e:
+                queue.put(str(e))
 
         queue = multiprocessing.Queue()
         process = multiprocessing.Process(target=conn, args=(queue,))
         process.start()
         queue.get()
-        time.sleep(0.3)
+        time.sleep(0.5)
         os.kill(process.pid, signal.SIGINT)
+        raised = queue.get()
         process.join()
-        self.assertEqual(queue.get(), "KeyboardInterrupt")
+        if green:
+            self.assertEqual(raised, "asynchronous connection attempt underway")
+        else:
+            self.assertEqual(raised, "KeyboardInterrupt")
 
 
 class ParseDsnTestCase(ConnectingTestCase):
