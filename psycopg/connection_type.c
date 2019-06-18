@@ -1395,7 +1395,15 @@ exit:
         PyObject *ptype = NULL, *pvalue = NULL, *ptb = NULL;
         PyErr_Fetch(&ptype, &pvalue, &ptb);
         obscure_password(self);
-        PyErr_Restore(ptype, pvalue, ptb);
+        // if we got a system exit exception (not a subclass of Exception),
+        // leave it as is, do not restore
+        if (PyErr_Occurred() && ! PyErr_ExceptionMatches(PyExc_Exception)) {
+            Py_XDECREF(ptype);
+            Py_XDECREF(pvalue);
+            Py_XDECREF(ptb);
+        } else {
+            PyErr_Restore(ptype, pvalue, ptb);
+        }
     }
     return rv;
 }

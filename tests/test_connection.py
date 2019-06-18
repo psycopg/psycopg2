@@ -35,6 +35,8 @@ import subprocess as sp
 from collections import deque
 from operator import attrgetter
 from weakref import ref
+import multiprocessing
+import signal
 
 import psycopg2
 import psycopg2.extras
@@ -407,6 +409,26 @@ t.join()
             self.assertEqual(out, b'', out)
         finally:
             shutil.rmtree(dir, ignore_errors=True)
+
+    @slow
+    def test_handles_keyboardinterrupt(self):
+        def conn(queue):
+            host = "10.255.255.1"  # will timeout
+            queue.put(1)
+            try:
+                self.connect(host=host, password="x", connect_timeout=1)
+            except KeyboardInterrupt:
+                queue.put("KeyboardInterrupt")
+            except psycopg2.OperationalError:
+                queue.put("OperationalError")
+
+        queue = multiprocessing.Queue()
+        process = multiprocessing.Process(target=conn, args=(queue,))
+        process.start()
+        queue.get()
+        os.kill(process.pid, signal.SIGINT)
+        process.join()
+        self.assertEqual(queue.get(), "KeyboardInterrupt")
 
 
 class ParseDsnTestCase(ConnectingTestCase):
