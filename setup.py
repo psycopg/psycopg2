@@ -409,6 +409,11 @@ For further information please check the 'doc/src/install.rst' file (also at
 
         try:
             self.library_dirs.append(pg_config_helper.query("libdir"))
+            # Parse LD_FLAGS: turn "-L/foo -L/bar -Wxyz" into ["/foo", "/bar"]
+            ld_flags = pg_config_helper.query("ldflags")
+            ld_flags = filter(lambda x: x.startswith('-L'), ld_flags.split(' '))
+            ld_flags = map(lambda x: x[2:], ld_flags)
+            self.library_dirs.extend(ld_flags)
             self.include_dirs.append(pg_config_helper.query("includedir"))
             self.include_dirs.append(pg_config_helper.query("includedir-server"))
             pgversion = pg_config_helper.query("version").split()[1]
