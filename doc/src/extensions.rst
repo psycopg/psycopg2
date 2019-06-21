@@ -413,9 +413,9 @@ deal with Python objects adaptation:
 
     .. method:: getquoted()
 
-        Return the string enclosed in single quotes.  Any single quote
-        appearing in the the string is escaped by doubling it according to SQL
-        string constants syntax.  Backslashes are escaped too.
+        Return the string enclosed in single quotes. Any single quote appearing
+        in the string is escaped by doubling it according to SQL string
+        constants syntax. Backslashes are escaped too.
 
             >>> QuotedString(r"O'Reilly").getquoted()
             "'O''Reilly'"
@@ -758,8 +758,8 @@ methods.  The level can be set to one of the following constants:
 
 .. data:: ISOLATION_LEVEL_READ_COMMITTED
 
-    This is usually the the default PostgreSQL value, but a different default
-    may be set in the database configuration.
+    This is usually the default PostgreSQL value, but a different default may
+    be set in the database configuration.
 
     A new transaction is started at the first `~cursor.execute()` command on a
     cursor and at each new `!execute()` after a `~connection.commit()` or a
