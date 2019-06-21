@@ -147,7 +147,7 @@ port_get(connInfoObject *self)
 
 
 static const char options_doc[] =
-"The command-line options passed in the the connection request.\n"
+"The command-line options passed in the connection request.\n"
 "\n"
 ".. seealso:: libpq docs for `PQoptions()`__ for details.\n"
 ".. __: https://www.postgresql.org/docs/current/static/libpq-status.html"

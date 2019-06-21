@@ -639,7 +639,7 @@ The ``connection`` class
         :param new_oid: Create a new object using the specified OID. The
             function raises `~psycopg2.OperationalError` if the OID is already
             in use. Default is 0, meaning assign a new one automatically.
-        :param new_file: The name of a file to be imported in the the database
+        :param new_file: The name of a file to be imported in the database
             (using the |lo_import|_ function)
         :param lobject_factory: Subclass of
             `~psycopg2.extensions.lobject` to be instantiated.
@@ -749,7 +749,7 @@ The ``connection`` class
 
     .. rubric:: informative methods of the native connection
 
-    .. note:: 
+    .. note::
 
         These methods are better accessed using the `~connection.info`
         attributes and may be dropped in future versions.

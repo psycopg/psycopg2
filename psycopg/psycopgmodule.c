@@ -673,8 +673,8 @@ RAISES_NEG static int
 basic_errors_init(PyObject *module)
 {
     /* the names of the exceptions here reflect the organization of the
-       psycopg2 module and not the fact the the original error objects
-       live in _psycopg */
+       psycopg2 module and not the fact the original error objects live in
+       _psycopg */
 
     int i;
     PyObject *dict = NULL;
