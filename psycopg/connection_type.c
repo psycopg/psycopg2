@@ -1297,21 +1297,28 @@ static struct PyGetSetDef connectionObject_getsets[] = {
 
 /* initialization and finalization methods */
 
-RAISES_NEG static int
-obscure_password(connectionObject *conn)
+/* Return a copy of the 'dsn' string with the password scrubbed.
+ *
+ * The string returned is allocated on the Python heap.
+ *
+ * In case of error return NULL and raise an exception.
+ */
+static char *
+obscure_password(const char *dsn)
 {
-    PQconninfoOption *options;
-    PyObject *d = NULL, *v = NULL, *dsn = NULL;
-    char *tmp;
-    int rv = -1;
+    PQconninfoOption *options = NULL;
+    PyObject *d = NULL, *v = NULL, *pydsn = NULL;
+    char *rv = NULL;
 
-    if (!conn || !conn->dsn) {
-        return 0;
+    if (!dsn) {
+        PyErr_SetString(InternalError, "unexpected null string");
+        goto exit;
     }
 
-    if (!(options = PQconninfoParse(conn->dsn, NULL))) {
+    if (!(options = PQconninfoParse(dsn, NULL))) {
         /* unlikely: the dsn was already tested valid */
-        return 0;
+        PyErr_SetString(InternalError, "the connection string is not valid");
+        goto exit;
     }
 
     if (!(d = psyco_dict_from_conninfo_options(
@@ -1320,28 +1327,24 @@ obscure_password(connectionObject *conn)
     }
     if (NULL == PyDict_GetItemString(d, "password")) {
         /* the dsn doesn't have a password */
-        rv = 0;
+        psyco_strdup(&rv, dsn, -1);
         goto exit;
     }
 
     /* scrub the password and put back the connection string together */
     if (!(v = Text_FromUTF8("xxx"))) { goto exit; }
     if (0 > PyDict_SetItemString(d, "password", v)) { goto exit; }
-    if (!(dsn = psyco_make_dsn(Py_None, d))) { goto exit; }
-    if (!(dsn = psyco_ensure_bytes(dsn))) { goto exit; }
+    if (!(pydsn = psyco_make_dsn(Py_None, d))) { goto exit; }
+    if (!(pydsn = psyco_ensure_bytes(pydsn))) { goto exit; }
 
-    /* Replace the connection string on the connection object */
-    tmp = conn->dsn;
-    psyco_strdup(&conn->dsn, Bytes_AS_STRING(dsn), -1);
-    PyMem_Free(tmp);
-
-    rv = 0;
+    /* Return the connection string with the password replaced */
+    psyco_strdup(&rv, Bytes_AS_STRING(pydsn), -1);
 
 exit:
     PQconninfoFree(options);
     Py_XDECREF(v);
     Py_XDECREF(d);
-    Py_XDECREF(dsn);
+    Py_XDECREF(pydsn);
 
     return rv;
 }
@@ -1356,7 +1359,7 @@ connection_setup(connectionObject *self, const char *dsn, long int async)
             self, async, Py_REFCNT(self)
       );
 
-    if (0 > psyco_strdup(&self->dsn, dsn, -1)) { goto exit; }
+    if (!(self->dsn = obscure_password(dsn))) { goto exit; }
     if (!(self->notice_list = PyList_New(0))) { goto exit; }
     if (!(self->notifies = PyList_New(0))) { goto exit; }
     self->async = async;
@@ -1378,7 +1381,7 @@ connection_setup(connectionObject *self, const char *dsn, long int async)
         goto exit;
     }
 
-    if (conn_connect(self, async) != 0) {
+    if (conn_connect(self, dsn, async) != 0) {
         Dprintf("connection_init: FAILED");
         goto exit;
     }
@@ -1390,13 +1393,6 @@ connection_setup(connectionObject *self, const char *dsn, long int async)
         self, Py_REFCNT(self));
 
 exit:
-    /* here we obfuscate the password even if there was a connection error */
-    {
-        PyObject *ptype = NULL, *pvalue = NULL, *ptb = NULL;
-        PyErr_Fetch(&ptype, &pvalue, &ptb);
-        obscure_password(self);
-        PyErr_Restore(ptype, pvalue, ptb);
-    }
     return rv;
 }
 
