@@ -1297,58 +1297,6 @@ static struct PyGetSetDef connectionObject_getsets[] = {
 
 /* initialization and finalization methods */
 
-/* Return a copy of the 'dsn' string with the password scrubbed.
- *
- * The string returned is allocated on the Python heap.
- *
- * In case of error return NULL and raise an exception.
- */
-static char *
-obscure_password(const char *dsn)
-{
-    PQconninfoOption *options = NULL;
-    PyObject *d = NULL, *v = NULL, *pydsn = NULL;
-    char *rv = NULL;
-
-    if (!dsn) {
-        PyErr_SetString(InternalError, "unexpected null string");
-        goto exit;
-    }
-
-    if (!(options = PQconninfoParse(dsn, NULL))) {
-        /* unlikely: the dsn was already tested valid */
-        PyErr_SetString(InternalError, "the connection string is not valid");
-        goto exit;
-    }
-
-    if (!(d = psyco_dict_from_conninfo_options(
-            options, /* include_password = */ 1))) {
-        goto exit;
-    }
-    if (NULL == PyDict_GetItemString(d, "password")) {
-        /* the dsn doesn't have a password */
-        psyco_strdup(&rv, dsn, -1);
-        goto exit;
-    }
-
-    /* scrub the password and put back the connection string together */
-    if (!(v = Text_FromUTF8("xxx"))) { goto exit; }
-    if (0 > PyDict_SetItemString(d, "password", v)) { goto exit; }
-    if (!(pydsn = psyco_make_dsn(Py_None, d))) { goto exit; }
-    if (!(pydsn = psyco_ensure_bytes(pydsn))) { goto exit; }
-
-    /* Return the connection string with the password replaced */
-    psyco_strdup(&rv, Bytes_AS_STRING(pydsn), -1);
-
-exit:
-    PQconninfoFree(options);
-    Py_XDECREF(v);
-    Py_XDECREF(d);
-    Py_XDECREF(pydsn);
-
-    return rv;
-}
-
 static int
 connection_setup(connectionObject *self, const char *dsn, long int async)
 {
@@ -1359,7 +1307,7 @@ connection_setup(connectionObject *self, const char *dsn, long int async)
             self, async, Py_REFCNT(self)
       );
 
-    if (!(self->dsn = obscure_password(dsn))) { goto exit; }
+    if (!(self->dsn = conn_obscure_password(dsn))) { goto exit; }
     if (!(self->notice_list = PyList_New(0))) { goto exit; }
     if (!(self->notifies = PyList_New(0))) { goto exit; }
     self->async = async;
