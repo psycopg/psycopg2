@@ -705,7 +705,7 @@ exit:
 /* conn_connect - execute a connection to the database */
 
 static int
-_conn_sync_connect(connectionObject *self)
+_conn_sync_connect(connectionObject *self, const char *dsn)
 {
     int green;
 
@@ -714,26 +714,26 @@ _conn_sync_connect(connectionObject *self)
     green = psyco_green();
     if (!green) {
         Py_BEGIN_ALLOW_THREADS;
-        self->pgconn = PQconnectdb(self->dsn);
+        self->pgconn = PQconnectdb(dsn);
         Py_END_ALLOW_THREADS;
         Dprintf("conn_connect: new PG connection at %p", self->pgconn);
     }
     else {
         Py_BEGIN_ALLOW_THREADS;
-        self->pgconn = PQconnectStart(self->dsn);
+        self->pgconn = PQconnectStart(dsn);
         Py_END_ALLOW_THREADS;
         Dprintf("conn_connect: new green PG connection at %p", self->pgconn);
     }
 
     if (!self->pgconn)
     {
-        Dprintf("conn_connect: PQconnectdb(%s) FAILED", self->dsn);
+        Dprintf("conn_connect: PQconnectdb(%s) FAILED", dsn);
         PyErr_SetString(OperationalError, "PQconnectdb() failed");
         return -1;
     }
     else if (PQstatus(self->pgconn) == CONNECTION_BAD)
     {
-        Dprintf("conn_connect: PQconnectdb(%s) returned BAD", self->dsn);
+        Dprintf("conn_connect: PQconnectdb(%s) returned BAD", dsn);
         PyErr_SetString(OperationalError, PQerrorMessage(self->pgconn));
         return -1;
     }
@@ -763,23 +763,23 @@ _conn_sync_connect(connectionObject *self)
 }
 
 static int
-_conn_async_connect(connectionObject *self)
+_conn_async_connect(connectionObject *self, const char *dsn)
 {
     PGconn *pgconn;
 
-    self->pgconn = pgconn = PQconnectStart(self->dsn);
+    self->pgconn = pgconn = PQconnectStart(dsn);
 
     Dprintf("conn_connect: new postgresql connection at %p", pgconn);
 
     if (pgconn == NULL)
     {
-        Dprintf("conn_connect: PQconnectStart(%s) FAILED", self->dsn);
+        Dprintf("conn_connect: PQconnectStart(%s) FAILED", dsn);
         PyErr_SetString(OperationalError, "PQconnectStart() failed");
         return -1;
     }
     else if (PQstatus(pgconn) == CONNECTION_BAD)
     {
-        Dprintf("conn_connect: PQconnectdb(%s) returned BAD", self->dsn);
+        Dprintf("conn_connect: PQconnectdb(%s) returned BAD", dsn);
         PyErr_SetString(OperationalError, PQerrorMessage(pgconn));
         return -1;
     }
@@ -800,17 +800,17 @@ _conn_async_connect(connectionObject *self)
 }
 
 int
-conn_connect(connectionObject *self, long int async)
+conn_connect(connectionObject *self, const char *dsn, long int async)
 {
     int rv;
 
     if (async == 1) {
       Dprintf("con_connect: connecting in ASYNC mode");
-      rv = _conn_async_connect(self);
+      rv = _conn_async_connect(self, dsn);
     }
     else {
       Dprintf("con_connect: connecting in SYNC mode");
-      rv = _conn_sync_connect(self);
+      rv = _conn_sync_connect(self, dsn);
     }
 
     if (rv != 0) {
@@ -1156,6 +1156,60 @@ conn_close(connectionObject *self)
     pthread_mutex_unlock(&self->lock);
     Py_END_ALLOW_THREADS;
 }
+
+
+/* Return a copy of the 'dsn' string with the password scrubbed.
+ *
+ * The string returned is allocated on the Python heap.
+ *
+ * In case of error return NULL and raise an exception.
+ */
+char *
+conn_obscure_password(const char *dsn)
+{
+    PQconninfoOption *options = NULL;
+    PyObject *d = NULL, *v = NULL, *pydsn = NULL;
+    char *rv = NULL;
+
+    if (!dsn) {
+        PyErr_SetString(InternalError, "unexpected null string");
+        goto exit;
+    }
+
+    if (!(options = PQconninfoParse(dsn, NULL))) {
+        /* unlikely: the dsn was already tested valid */
+        PyErr_SetString(InternalError, "the connection string is not valid");
+        goto exit;
+    }
+
+    if (!(d = psyco_dict_from_conninfo_options(
+            options, /* include_password = */ 1))) {
+        goto exit;
+    }
+    if (NULL == PyDict_GetItemString(d, "password")) {
+        /* the dsn doesn't have a password */
+        psyco_strdup(&rv, dsn, -1);
+        goto exit;
+    }
+
+    /* scrub the password and put back the connection string together */
+    if (!(v = Text_FromUTF8("xxx"))) { goto exit; }
+    if (0 > PyDict_SetItemString(d, "password", v)) { goto exit; }
+    if (!(pydsn = psyco_make_dsn(Py_None, d))) { goto exit; }
+    if (!(pydsn = psyco_ensure_bytes(pydsn))) { goto exit; }
+
+    /* Return the connection string with the password replaced */
+    psyco_strdup(&rv, Bytes_AS_STRING(pydsn), -1);
+
+exit:
+    PQconninfoFree(options);
+    Py_XDECREF(v);
+    Py_XDECREF(d);
+    Py_XDECREF(pydsn);
+
+    return rv;
+}
+
 
 /* conn_close_locked - shut down the connection with the lock already taken */
 
