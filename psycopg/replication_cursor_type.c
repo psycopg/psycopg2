@@ -211,6 +211,9 @@ send_feedback(replicationCursorObject *self,
     if (write_lsn > self->write_lsn)
         self->write_lsn = write_lsn;
 
+    if (flush_lsn > self->explicitly_flushed_lsn)
+        self->explicitly_flushed_lsn = flush_lsn;
+
     if (flush_lsn > self->flush_lsn)
         self->flush_lsn = flush_lsn;
 
