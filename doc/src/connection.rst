@@ -891,5 +891,5 @@ The ``connection`` class
 
     conn.rollback()
 
-.. _PgBouncer: http://pgbouncer.projects.postgresql.org/
+.. _PgBouncer: https://pgbouncer.github.io/
 
