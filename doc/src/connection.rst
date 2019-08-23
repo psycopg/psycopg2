@@ -117,8 +117,6 @@ The ``connection`` class
             with a `~connection.commit()`/`~connection.rollback()` before
             closing.
 
-            .. _PgBouncer: http://pgbouncer.projects.postgresql.org/
-
 
     .. index::
         single: Exceptions; In the connection class
@@ -828,6 +826,9 @@ The ``connection`` class
         Note that the PID belongs to a process executing on the database
         server host, not the local host!
 
+        .. warning:: Behaviour of the ``get_backend_pid`` is undefined when
+                     connecting to some sort of proxy, like PgBouncer_.
+
         .. seealso:: libpq docs for `PQbackendPID()`__ for details.
 
             .. __: https://www.postgresql.org/docs/current/static/libpq-status.html#LIBPQ-PQBACKENDPID
@@ -889,3 +890,6 @@ The ``connection`` class
     :hide:
 
     conn.rollback()
+
+.. _PgBouncer: http://pgbouncer.projects.postgresql.org/
+
