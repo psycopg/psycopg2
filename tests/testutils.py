@@ -429,3 +429,20 @@ def slow(f):
             return self.skipTest("slow test")
         return f(self)
     return slow_
+
+
+def restore_types(f):
+    """Decorator to restore the adaptation system after running a test"""
+    @wraps(f)
+    def restore_types_(self):
+        types = psycopg2.extensions.string_types.copy()
+        adapters = psycopg2.extensions.adapters.copy()
+        try:
+            return f(self)
+        finally:
+            psycopg2.extensions.string_types.clear()
+            psycopg2.extensions.string_types.update(types)
+            psycopg2.extensions.adapters.clear()
+            psycopg2.extensions.adapters.update(adapters)
+
+    return restore_types_

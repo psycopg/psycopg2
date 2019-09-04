@@ -30,7 +30,7 @@ import platform
 
 from . import testutils
 import unittest
-from .testutils import PY2, long, text_type, ConnectingTestCase
+from .testutils import PY2, long, text_type, ConnectingTestCase, restore_types
 
 import psycopg2
 from psycopg2.extensions import AsIs, adapt, register_adapter
@@ -430,6 +430,7 @@ class AdaptSubclassTest(unittest.TestCase):
         s2 = Sub(s1)
         self.assertEqual(adapt(s1).getquoted(), adapt(s2).getquoted())
 
+    @restore_types
     def test_adapt_most_specific(self):
         class A(object):
             pass
@@ -442,13 +443,10 @@ class AdaptSubclassTest(unittest.TestCase):
 
         register_adapter(A, lambda a: AsIs("a"))
         register_adapter(B, lambda b: AsIs("b"))
-        try:
-            self.assertEqual(b'b', adapt(C()).getquoted())
-        finally:
-            del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
-            del psycopg2.extensions.adapters[B, psycopg2.extensions.ISQLQuote]
+        self.assertEqual(b'b', adapt(C()).getquoted())
 
     @testutils.skip_from_python(3)
+    @restore_types
     def test_no_mro_no_joy(self):
         class A:
             pass
@@ -457,12 +455,10 @@ class AdaptSubclassTest(unittest.TestCase):
             pass
 
         register_adapter(A, lambda a: AsIs("a"))
-        try:
-            self.assertRaises(psycopg2.ProgrammingError, adapt, B())
-        finally:
-            del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
+        self.assertRaises(psycopg2.ProgrammingError, adapt, B())
 
     @testutils.skip_before_python(3)
+    @restore_types
     def test_adapt_subtype_3(self):
         class A:
             pass
@@ -471,10 +467,7 @@ class AdaptSubclassTest(unittest.TestCase):
             pass
 
         register_adapter(A, lambda a: AsIs("a"))
-        try:
-            self.assertEqual(b"a", adapt(B()).getquoted())
-        finally:
-            del psycopg2.extensions.adapters[A, psycopg2.extensions.ISQLQuote]
+        self.assertEqual(b"a", adapt(B()).getquoted())
 
     def test_conform_subclass_precedence(self):
         class foo(tuple):
