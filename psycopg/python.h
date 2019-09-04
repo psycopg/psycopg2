@@ -91,6 +91,11 @@ typedef unsigned long Py_uhash_t;
 
 #define INIT_MODULE(m) init ## m
 
+/* fix #961, but don't change all types to longs. Sure someone will complain. */
+#define PyLong_FromOid(x) (((x) & 0x80000000) ? \
+    PyLong_FromUnsignedLong((unsigned long)(x)) : \
+    PyInt_FromLong((x)))
+
 #endif  /* PY_2 */
 
 #if PY_3
@@ -133,6 +138,11 @@ typedef unsigned long Py_uhash_t;
 
 #define INIT_MODULE(m) PyInit_ ## m
 
+#define PyLong_FromOid(x) (PyLong_FromUnsignedLong((unsigned long)(x)))
+
 #endif  /* PY_3 */
+
+/* expose Oid attributes in Python C objects */
+#define T_OID T_UINT
 
 #endif /* !defined(PSYCOPG_PYTHON_H) */

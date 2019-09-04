@@ -176,7 +176,7 @@ lobject_open(lobjectObject *self, connectionObject *conn,
                 self->oid = lo_creat(self->conn->pgconn, INV_READ | INV_WRITE);
         }
 
-        Dprintf("lobject_open: large object created with oid = %d",
+        Dprintf("lobject_open: large object created with oid = %u",
                 self->oid);
 
         if (self->oid == InvalidOid) {

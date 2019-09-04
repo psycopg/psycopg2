@@ -995,9 +995,9 @@ _get_cast(cursorObject *curs, PGresult *pgres, int i)
     PyObject *rv = NULL;
 
     Oid ftype = PQftype(pgres, i);
-    if (!(type = PyInt_FromLong(ftype))) { goto exit; }
+    if (!(type = PyLong_FromOid(ftype))) { goto exit; }
 
-    Dprintf("_pq_fetch_tuples: looking for cast %d:", ftype);
+    Dprintf("_pq_fetch_tuples: looking for cast %u:", ftype);
     if (!(cast = curs_get_cast(curs, type))) { goto exit; }
 
     /* else if we got binary tuples and if we got a field that
@@ -1006,11 +1006,11 @@ _get_cast(cursorObject *curs, PGresult *pgres, int i)
     */
     if (cast == psyco_default_binary_cast && PQbinaryTuples(pgres)) {
         Dprintf("_pq_fetch_tuples: Binary cursor and "
-                "binary field: %i using default cast", ftype);
+                "binary field: %u using default cast", ftype);
         cast = psyco_default_cast;
     }
 
-    Dprintf("_pq_fetch_tuples: using cast at %p for type %d", cast, ftype);
+    Dprintf("_pq_fetch_tuples: using cast at %p for type %u", cast, ftype);
 
     /* success */
     Py_INCREF(cast);
@@ -1041,7 +1041,7 @@ _make_column(connectionObject *conn, PGresult *pgres, int i)
     /* fill the type and name fields */
     {
         PyObject *tmp;
-        if (!(tmp = PyInt_FromLong(ftype))) {
+        if (!(tmp = PyLong_FromOid(ftype))) {
             goto exit;
         }
         column->type_code = tmp;
@@ -1099,7 +1099,7 @@ _make_column(connectionObject *conn, PGresult *pgres, int i)
     /* table_oid, table_column */
     if (ftable != InvalidOid) {
         PyObject *tmp;
-        if (!(tmp = PyInt_FromLong((long)ftable))) { goto exit; }
+        if (!(tmp = PyLong_FromOid(ftable))) { goto exit; }
         column->table_oid = tmp;
     }
 
