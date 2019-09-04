@@ -1827,7 +1827,7 @@ static struct PyMemberDef cursorObject_members[] = {
         "Number of records ``iter(cur)`` must fetch per network roundtrip."},
     {"description", T_OBJECT, OFFSETOF(description), READONLY,
         "Cursor description as defined in DBAPI-2.0."},
-    {"lastrowid", T_LONG, OFFSETOF(lastoid), READONLY,
+    {"lastrowid", T_OID, OFFSETOF(lastoid), READONLY,
         "The ``oid`` of the last row inserted by the cursor."},
     /* DBAPI-2.0 extensions */
     {"rownumber", T_LONG, OFFSETOF(row), READONLY,

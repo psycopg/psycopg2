@@ -968,7 +968,7 @@ psyco_conn_lobject(connectionObject *self, PyObject *args, PyObject *keywds)
     Dprintf("psyco_conn_lobject: new lobject for connection at %p", self);
     Dprintf("psyco_conn_lobject:     parameters: oid = %u, mode = %s",
             oid, smode);
-    Dprintf("psyco_conn_lobject:     parameters: new_oid = %d, new_file = %s",
+    Dprintf("psyco_conn_lobject:     parameters: new_oid = %u, new_file = %s",
             new_oid, new_file);
 
     if (new_file)

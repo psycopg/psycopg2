@@ -327,7 +327,7 @@ static struct PyMethodDef lobjectObject_methods[] = {
 /* object member list */
 
 static struct PyMemberDef lobjectObject_members[] = {
-    {"oid", T_UINT, offsetof(lobjectObject, oid), READONLY,
+    {"oid", T_OID, offsetof(lobjectObject, oid), READONLY,
         "The backend OID associated to this lobject."},
     {"mode", T_STRING, offsetof(lobjectObject, smode), READONLY,
         "Open mode."},
@@ -368,7 +368,7 @@ lobject_setup(lobjectObject *self, connectionObject *conn,
 
    Dprintf("lobject_setup: good lobject object at %p, refcnt = "
            FORMAT_CODE_PY_SSIZE_T, self, Py_REFCNT(self));
-   Dprintf("lobject_setup:    oid = %d, fd = %d", self->oid, self->fd);
+   Dprintf("lobject_setup:    oid = %u, fd = %d", self->oid, self->fd);
    return 0;
 }
 
