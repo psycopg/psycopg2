@@ -97,6 +97,10 @@ Real dictionary cursor
 `namedtuple` cursor
 ^^^^^^^^^^^^^^^^^^^^
 
+This type of cursor is especially well suited if you need to fetch and process a
+large number of similar rows at once, because tuples occupy less memory than
+dicts.
+
 .. versionadded:: 2.3
 
 .. autoclass:: NamedTupleCursor
@@ -108,6 +112,37 @@ Real dictionary cursor
         Not very useful since Psycopg 2.5: you can use `psycopg2.connect`\
         ``(dsn, cursor_factory=NamedTupleCursor)`` instead of
         `!NamedTupleConnection`.
+
+
+.. index::
+    pair: Cursor; Row
+
+`Row` cursor
+^^^^^^^^^^^^
+
+This type of cursor is especially well suited if you want rows to be mutable.
+
+The rows support both dict-style and attribute-style lookups and assignments, in
+addition to index-based lookups. However, index-based assigments aren't allowed.
+
+    >>> cur = conn.cursor(cursor_factory=psycopg2.extras.HybridRowCursor)
+    >>> cur.execute("SELECT 1 as key, 'foo' as value")
+    >>> row = cur.fetchone()
+    >>> row[0] == row['key'] == row.key == 1
+    True
+    >>> key, value = row
+    >>> (key, value)
+    (1, 'foo')
+    >>> row.value = 'bar'
+    >>> row.timestamp = '2019-09-20 13:15:22.060537+00'
+    >>> row
+    Row(key=1, value='bar', timestamp='2019-09-20 13:15:22.060537+00')
+
+.. versionadded:: 2.9
+
+.. autoclass:: HybridRowCursor
+
+.. autoclass:: HybridRow
 
 
 .. index::

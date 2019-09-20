@@ -403,16 +403,9 @@ NamedTupleCursor._cached_make_nt = classmethod(_cached_make_nt)
 class HybridRow(object):
     """A versatile row type.
 
-    This class implements both dict-style and attribute-style lookups and
-    assignments, in addition to index-based lookups. However, index-based
-    assigments aren't allowed.
-
-    Assignments aren't limited to the initial columns, extra attributes can be
-    added.
-
-    Beware that although hybrid rows support dict-style lookups and assigments,
-    they do not have the standard :class:`dict` methods (:meth:`~dict.get`,
-    :meth:`~dict.items`, etc.).
+    Although hybrid rows support item lookups and assigments, they are not
+    instances of the :class:`dict` class and they don't have its methods
+    (:meth:`~dict.get`, :meth:`~dict.items`, etc.).
 
     """
 
