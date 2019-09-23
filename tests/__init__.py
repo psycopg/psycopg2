@@ -48,6 +48,7 @@ from . import test_ipaddress
 from . import test_lobject
 from . import test_module
 from . import test_notify
+from . import test_pool
 from . import test_psycopg2_dbapi20
 from . import test_quote
 from . import test_replication
@@ -93,6 +94,7 @@ def test_suite():
     suite.addTest(test_lobject.test_suite())
     suite.addTest(test_module.test_suite())
     suite.addTest(test_notify.test_suite())
+    suite.addTest(test_pool.test_suite())
     suite.addTest(test_psycopg2_dbapi20.test_suite())
     suite.addTest(test_quote.test_suite())
     suite.addTest(test_replication.test_suite())

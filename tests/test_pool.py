@@ -20,33 +20,22 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
-from datetime import datetime, timedelta
+import unittest
+
 import psycopg2
 import psycopg2.pool as psycopg_pool
 import psycopg2.extensions as _ext
 
-from testutils import (unittest, ConnectingTestCase, skip_before_postgres,
-    skip_if_no_namedtuple, skip_if_no_getrefcount, slow, skip_if_no_superuser,
-    skip_if_windows)
+from .testutils import ConnectingTestCase
 
-from testconfig import dsn, dbname
+from .testconfig import dsn, dbname
 
 class PoolTests(ConnectingTestCase):
     def test_caching_pool_get_conn(self):
         """Test the call to getconn. Should just return an open connection."""
         lifetime = 30
-        pool = psycopg_pool.CachingConnectionPool(0, 1, lifetime, dsn)
+        pool = psycopg_pool.SimpleConnectionPool(0, 1, dsn, idle_timeout=lifetime)
         conn = pool.getconn()
-        expected_expires = datetime.now() + timedelta(seconds = lifetime)
-
-        #Verify we have one entry in the expiration table
-        self.assertEqual(len(pool._expirations), 1)
-        actual_expires = pool._expirations[id(conn)]
-
-        # there may be some slight variation between when we created the connection
-        # and our "expected" expiration.
-        # Should be negligable, however
-        self.assertAlmostEqual(expected_expires, actual_expires, delta = timedelta(seconds = 1))
 
         #make sure we got an open connection
         self.assertFalse(conn.closed)
@@ -54,26 +43,24 @@ class PoolTests(ConnectingTestCase):
         #Try again. We should get an error, since we only allowed one connection
         self.assertRaises(psycopg2.pool.PoolError, pool.getconn)
 
-        # Put the connection back, then get it again. The expiration time should increment
-        # If this test is consistantly failing, we may need to add a "sleep" to force
-        # some real time between connections, but as long as the precision of
-        # datetime is high enough, this should work. All we care is that new_expires
-        # is greater than the original expiration time
+        # Put the connection back, the return time should be set.
         pool.putconn(conn)
-        conn = pool.getconn()
-        new_expires = pool._expirations[id(conn)]
-        self.assertGreater(new_expires, actual_expires)
+        self.assertIn(id(conn), pool._return_times)
+
+        # Get the connection back.
+        new_conn = pool.getconn()
+        self.assertIs(new_conn, conn)
 
     def test_caching_pool_prune(self):
         """Test the prune function to make sure it closes conenctions and removes them from the pool"""
-        pool = psycopg_pool.CachingConnectionPool(0, 3, 30, dsn)
+        pool = psycopg_pool.SimpleConnectionPool(0, 3, dsn, idle_timeout=30)
 
         # Get a connection that we use, so it can't be pruned.
         sticky_conn = pool.getconn()
         self.assertFalse(sticky_conn in pool._pool)
         self.assertTrue(sticky_conn in pool._used.values())
         self.assertFalse(sticky_conn.closed)
-        self.assertTrue(id(sticky_conn) in pool._expirations)
+        self.assertFalse(id(sticky_conn) in pool._return_times)
 
         # create a second connection that is put back into the pool, available to be pruned.
         conn = pool.getconn()
@@ -89,21 +76,19 @@ class PoolTests(ConnectingTestCase):
         self.assertTrue(conn in pool._pool)
         self.assertFalse(conn in pool._used.values())
         self.assertFalse(conn.closed)
-        self.assertTrue(id(conn) in pool._expirations)
+        self.assertTrue(id(conn) in pool._return_times)
 
         self.assertTrue(new_conn in pool._pool)
         self.assertFalse(new_conn in pool._used.values())
         self.assertFalse(new_conn.closed)
-        self.assertTrue(id(new_conn) in pool._expirations)
+        self.assertTrue(id(new_conn) in pool._return_times)
 
         self.assertNotEqual(conn, sticky_conn)
         self.assertNotEqual(new_conn, conn)
 
         #Make the connections expire a minute ago (but not new_con)
-        old_expire = datetime.now() - timedelta(minutes = 1)
-
-        pool._expirations[id(conn)] = old_expire
-        pool._expirations[id(sticky_conn)] = old_expire
+        pool._return_times[id(conn)] -= 60
+        pool._return_times[id(sticky_conn)] = pool._return_times[id(conn)]
 
         #prune connections
         pool._prune()
@@ -112,34 +97,17 @@ class PoolTests(ConnectingTestCase):
         # but the used connection isn't
         self.assertFalse(conn in pool._pool)
         self.assertTrue(conn.closed)
-        self.assertFalse(id(conn) in pool._expirations)
+        self.assertFalse(id(conn) in pool._return_times)
 
         self.assertFalse(sticky_conn.closed)
-        self.assertTrue(id(sticky_conn) in pool._expirations)
+        self.assertTrue(id(sticky_conn) in pool._return_times)
 
         # The un-expired connection should still exist and be open
         self.assertFalse(new_conn.closed)
-        self.assertTrue(id(new_conn) in pool._expirations)
-
-    def test_caching_pool_prune_missing_connection(self):
-        pool = psycopg_pool.CachingConnectionPool(0, 1, 30, dsn)
-        conn = pool.getconn(key = "test")
-
-        self.assertTrue("test" in pool._used)
-
-        #connection got lost somehow.
-        del pool._used["test"]
-
-        #expire this connection
-        old_expire = datetime.now() - timedelta(minutes = 1)
-
-        pool._expirations[id(conn)] = old_expire
-
-        # and prune
-        pool._prune()
+        self.assertTrue(id(new_conn) in pool._return_times)
 
     def test_caching_pool_prune_below_min(self):
-        pool = psycopg_pool.CachingConnectionPool(1, 1, 30, dsn)
+        pool = psycopg_pool.SimpleConnectionPool(1, 1, dsn, idle_timeout=30)
         conn = pool.getconn()
         self.assertFalse(conn in pool._pool)
 
@@ -156,7 +124,7 @@ class PoolTests(ConnectingTestCase):
 
 
     def test_caching_pool_putconn_normal(self):
-        pool = psycopg_pool.CachingConnectionPool(0, 1, 30, dsn)
+        pool = psycopg_pool.SimpleConnectionPool(0, 1, dsn, idle_timeout=30)
         conn = pool.getconn()
         self.assertFalse(conn in pool._pool)
 
@@ -164,50 +132,39 @@ class PoolTests(ConnectingTestCase):
         self.assertTrue(conn in pool._pool)
 
     def test_caching_pool_putconn_closecon(self):
-        pool = psycopg_pool.CachingConnectionPool(0, 1, 30, dsn)
+        pool = psycopg_pool.SimpleConnectionPool(0, 1, dsn, idle_timeout=30)
         conn = pool.getconn()
         self.assertFalse(conn in pool._pool)
 
         pool.putconn(conn, close = True)
         self.assertFalse(conn in pool._pool)
-        self.assertFalse(id(conn) in pool._expirations)
+        self.assertFalse(id(conn) in pool._return_times)
 
-    def test_caching_pool_putconn_closecon_noexp(self):
-        pool = psycopg_pool.CachingConnectionPool(0, 1, 30, dsn)
-        conn = pool.getconn()
-        self.assertFalse(conn in pool._pool)
-
-        # Something went haywire with the prune, and the expiration information
-        # for this connection got lost.
-        del pool._expirations[id(conn)]
-        self.assertFalse(id(conn) in pool._expirations)
-
-        # Should still work without error
-        pool.putconn(conn, close = True)
-        self.assertFalse(conn in pool._pool)
-
-    def test_caching_pool_putconn_expired(self):
-        pool = psycopg_pool.CachingConnectionPool(0, 1, 30, dsn)
+    def test_caching_pool_getconn_expired(self):
+        pool = psycopg_pool.SimpleConnectionPool(0, 1, dsn, idle_timeout=30)
         conn = pool.getconn()
 
         #expire the connection
-        pool._expirations[id(conn)] = datetime.now() - timedelta(minutes = 1)
         pool.putconn(conn)
+        pool._return_times[id(conn)] -= 60
 
         #connection should be discarded
+        new_conn = pool.getconn()
+        self.assertIsNot(new_conn, conn)
         self.assertFalse(conn in pool._pool)
-        self.assertFalse(id(conn) in pool._expirations)
+        self.assertFalse(id(conn) in pool._return_times)
         self.assertTrue(conn.closed)
 
     def test_caching_pool_putconn_unkeyed(self):
-        pool = psycopg_pool.CachingConnectionPool(0, 1, 30, dsn)
+        pool = psycopg_pool.SimpleConnectionPool(0, 1, dsn, idle_timeout=30)
 
-        #Test put with empty key
+        #Test put with missing key
         conn = pool.getconn()
-        self.assertRaises(psycopg_pool.PoolError, pool.putconn, conn, '')
+        del pool._rused[id(conn)]
+        self.assertRaises(psycopg_pool.PoolError, pool.putconn, conn)
 
     def test_caching_pool_putconn_errorState(self):
-        pool = psycopg_pool.CachingConnectionPool(0, 1, 30, dsn)
+        pool = psycopg_pool.SimpleConnectionPool(0, 1, dsn, idle_timeout=30)
         conn = pool.getconn()
 
         #Get connection into transaction state
@@ -228,54 +185,26 @@ class PoolTests(ConnectingTestCase):
         self.assertTrue(conn in pool._pool)
 
     def test_caching_pool_putconn_closed(self):
-        pool = psycopg_pool.CachingConnectionPool(0, 1, 30, dsn)
+        pool = psycopg_pool.SimpleConnectionPool(0, 1, dsn, idle_timeout=30)
         conn = pool.getconn()
 
-        #Open connection with expiration
+        # The connection should be open and shouldn't have a return time.
         self.assertFalse(conn.closed)
-        self.assertTrue(id(conn) in pool._expirations)
+        self.assertFalse(id(conn) in pool._return_times)
 
         conn.close()
 
-        # Now should be closed, but still have expiration entry
+        # Now should be closed
         self.assertTrue(conn.closed)
-        self.assertTrue(id(conn) in pool._expirations)
 
         pool.putconn(conn)
 
-        # we should not have an expiration any more
-        self.assertFalse(id(conn) in pool._expirations)
-
-        # and the connection should have been discarded
+        # the connection should have been discarded
         self.assertFalse(conn in pool._pool)
-
-    def test_caching_pool_putconn_closed_noexp(self):
-        pool = psycopg_pool.CachingConnectionPool(0, 1, 30, dsn)
-        conn = pool.getconn()
-
-        #Open connection with expiration
-        self.assertFalse(conn.closed)
-        self.assertTrue(id(conn) in pool._expirations)
-
-        conn.close()
-
-        # Now should be closed, but still have expiration entry
-        self.assertTrue(conn.closed)
-        self.assertTrue(id(conn) in pool._expirations)
-
-        # Delete the expiration entry to simulate confusion
-        del pool._expirations[id(conn)]
-
-        # we should not have an expiration any more
-        self.assertFalse(id(conn) in pool._expirations)
-
-        pool.putconn(conn)
-
-        # and the connection should have been discarded, without error
-        self.assertFalse(conn in pool._pool)
+        self.assertFalse(id(conn) in pool._return_times)
 
     def test_caching_pool_caching(self):
-        pool = psycopg_pool.CachingConnectionPool(0, 10, 30, dsn)
+        pool = psycopg_pool.SimpleConnectionPool(0, 10, dsn, idle_timeout=30)
 
         # Get a connection to use to check the number of connections
         check_conn = pool.getconn()
@@ -292,8 +221,6 @@ class PoolTests(ConnectingTestCase):
         #Get a couple more connections
         conn2 = pool.getconn()
         conn3 = pool.getconn()
-
-        self.assertEqual(len(pool._expirations), 3)
 
         self.assertNotEqual(conn2, conn3)
 
@@ -324,13 +251,12 @@ class PoolTests(ConnectingTestCase):
         self.assertEqual(total_cons_after_get, total_cons)
 
     def test_caching_pool_closeall(self):
-        pool = psycopg_pool.CachingConnectionPool(0, 10, 30, dsn)
+        pool = psycopg_pool.SimpleConnectionPool(0, 10, dsn, idle_timeout=30)
         conn1 = pool.getconn()
         conn2 = pool.getconn()
         pool.putconn(conn2)
 
         self.assertEqual(len(pool._pool), 1)  #1 in use, 1 put back
-        self.assertEqual(len(pool._expirations), 2)  # We have two expirations for two connections
         self.assertEqual(len(pool._used), 1)  # and we have one used connection
 
         # Both connections should be open at this point
@@ -348,8 +274,16 @@ class PoolTests(ConnectingTestCase):
         # self.assertEqual(len(pool._used), 0)
         # self.assertEqual(len(pool._pool), 0)
 
-        # To maintain consistancy with existing code, closeall doesn't mess with the _expirations dict either
-        # self.assertEqual(len(pool._expirations), 0)
+        # To maintain consistancy with existing code, closeall doesn't mess with the _return_times dict either
+        # self.assertEqual(len(pool._return_times), 0)
 
         #We should get an error if we try to put conn1 back now
         self.assertRaises(psycopg2.pool.PoolError, pool.putconn, conn1)
+
+
+def test_suite():
+    return unittest.TestLoader().loadTestsFromName(__name__)
+
+
+if __name__ == "__main__":
+    unittest.main()

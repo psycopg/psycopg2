@@ -24,6 +24,12 @@ This module implements thread-safe (and not) connection pools.
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
+try:
+    from time import process_time
+except ImportError:
+    # For Python < 3.3
+    from time import clock as process_time
+
 import psycopg2
 from psycopg2 import extensions as _ext
 
@@ -44,6 +50,7 @@ class AbstractConnectionPool(object):
         """
         self.minconn = int(minconn)
         self.maxconn = int(maxconn)
+        self.idle_timeout = kwargs.pop('idle_timeout', 0)
         self.closed = False
 
         self._args = args
@@ -53,6 +60,7 @@ class AbstractConnectionPool(object):
         self._used = {}
         self._rused = {}    # id(conn) -> key map
         self._keys = 0
+        self._return_times = {}
 
         for i in range(self.minconn):
             self._connect()
@@ -64,6 +72,7 @@ class AbstractConnectionPool(object):
             self._used[key] = conn
             self._rused[id(conn)] = key
         else:
+            self._return_times[id(conn)] = process_time()
             self._pool.append(conn)
         return conn
 
@@ -82,14 +91,26 @@ class AbstractConnectionPool(object):
         if key in self._used:
             return self._used[key]
 
-        if self._pool:
-            self._used[key] = conn = self._pool.pop()
-            self._rused[id(conn)] = key
-            return conn
-        else:
-            if len(self._used) == self.maxconn:
-                raise PoolError("connection pool exhausted")
-            return self._connect(key)
+        while True:
+            try:
+                conn = self._pool.pop()
+            except IndexError:
+                if len(self._used) >= self.maxconn:
+                    raise PoolError("connection pool exhausted")
+                conn = self._connect(key)
+            else:
+                idle_since = self._return_times.pop(id(conn), 0)
+                close = (
+                    conn.info.transaction_status != _ext.TRANSACTION_STATUS_IDLE or
+                    self.idle_timeout and idle_since < (process_time() - self.idle_timeout)
+                )
+                if close:
+                    conn.close()
+                    continue
+            break
+        self._used[key] = conn
+        self._rused[id(conn)] = key
+        return conn
 
     def _putconn(self, conn, key=None, close=False):
         """Put away a connection."""
@@ -101,7 +122,9 @@ class AbstractConnectionPool(object):
             if key is None:
                 raise PoolError("trying to put unkeyed connection")
 
-        if len(self._pool) < self.minconn and not close:
+        if close or self.idle_timeout == 0 and len(self._pool) >= self.minconn:
+            conn.close()
+        else:
             # Return the connection into a consistent state before putting
             # it back into the pool
             if not conn.closed:
@@ -112,19 +135,23 @@ class AbstractConnectionPool(object):
                 elif status != _ext.TRANSACTION_STATUS_IDLE:
                     # connection in error or in transaction
                     conn.rollback()
+                    self._return_times[id(conn)] = process_time()
                     self._pool.append(conn)
                 else:
                     # regular idle connection
+                    self._return_times[id(conn)] = process_time()
                     self._pool.append(conn)
             # If the connection is closed, we just discard it.
-        else:
-            conn.close()
 
         # here we check for the presence of key because it can happen that a
         # thread tries to put back a connection after a call to close
         if not self.closed or key in self._used:
             del self._used[key]
             del self._rused[id(conn)]
+
+        # Open new connections if we've dropped below minconn.
+        while (len(self._pool) + len(self._used)) < self.minconn:
+            self._connect()
 
     def _closeall(self):
         """Close all connections.
@@ -142,6 +169,20 @@ class AbstractConnectionPool(object):
                 pass
         self.closed = True
 
+    def _prune(self):
+        """Drop all expired connections from the pool."""
+        if self.idle_timeout is None:
+            return
+        threshold = process_time() - self.idle_timeout
+        for conn in list(self._pool):
+            if self._return_times.get(id(conn), 0) < threshold:
+                try:
+                    self._pool.remove(conn)
+                except ValueError:
+                    continue
+                self._return_times.pop(id(conn), None)
+                conn.close()
+
 
 class SimpleConnectionPool(AbstractConnectionPool):
     """A connection pool that can't be shared across different threads."""
@@ -149,6 +190,7 @@ class SimpleConnectionPool(AbstractConnectionPool):
     getconn = AbstractConnectionPool._getconn
     putconn = AbstractConnectionPool._putconn
     closeall = AbstractConnectionPool._closeall
+    prune = AbstractConnectionPool._prune
 
 
 class ThreadedConnectionPool(AbstractConnectionPool):
@@ -185,157 +227,10 @@ class ThreadedConnectionPool(AbstractConnectionPool):
         finally:
             self._lock.release()
 
-
-class CachingConnectionPool(AbstractConnectionPool):
-    """A connection pool that works with the threading module and caches connections"""
-
-    #---------------------------------------------------------------------------
-    def __init__(self, minconn, maxconn, lifetime = 3600, *args, **kwargs):
-        """Initialize the threading lock."""
-        import threading
-        from datetime import datetime, timedelta
-
-        AbstractConnectionPool.__init__(
-            self, minconn, maxconn, *args, **kwargs)
-        self._lock = threading.Lock()
-        self._lifetime = lifetime
-
-        #Initalize function to get expiration time.
-        self._expiration_time = lambda: datetime.now() + timedelta(seconds = lifetime)
-
-        # A dictionary to hold connection ID's and when they should be removed from the pool
-        # Keys are id(connection) and vlaues are expiration time
-        # Storing the expiration time on the connection object itself might be
-        # preferable, if possible.
-        self._expirations = {}
-
-    # Override the _putconn function to put the connection back into the pool even if we are over minconn, and to run the _prune command.
-    #---------------------------------------------------------------------------
-    def _putconn(self, conn, key=None, close=False):
-        """Put away a connection."""
-        if self.closed:
-            raise PoolError("connection pool is closed")
-        if key is None:
-            key = self._rused.get(id(conn))
-
-        if not key:
-            raise PoolError("trying to put unkeyed connection")
-
-        if len(self._pool) < self.maxconn and not close:
-            # Return the connection into a consistent state before putting
-            # it back into the pool
-            if not conn.closed:
-                status = conn.get_transaction_status()
-                if status == _ext.TRANSACTION_STATUS_UNKNOWN:
-                    # server connection lost
-                    conn.close()
-                    try:
-                        del self._expirations[id(conn)]
-                    except KeyError:
-                        pass
-                elif status != _ext.TRANSACTION_STATUS_IDLE:
-                    # connection in error or in transaction
-                    conn.rollback()
-                    self._pool.append(conn)
-                else:
-                    # regular idle connection
-                    self._pool.append(conn)
-            # If the connection is closed, we just discard it.
-            else:
-                try:
-                    del self._expirations[id(conn)]
-                except KeyError:
-                    pass
-        else:
-            conn.close()
-            #remove this connection from the expiration list
-            try:
-                del self._expirations[id(conn)]
-            except KeyError:
-                pass  #not in the expiration list for some reason, can't remove it.
-
-        # here we check for the presence of key because it can happen that a
-        # thread tries to put back a connection after a call to close
-        if not self.closed or key in self._used:
-            del self._used[key]
-            del self._rused[id(conn)]
-
-        # remove any expired connections from the pool
-        self._prune()
-
-    #---------------------------------------------------------------------------
-    def getconn(self, key=None):
-        """Get a free connection and assign it to 'key' if not None."""
+    def prune(self):
+        """Drop all expired connections from the pool."""
         self._lock.acquire()
         try:
-            conn = self._getconn(key)
-            #Add expiration time
-            self._expirations[id(conn)] = self._expiration_time()
-            return conn
+            self._prune()
         finally:
             self._lock.release()
-
-    #---------------------------------------------------------------------------
-    def putconn(self, conn=None, key=None, close=False):
-        """Put away an unused connection."""
-        self._lock.acquire()
-        try:
-            self._putconn(conn, key, close)
-        finally:
-            self._lock.release()
-
-    #---------------------------------------------------------------------------
-    def closeall(self):
-        """Close all connections (even the one currently in use.)"""
-        self._lock.acquire()
-        try:
-            self._closeall()
-        finally:
-            self._lock.release()
-
-    #---------------------------------------------------------------------------
-    def _prune(self):
-        """Remove any expired connections from the connection pool."""
-        from datetime import datetime
-        junk_expirations = []
-        for obj_id, exp_time in self._expirations.items():
-            if exp_time > datetime.now():  # Not expired, move on.
-                continue;
-
-            del_idx = None
-            #find index of connection in _pool. May not be there if connection is in use
-            for index, conn in enumerate(self._pool):
-                if id(conn) == obj_id:
-                    conn.close()
-                    junk_expirations.append(obj_id)
-                    del_idx = index
-                    break
-            else:
-                # See if this connection is used. If not, we need to remove
-                # the reference to it.
-                for conn in self._used.values():
-                    if id(conn) == obj_id:
-                        break  #found it, so just move on. Don't expire the
-                                # connection till we are done with it.
-                else:
-                    # This connection doesn't exist any more, so get rid
-                    # of the reference to the expiration.
-                    # Can't delete here because we'd be changing the item
-                    # we are itterating over.
-                    junk_expirations.append(obj_id)
-
-            # Delete connection from pool if expired
-            if del_idx is not None:
-                del self._pool[del_idx]
-
-        # Remove any junk expirations
-        for item in junk_expirations:
-            # Should be safe enough, since it existed in the loop above
-            del self._expirations[item]
-
-        # Make sure we still have at least minconn connections
-        # Connections may be available or used
-        total_conns = len(self._pool) + len(self._used)
-        if  total_conns < self.minconn:
-            for i in range(self.minconn - total_conns):
-                self._connect()

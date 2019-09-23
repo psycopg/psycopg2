@@ -12,13 +12,22 @@ Creating new PostgreSQL connections can be an expensive operation.  This
 module offers a few pure Python classes implementing simple connection pooling
 directly in the client application.
 
-.. class:: AbstractConnectionPool(minconn, maxconn, \*args, \*\*kwargs)
+.. class:: AbstractConnectionPool(minconn, maxconn, \*args, idle_timeout=0, \*\*kwargs)
 
     Base class implementing generic key-based pooling code.
 
     New *minconn* connections are created automatically. The pool will support
     a maximum of about *maxconn* connections.  *\*args* and *\*\*kwargs* are
     passed to the `~psycopg2.connect()` function.
+
+    Connections are kept in the pool for at most *idle_timeout* seconds. There
+    are two special values: zero means that connections are always immediately
+    closed upon their return to the pool; `None` means that connections are kept
+    indefinitely (leaving the server in charge of closing idle connections). The
+    current default value is zero because it replicates the behavior of previous
+    versions, however the default value may be changed in a future release.
+
+    .. versionadded:: 2.9 the *idle_timeout* argument.
 
     The following methods are expected to be implemented by subclasses:
 
@@ -44,6 +53,14 @@ directly in the client application.
         Note that all the connections are closed, including ones
         eventually in use by the application.
 
+    .. method:: prune
+
+        Drop all expired connections from the pool.
+
+        You can call this method periodically to clean up the pool.
+
+        .. versionadded:: 2.9
+
 
 The following classes are `AbstractConnectionPool` subclasses ready to
 be used.
@@ -58,7 +75,3 @@ be used.
 .. autoclass:: ThreadedConnectionPool
 
     .. note:: This pool class can be safely used in multi-threaded applications.
-
-.. autoclass:: CachingConnectionPool
-
-    .. note:: Expired connections are cleaned up on any call to putconn.
