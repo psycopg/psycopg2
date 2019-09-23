@@ -27,7 +27,7 @@ import psycopg2.extensions as _ext
 import psycopg2.pool
 
 from .testconfig import dsn, dbname
-from .testutils import ConnectingTestCase
+from .testutils import ConnectingTestCase, skip_before_postgres
 
 
 class PoolTests(ConnectingTestCase):
@@ -202,6 +202,7 @@ class PoolTests(ConnectingTestCase):
         self.assertFalse(conn in pool._pool)
         self.assertFalse(id(conn) in pool._return_times)
 
+    @skip_before_postgres(8, 2)
     def test_caching(self):
         pool = psycopg2.pool.SimpleConnectionPool(0, 10, dsn, idle_timeout=30)
 
