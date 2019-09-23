@@ -643,7 +643,10 @@ want to convert the float values from :sql:`json` into
     loads = lambda x: json.loads(x, parse_float=Decimal)
     psycopg2.extras.register_json(conn, loads=loads)
 
+By default, psycopg2 uses Python's standard library JSON implementation. Since ujson is much faster, you can improve performance with::
 
+    psycopg2.extras.register_default_json(loads=ujson.loads, globally=True)   
+    psycopg2.extras.register_default_jsonb(loads=ujson.loads, globally=True)   
 
 .. autoclass:: Json
 
