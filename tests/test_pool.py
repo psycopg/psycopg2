@@ -139,6 +139,22 @@ class PoolTests(ConnectingTestCase):
         self.assertFalse(conn in pool._pool)
         self.assertFalse(id(conn) in pool._return_times)
 
+    def test_getconn_closed(self):
+        pool = psycopg2.pool.SimpleConnectionPool(0, 1, dsn, idle_timeout=30)
+        conn = pool.getconn()
+        pool.putconn(conn)
+
+        # Close the connection, it should still be in the pool
+        conn.close()
+        self.assertIn(conn, pool._pool)
+
+        # The connection should be discarded by getconn
+        new_conn = pool.getconn()
+        self.assertIsNot(new_conn, conn)
+        self.assertNotIn(conn, pool._pool)
+        self.assertNotIn(id(conn), pool._return_times)
+        self.assertTrue(conn.closed)
+
     def test_getconn_expired(self):
         pool = psycopg2.pool.SimpleConnectionPool(0, 1, dsn, idle_timeout=30)
         conn = pool.getconn()
