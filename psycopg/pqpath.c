@@ -51,10 +51,10 @@
 #include <winsock2.h>
 /* gettimeofday() */
 #include "win32_support.h"
-#endif
-
-#if defined(__sun) && defined(__SVR4)
+#elif defined(__sun) && defined(__SVR4)
 #include "solaris_support.h"
+#else
+#include <sys/time.h>
 #endif
 
 extern HIDDEN PyObject *psyco_DescriptionType;
