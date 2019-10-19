@@ -16,7 +16,7 @@ How to make a psycopg2 release
     $ export VERSION=2.7
 
 - In the `Travis settings`__ you may want to be sure that the variables
-  ``TEST_PAST`` and ``TEST_FUTURE`` are set to a nonzero string to check all
+  ``TEST_PAST`` and ``TEST_FUTURE`` are set to 1 to check all
   the supported postgres version.
 
 .. __: https://travis-ci.org/psycopg/psycopg2/settings

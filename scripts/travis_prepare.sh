@@ -116,7 +116,7 @@ create () {
 cd /
 
 # Postgres versions supported by Travis CI
-if [[ -z "$DONT_TEST_PRESENT" ]]; then
+if (( ! "$DONT_TEST_PRESENT" )); then
     create 10
     create 9.6
     create 9.5
@@ -125,7 +125,7 @@ fi
 
 # Unsupported postgres versions that we still support
 # Images built by https://github.com/psycopg/psycopg2-wheels/tree/build-dinosaurs
-if [[ -n "$TEST_PAST" ]]; then
+if (( "$TEST_PAST" )); then
     create 7.4
     create 8.0
     create 8.1
@@ -139,6 +139,6 @@ if [[ -n "$TEST_PAST" ]]; then
 fi
 
 # Postgres built from master
-if [[ -n "$TEST_FUTURE" ]]; then
+if (( "$TEST_FUTURE" )); then
     create 11 11-master
 fi
