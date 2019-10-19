@@ -52,6 +52,7 @@ typedef struct replicationCursorObject {
 
     XLogRecPtr  last_msg_data_start; /* WAL pointer to the last non-keepalive message from the server */
     struct timeval last_feedback; /* timestamp of the last feedback message to the server */
+    XLogRecPtr  explicitly_flushed_lsn; /* the flush LSN explicitly set by the send_feedback call */ 
 } replicationCursorObject;
 
 

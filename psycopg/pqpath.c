@@ -1576,7 +1576,9 @@ retry:
 
         /* We can safely forward flush_lsn to the wal_end from the server keepalive message
          * if we know that the client already processed (confirmed) the last XLogData message */
-        if (repl->flush_lsn >= repl->last_msg_data_start && wal_end > repl->flush_lsn) {
+        if (repl->explicitly_flushed_lsn >= repl->last_msg_data_start
+                && wal_end > repl->explicitly_flushed_lsn
+                && wal_end > repl->flush_lsn) {
             repl->flush_lsn = wal_end;
         }
 
