@@ -22,6 +22,11 @@ environment:
       - {PY_VER: "34", PY_ARCH: "32"}
       - {PY_VER: "34", PY_ARCH: "64"}
 
+      # not supported by appveyor as of 2019-10-19
+      # https://www.appveyor.com/docs/windows-images-software/#python
+      # - {PY_VER: "38", PY_ARCH: "32"}
+      # - {PY_VER: "38", PY_ARCH: "64"}
+
     OPENSSL_VERSION: "1_1_1b"
     POSTGRES_VERSION: "11_2"
 

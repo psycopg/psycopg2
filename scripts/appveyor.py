@@ -698,7 +698,7 @@ class Options:
     def py_ver(self):
         """The Python version to build as 2 digits string."""
         rv = os.environ['PY_VER']
-        assert rv in ('27', '34', '35', '36', '37'), rv
+        assert rv in ('27', '34', '35', '36', '37', '38'), rv
         return rv
 
     @property
@@ -773,9 +773,10 @@ class Options:
 
     @property
     def vs_ver(self):
+        # https://wiki.python.org/moin/WindowsCompilers
         # Py 2.7 = VS Ver. 9.0 (VS 2008)
         # Py 3.3, 3.4 = VS Ver. 10.0 (VS 2010)
-        # Py 3.5, 3.6, 3.7 = VS Ver. 14.0 (VS 2015)
+        # Py 3.5--3.8 = VS Ver. 14.0 (VS 2015)
         vsvers = {
             '27': '9.0',
             '33': '10.0',
@@ -783,6 +784,7 @@ class Options:
             '35': '14.0',
             '36': '14.0',
             '37': '14.0',
+            '38': '14.0',
         }
         return vsvers[self.py_ver]
 
