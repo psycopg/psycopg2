@@ -117,6 +117,8 @@ cd /
 
 # Postgres versions supported by Travis CI
 if (( ! "$DONT_TEST_PRESENT" )); then
+    create 12
+    create 11
     create 10
     create 9.6
     create 9.5
@@ -140,5 +142,5 @@ fi
 
 # Postgres built from master
 if (( "$TEST_FUTURE" )); then
-    create 11 11-master
+    create 13 13-master
 fi
