@@ -1,7 +1,5 @@
 # Travis CI configuration file for psycopg2
 
-dist: xenial
-sudo: required
 language: python
 
 matrix:
@@ -11,7 +9,6 @@ matrix:
     - python: 3.6
     - python: 3.5
     - python: 3.4
-      dist: trusty
 
 install:
   - pip install -U pip setuptools wheel
