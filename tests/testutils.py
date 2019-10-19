@@ -425,7 +425,7 @@ def slow(f):
     """
     @wraps(f)
     def slow_(self):
-        if os.environ.get('PSYCOPG2_TEST_FAST'):
+        if os.environ.get('PSYCOPG2_TEST_FAST', '0') != '0':
             return self.skipTest("slow test")
         return f(self)
     return slow_

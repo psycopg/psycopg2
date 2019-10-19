@@ -16,7 +16,7 @@ set -e -x
 run_test () {
     VERSION=$1
     DBNAME=psycopg2_test
-    if [[ -n "$TEST_VERBOSE" ]]; then
+    if (( "$TEST_VERBOSE" )); then
         VERBOSE=--verbose
     else
         VERBOSE=
@@ -45,7 +45,9 @@ run_test () {
 }
 
 # Postgres versions supported by Travis CI
-if [[ -z "$DONT_TEST_PRESENT" ]]; then
+if (( ! "$DONT_TEST_PRESENT" )); then
+    run_test 12
+    run_test 11
     run_test 10
     run_test 9.6
     run_test 9.5
@@ -54,7 +56,7 @@ fi
 
 # Unsupported postgres versions that we still support
 # Images built by https://github.com/psycopg/psycopg2-wheels/tree/build-dinosaurs
-if [[ -n "$TEST_PAST" ]]; then
+if (( "$TEST_PAST" )); then
     run_test 9.3
     run_test 9.2
     run_test 9.1
@@ -68,6 +70,6 @@ if [[ -n "$TEST_PAST" ]]; then
 fi
 
 # Postgres built from master
-if [[ -n "$TEST_FUTURE" ]]; then
-    run_test 11
+if (( "$TEST_FUTURE" )); then
+    run_test 13
 fi
