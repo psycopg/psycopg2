@@ -117,7 +117,7 @@ The ``connection`` class
             with a `~connection.commit()`/`~connection.rollback()` before
             closing.
 
-            .. _PgBouncer: http://pgbouncer.projects.postgresql.org/
+            .. _PgBouncer: http://www.pgbouncer.org/
 
 
     .. index::
@@ -822,8 +822,10 @@ The ``connection`` class
         Also available as `~connection.info`\ `!.`\
         `~psycopg2.extensions.ConnectionInfo.backend_pid`.
 
-        Returns the process ID (PID) of the backend server process handling
-        this connection.
+        Returns the process ID (PID) of the backend server process *you
+        connected to*. Note that if you use a connection pool service such as
+        PgBouncer_ this value will not be updated if your connection is
+        switched to a different backend.
 
         Note that the PID belongs to a process executing on the database
         server host, not the local host!

@@ -362,7 +362,7 @@ socket_get(connInfoObject *self)
 
 
 static const char backend_pid_doc[] =
-"The process ID (PID) of the backend process handling this connection.\n"
+"The process ID (PID) of the backend process you connected to.\n"
 "\n"
 ":type: `!int`\n"
 "\n"
