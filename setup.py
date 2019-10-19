@@ -579,12 +579,6 @@ ext.append(Extension("psycopg2._psycopg", sources,
                      depends=depends,
                      undef_macros=[]))
 
-# Compute the direct download url.
-download_url = (
-    "http://initd.org/psycopg/tarballs/PSYCOPG-%s/psycopg2-%s.tar.gz"
-    % (re.sub(r'^(\d+)\.(\d+).*', r'\1-\2', PSYCOPG_VERSION),
-        PSYCOPG_VERSION))
-
 try:
     f = open("README.rst")
     readme = f.read()
@@ -600,7 +594,6 @@ setup(name="psycopg2",
       author="Federico Di Gregorio",
       author_email="fog@initd.org",
       url="http://initd.org/psycopg/",
-      download_url=download_url,
       license="LGPL with exceptions or ZPL",
       platforms=["any"],
       python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*',
