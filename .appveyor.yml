@@ -27,8 +27,8 @@ environment:
       # - {PY_VER: "38", PY_ARCH: "32"}
       # - {PY_VER: "38", PY_ARCH: "64"}
 
-    OPENSSL_VERSION: "1_1_1b"
-    POSTGRES_VERSION: "11_2"
+    OPENSSL_VERSION: "1_1_1d"
+    POSTGRES_VERSION: "11_5"
 
     PSYCOPG2_TESTDB: psycopg2_test
     PSYCOPG2_TESTDB_USER: postgres
