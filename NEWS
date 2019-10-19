@@ -7,7 +7,9 @@ What's new in psycopg 2.8.4
 - Don't swallow keyboard interrupts on connect when a password is specified
   in the connection string (:ticket:`#898`).
 - Fixed int overflow for large values in `~psycopg2.extensions.Column.table_oid`
-  and `~psycopg2.extensions.Column.type_code` (:ticket:`961).
+  and `~psycopg2.extensions.Column.type_code` (:ticket:`961`).
+- `~psycopg2.errorcodes` map and `~psycopg2.errors` classes updated to
+  PostgreSQL 12.
 
 
 What's new in psycopg 2.8.3

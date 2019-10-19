@@ -33,7 +33,7 @@ def main():
     file_start = read_base_file(filename)
     # If you add a version to the list fix the docs (in errorcodes.rst)
     classes, errors = fetch_errors(
-        ['9.1', '9.2', '9.3', '9.4', '9.5', '9.6', '10', '11'])
+        ['9.1', '9.2', '9.3', '9.4', '9.5', '9.6', '10', '11', '12'])
 
     f = open(filename, "w")
     for line in file_start:
@@ -108,12 +108,6 @@ def fetch_errors(versions):
         # This error was in old server versions but probably never used
         # https://github.com/postgres/postgres/commit/12f87b2c82
         errors['22']['22020'] = 'INVALID_LIMIT_VALUE'
-
-        # TODO: this error was added in PG 10 beta 1 but dropped in the
-        # final release. It doesn't harm leaving it in the file. Check if it
-        # will be added back in PG 12.
-        # https://github.com/postgres/postgres/commit/28e0727076
-        errors['55']['55P04'] = 'UNSAFE_NEW_ENUM_VALUE_USAGE'
 
         for c, cerrs in e1.items():
             errors[c].update(cerrs)
