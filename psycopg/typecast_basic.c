@@ -114,16 +114,27 @@ typecast_UNICODE_cast(const char *s, Py_ssize_t len, PyObject *curs)
 static PyObject *
 typecast_BOOLEAN_cast(const char *s, Py_ssize_t len, PyObject *curs)
 {
-    PyObject *res;
+    PyObject *res = NULL;
 
     if (s == NULL) { Py_RETURN_NONE; }
 
-    if (s[0] == 't')
-        res = Py_True;
-    else
-        res = Py_False;
+    switch (s[0]) {
+        case 't':
+        case 'T':
+            res = Py_True;
+            break;
 
-    Py_INCREF(res);
+        case 'f':
+        case 'F':
+            res = Py_False;
+            break;
+
+        default:
+            PyErr_Format(InterfaceError, "can't parse boolean: '%s'", s);
+            break;
+    }
+
+    Py_XINCREF(res);
     return res;
 }
 
