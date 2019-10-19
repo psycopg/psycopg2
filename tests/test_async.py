@@ -348,6 +348,7 @@ class AsyncTests(ConnectingTestCase):
         cur.connection.poll()
         self.assertEquals(cur.fetchone()[0], 1)
 
+    @slow
     def test_notify(self):
         cur = self.conn.cursor()
         sync_cur = self.sync_conn.cursor()
