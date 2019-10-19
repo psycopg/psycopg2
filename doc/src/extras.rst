@@ -643,6 +643,13 @@ want to convert the float values from :sql:`json` into
     loads = lambda x: json.loads(x, parse_float=Decimal)
     psycopg2.extras.register_json(conn, loads=loads)
 
+Or, if you want to use an alternative JSON module implementation, such as the
+faster UltraJSON_, you can use::
+
+    psycopg2.extras.register_default_json(loads=ujson.loads, globally=True)
+    psycopg2.extras.register_default_jsonb(loads=ujson.loads, globally=True)
+
+.. _UltraJSON: https://pypi.org/project/ujson/
 
 
 .. autoclass:: Json
