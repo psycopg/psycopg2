@@ -4,8 +4,10 @@ Current release
 What's new in psycopg 2.8.4
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Don't swallow keyboard interrupts on connect when a password is specified
-in the connection string (:ticket:`#898`).
+- Don't swallow keyboard interrupts on connect when a password is specified
+  in the connection string (:ticket:`#898`).
+- Don't advance replication cursor when the message wasn't confirmed
+  (:ticket:`#940`).
 
 
 What's new in psycopg 2.8.3
