@@ -39,8 +39,20 @@ create () {
 
     # install postgres versions not available on the image
     if [[ ! -d "${PGDIR}" ]]; then
-        wget -O - http://initd.org/psycopg/upload/postgresql/postgresql-${PACKAGE}-$(lsb_release -cs).tar.bz2 \
-            | sudo tar xjf - -C /usr/lib/postgresql
+        if (( "$VERNUM" >= 904 )); then
+            # A versiou supported by postgres
+            if [[ ! "${apt_updated:-}" ]]; then
+                apt_updated="yeah"
+                sudo apt-get update -y
+            fi
+            sudo apt-get install -y \
+                postgresql-server-dev-${VERSION} postgresql-${VERSION}
+        else
+            # A dinosaur
+            wget -O - \
+                http://initd.org/psycopg/upload/postgresql/postgresql-${PACKAGE}-$(lsb_release -cs).tar.bz2 \
+                | sudo tar xjf - -C /usr/lib/postgresql
+        fi
     fi
 
     sudo -u postgres "$PGBIN/initdb" -D "$DATADIR"
