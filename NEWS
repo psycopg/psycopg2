@@ -14,6 +14,7 @@ What's new in psycopg 2.8.4
   and `~psycopg2.extensions.Column.type_code` (:ticket:`#961`).
 - `~psycopg2.errorcodes` map and `~psycopg2.errors` classes updated to
   PostgreSQL 12.
+- Wheel package compiled against OpenSSL 1.1.1d and PostgreSQL at least 11.4.
 
 
 What's new in psycopg 2.8.3
