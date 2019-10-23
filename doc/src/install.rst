@@ -13,12 +13,15 @@ is a C extension and as such it is only compatible with CPython_. If you want
 to use Psycopg on a different Python implementation (PyPy, Jython, IronPython)
 there is an experimental `porting of Psycopg for Ctypes`__, but it is not as
 mature as the C implementation yet.
+In addition to that port, there is a `CFFI port of Psycopg`__ which is
+faster on PyPy and has seen some success in production environments.
 
 .. _PostgreSQL: https://www.postgresql.org/
 .. _Python: https://www.python.org/
 .. _libpq: https://www.postgresql.org/docs/current/static/libpq.html
 .. _CPython: https://en.wikipedia.org/wiki/CPython
 .. _Ctypes: https://docs.python.org/library/ctypes.html
+.. _`CFFI port of Psycopg`: https://github.com/chtd/psycopg2cffi
 .. __: https://github.com/mvantellingen/psycopg2-ctypes
 
 
