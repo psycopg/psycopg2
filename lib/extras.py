@@ -124,7 +124,7 @@ class DictCursorBase(_cursor):
 class DictConnection(_connection):
     """A connection that uses `DictCursor` automatically."""
     def cursor(self, *args, **kwargs):
-        kwargs.setdefault('cursor_factory', DictCursor)
+        kwargs.setdefault('cursor_factory', self.cursor_factory or DictCursor)
         return super(DictConnection, self).cursor(*args, **kwargs)
 
 
@@ -221,7 +221,7 @@ class DictRow(list):
 class RealDictConnection(_connection):
     """A connection that uses `RealDictCursor` automatically."""
     def cursor(self, *args, **kwargs):
-        kwargs.setdefault('cursor_factory', RealDictCursor)
+        kwargs.setdefault('cursor_factory', self.cursor_factory or RealDictCursor)
         return super(RealDictConnection, self).cursor(*args, **kwargs)
 
 
@@ -291,7 +291,7 @@ class RealDictRow(OrderedDict):
 class NamedTupleConnection(_connection):
     """A connection that uses `NamedTupleCursor` automatically."""
     def cursor(self, *args, **kwargs):
-        kwargs.setdefault('cursor_factory', NamedTupleCursor)
+        kwargs.setdefault('cursor_factory', self.cursor_factory or NamedTupleCursor)
         return super(NamedTupleConnection, self).cursor(*args, **kwargs)
 
 
@@ -442,7 +442,7 @@ class LoggingConnection(_connection):
 
     def cursor(self, *args, **kwargs):
         self._check()
-        kwargs.setdefault('cursor_factory', LoggingCursor)
+        kwargs.setdefault('cursor_factory', self.cursor_factory or LoggingCursor)
         return super(LoggingConnection, self).cursor(*args, **kwargs)
 
 
@@ -485,7 +485,8 @@ class MinTimeLoggingConnection(LoggingConnection):
             return msg + _os.linesep + "  (execution time: %d ms)" % t
 
     def cursor(self, *args, **kwargs):
-        kwargs.setdefault('cursor_factory', MinTimeLoggingCursor)
+        kwargs.setdefault('cursor_factory',
+            self.cursor_factory or MinTimeLoggingCursor)
         return LoggingConnection.cursor(self, *args, **kwargs)
 
 
