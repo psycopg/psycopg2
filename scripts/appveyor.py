@@ -516,15 +516,16 @@ def upload_packages():
     # Upload built artifacts
     logger.info("uploading artifacts")
 
-    ssh_cmd = r"C:\MinGW\msys\1.0\bin\ssh -i %s -o UserKnownHostsFile=%s" % (
-        opt.clone_dir / "id_rsa",
-        opt.clone_dir / 'known_hosts',
+    ssh_cmd = (
+        r"C:\MinGW\msys\1.0\bin\ssh -i %s "
+        "-o UserKnownHostsFile=%s -o StrictHostKeyChecking=yes"
+        % (opt.clone_dir / "id_rsa", opt.clone_dir / 'known_hosts')
     )
 
     os.chdir(opt.package_dir)
     run_command(
         [r"C:\MinGW\msys\1.0\bin\rsync", "-avr"]
-        + ["-e", ssh_cmd, "dist/", "upload@initd.org:"]
+        + ["-e", ssh_cmd, "dist/", "psycopg@upload.psycopg.org:"]
     )
 
 
