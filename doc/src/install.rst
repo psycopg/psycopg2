@@ -257,7 +257,8 @@ In case of problems, Psycopg can be configured to emit detailed debug
 messages, which can be very useful for diagnostics and to report a bug. In
 order to create a debug package:
 
-- `Download`__ and unpack the Psycopg source package.
+- `Download`__ and unpack the Psycopg *source package* (the ``.tar.gz``
+  package).
 
 - Edit the ``setup.cfg`` file adding the ``PSYCOPG_DEBUG`` flag to the
   ``define`` option.
@@ -274,7 +275,7 @@ order to create a debug package:
   one you just compiled and not e.g. the system one): you will have a copious
   stream of informations printed on stderr.
 
-.. __: http://initd.org/psycopg/download/
+.. __: https://pypi.org/project/psycopg2/#files
 
 
 

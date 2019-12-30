@@ -23,7 +23,7 @@ extended and customized thanks to a flexible :ref:`objects adaptation system
 Psycopg 2 is both Unicode and Python 3 friendly.
 
 
-.. _Psycopg: http://initd.org/psycopg/
+.. _Psycopg: http://psycopg.org/
 .. _PostgreSQL: https://www.postgresql.org/
 .. _Python: https://www.python.org/
 .. _libpq: https://www.postgresql.org/docs/current/static/libpq.html

@@ -6,7 +6,7 @@ provide new-style classes for connection and cursor objects and other sweet
 candies. Like the original, psycopg 2 was written with the aim of being very
 small and fast, and stable as a rock.
 
-Homepage: http://initd.org/projects/psycopg2
+Homepage: http://psycopg.org/
 
 .. _PostgreSQL: https://www.postgresql.org/
 .. _Python: https://www.python.org/

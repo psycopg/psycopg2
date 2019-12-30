@@ -104,7 +104,7 @@ If you prefer to avoid building psycopg2 from source, please install the PyPI
 'psycopg2-binary' package instead.
 
 For further information please check the 'doc/src/install.rst' file (also at
-<http://initd.org/psycopg/docs/install.html>).
+<http://www.psycopg.org/docs/install.html>).
 
 """)
             sys.exit(1)
@@ -303,7 +303,7 @@ If you want to install psycopg2 from source, please install the packages
 required for the build and try again.
 
 For further information please check the 'doc/src/install.rst' file (also at
-<http://initd.org/psycopg/docs/install.html>).
+<http://www.psycopg.org/docs/install.html>).
 
 """)
             raise
@@ -590,12 +590,12 @@ except Exception:
 
 setup(name="psycopg2",
       version=PSYCOPG_VERSION,
-      maintainer="Federico Di Gregorio",
-      maintainer_email="fog@initd.org",
       author="Federico Di Gregorio",
       author_email="fog@initd.org",
-      url="http://initd.org/psycopg/",
-      license="LGPL with exceptions or ZPL",
+      maintainer="Daniele Varrazzo",
+      maintainer_email="daniele.varrazzo@gmail.org",
+      url="http://psycopg.org/",
+      license="LGPL with exceptions",
       platforms=["any"],
       python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*',
       description=readme.split("\n")[0],
@@ -607,6 +607,9 @@ setup(name="psycopg2",
       cmdclass={'build_ext': psycopg_build_ext},
       ext_modules=ext,
       project_urls={
-          'Source': 'https://github.com/psycopg/psycopg2',
-          'Documentation': 'http://initd.org/psycopg/docs/',
+          'Homepage': 'http://psycopg.org/',
+          'Documentation': 'http://www.psycopg.org/docs/',
+          'Code': 'https://github.com/psycopg/psycopg2',
+          'Issue Tracker': 'https://github.com/psycopg/psycopg2/issues',
+          'Download': 'https://pypi.org/project/psycopg2/',
       })
