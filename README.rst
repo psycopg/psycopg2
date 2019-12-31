@@ -23,12 +23,12 @@ Documentation
 
 Documentation is included in the ``doc`` directory and is `available online`__.
 
-.. __: http://www.psycopg.org/docs/
+.. __: https://www.psycopg.org/docs/
 
 For any other resource (source code repository, bug tracker, mailing list)
 please check the `project homepage`__.
 
-.. __: http://psycopg.org/
+.. __: https://psycopg.org/
 
 
 Installation
@@ -58,8 +58,8 @@ production it is advised to use the package built from sources.
 
 .. _PyPI: https://pypi.org/project/psycopg2/
 .. _psycopg2-binary: https://pypi.org/project/psycopg2-binary/
-.. _install: http://www.psycopg.org/docs/install.html#install-from-source
-.. _faq: http://www.psycopg.org/docs/faq.html#faq-compile
+.. _install: https://www.psycopg.org/docs/install.html#install-from-source
+.. _faq: https://www.psycopg.org/docs/faq.html#faq-compile
 
 :Linux/OSX: |travis|
 :Windows: |appveyor|
