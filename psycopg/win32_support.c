@@ -1,6 +1,7 @@
 /* win32_support.c - emulate some functions missing on Win32
  *
  * Copyright (C) 2003-2019 Federico Di Gregorio <fog@debian.org>
+ * Copyright (C) 2020 The Psycopg Team
  *
  * This file is part of psycopg.
  *

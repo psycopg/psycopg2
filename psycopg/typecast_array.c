@@ -1,6 +1,7 @@
 /* typecast_array.c - array typecasters
  *
  * Copyright (C) 2005-2019 Federico Di Gregorio <fog@debian.org>
+ * Copyright (C) 2020 The Psycopg Team
  *
  * This file is part of psycopg.
  *

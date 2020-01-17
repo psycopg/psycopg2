@@ -1,6 +1,7 @@
 /* lobject_int.c - code used by the lobject object
  *
  * Copyright (C) 2006-2019 Federico Di Gregorio <fog@debian.org>
+ * Copyright (C) 2020 The Psycopg Team
  *
  * This file is part of psycopg.
  *

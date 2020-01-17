@@ -4,6 +4,7 @@
 # psycopg/sql.py - SQL composition utility module
 #
 # Copyright (C) 2016-2019 Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+# Copyright (C) 2020 The Psycopg Team
 #
 # psycopg2 is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Lesser General Public License as published

@@ -1,6 +1,7 @@
 /* replication_connection_type.c - python interface to replication connection objects
  *
  * Copyright (C) 2015-2019 Daniele Varrazzo <daniele.varrazzo@gmail.com>
+ * Copyright (C) 2020 The Psycopg Team
  *
  * This file is part of psycopg.
  *

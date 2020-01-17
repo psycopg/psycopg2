@@ -4,6 +4,7 @@
 # psycopg/errors.py - SQLSTATE and DB-API exceptions
 #
 # Copyright (C) 2018-2019 Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+# Copyright (C) 2020 The Psycopg Team
 #
 # psycopg2 is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Lesser General Public License as published

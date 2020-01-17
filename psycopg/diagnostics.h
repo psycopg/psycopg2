@@ -1,6 +1,7 @@
 /* diagnostics.c - definition for the psycopg Diagnostics type
  *
  * Copyright (C) 2013-2019 Matthew Woodcraft <matthew@woodcraft.me.uk>
+ * Copyright (C) 2020 The Psycopg Team
  *
  * This file is part of psycopg.
  *

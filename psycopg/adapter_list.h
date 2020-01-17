@@ -1,6 +1,7 @@
 /* adapter_list.h - definition for the python list types
  *
  * Copyright (C) 2004-2019 Federico Di Gregorio <fog@debian.org>
+ * Copyright (C) 2020 The Psycopg Team
  *
  * This file is part of psycopg.
  *

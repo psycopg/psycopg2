@@ -1,6 +1,7 @@
 /* connection.h - definition for the psycopg ConnectionInfo type
  *
  * Copyright (C) 2018-2019  Daniele Varrazzo <daniele.varrazzo@gmail.com>
+ * Copyright (C) 2020 The Psycopg Team
  *
  * This file is part of psycopg.
  *

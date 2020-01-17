@@ -1,6 +1,7 @@
 /* replication_connection.h - definition for the psycopg replication connection type
  *
  * Copyright (C) 2015-2019 Daniele Varrazzo <daniele.varrazzo@gmail.com>
+ * Copyright (C) 2020 The Psycopg Team
  *
  * This file is part of psycopg.
  *
