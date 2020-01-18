@@ -13,6 +13,7 @@
 
 import os
 import sys
+from better import better_theme_path
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -137,11 +138,11 @@ rst_epilog = """
 
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
-html_theme = 'classic'
+html_theme = 'better'
 
 # The stylesheet to use with HTML output: this will include the original one
 # adding a few classes.
-html_style = 'psycopg.css'
+# html_style = 'psycopg.css'
 
 # Hide the sphinx footer
 html_show_sphinx = False
@@ -149,17 +150,20 @@ html_show_sphinx = False
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-# html_theme_options = {}
+html_theme_options = {
+    'linktotheme': False,
+    'cssfiles': ['_static/psycopg.css'],
+}
 
 # Add any paths that contain custom themes here, relative to this directory.
-# html_theme_path = []
+html_theme_path = [better_theme_path]
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
 # html_title = None
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
-# html_short_title = None
+html_short_title = 'Home'
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
@@ -184,7 +188,10 @@ html_static_path = ['_static']
 # html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-# html_sidebars = {}
+# no need for the prev/next topic link using better theme: they are on top
+html_sidebars = {
+    '**': ['localtoc.html', 'searchbox.html'],
+}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.

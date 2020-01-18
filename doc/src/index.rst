@@ -57,6 +57,7 @@ Psycopg 2 is both Unicode and Python 3 friendly.
     .. rubric:: Indices and tables
 
     * :ref:`genindex`
+    * :ref:`modindex`
     * :ref:`search`
 
 
