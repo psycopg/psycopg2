@@ -55,10 +55,53 @@ from the query parameters::
             .format(sql.Identifier('my_table')),
         [10, 20])
 
-The objects exposed by the `!sql` module can be used to compose a query as a
-Python string (using the `~Composable.as_string()` method) or passed directly
-to cursor methods such as `~cursor.execute()`, `~cursor.executemany()`,
-`~cursor.copy_expert()`.
+
+Module usage
+------------
+
+Usually you should express the template of your query as an `SQL` instance
+with `{}`\-style placeholders and use `~SQL.format()` to merge the variable
+parts into them, all of which must be `Composable` subclasses. You can still
+have `%s`\ -style placeholders in your query and pass values to
+`~cursor.execute()`: such value placeholders will be untouched by
+`!format()`::
+
+    query = sql.SQL("select {field} from {table} where {pkey} = %s").format(
+        field=sql.Identifier('my_name'),
+        table=sql.Identifier('some_table'),
+        pkey=sql.Identifier('id'))
+
+The resulting object is meant to be passed directly to cursor methods such as
+`~cursor.execute()`, `~cursor.executemany()`, `~cursor.copy_expert()`, but can
+also be used to compose a query as a Python string, using the
+`~Composable.as_string()` method::
+
+    cur.execute(query, (42,))
+
+If part of your query is a variable sequence of arguments, such as a
+comma-separated list of field names, you can use the `SQL.join()` method to
+pass them to the query::
+
+    query = sql.SQL("select {fields} from {table}").format(
+        fields=sql.SQL(',').join([
+            sql.Identifier('field1'),
+            sql.Identifier('field2'),
+            sql.Identifier('field3'),
+        ]),
+        table=sql.Identifier('some_table'))
+
+
+`!sql` objects
+--------------
+
+The `!sql` objects are in the following inheritance hierarchy:
+
+|   `Composable`: the base class exposing the common interface
+|   ``|__`` `SQL`: a literal snippet of an SQL query
+|   ``|__`` `Identifier`: a PostgreSQL identifier or dot-separated sequence of identifiers
+|   ``|__`` `Literal`: a value hardcoded into a query
+|   ``|__`` `Placeholder`: a `%s`\ -style placeholder whose value will be added later e.g. by `~cursor.execute()`
+|   ``|__`` `Composed`: a sequence of `!Composable` instances.
 
 
 .. autoclass:: Composable
