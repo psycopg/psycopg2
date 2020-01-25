@@ -28,10 +28,6 @@ doctest:
 	$(MAKE) PYTHON=$(PYTHON) -C .. package
 	$(MAKE) $(SPHOPTS) -C src $@
 
-upload:
-	# this command requires ssh configured to the proper target
-	tar czf - -C html . | ssh psycoweb tar xzvf - -C docs/current
-
 clean:
 	$(MAKE) $(SPHOPTS) -C src $@
 	rm -rf html src/sqlstate_errors.rst
