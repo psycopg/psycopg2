@@ -1,6 +1,7 @@
 /* psycopgmodule.c - psycopg module (will import other C classes)
  *
  * Copyright (C) 2003-2019 Federico Di Gregorio <fog@debian.org>
+ * Copyright (C) 2020 The Psycopg Team
  *
  * This file is part of psycopg.
  *

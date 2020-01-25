@@ -1,0 +1,14 @@
+{# Override the sphinx theme for the docs to add analytics #}
+
+{%- extends "!layout.html" %}
+
+{%- block scripts %}
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-19287248-2"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-19287248-2');
+    </script>
+    {{- super() }}
+{%- endblock %}

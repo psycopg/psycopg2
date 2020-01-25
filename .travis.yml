@@ -20,5 +20,11 @@ install:
 script:
   - scripts/travis_test.sh
 
+deploy:
+  - provider: script
+    script: bash scripts/travis_update_docs.sh
+    on:
+      branch: master
+
 notifications:
   email: false

@@ -497,7 +497,7 @@ def setup_ssh():
 
     # Write SSH Private Key file from environment variable
     pkey = pkey.replace(' ', '\n')
-    with (opt.clone_dir / 'id_rsa').open('w') as f:
+    with (opt.clone_dir / 'data/id_rsa-psycopg-upload').open('w') as f:
         f.write(
             f"""\
 -----BEGIN RSA PRIVATE KEY-----
@@ -516,15 +516,11 @@ def upload_packages():
     # Upload built artifacts
     logger.info("uploading artifacts")
 
-    ssh_cmd = r"C:\MinGW\msys\1.0\bin\ssh -i %s -o UserKnownHostsFile=%s" % (
-        opt.clone_dir / "id_rsa",
-        opt.clone_dir / 'known_hosts',
-    )
-
-    os.chdir(opt.package_dir)
+    os.chdir(opt.clone_dir)
     run_command(
         [r"C:\MinGW\msys\1.0\bin\rsync", "-avr"]
-        + ["-e", ssh_cmd, "dist/", "upload@initd.org:"]
+        + ["-e", r"C:\MinGW\msys\1.0\bin\ssh -F data/ssh_config"]
+        + ["psycopg2/dist/", "upload:"]
     )
 
 

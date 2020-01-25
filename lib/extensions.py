@@ -13,6 +13,7 @@ This module holds all the extensions to the DBAPI-2.0 provided by psycopg.
 # psycopg/extensions.py - DBAPI-2.0 extensions specific to psycopg
 #
 # Copyright (C) 2003-2019 Federico Di Gregorio  <fog@debian.org>
+# Copyright (C) 2020 The Psycopg Team
 #
 # psycopg2 is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Lesser General Public License as published

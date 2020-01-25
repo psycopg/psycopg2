@@ -2,6 +2,7 @@
  *
  * Copyright (C) 2008-2019  James Henstridge <james@jamesh.id.au>
  * Copyright (C) 2010-2019  Daniele Varrazzo <daniele.varrazzo@gmail.com>
+ * Copyright (C) 2020 The Psycopg Team
  *
  * This file is part of psycopg.
  *

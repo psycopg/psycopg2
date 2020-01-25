@@ -1,6 +1,7 @@
 /* typecast_mxdatetime.c - date and time typecasting functions to mx types
  *
  * Copyright (C) 2001-2019 Federico Di Gregorio <fog@debian.org>
+ * Copyright (C) 2020 The Psycopg Team
  *
  * This file is part of psycopg.
  *

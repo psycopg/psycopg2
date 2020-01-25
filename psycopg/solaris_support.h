@@ -2,6 +2,7 @@
  *
  * Copyright (C) 2017 My Karlsson <mk@acc.umu.se>
  * Copyright (c) 2018-2019, Joyent, Inc.
+ * Copyright (C) 2020 The Psycopg Team
  *
  * This file is part of psycopg.
  *

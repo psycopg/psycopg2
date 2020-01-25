@@ -13,7 +13,7 @@ How to make a psycopg2 release
   In the rest of this document we assume you have exported the version number
   into an environment variable, e.g.::
 
-    $ export VERSION=2.7
+    $ export VERSION=2.8.4
 
 - In the `Travis settings`__ you may want to be sure that the variables
   ``TEST_PAST`` and ``TEST_FUTURE`` are set to 1 to check all
@@ -36,30 +36,29 @@ How to make a psycopg2 release
 - Create a signed tag with the content of the relevant NEWS bit and push it.
   E.g.::
 
-    $ git tag -a -s 2_7
+    $ git tag -a -s 2_8_4
 
-    Psycopg 2.7 released
+    Psycopg 2.8.4 released
 
-    What's new in psycopg 2.7
-    -------------------------
+    What's new in psycopg 2.8.4
+    ---------------------------
 
     New features:
 
-    - Added `~psycopg2.sql` module to generate SQL dynamically (:ticket:`#308`).
+    - Fixed bug blah (:ticket:`#42`).
     ...
 
 - Update the `psycopg2-wheels`_ submodule to the tag version and push. This
   will build the packages on `Travis CI`__ and `AppVeyor`__ and upload them to
-  the `initd.org upload`__ dir.
+  http://upload.psycopg.org/.
 
 .. _psycopg2-wheels: https://github.com/psycopg/psycopg2-wheels
 .. __: https://travis-ci.org/psycopg/psycopg2-wheels
 .. __: https://ci.appveyor.com/project/psycopg/psycopg2-wheels
-.. __: http://initd.org/psycopg/upload/
 
 - Download the packages generated (this assumes ssh configured properly)::
 
-    $ rsync -arv initd-upload:psycopg2-${VERSION} .
+    $ rsync -arv psycopg-upload:psycopg2-${VERSION} .
 
 - Sign the packages and upload the signatures back::
 
@@ -67,14 +66,7 @@ How to make a psycopg2 release
         gpg --armor --detach-sign $f;
       done
 
-    $ rsync -arv psycopg2-${VERSION} initd-upload:
-
-- Run the ``copy-tarball.sh`` script on the server to copy the uploaded files
-  in the `tarballs`__ dir::
-
-    $ ssh psycoweb@initd.org copy-tarball.sh ${VERSION}
-
-.. __: http://initd.org/psycopg/tarballs/
+    $ rsync -arv psycopg2-${VERSION} psycopg-upload:
 
 - Remove the ``.exe`` from the dir, because we don't want to upload them on
   PyPI::
@@ -88,7 +80,7 @@ How to make a psycopg2 release
 - Create a release and release notes in the psycopg website, announce to
   psycopg and pgsql-announce mailing lists.
 
-- Edit ``setup.py`` changing the version again (e.g. go to ``2.7.1.dev0``).
+- Edit ``setup.py`` changing the version again (e.g. go to ``2.8.5.dev0``).
 
 
 Releasing test packages

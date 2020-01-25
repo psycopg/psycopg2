@@ -1,6 +1,7 @@
 /* notify_type.c - python interface to Notify objects
  *
  * Copyright (C) 2010-2019  Daniele Varrazzo <daniele.varrazzo@gmail.com>
+ * Copyright (C) 2020 The Psycopg Team
  *
  * This file is part of psycopg.
  *

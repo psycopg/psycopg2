@@ -4,6 +4,7 @@
 # test_async.py - unit test for asynchronous API
 #
 # Copyright (C) 2010-2019 Jan Urbański  <wulczer@wulczer.org>
+# Copyright (C) 2020 The Psycopg Team
 #
 # psycopg2 is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Lesser General Public License as published

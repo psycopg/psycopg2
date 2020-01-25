@@ -42,7 +42,7 @@ endif
 VERSION := $(shell grep PSYCOPG_VERSION setup.py | head -1 | sed -e "s/.*'\(.*\)'/\1/")
 SDIST := dist/psycopg2-$(VERSION).tar.gz
 
-.PHONY: env check clean
+.PHONY: check clean
 
 default: package
 

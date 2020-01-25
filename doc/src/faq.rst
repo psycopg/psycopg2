@@ -292,7 +292,7 @@ How do I interrupt a long-running query in an interactive shell?
     can handle a :kbd:`Ctrl-C` correctly. For previous versions, you can use
     `this implementation`__.
 
-    .. __: http://initd.org/psycopg/articles/2014/07/20/cancelling-postgresql-statements-python/
+    .. __: https://www.psycopg.org/articles/2014/07/20/cancelling-postgresql-statements-python/
 
     .. code-block:: pycon
 
