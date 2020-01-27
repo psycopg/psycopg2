@@ -50,7 +50,7 @@ create () {
         else
             # A dinosaur
             wget -O - \
-                http://upload.psycopg.org/postgresql/postgresql-${PACKAGE}-$(lsb_release -cs).tar.bz2 \
+                https://upload.psycopg.org/postgresql/postgresql-${PACKAGE}-$(lsb_release -cs).tar.bz2 \
                 | sudo tar xjf - -C /usr/lib/postgresql
         fi
     fi

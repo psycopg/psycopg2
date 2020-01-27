@@ -50,7 +50,7 @@ How to make a psycopg2 release
 
 - Update the `psycopg2-wheels`_ submodule to the tag version and push. This
   will build the packages on `Travis CI`__ and `AppVeyor`__ and upload them to
-  http://upload.psycopg.org/.
+  https://upload.psycopg.org/.
 
 .. _psycopg2-wheels: https://github.com/psycopg/psycopg2-wheels
 .. __: https://travis-ci.org/psycopg/psycopg2-wheels
