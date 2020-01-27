@@ -3,3 +3,6 @@ src/_build/*
 html/*
 psycopg2.txt
 src/sqlstate_errors.rst
+
+# Added by psycopg-website to customize published docs
+src/_templates/layout.html
