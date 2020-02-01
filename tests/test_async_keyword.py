@@ -89,6 +89,8 @@ class AsyncTests(ConnectingTestCase):
                 "connection error reason lost")
         else:
             self.fail("no exception raised")
+        finally:
+            cnn.close()
 
 
 class CancelTests(ConnectingTestCase):
@@ -118,6 +120,7 @@ class CancelTests(ConnectingTestCase):
         cur.execute("select 1")
         extras.wait_select(async_conn)
         self.assertEqual(cur.fetchall(), [(1, )])
+        async_conn.close()
 
     def test_async_connection_cancel(self):
         async_conn = psycopg2.connect(dsn, async=True)

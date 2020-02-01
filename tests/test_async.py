@@ -451,14 +451,16 @@ class AsyncTests(ConnectingTestCase):
         self.assertEqual(cur.fetchone(), (42,))
 
     def test_async_connection_error_message(self):
+        cnn = psycopg2.connect('dbname=thisdatabasedoesntexist', async_=True)
         try:
-            cnn = psycopg2.connect('dbname=thisdatabasedoesntexist', async_=True)
             self.wait(cnn)
         except psycopg2.Error as e:
             self.assertNotEqual(str(e), "asynchronous connection failed",
                 "connection error reason lost")
         else:
             self.fail("no exception raised")
+        finally:
+            cnn.close()
 
     @skip_before_postgres(8, 2)
     def test_copy_no_hang(self):

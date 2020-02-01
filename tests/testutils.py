@@ -248,15 +248,17 @@ def skip_if_tpc_disabled(f):
     @wraps(f)
     def skip_if_tpc_disabled_(self):
         cnn = self.connect()
-        cur = cnn.cursor()
         try:
-            cur.execute("SHOW max_prepared_transactions;")
-        except psycopg2.ProgrammingError:
-            return self.skipTest(
-                "server too old: two phase transactions not supported.")
-        else:
-            mtp = int(cur.fetchone()[0])
-        cnn.close()
+            cur = cnn.cursor()
+            try:
+                cur.execute("SHOW max_prepared_transactions;")
+            except psycopg2.ProgrammingError:
+                return self.skipTest(
+                    "server too old: two phase transactions not supported.")
+            else:
+                mtp = int(cur.fetchone()[0])
+        finally:
+            cnn.close()
 
         if not mtp:
             return self.skipTest(
