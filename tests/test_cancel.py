@@ -41,11 +41,11 @@ class CancelTests(ConnectingTestCase):
     def setUp(self):
         ConnectingTestCase.setUp(self)
 
-        cur = self.conn.cursor()
-        cur.execute('''
-            CREATE TEMPORARY TABLE table1 (
-              id int PRIMARY KEY
-            )''')
+        with self.conn.cursor() as cur:
+            cur.execute('''
+                CREATE TEMPORARY TABLE table1 (
+                  id int PRIMARY KEY
+                )''')
         self.conn.commit()
 
     def test_empty_cancel(self):
@@ -57,25 +57,25 @@ class CancelTests(ConnectingTestCase):
         errors = []
 
         def neverending(conn):
-            cur = conn.cursor()
-            try:
-                self.assertRaises(psycopg2.extensions.QueryCanceledError,
-                                  cur.execute, "select pg_sleep(60)")
-            # make sure the connection still works
-                conn.rollback()
-                cur.execute("select 1")
-                self.assertEqual(cur.fetchall(), [(1, )])
-            except Exception as e:
-                errors.append(e)
-                raise
+            with conn.cursor() as cur:
+                try:
+                    self.assertRaises(psycopg2.extensions.QueryCanceledError,
+                                      cur.execute, "select pg_sleep(60)")
+                    # make sure the connection still works
+                    conn.rollback()
+                    cur.execute("select 1")
+                    self.assertEqual(cur.fetchall(), [(1, )])
+                except Exception as e:
+                    errors.append(e)
+                    raise
 
         def canceller(conn):
-            cur = conn.cursor()
-            try:
-                conn.cancel()
-            except Exception as e:
-                errors.append(e)
-                raise
+            with conn.cursor() as cur:
+                try:
+                    conn.cancel()
+                except Exception as e:
+                    errors.append(e)
+                    raise
             del cur
 
         thread1 = threading.Thread(target=neverending, args=(self.conn, ))
@@ -95,16 +95,16 @@ class CancelTests(ConnectingTestCase):
         async_conn = psycopg2.connect(dsn, async_=True)
         self.assertRaises(psycopg2.OperationalError, async_conn.cancel)
         extras.wait_select(async_conn)
-        cur = async_conn.cursor()
-        cur.execute("select pg_sleep(10)")
-        time.sleep(1)
-        self.assertTrue(async_conn.isexecuting())
-        async_conn.cancel()
-        self.assertRaises(psycopg2.extensions.QueryCanceledError,
-                          extras.wait_select, async_conn)
-        cur.execute("select 1")
-        extras.wait_select(async_conn)
-        self.assertEqual(cur.fetchall(), [(1, )])
+        with async_conn.cursor() as cur:
+            cur.execute("select pg_sleep(10)")
+            time.sleep(1)
+            self.assertTrue(async_conn.isexecuting())
+            async_conn.cancel()
+            self.assertRaises(psycopg2.extensions.QueryCanceledError,
+                              extras.wait_select, async_conn)
+            cur.execute("select 1")
+            extras.wait_select(async_conn)
+            self.assertEqual(cur.fetchall(), [(1, )])
         async_conn.close()
 
     def test_async_connection_cancel(self):

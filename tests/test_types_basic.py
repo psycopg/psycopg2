@@ -41,9 +41,9 @@ class TypesBasicTests(ConnectingTestCase):
     """Test that all type conversions are working."""
 
     def execute(self, *args):
-        curs = self.conn.cursor()
-        curs.execute(*args)
-        return curs.fetchone()[0]
+        with self.conn.cursor() as curs:
+            curs.execute(*args)
+            return curs.fetchone()[0]
 
     def testQuoting(self):
         s = "Quote'this\\! ''ok?''"
@@ -156,26 +156,27 @@ class TypesBasicTests(ConnectingTestCase):
 
     def testEmptyArrayRegression(self):
         # ticket #42
-        curs = self.conn.cursor()
-        curs.execute(
-            "create table array_test "
-            "(id integer, col timestamp without time zone[])")
+        with self.conn.cursor() as curs:
+            curs.execute(
+                "create table array_test "
+                "(id integer, col timestamp without time zone[])")
 
-        curs.execute("insert into array_test values (%s, %s)",
-            (1, [datetime.date(2011, 2, 14)]))
-        curs.execute("select col from array_test where id = 1")
-        self.assertEqual(curs.fetchone()[0], [datetime.datetime(2011, 2, 14, 0, 0)])
+            curs.execute("insert into array_test values (%s, %s)",
+                (1, [datetime.date(2011, 2, 14)]))
+            curs.execute("select col from array_test where id = 1")
+            self.assertEqual(
+                curs.fetchone()[0], [datetime.datetime(2011, 2, 14, 0, 0)])
 
-        curs.execute("insert into array_test values (%s, %s)", (2, []))
-        curs.execute("select col from array_test where id = 2")
-        self.assertEqual(curs.fetchone()[0], [])
+            curs.execute("insert into array_test values (%s, %s)", (2, []))
+            curs.execute("select col from array_test where id = 2")
+            self.assertEqual(curs.fetchone()[0], [])
 
     @testutils.skip_before_postgres(8, 4)
     def testNestedEmptyArray(self):
         # issue #788
-        curs = self.conn.cursor()
-        curs.execute("select 10 = any(%s::int[])", ([[]], ))
-        self.assertFalse(curs.fetchone()[0])
+        with self.conn.cursor() as curs:
+            curs.execute("select 10 = any(%s::int[])", ([[]], ))
+            self.assertFalse(curs.fetchone()[0])
 
     def testEmptyArrayNoCast(self):
         s = self.execute("SELECT '{}' AS foo")
@@ -204,86 +205,86 @@ class TypesBasicTests(ConnectingTestCase):
         self.failUnlessEqual(ss, r)
 
     def testArrayMalformed(self):
-        curs = self.conn.cursor()
-        ss = ['', '{', '{}}', '{' * 20 + '}' * 20]
-        for s in ss:
-            self.assertRaises(psycopg2.DataError,
-                psycopg2.extensions.STRINGARRAY, s.encode('utf8'), curs)
+        with self.conn.cursor() as curs:
+            ss = ['', '{', '{}}', '{' * 20 + '}' * 20]
+            for s in ss:
+                self.assertRaises(psycopg2.DataError,
+                    psycopg2.extensions.STRINGARRAY, s.encode('utf8'), curs)
 
     def testTextArray(self):
-        curs = self.conn.cursor()
-        curs.execute("select '{a,b,c}'::text[]")
-        x = curs.fetchone()[0]
+        with self.conn.cursor() as curs:
+            curs.execute("select '{a,b,c}'::text[]")
+            x = curs.fetchone()[0]
         self.assert_(isinstance(x[0], str))
         self.assertEqual(x, ['a', 'b', 'c'])
 
     def testUnicodeArray(self):
         psycopg2.extensions.register_type(
             psycopg2.extensions.UNICODEARRAY, self.conn)
-        curs = self.conn.cursor()
-        curs.execute("select '{a,b,c}'::text[]")
-        x = curs.fetchone()[0]
+        with self.conn.cursor() as curs:
+            curs.execute("select '{a,b,c}'::text[]")
+            x = curs.fetchone()[0]
         self.assert_(isinstance(x[0], text_type))
         self.assertEqual(x, [u'a', u'b', u'c'])
 
     def testBytesArray(self):
         psycopg2.extensions.register_type(
             psycopg2.extensions.BYTESARRAY, self.conn)
-        curs = self.conn.cursor()
-        curs.execute("select '{a,b,c}'::text[]")
-        x = curs.fetchone()[0]
+        with self.conn.cursor() as curs:
+            curs.execute("select '{a,b,c}'::text[]")
+            x = curs.fetchone()[0]
         self.assert_(isinstance(x[0], bytes))
         self.assertEqual(x, [b'a', b'b', b'c'])
 
     @testutils.skip_before_postgres(8, 2)
     def testArrayOfNulls(self):
-        curs = self.conn.cursor()
-        curs.execute("""
-            create table na (
-              texta text[],
-              inta int[],
-              boola boolean[],
+        with self.conn.cursor() as curs:
+            curs.execute("""
+                create table na (
+                  texta text[],
+                  inta int[],
+                  boola boolean[],
 
-              textaa text[][],
-              intaa int[][],
-              boolaa boolean[][]
-            )""")
+                  textaa text[][],
+                  intaa int[][],
+                  boolaa boolean[][]
+                )""")
 
-        curs.execute("insert into na (texta) values (%s)", ([None],))
-        curs.execute("insert into na (texta) values (%s)", (['a', None],))
-        curs.execute("insert into na (texta) values (%s)", ([None, None],))
-        curs.execute("insert into na (inta) values (%s)", ([None],))
-        curs.execute("insert into na (inta) values (%s)", ([42, None],))
-        curs.execute("insert into na (inta) values (%s)", ([None, None],))
-        curs.execute("insert into na (boola) values (%s)", ([None],))
-        curs.execute("insert into na (boola) values (%s)", ([True, None],))
-        curs.execute("insert into na (boola) values (%s)", ([None, None],))
+            curs.execute("insert into na (texta) values (%s)", ([None],))
+            curs.execute("insert into na (texta) values (%s)", (['a', None],))
+            curs.execute("insert into na (texta) values (%s)", ([None, None],))
+            curs.execute("insert into na (inta) values (%s)", ([None],))
+            curs.execute("insert into na (inta) values (%s)", ([42, None],))
+            curs.execute("insert into na (inta) values (%s)", ([None, None],))
+            curs.execute("insert into na (boola) values (%s)", ([None],))
+            curs.execute("insert into na (boola) values (%s)", ([True, None],))
+            curs.execute("insert into na (boola) values (%s)", ([None, None],))
 
-        curs.execute("insert into na (textaa) values (%s)", ([[None]],))
-        curs.execute("insert into na (textaa) values (%s)", ([['a', None]],))
-        curs.execute("insert into na (textaa) values (%s)", ([[None, None]],))
+            curs.execute("insert into na (textaa) values (%s)", ([[None]],))
+            curs.execute("insert into na (textaa) values (%s)", ([['a', None]],))
+            curs.execute("insert into na (textaa) values (%s)", ([[None, None]],))
 
-        curs.execute("insert into na (intaa) values (%s)", ([[None]],))
-        curs.execute("insert into na (intaa) values (%s)", ([[42, None]],))
-        curs.execute("insert into na (intaa) values (%s)", ([[None, None]],))
+            curs.execute("insert into na (intaa) values (%s)", ([[None]],))
+            curs.execute("insert into na (intaa) values (%s)", ([[42, None]],))
+            curs.execute("insert into na (intaa) values (%s)", ([[None, None]],))
 
-        curs.execute("insert into na (boolaa) values (%s)", ([[None]],))
-        curs.execute("insert into na (boolaa) values (%s)", ([[True, None]],))
-        curs.execute("insert into na (boolaa) values (%s)", ([[None, None]],))
+            curs.execute("insert into na (boolaa) values (%s)", ([[None]],))
+            curs.execute("insert into na (boolaa) values (%s)", ([[True, None]],))
+            curs.execute("insert into na (boolaa) values (%s)", ([[None, None]],))
 
     @testutils.skip_before_postgres(8, 2)
     def testNestedArrays(self):
-        curs = self.conn.cursor()
-        for a in [
-            [[1]],
-            [[None]],
-            [[None, None, None]],
-            [[None, None], [1, None]],
-            [[None, None], [None, None]],
-            [[[None, None], [None, None]]],
-        ]:
-            curs.execute("select %s::int[]", (a,))
-            self.assertEqual(curs.fetchone()[0], a)
+        with self.conn.cursor() as curs:
+            for a in [
+                [[1]],
+                [[None]],
+                [[None, None, None]],
+                [[None, None], [1, None]],
+                [[None, None], [None, None]],
+                [[[None, None], [None, None]]],
+            ]:
+                curs.execute("select %s::int[]", (a,))
+                self.assertEqual(curs.fetchone()[0], a)
 
     @testutils.skip_from_python(3)
     def testTypeRoundtripBuffer(self):

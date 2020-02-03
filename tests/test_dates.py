@@ -369,22 +369,22 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         self.assertEqual(total_seconds(t), 1e-6)
 
     def test_interval_overflow(self):
-        cur = self.conn.cursor()
-        # hack a cursor to receive values too extreme to be represented
-        # but still I want an error, not a random number
-        psycopg2.extensions.register_type(
-            psycopg2.extensions.new_type(
-                psycopg2.STRING.values, 'WAT', psycopg2.extensions.INTERVAL),
-            cur)
+        with self.conn.cursor() as cur:
+            # hack a cursor to receive values too extreme to be represented
+            # but still I want an error, not a random number
+            psycopg2.extensions.register_type(
+                psycopg2.extensions.new_type(
+                    psycopg2.STRING.values, 'WAT', psycopg2.extensions.INTERVAL),
+                cur)
 
-        def f(val):
-            cur.execute("select '%s'::text" % val)
-            return cur.fetchone()[0]
+            def f(val):
+                cur.execute("select '%s'::text" % val)
+                return cur.fetchone()[0]
 
-        self.assertRaises(OverflowError, f, '100000000000000000:00:00')
-        self.assertRaises(OverflowError, f, '00:100000000000000000:00:00')
-        self.assertRaises(OverflowError, f, '00:00:100000000000000000:00')
-        self.assertRaises(OverflowError, f, '00:00:00.100000000000000000')
+            self.assertRaises(OverflowError, f, '100000000000000000:00:00')
+            self.assertRaises(OverflowError, f, '00:100000000000000000:00:00')
+            self.assertRaises(OverflowError, f, '00:00:100000000000000000:00')
+            self.assertRaises(OverflowError, f, '00:00:00.100000000000000000')
 
     def test_adapt_infinity_tz(self):
         t = self.execute("select 'infinity'::timestamp")
@@ -405,31 +405,31 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
 
     def test_redshift_day(self):
         # Redshift is reported returning 1 day interval as microsec (bug #558)
-        cur = self.conn.cursor()
-        psycopg2.extensions.register_type(
-            psycopg2.extensions.new_type(
-                psycopg2.STRING.values, 'WAT', psycopg2.extensions.INTERVAL),
-            cur)
+        with self.conn.cursor() as cur:
+            psycopg2.extensions.register_type(
+                psycopg2.extensions.new_type(
+                    psycopg2.STRING.values, 'WAT', psycopg2.extensions.INTERVAL),
+                cur)
 
-        for s, v in [
-            ('0', timedelta(0)),
-            ('1', timedelta(microseconds=1)),
-            ('-1', timedelta(microseconds=-1)),
-            ('1000000', timedelta(seconds=1)),
-            ('86400000000', timedelta(days=1)),
-            ('-86400000000', timedelta(days=-1)),
-        ]:
-            cur.execute("select %s::text", (s,))
-            r = cur.fetchone()[0]
-            self.assertEqual(r, v, "%s -> %s != %s" % (s, r, v))
+            for s, v in [
+                ('0', timedelta(0)),
+                ('1', timedelta(microseconds=1)),
+                ('-1', timedelta(microseconds=-1)),
+                ('1000000', timedelta(seconds=1)),
+                ('86400000000', timedelta(days=1)),
+                ('-86400000000', timedelta(days=-1)),
+            ]:
+                cur.execute("select %s::text", (s,))
+                r = cur.fetchone()[0]
+                self.assertEqual(r, v, "%s -> %s != %s" % (s, r, v))
 
     @skip_before_postgres(8, 4)
     def test_interval_iso_8601_not_supported(self):
         # We may end up supporting, but no pressure for it
-        cur = self.conn.cursor()
-        cur.execute("set local intervalstyle to iso_8601")
-        cur.execute("select '1 day 2 hours'::interval")
-        self.assertRaises(psycopg2.NotSupportedError, cur.fetchone)
+        with self.conn.cursor() as cur:
+            cur.execute("set local intervalstyle to iso_8601")
+            cur.execute("select '1 day 2 hours'::interval")
+            self.assertRaises(psycopg2.NotSupportedError, cur.fetchone)
 
 
 @unittest.skipUnless(

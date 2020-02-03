@@ -120,10 +120,11 @@ conn.close()
         self.listen('foo')
         pid = int(self.notify('foo').communicate()[0])
         self.assertEqual(0, len(self.conn.notifies))
-        self.conn.cursor().execute('select 1;')
-        self.assertEqual(1, len(self.conn.notifies))
-        self.assertEqual(pid, self.conn.notifies[0][0])
-        self.assertEqual('foo', self.conn.notifies[0][1])
+        with self.conn.cursor() as cur:
+            cur.execute('select 1;')
+            self.assertEqual(1, len(self.conn.notifies))
+            self.assertEqual(pid, self.conn.notifies[0][0])
+            self.assertEqual('foo', self.conn.notifies[0][1])
 
     @slow
     def test_notify_object(self):

@@ -39,9 +39,9 @@ class StolenReferenceTestCase(ConnectingTestCase):
             return 42
         UUID = psycopg2.extensions.new_type((2950,), "UUID", fish)
         psycopg2.extensions.register_type(UUID, self.conn)
-        curs = self.conn.cursor()
-        curs.execute("select 'b5219e01-19ab-4994-b71e-149225dc51e4'::uuid")
-        curs.fetchone()
+        with self.conn.cursor() as curs:
+            curs.execute("select 'b5219e01-19ab-4994-b71e-149225dc51e4'::uuid")
+            curs.fetchone()
 
 
 def test_suite():

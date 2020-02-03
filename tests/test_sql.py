@@ -117,61 +117,61 @@ class SqlFormatTests(ConnectingTestCase):
             sql.SQL("select {0};").format(sql.Literal(Foo())).as_string, self.conn)
 
     def test_execute(self):
-        cur = self.conn.cursor()
-        cur.execute("""
-            create table test_compose (
-                id serial primary key,
-                foo text, bar text, "ba'z" text)
-            """)
-        cur.execute(
-            sql.SQL("insert into {0} (id, {1}) values (%s, {2})").format(
-                sql.Identifier('test_compose'),
-                sql.SQL(', ').join(map(sql.Identifier, ['foo', 'bar', "ba'z"])),
-                (sql.Placeholder() * 3).join(', ')),
-            (10, 'a', 'b', 'c'))
+        with self.conn.cursor() as cur:
+            cur.execute("""
+                create table test_compose (
+                    id serial primary key,
+                    foo text, bar text, "ba'z" text)
+                """)
+            cur.execute(
+                sql.SQL("insert into {0} (id, {1}) values (%s, {2})").format(
+                    sql.Identifier('test_compose'),
+                    sql.SQL(', ').join(map(sql.Identifier, ['foo', 'bar', "ba'z"])),
+                    (sql.Placeholder() * 3).join(', ')),
+                (10, 'a', 'b', 'c'))
 
-        cur.execute("select * from test_compose")
-        self.assertEqual(cur.fetchall(), [(10, 'a', 'b', 'c')])
+            cur.execute("select * from test_compose")
+            self.assertEqual(cur.fetchall(), [(10, 'a', 'b', 'c')])
 
     def test_executemany(self):
-        cur = self.conn.cursor()
-        cur.execute("""
-            create table test_compose (
-                id serial primary key,
-                foo text, bar text, "ba'z" text)
-            """)
-        cur.executemany(
-            sql.SQL("insert into {0} (id, {1}) values (%s, {2})").format(
-                sql.Identifier('test_compose'),
-                sql.SQL(', ').join(map(sql.Identifier, ['foo', 'bar', "ba'z"])),
-                (sql.Placeholder() * 3).join(', ')),
-            [(10, 'a', 'b', 'c'), (20, 'd', 'e', 'f')])
+        with self.conn.cursor() as cur:
+            cur.execute("""
+                create table test_compose (
+                    id serial primary key,
+                    foo text, bar text, "ba'z" text)
+                """)
+            cur.executemany(
+                sql.SQL("insert into {0} (id, {1}) values (%s, {2})").format(
+                    sql.Identifier('test_compose'),
+                    sql.SQL(', ').join(map(sql.Identifier, ['foo', 'bar', "ba'z"])),
+                    (sql.Placeholder() * 3).join(', ')),
+                [(10, 'a', 'b', 'c'), (20, 'd', 'e', 'f')])
 
-        cur.execute("select * from test_compose")
-        self.assertEqual(cur.fetchall(),
-            [(10, 'a', 'b', 'c'), (20, 'd', 'e', 'f')])
+            cur.execute("select * from test_compose")
+            self.assertEqual(cur.fetchall(),
+                [(10, 'a', 'b', 'c'), (20, 'd', 'e', 'f')])
 
     @skip_copy_if_green
     @skip_before_postgres(8, 2)
     def test_copy(self):
-        cur = self.conn.cursor()
-        cur.execute("""
-            create table test_compose (
-                id serial primary key,
-                foo text, bar text, "ba'z" text)
-            """)
+        with self.conn.cursor() as cur:
+            cur.execute("""
+                create table test_compose (
+                    id serial primary key,
+                    foo text, bar text, "ba'z" text)
+                """)
 
-        s = StringIO("10\ta\tb\tc\n20\td\te\tf\n")
-        cur.copy_expert(
-            sql.SQL("copy {t} (id, foo, bar, {f}) from stdin").format(
-                t=sql.Identifier("test_compose"), f=sql.Identifier("ba'z")), s)
+            s = StringIO("10\ta\tb\tc\n20\td\te\tf\n")
+            cur.copy_expert(
+                sql.SQL("copy {t} (id, foo, bar, {f}) from stdin").format(
+                    t=sql.Identifier("test_compose"), f=sql.Identifier("ba'z")), s)
 
-        s1 = StringIO()
-        cur.copy_expert(
-            sql.SQL("copy (select {f} from {t} order by id) to stdout").format(
-                t=sql.Identifier("test_compose"), f=sql.Identifier("ba'z")), s1)
-        s1.seek(0)
-        self.assertEqual(s1.read(), 'c\nf\n')
+            s1 = StringIO()
+            cur.copy_expert(
+                sql.SQL("copy (select {f} from {t} order by id) to stdout").format(
+                    t=sql.Identifier("test_compose"), f=sql.Identifier("ba'z")), s1)
+            s1.seek(0)
+            self.assertEqual(s1.read(), 'c\nf\n')
 
 
 class IdentifierTests(ConnectingTestCase):

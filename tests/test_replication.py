@@ -73,14 +73,13 @@ class ReplicationTestCase(ConnectingTestCase):
         conn = self.connect()
         if conn is None:
             return
-        cur = conn.cursor()
-
-        try:
-            cur.execute("DROP TABLE dummy1")
-        except psycopg2.ProgrammingError:
-            conn.rollback()
-        cur.execute(
-            "CREATE TABLE dummy1 AS SELECT * FROM generate_series(1, 5) AS id")
+        with conn.cursor() as cur:
+            try:
+                cur.execute("DROP TABLE dummy1")
+            except psycopg2.ProgrammingError:
+                conn.rollback()
+            cur.execute(
+                "CREATE TABLE dummy1 AS SELECT * FROM generate_series(1, 5) AS id")
         conn.commit()
 
 
@@ -90,9 +89,9 @@ class ReplicationTest(ReplicationTestCase):
         conn = self.repl_connect(connection_factory=PhysicalReplicationConnection)
         if conn is None:
             return
-        cur = conn.cursor()
-        cur.execute("IDENTIFY_SYSTEM")
-        cur.fetchall()
+        with conn.cursor() as cur:
+            cur.execute("IDENTIFY_SYSTEM")
+            cur.fetchall()
 
     @skip_before_postgres(9, 0)
     def test_datestyle(self):
@@ -104,29 +103,28 @@ class ReplicationTest(ReplicationTestCase):
             connection_factory=PhysicalReplicationConnection)
         if conn is None:
             return
-        cur = conn.cursor()
-        cur.execute("IDENTIFY_SYSTEM")
-        cur.fetchall()
+        with conn.cursor() as cur:
+            cur.execute("IDENTIFY_SYSTEM")
+            cur.fetchall()
 
     @skip_before_postgres(9, 4)
     def test_logical_replication_connection(self):
         conn = self.repl_connect(connection_factory=LogicalReplicationConnection)
         if conn is None:
             return
-        cur = conn.cursor()
-        cur.execute("IDENTIFY_SYSTEM")
-        cur.fetchall()
+        with conn.cursor() as cur:
+            cur.execute("IDENTIFY_SYSTEM")
+            cur.fetchall()
 
     @skip_before_postgres(9, 4)     # slots require 9.4
     def test_create_replication_slot(self):
         conn = self.repl_connect(connection_factory=PhysicalReplicationConnection)
         if conn is None:
             return
-        cur = conn.cursor()
-
-        self.create_replication_slot(cur)
-        self.assertRaises(
-            psycopg2.ProgrammingError, self.create_replication_slot, cur)
+        with conn.cursor() as cur:
+            self.create_replication_slot(cur)
+            self.assertRaises(
+                psycopg2.ProgrammingError, self.create_replication_slot, cur)
 
     @skip_before_postgres(9, 4)  # slots require 9.4
     @skip_repl_if_green
@@ -134,13 +132,12 @@ class ReplicationTest(ReplicationTestCase):
         conn = self.repl_connect(connection_factory=PhysicalReplicationConnection)
         if conn is None:
             return
-        cur = conn.cursor()
+        with conn.cursor() as cur:
+            self.assertRaises(psycopg2.ProgrammingError,
+                cur.start_replication, self.slot)
 
-        self.assertRaises(psycopg2.ProgrammingError,
-            cur.start_replication, self.slot)
-
-        self.create_replication_slot(cur)
-        cur.start_replication(self.slot)
+            self.create_replication_slot(cur)
+            cur.start_replication(self.slot)
 
     @skip_before_postgres(9, 4)  # slots require 9.4
     @skip_repl_if_green
@@ -148,12 +145,11 @@ class ReplicationTest(ReplicationTestCase):
         conn = self.repl_connect(connection_factory=LogicalReplicationConnection)
         if conn is None:
             return
-        cur = conn.cursor()
-
-        self.create_replication_slot(cur, output_plugin='test_decoding')
-        cur.start_replication_expert(
-            sql.SQL("START_REPLICATION SLOT {slot} LOGICAL 0/00000000").format(
-                slot=sql.Identifier(self.slot)))
+        with conn.cursor() as cur:
+            self.create_replication_slot(cur, output_plugin='test_decoding')
+            cur.start_replication_expert(
+                sql.SQL("START_REPLICATION SLOT {slot} LOGICAL 0/00000000").format(
+                    slot=sql.Identifier(self.slot)))
 
     @skip_before_postgres(9, 4)  # slots require 9.4
     @skip_repl_if_green
@@ -161,23 +157,22 @@ class ReplicationTest(ReplicationTestCase):
         conn = self.repl_connect(connection_factory=LogicalReplicationConnection)
         if conn is None:
             return
-        cur = conn.cursor()
+        with conn.cursor() as cur:
+            self.create_replication_slot(cur, output_plugin='test_decoding')
+            self.make_replication_events()
 
-        self.create_replication_slot(cur, output_plugin='test_decoding')
-        self.make_replication_events()
+            def consume(msg):
+                raise StopReplication()
 
-        def consume(msg):
-            raise StopReplication()
+            with self.assertRaises(psycopg2.DataError):
+                # try with invalid options
+                cur.start_replication(
+                    slot_name=self.slot, options={'invalid_param': 'value'})
+                cur.consume_stream(consume)
 
-        with self.assertRaises(psycopg2.DataError):
-            # try with invalid options
-            cur.start_replication(
-                slot_name=self.slot, options={'invalid_param': 'value'})
-            cur.consume_stream(consume)
-
-        # try with correct command
-        cur.start_replication(slot_name=self.slot)
-        self.assertRaises(StopReplication, cur.consume_stream, consume)
+            # try with correct command
+            cur.start_replication(slot_name=self.slot)
+            self.assertRaises(StopReplication, cur.consume_stream, consume)
 
     @skip_before_postgres(9, 4)  # slots require 9.4
     @skip_repl_if_green
@@ -208,17 +203,16 @@ class ReplicationTest(ReplicationTestCase):
         conn = self.repl_connect(connection_factory=LogicalReplicationConnection)
         if conn is None:
             return
-        cur = conn.cursor()
+        with conn.cursor() as cur:
+            self.create_replication_slot(cur, output_plugin='test_decoding')
 
-        self.create_replication_slot(cur, output_plugin='test_decoding')
+            self.make_replication_events()
 
-        self.make_replication_events()
+            cur.start_replication(self.slot)
 
-        cur.start_replication(self.slot)
-
-        def consume(msg):
-            raise StopReplication()
-        self.assertRaises(StopReplication, cur.consume_stream, consume)
+            def consume(msg):
+                raise StopReplication()
+            self.assertRaises(StopReplication, cur.consume_stream, consume)
 
 
 class AsyncReplicationTest(ReplicationTestCase):
@@ -230,42 +224,41 @@ class AsyncReplicationTest(ReplicationTestCase):
         if conn is None:
             return
 
-        cur = conn.cursor()
+        with conn.cursor() as cur:
+            self.create_replication_slot(cur, output_plugin='test_decoding')
+            self.wait(cur)
 
-        self.create_replication_slot(cur, output_plugin='test_decoding')
-        self.wait(cur)
+            cur.start_replication(self.slot)
+            self.wait(cur)
 
-        cur.start_replication(self.slot)
-        self.wait(cur)
+            self.make_replication_events()
 
-        self.make_replication_events()
+            self.msg_count = 0
 
-        self.msg_count = 0
+            def consume(msg):
+                # just check the methods
+                "%s: %s" % (cur.io_timestamp, repr(msg))
+                "%s: %s" % (cur.feedback_timestamp, repr(msg))
+                "%s: %s" % (cur.wal_end, repr(msg))
 
-        def consume(msg):
-            # just check the methods
-            "%s: %s" % (cur.io_timestamp, repr(msg))
-            "%s: %s" % (cur.feedback_timestamp, repr(msg))
-            "%s: %s" % (cur.wal_end, repr(msg))
+                self.msg_count += 1
+                if self.msg_count > 3:
+                    cur.send_feedback(reply=True)
+                    raise StopReplication()
 
-            self.msg_count += 1
-            if self.msg_count > 3:
-                cur.send_feedback(reply=True)
-                raise StopReplication()
+                cur.send_feedback(flush_lsn=msg.data_start)
 
-            cur.send_feedback(flush_lsn=msg.data_start)
+            # cannot be used in asynchronous mode
+            self.assertRaises(psycopg2.ProgrammingError, cur.consume_stream, consume)
 
-        # cannot be used in asynchronous mode
-        self.assertRaises(psycopg2.ProgrammingError, cur.consume_stream, consume)
-
-        def process_stream():
-            while True:
-                msg = cur.read_message()
-                if msg:
-                    consume(msg)
-                else:
-                    select([cur], [], [])
-        self.assertRaises(StopReplication, process_stream)
+            def process_stream():
+                while True:
+                    msg = cur.read_message()
+                    if msg:
+                        consume(msg)
+                    else:
+                        select([cur], [], [])
+            self.assertRaises(StopReplication, process_stream)
 
 
 def test_suite():
