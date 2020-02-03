@@ -56,6 +56,7 @@ from . import test_sql
 from . import test_transaction
 from . import test_types_basic
 from . import test_types_extras
+from . import test_warnings
 from . import test_with
 
 if sys.version_info[:2] < (3, 6):
@@ -101,6 +102,7 @@ def test_suite():
     suite.addTest(test_transaction.test_suite())
     suite.addTest(test_types_basic.test_suite())
     suite.addTest(test_types_extras.test_suite())
+    suite.addTest(test_warnings.test_suite())
     suite.addTest(test_with.test_suite())
     return suite
 

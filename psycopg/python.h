@@ -86,6 +86,8 @@ typedef unsigned long Py_uhash_t;
 #define Bytes_ConcatAndDel PyString_ConcatAndDel
 #define _Bytes_Resize _PyString_Resize
 
+#define Py_TPFLAGS_HAVE_FINALIZE 0L
+
 #define PyDateTime_DELTA_GET_DAYS(o)         (((PyDateTime_Delta*)o)->days)
 #define PyDateTime_DELTA_GET_SECONDS(o)      (((PyDateTime_Delta*)o)->seconds)
 #define PyDateTime_DELTA_GET_MICROSECONDS(o) (((PyDateTime_Delta*)o)->microseconds)
@@ -96,6 +98,8 @@ typedef unsigned long Py_uhash_t;
 #define PyLong_FromOid(x) (((x) & 0x80000000) ? \
     PyLong_FromUnsignedLong((unsigned long)(x)) : \
     PyInt_FromLong((x)))
+
+#define PyObject_CallFinalizerFromDealloc(obj) 0
 
 #endif  /* PY_2 */
 
