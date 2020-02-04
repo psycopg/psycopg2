@@ -36,7 +36,7 @@ from psycopg2._json import _get_json_oids
 from psycopg2.extras import (
     CompositeCaster, DateRange, DateTimeRange, DateTimeTZRange, HstoreAdapter,
     Inet, Json, NumericRange, Range, RealDictConnection,
-    register_composite, register_hstore, register_range,
+    register_composite, register_hstore, register_range, _solve_conn_curs
 )
 from psycopg2.tz import FixedOffsetTimezone
 
@@ -1622,6 +1622,32 @@ class RangeCasterTestCase(ConnectingTestCase):
         self.assertRaises(psycopg2.ProgrammingError,
             register_range, 'rs.r1', 'FailRange', cur)
         cur.execute("rollback to savepoint x;")
+
+
+class TestSolveConnCurs(ConnectingTestCase):
+    def test_pass_connection(self):
+        with _solve_conn_curs(self.conn) as (conn, curs):
+            self.assertIsInstance(conn, psycopg2.extensions.connection)
+            self.assertIsInstance(curs, psycopg2.extensions.cursor)
+            self.assertIs(conn, self.conn)
+            self.assertFalse(conn.closed)
+            self.assertFalse(curs.closed)
+        self.assertFalse(conn.closed)
+        self.assertTrue(curs.closed)
+
+    def test_pass_cursor(self):
+        with self.conn.cursor() as cursor:
+            with _solve_conn_curs(cursor) as (conn, curs):
+                self.assertIsInstance(conn, psycopg2.extensions.connection)
+                self.assertIsInstance(curs, psycopg2.extensions.cursor)
+                self.assertIs(conn, self.conn)
+                self.assertIsNot(curs, cursor)
+                self.assertFalse(conn.closed)
+                self.assertFalse(curs.closed)
+            self.assertFalse(conn.closed)
+            self.assertTrue(curs.closed)
+        self.assertFalse(conn.closed)
+        self.assertTrue(curs.closed)
 
 
 def test_suite():
