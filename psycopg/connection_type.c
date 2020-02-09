@@ -60,6 +60,7 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *kwargs)
 {
     PyObject *obj = NULL;
     cursorObject *curs = NULL;
+    PyObject *rv = NULL;
     PyObject *name = Py_None;
     PyObject *factory = Py_None;
     PyObject *withhold = Py_False;
@@ -110,12 +111,13 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *kwargs)
     if (PyObject_IsInstance(obj, (PyObject *)&cursorType) == 0) {
         PyErr_SetString(PyExc_TypeError,
             "cursor factory must be subclass of psycopg2.extensions.cursor");
-        Py_DECREF(obj);
-        obj = NULL;
         goto exit;
     }
 
+    /* pass ownership from obj to curs */
     curs = (cursorObject *)obj;
+    obj = NULL;
+
     if (0 > curs_withhold_set(curs, withhold)) {
         goto error;
     }
@@ -128,26 +130,31 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *kwargs)
         obj, Py_REFCNT(obj)
     );
 
-    obj = NULL;
+    /* pass ownership from curs to rv */
+    rv = (PyObject *)curs;
+    curs = NULL;
+
     goto exit;
 
 error:
     {
         PyObject *error_type, *error_value, *error_traceback;
         PyObject *close;
-        curs = NULL;
         PyErr_Fetch(&error_type, &error_value, &error_traceback);
-        close = PyObject_CallMethod(obj, "close", NULL);
-        if (close)
-            Py_DECREF(close);
-        else
-            PyErr_WriteUnraisable(obj);
+        if (curs) {
+            close = PyObject_CallMethod((PyObject *)curs, "close", NULL);
+            if (close)
+                Py_DECREF(close);
+            else
+                PyErr_WriteUnraisable((PyObject *)curs);
+        }
         PyErr_Restore(error_type, error_value, error_traceback);
     }
 
 exit:
     Py_XDECREF(obj);
-    return (PyObject *)curs;
+    Py_XDECREF(curs);
+    return rv;
 }
 
 
