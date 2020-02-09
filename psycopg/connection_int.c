@@ -1279,16 +1279,6 @@ conn_set_session(connectionObject *self, int autocommit,
         goto exit;
     }
 
-    /* Promote an isolation level to one of the levels supported by the server */
-    if (self->server_version < 80000) {
-        if (isolevel == ISOLATION_LEVEL_READ_UNCOMMITTED) {
-            isolevel = ISOLATION_LEVEL_READ_COMMITTED;
-        }
-        else if (isolevel == ISOLATION_LEVEL_REPEATABLE_READ) {
-            isolevel = ISOLATION_LEVEL_SERIALIZABLE;
-        }
-    }
-
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&self->lock);
 

@@ -128,9 +128,6 @@ fi
 # Unsupported postgres versions that we still support
 # Images built by https://github.com/psycopg/psycopg2-wheels/tree/build-dinosaurs
 if (( "$TEST_PAST" )); then
-    create 7.4
-    create 8.0
-    create 8.1
     create 8.2
     create 8.3
     create 8.4

@@ -25,7 +25,7 @@
 
 import threading
 import unittest
-from .testutils import ConnectingTestCase, skip_before_postgres, slow
+from .testutils import ConnectingTestCase, slow
 
 import psycopg2
 from psycopg2.extensions import (
@@ -238,7 +238,6 @@ class QueryCancellationTests(ConnectingTestCase):
         ConnectingTestCase.setUp(self)
         self.conn.set_isolation_level(ISOLATION_LEVEL_SERIALIZABLE)
 
-    @skip_before_postgres(8, 2)
     def test_statement_timeout(self):
         curs = self.conn.cursor()
         # Set a low statement timeout, then sleep for a longer period.

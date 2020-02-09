@@ -25,8 +25,7 @@ from psycopg2.compat import lru_cache
 import psycopg2.extras
 from psycopg2.extras import NamedTupleConnection, NamedTupleCursor
 
-from .testutils import ConnectingTestCase, skip_before_postgres, \
-    skip_before_python, skip_from_python
+from .testutils import ConnectingTestCase, skip_before_python, skip_from_python
 
 
 class _DictCursorBase(ConnectingTestCase):
@@ -97,7 +96,6 @@ class ExtrasDictCursorTests(_DictCursorBase):
         self.failUnless(row['foo'] == 'qux')
         self.failUnless(row[0] == 'qux')
 
-    @skip_before_postgres(8, 0)
     def testDictCursorWithPlainCursorIterRowNumber(self):
         curs = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         self._testIterRowNumber(curs)
@@ -128,12 +126,10 @@ class ExtrasDictCursorTests(_DictCursorBase):
                 return row
         self._testWithNamedCursor(getter)
 
-    @skip_before_postgres(8, 2)
     def testDictCursorWithNamedCursorNotGreedy(self):
         curs = self.conn.cursor('tmp', cursor_factory=psycopg2.extras.DictCursor)
         self._testNamedCursorNotGreedy(curs)
 
-    @skip_before_postgres(8, 0)
     def testDictCursorWithNamedCursorIterRowNumber(self):
         curs = self.conn.cursor('tmp', cursor_factory=psycopg2.extras.DictCursor)
         self._testIterRowNumber(curs)
@@ -246,7 +242,6 @@ class ExtrasDictCursorRealTests(_DictCursorBase):
                 return row
         self._testWithPlainCursorReal(getter)
 
-    @skip_before_postgres(8, 0)
     def testDictCursorWithPlainCursorRealIterRowNumber(self):
         curs = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         self._testIterRowNumber(curs)
@@ -285,12 +280,10 @@ class ExtrasDictCursorRealTests(_DictCursorBase):
                 return row
         self._testWithNamedCursorReal(getter)
 
-    @skip_before_postgres(8, 2)
     def testDictCursorRealWithNamedCursorNotGreedy(self):
         curs = self.conn.cursor('tmp', cursor_factory=psycopg2.extras.RealDictCursor)
         self._testNamedCursorNotGreedy(curs)
 
-    @skip_before_postgres(8, 0)
     def testDictCursorRealWithNamedCursorIterRowNumber(self):
         curs = self.conn.cursor('tmp', cursor_factory=psycopg2.extras.RealDictCursor)
         self._testIterRowNumber(curs)
@@ -524,7 +517,6 @@ class NamedTupleCursorTest(ConnectingTestCase):
         self.assertEqual(rv.f3, 3)
 
     @skip_before_python(3)
-    @skip_before_postgres(8)
     def test_nonascii_name(self):
         curs = self.conn.cursor()
         curs.execute('select 1 as \xe5h\xe9')
@@ -563,7 +555,6 @@ class NamedTupleCursorTest(ConnectingTestCase):
         finally:
             NamedTupleCursor._make_nt = f_orig
 
-    @skip_before_postgres(8, 0)
     def test_named(self):
         curs = self.conn.cursor('tmp')
         curs.execute("""select i from generate_series(0,9) i""")
@@ -591,7 +582,6 @@ class NamedTupleCursorTest(ConnectingTestCase):
         recs = curs.fetchall()
         self.assertEqual(recs[0].i, 42)
 
-    @skip_before_postgres(8, 2)
     def test_not_greedy(self):
         curs = self.conn.cursor('tmp')
         curs.itersize = 2
@@ -605,7 +595,6 @@ class NamedTupleCursorTest(ConnectingTestCase):
         self.assert_(recs[1].ts - recs[0].ts < timedelta(seconds=0.005))
         self.assert_(recs[2].ts - recs[1].ts > timedelta(seconds=0.0099))
 
-    @skip_before_postgres(8, 0)
     def test_named_rownumber(self):
         curs = self.conn.cursor('tmp')
         # Only checking for dataset < itersize:

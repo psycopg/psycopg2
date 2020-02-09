@@ -202,16 +202,7 @@ class ConnectionTests(ConnectingTestCase):
         self.assert_(self.conn.protocol_version in (2, 3),
             self.conn.protocol_version)
 
-    def test_tpc_unsupported(self):
-        cnn = self.conn
-        if cnn.info.server_version >= 80100:
-            return self.skipTest("tpc is supported")
-
-        self.assertRaises(psycopg2.NotSupportedError,
-            cnn.xid, 42, "foo", "bar")
-
     @slow
-    @skip_before_postgres(8, 2)
     def test_concurrent_execution(self):
         def slave():
             cnn = self.connect()
@@ -595,13 +586,6 @@ class IsolationLevelsTestCase(ConnectingTestCase):
         for name, level in levels:
             conn.set_isolation_level(level)
 
-            # the only values available on prehistoric PG versions
-            if conn.info.server_version < 80000:
-                if level in (
-                        ext.ISOLATION_LEVEL_READ_UNCOMMITTED,
-                        ext.ISOLATION_LEVEL_REPEATABLE_READ):
-                    name, level = levels[levels.index((name, level)) + 1]
-
             self.assertEqual(conn.isolation_level, level)
 
             curs.execute('show transaction_isolation;')
@@ -776,14 +760,9 @@ class IsolationLevelsTestCase(ConnectingTestCase):
 
         self.conn.isolation_level = ext.ISOLATION_LEVEL_REPEATABLE_READ
         cur.execute("SHOW transaction_isolation;")
-        if self.conn.info.server_version > 80000:
-            self.assertEqual(self.conn.isolation_level,
-                ext.ISOLATION_LEVEL_REPEATABLE_READ)
-            self.assertEqual(cur.fetchone()[0], 'repeatable read')
-        else:
-            self.assertEqual(self.conn.isolation_level,
-                ext.ISOLATION_LEVEL_SERIALIZABLE)
-            self.assertEqual(cur.fetchone()[0], 'serializable')
+        self.assertEqual(self.conn.isolation_level,
+            ext.ISOLATION_LEVEL_REPEATABLE_READ)
+        self.assertEqual(cur.fetchone()[0], 'repeatable read')
         self.conn.rollback()
 
         self.conn.isolation_level = ext.ISOLATION_LEVEL_READ_COMMITTED
@@ -795,14 +774,9 @@ class IsolationLevelsTestCase(ConnectingTestCase):
 
         self.conn.isolation_level = ext.ISOLATION_LEVEL_READ_UNCOMMITTED
         cur.execute("SHOW transaction_isolation;")
-        if self.conn.info.server_version > 80000:
-            self.assertEqual(self.conn.isolation_level,
-                ext.ISOLATION_LEVEL_READ_UNCOMMITTED)
-            self.assertEqual(cur.fetchone()[0], 'read uncommitted')
-        else:
-            self.assertEqual(self.conn.isolation_level,
-                ext.ISOLATION_LEVEL_READ_COMMITTED)
-            self.assertEqual(cur.fetchone()[0], 'read committed')
+        self.assertEqual(self.conn.isolation_level,
+            ext.ISOLATION_LEVEL_READ_UNCOMMITTED)
+        self.assertEqual(cur.fetchone()[0], 'read uncommitted')
         self.conn.rollback()
 
         self.assertEqual(ext.ISOLATION_LEVEL_DEFAULT, None)
@@ -824,14 +798,9 @@ class IsolationLevelsTestCase(ConnectingTestCase):
 
         self.conn.isolation_level = "repeatable read"
         cur.execute("SHOW transaction_isolation;")
-        if self.conn.info.server_version > 80000:
-            self.assertEqual(self.conn.isolation_level,
-                ext.ISOLATION_LEVEL_REPEATABLE_READ)
-            self.assertEqual(cur.fetchone()[0], 'repeatable read')
-        else:
-            self.assertEqual(self.conn.isolation_level,
-                ext.ISOLATION_LEVEL_SERIALIZABLE)
-            self.assertEqual(cur.fetchone()[0], 'serializable')
+        self.assertEqual(self.conn.isolation_level,
+            ext.ISOLATION_LEVEL_REPEATABLE_READ)
+        self.assertEqual(cur.fetchone()[0], 'repeatable read')
         self.conn.rollback()
 
         self.conn.isolation_level = "read committed"
@@ -843,14 +812,9 @@ class IsolationLevelsTestCase(ConnectingTestCase):
 
         self.conn.isolation_level = "read uncommitted"
         cur.execute("SHOW transaction_isolation;")
-        if self.conn.info.server_version > 80000:
-            self.assertEqual(self.conn.isolation_level,
-                ext.ISOLATION_LEVEL_READ_UNCOMMITTED)
-            self.assertEqual(cur.fetchone()[0], 'read uncommitted')
-        else:
-            self.assertEqual(self.conn.isolation_level,
-                ext.ISOLATION_LEVEL_READ_COMMITTED)
-            self.assertEqual(cur.fetchone()[0], 'read committed')
+        self.assertEqual(self.conn.isolation_level,
+            ext.ISOLATION_LEVEL_READ_UNCOMMITTED)
+        self.assertEqual(cur.fetchone()[0], 'read uncommitted')
         self.conn.rollback()
 
         self.conn.isolation_level = "default"
@@ -1265,10 +1229,7 @@ class TransactionControlTests(ConnectingTestCase):
         self.conn.set_session(
             ext.ISOLATION_LEVEL_REPEATABLE_READ)
         cur.execute("SHOW transaction_isolation;")
-        if self.conn.info.server_version > 80000:
-            self.assertEqual(cur.fetchone()[0], 'repeatable read')
-        else:
-            self.assertEqual(cur.fetchone()[0], 'serializable')
+        self.assertEqual(cur.fetchone()[0], 'repeatable read')
         self.conn.rollback()
 
         self.conn.set_session(
@@ -1280,10 +1241,7 @@ class TransactionControlTests(ConnectingTestCase):
         self.conn.set_session(
             isolation_level=ext.ISOLATION_LEVEL_READ_UNCOMMITTED)
         cur.execute("SHOW transaction_isolation;")
-        if self.conn.info.server_version > 80000:
-            self.assertEqual(cur.fetchone()[0], 'read uncommitted')
-        else:
-            self.assertEqual(cur.fetchone()[0], 'read committed')
+        self.assertEqual(cur.fetchone()[0], 'read uncommitted')
         self.conn.rollback()
 
     def test_set_isolation_level_str(self):
@@ -1295,10 +1253,7 @@ class TransactionControlTests(ConnectingTestCase):
 
         self.conn.set_session("repeatable read")
         cur.execute("SHOW transaction_isolation;")
-        if self.conn.info.server_version > 80000:
-            self.assertEqual(cur.fetchone()[0], 'repeatable read')
-        else:
-            self.assertEqual(cur.fetchone()[0], 'serializable')
+        self.assertEqual(cur.fetchone()[0], 'repeatable read')
         self.conn.rollback()
 
         self.conn.set_session("read committed")
@@ -1308,10 +1263,7 @@ class TransactionControlTests(ConnectingTestCase):
 
         self.conn.set_session("read uncommitted")
         cur.execute("SHOW transaction_isolation;")
-        if self.conn.info.server_version > 80000:
-            self.assertEqual(cur.fetchone()[0], 'read uncommitted')
-        else:
-            self.assertEqual(cur.fetchone()[0], 'read committed')
+        self.assertEqual(cur.fetchone()[0], 'read uncommitted')
         self.conn.rollback()
 
     def test_bad_isolation_level(self):
@@ -1685,7 +1637,6 @@ class PasswordLeakTestCase(ConnectingTestCase):
 
 class SignalTestCase(ConnectingTestCase):
     @slow
-    @skip_before_postgres(8, 2)
     def test_bug_551_returning(self):
         # Raise an exception trying to decode 'id'
         self._test_bug_551(query="""

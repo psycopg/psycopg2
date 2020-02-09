@@ -103,7 +103,6 @@ class CancelTests(ConnectingTestCase):
         self.conn.commit()
 
     @slow
-    @skip_before_postgres(8, 2)
     def test_async_cancel(self):
         async_conn = psycopg2.connect(dsn, async=True)
         self.assertRaises(psycopg2.OperationalError, async_conn.cancel)

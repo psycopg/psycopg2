@@ -33,7 +33,7 @@ from psycopg2 import extras
 
 from .testconfig import dsn
 import unittest
-from .testutils import ConnectingTestCase, skip_before_postgres, slow
+from .testutils import ConnectingTestCase, slow
 
 
 class CancelTests(ConnectingTestCase):
@@ -52,7 +52,6 @@ class CancelTests(ConnectingTestCase):
         self.conn.cancel()
 
     @slow
-    @skip_before_postgres(8, 2)
     def test_cancel(self):
         errors = []
 
@@ -90,7 +89,6 @@ class CancelTests(ConnectingTestCase):
         self.assertEqual(errors, [])
 
     @slow
-    @skip_before_postgres(8, 2)
     def test_async_cancel(self):
         async_conn = psycopg2.connect(dsn, async_=True)
         self.assertRaises(psycopg2.OperationalError, async_conn.cancel)

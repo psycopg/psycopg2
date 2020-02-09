@@ -193,7 +193,6 @@ static PyObject *
 psyco_conn_xid(connectionObject *self, PyObject *args, PyObject *kwargs)
 {
     EXC_IF_CONN_CLOSED(self);
-    EXC_IF_TPC_NOT_SUPPORTED(self);
 
     return PyObject_Call((PyObject *)&xidType, args, kwargs);
 }
@@ -211,7 +210,6 @@ psyco_conn_tpc_begin(connectionObject *self, PyObject *args)
 
     EXC_IF_CONN_CLOSED(self);
     EXC_IF_CONN_ASYNC(self, tpc_begin);
-    EXC_IF_TPC_NOT_SUPPORTED(self);
     EXC_IF_IN_TRANSACTION(self, tpc_begin);
 
     if (!PyArg_ParseTuple(args, "O", &oxid)) {
@@ -365,7 +363,6 @@ psyco_conn_tpc_commit(connectionObject *self, PyObject *args)
 {
     EXC_IF_CONN_CLOSED(self);
     EXC_IF_CONN_ASYNC(self, tpc_commit);
-    EXC_IF_TPC_NOT_SUPPORTED(self);
 
     return _psyco_conn_tpc_finish(self, args,
                                   conn_commit, "COMMIT PREPARED");
@@ -379,7 +376,6 @@ psyco_conn_tpc_rollback(connectionObject *self, PyObject *args)
 {
     EXC_IF_CONN_CLOSED(self);
     EXC_IF_CONN_ASYNC(self, tpc_rollback);
-    EXC_IF_TPC_NOT_SUPPORTED(self);
 
     return _psyco_conn_tpc_finish(self, args,
                                   conn_rollback, "ROLLBACK PREPARED");
@@ -394,7 +390,6 @@ psyco_conn_tpc_recover(connectionObject *self, PyObject *dummy)
     EXC_IF_CONN_CLOSED(self);
     EXC_IF_CONN_ASYNC(self, tpc_recover);
     EXC_IF_TPC_PREPARED(self, tpc_recover);
-    EXC_IF_TPC_NOT_SUPPORTED(self);
 
     return conn_tpc_recover(self);
 }

@@ -199,15 +199,6 @@ HIDDEN void conn_set_error(connectionObject *self, const char *msg);
         return NULL;                                            \
     }
 
-#define EXC_IF_TPC_NOT_SUPPORTED(self)              \
-    if ((self)->server_version < 80100) {           \
-        PyErr_Format(NotSupportedError,             \
-            "server version %d: "                   \
-            "two-phase transactions not supported", \
-            (self)->server_version);                \
-        return NULL;                                \
-    }
-
 #define EXC_IF_TPC_BEGIN(self, cmd) if ((self)->tpc_xid) {  \
     PyErr_Format(ProgrammingError, "%s cannot be used "     \
     "during a two-phase transaction", #cmd);                \

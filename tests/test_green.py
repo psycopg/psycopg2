@@ -115,7 +115,6 @@ class GreenTestCase(ConnectingTestCase):
         curs.execute("select 1")
         self.assertEqual(curs.fetchone()[0], 1)
 
-    @skip_before_postgres(8, 2)
     def test_copy_no_hang(self):
         cur = self.conn.cursor()
         self.assertRaises(psycopg2.ProgrammingError,

@@ -25,8 +25,7 @@
 
 import datetime as dt
 import unittest
-from .testutils import (
-    ConnectingTestCase, skip_before_postgres, skip_copy_if_green, StringIO)
+from .testutils import ConnectingTestCase, skip_copy_if_green, StringIO
 
 import psycopg2
 from psycopg2 import sql
@@ -152,7 +151,6 @@ class SqlFormatTests(ConnectingTestCase):
             [(10, 'a', 'b', 'c'), (20, 'd', 'e', 'f')])
 
     @skip_copy_if_green
-    @skip_before_postgres(8, 2)
     def test_copy(self):
         cur = self.conn.cursor()
         cur.execute("""

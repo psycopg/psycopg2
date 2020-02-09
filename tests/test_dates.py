@@ -321,7 +321,6 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
     def test_type_roundtrip_interval_array(self):
         self._test_type_roundtrip_array(timedelta(seconds=30))
 
-    @skip_before_postgres(8, 1)
     def test_time_24(self):
         t = self.execute("select '24:00'::time;")
         self.assertEqual(t, time(0, 0))
@@ -332,7 +331,6 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         t = self.execute("select '24:00+05:30'::timetz;")
         self.assertEqual(t, time(0, 0, tzinfo=FixedOffsetTimezone(330)))
 
-    @skip_before_postgres(8, 1)
     def test_large_interval(self):
         t = self.execute("select '999999:00:00'::interval")
         self.assertEqual(total_seconds(t), 999999 * 60 * 60)

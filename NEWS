@@ -1,6 +1,11 @@
 Current release
 ---------------
 
+UNRELEASED
+^^^^^^^^^^
+
+- Removed support for PostgreSQL server < 8.2.
+
 What's new in psycopg 2.8.5
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

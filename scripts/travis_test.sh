@@ -64,9 +64,6 @@ if (( "$TEST_PAST" )); then
     run_test 8.4
     run_test 8.3
     run_test 8.2
-    run_test 8.1
-    run_test 8.0
-    run_test 7.4
 fi
 
 # Postgres built from master

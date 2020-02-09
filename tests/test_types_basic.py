@@ -235,7 +235,6 @@ class TypesBasicTests(ConnectingTestCase):
         self.assert_(isinstance(x[0], bytes))
         self.assertEqual(x, [b'a', b'b', b'c'])
 
-    @testutils.skip_before_postgres(8, 2)
     def testArrayOfNulls(self):
         curs = self.conn.cursor()
         curs.execute("""
@@ -271,7 +270,6 @@ class TypesBasicTests(ConnectingTestCase):
         curs.execute("insert into na (boolaa) values (%s)", ([[True, None]],))
         curs.execute("insert into na (boolaa) values (%s)", ([[None, None]],))
 
-    @testutils.skip_before_postgres(8, 2)
     def testNestedArrays(self):
         curs = self.conn.cursor()
         for a in [
@@ -385,7 +383,6 @@ class TypesBasicTests(ConnectingTestCase):
         a = self.execute("select array['a', 'b', '''']::text[]")
         self.assertEqual(a, ['a', 'b', "'"])
 
-    @testutils.skip_before_postgres(8, 2)
     def testGenericArrayNull(self):
         def caster(s, cur):
             if s is None:
@@ -400,7 +397,6 @@ class TypesBasicTests(ConnectingTestCase):
         a = self.execute("select '{1, 2, NULL}'::int4[]")
         self.assertEqual(a, [2, 4, 'nada'])
 
-    @testutils.skip_before_postgres(8, 2)
     def testNetworkArray(self):
         # we don't know these types, but we know their arrays
         a = self.execute("select '{192.168.0.1/24}'::inet[]")

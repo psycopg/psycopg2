@@ -42,10 +42,9 @@ class QuotingTestCase(ConnectingTestCase):
 
     This test case checks that the E'' quotes are used whenever they are
     needed. The tests are expected to pass with all PostgreSQL server versions
-    (currently tested with 7.4 <= PG <= 8.3beta) and with any
-    'standard_conforming_strings' server parameter value.
-    The tests also check that no warning is raised ('escape_string_warning'
-    should be on).
+    and with any 'standard_conforming_strings' server parameter value. The
+    tests also check that no warning is raised ('escape_string_warning' should
+    be on).
 
     https://www.postgresql.org/docs/current/static/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS
     https://www.postgresql.org/docs/current/static/runtime-config-compatible.html
@@ -198,7 +197,6 @@ class TestQuotedIdentifier(ConnectingTestCase):
         self.assertEqual(quote_ident('blah-blah', self.conn), '"blah-blah"')
         self.assertEqual(quote_ident('quote"inside', self.conn), '"quote""inside"')
 
-    @testutils.skip_before_postgres(8, 0)
     def test_unicode_ident(self):
         snowman = u"\u2603"
         quoted = '"' + snowman + '"'

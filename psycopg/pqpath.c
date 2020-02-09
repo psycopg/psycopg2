@@ -360,8 +360,7 @@ pq_begin_locked(connectionObject *conn, PyThreadState **tstate)
     }
     else {
         snprintf(buf, bufsize,
-            conn->server_version >= 80000 ?
-                "BEGIN%s%s%s%s" : "BEGIN;SET TRANSACTION%s%s%s%s",
+                 "BEGIN%s%s%s%s",
             (conn->isolevel >= 1 && conn->isolevel <= 4)
                 ? " ISOLATION LEVEL " : "",
             (conn->isolevel >= 1 && conn->isolevel <= 4)

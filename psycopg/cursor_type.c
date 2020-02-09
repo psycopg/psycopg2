@@ -84,9 +84,9 @@ curs_close(cursorObject *self, PyObject *dummy)
          * closed (#746).
          *
          * So if we didn't execute() check for the cursor existence before
-         * closing it (the view exists since PG 8.2 according to docs).
+         * closing it.
          */
-        if (!self->query && self->conn->server_version >= 80200) {
+        if (!self->query) {
             if (!(lname = psyco_escape_string(
                     self->conn, self->name, -1, NULL, NULL))) {
                 goto exit;

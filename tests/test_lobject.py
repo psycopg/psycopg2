@@ -32,11 +32,8 @@ import psycopg2
 import psycopg2.extensions
 import unittest
 from .testutils import (decorate_all_tests, skip_if_tpc_disabled,
-    skip_before_postgres, ConnectingTestCase, skip_if_green, slow)
+    ConnectingTestCase, skip_if_green, slow)
 
-
-skip_if_no_lo = skip_before_postgres(8, 1,
-    "large objects only supported from PG 8.1")
 
 skip_lo_if_green = skip_if_green("libpq doesn't support LO in async mode")
 
@@ -66,7 +63,6 @@ class LargeObjectTestCase(ConnectingTestCase):
         ConnectingTestCase.tearDown(self)
 
 
-@skip_if_no_lo
 @skip_lo_if_green
 class LargeObjectTests(LargeObjectTestCase):
     def test_create(self):
@@ -412,7 +408,6 @@ def skip_if_no_truncate(f):
     return skip_if_no_truncate_
 
 
-@skip_if_no_lo
 @skip_lo_if_green
 @skip_if_no_truncate
 class LargeObjectTruncateTests(LargeObjectTestCase):
@@ -477,7 +472,6 @@ def skip_if_no_lo64(f):
     return skip_if_no_lo64_
 
 
-@skip_if_no_lo
 @skip_lo_if_green
 @skip_if_no_truncate
 @skip_if_no_lo64
@@ -505,7 +499,6 @@ def skip_if_lo64(f):
     return skip_if_lo64_
 
 
-@skip_if_no_lo
 @skip_lo_if_green
 @skip_if_no_truncate
 @skip_if_lo64

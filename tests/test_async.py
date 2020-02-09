@@ -101,7 +101,6 @@ class AsyncTests(ConnectingTestCase):
         self.assertEquals(cur.fetchone()[0], "a")
 
     @slow
-    @skip_before_postgres(8, 2)
     def test_async_callproc(self):
         cur = self.conn.cursor()
         cur.callproc("pg_sleep", (0.1, ))
@@ -460,7 +459,6 @@ class AsyncTests(ConnectingTestCase):
         else:
             self.fail("no exception raised")
 
-    @skip_before_postgres(8, 2)
     def test_copy_no_hang(self):
         cur = self.conn.cursor()
         cur.execute("copy (select 1) to stdout")

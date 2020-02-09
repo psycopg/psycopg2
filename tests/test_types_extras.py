@@ -415,21 +415,7 @@ class HstoreTestCase(ConnectingTestCase):
             conn.close()
 
 
-def skip_if_no_composite(f):
-    @wraps(f)
-    def skip_if_no_composite_(self):
-        if self.conn.info.server_version < 80000:
-            return self.skipTest(
-                "server version %s doesn't support composite types"
-                % self.conn.info.server_version)
-
-        return f(self)
-
-    return skip_if_no_composite_
-
-
 class AdaptTypeTestCase(ConnectingTestCase):
-    @skip_if_no_composite
     def test_none_in_record(self):
         curs = self.conn.cursor()
         s = curs.mogrify("SELECT %s;", [(42, None)])
@@ -489,7 +475,6 @@ class AdaptTypeTestCase(ConnectingTestCase):
            '^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f")',
            [None, ''.join(map(chr, range(1, 128)))])
 
-    @skip_if_no_composite
     def test_cast_composite(self):
         oid = self._create_type("type_isd",
             [('anint', 'integer'), ('astring', 'text'), ('adate', 'date')])
@@ -515,7 +500,6 @@ class AdaptTypeTestCase(ConnectingTestCase):
         self.assertEqual(v.astring, "hello")
         self.assertEqual(v.adate, date(2011, 1, 2))
 
-    @skip_if_no_composite
     def test_empty_string(self):
         # issue #141
         self._create_type("type_ss", [('s1', 'text'), ('s2', 'text')])
@@ -535,7 +519,6 @@ class AdaptTypeTestCase(ConnectingTestCase):
         ok(('', ''))
         ok((None, None))
 
-    @skip_if_no_composite
     def test_cast_nested(self):
         self._create_type("type_is",
             [("anint", "integer"), ("astring", "text")])
@@ -556,7 +539,6 @@ class AdaptTypeTestCase(ConnectingTestCase):
         self.assertEqual(r, v)
         self.assertEqual(v.anotherpair.apair.astring, "hello")
 
-    @skip_if_no_composite
     def test_register_on_cursor(self):
         self._create_type("type_ii", [("a", "integer"), ("b", "integer")])
 
@@ -568,7 +550,6 @@ class AdaptTypeTestCase(ConnectingTestCase):
         curs2.execute("select (1,2)::type_ii")
         self.assertEqual(curs2.fetchone()[0], "(1,2)")
 
-    @skip_if_no_composite
     def test_register_on_connection(self):
         self._create_type("type_ii", [("a", "integer"), ("b", "integer")])
 
@@ -586,7 +567,6 @@ class AdaptTypeTestCase(ConnectingTestCase):
             conn1.close()
             conn2.close()
 
-    @skip_if_no_composite
     @restore_types
     def test_register_globally(self):
         self._create_type("type_ii", [("a", "integer"), ("b", "integer")])
@@ -606,7 +586,6 @@ class AdaptTypeTestCase(ConnectingTestCase):
             conn1.close()
             conn2.close()
 
-    @skip_if_no_composite
     def test_composite_namespace(self):
         curs = self.conn.cursor()
         curs.execute("""
@@ -625,7 +604,6 @@ class AdaptTypeTestCase(ConnectingTestCase):
         curs.execute("select (4,8)::typens.typens_ii")
         self.assertEqual(curs.fetchone()[0], (4, 8))
 
-    @skip_if_no_composite
     @skip_before_postgres(8, 4)
     def test_composite_array(self):
         self._create_type("type_isd",
@@ -648,7 +626,6 @@ class AdaptTypeTestCase(ConnectingTestCase):
         self.assertEqual(v[1][1], "world")
         self.assertEqual(v[1][2], date(2011, 1, 3))
 
-    @skip_if_no_composite
     def test_wrong_schema(self):
         oid = self._create_type("type_ii", [("a", "integer"), ("b", "integer")])
         c = CompositeCaster('type_ii', oid, [('a', 23), ('b', 23), ('c', 23)])
@@ -658,7 +635,6 @@ class AdaptTypeTestCase(ConnectingTestCase):
         self.assertRaises(psycopg2.DataError, curs.fetchone)
 
     @slow
-    @skip_if_no_composite
     @skip_before_postgres(8, 4)
     def test_from_tables(self):
         curs = self.conn.cursor()
@@ -703,7 +679,6 @@ class AdaptTypeTestCase(ConnectingTestCase):
         self.assertEqual(r[0], (2, 'test2'))
         self.assertEqual(r[1], [(3, 'testc', 2), (4, 'testd', 2)])
 
-    @skip_if_no_composite
     def test_non_dbapi_connection(self):
         self._create_type("type_ii", [("a", "integer"), ("b", "integer")])
 
@@ -725,7 +700,6 @@ class AdaptTypeTestCase(ConnectingTestCase):
         finally:
             conn.close()
 
-    @skip_if_no_composite
     def test_subclass(self):
         oid = self._create_type("type_isd",
             [('anint', 'integer'), ('astring', 'text'), ('adate', 'date')])
@@ -953,7 +927,6 @@ class JsonTestCase(ConnectingTestCase):
         self.assert_(s.startswith("'"))
         self.assert_(s.endswith("'"))
 
-    @skip_before_postgres(8, 2)
     def test_scs(self):
         cnn_on = self.connect(options="-c standard_conforming_strings=on")
         cur_on = cnn_on.cursor()

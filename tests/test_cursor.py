@@ -335,7 +335,6 @@ class CursorTests(ConnectingTestCase):
         self.assertRaises(psycopg2.OperationalError, curs.scroll, -1)
 
     @slow
-    @skip_before_postgres(8, 2)
     def test_iter_named_cursor_efficient(self):
         curs = self.conn.cursor('tmp')
         # if these records are fetched in the same roundtrip their
@@ -349,7 +348,6 @@ class CursorTests(ConnectingTestCase):
             "named cursor records fetched in 2 roundtrips (delta: %s)"
             % (t2 - t1))
 
-    @skip_before_postgres(8, 0)
     def test_iter_named_cursor_default_itersize(self):
         curs = self.conn.cursor('tmp')
         curs.execute('select generate_series(1,50)')
@@ -357,7 +355,6 @@ class CursorTests(ConnectingTestCase):
         # everything swallowed in one gulp
         self.assertEqual(rv, [(i, i) for i in range(1, 51)])
 
-    @skip_before_postgres(8, 0)
     def test_iter_named_cursor_itersize(self):
         curs = self.conn.cursor('tmp')
         curs.itersize = 30
@@ -366,7 +363,6 @@ class CursorTests(ConnectingTestCase):
         # everything swallowed in two gulps
         self.assertEqual(rv, [(i, ((i - 1) % 30) + 1) for i in range(1, 51)])
 
-    @skip_before_postgres(8, 0)
     def test_iter_named_cursor_rownumber(self):
         curs = self.conn.cursor('tmp')
         # note: this fails if itersize < dataset: internally we check
@@ -443,7 +439,6 @@ class CursorTests(ConnectingTestCase):
 
         self.assertEqual(description, unpickled)
 
-    @skip_before_postgres(8, 0)
     def test_named_cursor_stealing(self):
         # you can use a named cursor to iterate on a refcursor created
         # somewhere else
@@ -457,12 +452,10 @@ class CursorTests(ConnectingTestCase):
         self.assertEqual([(2,), (3,), (4,)], cur2.fetchmany(3))
         self.assertEqual([(5,), (6,), (7,)], cur2.fetchall())
 
-    @skip_before_postgres(8, 2)
     def test_named_noop_close(self):
         cur = self.conn.cursor('test')
         cur.close()
 
-    @skip_before_postgres(8, 2)
     def test_stolen_named_cursor_close(self):
         cur1 = self.conn.cursor()
         cur1.execute("DECLARE test CURSOR WITHOUT HOLD "
@@ -475,7 +468,6 @@ class CursorTests(ConnectingTestCase):
         cur2 = self.conn.cursor('test')
         cur2.close()
 
-    @skip_before_postgres(8, 0)
     def test_scroll(self):
         cur = self.conn.cursor()
         cur.execute("select generate_series(0,9)")
@@ -509,7 +501,6 @@ class CursorTests(ConnectingTestCase):
         self.assertRaises((IndexError, psycopg2.ProgrammingError),
             cur.scroll, 1)
 
-    @skip_before_postgres(8, 0)
     def test_scroll_named(self):
         cur = self.conn.cursor('tmp', scrollable=True)
         cur.execute("select generate_series(0,9)")
@@ -636,7 +627,6 @@ class CursorTests(ConnectingTestCase):
 
             self.assertEqual(victim_conn.closed, 2)
 
-    @skip_before_postgres(8, 2)
     def test_rowcount_on_executemany_returning(self):
         cur = self.conn.cursor()
         cur.execute("create table execmany(id serial primary key, data int)")
