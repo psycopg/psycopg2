@@ -14,7 +14,7 @@ class WarningsTest(unittest.TestCase):
             psycopg2.connect(dsn)
 
         msg = (
-            "^unclosed connection <connection object at 0x[0-9a-f]+; dsn: '.*', "
+            "^unclosed connection <connection object at 0x[0-9a-fA-F]+; dsn: '.*', "
             "closed: 0>$"
         )
         with self.assertWarnsRegex(ResourceWarning, msg):
@@ -30,8 +30,8 @@ class WarningsTest(unittest.TestCase):
                 conn.close()
 
         msg = (
-            "^unclosed cursor <cursor object at 0x[0-9a-f]+; closed: 0> for "
-            "connection <connection object at 0x[0-9a-f]+; dsn: '.*', closed: 0>$"
+            "^unclosed cursor <cursor object at 0x[0-9a-fA-F]+; closed: 0> for "
+            "connection <connection object at 0x[0-9a-fA-F]+; dsn: '.*', closed: 0>$"
         )
         with self.assertWarnsRegex(ResourceWarning, msg):
             f()
