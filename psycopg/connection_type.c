@@ -127,7 +127,7 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *kwargs)
 
     Dprintf("psyco_conn_cursor: new cursor at %p: refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        obj, Py_REFCNT(obj)
+        curs, Py_REFCNT(curs)
     );
 
     /* pass ownership from curs to rv */
