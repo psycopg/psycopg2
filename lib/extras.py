@@ -1165,7 +1165,7 @@ def _paginate(seq, page_size):
     it = iter(seq)
     while True:
         try:
-            for i in range(page_size):
+            for i in range(int(page_size)):
                 page.append(next(it))
             yield page
             page = []
