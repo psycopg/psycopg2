@@ -6,6 +6,8 @@ What's new in psycopg 2.8.5
 
 - Fixed use of `!connection_factory` and `!cursor_factory` together
   (:ticket:`#1019`).
+- Added support for `~logging.LoggerAdapter` in
+  `~psycopg2.extras.LoggingConnection` (:ticket:`#1026`).
 
 
 What's new in psycopg 2.8.4

@@ -406,11 +406,11 @@ class LoggingConnection(_connection):
     def initialize(self, logobj):
         """Initialize the connection to log to `!logobj`.
 
-        The `!logobj` parameter can be an open file object or a Logger
+        The `!logobj` parameter can be an open file object or a Logger/LoggerAdapter
         instance from the standard logging module.
         """
         self._logobj = logobj
-        if _logging and isinstance(logobj, _logging.Logger):
+        if _logging and isinstance(logobj, (_logging.Logger, _logging.LoggerAdapter)):
             self.log = self._logtologger
         else:
             self.log = self._logtofile
