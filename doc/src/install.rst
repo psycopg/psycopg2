@@ -11,18 +11,22 @@ wrapper for the libpq_, the official PostgreSQL client library.
 The `psycopg2` package is the current mature implementation of the adapter: it
 is a C extension and as such it is only compatible with CPython_. If you want
 to use Psycopg on a different Python implementation (PyPy, Jython, IronPython)
-there is an experimental `porting of Psycopg for Ctypes`__, but it is not as
-mature as the C implementation yet.
-In addition to that port, there is a `CFFI port of Psycopg`__ which is
-faster on PyPy and has seen some success in production environments.
+there is a couple of alternative:
+
+- a `Ctypes port`__, but it is not as mature as the C implementation yet
+  and it is not as feature-complete;
+
+- a `CFFI port`__ which is currently more used and reported more efficient on
+  PyPy, but plese be careful to its version numbers because they are not
+  aligned to the official psycopg2 ones and some features may differ.
 
 .. _PostgreSQL: https://www.postgresql.org/
 .. _Python: https://www.python.org/
 .. _libpq: https://www.postgresql.org/docs/current/static/libpq.html
 .. _CPython: https://en.wikipedia.org/wiki/CPython
 .. _Ctypes: https://docs.python.org/library/ctypes.html
-.. _`CFFI port of Psycopg`: https://github.com/chtd/psycopg2cffi
 .. __: https://github.com/mvantellingen/psycopg2-ctypes
+.. __: https://github.com/chtd/psycopg2cffi
 
 
 
