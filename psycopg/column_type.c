@@ -233,6 +233,32 @@ column_getitem(columnObject *self, Py_ssize_t item)
 }
 
 
+static PyObject*
+column_subscript(columnObject* self, PyObject* item)
+{
+    PyObject *t = NULL;
+    PyObject *rv = NULL;
+
+    /* t = tuple(self) */
+    if (!(t = PyObject_CallFunctionObjArgs(
+            (PyObject *)&PyTuple_Type, (PyObject *)self, NULL))) {
+        goto exit;
+    }
+
+    /* rv = t[item] */
+    rv = PyObject_GetItem(t, item);
+
+exit:
+    Py_XDECREF(t);
+    return rv;
+}
+
+static PyMappingMethods column_mapping = {
+    (lenfunc)column_len,            /* mp_length */
+    (binaryfunc)column_subscript,   /* mp_subscript */
+    0                               /* mp_ass_subscript */
+};
+
 static PySequenceMethods column_sequence = {
     (lenfunc)column_len,       /* sq_length */
     0,                         /* sq_concat */
@@ -346,7 +372,7 @@ PyTypeObject columnType = {
     (reprfunc)column_repr, /*tp_repr*/
     0,          /*tp_as_number*/
     &column_sequence, /*tp_as_sequence*/
-    0,          /*tp_as_mapping*/
+    &column_mapping,  /*tp_as_mapping*/
     0,          /*tp_hash */
     0,          /*tp_call*/
     0,          /*tp_str*/

@@ -8,6 +8,8 @@ What's new in psycopg 2.8.5
   (:ticket:`#1019`).
 - Added support for `~logging.LoggerAdapter` in
   `~psycopg2.extras.LoggingConnection` (:ticket:`#1026`).
+- `~psycopg2.extensions.Column` objects in `cursor.description` can be sliced
+  (:ticket:`#1034`).
 
 
 What's new in psycopg 2.8.4
