@@ -29,7 +29,7 @@
 
 #include "psycopg/config.h"
 
-#if defined(__sun) && defined(__SVR4)
+#ifdef _AIX
 #include <sys/time.h>
 
 #ifndef timeradd
