@@ -433,6 +433,11 @@ class CursorTests(ConnectingTestCase):
         self.assertEqual(curs.description[2].table_oid, None)
         self.assertEqual(curs.description[2].table_column, None)
 
+    def test_description_slice(self):
+        curs = self.conn.cursor()
+        curs.execute("select 1::int as a")
+        self.assertEqual(curs.description[0][0:2], ('a', 23))
+
     def test_pickle_description(self):
         curs = self.conn.cursor()
         curs.execute('SELECT 1 AS foo')
