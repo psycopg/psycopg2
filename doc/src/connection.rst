@@ -431,8 +431,8 @@ The ``connection`` class
         invoked to terminate the transaction.
 
         The autocommit mode is useful to execute commands requiring to be run
-        outside a transaction, such as :sql:`CREATE DATABASE` or
-        :sql:`VACUUM`.
+        outside a transaction, such as :sql:`CREATE DATABASE`,
+        :sql:`VACUUM`, or calling stored procedures with transaction control inside.
 
         The default is `!False` (manual commit) as per DBAPI specification.
 

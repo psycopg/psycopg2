@@ -743,8 +743,9 @@ methods.  The level can be set to one of the following constants:
 
     No transaction is started when commands are executed and no
     `~connection.commit()` or `~connection.rollback()` is required.
-    Some PostgreSQL command such as :sql:`CREATE DATABASE` or :sql:`VACUUM`
-    can't run into a transaction: to run such command use::
+    Some PostgreSQL commands such as :sql:`CREATE DATABASE`, :sql:`VACUUM`,
+    or calling stored procedures with transaction control inside
+    can't run inside a transaction: to run such command use::
 
         >>> conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
 
