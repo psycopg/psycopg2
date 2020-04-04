@@ -318,7 +318,7 @@ _psyco_curs_merge_query_args(cursorObject *self,
 {
     PyObject *fquery;
 
-    /* if PyString_Format() return NULL an error occured: if the error is
+    /* if PyString_Format() return NULL an error occurred: if the error is
        a TypeError we need to check the exception.args[0] string for the
        values:
 
