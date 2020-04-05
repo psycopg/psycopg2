@@ -15,6 +15,7 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
+import copy
 import time
 import pickle
 import unittest
@@ -158,6 +159,20 @@ class ExtrasDictCursorTests(_DictCursorBase):
         self.assertEqual(r['b'], r1['b'])
         self.assertEqual(r._index, r1._index)
 
+    def test_copy(self):
+        curs = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        curs.execute("select 10 as foo, 'hi' as bar")
+        rv = curs.fetchone()
+        self.assertEqual(len(rv), 2)
+
+        rv2 = copy.copy(rv)
+        self.assertEqual(len(rv2), 2)
+        self.assertEqual(len(rv), 2)
+
+        rv3 = copy.deepcopy(rv)
+        self.assertEqual(len(rv3), 2)
+        self.assertEqual(len(rv), 2)
+
     @skip_from_python(3)
     def test_iter_methods_2(self):
         curs = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
@@ -266,6 +281,20 @@ class ExtrasDictCursorRealTests(_DictCursorBase):
         self.assertEqual(r, r1)
         self.assertEqual(r['a'], r1['a'])
         self.assertEqual(r['b'], r1['b'])
+
+    def test_copy(self):
+        curs = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        curs.execute("select 10 as foo, 'hi' as bar")
+        rv = curs.fetchone()
+        self.assertEqual(len(rv), 2)
+
+        rv2 = copy.copy(rv)
+        self.assertEqual(len(rv2), 2)
+        self.assertEqual(len(rv), 2)
+
+        rv3 = copy.deepcopy(rv)
+        self.assertEqual(len(rv3), 2)
+        self.assertEqual(len(rv), 2)
 
     def testDictCursorRealWithNamedCursorFetchOne(self):
         self._testWithNamedCursorReal(lambda curs: curs.fetchone())

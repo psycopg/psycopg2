@@ -10,6 +10,7 @@ What's new in psycopg 2.8.5
   `~psycopg2.extras.LoggingConnection` (:ticket:`#1026`).
 - `~psycopg2.extensions.Column` objects in `cursor.description` can be sliced
   (:ticket:`#1034`).
+- Fixed `~copy.copy()` of `~psycopg2.extras.DictCursor` rows (:ticket:`#1073`).
 
 
 What's new in psycopg 2.8.4

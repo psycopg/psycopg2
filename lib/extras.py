@@ -196,6 +196,10 @@ class DictRow(list):
     def __contains__(self, x):
         return x in self._index
 
+    def __reduce__(self):
+        # this is apparently useless, but it fixes #1073
+        return super(DictRow, self).__reduce__()
+
     def __getstate__(self):
         return self[:], self._index.copy()
 
@@ -392,6 +396,7 @@ class NamedTupleCursor(_cursor):
 def _cached_make_nt(cls, key):
     return cls._do_make_nt(key)
 
+
 # Exposed for testability, and if someone wants to monkeypatch to tweak
 # the cache size.
 NamedTupleCursor._cached_make_nt = classmethod(_cached_make_nt)
@@ -410,7 +415,8 @@ class LoggingConnection(_connection):
         instance from the standard logging module.
         """
         self._logobj = logobj
-        if _logging and isinstance(logobj, (_logging.Logger, _logging.LoggerAdapter)):
+        if _logging and isinstance(
+                logobj, (_logging.Logger, _logging.LoggerAdapter)):
             self.log = self._logtologger
         else:
             self.log = self._logtofile
