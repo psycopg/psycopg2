@@ -54,6 +54,8 @@
 #include "win32_support.h"
 #elif defined(__sun) && defined(__SVR4)
 #include "solaris_support.h"
+#elif defined(_AIX)
+#include "aix_support.h"
 #else
 #include <sys/time.h>
 #endif
