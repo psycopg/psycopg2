@@ -6,6 +6,7 @@ What's new in psycopg 2.8.5
 
 - Fixed use of `!connection_factory` and `!cursor_factory` together
   (:ticket:`#1019`).
+- Added AIX support (:ticket:`#1061`).`
 
 
 What's new in psycopg 2.8.4
