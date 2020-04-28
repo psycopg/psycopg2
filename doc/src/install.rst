@@ -17,7 +17,7 @@ there is a couple of alternative:
   and it is not as feature-complete;
 
 - a `CFFI port`__ which is currently more used and reported more efficient on
-  PyPy, but plese be careful to its version numbers because they are not
+  PyPy, but please be careful of its version numbers because they are not
   aligned to the official psycopg2 ones and some features may differ.
 
 .. _PostgreSQL: https://www.postgresql.org/
