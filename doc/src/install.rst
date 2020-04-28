@@ -151,7 +151,7 @@ runtime prerequisites.
     with Python and PostgreSQL without the need to meet the build
     requirements.
 
-    If you are the maintainer of a publish package depending on `!psycopg2`
+    If you are the maintainer of a published package depending on `!psycopg2`
     **you shouldn't use 'psycopg2-binary' as a module dependency**. For
     production use you are advised to use the source distribution.
 
