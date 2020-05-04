@@ -17,7 +17,7 @@ there is a couple of alternative:
   and it is not as feature-complete;
 
 - a `CFFI port`__ which is currently more used and reported more efficient on
-  PyPy, but plese be careful to its version numbers because they are not
+  PyPy, but please be careful of its version numbers because they are not
   aligned to the official psycopg2 ones and some features may differ.
 
 .. _PostgreSQL: https://www.postgresql.org/
@@ -151,7 +151,7 @@ runtime prerequisites.
     with Python and PostgreSQL without the need to meet the build
     requirements.
 
-    If you are the maintainer of a publish package depending on `!psycopg2`
+    If you are the maintainer of a published package depending on `!psycopg2`
     **you shouldn't use 'psycopg2-binary' as a module dependency**. For
     production use you are advised to use the source distribution.
 
