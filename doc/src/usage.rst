@@ -757,10 +757,13 @@ will result in an implicit rollback.
 
 It is possible to set the connection in *autocommit* mode: this way all the
 commands executed will be immediately committed and no rollback is possible. A
-few commands (e.g. :sql:`CREATE DATABASE`, :sql:`VACUUM`...) require to be run
+few commands (e.g. :sql:`CREATE DATABASE`, :sql:`VACUUM`, :sql:`CALL` on
+`stored procedures`__ using transaction control...) require to be run
 outside any transaction: in order to be able to run these commands from
 Psycopg, the connection must be in autocommit mode: you can use the
 `~connection.autocommit` property.
+
+.. __: https://www.postgresql.org/docs/current/xproc.html
 
 .. warning::
 
