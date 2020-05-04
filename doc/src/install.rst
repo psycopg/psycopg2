@@ -64,8 +64,9 @@ it from sources you will need:
 - A C compiler.
 
 - The Python header files. They are usually installed in a package such as
-  **python-dev**. A message such as *error: Python.h: No such file or
-  directory* is an indication that the Python headers are missing.
+  **python-dev** or **python3-dev**. A message such as *error: Python.h: No
+  such file or directory* is an indication that the Python headers are
+  missing.
 
 - The libpq header files. They are usually installed in a package such as
   **libpq-dev**. If you get an *error: libpq-fe.h: No such file or directory*

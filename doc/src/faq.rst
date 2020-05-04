@@ -328,7 +328,7 @@ Psycopg 2.8 fails to install, Psycopg 2.7 was working fine.
 
 I can't compile `!psycopg2`: the compiler says *error: Python.h: No such file or directory*. What am I missing?
     You need to install a Python development package: it is usually called
-    ``python-dev``.
+    ``python-dev`` or ``python3-dev`` according to your Python version.
 
 
 .. _faq-libpq-fe-h:
