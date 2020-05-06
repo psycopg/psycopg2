@@ -525,19 +525,21 @@ parser = configparser.ConfigParser()
 parser.read('setup.cfg')
 
 # check for mx package
-have_mxdatetime = False
 mxincludedir = ''
 if parser.has_option('build_ext', 'mx_include_dir'):
     mxincludedir = parser.get('build_ext', 'mx_include_dir')
 if not mxincludedir:
-    mxincludedir = os.path.join(get_python_inc(plat_specific=1), "mx")
+    # look for mxDateTime.h; prefer one located in venv
+    candidate_dirs = [os.path.join(d, 'mx', 'DateTime', 'mxDateTime') for d in sys.path] \
+                   + [os.path.join(get_python_inc(plat_specific=1), "mx")]
+    candidate_dirs = [d for d in candidate_dirs if os.path.exists(os.path.join(d, 'mxDateTime.h'))] or ['']
+    mxincludedir = candidate_dirs[0]
 if mxincludedir.strip() and os.path.exists(mxincludedir):
     # Build the support for mx: we will check at runtime if it can be imported
     include_dirs.append(mxincludedir)
     define_macros.append(('HAVE_MXDATETIME', '1'))
     sources.append('adapter_mxdatetime.c')
     depends.extend(['adapter_mxdatetime.h', 'typecast_mxdatetime.c'])
-    have_mxdatetime = True
     version_flags.append('mx')
 
 # generate a nice version string to avoid confusion when users report bugs

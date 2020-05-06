@@ -6,6 +6,7 @@ What's new in psycopg 2.8.6
 
 - Fixed memory leak changing connection encoding to the current one
   (:ticket:`#1101`).
+- Fixed search of mxDateTime headers in virtualenvs (:ticket:`#996`).
 
 
 What's new in psycopg 2.8.5
