@@ -1026,7 +1026,7 @@ using the |lo_import|_ and |lo_export|_ libpq functions.
 .. _lo_export: https://www.postgresql.org/docs/current/static/lo-interfaces.html#LO-EXPORT
 
 .. versionchanged:: 2.6
-    added support for large objects greated than 2GB. Note that the support is
+    added support for large objects greater than 2GB. Note that the support is
     enabled only if all the following conditions are verified:
 
     - the Python build is 64 bits;
