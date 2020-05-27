@@ -724,6 +724,7 @@ The ``connection`` class
         raw connection structure to C functions, e.g. via `ctypes`::
 
             >>> import ctypes
+            >>> import ctypes.util
             >>> libpq = ctypes.pydll.LoadLibrary(ctypes.util.find_library('pq'))
             >>> libpq.PQserverVersion.argtypes = [ctypes.c_void_p]
             >>> libpq.PQserverVersion.restype = ctypes.c_int
