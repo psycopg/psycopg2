@@ -490,7 +490,7 @@ resources about the topic.
 .. _Eventlet: https://eventlet.net/
 .. _gevent: http://www.gevent.org/
 .. _SQLAlchemy: https://www.sqlalchemy.org/
-.. _psycogreen: http://bitbucket.org/dvarrazzo/psycogreen/
+.. _psycogreen: https://github.com/psycopg/psycogreen/
 .. __: https://www.postgresql.org/docs/current/static/libpq-async.html
 
 .. warning::
