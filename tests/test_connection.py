@@ -913,9 +913,11 @@ class ConnectionTwoPhaseTests(ConnectingTestCase):
             cur.execute("DROP TABLE test_tpc;")
         except psycopg2.ProgrammingError:
             cnn.rollback()
-        cur.execute("CREATE TABLE test_tpc (data text);")
-        cnn.commit()
-        cnn.close()
+        try:
+            cur.execute("CREATE TABLE test_tpc (data text);")
+            cnn.commit()
+        finally:
+            cnn.close()
 
     def count_xacts(self):
         """Return the number of prepared xacts currently in the test db."""
