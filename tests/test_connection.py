@@ -567,9 +567,11 @@ class IsolationLevelsTestCase(ConnectingTestCase):
             cur.execute("drop table isolevel;")
         except psycopg2.ProgrammingError:
             conn.rollback()
-        cur.execute("create table isolevel (id integer);")
-        conn.commit()
-        conn.close()
+        try:
+            cur.execute("create table isolevel (id integer);")
+            conn.commit()
+        finally:
+            conn.close()
 
     def test_isolation_level(self):
         conn = self.connect()
