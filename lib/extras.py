@@ -26,6 +26,7 @@ and classes until a better place in the distribution is found.
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
+import contextlib
 import os as _os
 import time as _time
 import re as _re
@@ -787,6 +788,7 @@ def wait_select(conn):
             continue
 
 
+@contextlib.contextmanager
 def _solve_conn_curs(conn_or_curs):
     """Return the connection and a DBAPI cursor from a connection or cursor."""
     if conn_or_curs is None:
@@ -799,7 +801,8 @@ def _solve_conn_curs(conn_or_curs):
         conn = conn_or_curs
         curs = conn.cursor(cursor_factory=_cursor)
 
-    return conn, curs
+    with curs:
+        yield conn, curs
 
 
 class HstoreAdapter(object):
@@ -910,31 +913,30 @@ class HstoreAdapter(object):
     def get_oids(self, conn_or_curs):
         """Return the lists of OID of the hstore and hstore[] types.
         """
-        conn, curs = _solve_conn_curs(conn_or_curs)
+        with _solve_conn_curs(conn_or_curs) as (conn, curs):
+            # Store the transaction status of the connection to revert it after use
+            conn_status = conn.status
 
-        # Store the transaction status of the connection to revert it after use
-        conn_status = conn.status
+            # column typarray not available before PG 8.3
+            typarray = conn.info.server_version >= 80300 and "typarray" or "NULL"
 
-        # column typarray not available before PG 8.3
-        typarray = conn.info.server_version >= 80300 and "typarray" or "NULL"
+            rv0, rv1 = [], []
 
-        rv0, rv1 = [], []
-
-        # get the oid for the hstore
-        curs.execute("""\
+            # get the oid for the hstore
+            curs.execute("""\
 SELECT t.oid, %s
 FROM pg_type t JOIN pg_namespace ns
     ON typnamespace = ns.oid
 WHERE typname = 'hstore';
 """ % typarray)
-        for oids in curs:
-            rv0.append(oids[0])
-            rv1.append(oids[1])
+            for oids in curs:
+                rv0.append(oids[0])
+                rv1.append(oids[1])
 
-        # revert the status of the connection as before the command
-        if (conn_status != _ext.STATUS_IN_TRANSACTION
-        and not conn.autocommit):
-            conn.rollback()
+            # revert the status of the connection as before the command
+            if (conn_status != _ext.STATUS_IN_TRANSACTION
+            and not conn.autocommit):
+                conn.rollback()
 
         return tuple(rv0), tuple(rv1)
 
@@ -1089,23 +1091,22 @@ class CompositeCaster(object):
 
         Raise `ProgrammingError` if the type is not found.
         """
-        conn, curs = _solve_conn_curs(conn_or_curs)
+        with _solve_conn_curs(conn_or_curs) as (conn, curs):
+            # Store the transaction status of the connection to revert it after use
+            conn_status = conn.status
 
-        # Store the transaction status of the connection to revert it after use
-        conn_status = conn.status
+            # Use the correct schema
+            if '.' in name:
+                schema, tname = name.split('.', 1)
+            else:
+                tname = name
+                schema = 'public'
 
-        # Use the correct schema
-        if '.' in name:
-            schema, tname = name.split('.', 1)
-        else:
-            tname = name
-            schema = 'public'
+            # column typarray not available before PG 8.3
+            typarray = conn.info.server_version >= 80300 and "typarray" or "NULL"
 
-        # column typarray not available before PG 8.3
-        typarray = conn.info.server_version >= 80300 and "typarray" or "NULL"
-
-        # get the type oid and attributes
-        curs.execute("""\
+            # get the type oid and attributes
+            curs.execute("""\
 SELECT t.oid, %s, attname, atttypid
 FROM pg_type t
 JOIN pg_namespace ns ON typnamespace = ns.oid
@@ -1115,12 +1116,12 @@ WHERE typname = %%s AND nspname = %%s
 ORDER BY attnum;
 """ % typarray, (tname, schema))
 
-        recs = curs.fetchall()
+            recs = curs.fetchall()
 
-        # revert the status of the connection as before the command
-        if (conn_status != _ext.STATUS_IN_TRANSACTION
-        and not conn.autocommit):
-            conn.rollback()
+            # revert the status of the connection as before the command
+            if (conn_status != _ext.STATUS_IN_TRANSACTION
+            and not conn.autocommit):
+                conn.rollback()
 
         if not recs:
             raise psycopg2.ProgrammingError(

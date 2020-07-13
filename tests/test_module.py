@@ -154,22 +154,22 @@ class ConnectTestCase(unittest.TestCase):
 
 class ExceptionsTestCase(ConnectingTestCase):
     def test_attributes(self):
-        cur = self.conn.cursor()
-        try:
-            cur.execute("select * from nonexist")
-        except psycopg2.Error as exc:
-            e = exc
+        with self.conn.cursor() as cur:
+            try:
+                cur.execute("select * from nonexist")
+            except psycopg2.Error as exc:
+                e = exc
 
         self.assertEqual(e.pgcode, '42P01')
         self.assert_(e.pgerror)
         self.assert_(e.cursor is cur)
 
     def test_diagnostics_attributes(self):
-        cur = self.conn.cursor()
-        try:
-            cur.execute("select * from nonexist")
-        except psycopg2.Error as exc:
-            e = exc
+        with self.conn.cursor() as cur:
+            try:
+                cur.execute("select * from nonexist")
+            except psycopg2.Error as exc:
+                e = exc
 
         diag = e.diag
         self.assert_(isinstance(diag, psycopg2.extensions.Diagnostics))
@@ -195,11 +195,11 @@ class ExceptionsTestCase(ConnectingTestCase):
 
     def test_diagnostics_life(self):
         def tmp():
-            cur = self.conn.cursor()
-            try:
-                cur.execute("select * from nonexist")
-            except psycopg2.Error as exc:
-                return cur, exc
+            with self.conn.cursor() as cur:
+                try:
+                    cur.execute("select * from nonexist")
+                except psycopg2.Error as exc:
+                    return cur, exc
 
         cur, e = tmp()
         diag = e.diag

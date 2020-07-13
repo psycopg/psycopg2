@@ -71,14 +71,14 @@ class GreenTestCase(ConnectingTestCase):
         # a very large query requires a flush loop to be sent to the backend
         conn = self.conn
         stub = self.set_stub_wait_callback(conn)
-        curs = conn.cursor()
-        for mb in 1, 5, 10, 20, 50:
-            size = mb * 1024 * 1024
-            del stub.polls[:]
-            curs.execute("select %s;", ('x' * size,))
-            self.assertEqual(size, len(curs.fetchone()[0]))
-            if stub.polls.count(psycopg2.extensions.POLL_WRITE) > 1:
-                return
+        with conn.cursor() as curs:
+            for mb in 1, 5, 10, 20, 50:
+                size = mb * 1024 * 1024
+                del stub.polls[:]
+                curs.execute("select %s;", ('x' * size,))
+                self.assertEqual(size, len(curs.fetchone()[0]))
+                if stub.polls.count(psycopg2.extensions.POLL_WRITE) > 1:
+                    return
 
         # This is more a testing glitch than an error: it happens
         # on high load on linux: probably because the kernel has more
@@ -105,21 +105,21 @@ class GreenTestCase(ConnectingTestCase):
         # if there is an error in a green query, don't freak out and close
         # the connection
         conn = self.conn
-        curs = conn.cursor()
-        self.assertRaises(psycopg2.ProgrammingError,
-            curs.execute, "select the unselectable")
+        with conn.cursor() as curs:
+            self.assertRaises(psycopg2.ProgrammingError,
+                              curs.execute, "select the unselectable")
 
-        # check that the connection is left in an usable state
-        self.assert_(not conn.closed)
-        conn.rollback()
-        curs.execute("select 1")
-        self.assertEqual(curs.fetchone()[0], 1)
+            # check that the connection is left in an usable state
+            self.assert_(not conn.closed)
+            conn.rollback()
+            curs.execute("select 1")
+            self.assertEqual(curs.fetchone()[0], 1)
 
     @skip_before_postgres(8, 2)
     def test_copy_no_hang(self):
-        cur = self.conn.cursor()
-        self.assertRaises(psycopg2.ProgrammingError,
-            cur.execute, "copy (select 1) to stdout")
+        with self.conn.cursor() as cur:
+            self.assertRaises(psycopg2.ProgrammingError,
+                              cur.execute, "copy (select 1) to stdout")
 
     @slow
     @skip_before_postgres(9, 0)
@@ -137,19 +137,19 @@ class GreenTestCase(ConnectingTestCase):
                     raise conn.OperationalError("bad state from poll: %s" % state)
 
         stub = self.set_stub_wait_callback(self.conn, wait)
-        cur = self.conn.cursor()
-        cur.execute("""
-            select 1;
-            do $$
-                begin
-                    raise notice 'hello';
-                end
-            $$ language plpgsql;
-            select pg_sleep(1);
-            """)
+        with self.conn.cursor() as cur:
+            cur.execute("""
+                select 1;
+                do $$
+                    begin
+                        raise notice 'hello';
+                    end
+                $$ language plpgsql;
+                select pg_sleep(1);
+                """)
 
-        polls = stub.polls.count(POLL_READ)
-        self.assert_(polls > 8, polls)
+            polls = stub.polls.count(POLL_READ)
+            self.assert_(polls > 8, polls)
 
 
 class CallbackErrorTestCase(ConnectingTestCase):
@@ -203,16 +203,16 @@ class CallbackErrorTestCase(ConnectingTestCase):
         for i in range(100):
             self.to_error = None
             cnn = self.connect()
-            cur = cnn.cursor()
-            self.to_error = i
-            try:
-                cur.execute("select 1")
-                cur.fetchone()
-            except ZeroDivisionError:
-                pass
-            else:
-                # The query completed
-                return
+            with cnn.cursor() as cur:
+                self.to_error = i
+                try:
+                    cur.execute("select 1")
+                    cur.fetchone()
+                except ZeroDivisionError:
+                    pass
+                else:
+                    # The query completed
+                    return
 
         self.fail("you should have had a success or an error by now")
 
@@ -220,16 +220,19 @@ class CallbackErrorTestCase(ConnectingTestCase):
         for i in range(100):
             self.to_error = None
             cnn = self.connect()
-            cur = cnn.cursor('foo')
-            self.to_error = i
-            try:
-                cur.execute("select 1")
-                cur.fetchone()
-            except ZeroDivisionError:
-                pass
-            else:
-                # The query completed
-                return
+            with cnn.cursor('foo') as cur:
+                self.to_error = i
+                try:
+                    cur.execute("select 1")
+                    cur.fetchone()
+                except ZeroDivisionError:
+                    pass
+                else:
+                    # The query completed
+                    return
+                finally:
+                    # Don't raise an exception in the cursor context manager.
+                    self.to_error = None
 
         self.fail("you should have had a success or an error by now")
 

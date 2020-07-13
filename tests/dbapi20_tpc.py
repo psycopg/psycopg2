@@ -24,19 +24,22 @@ class TwoPhaseCommitTests(unittest.TestCase):
     def test_xid(self):
         con = self.connect()
         try:
-            xid = con.xid(42, "global", "bqual")
-        except self.driver.NotSupportedError:
-            self.fail("Driver does not support transaction IDs.")
+            try:
+                xid = con.xid(42, "global", "bqual")
+            except self.driver.NotSupportedError:
+                self.fail("Driver does not support transaction IDs.")
 
-        self.assertEquals(xid[0], 42)
-        self.assertEquals(xid[1], "global")
-        self.assertEquals(xid[2], "bqual")
+            self.assertEquals(xid[0], 42)
+            self.assertEquals(xid[1], "global")
+            self.assertEquals(xid[2], "bqual")
 
-        # Try some extremes for the transaction ID:
-        xid = con.xid(0, "", "")
-        self.assertEquals(tuple(xid), (0, "", ""))
-        xid = con.xid(0x7fffffff, "a" * 64, "b" * 64)
-        self.assertEquals(tuple(xid), (0x7fffffff, "a" * 64, "b" * 64))
+            # Try some extremes for the transaction ID:
+            xid = con.xid(0, "", "")
+            self.assertEquals(tuple(xid), (0, "", ""))
+            xid = con.xid(0x7fffffff, "a" * 64, "b" * 64)
+            self.assertEquals(tuple(xid), (0x7fffffff, "a" * 64, "b" * 64))
+        finally:
+            con.close()
 
     def test_tpc_begin(self):
         con = self.connect()

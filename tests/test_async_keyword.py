@@ -47,16 +47,18 @@ class AsyncTests(ConnectingTestCase):
 
         self.wait(self.conn)
 
-        curs = self.conn.cursor()
-        curs.execute('''
-            CREATE TEMPORARY TABLE table1 (
-              id int PRIMARY KEY
-            )''')
-        self.wait(curs)
+        with self.conn.cursor() as curs:
+            curs.execute('''
+                CREATE TEMPORARY TABLE table1 (
+                  id int PRIMARY KEY
+                )''')
+            self.wait(curs)
 
     def test_connection_setup(self):
         cur = self.conn.cursor()
         sync_cur = self.sync_conn.cursor()
+        cur.close()
+        sync_cur.close()
         del cur, sync_cur
 
         self.assert_(self.conn.async)
@@ -89,17 +91,19 @@ class AsyncTests(ConnectingTestCase):
                 "connection error reason lost")
         else:
             self.fail("no exception raised")
+        finally:
+            cnn.close()
 
 
 class CancelTests(ConnectingTestCase):
     def setUp(self):
         ConnectingTestCase.setUp(self)
 
-        cur = self.conn.cursor()
-        cur.execute('''
-            CREATE TEMPORARY TABLE table1 (
-              id int PRIMARY KEY
-            )''')
+        with self.conn.cursor() as cur:
+            cur.execute('''
+                CREATE TEMPORARY TABLE table1 (
+                  id int PRIMARY KEY
+                )''')
         self.conn.commit()
 
     @slow
@@ -108,16 +112,17 @@ class CancelTests(ConnectingTestCase):
         async_conn = psycopg2.connect(dsn, async=True)
         self.assertRaises(psycopg2.OperationalError, async_conn.cancel)
         extras.wait_select(async_conn)
-        cur = async_conn.cursor()
-        cur.execute("select pg_sleep(10)")
-        time.sleep(1)
-        self.assertTrue(async_conn.isexecuting())
-        async_conn.cancel()
-        self.assertRaises(psycopg2.extensions.QueryCanceledError,
-                          extras.wait_select, async_conn)
-        cur.execute("select 1")
-        extras.wait_select(async_conn)
-        self.assertEqual(cur.fetchall(), [(1, )])
+        with async_conn.cursor() as cur:
+            cur.execute("select pg_sleep(10)")
+            time.sleep(1)
+            self.assertTrue(async_conn.isexecuting())
+            async_conn.cancel()
+            self.assertRaises(psycopg2.extensions.QueryCanceledError,
+                              extras.wait_select, async_conn)
+            cur.execute("select 1")
+            extras.wait_select(async_conn)
+            self.assertEqual(cur.fetchall(), [(1, )])
+        async_conn.close()
 
     def test_async_connection_cancel(self):
         async_conn = psycopg2.connect(dsn, async=True)
@@ -180,41 +185,40 @@ class AsyncReplicationTest(ReplicationTestCase):
         if conn is None:
             return
 
-        cur = conn.cursor()
+        with conn.cursor() as cur:
+            self.create_replication_slot(cur, output_plugin='test_decoding')
+            self.wait(cur)
 
-        self.create_replication_slot(cur, output_plugin='test_decoding')
-        self.wait(cur)
+            cur.start_replication(self.slot)
+            self.wait(cur)
 
-        cur.start_replication(self.slot)
-        self.wait(cur)
+            self.make_replication_events()
 
-        self.make_replication_events()
+            self.msg_count = 0
 
-        self.msg_count = 0
+            def consume(msg):
+                # just check the methods
+                "%s: %s" % (cur.io_timestamp, repr(msg))
+                "%s: %s" % (cur.feedback_timestamp, repr(msg))
 
-        def consume(msg):
-            # just check the methods
-            "%s: %s" % (cur.io_timestamp, repr(msg))
-            "%s: %s" % (cur.feedback_timestamp, repr(msg))
+                self.msg_count += 1
+                if self.msg_count > 3:
+                    cur.send_feedback(reply=True)
+                    raise StopReplication()
 
-            self.msg_count += 1
-            if self.msg_count > 3:
-                cur.send_feedback(reply=True)
-                raise StopReplication()
+                cur.send_feedback(flush_lsn=msg.data_start)
 
-            cur.send_feedback(flush_lsn=msg.data_start)
+            # cannot be used in asynchronous mode
+            self.assertRaises(psycopg2.ProgrammingError, cur.consume_stream, consume)
 
-        # cannot be used in asynchronous mode
-        self.assertRaises(psycopg2.ProgrammingError, cur.consume_stream, consume)
-
-        def process_stream():
-            while True:
-                msg = cur.read_message()
-                if msg:
-                    consume(msg)
-                else:
-                    select([cur], [], [])
-        self.assertRaises(StopReplication, process_stream)
+            def process_stream():
+                while True:
+                    msg = cur.read_message()
+                    if msg:
+                        consume(msg)
+                    else:
+                        select([cur], [], [])
+            self.assertRaises(StopReplication, process_stream)
 
 
 def test_suite():

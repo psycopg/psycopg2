@@ -180,23 +180,22 @@ def _get_json_oids(conn_or_curs, name='json'):
     from psycopg2.extensions import STATUS_IN_TRANSACTION
     from psycopg2.extras import _solve_conn_curs
 
-    conn, curs = _solve_conn_curs(conn_or_curs)
+    with _solve_conn_curs(conn_or_curs) as (conn, curs):
+        # Store the transaction status of the connection to revert it after use
+        conn_status = conn.status
 
-    # Store the transaction status of the connection to revert it after use
-    conn_status = conn.status
+        # column typarray not available before PG 8.3
+        typarray = conn.info.server_version >= 80300 and "typarray" or "NULL"
 
-    # column typarray not available before PG 8.3
-    typarray = conn.info.server_version >= 80300 and "typarray" or "NULL"
+        # get the oid for the hstore
+        curs.execute(
+            "SELECT t.oid, %s FROM pg_type t WHERE t.typname = %%s;"
+            % typarray, (name,))
+        r = curs.fetchone()
 
-    # get the oid for the hstore
-    curs.execute(
-        "SELECT t.oid, %s FROM pg_type t WHERE t.typname = %%s;"
-        % typarray, (name,))
-    r = curs.fetchone()
-
-    # revert the status of the connection as before the command
-    if conn_status != STATUS_IN_TRANSACTION and not conn.autocommit:
-        conn.rollback()
+        # revert the status of the connection as before the command
+        if conn_status != STATUS_IN_TRANSACTION and not conn.autocommit:
+            conn.rollback()
 
     if not r:
         raise conn.ProgrammingError("%s data type not found" % name)

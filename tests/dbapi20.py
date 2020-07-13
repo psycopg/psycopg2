@@ -232,6 +232,7 @@ class DatabaseAPI20Test(unittest.TestCase):
         self.failUnless(con.InternalError is drv.InternalError)
         self.failUnless(con.ProgrammingError is drv.ProgrammingError)
         self.failUnless(con.NotSupportedError is drv.NotSupportedError)
+        con.close()
 
 
     def test_commit(self):
@@ -251,6 +252,7 @@ class DatabaseAPI20Test(unittest.TestCase):
                 con.rollback()
             except self.driver.NotSupportedError:
                 pass
+        con.close()
 
     def test_cursor(self):
         con = self._connect()

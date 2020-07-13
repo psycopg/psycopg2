@@ -228,9 +228,9 @@ def skip_if_no_uuid(f):
     @wraps(f)
     def skip_if_no_uuid_(self):
         try:
-            cur = self.conn.cursor()
-            cur.execute("select typname from pg_type where typname = 'uuid'")
-            has = cur.fetchone()
+            with self.conn.cursor() as cur:
+                cur.execute("select typname from pg_type where typname = 'uuid'")
+                has = cur.fetchone()
         finally:
             self.conn.rollback()
 
@@ -248,15 +248,17 @@ def skip_if_tpc_disabled(f):
     @wraps(f)
     def skip_if_tpc_disabled_(self):
         cnn = self.connect()
-        cur = cnn.cursor()
         try:
-            cur.execute("SHOW max_prepared_transactions;")
-        except psycopg2.ProgrammingError:
-            return self.skipTest(
-                "server too old: two phase transactions not supported.")
-        else:
-            mtp = int(cur.fetchone()[0])
-        cnn.close()
+            with cnn.cursor() as cur:
+                try:
+                    cur.execute("SHOW max_prepared_transactions;")
+                except psycopg2.ProgrammingError:
+                    return self.skipTest(
+                        "server too old: two phase transactions not supported.")
+                else:
+                    mtp = int(cur.fetchone()[0])
+        finally:
+            cnn.close()
 
         if not mtp:
             return self.skipTest(

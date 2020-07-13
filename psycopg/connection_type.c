@@ -59,6 +59,7 @@ static PyObject *
 psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *kwargs)
 {
     PyObject *obj = NULL;
+    cursorObject *curs = NULL;
     PyObject *rv = NULL;
     PyObject *name = Py_None;
     PyObject *factory = Py_None;
@@ -113,23 +114,46 @@ psyco_conn_cursor(connectionObject *self, PyObject *args, PyObject *kwargs)
         goto exit;
     }
 
-    if (0 > curs_withhold_set((cursorObject *)obj, withhold)) {
-        goto exit;
+    /* pass ownership from obj to curs */
+    curs = (cursorObject *)obj;
+    obj = NULL;
+
+    if (0 > curs_withhold_set(curs, withhold)) {
+        goto error;
     }
-    if (0 > curs_scrollable_set((cursorObject *)obj, scrollable)) {
-        goto exit;
+    if (0 > curs_scrollable_set(curs, scrollable)) {
+        goto error;
     }
 
     Dprintf("psyco_conn_cursor: new cursor at %p: refcnt = "
         FORMAT_CODE_PY_SSIZE_T,
-        obj, Py_REFCNT(obj)
+        curs, Py_REFCNT(curs)
     );
 
-    rv = obj;
-    obj = NULL;
+    /* pass ownership from curs to rv */
+    rv = (PyObject *)curs;
+    curs = NULL;
+
+    goto exit;
+
+error:
+    {
+        PyObject *error_type, *error_value, *error_traceback;
+        PyObject *close;
+        PyErr_Fetch(&error_type, &error_value, &error_traceback);
+        if (curs) {
+            close = PyObject_CallMethod((PyObject *)curs, "close", NULL);
+            if (close)
+                Py_DECREF(close);
+            else
+                PyErr_WriteUnraisable((PyObject *)curs);
+        }
+        PyErr_Restore(error_type, error_value, error_traceback);
+    }
 
 exit:
     Py_XDECREF(obj);
+    Py_XDECREF(curs);
     return rv;
 }
 
@@ -1366,6 +1390,9 @@ connection_dealloc(PyObject* obj)
 {
     connectionObject *self = (connectionObject *)obj;
 
+    if (PyObject_CallFinalizerFromDealloc(obj) < 0)
+        return;
+
     /* Make sure to untrack the connection before calling conn_close, which may
      * allow a different thread to try and dealloc the connection again,
      * resulting in a double-free segfault (ticket #166). */
@@ -1404,6 +1431,31 @@ connection_dealloc(PyObject* obj)
 
     Py_TYPE(obj)->tp_free(obj);
 }
+
+#if PY_3
+static void
+connection_finalize(PyObject *obj)
+{
+    connectionObject *self = (connectionObject *)obj;
+
+#ifdef CONN_CHECK_PID
+    if (self->procpid == getpid())
+#endif
+    {
+        if (!self->closed) {
+            PyObject *error_type, *error_value, *error_traceback;
+            /* Save the current exception, if any. */
+            PyErr_Fetch(&error_type, &error_value, &error_traceback);
+
+            if (PyErr_WarnFormat(PyExc_ResourceWarning, 1, "unclosed connection %R", obj))
+                PyErr_WriteUnraisable(obj);
+
+            /* Restore the saved exception. */
+            PyErr_Restore(error_type, error_value, error_traceback);
+        }
+    }
+}
+#endif
 
 static int
 connection_init(PyObject *obj, PyObject *args, PyObject *kwds)
@@ -1479,7 +1531,7 @@ PyTypeObject connectionType = {
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC |
-        Py_TPFLAGS_HAVE_WEAKREFS,
+        Py_TPFLAGS_HAVE_WEAKREFS | Py_TPFLAGS_HAVE_FINALIZE,
                 /*tp_flags*/
     connectionType_doc, /*tp_doc*/
     (traverseproc)connection_traverse, /*tp_traverse*/
@@ -1499,4 +1551,16 @@ PyTypeObject connectionType = {
     connection_init, /*tp_init*/
     0,          /*tp_alloc*/
     connection_new, /*tp_new*/
+    0,                   /* tp_free */
+    0,                   /* tp_is_gc */
+    0,                   /* tp_bases */
+    0,                   /* tp_mro */
+    0,                   /* tp_cache */
+    0,                   /* tp_subclasses */
+    0,                   /* tp_weaklist */
+#if PY_3
+    0,                   /* tp_del */
+    0,                   /* tp_version_tag */
+    connection_finalize, /* tp_finalize */
+#endif
 };

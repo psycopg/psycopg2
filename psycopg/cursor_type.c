@@ -39,6 +39,7 @@
 
 #include <stdlib.h>
 
+#define cursor_closed(self) ((self)->closed || ((self)->conn && (self)->conn->closed))
 
 /** DBAPI methods **/
 
@@ -1637,7 +1638,7 @@ exit:
 static PyObject *
 curs_closed_get(cursorObject *self, void *closure)
 {
-    return PyBool_FromLong(self->closed || (self->conn && self->conn->closed));
+    return PyBool_FromLong(cursor_closed(self));
 }
 
 /* extension: withhold - get or set "WITH HOLD" for named cursors */
@@ -1945,6 +1946,9 @@ cursor_dealloc(PyObject* obj)
 {
     cursorObject *self = (cursorObject *)obj;
 
+    if (PyObject_CallFinalizerFromDealloc(obj) < 0)
+        return;
+
     PyObject_GC_UnTrack(self);
 
     if (self->weakreflist) {
@@ -1964,6 +1968,28 @@ cursor_dealloc(PyObject* obj)
 
     Py_TYPE(obj)->tp_free(obj);
 }
+
+#if PY_3
+static void
+cursor_finalize(PyObject *obj)
+{
+    cursorObject *self = (cursorObject *)obj;
+
+    if (!cursor_closed(self)) {
+        PyObject *error_type, *error_value, *error_traceback;
+        /* Save the current exception, if any. */
+        PyErr_Fetch(&error_type, &error_value, &error_traceback);
+
+        if (PyErr_WarnFormat(PyExc_ResourceWarning, 1,
+                             "unclosed cursor %R for connection %R",
+                             obj, (PyObject *)self->conn))
+            PyErr_WriteUnraisable(obj);
+
+        /* Restore the saved exception. */
+        PyErr_Restore(error_type, error_value, error_traceback);
+    }
+}
+#endif
 
 static int
 cursor_init(PyObject *obj, PyObject *args, PyObject *kwargs)
@@ -2056,7 +2082,7 @@ PyTypeObject cursorType = {
     0,          /*tp_setattro*/
     0,          /*tp_as_buffer*/
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_ITER |
-      Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_HAVE_WEAKREFS ,
+      Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_HAVE_WEAKREFS | Py_TPFLAGS_HAVE_FINALIZE,
                 /*tp_flags*/
     cursorType_doc, /*tp_doc*/
     (traverseproc)cursor_traverse, /*tp_traverse*/
@@ -2076,4 +2102,16 @@ PyTypeObject cursorType = {
     cursor_init, /*tp_init*/
     0,          /*tp_alloc*/
     cursor_new, /*tp_new*/
+    0,               /* tp_free */
+    0,               /* tp_is_gc */
+    0,               /* tp_bases */
+    0,               /* tp_mro */
+    0,               /* tp_cache */
+    0,               /* tp_subclasses */
+    0,               /* tp_weaklist */
+#if PY_3
+    0,               /* tp_del */
+    0,               /* tp_version_tag */
+    cursor_finalize, /* tp_finalize */
+#endif
 };

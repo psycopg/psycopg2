@@ -56,24 +56,24 @@ class QuotingTestCase(ConnectingTestCase):
         """
         data += "".join(map(chr, range(1, 127)))
 
-        curs = self.conn.cursor()
-        curs.execute("SELECT %s;", (data,))
-        res = curs.fetchone()[0]
+        with self.conn.cursor() as curs:
+            curs.execute("SELECT %s;", (data,))
+            res = curs.fetchone()[0]
 
         self.assertEqual(res, data)
         self.assert_(not self.conn.notices)
 
     def test_string_null_terminator(self):
-        curs = self.conn.cursor()
-        data = 'abcd\x01\x00cdefg'
+        with self.conn.cursor() as curs:
+            data = 'abcd\x01\x00cdefg'
 
-        try:
-            curs.execute("SELECT %s", (data,))
-        except ValueError as e:
-            self.assertEquals(str(e),
-                'A string literal cannot contain NUL (0x00) characters.')
-        else:
-            self.fail("ValueError not raised")
+            try:
+                curs.execute("SELECT %s", (data,))
+            except ValueError as e:
+                self.assertEquals(str(e),
+                    'A string literal cannot contain NUL (0x00) characters.')
+            else:
+                self.fail("ValueError not raised")
 
     def test_binary(self):
         data = b"""some data with \000\013 binary
@@ -84,12 +84,12 @@ class QuotingTestCase(ConnectingTestCase):
         else:
             data += bytes(list(range(256)))
 
-        curs = self.conn.cursor()
-        curs.execute("SELECT %s::bytea;", (psycopg2.Binary(data),))
-        if PY2:
-            res = str(curs.fetchone()[0])
-        else:
-            res = curs.fetchone()[0].tobytes()
+        with self.conn.cursor() as curs:
+            curs.execute("SELECT %s::bytea;", (psycopg2.Binary(data),))
+            if PY2:
+                res = str(curs.fetchone()[0])
+            else:
+                res = curs.fetchone()[0].tobytes()
 
         if res[0] in (b'x', ord(b'x')) and self.conn.info.server_version >= 90000:
             return self.skipTest(
@@ -99,86 +99,87 @@ class QuotingTestCase(ConnectingTestCase):
         self.assert_(not self.conn.notices)
 
     def test_unicode(self):
-        curs = self.conn.cursor()
-        curs.execute("SHOW server_encoding")
-        server_encoding = curs.fetchone()[0]
-        if server_encoding != "UTF8":
-            return self.skipTest(
-                "Unicode test skipped since server encoding is %s"
-                % server_encoding)
+        with self.conn.cursor() as curs:
+            curs.execute("SHOW server_encoding")
+            server_encoding = curs.fetchone()[0]
+            if server_encoding != "UTF8":
+                return self.skipTest(
+                    "Unicode test skipped since server encoding is %s"
+                    % server_encoding)
 
-        data = u"""some data with \t chars
-        to escape into, 'quotes', \u20ac euro sign and \\ a backslash too.
-        """
-        data += u"".join(map(unichr, [u for u in range(1, 65536)
-            if not 0xD800 <= u <= 0xDFFF]))    # surrogate area
-        self.conn.set_client_encoding('UNICODE')
+            data = u"""some data with \t chars
+            to escape into, 'quotes', \u20ac euro sign and \\ a backslash too.
+            """
+            data += u"".join(map(unichr, [u for u in range(1, 65536)
+                if not 0xD800 <= u <= 0xDFFF]))    # surrogate area
+            self.conn.set_client_encoding('UNICODE')
 
-        psycopg2.extensions.register_type(psycopg2.extensions.UNICODE, self.conn)
-        curs.execute("SELECT %s::text;", (data,))
-        res = curs.fetchone()[0]
+            psycopg2.extensions.register_type(psycopg2.extensions.UNICODE, self.conn)
+            curs.execute("SELECT %s::text;", (data,))
+            res = curs.fetchone()[0]
 
-        self.assertEqual(res, data)
-        self.assert_(not self.conn.notices)
+            self.assertEqual(res, data)
+            self.assert_(not self.conn.notices)
 
     def test_latin1(self):
         self.conn.set_client_encoding('LATIN1')
-        curs = self.conn.cursor()
-        if PY2:
-            data = ''.join(map(chr, range(32, 127) + range(160, 256)))
-        else:
-            data = bytes(list(range(32, 127))
-                + list(range(160, 256))).decode('latin1')
+        with self.conn.cursor() as curs:
+            if PY2:
+                data = ''.join(map(chr, range(32, 127) + range(160, 256)))
+            else:
+                data = bytes(list(range(32, 127))
+                    + list(range(160, 256))).decode('latin1')
 
-        # as string
-        curs.execute("SELECT %s::text;", (data,))
-        res = curs.fetchone()[0]
-        self.assertEqual(res, data)
-        self.assert_(not self.conn.notices)
-
-        # as unicode
-        if PY2:
-            psycopg2.extensions.register_type(psycopg2.extensions.UNICODE, self.conn)
-            data = data.decode('latin1')
-
+            # as string
             curs.execute("SELECT %s::text;", (data,))
             res = curs.fetchone()[0]
             self.assertEqual(res, data)
             self.assert_(not self.conn.notices)
+
+            # as unicode
+            if PY2:
+                psycopg2.extensions.register_type(
+                    psycopg2.extensions.UNICODE, self.conn)
+                data = data.decode('latin1')
+
+                curs.execute("SELECT %s::text;", (data,))
+                res = curs.fetchone()[0]
+                self.assertEqual(res, data)
+                self.assert_(not self.conn.notices)
 
     def test_koi8(self):
         self.conn.set_client_encoding('KOI8')
-        curs = self.conn.cursor()
-        if PY2:
-            data = ''.join(map(chr, range(32, 127) + range(128, 256)))
-        else:
-            data = bytes(list(range(32, 127))
-                + list(range(128, 256))).decode('koi8_r')
+        with self.conn.cursor() as curs:
+            if PY2:
+                data = ''.join(map(chr, range(32, 127) + range(128, 256)))
+            else:
+                data = bytes(list(range(32, 127))
+                    + list(range(128, 256))).decode('koi8_r')
 
-        # as string
-        curs.execute("SELECT %s::text;", (data,))
-        res = curs.fetchone()[0]
-        self.assertEqual(res, data)
-        self.assert_(not self.conn.notices)
-
-        # as unicode
-        if PY2:
-            psycopg2.extensions.register_type(psycopg2.extensions.UNICODE, self.conn)
-            data = data.decode('koi8_r')
-
+            # as string
             curs.execute("SELECT %s::text;", (data,))
             res = curs.fetchone()[0]
             self.assertEqual(res, data)
             self.assert_(not self.conn.notices)
+
+            # as unicode
+            if PY2:
+                psycopg2.extensions.register_type(psycopg2.extensions.UNICODE, self.conn)
+                data = data.decode('koi8_r')
+
+                curs.execute("SELECT %s::text;", (data,))
+                res = curs.fetchone()[0]
+                self.assertEqual(res, data)
+                self.assert_(not self.conn.notices)
 
     def test_bytes(self):
         snowman = u"\u2603"
         conn = self.connect()
         conn.set_client_encoding('UNICODE')
         psycopg2.extensions.register_type(psycopg2.extensions.BYTES, conn)
-        curs = conn.cursor()
-        curs.execute("select %s::text", (snowman,))
-        x = curs.fetchone()[0]
+        with conn.cursor() as curs:
+            curs.execute("select %s::text", (snowman,))
+            x = curs.fetchone()[0]
         self.assert_(isinstance(x, bytes))
         self.assertEqual(x, snowman.encode('utf8'))
 
