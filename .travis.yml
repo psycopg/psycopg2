@@ -2,16 +2,24 @@
 
 language: python
 
+dist: bionic
+
+arch:
+  - amd64
+  - arm64
+
+python:
+  - 3.5
+  - 3.6
+  - 3.7
+  - 3.8
+
 matrix:
   include:
     - python: 2.7
-    - python: 3.8
-    - python: 3.7
-    - python: 3.6
-    - python: 3.5
-    - python: 3.4
 
 install:
+  - sudo apt-get install -y bc
   - pip install -U pip setuptools wheel
   - pip install .
   - rm -rf psycopg2.egg-info

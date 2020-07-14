@@ -13,6 +13,12 @@
 
 set -e -x
 
+export TEST_PAST=${TEST_PAST:-0}
+export TEST_FUTURE=${TEST_FUTURE:-0}
+export TEST_VERBOSE=${TEST_VERBOSE:-0}
+export PSYCOPG2_TEST_FAST=${PSYCOPG2_TEST_FAST:-0}
+export TEST_PRESENT=${TEST_PRESENT:-1}
+
 run_test () {
     VERSION=$1
     DBNAME=psycopg2_test
@@ -44,16 +50,20 @@ run_test () {
         $VERBOSE
 }
 
-# Postgres versions supported by Travis CI
-if (( ! "$DONT_TEST_PRESENT" )); then
-    run_test 12
-    run_test 11
-    run_test 10
-    run_test 9.6
-    run_test 9.5
-    run_test 9.4
+if (( "$TEST_PRESENT" )); then
+    if [[ "${TRAVIS_CPU_ARCH}" == "arm64" ]]; then
+    # Postgres versions supported by ARM64
+        run_test 10
+    else
+    # Postgres versions supported by Travis CI
+        run_test 12
+        run_test 11
+        run_test 10
+        run_test 9.6
+        run_test 9.5
+        run_test 9.4
+    fi
 fi
-
 # Unsupported postgres versions that we still support
 # Images built by https://github.com/psycopg/psycopg2-wheels/tree/build-dinosaurs
 if (( "$TEST_PAST" )); then
