@@ -3,10 +3,10 @@
 import os
 
 dbname = os.environ.get('PSYCOPG2_TESTDB', 'psycopg2_test')
-dbhost = os.environ.get('PSYCOPG2_TESTDB_HOST', None)
-dbport = os.environ.get('PSYCOPG2_TESTDB_PORT', None)
-dbuser = os.environ.get('PSYCOPG2_TESTDB_USER', None)
-dbpass = os.environ.get('PSYCOPG2_TESTDB_PASSWORD', None)
+dbhost = os.environ.get('PSYCOPG2_TESTDB_HOST', os.environ.get('PGHOST'))
+dbport = os.environ.get('PSYCOPG2_TESTDB_PORT', os.environ.get('PGPORT'))
+dbuser = os.environ.get('PSYCOPG2_TESTDB_USER', os.environ.get('PGUSER'))
+dbpass = os.environ.get('PSYCOPG2_TESTDB_PASSWORD', os.environ.get('PGPASSWORD'))
 
 # Check if we want to test psycopg's green path.
 green = os.environ.get('PSYCOPG2_TEST_GREEN', None)
