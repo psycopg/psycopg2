@@ -439,6 +439,19 @@ def crdb_version(conn, __crdb_version=[]):
     return __crdb_version[0]
 
 
+@decorate_all_tests
+def skip_if_crdb(f):
+    """Skip a test or test class if we are testing against CockroachDB."""
+
+    @wraps(f)
+    def skip_if_crdb_(self):
+        if crdb_version(self.connect()) is not None:
+            self.skipTest("not supported on CockroachDB")
+        return f(self)
+
+    return skip_if_crdb_
+
+
 class py3_raises_typeerror(object):
     def __enter__(self):
         pass
