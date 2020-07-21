@@ -532,6 +532,11 @@ class AsyncTests(ConnectingTestCase):
         else:
             self.fail("No notification received")
 
+    def test_close(self):
+        self.conn.close()
+        self.assertTrue(self.conn.closed)
+        self.assertTrue(self.conn.async_)
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

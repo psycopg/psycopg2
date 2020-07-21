@@ -34,12 +34,16 @@ from psycopg2 import extras
 from .testconfig import dsn
 import unittest
 from .testutils import ConnectingTestCase, skip_before_postgres, slow
+from .testutils import crdb_version
 
 
 class CancelTests(ConnectingTestCase):
 
     def setUp(self):
         ConnectingTestCase.setUp(self)
+        # here, instead of a decorator, to avoid creating the temp table
+        if crdb_version(self.conn) is not None:
+            self.skipTest("cancel not supported on CockroachDB")
 
         cur = self.conn.cursor()
         cur.execute('''
@@ -105,11 +109,6 @@ class CancelTests(ConnectingTestCase):
         cur.execute("select 1")
         extras.wait_select(async_conn)
         self.assertEqual(cur.fetchall(), [(1, )])
-
-    def test_async_connection_cancel(self):
-        async_conn = psycopg2.connect(dsn, async_=True)
-        async_conn.close()
-        self.assertTrue(async_conn.closed)
 
 
 def test_suite():

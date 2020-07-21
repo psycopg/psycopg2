@@ -409,13 +409,13 @@ def skip_if_windows(cls):
 
 def crdb_version(conn, __crdb_version=[]):
     """
-    Return the CockroachDB version if that's the db testing, else None.
+    Return the CockroachDB version if that's the db being tested, else None.
 
     Return the number as an integer similar to PQserverVersion: return
     v20.1.3 as 200103.
 
-    Assume all the connections are on the same db: return a chached result on
-    following runs.
+    Assume all the connections are on the same db: return a cached result on
+    following calls.
 
     """
     if __crdb_version:
