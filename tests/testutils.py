@@ -424,20 +424,17 @@ def crdb_version(conn, __crdb_version=[]):
     if __crdb_version:
         return __crdb_version[0]
 
-    with conn.cursor() as cur:
-        try:
-            cur.execute("show crdb_version")
-        except psycopg2.ProgrammingError:
-            __crdb_version.append(None)
-        else:
-            sver = cur.fetchone()[0]
-            m = re.search(r"\bv(\d+)\.(\d+)\.(\d+)", sver)
-            if not m:
-                raise ValueError(
-                    "can't parse CockroachDB version from %s" % sver)
+    sver = conn.info.parameter_status("crdb_version")
+    if sver is None:
+        __crdb_version.append(None)
+    else:
+        m = re.search(r"\bv(\d+)\.(\d+)\.(\d+)", sver)
+        if not m:
+            raise ValueError(
+                "can't parse CockroachDB version from %s" % sver)
 
-            ver = int(m.group(1)) * 10000 + int(m.group(2)) * 100 + int(m.group(3))
-            __crdb_version.append(ver)
+        ver = int(m.group(1)) * 10000 + int(m.group(2)) * 100 + int(m.group(3))
+        __crdb_version.append(ver)
 
     return __crdb_version[0]
 
