@@ -407,6 +407,38 @@ def skip_if_windows(cls):
     return decorator(cls)
 
 
+def crdb_version(conn, __crdb_version=[]):
+    """
+    Return the CockroachDB version if that's the db testing, else None.
+
+    Return the number as an integer similar to PQserverVersion: return
+    v20.1.3 as 200103.
+
+    Assume all the connections are on the same db: return a chached result on
+    following runs.
+
+    """
+    if __crdb_version:
+        return __crdb_version[0]
+
+    with conn.cursor() as cur:
+        try:
+            cur.execute("show crdb_version")
+        except psycopg2.ProgrammingError:
+            __crdb_version.append(None)
+        else:
+            sver = cur.fetchone()[0]
+            m = re.search(r"\bv(\d+)\.(\d+)\.(\d+)", sver)
+            if not m:
+                raise ValueError(
+                    "can't parse CockroachDB version from %s" % sver)
+
+            ver = int(m.group(1)) * 10000 + int(m.group(2)) * 100 + int(m.group(3))
+            __crdb_version.append(ver)
+
+    return __crdb_version[0]
+
+
 class py3_raises_typeerror(object):
     def __enter__(self):
         pass

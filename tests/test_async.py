@@ -33,7 +33,8 @@ import psycopg2
 import psycopg2.errors
 from psycopg2 import extensions as ext
 
-from .testutils import ConnectingTestCase, StringIO, skip_before_postgres, slow
+from .testutils import (ConnectingTestCase, StringIO, skip_before_postgres,
+    crdb_version, slow)
 
 
 class PollableStub(object):
@@ -62,6 +63,10 @@ class AsyncTests(ConnectingTestCase):
         self.wait(self.conn)
 
         curs = self.conn.cursor()
+        if crdb_version(self.sync_conn) is not None:
+            curs.execute("set experimental_enable_temp_tables = 'on'")
+            self.wait(curs)
+
         curs.execute('''
             CREATE TEMPORARY TABLE table1 (
               id int PRIMARY KEY
