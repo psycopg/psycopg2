@@ -248,6 +248,9 @@ def skip_if_tpc_disabled(f):
     @wraps(f)
     def skip_if_tpc_disabled_(self):
         cnn = self.connect()
+        if crdb_version(cnn):
+            self.skipTest("two phase transction not supported on CockroachDB")
+
         cur = cnn.cursor()
         try:
             cur.execute("SHOW max_prepared_transactions;")
