@@ -444,10 +444,10 @@ def skip_if_crdb(f):
     """Skip a test or test class if we are testing against CockroachDB."""
 
     @wraps(f)
-    def skip_if_crdb_(self):
+    def skip_if_crdb_(self, *args, **kwargs):
         if crdb_version(self.connect()) is not None:
             self.skipTest("not supported on CockroachDB")
-        return f(self)
+        return f(self, *args, **kwargs)
 
     return skip_if_crdb_
 
