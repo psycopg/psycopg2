@@ -26,7 +26,8 @@
 import datetime as dt
 import unittest
 from .testutils import (
-    ConnectingTestCase, skip_before_postgres, skip_copy_if_green, StringIO)
+    ConnectingTestCase, skip_before_postgres, skip_copy_if_green, StringIO,
+    skip_if_crdb)
 
 import psycopg2
 from psycopg2 import sql
@@ -151,6 +152,7 @@ class SqlFormatTests(ConnectingTestCase):
         self.assertEqual(cur.fetchall(),
             [(10, 'a', 'b', 'c'), (20, 'd', 'e', 'f')])
 
+    @skip_if_crdb
     @skip_copy_if_green
     @skip_before_postgres(8, 2)
     def test_copy(self):

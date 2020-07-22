@@ -25,7 +25,7 @@
 
 from . import testutils
 import unittest
-from .testutils import ConnectingTestCase, unichr, PY2
+from .testutils import ConnectingTestCase, skip_if_crdb, unichr, PY2
 
 import psycopg2
 import psycopg2.extensions
@@ -121,6 +121,7 @@ class QuotingTestCase(ConnectingTestCase):
         self.assertEqual(res, data)
         self.assert_(not self.conn.notices)
 
+    @skip_if_crdb
     def test_latin1(self):
         self.conn.set_client_encoding('LATIN1')
         curs = self.conn.cursor()
@@ -146,6 +147,7 @@ class QuotingTestCase(ConnectingTestCase):
             self.assertEqual(res, data)
             self.assert_(not self.conn.notices)
 
+    @skip_if_crdb
     def test_koi8(self):
         self.conn.set_client_encoding('KOI8')
         curs = self.conn.cursor()
