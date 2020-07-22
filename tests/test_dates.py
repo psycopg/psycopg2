@@ -30,7 +30,7 @@ from datetime import date, datetime, time, timedelta
 import psycopg2
 from psycopg2.tz import FixedOffsetTimezone, ZERO
 import unittest
-from .testutils import ConnectingTestCase, skip_before_postgres
+from .testutils import ConnectingTestCase, skip_before_postgres, skip_if_crdb
 
 try:
     from mx.DateTime import Date, Time, DateTime, DateTimeDeltaFrom
@@ -246,6 +246,7 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
                              [time(13, 30, 29)])
         self.assertEqual(value, '13:30:29')
 
+    @skip_if_crdb
     def test_adapt_datetime(self):
         value = self.execute('select (%s)::timestamp::text',
                              [datetime(2007, 1, 1, 13, 30, 29)])
@@ -386,6 +387,7 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         self.assertRaises(OverflowError, f, '00:00:100000000000000000:00')
         self.assertRaises(OverflowError, f, '00:00:00.100000000000000000')
 
+    @skip_if_crdb
     def test_adapt_infinity_tz(self):
         t = self.execute("select 'infinity'::timestamp")
         self.assert_(t.tzinfo is None)
@@ -423,6 +425,7 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
             r = cur.fetchone()[0]
             self.assertEqual(r, v, "%s -> %s != %s" % (s, r, v))
 
+    @skip_if_crdb
     @skip_before_postgres(8, 4)
     def test_interval_iso_8601_not_supported(self):
         # We may end up supporting, but no pressure for it
