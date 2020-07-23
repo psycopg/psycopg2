@@ -27,7 +27,7 @@ from pickle import dumps, loads
 import unittest
 from .testutils import (PY2, text_type, skip_if_no_uuid, skip_before_postgres,
     ConnectingTestCase, py3_raises_typeerror, slow, skip_from_python,
-    restore_types)
+    restore_types, skip_if_crdb, crdb_version)
 
 import psycopg2
 import psycopg2.extras
@@ -134,6 +134,7 @@ class TypesExtrasTests(ConnectingTestCase):
 
 def skip_if_no_hstore(f):
     @wraps(f)
+    @skip_if_crdb
     def skip_if_no_hstore_(self):
         oids = HstoreAdapter.get_oids(self.conn)
         if oids is None or not oids[0]:
@@ -417,6 +418,7 @@ class HstoreTestCase(ConnectingTestCase):
 
 def skip_if_no_composite(f):
     @wraps(f)
+    @skip_if_crdb
     def skip_if_no_composite_(self):
         if self.conn.info.server_version < 80000:
             return self.skipTest(
@@ -786,6 +788,7 @@ def skip_if_no_json_type(f):
     return skip_if_no_json_type_
 
 
+@skip_if_crdb
 class JsonTestCase(ConnectingTestCase):
     def test_adapt(self):
         objs = [None, "te'xt", 123, 123.45,
@@ -990,8 +993,9 @@ class JsonbTestCase(ConnectingTestCase):
         curs.execute("""select '{"a": 100.0, "b": null}'::jsonb""")
         self.assertEqual(curs.fetchone()[0], {'a': 100.0, 'b': None})
 
-        curs.execute("""select array['{"a": 100.0, "b": null}']::jsonb[]""")
-        self.assertEqual(curs.fetchone()[0], [{'a': 100.0, 'b': None}])
+        if crdb_version(self.conn) is None:
+            curs.execute("""select array['{"a": 100.0, "b": null}']::jsonb[]""")
+            self.assertEqual(curs.fetchone()[0], [{'a': 100.0, 'b': None}])
 
     def test_register_on_connection(self):
         psycopg2.extras.register_json(self.conn, loads=self.myloads, name='jsonb')
@@ -1025,11 +1029,12 @@ class JsonbTestCase(ConnectingTestCase):
         data = curs.fetchone()[0]
         self.assert_(isinstance(data['a'], Decimal))
         self.assertEqual(data['a'], Decimal('100.0'))
-        # sure we are not manling json too?
-        curs.execute("""select '{"a": 100.0, "b": null}'::json""")
-        data = curs.fetchone()[0]
-        self.assert_(isinstance(data['a'], float))
-        self.assertEqual(data['a'], 100.0)
+        # sure we are not mangling json too?
+        if crdb_version(self.conn) is None:
+            curs.execute("""select '{"a": 100.0, "b": null}'::json""")
+            data = curs.fetchone()[0]
+            self.assert_(isinstance(data['a'], float))
+            self.assertEqual(data['a'], 100.0)
 
     def test_register_default(self):
         curs = self.conn.cursor()
@@ -1044,17 +1049,19 @@ class JsonbTestCase(ConnectingTestCase):
         self.assert_(isinstance(data['a'], Decimal))
         self.assertEqual(data['a'], Decimal('100.0'))
 
-        curs.execute("""select array['{"a": 100.0, "b": null}']::jsonb[]""")
-        data = curs.fetchone()[0]
-        self.assert_(isinstance(data[0]['a'], Decimal))
-        self.assertEqual(data[0]['a'], Decimal('100.0'))
+        if crdb_version(self.conn) is None:
+            curs.execute("""select array['{"a": 100.0, "b": null}']::jsonb[]""")
+            data = curs.fetchone()[0]
+            self.assert_(isinstance(data[0]['a'], Decimal))
+            self.assertEqual(data[0]['a'], Decimal('100.0'))
 
     def test_null(self):
         curs = self.conn.cursor()
         curs.execute("""select NULL::jsonb""")
         self.assertEqual(curs.fetchone()[0], None)
-        curs.execute("""select NULL::jsonb[]""")
-        self.assertEqual(curs.fetchone()[0], None)
+        if crdb_version(self.conn) is None:
+            curs.execute("""select NULL::jsonb[]""")
+            self.assertEqual(curs.fetchone()[0], None)
 
 
 class RangeTestCase(unittest.TestCase):
@@ -1325,6 +1332,7 @@ class RangeTestCase(unittest.TestCase):
         self.assertEqual(result, expected)
 
 
+@skip_if_crdb
 @skip_before_postgres(9, 2, "range not supported before postgres 9.2")
 class RangeCasterTestCase(ConnectingTestCase):
 
