@@ -918,7 +918,7 @@ add_module_types(PyObject *module)
     for (i = 0; typetable[i].name; i++) {
         PyObject *type = (PyObject *)typetable[i].type;
 
-        Py_TYPE(typetable[i].type) = &PyType_Type;
+        Py_SET_TYPE(typetable[i].type, &PyType_Type);
         if (0 > PyType_Ready(typetable[i].type)) { return -1; }
 
         Py_INCREF(type);
@@ -950,7 +950,7 @@ datetime_init(void)
     if (0 > repl_curs_datetime_init()) { return -1; }
     if (0 > replmsg_datetime_init()) { return -1; }
 
-    Py_TYPE(&pydatetimeType) = &PyType_Type;
+    Py_SET_TYPE(&pydatetimeType, &PyType_Type);
     if (0 > PyType_Ready(&pydatetimeType)) { return -1; }
 
     return 0;
@@ -962,7 +962,7 @@ mxdatetime_init(PyObject *module)
     Dprintf("psycopgmodule: initializing mx.DateTime module");
 
 #ifdef HAVE_MXDATETIME
-    Py_TYPE(&mxdatetimeType) = &PyType_Type;
+    Py_SET_TYPE(&mxdatetimeType, &PyType_Type);
     if (0 > PyType_Ready(&mxdatetimeType)) { return -1; }
 
     if (mxDateTime_ImportModuleAndAPI()) {
@@ -1082,13 +1082,13 @@ INIT_MODULE(_psycopg)(void)
     libcrypto_threads_init();
 
     /* initialize types and objects not exposed to the module */
-    Py_TYPE(&typecastType) = &PyType_Type;
+    Py_SET_TYPE(&typecastType, &PyType_Type);
     if (0 > PyType_Ready(&typecastType)) { goto exit; }
 
-    Py_TYPE(&chunkType) = &PyType_Type;
+    Py_SET_TYPE(&chunkType, &PyType_Type);
     if (0 > PyType_Ready(&chunkType)) { goto exit; }
 
-    Py_TYPE(&errorType) = &PyType_Type;
+    Py_SET_TYPE(&errorType, &PyType_Type);
     errorType.tp_base = (PyTypeObject *)PyExc_StandardError;
     if (0 > PyType_Ready(&errorType)) { goto exit; }
 

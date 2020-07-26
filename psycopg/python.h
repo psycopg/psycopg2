@@ -52,6 +52,14 @@ typedef long Py_hash_t;
 typedef unsigned long Py_uhash_t;
 #endif
 
+/* Since Py_TYPE() is changed to the inline static function,
+ * Py_TYPE(obj) = new_type must be replaced with Py_SET_TYPE(obj, new_type)
+ * https://docs.python.org/3.10/whatsnew/3.10.html#id2
+ */
+#if PY_VERSION_HEX < 0x030900A4
+  #define Py_SET_TYPE(obj, type) ((Py_TYPE(obj) = (type)), (void)0)
+#endif
+
 /* FORMAT_CODE_PY_SSIZE_T is for Py_ssize_t: */
 #define FORMAT_CODE_PY_SSIZE_T "%" PY_FORMAT_SIZE_T "d"
 
