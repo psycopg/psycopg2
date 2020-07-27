@@ -203,7 +203,7 @@ class WithCursorTestCase(WithTestCase):
         self.assert_(curs.closed)
         self.assert_(closes)
 
-    @skip_if_crdb
+    @skip_if_crdb("named cursor")
     def test_exception_swallow(self):
         # bug #262: __exit__ calls cur.close() that hides the exception
         # with another error.
@@ -217,7 +217,7 @@ class WithCursorTestCase(WithTestCase):
         else:
             self.fail("where is my exception?")
 
-    @skip_if_crdb
+    @skip_if_crdb("named cursor")
     @skip_before_postgres(8, 2)
     def test_named_with_noop(self):
         with self.conn.cursor('named'):

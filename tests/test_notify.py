@@ -38,7 +38,7 @@ import select
 from subprocess import Popen, PIPE
 
 
-@skip_if_crdb
+@skip_if_crdb("notify")
 class NotifiesTests(ConnectingTestCase):
 
     def autocommit(self, conn):

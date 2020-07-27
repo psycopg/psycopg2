@@ -121,7 +121,7 @@ class QuotingTestCase(ConnectingTestCase):
         self.assertEqual(res, data)
         self.assert_(not self.conn.notices)
 
-    @skip_if_crdb
+    @skip_if_crdb("encoding")
     def test_latin1(self):
         self.conn.set_client_encoding('LATIN1')
         curs = self.conn.cursor()
@@ -147,7 +147,7 @@ class QuotingTestCase(ConnectingTestCase):
             self.assertEqual(res, data)
             self.assert_(not self.conn.notices)
 
-    @skip_if_crdb
+    @skip_if_crdb("encoding")
     def test_koi8(self):
         self.conn.set_client_encoding('KOI8')
         curs = self.conn.cursor()

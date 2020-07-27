@@ -149,14 +149,14 @@ class TypesBasicTests(ConnectingTestCase):
             buf2 = self.execute("SELECT %s::bytea AS foo", (buf,))
             self.assertEqual(s, buf2.tobytes())
 
-    @skip_if_crdb
+    @skip_if_crdb("nested array")
     def testArray(self):
         s = self.execute("SELECT %s AS foo", ([[1, 2], [3, 4]],))
         self.failUnlessEqual(s, [[1, 2], [3, 4]])
         s = self.execute("SELECT %s AS foo", (['one', 'two', 'three'],))
         self.failUnlessEqual(s, ['one', 'two', 'three'])
 
-    @skip_if_crdb
+    @skip_if_crdb("nested array")
     def testEmptyArrayRegression(self):
         # ticket #42
         curs = self.conn.cursor()
@@ -239,7 +239,7 @@ class TypesBasicTests(ConnectingTestCase):
         self.assert_(isinstance(x[0], bytes))
         self.assertEqual(x, [b'a', b'b', b'c'])
 
-    @skip_if_crdb
+    @skip_if_crdb("nested array")
     @testutils.skip_before_postgres(8, 2)
     def testArrayOfNulls(self):
         curs = self.conn.cursor()
@@ -406,7 +406,7 @@ class TypesBasicTests(ConnectingTestCase):
         a = self.execute("select '{1, 2, NULL}'::int4[]")
         self.assertEqual(a, [2, 4, 'nada'])
 
-    @skip_if_crdb
+    @skip_if_crdb("cidr")
     @testutils.skip_before_postgres(8, 2)
     def testNetworkArray(self):
         # we don't know these types, but we know their arrays

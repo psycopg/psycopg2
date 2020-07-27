@@ -213,7 +213,7 @@ class CursorTests(ConnectingTestCase):
         self.assertEqual(c.precision, None)
         self.assertEqual(c.scale, None)
 
-    @skip_if_crdb
+    @skip_if_crdb("table oid")
     def test_description_extra_attribs(self):
         curs = self.conn.cursor()
         curs.execute("""
@@ -271,7 +271,7 @@ class CursorTests(ConnectingTestCase):
     # It would be inappropriate to test callproc's named parameters in the
     # DBAPI2.0 test section because they are a psycopg2 extension.
     @skip_before_postgres(9, 0)
-    @skip_if_crdb
+    @skip_if_crdb("stored procedure")
     def test_callproc_dict(self):
         # This parameter name tests for injection and quote escaping
         paramname = '''
@@ -309,7 +309,7 @@ class CursorTests(ConnectingTestCase):
 
     @skip_if_no_superuser
     @skip_if_windows
-    @skip_if_crdb
+    @skip_if_crdb("backend pid")
     @skip_before_postgres(8, 4)
     def test_external_close_sync(self):
         # If a "victim" connection is closed by a "control" connection
@@ -327,7 +327,7 @@ class CursorTests(ConnectingTestCase):
 
     @skip_if_no_superuser
     @skip_if_windows
-    @skip_if_crdb
+    @skip_if_crdb("backend pid")
     @skip_before_postgres(8, 4)
     def test_external_close_async(self):
         # Issue #443 is in the async code too. Since the fix is duplicated,
@@ -403,7 +403,7 @@ class CursorTests(ConnectingTestCase):
         self.assert_(curs.pgresult_ptr is None)
 
 
-@skip_if_crdb
+@skip_if_crdb("named cursor")
 class NamedCursorTests(ConnectingTestCase):
     def test_invalid_name(self):
         curs = self.conn.cursor()

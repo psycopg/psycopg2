@@ -71,7 +71,7 @@ class NetworkingTestCase(testutils.ConnectingTestCase):
         cur.execute("select %s", [ip.ip_interface('::ffff:102:300/128')])
         self.assertEquals(cur.fetchone()[0], '::ffff:102:300/128')
 
-    @testutils.skip_if_crdb
+    @testutils.skip_if_crdb("cidr")
     def test_cidr_cast(self):
         cur = self.conn.cursor()
         psycopg2.extras.register_ipaddress(cur)
@@ -89,7 +89,7 @@ class NetworkingTestCase(testutils.ConnectingTestCase):
         self.assert_(isinstance(obj, ip.IPv6Network), repr(obj))
         self.assertEquals(obj, ip.ip_network('::ffff:102:300/128'))
 
-    @testutils.skip_if_crdb
+    @testutils.skip_if_crdb("cidr")
     @testutils.skip_before_postgres(8, 2)
     def test_cidr_array_cast(self):
         cur = self.conn.cursor()

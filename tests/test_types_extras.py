@@ -134,7 +134,7 @@ class TypesExtrasTests(ConnectingTestCase):
 
 def skip_if_no_hstore(f):
     @wraps(f)
-    @skip_if_crdb
+    @skip_if_crdb("hstore")
     def skip_if_no_hstore_(self):
         oids = HstoreAdapter.get_oids(self.conn)
         if oids is None or not oids[0]:
@@ -418,7 +418,7 @@ class HstoreTestCase(ConnectingTestCase):
 
 def skip_if_no_composite(f):
     @wraps(f)
-    @skip_if_crdb
+    @skip_if_crdb("composite")
     def skip_if_no_composite_(self):
         if self.conn.info.server_version < 80000:
             return self.skipTest(
@@ -788,7 +788,7 @@ def skip_if_no_json_type(f):
     return skip_if_no_json_type_
 
 
-@skip_if_crdb
+@skip_if_crdb("json")
 class JsonTestCase(ConnectingTestCase):
     def test_adapt(self):
         objs = [None, "te'xt", 123, 123.45,
@@ -1332,7 +1332,7 @@ class RangeTestCase(unittest.TestCase):
         self.assertEqual(result, expected)
 
 
-@skip_if_crdb
+@skip_if_crdb("range")
 @skip_before_postgres(9, 2, "range not supported before postgres 9.2")
 class RangeCasterTestCase(ConnectingTestCase):
 

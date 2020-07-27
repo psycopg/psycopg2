@@ -152,7 +152,7 @@ class SqlFormatTests(ConnectingTestCase):
         self.assertEqual(cur.fetchall(),
             [(10, 'a', 'b', 'c'), (20, 'd', 'e', 'f')])
 
-    @skip_if_crdb
+    @skip_if_crdb("copy")
     @skip_copy_if_green
     @skip_before_postgres(8, 2)
     def test_copy(self):

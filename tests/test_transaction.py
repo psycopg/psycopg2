@@ -26,22 +26,20 @@
 import threading
 import unittest
 from .testutils import ConnectingTestCase, skip_before_postgres, slow
-from .testutils import crdb_version, skip_if_crdb
+from .testutils import skip_if_crdb
 
 import psycopg2
 from psycopg2.extensions import (
     ISOLATION_LEVEL_SERIALIZABLE, STATUS_BEGIN, STATUS_READY)
 
 
-@skip_if_crdb
 class TransactionTests(ConnectingTestCase):
 
     def setUp(self):
         ConnectingTestCase.setUp(self)
+        skip_if_crdb("isolation level", self.conn)
         self.conn.set_isolation_level(ISOLATION_LEVEL_SERIALIZABLE)
         curs = self.conn.cursor()
-        if crdb_version(self.conn) is not None:
-            self.skipTest("features not supported on CockroachDB")
         curs.execute('''
             CREATE TEMPORARY TABLE table1 (
               id int PRIMARY KEY
@@ -96,7 +94,6 @@ class TransactionTests(ConnectingTestCase):
         self.assertEqual(curs.fetchone()[0], 1)
 
 
-@skip_if_crdb
 class DeadlockSerializationTests(ConnectingTestCase):
     """Test deadlock and serialization failure errors."""
 
@@ -107,8 +104,7 @@ class DeadlockSerializationTests(ConnectingTestCase):
 
     def setUp(self):
         ConnectingTestCase.setUp(self)
-        if crdb_version(self.conn) is not None:
-            self.skipTest("features not supported on CockroachDB")
+        skip_if_crdb("isolation level", self.conn)
 
         curs = self.conn.cursor()
         # Drop table if it already exists

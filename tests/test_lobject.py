@@ -38,7 +38,7 @@ from .testutils import (decorate_all_tests, skip_if_tpc_disabled,
 def skip_if_no_lo(f):
     f = skip_before_postgres(8, 1, "large objects only supported from PG 8.1")(f)
     f = skip_if_green("libpq doesn't support LO in async mode")(f)
-    f = skip_if_crdb(f)
+    f = skip_if_crdb("large objects")(f)
     return f
 
 

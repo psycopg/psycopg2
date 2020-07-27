@@ -328,6 +328,7 @@ class AsyncTests(ConnectingTestCase):
         conn.close()
 
     @slow
+    @skip_if_crdb("flush on write flakey")
     def test_flush_on_write(self):
         # a very large query requires a flush loop to be sent to the backend
         curs = self.conn.cursor()

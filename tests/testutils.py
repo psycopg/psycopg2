@@ -248,8 +248,7 @@ def skip_if_tpc_disabled(f):
     @wraps(f)
     def skip_if_tpc_disabled_(self):
         cnn = self.connect()
-        if crdb_version(cnn):
-            self.skipTest("two phase transction not supported on CockroachDB")
+        skip_if_crdb("2-phase commit", cnn)
 
         cur = cnn.cursor()
         try:
@@ -439,15 +438,29 @@ def crdb_version(conn, __crdb_version=[]):
     return __crdb_version[0]
 
 
-@decorate_all_tests
-def skip_if_crdb(f):
-    """Skip a test or test class if we are testing against CockroachDB."""
+def skip_if_crdb(reason, conn=None):
+    """Skip a test or test class if we are testing against CockroachDB.
 
-    @wraps(f)
-    def skip_if_crdb_(self, *args, **kwargs):
-        if crdb_version(self.connect()) is not None:
-            self.skipTest("not supported on CockroachDB")
-        return f(self, *args, **kwargs)
+    Can be used as a decorator for tests function or classes:
+
+        @skip_if_crdb("my reason")
+        class SomeUnitTest(UnitTest):
+            # ...
+
+    Or as a normal function if the *conn* argument is passed.
+    """
+    if conn is not None:
+        if crdb_version(conn) is not None:
+            raise unittest.SkipTest("not supported on CockroachDB: %s" % reason)
+
+    @decorate_all_tests
+    def skip_if_crdb_(f):
+        @wraps(f)
+        def skip_if_crdb__(self, *args, **kwargs):
+            skip_if_crdb(reason, self.connect())
+            return f(self, *args, **kwargs)
+
+        return skip_if_crdb__
 
     return skip_if_crdb_
 
