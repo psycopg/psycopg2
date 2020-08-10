@@ -28,7 +28,7 @@ For most operating systems, the quickest way to install psycopg is using the whe
 
     $ pip install psycopg2-binary
 
-This will install a pre-compiled binary version of the module which does not require the build or runtime prerequisites described below. Make sure to sue an up-date-date version of :program:`pip` (you can upgrade it
+This will install a pre-compiled binary version of the module which does not require the build or runtime prerequisites described below. Make sure to use an up-date-date version of :program:`pip` (you can upgrade it
 using something like ``pip install -U pip``).
 
 You may then import the ``psycopg`` package, as usual:
