@@ -449,6 +449,9 @@ def skip_if_crdb(reason, conn=None):
 
     Or as a normal function if the *conn* argument is passed.
     """
+    if not isinstance(reason, str):
+        raise TypeError("reason should be a string, got %r instead" % reason)
+
     if conn is not None:
         if crdb_version(conn) is not None:
             raise unittest.SkipTest("not supported on CockroachDB: %s" % reason)

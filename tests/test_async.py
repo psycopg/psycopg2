@@ -355,7 +355,7 @@ class AsyncTests(ConnectingTestCase):
         self.assertEquals(cur.fetchone()[0], 1)
 
     @slow
-    @skip_if_crdb
+    @skip_if_crdb("notify")
     def test_notify(self):
         cur = self.conn.cursor()
         sync_cur = self.sync_conn.cursor()
@@ -433,7 +433,7 @@ class AsyncTests(ConnectingTestCase):
         self.wait(cur2)
         self.assertEquals(cur2.fetchone()[0], 1)
 
-    @skip_if_crdb
+    @skip_if_crdb("notice")
     def test_notices(self):
         del self.conn.notices[:]
         cur = self.conn.cursor()
@@ -458,7 +458,7 @@ class AsyncTests(ConnectingTestCase):
         self.wait(self.conn)
         self.assertEqual(cur.fetchone(), (42,))
 
-    @skip_if_crdb
+    @skip_if_crdb("copy")
     def test_async_connection_error_message(self):
         try:
             cnn = psycopg2.connect('dbname=thisdatabasedoesntexist', async_=True)
@@ -476,7 +476,7 @@ class AsyncTests(ConnectingTestCase):
         self.assertRaises(psycopg2.ProgrammingError, self.wait, self.conn)
 
     @slow
-    @skip_if_crdb
+    @skip_if_crdb("notice")
     @skip_before_postgres(9, 0)
     def test_non_block_after_notification(self):
         from select import select
@@ -510,7 +510,7 @@ class AsyncTests(ConnectingTestCase):
     def test_poll_noop(self):
         self.conn.poll()
 
-    @skip_if_crdb
+    @skip_if_crdb("notify")
     @skip_before_postgres(9, 0)
     def test_poll_conn_for_notification(self):
         with self.conn.cursor() as cur:

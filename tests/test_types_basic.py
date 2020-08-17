@@ -173,7 +173,7 @@ class TypesBasicTests(ConnectingTestCase):
         curs.execute("select col from array_test where id = 2")
         self.assertEqual(curs.fetchone()[0], [])
 
-    @skip_if_crdb
+    @skip_if_crdb("nested array")
     @testutils.skip_before_postgres(8, 4)
     def testNestedEmptyArray(self):
         # issue #788
@@ -276,7 +276,7 @@ class TypesBasicTests(ConnectingTestCase):
         curs.execute("insert into na (boolaa) values (%s)", ([[True, None]],))
         curs.execute("insert into na (boolaa) values (%s)", ([[None, None]],))
 
-    @skip_if_crdb
+    @skip_if_crdb("nested array")
     @testutils.skip_before_postgres(8, 2)
     def testNestedArrays(self):
         curs = self.conn.cursor()
