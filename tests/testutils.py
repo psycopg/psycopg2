@@ -38,7 +38,7 @@ from ctypes.util import find_library
 import psycopg2
 import psycopg2.errors
 import psycopg2.extensions
-from psycopg2.compat import PY2, PY3, text_type
+from psycopg2.compat import PY2, PY3, string_types, text_type
 
 from .testconfig import green, dsn, repl_dsn
 
@@ -454,7 +454,7 @@ def skip_if_crdb(reason, conn=None, version=None):
     "== 20.1.3": the test will be skipped only if the version matches.
 
     """
-    if not isinstance(reason, str):
+    if not isinstance(reason, string_types):
         raise TypeError("reason should be a string, got %r instead" % reason)
 
     if conn is not None:
