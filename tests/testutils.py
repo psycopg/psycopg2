@@ -454,6 +454,10 @@ def skip_if_crdb(reason, conn=None):
 
     if conn is not None:
         if crdb_version(conn) is not None:
+            if reason in crdb_reasons:
+                reason = (
+                    "%s (https://github.com/cockroachdb/cockroach/issues/%s)"
+                    % (reason, crdb_reasons[reason]))
             raise unittest.SkipTest("not supported on CockroachDB: %s" % reason)
 
     @decorate_all_tests
@@ -466,6 +470,29 @@ def skip_if_crdb(reason, conn=None):
         return skip_if_crdb__
 
     return skip_if_crdb_
+
+
+# mapping from reason description to ticket number
+crdb_reasons = {
+    "2-phase commit": 22329,
+    "backend pid": 35897,
+    "cancel": 41335,
+    "cast adds tz": 51692,
+    "cidr": 18846,
+    "composite": 27792,
+    "copy": 41608,
+    "deferrable": 48307,
+    "encoding": 35882,
+    "hstore": 41284,
+    "infinity date": 41564,
+    "interval style": 35807,
+    "large objects": 243,
+    "named cursor": 41412,
+    "nested array": 32552,
+    "notify": 41522,
+    "range": 41282,
+    "stored procedure": 1751,
+}
 
 
 class py3_raises_typeerror(object):
