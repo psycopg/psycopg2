@@ -29,6 +29,7 @@ import sys
 import types
 import ctypes
 import select
+import operator
 import platform
 import unittest
 from functools import wraps
@@ -438,7 +439,7 @@ def crdb_version(conn, __crdb_version=[]):
     return __crdb_version[0]
 
 
-def skip_if_crdb(reason, conn=None):
+def skip_if_crdb(reason, conn=None, version=None):
     """Skip a test or test class if we are testing against CockroachDB.
 
     Can be used as a decorator for tests function or classes:
@@ -448,23 +449,29 @@ def skip_if_crdb(reason, conn=None):
             # ...
 
     Or as a normal function if the *conn* argument is passed.
+
+    If *version* is specified it should be a string such as ">= 20.1", "< 20",
+    "== 20.1.3": the test will be skipped only if the version matches.
+
     """
     if not isinstance(reason, str):
         raise TypeError("reason should be a string, got %r instead" % reason)
 
     if conn is not None:
-        if crdb_version(conn) is not None:
+        ver = crdb_version(conn)
+        if ver is not None and _crdb_match_version(ver, version):
             if reason in crdb_reasons:
                 reason = (
                     "%s (https://github.com/cockroachdb/cockroach/issues/%s)"
                     % (reason, crdb_reasons[reason]))
-            raise unittest.SkipTest("not supported on CockroachDB: %s" % reason)
+            raise unittest.SkipTest(
+                "not supported on CockroachDB %s: %s" % (ver, reason))
 
     @decorate_all_tests
     def skip_if_crdb_(f):
         @wraps(f)
         def skip_if_crdb__(self, *args, **kwargs):
-            skip_if_crdb(reason, self.connect())
+            skip_if_crdb(reason, conn=self.connect(), version=version)
             return f(self, *args, **kwargs)
 
         return skip_if_crdb__
@@ -493,6 +500,22 @@ crdb_reasons = {
     "range": 41282,
     "stored procedure": 1751,
 }
+
+
+def _crdb_match_version(version, pattern):
+    if pattern is None:
+        return True
+
+    m = re.match(r'^(>|>=|<|<=|==|!=)\s*(\d+)(?:\.(\d+))?(?:\.(\d+))?$', pattern)
+    if m is None:
+        raise ValueError(
+            "bad crdb version pattern %r: should be 'OP MAJOR[.MINOR[.BUGFIX]]'"
+            % pattern)
+
+    ops = {'>': 'gt', '>=': 'ge', '<': 'lt', '<=': 'le', '==': 'eq', '!=': 'ne'}
+    op = getattr(operator, ops[m.group(1)])
+    ref = int(m.group(2)) * 10000 + int(m.group(3) or 0) * 100 + int(m.group(4) or 0)
+    return op(version, ref)
 
 
 class py3_raises_typeerror(object):
