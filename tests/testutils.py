@@ -29,6 +29,7 @@ import sys
 import types
 import ctypes
 import select
+import operator
 import platform
 import unittest
 from functools import wraps
@@ -37,7 +38,7 @@ from ctypes.util import find_library
 import psycopg2
 import psycopg2.errors
 import psycopg2.extensions
-from psycopg2.compat import PY2, PY3, text_type
+from psycopg2.compat import PY2, PY3, string_types, text_type
 
 from .testconfig import green, dsn, repl_dsn
 
@@ -248,6 +249,8 @@ def skip_if_tpc_disabled(f):
     @wraps(f)
     def skip_if_tpc_disabled_(self):
         cnn = self.connect()
+        skip_if_crdb("2-phase commit", cnn)
+
         cur = cnn.cursor()
         try:
             cur.execute("SHOW max_prepared_transactions;")
@@ -405,6 +408,114 @@ def skip_if_windows(cls):
         "Not supported on Windows",
     )
     return decorator(cls)
+
+
+def crdb_version(conn, __crdb_version=[]):
+    """
+    Return the CockroachDB version if that's the db being tested, else None.
+
+    Return the number as an integer similar to PQserverVersion: return
+    v20.1.3 as 200103.
+
+    Assume all the connections are on the same db: return a cached result on
+    following calls.
+
+    """
+    if __crdb_version:
+        return __crdb_version[0]
+
+    sver = conn.info.parameter_status("crdb_version")
+    if sver is None:
+        __crdb_version.append(None)
+    else:
+        m = re.search(r"\bv(\d+)\.(\d+)\.(\d+)", sver)
+        if not m:
+            raise ValueError(
+                "can't parse CockroachDB version from %s" % sver)
+
+        ver = int(m.group(1)) * 10000 + int(m.group(2)) * 100 + int(m.group(3))
+        __crdb_version.append(ver)
+
+    return __crdb_version[0]
+
+
+def skip_if_crdb(reason, conn=None, version=None):
+    """Skip a test or test class if we are testing against CockroachDB.
+
+    Can be used as a decorator for tests function or classes:
+
+        @skip_if_crdb("my reason")
+        class SomeUnitTest(UnitTest):
+            # ...
+
+    Or as a normal function if the *conn* argument is passed.
+
+    If *version* is specified it should be a string such as ">= 20.1", "< 20",
+    "== 20.1.3": the test will be skipped only if the version matches.
+
+    """
+    if not isinstance(reason, string_types):
+        raise TypeError("reason should be a string, got %r instead" % reason)
+
+    if conn is not None:
+        ver = crdb_version(conn)
+        if ver is not None and _crdb_match_version(ver, version):
+            if reason in crdb_reasons:
+                reason = (
+                    "%s (https://github.com/cockroachdb/cockroach/issues/%s)"
+                    % (reason, crdb_reasons[reason]))
+            raise unittest.SkipTest(
+                "not supported on CockroachDB %s: %s" % (ver, reason))
+
+    @decorate_all_tests
+    def skip_if_crdb_(f):
+        @wraps(f)
+        def skip_if_crdb__(self, *args, **kwargs):
+            skip_if_crdb(reason, conn=self.connect(), version=version)
+            return f(self, *args, **kwargs)
+
+        return skip_if_crdb__
+
+    return skip_if_crdb_
+
+
+# mapping from reason description to ticket number
+crdb_reasons = {
+    "2-phase commit": 22329,
+    "backend pid": 35897,
+    "cancel": 41335,
+    "cast adds tz": 51692,
+    "cidr": 18846,
+    "composite": 27792,
+    "copy": 41608,
+    "deferrable": 48307,
+    "encoding": 35882,
+    "hstore": 41284,
+    "infinity date": 41564,
+    "interval style": 35807,
+    "large objects": 243,
+    "named cursor": 41412,
+    "nested array": 32552,
+    "notify": 41522,
+    "range": 41282,
+    "stored procedure": 1751,
+}
+
+
+def _crdb_match_version(version, pattern):
+    if pattern is None:
+        return True
+
+    m = re.match(r'^(>|>=|<|<=|==|!=)\s*(\d+)(?:\.(\d+))?(?:\.(\d+))?$', pattern)
+    if m is None:
+        raise ValueError(
+            "bad crdb version pattern %r: should be 'OP MAJOR[.MINOR[.BUGFIX]]'"
+            % pattern)
+
+    ops = {'>': 'gt', '>=': 'ge', '<': 'lt', '<=': 'le', '==': 'eq', '!=': 'ne'}
+    op = getattr(operator, ops[m.group(1)])
+    ref = int(m.group(2)) * 10000 + int(m.group(3) or 0) * 100 + int(m.group(4) or 0)
+    return op(version, ref)
 
 
 class py3_raises_typeerror(object):

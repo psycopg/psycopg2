@@ -29,7 +29,7 @@ from collections import deque
 import psycopg2
 from psycopg2 import extensions
 from psycopg2.extensions import Notify
-from .testutils import ConnectingTestCase, slow
+from .testutils import ConnectingTestCase, skip_if_crdb, slow
 from .testconfig import dsn
 
 import sys
@@ -38,6 +38,7 @@ import select
 from subprocess import Popen, PIPE
 
 
+@skip_if_crdb("notify")
 class NotifiesTests(ConnectingTestCase):
 
     def autocommit(self, conn):

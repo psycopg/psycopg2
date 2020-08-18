@@ -33,6 +33,7 @@ import psycopg2.extras
 from psycopg2.extensions import POLL_OK, POLL_READ, POLL_WRITE
 
 from .testutils import ConnectingTestCase, skip_before_postgres, slow
+from .testutils import skip_if_crdb
 
 
 class ConnectionStub(object):
@@ -67,6 +68,7 @@ class GreenTestCase(ConnectingTestCase):
         return stub
 
     @slow
+    @skip_if_crdb("flush on write flakey")
     def test_flush_on_write(self):
         # a very large query requires a flush loop to be sent to the backend
         conn = self.conn
@@ -122,8 +124,9 @@ class GreenTestCase(ConnectingTestCase):
             cur.execute, "copy (select 1) to stdout")
 
     @slow
+    @skip_if_crdb("notice")
     @skip_before_postgres(9, 0)
-    def test_non_block_after_notification(self):
+    def test_non_block_after_notice(self):
         def wait(conn):
             while 1:
                 state = conn.poll()
@@ -216,6 +219,7 @@ class CallbackErrorTestCase(ConnectingTestCase):
 
         self.fail("you should have had a success or an error by now")
 
+    @skip_if_crdb("named cursor")
     def test_errors_named_cursor(self):
         for i in range(100):
             self.to_error = None

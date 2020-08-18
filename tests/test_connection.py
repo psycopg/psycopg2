@@ -44,7 +44,8 @@ from psycopg2 import extensions as ext
 from .testutils import (
     PY2, unittest, skip_if_no_superuser, skip_before_postgres,
     skip_after_postgres, skip_before_libpq, skip_after_libpq,
-    ConnectingTestCase, skip_if_tpc_disabled, skip_if_windows, slow)
+    ConnectingTestCase, skip_if_tpc_disabled, skip_if_windows, slow,
+    skip_if_crdb, crdb_version)
 
 from .testconfig import dbhost, dsn, dbname
 
@@ -74,6 +75,7 @@ class ConnectionTests(ConnectingTestCase):
         conn.close()
         self.assertEqual(curs.closed, True)
 
+    @skip_if_crdb("backend pid")
     @skip_before_postgres(8, 4)
     @skip_if_no_superuser
     @skip_if_windows
@@ -88,6 +90,7 @@ class ConnectionTests(ConnectingTestCase):
         conn.close()
         self.assertEqual(conn.closed, 1)
 
+    @skip_if_crdb("isolation level")
     def test_reset(self):
         conn = self.conn
         # switch session characteristics
@@ -111,6 +114,7 @@ class ConnectionTests(ConnectingTestCase):
         if self.conn.info.server_version >= 90100:
             self.assert_(conn.deferrable is None)
 
+    @skip_if_crdb("notice")
     def test_notices(self):
         conn = self.conn
         cur = conn.cursor()
@@ -120,6 +124,7 @@ class ConnectionTests(ConnectingTestCase):
         self.assertEqual("CREATE TABLE", cur.statusmessage)
         self.assert_(conn.notices)
 
+    @skip_if_crdb("notice")
     def test_notices_consistent_order(self):
         conn = self.conn
         cur = conn.cursor()
@@ -140,6 +145,7 @@ class ConnectionTests(ConnectingTestCase):
         self.assert_('table4' in conn.notices[3])
 
     @slow
+    @skip_if_crdb("notice")
     def test_notices_limited(self):
         conn = self.conn
         cur = conn.cursor()
@@ -154,6 +160,7 @@ class ConnectionTests(ConnectingTestCase):
         self.assert_('table99' in conn.notices[-1], conn.notices[-1])
 
     @slow
+    @skip_if_crdb("notice")
     def test_notices_deque(self):
         conn = self.conn
         self.conn.notices = deque()
@@ -184,6 +191,7 @@ class ConnectionTests(ConnectingTestCase):
         self.assertEqual(len([n for n in conn.notices if 'CREATE TABLE' in n]),
             100)
 
+    @skip_if_crdb("notice")
     def test_notices_noappend(self):
         conn = self.conn
         self.conn.notices = None    # will make an error swallowes ok
@@ -230,6 +238,7 @@ class ConnectionTests(ConnectingTestCase):
         self.assert_(time.time() - t0 < 7,
             "something broken in concurrency")
 
+    @skip_if_crdb("encoding")
     def test_encoding_name(self):
         self.conn.set_client_encoding("EUC_JP")
         # conn.encoding is 'EUCJP' now.
@@ -329,6 +338,7 @@ class ConnectionTests(ConnectingTestCase):
         cur = conn.cursor(cursor_factory=None)
         self.assertEqual(type(cur), psycopg2.extras.DictCursor)
 
+    @skip_if_crdb("connect any db")
     def test_failed_init_status(self):
         class SubConnection(ext.connection):
             def __init__(self, dsn):
@@ -563,6 +573,12 @@ class IsolationLevelsTestCase(ConnectingTestCase):
 
         conn = self.connect()
         cur = conn.cursor()
+        if crdb_version(conn) is not None:
+            cur.execute("create table if not exists isolevel (id integer)")
+            cur.execute("truncate isolevel")
+            conn.commit()
+            return
+
         try:
             cur.execute("drop table isolevel;")
         except psycopg2.ProgrammingError:
@@ -583,6 +599,7 @@ class IsolationLevelsTestCase(ConnectingTestCase):
         conn = self.connect()
         self.assert_(conn.encoding in ext.encodings)
 
+    @skip_if_crdb("isolation level")
     def test_set_isolation_level(self):
         conn = self.connect()
         curs = conn.cursor()
@@ -630,6 +647,7 @@ class IsolationLevelsTestCase(ConnectingTestCase):
         curs.execute('show transaction_isolation;')
         self.assertEqual(curs.fetchone()[0], 'serializable')
 
+    @skip_if_crdb("isolation level")
     def test_set_isolation_level_default(self):
         conn = self.connect()
         curs = conn.cursor()
@@ -704,6 +722,7 @@ class IsolationLevelsTestCase(ConnectingTestCase):
         cur1.execute("select count(*) from isolevel;")
         self.assertEqual(1, cur1.fetchone()[0])
 
+    @skip_if_crdb("isolation level")
     def test_isolation_level_read_committed(self):
         cnn1 = self.connect()
         cnn2 = self.connect()
@@ -730,6 +749,7 @@ class IsolationLevelsTestCase(ConnectingTestCase):
         cur1.execute("select count(*) from isolevel;")
         self.assertEqual(2, cur1.fetchone()[0])
 
+    @skip_if_crdb("isolation level")
     def test_isolation_level_serializable(self):
         cnn1 = self.connect()
         cnn2 = self.connect()
@@ -767,6 +787,7 @@ class IsolationLevelsTestCase(ConnectingTestCase):
         self.assertRaises(psycopg2.InterfaceError,
             cnn.set_isolation_level, 1)
 
+    @skip_if_crdb("isolation level")
     def test_setattr_isolation_level_int(self):
         cur = self.conn.cursor()
         self.conn.isolation_level = ext.ISOLATION_LEVEL_SERIALIZABLE
@@ -815,6 +836,7 @@ class IsolationLevelsTestCase(ConnectingTestCase):
         cur.execute("SHOW default_transaction_isolation;")
         self.assertEqual(cur.fetchone()[0], isol)
 
+    @skip_if_crdb("isolation level")
     def test_setattr_isolation_level_str(self):
         cur = self.conn.cursor()
         self.conn.isolation_level = "serializable"
@@ -911,6 +933,13 @@ class ConnectionTwoPhaseTests(ConnectingTestCase):
     def make_test_table(self):
         cnn = self.connect()
         cur = cnn.cursor()
+        if crdb_version(cnn) is not None:
+            cur.execute("CREATE TABLE IF NOT EXISTS test_tpc (data text)")
+            cur.execute("TRUNCATE test_tpc")
+            cnn.commit()
+            cnn.close()
+            return
+
         try:
             cur.execute("DROP TABLE test_tpc;")
         except psycopg2.ProgrammingError:
@@ -1244,6 +1273,7 @@ class ConnectionTwoPhaseTests(ConnectingTestCase):
         self.assertEqual(None, xid.bqual)
 
 
+@skip_if_crdb("isolation level")
 class TransactionControlTests(ConnectingTestCase):
     def test_closed(self):
         self.conn.close()
@@ -1672,6 +1702,7 @@ class PasswordLeakTestCase(ConnectingTestCase):
                 # the password away
                 PasswordLeakTestCase.dsn = self.dsn
 
+    @skip_if_crdb("connect any db")
     def test_leak(self):
         self.assertRaises(psycopg2.DatabaseError,
             self.GrassingConnection, "dbname=nosuch password=whateva")
@@ -1857,6 +1888,7 @@ class TestConnectionInfo(ConnectingTestCase):
         self.assert_(self.conn.info.socket >= 0)
         self.assert_(self.bconn.info.socket < 0)
 
+    @skip_if_crdb("backend pid")
     def test_backend_pid(self):
         cur = self.conn.cursor()
         try:

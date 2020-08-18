@@ -27,7 +27,8 @@ import io
 import sys
 import string
 import unittest
-from .testutils import (ConnectingTestCase, skip_before_postgres, slow, StringIO)
+from .testutils import ConnectingTestCase, skip_before_postgres, slow, StringIO
+from .testutils import skip_if_crdb
 from itertools import cycle
 from subprocess import Popen, PIPE
 
@@ -66,6 +67,7 @@ class CopyTests(ConnectingTestCase):
         self._create_temp_table()
 
     def _create_temp_table(self):
+        skip_if_crdb("copy", self.conn)
         curs = self.conn.cursor()
         curs.execute('''
             CREATE TEMPORARY TABLE tcopy (
