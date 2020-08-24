@@ -8,26 +8,116 @@ Installation
 Psycopg is a PostgreSQL_ adapter for the Python_ programming language. It is a
 wrapper for the libpq_, the official PostgreSQL client library.
 
-The `psycopg2` package is the current mature implementation of the adapter: it
-is a C extension and as such it is only compatible with CPython_. If you want
-to use Psycopg on a different Python implementation (PyPy, Jython, IronPython)
-there is a couple of alternative:
-
-- a `Ctypes port`__, but it is not as mature as the C implementation yet
-  and it is not as feature-complete;
-
-- a `CFFI port`__ which is currently more used and reported more efficient on
-  PyPy, but please be careful of its version numbers because they are not
-  aligned to the official psycopg2 ones and some features may differ.
-
 .. _PostgreSQL: https://www.postgresql.org/
 .. _Python: https://www.python.org/
-.. _libpq: https://www.postgresql.org/docs/current/static/libpq.html
-.. _CPython: https://en.wikipedia.org/wiki/CPython
-.. _Ctypes: https://docs.python.org/library/ctypes.html
-.. __: https://github.com/mvantellingen/psycopg2-ctypes
-.. __: https://github.com/chtd/psycopg2cffi
 
+
+.. index::
+    single: Install; from PyPI
+    single: Install; wheel
+    single: Wheel
+
+.. _binary-packages:
+
+Quick Install
+-------------
+
+For most operating systems, the quickest way to install Psycopg is using the
+wheel_ package available on PyPI_:
+
+.. code-block:: console
+
+    $ pip install psycopg2-binary
+
+This will install a pre-compiled binary version of the module which does not
+require the build or runtime prerequisites described below. Make sure to use
+an up-date-date version of :program:`pip` (you can upgrade it using something
+like ``pip install -U pip``).
+
+You may then import the ``psycopg`` package, as usual:
+
+.. code-block:: python
+
+    import psycopg
+
+    # Connect to your postgres DB
+    conn = psycopg.connect("dbname=test user=postgres")
+
+    # Open a cursor to perform database operations
+    cur = conn.cursor()
+
+    # Execute a query
+    cur.execute("SELECT * FROM my_data");
+
+    # Retrieve query results
+    records = cur.fetchall()
+
+.. _PyPI: https://pypi.org/project/psycopg2-binary/
+.. _wheel: https://pythonwheels.com/
+
+
+psycopg vs psycopg-binary
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``psycopg2-binary`` package is meant for beginners to start playing
+with Python and PostgreSQL without the need to meet the build
+requirements.
+
+If you are the maintainer of a published package depending on `!psycopg2`
+you shouldn't use ``psycopg2-binary`` as a module dependency. **For
+production use you are advised to use the source distribution.**
+
+The binary packages come with their own versions of a few C libraries,
+among which ``libpq`` and ``libssl``, which will be used regardless of other
+libraries available on the client: upgrading the system libraries will not
+upgrade the libraries used by `!psycopg2`. Please build `!psycopg2` from
+source if you want to maintain binary upgradeability.
+
+.. warning::
+
+    The `!psycopg2` wheel package comes packaged, among the others, with its
+    own ``libssl`` binary. This may create conflicts with other extension
+    modules binding with ``libssl`` as well, for instance with the Python
+    `ssl` module: in some cases, under concurrency, the interaction between
+    the two libraries may result in a segfault. In case of doubts you are
+    advised to use a package built from source.
+
+
+.. index::
+    single: Install; disable wheel
+    single: Wheel; disable
+
+.. _disable-wheel:
+
+Change in binary packages between Psycopg 2.7 and 2.8
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In version 2.7.x, :command:`pip install psycopg2` would have tried to install
+automatically the binary package of Psycopg. Because of concurrency problems
+binary packages have displayed, ``psycopg2-binary`` has become a separate
+package, and from 2.8 it has become the only way to install the binary
+package.
+
+If you are using Psycopg 2.7 and you want to disable the use of wheel binary
+packages, relying on the system libraries available on your client, you
+can use the :command:`pip` |--no-binary option|__, e.g.:
+
+.. code-block:: console
+
+    $ pip install --no-binary :all: psycopg2
+
+.. |--no-binary option| replace:: ``--no-binary`` option
+.. __: https://pip.pypa.io/en/stable/reference/pip_install/#install-no-binary
+
+which can be specified in your :file:`requirements.txt` files too, e.g. use:
+
+.. code-block:: none
+
+    psycopg2>=2.7,<2.8 --no-binary psycopg2
+
+to use the last bugfix release of the `!psycopg2` 2.7 package, specifying to
+always compile it from source. Of course in this case you will have to meet
+the :ref:`build prerequisites <build-prerequisites>`.
 
 
 .. index::
@@ -130,101 +220,6 @@ which is OS-dependent (for instance setting a suitable
     to connect to.
 
 
-
-.. index::
-    single: Install; from PyPI
-    single: Install; wheel
-    single: Wheel
-
-.. _binary-packages:
-
-Binary install from PyPI
-------------------------
-
-`!psycopg2` is also `available on PyPI`__ in the form of wheel_ packages for
-the most common platform (Linux, OSX, Windows): this should make you able to
-install a binary version of the module, not requiring the above build or
-runtime prerequisites.
-
-.. note::
-
-    The ``psycopg2-binary`` package is meant for beginners to start playing
-    with Python and PostgreSQL without the need to meet the build
-    requirements.
-
-    If you are the maintainer of a published package depending on `!psycopg2`
-    **you shouldn't use 'psycopg2-binary' as a module dependency**. For
-    production use you are advised to use the source distribution.
-
-
-Make sure to use an up-to-date version of :program:`pip` (you can upgrade it
-using something like ``pip install -U pip``), then you can run:
-
-.. code-block:: console
-
-    $ pip install psycopg2-binary
-
-.. __: PyPI-binary_
-.. _PyPI-binary: https://pypi.org/project/psycopg2-binary/
-.. _wheel: https://pythonwheels.com/
-
-.. note::
-
-    The binary packages come with their own versions of a few C libraries,
-    among which ``libpq`` and ``libssl``, which will be used regardless of other
-    libraries available on the client: upgrading the system libraries will not
-    upgrade the libraries used by `!psycopg2`. Please build `!psycopg2` from
-    source if you want to maintain binary upgradeability.
-
-.. warning::
-
-    The `!psycopg2` wheel package comes packaged, among the others, with its
-    own ``libssl`` binary. This may create conflicts with other extension
-    modules binding with ``libssl`` as well, for instance with the Python
-    `ssl` module: in some cases, under concurrency, the interaction between
-    the two libraries may result in a segfault. In case of doubts you are
-    advised to use a package built from source.
-
-
-
-.. index::
-    single: Install; disable wheel
-    single: Wheel; disable
-
-.. _disable-wheel:
-
-Change in binary packages between Psycopg 2.7 and 2.8
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-In version 2.7.x, :command:`pip install psycopg2` would have tried to install
-automatically the binary package of Psycopg. Because of concurrency problems
-binary packages have displayed, ``psycopg2-binary`` has become a separate
-package, and from 2.8 it has become the only way to install the binary
-package.
-
-If you are using Psycopg 2.7 and you want to disable the use of wheel binary
-packages, relying on the system libraries available on your client, you
-can use the :command:`pip` |--no-binary option|__, e.g.:
-
-.. code-block:: console
-
-    $ pip install --no-binary :all: psycopg2
-
-.. |--no-binary option| replace:: ``--no-binary`` option
-.. __: https://pip.pypa.io/en/stable/reference/pip_install/#install-no-binary
-
-which can be specified in your :file:`requirements.txt` files too, e.g. use:
-
-.. code-block:: none
-
-    psycopg2>=2.7,<2.8 --no-binary psycopg2
-
-to use the last bugfix release of the `!psycopg2` 2.7 package, specifying to
-always compile it from source. Of course in this case you will have to meet
-the :ref:`build prerequisites <build-prerequisites>`.
-
-
-
 .. index::
     single: setup.py
     single: setup.cfg
@@ -286,6 +281,29 @@ order to create a debug package:
 .. __: https://pypi.org/project/psycopg2/#files
 
 
+Non-standard Python Implementation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The `psycopg2` package is the current mature implementation of the adapter: it
+is a C extension and as such it is only compatible with CPython_. If you want
+to use Psycopg on a different Python implementation (PyPy, Jython, IronPython)
+there is a couple of alternative:
+
+- a `Ctypes port`__, but it is not as mature as the C implementation yet
+  and it is not as feature-complete;
+
+- a `CFFI port`__ which is currently more used and reported more efficient on
+  PyPy, but please be careful of its version numbers because they are not
+  aligned to the official psycopg2 ones and some features may differ.
+
+.. _PostgreSQL: https://www.postgresql.org/
+.. _Python: https://www.python.org/
+.. _libpq: https://www.postgresql.org/docs/current/static/libpq.html
+.. _CPython: https://en.wikipedia.org/wiki/CPython
+.. _Ctypes: https://docs.python.org/library/ctypes.html
+.. __: https://github.com/mvantellingen/psycopg2-ctypes
+.. __: https://github.com/chtd/psycopg2cffi
+
 
 .. index::
     single: tests
@@ -312,7 +330,6 @@ setting the environment variables:
 - :envvar:`PSYCOPG2_TESTDB_USER`
 
 The database should already exist before running the tests.
-
 
 
 .. _other-problems:
