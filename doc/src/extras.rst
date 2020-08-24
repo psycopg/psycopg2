@@ -41,8 +41,8 @@ If you want to use a `!connection` subclass you can pass it as the
 Dictionary-like cursor
 ^^^^^^^^^^^^^^^^^^^^^^
 
-The dict cursors allow to access to the retrieved records using an interface
-similar to the Python dictionaries instead of the tuples.
+The dict cursors allow to access to the attributes of retrieved records
+using an interface similar to the Python dictionaries instead of the tuples.
 
     >>> dict_cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     >>> dict_cur.execute("INSERT INTO test (num, data) VALUES(%s, %s)",
