@@ -22,14 +22,17 @@ wrapper for the libpq_, the official PostgreSQL client library.
 Quick Install
 -------------
 
-For most operating systems, the quickest way to install psycopg is using the wheel_ package available on PyPI_:
+For most operating systems, the quickest way to install Psycopg is using the
+wheel_ package available on PyPI_:
 
 .. code-block:: console
 
     $ pip install psycopg2-binary
 
-This will install a pre-compiled binary version of the module which does not require the build or runtime prerequisites described below. Make sure to use an up-date-date version of :program:`pip` (you can upgrade it
-using something like ``pip install -U pip``).
+This will install a pre-compiled binary version of the module which does not
+require the build or runtime prerequisites described below. Make sure to use
+an up-date-date version of :program:`pip` (you can upgrade it using something
+like ``pip install -U pip``).
 
 You may then import the ``psycopg`` package, as usual:
 
@@ -49,9 +52,9 @@ You may then import the ``psycopg`` package, as usual:
     # Retrieve query results
     records = cur.fetchall()
 
-.. __: PyPI-binary_
 .. _PyPI: https://pypi.org/project/psycopg2-binary/
 .. _wheel: https://pythonwheels.com/
+
 
 psycopg vs psycopg-binary
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -61,9 +64,8 @@ with Python and PostgreSQL without the need to meet the build
 requirements.
 
 If you are the maintainer of a published package depending on `!psycopg2`
-you shouldn't use 'psycopg2-binary' as a module dependency. **For
+you shouldn't use ``psycopg2-binary`` as a module dependency. **For
 production use you are advised to use the source distribution.**
-
 
 The binary packages come with their own versions of a few C libraries,
 among which ``libpq`` and ``libssl``, which will be used regardless of other
@@ -79,7 +81,6 @@ source if you want to maintain binary upgradeability.
     `ssl` module: in some cases, under concurrency, the interaction between
     the two libraries may result in a segfault. In case of doubts you are
     advised to use a package built from source.
-
 
 
 .. index::
@@ -219,10 +220,6 @@ which is OS-dependent (for instance setting a suitable
     to connect to.
 
 
-
-
-
-
 .. index::
     single: setup.py
     single: setup.cfg
@@ -333,7 +330,6 @@ setting the environment variables:
 - :envvar:`PSYCOPG2_TESTDB_USER`
 
 The database should already exist before running the tests.
-
 
 
 .. _other-problems:
