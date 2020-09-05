@@ -12,6 +12,7 @@ What's new in psycopg 2.8.6
   (:ticket:`#1141`).
 - `~psycopg2.errorcodes` map and `~psycopg2.errors` classes updated to
   PostgreSQL 13.
+- Added wheel packages for ARM architecture (:ticket:`#1125`).
 - Wheel package compiled against OpenSSL 1.1.1g.
 
 
