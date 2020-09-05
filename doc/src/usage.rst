@@ -750,10 +750,14 @@ until a call to the `~connection.rollback()` method.
 
 The connection is responsible for terminating its transaction, calling either
 the `~connection.commit()` or `~connection.rollback()` method.  Committed
-changes are immediately made persistent into the database.  Closing the
-connection using the `~connection.close()` method or destroying the
-connection object (using `!del` or letting it fall out of scope)
-will result in an implicit rollback.
+changes are immediately made persistent into the database.  If he connection
+is closed (using the `~connection.close()` method) or destroyed (using `!del`
+or letting it falling out of scope) while a transaction is in progress, the
+server will discard the transaction.  However doing so is not adviceable:
+middleware such as PgBouncer_ may see the connection closed uncleanly and
+dispose of it.
+
+.. _PgBouncer: http://www.pgbouncer.org/
 
 It is possible to set the connection in *autocommit* mode: this way all the
 commands executed will be immediately committed and no rollback is possible. A
