@@ -12,11 +12,13 @@
 
 .. versionchanged:: 2.8.4 added errors introduced in PostgreSQL 12
 
+.. versionchanged:: 2.8.6 added errors introduced in PostgreSQL 13
+
 This module exposes the classes psycopg raises upon receiving an error from
 the database with a :sql:`SQLSTATE` value attached (available in the
 `~psycopg2.Error.pgcode` attribute). The content of the module is generated
 from the PostgreSQL source code and includes classes for every error defined
-by PostgreSQL in versions between 9.1 and 12.
+by PostgreSQL in versions between 9.1 and 13.
 
 Every class in the module is named after what referred as "condition name" `in
 the documentation`__, converted to CamelCase: e.g. the error 22012,

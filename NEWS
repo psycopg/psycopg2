@@ -8,6 +8,8 @@ What's new in psycopg 2.8.6
   (:ticket:`#1101`).
 - Fixed search of mxDateTime headers in virtualenvs (:ticket:`#996`).
 - Added missing values from errorcodes (:ticket:`#1133`).
+- `~psycopg2.errorcodes` map and `~psycopg2.errors` classes updated to
+  PostgreSQL 13.
 - Wheel package compiled against OpenSSL 1.1.1g.
 
 

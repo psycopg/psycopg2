@@ -96,6 +96,7 @@
 {"2202G", "InvalidTablesampleRepeat"},
 {"2202H", "InvalidTablesampleArgument"},
 {"22030", "DuplicateJsonObjectKeyValue"},
+{"22031", "InvalidArgumentForSqlJsonDatetimeFunction"},
 {"22032", "InvalidJsonText"},
 {"22033", "InvalidSqlJsonSubscript"},
 {"22034", "MoreThanOneSqlJsonItem"},
