@@ -36,6 +36,8 @@ def main():
     classes, errors = fetch_errors(
         ['9.1', '9.2', '9.3', '9.4', '9.5', '9.6', '10', '11', '12'])
 
+    disambiguate(errors)
+
     f = open(filename, "w")
     for line in file_start:
         print(line, file=f)
@@ -116,6 +118,18 @@ def fetch_errors(versions):
     return classes, errors
 
 
+def disambiguate(errors):
+    """
+    Change name for exception defined more than once.
+
+    Change the first occurrence, because before introdcing the function
+    they were pretty much lost (see ticket #1133)
+    """
+    # Note: if some code is missing it will be caught downstream
+    for code in "01004 22004 2F002 2F003 2F004".split():
+        errors[code[:2]][code] += "_"
+
+
 def generate_module_data(classes, errors):
     yield ""
     yield "# Error classes"
@@ -124,11 +138,16 @@ def generate_module_data(classes, errors):
             .strip().replace(" ", "_").replace('/', "_").upper()
         yield "CLASS_%s = %r" % (err, clscode)
 
+    seen = set()
+
     for clscode, clslabel in sorted(classes.items()):
         yield ""
         yield "# %s" % clslabel
 
         for errcode, errlabel in sorted(errors[clscode].items()):
+            if errlabel in seen:
+                raise Exception("error label already seen: %s" % errlabel)
+            seen.add(errlabel)
             yield "%s = %r" % (errlabel, errcode)
 
 

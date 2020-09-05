@@ -57,6 +57,14 @@ class ErrocodeTests(ConnectingTestCase):
                         len(errs), MAX_CYCLES,
                         errs[0].__class__.__name__, errs[0]))
 
+    def test_ambiguous_names(self):
+        self.assertEqual(
+            errorcodes.lookup('2F004'), "READING_SQL_DATA_NOT_PERMITTED")
+        self.assertEqual(
+            errorcodes.lookup('38004'), "READING_SQL_DATA_NOT_PERMITTED")
+        self.assertEqual(errorcodes.READING_SQL_DATA_NOT_PERMITTED, '38004')
+        self.assertEqual(errorcodes.READING_SQL_DATA_NOT_PERMITTED_, '2F004')
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
