@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """Generate the errorcodes module starting from PostgreSQL documentation.
 
 The script can be run at a new PostgreSQL release to refresh the module.
@@ -20,7 +20,7 @@ from __future__ import print_function
 
 import re
 import sys
-import urllib2
+from urllib.request import urlopen
 from collections import defaultdict
 
 
@@ -57,10 +57,10 @@ def parse_errors_txt(url):
     classes = {}
     errors = defaultdict(dict)
 
-    page = urllib2.urlopen(url)
+    page = urlopen(url)
     for line in page:
         # Strip comments and skip blanks
-        line = line.split('#')[0].strip()
+        line = line.decode("ascii").split('#')[0].strip()
         if not line:
             continue
 
