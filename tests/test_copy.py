@@ -307,6 +307,28 @@ class CopyTests(ConnectingTestCase):
             curs.copy_from, StringIO('aaa\nbbb\nccc\n'), 'tcopy')
         self.assertEqual(curs.rowcount, -1)
 
+    def test_copy_query(self):
+        curs = self.conn.cursor()
+
+        curs.copy_from(StringIO('aaa\nbbb\nccc\n'), 'tcopy', columns=['data'])
+        self.assert_(b"copy " in curs.query.lower())
+        self.assert_(b" from stdin" in curs.query.lower())
+
+        curs.copy_expert(
+            "copy tcopy (data) from stdin",
+            StringIO('ddd\neee\n'))
+        self.assert_(b"copy " in curs.query.lower())
+        self.assert_(b" from stdin" in curs.query.lower())
+
+        curs.copy_to(StringIO(), "tcopy")
+        self.assert_(b"copy " in curs.query.lower())
+        self.assert_(b" to stdout" in curs.query.lower())
+
+        curs.execute("insert into tcopy (data) values ('fff')")
+        curs.copy_expert("copy tcopy to stdout", StringIO())
+        self.assert_(b"copy " in curs.query.lower())
+        self.assert_(b" to stdout" in curs.query.lower())
+
     @slow
     def test_copy_from_segfault(self):
         # issue #219

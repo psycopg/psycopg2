@@ -1446,6 +1446,11 @@ curs_copy_from(cursorObject *self, PyObject *args, PyObject *kwargs)
 
     Dprintf("curs_copy_from: query = %s", query);
 
+    Py_CLEAR(self->query);
+    if (!(self->query = Bytes_FromString(query))) {
+        goto exit;
+    }
+
     /* This routine stores a borrowed reference.  Although it is only held
      * for the duration of curs_copy_from, nested invocations of
      * Py_BEGIN_ALLOW_THREADS could surrender control to another thread,
@@ -1538,6 +1543,11 @@ curs_copy_to(cursorObject *self, PyObject *args, PyObject *kwargs)
 
     Dprintf("curs_copy_to: query = %s", query);
 
+    Py_CLEAR(self->query);
+    if (!(self->query = Bytes_FromString(query))) {
+        goto exit;
+    }
+
     self->copysize = 0;
     Py_INCREF(file);
     self->copyfile = file;
@@ -1614,6 +1624,10 @@ curs_copy_expert(cursorObject *self, PyObject *args, PyObject *kwargs)
     self->copysize = bufsize;
     Py_INCREF(file);
     self->copyfile = file;
+
+    Py_CLEAR(self->query);
+    Py_INCREF(sql);
+    self->query = sql;
 
     /* At this point, the SQL statement must be str, not unicode */
     if (pq_execute(self, Bytes_AS_STRING(sql), 0, 0, 0) >= 0) {
