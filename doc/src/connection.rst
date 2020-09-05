@@ -21,6 +21,28 @@ The ``connection`` class
     Connections are thread safe and can be shared among many threads. See
     :ref:`thread-safety` for details.
 
+    Connections can be used as context managers. Note that a context wraps a
+    transaction: if the context exits with success the transaction is
+    committed, if it exits with an exception the transaction is rolled back.
+    Note that the connection is not closed by the context and it can be used
+    for several contexts.
+
+    .. code:: python
+
+        conn = psycopg2.connect(DSN)
+
+        with conn:
+            with conn.cursor() as curs:
+                curs.execute(SQL1)
+
+        with conn:
+            with conn.cursor() as curs:
+                curs.execute(SQL2)
+
+        # leaving contexts doesn't close the connection
+        conn.close()
+
+
     .. method:: cursor(name=None, cursor_factory=None, scrollable=None, withhold=False)
 
         Return a new `cursor` object using the connection.

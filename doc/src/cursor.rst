@@ -34,6 +34,16 @@ The ``cursor`` class
     many cursors from the same connection and should use each cursor from
     a single thread. See :ref:`thread-safety` for details.
 
+    Cursors can be used as context managers: leaving the context will close
+    the cursor.
+
+    .. code:: python
+
+        with conn.cursor() as curs:
+            curs.execute(SQL)
+
+        # the cursor is now closed
+
 
     .. attribute:: description
 
