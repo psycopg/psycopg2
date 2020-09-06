@@ -750,10 +750,10 @@ until a call to the `~connection.rollback()` method.
 
 The connection is responsible for terminating its transaction, calling either
 the `~connection.commit()` or `~connection.rollback()` method.  Committed
-changes are immediately made persistent into the database.  If he connection
+changes are immediately made persistent in the database.  If the connection
 is closed (using the `~connection.close()` method) or destroyed (using `!del`
-or letting it falling out of scope) while a transaction is in progress, the
-server will discard the transaction.  However doing so is not adviceable:
+or by letting it fall out of scope) while a transaction is in progress, the
+server will discard the transaction.  However doing so is not advisable:
 middleware such as PgBouncer_ may see the connection closed uncleanly and
 dispose of it.
 
