@@ -36,7 +36,8 @@ How to make a psycopg2 release
 - Create a signed tag with the content of the relevant NEWS bit and push it.
   E.g.::
 
-    $ git tag -a -s 2_8_4
+    # Tag name will be 2_8_4
+    $ git tag -a -s ${VERSION//\./_}
 
     Psycopg 2.8.4 released
 
