@@ -51,8 +51,8 @@ run_test () {
 }
 
 if (( "$TEST_PRESENT" )); then
-    if [[ "${TRAVIS_CPU_ARCH}" == "arm64" ]]; then
-    # Postgres versions supported by ARM64
+    if [[ "${TRAVIS_CPU_ARCH}" == "arm64" ]] || [[ ${TRAVIS_CPU_ARCH} == "ppc64le" ]]; then
+    # Postgres versions supported by ARM64 and PPC64LE
         run_test 10
     else
     # Postgres versions supported by Travis CI
