@@ -211,7 +211,7 @@ reliable. We must stress this point:
 
     Never, **never**, **NEVER** use Python string concatenation (``+``) or
     string parameters interpolation (``%``) to pass variables to a SQL query
-    string.  Not even at gunpoint.
+    string.
 
 The correct way to pass variables in a SQL command is using the second
 argument of the `~cursor.execute()` method::
