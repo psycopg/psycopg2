@@ -47,7 +47,7 @@ You may then import the ``psycopg`` package, as usual:
     cur = conn.cursor()
 
     # Execute a query
-    cur.execute("SELECT * FROM my_data");
+    cur.execute("SELECT * FROM my_data")
 
     # Retrieve query results
     records = cur.fetchall()
