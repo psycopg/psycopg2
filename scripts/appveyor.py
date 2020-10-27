@@ -17,6 +17,7 @@ import subprocess as sp
 from glob import glob
 from pathlib import Path
 from zipfile import ZipFile
+from argparse import ArgumentParser
 from tempfile import NamedTemporaryFile
 from urllib.request import urlopen
 
@@ -475,7 +476,7 @@ def print_sha1_hashes():
     logger.info("artifacts SHA1 hashes:")
 
     os.chdir(opt.package_dir / 'dist')
-    run_command([which('sha1sum'), '-b', f'psycopg2-*/*'])
+    run_command([which('sha1sum'), '-b', 'psycopg2-*/*'])
 
 
 def setup_ssh():
@@ -694,7 +695,7 @@ class Options:
     def py_ver(self):
         """The Python version to build as 2 digits string."""
         rv = os.environ['PY_VER']
-        assert rv in ('27', '34', '35', '36', '37', '38'), rv
+        assert rv in ('27', '34', '35', '36', '37', '38', '39'), rv
         return rv
 
     @property
@@ -770,9 +771,11 @@ class Options:
     @property
     def vs_ver(self):
         # https://wiki.python.org/moin/WindowsCompilers
+        # https://www.appveyor.com/docs/windows-images-software/#python
         # Py 2.7 = VS Ver. 9.0 (VS 2008)
         # Py 3.3, 3.4 = VS Ver. 10.0 (VS 2010)
         # Py 3.5--3.8 = VS Ver. 14.0 (VS 2015)
+        # Py 3.9 = VS Ver. 16.0 (VS 2019)
         vsvers = {
             '27': '9.0',
             '33': '10.0',
@@ -781,6 +784,7 @@ class Options:
             '36': '14.0',
             '37': '14.0',
             '38': '14.0',
+            '39': '16.0',
         }
         return vsvers[self.py_ver]
 
@@ -846,8 +850,6 @@ class Options:
 
 
 def parse_cmdline():
-    from argparse import ArgumentParser
-
     parser = ArgumentParser(description=__doc__)
 
     g = parser.add_mutually_exclusive_group()
