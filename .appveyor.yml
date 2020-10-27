@@ -1,5 +1,5 @@
 version : 2.x.{build}
-
+image: Visual Studio 2019
 clone_folder: C:\Project
 
 environment:
