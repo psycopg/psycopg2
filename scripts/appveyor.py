@@ -77,6 +77,8 @@ def setup_build_env():
 
 def python_info():
     logger.info("Python Information")
+    # NOMERGE: exploring available Python version. Remove before merging.
+    run_command(["dir", "C:\\"])
     run_python(['--version'], stderr=sp.STDOUT)
     run_python(
         ['-c', "import sys; print('64bit: %s' % (sys.maxsize > 2**32))"]
