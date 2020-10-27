@@ -694,7 +694,7 @@ class Options:
     def py_ver(self):
         """The Python version to build as 2 digits string."""
         rv = os.environ['PY_VER']
-        assert rv in ('27', '34', '35', '36', '37', '38'), rv
+        assert rv in ('27', '34', '35', '36', '37', '38', '39'), rv
         return rv
 
     @property
