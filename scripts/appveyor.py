@@ -51,6 +51,7 @@ def setup_build_env():
     path = [
         str(opt.py_dir),
         str(opt.py_dir / 'Scripts'),
+        r'C:\Strawberry\Perl\bin',
         r'C:\Program Files\Git\mingw64\bin',
         os.environ['PATH'],
     ]
