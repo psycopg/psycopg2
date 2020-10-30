@@ -126,15 +126,17 @@ conn_decode(connectionObject *self, const char *str, Py_ssize_t len)
 
     if (self) {
         if (self->cdecoder) {
-            return self->cdecoder(str, len, NULL);
+            return self->cdecoder(str, len, "ignore");
         }
         else if (self->pydecoder) {
             PyObject *b = NULL;
             PyObject *t = NULL;
             PyObject *rv = NULL;
+            static PyObject *errors = NULL;
 
             if (!(b = Bytes_FromStringAndSize(str, len))) { goto error; }
-            if (!(t = PyObject_CallFunctionObjArgs(self->pydecoder, b, NULL))) {
+            if (!(errors = PyUnicode_FromString("ignore"))) { goto error; }
+            if (!(t = PyObject_CallFunctionObjArgs(self->pydecoder, b, errors, NULL))) {
                 goto error;
             }
             if (!(rv = PyTuple_GetItem(t, 0))) { goto error; }
