@@ -11,20 +11,22 @@ environment:
     matrix:
         # For Python versions available on Appveyor, see
         # https://www.appveyor.com/docs/windows-images-software/#python
-      - {PY_VER: "27", PY_ARCH: "32"}
-      - {PY_VER: "27", PY_ARCH: "64"}
-      - {PY_VER: "38", PY_ARCH: "32"}
-      - {PY_VER: "38", PY_ARCH: "64"}
-      - {PY_VER: "37", PY_ARCH: "32"}
-      - {PY_VER: "37", PY_ARCH: "64"}
-      - {PY_VER: "36", PY_ARCH: "32"}
-      - {PY_VER: "36", PY_ARCH: "64"}
-      - {PY_VER: "35", PY_ARCH: "32"}
-      - {PY_VER: "35", PY_ARCH: "64"}
-      - {PY_VER: "34", PY_ARCH: "32"}
-      - {PY_VER: "34", PY_ARCH: "64"}
+        - {APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019, PY_VER: "39", PY_ARCH: "32"}
+        - {APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019, PY_VER: "39", PY_ARCH: "64"}
+        - {APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015, PY_VER: "38", PY_ARCH: "32"}
+        - {APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015, PY_VER: "38", PY_ARCH: "64"}
+        - {APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015, PY_VER: "37", PY_ARCH: "32"}
+        - {APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015, PY_VER: "37", PY_ARCH: "64"}
+        - {APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015, PY_VER: "36", PY_ARCH: "32"}
+        - {APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015, PY_VER: "36", PY_ARCH: "64"}
+        - {APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015, PY_VER: "35", PY_ARCH: "32"}
+        - {APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015, PY_VER: "35", PY_ARCH: "64"}
+        - {APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015, PY_VER: "34", PY_ARCH: "32"}
+        - {APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015, PY_VER: "34", PY_ARCH: "64"}
+        - {APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015, PY_VER: "27", PY_ARCH: "32"}
+        - {APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015, PY_VER: "27", PY_ARCH: "64"}
 
-    OPENSSL_VERSION: "1_1_1g"
+    OPENSSL_VERSION: "1_1_1h"
     POSTGRES_VERSION: "11_4"
 
     PSYCOPG2_TESTDB: psycopg2_test
@@ -34,6 +36,9 @@ environment:
     PGUSER: postgres
     PGPASSWORD: Password12!
     PGSSLMODE: require
+
+    # Add CWD to perl library path for PostgreSQL build on VS2019
+    PERL5LIB: .
 
     # Select according to the service enabled
     POSTGRES_DIR: C:\Program Files\PostgreSQL\9.6\
