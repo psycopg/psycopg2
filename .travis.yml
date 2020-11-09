@@ -32,7 +32,7 @@ deploy:
   - provider: script
     script: bash scripts/travis_update_docs.sh
     on:
-      branch: master
+      branch: maint_2_8
 
 notifications:
   email: false
