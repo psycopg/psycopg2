@@ -4,7 +4,7 @@ Current release
 What's new in psycopg 2.9.0
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- Dropped support for Python 3.4 (:ticket:`#1000`).
+- Dropped support for Python 3.4 (:ticket:`#1000`) and 3.5 (:ticket:`#1197`).
 
 What's new in psycopg 2.8.6
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^

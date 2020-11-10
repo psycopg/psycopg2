@@ -19,8 +19,6 @@ environment:
         - {APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015, PY_VER: "37", PY_ARCH: "64"}
         - {APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015, PY_VER: "36", PY_ARCH: "32"}
         - {APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015, PY_VER: "36", PY_ARCH: "64"}
-        - {APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015, PY_VER: "35", PY_ARCH: "32"}
-        - {APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015, PY_VER: "35", PY_ARCH: "64"}
         - {APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015, PY_VER: "27", PY_ARCH: "32"}
         - {APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015, PY_VER: "27", PY_ARCH: "64"}
 
