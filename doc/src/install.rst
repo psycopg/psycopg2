@@ -34,14 +34,14 @@ require the build or runtime prerequisites described below. Make sure to use
 an up-date-date version of :program:`pip` (you can upgrade it using something
 like ``pip install -U pip``).
 
-You may then import the ``psycopg`` package, as usual:
+You may then import the ``psycopg2`` package, as usual:
 
 .. code-block:: python
 
-    import psycopg
+    import psycopg2
 
     # Connect to your postgres DB
-    conn = psycopg.connect("dbname=test user=postgres")
+    conn = psycopg2.connect("dbname=test user=postgres")
 
     # Open a cursor to perform database operations
     cur = conn.cursor()
