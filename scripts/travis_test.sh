@@ -56,6 +56,7 @@ if (( "$TEST_PRESENT" )); then
         run_test 10
     else
     # Postgres versions supported by Travis CI
+        run_test 13
         run_test 12
         run_test 11
         run_test 10
@@ -81,5 +82,6 @@ fi
 
 # Postgres built from master
 if (( "$TEST_FUTURE" )); then
-    run_test 13
+    # create 14 14-master
+    true
 fi

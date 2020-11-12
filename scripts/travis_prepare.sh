@@ -125,6 +125,7 @@ if (( "$TEST_PRESENT" )); then
     # Postgres versions supported by ARM64
         create 10
     else
+        create 13
         create 12
         create 11
         create 10
@@ -150,5 +151,6 @@ fi
 
 # Postgres built from master
 if (( "$TEST_FUTURE" )); then
-    create 13 13-master
+    # create 14 14-master
+    true
 fi
