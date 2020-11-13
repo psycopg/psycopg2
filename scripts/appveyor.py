@@ -53,6 +53,7 @@ def setup_build_env():
         str(opt.py_dir / 'Scripts'),
         r'C:\Strawberry\Perl\bin',
         r'C:\Program Files\Git\mingw64\bin',
+        str(opt.ssl_build_dir / 'bin'),
         os.environ['PATH'],
     ]
     setenv('PATH', os.pathsep.join(path))
@@ -212,7 +213,7 @@ def build_openssl():
         + ['no-shared', 'no-zlib', f'--prefix={top}', f'--openssldir={top}']
     )
 
-    run_command("nmake build_libs install_dev".split())
+    run_command("nmake build_libs install_sw".split())
 
     assert (top / 'lib' / 'libssl.lib').exists()
 
