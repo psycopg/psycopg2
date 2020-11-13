@@ -250,20 +250,6 @@ def build_libpq():
     pgbuild = opt.build_dir / f"postgres-REL_{ver}"
     os.chdir(pgbuild)
 
-    # Patch for OpenSSL 1.1 configuration. See:
-    # https://www.postgresql-archive.org/Compile-psql-9-6-with-SSL-Version-1-1-0-td6054118.html
-    assert Path("src/include/pg_config.h.win32").exists()
-    with open("src/include/pg_config.h.win32", 'a') as f:
-        print(
-            """
-#define HAVE_ASN1_STRING_GET0_DATA 1
-#define HAVE_BIO_GET_DATA 1
-#define HAVE_BIO_METH_NEW 1
-#define HAVE_OPENSSL_INIT_SSL 1
-""",
-            file=f,
-        )
-
     # Setup build config file (config.pl)
     os.chdir("src/tools/msvc")
     with open("config.pl", 'w') as f:
