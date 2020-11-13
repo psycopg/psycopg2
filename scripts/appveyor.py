@@ -326,7 +326,7 @@ def build_psycopg():
     add_pg_config_path()
     run_python(
         ["setup.py", "build_ext", "--have-ssl"]
-        + ["-l", "libpgcommon", "-l", "libpgport"]
+        + ["-l", "libpgcommon libpgport"]
         + ["-L", opt.ssl_build_dir / 'lib']
         + ['-I', opt.ssl_build_dir / 'include']
     )
