@@ -12,7 +12,7 @@ OpenSSL
         Version: 1.1.1h
 
 PostgreSQL
-        Version: 11.4
+        Version: 11.10
 
 
 NOTE: to zap the cache manually you can also use:
