@@ -36,7 +36,7 @@ from .testutils import ConnectingTestCase, skip_before_postgres, slow
 from .testutils import skip_if_crdb
 
 
-class ConnectionStub(object):
+class ConnectionStub:
     """A `connection` wrapper allowing analysis of the `poll()` calls."""
     def __init__(self, conn):
         self.conn = conn

@@ -18,7 +18,6 @@ script exits with error 1.
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
-from __future__ import print_function
 
 import argparse
 import gc

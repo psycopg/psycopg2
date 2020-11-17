@@ -423,7 +423,7 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         ]:
             cur.execute("select %s::text", (s,))
             r = cur.fetchone()[0]
-            self.assertEqual(r, v, "%s -> %s != %s" % (s, r, v))
+            self.assertEqual(r, v, f"{s} -> {r} != {v}")
 
     @skip_if_crdb("interval style")
     @skip_before_postgres(8, 4)

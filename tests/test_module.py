@@ -329,10 +329,10 @@ class TestExtensionModule(unittest.TestCase):
         self.assert_(pardir in sys.path)
         script = ("""
 import sys
-sys.path.remove(%r)
-sys.path.insert(0, %r)
+sys.path.remove({!r})
+sys.path.insert(0, {!r})
 import _psycopg
-""" % (pardir, pkgdir))
+""".format(pardir, pkgdir))
 
         proc = Popen([sys.executable, '-c', script])
         proc.communicate()

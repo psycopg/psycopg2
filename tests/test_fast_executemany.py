@@ -43,9 +43,9 @@ class TestPaginate(unittest.TestCase):
             [list(range(i * 100, (i + 1) * 100)) for i in range(10)])
 
 
-class FastExecuteTestMixin(object):
+class FastExecuteTestMixin:
     def setUp(self):
-        super(FastExecuteTestMixin, self).setUp()
+        super().setUp()
         cur = self.conn.cursor()
         cur.execute("""create table testfast (
             id serial primary key, date date, val int, data text)""")
@@ -102,7 +102,7 @@ class TestExecuteBatch(FastExecuteTestMixin, testutils.ConnectingTestCase):
             page_size=10)
 
         # last command was 5 statements
-        self.assertEqual(sum(c == u';' for c in cur.query.decode('ascii')), 4)
+        self.assertEqual(sum(c == ';' for c in cur.query.decode('ascii')), 4)
 
         cur.execute("select id, val from testfast order by id")
         self.assertEqual(cur.fetchall(), [(i, i * 10) for i in range(25)])
@@ -111,7 +111,7 @@ class TestExecuteBatch(FastExecuteTestMixin, testutils.ConnectingTestCase):
     def test_unicode(self):
         cur = self.conn.cursor()
         ext.register_type(ext.UNICODE, cur)
-        snowman = u"\u2603"
+        snowman = "\u2603"
 
         # unicode in statement
         psycopg2.extras.execute_batch(cur,
@@ -206,7 +206,7 @@ class TestExecuteValues(FastExecuteTestMixin, testutils.ConnectingTestCase):
     def test_unicode(self):
         cur = self.conn.cursor()
         ext.register_type(ext.UNICODE, cur)
-        snowman = u"\u2603"
+        snowman = "\u2603"
 
         # unicode in statement
         psycopg2.extras.execute_values(cur,

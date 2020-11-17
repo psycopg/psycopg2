@@ -2,7 +2,6 @@
 """Create the docs table of the sqlstate errors.
 """
 
-from __future__ import print_function
 
 import re
 import sys
@@ -40,7 +39,7 @@ def main():
     for l in lines:
         cls = l.sqlstate[:2] if l.sqlstate else None
         if cls and cls != sqlclass:
-            print("**Class %s**: %s" % (cls, sqlclasses[cls]))
+            print("**Class {}**: {}".format(cls, sqlclasses[cls]))
             print(h1)
             sqlclass = cls
 

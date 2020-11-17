@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 # test_async_keyword.py - test for objects using 'async' as attribute/param
 #

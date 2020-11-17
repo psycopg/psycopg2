@@ -449,7 +449,7 @@ def skip_if_crdb(reason, conn=None, version=None):
                     "%s (https://github.com/cockroachdb/cockroach/issues/%s)"
                     % (reason, crdb_reasons[reason]))
             raise unittest.SkipTest(
-                "not supported on CockroachDB %s: %s" % (ver, reason))
+                f"not supported on CockroachDB {ver}: {reason}")
 
     @decorate_all_tests
     def skip_if_crdb_(f):
@@ -502,7 +502,7 @@ def _crdb_match_version(version, pattern):
     return op(version, ref)
 
 
-class raises_typeerror(object):
+class raises_typeerror:
     def __enter__(self):
         pass
 

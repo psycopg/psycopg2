@@ -117,7 +117,7 @@ class WithConnectionTestCase(WithTestCase):
         class MyConn(ext.connection):
             def commit(self):
                 commits.append(None)
-                super(MyConn, self).commit()
+                super().commit()
 
         with self.connect(connection_factory=MyConn) as conn:
             curs = conn.cursor()
@@ -136,7 +136,7 @@ class WithConnectionTestCase(WithTestCase):
         class MyConn(ext.connection):
             def rollback(self):
                 rollbacks.append(None)
-                super(MyConn, self).rollback()
+                super().rollback()
 
         try:
             with self.connect(connection_factory=MyConn) as conn:
@@ -195,7 +195,7 @@ class WithCursorTestCase(WithTestCase):
         class MyCurs(ext.cursor):
             def close(self):
                 closes.append(None)
-                super(MyCurs, self).close()
+                super().close()
 
         with self.conn.cursor(cursor_factory=MyCurs) as curs:
             self.assert_(isinstance(curs, MyCurs))

@@ -32,7 +32,7 @@ from psycopg2.extensions import ISQLQuote, adapt, register_adapter
 from psycopg2.extensions import new_type, new_array_type, register_type
 
 
-class Range(object):
+class Range:
     """Python representation for a PostgreSQL |range|_ type.
 
     :param lower: lower bound for the range. `!None` means unbound
@@ -59,7 +59,7 @@ class Range(object):
         if self._bounds is None:
             return "%s(empty=True)" % self.__class__.__name__
         else:
-            return "%s(%r, %r, %r)" % (self.__class__.__name__,
+            return "{}({!r}, {!r}, {!r})".format(self.__class__.__name__,
                 self._lower, self._upper, self._bounds)
 
     def __str__(self):
@@ -238,7 +238,7 @@ def register_range(pgrange, pyrange, conn_or_curs, globally=False):
     return caster
 
 
-class RangeAdapter(object):
+class RangeAdapter:
     """`ISQLQuote` adapter for `Range` subclasses.
 
     This is an abstract class: concrete classes must set a `name` class
@@ -286,7 +286,7 @@ class RangeAdapter(object):
             + b", '" + r._bounds.encode('utf8') + b"')"
 
 
-class RangeCaster(object):
+class RangeCaster:
     """Helper class to convert between `Range` and PostgreSQL range types.
 
     Objects of this class are usually created by `register_range()`. Manual
@@ -503,7 +503,7 @@ class NumberRangeAdapter(RangeAdapter):
         else:
             upper = ''
 
-        return ("'%s%s,%s%s'" % (
+        return ("'{}{},{}{}'".format(
             r._bounds[0], lower, upper, r._bounds[1])).encode('ascii')
 
 

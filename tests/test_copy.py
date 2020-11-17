@@ -97,7 +97,7 @@ class CopyTests(ConnectingTestCase):
         curs = self.conn.cursor()
         f = StringIO()
         for i in range(10):
-            f.write("%s\n" % (i,))
+            f.write(f"{i}\n")
 
         f.seek(0)
         curs.copy_from(MinimalRead(f), "tcopy", columns=['id'])
@@ -109,7 +109,7 @@ class CopyTests(ConnectingTestCase):
         curs = self.conn.cursor()
         f = StringIO()
         for i in range(10):
-            f.write("%s\n" % (i,))
+            f.write(f"{i}\n")
 
         f.seek(0)
 
@@ -209,7 +209,7 @@ class CopyTests(ConnectingTestCase):
         f = StringIO()
         for i, c in zip(range(nrecs), cycle(string.ascii_letters)):
             l = c * srec
-            f.write("%s\t%s\n" % (i, l))
+            f.write(f"{i}\t{l}\n")
 
         f.seek(0)
         curs.copy_from(MinimalRead(f), "tcopy", **copykw)
@@ -237,7 +237,7 @@ class CopyTests(ConnectingTestCase):
         self.assertEqual(ntests, len(string.ascii_letters))
 
     def test_copy_expert_file_refcount(self):
-        class Whatever(object):
+        class Whatever:
             pass
 
         f = Whatever()
@@ -319,7 +319,7 @@ class CopyTests(ConnectingTestCase):
         # issue #219
         script = ("""\
 import psycopg2
-conn = psycopg2.connect(%(dsn)r)
+conn = psycopg2.connect({dsn!r})
 curs = conn.cursor()
 curs.execute("create table copy_segf (id int)")
 try:
@@ -327,7 +327,7 @@ try:
 except psycopg2.ProgrammingError:
     pass
 conn.close()
-""" % {'dsn': dsn})
+""".format(dsn=dsn))
 
         proc = Popen([sys.executable, '-c', script])
         proc.communicate()
@@ -338,7 +338,7 @@ conn.close()
         # issue #219
         script = ("""\
 import psycopg2
-conn = psycopg2.connect(%(dsn)r)
+conn = psycopg2.connect({dsn!r})
 curs = conn.cursor()
 curs.execute("create table copy_segf (id int)")
 try:
@@ -346,7 +346,7 @@ try:
 except psycopg2.ProgrammingError:
     pass
 conn.close()
-""" % {'dsn': dsn})
+""".format(dsn=dsn))
 
         proc = Popen([sys.executable, '-c', script], stdout=PIPE)
         proc.communicate()

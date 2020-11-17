@@ -245,7 +245,7 @@ class ConnectionTests(ConnectingTestCase):
         cur = self.conn.cursor()
         ext.register_type(ext.UNICODE, cur)
         cur.execute("select 'foo'::text;")
-        self.assertEqual(cur.fetchone()[0], u'foo')
+        self.assertEqual(cur.fetchone()[0], 'foo')
 
     def test_connect_nonnormal_envvar(self):
         # We must perform encoding normalization at connection time
@@ -343,7 +343,7 @@ class ConnectionTests(ConnectingTestCase):
         class SubConnection(ext.connection):
             def __init__(self, dsn):
                 try:
-                    super(SubConnection, self).__init__(dsn)
+                    super().__init__(dsn)
                 except Exception:
                     pass
 
@@ -388,7 +388,7 @@ import time
 import psycopg2
 
 def thread():
-    conn = psycopg2.connect(%(dsn)r)
+    conn = psycopg2.connect({dsn!r})
     curs = conn.cursor()
     for i in range(10):
         curs.execute("select 1")
@@ -396,11 +396,11 @@ def thread():
 
 def process():
     time.sleep(0.2)
-""" % {'dsn': dsn})
+""".format(dsn=dsn))
 
             script = ("""\
 import sys
-sys.path.insert(0, %(dir)r)
+sys.path.insert(0, {dir!r})
 import time
 import threading
 import multiprocessing
@@ -411,7 +411,7 @@ t.start()
 time.sleep(0.2)
 multiprocessing.Process(target=mptest.process, name='myprocess').start()
 t.join()
-""" % {'dir': dir})
+""".format(dir=dir))
 
             out = sp.check_output(
                 [sys.executable, '-c', script], stderr=sp.STDOUT)
@@ -464,12 +464,12 @@ class ParseDsnTestCase(ConnectingTestCase):
         self.assertTrue(raised, "ProgrammingError raised due to invalid URI")
 
     def test_unicode_value(self):
-        snowman = u"\u2603"
+        snowman = "\u2603"
         d = ext.parse_dsn('dbname=' + snowman)
         self.assertEqual(d['dbname'], snowman)
 
     def test_unicode_key(self):
-        snowman = u"\u2603"
+        snowman = "\u2603"
         self.assertRaises(psycopg2.ProgrammingError, ext.parse_dsn,
             snowman + '=' + snowman)
 
@@ -1227,7 +1227,7 @@ class ConnectionTwoPhaseTests(ConnectingTestCase):
 
     def test_xid_unicode(self):
         cnn = self.connect()
-        x1 = cnn.xid(10, u'uni', u'code')
+        x1 = cnn.xid(10, 'uni', 'code')
         cnn.tpc_begin(x1)
         cnn.tpc_prepare()
         cnn.reset()
@@ -1242,7 +1242,7 @@ class ConnectionTwoPhaseTests(ConnectingTestCase):
         # Let's just check uniconde is accepted as type.
         cnn = self.connect()
         cnn.set_client_encoding('utf8')
-        cnn.tpc_begin(u"transaction-id")
+        cnn.tpc_begin("transaction-id")
         cnn.tpc_prepare()
         cnn.reset()
 
@@ -1679,7 +1679,7 @@ class AutocommitTests(ConnectingTestCase):
 
 class PasswordLeakTestCase(ConnectingTestCase):
     def setUp(self):
-        super(PasswordLeakTestCase, self).setUp()
+        super().setUp()
         PasswordLeakTestCase.dsn = None
 
     class GrassingConnection(ext.connection):
@@ -1754,7 +1754,7 @@ def killer():
 
 signal.signal(signal.SIGABRT, handle_sigabort)
 
-conn = psycopg2.connect(%(dsn)r)
+conn = psycopg2.connect({dsn!r})
 
 cur = conn.cursor()
 
@@ -1765,8 +1765,8 @@ t.daemon = True
 t.start()
 
 while True:
-    cur.execute(%(query)r, ("Hello, world!",))
-""" % {'dsn': dsn, 'query': query})
+    cur.execute({query!r}, ("Hello, world!",))
+""".format(dsn=dsn, query=query))
 
         proc = sp.Popen([sys.executable, '-c', script],
             stdout=sp.PIPE, stderr=sp.PIPE)

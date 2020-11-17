@@ -53,7 +53,7 @@ class ErrocodeTests(ConnectingTestCase):
 
             if errs:
                 self.fail(
-                    "raised %s errors in %s cycles (first is %s %s)" % (
+                    "raised {} errors in {} cycles (first is {} {})".format(
                         len(errs), MAX_CYCLES,
                         errs[0].__class__.__name__, errs[0]))
 

@@ -16,7 +16,6 @@ The script can be run at a new PostgreSQL release to refresh the module.
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
-from __future__ import print_function
 
 import os
 import re
@@ -86,7 +85,7 @@ def fetch_errors(versions):
     for version in versions:
         print(version, file=sys.stderr)
         tver = tuple(map(int, version.split()[0].split('.')))
-        tag = '%s%s_STABLE' % (
+        tag = '{}{}_STABLE'.format(
             (tver[0] >= 10 and 'REL_' or 'REL'),
             version.replace('.', '_'))
         c1, e1 = parse_errors_txt(errors_txt_url % tag)

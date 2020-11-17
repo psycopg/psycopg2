@@ -52,7 +52,7 @@ class TypesBasicTests(ConnectingTestCase):
                         "wrong quoting: " + s)
 
     def testUnicode(self):
-        s = u"Quote'this\\! ''ok?''"
+        s = "Quote'this\\! ''ok?''"
         self.failUnless(self.execute("SELECT %s AS foo", (s,)) == s,
                         "wrong unicode quoting: " + s)
 
@@ -210,7 +210,7 @@ class TypesBasicTests(ConnectingTestCase):
         curs.execute("select '{a,b,c}'::text[]")
         x = curs.fetchone()[0]
         self.assert_(isinstance(x[0], str))
-        self.assertEqual(x, [u'a', u'b', u'c'])
+        self.assertEqual(x, ['a', 'b', 'c'])
 
     def testBytesArray(self):
         psycopg2.extensions.register_type(
@@ -382,7 +382,7 @@ class AdaptSubclassTest(unittest.TestCase):
 
     @restore_types
     def test_adapt_most_specific(self):
-        class A(object):
+        class A:
             pass
 
         class B(A):

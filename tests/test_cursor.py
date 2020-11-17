@@ -74,12 +74,12 @@ class CursorTests(ConnectingTestCase):
         # test consistency between execute and mogrify.
 
         # unicode query containing only ascii data
-        cur.execute(u"SELECT 'foo';")
+        cur.execute("SELECT 'foo';")
         self.assertEqual('foo', cur.fetchone()[0])
-        self.assertEqual(b"SELECT 'foo';", cur.mogrify(u"SELECT 'foo';"))
+        self.assertEqual(b"SELECT 'foo';", cur.mogrify("SELECT 'foo';"))
 
         conn.set_client_encoding('UTF8')
-        snowman = u"\u2603"
+        snowman = "\u2603"
 
         def b(s):
             if isinstance(s, str):
@@ -88,10 +88,10 @@ class CursorTests(ConnectingTestCase):
                 return s
 
         # unicode query with non-ascii data
-        cur.execute(u"SELECT '%s';" % snowman)
+        cur.execute("SELECT '%s';" % snowman)
         self.assertEqual(snowman.encode('utf8'), b(cur.fetchone()[0]))
         self.assertQuotedEqual(("SELECT '%s';" % snowman).encode('utf8'),
-            cur.mogrify(u"SELECT '%s';" % snowman))
+            cur.mogrify("SELECT '%s';" % snowman))
 
         # unicode args
         cur.execute("SELECT %s;", (snowman,))
@@ -100,10 +100,10 @@ class CursorTests(ConnectingTestCase):
             cur.mogrify("SELECT %s;", (snowman,)))
 
         # unicode query and args
-        cur.execute(u"SELECT %s;", (snowman,))
+        cur.execute("SELECT %s;", (snowman,))
         self.assertEqual(snowman.encode("utf-8"), b(cur.fetchone()[0]))
         self.assertQuotedEqual(("SELECT '%s';" % snowman).encode('utf8'),
-            cur.mogrify(u"SELECT %s;", (snowman,)))
+            cur.mogrify("SELECT %s;", (snowman,)))
 
     def test_mogrify_decimal_explodes(self):
         conn = self.conn
@@ -283,11 +283,11 @@ class CursorTests(ConnectingTestCase):
 
         # Set up the temporary function
         cur.execute('''
-            CREATE FUNCTION %s(%s INT)
+            CREATE FUNCTION {}({} INT)
             RETURNS INT AS
                 'SELECT $1 * $1'
             LANGUAGE SQL
-        ''' % (procname, escaped_paramname))
+        '''.format(procname, escaped_paramname))
 
         # Make sure callproc works right
         cur.callproc(procname, {paramname: 2})
@@ -298,7 +298,7 @@ class CursorTests(ConnectingTestCase):
             ({paramname: 2, 'foo': 'bar'}, psycopg2.ProgrammingError),
             ({paramname: '2'}, psycopg2.ProgrammingError),
             ({paramname: 'two'}, psycopg2.ProgrammingError),
-            ({u'bj\xc3rn': 2}, psycopg2.ProgrammingError),
+            ({'bj\xc3rn': 2}, psycopg2.ProgrammingError),
             ({3: 2}, TypeError),
             ({self: 2}, TypeError),
         ]

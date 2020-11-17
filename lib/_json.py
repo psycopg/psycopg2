@@ -43,7 +43,7 @@ JSONB_OID = 3802
 JSONBARRAY_OID = 3807
 
 
-class Json(object):
+class Json:
     """
     An `~psycopg2.extensions.ISQLQuote` wrapper to adapt a Python object to
     :sql:`json` data type.

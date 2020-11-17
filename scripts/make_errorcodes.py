@@ -16,7 +16,6 @@ The script can be run at a new PostgreSQL release to refresh the module.
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
-from __future__ import print_function
 
 import re
 import sys
@@ -102,7 +101,7 @@ def fetch_errors(versions):
     for version in versions:
         print(version, file=sys.stderr)
         tver = tuple(map(int, version.split()[0].split('.')))
-        tag = '%s%s_STABLE' % (
+        tag = '{}{}_STABLE'.format(
             (tver[0] >= 10 and 'REL_' or 'REL'),
             version.replace('.', '_'))
         c1, e1 = parse_errors_txt(errors_txt_url % tag)
@@ -136,7 +135,7 @@ def generate_module_data(classes, errors):
     for clscode, clslabel in sorted(classes.items()):
         err = clslabel.split(" - ")[1].split("(")[0] \
             .strip().replace(" ", "_").replace('/', "_").upper()
-        yield "CLASS_%s = %r" % (err, clscode)
+        yield f"CLASS_{err} = {clscode!r}"
 
     seen = set()
 
@@ -148,7 +147,7 @@ def generate_module_data(classes, errors):
             if errlabel in seen:
                 raise Exception("error label already seen: %s" % errlabel)
             seen.add(errlabel)
-            yield "%s = %r" % (errlabel, errcode)
+            yield f"{errlabel} = {errcode!r}"
 
 
 if __name__ == '__main__':

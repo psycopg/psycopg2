@@ -32,7 +32,7 @@ from psycopg2 import extensions as ext
 _formatter = string.Formatter()
 
 
-class Composable(object):
+class Composable:
     """
     Abstract base class for objects that can be used to compose an SQL string.
 
@@ -50,7 +50,7 @@ class Composable(object):
         self._wrapped = wrapped
 
     def __repr__(self):
-        return "%s(%r)" % (self.__class__.__name__, self._wrapped)
+        return f"{self.__class__.__name__}({self._wrapped!r})"
 
     def as_string(self, context):
         """
@@ -109,7 +109,7 @@ class Composed(Composable):
                     "Composed elements must be Composable, got %r instead" % i)
             wrapped.append(i)
 
-        super(Composed, self).__init__(wrapped)
+        super().__init__(wrapped)
 
     @property
     def seq(self):
@@ -181,7 +181,7 @@ class SQL(Composable):
     def __init__(self, string):
         if not isinstance(string, str):
             raise TypeError("SQL values must be strings")
-        super(SQL, self).__init__(string)
+        super().__init__(string)
 
     @property
     def string(self):
@@ -326,7 +326,7 @@ class Identifier(Composable):
             if not isinstance(s, str):
                 raise TypeError("SQL identifier parts must be strings")
 
-        super(Identifier, self).__init__(strings)
+        super().__init__(strings)
 
     @property
     def strings(self):
@@ -344,7 +344,7 @@ class Identifier(Composable):
                 "the Identifier wraps more than one than one string")
 
     def __repr__(self):
-        return "%s(%s)" % (
+        return "{}({})".format(
             self.__class__.__name__,
             ', '.join(map(repr, self._wrapped)))
 
@@ -432,7 +432,7 @@ class Placeholder(Composable):
         elif name is not None:
             raise TypeError("expected string or None as name, got %r" % name)
 
-        super(Placeholder, self).__init__(name)
+        super().__init__(name)
 
     @property
     def name(self):
@@ -440,8 +440,8 @@ class Placeholder(Composable):
         return self._wrapped
 
     def __repr__(self):
-        return "Placeholder(%r)" % (
-            self._wrapped if self._wrapped is not None else '',)
+        return "Placeholder({!r})".format(
+            self._wrapped if self._wrapped is not None else '')
 
     def as_string(self, context):
         if self._wrapped is not None:

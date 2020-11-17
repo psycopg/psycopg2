@@ -439,7 +439,7 @@ def check_libpq_version():
         .decode('ascii')
         .rstrip()
     )
-    assert want_ver == got_ver, "libpq version mismatch: %r != %r" % (
+    assert want_ver == got_ver, "libpq version mismatch: {!r} != {!r}".format(
         want_ver,
         got_ver,
     )

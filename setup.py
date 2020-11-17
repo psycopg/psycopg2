@@ -170,7 +170,7 @@ For further information please check the 'doc/src/install.rst' file (also at
         try:
             pg_inst_list_key = winreg.OpenKey(reg,
                 'SOFTWARE\\PostgreSQL\\Installations')
-        except EnvironmentError:
+        except OSError:
             # No PostgreSQL installation, as best as we can tell.
             return None
 
@@ -178,7 +178,7 @@ For further information please check the 'doc/src/install.rst' file (also at
             # Determine the name of the first subkey, if any:
             try:
                 first_sub_key_name = winreg.EnumKey(pg_inst_list_key, 0)
-            except EnvironmentError:
+            except OSError:
                 return None
 
             pg_first_inst_key = winreg.OpenKey(reg,

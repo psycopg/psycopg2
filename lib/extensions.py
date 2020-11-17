@@ -106,7 +106,7 @@ def register_adapter(typ, callable):
 
 
 # The SQL_IN class is the official adapter for tuples starting from 2.0.6.
-class SQL_IN(object):
+class SQL_IN:
     """Adapt any iterable to an SQL quotable object."""
     def __init__(self, seq):
         self._seq = seq
@@ -130,7 +130,7 @@ class SQL_IN(object):
         return str(self.getquoted())
 
 
-class NoneAdapter(object):
+class NoneAdapter:
     """Adapt None to NULL.
 
     This adapter is not used normally as a fast path in mogrify uses NULL,
@@ -168,7 +168,7 @@ def make_dsn(dsn=None, **kwargs):
         tmp.update(kwargs)
         kwargs = tmp
 
-    dsn = " ".join(["%s=%s" % (k, _param_escape(str(v)))
+    dsn = " ".join(["{}={}".format(k, _param_escape(str(v)))
         for (k, v) in kwargs.items()])
 
     # verify that the returned dsn is valid

@@ -101,10 +101,10 @@ class QuotingTestCase(ConnectingTestCase):
                 "Unicode test skipped since server encoding is %s"
                 % server_encoding)
 
-        data = u"""some data with \t chars
+        data = """some data with \t chars
         to escape into, 'quotes', \u20ac euro sign and \\ a backslash too.
         """
-        data += u"".join(map(chr, [u for u in range(1, 65536)
+        data += "".join(map(chr, [u for u in range(1, 65536)
             if not 0xD800 <= u <= 0xDFFF]))    # surrogate area
         self.conn.set_client_encoding('UNICODE')
 
@@ -143,7 +143,7 @@ class QuotingTestCase(ConnectingTestCase):
         self.assert_(not self.conn.notices)
 
     def test_bytes(self):
-        snowman = u"\u2603"
+        snowman = "\u2603"
         conn = self.connect()
         conn.set_client_encoding('UNICODE')
         psycopg2.extensions.register_type(psycopg2.extensions.BYTES, conn)
@@ -171,7 +171,7 @@ class TestQuotedIdentifier(ConnectingTestCase):
 
     @testutils.skip_before_postgres(8, 0)
     def test_unicode_ident(self):
-        snowman = u"\u2603"
+        snowman = "\u2603"
         quoted = '"' + snowman + '"'
         self.assertEqual(quote_ident(snowman, self.conn), quoted)
 
@@ -189,7 +189,7 @@ class TestStringAdapter(ConnectingTestCase):
         # self.assertEqual(adapt(egrave).getquoted(), "'\xe8'")
 
     def test_encoding_error(self):
-        snowman = u"\u2603"
+        snowman = "\u2603"
         a = adapt(snowman)
         self.assertRaises(UnicodeEncodeError, a.getquoted)
 
@@ -197,14 +197,14 @@ class TestStringAdapter(ConnectingTestCase):
         # Note: this works-ish mostly in case when the standard db connection
         # we test with is utf8, otherwise the encoding chosen by PQescapeString
         # may give bad results.
-        snowman = u"\u2603"
+        snowman = "\u2603"
         a = adapt(snowman)
         a.encoding = 'utf8'
         self.assertEqual(a.encoding, 'utf8')
         self.assertEqual(a.getquoted(), b"'\xe2\x98\x83'")
 
     def test_connection_wins_anyway(self):
-        snowman = u"\u2603"
+        snowman = "\u2603"
         a = adapt(snowman)
         a.encoding = 'latin9'
 
@@ -215,7 +215,7 @@ class TestStringAdapter(ConnectingTestCase):
         self.assertQuotedEqual(a.getquoted(), b"'\xe2\x98\x83'")
 
     def test_adapt_bytes(self):
-        snowman = u"\u2603"
+        snowman = "\u2603"
         self.conn.set_client_encoding('utf8')
         a = psycopg2.extensions.QuotedString(snowman.encode('utf8'))
         a.prepare(self.conn)
