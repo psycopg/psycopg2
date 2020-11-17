@@ -27,30 +27,11 @@
 #ifndef PSYCOPG_PYTHON_H
 #define PSYCOPG_PYTHON_H 1
 
-#define PY_2 (PY_MAJOR_VERSION == 2)
-#define PY_3 (PY_MAJOR_VERSION == 3)
-
-#if PY_2 && PY_VERSION_HEX < 0x02070000
-#error "psycopg requires Python 2.7"
-#endif
-
-#if PY_3 && PY_VERSION_HEX < 0x03060000
+#if PY_VERSION_HEX < 0x03060000
 #error "psycopg requires Python 3.6"
 #endif
 
 #include <structmember.h>
-#if PY_2
-#include <stringobject.h>
-#endif
-
-/* hash() return size changed around version 3.2a4 on 64bit platforms.  Before
- *   this, the return size was always a long, regardless of arch.  ~3.2
- *   introduced the Py_hash_t & Py_uhash_t typedefs with the resulting sizes
- *   based upon arch. */
-#if PY_VERSION_HEX < 0x030200A4
-typedef long Py_hash_t;
-typedef unsigned long Py_uhash_t;
-#endif
 
 /* Since Py_TYPE() is changed to the inline static function,
  * Py_TYPE(obj) = new_type must be replaced with Py_SET_TYPE(obj, new_type)
@@ -71,43 +52,6 @@ typedef unsigned long Py_uhash_t;
   /* C99 standard format code: */
   #define FORMAT_CODE_SIZE_T "%zu"
 #endif
-
-#if PY_2
-
-#define Text_Type PyString_Type
-#define Text_Check(s) PyString_Check(s)
-#define Text_Format(f,a) PyString_Format(f,a)
-#define Text_FromUTF8(s) PyString_FromString(s)
-#define Text_FromUTF8AndSize(s,n) PyString_FromStringAndSize(s,n)
-
-#define Bytes_Type PyString_Type
-#define Bytes_Check PyString_Check
-#define Bytes_CheckExact PyString_CheckExact
-#define Bytes_AS_STRING PyString_AS_STRING
-#define Bytes_GET_SIZE PyString_GET_SIZE
-#define Bytes_Size PyString_Size
-#define Bytes_AsString PyString_AsString
-#define Bytes_AsStringAndSize PyString_AsStringAndSize
-#define Bytes_FromString PyString_FromString
-#define Bytes_FromStringAndSize PyString_FromStringAndSize
-#define Bytes_FromFormat PyString_FromFormat
-#define Bytes_ConcatAndDel PyString_ConcatAndDel
-#define _Bytes_Resize _PyString_Resize
-
-#define PyDateTime_DELTA_GET_DAYS(o)         (((PyDateTime_Delta*)o)->days)
-#define PyDateTime_DELTA_GET_SECONDS(o)      (((PyDateTime_Delta*)o)->seconds)
-#define PyDateTime_DELTA_GET_MICROSECONDS(o) (((PyDateTime_Delta*)o)->microseconds)
-
-#define INIT_MODULE(m) init ## m
-
-/* fix #961, but don't change all types to longs. Sure someone will complain. */
-#define PyLong_FromOid(x) (((x) & 0x80000000) ? \
-    PyLong_FromUnsignedLong((unsigned long)(x)) : \
-    PyInt_FromLong((x)))
-
-#endif  /* PY_2 */
-
-#if PY_3
 
 #define Text_Type PyUnicode_Type
 #define Text_Check(s) PyUnicode_Check(s)
@@ -148,8 +92,6 @@ typedef unsigned long Py_uhash_t;
 #define INIT_MODULE(m) PyInit_ ## m
 
 #define PyLong_FromOid(x) (PyLong_FromUnsignedLong((unsigned long)(x)))
-
-#endif  /* PY_3 */
 
 /* expose Oid attributes in Python C objects */
 #define T_OID T_UINT

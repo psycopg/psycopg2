@@ -34,31 +34,15 @@ import platform
 import unittest
 from functools import wraps
 from ctypes.util import find_library
+from io import StringIO         # noqa
+from io import TextIOBase       # noqa
+from importlib import reload    # noqa
 
 import psycopg2
 import psycopg2.errors
 import psycopg2.extensions
-from psycopg2.compat import PY2, PY3, string_types, text_type
 
 from .testconfig import green, dsn, repl_dsn
-
-# Python 2/3 compatibility
-
-if PY2:
-    # Python 2
-    from StringIO import StringIO
-    TextIOBase = object
-    long = long
-    reload = reload
-    unichr = unichr
-
-else:
-    # Python 3
-    from io import StringIO         # noqa
-    from io import TextIOBase       # noqa
-    from importlib import reload    # noqa
-    long = int
-    unichr = chr
 
 
 # Silence warnings caused by the stubbornness of the Python unittest
@@ -102,7 +86,7 @@ class ConnectingTestCase(unittest.TestCase):
     def assertQuotedEqual(self, first, second, msg=None):
         """Compare two quoted strings disregarding eventual E'' quotes"""
         def f(s):
-            if isinstance(s, text_type):
+            if isinstance(s, str):
                 return re.sub(r"\bE'", "'", s)
             elif isinstance(first, bytes):
                 return re.sub(br"\bE'", b"'", s)
@@ -454,7 +438,7 @@ def skip_if_crdb(reason, conn=None, version=None):
     "== 20.1.3": the test will be skipped only if the version matches.
 
     """
-    if not isinstance(reason, string_types):
+    if not isinstance(reason, str):
         raise TypeError("reason should be a string, got %r instead" % reason)
 
     if conn is not None:
@@ -518,14 +502,13 @@ def _crdb_match_version(version, pattern):
     return op(version, ref)
 
 
-class py3_raises_typeerror(object):
+class raises_typeerror(object):
     def __enter__(self):
         pass
 
     def __exit__(self, type, exc, tb):
-        if PY3:
-            assert type is TypeError
-            return True
+        assert type is TypeError
+        return True
 
 
 def slow(f):

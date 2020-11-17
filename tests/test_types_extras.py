@@ -25,8 +25,8 @@ from functools import wraps
 from pickle import dumps, loads
 
 import unittest
-from .testutils import (PY2, text_type, skip_if_no_uuid, skip_before_postgres,
-    ConnectingTestCase, py3_raises_typeerror, slow, skip_from_python,
+from .testutils import (skip_if_no_uuid, skip_before_postgres,
+    ConnectingTestCase, raises_typeerror, slow,
     restore_types, skip_if_crdb, crdb_version)
 
 import psycopg2
@@ -250,19 +250,6 @@ class HstoreTestCase(ConnectingTestCase):
         self.assertEqual(t[2], {'a': 'b'})
 
     @skip_if_no_hstore
-    @skip_from_python(3)
-    def test_register_unicode(self):
-        register_hstore(self.conn, unicode=True)
-        cur = self.conn.cursor()
-        cur.execute("select null::hstore, ''::hstore, 'a => b'::hstore")
-        t = cur.fetchone()
-        self.assert_(t[0] is None)
-        self.assertEqual(t[1], {})
-        self.assertEqual(t[2], {u'a': u'b'})
-        self.assert_(isinstance(t[2].keys()[0], unicode))
-        self.assert_(isinstance(t[2].values()[0], unicode))
-
-    @skip_if_no_hstore
     @restore_types
     def test_register_globally(self):
         HstoreAdapter.get_oids(self.conn)
@@ -297,35 +284,9 @@ class HstoreTestCase(ConnectingTestCase):
         ok({''.join(ab): ''.join(ab)})
 
         self.conn.set_client_encoding('latin1')
-        if PY2:
-            ab = map(chr, range(32, 127) + range(160, 255))
-        else:
-            ab = bytes(list(range(32, 127)) + list(range(160, 255))).decode('latin1')
+        ab = bytes(list(range(32, 127)) + list(range(160, 255))).decode('latin1')
 
         ok({''.join(ab): ''.join(ab)})
-        ok(dict(zip(ab, ab)))
-
-    @skip_if_no_hstore
-    @skip_from_python(3)
-    def test_roundtrip_unicode(self):
-        register_hstore(self.conn, unicode=True)
-        cur = self.conn.cursor()
-
-        def ok(d):
-            cur.execute("select %s", (d,))
-            d1 = cur.fetchone()[0]
-            self.assertEqual(len(d), len(d1))
-            for k, v in d1.iteritems():
-                self.assert_(k in d, k)
-                self.assertEqual(d[k], v)
-                self.assert_(isinstance(k, unicode))
-                self.assert_(v is None or isinstance(v, unicode))
-
-        ok({})
-        ok({'a': 'b', 'c': None, 'd': u'\u20ac', u'\u2603': 'e'})
-
-        ab = map(unichr, range(1, 1024))
-        ok({u''.join(ab): u''.join(ab)})
         ok(dict(zip(ab, ab)))
 
     @skip_if_no_hstore
@@ -356,10 +317,7 @@ class HstoreTestCase(ConnectingTestCase):
         ds.append({''.join(ab): ''.join(ab)})
 
         self.conn.set_client_encoding('latin1')
-        if PY2:
-            ab = map(chr, range(32, 127) + range(160, 255))
-        else:
-            ab = bytes(list(range(32, 127)) + list(range(160, 255))).decode('latin1')
+        ab = bytes(list(range(32, 127)) + list(range(160, 255))).decode('latin1')
 
         ds.append({''.join(ab): ''.join(ab)})
         ds.append(dict(zip(ab, ab)))
@@ -1238,9 +1196,9 @@ class RangeTestCase(unittest.TestCase):
         self.assert_(not Range() < Range())
         self.assert_(not Range(empty=True) < Range(empty=True))
         self.assert_(not Range(1, 2) < Range(1, 2))
-        with py3_raises_typeerror():
+        with raises_typeerror():
             self.assert_(1 < Range(1, 2))
-        with py3_raises_typeerror():
+        with raises_typeerror():
             self.assert_(not Range(1, 2) < 1)
 
     def test_gt_ordering(self):
@@ -1253,9 +1211,9 @@ class RangeTestCase(unittest.TestCase):
         self.assert_(not Range() > Range())
         self.assert_(not Range(empty=True) > Range(empty=True))
         self.assert_(not Range(1, 2) > Range(1, 2))
-        with py3_raises_typeerror():
+        with raises_typeerror():
             self.assert_(not 1 > Range(1, 2))
-        with py3_raises_typeerror():
+        with raises_typeerror():
             self.assert_(Range(1, 2) > 1)
 
     def test_le_ordering(self):
@@ -1268,9 +1226,9 @@ class RangeTestCase(unittest.TestCase):
         self.assert_(Range() <= Range())
         self.assert_(Range(empty=True) <= Range(empty=True))
         self.assert_(Range(1, 2) <= Range(1, 2))
-        with py3_raises_typeerror():
+        with raises_typeerror():
             self.assert_(1 <= Range(1, 2))
-        with py3_raises_typeerror():
+        with raises_typeerror():
             self.assert_(not Range(1, 2) <= 1)
 
     def test_ge_ordering(self):
@@ -1283,9 +1241,9 @@ class RangeTestCase(unittest.TestCase):
         self.assert_(Range() >= Range())
         self.assert_(Range(empty=True) >= Range(empty=True))
         self.assert_(Range(1, 2) >= Range(1, 2))
-        with py3_raises_typeerror():
+        with raises_typeerror():
             self.assert_(not 1 >= Range(1, 2))
-        with py3_raises_typeerror():
+        with raises_typeerror():
             self.assert_(Range(1, 2) >= 1)
 
     def test_pickling(self):
@@ -1313,10 +1271,10 @@ class RangeTestCase(unittest.TestCase):
 
         for bounds in ('()', '[]', '(]', '[)'):
             r = Range(0, 4, bounds=bounds)
-            results.append(text_type(r))
+            results.append(str(r))
 
         r = Range(empty=True)
-        results.append(text_type(r))
+        results.append(str(r))
         self.assertEqual(results, expected)
 
     def test_str_datetime(self):
@@ -1328,7 +1286,7 @@ class RangeTestCase(unittest.TestCase):
         r = DateTimeTZRange(datetime(2010, 1, 1, tzinfo=tz),
                             datetime(2011, 1, 1, tzinfo=tz))
         expected = u'[2010-01-01 00:00:00-05:00, 2011-01-01 00:00:00-05:00)'
-        result = text_type(r)
+        result = str(r)
         self.assertEqual(result, expected)
 
 

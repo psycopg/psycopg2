@@ -81,8 +81,7 @@ pdecimal_getquoted(pdecimalObject *self, PyObject *args)
     /* res may be unicode and may suffer for issue #57 */
 output:
 
-#if PY_3
-    /* unicode to bytes in Py3 */
+    /* unicode to bytes */
     {
         PyObject *tmp = PyUnicode_AsUTF8String(res);
         Py_DECREF(res);
@@ -90,7 +89,6 @@ output:
             goto end;
         }
     }
-#endif
 
     if ('-' == Bytes_AS_STRING(res)[0]) {
         /* Prepend a space in front of negative numbers (ticket #57) */

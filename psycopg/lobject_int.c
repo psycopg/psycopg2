@@ -85,11 +85,7 @@ _lobject_parse_mode(const char *mode)
             pos += 1;
             break;
         default:
-#if PY_2
-            rv |= LOBJECT_BINARY;
-#else
             rv |= LOBJECT_TEXT;
-#endif
             break;
     }
 

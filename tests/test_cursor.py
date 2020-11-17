@@ -39,7 +39,6 @@ from .testutils import (ConnectingTestCase, skip_before_postgres,
     skip_if_windows, skip_if_crdb, crdb_version)
 
 import psycopg2.extras
-from psycopg2.compat import text_type
 
 
 class CursorTests(ConnectingTestCase):
@@ -83,7 +82,7 @@ class CursorTests(ConnectingTestCase):
         snowman = u"\u2603"
 
         def b(s):
-            if isinstance(s, text_type):
+            if isinstance(s, str):
                 return s.encode('utf8')
             else:
                 return s

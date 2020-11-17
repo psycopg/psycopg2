@@ -25,7 +25,7 @@
 
 from . import testutils
 import unittest
-from .testutils import ConnectingTestCase, skip_if_crdb, unichr, PY2
+from .testutils import ConnectingTestCase, skip_if_crdb
 
 import psycopg2
 import psycopg2.extensions
@@ -79,17 +79,11 @@ class QuotingTestCase(ConnectingTestCase):
         data = b"""some data with \000\013 binary
         stuff into, 'quotes' and \\ a backslash too.
         """
-        if PY2:
-            data += "".join(map(chr, range(256)))
-        else:
-            data += bytes(list(range(256)))
+        data += bytes(list(range(256)))
 
         curs = self.conn.cursor()
         curs.execute("SELECT %s::bytea;", (psycopg2.Binary(data),))
-        if PY2:
-            res = str(curs.fetchone()[0])
-        else:
-            res = curs.fetchone()[0].tobytes()
+        res = curs.fetchone()[0].tobytes()
 
         if res[0] in (b'x', ord(b'x')) and self.conn.info.server_version >= 90000:
             return self.skipTest(
@@ -110,7 +104,7 @@ class QuotingTestCase(ConnectingTestCase):
         data = u"""some data with \t chars
         to escape into, 'quotes', \u20ac euro sign and \\ a backslash too.
         """
-        data += u"".join(map(unichr, [u for u in range(1, 65536)
+        data += u"".join(map(chr, [u for u in range(1, 65536)
             if not 0xD800 <= u <= 0xDFFF]))    # surrogate area
         self.conn.set_client_encoding('UNICODE')
 
@@ -125,11 +119,8 @@ class QuotingTestCase(ConnectingTestCase):
     def test_latin1(self):
         self.conn.set_client_encoding('LATIN1')
         curs = self.conn.cursor()
-        if PY2:
-            data = ''.join(map(chr, range(32, 127) + range(160, 256)))
-        else:
-            data = bytes(list(range(32, 127))
-                + list(range(160, 256))).decode('latin1')
+        data = bytes(list(range(32, 127))
+            + list(range(160, 256))).decode('latin1')
 
         # as string
         curs.execute("SELECT %s::text;", (data,))
@@ -137,41 +128,19 @@ class QuotingTestCase(ConnectingTestCase):
         self.assertEqual(res, data)
         self.assert_(not self.conn.notices)
 
-        # as unicode
-        if PY2:
-            psycopg2.extensions.register_type(psycopg2.extensions.UNICODE, self.conn)
-            data = data.decode('latin1')
-
-            curs.execute("SELECT %s::text;", (data,))
-            res = curs.fetchone()[0]
-            self.assertEqual(res, data)
-            self.assert_(not self.conn.notices)
 
     @skip_if_crdb("encoding")
     def test_koi8(self):
         self.conn.set_client_encoding('KOI8')
         curs = self.conn.cursor()
-        if PY2:
-            data = ''.join(map(chr, range(32, 127) + range(128, 256)))
-        else:
-            data = bytes(list(range(32, 127))
-                + list(range(128, 256))).decode('koi8_r')
+        data = bytes(list(range(32, 127))
+            + list(range(128, 256))).decode('koi8_r')
 
         # as string
         curs.execute("SELECT %s::text;", (data,))
         res = curs.fetchone()[0]
         self.assertEqual(res, data)
         self.assert_(not self.conn.notices)
-
-        # as unicode
-        if PY2:
-            psycopg2.extensions.register_type(psycopg2.extensions.UNICODE, self.conn)
-            data = data.decode('koi8_r')
-
-            curs.execute("SELECT %s::text;", (data,))
-            res = curs.fetchone()[0]
-            self.assertEqual(res, data)
-            self.assert_(not self.conn.notices)
 
     def test_bytes(self):
         snowman = u"\u2603"
@@ -204,10 +173,7 @@ class TestQuotedIdentifier(ConnectingTestCase):
     def test_unicode_ident(self):
         snowman = u"\u2603"
         quoted = '"' + snowman + '"'
-        if PY2:
-            self.assertEqual(quote_ident(snowman, self.conn), quoted.encode('utf8'))
-        else:
-            self.assertEqual(quote_ident(snowman, self.conn), quoted)
+        self.assertEqual(quote_ident(snowman, self.conn), quoted)
 
 
 class TestStringAdapter(ConnectingTestCase):
@@ -248,7 +214,6 @@ class TestStringAdapter(ConnectingTestCase):
         self.assertEqual(a.encoding, 'utf_8')
         self.assertQuotedEqual(a.getquoted(), b"'\xe2\x98\x83'")
 
-    @testutils.skip_before_python(3)
     def test_adapt_bytes(self):
         snowman = u"\u2603"
         self.conn.set_client_encoding('utf8')

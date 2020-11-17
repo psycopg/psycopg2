@@ -34,7 +34,7 @@ from subprocess import Popen, PIPE
 
 import psycopg2
 import psycopg2.extensions
-from .testutils import skip_copy_if_green, PY2, TextIOBase
+from .testutils import skip_copy_if_green, TextIOBase
 from .testconfig import dsn
 
 
@@ -133,14 +133,9 @@ class CopyTests(ConnectingTestCase):
         self.conn.set_client_encoding('latin1')
         self._create_temp_table()  # the above call closed the xn
 
-        if PY2:
-            abin = ''.join(map(chr, range(32, 127) + range(160, 256)))
-            about = abin.decode('latin1').replace('\\', '\\\\')
-
-        else:
-            abin = bytes(list(range(32, 127))
-                + list(range(160, 256))).decode('latin1')
-            about = abin.replace('\\', '\\\\')
+        abin = bytes(list(range(32, 127))
+            + list(range(160, 256))).decode('latin1')
+        about = abin.replace('\\', '\\\\')
 
         curs = self.conn.cursor()
         curs.execute('insert into tcopy values (%s, %s)',
@@ -155,13 +150,9 @@ class CopyTests(ConnectingTestCase):
         self.conn.set_client_encoding('latin1')
         self._create_temp_table()  # the above call closed the xn
 
-        if PY2:
-            abin = ''.join(map(chr, range(32, 127) + range(160, 255)))
-            about = abin.replace('\\', '\\\\')
-        else:
-            abin = bytes(list(range(32, 127))
-                + list(range(160, 255))).decode('latin1')
-            about = abin.replace('\\', '\\\\').encode('latin1')
+        abin = bytes(list(range(32, 127))
+            + list(range(160, 255))).decode('latin1')
+        about = abin.replace('\\', '\\\\').encode('latin1')
 
         curs = self.conn.cursor()
         curs.execute('insert into tcopy values (%s, %s)',
@@ -176,15 +167,9 @@ class CopyTests(ConnectingTestCase):
         self.conn.set_client_encoding('latin1')
         self._create_temp_table()  # the above call closed the xn
 
-        if PY2:
-            abin = ''.join(map(chr, range(32, 127) + range(160, 256)))
-            abin = abin.decode('latin1')
-            about = abin.replace('\\', '\\\\')
-
-        else:
-            abin = bytes(list(range(32, 127))
-                + list(range(160, 256))).decode('latin1')
-            about = abin.replace('\\', '\\\\')
+        abin = bytes(list(range(32, 127))
+            + list(range(160, 256))).decode('latin1')
+        about = abin.replace('\\', '\\\\')
 
         f = io.StringIO()
         f.write(about)

@@ -42,7 +42,7 @@ import psycopg2.extras
 from psycopg2 import extensions as ext
 
 from .testutils import (
-    PY2, unittest, skip_if_no_superuser, skip_before_postgres,
+    unittest, skip_if_no_superuser, skip_before_postgres,
     skip_after_postgres, skip_before_libpq, skip_after_libpq,
     ConnectingTestCase, skip_if_tpc_disabled, skip_if_windows, slow,
     skip_if_crdb, crdb_version)
@@ -466,10 +466,7 @@ class ParseDsnTestCase(ConnectingTestCase):
     def test_unicode_value(self):
         snowman = u"\u2603"
         d = ext.parse_dsn('dbname=' + snowman)
-        if PY2:
-            self.assertEqual(d['dbname'], snowman.encode('utf8'))
-        else:
-            self.assertEqual(d['dbname'], snowman)
+        self.assertEqual(d['dbname'], snowman)
 
     def test_unicode_key(self):
         snowman = u"\u2603"

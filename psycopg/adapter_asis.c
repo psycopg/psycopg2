@@ -45,14 +45,12 @@ asis_getquoted(asisObject *self, PyObject *args)
     }
     else {
         rv = PyObject_Str(self->wrapped);
-#if PY_3
-        /* unicode to bytes in Py3 */
+        /* unicode to bytes */
         if (rv) {
             PyObject *tmp = PyUnicode_AsUTF8String(rv);
             Py_DECREF(rv);
             rv = tmp;
         }
-#endif
     }
 
     return rv;

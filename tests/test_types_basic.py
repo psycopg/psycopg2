@@ -31,7 +31,7 @@ import platform
 
 from . import testutils
 import unittest
-from .testutils import PY2, long, text_type, ConnectingTestCase, restore_types
+from .testutils import ConnectingTestCase, restore_types
 from .testutils import skip_if_crdb
 
 import psycopg2
@@ -59,8 +59,6 @@ class TypesBasicTests(ConnectingTestCase):
     def testNumber(self):
         s = self.execute("SELECT %s AS foo", (1971,))
         self.failUnless(s == 1971, "wrong integer quoting: " + str(s))
-        s = self.execute("SELECT %s AS foo", (long(1971),))
-        self.failUnless(s == long(1971), "wrong integer quoting: " + str(s))
 
     def testBoolean(self):
         x = self.execute("SELECT %s as foo", (False,))
@@ -110,16 +108,10 @@ class TypesBasicTests(ConnectingTestCase):
         self.failUnless(str(s) == "-inf", "wrong float quoting: " + str(s))
 
     def testBinary(self):
-        if PY2:
-            s = ''.join([chr(x) for x in range(256)])
-            b = psycopg2.Binary(s)
-            buf = self.execute("SELECT %s::bytea AS foo", (b,))
-            self.assertEqual(s, str(buf))
-        else:
-            s = bytes(range(256))
-            b = psycopg2.Binary(s)
-            buf = self.execute("SELECT %s::bytea AS foo", (b,))
-            self.assertEqual(s, buf.tobytes())
+        s = bytes(range(256))
+        b = psycopg2.Binary(s)
+        buf = self.execute("SELECT %s::bytea AS foo", (b,))
+        self.assertEqual(s, buf.tobytes())
 
     def testBinaryNone(self):
         b = psycopg2.Binary(None)
@@ -128,26 +120,16 @@ class TypesBasicTests(ConnectingTestCase):
 
     def testBinaryEmptyString(self):
         # test to make sure an empty Binary is converted to an empty string
-        if PY2:
-            b = psycopg2.Binary('')
-            self.assertEqual(str(b), "''::bytea")
-        else:
-            b = psycopg2.Binary(bytes([]))
-            self.assertEqual(str(b), "''::bytea")
+        b = psycopg2.Binary(bytes([]))
+        self.assertEqual(str(b), "''::bytea")
 
     def testBinaryRoundTrip(self):
         # test to make sure buffers returned by psycopg2 are
         # understood by execute:
-        if PY2:
-            s = ''.join([chr(x) for x in range(256)])
-            buf = self.execute("SELECT %s::bytea AS foo", (psycopg2.Binary(s),))
-            buf2 = self.execute("SELECT %s::bytea AS foo", (buf,))
-            self.assertEqual(s, str(buf2))
-        else:
-            s = bytes(range(256))
-            buf = self.execute("SELECT %s::bytea AS foo", (psycopg2.Binary(s),))
-            buf2 = self.execute("SELECT %s::bytea AS foo", (buf,))
-            self.assertEqual(s, buf2.tobytes())
+        s = bytes(range(256))
+        buf = self.execute("SELECT %s::bytea AS foo", (psycopg2.Binary(s),))
+        buf2 = self.execute("SELECT %s::bytea AS foo", (buf,))
+        self.assertEqual(s, buf2.tobytes())
 
     @skip_if_crdb("nested array")
     def testArray(self):
@@ -227,7 +209,7 @@ class TypesBasicTests(ConnectingTestCase):
         curs = self.conn.cursor()
         curs.execute("select '{a,b,c}'::text[]")
         x = curs.fetchone()[0]
-        self.assert_(isinstance(x[0], text_type))
+        self.assert_(isinstance(x[0], str))
         self.assertEqual(x, [u'a', u'b', u'c'])
 
     def testBytesArray(self):
@@ -291,27 +273,6 @@ class TypesBasicTests(ConnectingTestCase):
             curs.execute("select %s::int[]", (a,))
             self.assertEqual(curs.fetchone()[0], a)
 
-    @testutils.skip_from_python(3)
-    def testTypeRoundtripBuffer(self):
-        o1 = buffer("".join(map(chr, range(256))))
-        o2 = self.execute("select %s;", (o1,))
-        self.assertEqual(type(o1), type(o2))
-
-        # Test with an empty buffer
-        o1 = buffer("")
-        o2 = self.execute("select %s;", (o1,))
-        self.assertEqual(type(o1), type(o2))
-        self.assertEqual(str(o1), str(o2))
-
-    @testutils.skip_from_python(3)
-    def testTypeRoundtripBufferArray(self):
-        o1 = buffer("".join(map(chr, range(256))))
-        o1 = [o1]
-        o2 = self.execute("select %s;", (o1,))
-        self.assertEqual(type(o1[0]), type(o2[0]))
-        self.assertEqual(str(o1[0]), str(o2[0]))
-
-    @testutils.skip_before_python(3)
     def testTypeRoundtripBytes(self):
         o1 = bytes(range(256))
         o2 = self.execute("select %s;", (o1,))
@@ -322,7 +283,6 @@ class TypesBasicTests(ConnectingTestCase):
         o2 = self.execute("select %s;", (o1,))
         self.assertEqual(memoryview, type(o2))
 
-    @testutils.skip_before_python(3)
     def testTypeRoundtripBytesArray(self):
         o1 = bytes(range(256))
         o1 = [o1]
@@ -332,12 +292,7 @@ class TypesBasicTests(ConnectingTestCase):
     def testAdaptBytearray(self):
         o1 = bytearray(range(256))
         o2 = self.execute("select %s;", (o1,))
-
-        if PY2:
-            self.assertEqual(buffer, type(o2))
-        else:
-            self.assertEqual(memoryview, type(o2))
-
+        self.assertEqual(memoryview, type(o2))
         self.assertEqual(len(o1), len(o2))
         for c1, c2 in zip(o1, o2):
             self.assertEqual(c1, ord(c2))
@@ -345,28 +300,18 @@ class TypesBasicTests(ConnectingTestCase):
         # Test with an empty buffer
         o1 = bytearray([])
         o2 = self.execute("select %s;", (o1,))
-
         self.assertEqual(len(o2), 0)
-        if PY2:
-            self.assertEqual(buffer, type(o2))
-        else:
-            self.assertEqual(memoryview, type(o2))
+        self.assertEqual(memoryview, type(o2))
 
     def testAdaptMemoryview(self):
         o1 = memoryview(bytearray(range(256)))
         o2 = self.execute("select %s;", (o1,))
-        if PY2:
-            self.assertEqual(buffer, type(o2))
-        else:
-            self.assertEqual(memoryview, type(o2))
+        self.assertEqual(memoryview, type(o2))
 
         # Test with an empty buffer
         o1 = memoryview(bytearray([]))
         o2 = self.execute("select %s;", (o1,))
-        if PY2:
-            self.assertEqual(buffer, type(o2))
-        else:
-            self.assertEqual(memoryview, type(o2))
+        self.assertEqual(memoryview, type(o2))
 
     def testByteaHexCheckFalsePositive(self):
         # the check \x -> x to detect bad bytea decode
@@ -382,8 +327,6 @@ class TypesBasicTests(ConnectingTestCase):
         self.assertEqual(1, f1)
         i1 = self.execute("select -%s;", (-1,))
         self.assertEqual(1, i1)
-        l1 = self.execute("select -%s;", (long(-1),))
-        self.assertEqual(1, l1)
 
     def testGenericArray(self):
         a = self.execute("select '{1, 2, 3}'::int4[]")
@@ -417,7 +360,6 @@ class TypesBasicTests(ConnectingTestCase):
         a = self.execute("select '{10:20:30:40:50:60}'::macaddr[]")
         self.assertEqual(a, ['10:20:30:40:50:60'])
 
-    @testutils.skip_before_python(3, 4)
     def testIntEnum(self):
         from enum import IntEnum
 
@@ -453,19 +395,6 @@ class AdaptSubclassTest(unittest.TestCase):
         register_adapter(B, lambda b: AsIs("b"))
         self.assertEqual(b'b', adapt(C()).getquoted())
 
-    @testutils.skip_from_python(3)
-    @restore_types
-    def test_no_mro_no_joy(self):
-        class A:
-            pass
-
-        class B(A):
-            pass
-
-        register_adapter(A, lambda a: AsIs("a"))
-        self.assertRaises(psycopg2.ProgrammingError, adapt, B())
-
-    @testutils.skip_before_python(3)
     @restore_types
     def test_adapt_subtype_3(self):
         class A:
@@ -512,10 +441,7 @@ class ByteaParserTest(unittest.TestCase):
         if rv is None:
             return None
 
-        if PY2:
-            return str(rv)
-        else:
-            return rv.tobytes()
+        return rv.tobytes()
 
     def test_null(self):
         rv = self.cast(None)
@@ -536,10 +462,7 @@ class ByteaParserTest(unittest.TestCase):
             buf = buf.upper()
         buf = '\\x' + buf
         rv = self.cast(buf.encode('utf8'))
-        if PY2:
-            self.assertEqual(rv, ''.join(map(chr, range(256))))
-        else:
-            self.assertEqual(rv, bytes(range(256)))
+        self.assertEqual(rv, bytes(range(256)))
 
     def test_full_hex_upper(self):
         return self.test_full_hex(upper=True)
@@ -547,10 +470,7 @@ class ByteaParserTest(unittest.TestCase):
     def test_full_escaped_octal(self):
         buf = ''.join(("\\%03o" % i) for i in range(256))
         rv = self.cast(buf.encode('utf8'))
-        if PY2:
-            self.assertEqual(rv, ''.join(map(chr, range(256))))
-        else:
-            self.assertEqual(rv, bytes(range(256)))
+        self.assertEqual(rv, bytes(range(256)))
 
     def test_escaped_mixed(self):
         buf = ''.join(("\\%03o" % i) for i in range(32))
@@ -558,12 +478,8 @@ class ByteaParserTest(unittest.TestCase):
         buf += ''.join('\\' + c for c in string.ascii_letters)
         buf += '\\\\'
         rv = self.cast(buf.encode('utf8'))
-        if PY2:
-            tgt = ''.join(map(chr, range(32))) \
-                + string.ascii_letters * 2 + '\\'
-        else:
-            tgt = bytes(range(32)) + \
-                (string.ascii_letters * 2 + '\\').encode('ascii')
+        tgt = bytes(range(32)) + \
+            (string.ascii_letters * 2 + '\\').encode('ascii')
 
         self.assertEqual(rv, tgt)
 

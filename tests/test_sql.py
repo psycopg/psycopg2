@@ -31,7 +31,6 @@ from .testutils import (
 
 import psycopg2
 from psycopg2 import sql
-from psycopg2.compat import text_type
 
 
 class SqlFormatTests(ConnectingTestCase):
@@ -61,13 +60,6 @@ class SqlFormatTests(ConnectingTestCase):
         s1 = s.as_string(self.conn)
         self.assert_(isinstance(s1, str))
         self.assertEqual(s1, 'select "field" from "table"')
-
-    def test_unicode(self):
-        s = sql.SQL(u"select {0} from {1}").format(
-            sql.Identifier(u'field'), sql.Identifier('table'))
-        s1 = s.as_string(self.conn)
-        self.assert_(isinstance(s1, text_type))
-        self.assertEqual(s1, u'select "field" from "table"')
 
     def test_compose_literal(self):
         s = sql.SQL("select {0};").format(sql.Literal(dt.date(2016, 12, 31)))

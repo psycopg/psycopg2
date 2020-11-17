@@ -26,8 +26,6 @@ UPDATEs. psycopg2 also provide full asynchronous operations and support
 for coroutine libraries.
 """
 
-# Note: The setup.py must be compatible with both Python 2 and 3
-
 
 import os
 import sys
@@ -38,7 +36,6 @@ from distutils.command.build_ext import build_ext
 from distutils.sysconfig import get_python_inc
 from distutils.ccompiler import get_default_compiler
 from distutils.errors import CompileError
-from distutils.util import get_platform
 
 try:
     import configparser
@@ -58,13 +55,12 @@ Development Status :: 5 - Production/Stable
 Intended Audience :: Developers
 License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)
 Programming Language :: Python
-Programming Language :: Python :: 2
-Programming Language :: Python :: 2.7
 Programming Language :: Python :: 3
 Programming Language :: Python :: 3.6
 Programming Language :: Python :: 3.7
 Programming Language :: Python :: 3.8
 Programming Language :: Python :: 3.9
+Programming Language :: Python :: 3 :: Only
 Programming Language :: Python :: Implementation :: CPython
 Programming Language :: C
 Programming Language :: SQL
@@ -201,12 +197,6 @@ For further information please check the 'doc/src/install.rst' file (also at
         if not os.path.exists(pg_config_path):
             return None
 
-        # Support unicode paths, if this version of Python provides the
-        # necessary infrastructure:
-        if sys.version_info[0] < 3:
-            pg_config_path = pg_config_path.encode(
-                sys.getfilesystemencoding())
-
         return pg_config_path
 
 
@@ -306,30 +296,6 @@ For further information please check the 'doc/src/install.rst' file (also at
 
 """)
             raise
-
-        sysVer = sys.version_info[:2]
-
-        # For Python versions that use MSVC compiler 2008, re-insert the
-        # manifest into the resulting .pyd file.
-        if self.compiler_is_msvc() and sysVer == (2, 7):
-            platform = get_platform()
-            # Default to the x86 manifest
-            manifest = '_psycopg.vc9.x86.manifest'
-            if platform == 'win-amd64':
-                manifest = '_psycopg.vc9.amd64.manifest'
-            try:
-                ext_path = self.get_ext_fullpath(extension.name)
-            except AttributeError:
-                ext_path = os.path.join(self.build_lib,
-                        'psycopg2', '_psycopg.pyd')
-            # Make sure spawn() will work if compile() was never
-            # called. https://github.com/psycopg/psycopg2/issues/380
-            if not self.compiler.initialized:
-                self.compiler.initialize()
-            self.compiler.spawn(
-                ['mt.exe', '-nologo', '-manifest',
-                 os.path.join('psycopg', manifest),
-                 '-outputresource:%s;2' % ext_path])
 
     def finalize_win32(self):
         """Finalize build system configuration on win32 platform."""
@@ -598,7 +564,7 @@ setup(name="psycopg2",
       url="https://psycopg.org/",
       license="LGPL with exceptions",
       platforms=["any"],
-      python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*',
+      python_requires='>=3.6',
       description=readme.split("\n")[0],
       long_description="\n".join(readme.split("\n")[2:]).lstrip(),
       classifiers=[x for x in classifiers.split("\n") if x],

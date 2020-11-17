@@ -54,39 +54,6 @@ chunk_repr(chunkObject *self)
       );
 }
 
-#if PY_2
-
-static Py_ssize_t
-chunk_getreadbuffer(chunkObject *self, Py_ssize_t segment, void **ptr)
-{
-    if (segment != 0)
-    {
-        PyErr_SetString(PyExc_SystemError,
-                        "accessing non-existant buffer segment");
-        return -1;
-    }
-    *ptr = self->base;
-    return self->len;
-}
-
-static Py_ssize_t
-chunk_getsegcount(chunkObject *self, Py_ssize_t *lenp)
-{
-    if (lenp != NULL)
-        *lenp = self->len;
-    return 1;
-}
-
-static PyBufferProcs chunk_as_buffer =
-{
-    (readbufferproc) chunk_getreadbuffer,
-    (writebufferproc) NULL,
-    (segcountproc) chunk_getsegcount,
-    (charbufferproc) NULL
-};
-
-#else
-
 /* 3.0 buffer interface */
 int chunk_getbuffer(PyObject *_self, Py_buffer *view, int flags)
 {
@@ -104,8 +71,6 @@ static PyBufferProcs chunk_as_buffer =
     chunk_getbuffer,
     NULL,
 };
-
-#endif
 
 #define chunk_doc "memory chunk"
 
@@ -183,13 +148,8 @@ typecast_BINARY_cast(const char *s, Py_ssize_t l, PyObject *curs)
     buffer = NULL;
     chunk->len = (Py_ssize_t)len;
 
-#if PY_2
-    if ((res = PyBuffer_FromObject((PyObject *)chunk, 0, chunk->len)) == NULL)
-        goto exit;
-#else
     if ((res = PyMemoryView_FromObject((PyObject*)chunk)) == NULL)
         goto exit;
-#endif
 
 exit:
     Py_XDECREF((PyObject *)chunk);

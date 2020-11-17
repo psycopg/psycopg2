@@ -475,11 +475,7 @@ PyTypeObject typecastType = {
     0,          /*tp_print*/
     0,          /*tp_getattr*/
     0,          /*tp_setattr*/
-#if PY_VERSION_HEX < 0x03000000
-    typecast_cmp, /*tp_compare*/
-#else
     0,          /*tp_reserved*/
-#endif
     typecast_repr, /*tp_repr*/
     0,          /*tp_as_number*/
     0,          /*tp_as_sequence*/
@@ -651,11 +647,7 @@ typecast_cast(PyObject *obj, const char *str, Py_ssize_t len, PyObject *curs)
          * Notice that this way it is about impossible to create a python
          * typecaster on a binary type. */
         if (str) {
-#if PY_2
-            s = PyString_FromStringAndSize(str, len);
-#else
             s = conn_decode(((cursorObject *)curs)->conn, str, len);
-#endif
         }
         else {
             Py_INCREF(Py_None);

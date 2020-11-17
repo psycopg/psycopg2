@@ -27,7 +27,6 @@
 import string
 
 from psycopg2 import extensions as ext
-from psycopg2.compat import PY3, string_types
 
 
 _formatter = string.Formatter()
@@ -148,7 +147,7 @@ class Composed(Composable):
             "foo", "bar"
 
         """
-        if isinstance(joiner, string_types):
+        if isinstance(joiner, str):
             joiner = SQL(joiner)
         elif not isinstance(joiner, SQL):
             raise TypeError(
@@ -180,7 +179,7 @@ class SQL(Composable):
         select "foo", "bar" from "table"
     """
     def __init__(self, string):
-        if not isinstance(string, string_types):
+        if not isinstance(string, str):
             raise TypeError("SQL values must be strings")
         super(SQL, self).__init__(string)
 
@@ -324,7 +323,7 @@ class Identifier(Composable):
             raise TypeError("Identifier cannot be empty")
 
         for s in strings:
-            if not isinstance(s, string_types):
+            if not isinstance(s, str):
                 raise TypeError("SQL identifier parts must be strings")
 
         super(Identifier, self).__init__(strings)
@@ -392,7 +391,7 @@ class Literal(Composable):
             a.prepare(conn)
 
         rv = a.getquoted()
-        if PY3 and isinstance(rv, bytes):
+        if isinstance(rv, bytes):
             rv = rv.decode(ext.encodings[conn.encoding])
 
         return rv
@@ -426,7 +425,7 @@ class Placeholder(Composable):
     """
 
     def __init__(self, name=None):
-        if isinstance(name, string_types):
+        if isinstance(name, str):
             if ')' in name:
                 raise ValueError("invalid name: %r" % name)
 
