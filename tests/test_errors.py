@@ -62,6 +62,13 @@ class ErrorsTests(ConnectingTestCase):
         with self.assertRaises(KeyError):
             errors.lookup('XXXXX')
 
+    def test_connection_exceptions_backwards_compatibility(self):
+        err = errors.lookup('08000')
+        # connection exceptions are classified as operational errors
+        self.assert_(issubclass(err, errors.OperationalError))
+        # previously these errors were classified only as DatabaseError
+        self.assert_(issubclass(err, errors.DatabaseError))
+
     def test_has_base_exceptions(self):
         excs = []
         for n in dir(psycopg2):

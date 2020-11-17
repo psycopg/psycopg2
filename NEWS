@@ -5,6 +5,10 @@ What's new in psycopg 2.9
 -------------------------
 
 - Dropped support for Python 3.4, 3.5 (:tickets:#1000, #1197).
+- Reclassified SQLSTATE connection exceptions (08XXX) as
+  `~psycopg2.errors.OperationalError` (subclass of previously used
+  `~psycopg2.errors.DatabaseError`) (:ticket:`#1148`).
+
 
 What's new in psycopg 2.8.6
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
