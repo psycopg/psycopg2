@@ -25,7 +25,7 @@ from collections import defaultdict
 
 def main():
     if len(sys.argv) != 2:
-        print("usage: %s /path/to/errorcodes.py" % sys.argv[0], file=sys.stderr)
+        print(f"usage: {sys.argv[0]} /path/to/errorcodes.py", file=sys.stderr)
         return 2
 
     filename = sys.argv[1]
@@ -84,7 +84,7 @@ def parse_errors_txt(url):
             continue
 
         # We don't expect anything else
-        raise ValueError("unexpected line:\n%s" % line)
+        raise ValueError(f"unexpected line:\n{line}")
 
     return classes, errors
 
@@ -101,9 +101,7 @@ def fetch_errors(versions):
     for version in versions:
         print(version, file=sys.stderr)
         tver = tuple(map(int, version.split()[0].split('.')))
-        tag = '{}{}_STABLE'.format(
-            (tver[0] >= 10 and 'REL_' or 'REL'),
-            version.replace('.', '_'))
+        tag = f"{tver[0] >= 10 and 'REL_' or 'REL'}{version.replace('.', '_')}_STABLE"
         c1, e1 = parse_errors_txt(errors_txt_url % tag)
         classes.update(c1)
 
@@ -141,11 +139,11 @@ def generate_module_data(classes, errors):
 
     for clscode, clslabel in sorted(classes.items()):
         yield ""
-        yield "# %s" % clslabel
+        yield f"# {clslabel}"
 
         for errcode, errlabel in sorted(errors[clscode].items()):
             if errlabel in seen:
-                raise Exception("error label already seen: %s" % errlabel)
+                raise Exception(f"error label already seen: {errlabel}")
             seen.add(errlabel)
             yield f"{errlabel} = {errcode!r}"
 

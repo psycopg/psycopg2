@@ -207,7 +207,7 @@ class LargeObjectTests(LargeObjectTestCase):
         data1 = lo.read()
         # avoid dumping megacraps in the console in case of error
         self.assert_(data == data1,
-            "{!r}... != {!r}...".format(data[:100], data1[:100]))
+            f"{data[:100]!r}... != {data1[:100]!r}...")
 
     def test_seek_tell(self):
         lo = self.conn.lobject()

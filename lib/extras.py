@@ -529,7 +529,7 @@ class ReplicationCursor(_replicationCursor):
     def create_replication_slot(self, slot_name, slot_type=None, output_plugin=None):
         """Create streaming replication slot."""
 
-        command = "CREATE_REPLICATION_SLOT %s " % quote_ident(slot_name, self)
+        command = f"CREATE_REPLICATION_SLOT {quote_ident(slot_name, self)} "
 
         if slot_type is None:
             slot_type = self.connection.replication_type
@@ -540,7 +540,7 @@ class ReplicationCursor(_replicationCursor):
                     "output plugin name is required to create "
                     "logical replication slot")
 
-            command += "LOGICAL %s" % quote_ident(output_plugin, self)
+            command += f"LOGICAL {quote_ident(output_plugin, self)}"
 
         elif slot_type == REPLICATION_PHYSICAL:
             if output_plugin is not None:
@@ -552,14 +552,14 @@ class ReplicationCursor(_replicationCursor):
 
         else:
             raise psycopg2.ProgrammingError(
-                "unrecognized replication type: %s" % repr(slot_type))
+                f"unrecognized replication type: {repr(slot_type)}")
 
         self.execute(command)
 
     def drop_replication_slot(self, slot_name):
         """Drop streaming replication slot."""
 
-        command = "DROP_REPLICATION_SLOT %s" % quote_ident(slot_name, self)
+        command = f"DROP_REPLICATION_SLOT {quote_ident(slot_name, self)}"
         self.execute(command)
 
     def start_replication(
@@ -574,7 +574,7 @@ class ReplicationCursor(_replicationCursor):
 
         if slot_type == REPLICATION_LOGICAL:
             if slot_name:
-                command += "SLOT %s " % quote_ident(slot_name, self)
+                command += f"SLOT {quote_ident(slot_name, self)} "
             else:
                 raise psycopg2.ProgrammingError(
                     "slot name is required for logical replication")
@@ -583,19 +583,18 @@ class ReplicationCursor(_replicationCursor):
 
         elif slot_type == REPLICATION_PHYSICAL:
             if slot_name:
-                command += "SLOT %s " % quote_ident(slot_name, self)
+                command += f"SLOT {quote_ident(slot_name, self)} "
             # don't add "PHYSICAL", before 9.4 it was just START_REPLICATION XXX/XXX
 
         else:
             raise psycopg2.ProgrammingError(
-                "unrecognized replication type: %s" % repr(slot_type))
+                f"unrecognized replication type: {repr(slot_type)}")
 
         if type(start_lsn) is str:
             lsn = start_lsn.split('/')
-            lsn = "{:X}/{:08X}".format(int(lsn[0], 16), int(lsn[1], 16))
+            lsn = f"{int(lsn[0], 16):X}/{int(lsn[1], 16):08X}"
         else:
-            lsn = "{:X}/{:08X}".format((start_lsn >> 32) & 0xFFFFFFFF,
-                               start_lsn & 0xFFFFFFFF)
+            lsn = f"{start_lsn >> 32 & 4294967295:X}/{start_lsn & 4294967295:08X}"
 
         command += lsn
 
@@ -615,7 +614,7 @@ class ReplicationCursor(_replicationCursor):
             for k, v in options.items():
                 if not command.endswith('('):
                     command += ", "
-                command += "{} {}".format(quote_ident(k, self), _A(str(v)))
+                command += f"{quote_ident(k, self)} {_A(str(v))}"
             command += ")"
 
         self.start_replication_expert(
@@ -643,10 +642,10 @@ class UUID_adapter:
             return self
 
     def getquoted(self):
-        return ("'%s'::uuid" % self._uuid).encode('utf8')
+        return (f"'{self._uuid}'::uuid").encode('utf8')
 
     def __str__(self):
-        return "'%s'::uuid" % self._uuid
+        return f"'{self._uuid}'::uuid"
 
 
 def register_uuid(oids=None, conn_or_curs=None):
@@ -768,7 +767,7 @@ def wait_select(conn):
             elif state == POLL_WRITE:
                 select.select([], [conn.fileno()], [])
             else:
-                raise conn.OperationalError("bad state from poll: %s" % state)
+                raise conn.OperationalError(f"bad state from poll: {state}")
         except KeyboardInterrupt:
             conn.cancel()
             # the loop will be broken by a server error
@@ -909,12 +908,11 @@ class HstoreAdapter:
         rv0, rv1 = [], []
 
         # get the oid for the hstore
-        curs.execute("""\
-SELECT t.oid, %s
+        curs.execute(f"""SELECT t.oid, {typarray}
 FROM pg_type t JOIN pg_namespace ns
     ON typnamespace = ns.oid
 WHERE typname = 'hstore';
-""" % typarray)
+""")
         for oids in curs:
             rv0.append(oids[0])
             rv1.append(oids[1])
@@ -1008,7 +1006,7 @@ class CompositeCaster:
         self.typecaster = _ext.new_type((oid,), name, self.parse)
         if array_oid:
             self.array_typecaster = _ext.new_array_type(
-                (array_oid,), "%sARRAY" % name, self.typecaster)
+                (array_oid,), f"{name}ARRAY", self.typecaster)
         else:
             self.array_typecaster = None
 
@@ -1052,7 +1050,7 @@ class CompositeCaster:
         rv = []
         for m in self._re_tokenize.finditer(s):
             if m is None:
-                raise psycopg2.InterfaceError("can't parse type: %r" % s)
+                raise psycopg2.InterfaceError(f"can't parse type: {s!r}")
             if m.group(1) is not None:
                 rv.append(None)
             elif m.group(2) is not None:
@@ -1107,7 +1105,7 @@ ORDER BY attnum;
 
         if not recs:
             raise psycopg2.ProgrammingError(
-                "PostgreSQL type '%s' not found" % name)
+                f"PostgreSQL type '{name}' not found")
 
         type_oid = recs[0][0]
         array_oid = recs[0][1]

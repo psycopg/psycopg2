@@ -100,8 +100,7 @@ class ConnectingTestCase(unittest.TestCase):
             self._conns
         except AttributeError as e:
             raise AttributeError(
-                "%s (did you forget to call ConnectingTestCase.setUp()?)"
-                % e)
+                f"{e} (did you forget to call ConnectingTestCase.setUp()?)")
 
         if 'dsn' in kwargs:
             conninfo = kwargs.pop('dsn')
@@ -134,7 +133,7 @@ class ConnectingTestCase(unittest.TestCase):
             # Otherwise we tried to run some bad operation in the connection
             # (e.g. bug #482) and we'd rather know that.
             if e.pgcode is None:
-                return self.skipTest("replication db not configured: %s" % e)
+                return self.skipTest(f"replication db not configured: {e}")
             else:
                 raise
 
@@ -324,7 +323,7 @@ def skip_after_libpq(*ver):
         v = libpq_version()
         decorator = unittest.skipIf(
             v >= int("%d%02d%02d" % ver),
-            "skipped because libpq %s" % v,
+            f"skipped because libpq {v}",
         )
         return decorator(cls)
     return skip_after_libpq_
@@ -335,8 +334,7 @@ def skip_before_python(*ver):
     def skip_before_python_(cls):
         decorator = unittest.skipIf(
             sys.version_info[:len(ver)] < ver,
-            "skipped because Python %s"
-            % ".".join(map(str, sys.version_info[:len(ver)])),
+            f"skipped because Python {'.'.join(map(str, sys.version_info[:len(ver)]))}",
         )
         return decorator(cls)
     return skip_before_python_
@@ -347,8 +345,7 @@ def skip_from_python(*ver):
     def skip_from_python_(cls):
         decorator = unittest.skipIf(
             sys.version_info[:len(ver)] >= ver,
-            "skipped because Python %s"
-            % ".".join(map(str, sys.version_info[:len(ver)])),
+            f"skipped because Python {'.'.join(map(str, sys.version_info[:len(ver)]))}",
         )
         return decorator(cls)
     return skip_from_python_
@@ -415,7 +412,7 @@ def crdb_version(conn, __crdb_version=[]):
         m = re.search(r"\bv(\d+)\.(\d+)\.(\d+)", sver)
         if not m:
             raise ValueError(
-                "can't parse CockroachDB version from %s" % sver)
+                f"can't parse CockroachDB version from {sver}")
 
         ver = int(m.group(1)) * 10000 + int(m.group(2)) * 100 + int(m.group(3))
         __crdb_version.append(ver)
@@ -439,7 +436,7 @@ def skip_if_crdb(reason, conn=None, version=None):
 
     """
     if not isinstance(reason, str):
-        raise TypeError("reason should be a string, got %r instead" % reason)
+        raise TypeError(f"reason should be a string, got {reason!r} instead")
 
     if conn is not None:
         ver = crdb_version(conn)

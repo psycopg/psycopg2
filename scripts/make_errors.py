@@ -68,7 +68,7 @@ def parse_errors_txt(url):
             continue
 
         # We don't expect anything else
-        raise ValueError("unexpected line:\n%s" % line)
+        raise ValueError(f"unexpected line:\n{line}")
 
     return classes, errors
 
@@ -85,9 +85,7 @@ def fetch_errors(versions):
     for version in versions:
         print(version, file=sys.stderr)
         tver = tuple(map(int, version.split()[0].split('.')))
-        tag = '{}{}_STABLE'.format(
-            (tver[0] >= 10 and 'REL_' or 'REL'),
-            version.replace('.', '_'))
+        tag = f"{tver[0] >= 10 and 'REL_' or 'REL'}{version.replace('.', '_')}_STABLE"
         c1, e1 = parse_errors_txt(errors_txt_url % tag)
         classes.update(c1)
 
@@ -118,7 +116,7 @@ def generate_module_data(classes, errors):
             # success and warning - never raised
             continue
 
-        yield "\n/* %s */" % clslabel
+        yield f"\n/* {clslabel} */"
 
         for errcode, errlabel in sorted(errors[clscode].items()):
             if errcode in specific:
@@ -126,7 +124,7 @@ def generate_module_data(classes, errors):
             else:
                 clsname = errlabel.title().replace('_', '')
             if clsname in seen:
-                raise Exception("class already existing: %s" % clsname)
+                raise Exception(f"class already existing: {clsname}")
             seen.add(clsname)
 
             yield tmpl % {

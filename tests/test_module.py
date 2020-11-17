@@ -120,7 +120,7 @@ class ConnectTestCase(unittest.TestCase):
 
     def test_int_port_param(self):
         psycopg2.connect(database='sony', port=6543)
-        dsn = " %s " % self.args[0]
+        dsn = f" {self.args[0]} "
         self.assert_(" dbname=sony " in dsn, dsn)
         self.assert_(" port=6543 " in dsn, dsn)
 
@@ -327,12 +327,12 @@ class TestExtensionModule(unittest.TestCase):
         pkgdir = os.path.dirname(psycopg2.__file__)
         pardir = os.path.dirname(pkgdir)
         self.assert_(pardir in sys.path)
-        script = ("""
+        script = f"""
 import sys
-sys.path.remove({!r})
-sys.path.insert(0, {!r})
+sys.path.remove({pardir!r})
+sys.path.insert(0, {pkgdir!r})
 import _psycopg
-""".format(pardir, pkgdir))
+"""
 
         proc = Popen([sys.executable, '-c', script])
         proc.communicate()

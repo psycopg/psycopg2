@@ -317,8 +317,7 @@ class CopyTests(ConnectingTestCase):
     @slow
     def test_copy_from_segfault(self):
         # issue #219
-        script = ("""\
-import psycopg2
+        script = f"""import psycopg2
 conn = psycopg2.connect({dsn!r})
 curs = conn.cursor()
 curs.execute("create table copy_segf (id int)")
@@ -327,7 +326,7 @@ try:
 except psycopg2.ProgrammingError:
     pass
 conn.close()
-""".format(dsn=dsn))
+"""
 
         proc = Popen([sys.executable, '-c', script])
         proc.communicate()
@@ -336,8 +335,7 @@ conn.close()
     @slow
     def test_copy_to_segfault(self):
         # issue #219
-        script = ("""\
-import psycopg2
+        script = f"""import psycopg2
 conn = psycopg2.connect({dsn!r})
 curs = conn.cursor()
 curs.execute("create table copy_segf (id int)")
@@ -346,7 +344,7 @@ try:
 except psycopg2.ProgrammingError:
     pass
 conn.close()
-""".format(dsn=dsn))
+"""
 
         proc = Popen([sys.executable, '-c', script], stdout=PIPE)
         proc.communicate()

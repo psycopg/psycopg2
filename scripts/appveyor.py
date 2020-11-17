@@ -439,10 +439,7 @@ def check_libpq_version():
         .decode('ascii')
         .rstrip()
     )
-    assert want_ver == got_ver, "libpq version mismatch: {!r} != {!r}".format(
-        want_ver,
-        got_ver,
-    )
+    assert want_ver == got_ver, f"libpq version mismatch: {want_ver!r} != {got_ver!r}"
 
 
 def run_test_suite():
@@ -684,7 +681,7 @@ def which(name):
             if os.path.isfile(fn):
                 return fn
 
-    raise Exception("couldn't find program on path: %s" % name)
+    raise Exception(f"couldn't find program on path: {name}")
 
 
 class Options:
@@ -846,7 +843,7 @@ class Options:
     def dist_dir(self):
         """The directory where to build packages to distribute."""
         return (
-            self.package_dir / 'dist' / ('psycopg2-%s' % self.package_version)
+            self.package_dir / 'dist' / (f'psycopg2-{self.package_version}')
         )
 
 

@@ -163,7 +163,7 @@ def _create_json_typecasters(oid, array_oid, loads=None, name='JSON'):
 
     JSON = new_type((oid, ), name, typecast_json)
     if array_oid is not None:
-        JSONARRAY = new_array_type((array_oid, ), "%sARRAY" % name, JSON)
+        JSONARRAY = new_array_type((array_oid, ), f"{name}ARRAY", JSON)
     else:
         JSONARRAY = None
 
@@ -194,6 +194,6 @@ def _get_json_oids(conn_or_curs, name='json'):
         conn.rollback()
 
     if not r:
-        raise conn.ProgrammingError("%s data type not found" % name)
+        raise conn.ProgrammingError(f"{name} data type not found")
 
     return r

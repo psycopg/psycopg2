@@ -56,7 +56,7 @@ class NotifiesTests(ConnectingTestCase):
         if payload is None:
             payload = ''
         else:
-            payload = ", %r" % payload
+            payload = f", {payload!r}"
 
         script = ("""\
 import time

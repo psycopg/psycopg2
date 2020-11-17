@@ -25,8 +25,8 @@ def main():
     for k in sorted(sqlstate_errors):
         exc = sqlstate_errors[k]
         lines.append(Line(
-            "``%s``" % k, "`!%s`" % exc.__name__,
-            "`!%s`" % get_base_exception(exc).__name__, k))
+            f"``{k}``", f"`!{exc.__name__}`",
+            f"`!{get_base_exception(exc).__name__}`", k))
 
     widths = [max(len(l[c]) for l in lines) for c in range(3)]
     h = Line(*(['=' * w for w in widths] + [None]))
@@ -39,7 +39,7 @@ def main():
     for l in lines:
         cls = l.sqlstate[:2] if l.sqlstate else None
         if cls and cls != sqlclass:
-            print("**Class {}**: {}".format(cls, sqlclasses[cls]))
+            print(f"**Class {cls}**: {sqlclasses[cls]}")
             print(h1)
             sqlclass = cls
 

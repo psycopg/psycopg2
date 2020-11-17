@@ -383,8 +383,7 @@ class ConnectionTests(ConnectingTestCase):
         dir = tempfile.mkdtemp()
         try:
             with open(os.path.join(dir, "mptest.py"), 'w') as f:
-                f.write("""\
-import time
+                f.write(f"""import time
 import psycopg2
 
 def thread():
@@ -396,7 +395,7 @@ def thread():
 
 def process():
     time.sleep(0.2)
-""".format(dsn=dsn))
+""")
 
             script = ("""\
 import sys
@@ -1732,8 +1731,7 @@ class SignalTestCase(ConnectingTestCase):
             """)
 
     def _test_bug_551(self, query):
-        script = ("""\
-import os
+        script = f"""import os
 import sys
 import time
 import signal
@@ -1766,7 +1764,7 @@ t.start()
 
 while True:
     cur.execute({query!r}, ("Hello, world!",))
-""".format(dsn=dsn, query=query))
+"""
 
         proc = sp.Popen([sys.executable, '-c', script],
             stdout=sp.PIPE, stderr=sp.PIPE)

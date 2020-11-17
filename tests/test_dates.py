@@ -379,7 +379,7 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
             cur)
 
         def f(val):
-            cur.execute("select '%s'::text" % val)
+            cur.execute(f"select '{val}'::text")
             return cur.fetchone()[0]
 
         self.assertRaises(OverflowError, f, '100000000000000000:00:00')

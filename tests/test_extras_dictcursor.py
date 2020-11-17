@@ -621,7 +621,7 @@ class NamedTupleCursorTest(ConnectingTestCase):
             recs = []
             curs = self.conn.cursor()
             for i in range(10):
-                curs.execute("select 1 as f%s" % i)
+                curs.execute(f"select 1 as f{i}")
                 recs.append(curs.fetchone())
 
             # Still in cache

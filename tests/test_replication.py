@@ -244,9 +244,9 @@ class AsyncReplicationTest(ReplicationTestCase):
 
         def consume(msg):
             # just check the methods
-            "{}: {}".format(cur.io_timestamp, repr(msg))
-            "{}: {}".format(cur.feedback_timestamp, repr(msg))
-            "{}: {}".format(cur.wal_end, repr(msg))
+            f"{cur.io_timestamp}: {repr(msg)}"
+            f"{cur.feedback_timestamp}: {repr(msg)}"
+            f"{cur.wal_end}: {repr(msg)}"
 
             self.msg_count += 1
             if self.msg_count > 3:

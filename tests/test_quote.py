@@ -98,8 +98,7 @@ class QuotingTestCase(ConnectingTestCase):
         server_encoding = curs.fetchone()[0]
         if server_encoding != "UTF8":
             return self.skipTest(
-                "Unicode test skipped since server encoding is %s"
-                % server_encoding)
+                f"Unicode test skipped since server encoding is {server_encoding}")
 
         data = """some data with \t chars
         to escape into, 'quotes', \u20ac euro sign and \\ a backslash too.

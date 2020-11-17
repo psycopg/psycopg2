@@ -106,7 +106,7 @@ class Composed(Composable):
         for i in seq:
             if not isinstance(i, Composable):
                 raise TypeError(
-                    "Composed elements must be Composable, got %r instead" % i)
+                    f"Composed elements must be Composable, got {i!r} instead")
             wrapped.append(i)
 
         super().__init__(wrapped)
@@ -344,9 +344,7 @@ class Identifier(Composable):
                 "the Identifier wraps more than one than one string")
 
     def __repr__(self):
-        return "{}({})".format(
-            self.__class__.__name__,
-            ', '.join(map(repr, self._wrapped)))
+        return f"{self.__class__.__name__}({', '.join(map(repr, self._wrapped))})"
 
     def as_string(self, context):
         return '.'.join(ext.quote_ident(s, context) for s in self._wrapped)
@@ -427,10 +425,10 @@ class Placeholder(Composable):
     def __init__(self, name=None):
         if isinstance(name, str):
             if ')' in name:
-                raise ValueError("invalid name: %r" % name)
+                raise ValueError(f"invalid name: {name!r}")
 
         elif name is not None:
-            raise TypeError("expected string or None as name, got %r" % name)
+            raise TypeError(f"expected string or None as name, got {name!r}")
 
         super().__init__(name)
 
@@ -440,12 +438,11 @@ class Placeholder(Composable):
         return self._wrapped
 
     def __repr__(self):
-        return "Placeholder({!r})".format(
-            self._wrapped if self._wrapped is not None else '')
+        return f"Placeholder({self._wrapped if self._wrapped is not None else ''!r})"
 
     def as_string(self, context):
         if self._wrapped is not None:
-            return "%%(%s)s" % self._wrapped
+            return f"%{self._wrapped['%s']}"
         else:
             return "%s"
 

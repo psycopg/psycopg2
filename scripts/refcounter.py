@@ -36,7 +36,7 @@ def main():
     if opt.suite:
         test = getattr(test, opt.suite)
 
-    sys.stdout.write("test suite %s\n" % test.__name__)
+    sys.stdout.write(f"test suite {test.__name__}\n")
 
     for i in range(1, opt.nruns + 1):
         sys.stdout.write("test suite run %d of %d\n" % (i, opt.nruns))

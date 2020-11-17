@@ -711,7 +711,7 @@ class AdaptTypeTestCase(ConnectingTestCase):
     def _create_type(self, name, fields):
         curs = self.conn.cursor()
         try:
-            curs.execute("drop type %s cascade;" % name)
+            curs.execute(f"drop type {name} cascade;")
         except psycopg2.ProgrammingError:
             self.conn.rollback()
 
@@ -1300,14 +1300,14 @@ class RangeCasterTestCase(ConnectingTestCase):
     def test_cast_null(self):
         cur = self.conn.cursor()
         for type in self.builtin_ranges:
-            cur.execute("select NULL::%s" % type)
+            cur.execute(f"select NULL::{type}")
             r = cur.fetchone()[0]
             self.assertEqual(r, None)
 
     def test_cast_empty(self):
         cur = self.conn.cursor()
         for type in self.builtin_ranges:
-            cur.execute("select 'empty'::%s" % type)
+            cur.execute(f"select 'empty'::{type}")
             r = cur.fetchone()[0]
             self.assert_(isinstance(r, Range), type)
             self.assert_(r.isempty)
@@ -1315,7 +1315,7 @@ class RangeCasterTestCase(ConnectingTestCase):
     def test_cast_inf(self):
         cur = self.conn.cursor()
         for type in self.builtin_ranges:
-            cur.execute("select '(,)'::%s" % type)
+            cur.execute(f"select '(,)'::{type}")
             r = cur.fetchone()[0]
             self.assert_(isinstance(r, Range), type)
             self.assert_(not r.isempty)
@@ -1325,7 +1325,7 @@ class RangeCasterTestCase(ConnectingTestCase):
     def test_cast_numbers(self):
         cur = self.conn.cursor()
         for type in ('int4range', 'int8range'):
-            cur.execute("select '(10,20)'::%s" % type)
+            cur.execute(f"select '(10,20)'::{type}")
             r = cur.fetchone()[0]
             self.assert_(isinstance(r, NumericRange))
             self.assert_(not r.isempty)

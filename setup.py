@@ -114,8 +114,7 @@ For further information please check the 'doc/src/install.rst' file (also at
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE)
         except OSError:
-            raise Warning("Unable to find 'pg_config' file in '%s'" %
-                          self.pg_config_exe)
+            raise Warning(f"Unable to find 'pg_config' file in '{self.pg_config_exe}'")
         pg_config_process.stdin.close()
         result = pg_config_process.stdout.readline().strip()
         if not result:
@@ -396,8 +395,7 @@ For further information please check the 'doc/src/install.rst' file (also at
                 pgpatch = int(pgpatch)
             else:
                 sys.stderr.write(
-                    "Error: could not determine PostgreSQL version from '%s'"
-                    % pgversion)
+                    f"Error: could not determine PostgreSQL version from '{pgversion}'")
                 sys.exit(1)
 
             define_macros.append(("PG_VERSION_NUM", "%d%02d%02d" %
@@ -419,7 +417,7 @@ For further information please check the 'doc/src/install.rst' file (also at
 
         except Warning:
             w = sys.exc_info()[1]  # work around py 2/3 different syntax
-            sys.stderr.write("Error: %s\n" % w)
+            sys.stderr.write(f"Error: {w}\n")
             sys.exit(1)
 
         if hasattr(self, "finalize_" + sys.platform):
@@ -512,7 +510,7 @@ version_flags.append('pq3')     # no more a choice
 version_flags.append('ext')     # no more a choice
 
 if version_flags:
-    PSYCOPG_VERSION_EX = PSYCOPG_VERSION + " (%s)" % ' '.join(version_flags)
+    PSYCOPG_VERSION_EX = PSYCOPG_VERSION + f" ({' '.join(version_flags)})"
 else:
     PSYCOPG_VERSION_EX = PSYCOPG_VERSION
 

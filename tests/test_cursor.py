@@ -88,21 +88,21 @@ class CursorTests(ConnectingTestCase):
                 return s
 
         # unicode query with non-ascii data
-        cur.execute("SELECT '%s';" % snowman)
+        cur.execute(f"SELECT '{snowman}';")
         self.assertEqual(snowman.encode('utf8'), b(cur.fetchone()[0]))
-        self.assertQuotedEqual(("SELECT '%s';" % snowman).encode('utf8'),
-            cur.mogrify("SELECT '%s';" % snowman))
+        self.assertQuotedEqual(f"SELECT '{snowman}';".encode('utf8'),
+            cur.mogrify(f"SELECT '{snowman}';"))
 
         # unicode args
         cur.execute("SELECT %s;", (snowman,))
         self.assertEqual(snowman.encode("utf-8"), b(cur.fetchone()[0]))
-        self.assertQuotedEqual(("SELECT '%s';" % snowman).encode('utf8'),
+        self.assertQuotedEqual(f"SELECT '{snowman}';".encode('utf8'),
             cur.mogrify("SELECT %s;", (snowman,)))
 
         # unicode query and args
         cur.execute("SELECT %s;", (snowman,))
         self.assertEqual(snowman.encode("utf-8"), b(cur.fetchone()[0]))
-        self.assertQuotedEqual(("SELECT '%s';" % snowman).encode('utf8'),
+        self.assertQuotedEqual(f"SELECT '{snowman}';".encode('utf8'),
             cur.mogrify("SELECT %s;", (snowman,)))
 
     def test_mogrify_decimal_explodes(self):
@@ -282,12 +282,12 @@ class CursorTests(ConnectingTestCase):
         cur = self.conn.cursor()
 
         # Set up the temporary function
-        cur.execute('''
-            CREATE FUNCTION {}({} INT)
+        cur.execute(f'''
+            CREATE FUNCTION {procname}({escaped_paramname} INT)
             RETURNS INT AS
                 'SELECT $1 * $1'
             LANGUAGE SQL
-        '''.format(procname, escaped_paramname))
+        ''')
 
         # Make sure callproc works right
         cur.callproc(procname, {paramname: 2})
@@ -573,8 +573,7 @@ class NamedCursorTests(ConnectingTestCase):
         time.sleep(0.2)
         t2 = next(i)[0]
         self.assert_((t2 - t1).microseconds * 1e-6 < 0.1,
-            "named cursor records fetched in 2 roundtrips (delta: %s)"
-            % (t2 - t1))
+            f"named cursor records fetched in 2 roundtrips (delta: {t2 - t1})")
 
     @skip_before_postgres(8, 0)
     def test_iter_named_cursor_default_itersize(self):
