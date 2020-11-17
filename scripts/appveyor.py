@@ -696,7 +696,7 @@ class Options:
     def py_ver(self):
         """The Python version to build as 2 digits string."""
         rv = os.environ['PY_VER']
-        assert rv in ('27', '34', '35', '36', '37', '38', '39'), rv
+        assert rv in ('27', '35', '36', '37', '38', '39'), rv
         return rv
 
     @property
@@ -780,13 +780,10 @@ class Options:
         # https://wiki.python.org/moin/WindowsCompilers
         # https://www.appveyor.com/docs/windows-images-software/#python
         # Py 2.7 = VS Ver. 9.0 (VS 2008)
-        # Py 3.3, 3.4 = VS Ver. 10.0 (VS 2010)
         # Py 3.5--3.8 = VS Ver. 14.0 (VS 2015)
         # Py 3.9 = VS Ver. 16.0 (VS 2019)
         vsvers = {
             '27': '9.0',
-            '33': '10.0',
-            '34': '10.0',
             '35': '14.0',
             '36': '14.0',
             '37': '14.0',

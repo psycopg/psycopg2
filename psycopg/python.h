@@ -34,8 +34,8 @@
 #error "psycopg requires Python 2.7"
 #endif
 
-#if PY_3 && PY_VERSION_HEX < 0x03040000
-#error "psycopg requires Python 3.4"
+#if PY_3 && PY_VERSION_HEX < 0x03050000
+#error "psycopg requires Python 3.5"
 #endif
 
 #include <structmember.h>
