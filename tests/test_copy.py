@@ -246,7 +246,7 @@ class CopyTests(ConnectingTestCase):
             curs.copy_expert, 'COPY tcopy (data) FROM STDIN', f)
 
     def test_copy_no_column_limit(self):
-        cols = ["c%050d" % i for i in range(200)]
+        cols = [f"c{i:050}" for i in range(200)]
 
         curs = self.conn.cursor()
         curs.execute('CREATE TEMPORARY TABLE manycols (%s)' % ',\n'.join(

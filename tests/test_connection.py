@@ -302,7 +302,7 @@ class ConnectionTests(ConnectingTestCase):
         # Stop the committer thread
         stop.append(True)
 
-        self.assert_(not notices, "%d notices raised" % len(notices))
+        self.assert_(not notices, f"{len(notices)} notices raised")
 
     def test_connect_cursor_factory(self):
         conn = self.connect(cursor_factory=psycopg2.extras.DictCursor)

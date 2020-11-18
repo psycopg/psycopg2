@@ -477,7 +477,7 @@ class MinTimeLoggingConnection(LoggingConnection):
         if t > self._mintime:
             if isinstance(msg, bytes):
                 msg = msg.decode(_ext.encodings[self.encoding], 'replace')
-            return msg + _os.linesep + "  (execution time: %d ms)" % t
+            return f"{msg}{_os.linesep}  (execution time: {t} ms)"
 
     def cursor(self, *args, **kwargs):
         kwargs.setdefault('cursor_factory',
@@ -603,7 +603,7 @@ class ReplicationCursor(_replicationCursor):
                 raise psycopg2.ProgrammingError(
                     "cannot specify timeline for logical replication")
 
-            command += " TIMELINE %d" % timeline
+            command += f" TIMELINE {timeline}"
 
         if options:
             if slot_type == REPLICATION_PHYSICAL:
@@ -869,7 +869,7 @@ class HstoreAdapter:
         for m in self._re_hstore.finditer(s):
             if m is None or m.start() != start:
                 raise psycopg2.InterfaceError(
-                    "error parsing hstore pair at char %d" % start)
+                    f"error parsing hstore pair at char {start}")
             k = _bsdec.sub(r'\1', m.group(1))
             v = m.group(2)
             if v is not None:
@@ -880,7 +880,7 @@ class HstoreAdapter:
 
         if start < len(s):
             raise psycopg2.InterfaceError(
-                "error parsing hstore: unparsed data after char %d" % start)
+                f"error parsing hstore: unparsed data after char {start}")
 
         return rv
 

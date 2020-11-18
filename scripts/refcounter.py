@@ -39,24 +39,24 @@ def main():
     sys.stdout.write(f"test suite {test.__name__}\n")
 
     for i in range(1, opt.nruns + 1):
-        sys.stdout.write("test suite run %d of %d\n" % (i, opt.nruns))
+        sys.stdout.write(f"test suite run {i} of {opt.nruns}\n")
         runner = unittest.TextTestRunner()
         runner.run(test.test_suite())
         dump(i, opt)
 
-    f1 = open('debug-%02d.txt' % (opt.nruns - 1)).readlines()
-    f2 = open('debug-%02d.txt' % opt.nruns).readlines()
+    f1 = open(f'debug-{(opt.nruns - 1):02}.txt').readlines()
+    f2 = open(f'debug-{opt.nruns:02}.txt').readlines()
     for line in difflib.unified_diff(f1, f2,
-            "run %d" % (opt.nruns - 1), "run %d" % opt.nruns):
+            f"run {opt.nruns - 1}", f"run {opt.nruns}"):
         sys.stdout.write(line)
 
     rv = f1 != f2 and 1 or 0
 
     if opt.objs:
-        f1 = open('objs-%02d.txt' % (opt.nruns - 1)).readlines()
-        f2 = open('objs-%02d.txt' % opt.nruns).readlines()
+        f1 = open(f'objs-{(opt.nruns - 1):02}.txt').readlines()
+        f2 = open(f'objs-{opt.nruns:02}.txt').readlines()
         for line in difflib.unified_diff(f1, f2,
-                "run %d" % (opt.nruns - 1), "run %d" % opt.nruns):
+                f"run {opt.nruns - 1}", f"run {opt.nruns}"):
             sys.stdout.write(line)
 
     return rv
@@ -85,7 +85,7 @@ def dump(i, opt):
 
     pprint(
         sorted(((v, str(k)) for k, v in c.items()), reverse=True),
-        stream=open("debug-%02d.txt" % i, "w"))
+        stream=open(f"debug-{i:02}.txt", "w"))
 
     if opt.objs:
         co = []
@@ -100,7 +100,7 @@ def dump(i, opt):
         else:
             co.sort()
 
-        pprint(co, stream=open("objs-%02d.txt" % i, "w"))
+        pprint(co, stream=open(f"objs-{i:02}.txt", "w"))
 
 
 if __name__ == '__main__':

@@ -309,7 +309,7 @@ def skip_before_libpq(*ver):
         v = libpq_version()
         decorator = unittest.skipIf(
             v < int("%d%02d%02d" % ver),
-            "skipped because libpq %d" % v,
+            f"skipped because libpq {v}",
         )
         return decorator(cls)
     return skip_before_libpq_
