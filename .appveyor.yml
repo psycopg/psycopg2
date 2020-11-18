@@ -21,7 +21,7 @@ environment:
         - {APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015, PY_VER: "36", PY_ARCH: "64"}
 
     OPENSSL_VERSION: "1_1_1h"
-    POSTGRES_VERSION: "11_4"
+    POSTGRES_VERSION: "13_0"
 
     PSYCOPG2_TESTDB: psycopg2_test
     PSYCOPG2_TESTDB_USER: postgres

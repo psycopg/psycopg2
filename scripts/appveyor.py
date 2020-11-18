@@ -53,6 +53,7 @@ def setup_build_env():
         str(opt.py_dir / 'Scripts'),
         r'C:\Strawberry\Perl\bin',
         r'C:\Program Files\Git\mingw64\bin',
+        str(opt.ssl_build_dir / 'bin'),
         os.environ['PATH'],
     ]
     setenv('PATH', os.pathsep.join(path))
@@ -212,7 +213,7 @@ def build_openssl():
         + ['no-shared', 'no-zlib', f'--prefix={top}', f'--openssldir={top}']
     )
 
-    run_command("nmake build_libs install_dev".split())
+    run_command("nmake build_libs install_sw".split())
 
     assert (top / 'lib' / 'libssl.lib').exists()
 
@@ -248,20 +249,6 @@ def build_libpq():
 
     pgbuild = opt.build_dir / f"postgres-REL_{ver}"
     os.chdir(pgbuild)
-
-    # Patch for OpenSSL 1.1 configuration. See:
-    # https://www.postgresql-archive.org/Compile-psql-9-6-with-SSL-Version-1-1-0-td6054118.html
-    assert Path("src/include/pg_config.h.win32").exists()
-    with open("src/include/pg_config.h.win32", 'a') as f:
-        print(
-            """
-#define HAVE_ASN1_STRING_GET0_DATA 1
-#define HAVE_BIO_GET_DATA 1
-#define HAVE_BIO_METH_NEW 1
-#define HAVE_OPENSSL_INIT_SSL 1
-""",
-            file=f,
-        )
 
     # Setup build config file (config.pl)
     os.chdir("src/tools/msvc")
@@ -326,7 +313,7 @@ def build_psycopg():
     add_pg_config_path()
     run_python(
         ["setup.py", "build_ext", "--have-ssl"]
-        + ["-l", "libpgcommon", "-l", "libpgport"]
+        + ["-l", "libpgcommon libpgport"]
         + ["-L", opt.ssl_build_dir / 'lib']
         + ['-I', opt.ssl_build_dir / 'include']
     )

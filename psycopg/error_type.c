@@ -65,6 +65,8 @@ base_exception_from_sqlstate(const char *sqlstate)
     switch (sqlstate[0]) {
     case '0':
         switch (sqlstate[1]) {
+        case '8': /* Class 08 - Connection Exception */
+            return OperationalError;
         case 'A': /* Class 0A - Feature Not Supported */
             return NotSupportedError;
         }
