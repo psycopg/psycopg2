@@ -185,3 +185,24 @@ class ThreadedConnectionPool(AbstractConnectionPool):
             self._closeall()
         finally:
             self._lock.release()
+
+class MultiProcessThreadedConnectionPool(ThreadedConnectionPool):
+
+    def __init__(self, *args, **kwargs):
+        self.pid = os.getpid()
+        self.args = args
+        self.kwargs = kwargs
+        super().__init__(*args, **kwargs)
+
+    def getconn(self, *args, **kwargs):
+        current_pid = os.getpid()
+        if current_pid != self.pid:
+            super().__init__(*self.args, **self.kwargs)
+            self.pid = current_pid
+        return super().getconn(*args, **kwargs)
+
+    def putconn(self, *args, **kwargs):
+        current_pid = os.getpid()
+        if current_pid != self.pid:
+            raise Exception("Returned a connection to the pool that was acquired pre-fork. Don't use pre-fork connections post-fork.")
+        return super().putconn(*args, **kwargs)
