@@ -280,6 +280,7 @@ class ExceptionsTestCase(ConnectingTestCase):
         self.assertEqual(e.diag.constraint_name, "chk_eq1")
         self.assertEqual(e.diag.datatype_name, None)
 
+    @skip_if_crdb("diagnostic")
     @skip_before_postgres(9, 6)
     def test_9_6_diagnostics(self):
         cur = self.conn.cursor()
