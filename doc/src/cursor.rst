@@ -124,7 +124,7 @@ The ``cursor`` class
     .. attribute:: name
 
         Read-only attribute containing the name of the cursor if it was
-        creates as named cursor by `connection.cursor()`, or `!None` if
+        created as named cursor by `connection.cursor()`, or `!None` if
         it is a client side cursor.  See :ref:`server-side-cursors`.
 
         .. extension::
