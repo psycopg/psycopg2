@@ -1,0 +1,37 @@
+name: Tests
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  tests:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-18.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+        - 2.7
+        - 3.6
+        - 3.7
+        - 3.8
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: install requirements
+      run: pip install --upgrade pip setuptools wheel
+    - name: install local project
+      run: pip install .
+    - name: cleanup local egg info
+      run: rm -rf psycopg2.egg-info
+    - name: setup test databases
+      run: sudo ./scripts/travis_prepare.sh
+    - name: run tests
+      run: ./scripts/travis_test.sh

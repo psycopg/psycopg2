@@ -1,0 +1,17 @@
+name: Build documentation
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  docs:
+    runs-on: ubuntu-18.04
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+    - name: install requirements
+      run: pip install --upgrade pip setuptools wheel
+    - name: run tests
+      run: TRAVIS_PYTHON_VERSION=3.6 ./scripts/travis_update_docs.sh
