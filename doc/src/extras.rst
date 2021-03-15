@@ -445,7 +445,9 @@ The individual messages in the replication stream are represented by
         If the *reply* or *force* parameters are not set, this method will
         just update internal structures without sending the feedback message
         to the server. The library sends feedback message automatically
-        when *status_interval* timeout is reached.
+        when *status_interval* timeout is reached. For this to work, you must
+        call `send_feedback()` on the same Cursor that you called `start_replication()`
+        on (the one in `message.cursor`) or your feedback will be lost.
 
         .. versionchanged:: 2.8.3
             added the *force* parameter.
