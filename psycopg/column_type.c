@@ -108,6 +108,16 @@ column_init(columnObject *self, PyObject *args, PyObject *kwargs)
         return -1;
     }
 
+    Py_XINCREF(self->name);
+    Py_XINCREF(self->type_code);
+    Py_XINCREF(self->display_size);
+    Py_XINCREF(self->internal_size);
+    Py_XINCREF(self->precision);
+    Py_XINCREF(self->scale);
+    Py_XINCREF(self->null_ok);
+    Py_XINCREF(self->table_oid);
+    Py_XINCREF(self->table_column);
+
     return 0;
 }
 
