@@ -351,25 +351,24 @@ class RangeCaster(object):
         """
         from psycopg2.extensions import STATUS_IN_TRANSACTION
         from psycopg2.extras import _solve_conn_curs
-        conn, curs = _solve_conn_curs(conn_or_curs)
+        with _solve_conn_curs(conn_or_curs) as (conn, curs):
+            if conn.info.server_version < 90200:
+                raise ProgrammingError("range types not available in version %s"
+                    % conn.info.server_version)
 
-        if conn.info.server_version < 90200:
-            raise ProgrammingError("range types not available in version %s"
-                % conn.info.server_version)
+            # Store the transaction status of the connection to revert it after use
+            conn_status = conn.status
 
-        # Store the transaction status of the connection to revert it after use
-        conn_status = conn.status
+            # Use the correct schema
+            if '.' in name:
+                schema, tname = name.split('.', 1)
+            else:
+                tname = name
+                schema = 'public'
 
-        # Use the correct schema
-        if '.' in name:
-            schema, tname = name.split('.', 1)
-        else:
-            tname = name
-            schema = 'public'
-
-        # get the type oid and attributes
-        try:
-            curs.execute("""\
+            # get the type oid and attributes
+            try:
+                curs.execute("""\
 select rngtypid, rngsubtype,
     (select typarray from pg_type where oid = rngtypid)
 from pg_range r
@@ -378,17 +377,17 @@ join pg_namespace ns on ns.oid = typnamespace
 where typname = %s and ns.nspname = %s;
 """, (tname, schema))
 
-        except ProgrammingError:
-            if not conn.autocommit:
-                conn.rollback()
-            raise
-        else:
-            rec = curs.fetchone()
+            except ProgrammingError:
+                if not conn.autocommit:
+                    conn.rollback()
+                raise
+            else:
+                rec = curs.fetchone()
 
-            # revert the status of the connection as before the command
-            if (conn_status != STATUS_IN_TRANSACTION
-            and not conn.autocommit):
-                conn.rollback()
+                # revert the status of the connection as before the command
+                if (conn_status != STATUS_IN_TRANSACTION
+                and not conn.autocommit):
+                    conn.rollback()
 
         if not rec:
             raise ProgrammingError(
