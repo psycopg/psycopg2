@@ -608,6 +608,10 @@ encodings_init(PyObject *module)
     int rv = -1;
 
     Dprintf("psycopgmodule: initializing encodings table");
+    if (psycoEncodings) {
+        Dprintf("encodings_init(): already called");
+        return 0;
+    }
 
     if (!(psycoEncodings = PyDict_New())) { goto exit; }
     Py_INCREF(psycoEncodings);
