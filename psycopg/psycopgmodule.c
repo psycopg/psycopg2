@@ -608,6 +608,10 @@ encodings_init(PyObject *module)
     int rv = -1;
 
     Dprintf("psycopgmodule: initializing encodings table");
+    if (psycoEncodings) {
+        Dprintf("encodings_init(): already called");
+        return 0;
+    }
 
     if (!(psycoEncodings = PyDict_New())) { goto exit; }
     Py_INCREF(psycoEncodings);
@@ -770,9 +774,8 @@ sqlstate_errors_init(PyObject *module)
     Dprintf("psycopgmodule: initializing sqlstate exceptions");
 
     if (sqlstate_errors) {
-        PyErr_SetString(PyExc_SystemError,
-            "sqlstate_errors_init(): already called");
-        goto exit;
+		Dprintf("sqlstate_errors_init(): already called");
+        return 0;
     }
     if (!(errmodule = PyImport_ImportModule("psycopg2.errors"))) {
         /* don't inject the exceptions into the errors module */
