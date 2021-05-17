@@ -1242,7 +1242,7 @@ class ConnectionTwoPhaseTests(ConnectingTestCase):
     def test_xid_unicode_unparsed(self):
         # We don't expect people shooting snowmen as transaction ids,
         # so if something explodes in an encode error I don't mind.
-        # Let's just check uniconde is accepted as type.
+        # Let's just check unicode is accepted as type.
         cnn = self.connect()
         cnn.set_client_encoding('utf8')
         cnn.tpc_begin(u"transaction-id")
