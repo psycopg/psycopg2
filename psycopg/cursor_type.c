@@ -768,7 +768,7 @@ curs_fetchone(cursorObject *self, PyObject *dummy)
     Dprintf("curs_fetchone: rowcount = %ld", self->rowcount);
 
     if (self->row >= self->rowcount) {
-        /* we exausted available data: return None */
+        /* we exhausted available data: return None */
         Py_RETURN_NONE;
     }
 
