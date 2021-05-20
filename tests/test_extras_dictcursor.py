@@ -20,14 +20,14 @@ import time
 import pickle
 import unittest
 from datetime import timedelta
+from functools import lru_cache
 
 import psycopg2
-from psycopg2.compat import lru_cache
 import psycopg2.extras
 from psycopg2.extras import NamedTupleConnection, NamedTupleCursor
 
 from .testutils import ConnectingTestCase, skip_before_postgres, \
-    skip_before_python, skip_from_python, crdb_version, skip_if_crdb
+    crdb_version, skip_if_crdb
 
 
 class _DictCursorBase(ConnectingTestCase):
@@ -179,27 +179,7 @@ class ExtrasDictCursorTests(_DictCursorBase):
         self.assertEqual(len(rv3), 2)
         self.assertEqual(len(rv), 2)
 
-    @skip_from_python(3)
-    def test_iter_methods_2(self):
-        curs = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        curs.execute("select 10 as a, 20 as b")
-        r = curs.fetchone()
-        self.assert_(isinstance(r.keys(), list))
-        self.assertEqual(len(r.keys()), 2)
-        self.assert_(isinstance(r.values(), tuple))     # sic?
-        self.assertEqual(len(r.values()), 2)
-        self.assert_(isinstance(r.items(), list))
-        self.assertEqual(len(r.items()), 2)
-
-        self.assert_(not isinstance(r.iterkeys(), list))
-        self.assertEqual(len(list(r.iterkeys())), 2)
-        self.assert_(not isinstance(r.itervalues(), list))
-        self.assertEqual(len(list(r.itervalues())), 2)
-        self.assert_(not isinstance(r.iteritems(), list))
-        self.assertEqual(len(list(r.iteritems())), 2)
-
-    @skip_before_python(3)
-    def test_iter_methods_3(self):
+    def test_iter_methods(self):
         curs = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         curs.execute("select 10 as a, 20 as b")
         r = curs.fetchone()
@@ -225,21 +205,6 @@ class ExtrasDictCursorTests(_DictCursorBase):
         self.assertEqual(list(r1.keys()), list(r.keys()))
         self.assertEqual(list(r1.values()), list(r.values()))
         self.assertEqual(list(r1.items()), list(r.items()))
-
-    @skip_from_python(3)
-    def test_order_iter(self):
-        curs = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        curs.execute("select 5 as foo, 4 as bar, 33 as baz, 2 as qux")
-        r = curs.fetchone()
-        self.assertEqual(list(r.iterkeys()), ['foo', 'bar', 'baz', 'qux'])
-        self.assertEqual(list(r.itervalues()), [5, 4, 33, 2])
-        self.assertEqual(list(r.iteritems()),
-            [('foo', 5), ('bar', 4), ('baz', 33), ('qux', 2)])
-
-        r1 = pickle.loads(pickle.dumps(r))
-        self.assertEqual(list(r1.iterkeys()), list(r.iterkeys()))
-        self.assertEqual(list(r1.itervalues()), list(r.itervalues()))
-        self.assertEqual(list(r1.iteritems()), list(r.iteritems()))
 
 
 class ExtrasDictCursorRealTests(_DictCursorBase):
@@ -340,27 +305,7 @@ class ExtrasDictCursorRealTests(_DictCursorBase):
         row = getter(curs)
         self.failUnless(row['foo'] == 'bar')
 
-    @skip_from_python(3)
-    def test_iter_methods_2(self):
-        curs = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        curs.execute("select 10 as a, 20 as b")
-        r = curs.fetchone()
-        self.assert_(isinstance(r.keys(), list))
-        self.assertEqual(len(r.keys()), 2)
-        self.assert_(isinstance(r.values(), list))
-        self.assertEqual(len(r.values()), 2)
-        self.assert_(isinstance(r.items(), list))
-        self.assertEqual(len(r.items()), 2)
-
-        self.assert_(not isinstance(r.iterkeys(), list))
-        self.assertEqual(len(list(r.iterkeys())), 2)
-        self.assert_(not isinstance(r.itervalues(), list))
-        self.assertEqual(len(list(r.itervalues())), 2)
-        self.assert_(not isinstance(r.iteritems(), list))
-        self.assertEqual(len(list(r.iteritems())), 2)
-
-    @skip_before_python(3)
-    def test_iter_methods_3(self):
+    def test_iter_methods(self):
         curs = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         curs.execute("select 10 as a, 20 as b")
         r = curs.fetchone()
@@ -386,21 +331,6 @@ class ExtrasDictCursorRealTests(_DictCursorBase):
         self.assertEqual(list(r1.keys()), list(r.keys()))
         self.assertEqual(list(r1.values()), list(r.values()))
         self.assertEqual(list(r1.items()), list(r.items()))
-
-    @skip_from_python(3)
-    def test_order_iter(self):
-        curs = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        curs.execute("select 5 as foo, 4 as bar, 33 as baz, 2 as qux")
-        r = curs.fetchone()
-        self.assertEqual(list(r.iterkeys()), ['foo', 'bar', 'baz', 'qux'])
-        self.assertEqual(list(r.itervalues()), [5, 4, 33, 2])
-        self.assertEqual(list(r.iteritems()),
-            [('foo', 5), ('bar', 4), ('baz', 33), ('qux', 2)])
-
-        r1 = pickle.loads(pickle.dumps(r))
-        self.assertEqual(list(r1.iterkeys()), list(r.iterkeys()))
-        self.assertEqual(list(r1.itervalues()), list(r.itervalues()))
-        self.assertEqual(list(r1.iteritems()), list(r.iteritems()))
 
     def test_pop(self):
         curs = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -564,7 +494,6 @@ class NamedTupleCursorTest(ConnectingTestCase):
         self.assertEqual(rv.f_column_, 2)
         self.assertEqual(rv.f3, 3)
 
-    @skip_before_python(3)
     @skip_before_postgres(8)
     def test_nonascii_name(self):
         curs = self.conn.cursor()
@@ -692,7 +621,7 @@ class NamedTupleCursorTest(ConnectingTestCase):
             recs = []
             curs = self.conn.cursor()
             for i in range(10):
-                curs.execute("select 1 as f%s" % i)
+                curs.execute(f"select 1 as f{i}")
                 recs.append(curs.fetchone())
 
             # Still in cache

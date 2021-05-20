@@ -426,10 +426,7 @@ def check_libpq_version():
         .decode('ascii')
         .rstrip()
     )
-    assert want_ver == got_ver, "libpq version mismatch: %r != %r" % (
-        want_ver,
-        got_ver,
-    )
+    assert want_ver == got_ver, f"libpq version mismatch: {want_ver!r} != {got_ver!r}"
 
 
 def run_test_suite():
@@ -671,7 +668,7 @@ def which(name):
             if os.path.isfile(fn):
                 return fn
 
-    raise Exception("couldn't find program on path: %s" % name)
+    raise Exception(f"couldn't find program on path: {name}")
 
 
 class Options:
@@ -683,7 +680,7 @@ class Options:
     def py_ver(self):
         """The Python version to build as 2 digits string."""
         rv = os.environ['PY_VER']
-        assert rv in ('27', '36', '37', '38', '39'), rv
+        assert rv in ('36', '37', '38', '39'), rv
         return rv
 
     @property
@@ -766,11 +763,9 @@ class Options:
     def vs_ver(self):
         # https://wiki.python.org/moin/WindowsCompilers
         # https://www.appveyor.com/docs/windows-images-software/#python
-        # Py 2.7 = VS Ver. 9.0 (VS 2008)
         # Py 3.6--3.8 = VS Ver. 14.0 (VS 2015)
         # Py 3.9 = VS Ver. 16.0 (VS 2019)
         vsvers = {
-            '27': '9.0',
             '36': '14.0',
             '37': '14.0',
             '38': '14.0',
@@ -835,7 +830,7 @@ class Options:
     def dist_dir(self):
         """The directory where to build packages to distribute."""
         return (
-            self.package_dir / 'dist' / ('psycopg2-%s' % self.package_version)
+            self.package_dir / 'dist' / (f'psycopg2-{self.package_version}')
         )
 
 

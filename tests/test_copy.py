@@ -34,7 +34,7 @@ from subprocess import Popen, PIPE
 
 import psycopg2
 import psycopg2.extensions
-from .testutils import skip_copy_if_green, PY2, TextIOBase
+from .testutils import skip_copy_if_green, TextIOBase
 from .testconfig import dsn
 
 
@@ -97,7 +97,7 @@ class CopyTests(ConnectingTestCase):
         curs = self.conn.cursor()
         f = StringIO()
         for i in range(10):
-            f.write("%s\n" % (i,))
+            f.write(f"{i}\n")
 
         f.seek(0)
         curs.copy_from(MinimalRead(f), "tcopy", columns=['id'])
@@ -109,7 +109,7 @@ class CopyTests(ConnectingTestCase):
         curs = self.conn.cursor()
         f = StringIO()
         for i in range(10):
-            f.write("%s\n" % (i,))
+            f.write(f"{i}\n")
 
         f.seek(0)
 
@@ -133,14 +133,9 @@ class CopyTests(ConnectingTestCase):
         self.conn.set_client_encoding('latin1')
         self._create_temp_table()  # the above call closed the xn
 
-        if PY2:
-            abin = ''.join(map(chr, range(32, 127) + range(160, 256)))
-            about = abin.decode('latin1').replace('\\', '\\\\')
-
-        else:
-            abin = bytes(list(range(32, 127))
-                + list(range(160, 256))).decode('latin1')
-            about = abin.replace('\\', '\\\\')
+        abin = bytes(list(range(32, 127))
+            + list(range(160, 256))).decode('latin1')
+        about = abin.replace('\\', '\\\\')
 
         curs = self.conn.cursor()
         curs.execute('insert into tcopy values (%s, %s)',
@@ -155,13 +150,9 @@ class CopyTests(ConnectingTestCase):
         self.conn.set_client_encoding('latin1')
         self._create_temp_table()  # the above call closed the xn
 
-        if PY2:
-            abin = ''.join(map(chr, range(32, 127) + range(160, 255)))
-            about = abin.replace('\\', '\\\\')
-        else:
-            abin = bytes(list(range(32, 127))
-                + list(range(160, 255))).decode('latin1')
-            about = abin.replace('\\', '\\\\').encode('latin1')
+        abin = bytes(list(range(32, 127))
+            + list(range(160, 255))).decode('latin1')
+        about = abin.replace('\\', '\\\\').encode('latin1')
 
         curs = self.conn.cursor()
         curs.execute('insert into tcopy values (%s, %s)',
@@ -176,15 +167,9 @@ class CopyTests(ConnectingTestCase):
         self.conn.set_client_encoding('latin1')
         self._create_temp_table()  # the above call closed the xn
 
-        if PY2:
-            abin = ''.join(map(chr, range(32, 127) + range(160, 256)))
-            abin = abin.decode('latin1')
-            about = abin.replace('\\', '\\\\')
-
-        else:
-            abin = bytes(list(range(32, 127))
-                + list(range(160, 256))).decode('latin1')
-            about = abin.replace('\\', '\\\\')
+        abin = bytes(list(range(32, 127))
+            + list(range(160, 256))).decode('latin1')
+        about = abin.replace('\\', '\\\\')
 
         f = io.StringIO()
         f.write(about)
@@ -224,7 +209,7 @@ class CopyTests(ConnectingTestCase):
         f = StringIO()
         for i, c in zip(range(nrecs), cycle(string.ascii_letters)):
             l = c * srec
-            f.write("%s\t%s\n" % (i, l))
+            f.write(f"{i}\t{l}\n")
 
         f.seek(0)
         curs.copy_from(MinimalRead(f), "tcopy", **copykw)
@@ -252,7 +237,7 @@ class CopyTests(ConnectingTestCase):
         self.assertEqual(ntests, len(string.ascii_letters))
 
     def test_copy_expert_file_refcount(self):
-        class Whatever(object):
+        class Whatever:
             pass
 
         f = Whatever()
@@ -261,7 +246,7 @@ class CopyTests(ConnectingTestCase):
             curs.copy_expert, 'COPY tcopy (data) FROM STDIN', f)
 
     def test_copy_no_column_limit(self):
-        cols = ["c%050d" % i for i in range(200)]
+        cols = [f"c{i:050}" for i in range(200)]
 
         curs = self.conn.cursor()
         curs.execute('CREATE TEMPORARY TABLE manycols (%s)' % ',\n'.join(
@@ -332,9 +317,8 @@ class CopyTests(ConnectingTestCase):
     @slow
     def test_copy_from_segfault(self):
         # issue #219
-        script = ("""\
-import psycopg2
-conn = psycopg2.connect(%(dsn)r)
+        script = f"""import psycopg2
+conn = psycopg2.connect({dsn!r})
 curs = conn.cursor()
 curs.execute("create table copy_segf (id int)")
 try:
@@ -342,7 +326,7 @@ try:
 except psycopg2.ProgrammingError:
     pass
 conn.close()
-""" % {'dsn': dsn})
+"""
 
         proc = Popen([sys.executable, '-c', script])
         proc.communicate()
@@ -351,9 +335,8 @@ conn.close()
     @slow
     def test_copy_to_segfault(self):
         # issue #219
-        script = ("""\
-import psycopg2
-conn = psycopg2.connect(%(dsn)r)
+        script = f"""import psycopg2
+conn = psycopg2.connect({dsn!r})
 curs = conn.cursor()
 curs.execute("create table copy_segf (id int)")
 try:
@@ -361,7 +344,7 @@ try:
 except psycopg2.ProgrammingError:
     pass
 conn.close()
-""" % {'dsn': dsn})
+"""
 
         proc = Popen([sys.executable, '-c', script], stdout=PIPE)
         proc.communicate()

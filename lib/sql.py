@@ -27,13 +27,12 @@
 import string
 
 from psycopg2 import extensions as ext
-from psycopg2.compat import PY3, string_types
 
 
 _formatter = string.Formatter()
 
 
-class Composable(object):
+class Composable:
     """
     Abstract base class for objects that can be used to compose an SQL string.
 
@@ -51,7 +50,7 @@ class Composable(object):
         self._wrapped = wrapped
 
     def __repr__(self):
-        return "%s(%r)" % (self.__class__.__name__, self._wrapped)
+        return f"{self.__class__.__name__}({self._wrapped!r})"
 
     def as_string(self, context):
         """
@@ -107,10 +106,10 @@ class Composed(Composable):
         for i in seq:
             if not isinstance(i, Composable):
                 raise TypeError(
-                    "Composed elements must be Composable, got %r instead" % i)
+                    f"Composed elements must be Composable, got {i!r} instead")
             wrapped.append(i)
 
-        super(Composed, self).__init__(wrapped)
+        super().__init__(wrapped)
 
     @property
     def seq(self):
@@ -148,7 +147,7 @@ class Composed(Composable):
             "foo", "bar"
 
         """
-        if isinstance(joiner, string_types):
+        if isinstance(joiner, str):
             joiner = SQL(joiner)
         elif not isinstance(joiner, SQL):
             raise TypeError(
@@ -180,9 +179,9 @@ class SQL(Composable):
         select "foo", "bar" from "table"
     """
     def __init__(self, string):
-        if not isinstance(string, string_types):
+        if not isinstance(string, str):
             raise TypeError("SQL values must be strings")
-        super(SQL, self).__init__(string)
+        super().__init__(string)
 
     @property
     def string(self):
@@ -324,10 +323,10 @@ class Identifier(Composable):
             raise TypeError("Identifier cannot be empty")
 
         for s in strings:
-            if not isinstance(s, string_types):
+            if not isinstance(s, str):
                 raise TypeError("SQL identifier parts must be strings")
 
-        super(Identifier, self).__init__(strings)
+        super().__init__(strings)
 
     @property
     def strings(self):
@@ -345,9 +344,7 @@ class Identifier(Composable):
                 "the Identifier wraps more than one than one string")
 
     def __repr__(self):
-        return "%s(%s)" % (
-            self.__class__.__name__,
-            ', '.join(map(repr, self._wrapped)))
+        return f"{self.__class__.__name__}({', '.join(map(repr, self._wrapped))})"
 
     def as_string(self, context):
         return '.'.join(ext.quote_ident(s, context) for s in self._wrapped)
@@ -392,7 +389,7 @@ class Literal(Composable):
             a.prepare(conn)
 
         rv = a.getquoted()
-        if PY3 and isinstance(rv, bytes):
+        if isinstance(rv, bytes):
             rv = rv.decode(ext.encodings[conn.encoding])
 
         return rv
@@ -426,14 +423,14 @@ class Placeholder(Composable):
     """
 
     def __init__(self, name=None):
-        if isinstance(name, string_types):
+        if isinstance(name, str):
             if ')' in name:
-                raise ValueError("invalid name: %r" % name)
+                raise ValueError(f"invalid name: {name!r}")
 
         elif name is not None:
-            raise TypeError("expected string or None as name, got %r" % name)
+            raise TypeError(f"expected string or None as name, got {name!r}")
 
-        super(Placeholder, self).__init__(name)
+        super().__init__(name)
 
     @property
     def name(self):
@@ -441,12 +438,11 @@ class Placeholder(Composable):
         return self._wrapped
 
     def __repr__(self):
-        return "Placeholder(%r)" % (
-            self._wrapped if self._wrapped is not None else '',)
+        return f"Placeholder({self._wrapped if self._wrapped is not None else ''!r})"
 
     def as_string(self, context):
         if self._wrapped is not None:
-            return "%%(%s)s" % self._wrapped
+            return f"%({self._wrapped})"
         else:
             return "%s"
 

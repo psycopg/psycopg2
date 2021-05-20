@@ -40,11 +40,7 @@ pint_getquoted(pintObject *self, PyObject *args)
 
     /* Convert subclass to int to handle IntEnum and other subclasses
      * whose str() is not the number. */
-    if (PyLong_CheckExact(self->wrapped)
-#if PY_2
-        || PyInt_CheckExact(self->wrapped)
-#endif
-       ) {
+    if (PyLong_CheckExact(self->wrapped)) {
         res = PyObject_Str(self->wrapped);
     } else {
         PyObject *tmp;
@@ -60,8 +56,7 @@ pint_getquoted(pintObject *self, PyObject *args)
         goto exit;
     }
 
-#if PY_3
-    /* unicode to bytes in Py3 */
+    /* unicode to bytes */
     {
         PyObject *tmp = PyUnicode_AsUTF8String(res);
         Py_DECREF(res);
@@ -69,7 +64,6 @@ pint_getquoted(pintObject *self, PyObject *args)
             goto exit;
         }
     }
-#endif
 
     if ('-' == Bytes_AS_STRING(res)[0]) {
         /* Prepend a space in front of negative numbers (ticket #57) */

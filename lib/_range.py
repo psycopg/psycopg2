@@ -30,10 +30,9 @@ import re
 from psycopg2._psycopg import ProgrammingError, InterfaceError
 from psycopg2.extensions import ISQLQuote, adapt, register_adapter
 from psycopg2.extensions import new_type, new_array_type, register_type
-from psycopg2.compat import string_types
 
 
-class Range(object):
+class Range:
     """Python representation for a PostgreSQL |range|_ type.
 
     :param lower: lower bound for the range. `!None` means unbound
@@ -48,7 +47,7 @@ class Range(object):
     def __init__(self, lower=None, upper=None, bounds='[)', empty=False):
         if not empty:
             if bounds not in ('[)', '(]', '()', '[]'):
-                raise ValueError("bound flags not valid: %r" % bounds)
+                raise ValueError(f"bound flags not valid: {bounds!r}")
 
             self._lower = lower
             self._upper = upper
@@ -58,9 +57,9 @@ class Range(object):
 
     def __repr__(self):
         if self._bounds is None:
-            return "%s(empty=True)" % self.__class__.__name__
+            return f"{self.__class__.__name__}(empty=True)"
         else:
-            return "%s(%r, %r, %r)" % (self.__class__.__name__,
+            return "{}({!r}, {!r}, {!r})".format(self.__class__.__name__,
                 self._lower, self._upper, self._bounds)
 
     def __str__(self):
@@ -239,7 +238,7 @@ def register_range(pgrange, pyrange, conn_or_curs, globally=False):
     return caster
 
 
-class RangeAdapter(object):
+class RangeAdapter:
     """`ISQLQuote` adapter for `Range` subclasses.
 
     This is an abstract class: concrete classes must set a `name` class
@@ -287,7 +286,7 @@ class RangeAdapter(object):
             + b", '" + r._bounds.encode('utf8') + b"')"
 
 
-class RangeCaster(object):
+class RangeCaster:
     """Helper class to convert between `Range` and PostgreSQL range types.
 
     Objects of this class are usually created by `register_range()`. Manual
@@ -315,7 +314,7 @@ class RangeCaster(object):
         # an implementation detail and is not documented. It is currently used
         # for the numeric ranges.
         self.adapter = None
-        if isinstance(pgrange, string_types):
+        if isinstance(pgrange, str):
             self.adapter = type(pgrange, (RangeAdapter,), {})
             self.adapter.name = pgrange
         else:
@@ -332,7 +331,7 @@ class RangeCaster(object):
 
         self.range = None
         try:
-            if isinstance(pyrange, string_types):
+            if isinstance(pyrange, str):
                 self.range = type(pyrange, (Range,), {})
             if issubclass(pyrange, Range) and pyrange is not Range:
                 self.range = pyrange
@@ -392,7 +391,7 @@ where typname = %s and ns.nspname = %s;
 
         if not rec:
             raise ProgrammingError(
-                "PostgreSQL type '%s' not found" % name)
+                f"PostgreSQL type '{name}' not found")
 
         type, subtype, array = rec
 
@@ -424,7 +423,7 @@ where typname = %s and ns.nspname = %s;
 
         m = self._re_range.match(s)
         if m is None:
-            raise InterfaceError("failed to parse range: '%s'" % s)
+            raise InterfaceError(f"failed to parse range: '{s}'")
 
         lower = m.group(3)
         if lower is None:
@@ -504,8 +503,7 @@ class NumberRangeAdapter(RangeAdapter):
         else:
             upper = ''
 
-        return ("'%s%s,%s%s'" % (
-            r._bounds[0], lower, upper, r._bounds[1])).encode('ascii')
+        return (f"'{r._bounds[0]}{lower},{upper}{r._bounds[1]}'").encode('ascii')
 
 
 # TODO: probably won't work with infs, nans and other tricky cases.

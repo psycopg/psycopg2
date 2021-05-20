@@ -19,7 +19,7 @@ class TwoPhaseCommitTests(unittest.TestCase):
     def make_xid(self, con):
         id = TwoPhaseCommitTests._last_id
         TwoPhaseCommitTests._last_id += 1
-        return con.xid(42, "%s%d" % (self._global_id_prefix, id), "qualifier")
+        return con.xid(42, f"{self._global_id_prefix}{id}", "qualifier")
 
     def test_xid(self):
         con = self.connect()

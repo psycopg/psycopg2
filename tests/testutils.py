@@ -34,31 +34,15 @@ import platform
 import unittest
 from functools import wraps
 from ctypes.util import find_library
+from io import StringIO         # noqa
+from io import TextIOBase       # noqa
+from importlib import reload    # noqa
 
 import psycopg2
 import psycopg2.errors
 import psycopg2.extensions
-from psycopg2.compat import PY2, PY3, string_types, text_type
 
 from .testconfig import green, dsn, repl_dsn
-
-# Python 2/3 compatibility
-
-if PY2:
-    # Python 2
-    from StringIO import StringIO
-    TextIOBase = object
-    long = long
-    reload = reload
-    unichr = unichr
-
-else:
-    # Python 3
-    from io import StringIO         # noqa
-    from io import TextIOBase       # noqa
-    from importlib import reload    # noqa
-    long = int
-    unichr = chr
 
 
 # Silence warnings caused by the stubbornness of the Python unittest
@@ -102,7 +86,7 @@ class ConnectingTestCase(unittest.TestCase):
     def assertQuotedEqual(self, first, second, msg=None):
         """Compare two quoted strings disregarding eventual E'' quotes"""
         def f(s):
-            if isinstance(s, text_type):
+            if isinstance(s, str):
                 return re.sub(r"\bE'", "'", s)
             elif isinstance(first, bytes):
                 return re.sub(br"\bE'", b"'", s)
@@ -116,8 +100,7 @@ class ConnectingTestCase(unittest.TestCase):
             self._conns
         except AttributeError as e:
             raise AttributeError(
-                "%s (did you forget to call ConnectingTestCase.setUp()?)"
-                % e)
+                f"{e} (did you forget to call ConnectingTestCase.setUp()?)")
 
         if 'dsn' in kwargs:
             conninfo = kwargs.pop('dsn')
@@ -150,7 +133,7 @@ class ConnectingTestCase(unittest.TestCase):
             # Otherwise we tried to run some bad operation in the connection
             # (e.g. bug #482) and we'd rather know that.
             if e.pgcode is None:
-                return self.skipTest("replication db not configured: %s" % e)
+                return self.skipTest(f"replication db not configured: {e}")
             else:
                 raise
 
@@ -326,7 +309,7 @@ def skip_before_libpq(*ver):
         v = libpq_version()
         decorator = unittest.skipIf(
             v < int("%d%02d%02d" % ver),
-            "skipped because libpq %d" % v,
+            f"skipped because libpq {v}",
         )
         return decorator(cls)
     return skip_before_libpq_
@@ -340,7 +323,7 @@ def skip_after_libpq(*ver):
         v = libpq_version()
         decorator = unittest.skipIf(
             v >= int("%d%02d%02d" % ver),
-            "skipped because libpq %s" % v,
+            f"skipped because libpq {v}",
         )
         return decorator(cls)
     return skip_after_libpq_
@@ -351,8 +334,7 @@ def skip_before_python(*ver):
     def skip_before_python_(cls):
         decorator = unittest.skipIf(
             sys.version_info[:len(ver)] < ver,
-            "skipped because Python %s"
-            % ".".join(map(str, sys.version_info[:len(ver)])),
+            f"skipped because Python {'.'.join(map(str, sys.version_info[:len(ver)]))}",
         )
         return decorator(cls)
     return skip_before_python_
@@ -363,8 +345,7 @@ def skip_from_python(*ver):
     def skip_from_python_(cls):
         decorator = unittest.skipIf(
             sys.version_info[:len(ver)] >= ver,
-            "skipped because Python %s"
-            % ".".join(map(str, sys.version_info[:len(ver)])),
+            f"skipped because Python {'.'.join(map(str, sys.version_info[:len(ver)]))}",
         )
         return decorator(cls)
     return skip_from_python_
@@ -431,7 +412,7 @@ def crdb_version(conn, __crdb_version=[]):
         m = re.search(r"\bv(\d+)\.(\d+)\.(\d+)", sver)
         if not m:
             raise ValueError(
-                "can't parse CockroachDB version from %s" % sver)
+                f"can't parse CockroachDB version from {sver}")
 
         ver = int(m.group(1)) * 10000 + int(m.group(2)) * 100 + int(m.group(3))
         __crdb_version.append(ver)
@@ -454,8 +435,8 @@ def skip_if_crdb(reason, conn=None, version=None):
     "== 20.1.3": the test will be skipped only if the version matches.
 
     """
-    if not isinstance(reason, string_types):
-        raise TypeError("reason should be a string, got %r instead" % reason)
+    if not isinstance(reason, str):
+        raise TypeError(f"reason should be a string, got {reason!r} instead")
 
     if conn is not None:
         ver = crdb_version(conn)
@@ -465,7 +446,7 @@ def skip_if_crdb(reason, conn=None, version=None):
                     "%s (https://github.com/cockroachdb/cockroach/issues/%s)"
                     % (reason, crdb_reasons[reason]))
             raise unittest.SkipTest(
-                "not supported on CockroachDB %s: %s" % (ver, reason))
+                f"not supported on CockroachDB {ver}: {reason}")
 
     @decorate_all_tests
     def skip_if_crdb_(f):
@@ -519,14 +500,13 @@ def _crdb_match_version(version, pattern):
     return op(version, ref)
 
 
-class py3_raises_typeerror(object):
+class raises_typeerror:
     def __enter__(self):
         pass
 
     def __exit__(self, type, exc, tb):
-        if PY3:
-            assert type is TypeError
-            return True
+        assert type is TypeError
+        return True
 
 
 def slow(f):

@@ -190,7 +190,7 @@ psyco_ensure_bytes(PyObject *obj)
 
 /* Take a Python object and return text from it.
  *
- * On Py3 this means converting bytes to unicode. On Py2 bytes are fine.
+ * This means converting bytes to unicode.
  *
  * The function is ref neutral: steals a ref from obj and adds one to the
  * return value.  It is safe to call it on NULL.
@@ -198,9 +198,6 @@ psyco_ensure_bytes(PyObject *obj)
 STEALS(1) PyObject *
 psyco_ensure_text(PyObject *obj)
 {
-#if PY_2
-    return obj;
-#else
     if (obj) {
         /* bytes to unicode in Py3 */
         PyObject *rv = PyUnicode_FromEncodedObject(obj, "utf8", "replace");
@@ -210,7 +207,6 @@ psyco_ensure_text(PyObject *obj)
     else {
         return NULL;
     }
-#endif
 }
 
 /* Check if a file derives from TextIOBase.
@@ -309,24 +305,13 @@ exit:
 
 /* Convert a C string into Python Text using a specified codec.
  *
- * The codec is the python function codec.getdecoder(enc). It is only used on
- * Python 3 to return unicode: in Py2 the function returns a string.
+ * The codec is the python function codec.getdecoder(enc).
  *
  * len is optional: use -1 to have it calculated by the function.
  */
 PyObject *
 psyco_text_from_chars_safe(const char *str, Py_ssize_t len, PyObject *decoder)
 {
-#if PY_2
-
-    if (!str) { Py_RETURN_NONE; }
-
-    if (len < 0) { len = strlen(str); }
-
-    return PyString_FromStringAndSize(str, len);
-
-#else
-
     static PyObject *replace = NULL;
     PyObject *rv = NULL;
     PyObject *b = NULL;
@@ -356,8 +341,6 @@ exit:
     Py_XDECREF(t);
     Py_XDECREF(b);
     return rv;
-
-#endif
 }
 
 

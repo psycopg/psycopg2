@@ -33,7 +33,7 @@ class PoolError(psycopg2.Error):
     pass
 
 
-class AbstractConnectionPool(object):
+class AbstractConnectionPool:
     """Generic key-based pooling code."""
 
     def __init__(self, minconn, maxconn, *args, **kwargs):

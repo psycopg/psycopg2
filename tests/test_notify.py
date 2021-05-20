@@ -56,23 +56,23 @@ class NotifiesTests(ConnectingTestCase):
         if payload is None:
             payload = ''
         else:
-            payload = ", %r" % payload
+            payload = f", {payload!r}"
 
         script = ("""\
 import time
-time.sleep(%(sec)s)
-import %(module)s as psycopg2
-import %(module)s.extensions as ext
-conn = psycopg2.connect(%(dsn)r)
+time.sleep({sec})
+import {module} as psycopg2
+import {module}.extensions as ext
+conn = psycopg2.connect({dsn!r})
 conn.set_isolation_level(ext.ISOLATION_LEVEL_AUTOCOMMIT)
 print(conn.info.backend_pid)
 curs = conn.cursor()
-curs.execute("NOTIFY " %(name)r %(payload)r)
+curs.execute("NOTIFY " {name!r} {payload!r})
 curs.close()
 conn.close()
-""" % {
-            'module': psycopg2.__name__,
-            'dsn': dsn, 'sec': sec, 'name': name, 'payload': payload})
+""".format(
+            module=psycopg2.__name__,
+            dsn=dsn, sec=sec, name=name, payload=payload))
 
         return Popen([sys.executable, '-c', script], stdout=PIPE)
 

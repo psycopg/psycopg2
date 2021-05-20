@@ -38,7 +38,7 @@ from psycopg2 import extensions as _ext
 from .extensions import cursor as _cursor
 from .extensions import connection as _connection
 from .extensions import adapt as _A, quote_ident
-from .compat import PY2, PY3, lru_cache
+from functools import lru_cache
 
 from psycopg2._psycopg import (                             # noqa
     REPLICATION_PHYSICAL, REPLICATION_LOGICAL,
@@ -72,47 +72,47 @@ class DictCursorBase(_cursor):
         else:
             raise NotImplementedError(
                 "DictCursorBase can't be instantiated without a row factory.")
-        super(DictCursorBase, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._query_executed = False
         self._prefetch = False
         self.row_factory = row_factory
 
     def fetchone(self):
         if self._prefetch:
-            res = super(DictCursorBase, self).fetchone()
+            res = super().fetchone()
         if self._query_executed:
             self._build_index()
         if not self._prefetch:
-            res = super(DictCursorBase, self).fetchone()
+            res = super().fetchone()
         return res
 
     def fetchmany(self, size=None):
         if self._prefetch:
-            res = super(DictCursorBase, self).fetchmany(size)
+            res = super().fetchmany(size)
         if self._query_executed:
             self._build_index()
         if not self._prefetch:
-            res = super(DictCursorBase, self).fetchmany(size)
+            res = super().fetchmany(size)
         return res
 
     def fetchall(self):
         if self._prefetch:
-            res = super(DictCursorBase, self).fetchall()
+            res = super().fetchall()
         if self._query_executed:
             self._build_index()
         if not self._prefetch:
-            res = super(DictCursorBase, self).fetchall()
+            res = super().fetchall()
         return res
 
     def __iter__(self):
         try:
             if self._prefetch:
-                res = super(DictCursorBase, self).__iter__()
+                res = super().__iter__()
                 first = next(res)
             if self._query_executed:
                 self._build_index()
             if not self._prefetch:
-                res = super(DictCursorBase, self).__iter__()
+                res = super().__iter__()
                 first = next(res)
 
             yield first
@@ -126,7 +126,7 @@ class DictConnection(_connection):
     """A connection that uses `DictCursor` automatically."""
     def cursor(self, *args, **kwargs):
         kwargs.setdefault('cursor_factory', self.cursor_factory or DictCursor)
-        return super(DictConnection, self).cursor(*args, **kwargs)
+        return super().cursor(*args, **kwargs)
 
 
 class DictCursor(DictCursorBase):
@@ -137,18 +137,18 @@ class DictCursor(DictCursorBase):
 
     def __init__(self, *args, **kwargs):
         kwargs['row_factory'] = DictRow
-        super(DictCursor, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._prefetch = True
 
     def execute(self, query, vars=None):
         self.index = OrderedDict()
         self._query_executed = True
-        return super(DictCursor, self).execute(query, vars)
+        return super().execute(query, vars)
 
     def callproc(self, procname, vars=None):
         self.index = OrderedDict()
         self._query_executed = True
-        return super(DictCursor, self).callproc(procname, vars)
+        return super().callproc(procname, vars)
 
     def _build_index(self):
         if self._query_executed and self.description:
@@ -169,22 +169,22 @@ class DictRow(list):
     def __getitem__(self, x):
         if not isinstance(x, (int, slice)):
             x = self._index[x]
-        return super(DictRow, self).__getitem__(x)
+        return super().__getitem__(x)
 
     def __setitem__(self, x, v):
         if not isinstance(x, (int, slice)):
             x = self._index[x]
-        super(DictRow, self).__setitem__(x, v)
+        super().__setitem__(x, v)
 
     def items(self):
-        g = super(DictRow, self).__getitem__
+        g = super().__getitem__
         return ((n, g(self._index[n])) for n in self._index)
 
     def keys(self):
         return iter(self._index)
 
     def values(self):
-        g = super(DictRow, self).__getitem__
+        g = super().__getitem__
         return (g(self._index[n]) for n in self._index)
 
     def get(self, x, default=None):
@@ -201,7 +201,7 @@ class DictRow(list):
 
     def __reduce__(self):
         # this is apparently useless, but it fixes #1073
-        return super(DictRow, self).__reduce__()
+        return super().__reduce__()
 
     def __getstate__(self):
         return self[:], self._index.copy()
@@ -210,27 +210,12 @@ class DictRow(list):
         self[:] = data[0]
         self._index = data[1]
 
-    if PY2:
-        iterkeys = keys
-        itervalues = values
-        iteritems = items
-        has_key = __contains__
-
-        def keys(self):
-            return list(self.iterkeys())
-
-        def values(self):
-            return tuple(self.itervalues())
-
-        def items(self):
-            return list(self.iteritems())
-
 
 class RealDictConnection(_connection):
     """A connection that uses `RealDictCursor` automatically."""
     def cursor(self, *args, **kwargs):
         kwargs.setdefault('cursor_factory', self.cursor_factory or RealDictCursor)
-        return super(RealDictConnection, self).cursor(*args, **kwargs)
+        return super().cursor(*args, **kwargs)
 
 
 class RealDictCursor(DictCursorBase):
@@ -243,17 +228,17 @@ class RealDictCursor(DictCursorBase):
     """
     def __init__(self, *args, **kwargs):
         kwargs['row_factory'] = RealDictRow
-        super(RealDictCursor, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def execute(self, query, vars=None):
         self.column_mapping = []
         self._query_executed = True
-        return super(RealDictCursor, self).execute(query, vars)
+        return super().execute(query, vars)
 
     def callproc(self, procname, vars=None):
         self.column_mapping = []
         self._query_executed = True
-        return super(RealDictCursor, self).callproc(procname, vars)
+        return super().callproc(procname, vars)
 
     def _build_index(self):
         if self._query_executed and self.description:
@@ -271,7 +256,7 @@ class RealDictRow(OrderedDict):
         else:
             cursor = None
 
-        super(RealDictRow, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         if cursor is not None:
             # Required for named cursors
@@ -287,20 +272,20 @@ class RealDictRow(OrderedDict):
         if RealDictRow in self:
             # We are in the row building phase
             mapping = self[RealDictRow]
-            super(RealDictRow, self).__setitem__(mapping[key], value)
+            super().__setitem__(mapping[key], value)
             if key == len(mapping) - 1:
                 # Row building finished
                 del self[RealDictRow]
             return
 
-        super(RealDictRow, self).__setitem__(key, value)
+        super().__setitem__(key, value)
 
 
 class NamedTupleConnection(_connection):
     """A connection that uses `NamedTupleCursor` automatically."""
     def cursor(self, *args, **kwargs):
         kwargs.setdefault('cursor_factory', self.cursor_factory or NamedTupleCursor)
-        return super(NamedTupleConnection, self).cursor(*args, **kwargs)
+        return super().cursor(*args, **kwargs)
 
 
 class NamedTupleCursor(_cursor):
@@ -324,18 +309,18 @@ class NamedTupleCursor(_cursor):
 
     def execute(self, query, vars=None):
         self.Record = None
-        return super(NamedTupleCursor, self).execute(query, vars)
+        return super().execute(query, vars)
 
     def executemany(self, query, vars):
         self.Record = None
-        return super(NamedTupleCursor, self).executemany(query, vars)
+        return super().executemany(query, vars)
 
     def callproc(self, procname, vars=None):
         self.Record = None
-        return super(NamedTupleCursor, self).callproc(procname, vars)
+        return super().callproc(procname, vars)
 
     def fetchone(self):
-        t = super(NamedTupleCursor, self).fetchone()
+        t = super().fetchone()
         if t is not None:
             nt = self.Record
             if nt is None:
@@ -343,14 +328,14 @@ class NamedTupleCursor(_cursor):
             return nt._make(t)
 
     def fetchmany(self, size=None):
-        ts = super(NamedTupleCursor, self).fetchmany(size)
+        ts = super().fetchmany(size)
         nt = self.Record
         if nt is None:
             nt = self.Record = self._make_nt()
         return list(map(nt._make, ts))
 
     def fetchall(self):
-        ts = super(NamedTupleCursor, self).fetchall()
+        ts = super().fetchall()
         nt = self.Record
         if nt is None:
             nt = self.Record = self._make_nt()
@@ -358,7 +343,7 @@ class NamedTupleCursor(_cursor):
 
     def __iter__(self):
         try:
-            it = super(NamedTupleCursor, self).__iter__()
+            it = super().__iter__()
             t = next(it)
 
             nt = self.Record
@@ -436,7 +421,7 @@ class LoggingConnection(_connection):
     def _logtofile(self, msg, curs):
         msg = self.filter(msg, curs)
         if msg:
-            if PY3 and isinstance(msg, bytes):
+            if isinstance(msg, bytes):
                 msg = msg.decode(_ext.encodings[self.encoding], 'replace')
             self._logobj.write(msg + _os.linesep)
 
@@ -453,7 +438,7 @@ class LoggingConnection(_connection):
     def cursor(self, *args, **kwargs):
         self._check()
         kwargs.setdefault('cursor_factory', self.cursor_factory or LoggingCursor)
-        return super(LoggingConnection, self).cursor(*args, **kwargs)
+        return super().cursor(*args, **kwargs)
 
 
 class LoggingCursor(_cursor):
@@ -461,13 +446,13 @@ class LoggingCursor(_cursor):
 
     def execute(self, query, vars=None):
         try:
-            return super(LoggingCursor, self).execute(query, vars)
+            return super().execute(query, vars)
         finally:
             self.connection.log(self.query, self)
 
     def callproc(self, procname, vars=None):
         try:
-            return super(LoggingCursor, self).callproc(procname, vars)
+            return super().callproc(procname, vars)
         finally:
             self.connection.log(self.query, self)
 
@@ -490,9 +475,9 @@ class MinTimeLoggingConnection(LoggingConnection):
     def filter(self, msg, curs):
         t = (_time.time() - curs.timestamp) * 1000
         if t > self._mintime:
-            if PY3 and isinstance(msg, bytes):
+            if isinstance(msg, bytes):
                 msg = msg.decode(_ext.encodings[self.encoding], 'replace')
-            return msg + _os.linesep + "  (execution time: %d ms)" % t
+            return f"{msg}{_os.linesep}  (execution time: {t} ms)"
 
     def cursor(self, *args, **kwargs):
         kwargs.setdefault('cursor_factory',
@@ -516,14 +501,14 @@ class LogicalReplicationConnection(_replicationConnection):
 
     def __init__(self, *args, **kwargs):
         kwargs['replication_type'] = REPLICATION_LOGICAL
-        super(LogicalReplicationConnection, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class PhysicalReplicationConnection(_replicationConnection):
 
     def __init__(self, *args, **kwargs):
         kwargs['replication_type'] = REPLICATION_PHYSICAL
-        super(PhysicalReplicationConnection, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class StopReplication(Exception):
@@ -544,7 +529,7 @@ class ReplicationCursor(_replicationCursor):
     def create_replication_slot(self, slot_name, slot_type=None, output_plugin=None):
         """Create streaming replication slot."""
 
-        command = "CREATE_REPLICATION_SLOT %s " % quote_ident(slot_name, self)
+        command = f"CREATE_REPLICATION_SLOT {quote_ident(slot_name, self)} "
 
         if slot_type is None:
             slot_type = self.connection.replication_type
@@ -555,7 +540,7 @@ class ReplicationCursor(_replicationCursor):
                     "output plugin name is required to create "
                     "logical replication slot")
 
-            command += "LOGICAL %s" % quote_ident(output_plugin, self)
+            command += f"LOGICAL {quote_ident(output_plugin, self)}"
 
         elif slot_type == REPLICATION_PHYSICAL:
             if output_plugin is not None:
@@ -567,14 +552,14 @@ class ReplicationCursor(_replicationCursor):
 
         else:
             raise psycopg2.ProgrammingError(
-                "unrecognized replication type: %s" % repr(slot_type))
+                f"unrecognized replication type: {repr(slot_type)}")
 
         self.execute(command)
 
     def drop_replication_slot(self, slot_name):
         """Drop streaming replication slot."""
 
-        command = "DROP_REPLICATION_SLOT %s" % quote_ident(slot_name, self)
+        command = f"DROP_REPLICATION_SLOT {quote_ident(slot_name, self)}"
         self.execute(command)
 
     def start_replication(
@@ -589,7 +574,7 @@ class ReplicationCursor(_replicationCursor):
 
         if slot_type == REPLICATION_LOGICAL:
             if slot_name:
-                command += "SLOT %s " % quote_ident(slot_name, self)
+                command += f"SLOT {quote_ident(slot_name, self)} "
             else:
                 raise psycopg2.ProgrammingError(
                     "slot name is required for logical replication")
@@ -598,19 +583,18 @@ class ReplicationCursor(_replicationCursor):
 
         elif slot_type == REPLICATION_PHYSICAL:
             if slot_name:
-                command += "SLOT %s " % quote_ident(slot_name, self)
+                command += f"SLOT {quote_ident(slot_name, self)} "
             # don't add "PHYSICAL", before 9.4 it was just START_REPLICATION XXX/XXX
 
         else:
             raise psycopg2.ProgrammingError(
-                "unrecognized replication type: %s" % repr(slot_type))
+                f"unrecognized replication type: {repr(slot_type)}")
 
         if type(start_lsn) is str:
             lsn = start_lsn.split('/')
-            lsn = "%X/%08X" % (int(lsn[0], 16), int(lsn[1], 16))
+            lsn = f"{int(lsn[0], 16):X}/{int(lsn[1], 16):08X}"
         else:
-            lsn = "%X/%08X" % ((start_lsn >> 32) & 0xFFFFFFFF,
-                               start_lsn & 0xFFFFFFFF)
+            lsn = f"{start_lsn >> 32 & 4294967295:X}/{start_lsn & 4294967295:08X}"
 
         command += lsn
 
@@ -619,7 +603,7 @@ class ReplicationCursor(_replicationCursor):
                 raise psycopg2.ProgrammingError(
                     "cannot specify timeline for logical replication")
 
-            command += " TIMELINE %d" % timeline
+            command += f" TIMELINE {timeline}"
 
         if options:
             if slot_type == REPLICATION_PHYSICAL:
@@ -630,7 +614,7 @@ class ReplicationCursor(_replicationCursor):
             for k, v in options.items():
                 if not command.endswith('('):
                     command += ", "
-                command += "%s %s" % (quote_ident(k, self), _A(str(v)))
+                command += f"{quote_ident(k, self)} {_A(str(v))}"
             command += ")"
 
         self.start_replication_expert(
@@ -643,7 +627,7 @@ class ReplicationCursor(_replicationCursor):
 
 # a dbtype and adapter for Python UUID type
 
-class UUID_adapter(object):
+class UUID_adapter:
     """Adapt Python's uuid.UUID__ type to PostgreSQL's uuid__.
 
     .. __: https://docs.python.org/library/uuid.html
@@ -658,10 +642,10 @@ class UUID_adapter(object):
             return self
 
     def getquoted(self):
-        return ("'%s'::uuid" % self._uuid).encode('utf8')
+        return (f"'{self._uuid}'::uuid").encode('utf8')
 
     def __str__(self):
-        return "'%s'::uuid" % self._uuid
+        return f"'{self._uuid}'::uuid"
 
 
 def register_uuid(oids=None, conn_or_curs=None):
@@ -698,7 +682,7 @@ def register_uuid(oids=None, conn_or_curs=None):
 
 # a type, dbtype and adapter for PostgreSQL inet type
 
-class Inet(object):
+class Inet:
     """Wrap a string to allow for correct SQL-quoting of inet values.
 
     Note that this adapter does NOT check the passed value to make
@@ -710,7 +694,7 @@ class Inet(object):
         self.addr = addr
 
     def __repr__(self):
-        return "%s(%r)" % (self.__class__.__name__, self.addr)
+        return f"{self.__class__.__name__}({self.addr!r})"
 
     def prepare(self, conn):
         self._conn = conn
@@ -783,7 +767,7 @@ def wait_select(conn):
             elif state == POLL_WRITE:
                 select.select([], [conn.fileno()], [])
             else:
-                raise conn.OperationalError("bad state from poll: %s" % state)
+                raise conn.OperationalError(f"bad state from poll: {state}")
         except KeyboardInterrupt:
             conn.cancel()
             # the loop will be broken by a server error
@@ -805,7 +789,7 @@ def _solve_conn_curs(conn_or_curs):
     return conn, curs
 
 
-class HstoreAdapter(object):
+class HstoreAdapter:
     """Adapt a Python dict to the hstore syntax."""
     def __init__(self, wrapped):
         self.wrapped = wrapped
@@ -885,7 +869,7 @@ class HstoreAdapter(object):
         for m in self._re_hstore.finditer(s):
             if m is None or m.start() != start:
                 raise psycopg2.InterfaceError(
-                    "error parsing hstore pair at char %d" % start)
+                    f"error parsing hstore pair at char {start}")
             k = _bsdec.sub(r'\1', m.group(1))
             v = m.group(2)
             if v is not None:
@@ -896,7 +880,7 @@ class HstoreAdapter(object):
 
         if start < len(s):
             raise psycopg2.InterfaceError(
-                "error parsing hstore: unparsed data after char %d" % start)
+                f"error parsing hstore: unparsed data after char {start}")
 
         return rv
 
@@ -924,12 +908,11 @@ class HstoreAdapter(object):
         rv0, rv1 = [], []
 
         # get the oid for the hstore
-        curs.execute("""\
-SELECT t.oid, %s
+        curs.execute(f"""SELECT t.oid, {typarray}
 FROM pg_type t JOIN pg_namespace ns
     ON typnamespace = ns.oid
 WHERE typname = 'hstore';
-""" % typarray)
+""")
         for oids in curs:
             rv0.append(oids[0])
             rv1.append(oids[1])
@@ -993,12 +976,7 @@ def register_hstore(conn_or_curs, globally=False, unicode=False,
             array_oid = tuple([x for x in array_oid if x])
 
     # create and register the typecaster
-    if PY2 and unicode:
-        cast = HstoreAdapter.parse_unicode
-    else:
-        cast = HstoreAdapter.parse
-
-    HSTORE = _ext.new_type(oid, "HSTORE", cast)
+    HSTORE = _ext.new_type(oid, "HSTORE", HstoreAdapter.parse)
     _ext.register_type(HSTORE, not globally and conn_or_curs or None)
     _ext.register_adapter(dict, HstoreAdapter)
 
@@ -1007,7 +985,7 @@ def register_hstore(conn_or_curs, globally=False, unicode=False,
         _ext.register_type(HSTOREARRAY, not globally and conn_or_curs or None)
 
 
-class CompositeCaster(object):
+class CompositeCaster:
     """Helps conversion of a PostgreSQL composite type into a Python object.
 
     The class is usually created by the `register_composite()` function.
@@ -1028,7 +1006,7 @@ class CompositeCaster(object):
         self.typecaster = _ext.new_type((oid,), name, self.parse)
         if array_oid:
             self.array_typecaster = _ext.new_array_type(
-                (array_oid,), "%sARRAY" % name, self.typecaster)
+                (array_oid,), f"{name}ARRAY", self.typecaster)
         else:
             self.array_typecaster = None
 
@@ -1072,7 +1050,7 @@ class CompositeCaster(object):
         rv = []
         for m in self._re_tokenize.finditer(s):
             if m is None:
-                raise psycopg2.InterfaceError("can't parse type: %r" % s)
+                raise psycopg2.InterfaceError(f"can't parse type: {s!r}")
             if m.group(1) is not None:
                 rv.append(None)
             elif m.group(2) is not None:
@@ -1127,7 +1105,7 @@ ORDER BY attnum;
 
         if not recs:
             raise psycopg2.ProgrammingError(
-                "PostgreSQL type '%s' not found" % name)
+                f"PostgreSQL type '{name}' not found")
 
         type_oid = recs[0][0]
         array_oid = recs[0][1]

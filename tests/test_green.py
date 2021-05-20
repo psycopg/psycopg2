@@ -36,7 +36,7 @@ from .testutils import ConnectingTestCase, skip_before_postgres, slow
 from .testutils import skip_if_crdb
 
 
-class ConnectionStub(object):
+class ConnectionStub:
     """A `connection` wrapper allowing analysis of the `poll()` calls."""
     def __init__(self, conn):
         self.conn = conn
@@ -137,7 +137,7 @@ class GreenTestCase(ConnectingTestCase):
                 elif state == POLL_WRITE:
                     select.select([], [conn.fileno()], [], 0.1)
                 else:
-                    raise conn.OperationalError("bad state from poll: %s" % state)
+                    raise conn.OperationalError(f"bad state from poll: {state}")
 
         stub = self.set_stub_wait_callback(self.conn, wait)
         cur = self.conn.cursor()
@@ -182,7 +182,7 @@ class CallbackErrorTestCase(ConnectingTestCase):
                 elif state == POLL_WRITE:
                     select.select([], [conn.fileno()], [])
                 else:
-                    raise conn.OperationalError("bad state from poll: %s" % state)
+                    raise conn.OperationalError(f"bad state from poll: {state}")
             except KeyboardInterrupt:
                 conn.cancel()
                 # the loop will be broken by a server error

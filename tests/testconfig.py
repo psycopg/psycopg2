@@ -23,15 +23,15 @@ if green:
     psycopg2.extensions.set_wait_callback(wait_callback)
 
 # Construct a DSN to connect to the test database:
-dsn = 'dbname=%s' % dbname
+dsn = f'dbname={dbname}'
 if dbhost is not None:
-    dsn += ' host=%s' % dbhost
+    dsn += f' host={dbhost}'
 if dbport is not None:
-    dsn += ' port=%s' % dbport
+    dsn += f' port={dbport}'
 if dbuser is not None:
-    dsn += ' user=%s' % dbuser
+    dsn += f' user={dbuser}'
 if dbpass is not None:
-    dsn += ' password=%s' % dbpass
+    dsn += f' password={dbpass}'
 
 # Don't run replication tests if REPL_DSN is not set, default to normal DSN if
 # set to empty string.

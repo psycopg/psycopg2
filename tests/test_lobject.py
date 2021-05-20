@@ -185,15 +185,15 @@ class LargeObjectTests(LargeObjectTestCase):
 
     def test_read_text(self):
         lo = self.conn.lobject()
-        snowman = u"\u2603"
-        lo.write(u"some data " + snowman)
+        snowman = "\u2603"
+        lo.write("some data " + snowman)
         lo.close()
 
         lo = self.conn.lobject(lo.oid, "rt")
         x = lo.read(4)
-        self.assertEqual(type(x), type(u''))
-        self.assertEqual(x, u"some")
-        self.assertEqual(lo.read(), u" data " + snowman)
+        self.assertEqual(type(x), type(''))
+        self.assertEqual(x, "some")
+        self.assertEqual(lo.read(), " data " + snowman)
 
     @slow
     def test_read_large(self):
@@ -207,7 +207,7 @@ class LargeObjectTests(LargeObjectTestCase):
         data1 = lo.read()
         # avoid dumping megacraps in the console in case of error
         self.assert_(data == data1,
-            "%r... != %r..." % (data[:100], data1[:100]))
+            f"{data[:100]!r}... != {data1[:100]!r}...")
 
     def test_seek_tell(self):
         lo = self.conn.lobject()

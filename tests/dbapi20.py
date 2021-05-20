@@ -185,13 +185,8 @@ class DatabaseAPI20Test(unittest.TestCase):
     def test_Exceptions(self):
         # Make sure required exceptions exist, and are in the
         # defined hierarchy.
-        if sys.version[0] == '3': #under Python 3 StardardError no longer exists
-            self.failUnless(issubclass(self.driver.Warning,Exception))
-            self.failUnless(issubclass(self.driver.Error,Exception))
-        else:
-            self.failUnless(issubclass(self.driver.Warning,StandardError))
-            self.failUnless(issubclass(self.driver.Error,StandardError))
-
+        self.failUnless(issubclass(self.driver.Warning,Exception))
+        self.failUnless(issubclass(self.driver.Error,Exception))
         self.failUnless(
             issubclass(self.driver.InterfaceError,self.driver.Error)
             )
@@ -547,7 +542,7 @@ class DatabaseAPI20Test(unittest.TestCase):
             tests.
         '''
         populate = [
-            "insert into %sbooze values ('%s')" % (self.table_prefix,s)
+            f"insert into {self.table_prefix}booze values ('{s}')"
                 for s in self.samples
             ]
         return populate

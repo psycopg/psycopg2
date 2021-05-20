@@ -76,15 +76,6 @@ binary_quote(binaryObject *self)
         buffer_len = view.len;
     }
 
-#if PY_2
-    if (!buffer && (Bytes_Check(self->wrapped) || PyBuffer_Check(self->wrapped))) {
-        if (PyObject_AsReadBuffer(self->wrapped, (const void **)&buffer,
-                                  &buffer_len) < 0) {
-            goto exit;
-        }
-    }
-#endif
-
     if (!buffer) {
         goto exit;
     }

@@ -31,7 +31,6 @@ from .testutils import (
 
 import psycopg2
 from psycopg2 import sql
-from psycopg2.compat import text_type
 
 
 class SqlFormatTests(ConnectingTestCase):
@@ -61,13 +60,6 @@ class SqlFormatTests(ConnectingTestCase):
         s1 = s.as_string(self.conn)
         self.assert_(isinstance(s1, str))
         self.assertEqual(s1, 'select "field" from "table"')
-
-    def test_unicode(self):
-        s = sql.SQL(u"select {0} from {1}").format(
-            sql.Identifier(u'field'), sql.Identifier('table'))
-        s1 = s.as_string(self.conn)
-        self.assert_(isinstance(s1, text_type))
-        self.assertEqual(s1, u'select "field" from "table"')
 
     def test_compose_literal(self):
         s = sql.SQL("select {0};").format(sql.Literal(dt.date(2016, 12, 31)))
@@ -111,7 +103,7 @@ class SqlFormatTests(ConnectingTestCase):
         self.assertRaises(ValueError, sql.SQL("select {a:<};").format, a=10)
 
     def test_must_be_adaptable(self):
-        class Foo(object):
+        class Foo:
             pass
 
         self.assertRaises(psycopg2.ProgrammingError,
@@ -182,7 +174,7 @@ class IdentifierTests(ConnectingTestCase):
 
     def test_init(self):
         self.assert_(isinstance(sql.Identifier('foo'), sql.Identifier))
-        self.assert_(isinstance(sql.Identifier(u'foo'), sql.Identifier))
+        self.assert_(isinstance(sql.Identifier('foo'), sql.Identifier))
         self.assert_(isinstance(sql.Identifier('foo', 'bar', 'baz'), sql.Identifier))
         self.assertRaises(TypeError, sql.Identifier)
         self.assertRaises(TypeError, sql.Identifier, 10)
@@ -231,7 +223,7 @@ class LiteralTests(ConnectingTestCase):
 
     def test_init(self):
         self.assert_(isinstance(sql.Literal('foo'), sql.Literal))
-        self.assert_(isinstance(sql.Literal(u'foo'), sql.Literal))
+        self.assert_(isinstance(sql.Literal('foo'), sql.Literal))
         self.assert_(isinstance(sql.Literal(b'foo'), sql.Literal))
         self.assert_(isinstance(sql.Literal(42), sql.Literal))
         self.assert_(isinstance(
@@ -256,7 +248,7 @@ class LiteralTests(ConnectingTestCase):
         self.assert_(sql.Literal('foo') != sql.SQL('foo'))
 
     def test_must_be_adaptable(self):
-        class Foo(object):
+        class Foo:
             pass
 
         self.assertRaises(psycopg2.ProgrammingError,
@@ -269,7 +261,7 @@ class SQLTests(ConnectingTestCase):
 
     def test_init(self):
         self.assert_(isinstance(sql.SQL('foo'), sql.SQL))
-        self.assert_(isinstance(sql.SQL(u'foo'), sql.SQL))
+        self.assert_(isinstance(sql.SQL('foo'), sql.SQL))
         self.assertRaises(TypeError, sql.SQL, 10)
         self.assertRaises(TypeError, sql.SQL, dt.date(2016, 12, 31))
 

@@ -309,11 +309,6 @@ adapters_init(PyObject *module)
     if (0 > microprotocols_add(&PyFloat_Type, NULL, (PyObject*)&pfloatType)) {
         goto exit;
     }
-#if PY_2
-    if (0 > microprotocols_add(&PyInt_Type, NULL, (PyObject*)&pintType)) {
-        goto exit;
-    }
-#endif
     if (0 > microprotocols_add(&PyLong_Type, NULL, (PyObject*)&pintType)) {
         goto exit;
     }
@@ -322,25 +317,14 @@ adapters_init(PyObject *module)
     }
 
     /* strings */
-#if PY_2
-    if (0 > microprotocols_add(&PyString_Type, NULL, (PyObject*)&qstringType)) {
-        goto exit;
-    }
-#endif
     if (0 > microprotocols_add(&PyUnicode_Type, NULL, (PyObject*)&qstringType)) {
         goto exit;
     }
 
     /* binary */
-#if PY_2
-    if (0 > microprotocols_add(&PyBuffer_Type, NULL, (PyObject*)&binaryType)) {
-        goto exit;
-    }
-#else
     if (0 > microprotocols_add(&PyBytes_Type, NULL, (PyObject*)&binaryType)) {
         goto exit;
     }
-#endif
 
     if (0 > microprotocols_add(&PyByteArray_Type, NULL, (PyObject*)&binaryType)) {
         goto exit;
@@ -1052,7 +1036,6 @@ static PyMethodDef psycopgMethods[] = {
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
-#if PY_3
 static struct PyModuleDef psycopgmodule = {
         PyModuleDef_HEAD_INIT,
         "_psycopg",
@@ -1064,7 +1047,6 @@ static struct PyModuleDef psycopgmodule = {
         NULL,
         NULL
 };
-#endif
 
 #ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
 #define PyMODINIT_FUNC void
@@ -1098,11 +1080,7 @@ INIT_MODULE(_psycopg)(void)
     if (!(psyco_null = Bytes_FromString("NULL"))) { goto exit; }
 
     /* initialize the module */
-#if PY_2
-    module = Py_InitModule("_psycopg", psycopgMethods);
-#else
     module = PyModule_Create(&psycopgmodule);
-#endif
     if (!module) { goto exit; }
 
     if (0 > add_module_constants(module)) { goto exit; }
@@ -1118,9 +1096,5 @@ INIT_MODULE(_psycopg)(void)
     Dprintf("psycopgmodule: module initialization complete");
 
 exit:
-#if PY_3
     return module;
-#else
-    return;
-#endif
 }

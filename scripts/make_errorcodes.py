@@ -16,7 +16,6 @@ The script can be run at a new PostgreSQL release to refresh the module.
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
-from __future__ import print_function
 
 import re
 import sys
@@ -26,7 +25,7 @@ from collections import defaultdict
 
 def main():
     if len(sys.argv) != 2:
-        print("usage: %s /path/to/errorcodes.py" % sys.argv[0], file=sys.stderr)
+        print(f"usage: {sys.argv[0]} /path/to/errorcodes.py", file=sys.stderr)
         return 2
 
     filename = sys.argv[1]
@@ -85,7 +84,7 @@ def parse_errors_txt(url):
             continue
 
         # We don't expect anything else
-        raise ValueError("unexpected line:\n%s" % line)
+        raise ValueError(f"unexpected line:\n{line}")
 
     return classes, errors
 
@@ -102,9 +101,7 @@ def fetch_errors(versions):
     for version in versions:
         print(version, file=sys.stderr)
         tver = tuple(map(int, version.split()[0].split('.')))
-        tag = '%s%s_STABLE' % (
-            (tver[0] >= 10 and 'REL_' or 'REL'),
-            version.replace('.', '_'))
+        tag = f"{tver[0] >= 10 and 'REL_' or 'REL'}{version.replace('.', '_')}_STABLE"
         c1, e1 = parse_errors_txt(errors_txt_url % tag)
         classes.update(c1)
 
@@ -136,19 +133,19 @@ def generate_module_data(classes, errors):
     for clscode, clslabel in sorted(classes.items()):
         err = clslabel.split(" - ")[1].split("(")[0] \
             .strip().replace(" ", "_").replace('/', "_").upper()
-        yield "CLASS_%s = %r" % (err, clscode)
+        yield f"CLASS_{err} = {clscode!r}"
 
     seen = set()
 
     for clscode, clslabel in sorted(classes.items()):
         yield ""
-        yield "# %s" % clslabel
+        yield f"# {clslabel}"
 
         for errcode, errlabel in sorted(errors[clscode].items()):
             if errlabel in seen:
-                raise Exception("error label already seen: %s" % errlabel)
+                raise Exception(f"error label already seen: {errlabel}")
             seen.add(errlabel)
-            yield "%s = %r" % (errlabel, errcode)
+            yield f"{errlabel} = {errcode!r}"
 
 
 if __name__ == '__main__':

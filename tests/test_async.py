@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 # test_async.py - unit test for asynchronous API
 #
@@ -37,7 +36,7 @@ from .testutils import (ConnectingTestCase, StringIO, skip_before_postgres,
     skip_if_crdb, crdb_version, slow)
 
 
-class PollableStub(object):
+class PollableStub:
     """A 'pollable' wrapper allowing analysis of the `poll()` calls."""
     def __init__(self, pollable):
         self.pollable = pollable
