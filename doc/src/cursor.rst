@@ -232,6 +232,16 @@ The ``cursor`` class
         .. versionchanged:: 2.7
           added support for named arguments.
 
+        .. note::
+
+            `!callproc()` can only be used with PostgreSQL functions__, not
+            with the procedures__ introduced in PostgreSQL 11, which require
+            the :sql:`CALL` statement to run. Please use a normal
+            `execute()` to run them.
+
+            .. __: https://www.postgresql.org/docs/current/sql-createfunction.html
+            .. __: https://www.postgresql.org/docs/current/sql-createprocedure.html
+
     .. method:: mogrify(operation [, parameters])
 
         Return a query string after arguments binding. The string returned is
