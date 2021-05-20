@@ -1,6 +1,12 @@
 Current release
 ---------------
 
+What's new in psycopg 2.8.7
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Accept empty params as `~psycopg2.connect()` (:ticket:`#1250).
+
+
 What's new in psycopg 2.8.6
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
