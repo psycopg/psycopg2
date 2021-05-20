@@ -442,7 +442,7 @@ class Placeholder(Composable):
 
     def as_string(self, context):
         if self._wrapped is not None:
-            return f"%{self._wrapped['%s']}"
+            return f"%({self._wrapped})"
         else:
             return "%s"
 
