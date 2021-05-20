@@ -76,7 +76,7 @@ def parse_errors_txt(url):
         m = re.match(r"(.....)\s+(?:E|W|S)\s+ERRCODE_(\S+)(?:\s+(\S+))?$", line)
         if m:
             errcode, macro, spec = m.groups()
-            # skip errcodes without specs as they are not publically visible
+            # skip errcodes without specs as they are not publicly visible
             if not spec:
                 continue
             errlabel = spec.upper()

@@ -249,6 +249,16 @@ class CursorTests(ConnectingTestCase):
 
         self.assertEqual(description, unpickled)
 
+    def test_column_refcount(self):
+        # Reproduce crash describe in ticket #1252
+        from psycopg2.extensions import Column
+
+        def do_stuff():
+            _ = Column(name='my_column')
+
+        for _ in range(1000):
+            do_stuff()
+
     def test_bad_subclass(self):
         # check that we get an error message instead of a segfault
         # for badly written subclasses.

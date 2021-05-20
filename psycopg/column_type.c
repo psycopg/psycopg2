@@ -97,16 +97,35 @@ column_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 static int
 column_init(columnObject *self, PyObject *args, PyObject *kwargs)
 {
+    PyObject *name = NULL;
+    PyObject *type_code = NULL;
+    PyObject *display_size = NULL;
+    PyObject *internal_size = NULL;
+    PyObject *precision = NULL;
+    PyObject *scale = NULL;
+    PyObject *null_ok = NULL;
+    PyObject *table_oid = NULL;
+    PyObject *table_column = NULL;
+
     static char *kwlist[] = {
         "name", "type_code", "display_size", "internal_size",
         "precision", "scale", "null_ok", "table_oid", "table_column", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|OOOOOOOOO", kwlist,
-            &self->name, &self->type_code, &self->display_size,
-            &self->internal_size, &self->precision, &self->scale,
-            &self->null_ok, &self->table_oid, &self->table_column)) {
+            &name, &type_code, &display_size, &internal_size, &precision,
+            &scale, &null_ok, &table_oid, &table_column)) {
         return -1;
     }
+
+    Py_XINCREF(name); self->name = name;
+    Py_XINCREF(type_code); self->type_code = type_code;
+    Py_XINCREF(display_size); self->display_size = display_size;
+    Py_XINCREF(internal_size); self->internal_size = internal_size;
+    Py_XINCREF(precision); self->precision = precision;
+    Py_XINCREF(scale); self->scale = scale;
+    Py_XINCREF(null_ok); self->null_ok = null_ok;
+    Py_XINCREF(table_oid); self->table_oid = table_oid;
+    Py_XINCREF(table_column); self->table_column = table_column;
 
     return 0;
 }

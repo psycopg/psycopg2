@@ -120,9 +120,6 @@ def connect(dsn=None, connection_factory=None, cursor_factory=None, **kwargs):
     if 'async_' in kwargs:
         kwasync['async_'] = kwargs.pop('async_')
 
-    if dsn is None and not kwargs:
-        raise TypeError('missing dsn and no parameters')
-
     dsn = _ext.make_dsn(dsn, **kwargs)
     conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
     if cursor_factory is not None:

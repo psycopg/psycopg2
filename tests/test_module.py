@@ -50,12 +50,22 @@ class ConnectTestCase(unittest.TestCase):
     def tearDown(self):
         psycopg2._connect = self._connect_orig
 
-    def test_there_has_to_be_something(self):
-        self.assertRaises(TypeError, psycopg2.connect)
-        self.assertRaises(TypeError, psycopg2.connect,
+    def test_there_might_be_nothing(self):
+        psycopg2.connect()
+        self.assertEqual(self.args[0], '')
+        self.assertEqual(self.args[1], None)
+        self.assertEqual(self.args[2], False)
+
+        psycopg2.connect(
             connection_factory=lambda dsn, async_=False: None)
-        self.assertRaises(TypeError, psycopg2.connect,
-            async_=True)
+        self.assertEqual(self.args[0], '')
+        self.assertNotEqual(self.args[1], None)
+        self.assertEqual(self.args[2], False)
+
+        psycopg2.connect(async_=True)
+        self.assertEqual(self.args[0], '')
+        self.assertEqual(self.args[1], None)
+        self.assertEqual(self.args[2], True)
 
     def test_no_keywords(self):
         psycopg2.connect('')
@@ -280,6 +290,7 @@ class ExceptionsTestCase(ConnectingTestCase):
         self.assertEqual(e.diag.constraint_name, "chk_eq1")
         self.assertEqual(e.diag.datatype_name, None)
 
+    @skip_if_crdb("diagnostic")
     @skip_before_postgres(9, 6)
     def test_9_6_diagnostics(self):
         cur = self.conn.cursor()

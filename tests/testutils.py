@@ -478,6 +478,7 @@ crdb_reasons = {
     "named cursor": 41412,
     "nested array": 32552,
     "notify": 41522,
+    "password_encryption": 42519,
     "range": 41282,
     "stored procedure": 1751,
 }

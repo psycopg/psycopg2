@@ -1238,7 +1238,7 @@ class ConnectionTwoPhaseTests(ConnectingTestCase):
     def test_xid_unicode_unparsed(self):
         # We don't expect people shooting snowmen as transaction ids,
         # so if something explodes in an encode error I don't mind.
-        # Let's just check uniconde is accepted as type.
+        # Let's just check unicode is accepted as type.
         cnn = self.connect()
         cnn.set_client_encoding('utf8')
         cnn.tpc_begin("transaction-id")
@@ -1513,6 +1513,7 @@ class TestEncryptPassword(ConnectingTestCase):
                 scope=self.conn, algorithm='md5'),
             'md594839d658c28a357126f105b9cb14cfc')
 
+    @skip_if_crdb("password_encryption")
     @skip_before_libpq(10)
     @skip_before_postgres(10)
     def test_encrypt_server(self):
