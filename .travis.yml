@@ -9,14 +9,9 @@ arch:
   - arm64
 
 python:
-  - 3.5
   - 3.6
   - 3.7
   - 3.8
-
-matrix:
-  include:
-    - python: 2.7
 
 install:
   - sudo apt-get install -y bc
