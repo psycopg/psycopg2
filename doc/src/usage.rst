@@ -783,6 +783,20 @@ A few other transaction properties can be set session-wide by the
 change the isolation level. See the `~connection.set_session()` method for all
 the details.
 
+.. note::
+
+    When multiple statements are executed in the same query, separated by
+    semicolon, PostgreSQL wraps them in a transaction. This means that
+    statements which cannot run in a transaction must be executed separately::
+
+        # This doesn't work
+        cur.execute("DROP DATABASE foo; DROP DATABASE bar;")
+
+    If you are wondering why the above works in :program:`psql`, that's
+    because :program:`psql` parses the queries and splits them on semicolon
+    before sending them. `!psycopg2` doesn't parse the query, so these
+    statements must be executed on their own.
+
 
 .. index::
     single: with statement
