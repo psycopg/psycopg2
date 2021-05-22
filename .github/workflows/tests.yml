@@ -26,11 +26,13 @@ jobs:
           - python: 3.9
             postgres: 13
 
-          # Opposite extremes of the supported Py/PG range
+          # Opposite extremes of the supported Py/PG range, other architecture
           - python: 2.7
             postgres: 13
+            architecture: 'x86'
           - python: 3.9
             postgres: 9.5
+            architecture: 'x86'
 
     env:
       PSYCOPG2_TESTDB: postgres
