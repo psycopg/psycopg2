@@ -138,12 +138,23 @@ class ConnectTestCase(unittest.TestCase):
     def tearDown(self):
         psycopg2._connect = self._connect_orig
 
-    def test_there_has_to_be_something(self):
-        self.assertRaises(TypeError, psycopg2.connect)
-        self.assertRaises(TypeError, psycopg2.connect,
+    def test_there_might_be_nothing(self):
+        psycopg2.connect()
+        self.assertEqual(self.args[0], '')
+        self.assertEqual(self.args[1], None)
+        self.assertEqual(self.args[2], False)
+
+        psycopg2.connect(
             connection_factory=lambda dsn, async=False: None)
-        self.assertRaises(TypeError, psycopg2.connect,
-            async=True)
+        self.assertEqual(self.args[0], '')
+        self.assertNotEqual(self.args[1], None)
+        self.assertEqual(self.args[2], False)
+
+        psycopg2.connect(async=True)
+        self.assertEqual(self.args[0], '')
+        self.assertEqual(self.args[1], None)
+        self.assertEqual(self.args[2], True)
+
 
     def test_factory(self):
         def f(dsn, async=False):
