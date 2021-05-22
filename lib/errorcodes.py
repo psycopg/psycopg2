@@ -1,4 +1,4 @@
-"""Error codes for PostgresSQL
+"""Error codes for PostgreSQL
 
 This module contains symbolic names for all PostgreSQL error codes.
 """
