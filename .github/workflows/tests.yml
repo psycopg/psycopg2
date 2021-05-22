@@ -2,36 +2,63 @@ name: Tests
 
 on:
   push:
-    branches: [ master ]
   pull_request:
-    branches: [ master ]
 
 jobs:
   tests:
-    name: Python ${{ matrix.python-version }}
-    runs-on: ubuntu-18.04
+    name: Unit tests run
+    runs-on: ubuntu-20.04
 
     strategy:
       fail-fast: false
       matrix:
-        python-version:
-        - 2.7
-        - 3.6
-        - 3.7
-        - 3.8
+        include:
+          - python: 2.7
+            postgres: 9.5
+          - python: 3.5
+            postgres: 9.6
+          - python: 3.6
+            postgres: 10
+          - python: 3.7
+            postgres: 11
+          - python: 3.8
+            postgres: 12
+          - python: 3.9
+            postgres: 13
+
+          # Opposite extremes of the supported Py/PG range
+          - python: 2.7
+            postgres: 13
+          - python: 3.9
+            postgres: 9.5
+
+    env:
+      PSYCOPG2_TESTDB: postgres
+      PSYCOPG2_TESTDB_HOST: 127.0.0.1
+      PSYCOPG2_TESTDB_USER: postgres
+      PSYCOPG2_TESTDB_PASSWORD: password
+
+    services:
+      postgresql:
+        image: postgres:${{ matrix.postgres }}
+        env:
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: install requirements
-      run: pip install --upgrade pip setuptools wheel
-    - name: install local project
-      run: pip install .
-    - name: cleanup local egg info
-      run: rm -rf psycopg2.egg-info
-    - name: setup test databases
-      run: sudo ./scripts/travis_prepare.sh
-    - name: run tests
-      run: ./scripts/travis_test.sh
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install tox
+        run: pip install tox
+      - name: Run tests
+        run: tox -e ${{ matrix.python }}
+        timeout-minutes: 5

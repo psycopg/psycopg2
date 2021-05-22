@@ -2,16 +2,17 @@ name: Build documentation
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - maint_2_8
 
 jobs:
   docs:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-    - name: install requirements
-      run: pip install --upgrade pip setuptools wheel
-    - name: run tests
-      run: TRAVIS_PYTHON_VERSION=3.6 ./scripts/travis_update_docs.sh
+      - uses: actions/checkout@v2
+      - name: Trigger docs build
+        run: ./scripts/travis_update_docs.sh
+        env:
+          TRAVIS_BRANCH: maint_2_8
+          TRAVIS_TOKEN: ${{ secrets.TRAVIS_TOKEN }}
