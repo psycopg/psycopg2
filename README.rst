@@ -61,11 +61,11 @@ production it is advised to use the package built from sources.
 .. _install: https://www.psycopg.org/docs/install.html#install-from-source
 .. _faq: https://www.psycopg.org/docs/faq.html#faq-compile
 
-:Linux/OSX: |travis|
+:Linux/OSX: |gh-actions|
 :Windows: |appveyor|
 
-.. |travis| image:: https://travis-ci.org/psycopg/psycopg2.svg?branch=master
-    :target: https://travis-ci.org/psycopg/psycopg2
+.. |gh-actions| image:: https://github.com/psycopg/psycopg2/actions/workflows/tests.yml/badge.svg
+    :target: https://github.com/psycopg/psycopg2/actions/workflows/tests.yml
     :alt: Linux and OSX build status
 
 .. |appveyor| image:: https://ci.appveyor.com/api/projects/status/github/psycopg/psycopg2?branch=master&svg=true
