@@ -403,12 +403,12 @@ where typname = %s and ns.nspname = %s;
         (?:                         # lower bound:
           " ( (?: [^"] | "")* ) "   #   - a quoted string
           | ( [^",]+ )              #   - or an unquoted string
-        )?                          #   - or empty (not catched)
+        )?                          #   - or empty (not caught)
         ,
         (?:                         # upper bound:
           " ( (?: [^"] | "")* ) "   #   - a quoted string
           | ( [^"\)\]]+ )           #   - or an unquoted string
-        )?                          #   - or empty (not catched)
+        )?                          #   - or empty (not caught)
         ( \)|\] )                   # upper bound flag
         """, re.VERBOSE)
 
