@@ -1,0 +1,18 @@
+name: Build documentation
+
+on:
+  push:
+    branches:
+      - maint_2_8
+
+jobs:
+  docs:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Trigger docs build
+        run: ./scripts/travis_update_docs.sh
+        env:
+          TRAVIS_BRANCH: maint_2_8
+          TRAVIS_TOKEN: ${{ secrets.TRAVIS_TOKEN }}
