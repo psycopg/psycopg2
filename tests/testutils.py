@@ -178,7 +178,10 @@ class ConnectingTestCase(unittest.TestCase):
         if libname is None and platform.system() == 'Windows':
             raise self.skipTest("can't import libpq on windows")
 
-        rv = ConnectingTestCase._libpq = ctypes.pydll.LoadLibrary(libname)
+        try:
+            rv = ConnectingTestCase._libpq = ctypes.pydll.LoadLibrary(libname)
+        except OSError as e:
+            raise self.skipTest("couldn't open libpq for testing: %s" % e)
         return rv
 
 
