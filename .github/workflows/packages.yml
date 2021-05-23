@@ -1,0 +1,52 @@
+---
+name: Build packages
+on:
+  - workflow_dispatch
+
+
+jobs:
+  build-sdist:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - package_name: psycopg2
+          - package_name: psycopg2-binary
+
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout repos
+        uses: actions/checkout@v2
+
+      - name: Build sdist
+        run: ./scripts/build/build_sdist.sh
+        env:
+          PACKAGE_NAME: ${{ matrix.package_name }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: packages_sdist
+          path: |
+            dist/*/*.tar.gz
+
+    env:
+      PSYCOPG2_TESTDB: postgres
+      PSYCOPG2_TESTDB_HOST: 172.17.0.1
+      PSYCOPG2_TESTDB_USER: postgres
+      PSYCOPG2_TESTDB_PASSWORD: password
+      PSYCOPG2_TEST_FAST: 1
+
+    services:
+      postgresql:
+        image: postgres:13
+        env:
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
