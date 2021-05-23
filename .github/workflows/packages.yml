@@ -106,3 +106,34 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+
+
+  build-macos:
+    runs-on: macos-10.15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.6', '3.7', '3.8', '3.9']
+
+    steps:
+      - name: Checkout repos
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Build packages
+        run: ./scripts/build/build_macos.sh
+        env:
+          PACKAGE_NAME: psycopg2-binary
+          PSYCOPG2_TESTDB: postgres
+          PSYCOPG2_TEST_FAST: 1
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: packages_macos
+          path: |
+            dist/*/*${{ matrix.platform }}.whl
