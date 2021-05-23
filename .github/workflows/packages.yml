@@ -67,6 +67,9 @@ jobs:
       - name: Checkout repos
         uses: actions/checkout@v2
 
+      - name: Set up QEMU for multi-arch build
+        uses: docker/setup-qemu-action@v1
+
       - name: Build packages
         run: >-
           docker run --rm
