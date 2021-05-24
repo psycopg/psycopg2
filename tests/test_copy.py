@@ -263,6 +263,24 @@ class CopyTests(ConnectingTestCase):
         curs.execute("select count(*) from manycols;")
         self.assertEqual(curs.fetchone()[0], 2)
 
+    def test_copy_funny_names(self):
+        cols = ["select", "insert", "group"]
+
+        curs = self.conn.cursor()
+        curs.execute('CREATE TEMPORARY TABLE "select" (%s)' % ',\n'.join(
+            ['"%s" int' % c for c in cols]))
+        curs.execute('INSERT INTO "select" DEFAULT VALUES')
+
+        f = StringIO()
+        curs.copy_to(f, "select", columns=cols)
+        f.seek(0)
+        self.assertEqual(f.read().split(), ['\\N'] * len(cols))
+
+        f.seek(0)
+        curs.copy_from(f, "select", columns=cols)
+        curs.execute('select count(*) from "select";')
+        self.assertEqual(curs.fetchone()[0], 2)
+
     @skip_before_postgres(8, 2)     # they don't send the count
     def test_copy_rowcount(self):
         curs = self.conn.cursor()
