@@ -1133,7 +1133,7 @@ exit:
             }
         }
     }
-    PyMem_Del(scpnames);
+    PyMem_Free(scpnames);
     Py_XDECREF(pname);
     Py_XDECREF(pnames);
     Py_XDECREF(operation);
