@@ -347,11 +347,16 @@ pq_begin_locked(connectionObject *conn, PyThreadState **tstate)
     char buf[256];  /* buf size must be same as bufsize */
     int result;
 
-    Dprintf("pq_begin_locked: pgconn = %p, autocommit = %d, status = %d",
+    Dprintf("pq_begin_locked: pgconn = %p, %d, status = %d",
             conn->pgconn, conn->autocommit, conn->status);
 
-    if (conn->autocommit || conn->status != CONN_STATUS_READY) {
+    if (conn->status != CONN_STATUS_READY) {
         Dprintf("pq_begin_locked: transaction in progress");
+        return 0;
+    }
+
+    if (conn->autocommit && !conn->entered) {
+        Dprintf("pq_begin_locked: autocommit and no with block");
         return 0;
     }
 
@@ -393,10 +398,10 @@ pq_commit(connectionObject *conn)
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&conn->lock);
 
-    Dprintf("pq_commit: pgconn = %p, autocommit = %d, status = %d",
-            conn->pgconn, conn->autocommit, conn->status);
+    Dprintf("pq_commit: pgconn = %p, status = %d",
+            conn->pgconn, conn->status);
 
-    if (conn->autocommit || conn->status != CONN_STATUS_BEGIN) {
+    if (conn->status != CONN_STATUS_BEGIN) {
         Dprintf("pq_commit: no transaction to commit");
         retvalue = 0;
     }
@@ -427,10 +432,10 @@ pq_abort_locked(connectionObject *conn, PyThreadState **tstate)
 {
     int retvalue = -1;
 
-    Dprintf("pq_abort_locked: pgconn = %p, autocommit = %d, status = %d",
-            conn->pgconn, conn->autocommit, conn->status);
+    Dprintf("pq_abort_locked: pgconn = %p, status = %d",
+            conn->pgconn, conn->status);
 
-    if (conn->autocommit || conn->status != CONN_STATUS_BEGIN) {
+    if (conn->status != CONN_STATUS_BEGIN) {
         Dprintf("pq_abort_locked: no transaction to abort");
         return 0;
     }
@@ -488,12 +493,12 @@ pq_reset_locked(connectionObject *conn, PyThreadState **tstate)
 {
     int retvalue = -1;
 
-    Dprintf("pq_reset_locked: pgconn = %p, autocommit = %d, status = %d",
-            conn->pgconn, conn->autocommit, conn->status);
+    Dprintf("pq_reset_locked: pgconn = %p, status = %d",
+            conn->pgconn, conn->status);
 
     conn->mark += 1;
 
-    if (!conn->autocommit && conn->status == CONN_STATUS_BEGIN) {
+    if (conn->status == CONN_STATUS_BEGIN) {
         retvalue = pq_execute_command_locked(conn, "ABORT", tstate);
         if (retvalue != 0) return retvalue;
     }

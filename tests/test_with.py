@@ -155,6 +155,93 @@ class WithConnectionTestCase(WithTestCase):
         curs.execute("select * from test_with")
         self.assertEqual(curs.fetchall(), [])
 
+    def test_cant_reenter(self):
+        raised_ok = False
+        with self.conn:
+            try:
+                with self.conn:
+                    pass
+            except psycopg2.ProgrammingError:
+                raised_ok = True
+
+        self.assert_(raised_ok)
+
+        # Still good
+        with self.conn:
+            pass
+
+    def test_with_autocommit(self):
+        self.conn.autocommit = True
+        self.assertEqual(
+            self.conn.info.transaction_status, ext.TRANSACTION_STATUS_IDLE
+        )
+        with self.conn:
+            curs = self.conn.cursor()
+            curs.execute("insert into test_with values (1)")
+            self.assertEqual(
+                self.conn.info.transaction_status,
+                ext.TRANSACTION_STATUS_INTRANS,
+            )
+
+        self.assertEqual(
+            self.conn.info.transaction_status, ext.TRANSACTION_STATUS_IDLE
+        )
+        curs.execute("select count(*) from test_with")
+        self.assertEqual(curs.fetchone()[0], 1)
+        self.assertEqual(
+            self.conn.info.transaction_status, ext.TRANSACTION_STATUS_IDLE
+        )
+
+    def test_with_autocommit_pyerror(self):
+        self.conn.autocommit = True
+        raised_ok = False
+        try:
+            with self.conn:
+                curs = self.conn.cursor()
+                curs.execute("insert into test_with values (2)")
+                self.assertEqual(
+                    self.conn.info.transaction_status,
+                    ext.TRANSACTION_STATUS_INTRANS,
+                )
+                1 / 0
+        except ZeroDivisionError:
+            raised_ok = True
+
+        self.assert_(raised_ok)
+        self.assertEqual(
+            self.conn.info.transaction_status, ext.TRANSACTION_STATUS_IDLE
+        )
+        curs.execute("select count(*) from test_with")
+        self.assertEqual(curs.fetchone()[0], 0)
+        self.assertEqual(
+            self.conn.info.transaction_status, ext.TRANSACTION_STATUS_IDLE
+        )
+
+    def test_with_autocommit_pgerror(self):
+        self.conn.autocommit = True
+        raised_ok = False
+        try:
+            with self.conn:
+                curs = self.conn.cursor()
+                curs.execute("insert into test_with values (2)")
+                self.assertEqual(
+                    self.conn.info.transaction_status,
+                    ext.TRANSACTION_STATUS_INTRANS,
+                )
+                curs.execute("insert into test_with values ('x')")
+        except psycopg2.errors.InvalidTextRepresentation:
+            raised_ok = True
+
+        self.assert_(raised_ok)
+        self.assertEqual(
+            self.conn.info.transaction_status, ext.TRANSACTION_STATUS_IDLE
+        )
+        curs.execute("select count(*) from test_with")
+        self.assertEqual(curs.fetchone()[0], 0)
+        self.assertEqual(
+            self.conn.info.transaction_status, ext.TRANSACTION_STATUS_IDLE
+        )
+
 
 class WithCursorTestCase(WithTestCase):
     def test_with_ok(self):
