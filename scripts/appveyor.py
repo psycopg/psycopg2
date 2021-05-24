@@ -45,9 +45,6 @@ def setup_build_env():
     """
     setenv('VS_VER', opt.vs_ver)
 
-    if opt.vs_ver == '10.0' and opt.arch_64:
-        setenv('DISTUTILS_USE_SDK', '1')
-
     path = [
         str(opt.py_dir),
         str(opt.py_dir / 'Scripts'),
@@ -57,22 +54,6 @@ def setup_build_env():
         os.environ['PATH'],
     ]
     setenv('PATH', os.pathsep.join(path))
-
-    if opt.vs_ver == '9.0':
-        logger.info("Fixing VS2008 Express and 64bit builds")
-        shutil.copyfile(
-            opt.vc_dir / "bin/vcvars64.bat",
-            opt.vc_dir / "bin/amd64/vcvarsamd64.bat",
-        )
-
-    # Fix problem with VS2010 Express 64bit missing vcvars64.bat
-    if opt.vs_ver == '10.0':
-        if not (opt.vc_dir / "bin/amd64/vcvars64.bat").exists():
-            logger.info("Fixing VS2010 Express and 64bit builds")
-            copy_file(
-                opt.package_dir / "scripts/vcvars64-vs2010.bat",
-                opt.vc_dir / "bin/amd64/vcvars64.bat",
-            )
 
     logger.info("Configuring compiler")
     bat_call([opt.vc_dir / "vcvarsall.bat", 'x86' if opt.arch_32 else 'amd64'])
@@ -750,7 +731,8 @@ class Options:
         """
         if self.vs_ver == '16.0':
             path = Path(
-                r"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build"
+                r"C:\Program Files (x86)\Microsoft Visual Studio\2019"
+                r"\Community\VC\Auxiliary\Build"
             )
         else:
             path = Path(
