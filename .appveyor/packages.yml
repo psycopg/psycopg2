@@ -2,12 +2,12 @@ version : 2.x.{build}
 
 clone_folder: C:\Project
 
-environment:
-    global:
-        # MSVC Express 2008's setenv.cmd failes if /E:ON and /V:ON are not
-        # enabled in the batch script interpreter
-        CMD_IN_ENV: cmd /E:ON /V:ON /C .\appveyor\run_with_env.cmd
+# We use the configuration to specify the package name
+configuration:
+  - psycopg2
+  - psycopg2-binary
 
+environment:
     matrix:
         # For Python versions available on Appveyor, see
         # https://www.appveyor.com/docs/windows-images-software/#python
@@ -19,6 +19,8 @@ environment:
         - {APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015, PY_VER: "37", PY_ARCH: "64"}
         - {APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015, PY_VER: "36", PY_ARCH: "32"}
         - {APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015, PY_VER: "36", PY_ARCH: "64"}
+
+    WORKFLOW: packages
 
     OPENSSL_VERSION: "1_1_1h"
     POSTGRES_VERSION: "13_0"
@@ -75,6 +77,12 @@ before_test:
 
 test_script:
     - "%PYEXE% scripts\\appveyor.py test_script"
+
+artifacts:
+    - path: dist\psycopg2-*\*.whl
+      name: wheel
+    - path: dist\psycopg2-*\*.exe
+      name: exe
 
 
 # vim: set ts=4 sts=4 sw=4:
