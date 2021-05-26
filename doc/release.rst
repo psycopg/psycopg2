@@ -15,23 +15,11 @@ How to make a psycopg2 release
 
     $ export VERSION=2.8.4
 
-- In the `Travis settings`__ you may want to be sure that the variables
-  ``TEST_PAST`` and ``TEST_FUTURE`` are set to 1 to check all
-  the supported postgres version.
+- Push psycopg2 to master or to the maint branch. Make sure tests on `GitHub
+  Actions`__ and AppVeyor__ pass.
 
-.. __: https://travis-ci.org/psycopg/psycopg2/settings
-
-- Push psycopg2 to master or to the maint branch. Make sure tests on Travis__
-  and AppVeyor__ pass.
-
-.. __: https://travis-ci.org/psycopg/psycopg2
+.. __: https://github.com/psycopg/psycopg2/actions/workflows/tests.yml
 .. __: https://ci.appveyor.com/project/psycopg/psycopg2
-
-- For an extra test merge or rebase the `test_i686`__ branch on the commit to
-  release and push it too: this will test with Python 32 bits and debug
-  versions.
-
-.. __: https://github.com/psycopg/psycopg2/tree/test_i686
 
 - Create a signed tag with the content of the relevant NEWS bit and push it.
   E.g.::
@@ -49,34 +37,31 @@ How to make a psycopg2 release
     - Fixed bug blah (:ticket:`#42`).
     ...
 
-- Update the `psycopg2-wheels`_ submodule to the tag version and push. This
-  will build the packages on `Travis CI`__ and `AppVeyor`__ and upload them to
-  https://upload.psycopg.org/.
+- Create the packages:
 
-.. _psycopg2-wheels: https://github.com/psycopg/psycopg2-wheels
-.. __: https://travis-ci.org/psycopg/psycopg2-wheels
-.. __: https://ci.appveyor.com/project/psycopg/psycopg2-wheels
+  - On GitHub Actions run manually a `package build workflow`__.
 
-- Download the packages generated (this assumes ssh configured properly)::
+  - On Appveyor change the `build settings`__ and replace the custom
+    configuration file name from ``.appveyor/tests.yml`` to
+    ``.appveyor/packages.yml`` (yeah, that sucks a bit. Remember to put it
+    back to testing).
 
-    $ rsync -arv psycopg-upload:psycopg2-${VERSION} .
+.. __: https://github.com/psycopg/psycopg2/actions/workflows/packages.yml
+.. __: https://ci.appveyor.com/project/psycopg/psycopg2/settings
 
-- Sign the packages and upload the signatures back::
-
-    $ for f in psycopg2-${VERSION}/*.{exe,tar.gz,whl}; do \
-        gpg --armor --detach-sign $f;
-      done
-
-    $ rsync -arv psycopg2-${VERSION} psycopg-upload:
+- When the workflows have finished download the packages using the
+  ``download_packages.py`` and ``download_packages_appveyor.py`` scripts from
+  the ``scripts/build`` directory. They will be saved in a
+  ``psycopg2-${VERSION}`` directory.
 
 - Remove the ``.exe`` from the dir, because we don't want to upload them on
   PyPI::
 
-    $ rm -v psycopg2-${VERSION}/*.exe{,.asc}
+    $ rm -v psycopg2-${VERSION}/*.exe
 
-- Only for stable packages: upload the packages and signatures on PyPI::
+- Only for stable packages: upload the signed packages on PyPI::
 
-    $ twine upload psycopg2-${VERSION}/*
+    $ twine upload -s psycopg2-${VERSION}/*
 
 - Create a release and release notes in the psycopg website, announce to
   psycopg and pgsql-announce mailing lists.
@@ -89,7 +74,7 @@ Releasing test packages
 
 Test packages may be uploaded on the `PyPI testing site`__ using::
 
-    $ twine upload -r testpypi psycopg2-${VERSION}/*
+    $ twine upload -s -r testpypi psycopg2-${VERSION}/*
 
 assuming `proper configuration`__ of ``~/.pypirc``.
 
