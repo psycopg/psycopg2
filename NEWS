@@ -12,6 +12,8 @@ What's new in psycopg 2.9
 - Connection exceptions with sqlstate ``08XXX`` reclassified as
   `~psycopg2.OperationalError` (a subclass of the previously used
   `~psycopg2.DatabaseError`) (:ticket:`#1148`).
+- Include library dirs required from libpq to work around MacOS build problems
+  (:ticket:`#1200`).
 
 
 What's new in psycopg 2.8.7

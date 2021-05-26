@@ -35,10 +35,6 @@ mkdir -p "$DISTDIR"
 # Install required python packages
 pip install -U pip wheel delocate
 
-# Allow to find the libraries needed.
-export LDFLAGS="-L/usr/local/opt/openssl@1.1/lib"
-export CPPFLAGS="-I/usr/local/opt/openssl@1.1/include"
-
 # Replace the package name
 gsed -i "s/^setup(name=\"psycopg2\"/setup(name=\"${PACKAGE_NAME}\"/" \
     "${PRJDIR}/setup.py"
