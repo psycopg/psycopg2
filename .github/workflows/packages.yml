@@ -50,3 +50,90 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+
+
+  build-manylinux_2_24:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: manylinux_2_24_x86_64
+          - platform: manylinux_2_24_i686
+          - platform: manylinux_2_24_aarch64
+          - platform: manylinux_2_24_ppc64le
+
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout repos
+        uses: actions/checkout@v2
+
+      - name: Set up QEMU for multi-arch build
+        uses: docker/setup-qemu-action@v1
+
+      - name: Build packages
+        run: >-
+          docker run --rm
+          -e PLAT=${{ matrix.platform }}
+          -e PACKAGE_NAME=psycopg2-binary
+          -e PYVERS="cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39 cp310-cp310"
+          -e PSYCOPG2_TESTDB=postgres
+          -e PSYCOPG2_TESTDB_HOST=172.17.0.1
+          -e PSYCOPG2_TESTDB_USER=postgres
+          -e PSYCOPG2_TESTDB_PASSWORD=password
+          -e PSYCOPG2_TEST_FAST=1
+          -v `pwd`:/src
+          --workdir /src
+          quay.io/pypa/${{ matrix.platform }}
+          ./scripts/build/build_manylinux_2_24.sh
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: packages_${{ matrix.platform }}
+          path: |
+            dist/*/*${{ matrix.platform }}.whl
+
+    services:
+      postgresql:
+        image: postgres:13
+        env:
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+
+  build-macos:
+    runs-on: macos-10.15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.6', '3.7', '3.8', '3.9']
+
+    steps:
+      - name: Checkout repos
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Build packages
+        run: ./scripts/build/build_macos.sh
+        env:
+          PACKAGE_NAME: psycopg2-binary
+          PSYCOPG2_TESTDB: postgres
+          PSYCOPG2_TEST_FAST: 1
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: packages_macos
+          path: |
+            dist/*/*${{ matrix.platform }}.whl

@@ -699,13 +699,8 @@ class Options:
     @property
     def is_wheel(self):
         """Are we building the wheel packages or just the extension?"""
-        project_name = os.environ['APPVEYOR_PROJECT_NAME']
-        if project_name == 'psycopg2':
-            return False
-        elif project_name == 'psycopg2-wheels':
-            return True
-        else:
-            raise Exception(f"unexpected project name: {project_name}")
+        workflow = os.environ["WORKFLOW"]
+        return workflow == "packages"
 
     @property
     def py_dir(self):
@@ -801,12 +796,7 @@ class Options:
 
     @property
     def package_dir(self):
-        """
-        The directory containing the psycopg code checkout dir.
-
-        Building psycopg it is clone_dir, building the wheels it is a submodule.
-        """
-        return self.clone_dir / 'psycopg2' if self.is_wheel else self.clone_dir
+        return self.clone_dir
 
     @property
     def dist_dir(self):

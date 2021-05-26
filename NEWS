@@ -4,7 +4,6 @@ Current release
 What's new in psycopg 2.9
 -------------------------
 
-- Dropped support for Python 2.7, 3.4, 3.5 (:tickets:`#1198, #1000, #1197`).
 - ``with connection`` starts a transaction on autocommit transactions too
   (:ticket:`#941`).
 - Escape table and column names in `~cursor.copy_from()` and
@@ -12,6 +11,14 @@ What's new in psycopg 2.9
 - Connection exceptions with sqlstate ``08XXX`` reclassified as
   `~psycopg2.OperationalError` (a subclass of the previously used
   `~psycopg2.DatabaseError`) (:ticket:`#1148`).
+- Include library dirs required from libpq to work around MacOS build problems
+  (:ticket:`#1200`).
+
+Other changes:
+
+- Dropped support for Python 2.7, 3.4, 3.5 (:tickets:`#1198, #1000, #1197`).
+- Build system for Linux/MacOS binary packages moved to GitHub action, now
+  providing :pep:`600`\-style wheels packages.
 
 
 What's new in psycopg 2.8.7
