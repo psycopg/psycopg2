@@ -52,7 +52,7 @@ How to make a psycopg2 release
 - When the workflows have finished download the packages using the
   ``download_packages.py`` and ``download_packages_appveyor.py`` scripts from
   the ``scripts/build`` directory. They will be saved in a
-  ``psycopg2-${VERSION}`` directory.
+  ``packages/psycopg2-${VERSION}`` directory.
 
 - Remove the ``.exe`` from the dir, because we don't want to upload them on
   PyPI::

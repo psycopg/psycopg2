@@ -3,8 +3,10 @@
 """
 
 import os
+import re
 import sys
 import logging
+import datetime as dt
 from pathlib import Path
 
 import requests
@@ -35,6 +37,18 @@ def main():
     resp = s.get(f"{API_URL}/projects/{REPOS}/")
     resp.raise_for_status()
     data = resp.json()
+
+    updated_at = dt.datetime.fromisoformat(
+        re.sub(r"\.\d+", "", data["build"]["finished"])
+    )
+    now = dt.datetime.now(dt.timezone.utc)
+    age = now - updated_at
+    logger.info(
+        f"found build {data['build']['version']} updated {pretty_interval(age)} ago"
+    )
+    if age > dt.timedelta(hours=6):
+        logger.warning("maybe it's a bit old?")
+
     jobs = data["build"]["jobs"]
     for job in jobs:
         if job["status"] != "success":
@@ -63,6 +77,19 @@ def main():
     logger.info("now you can run: 'twine upload -s packages/*'")
 
 
+def pretty_interval(td):
+    secs = td.total_seconds()
+    mins, secs = divmod(secs, 60)
+    hours, mins = divmod(mins, 60)
+    days, hours = divmod(hours, 24)
+    if days:
+        return f"{int(days)} days, {int(hours)} hours, {int(mins)} minutes"
+    elif hours:
+        return f"{int(hours)} hours, {int(mins)} minutes"
+    else:
+        return f"{int(mins)} minutes"
+
+
 if __name__ == "__main__":
     try:
         sys.exit(main())
@@ -74,4 +101,3 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         logger.info("user interrupt")
         sys.exit(1)
-
