@@ -8,8 +8,8 @@
 set -euo pipefail
 set -x
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-PRJDIR="$( cd "${DIR}/../.." && pwd )"
+dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+prjdir="$( cd "${dir}/../.." && pwd )"
 
 brew install gnu-sed postgresql@13
 
@@ -27,38 +27,40 @@ for i in $(seq 10 -1 0); do
 done
 
 # Find psycopg version
-VERSION=$(grep -e ^PSYCOPG_VERSION "${PRJDIR}/setup.py" | gsed "s/.*'\(.*\)'/\1/")
+version=$(grep -e ^PSYCOPG_VERSION "${prjdir}/setup.py" | gsed "s/.*'\(.*\)'/\1/")
 # A gratuitous comment to fix broken vim syntax file: '")
-DISTDIR="${PRJDIR}/dist/psycopg2-$VERSION"
-mkdir -p "$DISTDIR"
+distdir="${prjdir}/dist/psycopg2-$version"
+mkdir -p "$distdir"
 
 # Install required python packages
 pip install -U pip wheel delocate
 
 # Replace the package name
-gsed -i "s/^setup(name=\"psycopg2\"/setup(name=\"${PACKAGE_NAME}\"/" \
-    "${PRJDIR}/setup.py"
+if [[ "${PACKAGE_NAME:-}" ]]; then
+    gsed -i "s/^setup(name=\"psycopg2\"/setup(name=\"${PACKAGE_NAME}\"/" \
+        "${prjdir}/setup.py"
+fi
 
 # Build the wheels
-WHEELDIR="${PRJDIR}/wheels"
-pip wheel -w ${WHEELDIR} .
-delocate-listdeps ${WHEELDIR}/*.whl
+wheeldir="${prjdir}/wheels"
+pip wheel -w ${wheeldir} .
+delocate-listdeps ${wheeldir}/*.whl
 
 # Check where is the libpq. I'm gonna kill it for testing
 if [[ -z "${LIBPQ:-}" ]]; then
-    export LIBPQ=$(delocate-listdeps ${WHEELDIR}/*.whl | grep libpq)
+    export LIBPQ=$(delocate-listdeps ${wheeldir}/*.whl | grep libpq)
 fi
 
-delocate-wheel ${WHEELDIR}/*.whl
+delocate-wheel ${wheeldir}/*.whl
 # https://github.com/MacPython/wiki/wiki/Spinning-wheels#question-will-pip-give-me-a-broken-wheel
-delocate-addplat --rm-orig -x 10_9 -x 10_10 ${WHEELDIR}/*.whl
-cp ${WHEELDIR}/*.whl ${DISTDIR}
+delocate-addplat --rm-orig -x 10_9 -x 10_10 ${wheeldir}/*.whl
+cp ${wheeldir}/*.whl ${distdir}
 
 # kill the libpq to make sure tests don't depend on it
 mv "$LIBPQ" "${LIBPQ}-bye"
 
 # Install and test the built wheel
-pip install ${PACKAGE_NAME} --no-index -f "$DISTDIR"
+pip install ${PACKAGE_NAME:-psycopg2} --no-index -f "$distdir"
 
 # Print psycopg and libpq versions
 python -c "import psycopg2; print(psycopg2.__version__)"

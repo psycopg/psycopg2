@@ -52,15 +52,15 @@ jobs:
           --health-retries 5
 
 
-  build-manylinux_2_24:
+  build-manylinux:
     strategy:
       fail-fast: false
       matrix:
         include:
-          - platform: manylinux_2_24_x86_64
-          - platform: manylinux_2_24_i686
-          - platform: manylinux_2_24_aarch64
-          - platform: manylinux_2_24_ppc64le
+          - {tag: manylinux2014, arch: x86_64}
+          - {tag: manylinux2014, arch: i686}
+          - {tag: manylinux_2_24, arch: aarch64}
+          - {tag: manylinux_2_24, arch: ppc64le}
 
     runs-on: ubuntu-20.04
     steps:
@@ -73,9 +73,9 @@ jobs:
       - name: Build packages
         run: >-
           docker run --rm
-          -e PLAT=${{ matrix.platform }}
+          -e PLAT=${{ matrix.tag }}_${{ matrix.arch }}
           -e PACKAGE_NAME=psycopg2-binary
-          -e PYVERS="cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39 cp310-cp310"
+          -e PYVERS="cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39"
           -e PSYCOPG2_TESTDB=postgres
           -e PSYCOPG2_TESTDB_HOST=172.17.0.1
           -e PSYCOPG2_TESTDB_USER=postgres
@@ -83,15 +83,15 @@ jobs:
           -e PSYCOPG2_TEST_FAST=1
           -v `pwd`:/src
           --workdir /src
-          quay.io/pypa/${{ matrix.platform }}
-          ./scripts/build/build_manylinux_2_24.sh
+          quay.io/pypa/${{ matrix.tag }}_${{ matrix.arch }}
+          ./scripts/build/build_${{ matrix.tag }}.sh
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: packages_${{ matrix.platform }}
+          name: packages_${{ matrix.tag }}_${{ matrix.arch }}
           path: |
-            dist/*/*${{ matrix.platform }}.whl
+            dist/*/*${{ matrix.tag }}_${{ matrix.arch }}.whl
 
     services:
       postgresql:

@@ -1,6 +1,10 @@
 #!/bin/bash
 
-# Create manylinux_2_24 wheels for psycopg2
+# Create manylinux2014 wheels for psycopg2
+#
+# manylinux2014 is built on CentOS 7, which packages an old version of the
+# libssl, (1.0, which has concurrency problems with the Python libssl). So we
+# need to build these libraries from source.
 #
 # Look at the .github/workflows/packages.yml file for hints about how to use it.
 
@@ -26,12 +30,8 @@ if [[ "${PACKAGE_NAME:-}" ]]; then
         "${prjdir}/setup.py"
 fi
 
-# Install prerequisite libraries
-curl -s https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
-echo "deb http://apt.postgresql.org/pub/repos/apt stretch-pgdg main" \
-    > /etc/apt/sources.list.d/pgdg.list
-apt-get -y update
-apt-get install -y libpq-dev
+# Build depending libraries
+"${dir}/build_libpq.sh" > /dev/null
 
 # Create the wheel packages
 for pyver in $PYVERS; do
@@ -45,7 +45,7 @@ for whl in "${prjdir}"/dist/*.whl; do
 done
 
 # Make sure the libpq is not in the system
-for f in $(find /usr/lib /usr/lib64 -name libpq\*) ; do
+for f in $(find /usr/local/lib -name libpq\*) ; do
     mkdir -pv "/libpqbak/$(dirname $f)"
     mv -v "$f" "/libpqbak/$(dirname $f)"
 done
