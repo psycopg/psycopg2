@@ -4,6 +4,7 @@ Current release
 What's new in psycopg 2.8.7
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+- Fix concurrent use of `!conection.poll()` (:ticket:`1248`).
 - Accept empty params as `~psycopg2.connect()` (:ticket:`#1250`).
 - Fix attributes refcount in `Column` initialisation (:ticket:`#1252`).
 - Allow re-initialisation of static variables in the C module (:ticket:`#1267`).

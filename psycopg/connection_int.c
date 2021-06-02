@@ -904,7 +904,13 @@ _conn_poll_advance_read(connectionObject *self)
 
     Dprintf("conn_poll: poll reading");
 
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&(self->lock));
+
     busy = pq_get_result_async(self);
+
+    pthread_mutex_unlock(&(self->lock));
+    Py_END_ALLOW_THREADS;
 
     switch (busy) {
     case 0: /* result is ready */
