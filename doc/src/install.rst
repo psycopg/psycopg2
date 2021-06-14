@@ -230,7 +230,6 @@ If you have less standard requirements such as:
 
 - creating a :ref:`debug build <debug-build>`,
 - using :program:`pg_config` not in the :envvar:`PATH`,
-- supporting ``mx.DateTime``,
 
 then take a look at the ``setup.cfg`` file.
 

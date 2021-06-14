@@ -58,7 +58,6 @@
     <None Include="psycopg\adapter_binary.h" />
     <None Include="psycopg\adapter_datetime.h" />
     <None Include="psycopg\adapter_list.h" />
-    <None Include="psycopg\adapter_mxdatetime.h" />
     <None Include="psycopg\adapter_pboolean.h" />
     <None Include="psycopg\adapter_qstring.h" />
     <None Include="psycopg\config.h" />
@@ -166,7 +165,6 @@
     <Compile Include="psycopg\adapter_binary.c" />
     <Compile Include="psycopg\adapter_datetime.c" />
     <Compile Include="psycopg\adapter_list.c" />
-    <Compile Include="psycopg\adapter_mxdatetime.c" />
     <Compile Include="psycopg\adapter_pboolean.c" />
     <Compile Include="psycopg\adapter_qstring.c" />
     <Compile Include="psycopg\connection_int.c" />
@@ -187,7 +185,6 @@
     <Compile Include="psycopg\typecast_binary.c" />
     <Compile Include="psycopg\typecast_builtins.c" />
     <Compile Include="psycopg\typecast_datetime.c" />
-    <Compile Include="psycopg\typecast_mxdatetime.c" />
     <Compile Include="psycopg\utils.c" />
     <Compile Include="psycopg\win32_support.c" />
     <Compile Include="psycopg\lobject_int.c" />

@@ -540,7 +540,6 @@ or `!memoryview` (in Python 3).
     single: Date objects; Adaptation
     single: Time objects; Adaptation
     single: Interval objects; Adaptation
-    single: mx.DateTime; Adaptation
 
 .. _adapt-date:
 
@@ -550,8 +549,7 @@ Date/Time objects adaptation
 Python builtin `~datetime.datetime`, `~datetime.date`,
 `~datetime.time`,  `~datetime.timedelta` are converted into PostgreSQL's
 :sql:`timestamp[tz]`, :sql:`date`, :sql:`time[tz]`, :sql:`interval` data types.
-Time zones are supported too.  The Egenix `mx.DateTime`_ objects are adapted
-the same way::
+Time zones are supported too.
 
     >>> dt = datetime.datetime.now()
     >>> dt
