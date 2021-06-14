@@ -580,24 +580,32 @@ The PostgreSQL type :sql:`timestamp with time zone` (a.k.a.
 a `~datetime.datetime.tzinfo` attribute set to a
 `~psycopg2.tz.FixedOffsetTimezone` instance.
 
-    >>> cur.execute("SET TIME ZONE 'Europe/Rome';")  # UTC + 1 hour
-    >>> cur.execute("SELECT '2010-01-01 10:30:45'::timestamptz;")
+    >>> cur.execute("SET TIME ZONE 'Europe/Rome'")  # UTC + 1 hour
+    >>> cur.execute("SELECT '2010-01-01 10:30:45'::timestamptz")
     >>> cur.fetchone()[0].tzinfo
     psycopg2.tz.FixedOffsetTimezone(offset=60, name=None)
 
-Note that only time zones with an integer number of minutes are supported:
-this is a limitation of the Python `datetime` module.  A few historical time
-zones had seconds in the UTC offset: these time zones will have the offset
-rounded to the nearest minute, with an error of up to 30 seconds.
+.. note::
 
-    >>> cur.execute("SET TIME ZONE 'Asia/Calcutta';")  # offset was +5:53:20
-    >>> cur.execute("SELECT '1930-01-01 10:30:45'::timestamptz;")
-    >>> cur.fetchone()[0].tzinfo
-    psycopg2.tz.FixedOffsetTimezone(offset=353, name=None)
+    Before Python 3.7, the `datetime` module only supported timezones with an
+    integer number of minutes. A few historical time zones had seconds in the
+    UTC offset: these time zones will have the offset rounded to the nearest
+    minute, with an error of up to 30 seconds, on Python versions before 3.7.
+
+        >>> cur.execute("SET TIME ZONE 'Asia/Calcutta'")  # offset was +5:21:10
+        >>> cur.execute("SELECT '1900-01-01 10:30:45'::timestamptz")
+        >>> cur.fetchone()[0].tzinfo
+        # On Python 3.6: 5h, 21m
+        psycopg2.tz.FixedOffsetTimezone(offset=datetime.timedelta(0, 19260), name=None)
+        # On Python 3.7 and following: 5h, 21m, 10s
+        psycopg2.tz.FixedOffsetTimezone(offset=datetime.timedelta(seconds=19270), name=None)
 
 .. versionchanged:: 2.2.2
     timezones with seconds are supported (with rounding). Previously such
     timezones raised an error.
+
+.. versionchanged:: 2.9
+    timezones with seconds are supported without rounding.
 
 
 .. index::

@@ -45,6 +45,11 @@ class FixedOffsetTimezone(datetime.tzinfo):
     offset and name that instance will be returned. This saves memory and
     improves comparability.
 
+    .. versionchanged:: 2.9
+
+        The constructor can take either a timedelta or a number of minutes of
+        offset. Previously only minutes were supported.
+
     .. __: https://docs.python.org/library/datetime.html
     """
     _name = None
@@ -54,7 +59,9 @@ class FixedOffsetTimezone(datetime.tzinfo):
 
     def __init__(self, offset=None, name=None):
         if offset is not None:
-            self._offset = datetime.timedelta(minutes=offset)
+            if not isinstance(offset, datetime.timedelta):
+                offset = datetime.timedelta(minutes=offset)
+            self._offset = offset
         if name is not None:
             self._name = name
 
@@ -70,13 +77,23 @@ class FixedOffsetTimezone(datetime.tzinfo):
             return tz
 
     def __repr__(self):
-        offset_mins = self._offset.seconds // 60 + self._offset.days * 24 * 60
         return "psycopg2.tz.FixedOffsetTimezone(offset=%r, name=%r)" \
-            % (offset_mins, self._name)
+            % (self._offset, self._name)
+
+    def __eq__(self, other):
+        if isinstance(other, FixedOffsetTimezone):
+            return self._offset == other._offset
+        else:
+            return NotImplemented
+
+    def __ne__(self, other):
+        if isinstance(other, FixedOffsetTimezone):
+            return self._offset != other._offset
+        else:
+            return NotImplemented
 
     def __getinitargs__(self):
-        offset_mins = self._offset.seconds // 60 + self._offset.days * 24 * 60
-        return offset_mins, self._name
+        return self._offset, self._name
 
     def utcoffset(self, dt):
         return self._offset
@@ -84,14 +101,16 @@ class FixedOffsetTimezone(datetime.tzinfo):
     def tzname(self, dt):
         if self._name is not None:
             return self._name
-        else:
-            seconds = self._offset.seconds + self._offset.days * 86400
-            hours, seconds = divmod(seconds, 3600)
-            minutes = seconds / 60
-            if minutes:
-                return "%+03d:%d" % (hours, minutes)
-            else:
-                return "%+03d" % hours
+
+        minutes, seconds = divmod(self._offset.total_seconds(), 60)
+        hours, minutes = divmod(minutes, 60)
+        rv = "%+03d" % hours
+        if minutes or seconds:
+            rv += ":%02d" % minutes
+            if seconds:
+                rv += ":%02d" % seconds
+
+        return rv
 
     def dst(self, dt):
         return ZERO

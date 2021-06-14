@@ -23,6 +23,7 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
+import sys
 import math
 import pickle
 from datetime import date, datetime, time, timedelta
@@ -157,17 +158,27 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         self.check_time_tz("-01", -3600)
         self.check_time_tz("+01:15", 4500)
         self.check_time_tz("-01:15", -4500)
-        # The Python datetime module does not support time zone
-        # offsets that are not a whole number of minutes.
-        # We round the offset to the nearest minute.
-        self.check_time_tz("+01:15:00", 60 * (60 + 15))
-        self.check_time_tz("+01:15:29", 60 * (60 + 15))
-        self.check_time_tz("+01:15:30", 60 * (60 + 16))
-        self.check_time_tz("+01:15:59", 60 * (60 + 16))
-        self.check_time_tz("-01:15:00", -60 * (60 + 15))
-        self.check_time_tz("-01:15:29", -60 * (60 + 15))
-        self.check_time_tz("-01:15:30", -60 * (60 + 16))
-        self.check_time_tz("-01:15:59", -60 * (60 + 16))
+        if sys.version_info < (3, 7):
+            # The Python < 3.7 datetime module does not support time zone
+            # offsets that are not a whole number of minutes.
+            # We round the offset to the nearest minute.
+            self.check_time_tz("+01:15:00", 60 * (60 + 15))
+            self.check_time_tz("+01:15:29", 60 * (60 + 15))
+            self.check_time_tz("+01:15:30", 60 * (60 + 16))
+            self.check_time_tz("+01:15:59", 60 * (60 + 16))
+            self.check_time_tz("-01:15:00", -60 * (60 + 15))
+            self.check_time_tz("-01:15:29", -60 * (60 + 15))
+            self.check_time_tz("-01:15:30", -60 * (60 + 16))
+            self.check_time_tz("-01:15:59", -60 * (60 + 16))
+        else:
+            self.check_time_tz("+01:15:00", 60 * (60 + 15))
+            self.check_time_tz("+01:15:29", 60 * (60 + 15) + 29)
+            self.check_time_tz("+01:15:30", 60 * (60 + 15) + 30)
+            self.check_time_tz("+01:15:59", 60 * (60 + 15) + 59)
+            self.check_time_tz("-01:15:00", -(60 * (60 + 15)))
+            self.check_time_tz("-01:15:29", -(60 * (60 + 15) + 29))
+            self.check_time_tz("-01:15:30", -(60 * (60 + 15) + 30))
+            self.check_time_tz("-01:15:59", -(60 * (60 + 15) + 59))
 
     def check_datetime_tz(self, str_offset, offset):
         base = datetime(2007, 1, 1, 13, 30, 29)
@@ -192,17 +203,27 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         self.check_datetime_tz("-01", -3600)
         self.check_datetime_tz("+01:15", 4500)
         self.check_datetime_tz("-01:15", -4500)
-        # The Python datetime module does not support time zone
-        # offsets that are not a whole number of minutes.
-        # We round the offset to the nearest minute.
-        self.check_datetime_tz("+01:15:00", 60 * (60 + 15))
-        self.check_datetime_tz("+01:15:29", 60 * (60 + 15))
-        self.check_datetime_tz("+01:15:30", 60 * (60 + 16))
-        self.check_datetime_tz("+01:15:59", 60 * (60 + 16))
-        self.check_datetime_tz("-01:15:00", -60 * (60 + 15))
-        self.check_datetime_tz("-01:15:29", -60 * (60 + 15))
-        self.check_datetime_tz("-01:15:30", -60 * (60 + 16))
-        self.check_datetime_tz("-01:15:59", -60 * (60 + 16))
+        if sys.version_info < (3, 7):
+            # The Python < 3.7 datetime module does not support time zone
+            # offsets that are not a whole number of minutes.
+            # We round the offset to the nearest minute.
+            self.check_datetime_tz("+01:15:00", 60 * (60 + 15))
+            self.check_datetime_tz("+01:15:29", 60 * (60 + 15))
+            self.check_datetime_tz("+01:15:30", 60 * (60 + 16))
+            self.check_datetime_tz("+01:15:59", 60 * (60 + 16))
+            self.check_datetime_tz("-01:15:00", -60 * (60 + 15))
+            self.check_datetime_tz("-01:15:29", -60 * (60 + 15))
+            self.check_datetime_tz("-01:15:30", -60 * (60 + 16))
+            self.check_datetime_tz("-01:15:59", -60 * (60 + 16))
+        else:
+            self.check_datetime_tz("+01:15:00", 60 * (60 + 15))
+            self.check_datetime_tz("+01:15:29", 60 * (60 + 15) + 29)
+            self.check_datetime_tz("+01:15:30", 60 * (60 + 15) + 30)
+            self.check_datetime_tz("+01:15:59", 60 * (60 + 15) + 59)
+            self.check_datetime_tz("-01:15:00", -(60 * (60 + 15)))
+            self.check_datetime_tz("-01:15:29", -(60 * (60 + 15) + 29))
+            self.check_datetime_tz("-01:15:30", -(60 * (60 + 15) + 30))
+            self.check_datetime_tz("-01:15:59", -(60 * (60 + 15) + 59))
 
     def test_parse_time_no_timezone(self):
         self.assertEqual(self.TIME("13:30:29", self.curs).tzinfo, None)
@@ -628,17 +649,27 @@ class FixedOffsetTimezoneTests(unittest.TestCase):
     def test_repr_with_positive_offset(self):
         tzinfo = FixedOffsetTimezone(5 * 60)
         self.assertEqual(repr(tzinfo),
-            "psycopg2.tz.FixedOffsetTimezone(offset=300, name=None)")
+            "psycopg2.tz.FixedOffsetTimezone(offset=%r, name=None)"
+            % timedelta(minutes=5 * 60))
 
     def test_repr_with_negative_offset(self):
         tzinfo = FixedOffsetTimezone(-5 * 60)
         self.assertEqual(repr(tzinfo),
-            "psycopg2.tz.FixedOffsetTimezone(offset=-300, name=None)")
+            "psycopg2.tz.FixedOffsetTimezone(offset=%r, name=None)"
+            % timedelta(minutes=-5 * 60))
+
+    def test_init_with_timedelta(self):
+        td = timedelta(minutes=5 * 60)
+        tzinfo = FixedOffsetTimezone(td)
+        self.assertEqual(tzinfo, FixedOffsetTimezone(5 * 60))
+        self.assertEqual(repr(tzinfo),
+            "psycopg2.tz.FixedOffsetTimezone(offset=%r, name=None)" % td)
 
     def test_repr_with_name(self):
         tzinfo = FixedOffsetTimezone(name="FOO")
         self.assertEqual(repr(tzinfo),
-            "psycopg2.tz.FixedOffsetTimezone(offset=0, name='FOO')")
+            "psycopg2.tz.FixedOffsetTimezone(offset=%r, name='FOO')"
+            % timedelta(0))
 
     def test_instance_caching(self):
         self.assert_(FixedOffsetTimezone(name="FOO")

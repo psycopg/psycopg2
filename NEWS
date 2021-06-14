@@ -6,6 +6,8 @@ What's new in psycopg 2.9
 
 - ``with connection`` starts a transaction on autocommit transactions too
   (:ticket:`#941`).
+- Timezones with fractional minutes are supported on Python 3.7 and following
+  (:ticket:`#1272`).
 - Escape table and column names in `~cursor.copy_from()` and
   `~cursor.copy_to()`.
 - Connection exceptions with sqlstate ``08XXX`` reclassified as
