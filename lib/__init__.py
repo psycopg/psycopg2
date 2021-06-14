@@ -61,8 +61,6 @@ from psycopg2._psycopg import (                     # noqa
     __version__, __libpq_version__,
 )
 
-from psycopg2 import tz                             # noqa
-
 
 # Register default adapters.
 

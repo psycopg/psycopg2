@@ -188,7 +188,7 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         self.assertEqual(value.replace(tzinfo=None), base)
 
         # Conversion to UTC produces the expected offset.
-        UTC = FixedOffsetTimezone(0, "UTC")
+        UTC = timezone(timedelta(0))
         value_utc = value.astimezone(UTC).replace(tzinfo=None)
         self.assertEqual(base - value_utc, timedelta(seconds=offset))
 
@@ -317,7 +317,7 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         self.assertEqual(None, dt.tzinfo)
 
     def test_type_roundtrip_datetimetz(self):
-        tz = FixedOffsetTimezone(8 * 60)
+        tz = timezone(timedelta(minutes=8 * 60))
         dt1 = datetime(2010, 5, 3, 10, 20, 30, tzinfo=tz)
         dt2 = self._test_type_roundtrip(dt1)
         self.assertNotEqual(None, dt2.tzinfo)
@@ -328,7 +328,7 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         self.assertEqual(None, tm.tzinfo)
 
     def test_type_roundtrip_timetz(self):
-        tz = FixedOffsetTimezone(8 * 60)
+        tz = timezone(timedelta(minutes=8 * 60))
         tm1 = time(10, 20, 30, tzinfo=tz)
         tm2 = self._test_type_roundtrip(tm1)
         self.assertNotEqual(None, tm2.tzinfo)
@@ -345,7 +345,7 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
 
     def test_type_roundtrip_datetimetz_array(self):
         self._test_type_roundtrip_array(
-            datetime(2010, 5, 3, 10, 20, 30, tzinfo=FixedOffsetTimezone(0)))
+            datetime(2010, 5, 3, 10, 20, 30, tzinfo=timezone(timedelta(0))))
 
     def test_type_roundtrip_time_array(self):
         self._test_type_roundtrip_array(time(10, 20, 30))
@@ -359,10 +359,10 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         self.assertEqual(t, time(0, 0))
 
         t = self.execute("select '24:00+05'::timetz;")
-        self.assertEqual(t, time(0, 0, tzinfo=FixedOffsetTimezone(300)))
+        self.assertEqual(t, time(0, 0, tzinfo=timezone(timedelta(minutes=300))))
 
         t = self.execute("select '24:00+05:30'::timetz;")
-        self.assertEqual(t, time(0, 0, tzinfo=FixedOffsetTimezone(330)))
+        self.assertEqual(t, time(0, 0, tzinfo=timezone(timedelta(minutes=330))))
 
     @skip_before_postgres(8, 1)
     def test_large_interval(self):
@@ -430,11 +430,11 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
 
         t = self.execute("select 'infinity'::timestamptz")
         self.assert_(t.tzinfo is not None)
-        self.assert_(t > datetime(4000, 1, 1, tzinfo=FixedOffsetTimezone()))
+        self.assert_(t > datetime(4000, 1, 1, tzinfo=timezone(timedelta(0))))
 
         t = self.execute("select '-infinity'::timestamptz")
         self.assert_(t.tzinfo is not None)
-        self.assert_(t < datetime(1000, 1, 1, tzinfo=FixedOffsetTimezone()))
+        self.assert_(t < datetime(1000, 1, 1, tzinfo=timezone(timedelta(0))))
 
     def test_redshift_day(self):
         # Redshift is reported returning 1 day interval as microsec (bug #558)
@@ -473,7 +473,7 @@ class FromTicksTestCase(unittest.TestCase):
         s = psycopg2.TimestampFromTicks(1273173119.99992)
         self.assertEqual(s.adapted,
             datetime(2010, 5, 6, 14, 11, 59, 999920,
-                tzinfo=FixedOffsetTimezone(-5 * 60)))
+                tzinfo=timezone(timedelta(minutes=-5 * 60))))
 
     def test_date_value_error_sec_59_99(self):
         s = psycopg2.DateFromTicks(1273173119.99992)
