@@ -498,8 +498,10 @@ The ``cursor`` class
 
         The time zone factory used to handle data types such as
         :sql:`TIMESTAMP WITH TIME ZONE`.  It should be a `~datetime.tzinfo`
-        object.  A few implementations are available in the `psycopg2.tz`
-        module.
+        object.  Default is `datetime.timezone`.
+
+        .. versionchanged:: 2.9
+            previosly the default factory was `psycopg2.tz.FixedOffsetTimezone`.
 
 
     .. method:: nextset()

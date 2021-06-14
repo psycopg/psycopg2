@@ -104,9 +104,18 @@ _parse_inftz(const char *str, PyObject *curs)
         goto exit;
     }
 
-    if (!(tzinfo = PyObject_CallFunction(tzinfo_factory, "i", 0))) {
-        goto exit;
+#if PY_VERSION_HEX < 0x03070000
+    {
+        PyObject *tzoff;
+        if (!(tzoff = PyDelta_FromDSU(0, 0, 0))) { goto exit; }
+        tzinfo = PyObject_CallFunctionObjArgs(tzinfo_factory, tzoff, NULL);
+        Py_DECREF(tzoff);
+        if (!tzinfo) { goto exit; }
     }
+#else
+    tzinfo = PyDateTime_TimeZone_UTC;
+    Py_INCREF(tzinfo);
+#endif
 
     /* m.replace(tzinfo=tzinfo) */
     if (!(args = PyTuple_New(0))) { goto exit; }

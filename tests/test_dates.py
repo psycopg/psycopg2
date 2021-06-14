@@ -26,7 +26,7 @@
 import sys
 import math
 import pickle
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime, time, timedelta, timezone
 
 import psycopg2
 from psycopg2.tz import FixedOffsetTimezone, ZERO
@@ -191,6 +191,22 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         UTC = FixedOffsetTimezone(0, "UTC")
         value_utc = value.astimezone(UTC).replace(tzinfo=None)
         self.assertEqual(base - value_utc, timedelta(seconds=offset))
+
+    def test_default_tzinfo(self):
+        self.curs.execute("select '2000-01-01 00:00+02:00'::timestamptz")
+        dt = self.curs.fetchone()[0]
+        self.assert_(isinstance(dt.tzinfo, timezone))
+        self.assertEqual(dt,
+            datetime(2000, 1, 1, tzinfo=timezone(timedelta(minutes=120))))
+
+    def test_fotz_tzinfo(self):
+        self.curs.tzinfo_factory = FixedOffsetTimezone
+        self.curs.execute("select '2000-01-01 00:00+02:00'::timestamptz")
+        dt = self.curs.fetchone()[0]
+        self.assert_(not isinstance(dt.tzinfo, timezone))
+        self.assert_(isinstance(dt.tzinfo, FixedOffsetTimezone))
+        self.assertEqual(dt,
+            datetime(2000, 1, 1, tzinfo=timezone(timedelta(minutes=120))))
 
     def test_parse_datetime_timezone(self):
         self.check_datetime_tz("+01", 3600)

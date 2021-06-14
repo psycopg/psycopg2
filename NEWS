@@ -20,6 +20,8 @@ Other changes:
 
 - Dropped support for Python 2.7, 3.4, 3.5 (:tickets:`#1198, #1000, #1197`).
 - Dropped support for mx.DateTime.
+- Use `datetime.timezone` objects by default in datetime objects instead of
+  `~psycopg2.tz.FixedOffsetTimezone`.
 - Build system for Linux/MacOS binary packages moved to GitHub action, now
   providing :pep:`600`\-style wheels packages.
 

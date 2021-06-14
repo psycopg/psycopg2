@@ -574,14 +574,13 @@ Time zones handling
 '''''''''''''''''''
 
 The PostgreSQL type :sql:`timestamp with time zone` (a.k.a.
-:sql:`timestamptz`) is converted into Python `~datetime.datetime` objects with
-a `~datetime.datetime.tzinfo` attribute set to a
-`~psycopg2.tz.FixedOffsetTimezone` instance.
+:sql:`timestamptz`) is converted into Python `~datetime.datetime` objects.
 
     >>> cur.execute("SET TIME ZONE 'Europe/Rome'")  # UTC + 1 hour
     >>> cur.execute("SELECT '2010-01-01 10:30:45'::timestamptz")
-    >>> cur.fetchone()[0].tzinfo
-    psycopg2.tz.FixedOffsetTimezone(offset=60, name=None)
+    >>> cur.fetchone()[0]
+    datetime.datetime(2010, 1, 1, 10, 30, 45,
+        tzinfo=datetime.timezone(datetime.timedelta(seconds=3600)))
 
 .. note::
 
@@ -594,9 +593,9 @@ a `~datetime.datetime.tzinfo` attribute set to a
         >>> cur.execute("SELECT '1900-01-01 10:30:45'::timestamptz")
         >>> cur.fetchone()[0].tzinfo
         # On Python 3.6: 5h, 21m
-        psycopg2.tz.FixedOffsetTimezone(offset=datetime.timedelta(0, 19260), name=None)
+        datetime.timezone(datetime.timedelta(0, 19260))
         # On Python 3.7 and following: 5h, 21m, 10s
-        psycopg2.tz.FixedOffsetTimezone(offset=datetime.timedelta(seconds=19270), name=None)
+        datetime.timezone(datetime.timedelta(seconds=19270))
 
 .. versionchanged:: 2.2.2
     timezones with seconds are supported (with rounding). Previously such
@@ -605,6 +604,9 @@ a `~datetime.datetime.tzinfo` attribute set to a
 .. versionchanged:: 2.9
     timezones with seconds are supported without rounding.
 
+.. versionchanged:: 2.9
+    use `datetime.timezone` as default tzinfo object instead of
+    `~psycopg2.tz.FixedOffsetTimezone`.
 
 .. index::
     double: Date objects; Infinite
