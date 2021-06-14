@@ -49,7 +49,7 @@ master_doc = 'index'
 # General information about the project.
 project = 'Psycopg'
 copyright = (
-    '2001-2020, Federico Di Gregorio, Daniele Varrazzo, The Psycopg Team'
+    '2001-2021, Federico Di Gregorio, Daniele Varrazzo, The Psycopg Team'
 )
 
 # The version info for the project you're documenting, acts as replacement for

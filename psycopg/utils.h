@@ -1,7 +1,7 @@
 /* utils.h - function definitions for utility file
  *
  * Copyright (C) 2018-2019 Daniele Varrazzo <daniele.varrazzo@gmail.com>
- * Copyright (C) 2020 The Psycopg Team
+ * Copyright (C) 2020-2021 The Psycopg Team
  *
  * This file is part of psycopg.
  *

@@ -1,7 +1,7 @@
 /* replication_cursor_type.c - python interface to replication cursor objects
  *
  * Copyright (C) 2015-2019 Daniele Varrazzo <daniele.varrazzo@gmail.com>
- * Copyright (C) 2020 The Psycopg Team
+ * Copyright (C) 2020-2021 The Psycopg Team
  *
  * This file is part of psycopg.
  *

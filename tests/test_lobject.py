@@ -3,7 +3,7 @@
 # test_lobject.py - unit test for large objects support
 #
 # Copyright (C) 2008-2019 James Henstridge  <james@jamesh.id.au>
-# Copyright (C) 2020 The Psycopg Team
+# Copyright (C) 2020-2021 The Psycopg Team
 #
 # psycopg2 is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Lesser General Public License as published

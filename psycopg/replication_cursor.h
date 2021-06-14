@@ -1,7 +1,7 @@
 /* replication_cursor.h - definition for the psycopg replication cursor type
  *
  * Copyright (C) 2015-2019 Daniele Varrazzo <daniele.varrazzo@gmail.com>
- * Copyright (C) 2020 The Psycopg Team
+ * Copyright (C) 2020-2021 The Psycopg Team
  *
  * This file is part of psycopg.
  *

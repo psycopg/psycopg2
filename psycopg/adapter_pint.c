@@ -1,7 +1,7 @@
 /* adapter_int.c - psycopg pint type wrapper implementation
  *
  * Copyright (C) 2011-2019 Daniele Varrazzo <daniele.varrazzo@gmail.com>
- * Copyright (C) 2020 The Psycopg Team
+ * Copyright (C) 2020-2021 The Psycopg Team
  *
  * This file is part of psycopg.
  *

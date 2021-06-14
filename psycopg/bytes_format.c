@@ -1,7 +1,7 @@
 /* bytes_format.c - bytes-oriented version of PyString_Format
  *
  * Copyright (C) 2010-2019 Daniele Varrazzo <daniele.varrazzo@gmail.com>
- * Copyright (C) 2020 The Psycopg Team
+ * Copyright (C) 2020-2021 The Psycopg Team
  *
  * This file is part of psycopg.
  *

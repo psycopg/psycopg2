@@ -1,7 +1,7 @@
 /* column_type.c - python interface to cursor.description objects
  *
  * Copyright (C) 2018-2019  Daniele Varrazzo <daniele.varrazzo@gmail.com>
- * Copyright (C) 2020 The Psycopg Team
+ * Copyright (C) 2020-2021 The Psycopg Team
  *
  * This file is part of psycopg.
  *
