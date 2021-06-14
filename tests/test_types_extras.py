@@ -20,7 +20,7 @@ import json
 import uuid
 import warnings
 from decimal import Decimal
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, timezone
 from functools import wraps
 from pickle import dumps, loads
 
@@ -38,7 +38,6 @@ from psycopg2.extras import (
     Inet, Json, NumericRange, Range, RealDictConnection,
     register_composite, register_hstore, register_range,
 )
-from psycopg2.tz import FixedOffsetTimezone
 
 
 class TypesExtrasTests(ConnectingTestCase):
@@ -1282,7 +1281,7 @@ class RangeTestCase(unittest.TestCase):
         Date-Time ranges should return a human-readable string as well on
         string conversion.
         '''
-        tz = FixedOffsetTimezone(-5 * 60, "EST")
+        tz = timezone(timedelta(minutes=-5 * 60), "EST")
         r = DateTimeTZRange(datetime(2010, 1, 1, tzinfo=tz),
                             datetime(2011, 1, 1, tzinfo=tz))
         expected = '[2010-01-01 00:00:00-05:00, 2011-01-01 00:00:00-05:00)'
@@ -1377,9 +1376,9 @@ class RangeCasterTestCase(ConnectingTestCase):
 
     def test_cast_timestamptz(self):
         cur = self.conn.cursor()
-        ts1 = datetime(2000, 1, 1, tzinfo=FixedOffsetTimezone(600))
+        ts1 = datetime(2000, 1, 1, tzinfo=timezone(timedelta(minutes=600)))
         ts2 = datetime(2000, 12, 31, 23, 59, 59, 999,
-                       tzinfo=FixedOffsetTimezone(600))
+                       tzinfo=timezone(timedelta(minutes=600)))
         cur.execute("select tstzrange(%s, %s, '[]')", (ts1, ts2))
         r = cur.fetchone()[0]
         self.assert_(isinstance(r, DateTimeTZRange))
@@ -1465,9 +1464,9 @@ class RangeCasterTestCase(ConnectingTestCase):
         self.assert_(isinstance(r1, DateTimeRange))
         self.assert_(r1.isempty)
 
-        ts1 = datetime(2000, 1, 1, tzinfo=FixedOffsetTimezone(600))
+        ts1 = datetime(2000, 1, 1, tzinfo=timezone(timedelta(minutes=600)))
         ts2 = datetime(2000, 12, 31, 23, 59, 59, 999,
-                       tzinfo=FixedOffsetTimezone(600))
+                       tzinfo=timezone(timedelta(minutes=600)))
         r = DateTimeTZRange(ts1, ts2, '(]')
         cur.execute("select %s", (r,))
         r1 = cur.fetchone()[0]

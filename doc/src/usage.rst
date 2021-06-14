@@ -540,7 +540,6 @@ or `!memoryview` (in Python 3).
     single: Date objects; Adaptation
     single: Time objects; Adaptation
     single: Interval objects; Adaptation
-    single: mx.DateTime; Adaptation
 
 .. _adapt-date:
 
@@ -550,8 +549,7 @@ Date/Time objects adaptation
 Python builtin `~datetime.datetime`, `~datetime.date`,
 `~datetime.time`,  `~datetime.timedelta` are converted into PostgreSQL's
 :sql:`timestamp[tz]`, :sql:`date`, :sql:`time[tz]`, :sql:`interval` data types.
-Time zones are supported too.  The Egenix `mx.DateTime`_ objects are adapted
-the same way::
+Time zones are supported too.
 
     >>> dt = datetime.datetime.now()
     >>> dt
@@ -576,29 +574,39 @@ Time zones handling
 '''''''''''''''''''
 
 The PostgreSQL type :sql:`timestamp with time zone` (a.k.a.
-:sql:`timestamptz`) is converted into Python `~datetime.datetime` objects with
-a `~datetime.datetime.tzinfo` attribute set to a
-`~psycopg2.tz.FixedOffsetTimezone` instance.
+:sql:`timestamptz`) is converted into Python `~datetime.datetime` objects.
 
-    >>> cur.execute("SET TIME ZONE 'Europe/Rome';")  # UTC + 1 hour
-    >>> cur.execute("SELECT '2010-01-01 10:30:45'::timestamptz;")
-    >>> cur.fetchone()[0].tzinfo
-    psycopg2.tz.FixedOffsetTimezone(offset=60, name=None)
+    >>> cur.execute("SET TIME ZONE 'Europe/Rome'")  # UTC + 1 hour
+    >>> cur.execute("SELECT '2010-01-01 10:30:45'::timestamptz")
+    >>> cur.fetchone()[0]
+    datetime.datetime(2010, 1, 1, 10, 30, 45,
+        tzinfo=datetime.timezone(datetime.timedelta(seconds=3600)))
 
-Note that only time zones with an integer number of minutes are supported:
-this is a limitation of the Python `datetime` module.  A few historical time
-zones had seconds in the UTC offset: these time zones will have the offset
-rounded to the nearest minute, with an error of up to 30 seconds.
+.. note::
 
-    >>> cur.execute("SET TIME ZONE 'Asia/Calcutta';")  # offset was +5:53:20
-    >>> cur.execute("SELECT '1930-01-01 10:30:45'::timestamptz;")
-    >>> cur.fetchone()[0].tzinfo
-    psycopg2.tz.FixedOffsetTimezone(offset=353, name=None)
+    Before Python 3.7, the `datetime` module only supported timezones with an
+    integer number of minutes. A few historical time zones had seconds in the
+    UTC offset: these time zones will have the offset rounded to the nearest
+    minute, with an error of up to 30 seconds, on Python versions before 3.7.
+
+        >>> cur.execute("SET TIME ZONE 'Asia/Calcutta'")  # offset was +5:21:10
+        >>> cur.execute("SELECT '1900-01-01 10:30:45'::timestamptz")
+        >>> cur.fetchone()[0].tzinfo
+        # On Python 3.6: 5h, 21m
+        datetime.timezone(datetime.timedelta(0, 19260))
+        # On Python 3.7 and following: 5h, 21m, 10s
+        datetime.timezone(datetime.timedelta(seconds=19270))
 
 .. versionchanged:: 2.2.2
     timezones with seconds are supported (with rounding). Previously such
     timezones raised an error.
 
+.. versionchanged:: 2.9
+    timezones with seconds are supported without rounding.
+
+.. versionchanged:: 2.9
+    use `datetime.timezone` as default tzinfo object instead of
+    `~psycopg2.tz.FixedOffsetTimezone`.
 
 .. index::
     double: Date objects; Infinite

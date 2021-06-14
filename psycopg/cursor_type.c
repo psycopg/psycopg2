@@ -1951,10 +1951,11 @@ cursor_setup(cursorObject *self, connectionObject *conn, const char *name)
 
     /* default tzinfo factory */
     {
+        /* The datetime api doesn't seem to have a constructor to make a
+         * datetime.timezone, so use the Python interface. */
         PyObject *m = NULL;
-        if ((m = PyImport_ImportModule("psycopg2.tz"))) {
-            self->tzinfo_factory = PyObject_GetAttrString(
-                    m, "FixedOffsetTimezone");
+        if ((m = PyImport_ImportModule("datetime"))) {
+            self->tzinfo_factory = PyObject_GetAttrString(m, "timezone");
             Py_DECREF(m);
         }
         if (!self->tzinfo_factory) {

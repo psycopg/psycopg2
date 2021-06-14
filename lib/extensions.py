@@ -42,14 +42,6 @@ from psycopg2._psycopg import (                             # noqa
     ROWIDARRAY, STRINGARRAY, TIME, TIMEARRAY, UNICODE, UNICODEARRAY,
     AsIs, Binary, Boolean, Float, Int, QuotedString, )
 
-try:
-    from psycopg2._psycopg import (                         # noqa
-        MXDATE, MXDATETIME, MXDATETIMETZ, MXINTERVAL, MXTIME, MXDATEARRAY,
-        MXDATETIMEARRAY, MXDATETIMETZARRAY, MXINTERVALARRAY, MXTIMEARRAY,
-        DateFromMx, TimeFromMx, TimestampFromMx, IntervalFromMx, )
-except ImportError:
-    pass
-
 from psycopg2._psycopg import (                         # noqa
     PYDATE, PYDATETIME, PYDATETIMETZ, PYINTERVAL, PYTIME, PYDATEARRAY,
     PYDATETIMEARRAY, PYDATETIMETZARRAY, PYINTERVALARRAY, PYTIMEARRAY,

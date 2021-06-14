@@ -128,8 +128,6 @@ rst_epilog = """
 .. _transaction isolation level:
     https://www.postgresql.org/docs/current/static/transaction-iso.html
 
-.. _mx.DateTime: https://www.egenix.com/products/python/mxBase/mxDateTime/
-
 .. |MVCC| replace:: :abbr:`MVCC (Multiversion concurrency control)`
 """
 

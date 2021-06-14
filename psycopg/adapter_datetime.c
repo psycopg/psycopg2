@@ -423,8 +423,8 @@ psyco_TimeFromTicks(PyObject *self, PyObject *args)
 PyObject *
 psyco_TimestampFromTicks(PyObject *self, PyObject *args)
 {
-    PyObject *m = NULL;
-    PyObject *tz = NULL;
+    pydatetimeObject *wrapper = NULL;
+    PyObject *dt_aware = NULL;
     PyObject *res = NULL;
     struct tm tm;
     time_t t;
@@ -433,10 +433,6 @@ psyco_TimestampFromTicks(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "d", &ticks))
         return NULL;
 
-    /* get psycopg2.tz.LOCAL from pythonland */
-    if (!(m = PyImport_ImportModule("psycopg2.tz"))) { goto exit; }
-    if (!(tz = PyObject_GetAttrString(m, "LOCAL"))) { goto exit; }
-
     t = (time_t)floor(ticks);
     ticks -= (double)t;
     if (!localtime_r(&t, &tm)) {
@@ -444,14 +440,29 @@ psyco_TimestampFromTicks(PyObject *self, PyObject *args)
         goto exit;
     }
 
-    res = _psyco_Timestamp(
-        tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
-        tm.tm_hour, tm.tm_min, (double)tm.tm_sec + ticks,
-        tz);
+    /* Convert the tm to a wrapper containing a naive datetime.datetime */
+    if (!(wrapper = (pydatetimeObject *)_psyco_Timestamp(
+            tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
+            tm.tm_hour, tm.tm_min, (double)tm.tm_sec + ticks, NULL))) {
+        goto exit;
+    }
+
+    /* Localize the datetime and assign it back to the wrapper */
+    if (!(dt_aware = PyObject_CallMethod(
+            wrapper->wrapped, "astimezone", NULL))) {
+        goto exit;
+    }
+    Py_CLEAR(wrapper->wrapped);
+    wrapper->wrapped = dt_aware;
+    dt_aware = NULL;
+
+    /* the wrapper is ready to be returned */
+    res = (PyObject *)wrapper;
+    wrapper = NULL;
 
 exit:
-    Py_XDECREF(tz);
-    Py_XDECREF(m);
+    Py_XDECREF(dt_aware);
+    Py_XDECREF(wrapper);
     return res;
 }
 

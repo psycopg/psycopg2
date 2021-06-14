@@ -6,6 +6,8 @@ What's new in psycopg 2.9
 
 - ``with connection`` starts a transaction on autocommit transactions too
   (:ticket:`#941`).
+- Timezones with fractional minutes are supported on Python 3.7 and following
+  (:ticket:`#1272`).
 - Escape table and column names in `~cursor.copy_from()` and
   `~cursor.copy_to()`.
 - Connection exceptions with sqlstate ``08XXX`` reclassified as
@@ -17,6 +19,11 @@ What's new in psycopg 2.9
 Other changes:
 
 - Dropped support for Python 2.7, 3.4, 3.5 (:tickets:`#1198, #1000, #1197`).
+- Dropped support for mx.DateTime.
+- Use `datetime.timezone` objects by default in datetime objects instead of
+  `~psycopg2.tz.FixedOffsetTimezone`.
+- The `psycopg2.tz` module is deprecated and scheduled to be dropped in the
+  next major release.
 - Build system for Linux/MacOS binary packages moved to GitHub action, now
   providing :pep:`600`\-style wheels packages.
 

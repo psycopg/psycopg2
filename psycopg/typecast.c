@@ -32,15 +32,6 @@
 
 /* useful function used by some typecasters */
 
-#ifdef HAVE_MXDATETIME
-static const char *
-skip_until_space(const char *s)
-{
-    while (*s && *s != ' ') s++;
-    return s;
-}
-#endif
-
 static const char *
 skip_until_space2(const char *s, Py_ssize_t *len)
 {
@@ -82,11 +73,11 @@ typecast_parse_date(const char* s, const char** t, Py_ssize_t* len,
         cz += 1;
     }
 
-    /* Is this a BC date?  If so, adjust the year value.  Note that
-     * mx.DateTime numbers BC dates from zero rather than one.  The
-     * Python datetime module does not support BC dates at all. */
+    /* Is this a BC date?  If so, adjust the year value.  However
+     * Python datetime module does not support BC dates, so this will raise
+     * an exception downstream. */
     if (*len >= 2 && s[*len-2] == 'B' && s[*len-1] == 'C')
-        *year = 1 - (*year);
+        *year = -(*year);
 
     if (t != NULL) *t = s;
 
@@ -175,11 +166,6 @@ typecast_parse_time(const char* s, const char** t, Py_ssize_t* len,
 #include "psycopg/typecast_basic.c"
 #include "psycopg/typecast_binary.c"
 #include "psycopg/typecast_datetime.c"
-
-#ifdef HAVE_MXDATETIME
-#include "psycopg/typecast_mxdatetime.c"
-#endif
-
 #include "psycopg/typecast_array.c"
 
 static long int typecast_default_DEFAULT[] = {0};
@@ -217,29 +203,6 @@ static typecastObject_initlist typecast_pydatetime[] = {
     {"PYINTERVALARRAY", typecast_INTERVALARRAY_types, typecast_PYINTERVALARRAY_cast, "PYINTERVAL"},
     {NULL, NULL, NULL}
 };
-
-#ifdef HAVE_MXDATETIME
-#define typecast_MXDATETIMEARRAY_cast typecast_GENERIC_ARRAY_cast
-#define typecast_MXDATETIMETZARRAY_cast typecast_GENERIC_ARRAY_cast
-#define typecast_MXDATEARRAY_cast typecast_GENERIC_ARRAY_cast
-#define typecast_MXTIMEARRAY_cast typecast_GENERIC_ARRAY_cast
-#define typecast_MXINTERVALARRAY_cast typecast_GENERIC_ARRAY_cast
-
-/* a list of initializers, used to make the typecasters accessible anyway */
-static typecastObject_initlist typecast_mxdatetime[] = {
-    {"MXDATETIME", typecast_DATETIME_types, typecast_MXDATE_cast},
-    {"MXDATETIMETZ", typecast_DATETIMETZ_types, typecast_MXDATE_cast},
-    {"MXTIME", typecast_TIME_types, typecast_MXTIME_cast},
-    {"MXDATE", typecast_DATE_types, typecast_MXDATE_cast},
-    {"MXINTERVAL", typecast_INTERVAL_types, typecast_MXINTERVAL_cast},
-    {"MXDATETIMEARRAY", typecast_DATETIMEARRAY_types, typecast_MXDATETIMEARRAY_cast, "MXDATETIME"},
-    {"MXDATETIMETZARRAY", typecast_DATETIMETZARRAY_types, typecast_MXDATETIMETZARRAY_cast, "MXDATETIMETZ"},
-    {"MXTIMEARRAY", typecast_TIMEARRAY_types, typecast_MXTIMEARRAY_cast, "MXTIME"},
-    {"MXDATEARRAY", typecast_DATEARRAY_types, typecast_MXDATEARRAY_cast, "MXDATE"},
-    {"MXINTERVALARRAY", typecast_INTERVALARRAY_types, typecast_MXINTERVALARRAY_cast, "MXINTERVAL"},
-    {NULL, NULL, NULL}
-};
-#endif
 
 
 /** the type dictionary and associated functions **/
@@ -291,18 +254,6 @@ typecast_init(PyObject *module)
     psyco_default_cast = typecast_from_c(&typecast_default, dict);
 
     /* register the date/time typecasters with their original names */
-#ifdef HAVE_MXDATETIME
-    if (0 == typecast_mxdatetime_init()) {
-        for (i = 0; typecast_mxdatetime[i].name != NULL; i++) {
-            t = (typecastObject *)typecast_from_c(&(typecast_mxdatetime[i]), dict);
-            if (t == NULL) { goto exit; }
-            PyDict_SetItem(dict, t->name, (PyObject *)t);
-            Py_DECREF((PyObject *)t);
-            t = NULL;
-        }
-    }
-#endif
-
     if (0 > typecast_datetime_init()) { goto exit; }
     for (i = 0; typecast_pydatetime[i].name != NULL; i++) {
         t = (typecastObject *)typecast_from_c(&(typecast_pydatetime[i]), dict);
