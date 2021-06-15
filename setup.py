@@ -33,7 +33,6 @@ import re
 import subprocess
 from setuptools import setup, Extension
 from distutils.command.build_ext import build_ext
-from distutils.sysconfig import get_python_inc
 from distutils.ccompiler import get_default_compiler
 from distutils.errors import CompileError
 
@@ -45,7 +44,7 @@ except ImportError:
 # Take a look at https://www.python.org/dev/peps/pep-0440/
 # for a consistent versioning pattern.
 
-PSYCOPG_VERSION = '2.9.dev0'
+PSYCOPG_VERSION = '2.9.dev1'
 
 
 # note: if you are changing the list of supported Python version please fix
@@ -114,7 +113,8 @@ For further information please check the 'doc/src/install.rst' file (also at
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE)
         except OSError:
-            raise Warning(f"Unable to find 'pg_config' file in '{self.pg_config_exe}'")
+            raise Warning(
+                f"Unable to find 'pg_config' file in '{self.pg_config_exe}'")
         pg_config_process.stdin.close()
         result = pg_config_process.stdout.readline().strip()
         if not result:
@@ -404,7 +404,8 @@ For further information please check the 'doc/src/install.rst' file (also at
                 pgpatch = int(pgpatch)
             else:
                 sys.stderr.write(
-                    f"Error: could not determine PostgreSQL version from '{pgversion}'")
+                    f"Error: could not determine PostgreSQL version from "
+                    f"'{pgversion}'")
                 sys.exit(1)
 
             define_macros.append(("PG_VERSION_NUM", "%d%02d%02d" %
