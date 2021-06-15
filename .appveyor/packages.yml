@@ -52,7 +52,7 @@ services:
 cache:
   # Rebuild cache if following file changes
   # (See the file to zap the cache manually)
-  - C:\Others -> scripts\appveyor.cache_rebuild
+  - C:\Others -> scripts\build\appveyor.cache_rebuild
 
 # Script called before repo cloning
 # init:
@@ -60,23 +60,23 @@ cache:
 # Repository gets cloned, Cache is restored
 
 install:
-    - "%PYEXE% scripts\\appveyor.py install"
+    - "%PYEXE% scripts\\build\\appveyor.py install"
 
 # PostgreSQL server starts now
 
 build: off
 
 build_script:
-    - "%PYEXE% scripts\\appveyor.py build_script"
+    - "%PYEXE% scripts\\build\\appveyor.py build_script"
 
 after_build:
-    - "%PYEXE% scripts\\appveyor.py after_build"
+    - "%PYEXE% scripts\\build\\appveyor.py after_build"
 
 before_test:
-    - "%PYEXE% scripts\\appveyor.py before_test"
+    - "%PYEXE% scripts\\build\\appveyor.py before_test"
 
 test_script:
-    - "%PYEXE% scripts\\appveyor.py test_script"
+    - "%PYEXE% scripts\\build\\appveyor.py test_script"
 
 artifacts:
     - path: dist\psycopg2-*\*.whl
