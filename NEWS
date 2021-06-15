@@ -28,6 +28,7 @@ Other changes:
   platforms.
 - Provide :pep:`600` wheels packages (manylinux_2_24 tag) for aarch64 and
   ppc64le platforms.
+- Wheel package compiled against OpenSSL 1.1.1k and PostgreSQL 13.3.
 - Build system for Linux/MacOS binary packages moved to GitHub action.
 
 
