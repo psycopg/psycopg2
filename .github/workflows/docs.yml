@@ -3,7 +3,7 @@ name: Build documentation
 on:
   push:
     branches:
-      - maint_2_8
+      - master
 
 jobs:
   docs:
@@ -14,5 +14,5 @@ jobs:
       - name: Trigger docs build
         run: ./scripts/travis_update_docs.sh
         env:
-          TRAVIS_BRANCH: maint_2_8
+          TRAVIS_BRANCH: master
           TRAVIS_TOKEN: ${{ secrets.TRAVIS_TOKEN }}
