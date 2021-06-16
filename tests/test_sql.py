@@ -393,6 +393,10 @@ class PlaceholderTest(ConnectingTestCase):
         self.assert_(sql.Placeholder('foo') != sql.Placeholder())
         self.assert_(sql.Placeholder('foo') != sql.Literal('foo'))
 
+    def test_as_string(self):
+        self.assertEqual(sql.Placeholder().as_string(self.conn), "%s")
+        self.assertEqual(sql.Placeholder('foo').as_string(self.conn), "%(foo)s")
+
 
 class ValuesTest(ConnectingTestCase):
     def test_null(self):

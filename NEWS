@@ -1,6 +1,12 @@
 Current release
 ---------------
 
+What's new in psycopg 2.9.1
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Fix regression with named `sql.Placeholder` (:ticket:`1291`).
+
+
 What's new in psycopg 2.9
 -------------------------
 
