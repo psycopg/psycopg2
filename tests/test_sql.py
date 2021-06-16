@@ -373,29 +373,25 @@ class PlaceholderTest(ConnectingTestCase):
         self.assertEqual(sql.Placeholder('foo').name, 'foo')
 
     def test_repr(self):
-        self.assert_(str(sql.Placeholder()), 'Placeholder()')
-        self.assert_(repr(sql.Placeholder()), 'Placeholder()')
-        self.assert_(sql.Placeholder().as_string(self.conn), '%s')
+        self.assertEqual(str(sql.Placeholder()), 'Placeholder()')
+        self.assertEqual(repr(sql.Placeholder()), 'Placeholder()')
+        self.assertEqual(sql.Placeholder().as_string(self.conn), '%s')
 
     def test_repr_name(self):
-        self.assert_(str(sql.Placeholder('foo')), "Placeholder('foo')")
-        self.assert_(repr(sql.Placeholder('foo')), "Placeholder('foo')")
-        self.assert_(sql.Placeholder('foo').as_string(self.conn), '%(foo)s')
+        self.assertEqual(str(sql.Placeholder('foo')), "Placeholder('foo')")
+        self.assertEqual(repr(sql.Placeholder('foo')), "Placeholder('foo')")
+        self.assertEqual(sql.Placeholder('foo').as_string(self.conn), '%(foo)s')
 
     def test_bad_name(self):
         self.assertRaises(ValueError, sql.Placeholder, ')')
 
     def test_eq(self):
-        self.assert_(sql.Placeholder('foo') == sql.Placeholder('foo'))
-        self.assert_(sql.Placeholder('foo') != sql.Placeholder('bar'))
-        self.assert_(sql.Placeholder('foo') != 'foo')
-        self.assert_(sql.Placeholder() == sql.Placeholder())
-        self.assert_(sql.Placeholder('foo') != sql.Placeholder())
-        self.assert_(sql.Placeholder('foo') != sql.Literal('foo'))
-
-    def test_as_string(self):
-        self.assertEqual(sql.Placeholder().as_string(self.conn), "%s")
-        self.assertEqual(sql.Placeholder('foo').as_string(self.conn), "%(foo)s")
+        self.assertEqual(sql.Placeholder('foo'), sql.Placeholder('foo'))
+        self.assertNotEqual(sql.Placeholder('foo'), sql.Placeholder('bar'))
+        self.assertNotEqual(sql.Placeholder('foo'), 'foo')
+        self.assertEqual(sql.Placeholder(), sql.Placeholder())
+        self.assertNotEqual(sql.Placeholder('foo'), sql.Placeholder())
+        self.assertNotEqual(sql.Placeholder('foo'), sql.Literal('foo'))
 
 
 class ValuesTest(ConnectingTestCase):

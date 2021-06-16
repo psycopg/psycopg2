@@ -438,7 +438,10 @@ class Placeholder(Composable):
         return self._wrapped
 
     def __repr__(self):
-        return f"Placeholder({self._wrapped if self._wrapped is not None else ''!r})"
+        if self._wrapped is None:
+            return f"{self.__class__.__name__}()"
+        else:
+            return f"{self.__class__.__name__}({self._wrapped!r})"
 
     def as_string(self, context):
         if self._wrapped is not None:
