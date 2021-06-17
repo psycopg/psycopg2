@@ -19,7 +19,7 @@ html: package src/sqlstate_errors.rst
 	cp -r src/_build/html .
 
 src/sqlstate_errors.rst: ../psycopg/sqlstate_errors.h $(BUILD_DIR)
-	$(PYTHON) src/tools/make_sqlstate_docs.py $< > $@
+	./env/bin/python src/tools/make_sqlstate_docs.py $< > $@
 
 $(BUILD_DIR):
 	$(MAKE) PYTHON=$(PYTHON) -C .. package
