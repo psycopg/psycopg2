@@ -3,16 +3,16 @@ name: Build documentation
 on:
   push:
     branches:
+      # This should match the DOC_BRANCH value in the psycopg-website Makefile
       - master
 
 jobs:
   docs:
-    runs-on: ubuntu-20.04
-
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
       - name: Trigger docs build
-        run: ./scripts/travis_update_docs.sh
-        env:
-          TRAVIS_BRANCH: master
-          TRAVIS_TOKEN: ${{ secrets.TRAVIS_TOKEN }}
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          repository: psycopg/psycopg-website
+          event-type: psycopg2-commit
+          token: ${{ secrets.ACCESS_TOKEN }}
