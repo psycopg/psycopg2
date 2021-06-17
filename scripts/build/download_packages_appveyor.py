@@ -8,6 +8,7 @@ import sys
 import logging
 import datetime as dt
 from pathlib import Path
+from argparse import ArgumentParser
 
 import requests
 
@@ -24,6 +25,7 @@ class ScriptError(Exception):
 
 
 def main():
+    opt = parse_cmdline()
     try:
         token = os.environ["APPVEYOR_TOKEN"]
     except KeyError:
@@ -33,8 +35,13 @@ def main():
     s.headers["Content-Type"] = "application/json"
     s.headers["Authorization"] = f"Bearer {token}"
 
-    logger.info("fetching last run")
-    resp = s.get(f"{API_URL}/projects/{REPOS}/")
+    if opt.build:
+        logger.info("fetching build %s", opt.build)
+        resp = s.get(f"{API_URL}/projects/{REPOS}/build/{opt.build}")
+    else:
+        logger.info("fetching last run")
+        resp = s.get(f"{API_URL}/projects/{REPOS}")
+
     resp.raise_for_status()
     data = resp.json()
 
@@ -52,7 +59,7 @@ def main():
     jobs = data["build"]["jobs"]
     for job in jobs:
         if job["status"] != "success":
-            raise ScriptError("status for job {job['jobId']} is {job['status']}")
+            raise ScriptError(f"status for job {job['jobId']} is {job['status']}")
 
         logger.info(f"fetching artifacts info for {job['name']}")
         resp = s.get(f"{API_URL}/buildjobs/{job['jobId']}/artifacts/")
@@ -75,6 +82,13 @@ def main():
                 f.write(resp.content)
 
     logger.info("now you can run: 'twine upload -s packages/*'")
+
+
+def parse_cmdline():
+    parser = ArgumentParser(description=__doc__)
+    parser.add_argument("--build", help="build version to download [default: latest]")
+    opt = parser.parse_args()
+    return opt
 
 
 def pretty_interval(td):
