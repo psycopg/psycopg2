@@ -562,13 +562,6 @@ The ``cursor`` class
             >>> cur.fetchall()
             [(6, 42, 'foo'), (7, 74, 'bar')]
 
-        .. note:: the name of the table is not quoted: if the table name
-            contains uppercase letters or special characters it must be quoted
-            with double quotes::
-
-                cur.copy_from(f, '"TABLE"')
-
-
         .. versionchanged:: 2.0.6
             added the *columns* parameter.
 
@@ -576,6 +569,11 @@ The ``cursor`` class
             data read from files implementing the `io.TextIOBase` interface
             are encoded in the connection `~connection.encoding` when sent to
             the backend.
+
+        .. versionchanged:: 2.9
+            the table and fields names are now quoted. If you need to specify
+            a schema-qualified table please use `copy_expert()`.
+
 
     .. method:: copy_to(file, table, sep='\\t', null='\\\\N', columns=None)
 
@@ -598,12 +596,6 @@ The ``cursor`` class
             2|\N|dada
             ...
 
-        .. note:: the name of the table is not quoted: if the table name
-            contains uppercase letters or special characters it must be quoted
-            with double quotes::
-
-                cur.copy_to(f, '"TABLE"')
-
         .. versionchanged:: 2.0.6
             added the *columns* parameter.
 
@@ -611,6 +603,10 @@ The ``cursor`` class
             data sent to files implementing the `io.TextIOBase` interface
             are decoded in the connection `~connection.encoding` when read
             from the backend.
+
+        .. versionchanged:: 2.9
+            the table and fields names are now quoted. If you need to specify
+            a schema-qualified table please use `copy_expert()`.
 
 
     .. method:: copy_expert(sql, file, size=8192)
