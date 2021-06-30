@@ -54,11 +54,6 @@ How to make a psycopg2 release
   ``scripts/build`` directory. They will be saved in a
   ``packages/psycopg2-${VERSION}`` directory.
 
-- Remove the ``.exe`` from the dir, because we don't want to upload them on
-  PyPI::
-
-    $ rm -v packages/psycopg2-${VERSION}/*.exe
-
 - Only for stable packages: upload the signed packages on PyPI::
 
     $ twine upload -s packages/psycopg2-${VERSION}/*

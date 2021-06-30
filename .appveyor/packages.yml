@@ -81,8 +81,6 @@ test_script:
 artifacts:
     - path: dist\psycopg2-*\*.whl
       name: wheel
-    - path: dist\psycopg2-*\*.exe
-      name: exe
 
 
 # vim: set ts=4 sts=4 sw=4:

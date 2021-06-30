@@ -321,14 +321,10 @@ def patch_package_name():
 
 
 def build_binary_packages():
-    """Create wheel/exe binary packages."""
+    """Create wheel binary packages."""
     os.chdir(opt.package_dir)
 
     add_pg_config_path()
-
-    # Build .exe packages for whom still use them
-    if opt.package_name == 'psycopg2':
-        run_python(['setup.py', 'bdist_wininst', "-d", opt.dist_dir])
 
     # Build .whl packages
     run_python(['setup.py', 'bdist_wheel', "-d", opt.dist_dir])
