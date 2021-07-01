@@ -84,7 +84,7 @@ class PostgresConfig:
             self.pg_config_exe = self.autodetect_pg_config_path()
         self.pkg_config_exe = self.build_ext.pkg_config
         self.using_pkg_config = self.pkg_config_exe is not None
-        if not self.pkg_config_exe:
+        if not self.pg_config_exe and not self.pkg_config_exe:
             self.pkg_config_exe = self.autodetect_pkg_config_path()
             self.using_pkg_config = self.pkg_config_exe is not None
         if not self.pg_config_exe and not self.pkg_config_exe:
