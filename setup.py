@@ -82,7 +82,12 @@ class PostgresConfig:
         self.pg_config_exe = self.build_ext.pg_config
         if not self.pg_config_exe:
             self.pg_config_exe = self.autodetect_pg_config_path()
-        if self.pg_config_exe is None:
+        self.pkg_config_exe = self.build_ext.pkg_config
+        self.using_pkg_config = self.pkg_config_exe is not None
+        if not self.pkg_config_exe:
+            self.pkg_config_exe = self.autodetect_pkg_config_path()
+            self.using_pkg_config = self.pkg_config_exe is not None
+        if not self.pg_config_exe and not self.pkg_config_exe:
             sys.stderr.write("""
 Error: pg_config executable not found.
 
@@ -102,10 +107,48 @@ For further information please check the 'doc/src/install.rst' file (also at
 
 """)
             sys.exit(1)
+    
+    def query_pkgconfig(self, attr_name):
+        """Spawn the pkg-config executable, querying for the given config
+        name, and return the printed value, sanitized. """
+
+        # Compability patch for pg_config
+        process = None
+        if attr_name == "libdir":
+            ldconfig = self.find_on_path('ldconfig')
+            process = "{} -p | grep -m1 libpq.so | cut -f4 -d' ' | sed 's|/[^/]*$||'".format(ldconfig)
+        elif attr_name == "includedir":
+            process = "{} --cflags libpq | sed 's/^-I//'".format(self.pkg_config_exe)
+        elif attr_name == "includedir-server":
+            process = "{0} --cflags libpq | sed -e 's/^-I//' -e 's/\s$/\/'$({0} --modversion libpq | cut -f1 -d\".\")'\/server/'".format(self.pkg_config_exe)
+        elif attr_name == "version":
+            process = "{} --modversion libpq | sed 's/^/PostgreSQL /'".format(self.pkg_config_exe)
+        elif attr_name == "ldflags":
+            process = "{} --libs-only-L libpq".format(self.pkg_config_exe)
+        elif attr_name == "cppflags":
+            process = "{} --cflags libpq".format(self.pkg_config_exe)
+        else:
+            raise Exception("Unsupported attr '{}'".format(attr_name))
+
+        try:
+            pkg_config_process = subprocess.getoutput(process)
+        except OSError:
+            raise Warning(
+                f"Unable to find 'pkgconfig' file in '{self.pkg_config_exe}'")
+        result = pkg_config_process
+        if not result:
+            print("Command error at {}".format(process))
+        if not isinstance(result, str):
+            result = result.decode('ascii')
+        return result
 
     def query(self, attr_name):
         """Spawn the pg_config executable, querying for the given config
         name, and return the printed value, sanitized. """
+
+        if self.using_pkg_config:
+            return self.query_pkgconfig(attr_name)
+
         try:
             pg_config_process = subprocess.Popen(
                 [self.pg_config_exe, "--" + attr_name],
@@ -197,6 +240,13 @@ For further information please check the 'doc/src/install.rst' file (also at
             return None
 
         return pg_config_path
+    
+    def autodetect_pkg_config_path(self):
+        if PLATFORM_IS_WINDOWS:
+            sys.stderr.write("pkg-config is not supported on Windows.")
+            return None
+        else:
+            return self.find_on_path("pkg-config")
 
 
 class psycopg_build_ext(build_ext):
@@ -233,6 +283,8 @@ class psycopg_build_ext(build_ext):
         self.have_ssl = have_ssl
         self.static_libpq = static_libpq
         self.pg_config = None
+        self.pkg_config = None
+        self.using_pkg_config = False
 
     def compiler_is_msvc(self):
         return self.get_compiler_name().lower().startswith('msvc')
