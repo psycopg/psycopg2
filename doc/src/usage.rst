@@ -795,6 +795,8 @@ the details.
 .. index::
     single: with statement
 
+.. _with:
+
 ``with`` statement
 ^^^^^^^^^^^^^^^^^^
 
