@@ -11,7 +11,8 @@ assignees: ''
 If you have a question, such has "how do you do X with Python/PostgreSQL/psycopg2" please [write to the mailing list](https://lists.postgresql.org/manage/) or [open a question](https://github.com/psycopg/psycopg2/discussions) instead.
 
 **Please complete the following information:**
-- OS: 
+- OS:
+- Psycopg version:
 - Python version:
 - PostgreSQL version:
 - pip version

@@ -18,7 +18,8 @@ If you have a question, such has "how do you do X with Python/PostgreSQL/psycopg
 - [ ] If install failed, I typed `pg_config` on the command line and I obtained an output instead of an error.
 
 **Please complete the following information:**
-- OS: 
+- OS:
+- Psycopg version:
 - Python version:
 - PostgreSQL version:
 - pip version
