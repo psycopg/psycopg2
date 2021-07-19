@@ -19,6 +19,9 @@ environment:
         - {APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015, PY_VER: "37", PY_ARCH: "64"}
         - {APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015, PY_VER: "36", PY_ARCH: "32"}
         - {APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015, PY_VER: "36", PY_ARCH: "64"}
+        - PYTHON: "C:\\Python3.10b4-x64"
+          PYTHON_VERSION: "3.10.0b4"
+          PYTHON_ARCH: "64"
 
     WORKFLOW: packages
 
