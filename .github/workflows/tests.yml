@@ -56,7 +56,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - name: Install tox
-        run: pip install tox
+        run: pip install tox tox-gh-actions
       - name: Run tests
         run: tox -e ${{ matrix.python }}
         timeout-minutes: 5
