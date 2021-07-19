@@ -60,5 +60,5 @@ jobs:
       - name: Install tox
         run: pip install tox tox-gh-actions
       - name: Run tests
-        run: tox -e ${{ matrix.python }}
+        run: tox
         timeout-minutes: 5
