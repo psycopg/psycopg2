@@ -31,7 +31,7 @@ wheel_ package available on PyPI_:
 
 This will install a pre-compiled binary version of the module which does not
 require the build or runtime prerequisites described below. Make sure to use
-an up-date-date version of :program:`pip` (you can upgrade it using something
+an up-to-date version of :program:`pip` (you can upgrade it using something
 like ``pip install -U pip``).
 
 You may then import the ``psycopg2`` package, as usual:
