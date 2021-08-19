@@ -1,4 +1,4 @@
-"""psycopg context managers for connections, cursors, and pools."""
+"""psycopg context managers for connection and cursor objects."""
 
 
 from contextlib import contextmanager
