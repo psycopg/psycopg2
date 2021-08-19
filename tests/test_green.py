@@ -101,7 +101,7 @@ class GreenTestCase(ConnectingTestCase):
         psycopg2.extensions.set_wait_callback(lambda conn: 1 // 0)
         self.assertRaises(ZeroDivisionError, curs.execute, "select 2")
 
-        self.assert_(conn.closed)
+        self.assertTrue(conn.closed)
 
     def test_dont_freak_out(self):
         # if there is an error in a green query, don't freak out and close
@@ -112,7 +112,7 @@ class GreenTestCase(ConnectingTestCase):
             curs.execute, "select the unselectable")
 
         # check that the connection is left in an usable state
-        self.assert_(not conn.closed)
+        self.assertTrue(not conn.closed)
         conn.rollback()
         curs.execute("select 1")
         self.assertEqual(curs.fetchone()[0], 1)
@@ -152,7 +152,7 @@ class GreenTestCase(ConnectingTestCase):
             """)
 
         polls = stub.polls.count(POLL_READ)
-        self.assert_(polls > 8, polls)
+        self.assertTrue(polls > 8, polls)
 
 
 class CallbackErrorTestCase(ConnectingTestCase):

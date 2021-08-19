@@ -61,7 +61,7 @@ class QuotingTestCase(ConnectingTestCase):
         res = curs.fetchone()[0]
 
         self.assertEqual(res, data)
-        self.assert_(not self.conn.notices)
+        self.assertTrue(not self.conn.notices)
 
     def test_string_null_terminator(self):
         curs = self.conn.cursor()
@@ -70,7 +70,7 @@ class QuotingTestCase(ConnectingTestCase):
         try:
             curs.execute("SELECT %s", (data,))
         except ValueError as e:
-            self.assertEquals(str(e),
+            self.assertEqual(str(e),
                 'A string literal cannot contain NUL (0x00) characters.')
         else:
             self.fail("ValueError not raised")
@@ -90,7 +90,7 @@ class QuotingTestCase(ConnectingTestCase):
                 "bytea broken with server >= 9.0, libpq < 9")
 
         self.assertEqual(res, data)
-        self.assert_(not self.conn.notices)
+        self.assertTrue(not self.conn.notices)
 
     def test_unicode(self):
         curs = self.conn.cursor()
@@ -112,7 +112,7 @@ class QuotingTestCase(ConnectingTestCase):
         res = curs.fetchone()[0]
 
         self.assertEqual(res, data)
-        self.assert_(not self.conn.notices)
+        self.assertTrue(not self.conn.notices)
 
     @skip_if_crdb("encoding")
     def test_latin1(self):
@@ -125,7 +125,7 @@ class QuotingTestCase(ConnectingTestCase):
         curs.execute("SELECT %s::text;", (data,))
         res = curs.fetchone()[0]
         self.assertEqual(res, data)
-        self.assert_(not self.conn.notices)
+        self.assertTrue(not self.conn.notices)
 
 
     @skip_if_crdb("encoding")
@@ -139,7 +139,7 @@ class QuotingTestCase(ConnectingTestCase):
         curs.execute("SELECT %s::text;", (data,))
         res = curs.fetchone()[0]
         self.assertEqual(res, data)
-        self.assert_(not self.conn.notices)
+        self.assertTrue(not self.conn.notices)
 
     def test_bytes(self):
         snowman = "\u2603"
@@ -149,7 +149,7 @@ class QuotingTestCase(ConnectingTestCase):
         curs = conn.cursor()
         curs.execute("select %s::text", (snowman,))
         x = curs.fetchone()[0]
-        self.assert_(isinstance(x, bytes))
+        self.assertTrue(isinstance(x, bytes))
         self.assertEqual(x, snowman.encode('utf8'))
 
 

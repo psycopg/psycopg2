@@ -48,39 +48,39 @@ class TypesBasicTests(ConnectingTestCase):
 
     def testQuoting(self):
         s = "Quote'this\\! ''ok?''"
-        self.failUnless(self.execute("SELECT %s AS foo", (s,)) == s,
+        self.assertTrue(self.execute("SELECT %s AS foo", (s,)) == s,
                         "wrong quoting: " + s)
 
     def testUnicode(self):
         s = "Quote'this\\! ''ok?''"
-        self.failUnless(self.execute("SELECT %s AS foo", (s,)) == s,
+        self.assertTrue(self.execute("SELECT %s AS foo", (s,)) == s,
                         "wrong unicode quoting: " + s)
 
     def testNumber(self):
         s = self.execute("SELECT %s AS foo", (1971,))
-        self.failUnless(s == 1971, "wrong integer quoting: " + str(s))
+        self.assertTrue(s == 1971, "wrong integer quoting: " + str(s))
 
     def testBoolean(self):
         x = self.execute("SELECT %s as foo", (False,))
-        self.assert_(x is False)
+        self.assertTrue(x is False)
         x = self.execute("SELECT %s as foo", (True,))
-        self.assert_(x is True)
+        self.assertTrue(x is True)
 
     def testDecimal(self):
         s = self.execute("SELECT %s AS foo", (decimal.Decimal("19.10"),))
-        self.failUnless(s - decimal.Decimal("19.10") == 0,
+        self.assertTrue(s - decimal.Decimal("19.10") == 0,
                         "wrong decimal quoting: " + str(s))
         s = self.execute("SELECT %s AS foo", (decimal.Decimal("NaN"),))
-        self.failUnless(str(s) == "NaN", "wrong decimal quoting: " + str(s))
-        self.failUnless(type(s) == decimal.Decimal,
+        self.assertTrue(str(s) == "NaN", "wrong decimal quoting: " + str(s))
+        self.assertTrue(type(s) == decimal.Decimal,
                         "wrong decimal conversion: " + repr(s))
         s = self.execute("SELECT %s AS foo", (decimal.Decimal("infinity"),))
-        self.failUnless(str(s) == "NaN", "wrong decimal quoting: " + str(s))
-        self.failUnless(type(s) == decimal.Decimal,
+        self.assertTrue(str(s) == "NaN", "wrong decimal quoting: " + str(s))
+        self.assertTrue(type(s) == decimal.Decimal,
                         "wrong decimal conversion: " + repr(s))
         s = self.execute("SELECT %s AS foo", (decimal.Decimal("-infinity"),))
-        self.failUnless(str(s) == "NaN", "wrong decimal quoting: " + str(s))
-        self.failUnless(type(s) == decimal.Decimal,
+        self.assertTrue(str(s) == "NaN", "wrong decimal quoting: " + str(s))
+        self.assertTrue(type(s) == decimal.Decimal,
                         "wrong decimal conversion: " + repr(s))
 
     def testFloatNan(self):
@@ -90,8 +90,8 @@ class TypesBasicTests(ConnectingTestCase):
             return self.skipTest("nan not available on this platform")
 
         s = self.execute("SELECT %s AS foo", (float("nan"),))
-        self.failUnless(str(s) == "nan", "wrong float quoting: " + str(s))
-        self.failUnless(type(s) == float, "wrong float conversion: " + repr(s))
+        self.assertTrue(str(s) == "nan", "wrong float quoting: " + str(s))
+        self.assertTrue(type(s) == float, "wrong float conversion: " + repr(s))
 
     def testFloatInf(self):
         try:
@@ -101,11 +101,11 @@ class TypesBasicTests(ConnectingTestCase):
         except ValueError:
             return self.skipTest("inf not available on this platform")
         s = self.execute("SELECT %s AS foo", (float("inf"),))
-        self.failUnless(str(s) == "inf", "wrong float quoting: " + str(s))
-        self.failUnless(type(s) == float, "wrong float conversion: " + repr(s))
+        self.assertTrue(str(s) == "inf", "wrong float quoting: " + str(s))
+        self.assertTrue(type(s) == float, "wrong float conversion: " + repr(s))
 
         s = self.execute("SELECT %s AS foo", (float("-inf"),))
-        self.failUnless(str(s) == "-inf", "wrong float quoting: " + str(s))
+        self.assertTrue(str(s) == "-inf", "wrong float quoting: " + str(s))
 
     def testBinary(self):
         s = bytes(range(256))
@@ -134,9 +134,9 @@ class TypesBasicTests(ConnectingTestCase):
     @skip_if_crdb("nested array")
     def testArray(self):
         s = self.execute("SELECT %s AS foo", ([[1, 2], [3, 4]],))
-        self.failUnlessEqual(s, [[1, 2], [3, 4]])
+        self.assertEqual(s, [[1, 2], [3, 4]])
         s = self.execute("SELECT %s AS foo", (['one', 'two', 'three'],))
-        self.failUnlessEqual(s, ['one', 'two', 'three'])
+        self.assertEqual(s, ['one', 'two', 'three'])
 
     @skip_if_crdb("nested array")
     def testEmptyArrayRegression(self):
@@ -171,23 +171,23 @@ class TypesBasicTests(ConnectingTestCase):
 
     def testEmptyArray(self):
         s = self.execute("SELECT '{}'::text[] AS foo")
-        self.failUnlessEqual(s, [])
+        self.assertEqual(s, [])
         s = self.execute("SELECT 1 != ALL(%s)", ([],))
-        self.failUnlessEqual(s, True)
+        self.assertEqual(s, True)
         # but don't break the strings :)
         s = self.execute("SELECT '{}'::text AS foo")
-        self.failUnlessEqual(s, "{}")
+        self.assertEqual(s, "{}")
 
     def testArrayEscape(self):
         ss = ['', '\\', '"', '\\\\', '\\"']
         for s in ss:
             r = self.execute("SELECT %s AS foo", (s,))
-            self.failUnlessEqual(s, r)
+            self.assertEqual(s, r)
             r = self.execute("SELECT %s AS foo", ([s],))
-            self.failUnlessEqual([s], r)
+            self.assertEqual([s], r)
 
         r = self.execute("SELECT %s AS foo", (ss,))
-        self.failUnlessEqual(ss, r)
+        self.assertEqual(ss, r)
 
     def testArrayMalformed(self):
         curs = self.conn.cursor()
@@ -200,7 +200,7 @@ class TypesBasicTests(ConnectingTestCase):
         curs = self.conn.cursor()
         curs.execute("select '{a,b,c}'::text[]")
         x = curs.fetchone()[0]
-        self.assert_(isinstance(x[0], str))
+        self.assertTrue(isinstance(x[0], str))
         self.assertEqual(x, ['a', 'b', 'c'])
 
     def testUnicodeArray(self):
@@ -209,7 +209,7 @@ class TypesBasicTests(ConnectingTestCase):
         curs = self.conn.cursor()
         curs.execute("select '{a,b,c}'::text[]")
         x = curs.fetchone()[0]
-        self.assert_(isinstance(x[0], str))
+        self.assertTrue(isinstance(x[0], str))
         self.assertEqual(x, ['a', 'b', 'c'])
 
     def testBytesArray(self):
@@ -218,7 +218,7 @@ class TypesBasicTests(ConnectingTestCase):
         curs = self.conn.cursor()
         curs.execute("select '{a,b,c}'::text[]")
         x = curs.fetchone()[0]
-        self.assert_(isinstance(x[0], bytes))
+        self.assertTrue(isinstance(x[0], bytes))
         self.assertEqual(x, [b'a', b'b', b'c'])
 
     @skip_if_crdb("nested array")

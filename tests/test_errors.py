@@ -40,8 +40,8 @@ class ErrorsTests(ConnectingTestCase):
         except psycopg2.Error as exc:
             e = exc
 
-        self.assert_(isinstance(e, UndefinedTable), type(e))
-        self.assert_(isinstance(e, self.conn.ProgrammingError))
+        self.assertTrue(isinstance(e, UndefinedTable), type(e))
+        self.assertTrue(isinstance(e, self.conn.ProgrammingError))
 
     def test_exception_class_fallback(self):
         cur = self.conn.cursor()
@@ -65,9 +65,9 @@ class ErrorsTests(ConnectingTestCase):
     def test_connection_exceptions_backwards_compatibility(self):
         err = errors.lookup('08000')
         # connection exceptions are classified as operational errors
-        self.assert_(issubclass(err, errors.OperationalError))
+        self.assertTrue(issubclass(err, errors.OperationalError))
         # previously these errors were classified only as DatabaseError
-        self.assert_(issubclass(err, errors.DatabaseError))
+        self.assertTrue(issubclass(err, errors.DatabaseError))
 
     def test_has_base_exceptions(self):
         excs = []
@@ -76,14 +76,14 @@ class ErrorsTests(ConnectingTestCase):
             if isinstance(obj, type) and issubclass(obj, Exception):
                 excs.append(obj)
 
-        self.assert_(len(excs) > 8, str(excs))
+        self.assertTrue(len(excs) > 8, str(excs))
 
         excs.append(psycopg2.extensions.QueryCanceledError)
         excs.append(psycopg2.extensions.TransactionRollbackError)
 
         for exc in excs:
-            self.assert_(hasattr(errors, exc.__name__))
-            self.assert_(getattr(errors, exc.__name__) is exc)
+            self.assertTrue(hasattr(errors, exc.__name__))
+            self.assertTrue(getattr(errors, exc.__name__) is exc)
 
 
 def test_suite():

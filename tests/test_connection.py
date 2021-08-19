@@ -61,7 +61,7 @@ class ConnectionTests(ConnectingTestCase):
         conn = self.conn
         conn.close()
         conn.close()
-        self.assert_(conn.closed)
+        self.assertTrue(conn.closed)
 
     def test_cursor_closed_attribute(self):
         conn = self.conn
@@ -100,19 +100,19 @@ class ConnectionTests(ConnectingTestCase):
         if self.conn.info.server_version >= 90100:
             conn.deferrable = False
 
-        self.assert_(conn.autocommit)
+        self.assertTrue(conn.autocommit)
         self.assertEqual(conn.isolation_level, ext.ISOLATION_LEVEL_SERIALIZABLE)
-        self.assert_(conn.readonly is True)
+        self.assertTrue(conn.readonly is True)
         if self.conn.info.server_version >= 90100:
-            self.assert_(conn.deferrable is False)
+            self.assertTrue(conn.deferrable is False)
 
         conn.reset()
         # now the session characteristics should be reverted
-        self.assert_(not conn.autocommit)
+        self.assertTrue(not conn.autocommit)
         self.assertEqual(conn.isolation_level, ext.ISOLATION_LEVEL_DEFAULT)
-        self.assert_(conn.readonly is None)
+        self.assertTrue(conn.readonly is None)
         if self.conn.info.server_version >= 90100:
-            self.assert_(conn.deferrable is None)
+            self.assertTrue(conn.deferrable is None)
 
     @skip_if_crdb("notice")
     def test_notices(self):
@@ -122,7 +122,7 @@ class ConnectionTests(ConnectingTestCase):
             cur.execute("set client_min_messages=debug1")
         cur.execute("create temp table chatty (id serial primary key);")
         self.assertEqual("CREATE TABLE", cur.statusmessage)
-        self.assert_(conn.notices)
+        self.assertTrue(conn.notices)
 
     @skip_if_crdb("notice")
     def test_notices_consistent_order(self):
@@ -139,10 +139,10 @@ class ConnectionTests(ConnectingTestCase):
             create temp table table4 (id serial);
             """)
         self.assertEqual(4, len(conn.notices))
-        self.assert_('table1' in conn.notices[0])
-        self.assert_('table2' in conn.notices[1])
-        self.assert_('table3' in conn.notices[2])
-        self.assert_('table4' in conn.notices[3])
+        self.assertTrue('table1' in conn.notices[0])
+        self.assertTrue('table2' in conn.notices[1])
+        self.assertTrue('table3' in conn.notices[2])
+        self.assertTrue('table4' in conn.notices[3])
 
     @slow
     @skip_if_crdb("notice")
@@ -157,7 +157,7 @@ class ConnectionTests(ConnectingTestCase):
             cur.execute(sql)
 
         self.assertEqual(50, len(conn.notices))
-        self.assert_('table99' in conn.notices[-1], conn.notices[-1])
+        self.assertTrue('table99' in conn.notices[-1], conn.notices[-1])
 
     @slow
     @skip_if_crdb("notice")
@@ -176,10 +176,10 @@ class ConnectionTests(ConnectingTestCase):
             create temp table table3 (id serial);
             create temp table table4 (id serial);""")
         self.assertEqual(len(conn.notices), 4)
-        self.assert_('table1' in conn.notices.popleft())
-        self.assert_('table2' in conn.notices.popleft())
-        self.assert_('table3' in conn.notices.popleft())
-        self.assert_('table4' in conn.notices.popleft())
+        self.assertTrue('table1' in conn.notices.popleft())
+        self.assertTrue('table2' in conn.notices.popleft())
+        self.assertTrue('table3' in conn.notices.popleft())
+        self.assertTrue('table4' in conn.notices.popleft())
         self.assertEqual(len(conn.notices), 0)
 
         # not limited, but no error
@@ -204,10 +204,10 @@ class ConnectionTests(ConnectingTestCase):
         self.assertEqual(self.conn.notices, None)
 
     def test_server_version(self):
-        self.assert_(self.conn.server_version)
+        self.assertTrue(self.conn.server_version)
 
     def test_protocol_version(self):
-        self.assert_(self.conn.protocol_version in (2, 3),
+        self.assertTrue(self.conn.protocol_version in (2, 3),
             self.conn.protocol_version)
 
     def test_tpc_unsupported(self):
@@ -235,7 +235,7 @@ class ConnectionTests(ConnectingTestCase):
         t2.start()
         t1.join()
         t2.join()
-        self.assert_(time.time() - t0 < 7,
+        self.assertTrue(time.time() - t0 < 7,
             "something broken in concurrency")
 
     @skip_if_crdb("encoding")
@@ -273,7 +273,7 @@ class ConnectionTests(ConnectingTestCase):
         conn.close()
         del conn
         gc.collect()
-        self.assert_(w() is None)
+        self.assertTrue(w() is None)
 
     @slow
     def test_commit_concurrency(self):
@@ -302,7 +302,7 @@ class ConnectionTests(ConnectingTestCase):
         # Stop the committer thread
         stop.append(True)
 
-        self.assert_(not notices, f"{len(notices)} notices raised")
+        self.assertTrue(not notices, f"{len(notices)} notices raised")
 
     def test_connect_cursor_factory(self):
         conn = self.connect(cursor_factory=psycopg2.extras.DictCursor)
@@ -348,8 +348,8 @@ class ConnectionTests(ConnectingTestCase):
                     pass
 
         c = SubConnection("dbname=thereisnosuchdatabasemate password=foobar")
-        self.assert_(c.closed, "connection failed so it must be closed")
-        self.assert_('foobar' not in c.dsn, "password was not obscured")
+        self.assertTrue(c.closed, "connection failed so it must be closed")
+        self.assertTrue('foobar' not in c.dsn, "password was not obscured")
 
     def test_get_native_connection(self):
         conn = self.connect()
@@ -359,7 +359,7 @@ class ConnectionTests(ConnectingTestCase):
 
     def test_pgconn_ptr(self):
         conn = self.connect()
-        self.assert_(conn.pgconn_ptr is not None)
+        self.assertTrue(conn.pgconn_ptr is not None)
 
         try:
             f = self.libpq.PQserverVersion
@@ -376,7 +376,7 @@ class ConnectionTests(ConnectingTestCase):
             self.assertEqual(ver, conn.server_version)
 
         conn.close()
-        self.assert_(conn.pgconn_ptr is None)
+        self.assertTrue(conn.pgconn_ptr is None)
 
     @slow
     def test_multiprocess_close(self):
@@ -434,7 +434,7 @@ class ParseDsnTestCase(ConnectingTestCase):
             dict(user='tester', password='secret', dbname='test 2'),
             "DSN with quoting parsed")
 
-        # Can't really use assertRaisesRegexp() here since we need to
+        # Can't really use assertRaisesRegex() here since we need to
         # make sure that secret is *not* exposed in the error message.
         raised = False
         try:
@@ -559,7 +559,7 @@ class MakeDsnTestCase(ConnectingTestCase):
         conn = self.connect()
         d = conn.get_dsn_parameters()
         self.assertEqual(d['dbname'], dbname)  # the only param we can check reliably
-        self.assert_('password' not in d, d)
+        self.assertTrue('password' not in d, d)
 
 
 class IsolationLevelsTestCase(ConnectingTestCase):
@@ -593,7 +593,7 @@ class IsolationLevelsTestCase(ConnectingTestCase):
 
     def test_encoding(self):
         conn = self.connect()
-        self.assert_(conn.encoding in ext.encodings)
+        self.assertTrue(conn.encoding in ext.encodings)
 
     @skip_if_crdb("isolation level")
     def test_set_isolation_level(self):
@@ -634,11 +634,11 @@ class IsolationLevelsTestCase(ConnectingTestCase):
 
         conn.set_isolation_level(ext.ISOLATION_LEVEL_AUTOCOMMIT)
         self.assertEqual(conn.isolation_level, ext.ISOLATION_LEVEL_DEFAULT)
-        self.assert_(conn.autocommit)
+        self.assertTrue(conn.autocommit)
 
         conn.isolation_level = 'serializable'
         self.assertEqual(conn.isolation_level, ext.ISOLATION_LEVEL_SERIALIZABLE)
-        self.assert_(conn.autocommit)
+        self.assertTrue(conn.autocommit)
 
         curs.execute('show transaction_isolation;')
         self.assertEqual(curs.fetchone()[0], 'serializable')
@@ -1350,11 +1350,11 @@ class TransactionControlTests(ConnectingTestCase):
         self.assertRaises(ValueError, self.conn.set_session, 'whatever')
 
     def test_set_read_only(self):
-        self.assert_(self.conn.readonly is None)
+        self.assertTrue(self.conn.readonly is None)
 
         cur = self.conn.cursor()
         self.conn.set_session(readonly=True)
-        self.assert_(self.conn.readonly is True)
+        self.assertTrue(self.conn.readonly is True)
         cur.execute("SHOW transaction_read_only;")
         self.assertEqual(cur.fetchone()[0], 'on')
         self.conn.rollback()
@@ -1363,7 +1363,7 @@ class TransactionControlTests(ConnectingTestCase):
         self.conn.rollback()
 
         self.conn.set_session(readonly=False)
-        self.assert_(self.conn.readonly is False)
+        self.assertTrue(self.conn.readonly is False)
         cur.execute("SHOW transaction_read_only;")
         self.assertEqual(cur.fetchone()[0], 'off')
         self.conn.rollback()
@@ -1371,12 +1371,12 @@ class TransactionControlTests(ConnectingTestCase):
     def test_setattr_read_only(self):
         cur = self.conn.cursor()
         self.conn.readonly = True
-        self.assert_(self.conn.readonly is True)
+        self.assertTrue(self.conn.readonly is True)
         cur.execute("SHOW transaction_read_only;")
         self.assertEqual(cur.fetchone()[0], 'on')
         self.assertRaises(self.conn.ProgrammingError,
             setattr, self.conn, 'readonly', False)
-        self.assert_(self.conn.readonly is True)
+        self.assertTrue(self.conn.readonly is True)
         self.conn.rollback()
         cur.execute("SHOW transaction_read_only;")
         self.assertEqual(cur.fetchone()[0], 'on')
@@ -1384,13 +1384,13 @@ class TransactionControlTests(ConnectingTestCase):
 
         cur = self.conn.cursor()
         self.conn.readonly = None
-        self.assert_(self.conn.readonly is None)
+        self.assertTrue(self.conn.readonly is None)
         cur.execute("SHOW transaction_read_only;")
         self.assertEqual(cur.fetchone()[0], 'off')  # assume defined by server
         self.conn.rollback()
 
         self.conn.readonly = False
-        self.assert_(self.conn.readonly is False)
+        self.assertTrue(self.conn.readonly is False)
         cur.execute("SHOW transaction_read_only;")
         self.assertEqual(cur.fetchone()[0], 'off')
         self.conn.rollback()
@@ -1413,10 +1413,10 @@ class TransactionControlTests(ConnectingTestCase):
 
     @skip_before_postgres(9, 1)
     def test_set_deferrable(self):
-        self.assert_(self.conn.deferrable is None)
+        self.assertTrue(self.conn.deferrable is None)
         cur = self.conn.cursor()
         self.conn.set_session(readonly=True, deferrable=True)
-        self.assert_(self.conn.deferrable is True)
+        self.assertTrue(self.conn.deferrable is True)
         cur.execute("SHOW transaction_read_only;")
         self.assertEqual(cur.fetchone()[0], 'on')
         cur.execute("SHOW transaction_deferrable;")
@@ -1427,7 +1427,7 @@ class TransactionControlTests(ConnectingTestCase):
         self.conn.rollback()
 
         self.conn.set_session(deferrable=False)
-        self.assert_(self.conn.deferrable is False)
+        self.assertTrue(self.conn.deferrable is False)
         cur.execute("SHOW transaction_read_only;")
         self.assertEqual(cur.fetchone()[0], 'on')
         cur.execute("SHOW transaction_deferrable;")
@@ -1445,12 +1445,12 @@ class TransactionControlTests(ConnectingTestCase):
     def test_setattr_deferrable(self):
         cur = self.conn.cursor()
         self.conn.deferrable = True
-        self.assert_(self.conn.deferrable is True)
+        self.assertTrue(self.conn.deferrable is True)
         cur.execute("SHOW transaction_deferrable;")
         self.assertEqual(cur.fetchone()[0], 'on')
         self.assertRaises(self.conn.ProgrammingError,
             setattr, self.conn, 'deferrable', False)
-        self.assert_(self.conn.deferrable is True)
+        self.assertTrue(self.conn.deferrable is True)
         self.conn.rollback()
         cur.execute("SHOW transaction_deferrable;")
         self.assertEqual(cur.fetchone()[0], 'on')
@@ -1458,13 +1458,13 @@ class TransactionControlTests(ConnectingTestCase):
 
         cur = self.conn.cursor()
         self.conn.deferrable = None
-        self.assert_(self.conn.deferrable is None)
+        self.assertTrue(self.conn.deferrable is None)
         cur.execute("SHOW transaction_deferrable;")
         self.assertEqual(cur.fetchone()[0], 'off')  # assume defined by server
         self.conn.rollback()
 
         self.conn.deferrable = False
-        self.assert_(self.conn.deferrable is False)
+        self.assertTrue(self.conn.deferrable is False)
         cur.execute("SHOW transaction_deferrable;")
         self.assertEqual(cur.fetchone()[0], 'off')
         self.conn.rollback()
@@ -1555,7 +1555,7 @@ class TestEncryptPassword(ConnectingTestCase):
 
     @skip_before_libpq(10)
     def test_encrypt_scram(self):
-        self.assert_(
+        self.assertTrue(
             ext.encrypt_password(
                 'psycopg2', 'ashesh', self.conn, 'scram-sha-256')
             .startswith('SCRAM-SHA-256$'))
@@ -1589,12 +1589,12 @@ class AutocommitTests(ConnectingTestCase):
         # to make it consistent with other methods; meanwhile let's just check
         # it doesn't explode.
         try:
-            self.assert_(self.conn.autocommit in (True, False))
+            self.assertTrue(self.conn.autocommit in (True, False))
         except psycopg2.InterfaceError:
             pass
 
     def test_default_no_autocommit(self):
-        self.assert_(not self.conn.autocommit)
+        self.assertTrue(not self.conn.autocommit)
         self.assertEqual(self.conn.status, ext.STATUS_READY)
         self.assertEqual(self.conn.info.transaction_status,
             ext.TRANSACTION_STATUS_IDLE)
@@ -1612,7 +1612,7 @@ class AutocommitTests(ConnectingTestCase):
 
     def test_set_autocommit(self):
         self.conn.autocommit = True
-        self.assert_(self.conn.autocommit)
+        self.assertTrue(self.conn.autocommit)
         self.assertEqual(self.conn.status, ext.STATUS_READY)
         self.assertEqual(self.conn.info.transaction_status,
             ext.TRANSACTION_STATUS_IDLE)
@@ -1624,7 +1624,7 @@ class AutocommitTests(ConnectingTestCase):
             ext.TRANSACTION_STATUS_IDLE)
 
         self.conn.autocommit = False
-        self.assert_(not self.conn.autocommit)
+        self.assertTrue(not self.conn.autocommit)
         self.assertEqual(self.conn.status, ext.STATUS_READY)
         self.assertEqual(self.conn.info.transaction_status,
             ext.TRANSACTION_STATUS_IDLE)
@@ -1642,7 +1642,7 @@ class AutocommitTests(ConnectingTestCase):
 
     def test_set_session_autocommit(self):
         self.conn.set_session(autocommit=True)
-        self.assert_(self.conn.autocommit)
+        self.assertTrue(self.conn.autocommit)
         self.assertEqual(self.conn.status, ext.STATUS_READY)
         self.assertEqual(self.conn.info.transaction_status,
             ext.TRANSACTION_STATUS_IDLE)
@@ -1654,7 +1654,7 @@ class AutocommitTests(ConnectingTestCase):
             ext.TRANSACTION_STATUS_IDLE)
 
         self.conn.set_session(autocommit=False)
-        self.assert_(not self.conn.autocommit)
+        self.assertTrue(not self.conn.autocommit)
         self.assertEqual(self.conn.status, ext.STATUS_READY)
         self.assertEqual(self.conn.info.transaction_status,
             ext.TRANSACTION_STATUS_IDLE)
@@ -1666,7 +1666,7 @@ class AutocommitTests(ConnectingTestCase):
         self.conn.rollback()
 
         self.conn.set_session('serializable', readonly=True, autocommit=True)
-        self.assert_(self.conn.autocommit)
+        self.assertTrue(self.conn.autocommit)
         cur.execute('select 1;')
         self.assertEqual(self.conn.status, ext.STATUS_READY)
         self.assertEqual(self.conn.info.transaction_status,
@@ -1773,7 +1773,7 @@ while True:
         self.assertNotEqual(proc.returncode, 0)
         # Strip [NNN refs] from output
         err = re.sub(br'\[[^\]]+\]', b'', err).strip()
-        self.assert_(not err, err)
+        self.assertTrue(not err, err)
 
 
 class TestConnectionInfo(ConnectingTestCase):
@@ -1789,42 +1789,42 @@ class TestConnectionInfo(ConnectingTestCase):
         self.bconn = self.connect(connection_factory=BrokenConn)
 
     def test_dbname(self):
-        self.assert_(isinstance(self.conn.info.dbname, str))
-        self.assert_(self.bconn.info.dbname is None)
+        self.assertTrue(isinstance(self.conn.info.dbname, str))
+        self.assertTrue(self.bconn.info.dbname is None)
 
     def test_user(self):
         cur = self.conn.cursor()
         cur.execute("select user")
         self.assertEqual(self.conn.info.user, cur.fetchone()[0])
-        self.assert_(self.bconn.info.user is None)
+        self.assertTrue(self.bconn.info.user is None)
 
     def test_password(self):
-        self.assert_(isinstance(self.conn.info.password, str))
-        self.assert_(self.bconn.info.password is None)
+        self.assertTrue(isinstance(self.conn.info.password, str))
+        self.assertTrue(self.bconn.info.password is None)
 
     def test_host(self):
         expected = dbhost if dbhost else "/"
         self.assertIn(expected, self.conn.info.host)
-        self.assert_(self.bconn.info.host is None)
+        self.assertTrue(self.bconn.info.host is None)
 
     def test_host_readonly(self):
         with self.assertRaises(AttributeError):
             self.conn.info.host = 'override'
 
     def test_port(self):
-        self.assert_(isinstance(self.conn.info.port, int))
-        self.assert_(self.bconn.info.port is None)
+        self.assertTrue(isinstance(self.conn.info.port, int))
+        self.assertTrue(self.bconn.info.port is None)
 
     def test_options(self):
-        self.assert_(isinstance(self.conn.info.options, str))
-        self.assert_(self.bconn.info.options is None)
+        self.assertTrue(isinstance(self.conn.info.options, str))
+        self.assertTrue(self.bconn.info.options is None)
 
     @skip_before_libpq(9, 3)
     def test_dsn_parameters(self):
         d = self.conn.info.dsn_parameters
-        self.assert_(isinstance(d, dict))
+        self.assertTrue(isinstance(d, dict))
         self.assertEqual(d['dbname'], dbname)  # the only param we can check reliably
-        self.assert_('password' not in d, d)
+        self.assertTrue('password' not in d, d)
 
     def test_status(self):
         self.assertEqual(self.conn.info.status, 0)
@@ -1861,7 +1861,7 @@ class TestConnectionInfo(ConnectingTestCase):
         try:
             cur.execute("show server_version_num")
         except psycopg2.DatabaseError:
-            self.assert_(isinstance(self.conn.info.server_version, int))
+            self.assertTrue(isinstance(self.conn.info.server_version, int))
         else:
             self.assertEqual(
                 self.conn.info.server_version, int(cur.fetchone()[0]))
@@ -1878,11 +1878,11 @@ class TestConnectionInfo(ConnectingTestCase):
         except psycopg2.DatabaseError:
             pass
 
-        self.assert_('nosuchtable' in self.conn.info.error_message)
+        self.assertTrue('nosuchtable' in self.conn.info.error_message)
 
     def test_socket(self):
-        self.assert_(self.conn.info.socket >= 0)
-        self.assert_(self.bconn.info.socket < 0)
+        self.assertTrue(self.conn.info.socket >= 0)
+        self.assertTrue(self.bconn.info.socket < 0)
 
     @skip_if_crdb("backend pid")
     def test_backend_pid(self):
@@ -1890,12 +1890,12 @@ class TestConnectionInfo(ConnectingTestCase):
         try:
             cur.execute("select pg_backend_pid()")
         except psycopg2.DatabaseError:
-            self.assert_(self.conn.info.backend_pid > 0)
+            self.assertTrue(self.conn.info.backend_pid > 0)
         else:
             self.assertEqual(
                 self.conn.info.backend_pid, int(cur.fetchone()[0]))
 
-        self.assert_(self.bconn.info.backend_pid == 0)
+        self.assertTrue(self.bconn.info.backend_pid == 0)
 
     def test_needs_password(self):
         self.assertIs(self.conn.info.needs_password, False)
@@ -1922,7 +1922,7 @@ class TestConnectionInfo(ConnectingTestCase):
     @skip_before_libpq(9, 5)
     def test_ssl_attribute(self):
         attribs = self.conn.info.ssl_attribute_names
-        self.assert_(attribs)
+        self.assertTrue(attribs)
         if self.conn.info.ssl_in_use:
             for attrib in attribs:
                 self.assertIsInstance(self.conn.info.ssl_attribute(attrib), str)

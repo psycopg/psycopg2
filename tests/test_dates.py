@@ -47,7 +47,7 @@ class CommonDatetimeTestsMixin:
 
     def test_parse_date(self):
         value = self.DATE('2007-01-01', self.curs)
-        self.assert_(value is not None)
+        self.assertTrue(value is not None)
         self.assertEqual(value.year, 2007)
         self.assertEqual(value.month, 1)
         self.assertEqual(value.day, 1)
@@ -62,7 +62,7 @@ class CommonDatetimeTestsMixin:
 
     def test_parse_time(self):
         value = self.TIME('13:30:29', self.curs)
-        self.assert_(value is not None)
+        self.assertTrue(value is not None)
         self.assertEqual(value.hour, 13)
         self.assertEqual(value.minute, 30)
         self.assertEqual(value.second, 29)
@@ -77,7 +77,7 @@ class CommonDatetimeTestsMixin:
 
     def test_parse_datetime(self):
         value = self.DATETIME('2007-01-01 13:30:29', self.curs)
-        self.assert_(value is not None)
+        self.assertTrue(value is not None)
         self.assertEqual(value.year, 2007)
         self.assertEqual(value.month, 1)
         self.assertEqual(value.day, 1)
@@ -195,7 +195,7 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
     def test_default_tzinfo(self):
         self.curs.execute("select '2000-01-01 00:00+02:00'::timestamptz")
         dt = self.curs.fetchone()[0]
-        self.assert_(isinstance(dt.tzinfo, timezone))
+        self.assertTrue(isinstance(dt.tzinfo, timezone))
         self.assertEqual(dt,
             datetime(2000, 1, 1, tzinfo=timezone(timedelta(minutes=120))))
 
@@ -203,8 +203,8 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         self.curs.tzinfo_factory = FixedOffsetTimezone
         self.curs.execute("select '2000-01-01 00:00+02:00'::timestamptz")
         dt = self.curs.fetchone()[0]
-        self.assert_(not isinstance(dt.tzinfo, timezone))
-        self.assert_(isinstance(dt.tzinfo, FixedOffsetTimezone))
+        self.assertTrue(not isinstance(dt.tzinfo, timezone))
+        self.assertTrue(isinstance(dt.tzinfo, FixedOffsetTimezone))
         self.assertEqual(dt,
             datetime(2000, 1, 1, tzinfo=timezone(timedelta(minutes=120))))
 
@@ -421,20 +421,20 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
     @skip_if_crdb("infinity date")
     def test_adapt_infinity_tz(self):
         t = self.execute("select 'infinity'::timestamp")
-        self.assert_(t.tzinfo is None)
-        self.assert_(t > datetime(4000, 1, 1))
+        self.assertTrue(t.tzinfo is None)
+        self.assertTrue(t > datetime(4000, 1, 1))
 
         t = self.execute("select '-infinity'::timestamp")
-        self.assert_(t.tzinfo is None)
-        self.assert_(t < datetime(1000, 1, 1))
+        self.assertTrue(t.tzinfo is None)
+        self.assertTrue(t < datetime(1000, 1, 1))
 
         t = self.execute("select 'infinity'::timestamptz")
-        self.assert_(t.tzinfo is not None)
-        self.assert_(t > datetime(4000, 1, 1, tzinfo=timezone(timedelta(0))))
+        self.assertTrue(t.tzinfo is not None)
+        self.assertTrue(t > datetime(4000, 1, 1, tzinfo=timezone(timedelta(0))))
 
         t = self.execute("select '-infinity'::timestamptz")
-        self.assert_(t.tzinfo is not None)
-        self.assert_(t < datetime(1000, 1, 1, tzinfo=timezone(timedelta(0))))
+        self.assertTrue(t.tzinfo is not None)
+        self.assertTrue(t < datetime(1000, 1, 1, tzinfo=timezone(timedelta(0))))
 
     def test_redshift_day(self):
         # Redshift is reported returning 1 day interval as microsec (bug #558)
@@ -478,7 +478,7 @@ class FromTicksTestCase(unittest.TestCase):
     def test_date_value_error_sec_59_99(self):
         s = psycopg2.DateFromTicks(1273173119.99992)
         # The returned date is local
-        self.assert_(s.adapted in [date(2010, 5, 6), date(2010, 5, 7)])
+        self.assertTrue(s.adapted in [date(2010, 5, 6), date(2010, 5, 7)])
 
     def test_time_value_error_sec_59_99(self):
         s = psycopg2.TimeFromTicks(1273173119.99992)
@@ -490,8 +490,8 @@ class FixedOffsetTimezoneTests(unittest.TestCase):
 
     def test_init_with_no_args(self):
         tzinfo = FixedOffsetTimezone()
-        self.assert_(tzinfo._offset is ZERO)
-        self.assert_(tzinfo._name is None)
+        self.assertTrue(tzinfo._offset is ZERO)
+        self.assertTrue(tzinfo._name is None)
 
     def test_repr_with_positive_offset(self):
         tzinfo = FixedOffsetTimezone(5 * 60)
@@ -519,15 +519,15 @@ class FixedOffsetTimezoneTests(unittest.TestCase):
             % timedelta(0))
 
     def test_instance_caching(self):
-        self.assert_(FixedOffsetTimezone(name="FOO")
+        self.assertTrue(FixedOffsetTimezone(name="FOO")
             is FixedOffsetTimezone(name="FOO"))
-        self.assert_(FixedOffsetTimezone(7 * 60)
+        self.assertTrue(FixedOffsetTimezone(7 * 60)
             is FixedOffsetTimezone(7 * 60))
-        self.assert_(FixedOffsetTimezone(-9 * 60, 'FOO')
+        self.assertTrue(FixedOffsetTimezone(-9 * 60, 'FOO')
             is FixedOffsetTimezone(-9 * 60, 'FOO'))
-        self.assert_(FixedOffsetTimezone(9 * 60)
+        self.assertTrue(FixedOffsetTimezone(9 * 60)
             is not FixedOffsetTimezone(9 * 60, 'FOO'))
-        self.assert_(FixedOffsetTimezone(name='FOO')
+        self.assertTrue(FixedOffsetTimezone(name='FOO')
             is not FixedOffsetTimezone(9 * 60, 'FOO'))
 
     def test_pickle(self):

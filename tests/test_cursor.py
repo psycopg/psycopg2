@@ -47,7 +47,7 @@ class CursorTests(ConnectingTestCase):
         cur = self.conn.cursor()
         cur.close()
         cur.close()
-        self.assert_(cur.closed)
+        self.assertTrue(cur.closed)
 
     def test_empty_query(self):
         cur = self.conn.cursor()
@@ -170,7 +170,7 @@ class CursorTests(ConnectingTestCase):
         w = ref(curs)
         del curs
         gc.collect()
-        self.assert_(w() is None)
+        self.assertTrue(w() is None)
 
     def test_null_name(self):
         curs = self.conn.cursor(None)
@@ -188,27 +188,27 @@ class CursorTests(ConnectingTestCase):
             self.assertEqual(len(c), 7)  # DBAPI happy
             for a in ('name', 'type_code', 'display_size', 'internal_size',
                     'precision', 'scale', 'null_ok'):
-                self.assert_(hasattr(c, a), a)
+                self.assertTrue(hasattr(c, a), a)
 
         c = curs.description[0]
         self.assertEqual(c.name, 'pi')
-        self.assert_(c.type_code in psycopg2.extensions.DECIMAL.values)
+        self.assertTrue(c.type_code in psycopg2.extensions.DECIMAL.values)
         if crdb_version(self.conn) is None:
-            self.assert_(c.internal_size > 0)
+            self.assertTrue(c.internal_size > 0)
             self.assertEqual(c.precision, 10)
             self.assertEqual(c.scale, 2)
 
         c = curs.description[1]
         self.assertEqual(c.name, 'hi')
-        self.assert_(c.type_code in psycopg2.STRING.values)
-        self.assert_(c.internal_size < 0)
+        self.assertTrue(c.type_code in psycopg2.STRING.values)
+        self.assertTrue(c.internal_size < 0)
         self.assertEqual(c.precision, None)
         self.assertEqual(c.scale, None)
 
         c = curs.description[2]
         self.assertEqual(c.name, 'now')
-        self.assert_(c.type_code in psycopg2.extensions.DATE.values)
-        self.assert_(c.internal_size > 0)
+        self.assertTrue(c.type_code in psycopg2.extensions.DATE.values)
+        self.assertTrue(c.internal_size > 0)
         self.assertEqual(c.precision, None)
         self.assertEqual(c.scale, None)
 
@@ -301,7 +301,7 @@ class CursorTests(ConnectingTestCase):
 
         # Make sure callproc works right
         cur.callproc(procname, {paramname: 2})
-        self.assertEquals(cur.fetchone()[0], 4)
+        self.assertEqual(cur.fetchone()[0], 4)
 
         # Make sure callproc fails right
         failing_cases = [
@@ -393,10 +393,10 @@ class CursorTests(ConnectingTestCase):
     @skip_before_postgres(9)
     def test_pgresult_ptr(self):
         curs = self.conn.cursor()
-        self.assert_(curs.pgresult_ptr is None)
+        self.assertTrue(curs.pgresult_ptr is None)
 
         curs.execute("select 'x'")
-        self.assert_(curs.pgresult_ptr is not None)
+        self.assertTrue(curs.pgresult_ptr is not None)
 
         try:
             f = self.libpq.PQcmdStatus
@@ -409,7 +409,7 @@ class CursorTests(ConnectingTestCase):
             self.assertEqual(status, b'SELECT 1')
 
         curs.close()
-        self.assert_(curs.pgresult_ptr is None)
+        self.assertTrue(curs.pgresult_ptr is None)
 
 
 @skip_if_crdb("named cursor")
@@ -582,7 +582,7 @@ class NamedCursorTests(ConnectingTestCase):
         t1 = next(i)[0]
         time.sleep(0.2)
         t2 = next(i)[0]
-        self.assert_((t2 - t1).microseconds * 1e-6 < 0.1,
+        self.assertTrue((t2 - t1).microseconds * 1e-6 < 0.1,
             f"named cursor records fetched in 2 roundtrips (delta: {t2 - t1})")
 
     @skip_before_postgres(8, 0)
