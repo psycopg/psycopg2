@@ -1,29 +1,29 @@
 """psycopg context managers for connection and cursor objects."""
 
 
+import psycopg2
 from contextlib import contextmanager
-from extensions import connect, cursor
 
 
 @contextmanager
-def connection(**kwargs):
+def connect(**kwargs):
     """Context manager to yield and close a db connection."""
-    connection = connect(**kwargs)
+    conn = psycopg2.connect(**kwargs)
 
     try:
-        yield connection
+        yield conn
 
     finally:
-        connection.close()
+        conn.close()
 
 
 @contextmanager
-def cursor(connection):
+def cursor(conn):
     """
     Context manager to yield and close a cursor given an existing db
     connection.
     """
-    cursor = connection.cursor()
+    cursor = conn.cursor()
 
     try:
         yield cursor
@@ -33,17 +33,17 @@ def cursor(connection):
 
 
 @contextmanager
-def connection_cursor(**kwargs):
+def connect_cursor(**kwargs):
     """
     Context manager to yield a cursor and close it and its connection for
     purposes or performing a single db call.
     """
-    connection = connect(**kwargs)
-    cursor = connection.cursor()
+    conn = psycopg2.connect(**kwargs)
+    cur = conn.cursor()
 
     try:
-        yield cursor
+        yield cur
 
     finally:
-        cursor.close()
-        connection.close()
+        cur.close()
+        conn.close()
