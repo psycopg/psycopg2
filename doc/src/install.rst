@@ -153,7 +153,8 @@ it from sources you will need:
 - A C compiler.
 
 - The Python header files. They are usually installed in a package such as
-  **python-dev** or **python3-dev**. A message such as *error: Python.h: No
+  **python-dev**, **python3-dev** or **python3.x-dev** (where 3.x is your
+  Python version, e.g. python3.9-dev). A message such as *error: Python.h: No
   such file or directory* is an indication that the Python headers are
   missing.
 
