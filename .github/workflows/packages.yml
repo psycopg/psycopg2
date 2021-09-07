@@ -157,4 +157,4 @@ jobs:
         with:
           name: packages_macos
           path: |
-            dist/*/*macosx_11_0_arm64.whl
+            dist/*macosx_11_0_arm64.whl
