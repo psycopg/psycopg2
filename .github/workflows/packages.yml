@@ -3,7 +3,6 @@ name: Build packages
 on:
   - workflow_dispatch
 
-
 jobs:
   build-sdist:
     strategy:
@@ -51,16 +50,15 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-
   build-manylinux:
     strategy:
       fail-fast: false
       matrix:
         include:
-          - {tag: manylinux2014, arch: x86_64}
-          - {tag: manylinux2014, arch: i686}
-          - {tag: manylinux_2_24, arch: aarch64}
-          - {tag: manylinux_2_24, arch: ppc64le}
+          - { tag: manylinux2014, arch: x86_64 }
+          - { tag: manylinux2014, arch: i686 }
+          - { tag: manylinux_2_24, arch: aarch64 }
+          - { tag: manylinux_2_24, arch: ppc64le }
 
     runs-on: ubuntu-20.04
     steps:
@@ -107,13 +105,12 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-
   build-macos:
     runs-on: macos-10.15
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.6', '3.7', '3.8', '3.9']
+        python-version: ["3.6", "3.7", "3.8", "3.9"]
 
     steps:
       - name: Checkout repos
@@ -137,3 +134,27 @@ jobs:
           name: packages_macos
           path: |
             dist/*/*${{ matrix.platform }}.whl
+
+  # This only uploads the arm64 wheels for Apple M1 silicon usage
+  build-macos-arm64:
+    runs-on: macos-10.15
+    strategy:
+      fail-fast: false
+    name: "build-macos (3.8-3.10 - arm64)"
+    steps:
+      - uses: actions/checkout@v2
+      # This builds all possible Python versions (currently, 3.8 to 3.10)
+      - uses: pypa/cibuildwheel@v2.1.1
+        with:
+          output-dir: dist
+        # Read about options here https://cibuildwheel.readthedocs.io/en/stable/options
+        env:
+          CIBW_ARCHS_MACOS: arm64
+          # Skip testing the arm64 builds
+          CIBW_TEST_SKIP: "*:arm64"
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: packages_macos
+          path: |
+            dist/*/*macosx_11_0_arm64.whl
