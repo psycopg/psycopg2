@@ -155,6 +155,6 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: packages_macos
+          name: packages_macos_arm64
           path: |
             dist/*macosx_11_0_arm64.whl
