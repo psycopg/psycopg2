@@ -2,8 +2,6 @@
 name: Build packages
 on:
   - workflow_dispatch
-  # XXX: Temp change while working on PR; remove with prettier changes
-  - pull_request
 
 jobs:
   build-sdist:
@@ -52,15 +50,16 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+ 
   build-manylinux:
     strategy:
       fail-fast: false
       matrix:
         include:
-          - { tag: manylinux2014, arch: x86_64 }
-          - { tag: manylinux2014, arch: i686 }
-          - { tag: manylinux_2_24, arch: aarch64 }
-          - { tag: manylinux_2_24, arch: ppc64le }
+          - {tag: manylinux2014, arch: x86_64}
+          - {tag: manylinux2014, arch: i686}
+          - {tag: manylinux_2_24, arch: aarch64}
+          - {tag: manylinux_2_24, arch: ppc64le}
 
     runs-on: ubuntu-20.04
     steps:
@@ -112,7 +111,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.6", "3.7", "3.8", "3.9"]
+        python-version: ['3.6', '3.7', '3.8', '3.9']
 
     steps:
       - name: Checkout repos
