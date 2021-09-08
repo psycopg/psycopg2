@@ -3,6 +3,7 @@ name: Build packages
 on:
   - workflow_dispatch
 
+
 jobs:
   build-sdist:
     strategy:
@@ -50,7 +51,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
- 
+
   build-manylinux:
     strategy:
       fail-fast: false
@@ -105,6 +106,7 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+
 
   build-macos:
     runs-on: macos-10.15
