@@ -45,6 +45,7 @@ except ImportError:
 # for a consistent versioning pattern.
 
 PSYCOPG_VERSION = '2.9.1'
+PSYCOPG_NAME = os.environ.get("PACKAGE_NAME", "psycopg2")
 
 
 # note: if you are changing the list of supported Python version please fix
@@ -545,7 +546,7 @@ except Exception:
     print("failed to read readme: ignoring...")
     readme = __doc__
 
-setup(name="psycopg2",
+setup(name=PSYCOPG_NAME,
       version=PSYCOPG_VERSION,
       author="Federico Di Gregorio",
       author_email="fog@initd.org",
