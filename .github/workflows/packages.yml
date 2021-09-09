@@ -148,7 +148,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install pre-requisites
         # This skips updating brew when installing a package
-        env: HOMEBREW_NO_AUTO_UPDATE=1 
+        env: HOMEBREW_NO_AUTO_UPDATE=1
         run: |
           brew install postgresql@13
           brew services start postgresql
@@ -162,7 +162,7 @@ jobs:
           CIBW_REPAIR_WHEEL_COMMAND: delocate-listdeps {wheel} && delocate-wheel --require-archs {delocate_archs} -w repaired_wheels {wheel}
           # This allows substitution within setup.py
           PACKAGE_NAME: psycopg2-binary
-      
+
       - run: |
           ls -l
           ls -l dist
