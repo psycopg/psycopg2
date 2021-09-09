@@ -144,13 +144,13 @@ jobs:
     name: "build-macos-11 - arm64"
     steps:
       - uses: actions/checkout@v2
-      - name: Install pre-requisites
+      - name: Start postgresql service
         # This skips updating brew when installing a package
         env:
           HOMEBREW_NO_AUTO_UPDATE: 1
         run: |
-          brew install postgresql@13
           brew services start postgresql
+          mkdir repaired_wheels
 
       # This builds all possible Python versions (currently, 3.8 to 3.10)
       - uses: pypa/cibuildwheel@v2.1.1
