@@ -156,12 +156,8 @@ jobs:
         # Read about options here https://cibuildwheel.readthedocs.io/en/stable/options
         env:
           CIBW_ARCHS: arm64
-          CIBW_BUILD: cp39-macosx_arm64
           # This allows substitution within setup.py
           PACKAGE_NAME: psycopg2-binary
-
-      - run: |
-          ls -l wheelhouse
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
