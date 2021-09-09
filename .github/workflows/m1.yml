@@ -19,7 +19,7 @@ jobs:
           brew services start postgresql
 
       # This builds all possible Python versions (currently, 3.8 to 3.10)
-      - uses: armenzg/cibuildwheel
+      - uses: armenzg/cibuildwheel@main
         # Read about options here https://cibuildwheel.readthedocs.io/en/stable/options
         env:
           CIBW_ARCHS: arm64
