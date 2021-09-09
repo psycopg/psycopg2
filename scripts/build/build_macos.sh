@@ -33,7 +33,9 @@ distdir="${prjdir}/dist/psycopg2-$version"
 mkdir -p "$distdir"
 
 # Install required python packages
-pip install -U pip wheel delocate
+pip install -U pip wheel
+# Running it after installing wheel will save building the wheel
+pip install -U delocate
 
 # Build the wheels
 wheeldir="${prjdir}/wheels"
@@ -46,8 +48,10 @@ if [[ -z "${LIBPQ:-}" ]]; then
 fi
 
 delocate-wheel ${wheeldir}/*.whl
-# https://github.com/MacPython/wiki/wiki/Spinning-wheels#question-will-pip-give-me-a-broken-wheel
-delocate-addplat --rm-orig -x 10_9 -x 10_10 ${wheeldir}/*.whl
+if [[ $(uname -m) != 'arm64' ]]; then
+    # https://github.com/MacPython/wiki/wiki/Spinning-wheels#question-will-pip-give-me-a-broken-wheel
+    delocate-addplat --rm-orig -x 10_9 -x 10_10 ${wheeldir}/*.whl
+fi
 cp ${wheeldir}/*.whl ${distdir}
 
 # kill the libpq to make sure tests don't depend on it

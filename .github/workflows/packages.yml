@@ -140,32 +140,37 @@ jobs:
 
   # This only uploads the arm64 wheels for Apple M1 Silicon usage
   build-macos-arm64:
-    runs-on: ${{ matrix.os }}
+    runs-on: macos-11.0
     strategy:
       fail-fast: false
-      matrix:
-        os: [macos-10.15, macos-11.0]
-    name: "build-${{ matrix.os }} - arm64"
+    name: "build-macos-11 - arm64"
     steps:
       - uses: actions/checkout@v2
       - name: Install pre-requisites
+        # This skips updating brew when installing a package
+        env: HOMEBREW_NO_AUTO_UPDATE=1 
         run: |
           brew install postgresql@13
           brew services start postgresql
 
       # This builds all possible Python versions (currently, 3.8 to 3.10)
       - uses: pypa/cibuildwheel@v2.1.1
-        with:
-          output-dir: dist
         # Read about options here https://cibuildwheel.readthedocs.io/en/stable/options
         env:
           CIBW_ARCHS: arm64
+          # This changes the default in order to place the wheel in "repaired_wheels"
+          CIBW_REPAIR_WHEEL_COMMAND: delocate-listdeps {wheel} && delocate-wheel --require-archs {delocate_archs} -w repaired_wheels {wheel}
           # This allows substitution within setup.py
           PACKAGE_NAME: psycopg2-binary
+      
+      - run: |
+          ls -l
+          ls -l dist
+          ls -l repaired_wheels
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: packages_${{ matrix.os }}_arm64
+          name: packages_macos_arm64
           path: |
-            dist/*macosx_11_0_arm64.whl
+            repaired_wheels/*.whl
