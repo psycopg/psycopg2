@@ -1,5 +1,5 @@
 ---
-name: Build packages
+name: Build packages (M1)
 on:
   - push
 
