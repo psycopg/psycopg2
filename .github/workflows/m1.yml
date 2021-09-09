@@ -3,7 +3,6 @@ name: Build packages (M1)
 on:
   - push
 
-
 jobs:
   # This only uploads the arm64 wheels for Apple M1 Silicon usage
   build-macos-arm64:
@@ -23,7 +22,7 @@ jobs:
         # Read about options here https://cibuildwheel.readthedocs.io/en/stable/options
         env:
           CIBW_ARCHS: arm64
-          # XXX: temp: faster
+          # XXX: temp: only one version to build
           CIBW_BUILD: cp39-macosx_arm64
           # It silences a warning since we can't test on Apple Silicon runners
           CIBW_TEST_SKIP: "*-macosx_arm64"
@@ -32,6 +31,7 @@ jobs:
 
       - run: |
           ls -l
+          ls -l wheelhouse
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
@@ -40,11 +40,11 @@ jobs:
           path: ./wheelhouse/*.whl
 
   build-macos:
-    runs-on: macos-10.15
+    runs-on: macos-11.0
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.8']
+        python-version: "3.8"
 
     steps:
       - name: Checkout repos
@@ -61,7 +61,9 @@ jobs:
           PACKAGE_NAME: psycopg2-binary
           PSYCOPG2_TESTDB: postgres
           PSYCOPG2_TEST_FAST: 1
-      
+          ARCHFLAGS: "-arch arm64"
+          _PYTHON_HOST_PLATFORM: macosx-11.0-arm64
+
       - run: |
           ls -l
           ls -l wheels
