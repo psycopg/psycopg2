@@ -8,8 +8,8 @@
 set -euo pipefail
 set -x
 
-dir="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
-prjdir="$( cd "${dir}/../.." && pwd )"
+dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+prjdir="$(cd "${dir}/../.." && pwd)"
 
 brew install gnu-sed postgresql@13
 
@@ -17,13 +17,13 @@ brew install gnu-sed postgresql@13
 brew services start postgresql
 
 for i in $(seq 10 -1 0); do
-  eval pg_isready && break
-  if [ $i == 0 ]; then
-      echo "PostgreSQL service not ready, giving up"
-      exit 1
-  fi
-  echo "PostgreSQL service not ready, waiting a bit, attempts left: $i"
-  sleep 5
+    eval pg_isready && break
+    if [ $i == 0 ]; then
+        echo "PostgreSQL service not ready, giving up"
+        exit 1
+    fi
+    echo "PostgreSQL service not ready, waiting a bit, attempts left: $i"
+    sleep 5
 done
 
 # Find psycopg version
@@ -57,21 +57,24 @@ cp ${wheeldir}/*.whl ${distdir}
 # kill the libpq to make sure tests don't depend on it
 mv "$LIBPQ" "${LIBPQ}-bye"
 
-# Install and test the built wheel
-pip install ${PACKAGE_NAME:-psycopg2} --no-index -f "$distdir"
+# XXX: Move this code into a test script
+if [[ $(uname -m) != 'arm64' ]]; then
+    # Install and test the built wheel
+    pip install ${PACKAGE_NAME:-psycopg2} --no-index -f "$distdir"
 
-# Print psycopg and libpq versions
-python -c "import psycopg2; print(psycopg2.__version__)"
-python -c "import psycopg2; print(psycopg2.__libpq_version__)"
-python -c "import psycopg2; print(psycopg2.extensions.libpq_version())"
+    # Print psycopg and libpq versions
+    python -c "import psycopg2; print(psycopg2.__version__)"
+    python -c "import psycopg2; print(psycopg2.__libpq_version__)"
+    python -c "import psycopg2; print(psycopg2.extensions.libpq_version())"
 
-# fail if we are not using the expected libpq library
-# Disabled as we just use what's available on the system on macOS
-# if [[ "${WANT_LIBPQ:-}" ]]; then
-#     python -c "import psycopg2, sys; sys.exit(${WANT_LIBPQ} != psycopg2.extensions.libpq_version())"
-# fi
+    # fail if we are not using the expected libpq library
+    # Disabled as we just use what's available on the system on macOS
+    # if [[ "${WANT_LIBPQ:-}" ]]; then
+    #     python -c "import psycopg2, sys; sys.exit(${WANT_LIBPQ} != psycopg2.extensions.libpq_version())"
+    # fi
 
-python -c "import tests; tests.unittest.main(defaultTest='tests.test_suite')"
+    python -c "import tests; tests.unittest.main(defaultTest='tests.test_suite')"
+fi
 
 # just because I'm a boy scout
 mv "${LIBPQ}-bye" "$LIBPQ"

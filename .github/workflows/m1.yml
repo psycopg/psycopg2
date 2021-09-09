@@ -39,7 +39,7 @@ jobs:
           name: packages_macos_arm64
           path: ./wheelhouse/*.whl
 
-build-macos:
+  build-macos:
     runs-on: macos-10.15
     strategy:
       fail-fast: false
