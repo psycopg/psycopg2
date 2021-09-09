@@ -54,11 +54,11 @@ if [[ $(uname -m) != 'arm64' ]]; then
 fi
 cp ${wheeldir}/*.whl ${distdir}
 
-# kill the libpq to make sure tests don't depend on it
-mv "$LIBPQ" "${LIBPQ}-bye"
-
 # XXX: Move this code into a test script
 if [[ $(uname -m) != 'arm64' ]]; then
+    # kill the libpq to make sure tests don't depend on it
+    mv "$LIBPQ" "${LIBPQ}-bye"
+
     # Install and test the built wheel
     pip install ${PACKAGE_NAME:-psycopg2} --no-index -f "$distdir"
 
@@ -74,7 +74,7 @@ if [[ $(uname -m) != 'arm64' ]]; then
     # fi
 
     python -c "import tests; tests.unittest.main(defaultTest='tests.test_suite')"
-fi
 
-# just because I'm a boy scout
-mv "${LIBPQ}-bye" "$LIBPQ"
+    # just because I'm a boy scout
+    mv "${LIBPQ}-bye" "$LIBPQ"
+fi
