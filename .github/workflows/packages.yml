@@ -141,14 +141,13 @@ jobs:
   # This only uploads the arm64 wheels for Apple M1 Silicon usage
   build-macos-arm64:
     runs-on: macos-11.0
-    strategy:
-      fail-fast: false
     name: "build-macos-11 - arm64"
     steps:
       - uses: actions/checkout@v2
       - name: Install pre-requisites
         # This skips updating brew when installing a package
-        env: HOMEBREW_NO_AUTO_UPDATE=1
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: 1
         run: |
           brew install postgresql@13
           brew services start postgresql
