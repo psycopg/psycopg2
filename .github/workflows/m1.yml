@@ -38,3 +38,38 @@ jobs:
         with:
           name: packages_macos_arm64
           path: ./wheelhouse/*.whl
+
+build-macos:
+    runs-on: macos-10.15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.8']
+
+    steps:
+      - name: Checkout repos
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Build packages
+        run: ./scripts/build/build_macos.sh
+        env:
+          PACKAGE_NAME: psycopg2-binary
+          PSYCOPG2_TESTDB: postgres
+          PSYCOPG2_TEST_FAST: 1
+      
+      - run: |
+          ls -l
+          ls -l wheels
+          ls -l dist
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: packages_macos
+          path: |
+            dist/*/*${{ matrix.platform }}.whl
