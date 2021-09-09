@@ -54,27 +54,24 @@ if [[ $(uname -m) != 'arm64' ]]; then
 fi
 cp ${wheeldir}/*.whl ${distdir}
 
-# XXX: Move this code into a test script
-if [[ $(uname -m) != 'arm64' ]]; then
-    # kill the libpq to make sure tests don't depend on it
-    mv "$LIBPQ" "${LIBPQ}-bye"
+# kill the libpq to make sure tests don't depend on it
+[[ -z "${LIBPQ:-}" ]] && mv "$LIBPQ" "${LIBPQ}-bye"
 
-    # Install and test the built wheel
-    pip install ${PACKAGE_NAME:-psycopg2} --no-index -f "$distdir"
+# Install and test the built wheel
+pip install ${PACKAGE_NAME:-psycopg2} --no-index -f "$distdir"
 
-    # Print psycopg and libpq versions
-    python -c "import psycopg2; print(psycopg2.__version__)"
-    python -c "import psycopg2; print(psycopg2.__libpq_version__)"
-    python -c "import psycopg2; print(psycopg2.extensions.libpq_version())"
+# Print psycopg and libpq versions
+python -c "import psycopg2; print(psycopg2.__version__)"
+python -c "import psycopg2; print(psycopg2.__libpq_version__)"
+python -c "import psycopg2; print(psycopg2.extensions.libpq_version())"
 
-    # fail if we are not using the expected libpq library
-    # Disabled as we just use what's available on the system on macOS
-    # if [[ "${WANT_LIBPQ:-}" ]]; then
-    #     python -c "import psycopg2, sys; sys.exit(${WANT_LIBPQ} != psycopg2.extensions.libpq_version())"
-    # fi
+# fail if we are not using the expected libpq library
+# Disabled as we just use what's available on the system on macOS
+# if [[ "${WANT_LIBPQ:-}" ]]; then
+#     python -c "import psycopg2, sys; sys.exit(${WANT_LIBPQ} != psycopg2.extensions.libpq_version())"
+# fi
 
-    python -c "import tests; tests.unittest.main(defaultTest='tests.test_suite')"
+python -c "import tests; tests.unittest.main(defaultTest='tests.test_suite')"
 
-    # just because I'm a boy scout
-    mv "${LIBPQ}-bye" "$LIBPQ"
-fi
+# just because I'm a boy scout
+[[ -z "${LIBPQ:-}" ]] && mv "${LIBPQ}-bye" "$LIBPQ"
