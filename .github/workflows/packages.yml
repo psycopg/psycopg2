@@ -3,7 +3,6 @@ name: Build packages
 on:
   - workflow_dispatch
 
-
 jobs:
   build-sdist:
     strategy:
@@ -51,16 +50,15 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-
   build-manylinux:
     strategy:
       fail-fast: false
       matrix:
         include:
-          - {tag: manylinux2014, arch: x86_64}
-          - {tag: manylinux2014, arch: i686}
-          - {tag: manylinux_2_24, arch: aarch64}
-          - {tag: manylinux_2_24, arch: ppc64le}
+          - { tag: manylinux2014, arch: x86_64 }
+          - { tag: manylinux2014, arch: i686 }
+          - { tag: manylinux_2_24, arch: aarch64 }
+          - { tag: manylinux_2_24, arch: ppc64le }
 
     runs-on: ubuntu-20.04
     steps:
@@ -107,13 +105,12 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-
   build-macos:
     runs-on: macos-10.15
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.6', '3.7', '3.8', '3.9']
+        python-version: ["3.6", "3.7", "3.8", "3.9"]
 
     steps:
       - name: Checkout repos
@@ -137,30 +134,3 @@ jobs:
           name: packages_macos
           path: |
             dist/*/*${{ matrix.platform }}.whl
-
-  # This only uploads the arm64 wheels for Apple M1 Silicon usage
-  build-macos-arm64:
-    runs-on: macos-11.0
-    name: "build-macos (3.8-3.10, arm64)"
-    steps:
-      - uses: actions/checkout@v2
-      - name: Start postgresql service
-        # This skips updating brew when installing a package
-        env:
-          HOMEBREW_NO_AUTO_UPDATE: 1
-        run: |
-          brew services start postgresql
-
-      # This builds all possible Python versions (currently, 3.8 to 3.10)
-      - uses: pypa/cibuildwheel@v2.1.1
-        # Read about options here https://cibuildwheel.readthedocs.io/en/stable/options
-        env:
-          CIBW_ARCHS: arm64
-          # This allows substitution within setup.py
-          PACKAGE_NAME: psycopg2-binary
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: packages_macos_arm64
-          path: ./wheelhouse/*.whl
