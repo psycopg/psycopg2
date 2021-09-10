@@ -7,42 +7,51 @@ set -euo pipefail
 
 create-venv() {
     python3 -m venv "${1}"
+    source "${1}/bin/activate"
     pip install -U pip wheel
 }
 
 tempdir=$(mktemp -d /tmp/psycopg2.$$)
+export PACKAGE_NAME=psycopg2-binary
+brew install postgresql
 
 echo "Everything will be created under ${tempdir}"
+
+# These are necessary for an Intel machine (from cibuildwheel macos.py code)
+export ARCHFLAGS="-arch arm64"
+export _PYTHON_HOST_PLATFORM="macosx-11.0-arm64"
+export SDKROOT="/Library/Developer/CommandLineTools/SDKs/MacOSX11.sdk"
 
 # create-venv "${tempdir}/venv_cibuildwheel" cibuildwheel
 # source "${tempdir}/venv_cibuildwheel/bin/activate"
 # pip install cibuildwheel
-# export PACKAGE_NAME=psycopg2-binary
 # # When you see "Repairing wheel" you will see this output when executing in an Apple Silicon
 # # /opt/homebrew/Cellar/openssl@1.1/1.1.1l/lib/libcrypto.1.1.dylib
 # # /opt/homebrew/Cellar/openssl@1.1/1.1.1l/lib/libssl.1.1.dylib
 # # /opt/homebrew/Cellar/postgresql/13.4/lib/libpq.5.13.dylib
 # # If you don't specify --output-dir you will be prompted for sudo
-# CIBW_BUILD=cp38-macosx_arm64 cibuildwheel . --output-dir "${tempdir}/wheelhouse" --platform macos 2>&1
+# set -x
+# CIBW_BUILD=cp38-macosx_arm64 cibuildwheel . --output-dir "${tempdir}/wheelhouse" --platform macos
+# set +x
 # # This package should be close to 2MB rather than 140KB
-# du -h wheelhouse/*.whl
+# du -h "${tempdir}/wheelhouse/psycopg2_binary-2.9.1-cp38-cp38-macosx_11_0_arm64.whl"
 # deactivate
 
 create-venv "${tempdir}/venv_delocate"
 source "${tempdir}/venv_delocate/bin/activate"
 pip install delocate
-export PACKAGE_NAME=psycopg2-binary
+set -x
 # I'm making the steps close to what cibuildwheel does
 pip wheel --use-feature=in-tree-build --wheel-dir "${tempdir}/built_wheel" --no-deps .
-set -x
-delocate-listdeps "${tempdir}/built_wheel/*.whl"
+delocate-listdeps "${tempdir}/built_wheel/psycopg2_binary-2.9.1-cp38-cp38-macosx_11_0_arm64.whl"
 delocate-wheel --require-archs arm64 \
     -w "${tempdir}/repaired_wheel" \
-    "${tempdir}/built_wheel/*.whl"
+    "${tempdir}/built_wheel/psycopg2_binary-2.9.1-cp38-cp38-macosx_11_0_arm64.whl"
+set +x
 # This should be around 140KB
-du -h "${tempdir}/built_wheel/*.whl" || exit 0
+du -h "${tempdir}/built_wheel/psycopg2_binary-2.9.1-cp38-cp38-macosx_11_0_arm64.whl" || exit 0
 # This package should be close to 2MB rather than 140KB
-du -h "${tempdir}/repaired_wheel/*"
+du -h "${tempdir}/repaired_wheel/psycopg2_binary-2.9.1-cp38-cp38-macosx_11_0_arm64.whl"
 deactivate
 
 # Start the database for testing
