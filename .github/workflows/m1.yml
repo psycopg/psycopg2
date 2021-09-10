@@ -61,6 +61,8 @@ jobs:
           PACKAGE_NAME: psycopg2-binary
           PSYCOPG2_TESTDB: postgres
           PSYCOPG2_TEST_FAST: 1
+          ARCHFLAGS: "-arch arm64"
+          _PYTHON_HOST_PLATFORM: "macosx-11.0-arm64"
       
       - run: |
           ls -l
