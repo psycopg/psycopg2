@@ -174,9 +174,9 @@ class ThreadedConnectionPool(AbstractConnectionPool):
             of psycopg2
         """
 
+        super().__init__(minconn, maxconn, *args, **kwargs)
+
         import threading
-        AbstractConnectionPool.__init__(
-            self, minconn, maxconn, *args, **kwargs)
         self._lock = threading.Lock()
 
     def getconn(self, key=None):
