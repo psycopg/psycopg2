@@ -156,7 +156,27 @@ class ThreadedConnectionPool(AbstractConnectionPool):
     """A connection pool that works with the threading module."""
 
     def __init__(self, minconn, maxconn, *args, **kwargs):
-        """Initialize the threading lock."""
+        """Initializes a new instance of ThreadedConnectionPool.
+
+        Parameters
+        ----------
+        minconn : int
+            The minimum number of connections that should be automatically
+            created when you initialize the connection pool.
+        maxconn : int
+            The maximum number of connections that will be supported by this
+            connection pool
+        args : optional, positional arguments
+            Usually this arguments are passed to the underlying ``connect`` method
+            of psycopg2
+        args : optional, positional arguments
+            Usually these are passed to the underlying ``connect`` method
+            of psycopg2
+        kwargs : optional, keyword only arguments
+            Usually these are passed to the underlying ``connect`` method
+            of psycopg2
+        """
+        
         import threading
         AbstractConnectionPool.__init__(
             self, minconn, maxconn, *args, **kwargs)
