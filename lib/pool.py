@@ -160,28 +160,21 @@ class ThreadedConnectionPool(AbstractConnectionPool):
         import threading
         AbstractConnectionPool.__init__(
             self, minconn, maxconn, *args, **kwargs)
+            
         self._lock = threading.Lock()
 
     def getconn(self, key=None):
         """Get a free connection and assign it to 'key' if not None."""
-        self._lock.acquire()
-        try:
+        with self._lock:
             return self._getconn(key)
-        finally:
-            self._lock.release()
 
     def putconn(self, conn=None, key=None, close=False):
         """Put away an unused connection."""
-        self._lock.acquire()
-        try:
+        with self._lock:
             self._putconn(conn, key, close)
-        finally:
-            self._lock.release()
 
     def closeall(self):
         """Close all connections (even the one currently in use.)"""
-        self._lock.acquire()
-        try:
+        with self._lock:
             self._closeall()
-        finally:
-            self._lock.release()
+
