@@ -167,9 +167,6 @@ class ThreadedConnectionPool(AbstractConnectionPool):
             The maximum number of connections that will be supported by this
             connection pool
         args : optional, positional arguments
-            Usually this arguments are passed to the underlying ``connect`` method
-            of psycopg2
-        args : optional, positional arguments
             Usually these are passed to the underlying ``connect`` method
             of psycopg2
         kwargs : optional, keyword only arguments
