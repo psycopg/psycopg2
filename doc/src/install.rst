@@ -198,7 +198,7 @@ self-contained wheel package, it will need the libpq_ library at runtime
 (usually distributed in a ``libpq.so`` or ``libpq.dll`` file).  `!psycopg2`
 relies on the host OS to find the library if the library is installed in a
 standard location there is usually no problem; if the library is in a
-non-standard location you will have to tell somehow Psycopg how to find it,
+non-standard location you will have to tell Psycopg how to find it,
 which is OS-dependent (for instance setting a suitable
 :envvar:`LD_LIBRARY_PATH` on Linux).
 
