@@ -655,9 +655,9 @@ class Options:
 
     @property
     def py_ver(self):
-        """The Python version to build as 2 digits string."""
+        """The Python version to build as 2-3 digits string."""
         rv = os.environ['PY_VER']
-        assert rv in ('36', '37', '38', '39'), rv
+        assert rv in ('36', '37', '38', '39', '310'), rv
         return rv
 
     @property
@@ -737,12 +737,13 @@ class Options:
         # https://wiki.python.org/moin/WindowsCompilers
         # https://www.appveyor.com/docs/windows-images-software/#python
         # Py 3.6--3.8 = VS Ver. 14.0 (VS 2015)
-        # Py 3.9 = VS Ver. 16.0 (VS 2019)
+        # Py 3.9--3.10 = VS Ver. 16.0 (VS 2019)
         vsvers = {
             '36': '14.0',
             '37': '14.0',
             '38': '14.0',
             '39': '16.0',
+            '310': '16.0',
         }
         return vsvers[self.py_ver]
 

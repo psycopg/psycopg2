@@ -21,12 +21,14 @@ jobs:
             postgres: 12
           - python: 3.9
             postgres: 13
+          - python: 3.10
+            postgres: 13
 
           # Opposite extremes of the supported Py/PG range, other architecture
           - python: 3.6
             postgres: 13
             architecture: 'x86'
-          - python: 3.9
+          - python: 3.10
             postgres: 9.5
             architecture: 'x86'
 
