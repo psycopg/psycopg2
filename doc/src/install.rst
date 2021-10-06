@@ -218,6 +218,14 @@ which is OS-dependent (for instance setting a suitable
     trying to match it to the version of the PostgreSQL server you will have
     to connect to.
 
+.. note::
+
+    Since version 3.8, Python does not resolve DLLs using the :envvar:`PATH` 
+    variable on Windows. In order for the ``libpq.dll`` to be resolved
+    properly, add the DLLs parent directory to the search path using
+    os.add_dll_directory_
+
+.. _os.add_dll_directory: https://docs.python.org/3/library/os.html#os.add_dll_directory
 
 .. index::
     single: setup.py
