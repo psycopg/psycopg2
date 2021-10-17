@@ -33,6 +33,7 @@
 #include "psycopg/green.h"
 #include "psycopg/notify.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 /* String indexes match the ISOLATION_LEVEL_* consts */
