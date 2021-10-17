@@ -57,6 +57,8 @@
 #include <datetime.h>
 #include "psycopg/adapter_datetime.h"
 
+#include <stdlib.h>
+
 HIDDEN PyObject *psycoEncodings = NULL;
 HIDDEN PyObject *sqlstate_errors = NULL;
 

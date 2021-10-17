@@ -346,6 +346,11 @@ replicationCursor_repr(replicationCursorObject *self)
         "<ReplicationCursor object at %p; closed: %d>", self, self->cur.closed);
 }
 
+static int
+replicationCursorType_traverse(PyObject *self, visitproc visit, void *arg)
+{
+    return cursorType.tp_traverse(self, visit, arg);
+}
 
 /* object type */
 
@@ -374,7 +379,7 @@ PyTypeObject replicationCursorType = {
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_ITER |
       Py_TPFLAGS_HAVE_GC, /*tp_flags*/
     replicationCursorType_doc, /*tp_doc*/
-    0,          /*tp_traverse*/
+    replicationCursorType_traverse, /*tp_traverse*/
     0,          /*tp_clear*/
     0,          /*tp_richcompare*/
     0,          /*tp_weaklistoffset*/

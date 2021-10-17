@@ -47,6 +47,7 @@
 #include "psycopg/libpq_support.h"
 #include "libpq-fe.h"
 
+#include <stdlib.h>
 #ifdef _WIN32
 /* select() */
 #include <winsock2.h>
