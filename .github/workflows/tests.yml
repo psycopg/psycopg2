@@ -54,5 +54,5 @@ jobs:
       - name: Install tox
         run: pip install tox
       - name: Run tests
-        run: tox -e ${{ matrix.python }}
+        run: tox -e py$(sed -e 's/\.//' <<< ${{ matrix.python }})
         timeout-minutes: 5
