@@ -51,8 +51,8 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python }}
-      - name: Install tox
-        run: pip install tox
+      - name: Build
+        run: make
       - name: Run tests
-        run: tox -e ${{ matrix.python }}
+        run: make check
         timeout-minutes: 5
