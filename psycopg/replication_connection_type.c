@@ -129,6 +129,11 @@ replicationConnection_repr(replicationConnectionObject *self)
         self, self->conn.dsn, self->conn.closed);
 }
 
+static int
+replicationConnectionType_traverse(PyObject *self, visitproc visit, void *arg)
+{
+    return connectionType.tp_traverse(self, visit, arg);
+}
 
 /* object calculated member list */
 
@@ -173,7 +178,7 @@ PyTypeObject replicationConnectionType = {
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_ITER |
       Py_TPFLAGS_HAVE_GC, /*tp_flags*/
     replicationConnectionType_doc, /*tp_doc*/
-    0,          /*tp_traverse*/
+    replicationConnectionType_traverse, /*tp_traverse*/
     0,          /*tp_clear*/
     0,          /*tp_richcompare*/
     0,          /*tp_weaklistoffset*/
