@@ -27,7 +27,7 @@ if [[ "${PACKAGE_NAME:-}" ]]; then
 fi
 
 # Install prerequisite libraries
-curl -s https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
+curl -k -s https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
 echo "deb http://apt.postgresql.org/pub/repos/apt stretch-pgdg main" \
     > /etc/apt/sources.list.d/pgdg.list
 apt-get -y update
