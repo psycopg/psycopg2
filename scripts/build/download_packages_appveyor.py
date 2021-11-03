@@ -52,7 +52,7 @@ def main():
     jobs = data["build"]["jobs"]
     for job in jobs:
         if job["status"] != "success":
-            raise ScriptError("status for job {job['jobId']} is {job['status']}")
+            raise ScriptError(f"status for job {job['jobId']} is {job['status']}")
 
         logger.info(f"fetching artifacts info for {job['name']}")
         resp = s.get(f"{API_URL}/buildjobs/{job['jobId']}/artifacts/")
