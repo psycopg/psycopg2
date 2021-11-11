@@ -5,10 +5,10 @@
 set -euo pipefail
 set -x
 
-openssl_version="1.1.1k"
+openssl_version="1.1.1l"
 ldap_version="2.4.59"
 sasl_version="2.1.27"
-postgres_version="13.3"
+postgres_version="14.1"
 
 yum install -y zlib-devel krb5-devel pam-devel
 

@@ -11,7 +11,10 @@ set -x
 dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 prjdir="$( cd "${dir}/../.." && pwd )"
 
-brew install gnu-sed postgresql@13
+brew update
+brew install gnu-sed postgresql@14
+# Fetch 14.1 if 14.0 is still the default  version
+brew reinstall postgresql
 
 # Start the database for testing
 brew services start postgresql
