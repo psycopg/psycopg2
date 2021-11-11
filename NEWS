@@ -7,6 +7,7 @@ What's new in psycopg 2.9.2
 - Raise `ValueError` for dates >= Y10k (:ticket:`#1307`).
 - `~psycopg2.errorcodes` map and `~psycopg2.errors` classes updated to
   PostgreSQL 14.
+- Add preliminary support for Python 3.11 (:tickets:`#1376, #1386`).
 - Wheel package compiled against OpenSSL 1.1.1l and PostgreSQL 14.1
   (:ticket:`#1388`).
 
