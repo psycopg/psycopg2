@@ -279,6 +279,7 @@
 {"57P02", "CrashShutdown"},
 {"57P03", "CannotConnectNow"},
 {"57P04", "DatabaseDropped"},
+{"57P05", "IdleSessionTimeout"},
 
 /* Class 58 - System Error (errors external to PostgreSQL itself) */
 {"58000", "SystemError"},

@@ -4,7 +4,9 @@ Current release
 What's new in psycopg 2.9.2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Raise `ValueError` for dates >= Y10k (:ticket:`#1307`)
+- Raise `ValueError` for dates >= Y10k (:ticket:`#1307`).
+- `~psycopg2.errorcodes` map and `~psycopg2.errors` classes updated to
+  PostgreSQL 14.
 
 
 What's new in psycopg 2.9.1
