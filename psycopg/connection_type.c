@@ -35,6 +35,7 @@
 #include "psycopg/green.h"
 #include "psycopg/xid.h"
 
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
