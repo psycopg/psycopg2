@@ -41,6 +41,7 @@ done
 
 # Bundle external shared libraries into the wheels
 for whl in "${prjdir}"/dist/*.whl; do
+    "${dir}/strip_wheel.sh" "$whl"
     auditwheel repair "$whl" -w "$distdir"
 done
 
