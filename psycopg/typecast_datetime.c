@@ -71,7 +71,6 @@ typecast_PYDATE_cast(const char *str, Py_ssize_t len, PyObject *curs)
             return NULL;
         }
         else {
-            if (y > 9999) y = 9999;
             obj = PyObject_CallFunction(
                 (PyObject*)PyDateTimeAPI->DateType, "iii", y, m, d);
         }
@@ -172,8 +171,6 @@ _parse_noninftz(const char *str, Py_ssize_t len, PyObject *curs)
         mm += 1;
         ss -= 60;
     }
-    if (y > 9999)
-        y = 9999;
 
     tzinfo_factory = ((cursorObject *)curs)->tzinfo_factory;
     if (n >= 5 && tzinfo_factory != Py_None) {

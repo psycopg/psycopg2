@@ -115,12 +115,26 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         self.DATETIME = psycopg2.extensions.PYDATETIME
         self.INTERVAL = psycopg2.extensions.PYINTERVAL
 
+    def test_parse_10k_date(self):
+        # datetime does not support dates larger than date.max
+        self.assertEqual(self.DATE('9999-12-31', self.curs), date(9999, 12, 31))
+        self.assertRaises(ValueError, self.DATE, '10000-01-01', self.curs)
+
     def test_parse_bc_date(self):
         # datetime does not support BC dates
+        self.assertEqual(self.DATE('0001-01-01', self.curs), date(1, 1, 1))
         self.assertRaises(ValueError, self.DATE, '00042-01-01 BC', self.curs)
+
+    def test_parse_10k_datetime(self):
+        # datetime does not support dates larger than date.max
+        self.assertEqual(self.DATETIME('9999-12-31 23:59:59', self.curs),
+                         datetime(9999, 12, 31, 23, 59, 59))
+        self.assertRaises(ValueError, self.DATE, '10000-01-01', self.curs)
 
     def test_parse_bc_datetime(self):
         # datetime does not support BC dates
+        self.assertEqual(self.DATETIME('0001-01-01 13:30:29', self.curs),
+            datetime(1, 1, 1, 13, 30, 29))
         self.assertRaises(ValueError, self.DATETIME,
                           '00042-01-01 13:30:29 BC', self.curs)
 
