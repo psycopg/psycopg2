@@ -60,7 +60,7 @@ def main():
     dest = Path("packages")
     if not dest.exists():
         logger.info(f"creating dir {dest}")
-        dest.mkdir()
+        dest.mkdir(parents=True)
 
     for artifact in artifacts:
         logger.info(f"downloading {artifact['name']} archive")

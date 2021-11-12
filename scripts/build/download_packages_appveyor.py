@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Download packages from github actions artifacts
+"""Download packages from appveyor artifacts
 """
 
 import os
@@ -76,7 +76,7 @@ def main():
             )
             resp.raise_for_status()
             if not dest.parent.exists():
-                dest.parent.mkdir()
+                dest.parent.mkdir(parents=True)
 
             with dest.open("wb") as f:
                 f.write(resp.content)
