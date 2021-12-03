@@ -103,7 +103,7 @@ _parse_inftz(const char *str, PyObject *curs)
         goto exit;
     }
 
-#if PY_VERSION_HEX < 0x03070000
+#if defined(PYPY_VERSION) || PY_VERSION_HEX < 0x03070000
     {
         PyObject *tzoff;
         if (!(tzoff = PyDelta_FromDSU(0, 0, 0))) { goto exit; }
