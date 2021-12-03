@@ -38,6 +38,7 @@
 #include "psycopg/win32_support.h"
 #else
 #include <arpa/inet.h>
+#include <sys/time.h>
 #endif
 
 /* support routines taken from pg_basebackup/streamutil.c */
