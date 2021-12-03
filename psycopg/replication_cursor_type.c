@@ -34,6 +34,9 @@
 
 #include <string.h>
 #include <stdlib.h>
+#ifndef _WIN32
+#include <sys/time.h>
+#endif
 
 /* python */
 #include "datetime.h"
