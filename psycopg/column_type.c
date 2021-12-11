@@ -111,7 +111,7 @@ column_init(columnObject *self, PyObject *args, PyObject *kwargs)
         "name", "type_code", "display_size", "internal_size",
         "precision", "scale", "null_ok", "table_oid", "table_column", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|OOOOOOOOO", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|UOOOOOOOO", kwlist,
             &name, &type_code, &display_size, &internal_size, &precision,
             &scale, &null_ok, &table_oid, &table_column)) {
         return -1;
