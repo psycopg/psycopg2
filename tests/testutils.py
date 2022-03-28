@@ -467,11 +467,13 @@ def skip_if_crdb(reason, conn=None, version=None):
 crdb_reasons = {
     "2-phase commit": 22329,
     "backend pid": 35897,
+    "batch statements": 44803,
     "cancel": 41335,
     "cast adds tz": 51692,
     "cidr": 18846,
     "composite": 27792,
     "copy": 41608,
+    "cursor with hold": 77101,
     "deferrable": 48307,
     "encoding": 35882,
     "hstore": 41284,
@@ -483,6 +485,7 @@ crdb_reasons = {
     "notify": 41522,
     "password_encryption": 42519,
     "range": 41282,
+    "scroll cursor": 77102,
     "stored procedure": 1751,
 }
 

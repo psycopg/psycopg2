@@ -390,6 +390,7 @@ class AsyncTests(ConnectingTestCase):
         # fetching from the correct cursor works
         self.assertEquals(cur1.fetchone()[0], 1)
 
+    @skip_if_crdb("batch statements", version="< 22.1")
     def test_error(self):
         cur = self.conn.cursor()
         cur.execute("insert into table1 values (%s)", (1, ))
@@ -402,9 +403,8 @@ class AsyncTests(ConnectingTestCase):
         # this should fail as well (Postgres behaviour)
         self.assertRaises(psycopg2.IntegrityError, self.wait, cur)
         # but this should work
-        if crdb_version(self.sync_conn) is None:
-            cur.execute("insert into table1 values (%s)", (2, ))
-            self.wait(cur)
+        cur.execute("insert into table1 values (%s)", (2, ))
+        self.wait(cur)
         # and the cursor should be usable afterwards
         cur.execute("insert into table1 values (%s)", (3, ))
         self.wait(cur)
