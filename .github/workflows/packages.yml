@@ -59,8 +59,8 @@ jobs:
         include:
           - {tag: manylinux2014, arch: x86_64}
           - {tag: manylinux2014, arch: i686}
-          - {tag: manylinux_2_24, arch: aarch64}
-          - {tag: manylinux_2_24, arch: ppc64le}
+          - {tag: manylinux_2_28, arch: aarch64}
+          - {tag: manylinux_2_28, arch: ppc64le}
           - {tag: musllinux_1_1, arch: x86_64}
           - {tag: musllinux_1_1, arch: i686}
           - {tag: musllinux_1_1, arch: aarch64}

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Create manylinux_2_24 wheels for psycopg2
+# Create manylinux_2_28 wheels for psycopg2
 #
 # Look at the .github/workflows/packages.yml file for hints about how to use it.
 
@@ -28,7 +28,7 @@ fi
 
 # Install prerequisite libraries
 curl -k -s https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
-echo "deb http://apt.postgresql.org/pub/repos/apt stretch-pgdg main" \
+echo "deb http://apt.postgresql.org/pub/repos/apt buster-pgdg main" \
     > /etc/apt/sources.list.d/pgdg.list
 apt-get -y update
 apt-get install -y libpq-dev
