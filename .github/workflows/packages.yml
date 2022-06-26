@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout repos
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Build sdist
         run: ./scripts/build/build_sdist.sh
@@ -24,7 +24,7 @@ jobs:
           PACKAGE_NAME: ${{ matrix.package_name }}
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: packages_sdist
           path: |
@@ -69,10 +69,10 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout repos
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up QEMU for multi-arch build
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@v2
 
       - name: Build packages
         run: >-
@@ -91,7 +91,7 @@ jobs:
           ./scripts/build/build_${{ matrix.tag }}.sh
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: packages_${{ matrix.tag }}_${{ matrix.arch }}
           path: |
@@ -121,10 +121,10 @@ jobs:
 
     steps:
       - name: Checkout repos
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -136,7 +136,7 @@ jobs:
           PSYCOPG2_TEST_FAST: 1
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: packages_macos
           path: |
