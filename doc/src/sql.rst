@@ -33,7 +33,7 @@ name should be escaped using `~psycopg2.extensions.quote_ident()`::
     # This works, but it is not optimal
     table_name = 'my_table'
     cur.execute(
-        "insert into %s values (%%s, %%s)" % ext.quote_ident(table_name),
+        "insert into %s values (%%s, %%s)" % ext.quote_ident(table_name, cur),
         [10, 20])
 
 This is now safe, but it somewhat ad-hoc. In case, for some reason, it is
