@@ -379,6 +379,12 @@ class CursorTests(ConnectingTestCase):
     @skip_before_postgres(8, 2)
     def test_rowcount_on_executemany_returning(self):
         cur = self.conn.cursor()
+        try:
+            cur.execute("drop table execmany")
+            self.conn.commit()
+        except psycopg2.DatabaseError:
+            self.conn.rollback()
+
         cur.execute("create table execmany(id serial primary key, data int)")
         cur.executemany(
             "insert into execmany (data) values (%s)",
