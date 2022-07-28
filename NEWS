@@ -4,7 +4,7 @@ Current release
 What's new in psycopg 2.9.3
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- Alpine (musl) wheels now available (:ticket:`#1148`).
+- Alpine (musl) wheels now available (:ticket:`#1392`).
 
 
 What's new in psycopg 2.9.2
