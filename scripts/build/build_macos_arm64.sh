@@ -38,7 +38,12 @@ fi
 # Install PostgreSQL, if necessary
 command -v pg_config > /dev/null || (
     brew install postgresql@${postgres_version}
-    brew services start postgresql
+    # Currently not working
+    # brew services start postgresql@${postgres_version}
+    pg_ctl \
+        -D /opt/homebrew/var/postgresql@${postgres_version} \
+        -l /opt/homebrew/var/log/postgresql@${postgres_version}.log \
+        start
 )
 
 # Install the Python versions we want to build
