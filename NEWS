@@ -5,6 +5,7 @@ What's new in psycopg 2.9.3
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Alpine (musl) wheels now available (:ticket:`#1392`).
+- macOS arm64 (Apple M1) wheels now available (:ticket:`1482`).
 
 
 What's new in psycopg 2.9.2
