@@ -1098,9 +1098,40 @@ ORDER BY attnum;
 
         recs = curs.fetchall()
 
+        if not recs:
+            # The above algorithm doesn't work for customized seach_path
+            # (#1487) The implementation below works better, but, to guarantee
+            # backwards compatibility, use it only if the original one failed.
+            try:
+                savepoint = False
+                # Because we executed statements earlier, we are either INTRANS
+                # or we are IDLE only if the transaction is autocommit, in
+                # which case we don't need the savepoint anyway.
+                if conn.status == _ext.STATUS_IN_TRANSACTION:
+                    curs.execute("SAVEPOINT register_type")
+                    savepoint = True
+
+                curs.execute("""\
+SELECT t.oid, %s, attname, atttypid, nspname
+FROM pg_type t
+JOIN pg_namespace ns ON typnamespace = ns.oid
+JOIN pg_attribute a ON attrelid = typrelid
+WHERE t.oid = %%s::regtype
+    AND attnum > 0 AND NOT attisdropped
+ORDER BY attnum;
+""" % typarray, (name, ))
+            except psycopg2.ProgrammingError:
+                pass
+            else:
+                recs = curs.fetchall()
+                if recs:
+                    schema = recs[0][4]
+            finally:
+                if savepoint:
+                    curs.execute("ROLLBACK TO SAVEPOINT register_type")
+
         # revert the status of the connection as before the command
-        if (conn_status != _ext.STATUS_IN_TRANSACTION
-        and not conn.autocommit):
+        if conn_status != _ext.STATUS_IN_TRANSACTION and not conn.autocommit:
             conn.rollback()
 
         if not recs:

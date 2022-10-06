@@ -585,6 +585,49 @@ class AdaptTypeTestCase(ConnectingTestCase):
         self.assertEqual(curs.fetchone()[0], (4, 8))
 
     @skip_if_no_composite
+    def test_composite_namespace_path(self):
+        curs = self.conn.cursor()
+        curs.execute("""
+            select nspname from pg_namespace
+            where nspname = 'typens';
+            """)
+        if not curs.fetchone():
+            curs.execute("create schema typens;")
+            self.conn.commit()
+
+        self._create_type("typens.typensp_ii",
+            [("a", "integer"), ("b", "integer")])
+        curs.execute("set search_path=typens,public")
+        t = psycopg2.extras.register_composite(
+            "typensp_ii", self.conn)
+        self.assertEqual(t.schema, 'typens')
+        curs.execute("select (4,8)::typensp_ii")
+        self.assertEqual(curs.fetchone()[0], (4, 8))
+
+    @skip_if_no_composite
+    def test_composite_not_found(self):
+
+        self.assertRaises(
+            psycopg2.ProgrammingError, psycopg2.extras.register_composite,
+            "nosuchtype", self.conn)
+        self.assertEqual(self.conn.status, ext.STATUS_READY)
+
+        cur = self.conn.cursor()
+        cur.execute("select 1")
+        self.assertRaises(
+            psycopg2.ProgrammingError, psycopg2.extras.register_composite,
+            "nosuchtype", self.conn)
+
+        self.assertEqual(self.conn.status, ext.STATUS_IN_TRANSACTION)
+
+        self.conn.rollback()
+        self.conn.autocommit = True
+        self.assertRaises(
+            psycopg2.ProgrammingError, psycopg2.extras.register_composite,
+            "nosuchtype", self.conn)
+        self.assertEqual(self.conn.status, ext.STATUS_READY)
+
+    @skip_if_no_composite
     @skip_before_postgres(8, 4)
     def test_composite_array(self):
         self._create_type("type_isd",
