@@ -6,7 +6,7 @@ MANIFEST
 *.sw[po]
 *.egg-info/
 dist/*
-build/*
+/build
 env
 env?
 .idea

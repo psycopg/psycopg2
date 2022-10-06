@@ -5,10 +5,14 @@
 set -euo pipefail
 set -x
 
-openssl_version="1.1.1l"
+# Last release: https://www.postgresql.org/ftp/source/
+postgres_version="14.4"
+# last release: https://www.openssl.org/source/
+openssl_version="1.1.1q"
+# last release: https://openldap.org/software/download/
 ldap_version="2.4.59"
-sasl_version="2.1.27"
-postgres_version="14.1"
+# last release: https://github.com/cyrusimap/cyrus-sasl/releases
+sasl_version="2.1.28"
 
 yum install -y zlib-devel krb5-devel pam-devel
 
