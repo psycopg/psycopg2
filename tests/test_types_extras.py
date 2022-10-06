@@ -1615,6 +1615,18 @@ class RangeCasterTestCase(ConnectingTestCase):
         cur = self.conn.cursor()
         self.assertRaises(psycopg2.ProgrammingError,
             register_range, 'nosuchrange', 'FailRange', cur)
+        self.assertEqual(self.conn.status, ext.STATUS_READY)
+
+        cur.execute("select 1")
+        self.assertRaises(psycopg2.ProgrammingError,
+            register_range, 'nosuchrange', 'FailRange', cur)
+
+        self.assertEqual(self.conn.status, ext.STATUS_IN_TRANSACTION)
+
+        self.conn.rollback()
+        self.conn.autocommit = True
+        self.assertRaises(psycopg2.ProgrammingError,
+            register_range, 'nosuchrange', 'FailRange', cur)
 
     @restore_types
     def test_schema_range(self):
@@ -1629,7 +1641,7 @@ class RangeCasterTestCase(ConnectingTestCase):
         register_range('r1', 'r1', cur)
         ra2 = register_range('r2', 'r2', cur)
         rars2 = register_range('rs.r2', 'r2', cur)
-        register_range('rs.r3', 'r3', cur)
+        rars3 = register_range('rs.r3', 'r3', cur)
 
         self.assertNotEqual(
             ra2.typecaster.values[0],
@@ -1642,6 +1654,11 @@ class RangeCasterTestCase(ConnectingTestCase):
         self.assertRaises(psycopg2.ProgrammingError,
             register_range, 'rs.r1', 'FailRange', cur)
         cur.execute("rollback to savepoint x;")
+
+        cur2 = self.conn.cursor()
+        cur2.execute("set local search_path to rs,public")
+        ra3 = register_range('r3', 'r3', cur2)
+        self.assertEqual(ra3.typecaster.values[0], rars3.typecaster.values[0])
 
 
 def test_suite():
