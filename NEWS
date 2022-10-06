@@ -2,6 +2,7 @@ What's new in psycopg 2.9.4 (unreleased)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Fix `register_composite()` with customized search_path (:ticket:`#1487`).
+- Handle correctly composite types with names or in schemas requiring escape.
 
 
 Current release

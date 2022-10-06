@@ -357,10 +357,6 @@ class NamedTupleCursor(_cursor):
         except StopIteration:
             return
 
-    # ascii except alnum and underscore
-    _re_clean = _re.compile(
-        '[' + _re.escape(' !"#$%&\'()*+,-./:;<=>?@[\\]^`{|}~') + ']')
-
     def _make_nt(self):
         key = tuple(d[0] for d in self.description) if self.description else ()
         return self._cached_make_nt(key)
@@ -369,7 +365,7 @@ class NamedTupleCursor(_cursor):
     def _do_make_nt(cls, key):
         fields = []
         for s in key:
-            s = cls._re_clean.sub('_', s)
+            s = _re_clean.sub('_', s)
             # Python identifier cannot start with numbers, namedtuple fields
             # cannot start with underscore. So...
             if s[0] == '_' or '0' <= s[0] <= '9':
@@ -1061,6 +1057,7 @@ class CompositeCaster:
         return rv
 
     def _create_type(self, name, attnames):
+        name = _re_clean.sub('_', name)
         self.type = namedtuple(name, attnames)
         self._ctor = self.type._make
 
@@ -1112,7 +1109,7 @@ ORDER BY attnum;
                     savepoint = True
 
                 curs.execute("""\
-SELECT t.oid, %s, attname, atttypid, nspname
+SELECT t.oid, %s, attname, atttypid, typname, nspname
 FROM pg_type t
 JOIN pg_namespace ns ON typnamespace = ns.oid
 JOIN pg_attribute a ON attrelid = typrelid
@@ -1125,7 +1122,8 @@ ORDER BY attnum;
             else:
                 recs = curs.fetchall()
                 if recs:
-                    schema = recs[0][4]
+                    tname = recs[0][4]
+                    schema = recs[0][5]
             finally:
                 if savepoint:
                     curs.execute("ROLLBACK TO SAVEPOINT register_type")
@@ -1335,3 +1333,8 @@ def _split_sql(sql):
         raise ValueError("the query doesn't contain any '%s' placeholder")
 
     return pre, post
+
+
+# ascii except alnum and underscore
+_re_clean = _re.compile(
+    '[' + _re.escape(' !"#$%&\'()*+,-./:;<=>?@[\\]^`{|}~') + ']')

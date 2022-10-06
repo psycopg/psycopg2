@@ -605,6 +605,25 @@ class AdaptTypeTestCase(ConnectingTestCase):
         self.assertEqual(curs.fetchone()[0], (4, 8))
 
     @skip_if_no_composite
+    def test_composite_weird_name(self):
+        curs = self.conn.cursor()
+        curs.execute("""
+            select nspname from pg_namespace
+            where nspname = 'qux.quux';
+            """)
+        if not curs.fetchone():
+            curs.execute('create schema "qux.quux";')
+
+        self._create_type('"qux.quux"."foo.bar"',
+            [("a", "integer"), ("b", "integer")])
+        t = psycopg2.extras.register_composite(
+            '"qux.quux"."foo.bar"', self.conn)
+        self.assertEqual(t.name, 'foo.bar')
+        self.assertEqual(t.schema, 'qux.quux')
+        curs.execute('select (4,8)::"qux.quux"."foo.bar"')
+        self.assertEqual(curs.fetchone()[0], (4, 8))
+
+    @skip_if_no_composite
     def test_composite_not_found(self):
 
         self.assertRaises(
@@ -753,22 +772,15 @@ class AdaptTypeTestCase(ConnectingTestCase):
     def _create_type(self, name, fields):
         curs = self.conn.cursor()
         try:
+            curs.execute("savepoint x")
             curs.execute(f"drop type {name} cascade;")
         except psycopg2.ProgrammingError:
-            self.conn.rollback()
+            curs.execute("rollback to savepoint x")
 
         curs.execute("create type {} as ({});".format(name,
             ", ".join(["%s %s" % p for p in fields])))
-        if '.' in name:
-            schema, name = name.split('.')
-        else:
-            schema = 'public'
 
-        curs.execute("""\
-            SELECT t.oid
-            FROM pg_type t JOIN pg_namespace ns ON typnamespace = ns.oid
-            WHERE typname = %s and nspname = %s;
-            """, (name, schema))
+        curs.execute("SELECT %s::regtype::oid", (name, ))
         oid = curs.fetchone()[0]
         self.conn.commit()
         return oid
