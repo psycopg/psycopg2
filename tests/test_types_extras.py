@@ -585,6 +585,68 @@ class AdaptTypeTestCase(ConnectingTestCase):
         self.assertEqual(curs.fetchone()[0], (4, 8))
 
     @skip_if_no_composite
+    def test_composite_namespace_path(self):
+        curs = self.conn.cursor()
+        curs.execute("""
+            select nspname from pg_namespace
+            where nspname = 'typens';
+            """)
+        if not curs.fetchone():
+            curs.execute("create schema typens;")
+            self.conn.commit()
+
+        self._create_type("typens.typensp_ii",
+            [("a", "integer"), ("b", "integer")])
+        curs.execute("set search_path=typens,public")
+        t = psycopg2.extras.register_composite(
+            "typensp_ii", self.conn)
+        self.assertEqual(t.schema, 'typens')
+        curs.execute("select (4,8)::typensp_ii")
+        self.assertEqual(curs.fetchone()[0], (4, 8))
+
+    @skip_if_no_composite
+    def test_composite_weird_name(self):
+        curs = self.conn.cursor()
+        curs.execute("""
+            select nspname from pg_namespace
+            where nspname = 'qux.quux';
+            """)
+        if not curs.fetchone():
+            curs.execute('create schema "qux.quux";')
+
+        self._create_type('"qux.quux"."foo.bar"',
+            [("a", "integer"), ("b", "integer")])
+        t = psycopg2.extras.register_composite(
+            '"qux.quux"."foo.bar"', self.conn)
+        self.assertEqual(t.name, 'foo.bar')
+        self.assertEqual(t.schema, 'qux.quux')
+        curs.execute('select (4,8)::"qux.quux"."foo.bar"')
+        self.assertEqual(curs.fetchone()[0], (4, 8))
+
+    @skip_if_no_composite
+    def test_composite_not_found(self):
+
+        self.assertRaises(
+            psycopg2.ProgrammingError, psycopg2.extras.register_composite,
+            "nosuchtype", self.conn)
+        self.assertEqual(self.conn.status, ext.STATUS_READY)
+
+        cur = self.conn.cursor()
+        cur.execute("select 1")
+        self.assertRaises(
+            psycopg2.ProgrammingError, psycopg2.extras.register_composite,
+            "nosuchtype", self.conn)
+
+        self.assertEqual(self.conn.status, ext.STATUS_IN_TRANSACTION)
+
+        self.conn.rollback()
+        self.conn.autocommit = True
+        self.assertRaises(
+            psycopg2.ProgrammingError, psycopg2.extras.register_composite,
+            "nosuchtype", self.conn)
+        self.assertEqual(self.conn.status, ext.STATUS_READY)
+
+    @skip_if_no_composite
     @skip_before_postgres(8, 4)
     def test_composite_array(self):
         self._create_type("type_isd",
@@ -710,22 +772,15 @@ class AdaptTypeTestCase(ConnectingTestCase):
     def _create_type(self, name, fields):
         curs = self.conn.cursor()
         try:
+            curs.execute("savepoint x")
             curs.execute(f"drop type {name} cascade;")
         except psycopg2.ProgrammingError:
-            self.conn.rollback()
+            curs.execute("rollback to savepoint x")
 
         curs.execute("create type {} as ({});".format(name,
             ", ".join(["%s %s" % p for p in fields])))
-        if '.' in name:
-            schema, name = name.split('.')
-        else:
-            schema = 'public'
 
-        curs.execute("""\
-            SELECT t.oid
-            FROM pg_type t JOIN pg_namespace ns ON typnamespace = ns.oid
-            WHERE typname = %s and nspname = %s;
-            """, (name, schema))
+        curs.execute("SELECT %s::regtype::oid", (name, ))
         oid = curs.fetchone()[0]
         self.conn.commit()
         return oid
@@ -1560,6 +1615,18 @@ class RangeCasterTestCase(ConnectingTestCase):
         cur = self.conn.cursor()
         self.assertRaises(psycopg2.ProgrammingError,
             register_range, 'nosuchrange', 'FailRange', cur)
+        self.assertEqual(self.conn.status, ext.STATUS_READY)
+
+        cur.execute("select 1")
+        self.assertRaises(psycopg2.ProgrammingError,
+            register_range, 'nosuchrange', 'FailRange', cur)
+
+        self.assertEqual(self.conn.status, ext.STATUS_IN_TRANSACTION)
+
+        self.conn.rollback()
+        self.conn.autocommit = True
+        self.assertRaises(psycopg2.ProgrammingError,
+            register_range, 'nosuchrange', 'FailRange', cur)
 
     @restore_types
     def test_schema_range(self):
@@ -1574,7 +1641,7 @@ class RangeCasterTestCase(ConnectingTestCase):
         register_range('r1', 'r1', cur)
         ra2 = register_range('r2', 'r2', cur)
         rars2 = register_range('rs.r2', 'r2', cur)
-        register_range('rs.r3', 'r3', cur)
+        rars3 = register_range('rs.r3', 'r3', cur)
 
         self.assertNotEqual(
             ra2.typecaster.values[0],
@@ -1587,6 +1654,27 @@ class RangeCasterTestCase(ConnectingTestCase):
         self.assertRaises(psycopg2.ProgrammingError,
             register_range, 'rs.r1', 'FailRange', cur)
         cur.execute("rollback to savepoint x;")
+
+        cur2 = self.conn.cursor()
+        cur2.execute("set local search_path to rs,public")
+        ra3 = register_range('r3', 'r3', cur2)
+        self.assertEqual(ra3.typecaster.values[0], rars3.typecaster.values[0])
+
+    @skip_if_no_composite
+    def test_rang_weird_name(self):
+        cur = self.conn.cursor()
+        cur.execute("""
+            select nspname from pg_namespace
+            where nspname = 'qux.quux';
+            """)
+        if not cur.fetchone():
+            cur.execute('create schema "qux.quux";')
+
+        cur.execute('create type "qux.quux"."foo.range" as range (subtype=text)')
+        r = psycopg2.extras.register_range(
+            '"qux.quux"."foo.range"', "foorange", cur)
+        cur.execute('''select '[a,z]'::"qux.quux"."foo.range"''')
+        self.assertEqual(cur.fetchone()[0], r.range('a', 'z', '[]'))
 
 
 def test_suite():

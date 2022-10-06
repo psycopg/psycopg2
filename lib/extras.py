@@ -357,10 +357,6 @@ class NamedTupleCursor(_cursor):
         except StopIteration:
             return
 
-    # ascii except alnum and underscore
-    _re_clean = _re.compile(
-        '[' + _re.escape(' !"#$%&\'()*+,-./:;<=>?@[\\]^`{|}~') + ']')
-
     def _make_nt(self):
         key = tuple(d[0] for d in self.description) if self.description else ()
         return self._cached_make_nt(key)
@@ -369,7 +365,7 @@ class NamedTupleCursor(_cursor):
     def _do_make_nt(cls, key):
         fields = []
         for s in key:
-            s = cls._re_clean.sub('_', s)
+            s = _re_clean.sub('_', s)
             # Python identifier cannot start with numbers, namedtuple fields
             # cannot start with underscore. So...
             if s[0] == '_' or '0' <= s[0] <= '9':
@@ -1061,6 +1057,7 @@ class CompositeCaster:
         return rv
 
     def _create_type(self, name, attnames):
+        name = _re_clean.sub('_', name)
         self.type = namedtuple(name, attnames)
         self._ctor = self.type._make
 
@@ -1098,9 +1095,41 @@ ORDER BY attnum;
 
         recs = curs.fetchall()
 
+        if not recs:
+            # The above algorithm doesn't work for customized seach_path
+            # (#1487) The implementation below works better, but, to guarantee
+            # backwards compatibility, use it only if the original one failed.
+            try:
+                savepoint = False
+                # Because we executed statements earlier, we are either INTRANS
+                # or we are IDLE only if the transaction is autocommit, in
+                # which case we don't need the savepoint anyway.
+                if conn.status == _ext.STATUS_IN_TRANSACTION:
+                    curs.execute("SAVEPOINT register_type")
+                    savepoint = True
+
+                curs.execute("""\
+SELECT t.oid, %s, attname, atttypid, typname, nspname
+FROM pg_type t
+JOIN pg_namespace ns ON typnamespace = ns.oid
+JOIN pg_attribute a ON attrelid = typrelid
+WHERE t.oid = %%s::regtype
+    AND attnum > 0 AND NOT attisdropped
+ORDER BY attnum;
+""" % typarray, (name, ))
+            except psycopg2.ProgrammingError:
+                pass
+            else:
+                recs = curs.fetchall()
+                if recs:
+                    tname = recs[0][4]
+                    schema = recs[0][5]
+            finally:
+                if savepoint:
+                    curs.execute("ROLLBACK TO SAVEPOINT register_type")
+
         # revert the status of the connection as before the command
-        if (conn_status != _ext.STATUS_IN_TRANSACTION
-        and not conn.autocommit):
+        if conn_status != _ext.STATUS_IN_TRANSACTION and not conn.autocommit:
             conn.rollback()
 
         if not recs:
@@ -1304,3 +1333,8 @@ def _split_sql(sql):
         raise ValueError("the query doesn't contain any '%s' placeholder")
 
     return pre, post
+
+
+# ascii except alnum and underscore
+_re_clean = _re.compile(
+    '[' + _re.escape(' !"#$%&\'()*+,-./:;<=>?@[\\]^`{|}~') + ']')
