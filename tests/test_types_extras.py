@@ -1660,6 +1660,22 @@ class RangeCasterTestCase(ConnectingTestCase):
         ra3 = register_range('r3', 'r3', cur2)
         self.assertEqual(ra3.typecaster.values[0], rars3.typecaster.values[0])
 
+    @skip_if_no_composite
+    def test_rang_weird_name(self):
+        cur = self.conn.cursor()
+        cur.execute("""
+            select nspname from pg_namespace
+            where nspname = 'qux.quux';
+            """)
+        if not cur.fetchone():
+            cur.execute('create schema "qux.quux";')
+
+        cur.execute('create type "qux.quux"."foo.range" as range (subtype=text)')
+        r = psycopg2.extras.register_range(
+            '"qux.quux"."foo.range"', "foorange", cur)
+        cur.execute('''select '[a,z]'::"qux.quux"."foo.range"''')
+        self.assertEqual(cur.fetchone()[0], r.range('a', 'z', '[]'))
+
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
