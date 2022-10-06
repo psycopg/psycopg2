@@ -4,6 +4,8 @@ What's new in psycopg 2.9.4 (unreleased)
 - Fix `register_composite()`, `register_range()` with customized search_path
   (:ticket:`#1487`).
 - Handle correctly composite types with names or in schemas requiring escape.
+- `~psycopg2.errorcodes` map and `~psycopg2.errors` classes updated to
+  PostgreSQL 15.
 
 
 Current release

@@ -1928,11 +1928,16 @@ class TestConnectionInfo(ConnectingTestCase):
                 self.assertIsInstance(self.conn.info.ssl_attribute(attrib), str)
         else:
             for attrib in attribs:
+                # Behaviour changed in PostgreSQL 15
+                if attrib == "library":
+                    continue
                 self.assertIsNone(self.conn.info.ssl_attribute(attrib))
 
         self.assertIsNone(self.conn.info.ssl_attribute('wat'))
 
         for attrib in attribs:
+            if attrib == "library":
+                continue
             self.assertIsNone(self.bconn.info.ssl_attribute(attrib))
 
 

@@ -18,14 +18,14 @@ jobs:
           - {python: "3.8", postgres: "12"}
           - {python: "3.9", postgres: "13"}
           - {python: "3.10", postgres: "14"}
-          - {python: "3.11-dev", postgres: "14"}
+          - {python: "3.11-dev", postgres: "15rc1"}
 
           # Opposite extremes of the supported Py/PG range, other architecture
-          - {python: "3.6", postgres: "14", architecture: "x86"}
-          - {python: "3.7", postgres: "13", architecture: "x86"}
-          - {python: "3.8", postgres: "12", architecture: "x86"}
-          - {python: "3.9", postgres: "11", architecture: "x86"}
-          - {python: "3.10", postgres: "10", architecture: "x86"}
+          - {python: "3.6", postgres: "15rc1", architecture: "x86"}
+          - {python: "3.7", postgres: "14", architecture: "x86"}
+          - {python: "3.8", postgres: "13", architecture: "x86"}
+          - {python: "3.9", postgres: "12", architecture: "x86"}
+          - {python: "3.10", postgres: "11", architecture: "x86"}
           - {python: "3.11-dev", postgres: "10", architecture: "x86"}
 
     env:
@@ -50,6 +50,20 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+
+      - name: install libpq 15
+        # TODO: disable after PostgreSQL 15 has been released officially.
+        if: true
+        run: |
+          set -x
+          rel=$(lsb_release -c -s)
+          echo "deb http://apt.postgresql.org/pub/repos/apt ${rel}-pgdg main 15" \
+            | sudo tee -a /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get -qq update
+          pqver=$(apt-cache show libpq5  | grep ^Version: | head -1 \
+            | awk '{print $2}')
+          sudo apt-get -qq -y install "libpq-dev=${pqver}" "libpq5=${pqver}"
+
       - name: Install tox
         run: pip install tox
       - uses: actions/setup-python@v2
