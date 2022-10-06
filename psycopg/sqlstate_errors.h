@@ -111,6 +111,7 @@
 {"2203D", "TooManyJsonArrayElements"},
 {"2203E", "TooManyJsonObjectMembers"},
 {"2203F", "SqlJsonScalarRequired"},
+{"2203G", "SqlJsonItemCannotBeCastToTargetType"},
 {"22P01", "FloatingPointException"},
 {"22P02", "InvalidTextRepresentation"},
 {"22P03", "InvalidBinaryRepresentation"},
