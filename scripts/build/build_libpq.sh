@@ -117,7 +117,8 @@ if [ ! -d "${postgres_dir}" ]; then
     fi
 
     ./configure --prefix=/usr/local --without-readline \
-        --with-gssapi --with-openssl --with-pam --with-ldap
+        --with-gssapi --with-openssl --with-pam --with-ldap \
+        --sysconfdir=/etc/postgresql-common
     make -C src/interfaces/libpq
     make -C src/bin/pg_config
     make -C src/include
