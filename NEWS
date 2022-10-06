@@ -1,16 +1,17 @@
-What's new in psycopg 2.9.4 (unreleased)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Current release
+---------------
 
-- Fix `register_composite()`, `register_range()` with customized search_path
+What's new in psycopg 2.9.4
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Fix `~psycopg2.extras.register_composite()`,
+  `~psycopg2.extras.register_range()` with customized search_path
   (:ticket:`#1487`).
 - Handle correctly composite types with names or in schemas requiring escape.
 - `~psycopg2.errorcodes` map and `~psycopg2.errors` classes updated to
   PostgreSQL 15.
 - Wheel package compiled against OpenSSL 1.1.1q and PostgreSQL 14.4
 
-
-Current release
----------------
 
 What's new in psycopg 2.9.3
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -33,7 +34,7 @@ What's new in psycopg 2.9.2
 What's new in psycopg 2.9.1
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Fix regression with named `sql.Placeholder` (:ticket:`#1291`).
+- Fix regression with named `~psycopg2.sql.Placeholder` (:ticket:`#1291`).
 
 
 What's new in psycopg 2.9
