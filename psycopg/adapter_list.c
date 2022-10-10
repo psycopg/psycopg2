@@ -47,7 +47,7 @@ list_quote(listObject *self)
     /*  list consisting of only NULL don't work with the ARRAY[] construct
      *  so we use the {NULL,...} syntax. The same syntax is also necessary
      *  to convert array of arrays containing only nulls. */
-    int all_nulls = 1;
+    int all_nulls = 0;
 
     Py_ssize_t i, len;
 
