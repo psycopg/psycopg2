@@ -272,6 +272,8 @@ class TypesBasicTests(ConnectingTestCase):
         ]:
             curs.execute("select %s::int[]", (a,))
             self.assertEqual(curs.fetchone()[0], a)
+            curs.execute("select array[%s::int[]]", (a,))
+            self.assertEqual(curs.fetchone()[0], [a])
 
     def testTypeRoundtripBytes(self):
         o1 = bytes(range(256))
