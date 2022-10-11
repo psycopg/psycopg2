@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repos
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Build sdist
         run: ./scripts/build/build_sdist.sh
@@ -24,7 +24,7 @@ jobs:
           PACKAGE_NAME: ${{ matrix.package_name }}
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: packages_sdist
           path: |
@@ -69,17 +69,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repos
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up QEMU for multi-arch build
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@v2
 
       - name: Build packages
         run: >-
           docker run --rm
           -e PLAT=${{ matrix.tag }}_${{ matrix.arch }}
           -e PACKAGE_NAME=psycopg2-binary
-          -e PYVERS="cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39 cp310-cp310"
+          -e PYVERS="cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39 cp310-cp310 cp311-cp311"
           -e PSYCOPG2_TESTDB=postgres
           -e PSYCOPG2_TESTDB_HOST=172.17.0.1
           -e PSYCOPG2_TESTDB_USER=postgres
@@ -91,7 +91,7 @@ jobs:
           ./scripts/build/build_${{ matrix.tag }}.sh
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: packages_${{ matrix.tag }}_${{ matrix.arch }}
           path: |
@@ -117,14 +117,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.6', '3.7', '3.8', '3.9', '3.10']
+        python-version: ['3.6', '3.7', '3.8', '3.9', '3.10', '3.11-dev']
 
     steps:
       - name: Checkout repos
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -136,7 +136,7 @@ jobs:
           PSYCOPG2_TEST_FAST: 1
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: packages_macos
           path: |
