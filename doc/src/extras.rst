@@ -1029,6 +1029,14 @@ parameters.  By reducing the number of server roundtrips the performance can be
 
 .. autofunction:: execute_batch
 
+    .. code:: python
+
+        >>> nums = ((1,), (5,), (10,))
+        >>> execute_batch(cur, "INSERT INTO test (num) VALUES (%s)", nums)
+
+        >>> tuples = ((123, "foo"), (42, "bar"), (23, "baz"))
+        >>> execute_batch(cur, "INSERT INTO test (num, data) VALUES (%s, %s)", tuples)
+
     .. versionadded:: 2.7
 
 .. note::
