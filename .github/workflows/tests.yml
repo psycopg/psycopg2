@@ -53,7 +53,7 @@ jobs:
 
       # Can enable to test an unreleased libpq version.
       - name: install libpq 16
-        if false:
+        if: false
         run: |
           set -x
           rel=$(lsb_release -c -s)
