@@ -51,13 +51,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: install libpq 15
-        # TODO: disable after PostgreSQL 15 has been released officially.
-        if: true
+      # Can enable to test an unreleased libpq version.
+      - name: install libpq 16
+        if false:
         run: |
           set -x
           rel=$(lsb_release -c -s)
-          echo "deb http://apt.postgresql.org/pub/repos/apt ${rel}-pgdg main 15" \
+          echo "deb http://apt.postgresql.org/pub/repos/apt ${rel}-pgdg main 16" \
             | sudo tee -a /etc/apt/sources.list.d/pgdg.list
           sudo apt-get -qq update
           pqver=$(apt-cache show libpq5  | grep ^Version: | head -1 \

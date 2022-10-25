@@ -5,6 +5,9 @@ What's new in psycopg 2.9.5
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Add support for Python 3.11.
+- Add support for rowcount in MERGE statements in binary packages
+  (:ticket:`#1497`).
+- Wheel package compiled against OpenSSL 1.1.1q and PostgreSQL 15 libpq.
 
 
 What's new in psycopg 2.9.4
@@ -18,7 +21,7 @@ What's new in psycopg 2.9.4
   binary packages (:ticket:`#1365`).
 - `~psycopg2.errorcodes` map and `~psycopg2.errors` classes updated to
   PostgreSQL 15.
-- Wheel package compiled against OpenSSL 1.1.1q and PostgreSQL 14.4
+- Wheel package compiled against OpenSSL 1.1.1q and PostgreSQL 14.4 libpq.
 
 
 What's new in psycopg 2.9.3
@@ -35,7 +38,7 @@ What's new in psycopg 2.9.2
 - `~psycopg2.errorcodes` map and `~psycopg2.errors` classes updated to
   PostgreSQL 14.
 - Add preliminary support for Python 3.11 (:tickets:`#1376, #1386`).
-- Wheel package compiled against OpenSSL 1.1.1l and PostgreSQL 14.1
+- Wheel package compiled against OpenSSL 1.1.1l and PostgreSQL 14.1 libpq
   (:ticket:`#1388`).
 
 
@@ -72,7 +75,7 @@ Other changes:
   platforms.
 - Provide :pep:`600` wheels packages (manylinux_2_24 tag) for aarch64 and
   ppc64le platforms.
-- Wheel package compiled against OpenSSL 1.1.1k and PostgreSQL 13.3.
+- Wheel package compiled against OpenSSL 1.1.1k and PostgreSQL 13.3 libpq.
 - Build system for Linux/MacOS binary packages moved to GitHub Actions.
 
 

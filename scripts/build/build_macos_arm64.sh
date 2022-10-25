@@ -11,7 +11,7 @@ set -euo pipefail
 set -x
 
 python_versions="3.8.10 3.9.13 3.10.5 3.11"
-postgres_version=14
+postgres_version=15
 
 # Move to the root of the project
 dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"

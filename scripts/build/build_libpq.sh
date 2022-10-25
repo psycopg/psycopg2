@@ -6,7 +6,7 @@ set -euo pipefail
 set -x
 
 # Last release: https://www.postgresql.org/ftp/source/
-postgres_version="14.4"
+postgres_version="15.0"
 # last release: https://www.openssl.org/source/
 openssl_version="1.1.1q"
 # last release: https://openldap.org/software/download/
