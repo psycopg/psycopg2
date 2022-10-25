@@ -54,7 +54,7 @@ services:
 cache:
   # Rebuild cache if following file changes
   # (See the file to zap the cache manually)
-  - C:\Others -> scripts\build\appveyor.cache_rebuild
+  - C:\Others -> .appveyor\cache_rebuild
 
 # Script called before repo cloning
 # init:
