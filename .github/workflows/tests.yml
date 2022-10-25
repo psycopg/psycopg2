@@ -49,7 +49,7 @@ jobs:
           --health-retries 5
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       # Can enable to test an unreleased libpq version.
       - name: install libpq 16
@@ -66,7 +66,7 @@ jobs:
 
       - name: Install tox
         run: pip install tox
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}
       - name: Run tests
