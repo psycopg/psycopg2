@@ -79,7 +79,7 @@ jobs:
           docker run --rm
           -e PLAT=${{ matrix.tag }}_${{ matrix.arch }}
           -e PACKAGE_NAME=psycopg2-binary
-          -e PYVERS="cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39 cp310-cp310"
+          -e PYVERS="cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39 cp310-cp310 cp311-cp311"
           -e PSYCOPG2_TESTDB=postgres
           -e PSYCOPG2_TESTDB_HOST=172.17.0.1
           -e PSYCOPG2_TESTDB_USER=postgres
@@ -117,7 +117,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.6', '3.7', '3.8', '3.9', '3.10']
+        python-version: ['3.6', '3.7', '3.8', '3.9', '3.10', '3.11']
 
     steps:
       - name: Checkout repos

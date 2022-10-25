@@ -18,15 +18,15 @@ jobs:
           - {python: "3.8", postgres: "12"}
           - {python: "3.9", postgres: "13"}
           - {python: "3.10", postgres: "14"}
-          - {python: "3.11-dev", postgres: "15rc1"}
+          - {python: "3.11", postgres: "15"}
 
           # Opposite extremes of the supported Py/PG range, other architecture
-          - {python: "3.6", postgres: "15rc1", architecture: "x86"}
+          - {python: "3.6", postgres: "15", architecture: "x86"}
           - {python: "3.7", postgres: "14", architecture: "x86"}
           - {python: "3.8", postgres: "13", architecture: "x86"}
           - {python: "3.9", postgres: "12", architecture: "x86"}
           - {python: "3.10", postgres: "11", architecture: "x86"}
-          - {python: "3.11-dev", postgres: "10", architecture: "x86"}
+          - {python: "3.11", postgres: "10", architecture: "x86"}
 
     env:
       PSYCOPG2_TESTDB: postgres
