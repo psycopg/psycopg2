@@ -7,7 +7,7 @@ What's new in psycopg 2.9.5
 - Add support for Python 3.11.
 - Add support for rowcount in MERGE statements in binary packages
   (:ticket:`#1497`).
-- Wheel package compiled against OpenSSL 1.1.1q and PostgreSQL 15 libpq.
+- Wheel package compiled against OpenSSL 1.1.1r and PostgreSQL 15 libpq.
 
 
 What's new in psycopg 2.9.4

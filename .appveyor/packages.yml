@@ -24,7 +24,7 @@ environment:
 
     WORKFLOW: packages
 
-    OPENSSL_VERSION: "1_1_1q"
+    OPENSSL_VERSION: "1_1_1r"
     POSTGRES_VERSION: "15_0"
 
     PSYCOPG2_TESTDB: psycopg2_test

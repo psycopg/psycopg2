@@ -8,7 +8,7 @@ set -x
 # Last release: https://www.postgresql.org/ftp/source/
 postgres_version="15.0"
 # last release: https://www.openssl.org/source/
-openssl_version="1.1.1q"
+openssl_version="1.1.1r"
 # last release: https://openldap.org/software/download/
 ldap_version="2.4.59"
 # last release: https://github.com/cyrusimap/cyrus-sasl/releases
