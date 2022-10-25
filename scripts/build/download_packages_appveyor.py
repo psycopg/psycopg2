@@ -69,7 +69,7 @@ def main():
             fn = af["fileName"]
             if fn.startswith("dist/"):
                 fn = fn.split("/", 1)[1]
-            dest = Path("packages") / fn
+            dest = Path("wheelhouse") / fn
             logger.info(f"downloading {dest}")
             resp = s.get(
                 f"{API_URL}/buildjobs/{job['jobId']}/artifacts/{af['fileName']}"
@@ -81,7 +81,7 @@ def main():
             with dest.open("wb") as f:
                 f.write(resp.content)
 
-    logger.info("now you can run: 'twine upload -s packages/*'")
+    logger.info("now you can run: 'twine upload -s wheelhouse/*'")
 
 
 def parse_cmdline():

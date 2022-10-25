@@ -52,11 +52,11 @@ How to make a psycopg2 release
 - When the workflows have finished download the packages using the
   ``download_packages_{github|appveyor}.py`` scripts from the
   ``scripts/build`` directory. They will be saved in a
-  ``packages/psycopg2-${VERSION}`` directory.
+  ``wheelhouse/psycopg2-${VERSION}`` directory.
 
 - Only for stable packages: upload the signed packages on PyPI::
 
-    $ twine upload -s packages/psycopg2-${VERSION}/*
+    $ twine upload -s wheelhouse/psycopg2-${VERSION}/*
 
 - Create a release and release notes in the psycopg website, announce to
   psycopg and pgsql-announce mailing lists.
@@ -69,7 +69,7 @@ Releasing test packages
 
 Test packages may be uploaded on the `PyPI testing site`__ using::
 
-    $ twine upload -s -r testpypi packages/psycopg2-${VERSION}/*
+    $ twine upload -s -r testpypi wheelhouse/psycopg2-${VERSION}/*
 
 assuming `proper configuration`__ of ``~/.pypirc``.
 

@@ -57,7 +57,7 @@ def main():
     resp.raise_for_status()
     artifacts = resp.json()["artifacts"]
 
-    dest = Path("packages")
+    dest = Path("wheelhouse")
     if not dest.exists():
         logger.info(f"creating dir {dest}")
         dest.mkdir(parents=True)
