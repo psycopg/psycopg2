@@ -6,6 +6,7 @@ on:
 
 jobs:
   build-sdist:
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -53,6 +54,7 @@ jobs:
 
 
   build-manylinux:
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -114,10 +116,11 @@ jobs:
 
   build-macos:
     runs-on: macos-latest
+    if: true
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.6', '3.7', '3.8', '3.9', '3.10']
+        python-version: ['3.11']
 
     steps:
       - name: Checkout repos
