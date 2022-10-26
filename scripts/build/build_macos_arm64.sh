@@ -10,8 +10,8 @@
 set -euo pipefail
 set -x
 
-python_versions="3.8.10 3.9.13 3.10.5 3.11"
-postgres_version=15
+python_versions="3.8.10 3.9.13 3.10.5 3.11.0"
+pg_version=15
 
 # Move to the root of the project
 dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -35,16 +35,25 @@ else
     eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
+export PGDATA=/opt/homebrew/var/postgresql@${pg_version}
+
 # Install PostgreSQL, if necessary
 command -v pg_config > /dev/null || (
-    brew install postgresql@${postgres_version}
-    # Currently not working
-    # brew services start postgresql@${postgres_version}
-    pg_ctl \
-        -D /opt/homebrew/var/postgresql@${postgres_version} \
-        -l /opt/homebrew/var/log/postgresql@${postgres_version}.log \
-        start
+    brew install postgresql@${pg_version}
 )
+
+# After PostgreSQL 15, the bin path is not in the path.
+export PATH=$(ls -d1 /opt/homebrew/Cellar/postgresql@${pg_version}/*/bin):$PATH
+
+# Make sure the server is running
+
+# Currently not working
+# brew services start postgresql@${pg_version}
+
+if ! pg_ctl status; then
+    pg_ctl -l /opt/homebrew/var/log/postgresql@${pg_version}.log start
+fi
+
 
 # Install the Python versions we want to build
 for ver3 in $python_versions; do
@@ -68,7 +77,7 @@ pip install cibuildwheel
 # Build the binary packages
 export CIBW_PLATFORM=macos
 export CIBW_ARCHS=arm64
-export CIBW_BUILD='cp{38,39,310}-*'
+export CIBW_BUILD='cp{38,39,310,311}-*'
 export CIBW_TEST_COMMAND='python -c "import tests; tests.unittest.main(defaultTest=\"tests.test_suite\")"'
 
 export PSYCOPG2_TESTDB=postgres
