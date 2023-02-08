@@ -6,93 +6,133 @@ set -euo pipefail
 set -x
 
 # Last release: https://www.postgresql.org/ftp/source/
-postgres_version="15.0"
+# IMPORTANT! Change the cache key in packages.yml when upgrading libraries
+postgres_version="${LIBPQ_VERSION:-15.0}"
+
 # last release: https://www.openssl.org/source/
-openssl_version="1.1.1r"
+openssl_version="${OPENSSL_VERSION:-1.1.1r}"
+
 # last release: https://openldap.org/software/download/
-ldap_version="2.4.59"
+ldap_version="2.6.3"
+
 # last release: https://github.com/cyrusimap/cyrus-sasl/releases
 sasl_version="2.1.28"
 
-yum install -y zlib-devel krb5-devel pam-devel
+export LIBPQ_BUILD_PREFIX=${LIBPQ_BUILD_PREFIX:-/usr/local}
 
-
-# Build openssl if needed
-openssl_tag="OpenSSL_${openssl_version//./_}"
-openssl_dir="openssl-${openssl_tag}"
-if [ ! -d "${openssl_dir}" ]; then curl -sL \
-        https://github.com/openssl/openssl/archive/${openssl_tag}.tar.gz \
-        | tar xzf -
-
-    cd "${openssl_dir}"
-
-    ./config --prefix=/usr/local/ --openssldir=/usr/local/ \
-        zlib -fPIC shared
-    make depend
-    make
-else
-    cd "${openssl_dir}"
+if [[ -f "${LIBPQ_BUILD_PREFIX}/lib/libpq.so" ]]; then
+    echo "libpq already available: build skipped" >&2
+    exit 0
 fi
 
-# Install openssl
-make install_sw
-cd ..
+source /etc/os-release
 
+case "$ID" in
+    centos)
+        yum update -y
+        yum install -y zlib-devel krb5-devel pam-devel
+        ;;
 
-# Build libsasl2 if needed
-# The system package (cyrus-sasl-devel) causes an amazing error on i686:
-# "unsupported version 0 of Verneed record"
-# https://github.com/pypa/manylinux/issues/376
-sasl_tag="cyrus-sasl-${sasl_version}"
-sasl_dir="cyrus-sasl-${sasl_tag}"
-if [ ! -d "${sasl_dir}" ]; then
-    curl -sL \
-        https://github.com/cyrusimap/cyrus-sasl/archive/${sasl_tag}.tar.gz \
-        | tar xzf -
+    alpine)
+        apk upgrade
+        apk add --no-cache zlib-dev krb5-dev linux-pam-dev openldap-dev
+        ;;
 
-    cd "${sasl_dir}"
+    *)
+        echo "$0: unexpected Linux distribution: '$ID'" >&2
+        exit 1
+        ;;
+esac
 
-    autoreconf -i
-    ./configure
-    make
-else
-    cd "${sasl_dir}"
+if [ "$ID" == "centos" ]; then
+
+    # Build openssl if needed
+    openssl_tag="OpenSSL_${openssl_version//./_}"
+    openssl_dir="openssl-${openssl_tag}"
+    if [ ! -d "${openssl_dir}" ]; then curl -sL \
+            https://github.com/openssl/openssl/archive/${openssl_tag}.tar.gz \
+            | tar xzf -
+
+        cd "${openssl_dir}"
+
+        ./config --prefix=${LIBPQ_BUILD_PREFIX} --openssldir=${LIBPQ_BUILD_PREFIX} \
+            zlib -fPIC shared
+        make depend
+        make
+    else
+        cd "${openssl_dir}"
+    fi
+
+    # Install openssl
+    make install_sw
+    cd ..
+
 fi
 
-# Install libsasl2
-# requires missing nroff to build
-touch saslauthd/saslauthd.8
-make install
-cd ..
 
+if [ "$ID" == "centos" ]; then
 
-# Build openldap if needed
-ldap_tag="${ldap_version}"
-ldap_dir="openldap-${ldap_tag}"
-if [ ! -d "${ldap_dir}" ]; then
-    curl -sL \
-        https://www.openldap.org/software/download/OpenLDAP/openldap-release/openldap-${ldap_tag}.tgz \
-        | tar xzf -
+    # Build libsasl2 if needed
+    # The system package (cyrus-sasl-devel) causes an amazing error on i686:
+    # "unsupported version 0 of Verneed record"
+    # https://github.com/pypa/manylinux/issues/376
+    sasl_tag="cyrus-sasl-${sasl_version}"
+    sasl_dir="cyrus-sasl-${sasl_tag}"
+    if [ ! -d "${sasl_dir}" ]; then
+        curl -sL \
+            https://github.com/cyrusimap/cyrus-sasl/archive/${sasl_tag}.tar.gz \
+            | tar xzf -
 
-    cd "${ldap_dir}"
+        cd "${sasl_dir}"
 
-    ./configure --enable-backends=no --enable-null
-    make depend
-    make -C libraries/liblutil/
-    make -C libraries/liblber/
-    make -C libraries/libldap/
-    make -C libraries/libldap_r/
-else
-    cd "${ldap_dir}"
+        autoreconf -i
+        ./configure --prefix=${LIBPQ_BUILD_PREFIX} \
+            CPPFLAGS=-I${LIBPQ_BUILD_PREFIX}/include/ LDFLAGS=-L${LIBPQ_BUILD_PREFIX}/lib
+        make
+    else
+        cd "${sasl_dir}"
+    fi
+
+    # Install libsasl2
+    # requires missing nroff to build
+    touch saslauthd/saslauthd.8
+    make install
+    cd ..
+
 fi
 
-# Install openldap
-make -C libraries/liblber/ install
-make -C libraries/libldap/ install
-make -C libraries/libldap_r/ install
-make -C include/ install
-chmod +x /usr/local/lib/{libldap,liblber}*.so*
-cd ..
+
+if [ "$ID" == "centos" ]; then
+
+    # Build openldap if needed
+    ldap_tag="${ldap_version}"
+    ldap_dir="openldap-${ldap_tag}"
+    if [ ! -d "${ldap_dir}" ]; then
+        curl -sL \
+            https://www.openldap.org/software/download/OpenLDAP/openldap-release/openldap-${ldap_tag}.tgz \
+            | tar xzf -
+
+        cd "${ldap_dir}"
+
+        ./configure --prefix=${LIBPQ_BUILD_PREFIX} --enable-backends=no --enable-null \
+            CPPFLAGS=-I${LIBPQ_BUILD_PREFIX}/include/ LDFLAGS=-L${LIBPQ_BUILD_PREFIX}/lib
+
+        make depend
+        make -C libraries/liblutil/
+        make -C libraries/liblber/
+        make -C libraries/libldap/
+    else
+        cd "${ldap_dir}"
+    fi
+
+    # Install openldap
+    make -C libraries/liblber/ install
+    make -C libraries/libldap/ install
+    make -C include/ install
+    chmod +x ${LIBPQ_BUILD_PREFIX}/lib/{libldap,liblber}*.so*
+    cd ..
+
+fi
 
 
 # Build libpq if needed
@@ -111,14 +151,12 @@ if [ ! -d "${postgres_dir}" ]; then
 '|#define DEFAULT_PGSOCKET_DIR "/var/run/postgresql"|' \
         src/include/pg_config_manual.h
 
-    # Without this, libpq ./configure fails on i686
-    if [[ "$(uname -m)" == "i686" ]]; then
-        export LD_LIBRARY_PATH=/usr/local/lib
-    fi
+    # Often needed, but currently set by the workflow
+    export LD_LIBRARY_PATH="${LIBPQ_BUILD_PREFIX}/lib"
 
-    ./configure --prefix=/usr/local --without-readline \
-        --with-gssapi --with-openssl --with-pam --with-ldap \
-        --sysconfdir=/etc/postgresql-common
+    ./configure --prefix=${LIBPQ_BUILD_PREFIX} --sysconfdir=/etc/postgresql-common \
+        --without-readline --with-gssapi --with-openssl --with-pam --with-ldap \
+        CPPFLAGS=-I${LIBPQ_BUILD_PREFIX}/include/ LDFLAGS=-L${LIBPQ_BUILD_PREFIX}/lib
     make -C src/interfaces/libpq
     make -C src/bin/pg_config
     make -C src/include
@@ -132,4 +170,4 @@ make -C src/bin/pg_config install
 make -C src/include install
 cd ..
 
-find /usr/local/ -name \*.so.\* -type f -exec strip --strip-unneeded {} \;
+find ${LIBPQ_BUILD_PREFIX} -name \*.so.\* -type f -exec strip --strip-unneeded {} \;
