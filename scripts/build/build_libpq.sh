@@ -152,7 +152,7 @@ if [ ! -d "${postgres_dir}" ]; then
         src/include/pg_config_manual.h
 
     # Often needed, but currently set by the workflow
-    export LD_LIBRARY_PATH="${LIBPQ_BUILD_PREFIX}/lib"
+    export LD_LIBRARY_PATH="${LIBPQ_BUILD_PREFIX}/lib;${LIBPQ_BUILD_PREFIX}/lib64"
 
     ./configure --prefix=${LIBPQ_BUILD_PREFIX} --sysconfdir=/etc/postgresql-common \
         --without-readline --with-gssapi --with-openssl --with-pam --with-ldap \
