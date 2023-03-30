@@ -27,7 +27,6 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: packages_sdist
           path: |
             dist/*/*.tar.gz
 
@@ -95,7 +94,6 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: packages_${{ matrix.tag }}_${{ matrix.arch }}
           path: |
             dist/*/*${{ matrix.tag }}_${{ matrix.arch }}.whl
 
@@ -117,30 +115,33 @@ jobs:
   build-macos:
     runs-on: macos-latest
     if: true
+
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.6', '3.7', '3.8', '3.9', '3.10', '3.11']
+        # These archs require an Apple M1 runner: [arm64, universal2]
+        arch: [x86_64]
+        pyver: [cp37, cp38, cp39, cp310, cp311]
 
     steps:
       - name: Checkout repos
         uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Build packages
-        run: ./scripts/build/build_macos.sh
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.12.1
         env:
-          PACKAGE_NAME: psycopg2-binary
-          PSYCOPG2_TESTDB: postgres
-          PSYCOPG2_TEST_FAST: 1
+          CIBW_BUILD: ${{matrix.pyver}}-macosx_${{matrix.arch}}
+          CIBW_ARCHS_MACOS: x86_64
+          CIBW_BEFORE_ALL_MACOS: ./scripts/build/wheel_macos_before_all.sh
+          CIBW_TEST_COMMAND: >-
+            export PYTHONPATH={project} &&
+            python -c "import tests; tests.unittest.main(defaultTest='tests.test_suite')"
+          CIBW_ENVIRONMENT: >-
+            PACKAGE_NAME=psycopg2-binary
+            PSYCOPG2_TESTDB=postgres
+            PSYCOPG2_TEST_FAST=1
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: packages_macos
-          path: |
-            dist/*/*${{ matrix.platform }}.whl
+          path: ./wheelhouse/*.whl
