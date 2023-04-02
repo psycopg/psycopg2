@@ -18,7 +18,7 @@ ldap_version="2.6.3"
 # last release: https://github.com/cyrusimap/cyrus-sasl/releases
 sasl_version="2.1.28"
 
-export LIBPQ_BUILD_PREFIX=${LIBPQ_BUILD_PREFIX:-/usr/local}
+export LIBPQ_BUILD_PREFIX=${LIBPQ_BUILD_PREFIX:-/tmp/libpq.build}
 
 if [[ -f "${LIBPQ_BUILD_PREFIX}/lib/libpq.so" ]]; then
     echo "libpq already available: build skipped" >&2
@@ -152,7 +152,7 @@ if [ ! -d "${postgres_dir}" ]; then
         src/include/pg_config_manual.h
 
     # Often needed, but currently set by the workflow
-    export LD_LIBRARY_PATH="${LIBPQ_BUILD_PREFIX}/lib;${LIBPQ_BUILD_PREFIX}/lib64"
+    # export LD_LIBRARY_PATH="${LIBPQ_BUILD_PREFIX}/lib"
 
     ./configure --prefix=${LIBPQ_BUILD_PREFIX} --sysconfdir=/etc/postgresql-common \
         --without-readline --with-gssapi --with-openssl --with-pam --with-ldap \

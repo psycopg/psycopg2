@@ -14,28 +14,36 @@
 # This script is designed to run on a wheel archive before auditwheel.
 
 set -euo pipefail
-set -x
+# set -x
+
+source /etc/os-release
+dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 wheel=$(realpath "$1")
 shift
-
-# python or python3?
-if which python > /dev/null; then
-    py=python
-else
-    py=python3
-fi
 
 tmpdir=$(mktemp -d)
 trap "rm -r ${tmpdir}" EXIT
 
 cd "${tmpdir}"
-$py -m zipfile -e "${wheel}" .
+python -m zipfile -e "${wheel}" .
 
-find . -name *.so -ls -exec strip "$@" {} \;
-# Display the size after strip
-find . -name *.so -ls
+echo "
+Libs before:"
+# Busybox doesn't have "find -ls"
+find . -name \*.so | xargs ls -l
 
-$py -m zipfile -c "${wheel}" *
+# On Debian, print the package versions libraries come from
+echo "
+Dependencies versions of '_psycopg.so' library:"
+"${dir}/print_so_versions.sh" "$(find . -name \*_psycopg\*.so)"
+
+find . -name \*.so -exec strip "$@" {} \;
+
+echo "
+Libs after:"
+find . -name \*.so | xargs ls -l
+
+python -m zipfile -c ${wheel} *
 
 cd -
