@@ -10,7 +10,7 @@ set -x
 postgres_version="${LIBPQ_VERSION:-15.0}"
 
 # last release: https://www.openssl.org/source/
-openssl_version="${OPENSSL_VERSION:-1.1.1r}"
+openssl_version="${OPENSSL_VERSION:-1.1.1t}"
 
 # last release: https://openldap.org/software/download/
 ldap_version="2.6.3"

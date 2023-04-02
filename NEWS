@@ -6,6 +6,7 @@ What's new in psycopg 2.9.6
 
 - Package manylinux 2014 for aarch64 and ppc64le platforms, in order to
   include libpq 15 in the binary package (:ticket:`#1396`).
+- Wheel package compiled against OpenSSL 1.1.1t.
 
 
 What's new in psycopg 2.9.5
