@@ -9,7 +9,7 @@ prjdir="$( cd "${dir}/../.." && pwd )"
 # Find psycopg version
 version=$(grep -e ^PSYCOPG_VERSION setup.py | sed "s/.*'\(.*\)'/\1/")
 # A gratuitous comment to fix broken vim syntax file: '")
-distdir="${prjdir}/dist/psycopg2-$version"
+distdir="${prjdir}/dist"
 
 # Replace the package name
 if [[ "${PACKAGE_NAME:-}" ]]; then

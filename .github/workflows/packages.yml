@@ -28,7 +28,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           path: |
-            dist/*/*.tar.gz
+            dist/*.tar.gz
 
     env:
       PSYCOPG2_TESTDB: postgres
@@ -95,7 +95,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           path: |
-            dist/*/*${{ matrix.tag }}_${{ matrix.arch }}.whl
+            dist/*.whl
 
     services:
       postgresql:
