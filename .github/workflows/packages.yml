@@ -54,6 +54,11 @@ jobs:
 
   build-linux:
     if: true
+
+    env:
+      LIBPQ_VERSION: "15.0"
+      OPENSSL_VERSION: "1.1.1t"
+
     strategy:
       fail-fast: false
       matrix:

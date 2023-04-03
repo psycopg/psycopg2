@@ -7,10 +7,10 @@ set -x
 
 # Last release: https://www.postgresql.org/ftp/source/
 # IMPORTANT! Change the cache key in packages.yml when upgrading libraries
-postgres_version="${LIBPQ_VERSION:-15.0}"
+postgres_version="${LIBPQ_VERSION}"
 
 # last release: https://www.openssl.org/source/
-openssl_version="${OPENSSL_VERSION:-1.1.1t}"
+openssl_version="${OPENSSL_VERSION}"
 
 # last release: https://openldap.org/software/download/
 ldap_version="2.6.3"
