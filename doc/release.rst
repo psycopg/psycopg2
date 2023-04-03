@@ -49,10 +49,11 @@ How to make a psycopg2 release
 .. __: https://github.com/psycopg/psycopg2/actions/workflows/packages.yml
 .. __: https://ci.appveyor.com/project/psycopg/psycopg2/settings
 
-- When the workflows have finished download the packages using the
-  ``download_packages_{github|appveyor}.py`` scripts from the
-  ``scripts/build`` directory. They will be saved in a
-  ``wheelhouse/psycopg2-${VERSION}`` directory.
+- When the workflows have finished download the packages from the job
+  artifacts. For Appveyor you can use the ``download_packages_appveyor.py``
+  scripts from the ``scripts/build`` directory. They will be saved in a
+  ``wheelhouse/psycopg2-${VERSION}`` directory. For Github just download it
+  from the web interface (it's a single file).
 
 - Only for stable packages: upload the signed packages on PyPI::
 
