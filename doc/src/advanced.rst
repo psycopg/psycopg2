@@ -226,7 +226,7 @@ read:
 
     >>> cur.execute("SELECT '(10.2,20.3)'::point")
     >>> point = cur.fetchone()[0]
-    >>> print type(point), point.x, point.y
+    >>> print(type(point), point.x, point.y)
     <class 'Point'> 10.2 20.3
 
 A typecaster created by `!new_type()` can be also used with
@@ -284,15 +284,15 @@ something to read::
     curs = conn.cursor()
     curs.execute("LISTEN test;")
 
-    print "Waiting for notifications on channel 'test'"
+    print("Waiting for notifications on channel 'test'")
     while True:
         if select.select([conn],[],[],5) == ([],[],[]):
-            print "Timeout"
+            print("Timeout")
         else:
             conn.poll()
             while conn.notifies:
                 notify = conn.notifies.pop(0)
-                print "Got NOTIFY:", notify.pid, notify.channel, notify.payload
+                print("Got NOTIFY:", notify.pid, notify.channel, notify.payload)
 
 Running the script and executing a command such as :sql:`NOTIFY test, 'hello'`
 in a separate :program:`psql` shell, the output may look similar to:

@@ -8,7 +8,7 @@ check: doctest
 # It is not clean by 'make clean'
 
 PYTHON := python$(PYTHON_VERSION)
-PYTHON_VERSION ?= $(shell $(PYTHON) -c 'import sys; print ("%d.%d" % sys.version_info[:2])')
+PYTHON_VERSION ?= $(shell $(PYTHON) -c 'import sys; print("%d.%d" % sys.version_info[:2])')
 BUILD_DIR = $(shell pwd)/../build/lib.$(PYTHON_VERSION)
 
 SPHINXBUILD ?= $$(pwd)/env/bin/sphinx-build

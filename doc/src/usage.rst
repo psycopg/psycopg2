@@ -407,7 +407,7 @@ defined on the database connection (the `PostgreSQL encoding`__, available in
 `connection.encoding`, is translated into a `Python encoding`__ using the
 `~psycopg2.extensions.encodings` mapping)::
 
-    >>> print u, type(u)
+    >>> print(u, type(u))
     àèìòù€ <type 'unicode'>
 
     >>> cur.execute("INSERT INTO test (num, data) VALUES (%s,%s);", (74, u))
@@ -418,19 +418,19 @@ defined on the database connection (the `PostgreSQL encoding`__, available in
 When reading data from the database, in Python 2 the strings returned are
 usually 8 bit `!str` objects encoded in the database client encoding::
 
-    >>> print conn.encoding
+    >>> print(conn.encoding)
     UTF8
 
     >>> cur.execute("SELECT data FROM test WHERE num = 74")
     >>> x = cur.fetchone()[0]
-    >>> print x, type(x), repr(x)
+    >>> print(x, type(x), repr(x))
     àèìòù€ <type 'str'> '\xc3\xa0\xc3\xa8\xc3\xac\xc3\xb2\xc3\xb9\xe2\x82\xac'
 
     >>> conn.set_client_encoding('LATIN9')
 
     >>> cur.execute("SELECT data FROM test WHERE num = 74")
     >>> x = cur.fetchone()[0]
-    >>> print type(x), repr(x)
+    >>> print(type(x), repr(x))
     <type 'str'> '\xe0\xe8\xec\xf2\xf9\xa4'
 
 In Python 3 instead the strings are automatically *decoded* in the connection
@@ -442,7 +442,7 @@ In Python 2 you must register a :ref:`typecaster
 
     >>> cur.execute("SELECT data FROM test WHERE num = 74")
     >>> x = cur.fetchone()[0]
-    >>> print x, type(x), repr(x)
+    >>> print(x, type(x), repr(x))
     àèìòù€ <type 'unicode'> u'\xe0\xe8\xec\xf2\xf9\u20ac'
 
 In the above example, the `~psycopg2.extensions.UNICODE` typecaster is

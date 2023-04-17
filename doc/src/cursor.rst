@@ -292,7 +292,7 @@ The ``cursor`` class
 
             >>> cur.execute("SELECT * FROM test;")
             >>> for record in cur:
-            ...     print record
+            ...     print(record)
             ...
             (1, 100, "abc'def")
             (2, None, 'dada')
