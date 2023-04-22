@@ -860,7 +860,7 @@ Server side cursors
 
 When a database query is executed, the Psycopg `cursor` usually fetches
 all the records returned by the backend, transferring them to the client
-process. If the query returned an huge amount of data, a proportionally large
+process. If the query returns a huge amount of data, a proportionally large
 amount of memory will be allocated by the client.
 
 If the dataset is too large to be practically handled on the client side, it is
