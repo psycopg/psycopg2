@@ -1920,6 +1920,7 @@ class TestConnectionInfo(ConnectingTestCase):
             self.conn.info.ssl_attribute('wat')
 
     @skip_before_libpq(9, 5)
+    @skip_after_libpq(16)
     def test_ssl_attribute(self):
         attribs = self.conn.info.ssl_attribute_names
         self.assert_(attribs)
