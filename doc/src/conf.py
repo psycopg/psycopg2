@@ -255,6 +255,7 @@ latex_documents = [
 # If false, no module index is generated.
 # latex_use_modindex = True
 
+toc_object_entries = False
 
 doctest_global_setup = """
 
