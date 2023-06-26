@@ -97,11 +97,13 @@ typecast_BOOLEAN_cast(const char *s, Py_ssize_t len, PyObject *curs)
     if (s == NULL) { Py_RETURN_NONE; }
 
     switch (s[0]) {
+        case '1':
         case 't':
         case 'T':
             res = Py_True;
             break;
 
+        case '0':
         case 'f':
         case 'F':
             res = Py_False;
