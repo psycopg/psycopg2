@@ -1001,32 +1001,35 @@ INIT_MODULE(_psycopg)(void)
 
     /* initialize types and objects not exposed to the module */
     Py_SET_TYPE(&typecastType, &PyType_Type);
-    if (0 > PyType_Ready(&typecastType)) { goto exit; }
+    if (0 > PyType_Ready(&typecastType)) { goto error; }
 
     Py_SET_TYPE(&chunkType, &PyType_Type);
-    if (0 > PyType_Ready(&chunkType)) { goto exit; }
+    if (0 > PyType_Ready(&chunkType)) { goto error; }
 
     Py_SET_TYPE(&errorType, &PyType_Type);
     errorType.tp_base = (PyTypeObject *)PyExc_StandardError;
-    if (0 > PyType_Ready(&errorType)) { goto exit; }
+    if (0 > PyType_Ready(&errorType)) { goto error; }
 
-    if (!(psyco_null = Bytes_FromString("NULL"))) { goto exit; }
+    if (!(psyco_null = Bytes_FromString("NULL"))) { goto error; }
 
     /* initialize the module */
     module = PyModule_Create(&psycopgmodule);
-    if (!module) { goto exit; }
+    if (!module) { goto error; }
 
-    if (0 > add_module_constants(module)) { goto exit; }
-    if (0 > add_module_types(module)) { goto exit; }
-    if (0 > datetime_init()) { goto exit; }
-    if (0 > encodings_init(module)) { goto exit; }
-    if (0 > typecast_init(module)) { goto exit; }
-    if (0 > adapters_init(module)) { goto exit; }
-    if (0 > basic_errors_init(module)) { goto exit; }
-    if (0 > sqlstate_errors_init(module)) { goto exit; }
+    if (0 > add_module_constants(module)) { goto error; }
+    if (0 > add_module_types(module)) { goto error; }
+    if (0 > datetime_init()) { goto error; }
+    if (0 > encodings_init(module)) { goto error; }
+    if (0 > typecast_init(module)) { goto error; }
+    if (0 > adapters_init(module)) { goto error; }
+    if (0 > basic_errors_init(module)) { goto error; }
+    if (0 > sqlstate_errors_init(module)) { goto error; }
 
     Dprintf("psycopgmodule: module initialization complete");
-
-exit:
     return module;
+
+error:
+	if (module)
+		Py_DECREF(module);
+	return NULL;
 }
