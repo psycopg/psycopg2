@@ -184,7 +184,7 @@ available through the following exceptions:
 
             >>> try:
             ...     cur.execute("SELECT * FROM barf")
-            ... except psycopg2.Error, e:
+            ... except psycopg2.Error as e:
             ...     pass
 
             >>> e.diag.severity
