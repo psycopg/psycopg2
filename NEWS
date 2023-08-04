@@ -1,6 +1,12 @@
 Current release
 ---------------
 
+What's new in psycopg 2.9.7 (unreleased)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Wheel package compiled against OpenSSL 1.1.1v.
+
+
 What's new in psycopg 2.9.6
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

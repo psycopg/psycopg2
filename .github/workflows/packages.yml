@@ -56,8 +56,8 @@ jobs:
     if: true
 
     env:
-      LIBPQ_VERSION: "15.0"
-      OPENSSL_VERSION: "1.1.1t"
+      LIBPQ_VERSION: "15.3"
+      OPENSSL_VERSION: "1.1.1v"
 
     strategy:
       fail-fast: false
