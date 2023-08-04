@@ -105,24 +105,23 @@ For further information please check the 'doc/src/install.rst' file (also at
 """)
             sys.exit(1)
 
-    def query(self, attr_name):
+    def query(self, attr_name, *, empty_ok=False):
         """Spawn the pg_config executable, querying for the given config
         name, and return the printed value, sanitized. """
         try:
-            pg_config_process = subprocess.Popen(
+            pg_config_process = subprocess.run(
                 [self.pg_config_exe, "--" + attr_name],
-                stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE)
         except OSError:
             raise Warning(
                 f"Unable to find 'pg_config' file in '{self.pg_config_exe}'")
-        pg_config_process.stdin.close()
-        result = pg_config_process.stdout.readline().strip()
-        if not result:
-            raise Warning(pg_config_process.stderr.readline())
-        if not isinstance(result, str):
-            result = result.decode('ascii')
+        if pg_config_process.returncode:
+            err = pg_config_process.stderr.decode(errors='backslashreplace')
+            raise Warning(f"pg_config --{attr_name} failed: {err}")
+        result = pg_config_process.stdout.decode().strip()
+        if not result and not empty_ok:
+            raise Warning(f"pg_config --{attr_name} is empty")
         return result
 
     def find_on_path(self, exename, path_directories=None):
@@ -378,12 +377,14 @@ For further information please check the 'doc/src/install.rst' file (also at
             self.include_dirs.append(pg_config_helper.query("includedir"))
             self.include_dirs.append(pg_config_helper.query("includedir-server"))
 
-            # add includedirs from cppflags, libdirs from ldflags
-            for token in pg_config_helper.query("ldflags").split():
+            # if present, add includedirs from cppflags, libdirs from ldflags
+            tokens = pg_config_helper.query("ldflags", empty_ok=True).split()
+            for token in tokens:
                 if token.startswith("-L"):
                     self.library_dirs.append(token[2:])
 
-            for token in pg_config_helper.query("cppflags").split():
+            tokens = pg_config_helper.query("cppflags", empty_ok=True).split()
+            for token in tokens:
                 if token.startswith("-I"):
                     self.include_dirs.append(token[2:])
 

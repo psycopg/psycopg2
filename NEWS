@@ -4,6 +4,7 @@ Current release
 What's new in psycopg 2.9.7 (unreleased)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+- Fix building when pg_config returns an empty string (:ticket:`#1599`).
 - Wheel package compiled against OpenSSL 1.1.1v.
 
 
