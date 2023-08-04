@@ -1,8 +1,8 @@
 Current release
 ---------------
 
-What's new in psycopg 2.9.7 (unreleased)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+What's new in psycopg 2.9.7
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Fix propagation of exceptions raised during module initialization
   (:ticket:`#1598`).
