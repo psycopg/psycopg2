@@ -140,15 +140,15 @@ class DictCursor(DictCursorBase):
         super().__init__(*args, **kwargs)
         self._prefetch = True
 
-    def execute(self, query, vars=None):
+    def execute(self, query, vars=None, place_holder = '%'):
         self.index = OrderedDict()
         self._query_executed = True
-        return super().execute(query, vars)
+        return super().execute(query, vars, place_holder)
 
-    def callproc(self, procname, vars=None):
+    def callproc(self, procname, vars=None, place_holder = '%'):
         self.index = OrderedDict()
         self._query_executed = True
-        return super().callproc(procname, vars)
+        return super().callproc(procname, vars, place_holder)
 
     def _build_index(self):
         if self._query_executed and self.description:
@@ -230,15 +230,15 @@ class RealDictCursor(DictCursorBase):
         kwargs['row_factory'] = RealDictRow
         super().__init__(*args, **kwargs)
 
-    def execute(self, query, vars=None):
+    def execute(self, query, vars=None, place_holder = '%'):
         self.column_mapping = []
         self._query_executed = True
-        return super().execute(query, vars)
+        return super().execute(query, vars, place_holder)
 
-    def callproc(self, procname, vars=None):
+    def callproc(self, procname, vars=None, place_holder = '%'):
         self.column_mapping = []
         self._query_executed = True
-        return super().callproc(procname, vars)
+        return super().callproc(procname, vars, place_holder)
 
     def _build_index(self):
         if self._query_executed and self.description:
@@ -307,17 +307,17 @@ class NamedTupleCursor(_cursor):
     Record = None
     MAX_CACHE = 1024
 
-    def execute(self, query, vars=None):
+    def execute(self, query, vars=None, place_holder = '%'):
         self.Record = None
-        return super().execute(query, vars)
+        return super().execute(query, vars, place_holder)
 
-    def executemany(self, query, vars):
+    def executemany(self, query, vars, place_holder = '%'):
         self.Record = None
-        return super().executemany(query, vars)
+        return super().executemany(query, vars, place_holder)
 
-    def callproc(self, procname, vars=None):
+    def callproc(self, procname, vars=None, place_holder = '%'):
         self.Record = None
-        return super().callproc(procname, vars)
+        return super().callproc(procname, vars, place_holder)
 
     def fetchone(self):
         t = super().fetchone()
@@ -440,15 +440,15 @@ class LoggingConnection(_connection):
 class LoggingCursor(_cursor):
     """A cursor that logs queries using its connection logging facilities."""
 
-    def execute(self, query, vars=None):
+    def execute(self, query, vars=None, place_holder = '%'):
         try:
-            return super().execute(query, vars)
+            return super().execute(query, vars, place_holder)
         finally:
             self.connection.log(self.query, self)
 
-    def callproc(self, procname, vars=None):
+    def callproc(self, procname, vars=None, place_holder = '%'):
         try:
-            return super().callproc(procname, vars)
+            return super().callproc(procname, vars, place_holder)
         finally:
             self.connection.log(self.query, self)
 
@@ -484,13 +484,13 @@ class MinTimeLoggingConnection(LoggingConnection):
 class MinTimeLoggingCursor(LoggingCursor):
     """The cursor sub-class companion to `MinTimeLoggingConnection`."""
 
-    def execute(self, query, vars=None):
+    def execute(self, query, vars=None, place_holder = '%'):
         self.timestamp = _time.time()
-        return LoggingCursor.execute(self, query, vars)
+        return LoggingCursor.execute(self, query, vars, place_holder)
 
-    def callproc(self, procname, vars=None):
+    def callproc(self, procname, vars=None, place_holder = '%'):
         self.timestamp = _time.time()
-        return LoggingCursor.callproc(self, procname, vars)
+        return LoggingCursor.callproc(self, procname, vars, place_holder)
 
 
 class LogicalReplicationConnection(_replicationConnection):
@@ -1191,7 +1191,7 @@ def _paginate(seq, page_size):
             return
 
 
-def execute_batch(cur, sql, argslist, page_size=100):
+def execute_batch(cur, sql, argslist, page_size=100, place_holder = '%'):
     r"""Execute groups of statements in fewer server roundtrips.
 
     Execute *sql* several times, against all parameters set (sequences or
@@ -1212,11 +1212,11 @@ def execute_batch(cur, sql, argslist, page_size=100):
 
     """
     for page in _paginate(argslist, page_size=page_size):
-        sqls = [cur.mogrify(sql, args) for args in page]
+        sqls = [cur.mogrify(sql, args, place_holder) for args in page]
         cur.execute(b";".join(sqls))
 
 
-def execute_values(cur, sql, argslist, template=None, page_size=100, fetch=False):
+def execute_values(cur, sql, argslist, template=None, page_size=100, fetch=False, place_holder = '%'):
     '''Execute a statement using :sql:`VALUES` with a sequence of parameters.
 
     :param cur: the cursor to use to execute the query.
@@ -1293,7 +1293,7 @@ def execute_values(cur, sql, argslist, template=None, page_size=100, fetch=False
             template = b'(' + b','.join([b'%s'] * len(page[0])) + b')'
         parts = pre[:]
         for args in page:
-            parts.append(cur.mogrify(template, args))
+            parts.append(cur.mogrify(template, args, place_holder))
             parts.append(b',')
         parts[-1:] = post
         cur.execute(b''.join(parts))

@@ -85,225 +85,314 @@
 /* Helpers for formatstring */
 
 BORROWED Py_LOCAL_INLINE(PyObject *)
-getnextarg(PyObject *args, Py_ssize_t arglen, Py_ssize_t *p_argidx)
-{
+getnextarg(PyObject *args, Py_ssize_t arglen, Py_ssize_t *p_argidx) {
     Py_ssize_t argidx = *p_argidx;
     if (argidx < arglen) {
         (*p_argidx)++;
-        if (arglen < 0)
-            return args;
-        else
-            return PyTuple_GetItem(args, argidx);
+        if (arglen < 0) return args;
+        else return PyTuple_GetItem(args, argidx);
     }
-    PyErr_SetString(PyExc_TypeError,
-                    "not enough arguments for format string");
     return NULL;
 }
+
+/*
+    for function getnextarg：
+    I delete the line including 'raise error', for making this func a iterator
+    just used to fill in the arguments array
+*/
 
 /* wrapper around _Bytes_Resize offering normal Python call semantics */
 
 STEALS(1)
 Py_LOCAL_INLINE(PyObject *)
 resize_bytes(PyObject *b, Py_ssize_t newsize) {
-    if (0 == _Bytes_Resize(&b, newsize)) {
-        return b;
-    }
-    else {
-        return NULL;
-    }
+    if (0 == _Bytes_Resize(&b, newsize)) return b;
+    else return NULL;
 }
 
-/* fmt%(v1,v2,...) is roughly equivalent to sprintf(fmt, v1, v2, ...) */
-
-PyObject *
-Bytes_Format(PyObject *format, PyObject *args)
-{
-    char *fmt, *res;
-    Py_ssize_t arglen, argidx;
-    Py_ssize_t reslen, rescnt, fmtcnt;
-    int args_owned = 0;
-    PyObject *result;
-    PyObject *dict = NULL;
-    if (format == NULL || !Bytes_Check(format) || args == NULL) {
+PyObject *Bytes_Format(PyObject *format, PyObject *args, char place_holder) {
+    char *fmt, *res;                    //array pointer of format, and array pointer of result
+    Py_ssize_t arglen, argidx;          //length of arguments array, and index of arguments(when processing args_list)
+    Py_ssize_t reslen, rescnt, fmtcnt;  //rescnt: blank space in result; reslen: the total length of result; fmtcnt: length of format
+    int args_owned = 0;                 //args is valid or invalid(or maybe refcnt), 0 for invalid，1 otherwise
+    PyObject *result;                   //function's return value
+    PyObject *dict = NULL;              //dictionary
+    PyObject *args_value = NULL;        //every argument store in it after parse
+    char **args_list = NULL;            //arguments list as char **
+    char *args_buffer = NULL;           //Bytes_AS_STRING(args_value)
+    Py_ssize_t * args_len = NULL;       //every argument's length in args_list
+    int args_id = 0;                    //index of arguments(when generating result)
+    int index_type = 0;                 //if exists $number, it will be 1, otherwise 0
+    
+    if (format == NULL || !Bytes_Check(format) || args == NULL) {   //check if arguments are valid
         PyErr_SetString(PyExc_SystemError, "bad argument to internal function");
         return NULL;
     }
-    fmt = Bytes_AS_STRING(format);
-    fmtcnt = Bytes_GET_SIZE(format);
-    reslen = rescnt = fmtcnt + 100;
-    result = Bytes_FromStringAndSize((char *)NULL, reslen);
-    if (result == NULL)
-        return NULL;
+    fmt = Bytes_AS_STRING(format);      //get pointer of format
+    fmtcnt = Bytes_GET_SIZE(format);    //get length of format
+    reslen = rescnt = 1;
+    while (reslen <= fmtcnt) {          //when space is not enough, double it's size
+        reslen *= 2;
+        rescnt *= 2;
+    }
+    result = Bytes_FromStringAndSize((char *)NULL, reslen); 
+    if (result == NULL) return NULL;
     res = Bytes_AS_STRING(result);
-    if (PyTuple_Check(args)) {
+    if (PyTuple_Check(args)) {          //check if arguments are sequences
         arglen = PyTuple_GET_SIZE(args);
         argidx = 0;
     }
-    else {
+    else {                              //if no, then this two are of no importance
         arglen = -1;
         argidx = -2;
     }
-    if (Py_TYPE(args)->tp_as_mapping && !PyTuple_Check(args) &&
-        !PyObject_TypeCheck(args, &Bytes_Type))
+    if (Py_TYPE(args)->tp_as_mapping && !PyTuple_Check(args) && !PyObject_TypeCheck(args, &Bytes_Type)) {   //check if args is dict
         dict = args;
-    while (--fmtcnt >= 0) {
-        if (*fmt != '%') {
+        //Py_INCREF(dict);
+    }
+    while (--fmtcnt >= 0) {             //scan the format
+        if (*fmt != '%') {              //if not %, pass it(for the special format '%(name)s')
             if (--rescnt < 0) {
-                rescnt = fmtcnt + 100;
-                reslen += rescnt;
+                rescnt = reslen;        //double the space
+                reslen *= 2;
                 if (!(result = resize_bytes(result, reslen))) {
                     return NULL;
                 }
-                res = Bytes_AS_STRING(result) + reslen - rescnt;
+                res = Bytes_AS_STRING(result) + reslen - rescnt;//calculate offset
                 --rescnt;
             }
-            *res++ = *fmt++;
+            *res++ = *fmt++;            //copy
         }
         else {
             /* Got a format specifier */
-            Py_ssize_t width = -1;
-            int c = '\0';
-            PyObject *v = NULL;
-            PyObject *temp = NULL;
-            char *pbuf;
-            Py_ssize_t len;
             fmt++;
             if (*fmt == '(') {
-                char *keystart;
-                Py_ssize_t keylen;
+                char *keystart;         //begin pos of left bracket
+                Py_ssize_t keylen;      //length of content in bracket
                 PyObject *key;
-                int pcount = 1;
-
+                int pcount = 1;         //counter of left bracket
+                Py_ssize_t length = 0;
                 if (dict == NULL) {
-                    PyErr_SetString(PyExc_TypeError,
-                             "format requires a mapping");
+                    PyErr_SetString(PyExc_TypeError, "format requires a mapping");
                     goto error;
                 }
                 ++fmt;
                 --fmtcnt;
                 keystart = fmt;
                 /* Skip over balanced parentheses */
-                while (pcount > 0 && --fmtcnt >= 0) {
-                    if (*fmt == ')')
-                        --pcount;
-                    else if (*fmt == '(')
-                        ++pcount;
+                while (pcount > 0 && --fmtcnt >= 0) {       //find the matching right bracket
+                    if (*fmt == ')') --pcount;
+                    else if (*fmt == '(') ++pcount;
                     fmt++;
                 }
                 keylen = fmt - keystart - 1;
-                if (fmtcnt < 0 || pcount > 0) {
-                    PyErr_SetString(PyExc_ValueError,
-                               "incomplete format key");
+                if (fmtcnt < 0 || pcount > 0 || *(fmt++) != 's') {             //not found, raise an error
+                    PyErr_SetString(PyExc_ValueError, "incomplete format key");
                     goto error;
                 }
-                key = Text_FromUTF8AndSize(keystart, keylen);
-                if (key == NULL)
-                    goto error;
-                if (args_owned) {
+                --fmtcnt;
+                key = Text_FromUTF8AndSize(keystart, keylen);//get key
+                if (key == NULL) goto error;
+                if (args_owned) {                           //if refcnt > 0, then release
                     Py_DECREF(args);
                     args_owned = 0;
                 }
-                args = PyObject_GetItem(dict, key);
+                args = PyObject_GetItem(dict, key);         //get value with key
                 Py_DECREF(key);
-                if (args == NULL) {
+                if (args == NULL) goto error;
+                if (!Bytes_CheckExact(args)) {
+                    PyErr_Format(PyExc_ValueError, "only bytes values expected, got %s", Py_TYPE(args)->tp_name);   //raise error, but may have bug
                     goto error;
                 }
+                args_buffer = Bytes_AS_STRING(args);        //temporary buffer
+                length = Bytes_GET_SIZE(args);
+                if (rescnt < length) {
+                    while (rescnt < length) {
+                        rescnt += reslen;
+                        reslen *= 2;
+                    }
+                    if ((result = resize_bytes(result, reslen)) == NULL) goto error;
+                }
+                res = Bytes_AS_STRING(result) + reslen - rescnt;
+                Py_MEMCPY(res, args_buffer, length);
+                rescnt -= length;
+                res += length;
                 args_owned = 1;
-                arglen = -1;
+                arglen = -1;    //exists place holder as "%(name)s", set these arguments to invalid
                 argidx = -2;
             }
-            while (--fmtcnt >= 0) {
-                c = *fmt++;
-                break;
-            }
-            if (fmtcnt < 0) {
-                PyErr_SetString(PyExc_ValueError,
-                                "incomplete format");
-                goto error;
-            }
-            switch (c) {
-            case '%':
-                pbuf = "%";
-                len = 1;
-                break;
-            case 's':
-                /* only bytes! */
-                if (!(v = getnextarg(args, arglen, &argidx)))
-                    goto error;
-                if (!Bytes_CheckExact(v)) {
-                    PyErr_Format(PyExc_ValueError,
-                                    "only bytes values expected, got %s",
-                                    Py_TYPE(v)->tp_name);
-                    goto error;
-                }
-                temp = v;
-                Py_INCREF(v);
-                pbuf = Bytes_AS_STRING(temp);
-                len = Bytes_GET_SIZE(temp);
-                break;
-            default:
-                PyErr_Format(PyExc_ValueError,
-                  "unsupported format character '%c' (0x%x) "
-                  "at index " FORMAT_CODE_PY_SSIZE_T,
-                  c, c,
-                  (Py_ssize_t)(fmt - 1 - Bytes_AS_STRING(format)));
-                goto error;
-            }
-            if (width < len)
-                width = len;
-            if (rescnt < width) {
-                reslen -= rescnt;
-                rescnt = width + fmtcnt + 100;
-                reslen += rescnt;
-                if (reslen < 0) {
-                    Py_DECREF(result);
-                    Py_XDECREF(temp);
-                    if (args_owned)
-                        Py_DECREF(args);
-                    return PyErr_NoMemory();
-                }
-                if (!(result = resize_bytes(result, reslen))) {
-                    Py_XDECREF(temp);
-                    if (args_owned)
-                        Py_DECREF(args);
-                    return NULL;
-                }
-                res = Bytes_AS_STRING(result)
-                    + reslen - rescnt;
-            }
-            Py_MEMCPY(res, pbuf, len);
-            res += len;
-            rescnt -= len;
-            while (--width >= len) {
-                --rescnt;
-                *res++ = ' ';
-            }
-            if (dict && (argidx < arglen) && c != '%') {
-                PyErr_SetString(PyExc_TypeError,
-                           "not all arguments converted during string formatting");
-                Py_XDECREF(temp);
-                goto error;
-            }
-            Py_XDECREF(temp);
         } /* '%' */
     } /* until end */
-    if (argidx < arglen && !dict) {
-        PyErr_SetString(PyExc_TypeError,
-                        "not all arguments converted during string formatting");
+    
+    if (dict) {                                             //if args' type is dict, the func ends
+        if (args_owned) Py_DECREF(args);
+        if (!(result = resize_bytes(result, reslen - rescnt))) return NULL;         //resize and return
+        if (place_holder != '%') {
+            PyErr_SetString(PyExc_TypeError, "place holder only expect %% when using dict");
+            goto error;
+        }
+        return result;
+    }
+
+    args_list = (char **)malloc(sizeof(char *) * arglen);                           //buffer
+    args_len = (Py_ssize_t *)malloc(sizeof(Py_ssize_t *) * arglen);                 //length of every argument
+    while ((args_value = getnextarg(args, arglen, &argidx)) != NULL) {              //stop when receive NULL
+        Py_ssize_t length = 0;
+        if (!Bytes_CheckExact(args_value)) {
+            PyErr_Format(PyExc_ValueError, "only bytes values expected, got %s", Py_TYPE(args_value)->tp_name);  //may have bug
+            goto error;
+        }
+        Py_INCREF(args_value);                              //increase refcnt
+        args_buffer = Bytes_AS_STRING(args_value);
+        length = Bytes_GET_SIZE(args_value);
+        //printf("type: %s, len: %d, value: %s\n", Py_TYPE(args_value)->tp_name, length, args_buffer);
+        args_len[argidx - 1] = length;
+        args_list[argidx - 1] = (char *)malloc(sizeof(char *) * (length + 1));
+        Py_MEMCPY(args_list[argidx - 1], args_buffer, length);
+        args_list[argidx - 1][length] = '\0';
+        Py_XDECREF(args_value);
+    }
+
+    fmt = Bytes_AS_STRING(format);      //get pointer of format
+    fmtcnt = Bytes_GET_SIZE(format);    //get length of format
+    reslen = rescnt = 1;
+    while (reslen <= fmtcnt) {
+        reslen *= 2;
+        rescnt *= 2;
+    }
+    if ((result = resize_bytes(result, reslen)) == NULL) goto error;
+    res = Bytes_AS_STRING(result);
+    memset(res, 0, sizeof(char) * reslen);
+    
+    while (*fmt != '\0') {
+        if (*fmt != place_holder) {     //not place holder, pass it
+            if (!rescnt) {
+                rescnt += reslen;
+                reslen *= 2;
+                if ((result = resize_bytes(result, reslen)) == NULL) goto error;
+                res = Bytes_AS_STRING(result) + reslen - rescnt;
+            }
+            *(res++) = *(fmt++);
+            --rescnt;
+            continue;
+        }
+        if (*fmt == '%') {
+            char c = *(++fmt);
+            if (c == '\0') {            //if there is nothing after '%', raise an error
+                PyErr_SetString(PyExc_ValueError, "incomplete format");
+                goto error;
+            }
+            else if (c == '%') {        //'%%' will be transfered to '%'
+                if (!rescnt) {
+                    rescnt += reslen;
+                    reslen *= 2;
+                    if ((result = resize_bytes(result, reslen)) == NULL) goto error;
+                    res = Bytes_AS_STRING(result) + reslen - rescnt;
+                }
+                *res = c;
+                --rescnt;
+                ++res;
+                ++fmt;
+            }
+            else if (c == 's') {                //'%s', replace it with corresponding string
+                if (args_id >= arglen) {        //index is out of bound
+                    PyErr_SetString(PyExc_TypeError, "arguments not enough during string formatting");
+                    goto error;
+                }
+                if (rescnt < args_len[args_id]) {
+                    while (rescnt < args_len[args_id]) {
+                        rescnt += reslen;
+                        reslen *= 2;
+                    }
+                    if ((result = resize_bytes(result, reslen)) == NULL) goto error;
+                    res = Bytes_AS_STRING(result) + reslen - rescnt;
+                }
+                Py_MEMCPY(res, args_list[args_id], args_len[args_id]);
+                rescnt -= args_len[args_id];
+                res += args_len[args_id];
+                ++args_id;
+                ++fmt;
+            }
+            else {                          //not support the character currently
+                PyErr_Format(PyExc_ValueError, "unsupported format character '%c' (0x%x) "
+                "at index " FORMAT_CODE_PY_SSIZE_T,
+                c, c,
+                (Py_ssize_t)(fmt - 1 - Bytes_AS_STRING(format)));
+                goto error;
+            }
+            continue;
+        }
+        if (*fmt == '$') {
+            char c = *(++fmt);
+            if (c == '\0') {            //if there is nothing after '$', raise an error
+                PyErr_SetString(PyExc_ValueError, "incomplete format");
+                goto error;
+            }
+            else if (c == '$') {        //'$$' will be transfered to'$'
+                if (!rescnt) {          //resize buffer
+                    rescnt += reslen;
+                    reslen *= 2;
+                    if ((result = resize_bytes(result, reslen)) == NULL) goto error;
+                    res = Bytes_AS_STRING(result) + reslen - rescnt;
+                }
+                *res = c;
+                --rescnt;
+                ++res;
+                ++fmt;
+            }
+            else if (isdigit(c)) {      //represents '$number'
+                int index = 0;
+                index_type = 1;
+                while (isdigit(*fmt)) {
+                    index = index * 10 + (*fmt) -'0';
+                    ++fmt;
+                }
+                if ((index > arglen) || (index <= 0)) {       //invalid index
+                    PyErr_SetString(PyExc_ValueError, "invalid index");
+                    goto error;
+                }
+                --index;
+                if (rescnt < args_len[index]) {
+                    while (rescnt < args_len[index]) {
+                        rescnt += reslen;
+                        reslen *= 2;
+                    }
+                    if ((result = resize_bytes(result, reslen)) == NULL) goto error;
+                    res = Bytes_AS_STRING(result) + reslen - rescnt;
+                }
+                Py_MEMCPY(res, args_list[index], args_len[index]);
+                rescnt -= args_len[index];
+                res += args_len[index];
+            }
+            else {                      //invalid place holder
+                PyErr_Format(PyExc_ValueError, "unsupported format character '%c' (0x%x) "
+                "at index " FORMAT_CODE_PY_SSIZE_T,
+                c, c,
+                (Py_ssize_t)(fmt - 1 - Bytes_AS_STRING(format)));
+                goto error;
+            }
+        }
+    }
+    if ((args_id < arglen) && (!dict) && (!index_type)) {    //not all arguments are used
+        PyErr_SetString(PyExc_TypeError, "not all arguments converted during string formatting");
         goto error;
     }
-    if (args_owned) {
-        Py_DECREF(args);
+    if (args_list != NULL) {
+        while (--argidx >= 0) free(args_list[argidx]);
+        free(args_list);
+        free(args_len);
     }
-    if (!(result = resize_bytes(result, reslen - rescnt))) {
-        return NULL;
-    }
+    if (args_owned) Py_DECREF(args);
+    if (!(result = resize_bytes(result, reslen - rescnt))) return NULL;        //resize
     return result;
 
- error:
-    Py_DECREF(result);
-    if (args_owned) {
-        Py_DECREF(args);
+error:
+    if (args_list != NULL) {    //release all the refcnt
+        while (--argidx >= 0) free(args_list[argidx]);
+        free(args_list);
+        free(args_len);
     }
+    Py_DECREF(result);
+    if (args_owned) Py_DECREF(args);
     return NULL;
 }

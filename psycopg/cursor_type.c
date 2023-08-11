@@ -127,12 +127,13 @@ exit:
 /* mogrify a query string and build argument array or dict */
 
 RAISES_NEG static int
-_mogrify(PyObject *var, PyObject *fmt, cursorObject *curs, PyObject **new)
+_mogrify(PyObject *var, PyObject *fmt, cursorObject *curs, PyObject **new, char place_holder)
 {
     PyObject *key, *value, *n;
     const char *d, *c;
     Py_ssize_t index = 0;
     int force = 0, kind = 0;
+    int max_index = 0;
 
     /* from now on we'll use n and replace its value in *new only at the end,
        just before returning. we also init *new to NULL to exit with an error
@@ -141,164 +142,199 @@ _mogrify(PyObject *var, PyObject *fmt, cursorObject *curs, PyObject **new)
     c = Bytes_AsString(fmt);
 
     while(*c) {
-        if (*c++ != '%') {
-            /* a regular character */
-            continue;
-        }
-
-        switch (*c) {
-
-        /* handle plain percent symbol in format string */
-        case '%':
+        while ((*c != '\0') && (*c != place_holder)) ++c;
+        if (*c == '%') {
             ++c;
             force = 1;
-            break;
+            if (*c == '(') {
+                if ((kind == 2) || (kind == 3)) {
+                    Py_XDECREF(n);
+                    psyco_set_error(ProgrammingError, curs,
+                    "argument formats can't be mixed");
+                    return -1;
+                }
+                kind = 1;
 
-        /* if we find '%(' then this is a dictionary, we:
-           1/ find the matching ')' and extract the key name
-           2/ locate the value in the dictionary (or return an error)
-           3/ mogrify the value into something useful (quoting)...
-           4/ ...and add it to the new dictionary to be used as argument
-        */
-        case '(':
-            /* check if some crazy guy mixed formats */
-            if (kind == 2) {
-                Py_XDECREF(n);
-                psyco_set_error(ProgrammingError, curs,
-                   "argument formats can't be mixed");
-                return -1;
+                /* let's have d point the end of the argument */
+                for (d = c + 1; *d && *d != ')' && *d != '%'; d++);
+
+                if (*d == ')') {
+                    if (!(key = Text_FromUTF8AndSize(c+1, (Py_ssize_t)(d-c-1)))) {
+                        Py_XDECREF(n);
+                        return -1;
+                    }
+
+                    /*  if value is NULL we did not find the key (or this is not a
+                        dictionary): let python raise a KeyError */
+                    if (!(value = PyObject_GetItem(var, key))) {
+                        Py_DECREF(key); /* destroy key */
+                        Py_XDECREF(n);  /* destroy n */
+                        return -1;
+                    }
+                    /* key has refcnt 1, value the original value + 1 */
+
+                    Dprintf("_mogrify: value refcnt: "
+                    FORMAT_CODE_PY_SSIZE_T " (+1)", Py_REFCNT(value));
+
+                    if (n == NULL) {
+                        if (!(n = PyDict_New())) {
+                            Py_DECREF(key);
+                            Py_DECREF(value);
+                            return -1;
+                        }
+                    }
+
+                    if (0 == PyDict_Contains(n, key)) {
+                        PyObject *t = NULL;
+
+                        /* None is always converted to NULL; this is an
+                        optimization over the adapting code and can go away in
+                        the future if somebody finds a None adapter useful. */
+                        if (value == Py_None) {
+                            Py_INCREF(psyco_null);
+                            t = psyco_null;
+                            PyDict_SetItem(n, key, t);
+                            /* t is a new object, refcnt = 1, key is at 2 */
+                        }
+                        else {
+                            t = microprotocol_getquoted(value, curs->conn);
+                            if (t != NULL) {
+                                PyDict_SetItem(n, key, t);
+                                /* both key and t refcnt +1, key is at 2 now */
+                            }
+                            else {
+                                /* no adapter found, raise a BIG exception */
+                                Py_DECREF(key);
+                                Py_DECREF(value);
+                                Py_DECREF(n);
+                                return -1;
+                            }
+                        }
+
+                        Py_XDECREF(t); /* t dies here */
+                    }
+                    Py_DECREF(value);
+                    Py_DECREF(key); /* key has the original refcnt now */
+                    Dprintf("_mogrify: after value refcnt: "
+                        FORMAT_CODE_PY_SSIZE_T, Py_REFCNT(value));
+                }
+                else {
+                    /* we found %( but not a ) */
+                    Py_XDECREF(n);
+                    psyco_set_error(ProgrammingError, curs,
+                    "incomplete placeholder: '%(' without ')'");
+                    return -1;
+                }
+                c = d + 1;
             }
-            kind = 1;
+            else if (*c == 's') {
+                /* this is a format that expects a tuple; it is much easier,
+                because we don't need to check the old/new dictionary for
+                keys */
 
-            /* let's have d point the end of the argument */
-            for (d = c + 1; *d && *d != ')' && *d != '%'; d++);
+                /* check if some crazy guy mixed formats */
+                if ((kind == 1) || (kind == 3)) {
+                    Py_XDECREF(n);
+                    psyco_set_error(ProgrammingError, curs,
+                    "argument formats can't be mixed");
+                    return -1;
+                }
+                kind = 2;
 
-            if (*d == ')') {
-                if (!(key = Text_FromUTF8AndSize(c+1, (Py_ssize_t)(d-c-1)))) {
+                value = PySequence_GetItem(var, index);
+                /* value has refcnt inc'ed by 1 here */
+
+                /*  if value is NULL this is not a sequence or the index is wrong;
+                    anyway we let python set its own exception */
+                if (value == NULL) {
                     Py_XDECREF(n);
                     return -1;
                 }
 
-                /*  if value is NULL we did not find the key (or this is not a
-                    dictionary): let python raise a KeyError */
-                if (!(value = PyObject_GetItem(var, key))) {
-                    Py_DECREF(key); /* destroy key */
-                    Py_XDECREF(n);  /* destroy n */
-                    return -1;
-                }
-                /* key has refcnt 1, value the original value + 1 */
-
-                Dprintf("_mogrify: value refcnt: "
-                  FORMAT_CODE_PY_SSIZE_T " (+1)", Py_REFCNT(value));
-
                 if (n == NULL) {
-                    if (!(n = PyDict_New())) {
-                        Py_DECREF(key);
+                    if (!(n = PyTuple_New(PyObject_Length(var)))) {
                         Py_DECREF(value);
                         return -1;
                     }
                 }
 
-                if (0 == PyDict_Contains(n, key)) {
-                    PyObject *t = NULL;
-
-                    /* None is always converted to NULL; this is an
-                       optimization over the adapting code and can go away in
-                       the future if somebody finds a None adapter useful. */
-                    if (value == Py_None) {
-                        Py_INCREF(psyco_null);
-                        t = psyco_null;
-                        PyDict_SetItem(n, key, t);
-                        /* t is a new object, refcnt = 1, key is at 2 */
-                    }
-                    else {
-                        t = microprotocol_getquoted(value, curs->conn);
-                        if (t != NULL) {
-                            PyDict_SetItem(n, key, t);
-                            /* both key and t refcnt +1, key is at 2 now */
-                        }
-                        else {
-                            /* no adapter found, raise a BIG exception */
-                            Py_DECREF(key);
-                            Py_DECREF(value);
-                            Py_DECREF(n);
-                            return -1;
-                        }
-                    }
-
-                    Py_XDECREF(t); /* t dies here */
-                }
-                Py_DECREF(value);
-                Py_DECREF(key); /* key has the original refcnt now */
-                Dprintf("_mogrify: after value refcnt: "
-                    FORMAT_CODE_PY_SSIZE_T, Py_REFCNT(value));
-            }
-            else {
-                /* we found %( but not a ) */
-                Py_XDECREF(n);
-                psyco_set_error(ProgrammingError, curs,
-                   "incomplete placeholder: '%(' without ')'");
-                return -1;
-            }
-            c = d + 1;  /* after the ) */
-            break;
-
-        default:
-            /* this is a format that expects a tuple; it is much easier,
-               because we don't need to check the old/new dictionary for
-               keys */
-
-            /* check if some crazy guy mixed formats */
-            if (kind == 1) {
-                Py_XDECREF(n);
-                psyco_set_error(ProgrammingError, curs,
-                  "argument formats can't be mixed");
-                return -1;
-            }
-            kind = 2;
-
-            value = PySequence_GetItem(var, index);
-            /* value has refcnt inc'ed by 1 here */
-
-            /*  if value is NULL this is not a sequence or the index is wrong;
-                anyway we let python set its own exception */
-            if (value == NULL) {
-                Py_XDECREF(n);
-                return -1;
-            }
-
-            if (n == NULL) {
-                if (!(n = PyTuple_New(PyObject_Length(var)))) {
-                    Py_DECREF(value);
-                    return -1;
-                }
-            }
-
-            /* let's have d point just after the '%' */
-            if (value == Py_None) {
-                Py_INCREF(psyco_null);
-                PyTuple_SET_ITEM(n, index, psyco_null);
-                Py_DECREF(value);
-            }
-            else {
-                PyObject *t = microprotocol_getquoted(value, curs->conn);
-
-                if (t != NULL) {
-                    PyTuple_SET_ITEM(n, index, t);
+                /* let's have d point just after the '%' */
+                if (value == Py_None) {
+                    Py_INCREF(psyco_null);
+                    PyTuple_SET_ITEM(n, index, psyco_null);
                     Py_DECREF(value);
                 }
                 else {
-                    Py_DECREF(n);
-                    Py_DECREF(value);
+                    PyObject *t = microprotocol_getquoted(value, curs->conn);
+
+                    if (t != NULL) {
+                        PyTuple_SET_ITEM(n, index, t);
+                        Py_DECREF(value);
+                    }
+                    else {
+                        Py_DECREF(n);
+                        Py_DECREF(value);
+                        return -1;
+                    }
+                }
+                index += 1;
+            }
+        }
+
+        else if (*c == '$') {       //new place holder $
+            int tmp_index = 0;
+            if ((kind == 1) || (kind == 2)) {
+                Py_XDECREF(n);
+                psyco_set_error(ProgrammingError, curs,
+                "argument formats can't be mixed");
+                return -1;
+            }
+            kind = 3;               //kind = 3 means using 
+
+            ++c;
+            while (isdigit(*c)) {   //calculate index
+                tmp_index = tmp_index * 10 + (*c) -'0';
+                ++c;
+            }
+            --tmp_index;
+
+            for (; max_index <= tmp_index; ++max_index) {
+                //to avoid index not cover all arguments, which may cause double free in bytes_format
+                int id = max_index;
+                value = PySequence_GetItem(var, id);
+                if (value == NULL) {
+                    Py_XDECREF(n);
                     return -1;
                 }
+                if (n == NULL) {
+                    if (!(n = PyTuple_New(PyObject_Length(var)))) {
+                        Py_DECREF(value);
+                        return -1;
+                    }
+                }
+                if (value == Py_None) {
+                    Py_INCREF(psyco_null);
+                    PyTuple_SET_ITEM(n, id, psyco_null);
+                    Py_DECREF(value);
+                }
+                else {
+                    PyObject *t = microprotocol_getquoted(value, curs->conn);
+                    if (t != NULL) {
+                        PyTuple_SET_ITEM(n, id, t);
+                        Py_DECREF(value);
+                    }
+                    else {
+                        Py_DECREF(n);
+                        Py_DECREF(value);
+                        return -1;
+                    }
+                }
             }
-            index += 1;
+            
         }
     }
 
-    if (force && n == NULL)
-        n = PyTuple_New(0);
+    if (force && n == NULL) n = PyTuple_New(0);
     *new = n;
 
     return 0;
@@ -314,7 +350,7 @@ _mogrify(PyObject *var, PyObject *fmt, cursorObject *curs, PyObject **new)
  */
 static PyObject *
 _psyco_curs_merge_query_args(cursorObject *self,
-                             PyObject *query, PyObject *args)
+                             PyObject *query, PyObject *args, char place_holder)
 {
     PyObject *fquery;
 
@@ -329,7 +365,7 @@ _psyco_curs_merge_query_args(cursorObject *self,
        the current exception (we will later restore it if the type or the
        strings do not match.) */
 
-    if (!(fquery = Bytes_Format(query, args))) {
+    if (!(fquery = Bytes_Format(query, args, place_holder))) {
         PyObject *err, *arg, *trace;
         int pe = 0;
 
@@ -376,7 +412,7 @@ _psyco_curs_merge_query_args(cursorObject *self,
 RAISES_NEG static int
 _psyco_curs_execute(cursorObject *self,
                     PyObject *query, PyObject *vars,
-                    long int async, int no_result)
+                    char place_holder, long int async, int no_result)
 {
     int res = -1;
     int tmp;
@@ -396,12 +432,12 @@ _psyco_curs_execute(cursorObject *self,
        the right thing (i.e., what the user expects) */
     if (vars && vars != Py_None)
     {
-        if (0 > _mogrify(vars, query, self, &cvt)) { goto exit; }
+        if (0 > _mogrify(vars, query, self, &cvt, place_holder)) { goto exit; }
     }
 
     /* Merge the query to the arguments if needed */
     if (cvt) {
-        if (!(fquery = _psyco_curs_merge_query_args(self, query, cvt))) {
+        if (!(fquery = _psyco_curs_merge_query_args(self, query, cvt, place_holder))) {
             goto exit;
         }
     }
@@ -461,13 +497,26 @@ exit:
 static PyObject *
 curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
-    PyObject *vars = NULL, *operation = NULL;
+    PyObject *vars = NULL, *operation = NULL, *Place_holder = NULL;
+    char place_holder = '%';    //default value: '%'
 
-    static char *kwlist[] = {"query", "vars", NULL};
+    static char *kwlist[] = {"query", "vars", "place_holder", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|O", kwlist,
-                                     &operation, &vars)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OO", kwlist,
+                                     &operation, &vars, &Place_holder)) {
         return NULL;
+    }
+
+    if (Place_holder != NULL) { //if exists place holder argument, it will be checked and parse
+        if (!(Place_holder = curs_validate_sql_basic(self, Place_holder))) {
+            psyco_set_error(ProgrammingError, self, "can't parse place holder");
+            return NULL;
+        }
+        if (Bytes_GET_SIZE(Place_holder) != 1) {
+            psyco_set_error(ProgrammingError, self, "place holder must be a character");
+            return NULL;
+        }
+        place_holder = Bytes_AS_STRING(Place_holder)[0];
     }
 
     if (self->name != NULL) {
@@ -488,7 +537,7 @@ curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
     EXC_IF_ASYNC_IN_PROGRESS(self, execute);
     EXC_IF_TPC_PREPARED(self->conn, execute);
 
-    if (0 > _psyco_curs_execute(self, operation, vars, self->conn->async, 0)) {
+    if (0 > _psyco_curs_execute(self, operation, vars, place_holder, self->conn->async, 0)) {
         return NULL;
     }
 
@@ -502,18 +551,31 @@ curs_execute(cursorObject *self, PyObject *args, PyObject *kwargs)
 static PyObject *
 curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
-    PyObject *operation = NULL, *vars = NULL;
+    PyObject *operation = NULL, *vars = NULL, *Place_holder = NULL;
     PyObject *v, *iter = NULL;
+    char place_holder = '%';
     long rowcount = 0;
 
-    static char *kwlist[] = {"query", "vars_list", NULL};
+    static char *kwlist[] = {"query", "vars_list", "plae_holder", NULL};
 
     /* reset rowcount to -1 to avoid setting it when an exception is raised */
     self->rowcount = -1;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO", kwlist,
-                                     &operation, &vars)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OO", kwlist,
+                                     &operation, &vars, &Place_holder)) {
         return NULL;
+    }
+
+    if (Place_holder != NULL) {
+        if (!(Place_holder = curs_validate_sql_basic(self, Place_holder))) {
+            psyco_set_error(ProgrammingError, self, "can't parse place holder");
+            return NULL;
+        }
+        if (Bytes_GET_SIZE(Place_holder) != 1) {
+            psyco_set_error(ProgrammingError, self, "place holder must be a character");
+            return NULL;
+        }
+        place_holder = Bytes_AS_STRING(Place_holder)[0];
     }
 
     EXC_IF_CURS_CLOSED(self);
@@ -532,7 +594,7 @@ curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
     }
 
     while ((v = PyIter_Next(vars)) != NULL) {
-        if (0 > _psyco_curs_execute(self, operation, v, 0, 1)) {
+        if (0 > _psyco_curs_execute(self, operation, v, place_holder, 0, 1)) {
             Py_DECREF(v);
             Py_XDECREF(iter);
             return NULL;
@@ -562,7 +624,7 @@ curs_executemany(cursorObject *self, PyObject *args, PyObject *kwargs)
 
 static PyObject *
 _psyco_curs_mogrify(cursorObject *self,
-                   PyObject *operation, PyObject *vars)
+                   PyObject *operation, PyObject *vars, char place_holder)
 {
     PyObject *fquery = NULL, *cvt = NULL;
 
@@ -577,13 +639,13 @@ _psyco_curs_mogrify(cursorObject *self,
 
     if (vars && vars != Py_None)
     {
-        if (0 > _mogrify(vars, operation, self, &cvt)) {
+        if (0 > _mogrify(vars, operation, self, &cvt, place_holder)) {
             goto cleanup;
         }
     }
 
     if (vars && cvt) {
-        if (!(fquery = _psyco_curs_merge_query_args(self, operation, cvt))) {
+        if (!(fquery = _psyco_curs_merge_query_args(self, operation, cvt, place_holder))) {
             goto cleanup;
         }
 
@@ -606,16 +668,29 @@ cleanup:
 static PyObject *
 curs_mogrify(cursorObject *self, PyObject *args, PyObject *kwargs)
 {
-    PyObject *vars = NULL, *operation = NULL;
+    PyObject *vars = NULL, *operation = NULL, *Place_holder = NULL;
+    char place_holder = '%';
 
-    static char *kwlist[] = {"query", "vars", NULL};
+    static char *kwlist[] = {"query", "vars", "place_holder", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|O", kwlist,
-                                     &operation, &vars)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OO", kwlist,
+                                     &operation, &vars, &Place_holder)) {
         return NULL;
     }
 
-    return _psyco_curs_mogrify(self, operation, vars);
+    if (Place_holder != NULL) {
+        if (!(Place_holder = curs_validate_sql_basic(self, Place_holder))) {
+            psyco_set_error(ProgrammingError, self, "can't parse place holder");
+            return NULL;
+        }
+        if (Bytes_GET_SIZE(Place_holder) != 1) {
+            psyco_set_error(ProgrammingError, self, "place holder must be a character");
+            return NULL;
+        }
+        place_holder = Bytes_AS_STRING(Place_holder)[0];
+    }
+
+    return _psyco_curs_mogrify(self, operation, vars, place_holder);
 }
 
 
@@ -1016,10 +1091,24 @@ curs_callproc(cursorObject *self, PyObject *args)
     PyObject *pvals = NULL;
     char *cpname = NULL;
     char **scpnames = NULL;
+    PyObject *Place_holder = NULL;
+    char place_holder = '%';
 
-    if (!PyArg_ParseTuple(args, "s#|O", &procname, &procname_len,
-                &parameters)) {
+    if (!PyArg_ParseTuple(args, "s#|OO", &procname, &procname_len,
+                &parameters, &Place_holder)) {
         goto exit;
+    }
+    
+    if (Place_holder != NULL) {
+        if (!(Place_holder = curs_validate_sql_basic(self, Place_holder))) {
+            psyco_set_error(ProgrammingError, self, "can't parse place holder");
+            return NULL;
+        }
+        if (Bytes_GET_SIZE(Place_holder) != 1) {
+            psyco_set_error(ProgrammingError, self, "place holder must be a character");
+            return NULL;
+        }
+        place_holder = Bytes_AS_STRING(Place_holder)[0];
     }
 
     EXC_IF_CURS_CLOSED(self);
@@ -1114,7 +1203,7 @@ curs_callproc(cursorObject *self, PyObject *args)
     }
 
     if (0 <= _psyco_curs_execute(
-            self, operation, pvals, self->conn->async, 0)) {
+            self, operation, pvals, place_holder, self->conn->async, 0)) {
         /* The dict case is outside DBAPI scope anyway, so simply return None */
         if (using_dict) {
             res = Py_None;
