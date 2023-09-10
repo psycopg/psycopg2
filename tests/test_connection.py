@@ -1922,6 +1922,10 @@ class TestConnectionInfo(ConnectingTestCase):
     @skip_before_libpq(9, 5)
     @skip_after_libpq(16)
     def test_ssl_attribute(self):
+        # Skip this test even if libpq built == 15, runtime == 16 (see #1619)
+        if ext.libpq_version() >= 160000:
+            return self.skipTest("libpq runtime version == %s" % ext.libpq_version())
+
         attribs = self.conn.info.ssl_attribute_names
         self.assert_(attribs)
         if self.conn.info.ssl_in_use:
