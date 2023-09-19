@@ -102,7 +102,7 @@ class AbstractConnectionPool:
             if key is None:
                 raise PoolError("trying to put unkeyed connection")
 
-        if len(self._pool) < self.minconn and not close:
+        if len(self._pool) < self.maxconn and not close:
             # Return the connection into a consistent state before putting
             # it back into the pool
             if not conn.closed:
