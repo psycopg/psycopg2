@@ -8,10 +8,14 @@
 # so it can pretty much only be executed by a sudo user as it is.
 
 set -euo pipefail
-set -x
+# set -x
 
 python_versions="3.8.10 3.9.13 3.10.5 3.11.0"
-pg_version=15
+pg_version=16
+
+function log {
+    echo "$@" >&2
+}
 
 # Move to the root of the project
 dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -26,6 +30,7 @@ fi
 if [[ -x /opt/homebrew/bin/brew ]]; then
     eval "$(/opt/homebrew/bin/brew shellenv)"
 else
+    log "installing brew"
     command -v brew > /dev/null || (
         # Not necessary: already installed
         # xcode-select --install
@@ -39,11 +44,12 @@ export PGDATA=/opt/homebrew/var/postgresql@${pg_version}
 
 # Install PostgreSQL, if necessary
 command -v pg_config > /dev/null || (
+    log "installing postgres"
     brew install postgresql@${pg_version}
 )
 
-# After PostgreSQL 15, the bin path is not in the path.
-export PATH=$(ls -d1 /opt/homebrew/Cellar/postgresql@${pg_version}/*/bin):$PATH
+# Starting from PostgreSQL 15, the bin path is not in the path.
+export PATH="$(ls -d1 /opt/homebrew/Cellar/postgresql@${pg_version}/*/bin):$PATH"
 
 # Make sure the server is running
 
@@ -51,7 +57,8 @@ export PATH=$(ls -d1 /opt/homebrew/Cellar/postgresql@${pg_version}/*/bin):$PATH
 # brew services start postgresql@${pg_version}
 
 if ! pg_ctl status; then
-    pg_ctl -l /opt/homebrew/var/log/postgresql@${pg_version}.log start
+    log "starting the server"
+    pg_ctl -l "/opt/homebrew/var/log/postgresql@${pg_version}.log" start
 fi
 
 
@@ -59,6 +66,7 @@ fi
 for ver3 in $python_versions; do
     ver2=$(echo $ver3 | sed 's/\([^\.]*\)\(\.[^\.]*\)\(.*\)/\1\2/')
     command -v python${ver2} > /dev/null || (
+        log "installing Python $ver3"
         (cd /tmp &&
             curl -fsSl -O \
                 https://www.python.org/ftp/python/${ver3}/python-${ver3}-macos11.pkg)
@@ -68,11 +76,15 @@ done
 
 # Create a virtualenv where to work
 if [[ ! -x .venv/bin/python ]]; then
+    log "creating a virtualenv"
     python3 -m venv .venv
 fi
 
+log "installing cibuildwheel"
 source .venv/bin/activate
 pip install cibuildwheel
+
+log "building wheels"
 
 # Build the binary packages
 export CIBW_PLATFORM=macos

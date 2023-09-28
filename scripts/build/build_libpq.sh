@@ -155,7 +155,8 @@ if [ ! -d "${postgres_dir}" ]; then
     # export LD_LIBRARY_PATH="${LIBPQ_BUILD_PREFIX}/lib"
 
     ./configure --prefix=${LIBPQ_BUILD_PREFIX} --sysconfdir=/etc/postgresql-common \
-        --without-readline --with-gssapi --with-openssl --with-pam --with-ldap \
+        --with-gssapi --with-openssl --with-pam --with-ldap \
+        --without-readline --without-icu \
         CPPFLAGS=-I${LIBPQ_BUILD_PREFIX}/include/ LDFLAGS=-L${LIBPQ_BUILD_PREFIX}/lib
     make -C src/interfaces/libpq
     make -C src/bin/pg_config

@@ -8,8 +8,8 @@ To invalidate the cache, update this file and check it into git.
 
 Currently used modules built in the cache:
 
-- OPENSSL_VERSION: 1.1.1v
-- POSTGRES_VERSION: 15.3
+- OPENSSL_VERSION: 1.1.1w
+- POSTGRES_VERSION: 16.0
 
 
 NOTE: to zap the cache manually you can also use:

@@ -1,6 +1,13 @@
 Current release
 ---------------
 
+What's new in psycopg 2.9.8
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Wheel package bundled with PostgreSQL 16 libpq in order to add support for
+  recent features, such as ``sslcertmode``.
+
+
 What's new in psycopg 2.9.7
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
