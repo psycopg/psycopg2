@@ -7,7 +7,7 @@ What's new in psycopg 2.9.7
 - Fix propagation of exceptions raised during module initialization
   (:ticket:`#1598`).
 - Fix building when pg_config returns an empty string (:ticket:`#1599`).
-- Wheel package compiled against OpenSSL 1.1.1v.
+- Wheel package bundled with OpenSSL 1.1.1v.
 
 
 What's new in psycopg 2.9.6
@@ -15,7 +15,7 @@ What's new in psycopg 2.9.6
 
 - Package manylinux 2014 for aarch64 and ppc64le platforms, in order to
   include libpq 15 in the binary package (:ticket:`#1396`).
-- Wheel package compiled against OpenSSL 1.1.1t.
+- Wheel package bundled with OpenSSL 1.1.1t.
 
 
 What's new in psycopg 2.9.5
@@ -24,7 +24,7 @@ What's new in psycopg 2.9.5
 - Add support for Python 3.11.
 - Add support for rowcount in MERGE statements in binary packages
   (:ticket:`#1497`).
-- Wheel package compiled against OpenSSL 1.1.1r and PostgreSQL 15 libpq.
+- Wheel package bundled with OpenSSL 1.1.1r and PostgreSQL 15 libpq.
 
 
 What's new in psycopg 2.9.4
@@ -38,7 +38,7 @@ What's new in psycopg 2.9.4
   binary packages (:ticket:`#1365`).
 - `~psycopg2.errorcodes` map and `~psycopg2.errors` classes updated to
   PostgreSQL 15.
-- Wheel package compiled against OpenSSL 1.1.1q and PostgreSQL 14.4 libpq.
+- Wheel package bundled with OpenSSL 1.1.1q and PostgreSQL 14.4 libpq.
 
 
 What's new in psycopg 2.9.3
@@ -55,7 +55,7 @@ What's new in psycopg 2.9.2
 - `~psycopg2.errorcodes` map and `~psycopg2.errors` classes updated to
   PostgreSQL 14.
 - Add preliminary support for Python 3.11 (:tickets:`#1376, #1386`).
-- Wheel package compiled against OpenSSL 1.1.1l and PostgreSQL 14.1 libpq
+- Wheel package bundled with OpenSSL 1.1.1l and PostgreSQL 14.1 libpq
   (:ticket:`#1388`).
 
 
@@ -92,7 +92,7 @@ Other changes:
   platforms.
 - Provide :pep:`600` wheels packages (manylinux_2_24 tag) for aarch64 and
   ppc64le platforms.
-- Wheel package compiled against OpenSSL 1.1.1k and PostgreSQL 13.3 libpq.
+- Wheel package bundled with OpenSSL 1.1.1k and PostgreSQL 13.3 libpq.
 - Build system for Linux/MacOS binary packages moved to GitHub Actions.
 
 
@@ -116,7 +116,7 @@ What's new in psycopg 2.8.6
 - `~psycopg2.errorcodes` map and `~psycopg2.errors` classes updated to
   PostgreSQL 13.
 - Added wheel packages for ARM architecture (:ticket:`#1125`).
-- Wheel package compiled against OpenSSL 1.1.1g.
+- Wheel package bundled with OpenSSL 1.1.1g.
 
 
 What's new in psycopg 2.8.5
@@ -145,7 +145,7 @@ What's new in psycopg 2.8.4
   and `~psycopg2.extensions.Column.type_code` (:ticket:`#961`).
 - `~psycopg2.errorcodes` map and `~psycopg2.errors` classes updated to
   PostgreSQL 12.
-- Wheel package compiled against OpenSSL 1.1.1d and PostgreSQL at least 11.4.
+- Wheel package bundled with OpenSSL 1.1.1d and PostgreSQL at least 11.4.
 
 
 What's new in psycopg 2.8.3
@@ -234,7 +234,7 @@ Other changes:
   source files are now compatible with Python 2 & 3 as is.
 - The `!psycopg2.test` package is no longer installed by ``python setup.py
   install``.
-- Wheel package compiled against OpenSSL 1.0.2r and PostgreSQL 11.2 libpq.
+- Wheel package bundled with OpenSSL 1.0.2r and PostgreSQL 11.2 libpq.
 
 
 What's new in psycopg 2.7.7
@@ -242,14 +242,14 @@ What's new in psycopg 2.7.7
 
 - Cleanup of the cursor results assignment code, which might have solved
   double free and inconsistencies in concurrent usage (:tickets:`#346, #384`).
-- Wheel package compiled against OpenSSL 1.0.2q.
+- Wheel package bundled with OpenSSL 1.0.2q.
 
 
 What's new in psycopg 2.7.6.1
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Fixed binary package broken on OS X 10.12 (:ticket:`#807`).
-- Wheel package compiled against PostgreSQL 11.1 libpq.
+- Wheel package bundled with PostgreSQL 11.1 libpq.
 
 
 What's new in psycopg 2.7.6
@@ -266,7 +266,7 @@ What's new in psycopg 2.7.6
 - `~psycopg2.extras.execute_values()` accepts `~psycopg2.sql.Composable`
   objects (:ticket:`#794`).
 - `~psycopg2.errorcodes` map updated to PostgreSQL 11.
-- Wheel package compiled against PostgreSQL 10.5 libpq and OpenSSL 1.0.2p.
+- Wheel package bundled with PostgreSQL 10.5 libpq and OpenSSL 1.0.2p.
 
 
 What's new in psycopg 2.7.5
@@ -280,7 +280,7 @@ What's new in psycopg 2.7.5
 - Maybe fixed building on MSYS2 (as reported in :ticket:`#658`).
 - Allow string subclasses in connection and other places (:ticket:`#679`).
 - Don't raise an exception closing an unused named cursor (:ticket:`#716`).
-- Wheel package compiled against PostgreSQL 10.4 libpq and OpenSSL 1.0.2o.
+- Wheel package bundled with PostgreSQL 10.4 libpq and OpenSSL 1.0.2o.
 
 
 What's new in psycopg 2.7.4
@@ -302,7 +302,7 @@ What's new in psycopg 2.7.4
 - Fixed `~cursor.rowcount` after `~cursor.executemany()` with :sql:`RETURNING`
   statements (:ticket:`#633`).
 - Fixed compatibility problem with pypy3 (:ticket:`#649`).
-- Wheel packages compiled against PostgreSQL 10.1 libpq and OpenSSL 1.0.2n.
+- Wheel packages bundled with PostgreSQL 10.1 libpq and OpenSSL 1.0.2n.
 - Wheel packages for Python 2.6 no more available (support dropped from
   wheel building infrastructure).
 
@@ -310,7 +310,7 @@ What's new in psycopg 2.7.4
 What's new in psycopg 2.7.3.2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- Wheel package compiled against PostgreSQL 10.0 libpq and OpenSSL 1.0.2l
+- Wheel package bundled with PostgreSQL 10.0 libpq and OpenSSL 1.0.2l
   (:tickets:`#601, #602`).
 
 
@@ -383,7 +383,7 @@ New features:
   them together.
 - Added `~psycopg2.__libpq_version__` and
   `~psycopg2.extensions.libpq_version()` to inspect the version of the
-  ``libpq`` library the module was compiled/loaded with
+  ``libpq`` library the module was bundled with
   (:tickets:`#35, #323`).
 - The attributes `~connection.notices` and `~connection.notifies` can be
   customized replacing them with any object exposing an `!append()` method
