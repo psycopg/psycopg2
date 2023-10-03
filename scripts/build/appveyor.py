@@ -660,7 +660,7 @@ class Options:
         For large values of 2, occasionally.
         """
         rv = os.environ['PY_VER']
-        assert rv in ('36', '37', '38', '39', '310', '311'), rv
+        assert rv in ('37', '38', '39', '310', '311'), rv
         return rv
 
     @property
@@ -742,7 +742,6 @@ class Options:
         # Py 3.6--3.8 = VS Ver. 14.0 (VS 2015)
         # Py 3.9 = VS Ver. 16.0 (VS 2019)
         vsvers = {
-            '36': '14.0',
             '37': '14.0',
             '38': '14.0',
             '39': '16.0',

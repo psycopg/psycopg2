@@ -1,6 +1,12 @@
 Current release
 ---------------
 
+What's new in psycopg 2.9.9
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Drop support for Python 3.6.
+
+
 What's new in psycopg 2.9.8
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
