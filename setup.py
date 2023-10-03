@@ -36,10 +36,7 @@ from distutils.command.build_ext import build_ext
 from distutils.ccompiler import get_default_compiler
 from distutils.errors import CompileError
 
-try:
-    import configparser
-except ImportError:
-    import ConfigParser as configparser
+import configparser
 
 # Take a look at https://www.python.org/dev/peps/pep-0440/
 # for a consistent versioning pattern.
@@ -161,10 +158,7 @@ For further information please check the 'doc/src/install.rst' file (also at
         return None
 
     def _get_pg_config_from_registry(self):
-        try:
-            import winreg
-        except ImportError:
-            import _winreg as winreg
+        import winreg
 
         reg = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
         try:
