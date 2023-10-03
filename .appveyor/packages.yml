@@ -11,6 +11,8 @@ environment:
   matrix:
     # For Python versions available on Appveyor, see
     # https://www.appveyor.com/docs/windows-images-software/#python
+    - {PY_VER: "312", PY_ARCH: "32", APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019}
+    - {PY_VER: "312", PY_ARCH: "64", APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019}
     - {PY_VER: "311", PY_ARCH: "32", APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019}
     - {PY_VER: "311", PY_ARCH: "64", APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019}
     - {PY_VER: "310", PY_ARCH: "32", APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019}
