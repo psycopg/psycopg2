@@ -562,6 +562,7 @@ setup(name="psycopg2",
       ext_modules=ext,
       project_urls={
           'Homepage': 'https://psycopg.org/',
+          'Changes': 'https://github.com/psycopg/psycopg2/blob/master/NEWS',
           'Documentation': 'https://www.psycopg.org/docs/',
           'Code': 'https://github.com/psycopg/psycopg2',
           'Issue Tracker': 'https://github.com/psycopg/psycopg2/issues',
