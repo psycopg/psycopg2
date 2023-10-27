@@ -71,17 +71,14 @@ def step_install():
     python_info()
     configure_sdk()
     configure_postgres()
-
-    if opt.is_wheel:
-        install_wheel_support()
+    install_python_build_tools()
 
 
-def install_wheel_support():
+def install_python_build_tools():
     """
-    Install an up-to-date pip wheel package to build wheels.
+    Install or upgrade pip and build tools.
     """
-    run_python("-m pip install --upgrade pip".split())
-    run_python("-m pip install wheel".split())
+    run_python("-m pip install --upgrade pip setuptools wheel".split())
 
 
 def configure_sdk():
