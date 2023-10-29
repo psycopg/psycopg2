@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repos
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Build sdist
         run: ./scripts/build/build_sdist.sh
@@ -39,7 +39,7 @@ jobs:
 
     services:
       postgresql:
-        image: postgres:13
+        image: postgres:16
         env:
           POSTGRES_PASSWORD: password
         ports:
@@ -69,10 +69,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repos
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up QEMU for multi-arch build
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
 
       - name: Cache libpq build
         uses: actions/cache@v3
@@ -81,7 +81,7 @@ jobs:
           key: libpq-${{ env.LIBPQ_VERSION }}-${{ matrix.platform }}-${{ matrix.arch }}
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.16.1
+        uses: pypa/cibuildwheel@v2.16.2
         env:
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
           CIBW_MANYLINUX_I686_IMAGE: manylinux2014
@@ -114,7 +114,7 @@ jobs:
 
     services:
       postgresql:
-        image: postgres:14
+        image: postgres:16
         env:
           POSTGRES_PASSWORD: password
         ports:
@@ -140,10 +140,10 @@ jobs:
 
     steps:
       - name: Checkout repos
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.16.1
+        uses: pypa/cibuildwheel@v2.16.2
         env:
           CIBW_BUILD: ${{matrix.pyver}}-macosx_${{matrix.arch}}
           CIBW_ARCHS_MACOS: x86_64
