@@ -10,7 +10,7 @@
 set -euo pipefail
 # set -x
 
-python_versions="3.8.10 3.9.13 3.10.5 3.11.0 3.12.0"
+python_versions="3.8.18 3.9.18 3.10.13 3.11.6 3.12.0"
 pg_version=16
 
 function log {
@@ -89,7 +89,7 @@ log "building wheels"
 # Build the binary packages
 export CIBW_PLATFORM=macos
 export CIBW_ARCHS=arm64
-export CIBW_BUILD='cp{38,39,310,311}-*'
+export CIBW_BUILD='cp{38,39,310,311,312}-*'
 export CIBW_TEST_COMMAND='python -c "import tests; tests.unittest.main(defaultTest=\"tests.test_suite\")"'
 
 export PSYCOPG2_TESTDB=postgres
