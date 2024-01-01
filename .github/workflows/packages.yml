@@ -25,7 +25,7 @@ jobs:
           PACKAGE_NAME: ${{ matrix.package_name }}
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           path: |
             dist/*.tar.gz
@@ -108,7 +108,7 @@ jobs:
             PSYCOPG2_TESTDB_PASSWORD=password
             PSYCOPG2_TEST_FAST=1
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           path: ./wheelhouse/*.whl
 
@@ -159,6 +159,6 @@ jobs:
             PATH="/usr/local/opt/postgresql@${PG_VERSION}/bin:$PATH"
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           path: ./wheelhouse/*.whl
