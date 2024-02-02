@@ -64,7 +64,7 @@ psyco_lobj_close(lobjectObject *self, PyObject *args)
 /* write method - write data to the lobject */
 
 #define psyco_lobj_write_doc \
-"write(str) -- Write a string to the large object."
+"write(str | bytes) -- Write a string or bytes to the large object."
 
 static PyObject *
 psyco_lobj_write(lobjectObject *self, PyObject *args)
