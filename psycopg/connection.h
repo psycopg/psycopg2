@@ -102,7 +102,7 @@ struct connectionObject {
     int server_version;       /* server version */
 
     PGconn *pgconn;           /* the postgresql connection */
-    PGcancel *cancel;         /* the cancellation structure */
+    int *cancel;         /* the cancellation structure */
 
     /* Weakref to the object executing an asynchronous query. The object
      * is a cursor for async connections, but it may be something else

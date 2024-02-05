@@ -339,6 +339,9 @@ For further information please check the 'doc/src/install.rst' file (also at
     def finalize_linux(self):
         """Finalize build system configuration on GNU/Linux platform."""
         # tell piro that GCC is fine and dandy, but not so MS compilers
+        self.libraries.append("krb5")
+        self.libraries.append("ssl")
+        self.libraries.append("k5crypto")
         for extension in self.extensions:
             extension.extra_compile_args.append(
                 '-Wdeclaration-after-statement')
@@ -358,16 +361,18 @@ For further information please check the 'doc/src/install.rst' file (also at
         pg_config_helper = PostgresConfig(self)
 
         self.include_dirs.append(".")
+        self.include_dirs.append("./nz_include")
         if self.static_libpq:
             if not getattr(self, 'link_objects', None):
                 self.link_objects = []
             self.link_objects.append(
                 os.path.join(pg_config_helper.query("libdir"), "libpq.a"))
         else:
-            self.libraries.append("pq")
+            self.libraries.append("nzpq")
 
         try:
             self.library_dirs.append(pg_config_helper.query("libdir"))
+            self.library_dirs.append("./nz_lib")
             self.include_dirs.append(pg_config_helper.query("includedir"))
             self.include_dirs.append(pg_config_helper.query("includedir-server"))
 
