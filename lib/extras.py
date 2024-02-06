@@ -409,7 +409,9 @@ class LoggingConnection(_connection):
         """
         Public interface of the log method defined in initialize
         """
-        return self._log()(*args, **kwargs)
+        log = self._log()
+        if log:
+            return self._log()(*args, **kwargs)
 
     def filter(self, msg, curs):
         """Filter the query before logging it.
