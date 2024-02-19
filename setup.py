@@ -73,6 +73,7 @@ Operating System :: Unix
 version_flags = ['dt', 'dec']
 
 PLATFORM_IS_WINDOWS = sys.platform.lower().startswith('win')
+PLATFORM_IS_LINUX = sys.platform.lower().startswith('linux')
 
 
 class PostgresConfig:
@@ -367,7 +368,10 @@ For further information please check the 'doc/src/install.rst' file (also at
             self.libraries.append("pq")
 
         try:
-            self.library_dirs.append(pg_config_helper.query("libdir"))
+            pg_config_libdir = pg_config_helper.query("libdir")
+            self.library_dirs.append(pg_config_libdir)
+            if PLATFORM_IS_LINUX:
+                self.rpath.append(pg_config_libdir)
             self.include_dirs.append(pg_config_helper.query("includedir"))
             self.include_dirs.append(pg_config_helper.query("includedir-server"))
 
