@@ -947,6 +947,16 @@ exit:
 #endif
 }
 
+#define psyco_conn_get_host_addr_doc \
+"get_host_addr() -- Get the server IP address of the active connection."
+
+static PyObject *
+psyco_conn_get_host_addr(connectionObject *self, PyObject *dummy)
+{
+    EXC_IF_CONN_CLOSED(self);
+
+    return Text_FromUTF8(PQhostaddr(self->pgconn));
+}
 
 /* lobject method - allocate a new lobject */
 
@@ -1220,6 +1230,8 @@ static struct PyMethodDef connectionObject_methods[] = {
      METH_VARARGS, psyco_conn_get_parameter_status_doc},
     {"get_dsn_parameters", (PyCFunction)psyco_conn_get_dsn_parameters,
      METH_NOARGS, psyco_conn_get_dsn_parameters_doc},
+    {"get_host_addr", (PyCFunction)psyco_conn_get_host_addr,
+     METH_NOARGS, psyco_conn_get_host_addr_doc},
     {"get_backend_pid", (PyCFunction)psyco_conn_get_backend_pid,
      METH_NOARGS, psyco_conn_get_backend_pid_doc},
     {"lobject", (PyCFunction)psyco_conn_lobject,

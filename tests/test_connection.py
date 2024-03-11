@@ -1826,6 +1826,9 @@ class TestConnectionInfo(ConnectingTestCase):
         self.assertEqual(d['dbname'], dbname)  # the only param we can check reliably
         self.assert_('password' not in d, d)
 
+    def test_host_addr(self):
+        self.assertEqual(self.conn.get_host_addr(), "")
+
     def test_status(self):
         self.assertEqual(self.conn.info.status, 0)
         self.assertEqual(self.bconn.info.status, 1)

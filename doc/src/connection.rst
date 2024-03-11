@@ -910,6 +910,20 @@ The ``connection`` class
         .. versionadded:: 2.7
 
 
+    .. index::
+        pair: Connection; Parameters
+
+    .. method:: get_host_addr()
+
+        Get the server IP address of the active connection.
+
+        .. seealso:: libpq docs for `PQhostaddr()`__ for details.
+
+            .. __: https://www.postgresql.org/docs/current/libpq-status.html#LIBPQ-PQHOSTADDR
+
+        .. versionadded:: 2.9.10
+
+
 .. testcode::
     :hide:
 
