@@ -392,7 +392,10 @@ psyco_set_error(PyObject *exc, cursorObject *curs, const char *msg)
 static int
 psyco_is_main_interp(void)
 {
-#if PY_VERSION_HEX >= 0x03080000
+#if PY_VERSION_HEX >= 0x030d0000
+    /* tested with Python 3.13.0a6 */
+    return PyInterpreterState_Get() == PyInterpreterState_Main();
+#elif PY_VERSION_HEX >= 0x03080000
     /* tested with Python 3.8.0a2 */
     return _PyInterpreterState_Get() == PyInterpreterState_Main();
 #else
