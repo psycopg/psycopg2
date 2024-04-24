@@ -18,6 +18,7 @@
 
 from . import testutils
 import unittest
+import sys
 
 import psycopg2
 import psycopg2.extras
@@ -68,7 +69,12 @@ class NetworkingTestCase(testutils.ConnectingTestCase):
         self.assertEquals(cur.fetchone()[0], '127.0.0.1/24')
 
         cur.execute("select %s", [ip.ip_interface('::ffff:102:300/128')])
-        self.assertEquals(cur.fetchone()[0], '::ffff:102:300/128')
+
+        # The texual representation of addresses has changed in Python 3.13
+        if sys.version_info >= (3, 13):
+            self.assertEquals(cur.fetchone()[0], '::ffff:1.2.3.0/128')
+        else:
+            self.assertEquals(cur.fetchone()[0], '::ffff:102:300/128')
 
     @testutils.skip_if_crdb("cidr")
     def test_cidr_cast(self):
@@ -109,7 +115,12 @@ class NetworkingTestCase(testutils.ConnectingTestCase):
         self.assertEquals(cur.fetchone()[0], '127.0.0.0/24')
 
         cur.execute("select %s", [ip.ip_network('::ffff:102:300/128')])
-        self.assertEquals(cur.fetchone()[0], '::ffff:102:300/128')
+
+        # The texual representation of addresses has changed in Python 3.13
+        if sys.version_info >= (3, 13):
+            self.assertEquals(cur.fetchone()[0], '::ffff:1.2.3.0/128')
+        else:
+            self.assertEquals(cur.fetchone()[0], '::ffff:102:300/128')
 
 
 def test_suite():
