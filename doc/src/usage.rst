@@ -814,7 +814,7 @@ is rolled back.
 When a cursor exits the ``with`` block it is closed, releasing any resource
 eventually associated with it. The state of the transaction is not affected.
 
-A connection can be used in more than a ``with`` statement
+A connection can be used in more than one ``with`` statement
 and each ``with`` block is effectively wrapped in a separate transaction::
 
     conn = psycopg2.connect(DSN)
