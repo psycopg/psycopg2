@@ -412,6 +412,7 @@ pq_commit(connectionObject *conn)
     }
 
     Py_BLOCK_THREADS;
+    conn_notifies_process(conn);
     conn_notice_process(conn);
     Py_UNBLOCK_THREADS;
 
