@@ -1344,6 +1344,11 @@ conn_set_session(connectionObject *self, int autocommit,
         }
     }
 
+    Py_BLOCK_THREADS;
+    conn_notifies_process(self);
+    conn_notice_process(self);
+    Py_UNBLOCK_THREADS;
+
     if (autocommit != SRV_STATE_UNCHANGED) {
         self->autocommit = autocommit;
     }
@@ -1407,6 +1412,11 @@ conn_set_client_encoding(connectionObject *self, const char *pgenc)
     if ((res = pq_set_guc_locked(self, "client_encoding", clean_enc, &_save))) {
         goto endlock;
     }
+
+    Py_BLOCK_THREADS;
+    conn_notifies_process(self);
+    conn_notice_process(self);
+    Py_UNBLOCK_THREADS;
 
 endlock:
     pthread_mutex_unlock(&self->lock);
