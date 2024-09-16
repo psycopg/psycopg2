@@ -27,6 +27,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
+          name: sdist-${{ matrix.package_name }}
           path: |
             dist/*.tar.gz
 
@@ -64,7 +65,7 @@ jobs:
       matrix:
         platform: [manylinux, musllinux]
         arch: [x86_64, i686, aarch64, ppc64le]
-        pyver: [cp37, cp38, cp39, cp310, cp311, cp312]
+        pyver: [cp38, cp39, cp310, cp311, cp312, cp313]
 
     runs-on: ubuntu-latest
     steps:
@@ -81,7 +82,7 @@ jobs:
           key: libpq-${{ env.LIBPQ_VERSION }}-${{ matrix.platform }}-${{ matrix.arch }}
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.16.2
+        uses: pypa/cibuildwheel@v2.21.2
         env:
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
           CIBW_MANYLINUX_I686_IMAGE: manylinux2014
@@ -110,6 +111,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
+          name: linux-${{matrix.pyver}}-${{matrix.platform}}_${{matrix.arch}}
           path: ./wheelhouse/*.whl
 
     services:
@@ -128,7 +130,7 @@ jobs:
 
 
   build-macos:
-    runs-on: macos-latest
+    runs-on: macos-${{ matrix.macver }}
     if: true
 
     strategy:
@@ -136,22 +138,37 @@ jobs:
       matrix:
         # These archs require an Apple M1 runner: [arm64, universal2]
         arch: [x86_64]
-        pyver: [cp37, cp38, cp39, cp310, cp311, cp312]
+        pyver: [cp38, cp39, cp310, cp311, cp312, cp313]
+        macver: ["12"]
+        include:
+          - arch: arm64
+            pyver: cp310
+            macver: "14"
+          - arch: arm64
+            pyver: cp311
+            macver: "14"
+          - arch: arm64
+            pyver: cp312
+            macver: "14"
+          - arch: arm64
+            pyver: cp313
+            macver: "14"
 
     steps:
       - name: Checkout repos
         uses: actions/checkout@v4
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.16.2
+        uses: pypa/cibuildwheel@v2.21.2
         env:
           CIBW_BUILD: ${{matrix.pyver}}-macosx_${{matrix.arch}}
-          CIBW_ARCHS_MACOS: x86_64
+          CIBW_ARCHS_MACOS: ${{matrix.arch}}
           CIBW_BEFORE_ALL_MACOS: ./scripts/build/wheel_macos_before_all.sh
           CIBW_TEST_COMMAND: >-
             export PYTHONPATH={project} &&
             python -c "import tests; tests.unittest.main(defaultTest='tests.test_suite')"
           CIBW_ENVIRONMENT: >-
+            MACOSX_DEPLOYMENT_TARGET=${{ matrix.macver }}.0
             PG_VERSION=16
             PACKAGE_NAME=psycopg2-binary
             PSYCOPG2_TESTDB=postgres
@@ -161,4 +178,5 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
+          name: macos-${{matrix.pyver}}-macos-${{matrix.macver}}_${{matrix.arch}}
           path: ./wheelhouse/*.whl
