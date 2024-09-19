@@ -1053,7 +1053,7 @@ using the |lo_import|_ and |lo_export|_ libpq functions.
 
     If Psycopg was built with 64 bits large objects support (i.e. the first
     two conditions above are verified), the `psycopg2.__version__` constant
-    will contain the ``lo64`` flag.  If any of the contition is not met
+    will contain the ``lo64`` flag.  If any of the condition is not met
     several `!lobject` methods will fail if the arguments exceed 2GB.
 
 
