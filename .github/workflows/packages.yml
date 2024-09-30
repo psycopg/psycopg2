@@ -75,7 +75,7 @@ jobs:
         uses: docker/setup-qemu-action@v3
 
       - name: Cache libpq build
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: /tmp/libpq.build
           key: libpq-${{ env.LIBPQ_VERSION }}-${{ matrix.platform }}-${{ matrix.arch }}
