@@ -13,7 +13,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {python: "3.7", postgres: "10"}
           - {python: "3.8", postgres: "12"}
           - {python: "3.9", postgres: "13"}
           - {python: "3.10", postgres: "14"}
@@ -22,7 +21,6 @@ jobs:
           - {python: "3.13-dev", postgres: "16"}
 
           # Opposite extremes of the supported Py/PG range, other architecture
-          - {python: "3.7", postgres: "16", architecture: "x86"}
           - {python: "3.8", postgres: "15", architecture: "x86"}
           - {python: "3.9", postgres: "14", architecture: "x86"}
           - {python: "3.10", postgres: "13", architecture: "x86"}

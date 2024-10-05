@@ -5,6 +5,7 @@ What's new in psycopg 2.9.10 (unreleased)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Add support for Python 3.13.
+- Drop support for Python 3.7.
 
 
 What's new in psycopg 2.9.9

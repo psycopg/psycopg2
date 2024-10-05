@@ -16,8 +16,6 @@ environment:
     - {PY_VER: "39", PY_ARCH: "64", APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019}
     - {PY_VER: "38", PY_ARCH: "32", APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015}
     - {PY_VER: "38", PY_ARCH: "64", APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015}
-    - {PY_VER: "37", PY_ARCH: "32", APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015}
-    - {PY_VER: "37", PY_ARCH: "64", APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015}
 
   WORKFLOW: tests
 
