@@ -14,8 +14,6 @@ environment:
     - {PY_VER: "310", PY_ARCH: "64", APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019}
     - {PY_VER: "39", PY_ARCH: "32", APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019}
     - {PY_VER: "39", PY_ARCH: "64", APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019}
-    - {PY_VER: "38", PY_ARCH: "32", APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015}
-    - {PY_VER: "38", PY_ARCH: "64", APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015}
 
   WORKFLOW: tests
 
@@ -34,14 +32,14 @@ environment:
   PERL5LIB: .
 
   # Select according to the service enabled
-  POSTGRES_DIR: C:\Program Files\PostgreSQL\9.6\
+  POSTGRES_DIR: C:\Program Files\PostgreSQL\13\
 
 matrix:
   fast_finish: false
 
 services:
   # Note: if you change this service also change POSTGRES_DIR
-  - postgresql96
+  - postgresql13
 
 cache:
   # Rebuild cache if following file changes
