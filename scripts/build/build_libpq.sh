@@ -35,7 +35,7 @@ case "$ID" in
 
     alpine)
         apk upgrade
-        apk add --no-cache zlib-dev krb5-dev linux-pam-dev openldap-dev
+        apk add --no-cache zlib-dev krb5-dev linux-pam-dev openldap-dev openssl-dev
         ;;
 
     *)

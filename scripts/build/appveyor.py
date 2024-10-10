@@ -99,6 +99,7 @@ def configure_postgres():
     Set up PostgreSQL config before the service starts.
     """
     logger.info("Configuring Postgres")
+    opt.pg_data_dir.mkdir(parents=True, exist_ok=True)
     with (opt.pg_data_dir / 'postgresql.conf').open('a') as f:
         # allow > 1 prepared transactions for test cases
         print("max_prepared_transactions = 10", file=f)

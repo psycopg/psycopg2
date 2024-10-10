@@ -19,10 +19,6 @@ environment:
     - {PY_VER: "310", PY_ARCH: "64", APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019}
     - {PY_VER: "39", PY_ARCH: "32", APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019}
     - {PY_VER: "39", PY_ARCH: "64", APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019}
-    - {PY_VER: "38", PY_ARCH: "32", APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015}
-    - {PY_VER: "38", PY_ARCH: "64", APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015}
-    - {PY_VER: "37", PY_ARCH: "32", APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015}
-    - {PY_VER: "37", PY_ARCH: "64", APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015}
 
   WORKFLOW: packages
 
@@ -41,17 +37,14 @@ environment:
   PERL5LIB: .
 
   # Select according to the service enabled
-  POSTGRES_DIR: C:\Program Files\PostgreSQL\9.6\
-
-  # The python used in the build process, not the one packages are built for
-  PYEXE: C:\Python36\python.exe
+  POSTGRES_DIR: C:\Program Files\PostgreSQL\13\
 
 matrix:
   fast_finish: false
 
 services:
   # Note: if you change this service also change POSTGRES_DIR
-  - postgresql96
+  - postgresql13
 
 cache:
   # Rebuild cache if following file changes
@@ -64,23 +57,23 @@ cache:
 # Repository gets cloned, Cache is restored
 
 install:
-  - "%PYEXE% scripts\\build\\appveyor.py install"
+  - "py scripts\\build\\appveyor.py install"
 
 # PostgreSQL server starts now
 
 build: "off"
 
 build_script:
-  - "%PYEXE% scripts\\build\\appveyor.py build_script"
+  - "py scripts\\build\\appveyor.py build_script"
 
 after_build:
-  - "%PYEXE% scripts\\build\\appveyor.py after_build"
+  - "py scripts\\build\\appveyor.py after_build"
 
 before_test:
-  - "%PYEXE% scripts\\build\\appveyor.py before_test"
+  - "py scripts\\build\\appveyor.py before_test"
 
 test_script:
-  - "%PYEXE% scripts\\build\\appveyor.py test_script"
+  - "py scripts\\build\\appveyor.py test_script"
 
 artifacts:
   - path: dist\psycopg2-*\*.whl

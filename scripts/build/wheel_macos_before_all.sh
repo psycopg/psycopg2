@@ -12,9 +12,10 @@ dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 prjdir="$( cd "${dir}/../.." && pwd )"
 
 brew install gnu-sed postgresql@${PG_VERSION}
+brew link --overwrite postgresql@${PG_VERSION}
 
 # Start the database for testing
-brew services start postgresql
+brew services start postgresql@${PG_VERSION}
 
 # Wait for postgres to come up
 for i in $(seq 10 -1 0); do
