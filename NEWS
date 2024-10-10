@@ -1,12 +1,16 @@
-Current release
+Future releases
 ---------------
 
 What's new in psycopg 2.9.10 (unreleased)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Add support for Python 3.13.
+- Receive notifications on commit (:ticket:`#1728`).
 - Drop support for Python 3.7.
 
+
+Current release
+---------------
 
 What's new in psycopg 2.9.9
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
