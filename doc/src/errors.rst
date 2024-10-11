@@ -18,6 +18,8 @@
 
 .. versionchanged:: 2.9.4 added errors introduced in PostgreSQL 15
 
+.. versionchanged:: 2.9.10 added errors introduced in PostgreSQL 17
+
 This module exposes the classes psycopg raises upon receiving an error from
 the database with a :sql:`SQLSTATE` value attached (available in the
 `~psycopg2.Error.pgcode` attribute). The content of the module is generated

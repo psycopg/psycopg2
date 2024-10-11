@@ -19,6 +19,7 @@ The script can be run at a new PostgreSQL release to refresh the module.
 
 import re
 import sys
+import time
 from urllib.request import urlopen
 from collections import defaultdict
 
@@ -32,8 +33,7 @@ def main():
 
     file_start = read_base_file(filename)
     # If you add a version to the list fix the docs (in errorcodes.rst)
-    classes, errors = fetch_errors(
-        '9.1 9.2 9.3 9.4 9.5 9.6 10 11 12 13 14 15'.split())
+    classes, errors = fetch_errors("11 12 13 14 15 16 17".split())
 
     disambiguate(errors)
 
@@ -90,8 +90,8 @@ def parse_errors_txt(url):
 
 
 errors_txt_url = \
-    "http://git.postgresql.org/gitweb/?p=postgresql.git;a=blob_plain;" \
-    "f=src/backend/utils/errcodes.txt;hb=%s"
+    "https://raw.githubusercontent.com/postgres/postgres/refs/heads/%s" \
+    "/src/backend/utils/errcodes.txt"
 
 
 def fetch_errors(versions):

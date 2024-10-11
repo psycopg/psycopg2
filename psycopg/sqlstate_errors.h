@@ -144,6 +144,7 @@
 {"25P01", "NoActiveSqlTransaction"},
 {"25P02", "InFailedSqlTransaction"},
 {"25P03", "IdleInTransactionSessionTimeout"},
+{"25P04", "TransactionTimeout"},
 
 /* Class 26 - Invalid SQL Statement Name */
 {"26000", "InvalidSqlStatementName"},

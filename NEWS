@@ -1,4 +1,4 @@
-Current release
+Future releases
 ---------------
 
 What's new in psycopg 2.9.10 (unreleased)
@@ -6,7 +6,12 @@ What's new in psycopg 2.9.10 (unreleased)
 
 - Add support for Python 3.13.
 - Drop support for Python 3.7.
+- `~psycopg2.errorcodes` map and `~psycopg2.errors` classes updated to
+  PostgreSQL 17.
 
+
+Current release
+---------------
 
 What's new in psycopg 2.9.9
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
