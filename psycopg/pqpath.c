@@ -412,6 +412,7 @@ pq_commit(connectionObject *conn)
     }
 
     Py_BLOCK_THREADS;
+    conn_notifies_process(conn);
     conn_notice_process(conn);
     Py_UNBLOCK_THREADS;
 
@@ -468,6 +469,7 @@ pq_abort(connectionObject *conn)
     retvalue = pq_abort_locked(conn, &_save);
 
     Py_BLOCK_THREADS;
+    conn_notifies_process(conn);
     conn_notice_process(conn);
     Py_UNBLOCK_THREADS;
 
@@ -538,6 +540,7 @@ pq_reset(connectionObject *conn)
 
     Py_BLOCK_THREADS;
     conn_notice_process(conn);
+    conn_notifies_process(conn);
     Py_UNBLOCK_THREADS;
 
     pthread_mutex_unlock(&conn->lock);

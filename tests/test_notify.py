@@ -23,13 +23,15 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 # License for more details.
 
+import os
 import unittest
 from collections import deque
+from functools import partial
 
 import psycopg2
 from psycopg2 import extensions
 from psycopg2.extensions import Notify
-from .testutils import ConnectingTestCase, skip_if_crdb, slow
+from .testutils import ConnectingTestCase, skip_if_crdb, skip_if_windows, slow
 from .testconfig import dsn
 
 import sys
@@ -74,7 +76,9 @@ conn.close()
             module=psycopg2.__name__,
             dsn=dsn, sec=sec, name=name, payload=payload))
 
-        return Popen([sys.executable, '-c', script], stdout=PIPE)
+        env = os.environ.copy()
+        env.pop("PSYCOPG_DEBUG", None)
+        return Popen([sys.executable, '-c', script], stdout=PIPE, env=env)
 
     @slow
     def test_notifies_received_on_poll(self):
@@ -125,6 +129,52 @@ conn.close()
         self.assertEqual(1, len(self.conn.notifies))
         self.assertEqual(pid, self.conn.notifies[0][0])
         self.assertEqual('foo', self.conn.notifies[0][1])
+
+    def _test_notifies_received_on_operation(self, operation, execute_query=True):
+        self.listen('foo')
+        self.conn.commit()
+        if execute_query:
+            self.conn.cursor().execute('select 1;')
+        pid = int(self.notify('foo').communicate()[0])
+        self.assertEqual(0, len(self.conn.notifies))
+        operation()
+        self.assertEqual(1, len(self.conn.notifies))
+        self.assertEqual(pid, self.conn.notifies[0][0])
+        self.assertEqual('foo', self.conn.notifies[0][1])
+
+    @slow
+    @skip_if_windows
+    def test_notifies_received_on_commit(self):
+        self._test_notifies_received_on_operation(self.conn.commit)
+
+    @slow
+    @skip_if_windows
+    def test_notifies_received_on_rollback(self):
+        self._test_notifies_received_on_operation(self.conn.rollback)
+
+    @slow
+    @skip_if_windows
+    def test_notifies_received_on_reset(self):
+        self._test_notifies_received_on_operation(self.conn.reset, execute_query=False)
+
+    @slow
+    @skip_if_windows
+    def test_notifies_received_on_set_session(self):
+        self._test_notifies_received_on_operation(
+            partial(self.conn.set_session, autocommit=True, readonly=True),
+            execute_query=False,
+        )
+
+    @slow
+    @skip_if_windows
+    def test_notifies_received_on_set_client_encoding(self):
+        self._test_notifies_received_on_operation(
+            partial(
+                self.conn.set_client_encoding,
+                'LATIN1' if self.conn.encoding != 'LATIN1' else 'UTF8'
+            ),
+            execute_query=False,
+        )
 
     @slow
     def test_notify_object(self):
