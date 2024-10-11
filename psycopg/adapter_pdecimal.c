@@ -47,8 +47,21 @@ pdecimal_getquoted(pdecimalObject *self, PyObject *args)
         }
         goto output;
     }
-    else if (check) {
+
+    check = PyObject_CallMethod(self->wrapped, "is_nan", NULL);
+    if (check == Py_True) {
         res = Bytes_FromString("'NaN'::numeric");
+        goto end;
+    }
+
+    /* If the decimal is not finite and not NaN, it must be infinity,
+     * so all that is left is to check if it is positive or negative. */
+    check = PyObject_CallMethod(self->wrapped, "is_signed", NULL);
+    if (check == Py_True) {
+        res = Bytes_FromString("'-Infinity'::numeric");
+        goto end;
+    } else {
+        res = Bytes_FromString("'Infinity'::numeric");
         goto end;
     }
 

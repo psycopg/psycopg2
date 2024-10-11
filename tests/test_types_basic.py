@@ -75,11 +75,11 @@ class TypesBasicTests(ConnectingTestCase):
         self.failUnless(type(s) == decimal.Decimal,
                         "wrong decimal conversion: " + repr(s))
         s = self.execute("SELECT %s AS foo", (decimal.Decimal("infinity"),))
-        self.failUnless(str(s) == "NaN", "wrong decimal quoting: " + str(s))
+        self.failUnless(str(s) == "Infinity", "wrong decimal quoting: " + str(s))
         self.failUnless(type(s) == decimal.Decimal,
                         "wrong decimal conversion: " + repr(s))
         s = self.execute("SELECT %s AS foo", (decimal.Decimal("-infinity"),))
-        self.failUnless(str(s) == "NaN", "wrong decimal quoting: " + str(s))
+        self.failUnless(str(s) == "-Infinity", "wrong decimal quoting: " + str(s))
         self.failUnless(type(s) == decimal.Decimal,
                         "wrong decimal conversion: " + repr(s))
 
