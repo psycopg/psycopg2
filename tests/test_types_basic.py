@@ -74,6 +74,9 @@ class TypesBasicTests(ConnectingTestCase):
         self.failUnless(str(s) == "NaN", "wrong decimal quoting: " + str(s))
         self.failUnless(type(s) == decimal.Decimal,
                         "wrong decimal conversion: " + repr(s))
+
+    @testutils.skip_before_postgres(14, 0)
+    def testDecimalInfinity(self):
         s = self.execute("SELECT %s AS foo", (decimal.Decimal("infinity"),))
         self.failUnless(str(s) == "Infinity", "wrong decimal quoting: " + str(s))
         self.failUnless(type(s) == decimal.Decimal,
