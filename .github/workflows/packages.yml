@@ -5,6 +5,8 @@ on:
 
 env:
   PIP_BREAK_SYSTEM_PACKAGES: "1"
+  LIBPQ_VERSION: "16.0"
+  OPENSSL_VERSION: "1.1.1w"
 
 jobs:
   sdist:  # {{{
@@ -58,10 +60,6 @@ jobs:
 
   linux:  # {{{
     if: true
-
-    env:
-      LIBPQ_VERSION: "16.0"
-      OPENSSL_VERSION: "1.1.1w"
 
     strategy:
       fail-fast: false
@@ -162,6 +160,12 @@ jobs:
       - name: Checkout repos
         uses: actions/checkout@v4
 
+      - name: Build dependencies
+        run: ./scripts/build/build_libpq.sh
+
+      - name: Show dependency tree
+        run: otool -L /tmp/libpq.build/lib/*.dylib
+
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.22.0
         env:
@@ -172,12 +176,11 @@ jobs:
             export PYTHONPATH={project} &&
             python -c "import tests; tests.unittest.main(defaultTest='tests.test_suite')"
           CIBW_ENVIRONMENT: >-
-            MACOSX_DEPLOYMENT_TARGET=${{ matrix.macver }}.0
             PG_VERSION=16
             PACKAGE_NAME=psycopg2-binary
             PSYCOPG2_TESTDB=postgres
             PSYCOPG2_TEST_FAST=1
-            PATH="/usr/local/opt/postgresql@${PG_VERSION}/bin:$PATH"
+            PATH="/tmp/libpq.build/bin:$PATH"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
