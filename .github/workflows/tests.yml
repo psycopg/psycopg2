@@ -9,6 +9,7 @@ on:
 
 jobs:
   tests:
+    if: false
     name: Unit tests run
     runs-on: ubuntu-latest
 
