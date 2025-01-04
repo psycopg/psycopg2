@@ -27,6 +27,7 @@
 #ifndef PSYCOPG_H
 #define PSYCOPG_H 1
 
+#include <pg_config.h>
 #if PG_VERSION_NUM < 90100
 #error "Psycopg requires PostgreSQL client library (libpq) >= 9.1"
 #endif

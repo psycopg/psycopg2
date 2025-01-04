@@ -29,7 +29,6 @@ for coroutine libraries.
 
 import os
 import sys
-import re
 import subprocess
 from setuptools import setup, Extension
 from distutils.command.build_ext import build_ext
@@ -382,34 +381,8 @@ For further information please check the 'doc/src/install.rst' file (also at
                 if token.startswith("-I"):
                     self.include_dirs.append(token[2:])
 
-            pgversion = pg_config_helper.query("version").split()[1]
-
-            verre = re.compile(
-                r"(\d+)(?:\.(\d+))?(?:(?:\.(\d+))|(devel|(?:alpha|beta|rc)\d+))?")
-            m = verre.match(pgversion)
-            if m:
-                pgmajor, pgminor, pgpatch = m.group(1, 2, 3)
-                # Postgres >= 10 doesn't have pgminor anymore.
-                pgmajor = int(pgmajor)
-                if pgmajor >= 10:
-                    pgminor, pgpatch = None, pgminor
-                if pgminor is None or not pgminor.isdigit():
-                    pgminor = 0
-                if pgpatch is None or not pgpatch.isdigit():
-                    pgpatch = 0
-                pgminor = int(pgminor)
-                pgpatch = int(pgpatch)
-            else:
-                sys.stderr.write(
-                    f"Error: could not determine PostgreSQL version from "
-                    f"'{pgversion}'")
-                sys.exit(1)
-
-            define_macros.append(("PG_VERSION_NUM", "%d%02d%02d" %
-                                  (pgmajor, pgminor, pgpatch)))
-
-            # enable lo64 if libpq >= 9.3 and Python 64 bits
-            if (pgmajor, pgminor) >= (9, 3) and is_py_64():
+            # enable lo64 if Python 64 bits
+            if is_py_64():
                 define_macros.append(("HAVE_LO64", "1"))
 
                 # Inject the flag in the version string already packed up
