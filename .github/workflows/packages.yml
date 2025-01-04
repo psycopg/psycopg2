@@ -7,7 +7,7 @@ env:
   PIP_BREAK_SYSTEM_PACKAGES: "1"
 
 jobs:
-  build-sdist:
+  sdist:  # {{{
     if: true
     strategy:
       fail-fast: false
@@ -54,8 +54,9 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+  # }}}
 
-  build-linux:
+  linux:  # {{{
     if: true
 
     env:
@@ -130,8 +131,9 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+  # }}}
 
-  build-macos:
+  macos:  # {{{
     runs-on: macos-${{ matrix.macver }}
     if: true
 
@@ -183,8 +185,9 @@ jobs:
           name: macos-${{matrix.pyver}}-macos-${{matrix.macver}}_${{matrix.arch}}
           path: ./wheelhouse/*.whl
 
+  # }}}
 
-  build-windows:
+  windows:  # {{{
     runs-on: windows-latest
     if: true
 
@@ -254,3 +257,21 @@ jobs:
         with:
           name: windows-${{ matrix.package_name }}-${{matrix.pyver}}-${{matrix.arch}}
           path: ./wheelhouse/*.whl
+
+  # }}}
+
+  merge:  # {{{
+    runs-on: ubuntu-latest
+    needs:
+      - sdist
+      - linux
+      - macos
+      - windows
+    steps:
+      - name: Merge Artifacts
+        uses: actions/upload-artifact/merge@v4
+        with:
+          name: psycopg2-binary-artifact
+          delete-merged: true
+
+  # }}}
