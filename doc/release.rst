@@ -16,10 +16,9 @@ How to make a psycopg2 release
     $ export VERSION=2.8.4
 
 - Push psycopg2 to master or to the maint branch. Make sure tests on `GitHub
-  Actions`__ and AppVeyor__ pass.
+  Actions`__.
 
 .. __: https://github.com/psycopg/psycopg2/actions/workflows/tests.yml
-.. __: https://ci.appveyor.com/project/psycopg/psycopg2
 
 - Create a signed tag with the content of the relevant NEWS bit and push it.
   E.g.::
@@ -41,19 +40,10 @@ How to make a psycopg2 release
 
   - On GitHub Actions run manually a `package build workflow`__.
 
-  - On Appveyor change the `build settings`__ and replace the custom
-    configuration file name from ``.appveyor/tests.yml`` to
-    ``.appveyor/packages.yml`` (yeah, that sucks a bit. Remember to put it
-    back to testing).
-
 .. __: https://github.com/psycopg/psycopg2/actions/workflows/packages.yml
-.. __: https://ci.appveyor.com/project/psycopg/psycopg2/settings
 
 - When the workflows have finished download the packages from the job
-  artifacts. For Appveyor you can use the ``download_packages_appveyor.py``
-  scripts from the ``scripts/build`` directory. They will be saved in a
-  ``wheelhouse/psycopg2-${VERSION}`` directory. For Github just download it
-  from the web interface (it's a single file).
+  artifacts.
 
 - Only for stable packages: upload the signed packages on PyPI::
 
