@@ -8,8 +8,7 @@ on:
   pull_request:
 
 jobs:
-  tests:
-    name: Unit tests run
+  linux:
     runs-on: ubuntu-latest
 
     strategy:
@@ -21,7 +20,7 @@ jobs:
           - {python: "3.10", postgres: "14"}
           - {python: "3.11", postgres: "15"}
           - {python: "3.12", postgres: "16"}
-          - {python: "3.13-dev", postgres: "17"}
+          - {python: "3.13", postgres: "17"}
 
           # Opposite extremes of the supported Py/PG range, other architecture
           - {python: "3.8", postgres: "17", architecture: "x86"}
@@ -29,7 +28,7 @@ jobs:
           - {python: "3.10", postgres: "15", architecture: "x86"}
           - {python: "3.11", postgres: "14", architecture: "x86"}
           - {python: "3.12", postgres: "13", architecture: "x86"}
-          - {python: "3.13-dev", postgres: "12", architecture: "x86"}
+          - {python: "3.13", postgres: "12", architecture: "x86"}
 
     env:
       PSYCOPG2_TESTDB: postgres
