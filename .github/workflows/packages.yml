@@ -271,7 +271,7 @@ jobs:
       - name: Merge Artifacts
         uses: actions/upload-artifact/merge@v4
         with:
-          name: psycopg2-binary-artifact
+          name: psycopg2-artifacts
           delete-merged: true
 
   # }}}
