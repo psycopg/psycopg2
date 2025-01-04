@@ -10,6 +10,7 @@ on:
 jobs:
   linux:
     runs-on: ubuntu-latest
+    if: true
 
     strategy:
       fail-fast: false

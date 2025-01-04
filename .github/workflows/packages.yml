@@ -182,3 +182,72 @@ jobs:
         with:
           name: macos-${{matrix.pyver}}-macos-${{matrix.macver}}_${{matrix.arch}}
           path: ./wheelhouse/*.whl
+
+
+  build-windows:
+    runs-on: windows-latest
+    if: true
+
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [win_amd64]
+        pyver: [cp38, cp39, cp310, cp311, cp312, cp313]
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      # there are some other libpq in PATH
+      - name: Drop spurious libpq in the path
+        run: rm -rf c:/tools/php C:/Strawberry/c/bin
+
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Start PostgreSQL service for test
+        run: |
+          $PgSvc = Get-Service "postgresql*"
+          Set-Service $PgSvc.Name -StartupType manual
+          $PgSvc.Start()
+        shell: powershell
+
+      - name: Export GitHub Actions cache environment variables
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const path = require('path')
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+            core.addPath(path.join(process.env.VCPKG_INSTALLATION_ROOT, 'installed/x64-windows-release/lib'));
+            core.addPath(path.join(process.env.VCPKG_INSTALLATION_ROOT, 'installed/x64-windows-release/bin'));
+
+      # TODO: patch to psycopg2-binary
+      # - name: Create the binary package source tree
+      #   run: python3 ./tools/build/copy_to_binary.py
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.22.0
+        env:
+          VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite" # cache vcpkg
+          CIBW_BUILD: ${{matrix.pyver}}-${{matrix.arch}}
+          CIBW_ARCHS_WINDOWS: AMD64 x86
+          CIBW_BEFORE_BUILD_WINDOWS: '.\scripts\build\wheel_win32_before_build.bat'
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >-
+            delvewheel repair -w {dest_dir}
+            --no-mangle "libiconv-2.dll;libwinpthread-1.dll" {wheel}
+          CIBW_TEST_COMMAND: >-
+            set PYTHONPATH={project} &&
+            python -c "import tests; tests.unittest.main(defaultTest='tests.test_suite')"
+          # Note: no fast test because we don't run Windows tests
+          CIBW_ENVIRONMENT_WINDOWS: >-
+            PSYCOPG2_TESTDB=postgres
+            PSYCOPG2_TESTDB_USER=postgres
+            PSYCOPG2_TESTDB_HOST=localhost
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-${{matrix.pyver}}-${{matrix.arch}}
+          path: ./wheelhouse/*.whl
