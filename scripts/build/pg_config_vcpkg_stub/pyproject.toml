@@ -1,0 +1,11 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = 'pg_config_vcpkg_stub'
+version = "0"
+description = "see docs string in pg_config_vcpkg_stub for more details"
+
+[project.scripts]
+pg_config = 'pg_config_vcpkg_stub:main'
