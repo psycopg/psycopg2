@@ -193,6 +193,7 @@ jobs:
       matrix:
         arch: [win_amd64]
         pyver: [cp38, cp39, cp310, cp311, cp312, cp313]
+        package_name: [psycopg2, psycopg2-binary]
 
     defaults:
       run:
@@ -223,9 +224,11 @@ jobs:
             core.addPath(path.join(process.env.VCPKG_INSTALLATION_ROOT, 'installed/x64-windows-release/lib'));
             core.addPath(path.join(process.env.VCPKG_INSTALLATION_ROOT, 'installed/x64-windows-release/bin'));
 
-      # TODO: patch to psycopg2-binary
-      # - name: Create the binary package source tree
-      #   run: python3 ./tools/build/copy_to_binary.py
+      - name: Create the binary package source tree
+        run: >-
+          sed -i 's/^setup(name="psycopg2"/setup(name="${{matrix.package_name}}"/'
+          setup.py
+        if: ${{ matrix.package_name != 'psycopg2' }}
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.22.0
@@ -249,5 +252,5 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: windows-${{matrix.pyver}}-${{matrix.arch}}
+          name: windows-${{ matrix.package_name }}-${{matrix.pyver}}-${{matrix.arch}}
           path: ./wheelhouse/*.whl
