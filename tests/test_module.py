@@ -31,7 +31,7 @@ from subprocess import Popen
 from weakref import ref
 
 import unittest
-from .testutils import (skip_before_postgres,
+from .testutils import (skip_before_postgres, skip_if_windows,
     ConnectingTestCase, skip_copy_if_green, skip_if_crdb, slow, StringIO)
 
 import psycopg2
@@ -330,6 +330,7 @@ class ExceptionsTestCase(ConnectingTestCase):
 
 class TestExtensionModule(unittest.TestCase):
     @slow
+    @skip_if_windows
     def test_import_internal(self):
         # check that the internal package can be imported "naked"
         # we may break this property if there is a compelling reason to do so,
