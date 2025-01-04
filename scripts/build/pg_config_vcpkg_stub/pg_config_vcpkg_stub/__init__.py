@@ -39,10 +39,17 @@ def _main() -> None:
             raise ScriptError(f"libpq library not found: {f}")
         print(vcpkg_platform_root.joinpath("lib"))
 
-    elif args.includedir:
+    elif args.includedir or args.includedir_server:
+        # NOTE: on linux, the includedir-server dir contains pg_config.h
+        # which we need because it includes the PG_VERSION_NUM macro.
+        # In the vcpkg directory this file is in the includedir directory,
+        # therefore we return the same value.
         if not (d := vcpkg_platform_root / "include/libpq").is_dir():
             raise ScriptError(f"libpq include directory not found: {d}")
         print(vcpkg_platform_root.joinpath("include"))
+
+    elif args.cppflags or args.ldflags:
+        print("")
 
     else:
         raise ScriptError("command not handled")
@@ -62,6 +69,21 @@ def parse_cmdline() -> Namespace:
         "--includedir",
         action="store_true",
         help="show location of C header files of the client interfaces",
+    )
+    g.add_argument(
+        "--includedir-server",
+        action="store_true",
+        help="show location of C header files for the server",
+    )
+    g.add_argument(
+        "--cppflags",
+        action="store_true",
+        help="(dummy) show CPPFLAGS value used when PostgreSQL was built",
+    )
+    g.add_argument(
+        "--ldflags",
+        action="store_true",
+        help="(dummy) show LDFLAGS value used when PostgreSQL was built",
     )
     opt = parser.parse_args()
     return opt
