@@ -62,7 +62,7 @@ case "$ID" in
         # openssl no matter what so remove it. Since homebrew's curl depends on
         # it, force use of system curl.
         brew uninstall --force --ignore-dependencies openssl gettext curl
-        if [ -z "$MACOSX_ARCHITECTURE" ]; then
+        if [ -z "${MACOSX_ARCHITECTURE:-}" ]; then
             MACOSX_ARCHITECTURE="$(uname -m)"
         fi
         # Set the deployment target to be <= to that of the oldest supported Python version.
@@ -110,7 +110,7 @@ if [ "$ID" == "centos" ] || [ "$ID" == "macos" ]; then
 
         options=(--prefix=${LIBPQ_BUILD_PREFIX} --openssldir=${LIBPQ_BUILD_PREFIX} \
             zlib -fPIC shared)
-        if [ -z "$MACOSX_ARCHITECTURE" ]; then
+        if [ -z "${MACOSX_ARCHITECTURE:-}" ]; then
             ./config $options
         else
             ./configure "darwin64-$MACOSX_ARCHITECTURE-cc" $options
