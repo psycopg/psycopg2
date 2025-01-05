@@ -132,29 +132,15 @@ jobs:
   # }}}
 
   macos:  # {{{
-    runs-on: macos-${{ matrix.macver }}
+    runs-on: macos-latest
     if: true
 
     strategy:
       fail-fast: false
       matrix:
         # These archs require an Apple M1 runner: [arm64, universal2]
-        arch: [x86_64]
+        arch: [x86_64, arm64]
         pyver: [cp39, cp310, cp311, cp312, cp313]
-        macver: ["13"]
-        include:
-          - arch: arm64
-            pyver: cp310
-            macver: "14"
-          - arch: arm64
-            pyver: cp311
-            macver: "14"
-          - arch: arm64
-            pyver: cp312
-            macver: "14"
-          - arch: arm64
-            pyver: cp313
-            macver: "14"
 
     steps:
       - name: Checkout repos
@@ -171,6 +157,7 @@ jobs:
         env:
           CIBW_BUILD: ${{matrix.pyver}}-macosx_${{matrix.arch}}
           CIBW_ARCHS_MACOS: ${{matrix.arch}}
+          MACOSX_ARCHITECTURE: ${{matrix.arch}}
           CIBW_BEFORE_ALL_MACOS: ./scripts/build/wheel_macos_before_all.sh
           CIBW_TEST_COMMAND: >-
             export PYTHONPATH={project} &&
@@ -184,7 +171,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: macos-${{matrix.pyver}}-macos-${{matrix.macver}}_${{matrix.arch}}
+          name: macos-${{matrix.pyver}}-macos-${{matrix.arch}}
           path: ./wheelhouse/*.whl
 
   # }}}

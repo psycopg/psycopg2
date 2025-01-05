@@ -68,9 +68,12 @@ case "$ID" in
         # it, force use of system curl.
         brew uninstall --force --ignore-dependencies openssl gettext
         curl="/usr/bin/curl"
-        # The deployment target should be <= to that of the oldest supported Python version.
+        if [ -z "$MACOSX_ARCHITECTURE" ]; then
+            MACOSX_ARCHITECTURE="$(uname -m)"
+        fi
+        # Set the deployment target to be <= to that of the oldest supported Python version.
         # e.g. https://www.python.org/downloads/release/python-380/
-        if [ "$(uname -m)" == "x86_64" ]; then
+        if [ "$MACOSX_ARCHITECTURE" == "x86_64" ]; then
             export MACOSX_DEPLOYMENT_TARGET=10.9
         else
             export MACOSX_DEPLOYMENT_TARGET=11.0
@@ -83,6 +86,22 @@ case "$ID" in
         ;;
 esac
 
+
+if [ "$ID" == "macos" ]; then
+    make_configure_standard_flags=( \
+        --prefix=${LIBPQ_BUILD_PREFIX} \
+        "CPPFLAGS=-I${LIBPQ_BUILD_PREFIX}/include/ -arch $MACOSX_ARCHITECTURE" \
+        "LDFLAGS=-L${LIBPQ_BUILD_PREFIX}/lib -arch $MACOSX_ARCHITECTURE" \
+    )
+else
+    make_configure_standard_flags=( \
+        --prefix=${LIBPQ_BUILD_PREFIX} \
+        CPPFLAGS=-I${LIBPQ_BUILD_PREFIX}/include/ \
+        LDFLAGS=-L${LIBPQ_BUILD_PREFIX}/lib \
+    )
+fi
+
+
 if [ "$ID" == "centos" ] || [ "$ID" == "macos" ]; then
 
     # Build openssl if needed
@@ -94,8 +113,14 @@ if [ "$ID" == "centos" ] || [ "$ID" == "macos" ]; then
 
         cd "${openssl_dir}"
 
-        ./config --prefix=${LIBPQ_BUILD_PREFIX} --openssldir=${LIBPQ_BUILD_PREFIX} \
-            zlib -fPIC shared
+        options=(--prefix=${LIBPQ_BUILD_PREFIX} --openssldir=${LIBPQ_BUILD_PREFIX} \
+            zlib -fPIC shared)
+        if [ -z "$MACOSX_ARCHITECTURE" ]; then
+            ./config $options
+        else
+            ./configure "darwin64-$MACOSX_ARCHITECTURE-cc" $options
+        fi
+
         make depend
         make
     else
@@ -119,9 +144,7 @@ if [ "$ID" == "macos" ]; then
             | tar xzf -
 
         cd "${krb5_dir}"
-
-        ./configure --prefix=${LIBPQ_BUILD_PREFIX} \
-            CPPFLAGS=-I${LIBPQ_BUILD_PREFIX}/include/ LDFLAGS=-L${LIBPQ_BUILD_PREFIX}/lib
+        ./configure "${make_configure_standard_flags[@]}"
         make
     else
         cd "${krb5_dir}"
@@ -143,9 +166,7 @@ if [ "$ID" == "macos" ]; then
             | tar xzf -
 
         cd "${gettext_dir}"
-
-        ./configure --prefix=${LIBPQ_BUILD_PREFIX} --disable-java \
-            CPPFLAGS=-I${LIBPQ_BUILD_PREFIX}/include/ LDFLAGS=-L${LIBPQ_BUILD_PREFIX}/lib
+        ./configure --disable-java "${make_configure_standard_flags[@]}"
         make -C gettext-runtime all
     else
         cd "${gettext_dir}"
@@ -173,8 +194,7 @@ if [ "$ID" == "centos" ] || [ "$ID" == "macos" ]; then
         cd "${sasl_dir}"
 
         autoreconf -i
-        ./configure --prefix=${LIBPQ_BUILD_PREFIX} --disable-macos-framework \
-            CPPFLAGS=-I${LIBPQ_BUILD_PREFIX}/include/ LDFLAGS=-L${LIBPQ_BUILD_PREFIX}/lib
+        ./configure "${make_configure_standard_flags[@]}" --disable-macos-framework
         make
     else
         cd "${sasl_dir}"
@@ -201,8 +221,7 @@ if [ "$ID" == "centos" ] || [ "$ID" == "macos" ]; then
 
         cd "${ldap_dir}"
 
-        ./configure --prefix=${LIBPQ_BUILD_PREFIX} --enable-backends=no --enable-null \
-            CPPFLAGS=-I${LIBPQ_BUILD_PREFIX}/include/ LDFLAGS=-L${LIBPQ_BUILD_PREFIX}/lib
+        ./configure "${make_configure_standard_flags[@]}" --enable-backends=no --enable-null
 
         make depend
         make -C libraries/liblutil/
@@ -243,10 +262,9 @@ if [ ! -d "${postgres_dir}" ]; then
     # Often needed, but currently set by the workflow
     # export LD_LIBRARY_PATH="${LIBPQ_BUILD_PREFIX}/lib"
 
-    ./configure --prefix=${LIBPQ_BUILD_PREFIX} --sysconfdir=/etc/postgresql-common \
+    ./configure "${make_configure_standard_flags[@]}" --sysconfdir=/etc/postgresql-common \
         --with-gssapi --with-openssl --with-pam --with-ldap \
-        --without-readline --without-icu \
-        CPPFLAGS=-I${LIBPQ_BUILD_PREFIX}/include/ LDFLAGS=-L${LIBPQ_BUILD_PREFIX}/lib
+        --without-readline --without-icu
     make -C src/interfaces/libpq
     make -C src/bin/pg_config
     make -C src/include
