@@ -160,12 +160,6 @@ jobs:
       - name: Checkout repos
         uses: actions/checkout@v4
 
-      - name: Build dependencies
-        run: ./scripts/build/build_libpq.sh
-
-      - name: Show dependency tree
-        run: otool -L /tmp/libpq.build/lib/*.dylib
-
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.22.0
         env:
