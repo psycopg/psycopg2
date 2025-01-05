@@ -160,6 +160,12 @@ jobs:
       - name: Checkout repos
         uses: actions/checkout@v4
 
+      - name: Cache libpq build
+        uses: actions/cache@v4
+        with:
+          path: /tmp/libpq.build
+          key: libpq-${{ env.LIBPQ_VERSION }}-macos-${{ matrix.arch }}
+
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.22.0
         env:
