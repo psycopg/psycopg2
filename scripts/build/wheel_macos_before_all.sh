@@ -15,7 +15,7 @@ prjdir="$( cd "${dir}/../.." && pwd )"
 "${prjdir}/scripts/build/build_libpq.sh"
 
 # Show dependency tree
-# otool -L /tmp/libpq.build/lib/*.dylib
+otool -L /tmp/libpq.build/lib/*.dylib
 
 brew install gnu-sed postgresql@${PG_VERSION}
 brew link --overwrite postgresql@${PG_VERSION}

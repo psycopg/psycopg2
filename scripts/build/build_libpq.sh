@@ -15,9 +15,6 @@ openssl_version="${OPENSSL_VERSION}"
 # last release: https://kerberos.org/dist/
 krb5_version="1.21.3"
 
-# last release: https://www.gnu.org/software/gettext/
-gettext_version="0.22.5"
-
 # last release: https://openldap.org/software/download/
 ldap_version="2.6.8"
 
@@ -148,27 +145,6 @@ if [ "$ID" == "macos" ]; then
     fi
 
     make install
-    popd
-
-fi
-
-
-if [ "$ID" == "macos" ]; then
-
-    # Build gettext if needed
-    gettext_dir="gettext-${gettext_version}"
-    if [ ! -d "${gettext_dir}" ]; then
-        curl -sL "https://ftp.gnu.org/pub/gnu/gettext/gettext-${gettext_version}.tar.gz" \
-            | tar xzf -
-
-        pushd "${gettext_dir}"
-        ./configure --disable-java "${make_configure_standard_flags[@]}"
-        make -C gettext-runtime all
-    else
-        pushd "${gettext_dir}"
-    fi
-
-    make -C gettext-runtime install
     popd
 
 fi
