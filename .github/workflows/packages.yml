@@ -179,7 +179,6 @@ jobs:
             PG_VERSION=16
             PACKAGE_NAME=psycopg2-binary
             PSYCOPG2_TESTDB=postgres
-            PSYCOPG2_TEST_FAST=1
             PATH="/tmp/libpq.build/bin:$PATH"
 
       - name: Upload artifacts
