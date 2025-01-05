@@ -109,7 +109,7 @@ if [ "$ID" == "centos" ] || [ "$ID" == "macos" ]; then
             https://github.com/openssl/openssl/archive/${openssl_tag}.tar.gz \
             | tar xzf -
 
-        cd "${openssl_dir}"
+        pushd "${openssl_dir}"
 
         options=(--prefix=${LIBPQ_BUILD_PREFIX} --openssldir=${LIBPQ_BUILD_PREFIX} \
             zlib -fPIC shared)
@@ -122,12 +122,12 @@ if [ "$ID" == "centos" ] || [ "$ID" == "macos" ]; then
         make depend
         make
     else
-        cd "${openssl_dir}"
+        pushd "${openssl_dir}"
     fi
 
     # Install openssl
     make install_sw
-    cd ..
+    popd
 
 fi
 
@@ -140,15 +140,15 @@ if [ "$ID" == "macos" ]; then
         curl -sL "https://kerberos.org/dist/krb5/${krb5_version%.*}/krb5-${krb5_version}.tar.gz" \
             | tar xzf -
 
-        cd "${krb5_dir}"
+        pushd "${krb5_dir}"
         ./configure "${make_configure_standard_flags[@]}"
         make
     else
-        cd "${krb5_dir}"
+        pushd "${krb5_dir}"
     fi
 
     make install
-    cd ../..
+    popd
 
 fi
 
@@ -161,15 +161,15 @@ if [ "$ID" == "macos" ]; then
         curl -sL "https://ftp.gnu.org/pub/gnu/gettext/gettext-${gettext_version}.tar.gz" \
             | tar xzf -
 
-        cd "${gettext_dir}"
+        pushd "${gettext_dir}"
         ./configure --disable-java "${make_configure_standard_flags[@]}"
         make -C gettext-runtime all
     else
-        cd "${gettext_dir}"
+        pushd "${gettext_dir}"
     fi
 
     make -C gettext-runtime install
-    cd ..
+    popd
 
 fi
 
@@ -187,20 +187,20 @@ if [ "$ID" == "centos" ] || [ "$ID" == "macos" ]; then
             https://github.com/cyrusimap/cyrus-sasl/archive/${sasl_tag}.tar.gz \
             | tar xzf -
 
-        cd "${sasl_dir}"
+        pushd "${sasl_dir}"
 
         autoreconf -i
         ./configure "${make_configure_standard_flags[@]}" --disable-macos-framework
         make
     else
-        cd "${sasl_dir}"
+        pushd "${sasl_dir}"
     fi
 
     # Install libsasl2
     # requires missing nroff to build
     touch saslauthd/saslauthd.8
     make install
-    cd ..
+    popd
 
 fi
 
@@ -215,7 +215,7 @@ if [ "$ID" == "centos" ] || [ "$ID" == "macos" ]; then
             https://www.openldap.org/software/download/OpenLDAP/openldap-release/openldap-${ldap_tag}.tgz \
             | tar xzf -
 
-        cd "${ldap_dir}"
+        pushd "${ldap_dir}"
 
         ./configure "${make_configure_standard_flags[@]}" --enable-backends=no --enable-null
 
@@ -224,7 +224,7 @@ if [ "$ID" == "centos" ] || [ "$ID" == "macos" ]; then
         make -C libraries/liblber/
         make -C libraries/libldap/
     else
-        cd "${ldap_dir}"
+        pushd "${ldap_dir}"
     fi
 
     # Install openldap
@@ -232,7 +232,7 @@ if [ "$ID" == "centos" ] || [ "$ID" == "macos" ]; then
     make -C libraries/libldap/ install
     make -C include/ install
     chmod +x ${LIBPQ_BUILD_PREFIX}/lib/{libldap,liblber}*.${library_suffix}*
-    cd ..
+    popd
 
 fi
 
@@ -245,7 +245,7 @@ if [ ! -d "${postgres_dir}" ]; then
         https://github.com/postgres/postgres/archive/${postgres_tag}.tar.gz \
         | tar xzf -
 
-    cd "${postgres_dir}"
+    pushd "${postgres_dir}"
 
     if [ "$ID" != "macos" ]; then
         # Match the default unix socket dir default with what defined on Ubuntu and
@@ -265,13 +265,13 @@ if [ ! -d "${postgres_dir}" ]; then
     make -C src/bin/pg_config
     make -C src/include
 else
-    cd "${postgres_dir}"
+    pushd "${postgres_dir}"
 fi
 
 # Install libpq
 make -C src/interfaces/libpq install
 make -C src/bin/pg_config install
 make -C src/include install
-cd ..
+popd
 
 find ${LIBPQ_BUILD_PREFIX} -name \*.${library_suffix}.\* -type f -exec strip --strip-unneeded {} \;
