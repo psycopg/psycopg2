@@ -52,13 +52,11 @@ case "$ID" in
     centos)
         yum update -y
         yum install -y zlib-devel krb5-devel pam-devel
-        curl="$(which curl)"
         ;;
 
     alpine)
         apk upgrade
         apk add --no-cache zlib-dev krb5-dev linux-pam-dev openldap-dev openssl-dev
-        curl="$(which curl)"
         ;;
 
     macos)
@@ -66,8 +64,7 @@ case "$ID" in
         # If available, libpq seemingly insists on linking against homebrew's
         # openssl no matter what so remove it. Since homebrew's curl depends on
         # it, force use of system curl.
-        brew uninstall --force --ignore-dependencies openssl gettext
-        curl="/usr/bin/curl"
+        brew uninstall --force --ignore-dependencies openssl gettext curl
         if [ -z "$MACOSX_ARCHITECTURE" ]; then
             MACOSX_ARCHITECTURE="$(uname -m)"
         fi
@@ -107,7 +104,8 @@ if [ "$ID" == "centos" ] || [ "$ID" == "macos" ]; then
     # Build openssl if needed
     openssl_tag="OpenSSL_${openssl_version//./_}"
     openssl_dir="openssl-${openssl_tag}"
-    if [ ! -d "${openssl_dir}" ]; then "$curl" -sL \
+    if [ ! -d "${openssl_dir}" ]; then
+        curl -sL \
             https://github.com/openssl/openssl/archive/${openssl_tag}.tar.gz \
             | tar xzf -
 
@@ -139,8 +137,7 @@ if [ "$ID" == "macos" ]; then
     # Build kerberos if needed
     krb5_dir="krb5-${krb5_version}/src"
     if [ ! -d "${krb5_dir}" ]; then
-        "$curl" -sL \
-            curl -sL "https://kerberos.org/dist/krb5/$(echo 1.21.3 | grep -oE '\d+\.\d+')/krb5-${krb5_version}.tar.gz" \
+        curl -sL "https://kerberos.org/dist/krb5/${krb5_version%.*}/krb5-${krb5_version}.tar.gz" \
             | tar xzf -
 
         cd "${krb5_dir}"
@@ -161,8 +158,7 @@ if [ "$ID" == "macos" ]; then
     # Build gettext if needed
     gettext_dir="gettext-${gettext_version}"
     if [ ! -d "${gettext_dir}" ]; then
-        "$curl" -sL \
-            curl -sL "https://ftp.gnu.org/pub/gnu/gettext/gettext-${gettext_version}.tar.gz" \
+        curl -sL "https://ftp.gnu.org/pub/gnu/gettext/gettext-${gettext_version}.tar.gz" \
             | tar xzf -
 
         cd "${gettext_dir}"
@@ -187,7 +183,7 @@ if [ "$ID" == "centos" ] || [ "$ID" == "macos" ]; then
     sasl_tag="cyrus-sasl-${sasl_version}"
     sasl_dir="cyrus-sasl-${sasl_tag}"
     if [ ! -d "${sasl_dir}" ]; then
-        "$curl" -sL \
+        curl -sL \
             https://github.com/cyrusimap/cyrus-sasl/archive/${sasl_tag}.tar.gz \
             | tar xzf -
 
@@ -215,7 +211,7 @@ if [ "$ID" == "centos" ] || [ "$ID" == "macos" ]; then
     ldap_tag="${ldap_version}"
     ldap_dir="openldap-${ldap_tag}"
     if [ ! -d "${ldap_dir}" ]; then
-        "$curl" -sL \
+        curl -sL \
             https://www.openldap.org/software/download/OpenLDAP/openldap-release/openldap-${ldap_tag}.tgz \
             | tar xzf -
 
@@ -245,7 +241,7 @@ fi
 postgres_tag="REL_${postgres_version//./_}"
 postgres_dir="postgres-${postgres_tag}"
 if [ ! -d "${postgres_dir}" ]; then
-    "$curl" -sL \
+    curl -sL \
         https://github.com/postgres/postgres/archive/${postgres_tag}.tar.gz \
         | tar xzf -
 
