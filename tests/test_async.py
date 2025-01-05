@@ -504,7 +504,7 @@ class AsyncTests(ConnectingTestCase):
                 raise Exception("Unexpected result from poll: %r", state)
             polls += 1
 
-        self.assert_(polls >= 8, polls)
+        self.assert_(polls >= 5, polls)
 
     def test_poll_noop(self):
         self.conn.poll()

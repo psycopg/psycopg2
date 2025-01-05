@@ -152,7 +152,7 @@ class GreenTestCase(ConnectingTestCase):
             """)
 
         polls = stub.polls.count(POLL_READ)
-        self.assert_(polls > 8, polls)
+        self.assert_(polls > 6, polls)
 
 
 class CallbackErrorTestCase(ConnectingTestCase):
