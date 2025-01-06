@@ -5,6 +5,8 @@ on:
 
 env:
   PIP_BREAK_SYSTEM_PACKAGES: "1"
+  LIBPQ_VERSION: "16.0"
+  OPENSSL_VERSION: "1.1.1w"
 
 jobs:
   sdist:  # {{{
@@ -58,10 +60,6 @@ jobs:
 
   linux:  # {{{
     if: true
-
-    env:
-      LIBPQ_VERSION: "16.0"
-      OPENSSL_VERSION: "1.1.1w"
 
     strategy:
       fail-fast: false
@@ -134,55 +132,46 @@ jobs:
   # }}}
 
   macos:  # {{{
-    runs-on: macos-${{ matrix.macver }}
+    runs-on: macos-latest
     if: true
 
     strategy:
       fail-fast: false
       matrix:
         # These archs require an Apple M1 runner: [arm64, universal2]
-        arch: [x86_64]
+        arch: [x86_64, arm64]
         pyver: [cp39, cp310, cp311, cp312, cp313]
-        macver: ["13"]
-        include:
-          - arch: arm64
-            pyver: cp310
-            macver: "14"
-          - arch: arm64
-            pyver: cp311
-            macver: "14"
-          - arch: arm64
-            pyver: cp312
-            macver: "14"
-          - arch: arm64
-            pyver: cp313
-            macver: "14"
 
     steps:
       - name: Checkout repos
         uses: actions/checkout@v4
+
+      - name: Cache libpq build
+        uses: actions/cache@v4
+        with:
+          path: /tmp/libpq.build
+          key: libpq-${{ env.LIBPQ_VERSION }}-macos-${{ matrix.arch }}
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.22.0
         env:
           CIBW_BUILD: ${{matrix.pyver}}-macosx_${{matrix.arch}}
           CIBW_ARCHS_MACOS: ${{matrix.arch}}
+          MACOSX_ARCHITECTURE: ${{matrix.arch}}
           CIBW_BEFORE_ALL_MACOS: ./scripts/build/wheel_macos_before_all.sh
           CIBW_TEST_COMMAND: >-
             export PYTHONPATH={project} &&
             python -c "import tests; tests.unittest.main(defaultTest='tests.test_suite')"
           CIBW_ENVIRONMENT: >-
-            MACOSX_DEPLOYMENT_TARGET=${{ matrix.macver }}.0
             PG_VERSION=16
             PACKAGE_NAME=psycopg2-binary
             PSYCOPG2_TESTDB=postgres
-            PSYCOPG2_TEST_FAST=1
-            PATH="/usr/local/opt/postgresql@${PG_VERSION}/bin:$PATH"
+            PATH="/tmp/libpq.build/bin:$PATH"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: macos-${{matrix.pyver}}-macos-${{matrix.macver}}_${{matrix.arch}}
+          name: macos-${{matrix.pyver}}-macos-${{matrix.arch}}
           path: ./wheelhouse/*.whl
 
   # }}}
