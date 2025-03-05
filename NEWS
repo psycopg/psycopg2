@@ -1,6 +1,13 @@
 Current release
 ---------------
 
+What's new in psycopg 2.9.11
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Wheel package bundled with PostgreSQL 17 libpq in order to add support for
+  recent changes, such as ``daticulocale`` being renamed to ``datlocale``.
+
+
 What's new in psycopg 2.9.10
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

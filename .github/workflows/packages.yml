@@ -5,7 +5,7 @@ on:
 
 env:
   PIP_BREAK_SYSTEM_PACKAGES: "1"
-  LIBPQ_VERSION: "16.0"
+  LIBPQ_VERSION: "17.4"
   OPENSSL_VERSION: "1.1.1w"
 
 jobs:
@@ -163,7 +163,7 @@ jobs:
             export PYTHONPATH={project} &&
             python -c "import tests; tests.unittest.main(defaultTest='tests.test_suite')"
           CIBW_ENVIRONMENT: >-
-            PG_VERSION=16
+            PG_VERSION=17
             PACKAGE_NAME=psycopg2-binary
             PSYCOPG2_TESTDB=postgres
             PATH="/tmp/libpq.build/bin:$PATH"

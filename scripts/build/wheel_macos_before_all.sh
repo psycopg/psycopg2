@@ -3,7 +3,7 @@
 # Configure the environment needed to build wheel packages on Mac OS.
 # This script is designed to be used by cibuildwheel as CIBW_BEFORE_ALL_MACOS
 #
-# The PG_VERSION env var must be set to a Postgres major version (e.g. 16).
+# The PG_VERSION env var must be set to a Postgres major version (e.g. 17).
 
 set -euo pipefail
 set -x

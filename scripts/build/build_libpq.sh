@@ -16,7 +16,7 @@ openssl_version="${OPENSSL_VERSION}"
 krb5_version="1.21.3"
 
 # last release: https://openldap.org/software/download/
-ldap_version="2.6.8"
+ldap_version="2.6.9"
 
 # last release: https://github.com/cyrusimap/cyrus-sasl/releases
 sasl_version="2.1.28"
