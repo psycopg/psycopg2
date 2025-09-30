@@ -66,7 +66,7 @@ jobs:
       matrix:
         platform: [manylinux, musllinux]
         arch: [x86_64, aarch64, ppc64le]
-        pyver: [cp39, cp310, cp311, cp312, cp313]
+        pyver: [cp39, cp310, cp311, cp312, cp313, cp314]
 
     runs-on: ubuntu-latest
     steps:
@@ -83,8 +83,9 @@ jobs:
           key: libpq-${{ env.LIBPQ_VERSION }}-${{ matrix.platform }}-${{ matrix.arch }}
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.23.3
+        uses: pypa/cibuildwheel@v3.2.0
         env:
+          CIBW_SKIP: "cp31?t-*"
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
           CIBW_MANYLINUX_I686_IMAGE: manylinux2014
           CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014
@@ -140,7 +141,7 @@ jobs:
       matrix:
         # These archs require an Apple M1 runner: [arm64, universal2]
         arch: [x86_64, arm64]
-        pyver: [cp39, cp310, cp311, cp312, cp313]
+        pyver: [cp39, cp310, cp311, cp312, cp313, cp314]
 
     steps:
       - name: Checkout repos
@@ -153,8 +154,9 @@ jobs:
           key: libpq-${{ env.LIBPQ_VERSION }}-macos-${{ matrix.arch }}
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.23.3
+        uses: pypa/cibuildwheel@v3.2.0
         env:
+          CIBW_SKIP: "cp31?t-*"
           CIBW_BUILD: ${{matrix.pyver}}-macosx_${{matrix.arch}}
           CIBW_ARCHS_MACOS: ${{matrix.arch}}
           MACOSX_ARCHITECTURE: ${{matrix.arch}}
@@ -184,7 +186,7 @@ jobs:
       fail-fast: false
       matrix:
         arch: [win_amd64]
-        pyver: [cp39, cp310, cp311, cp312, cp313]
+        pyver: [cp39, cp310, cp311, cp312, cp313, cp314]
         package_name: [psycopg2, psycopg2-binary]
 
     defaults:
@@ -223,8 +225,9 @@ jobs:
         if: ${{ matrix.package_name != 'psycopg2' }}
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.23.3
+        uses: pypa/cibuildwheel@v3.2.0
         env:
+          CIBW_SKIP: "cp31?t-*"
           VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite" # cache vcpkg
           CIBW_BUILD: ${{matrix.pyver}}-${{matrix.arch}}
           CIBW_ARCHS_WINDOWS: AMD64 x86
