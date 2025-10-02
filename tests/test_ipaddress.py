@@ -71,10 +71,13 @@ class NetworkingTestCase(testutils.ConnectingTestCase):
         cur.execute("select %s", [ip.ip_interface('::ffff:102:300/128')])
 
         # The texual representation of addresses has changed in Python 3.13
-        if sys.version_info >= (3, 13):
+        # https://github.com/python/cpython/issues/128840
+        if str(ip.ip_interface("::ffff:102:300/128")) == "::ffff:1.2.3.0/128":
             self.assertEquals(cur.fetchone()[0], '::ffff:1.2.3.0/128')
-        else:
+        elif str(ip.ip_interface("::ffff:102:300/128")) == "::ffff:102:300/128":
             self.assertEquals(cur.fetchone()[0], '::ffff:102:300/128')
+        else:
+            assert False, "unexpected"
 
     @testutils.skip_if_crdb("cidr")
     def test_cidr_cast(self):
@@ -117,10 +120,13 @@ class NetworkingTestCase(testutils.ConnectingTestCase):
         cur.execute("select %s", [ip.ip_network('::ffff:102:300/128')])
 
         # The texual representation of addresses has changed in Python 3.13
-        if sys.version_info >= (3, 13):
+        # https://github.com/python/cpython/issues/128840
+        if str(ip.ip_interface("::ffff:102:300/128")) == "::ffff:1.2.3.0/128":
             self.assertEquals(cur.fetchone()[0], '::ffff:1.2.3.0/128')
-        else:
+        elif str(ip.ip_interface("::ffff:102:300/128")) == "::ffff:102:300/128":
             self.assertEquals(cur.fetchone()[0], '::ffff:102:300/128')
+        else:
+            assert False, "unexpected"
 
 
 def test_suite():
