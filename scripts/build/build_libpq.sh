@@ -56,12 +56,13 @@ fi
 case "$ID" in
     centos)
         yum update -y
-        yum install -y zlib-devel krb5-devel pam-devel
+        yum install -y flex krb5-devel pam-devel zlib-devel
         ;;
 
     alpine)
         apk upgrade
-        apk add --no-cache zlib-dev krb5-dev linux-pam-dev openldap-dev openssl-dev
+        apk add --no-cache flex krb5-dev linux-pam-dev openldap-dev \
+            openssl-dev zlib-dev
         ;;
 
     macos)
