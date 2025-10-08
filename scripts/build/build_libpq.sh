@@ -56,7 +56,7 @@ fi
 case "$ID" in
     centos)
         yum update -y
-        yum install -y flex krb5-devel pam-devel zlib-devel
+        yum install -y flex krb5-devel pam-devel perl-IPC-Cmd perl-Time-Piece zlib-devel
         ;;
 
     alpine)
@@ -108,7 +108,7 @@ fi
 if [ "$ID" == "centos" ] || [ "$ID" == "macos" ]; then
 
     # Build openssl if needed
-    openssl_tag="OpenSSL_${openssl_version//./_}"
+    openssl_tag="openssl-${openssl_version}"
     openssl_dir="openssl-${openssl_tag}"
     if [ ! -d "${openssl_dir}" ]; then
         curl -sL \

@@ -6,7 +6,7 @@ on:
 env:
   PIP_BREAK_SYSTEM_PACKAGES: "1"
   LIBPQ_VERSION: "17.6"
-  OPENSSL_VERSION: "1.1.1w"
+  OPENSSL_VERSION: "3.5.4"
 
 jobs:
   sdist:  # {{{
