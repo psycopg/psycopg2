@@ -40,7 +40,7 @@ import configparser
 # Take a look at https://www.python.org/dev/peps/pep-0440/
 # for a consistent versioning pattern.
 
-PSYCOPG_VERSION = '2.9.10'
+PSYCOPG_VERSION = '2.9.11.dev1'
 
 
 # note: if you are changing the list of supported Python version please fix
