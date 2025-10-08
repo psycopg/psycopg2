@@ -3,7 +3,6 @@
 # Build a modern version of libpq and depending libs from source on Centos 5, Alpine or macOS
 
 set -euo pipefail
-set -x
 
 # Last release: https://www.postgresql.org/ftp/source/
 # IMPORTANT! Change the cache key in packages.yml when upgrading libraries
@@ -12,13 +11,13 @@ postgres_version="${LIBPQ_VERSION}"
 # last release: https://www.openssl.org/source/
 openssl_version="${OPENSSL_VERSION}"
 
-# last release: https://kerberos.org/dist/
+# Latest release: https://kerberos.org/dist/
 krb5_version="1.21.3"
 
-# last release: https://openldap.org/software/download/
-ldap_version="2.6.8"
+# Latest release: https://openldap.org/software/download/
+ldap_version="2.6.9"
 
-# last release: https://github.com/cyrusimap/cyrus-sasl/releases
+# Latest release: https://github.com/cyrusimap/cyrus-sasl/releases
 sasl_version="2.1.28"
 
 export LIBPQ_BUILD_PREFIX=${LIBPQ_BUILD_PREFIX:-/tmp/libpq.build}
