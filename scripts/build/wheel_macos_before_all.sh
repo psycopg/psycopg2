@@ -12,7 +12,7 @@ dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 prjdir="$( cd "${dir}/../.." && pwd )"
 
 # Build dependency libraries
-"${prjdir}/scripts/build/build_libpq.sh"
+"${prjdir}/scripts/build/build_libpq.sh" > /dev/null
 
 # Show dependency tree
 otool -L /tmp/libpq.build/lib/*.dylib
