@@ -5,6 +5,8 @@ What's new in psycopg 2.9.11
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Add support for Python 3.14.
+- Avoid a segfault passing more arguments than placeholders if Python is built
+  with assertions enabled (:ticket:`#1791`).
 - `~psycopg2.errorcodes` map and `~psycopg2.errors` classes updated to
   PostgreSQL 18.
 - Drop support for Python 3.8.

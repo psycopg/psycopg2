@@ -342,7 +342,7 @@ _psyco_curs_merge_query_args(cursorObject *self,
             if (PyObject_HasAttrString(arg, "args")) {
                 PyObject *args = PyObject_GetAttrString(arg, "args");
                 PyObject *str = PySequence_GetItem(args, 0);
-                const char *s = Bytes_AS_STRING(str);
+                const char *s = PyUnicode_AsUTF8(str);
 
                 Dprintf("curs_execute:     -> %s", s);
 
