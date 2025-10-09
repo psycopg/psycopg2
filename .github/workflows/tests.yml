@@ -16,18 +16,20 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {python: "3.9", postgres: "14"}
-          - {python: "3.10", postgres: "15"}
-          - {python: "3.11", postgres: "16"}
-          - {python: "3.12", postgres: "17"}
-          - {python: "3.13", postgres: "18"}
+          - {python: "3.9", postgres: "13"}
+          - {python: "3.10", postgres: "14"}
+          - {python: "3.11", postgres: "15"}
+          - {python: "3.12", postgres: "16"}
+          - {python: "3.13", postgres: "17"}
+          - {python: "3.14", postgres: "18"}
 
           # Opposite extremes of the supported Py/PG range, other architecture
           - {python: "3.9", postgres: "18", architecture: "x86"}
           - {python: "3.10", postgres: "17", architecture: "x86"}
           - {python: "3.11", postgres: "16", architecture: "x86"}
           - {python: "3.12", postgres: "15", architecture: "x86"}
-          - {python: "3.13", postgres: "13", architecture: "x86"}
+          - {python: "3.13", postgres: "14", architecture: "x86"}
+          - {python: "3.14", postgres: "13", architecture: "x86"}
 
     env:
       PSYCOPG2_TESTDB: postgres
@@ -70,6 +72,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
+          allow-prereleases: true
       - name: Run tests
         env:
           MATRIX_PYTHON: ${{ matrix.python }}
