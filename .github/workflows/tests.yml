@@ -52,7 +52,7 @@ jobs:
           --health-retries 5
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Can enable to test an unreleased libpq version.
       - name: install libpq 16

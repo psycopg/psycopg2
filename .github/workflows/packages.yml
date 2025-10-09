@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repos
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Build sdist
         run: ./scripts/build/build_sdist.sh
@@ -71,7 +71,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repos
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up QEMU for multi-arch build
         uses: docker/setup-qemu-action@v3
@@ -145,7 +145,7 @@ jobs:
 
     steps:
       - name: Checkout repos
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Cache libpq build
         uses: actions/cache@v4
@@ -199,7 +199,7 @@ jobs:
         run: rm -rf c:/tools/php C:/Strawberry/c/bin
 
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Start PostgreSQL service for test
         run: |
