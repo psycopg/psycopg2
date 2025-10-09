@@ -69,7 +69,7 @@ jobs:
 
       - name: Install tox
         run: pip install "tox < 4"
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python }}
           allow-prereleases: true
