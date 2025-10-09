@@ -27,8 +27,8 @@
 #ifndef PSYCOPG_PYTHON_H
 #define PSYCOPG_PYTHON_H 1
 
-#if PY_VERSION_HEX < 0x03080000
-#error "psycopg requires Python 3.8"
+#if PY_VERSION_HEX < 0x03090000
+#error "psycopg requires Python 3.9"
 #endif
 
 #include <structmember.h>

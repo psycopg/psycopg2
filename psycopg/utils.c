@@ -395,25 +395,9 @@ psyco_is_main_interp(void)
 #if PY_VERSION_HEX >= 0x030d0000
     /* tested with Python 3.13.0a6 */
     return PyInterpreterState_Get() == PyInterpreterState_Main();
-#elif PY_VERSION_HEX >= 0x03080000
+#else
     /* tested with Python 3.8.0a2 */
     return _PyInterpreterState_Get() == PyInterpreterState_Main();
-#else
-    static PyInterpreterState *main_interp = NULL;  /* Cached reference */
-    PyInterpreterState *interp;
-
-    if (main_interp) {
-        return (main_interp == PyThreadState_Get()->interp);
-    }
-
-    /* No cached value: cache the proper value and try again. */
-    interp = PyInterpreterState_Head();
-    while (interp->next)
-        interp = interp->next;
-
-    main_interp = interp;
-    assert (main_interp);
-    return psyco_is_main_interp();
 #endif
 }
 
