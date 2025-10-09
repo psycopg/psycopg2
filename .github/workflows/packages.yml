@@ -5,8 +5,8 @@ on:
 
 env:
   PIP_BREAK_SYSTEM_PACKAGES: "1"
-  LIBPQ_VERSION: "16.0"
-  OPENSSL_VERSION: "1.1.1w"
+  LIBPQ_VERSION: "17.6"
+  OPENSSL_VERSION: "3.5.4"
 
 jobs:
   sdist:  # {{{
@@ -65,7 +65,7 @@ jobs:
       fail-fast: false
       matrix:
         platform: [manylinux, musllinux]
-        arch: [x86_64, i686, aarch64, ppc64le]
+        arch: [x86_64, aarch64, ppc64le]
         pyver: [cp38, cp39, cp310, cp311, cp312, cp313]
 
     runs-on: ubuntu-latest
