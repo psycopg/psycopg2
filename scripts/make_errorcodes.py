@@ -33,7 +33,7 @@ def main():
 
     file_start = read_base_file(filename)
     # If you add a version to the list fix the docs (in errorcodes.rst)
-    classes, errors = fetch_errors("11 12 13 14 15 16 17".split())
+    classes, errors = fetch_errors("11 12 13 14 15 16 17 18".split())
 
     disambiguate(errors)
 
