@@ -1047,7 +1047,7 @@ static cursorObject *
 _conn_get_async_cursor(connectionObject *self) {
     PyObject *py_curs;
 
-    if (!(py_curs = PyWeakref_GetObject(self->async_cursor))) {
+    if (!(py_curs = psyco_weakref_get_object(self->async_cursor))) {
         PyErr_SetString(PyExc_SystemError,
             "got null dereferencing cursor weakref");
         goto error;

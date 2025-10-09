@@ -139,6 +139,11 @@ class CursorTests(ConnectingTestCase):
         self.assertRaises(psycopg2.ProgrammingError,
             cur.mogrify, "select %(foo, %(bar)", {'foo': 1, 'bar': 2})
 
+    def test_bad_params_number(self):
+        cur = self.conn.cursor()
+        self.assertRaises(IndexError, cur.execute, "select %s, %s", [1])
+        self.assertRaises(TypeError, cur.execute, "select %s", [1, 2])
+
     def test_cast(self):
         curs = self.conn.cursor()
 

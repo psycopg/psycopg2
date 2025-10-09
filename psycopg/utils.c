@@ -441,3 +441,36 @@ psyco_get_decimal_type(void)
 
     return decimalType;
 }
+
+/* Return the object referred by the weak ref as a borrowed pointer.
+ *
+ * Reproduce the semantics of PyWeakref_GetObject(), which was deprecated in
+ * 3.13.
+ *
+ * I know that it would have been better to reproduce the semantics of
+ * PyWeakref_GetRef(), thank you for the suggestion. However this opens a can
+ * of worms in cursor_type.c. Why so? Glad you ask: because there are many
+ * places in that function where we don't check the return value. That stuff is
+ * convoluted and async: I think in case of failure it would fail of internal
+ * error, but it's not been reported doing so.
+ */
+BORROWED PyObject *
+psyco_weakref_get_object(PyObject *ref)
+{
+#if PY_VERSION_HEX >= 0x030d0000
+    PyObject *obj = NULL;
+    int rv;
+
+    if ((rv = PyWeakref_GetRef(ref, &obj)) > 0) {
+        Py_DECREF(obj);  /* make it weak */
+    }
+    else if (rv == 0) {  /* dead ref */
+        obj = Py_None;
+    }
+    /* else it's an error */
+
+    return obj;
+#else
+    return PyWeakref_GetObject(ref);
+#endif
+}

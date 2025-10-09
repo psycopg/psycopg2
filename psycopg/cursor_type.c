@@ -342,7 +342,7 @@ _psyco_curs_merge_query_args(cursorObject *self,
             if (PyObject_HasAttrString(arg, "args")) {
                 PyObject *args = PyObject_GetAttrString(arg, "args");
                 PyObject *str = PySequence_GetItem(args, 0);
-                const char *s = Bytes_AS_STRING(str);
+                const char *s = PyUnicode_AsUTF8(str);
 
                 Dprintf("curs_execute:     -> %s", s);
 
@@ -779,7 +779,7 @@ curs_fetchone(cursorObject *self, PyObject *dummy)
        successive requests to reallocate it */
     if (self->row >= self->rowcount
         && self->conn->async_cursor
-        && PyWeakref_GetObject(self->conn->async_cursor) == (PyObject*)self)
+        && psyco_weakref_get_object(self->conn->async_cursor) == (PyObject*)self)
         CLEARPGRES(self->pgres);
 
     return res;
@@ -826,7 +826,7 @@ curs_next_named(cursorObject *self)
        successive requests to reallocate it */
     if (self->row >= self->rowcount
         && self->conn->async_cursor
-        && PyWeakref_GetObject(self->conn->async_cursor) == (PyObject*)self)
+        && psyco_weakref_get_object(self->conn->async_cursor) == (PyObject*)self)
         CLEARPGRES(self->pgres);
 
     return res;
@@ -911,7 +911,7 @@ curs_fetchmany(cursorObject *self, PyObject *args, PyObject *kwords)
        successive requests to reallocate it */
     if (self->row >= self->rowcount
         && self->conn->async_cursor
-        && PyWeakref_GetObject(self->conn->async_cursor) == (PyObject*)self)
+        && psyco_weakref_get_object(self->conn->async_cursor) == (PyObject*)self)
         CLEARPGRES(self->pgres);
 
     /* success */
@@ -980,7 +980,7 @@ curs_fetchall(cursorObject *self, PyObject *dummy)
        successive requests to reallocate it */
     if (self->row >= self->rowcount
         && self->conn->async_cursor
-        && PyWeakref_GetObject(self->conn->async_cursor) == (PyObject*)self)
+        && psyco_weakref_get_object(self->conn->async_cursor) == (PyObject*)self)
         CLEARPGRES(self->pgres);
 
     /* success */
