@@ -1,0 +1,138 @@
+name: Build and cache libpq
+
+# Build the libpq package and cache the artifacts.
+#
+# Every Python version on the same architecture will use the same libpq.
+# Therefore building and caching the libpq together with the binary packages
+# result in multiple concurrent builds, and the github artifacts manageer very
+# confused.
+#
+# This job builds the libpq and then caches the artifacts so that the
+# packages.yml workflow will find the library in the cache.
+#
+# You can see the caches at https://github.com/psycopg/psycopg2/actions/caches
+#
+# Or from the API:
+#
+#   curl -fsSL -X GET \
+#     -H "Accept: application/vnd.github+json" \
+#     -H "Authorization: Bearer $GITHUB_TOKEN" \
+#     -H "X-GitHub-Api-Version: 2022-11-28" \
+#     "https://api.github.com/repos/psycopg/psycopg/actions/caches" \
+#   | jq -r '.actions_caches[].key'
+#
+# You can delete a cache using:
+#
+#   curl -fsSL -X DELETE \
+#     -H "Accept: application/vnd.github+json" \
+#     -H "Authorization: Bearer $GITHUB_TOKEN" \
+#     -H "X-GitHub-Api-Version: 2022-11-28" \
+#     "https://api.github.com/repos/psycopg/psycopg/actions/caches?key=libpq-manylinux-ppc64le-17.2-3.4.0"
+#
+# ref: https://docs.github.com/en/rest/actions/cache?apiVersion=2022-11-28#delete-github-actions-caches-for-a-repository-using-a-cache-key
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/build-and-cache-libpq.yml
+      - scripts/build/build_libpq.sh
+
+# TODO: move these env vars in an external env file in order to share them
+# across workflows.
+
+env:
+  LIBPQ_VERSION: "17.6"
+  OPENSSL_VERSION: "3.5.4"
+  PQ_FLAGS: ""
+
+concurrency:
+  # Cancel older requests of the same workflow in the same branch.
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+
+  linux:  # {{{
+    runs-on: ubuntu-latest
+    if: true
+
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64, ppc64le, aarch64, riscv64]
+        platform: [manylinux, musllinux]
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up QEMU for multi-arch build
+        # Check https://github.com/docker/setup-qemu-action for newer versions.
+        uses: docker/setup-qemu-action@v3
+        with:
+          # https://github.com/pypa/cibuildwheel/discussions/2256
+          image: tonistiigi/binfmt:qemu-v8.1.5
+
+      - name: Cache libpq build
+        uses: actions/cache@v4
+        with:
+          path: /tmp/libpq.build
+          key: libpq-${{ matrix.platform }}-${{ matrix.arch }}-${{ env.LIBPQ_VERSION }}-${{ env.OPENSSL_VERSION }}${{ env.PQ_FLAGS }}
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v3.2.0
+        env:
+          CIBW_SKIP: "cp31?t-*"
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+          CIBW_MANYLINUX_I686_IMAGE: manylinux2014
+          CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014
+          CIBW_MANYLINUX_PPC64LE_IMAGE: manylinux2014
+          CIBW_MANYLINUX_RISCV64_IMAGE: quay.io/pypa/manylinux_2_39_riscv64
+          CIBW_BUILD: cp313-${{matrix.platform}}_${{matrix.arch}}
+          CIBW_ARCHS_LINUX: auto aarch64 ppc64le riscv64
+          CIBW_BEFORE_ALL_LINUX: ./scripts/build/build_libpq.sh
+          CIBW_REPAIR_WHEEL_COMMAND: >-
+            ./scripts/build/strip_wheel.sh {wheel}
+            && auditwheel repair -w {dest_dir} {wheel}
+          CIBW_ENVIRONMENT_PASS_LINUX: LIBPQ_VERSION OPENSSL_VERSION
+          CIBW_ENVIRONMENT: >-
+            LIBPQ_BUILD_PREFIX=/host/tmp/libpq.build
+            PATH="$LIBPQ_BUILD_PREFIX/bin:$PATH"
+            LD_LIBRARY_PATH="$LIBPQ_BUILD_PREFIX/lib:$LIBPQ_BUILD_PREFIX/lib64"
+
+
+  # }}}
+
+  macos:  # {{{
+    runs-on: macos-latest
+    if: true
+
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64, arm64]
+
+    steps:
+      - name: Checkout repos
+        uses: actions/checkout@v5
+
+      - name: Cache libpq build
+        uses: actions/cache@v4
+        with:
+          path: /tmp/libpq.build
+          key: libpq-macos-${{ env.LIBPQ_VERSION }}-${{ matrix.arch }}-${{ env.OPENSSL_VERSION }}${{ env.PQ_FLAGS }}
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v3.2.0
+        env:
+          CIBW_SKIP: "cp31?t-*"
+          CIBW_BUILD: cp313-macosx_${{matrix.arch}}
+          CIBW_ARCHS_MACOS: ${{matrix.arch}}
+          MACOSX_ARCHITECTURE: ${{matrix.arch}}
+          CIBW_BEFORE_ALL_MACOS: ./scripts/build/build_libpq.sh
+          CIBW_ENVIRONMENT: >-
+            PSYCOPG_IMPL=binary
+            LIBPQ_BUILD_PREFIX=/tmp/libpq.build
+            PATH="$LIBPQ_BUILD_PREFIX/bin:$PATH"
+
+  # }}}

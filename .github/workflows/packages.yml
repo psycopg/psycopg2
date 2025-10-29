@@ -1,5 +1,13 @@
 ---
 name: Build packages
+
+# Note: these jobs also build and cache the libpq, but, because every Python
+# version will try to build and cache the same libpq instance, there is a race
+# condition and most likely the artifacts manager will refuse to cache.
+#
+# Please run the `build-and-cache-libpq.yml` workflow when the libpq/openssl
+# version change in order to update the cache.
+
 on:
   - workflow_dispatch
 
@@ -7,6 +15,7 @@ env:
   PIP_BREAK_SYSTEM_PACKAGES: "1"
   LIBPQ_VERSION: "17.6"
   OPENSSL_VERSION: "3.5.4"
+  PQ_FLAGS: ""
 
 jobs:
   sdist:  # {{{
@@ -65,7 +74,7 @@ jobs:
       fail-fast: false
       matrix:
         platform: [manylinux, musllinux]
-        arch: [x86_64, aarch64, ppc64le]
+        arch: [x86_64, aarch64, ppc64le, riscv64]
         pyver: [cp39, cp310, cp311, cp312, cp313, cp314]
 
     runs-on: ubuntu-latest
@@ -80,7 +89,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /tmp/libpq.build
-          key: libpq-${{ env.LIBPQ_VERSION }}-${{ matrix.platform }}-${{ matrix.arch }}
+          key: libpq-${{ matrix.platform }}-${{ matrix.arch }}-${{ env.LIBPQ_VERSION }}-${{ env.OPENSSL_VERSION }}${{ env.PQ_FLAGS }}
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.2.0
@@ -90,8 +99,9 @@ jobs:
           CIBW_MANYLINUX_I686_IMAGE: manylinux2014
           CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014
           CIBW_MANYLINUX_PPC64LE_IMAGE: manylinux2014
+          CIBW_MANYLINUX_RISCV64_IMAGE: quay.io/pypa/manylinux_2_39_riscv64
           CIBW_BUILD: ${{matrix.pyver}}-${{matrix.platform}}_${{matrix.arch}}
-          CIBW_ARCHS_LINUX: auto aarch64 ppc64le
+          CIBW_ARCHS_LINUX: auto aarch64 ppc64le riscv64
           CIBW_BEFORE_ALL_LINUX: ./scripts/build/wheel_linux_before_all.sh
           CIBW_REPAIR_WHEEL_COMMAND: >-
             ./scripts/build/strip_wheel.sh {wheel}
@@ -151,7 +161,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /tmp/libpq.build
-          key: libpq-${{ env.LIBPQ_VERSION }}-macos-${{ matrix.arch }}
+          key: libpq-macos-${{ env.LIBPQ_VERSION }}-${{ matrix.arch }}-${{ env.OPENSSL_VERSION }}${{ env.PQ_FLAGS }}
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.2.0
