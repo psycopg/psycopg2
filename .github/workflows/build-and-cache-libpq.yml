@@ -80,7 +80,7 @@ jobs:
           key: libpq-${{ matrix.platform }}-${{ matrix.arch }}-${{ env.LIBPQ_VERSION }}-${{ env.OPENSSL_VERSION }}${{ env.PQ_FLAGS }}
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3.2.0
+        uses: pypa/cibuildwheel@v3.2.1
         env:
           CIBW_SKIP: "cp31?t-*"
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
@@ -123,7 +123,7 @@ jobs:
           key: libpq-macos-${{ env.LIBPQ_VERSION }}-${{ matrix.arch }}-${{ env.OPENSSL_VERSION }}${{ env.PQ_FLAGS }}
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3.2.0
+        uses: pypa/cibuildwheel@v3.2.1
         env:
           CIBW_SKIP: "cp31?t-*"
           CIBW_BUILD: cp313-macosx_${{matrix.arch}}
