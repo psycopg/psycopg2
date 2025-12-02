@@ -64,7 +64,7 @@ jobs:
         platform: [manylinux, musllinux]
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Set up QEMU for multi-arch build
         # Check https://github.com/docker/setup-qemu-action for newer versions.
@@ -114,7 +114,7 @@ jobs:
 
     steps:
       - name: Checkout repos
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Cache libpq build
         uses: actions/cache@v4
