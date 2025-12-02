@@ -92,7 +92,7 @@ jobs:
           key: libpq-${{ matrix.platform }}-${{ matrix.arch }}-${{ env.LIBPQ_VERSION }}-${{ env.OPENSSL_VERSION }}${{ env.PQ_FLAGS }}
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3.2.0
+        uses: pypa/cibuildwheel@v3.3.0
         env:
           CIBW_SKIP: "cp31?t-*"
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
@@ -164,7 +164,7 @@ jobs:
           key: libpq-macos-${{ env.LIBPQ_VERSION }}-${{ matrix.arch }}-${{ env.OPENSSL_VERSION }}${{ env.PQ_FLAGS }}
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3.2.0
+        uses: pypa/cibuildwheel@v3.3.0
         env:
           CIBW_SKIP: "cp31?t-*"
           CIBW_BUILD: ${{matrix.pyver}}-macosx_${{matrix.arch}}
@@ -235,7 +235,7 @@ jobs:
         if: ${{ matrix.package_name != 'psycopg2' }}
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3.2.0
+        uses: pypa/cibuildwheel@v3.3.0
         env:
           CIBW_SKIP: "cp31?t-*"
           VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite" # cache vcpkg
