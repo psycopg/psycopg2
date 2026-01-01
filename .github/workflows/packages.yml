@@ -38,7 +38,7 @@ jobs:
           PACKAGE_NAME: ${{ matrix.package_name }}
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: sdist-${{ matrix.package_name }}
           path: |
@@ -121,7 +121,7 @@ jobs:
             PSYCOPG2_TESTDB_PASSWORD=password
             PSYCOPG2_TEST_FAST=1
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: linux-${{matrix.pyver}}-${{matrix.platform}}_${{matrix.arch}}
           path: ./wheelhouse/*.whl
@@ -181,7 +181,7 @@ jobs:
             PATH="/tmp/libpq.build/bin:$PATH"
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: macos-${{matrix.pyver}}-macos-${{matrix.arch}}
           path: ./wheelhouse/*.whl
@@ -255,7 +255,7 @@ jobs:
             PSYCOPG2_TESTDB_HOST=localhost
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: windows-${{ matrix.package_name }}-${{matrix.pyver}}-${{matrix.arch}}
           path: ./wheelhouse/*.whl
@@ -271,7 +271,7 @@ jobs:
       - windows
     steps:
       - name: Merge Artifacts
-        uses: actions/upload-artifact/merge@v5
+        uses: actions/upload-artifact/merge@v6
         with:
           name: psycopg2-artifacts
           delete-merged: true
