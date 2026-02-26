@@ -277,7 +277,7 @@ def drop_test_table(name):
     cur.execute("SAVEPOINT drop_test_table;")
     try:
         cur.execute("DROP TABLE %s;" % name)
-    except:
+    except Exception:
         cur.execute("ROLLBACK TO SAVEPOINT drop_test_table;")
     conn.commit()
 
