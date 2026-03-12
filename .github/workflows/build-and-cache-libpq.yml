@@ -42,7 +42,7 @@ on:
 # across workflows.
 
 env:
-  LIBPQ_VERSION: "17.6"
+  LIBPQ_VERSION: "17.9"
   OPENSSL_VERSION: "3.5.4"
   PQ_FLAGS: ""
 
