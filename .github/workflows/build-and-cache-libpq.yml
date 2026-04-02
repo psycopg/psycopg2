@@ -70,7 +70,7 @@ jobs:
 
       - name: Set up QEMU for multi-arch build
         # Check https://github.com/docker/setup-qemu-action for newer versions.
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
         with:
           # https://github.com/pypa/cibuildwheel/discussions/2256
           image: tonistiigi/binfmt:qemu-v8.1.5
