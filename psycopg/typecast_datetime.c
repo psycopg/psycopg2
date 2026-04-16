@@ -358,7 +358,12 @@ typecast_PYINTERVAL_cast(const char *str, Py_ssize_t len, PyObject *curs)
                 v = v1;
             }
             if (part == 6) {
-                denom *= 10;
+                /* if denom would overflow it means that an excess of decimal
+                 * digits is being pushed. Postgres should never send more than
+                 * 6. Therefore we can quietly discard the extra. */
+                if (denom <= INT_MAX / 10) {
+                    denom *= 10;
+                }
             }
             break;
 
