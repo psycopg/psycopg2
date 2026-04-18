@@ -12,10 +12,10 @@ postgres_version="${LIBPQ_VERSION}"
 openssl_version="${OPENSSL_VERSION}"
 
 # Latest release: https://kerberos.org/dist/
-krb5_version="1.21.3"
+krb5_version="1.22.2"
 
 # Latest release: https://openldap.org/software/download/
-ldap_version="2.6.9"
+ldap_version="2.6.13"
 
 export LIBPQ_BUILD_PREFIX=${LIBPQ_BUILD_PREFIX:-/tmp/libpq.build}
 
