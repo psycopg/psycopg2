@@ -26,7 +26,7 @@ case "$ID" in
         done) | sort | uniq
         ;;
 
-    centos|rocky)
+    centos|rocky|almalinux)
         echo "TODO!"
         ;;
 
