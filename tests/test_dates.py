@@ -479,6 +479,12 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
         cur.execute("select '1 day 2 hours'::interval")
         self.assertRaises(psycopg2.NotSupportedError, cur.fetchone)
 
+    def test_bug_1835(self):
+        for digits in (8, 31, 100):
+            self.assertEqual(
+                psycopg2.extensions.INTERVAL(b"0:0:0." + b"0" * digits, None),
+                timedelta(0))
+
 
 class FromTicksTestCase(unittest.TestCase):
     # bug "TimestampFromTicks() throws ValueError (2-2.0.14)"
