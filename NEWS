@@ -1,14 +1,11 @@
-Future releases
+Current release
 ---------------
 
-What's new in psycopg 2.9.12 (unreleased)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+What's new in psycopg 2.9.12
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Fix infinite loop with malformed interval (:ticket:`1835`).
 
-
-Current release
----------------
 
 What's new in psycopg 2.9.11
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
