@@ -4,7 +4,6 @@
 # This script is designed to be used by cibuildwheel as CIBW_BEFORE_ALL_LINUX
 
 set -euo pipefail
-set -x
 
 dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 prjdir="$( cd "${dir}/../.." && pwd )"
@@ -26,16 +25,16 @@ case "$ID" in
             # TODO: On 2021-11-09 curl fails on 'ppc64le' with:
             #   curl: (60) SSL certificate problem: certificate has expired
             # Test again later if -k can be removed.
-            curl -skf https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+            curl -fsSLk https://www.postgresql.org/media/keys/ACCC4CF8.asc \
                 > /etc/apt/trusted.gpg.d/postgresql.asc
         fi
 
         apt-get update
         apt-get -y upgrade
-        apt-get -y install libpq-dev
+        apt-get -y install libpq-dev flex
         ;;
 
-    centos|rocky)
+    centos | rocky | almalinux)
         "${dir}/build_libpq.sh" > /dev/null
         ;;
 
