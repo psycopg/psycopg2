@@ -462,6 +462,38 @@ class ParseDsnTestCase(ConnectingTestCase):
                             "URI was not exposed in error message")
         self.assertTrue(raised, "ProgrammingError raised due to invalid URI")
 
+    @skip_before_libpq(9, 2)
+    def test_parse_dsn_uri_password_redacted(self):
+        # libpq echoes the conninfo string verbatim for some errors (e.g.
+        # an unknown compound scheme like "postgresql+driver://"); confirm
+        # the password never appears in the exception message.
+        cases = [
+            ('postgresql+driver://alice:hunter2@host/db', 'hunter2'),
+            ('postgresql+asyncpg://joe:TopSecret@host:5432/db', 'TopSecret'),
+            ('postgres+psycopg://bob:S3cret!@host/db', 'S3cret!'),
+        ]
+        for url, password in cases:
+            try:
+                ext.parse_dsn(url)
+            except psycopg2.Error as e:
+                msg = str(e)
+                self.assertNotIn(password, msg)
+                # When libpq echoes the URI, the password segment is replaced
+                # by a fixed placeholder (username is preserved).
+                if '://' in msg:
+                    self.assertIn(':***@', msg,
+                        "password should be replaced by '***' placeholder"
+                        " in: %r" % msg)
+
+    @skip_before_libpq(9, 2)
+    def test_parse_dsn_uri_no_password_preserved(self):
+        # When the URI has no password the redactor must not inject a
+        # placeholder.
+        try:
+            ext.parse_dsn('postgresql+driver://user_only@host/db')
+        except psycopg2.Error as e:
+            self.assertNotIn('***', str(e))
+
     def test_unicode_value(self):
         snowman = "\u2603"
         d = ext.parse_dsn('dbname=' + snowman)

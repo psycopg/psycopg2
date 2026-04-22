@@ -334,12 +334,17 @@ static PyObject *
 error_message_get(connInfoObject *self)
 {
     const char *val;
+    char *red;
+    PyObject *rv;
 
     val = PQerrorMessage(self->conn->pgconn);
     if (!val || !val[0]) {
         Py_RETURN_NONE;
     }
-    return conn_text_from_chars(self->conn, val);
+    red = psyco_redact_conninfo_msg(val);
+    rv = conn_text_from_chars(self->conn, red ? red : val);
+    PyMem_Free(red);
+    return rv;
 }
 
 

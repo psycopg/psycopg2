@@ -5,6 +5,10 @@ What's new in psycopg 2.9.12
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Fix infinite loop with malformed interval (:ticket:`1835`).
+- Redact passwords from PostgreSQL connection URIs embedded in exception
+  messages (e.g. ``postgresql://user:pass@host`` becomes
+  ``postgresql://user:***@host``) to avoid leaking credentials into
+  application logs when ``parse_dsn()`` or ``connect()`` fails.
 
 
 What's new in psycopg 2.9.11

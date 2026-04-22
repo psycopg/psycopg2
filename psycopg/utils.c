@@ -35,6 +35,211 @@
 #include <string.h>
 #include <stdlib.h>
 
+/* ---------- connection string credential redaction -----------------------
+ *
+ * libpq may embed verbatim the connection URI the user passed into its
+ * diagnostic strings (e.g. `invalid URI query parameter: "x" in
+ * "postgresql://joe:hunter2@host/db"`). When those strings surface through
+ * an exception they leak credentials into application logs, CI output and
+ * APM systems. To prevent that we sanitize every diagnostic we surface as
+ * the message of a Python exception.
+ *
+ * The sanitizer is intentionally narrow and byte-oriented:
+ *
+ *   - it only rewrites the "userinfo" segment of a URI whose scheme starts
+ *     with "postgres" (covers "postgres", "postgresql", "postgresql+driver",
+ *     etc.);
+ *   - in that segment it preserves the username (useful for diagnostics,
+ *     matching the convention of SQLAlchemy/Django) and replaces the
+ *     password with a fixed placeholder, yielding `user:***@host`;
+ *   - bytes are scanned one at a time, so UTF-8 and other ASCII-compatible
+ *     encodings emitted by libpq are safe (the delimiters we match `://`,
+ *     `@`, `/`, `?`, `#` are all single-byte ASCII and never occur inside
+ *     UTF-8 continuation bytes).
+ *
+ * The function always returns a freshly-allocated copy of the input (or
+ * NULL on allocation failure) so callers have a uniform ownership model.
+ */
+
+#define PSYCO_REDACTED "***"
+
+typedef struct {
+    char *buf;
+    size_t len;
+    size_t cap;
+} strbuf;
+
+static int
+strbuf_reserve(strbuf *sb, size_t extra)
+{
+    size_t need = sb->len + extra + 1;
+    if (need <= sb->cap) {
+        return 0;
+    }
+    size_t cap = sb->cap ? sb->cap : 64;
+    while (cap < need) {
+        cap *= 2;
+    }
+    char *tmp = PyMem_Realloc(sb->buf, cap);
+    if (!tmp) {
+        PyMem_Free(sb->buf);
+        sb->buf = NULL;
+        return -1;
+    }
+    sb->buf = tmp;
+    sb->cap = cap;
+    return 0;
+}
+
+static int
+strbuf_append(strbuf *sb, const char *s, size_t n)
+{
+    if (strbuf_reserve(sb, n) < 0) {
+        return -1;
+    }
+    memcpy(sb->buf + sb->len, s, n);
+    sb->len += n;
+    sb->buf[sb->len] = '\0';
+    return 0;
+}
+
+static int
+is_scheme_char(unsigned char c)
+{
+    /* RFC 3986: scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." ) */
+    return (c >= 'a' && c <= 'z')
+        || (c >= 'A' && c <= 'Z')
+        || (c >= '0' && c <= '9')
+        || c == '+' || c == '-' || c == '.';
+}
+
+/* True iff [s, s+n) equals "postgres" prefix case-insensitively. */
+static int
+is_postgres_scheme(const char *s, size_t n)
+{
+    static const char prefix[] = "postgres";
+    size_t pn = sizeof(prefix) - 1;
+    if (n < pn) {
+        return 0;
+    }
+    for (size_t i = 0; i < pn; i++) {
+        unsigned char c = (unsigned char)s[i];
+        if (c >= 'A' && c <= 'Z') {
+            c = (unsigned char)(c - 'A' + 'a');
+        }
+        if (c != (unsigned char)prefix[i]) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+/* Walk back from the `://` colon to find the start of the scheme. Returns a
+ * pointer inside [start, colon] that is either start or the character just
+ * after the last non-scheme byte. */
+static const char *
+scheme_start(const char *start, const char *colon)
+{
+    const char *p = colon;
+    while (p > start && is_scheme_char((unsigned char)p[-1])) {
+        p--;
+    }
+    return p;
+}
+
+char *
+psyco_redact_conninfo_msg(const char *msg)
+{
+    strbuf out = {NULL, 0, 0};
+
+    if (!msg) {
+        return NULL;
+    }
+
+    const char *base = msg;
+    const char *p = msg;
+
+    while (*p) {
+        /* Look for "://" — the authority separator of any URI. */
+        if (!(p[0] == ':' && p[1] == '/' && p[2] == '/')) {
+            p++;
+            continue;
+        }
+
+        /* Confirm this is a postgres-family URI. */
+        const char *s_beg = scheme_start(base, p);
+        size_t s_len = (size_t)(p - s_beg);
+        if (!is_postgres_scheme(s_beg, s_len)) {
+            p++;
+            continue;
+        }
+
+        /* Emit everything up to and including `://`. */
+        if (strbuf_append(&out, base, (size_t)(p - base + 3)) < 0) {
+            return NULL;
+        }
+
+        /* The authority ends at the next `/`, `?`, `#` or string end. */
+        const char *auth_beg = p + 3;
+        const char *auth_end = auth_beg;
+        while (*auth_end && *auth_end != '/'
+               && *auth_end != '?' && *auth_end != '#') {
+            auth_end++;
+        }
+
+        /* userinfo (if any) is terminated by the rightmost `@` in the
+         * authority. Scanning for the first `@` is safe because `@` is
+         * not allowed unescaped in the host portion of a URI. */
+        const char *at = memchr(auth_beg, '@',
+                                (size_t)(auth_end - auth_beg));
+
+        if (at && at > auth_beg) {
+            /* Within userinfo, the password (if present) follows the
+             * first `:`. Keep the username, replace the password. */
+            const char *colon = memchr(auth_beg, ':',
+                                       (size_t)(at - auth_beg));
+            if (colon) {
+                /* user:pass@ -> user:***@ */
+                if (strbuf_append(&out, auth_beg,
+                                  (size_t)(colon - auth_beg + 1)) < 0) {
+                    return NULL;
+                }
+                if (strbuf_append(&out, PSYCO_REDACTED,
+                                  sizeof(PSYCO_REDACTED) - 1) < 0) {
+                    return NULL;
+                }
+            }
+            else {
+                /* userinfo without password: keep it as-is. */
+                if (strbuf_append(&out, auth_beg,
+                                  (size_t)(at - auth_beg)) < 0) {
+                    return NULL;
+                }
+            }
+            if (strbuf_append(&out, at, (size_t)(auth_end - at)) < 0) {
+                return NULL;
+            }
+        }
+        else {
+            /* No userinfo at all: copy the host segment verbatim. */
+            if (strbuf_append(&out, auth_beg,
+                              (size_t)(auth_end - auth_beg)) < 0) {
+                return NULL;
+            }
+        }
+
+        base = auth_end;
+        p = auth_end;
+    }
+
+    /* Emit the tail. strbuf_append always allocates, so `out.buf` is
+     * non-NULL on success even when the input (and tail) is empty. */
+    if (strbuf_append(&out, base, strlen(base)) < 0) {
+        return NULL;
+    }
+    return out.buf;
+}
+
 /* Escape a string for sql inclusion.
  *
  * The function must be called holding the GIL.
@@ -116,12 +321,15 @@ psyco_escape_identifier(connectionObject *conn, const char *str, Py_ssize_t len)
 
     rv = PQescapeIdentifier(conn->pgconn, str, len);
     if (!rv) {
-        char *msg;
-        msg = PQerrorMessage(conn->pgconn);
+        const char *msg = PQerrorMessage(conn->pgconn);
         if (!msg || !msg[0]) {
             msg = "no message provided";
         }
-        PyErr_Format(InterfaceError, "failed to escape identifier: %s", msg);
+        /* libpq error strings can embed the connection URI; redact. */
+        char *safe = psyco_redact_conninfo_msg(msg);
+        PyErr_Format(InterfaceError,
+            "failed to escape identifier: %s", safe ? safe : msg);
+        PyMem_Free(safe);
     }
 
 exit:
@@ -354,23 +562,25 @@ psyco_set_error(PyObject *exc, cursorObject *curs, const char *msg)
 {
     PyObject *pymsg;
     PyObject *err = NULL;
-    connectionObject *conn = NULL;
+    connectionObject *conn = curs ? ((cursorObject *)curs)->conn : NULL;
+    /* Scrub credentials embedded in the libpq diagnostic (if any) before
+     * handing the message off to the exception. */
+    char *red = msg ? psyco_redact_conninfo_msg(msg) : NULL;
+    const char *safe = red ? red : msg;
 
-    if (curs) {
-        conn = ((cursorObject *)curs)->conn;
-    }
-
-    if ((pymsg = conn_text_from_chars(conn, msg))) {
+    if ((pymsg = conn_text_from_chars(conn, safe))) {
         err = PyObject_CallFunctionObjArgs(exc, pymsg, NULL);
         Py_DECREF(pymsg);
     }
-    else {
-        /* what's better than an error in an error handler in the morning?
-         * Anyway, some error was set, refcount is ok... get outta here. */
+    PyMem_Free(red);
+
+    if (!err) {
+        /* An error occurred while building the exception; whatever was
+         * raised is already set, so just bail. */
         return NULL;
     }
 
-    if (err && PyObject_TypeCheck(err, &errorType)) {
+    if (PyObject_TypeCheck(err, &errorType)) {
         errorObject *perr = (errorObject *)err;
         if (curs) {
             Py_CLEAR(perr->cursor);
@@ -379,11 +589,8 @@ psyco_set_error(PyObject *exc, cursorObject *curs, const char *msg)
         }
     }
 
-    if (err) {
-        PyErr_SetObject(exc, err);
-        Py_DECREF(err);
-    }
-
+    PyErr_SetObject(exc, err);
+    Py_DECREF(err);
     return err;
 }
 

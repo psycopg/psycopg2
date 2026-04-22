@@ -96,6 +96,8 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult **pgres)
     PyObject *exc = NULL;
     const char *err = NULL;
     const char *err2 = NULL;
+    const char *safe_err = NULL;
+    char *red_err = NULL;
     const char *code = NULL;
     PyObject *pyerr = NULL;
     PyObject *pgerror = NULL, *pgcode = NULL;
@@ -140,6 +142,9 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult **pgres)
         return;
     }
 
+    red_err = psyco_redact_conninfo_msg(err);
+    safe_err = red_err ? red_err : err;
+
     /* Analyze the message and try to deduce the right exception kind
        (only if we got the SQLSTATE from the pgres, obviously) */
     if (code != NULL) {
@@ -152,13 +157,13 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult **pgres)
     }
 
     /* try to remove the initial "ERROR: " part from the postgresql error */
-    err2 = strip_severity(err);
+    err2 = strip_severity(safe_err);
     Dprintf("pq_raise: err2=%s", err2);
 
     /* decode now the details of the error, because after psyco_set_error
      * decoding will fail.
      */
-    if (!(pgerror = conn_text_from_chars(conn, err))) {
+    if (!(pgerror = conn_text_from_chars(conn, safe_err))) {
         /* we can't really handle an exception while handling this error
          * so just print it. */
         PyErr_Print();
@@ -196,6 +201,8 @@ pq_raise(connectionObject *conn, cursorObject *curs, PGresult **pgres)
 
     Py_XDECREF(pgerror);
     Py_XDECREF(pgcode);
+
+    PyMem_Free(red_err);
 }
 
 /* pq_clear_async - clear the effects of a previous async query
@@ -716,7 +723,7 @@ pq_get_result_async(connectionObject *conn)
             conn->closed = 2;
         }
 
-        PyErr_SetString(OperationalError, PQerrorMessage(conn->pgconn));
+        psyco_set_error(OperationalError, NULL, PQerrorMessage(conn->pgconn));
         goto exit;
     }
 
@@ -851,8 +858,7 @@ _pq_execute_sync(cursorObject *curs, const char *query, int no_result, int no_be
         pthread_mutex_unlock(&(conn->lock));
         Py_BLOCK_THREADS;
         if (!PyErr_Occurred()) {
-            PyErr_SetString(OperationalError,
-                            PQerrorMessage(conn->pgconn));
+            psyco_set_error(OperationalError, NULL, PQerrorMessage(conn->pgconn));
         }
         return -1;
     }
@@ -903,8 +909,7 @@ _pq_execute_async(cursorObject *curs, const char *query, int no_result)
         }
         pthread_mutex_unlock(&(conn->lock));
         Py_BLOCK_THREADS;
-        PyErr_SetString(OperationalError,
-                        PQerrorMessage(conn->pgconn));
+        psyco_set_error(OperationalError, NULL, PQerrorMessage(conn->pgconn));
         return -1;
     }
     Dprintf("pq_execute: async query sent to backend");
@@ -924,8 +929,7 @@ _pq_execute_async(cursorObject *curs, const char *query, int no_result)
         /* there was an error */
         pthread_mutex_unlock(&(conn->lock));
         Py_BLOCK_THREADS;
-        PyErr_SetString(OperationalError,
-                        PQerrorMessage(conn->pgconn));
+        psyco_set_error(OperationalError, NULL, PQerrorMessage(conn->pgconn));
         return -1;
     }
 
@@ -947,7 +951,7 @@ pq_execute(cursorObject *curs, const char *query, int async, int no_result, int 
     /* check status of connection, raise error if not OK */
     if (PQstatus(curs->conn->pgconn) != CONNECTION_OK) {
         Dprintf("pq_execute: connection NOT OK");
-        PyErr_SetString(OperationalError, PQerrorMessage(curs->conn->pgconn));
+        psyco_set_error(OperationalError, NULL, PQerrorMessage(curs->conn->pgconn));
         return -1;
     }
     Dprintf("pq_execute: pg connection at %p OK", curs->conn->pgconn);

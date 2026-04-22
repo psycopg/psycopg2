@@ -139,7 +139,12 @@ parse_dsn(PyObject *self, PyObject *args, PyObject *kwargs)
     options = PQconninfoParse(Bytes_AS_STRING(dsn), &err);
     if (options == NULL) {
         if (err != NULL) {
-            PyErr_Format(ProgrammingError, "invalid dsn: %s", err);
+            /* `err` from libpq may quote the raw DSN/URI verbatim; redact
+             * any embedded credentials before surfacing to Python. */
+            char *safe = psyco_redact_conninfo_msg(err);
+            PyErr_Format(ProgrammingError, "invalid dsn: %s",
+                         safe ? safe : err);
+            PyMem_Free(safe);
             PQfreemem(err);
         } else {
             PyErr_SetString(OperationalError, "PQconninfoParse() failed");
@@ -454,8 +459,11 @@ encrypt_password(PyObject *self, PyObject *args, PyObject *kwargs)
     }
     else {
         const char *msg = PQerrorMessage(conn->pgconn);
+        const char *raw = (msg && msg[0]) ? msg : "no reason given";
+        char *safe = psyco_redact_conninfo_msg(raw);
         PyErr_Format(ProgrammingError,
-            "password encryption failed: %s", msg ? msg : "no reason given");
+            "password encryption failed: %s", safe ? safe : raw);
+        PyMem_Free(safe);
         goto exit;
     }
 

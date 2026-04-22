@@ -63,5 +63,11 @@ HIDDEN BORROWED PyObject *psyco_weakref_get_object(PyObject *);
 
 HIDDEN PyObject *Bytes_Format(PyObject *format, PyObject *args);
 
+/* Return a freshly-allocated copy of `msg` with credentials that may be
+ * embedded in PostgreSQL connection URIs replaced by a placeholder.
+ * Returns NULL only if `msg` is NULL or allocation fails. The caller owns
+ * the result and must PyMem_Free() it. */
+HIDDEN char *psyco_redact_conninfo_msg(const char *msg);
+
 
 #endif /* !defined(UTILS_H) */

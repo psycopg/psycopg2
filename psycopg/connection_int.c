@@ -736,7 +736,7 @@ _conn_sync_connect(connectionObject *self, const char *dsn)
     else if (PQstatus(self->pgconn) == CONNECTION_BAD)
     {
         Dprintf("conn_connect: PQconnectdb(%s) returned BAD", dsn);
-        PyErr_SetString(OperationalError, PQerrorMessage(self->pgconn));
+        psyco_set_error(OperationalError, NULL, PQerrorMessage(self->pgconn));
         return -1;
     }
 
@@ -782,7 +782,7 @@ _conn_async_connect(connectionObject *self, const char *dsn)
     else if (PQstatus(pgconn) == CONNECTION_BAD)
     {
         Dprintf("conn_connect: PQconnectdb(%s) returned BAD", dsn);
-        PyErr_SetString(OperationalError, PQerrorMessage(pgconn));
+        psyco_set_error(OperationalError, NULL, PQerrorMessage(pgconn));
         return -1;
     }
 
@@ -849,7 +849,7 @@ _conn_poll_connecting(connectionObject *self)
         if (!(msg && *msg)) {
             msg = "asynchronous connection failed";
         }
-        PyErr_SetString(OperationalError, msg);
+        psyco_set_error(OperationalError, NULL, msg);
         res = PSYCO_POLL_ERROR;
         break;
     }
@@ -883,7 +883,7 @@ _conn_poll_advance_write(connectionObject *self)
         res = PSYCO_POLL_WRITE;
         break;
     case -1:  /* error */
-        PyErr_SetString(OperationalError, PQerrorMessage(self->pgconn));
+        psyco_set_error(OperationalError, NULL, PQerrorMessage(self->pgconn));
         res = PSYCO_POLL_ERROR;
         break;
     default:
@@ -1008,7 +1008,7 @@ _conn_poll_setup_async(connectionObject *self)
             Dprintf("conn_poll: status -> CONN_STATUS_DATESTYLE");
             self->status = CONN_STATUS_DATESTYLE;
             if (0 == pq_send_query(self, psyco_datestyle)) {
-                PyErr_SetString(OperationalError, PQerrorMessage(self->pgconn));
+                psyco_set_error(OperationalError, NULL, PQerrorMessage(self->pgconn));
                 break;
             }
             Dprintf("conn_poll: async_status -> ASYNC_WRITE");
@@ -1559,6 +1559,8 @@ conn_set_error(connectionObject *self, const char *msg)
         self->error = NULL;
     }
     if (msg && *msg) {
-        self->error = strdup(msg);
+        char *red = psyco_redact_conninfo_msg(msg);
+        self->error = strdup(red ? red : msg);
+        PyMem_Free(red);
     }
 }
