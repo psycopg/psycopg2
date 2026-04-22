@@ -29,8 +29,8 @@ and classes until a better place in the distribution is found.
 import os as _os
 import time as _time
 import re as _re
+import weakref as _weakref
 from collections import namedtuple, OrderedDict
-
 import logging as _logging
 
 import psycopg2
@@ -401,9 +401,17 @@ class LoggingConnection(_connection):
         self._logobj = logobj
         if _logging and isinstance(
                 logobj, (_logging.Logger, _logging.LoggerAdapter)):
-            self.log = self._logtologger
+            self._log = _weakref.WeakMethod(self._logtologger)
         else:
-            self.log = self._logtofile
+            self._log = _weakref.WeakMethod(self._logtofile)
+
+    def log(self, *args, **kwargs):
+        """
+        Public interface of the log method defined in initialize
+        """
+        log = self._log()
+        if log:
+            return self._log()(*args, **kwargs)
 
     def filter(self, msg, curs):
         """Filter the query before logging it.
