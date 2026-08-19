@@ -189,13 +189,13 @@ jobs:
   # }}}
 
   windows:  # {{{
-    runs-on: windows-latest
+    runs-on: ${{ matrix.arch == 'win_arm64' && 'windows-11-arm' || 'windows-latest' }}
     if: true
 
     strategy:
       fail-fast: false
       matrix:
-        arch: [win_amd64]
+        arch: [win_amd64, win_arm64]
         pyver: [cp39, cp310, cp311, cp312, cp313, cp314]
         package_name: [psycopg2, psycopg2-binary]
 
@@ -212,6 +212,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Start PostgreSQL service for test
+        if: matrix.arch == 'win_amd64'
         run: |
           $PgSvc = Get-Service "postgresql*"
           Set-Service $PgSvc.Name -StartupType manual
@@ -223,10 +224,12 @@ jobs:
         with:
           script: |
             const path = require('path')
+            const triplet = '${{ matrix.arch == 'win_arm64' && 'arm64-windows' || 'x64-windows-release' }}';
             core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
             core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
-            core.addPath(path.join(process.env.VCPKG_INSTALLATION_ROOT, 'installed/x64-windows-release/lib'));
-            core.addPath(path.join(process.env.VCPKG_INSTALLATION_ROOT, 'installed/x64-windows-release/bin'));
+            core.exportVariable('VCPKG_TARGET_TRIPLET', triplet);
+            core.addPath(path.join(process.env.VCPKG_INSTALLATION_ROOT, `installed/${triplet}/lib`));
+            core.addPath(path.join(process.env.VCPKG_INSTALLATION_ROOT, `installed/${triplet}/bin`));
 
       - name: Create the binary package source tree
         run: >-
@@ -238,9 +241,12 @@ jobs:
         uses: pypa/cibuildwheel@v3.4.0
         env:
           CIBW_SKIP: "cp31?t-*"
+          # GitHub's Windows ARM64 runner image omits the PostgreSQL server,
+          # so there is no database service available for the wheel tests.
+          CIBW_TEST_SKIP: "*-win_arm64"
           VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite" # cache vcpkg
           CIBW_BUILD: ${{matrix.pyver}}-${{matrix.arch}}
-          CIBW_ARCHS_WINDOWS: AMD64 x86
+          CIBW_ARCHS_WINDOWS: ${{ matrix.arch == 'win_arm64' && 'ARM64' || 'AMD64' }}
           CIBW_BEFORE_BUILD_WINDOWS: '.\scripts\build\wheel_win32_before_build.bat'
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >-
             delvewheel repair -w {dest_dir}
