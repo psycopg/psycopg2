@@ -198,6 +198,10 @@ jobs:
         arch: [win_amd64, win_arm64]
         pyver: [cp39, cp310, cp311, cp312, cp313, cp314]
         package_name: [psycopg2, psycopg2-binary]
+        exclude:
+          # Python 3.9 and 3.10 don't have Windows ARM64 releases.
+          - {arch: win_arm64, pyver: cp39}
+          - {arch: win_arm64, pyver: cp310}
 
     defaults:
       run:
@@ -211,12 +215,21 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v6
 
-      - name: Start PostgreSQL service for test
-        if: matrix.arch == 'win_amd64'
+      - name: Install and start PostgreSQL for test
+        # Install PostgreSQL if the runner image doesn't provide it, as is
+        # currently the case for Windows ARM64.
         run: |
-          $PgSvc = Get-Service "postgresql*"
+          $PgSvc = Get-Service "postgresql*" -ErrorAction SilentlyContinue
+          if (-not $PgSvc) {
+            choco install postgresql17 -y --no-progress --params '/Password:root'
+            "PGUSER=postgres" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+            "PGPASSWORD=root" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+            $PgSvc = Get-Service "postgresql*"
+          }
           Set-Service $PgSvc.Name -StartupType manual
-          $PgSvc.Start()
+          if ($PgSvc.Status -ne 'Running') {
+            $PgSvc.Start()
+          }
         shell: powershell
 
       - name: Export GitHub Actions cache environment variables
@@ -241,9 +254,6 @@ jobs:
         uses: pypa/cibuildwheel@v3.4.0
         env:
           CIBW_SKIP: "cp31?t-*"
-          # GitHub's Windows ARM64 runner image omits the PostgreSQL server,
-          # so there is no database service available for the wheel tests.
-          CIBW_TEST_SKIP: "*-win_arm64"
           VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite" # cache vcpkg
           CIBW_BUILD: ${{matrix.pyver}}-${{matrix.arch}}
           CIBW_ARCHS_WINDOWS: ${{ matrix.arch == 'win_arm64' && 'ARM64' || 'AMD64' }}
