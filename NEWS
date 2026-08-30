@@ -4,6 +4,7 @@ Future releases
 What's new in psycopg 2.9.13 (unreleased)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+- Add support for Python 3.15 (:ticket:`#1848`).
 - Fix parsing of malformed bytea input.
 - Fix parsing of malformed int64 input in arrays (:ticket:`#1847`).
 - Add a ``pyproject.toml`` file to declare a PEP 517 build backend
