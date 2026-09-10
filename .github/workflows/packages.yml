@@ -191,6 +191,8 @@ jobs:
   windows:  # {{{
     runs-on: ${{ matrix.arch == 'win_arm64' && 'windows-11-arm' || 'windows-latest' }}
     if: true
+    permissions:
+      contents: read
 
     strategy:
       fail-fast: false
@@ -214,6 +216,8 @@ jobs:
 
       - name: Checkout repo
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Install and start PostgreSQL for test
         # Install PostgreSQL if the runner image doesn't provide it, as is
@@ -221,10 +225,13 @@ jobs:
         run: |
           $PgSvc = Get-Service "postgresql*" -ErrorAction SilentlyContinue
           if (-not $PgSvc) {
-            choco install postgresql17 -y --no-progress --params '/Password:root'
+            choco install postgresql16 --version=16.15.0 --source=https://community.chocolatey.org/api/v2/ --require-checksums -y --no-progress --params '/Password:root'
+            if ($LASTEXITCODE -ne 0) {
+              throw "Chocolatey failed to install PostgreSQL"
+            }
             "PGUSER=postgres" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
             "PGPASSWORD=root" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-            $PgSvc = Get-Service "postgresql*"
+            $PgSvc = Get-Service "postgresql*" -ErrorAction Stop
           }
           Set-Service $PgSvc.Name -StartupType manual
           if ($PgSvc.Status -ne 'Running') {
