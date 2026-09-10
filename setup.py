@@ -40,7 +40,7 @@ import configparser
 # Take a look at https://www.python.org/dev/peps/pep-0440/
 # for a consistent versioning pattern.
 
-PSYCOPG_VERSION = '2.9.12'
+PSYCOPG_VERSION = '2.9.13'
 
 
 # note: if you are changing the list of supported Python version please fix
@@ -51,12 +51,12 @@ Intended Audience :: Developers
 License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)
 Programming Language :: Python
 Programming Language :: Python :: 3
-Programming Language :: Python :: 3.9
 Programming Language :: Python :: 3.10
 Programming Language :: Python :: 3.11
 Programming Language :: Python :: 3.12
 Programming Language :: Python :: 3.13
 Programming Language :: Python :: 3.14
+Programming Language :: Python :: 3.15
 Programming Language :: Python :: 3 :: Only
 Programming Language :: Python :: Implementation :: CPython
 Programming Language :: C
@@ -524,7 +524,7 @@ setup(name="psycopg2",
       url="https://psycopg.org/",
       license="LGPL with exceptions",
       platforms=["any"],
-      python_requires='>=3.9',
+      python_requires='>= 3.10',
       description=readme.split("\n")[0],
       long_description="\n".join(readme.split("\n")[2:]).lstrip(),
       classifiers=[x for x in classifiers.split("\n") if x],

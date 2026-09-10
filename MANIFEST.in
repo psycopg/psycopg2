@@ -6,4 +6,4 @@ include doc/Makefile doc/requirements.txt
 recursive-include doc/src *.rst *.py *.css Makefile
 recursive-include scripts *.py *.sh
 include AUTHORS README.rst INSTALL LICENSE NEWS
-include MANIFEST.in setup.py setup.cfg Makefile
+include MANIFEST.in pyproject.toml setup.py setup.cfg Makefile

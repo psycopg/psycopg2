@@ -36,6 +36,11 @@ typecast_LONGINTEGER_cast(const char *s, Py_ssize_t len, PyObject *curs)
     char buffer[24];
 
     if (s == NULL) { Py_RETURN_NONE; }
+    if (len >= 24) {
+        PyErr_SetString(DataError, "int64 representation too long");
+        return NULL;
+    }
+
     if (s[len] != '\0') {
         strncpy(buffer, s, (size_t) len); buffer[len] = '\0';
         s = buffer;

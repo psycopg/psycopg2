@@ -188,8 +188,8 @@ parse_hex(const char *bufin, Py_ssize_t sizein, Py_ssize_t *sizeout)
     char *bufout;
     char *po;
 
-    po = bufout = PyMem_Malloc((sizein - 2) >> 1);   /* output size upper bound */
-    if (NULL == bufout) {
+    /* output size upper bound */
+    if (NULL == (po = bufout = PyMem_Malloc((sizein - 1) >> 1))) {
         PyErr_NoMemory();
         goto exit;
     }

@@ -15,7 +15,7 @@ openssl_version="${OPENSSL_VERSION}"
 krb5_version="1.22.2"
 
 # Latest release: https://openldap.org/software/download/
-ldap_version="2.6.13"
+ldap_version="2.6.14"
 
 export LIBPQ_BUILD_PREFIX=${LIBPQ_BUILD_PREFIX:-/tmp/libpq.build}
 

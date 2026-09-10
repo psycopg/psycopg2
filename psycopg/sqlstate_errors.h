@@ -43,6 +43,9 @@
 {"0Z000", "DiagnosticsException"},
 {"0Z002", "StackedDiagnosticsAccessedWithoutActiveHandler"},
 
+/* Class 10 - XQuery Error */
+{"10608", "InvalidArgumentForXquery"},
+
 /* Class 20 - Case Not Found */
 {"20000", "CaseNotFound"},
 
@@ -288,6 +291,7 @@
 {"58030", "IoError"},
 {"58P01", "UndefinedFile"},
 {"58P02", "DuplicateFile"},
+{"58P03", "FileNameTooLong"},
 
 /* Class 72 - Snapshot Failure */
 {"72000", "SnapshotTooOld"},
