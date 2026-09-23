@@ -6,7 +6,7 @@ This is a stub to work as `pg_config --libdir` or `pg_config --includedir` to
 make it work with vcpkg.
 
 You will need install `vcpkg`, set `VCPKG_ROOT` env, and run `vcpkg install
-libpq:x64-windows-release` before using this script.
+libpq:<triplet>` before using this script.
 """
 
 import os
@@ -21,16 +21,25 @@ class ScriptError(Exception):
 
 
 def _main() -> None:
-    # only x64-windows
-    if not (sys.platform == "win32" and platform.machine() == "AMD64"):
-        raise ScriptError("this script should only be used in x64-windows")
+    triplets = {
+        "AMD64": "x64-windows-release",
+        "ARM64": "arm64-windows",
+    }
+    machine = platform.machine().upper()
+    if sys.platform != "win32" or machine not in triplets:
+        raise ScriptError("this script should only be used in x64 or ARM64 Windows")
+
+    expected_triplet = triplets[machine]
+    triplet = os.environ.get("VCPKG_TARGET_TRIPLET", expected_triplet)
+    if triplet != expected_triplet:
+        raise ScriptError(f"triplet {triplet!r} does not match {machine}")
 
     vcpkg_root = os.environ.get(
         "VCPKG_ROOT", os.environ.get("VCPKG_INSTALLATION_ROOT", "")
     )
     if not vcpkg_root:
         raise ScriptError("VCPKG_ROOT/VCPKG_INSTALLATION_ROOT env var not specified")
-    vcpkg_platform_root = (Path(vcpkg_root) / "installed/x64-windows-release").resolve()
+    vcpkg_platform_root = (Path(vcpkg_root) / "installed" / triplet).resolve()
 
     args = parse_cmdline()
 

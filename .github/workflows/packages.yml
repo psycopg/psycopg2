@@ -189,15 +189,20 @@ jobs:
   # }}}
 
   windows:  # {{{
-    runs-on: windows-latest
+    runs-on: ${{ matrix.arch == 'win_arm64' && 'windows-11-arm' || 'windows-latest' }}
     if: true
+    permissions:
+      contents: read
 
     strategy:
       fail-fast: false
       matrix:
-        arch: [win_amd64]
+        arch: [win_amd64, win_arm64]
         pyver: [cp310, cp311, cp312, cp313, cp314, cp315]
         package_name: [psycopg2, psycopg2-binary]
+        exclude:
+          # Python 3.10 doesn't have a Windows ARM64 release.
+          - {arch: win_arm64, pyver: cp310}
 
     defaults:
       run:
@@ -210,12 +215,27 @@ jobs:
 
       - name: Checkout repo
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
-      - name: Start PostgreSQL service for test
+      - name: Install and start PostgreSQL for test
+        # Install PostgreSQL if the runner image doesn't provide it, as is
+        # currently the case for Windows ARM64.
         run: |
-          $PgSvc = Get-Service "postgresql*"
+          $PgSvc = Get-Service "postgresql*" -ErrorAction SilentlyContinue
+          if (-not $PgSvc) {
+            choco install postgresql16 --version=16.15.0 --source=https://community.chocolatey.org/api/v2/ --require-checksums -y --no-progress --params '/Password:root'
+            if ($LASTEXITCODE -ne 0) {
+              throw "Chocolatey failed to install PostgreSQL"
+            }
+            "PGUSER=postgres" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+            "PGPASSWORD=root" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+            $PgSvc = Get-Service "postgresql*" -ErrorAction Stop
+          }
           Set-Service $PgSvc.Name -StartupType manual
-          $PgSvc.Start()
+          if ($PgSvc.Status -ne 'Running') {
+            $PgSvc.Start()
+          }
         shell: powershell
 
       - name: Export GitHub Actions cache environment variables
@@ -223,10 +243,12 @@ jobs:
         with:
           script: |
             const path = require('path')
+            const triplet = '${{ matrix.arch == 'win_arm64' && 'arm64-windows' || 'x64-windows-release' }}';
             core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
             core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
-            core.addPath(path.join(process.env.VCPKG_INSTALLATION_ROOT, 'installed/x64-windows-release/lib'));
-            core.addPath(path.join(process.env.VCPKG_INSTALLATION_ROOT, 'installed/x64-windows-release/bin'));
+            core.exportVariable('VCPKG_TARGET_TRIPLET', triplet);
+            core.addPath(path.join(process.env.VCPKG_INSTALLATION_ROOT, `installed/${triplet}/lib`));
+            core.addPath(path.join(process.env.VCPKG_INSTALLATION_ROOT, `installed/${triplet}/bin`));
 
       - name: Create the binary package source tree
         run: >-
@@ -240,7 +262,7 @@ jobs:
           CIBW_SKIP: "cp31?t-*"
           VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite" # cache vcpkg
           CIBW_BUILD: ${{matrix.pyver}}-${{matrix.arch}}
-          CIBW_ARCHS_WINDOWS: AMD64 x86
+          CIBW_ARCHS_WINDOWS: ${{ matrix.arch == 'win_arm64' && 'ARM64' || 'AMD64' }}
           CIBW_BEFORE_BUILD_WINDOWS: '.\scripts\build\wheel_win32_before_build.bat'
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >-
             delvewheel repair -w {dest_dir}
