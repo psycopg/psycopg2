@@ -28,7 +28,7 @@
 import re
 
 from psycopg2._psycopg import ProgrammingError, InterfaceError
-from psycopg2.extensions import ISQLQuote, adapt, register_adapter
+from psycopg2.extensions import ISQLQuote, QuotedString, adapt, register_adapter
 from psycopg2.extensions import new_type, new_array_type, register_type
 
 
@@ -520,7 +520,12 @@ class NumberRangeAdapter(RangeAdapter):
         else:
             upper = ''
 
-        return (f"'{r._bounds[0]}{lower},{upper}{r._bounds[1]}'").encode('ascii')
+        # Quote the range literal as a whole: a bound adapted as a quoted
+        # literal (e.g. a string) must not terminate the outer literal.
+        rv = QuotedString(f"{r._bounds[0]}{lower},{upper}{r._bounds[1]}")
+        if getattr(self, '_conn', None) is not None:
+            rv.prepare(self._conn)
+        return rv.getquoted()
 
 
 # TODO: probably won't work with infs, nans and other tricky cases.

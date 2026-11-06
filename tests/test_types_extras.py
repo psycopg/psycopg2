@@ -1472,6 +1472,12 @@ class RangeCasterTestCase(ConnectingTestCase):
         self.assert_(not r1.lower_inc)
         self.assert_(r1.upper_inc)
 
+    def test_adapt_number_range_quoted_bound(self):
+        cur = self.conn.cursor()
+        r = NumericRange("|| (select 42) --", 10)
+        self.assertRaises(psycopg2.DataError,
+            cur.execute, "select %s::int4range", (r,))
+
     def test_adapt_numeric_range(self):
         cur = self.conn.cursor()
 

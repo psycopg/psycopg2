@@ -1,6 +1,13 @@
 Current release
 ---------------
 
+What's new in psycopg 2.9.14
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Fix quoting of `~psycopg2.extras.NumericRange` bounds adapted as quoted
+  literals, which could break out of the range literal.
+
+
 What's new in psycopg 2.9.13
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
