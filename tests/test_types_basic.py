@@ -196,6 +196,22 @@ class TypesBasicTests(ConnectingTestCase):
             self.assertRaises(psycopg2.DataError,
                 psycopg2.extensions.STRINGARRAY, s.encode('utf8'), curs)
 
+    def testArrayMalformedUnterminatedQuote(self):
+        # an element that opens a quote but never closes it used to make the
+        # tokenizer emit a negative length, crashing the element typecasters.
+        curs = self.conn.cursor()
+        casters = [
+            psycopg2.extensions.INTEGERARRAY,
+            psycopg2.extensions.LONGINTEGERARRAY,
+            psycopg2.extensions.DECIMALARRAY,
+            psycopg2.extensions.FLOATARRAY,
+            psycopg2.extensions.STRINGARRAY,
+        ]
+        for caster in casters:
+            for s in ['{"}', '{1,"}', '{1,2,"}']:
+                self.assertRaises(psycopg2.DataError,
+                    caster, s.encode('utf8'), curs)
+
     def testTextArray(self):
         curs = self.conn.cursor()
         curs.execute("select '{a,b,c}'::text[]")

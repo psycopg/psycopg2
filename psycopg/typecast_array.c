@@ -133,6 +133,15 @@ typecast_array_tokenize(const char *str, Py_ssize_t strlength,
         *quotes = 1;
     }
 
+    /* an element that opens a quote but never closes it (a malformed array
+     * literal such as '{"}') leaves l negative. reject it here: otherwise the
+     * negative length flows into the element typecasters and is used as a copy
+     * or allocation size, reading out of bounds. */
+    if (l < 0) {
+        PyErr_SetString(DataError, "unterminated quoted string in array");
+        return ASCAN_ERROR;
+    }
+
     if (res == ASCAN_QUOTED) {
         const char *j, *jj;
         char *buffer = PyMem_Malloc(l+1);
