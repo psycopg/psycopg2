@@ -405,7 +405,8 @@ typecast_call(PyObject *obj, PyObject *args, PyObject *kwargs)
     Py_ssize_t length;
     PyObject *cursor;
 
-    if (!PyArg_ParseTuple(args, "z#O", &string, &length, &cursor)) {
+    if (!PyArg_ParseTuple(args, "z#O!",
+            &string, &length, &cursorType, &cursor)) {
         return NULL;
     }
 
@@ -415,7 +416,7 @@ typecast_call(PyObject *obj, PyObject *args, PyObject *kwargs)
         Py_RETURN_NONE;
     }
 
-    return typecast_cast(obj, string, length, cursor);
+    return typecast_cast(obj, string, length, (cursorObject *)cursor);
 }
 
 PyTypeObject typecastType = {
@@ -579,17 +580,17 @@ typecast_from_c(typecastObject_initlist *type, PyObject *dict)
 }
 
 PyObject *
-typecast_cast(PyObject *obj, const char *str, Py_ssize_t len, PyObject *curs)
+typecast_cast(PyObject *obj, const char *str, Py_ssize_t len, cursorObject *curs)
 {
     PyObject *old, *res = NULL;
     typecastObject *self = (typecastObject *)obj;
 
     Py_INCREF(obj);
-    old = ((cursorObject*)curs)->caster;
-    ((cursorObject*)curs)->caster = obj;
+    old = curs->caster;
+    curs->caster = obj;
 
     if (self->ccast) {
-        res = self->ccast(str, len, curs);
+        res = self->ccast(str, len, (PyObject *)curs);
     }
     else if (self->pcast) {
         PyObject *s;
@@ -598,14 +599,14 @@ typecast_cast(PyObject *obj, const char *str, Py_ssize_t len, PyObject *curs)
          * Notice that this way it is about impossible to create a python
          * typecaster on a binary type. */
         if (str) {
-            s = conn_decode(((cursorObject *)curs)->conn, str, len);
+            s = conn_decode(curs->conn, str, len);
         }
         else {
             Py_INCREF(Py_None);
             s = Py_None;
         }
         if (s) {
-            res = PyObject_CallFunctionObjArgs(self->pcast, s, curs, NULL);
+            res = PyObject_CallFunctionObjArgs(self->pcast, s, (PyObject *)curs, NULL);
             Py_DECREF(s);
         }
     }
@@ -613,7 +614,7 @@ typecast_cast(PyObject *obj, const char *str, Py_ssize_t len, PyObject *curs)
         PyErr_SetString(Error, "internal error: no casting function found");
     }
 
-    ((cursorObject*)curs)->caster = old;
+    curs->caster = old;
     Py_DECREF(obj);
 
     return res;

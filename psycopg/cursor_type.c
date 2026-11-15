@@ -690,7 +690,7 @@ _psyco_curs_buildrow_fill(cursorObject *self, PyObject *res,
                 self->row, i, len);
 
         if (!(val = typecast_cast(PyTuple_GET_ITEM(self->casts, i), str, len,
-                            (PyObject*)self))) {
+                            self))) {
             goto exit;
         }
 

@@ -86,6 +86,6 @@ HIDDEN PyObject *typecast_array_from_python(
 
 /* the function used to dispatch typecasting calls */
 HIDDEN PyObject *typecast_cast(
-    PyObject *self, const char *str, Py_ssize_t len, PyObject *curs);
+    PyObject *self, const char *str, Py_ssize_t len, cursorObject *curs);
 
 #endif /* !defined(PSYCOPG_TYPECAST_H) */
