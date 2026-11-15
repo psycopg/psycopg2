@@ -193,9 +193,9 @@ typecast_array_scan(const char *str, Py_ssize_t strlength,
                 && (token[2] == 'l' || token[2] == 'L')
                 && (token[3] == 'l' || token[3] == 'L'))
             {
-                obj = typecast_cast(base, NULL, 0, curs);
+                obj = typecast_cast(base, NULL, 0, (cursorObject *)curs);
             } else {
-                obj = typecast_cast(base, token, length, curs);
+                obj = typecast_cast(base, token, length, (cursorObject *)curs);
             }
 
             /* before anything else we free the memory */

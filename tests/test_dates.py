@@ -482,7 +482,7 @@ class DatetimeTests(ConnectingTestCase, CommonDatetimeTestsMixin):
     def test_bug_1835(self):
         for digits in (8, 31, 100):
             self.assertEqual(
-                psycopg2.extensions.INTERVAL(b"0:0:0." + b"0" * digits, None),
+                psycopg2.extensions.INTERVAL(b"0:0:0." + b"0" * digits, self.curs),
                 timedelta(0))
 
 

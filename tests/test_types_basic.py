@@ -373,6 +373,22 @@ class TypesBasicTests(ConnectingTestCase):
         a = self.execute("select %s", (Color.GREEN,))
         self.assertEqual(a, Color.GREEN)
 
+    def testCastBadCursor(self):
+        # bug #1858: typecaster called with non-cursor resulting in segmentation fault
+        for curs in (b"A" * 256, "abc", 42, None):
+            with self.assertRaises(TypeError):
+                psycopg2.STRING("abc", curs)
+            with self.assertRaises(TypeError):
+                psycopg2.extensions.INTERVAL(b"0:0:0", curs)
+
+        # real cursor with subclasses are still acceptde
+        from psycopg2.extras import DictCursor
+        for curs in (
+            self.conn.cursor(),
+            self.conn.cursor(cursor_factory=DictCursor),
+        ):
+            self.assertEqual(psycopg2.STRING("abc", curs), "abc")
+
 
 class AdaptSubclassTest(unittest.TestCase):
     def test_adapt_subtype(self):
