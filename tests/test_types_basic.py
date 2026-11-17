@@ -275,6 +275,19 @@ class TypesBasicTests(ConnectingTestCase):
             curs.execute("select array[%s::int[]]", (a,))
             self.assertEqual(curs.fetchone()[0], [a])
 
+    def testArrayChangingSize(self):
+        a = []
+
+        class Shrink:
+            def __conform__(self, proto):
+                del a[:]
+                return AsIs("42")
+
+        a.extend([Shrink(), 1, 2])
+        self.assertEqual(
+            self.conn.cursor().mogrify("select %s", (a,)),
+            b"select ARRAY[42,1,2]")
+
     def testTypeRoundtripBytes(self):
         o1 = bytes(range(256))
         o2 = self.execute("select %s;", (o1,))

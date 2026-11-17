@@ -1,3 +1,13 @@
+Future releases
+---------------
+
+What's new in psycopg 2.9.14 (unreleased)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Fix memory corruption if the query arguments or a list being adapted change
+  size during adaptation.
+
+
 Current release
 ---------------
 
