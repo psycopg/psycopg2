@@ -99,6 +99,16 @@ class CommonDatetimeTestsMixin:
         self.assertRaises(psycopg2.DataError,
                           self.DATETIME, '2007-01-01 13:30', self.curs)
 
+    def test_parse_overflow(self):
+        # values wrapping around a C int, e.g. to 2000 or to +01:00
+        self.assertRaises(psycopg2.DataError,
+                          self.DATE, '4294969296-01-01', self.curs)
+        self.assertRaises(psycopg2.DataError,
+                          self.TIME, '13:30:29+4294967297', self.curs)
+        self.assertRaises(psycopg2.DataError,
+                          self.DATETIME, '2007-01-01 13:30:29+4294967297',
+                          self.curs)
+
     def test_parse_null_interval(self):
         value = self.INTERVAL(None, self.curs)
         self.assertEqual(value, None)

@@ -61,6 +61,8 @@ typecast_parse_date(const char* s, const char** t, Py_ssize_t* len,
             acc = -1; cz++;
             break;
         default:
+            /* no valid field is this long: bail out before acc overflows */
+            if (acc > 99999999 || acc < -99999999) return -1;
             acc = (acc == -1 ? 0 : acc*10) + ((int)*s - (int)'0');
             break;
         }
@@ -131,6 +133,8 @@ typecast_parse_time(const char* s, const char** t, Py_ssize_t* len,
              * when parsing the date portion. */
             break;
         default:
+            /* no valid field is this long: bail out before acc overflows */
+            if (acc > 99999999 || acc < -99999999) return -1;
             acc = (acc == -1 ? 0 : acc*10) + ((int)*s - (int)'0');
             if (cz == 3) usd += 1;
             break;
@@ -150,7 +154,12 @@ typecast_parse_time(const char* s, const char** t, Py_ssize_t* len,
     }
     if (t != NULL) *t = s;
 
-    *tz = tzsign * (3600 * tzhh + 60 * tzmm + tzss);
+    {
+        PY_LONG_LONG tzl = 3600 * (PY_LONG_LONG)tzhh
+            + 60 * (PY_LONG_LONG)tzmm + tzss;
+        if (tzl > INT_MAX || tzl < -INT_MAX) return -1;
+        *tz = tzsign * (int)tzl;
+    }
 
     if (*us != 0) {
         while (usd++ < 6) *us *= 10;
