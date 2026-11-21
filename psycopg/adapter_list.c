@@ -40,6 +40,7 @@ list_quote(listObject *self)
     /*  adapt the list by calling adapt() recursively and then wrapping
         everything into "ARRAY[]" */
     PyObject *res = NULL;
+    PyObject *items = NULL;
     PyObject **qs = NULL;
     Py_ssize_t bufsize = 0;
     char *buf = NULL, *ptr;
@@ -49,9 +50,14 @@ list_quote(listObject *self)
      *  to convert array of arrays containing only nulls. */
     int all_nulls = 1;
 
-    Py_ssize_t i, len;
+    Py_ssize_t i, len = 0;
 
-    len = PyList_GET_SIZE(self->wrapped);
+    /* adapting the items may run Python code changing the list: work on a
+     * snapshot holding a reference to each item */
+    if (!(items = PyList_AsTuple(self->wrapped))) {
+        goto exit;
+    }
+    len = PyTuple_GET_SIZE(items);
 
     /* empty arrays are converted to NULLs (still searching for a way to
        insert an empty array in postgresql */
@@ -69,7 +75,7 @@ list_quote(listObject *self)
     memset(qs, 0, len * sizeof(PyObject *));
 
     for (i = 0; i < len; i++) {
-        PyObject *wrapped = PyList_GET_ITEM(self->wrapped, i);
+        PyObject *wrapped = PyTuple_GET_ITEM(items, i);
         if (wrapped == Py_None) {
             Py_INCREF(psyco_null);
             qs[i] = psyco_null;
@@ -158,6 +164,7 @@ exit:
         }
         PyMem_Free(qs);
     }
+    Py_XDECREF(items);
     PyMem_Free(buf);
 
     return res;

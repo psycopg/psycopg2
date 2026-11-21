@@ -144,6 +144,25 @@ class CursorTests(ConnectingTestCase):
         self.assertRaises(IndexError, cur.execute, "select %s, %s", [1])
         self.assertRaises(TypeError, cur.execute, "select %s", [1, 2])
 
+    def test_params_changing_size(self):
+        cur = self.conn.cursor()
+        params = []
+
+        class Grow:
+            def __conform__(self, proto):
+                params.extend([1] * 100)
+                return psycopg2.extensions.AsIs("42")
+
+        params.append(Grow())
+        self.assertRaises(RuntimeError, cur.mogrify, "select %s, %s", params)
+
+        class LyingLen(list):
+            def __len__(self):
+                return 0
+
+        self.assertRaises(
+            RuntimeError, cur.mogrify, "select %s, %s", LyingLen([1, 2]))
+
     def test_cast(self):
         curs = self.conn.cursor()
 

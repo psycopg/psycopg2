@@ -274,6 +274,16 @@ _mogrify(PyObject *var, PyObject *fmt, cursorObject *curs, PyObject **new)
                 }
             }
 
+            /* n was sized on the first placeholder: the sequence may have
+               grown since, adapting its items, or its len() may be lying */
+            if (index >= PyTuple_GET_SIZE(n)) {
+                PyErr_SetString(PyExc_RuntimeError,
+                    "query arguments sequence changed size");
+                Py_DECREF(n);
+                Py_DECREF(value);
+                return -1;
+            }
+
             /* let's have d point just after the '%' */
             if (value == Py_None) {
                 Py_INCREF(psyco_null);
